@@ -22,8 +22,6 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 ### Data Access Layers
 
-The app has TWO data access paths:
-
 1. **Real PostgreSQL** (production path): `services/dbApi.ts` → `services/api/*.ts` → HTTP API → `server/routes/*.ts` → `server/repositories/*.ts` → PostgreSQL
 2. **Legacy mockDb** (still exists as `services/mockDb.ts` but NO longer imported by any frontend code)
 
@@ -51,27 +49,59 @@ The app has TWO data access paths:
 - `leadApi.ts`, `listingApi.ts`, `proposalApi.ts`, `contractApi.ts`, `inboxApi.ts`, `userApi.ts`, `analyticsApi.ts`
 - `services/dbApi.ts` — Compatibility shim: mirrors the mockDb interface but routes to real API
 
+### Middleware (`server/middleware/`)
+- `security.ts` — Security headers (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy, HSTS), CORS, webhook signature verification (Facebook HMAC-SHA256, Zalo), parameter pollution prevention
+- `validation.ts` — Input validation middleware with schema definitions for all POST/PUT routes, XSS sanitization, UUID validation
+- `errorHandler.ts` — Centralized error handler with AppError class hierarchy (NotFoundError, ForbiddenError, ConflictError, ValidationError), async handler wrapper
+- `rateLimiter.ts` — In-memory rate limiting: AI (20/min), auth (15/15min), API (120/min), webhooks (100/min); includes X-RateLimit headers
+- `logger.ts` — Structured JSON logging with levels (DEBUG/INFO/WARN/ERROR), request logging middleware, audit logging
+- `auditLog.ts` — Audit trail writes to PostgreSQL audit_logs table for sensitive operations (login, CRUD, password changes)
+
 ## Security
 
-- API keys (GEMINI_API_KEY) are server-side only — never exposed to frontend bundle
-- JWT_SECRET auto-generates a random secret per session if not set (logged as warning)
-- Socket.io connections require JWT auth via httpOnly cookie
-- Yjs WebSocket connections require JWT auth via httpOnly cookie
-- Vite HMR WebSocket is excluded from auth (dev only)
-- All API routes require `authenticateToken` middleware (except auth endpoints, webhooks, health)
-- PostgreSQL RLS enforces tenant isolation at DB level
-- RBAC enforced in repositories (Sales agents see own leads, Admin/Team Lead see all)
-- `withTenantContext` uses UUID-validated string interpolation (SET LOCAL doesn't support $1 params)
+- Security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy
+- HSTS enabled in production
+- CORS: restricted origins in production, open in dev
+- Rate limiting on auth (15/15min), AI (20/min), API (120/min), webhooks (100/min)
+- Input validation on all POST/PUT routes with schema-based validation
+- XSS prevention via input sanitization
+- Webhook signature verification for Facebook (HMAC-SHA256) and Zalo
+- Parameter pollution prevention
+- API keys (GEMINI_API_KEY) server-side only
+- JWT with httpOnly cookies, 24h expiry
+- Socket.io/Yjs WebSocket auth via JWT cookie
+- PostgreSQL RLS enforces tenant isolation
+- RBAC in repositories (Sales see own, Admin/Team Lead see all)
+- `withTenantContext` uses UUID-validated string interpolation
+- Audit logging for login, CRUD operations, password changes
 
 ## Business Logic
 
-- **Lead → LOST**: Auto-rejects all PENDING_APPROVAL and DRAFT proposals for that lead
-- **Lead Scoring**: Heuristic score on create/update, then enqueues AI scoring via background queue
-- **Proposal Smart Approval**: Auto-approves if discount <= 10%, otherwise PENDING_APPROVAL
+- **Lead → LOST**: Auto-rejects all PENDING_APPROVAL and DRAFT proposals
+- **Lead Scoring**: Heuristic score + AI scoring (persisted to DB via background queue)
+- **Proposal Smart Approval**: Auto-approves if discount <= 10%
 - **Revenue**: 2% commission on APPROVED proposals' finalPrice
-- **Pipeline Value**: finalPrice × probability (A=85%, B=60%, C=30%, D=10%, F=1%)
-- **Win Probability**: Weighted average from actual pipeline data (not hardcoded)
-- **AI Deflection Rate**: AI outbound interactions / total outbound interactions
+- **Pipeline Value**: finalPrice x probability (A=85%, B=60%, C=30%, D=10%, F=1%)
+- **Win Probability**: Weighted average from actual pipeline data
+- **AI Deflection Rate**: AI outbound / total outbound interactions
+
+## Real-time Events (Socket.io)
+
+- `send_message` — Persists interaction to PostgreSQL, then broadcasts to room
+- `receive_message` — Webhook worker saves to DB first, then emits
+- `lead_updated` / `lead_created` — Broadcasts to other clients
+- `view_lead` / `leave_lead` — Presence tracking (in-memory)
+- Webhook worker persists Zalo/Facebook messages to DB + triggers AI scoring
+
+## AI Integration
+
+- `POST /api/ai/process-message` — Multi-agent LangGraph workflow with Gemini
+- `POST /api/ai/score-lead` — Scores lead, persists score back to DB
+- `POST /api/ai/summarize-lead` — Reads interactions from DB if not provided
+- `POST /api/ai/valuation` — Real-time valuation with Google Search grounding
+- `POST /api/ai/generate-content` — Generic Gemini proxy with streaming SSE
+- `POST /api/ai/embed-content` — Vector embeddings via text-embedding-004
+- All AI endpoints rate-limited (20 req/min per user)
 
 ## Entry Points
 
@@ -79,8 +109,8 @@ The app has TWO data access paths:
 - `App.tsx` - React frontend entry
 - `server/db.ts` - PostgreSQL schema and RLS setup
 - `server/seed.ts` - Database seeding script
-- `server/queue.ts` - BullMQ webhook queue
-- `server/ai.ts` - AI service routes
+- `server/queue.ts` - BullMQ webhook queue (persists to DB)
+- `server/ai.ts` - AI service (LangGraph state machine)
 - `services/dbApi.ts` - Frontend data access (API-backed)
 
 ## Environment Variables
@@ -90,6 +120,10 @@ The app has TWO data access paths:
 - `GEMINI_API_KEY` or `API_KEY` - Google Gemini API key for AI features (server-side only)
 - `JWT_SECRET` - JWT signing secret (required for production; auto-generated in dev)
 - `FB_VERIFY_TOKEN` - Facebook webhook verification token
+- `FB_APP_SECRET` - Facebook app secret for webhook signature verification
+- `ZALO_OA_SECRET` - Zalo OA secret for webhook signature verification
+- `ALLOWED_ORIGINS` - Comma-separated allowed CORS origins (production)
+- `LOG_LEVEL` - Logging level: DEBUG, INFO, WARN, ERROR (default: INFO)
 
 ## Dev Credentials
 
@@ -104,15 +138,3 @@ The app has TWO data access paths:
 - `npm run start` - Start production server
 - `npm run seed` - Seed database with sample data (idempotent)
 - `npm run lint` - TypeScript type check
-
-## Known Issues (Resolved)
-
-- SVG path error in ListingCard EYE icon: fixed malformed `s` command
-- Dashboard AI Deflection Rate circle overflow: fixed with overflow-hidden
-- Recharts ResponsiveContainer negative dimensions: fixed with minHeight/minWidth
-- Dashboard KPI cards: unified layout with computed metrics and delta trends
-- winProbability: computed as weighted average from pipeline data
-- RLS/RBAC enforced in getLeadById, getInteractions, getPendingProposals
-- /api/courses: added authenticateToken middleware
-- withTenantContext SET LOCAL: uses UUID-validated string interpolation (not $1 params)
-- Inbox threads query: fixed l.avatar → l.attributes->>'avatar'

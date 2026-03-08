@@ -20,14 +20,30 @@ import { createContractRoutes } from "./server/routes/contractRoutes";
 import { createInteractionRoutes } from "./server/routes/interactionRoutes";
 import { createUserRoutes } from "./server/routes/userRoutes";
 import { createAnalyticsRoutes } from "./server/routes/analyticsRoutes";
+import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
+import { errorHandler } from "./server/middleware/errorHandler";
+import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
+import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit } from "./server/middleware/rateLimiter";
+import { logger, requestLogger } from "./server/middleware/logger";
+import { writeAuditLog } from "./server/middleware/auditLog";
+import { interactionRepository } from "./server/repositories/interactionRepository";
+import { leadRepository } from "./server/repositories/leadRepository";
 
 async function startServer() {
   const app = express();
   const PORT = 5000;
 
-  // Middleware to parse JSON bodies
+  app.use(securityHeaders);
+  app.use(corsMiddleware);
+  app.use('/api/webhooks', express.json({
+    limit: '1mb',
+    verify: (req: any, _res, buf) => { req.rawBody = buf; }
+  }));
   app.use(express.json({ limit: '10mb' }));
   app.use(cookieParser());
+  app.use(preventParamPollution);
+  app.use(sanitizeInput);
+  app.use(requestLogger);
 
   const isProduction = process.env.NODE_ENV === 'production';
   if (!process.env.JWT_SECRET) {
@@ -74,7 +90,7 @@ async function startServer() {
     ...(isProduction && { secure: true }),
   };
 
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", authRateLimit, validateBody(schemas.login), async (req, res) => {
     try {
       let { email, password } = req.body;
       email = email?.trim();
@@ -100,6 +116,7 @@ async function startServer() {
       }
 
       if (!dbUser) {
+        writeAuditLog(tenantId, email, 'LOGIN_FAILED', 'auth', undefined, { email }, req.ip);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
@@ -113,9 +130,10 @@ async function startServer() {
       const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
       res.cookie('token', token, cookieOptions);
       await userRepository.updateLastLogin(tenantId, dbUser.id);
+      writeAuditLog(tenantId, dbUser.id, 'LOGIN', 'auth', dbUser.id, undefined, req.ip);
       res.json({ message: 'Logged in successfully', user: userRepository.toPublicUser(dbUser), token });
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       res.status(500).json({ error: 'Login failed' });
     }
   });
@@ -154,12 +172,9 @@ async function startServer() {
     }
   });
 
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/register", authRateLimit, validateBody(schemas.register), async (req, res) => {
     try {
       const { name, email, password, company } = req.body;
-      if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password are required' });
-      }
 
       const tenantId = DEFAULT_TENANT_ID;
       const existing = await userRepository.findByEmail(tenantId, email);
@@ -204,8 +219,7 @@ async function startServer() {
     res.json({ user: (req as any).user });
   });
 
-  // AI Routes
-  app.post("/api/ai/process-message", authenticateToken, async (req, res) => {
+  app.post("/api/ai/process-message", authenticateToken, aiRateLimit, validateBody(schemas.aiProcessMessage), async (req, res) => {
     try {
       const { lead, userMessage, history, lang } = req.body;
       const { aiService } = await import('./server/ai');
@@ -218,43 +232,68 @@ async function startServer() {
     }
   });
 
-  app.post("/api/ai/score-lead", authenticateToken, async (req, res) => {
+  app.post("/api/ai/score-lead", authenticateToken, aiRateLimit, validateBody(schemas.aiScoreLead), async (req, res) => {
     try {
       const { leadData, messageContent, weights, lang } = req.body;
       const { aiService } = await import('./server/ai');
       const result = await aiService.scoreLead(leadData, messageContent, weights, lang);
+
+      if (result && leadData?.id) {
+        const tenantId = (req as any).tenantId;
+        try {
+          await leadRepository.update(tenantId, leadData.id, {
+            score: result.score || result.totalScore,
+            scoreGrade: result.grade,
+          }, (req as any).user?.id, (req as any).user?.role || 'ADMIN');
+          logger.info(`AI score persisted for lead ${leadData.id}: ${result.score || result.totalScore}`);
+        } catch (e) {
+          logger.warn(`Could not persist AI score for lead ${leadData.id}`);
+        }
+      }
+
       res.json(result);
     } catch (error) {
-      console.error('AI score lead error:', error);
+      logger.error('AI score lead error:', error);
       res.status(500).json({ error: 'AI scoring failed' });
     }
   });
 
-  app.post("/api/ai/summarize-lead", authenticateToken, async (req, res) => {
+  app.post("/api/ai/summarize-lead", authenticateToken, aiRateLimit, async (req, res) => {
     try {
       const { lead, logs, lang } = req.body;
       const { aiService } = await import('./server/ai');
-      const result = await aiService.summarizeLead(lead, logs, lang);
+
+      let interactions = logs;
+      if (!interactions && lead?.id) {
+        const tenantId = (req as any).tenantId;
+        try {
+          interactions = await interactionRepository.findByLead(tenantId, lead.id);
+        } catch (e) {
+          logger.warn(`Could not fetch interactions for lead ${lead.id}`);
+        }
+      }
+
+      const result = await aiService.summarizeLead(lead, interactions || [], lang);
       res.json({ summary: result });
     } catch (error) {
-      console.error('AI summarize lead error:', error);
+      logger.error('AI summarize lead error:', error);
       res.status(500).json({ error: 'AI summarization failed' });
     }
   });
 
-  app.post("/api/ai/valuation", authenticateToken, async (req, res) => {
+  app.post("/api/ai/valuation", authenticateToken, aiRateLimit, validateBody(schemas.aiValuation), async (req, res) => {
     try {
       const { address, area, roadWidth, legal } = req.body;
       const { aiService } = await import('./server/ai');
       const result = await aiService.getRealtimeValuation(address, area, roadWidth, legal);
       res.json(result);
     } catch (error) {
-      console.error('AI valuation error:', error);
+      logger.error('AI valuation error:', error);
       res.status(500).json({ error: 'AI valuation failed' });
     }
   });
 
-  app.post("/api/ai/generate-content", authenticateToken, async (req, res) => {
+  app.post("/api/ai/generate-content", authenticateToken, aiRateLimit, async (req, res) => {
     try {
       const { prompt, model, temperature, systemInstruction, responseMimeType, responseSchema, stream } = req.body;
       const { GoogleGenAI } = await import('@google/genai');
@@ -308,7 +347,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/ai/embed-content", authenticateToken, async (req, res) => {
+  app.post("/api/ai/embed-content", authenticateToken, aiRateLimit, async (req, res) => {
     try {
       const { text, model } = req.body;
       const { GoogleGenAI } = await import('@google/genai');
@@ -454,13 +493,13 @@ async function startServer() {
     console.warn("DATABASE_URL not set. Skipping database initialization.");
   }
 
-  app.use('/api/leads', createLeadRoutes(authenticateToken));
-  app.use('/api/listings', createListingRoutes(authenticateToken));
-  app.use('/api/proposals', createProposalRoutes(authenticateToken));
-  app.use('/api/contracts', createContractRoutes(authenticateToken));
-  app.use('/api/inbox', createInteractionRoutes(authenticateToken));
-  app.use('/api/users', createUserRoutes(authenticateToken));
-  app.use('/api/analytics', createAnalyticsRoutes(authenticateToken));
+  app.use('/api/leads', apiRateLimit, createLeadRoutes(authenticateToken));
+  app.use('/api/listings', apiRateLimit, createListingRoutes(authenticateToken));
+  app.use('/api/proposals', apiRateLimit, createProposalRoutes(authenticateToken));
+  app.use('/api/contracts', apiRateLimit, createContractRoutes(authenticateToken));
+  app.use('/api/inbox', apiRateLimit, createInteractionRoutes(authenticateToken));
+  app.use('/api/users', apiRateLimit, createUserRoutes(authenticateToken));
+  app.use('/api/analytics', apiRateLimit, createAnalyticsRoutes(authenticateToken));
 
   app.get("/api/health", async (req, res) => {
     try {
@@ -471,8 +510,7 @@ async function startServer() {
     }
   });
 
-  // API Route: Zalo Webhook (Receive messages from Zalo OA)
-  app.post("/api/webhooks/zalo", async (req, res) => {
+  app.post("/api/webhooks/zalo", webhookRateLimit, verifyWebhookSignature('zalo'), async (req, res) => {
     try {
       const { sender, message, timestamp, event_name } = req.body;
       console.log(`[Zalo Webhook] Received event: ${event_name} from ${sender?.id}`);
@@ -488,8 +526,7 @@ async function startServer() {
     }
   });
 
-  // API Route: Facebook Webhook
-  app.post("/api/webhooks/facebook", async (req, res) => {
+  app.post("/api/webhooks/facebook", webhookRateLimit, verifyWebhookSignature('facebook'), async (req, res) => {
     try {
       const { object, entry } = req.body;
       console.log(`[Facebook Webhook] Received event`);
@@ -606,7 +643,30 @@ async function startServer() {
       io.to(room).emit("active_viewers", uniqueUsers);
     }));
 
-    socket.on("send_message", requireAuth((data) => {
+    socket.on("send_message", requireAuth(async (data) => {
+      const user = socket.data.authUser;
+      const tenantId = user?.tenantId || DEFAULT_TENANT_ID;
+
+      if (data.leadId && data.content) {
+        try {
+          const saved = await interactionRepository.create(tenantId, {
+            leadId: data.leadId,
+            content: data.content,
+            channel: data.channel || 'INTERNAL',
+            direction: 'OUTBOUND',
+            type: data.type || 'TEXT',
+            senderId: user?.id,
+            metadata: data.metadata,
+          });
+          data.id = saved.id;
+          data.timestamp = saved.timestamp || saved.createdAt;
+          data.senderId = user?.id;
+          data.senderName = user?.name;
+        } catch (err) {
+          logger.error('Failed to persist socket message to DB', err);
+        }
+      }
+
       io.to(data.room).emit("receive_message", data);
     }));
 
@@ -641,8 +701,10 @@ async function startServer() {
     app.use(express.static("dist"));
   }
 
+  app.use(errorHandler);
+
   server.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    logger.info(`Server running on http://localhost:${PORT}`);
   });
 }
 
