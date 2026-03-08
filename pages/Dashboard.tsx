@@ -255,7 +255,7 @@ export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
     const [isExporting, setIsExporting] = useState(false);
     const dashboardRef = useRef<HTMLDivElement>(null);
-    const { t, formatCurrency, language } = useTranslation();
+    const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const { chartTheme } = useTheme();
 
     const handleExport = async () => {
@@ -389,15 +389,15 @@ export const Dashboard: React.FC = () => {
                 
                 {/* TIER 1: North Star Metrics (KPI Cards) — Unified Layout */}
                 {/* 1. Revenue (Doanh Thu Hoa Hồng) */}
-                <div className="md:col-span-1 lg:col-span-1">
+                <div className="md:col-span-1 lg:col-span-1 overflow-hidden">
                     <BentoCard 
                         title={t('dash.revenue_title')} 
-                        className="h-full min-h-[180px] bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none shadow-xl [&_h3]:!text-indigo-200"
+                        className="h-full min-h-[180px] bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none shadow-xl [&_h3]:!text-indigo-200 overflow-hidden"
                     >
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
-                                <div className="text-3xl font-black tracking-tight mt-2 text-white">
-                                    {formatCurrency(analytics.revenue || 0)}
+                                <div className="text-2xl sm:text-3xl font-black tracking-tight mt-2 text-white break-words">
+                                    {formatCompactNumber(analytics.revenue || 0)}
                                 </div>
                                 <div className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider mt-1">
                                     {t('dash.commission_2_percent') || "Hoa hồng 2%"}
@@ -414,12 +414,12 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* 2. Pipeline Value (Giá Trị Pipeline) */}
-                <div className="md:col-span-1 lg:col-span-1">
-                    <BentoCard title={t('dash.pipeline_value') || "Pipeline Value"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10">
+                <div className="md:col-span-1 lg:col-span-1 overflow-hidden">
+                    <BentoCard title={t('dash.pipeline_value') || "Pipeline Value"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
-                                <div className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight mt-2">
-                                    {formatCurrency(analytics.pipelineValue || 0)}
+                                <div className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight mt-2 break-words">
+                                    {formatCompactNumber(analytics.pipelineValue || 0)}
                                 </div>
                                 <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
                                     {t('dash.win_probability') || "Xác suất chốt"}: <span className="text-indigo-600 dark:text-indigo-400">{analytics.winProbability || 0}%</span>
