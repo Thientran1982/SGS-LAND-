@@ -1,0 +1,347 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, interactive-widget=resizes-content" />
+    <meta name="description" content="SGS LAND Enterprise - Hệ điều hành Bất động sản tích hợp AI Agent & CRM chuyên sâu cho doanh nghiệp." />
+    <meta name="keywords" content="bất động sản, AI real estate, CRM bất động sản, thẩm định giá AI, quản lý kho hàng, SGS LAND" />
+    <meta name="theme-color" content="#FAFAFA" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://ais-dev-xlfuvizm4xq7tmrdqyx7c7-243274461503.asia-southeast1.run.app" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏢</text></svg>" />
+    
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SGS LAND | Enterprise OS" />
+    <meta property="og:description" content="Hệ điều hành Bất động sản tích hợp AI Agent, CRM đa kênh và Tự động hóa." />
+    <meta property="og:image" content="https://ui-avatars.com/api/?name=SGS+Land&background=4F46E5&color=fff&size=512" />
+    
+    <title>SGS LAND | Enterprise OS</title>
+    
+    <!-- Preload Critical Assets -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Dependencies (ESM) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+      :root {
+        /* --- DESIGN TOKENS --- */
+        --bg-app: #FAFAFA; 
+        --bg-surface: #FFFFFF;
+        --glass-surface: rgba(255, 255, 255, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.6);
+        --text-primary: #09090B;   
+        --text-secondary: #52525B; 
+        --primary-600: #4F46E5;
+        --rose-500: #F43F5E;
+        
+        /* Aurora Gradients */
+        --aurora-1: #E0E7FF; 
+        --aurora-2: #FAE8FF;
+        --aurora-3: #D1FAE5;
+      }
+
+      .dark {
+        --bg-app: #050505;
+        --bg-surface: #121212;     
+        --glass-surface: rgba(20, 20, 20, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --text-primary: #FAFAFA;   
+        --text-secondary: #A1A1AA; 
+        
+        --aurora-1: #1e1b4b; 
+        --aurora-2: #312e81; 
+        --aurora-3: #0f172a;
+      }
+
+      /* --- CORE LAYOUT --- */
+      html, body {
+        height: 100%;
+        width: 100%;
+        margin: 0; padding: 0;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-app);
+        color: var(--text-primary);
+        -webkit-font-smoothing: antialiased;
+        overscroll-behavior: none;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      /* --- OPTIMIZED AURORA BACKGROUND (GPU Accelerated) --- */
+      #app-background {
+        position: fixed;
+        inset: -50%;
+        width: 200%; height: 200%;
+        background: radial-gradient(circle at center, transparent 0%, var(--bg-app) 70%),
+                    conic-gradient(from 0deg at 50% 50%, var(--aurora-1), var(--aurora-2), var(--aurora-3), var(--aurora-1));
+        filter: blur(80px);
+        opacity: 0.4;
+        z-index: -1;
+        animation: aurora-spin 60s linear infinite; 
+        pointer-events: none;
+        will-change: transform;
+        transform: translateZ(0);
+      }
+
+      @keyframes aurora-spin {
+        from { transform: rotate(0deg) translateZ(0); }
+        to { transform: rotate(360deg) translateZ(0); }
+      }
+
+      /* --- UTILITIES --- */
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      /* GLOBAL CUSTOM SCROLLBAR (Elegant Thin) */
+      @media (min-width: 1024px) {
+          .custom-scrollbar::-webkit-scrollbar {
+              display: block;
+              width: 5px; /* Thin but visible */
+              height: 5px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+              background: transparent;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+              background-color: rgba(156, 163, 175, 0.3); /* Subtle Gray */
+              border-radius: 20px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+              background-color: rgba(156, 163, 175, 0.5); /* Darker on hover */
+          }
+          .custom-scrollbar {
+              -ms-overflow-style: auto;
+              scrollbar-width: thin;
+          }
+      }
+      
+      .glass-card {
+        background: var(--glass-surface);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border: 1px solid var(--glass-border);
+      }
+
+      .animate-enter { animation: soft-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      @keyframes soft-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+      /* --- ENHANCED LOADER --- */
+      .initial-loader {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        gap: 24px;
+        color: var(--text-secondary);
+        z-index: 50;
+        position: relative;
+      }
+      .loader-logo {
+        width: 64px; height: 64px;
+        background: var(--bg-surface);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        animation: breathe 2s infinite ease-in-out;
+      }
+      .loader-bar {
+        width: 120px;
+        height: 4px;
+        background: rgba(125,125,125,0.1);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .loader-progress {
+        height: 100%;
+        width: 50%;
+        background: var(--primary-600);
+        border-radius: 2px;
+        animation: progress 1.5s infinite ease-in-out;
+      }
+      @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+      @keyframes progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+
+      /* --- ENTERPRISE MAP OVERRIDES (White Labeling & Fixes) --- */
+      .leaflet-control-attribution {
+          background: rgba(255, 255, 255, 0.7) !important;
+          backdrop-filter: blur(8px) !important;
+          -webkit-backdrop-filter: blur(8px) !important;
+          border-radius: 12px !important;
+          padding: 2px 8px !important;
+          margin: 0 8px 8px 0 !important;
+          font-family: 'Inter', sans-serif !important;
+          font-size: 9px !important;
+          color: #94a3b8 !important;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+          border: 1px solid rgba(255,255,255,0.5) !important;
+          pointer-events: auto !important; /* Ensure it stays interactive but inside map */
+          z-index: 500 !important; /* Keep it below modals but above tiles */
+      }
+      .leaflet-control-attribution a {
+          color: #64748b !important;
+          text-decoration: none !important;
+          font-weight: 600 !important;
+      }
+      /* Hide default zoom control to use our custom UI */
+      .leaflet-control-zoom { display: none !important; }
+      
+      /* Ensure container cleanup doesn't leave ghosts */
+      .leaflet-container {
+          background: #e2e8f0; /* Match loading placeholder */
+      }
+
+      /* --- CUSTOM PIN FIX --- */
+      .custom-map-pin {
+          background: transparent !important;
+          border: none !important;
+          width: auto !important;
+          height: auto !important;
+      }
+
+      /* --- LANDING PAGE ANIMATIONS --- */
+      @keyframes scroll-x {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+      }
+      .animate-scroll-x {
+          animation: scroll-x 25s linear infinite;
+          width: max-content; /* Critical for seamless looping */
+      }
+      .mask-linear-fade {
+          mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+          -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+      }
+      @keyframes blink { 50% { opacity: 0; } }
+      .animate-blink { animation: blink 1s step-end infinite; }
+
+      /* --- MARKDOWN STYLES --- */
+      .markdown-body {
+        font-family: inherit;
+      }
+      .markdown-body p { margin-bottom: 0.75em; }
+      .markdown-body p:last-child { margin-bottom: 0; }
+      .markdown-body strong { font-weight: 700; }
+      .markdown-body em { font-style: italic; }
+      .markdown-body ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
+      .markdown-body ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 0.75em; }
+      .markdown-body li { margin-bottom: 0.25em; }
+      .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { font-weight: 700; margin-top: 1em; margin-bottom: 0.5em; }
+      .markdown-body h1 { font-size: 1.5em; }
+      .markdown-body h2 { font-size: 1.25em; }
+      .markdown-body h3 { font-size: 1.125em; }
+      .markdown-body code { background-color: rgba(0,0,0,0.05); padding: 0.1em 0.3em; border-radius: 0.25em; font-family: var(--font-mono); font-size: 0.9em; }
+      .dark .markdown-body code { background-color: rgba(255,255,255,0.1); }
+      .markdown-body pre { background-color: rgba(0,0,0,0.05); padding: 0.75em; border-radius: 0.5em; overflow-x: auto; margin-bottom: 0.75em; }
+      .dark .markdown-body pre { background-color: rgba(255,255,255,0.05); }
+      .markdown-body pre code { background-color: transparent; padding: 0; }
+      .markdown-body blockquote { border-left: 3px solid rgba(0,0,0,0.1); padding-left: 1em; margin-left: 0; color: var(--text-secondary); font-style: italic; }
+      .dark .markdown-body blockquote { border-left-color: rgba(255,255,255,0.1); }
+      .markdown-body a { color: var(--primary-600); text-decoration: underline; text-underline-offset: 2px; }
+    </style>
+
+    <!-- CRITICAL: Hydration Script (Prevents FOUC) -->
+    <script>
+      (function() {
+        try {
+          const localTheme = localStorage.getItem('sgs_theme');
+          const sysTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          const theme = (localTheme === 'dark' || localTheme === 'light') ? localTheme : sysTheme;
+          
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#050505');
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+          }
+        } catch (e) {}
+      })();
+
+      // Tailwind Config Injection
+      tailwind.config = {
+        darkMode: 'class', 
+        theme: {
+          extend: {
+            fontFamily: { 
+              sans: ['Inter', 'sans-serif'], 
+              display: ['Inter', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+            },
+            colors: {
+              surface: "var(--bg-surface)",
+              primary: { DEFAULT: "var(--primary-600)", 600: "var(--primary-600)" }
+            },
+            animation: {
+              'scale-up': 'scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              'slide-in-right': 'slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            },
+            keyframes: {
+              scaleUp: { '0%': { opacity: 0, transform: 'scale(0.95)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
+              slideInRight: { '0%': { opacity: 0, transform: 'translateX(20px)' }, '100%': { opacity: 1, transform: 'translateX(0)' } }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react/": "https://esm.sh/react@18.2.0/",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
+    "recharts": "https://esm.sh/recharts@2.12.7?external=react,react-dom",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "socket.io-client": "https://esm.sh/socket.io-client@4.8.3",
+    "@playwright/test": "https://esm.sh/@playwright/test@^1.57.0",
+    "k6/": "https://esm.sh/k6@^0.0.0/",
+    "k6": "https://esm.sh/k6@^0.0.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="app-background"></div>
+    <div id="root">
+        <!-- Optimized Skeleton Loader -->
+        <div class="initial-loader">
+            <div class="loader-logo">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 12l10 5 10-5"/>
+                    <path d="M2 17l10 5 10-5"/>
+                </svg>
+            </div>
+            <div class="loader-bar">
+                <div class="loader-progress"></div>
+            </div>
+            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5;">Initializing OS...</div>
+        </div>
+    </div>
+    
+    <noscript>
+      <div style="padding: 40px; text-align: center; color: var(--text-primary);">
+        <h2 style="font-weight: 800; margin-bottom: 10px;">JavaScript Required</h2>
+        <p>SGS LAND Enterprise requires JavaScript to function securely.</p>
+      </div>
+    </noscript>
+    
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
