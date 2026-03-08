@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '../services/i18n';
 import { useSocket } from '../services/websocket';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Lead, Interaction, Channel, Direction } from '../types';
 import { MessageBubble } from '../components/ChatUI';
 import { motion } from 'motion/react';

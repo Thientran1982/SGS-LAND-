@@ -7,7 +7,7 @@ import {
     BarChart, Bar, LineChart, Line, ComposedChart, Legend, ScatterChart, Scatter, ZAxis, Cell
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { systemService } from '../services/systemService';
 import { AnalyticsSummary } from '../types';
 import { useTranslation } from '../services/i18n';

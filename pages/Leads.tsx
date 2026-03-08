@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Lead, LeadStage } from '../types';
 import { useTranslation } from '../services/i18n';
 import { CreateLeadModal } from '../components/CreateLeadModal';

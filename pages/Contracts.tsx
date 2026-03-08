@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '../services/i18n';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Contract, ContractType, ContractStatus } from '../types';
 import { ContractModal } from '../components/ContractModal';
 import { Dropdown } from '../components/Dropdown';

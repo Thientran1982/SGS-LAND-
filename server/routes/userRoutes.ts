@@ -1,0 +1,90 @@
+import { Router, Request, Response } from 'express';
+import { userRepository } from '../repositories/userRepository';
+import { auditRepository } from '../repositories/auditRepository';
+
+export function createUserRoutes(authenticateToken: any) {
+  const router = Router();
+
+  router.get('/', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 50;
+      const filters: any = {};
+      if (req.query.role) filters.role = req.query.role;
+      if (req.query.status) filters.status = req.query.status;
+
+      const result = await userRepository.listUsers(user.tenantId, { page, pageSize }, filters);
+      result.data = result.data.map((u: any) => userRepository.toPublicUser(u));
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
+  router.get('/me', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const dbUser = await userRepository.findByIdDirect(user.id);
+      if (!dbUser) return res.json({ user });
+      res.json({ user: userRepository.toPublicUser(dbUser) });
+    } catch (error) {
+      res.json({ user: (req as any).user });
+    }
+  });
+
+  router.get('/teams', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const teams = await userRepository.getTeams(user.tenantId);
+      res.json(teams);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      res.status(500).json({ error: 'Failed to fetch teams' });
+    }
+  });
+
+  router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.id !== req.params.id && user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Can only update own profile or must be admin' });
+      }
+
+      const updated = await userRepository.update(user.tenantId, req.params.id, req.body);
+      if (!updated) return res.status(404).json({ error: 'User not found' });
+
+      res.json(userRepository.toPublicUser(updated));
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ error: 'Failed to update user' });
+    }
+  });
+
+  router.post('/:id/password', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.id !== req.params.id && user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Can only change own password or must be admin' });
+      }
+
+      const { newPassword } = req.body;
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters' });
+      }
+
+      await userRepository.updatePassword(user.tenantId, req.params.id, newPassword);
+      res.json({ message: 'Password updated' });
+    } catch (error) {
+      console.error('Error updating password:', error);
+      res.status(500).json({ error: 'Failed to update password' });
+    }
+  });
+
+  return router;
+}

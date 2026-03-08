@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Listing, PropertyType, ListingStatus, TransactionType, LeadStage, User, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { normalizeForSearch, formatUnitPrice } from '../utils/textUtils';

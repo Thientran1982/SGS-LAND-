@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../services/i18n';
 import { Contract, ContractType, ContractStatus } from '../types';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Dropdown } from './Dropdown';
 import { CollaborativeEditor } from './CollaborativeEditor';
 

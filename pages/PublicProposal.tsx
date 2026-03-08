@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Proposal, Listing, Lead } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Logo } from '../components/Logo';

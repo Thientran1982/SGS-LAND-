@@ -4,7 +4,7 @@ import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { useTranslation } from '../services/i18n';
 import { ArrowLeft, Check, Rocket, BrainCircuit, Zap, BarChart3 } from 'lucide-react';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { User } from '../types';
 
 const ICONS = {

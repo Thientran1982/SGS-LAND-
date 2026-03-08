@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Sequence, SequenceStep, Channel, LeadStage, SequenceStats } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';

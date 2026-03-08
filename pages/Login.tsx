@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { AreaChart, Area, YAxis, ResponsiveContainer } from 'recharts';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { Logo } from '../components/Logo';
 import { ROUTES } from '../config/routes';

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { aiService } from '../services/aiService';
 import { InboxThread, Interaction, LeadId, User, Channel, Direction, ThreadStatus } from '../types';
 import { useTranslation } from '../services/i18n';

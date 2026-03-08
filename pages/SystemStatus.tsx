@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { systemService } from '../services/systemService';
 import { chaosService } from '../services/chaosService';
 import { SystemHealth, ChaosConfig, LogEntry, UserRole } from '../types';

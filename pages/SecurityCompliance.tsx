@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { ComplianceConfig, DlpRule, SecuritySession } from '../types';
 import { useTranslation } from '../services/i18n';
 

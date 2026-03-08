@@ -5,7 +5,7 @@ import { systemService } from './services/systemService';
 import { copyToClipboard } from './utils/clipboard';
 import { queueService } from './services/queueService';
 import { aiService } from './services/aiService';
-import { db } from './services/mockDb';
+import { db } from './services/dbApi';
 
 // Register Queue Handlers
 queueService.registerHandler('SCORE_LEAD', async (payload: any) => {

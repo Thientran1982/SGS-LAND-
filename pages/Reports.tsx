@@ -4,7 +4,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
     ComposedChart, Line, Area, AreaChart 
 } from 'recharts';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
 import { CampaignCost } from '../types';

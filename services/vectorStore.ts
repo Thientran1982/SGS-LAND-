@@ -1,4 +1,4 @@
-import { db } from './mockDb';
+import { db } from './dbApi';
 
 // Simulated Vector Database (In-Memory)
 // In a real production environment, this would be Pinecone, pgvector, or Milvus.

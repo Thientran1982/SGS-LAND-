@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Listing, ListingStatus, PropertyType, TransactionType, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ListingCard } from '../components/ListingCard';

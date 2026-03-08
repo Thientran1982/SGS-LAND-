@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Contract, ContractType } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Logo } from '../components/Logo';

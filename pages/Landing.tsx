@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Listing, ListingStatus, PropertyType, User } from '../types'; 
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';

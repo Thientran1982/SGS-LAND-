@@ -4,7 +4,7 @@ import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { useTranslation } from '../services/i18n';
 import { copyToClipboard } from '../utils/clipboard';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { User } from '../types';
 
 const ICONS = {

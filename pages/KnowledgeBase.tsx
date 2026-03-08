@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { KnowledgeDocument } from '../types';
 import { useTranslation } from '../services/i18n';
 

@@ -11,7 +11,7 @@ AI-powered real estate CRM and management platform for the Vietnamese market.
 - **Database**: PostgreSQL with Row Level Security (multi-tenancy)
 - **Queue**: BullMQ (falls back to in-memory if no Redis)
 - **AI**: Google Gemini via `@google/genai`
-- **Auth**: JWT with httpOnly cookies
+- **Auth**: JWT with httpOnly cookies, bcrypt password hashing
 
 ## Architecture
 
@@ -19,6 +19,37 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 - Port: **5000** (both in dev and production)
 - Host: `0.0.0.0`
+
+### Data Access Layers
+
+The app has TWO data access paths:
+
+1. **Real PostgreSQL** (production path): `services/dbApi.ts` → `services/api/*.ts` → HTTP API → `server/routes/*.ts` → `server/repositories/*.ts` → PostgreSQL
+2. **Legacy mockDb** (still exists as `services/mockDb.ts` but NO longer imported by any frontend code)
+
+### Repository Pattern (`server/repositories/`)
+- `baseRepository.ts` — `withTenantContext()` for RLS, pagination, error handling
+- `leadRepository.ts` — CRUD leads with search, duplicate check, stage transitions
+- `listingRepository.ts` — CRUD listings, favorites
+- `proposalRepository.ts` — CRUD proposals, smart approval logic
+- `contractRepository.ts` — CRUD contracts
+- `interactionRepository.ts` — CRUD interactions, inbox thread aggregation
+- `userRepository.ts` — CRUD users, bcrypt auth, teams
+- `analyticsRepository.ts` — SQL aggregations for dashboard KPIs
+
+### API Routes (`server/routes/`)
+- `leadRoutes.ts` — `/api/leads/*`
+- `listingRoutes.ts` — `/api/listings/*`
+- `proposalRoutes.ts` — `/api/proposals/*`
+- `contractRoutes.ts` — `/api/contracts/*`
+- `interactionRoutes.ts` — `/api/inbox/*`
+- `userRoutes.ts` — `/api/users/*`
+- `analyticsRoutes.ts` — `/api/analytics/*`
+
+### Frontend API Client (`services/api/`)
+- `apiClient.ts` — Base HTTP client with JWT cookie auth, error handling
+- `leadApi.ts`, `listingApi.ts`, `proposalApi.ts`, `contractApi.ts`, `inboxApi.ts`, `userApi.ts`, `analyticsApi.ts`
+- `services/dbApi.ts` — Compatibility shim: mirrors the mockDb interface but routes to real API
 
 ## Security
 
@@ -28,17 +59,9 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - Yjs WebSocket connections require JWT auth via httpOnly cookie
 - Vite HMR WebSocket is excluded from auth (dev only)
 - All API routes require `authenticateToken` middleware (except auth endpoints, webhooks, health)
-- MockDb enforces RLS (tenant isolation) and RBAC (role-based access) on all data access methods
-
-## Data Access Control (mockDb.ts)
-
-- **RLS (Row-Level Security)**: `withRLS()` filters data by `currentTenantId` — applied to getLeads, getLeadById, getPendingProposals, createLead
-- **RBAC**: Sales agents only see their own assigned leads. Admin/Team Lead see all tenant leads
-- **getLeadById**: RLS + RBAC enforced (returns null if no access)
-- **getInteractions**: Validates lead access via getLeadById first (returns [] if no access)
-- **getPendingProposals**: RLS + RBAC scoped to accessible leads
-- **sendInteraction**: Validates lead exists AND user has access (separate error messages)
-- **createLead**: Duplicate phone check within tenant before creation
+- PostgreSQL RLS enforces tenant isolation at DB level
+- RBAC enforced in repositories (Sales agents see own leads, Admin/Team Lead see all)
+- `withTenantContext` uses UUID-validated string interpolation (SET LOCAL doesn't support $1 params)
 
 ## Business Logic
 
@@ -55,36 +78,41 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `server.ts` - Express + Vite server entry
 - `App.tsx` - React frontend entry
 - `server/db.ts` - PostgreSQL schema and RLS setup
+- `server/seed.ts` - Database seeding script
 - `server/queue.ts` - BullMQ webhook queue
 - `server/ai.ts` - AI service routes
+- `services/dbApi.ts` - Frontend data access (API-backed)
 
 ## Environment Variables
 
-- `DATABASE_URL` - PostgreSQL connection string (optional; app runs without it)
+- `DATABASE_URL` - PostgreSQL connection string (required)
 - `REDIS_URL` - Redis connection URL (optional; falls back to in-memory)
 - `GEMINI_API_KEY` or `API_KEY` - Google Gemini API key for AI features (server-side only)
 - `JWT_SECRET` - JWT signing secret (required for production; auto-generated in dev)
 - `FB_VERIFY_TOKEN` - Facebook webhook verification token
 
-## Known Issues (Resolved)
-
-- SVG path error in ListingCard EYE icon: fixed malformed `s` command (13 params → 12)
-- Dashboard AI Deflection Rate circle overflow: fixed with `overflow-hidden`, responsive sizing, `min-w-0`
-- Recharts `ResponsiveContainer` negative dimensions: fixed by adding `minHeight`/`minWidth` to all instances
-- Vite HMR WebSocket in Replit webview: infrastructure limitation, non-blocking (page loads fine, hot reload may not work)
-- Dashboard KPI cards data inconsistency: all 4 cards now show unified layout with computed metrics and delta trends
-- winProbability was hardcoded 30%: now computed as weighted average from pipeline data
-- Missing RLS/RBAC in getLeadById, getInteractions, getPendingProposals: all now enforced
-- /api/courses missing auth: added authenticateToken middleware
-- systemService SIMULATION_ROUTES referenced non-existent /api/v1/* paths: updated to real routes
-
 ## Dev Credentials
 
-- Email: `admin@sgs.vn`, Password: `admin` (or any password `123456`)
+- Email: `admin@sgs.vn`, Password: `admin`
+- Default tenant ID: `00000000-0000-0000-0000-000000000001`
+- 8 users, 20 leads, 15 listings, 7 proposals, 1 contract, 35 interactions seeded
 
 ## Scripts
 
 - `npm run dev` - Start development server (tsx server.ts)
 - `npm run build` - Build production bundle
 - `npm run start` - Start production server
+- `npm run seed` - Seed database with sample data (idempotent)
 - `npm run lint` - TypeScript type check
+
+## Known Issues (Resolved)
+
+- SVG path error in ListingCard EYE icon: fixed malformed `s` command
+- Dashboard AI Deflection Rate circle overflow: fixed with overflow-hidden
+- Recharts ResponsiveContainer negative dimensions: fixed with minHeight/minWidth
+- Dashboard KPI cards: unified layout with computed metrics and delta trends
+- winProbability: computed as weighted average from pipeline data
+- RLS/RBAC enforced in getLeadById, getInteractions, getPendingProposals
+- /api/courses: added authenticateToken middleware
+- withTenantContext SET LOCAL: uses UUID-validated string interpolation (not $1 params)
+- Inbox threads query: fixed l.avatar → l.attributes->>'avatar'

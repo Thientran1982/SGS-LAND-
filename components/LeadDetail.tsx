@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Lead, LeadStage, Interaction, Channel, Direction, LEAD_SOURCES, VN_PHONE_REGEX, ContractStatus, ContractType } from '../types';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { aiService } from '../services/aiService';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from './Dropdown';

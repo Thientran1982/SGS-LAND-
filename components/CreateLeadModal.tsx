@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from './Dropdown';
 import { Lead, LEAD_SOURCES, VN_PHONE_REGEX, LeadStage } from '../types';

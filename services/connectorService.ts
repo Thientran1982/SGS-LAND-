@@ -1,5 +1,5 @@
 import { ConnectorType, SyncJob, SyncStatus, DataExportResponse } from '../types';
-import { db } from './mockDb';
+import { db } from './dbApi';
 import { systemService } from './systemService';
 import { chaosService } from './chaosService';
 

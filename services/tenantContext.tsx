@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Tenant, TenantId } from '../types';
-import { db } from './mockDb';
+import { db } from './dbApi';
 
 interface TenantContextState {
     tenant: Tenant | null;

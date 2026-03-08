@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef, useCallback, memo, useMemo } from 'react';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Skeleton } from '../components/Skeleton';

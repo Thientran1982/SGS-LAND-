@@ -3,21 +3,20 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Create a new PostgreSQL connection pool
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
-// Function to initialize the database schema with Multi-Tenancy (RLS)
 export async function initializeDatabase() {
   const client = await pool.connect();
   try {
     console.log('Initializing database schema with Multi-Tenancy (RLS)...');
     
-    // Enable UUID extension
     await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
 
-    // 1. Tenants Table
     await client.query(`
       CREATE TABLE IF NOT EXISTS tenants (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -28,14 +27,12 @@ export async function initializeDatabase() {
       );
     `);
 
-    // Insert default tenant if not exists
     await client.query(`
       INSERT INTO tenants (id, name, domain)
-      VALUES ('00000000-0000-0000-0000-000000000001', 'Default Tenant', 'localhost')
+      VALUES ('00000000-0000-0000-0000-000000000001', 'SGS Land Demo', 'localhost')
       ON CONFLICT (domain) DO NOTHING;
     `);
 
-    // Helper function to create table with tenant_id and RLS
     const createTenantTable = async (tableName: string, schema: string) => {
       await client.query(`
         CREATE TABLE IF NOT EXISTS ${tableName} (
@@ -43,7 +40,6 @@ export async function initializeDatabase() {
         );
       `);
       
-      // Add tenant_id if it doesn't exist (for existing tables)
       await client.query(`
         DO $$ 
         BEGIN 
@@ -53,10 +49,8 @@ export async function initializeDatabase() {
         END $$;
       `);
 
-      // Enable RLS
       await client.query(`ALTER TABLE ${tableName} ENABLE ROW LEVEL SECURITY;`);
 
-      // Create Policy
       await client.query(`
         DROP POLICY IF EXISTS tenant_isolation_policy ON ${tableName};
         CREATE POLICY tenant_isolation_policy ON ${tableName}
@@ -65,12 +59,12 @@ export async function initializeDatabase() {
       `);
     };
 
-    // 2. Users
     await createTenantTable('users', `
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
       name VARCHAR(255) NOT NULL,
       email VARCHAR(255) NOT NULL,
+      password_hash VARCHAR(255),
       role VARCHAR(50) DEFAULT 'VIEWER',
       permissions JSONB,
       avatar TEXT,
@@ -82,11 +76,19 @@ export async function initializeDatabase() {
       last_login_at TIMESTAMP WITH TIME ZONE,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='password_hash') THEN
+          ALTER TABLE users ADD COLUMN password_hash VARCHAR(255);
+        END IF;
+      END $$;
+    `);
+
     await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key;`);
     await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_tenant_id_email_key;`);
     await client.query(`ALTER TABLE users ADD CONSTRAINT users_tenant_id_email_key UNIQUE(tenant_id, email);`);
 
-    // 3. Teams
     await createTenantTable('teams', `
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
@@ -96,7 +98,6 @@ export async function initializeDatabase() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
 
-    // 4. Team Members
     await createTenantTable('team_members', `
       team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
       user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -104,7 +105,6 @@ export async function initializeDatabase() {
       PRIMARY KEY (team_id, user_id)
     `);
 
-    // 5. Leads
     await createTenantTable('leads', `
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
@@ -127,7 +127,6 @@ export async function initializeDatabase() {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
 
-    // 6. Listings
     await createTenantTable('listings', `
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
@@ -149,7 +148,6 @@ export async function initializeDatabase() {
       contact_phone VARCHAR(50),
       coordinates JSONB,
       is_verified BOOLEAN DEFAULT false,
-      is_favorite BOOLEAN DEFAULT false,
       view_count INTEGER DEFAULT 0,
       booking_count INTEGER DEFAULT 0,
       total_units INTEGER,
@@ -164,7 +162,6 @@ export async function initializeDatabase() {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
 
-    // 7. Proposals
     await createTenantTable('proposals', `
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
@@ -183,21 +180,28 @@ export async function initializeDatabase() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
 
-    // 8. Interactions
     await createTenantTable('interactions', `
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
       lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
       channel VARCHAR(50) NOT NULL,
       direction VARCHAR(50) NOT NULL,
-      type VARCHAR(50) NOT NULL,
+      type VARCHAR(50) NOT NULL DEFAULT 'TEXT',
       content TEXT NOT NULL,
       metadata JSONB,
       status VARCHAR(50) DEFAULT 'PENDING',
+      sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
       timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
 
-    // 9. Tasks
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='interactions' AND column_name='sender_id') THEN
+          ALTER TABLE interactions ADD COLUMN sender_id UUID REFERENCES users(id) ON DELETE SET NULL;
+        END IF;
+      END $$;
+    `);
+
     await createTenantTable('tasks', `
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
@@ -212,20 +216,62 @@ export async function initializeDatabase() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
 
-    // 10. Contracts
     await createTenantTable('contracts', `
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      proposal_id UUID REFERENCES proposals(id) ON DELETE CASCADE,
+      proposal_id UUID REFERENCES proposals(id) ON DELETE SET NULL,
+      lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
+      listing_id UUID REFERENCES listings(id) ON DELETE CASCADE,
       type VARCHAR(50) NOT NULL,
       status VARCHAR(50) DEFAULT 'DRAFT',
-      value NUMERIC NOT NULL,
+      party_a JSONB DEFAULT '{}'::jsonb,
+      party_b JSONB DEFAULT '{}'::jsonb,
+      property_details JSONB DEFAULT '{}'::jsonb,
+      property_price NUMERIC,
+      deposit_amount NUMERIC,
+      payment_terms TEXT,
+      tax_responsibility TEXT,
+      handover_date TIMESTAMP WITH TIME ZONE,
+      handover_condition TEXT,
       signed_at TIMESTAMP WITH TIME ZONE,
       metadata JSONB,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      created_by VARCHAR(255),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
 
-    // 11. Audit Logs
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='lead_id') THEN
+          ALTER TABLE contracts ADD COLUMN lead_id UUID REFERENCES leads(id) ON DELETE CASCADE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='listing_id') THEN
+          ALTER TABLE contracts ADD COLUMN listing_id UUID REFERENCES listings(id) ON DELETE CASCADE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='party_a') THEN
+          ALTER TABLE contracts ADD COLUMN party_a JSONB DEFAULT '{}'::jsonb;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='party_b') THEN
+          ALTER TABLE contracts ADD COLUMN party_b JSONB DEFAULT '{}'::jsonb;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='property_details') THEN
+          ALTER TABLE contracts ADD COLUMN property_details JSONB DEFAULT '{}'::jsonb;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='property_price') THEN
+          ALTER TABLE contracts ADD COLUMN property_price NUMERIC;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='deposit_amount') THEN
+          ALTER TABLE contracts ADD COLUMN deposit_amount NUMERIC;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='updated_at') THEN
+          ALTER TABLE contracts ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='created_by') THEN
+          ALTER TABLE contracts ADD COLUMN created_by VARCHAR(255);
+        END IF;
+      END $$;
+    `);
+
     await createTenantTable('audit_logs', `
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
@@ -239,29 +285,128 @@ export async function initializeDatabase() {
       ip_address VARCHAR(45)
     `);
 
+    await createTenantTable('enterprise_config', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      config_key VARCHAR(255) NOT NULL,
+      config_value JSONB NOT NULL,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await createTenantTable('favorites', `
+      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+      listing_id UUID REFERENCES listings(id) ON DELETE CASCADE,
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id, listing_id)
+    `);
+
+    await createTenantTable('sequences', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      name VARCHAR(255) NOT NULL,
+      trigger_event VARCHAR(100) NOT NULL,
+      steps JSONB DEFAULT '[]'::jsonb,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await createTenantTable('routing_rules', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      name VARCHAR(255) NOT NULL,
+      conditions JSONB DEFAULT '[]'::jsonb,
+      action JSONB NOT NULL,
+      priority INTEGER DEFAULT 0,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await createTenantTable('articles', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      title VARCHAR(500) NOT NULL,
+      slug VARCHAR(500),
+      content TEXT,
+      excerpt TEXT,
+      category VARCHAR(100),
+      tags JSONB DEFAULT '[]'::jsonb,
+      author VARCHAR(255),
+      cover_image TEXT,
+      status VARCHAR(50) DEFAULT 'DRAFT',
+      view_count INTEGER DEFAULT 0,
+      published_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    console.log('Creating indexes...');
+    const indexes = [
+      'CREATE INDEX IF NOT EXISTS idx_leads_tenant_stage ON leads(tenant_id, stage)',
+      'CREATE INDEX IF NOT EXISTS idx_leads_tenant_assigned ON leads(tenant_id, assigned_to)',
+      'CREATE INDEX IF NOT EXISTS idx_leads_tenant_phone ON leads(tenant_id, phone)',
+      'CREATE INDEX IF NOT EXISTS idx_leads_updated ON leads(updated_at DESC)',
+      'CREATE INDEX IF NOT EXISTS idx_listings_tenant_status ON listings(tenant_id, status)',
+      'CREATE INDEX IF NOT EXISTS idx_listings_tenant_type ON listings(tenant_id, type)',
+      'CREATE INDEX IF NOT EXISTS idx_listings_price ON listings(price)',
+      'CREATE INDEX IF NOT EXISTS idx_interactions_lead ON interactions(lead_id, timestamp DESC)',
+      'CREATE INDEX IF NOT EXISTS idx_interactions_tenant ON interactions(tenant_id, timestamp DESC)',
+      'CREATE INDEX IF NOT EXISTS idx_proposals_tenant_status ON proposals(tenant_id, status)',
+      'CREATE INDEX IF NOT EXISTS idx_proposals_lead ON proposals(lead_id)',
+      'CREATE INDEX IF NOT EXISTS idx_contracts_tenant_status ON contracts(tenant_id, status)',
+      'CREATE INDEX IF NOT EXISTS idx_tasks_tenant_assigned ON tasks(tenant_id, assigned_to)',
+      'CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON audit_logs(tenant_id, timestamp DESC)',
+      'CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role)',
+    ];
+    for (const idx of indexes) {
+      await client.query(idx);
+    }
+
     console.log('Database schema initialized successfully.');
   } catch (error) {
     console.error('Error initializing database schema:', error);
-    // Don't throw, let the app start even if DB is missing for preview purposes
   } finally {
     client.release();
   }
 }
 
-// Helper to execute queries within a tenant context
 export async function withTenantContext<T>(
   tenantId: string,
   queryFn: (client: PoolClient) => Promise<T>
 ): Promise<T> {
+  const sanitized = tenantId.replace(/[^a-f0-9\-]/gi, '');
+  if (sanitized.length !== tenantId.length) {
+    throw new Error('Invalid tenant ID format');
+  }
   const client = await pool.connect();
   try {
-    // Set the tenant ID for the current transaction/session
-    await client.query(`SET LOCAL app.current_tenant_id = $1`, [tenantId]);
-    return await queryFn(client);
+    await client.query('BEGIN');
+    await client.query(`SET LOCAL app.current_tenant_id = '${sanitized}'`);
+    const result = await queryFn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
   } finally {
-    // Reset the setting to avoid leaking context to other requests using the same pooled client
-    await client.query(`RESET app.current_tenant_id`);
     client.release();
   }
 }
 
+export async function withTransaction<T>(
+  queryFn: (client: PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await queryFn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}

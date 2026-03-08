@@ -2,7 +2,7 @@
 import React, { useState, memo, useCallback, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Listing, PropertyType, TransactionType, ListingStatus } from '../types';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { copyToClipboard } from '../utils/clipboard';
 import { ROUTES } from '../config/routes';
 import { formatSmartPrice, formatUnitPrice } from '../utils/textUtils';

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { Article, UserRole, User } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { copyToClipboard } from '../utils/clipboard';

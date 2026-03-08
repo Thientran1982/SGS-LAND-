@@ -1,5 +1,5 @@
 import { HealthStatus, SystemHealth, EnvCheckResult, LogEntry, LogSource } from '../types';
-import { db } from './mockDb';
+import { db } from './dbApi';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION

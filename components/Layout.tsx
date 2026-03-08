@@ -2,7 +2,7 @@
 import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { User, NavGroup } from '../types';
 import { ROUTES, FULL_HEIGHT_PAGES } from '../config/routes';
 import { CommandCenter } from './Navigation';

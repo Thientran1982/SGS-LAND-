@@ -12,13 +12,21 @@ import { setupWSConnection } from "y-websocket/bin/utils";
 import { initializeDatabase, pool, withTenantContext } from "./server/db";
 import { systemService } from "./services/systemService";
 import { webhookQueue, setupWebhookWorker } from "./server/queue";
+import { userRepository } from "./server/repositories/userRepository";
+import { createLeadRoutes } from "./server/routes/leadRoutes";
+import { createListingRoutes } from "./server/routes/listingRoutes";
+import { createProposalRoutes } from "./server/routes/proposalRoutes";
+import { createContractRoutes } from "./server/routes/contractRoutes";
+import { createInteractionRoutes } from "./server/routes/interactionRoutes";
+import { createUserRoutes } from "./server/routes/userRoutes";
+import { createAnalyticsRoutes } from "./server/routes/analyticsRoutes";
 
 async function startServer() {
   const app = express();
   const PORT = 5000;
 
   // Middleware to parse JSON bodies
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
   app.use(cookieParser());
 
   const isProduction = process.env.NODE_ENV === 'production';
@@ -30,7 +38,21 @@ async function startServer() {
   }
   const JWT_SECRET = process.env.JWT_SECRET || (await import('crypto')).randomBytes(64).toString('hex');
 
-  // Auth Middleware
+  app.use((req, res, next) => {
+    let tenantId = '00000000-0000-0000-0000-000000000001';
+    const token = req.cookies?.token;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        if (decoded?.tenantId) tenantId = decoded.tenantId;
+      } catch (e) {}
+    } else if (req.headers['x-tenant-id']) {
+      tenantId = req.headers['x-tenant-id'] as string;
+    }
+    (req as any).tenantId = tenantId;
+    next();
+  });
+
   const authenticateToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const token = req.cookies.token;
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
@@ -38,90 +60,134 @@ async function startServer() {
     jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
       if (err) return res.status(403).json({ error: 'Forbidden' });
       (req as any).user = user;
+      if (user?.tenantId) (req as any).tenantId = user.tenantId;
       next();
     });
   };
 
-  // Auth Routes
-  app.post("/api/auth/login", (req, res) => {
-    let { email, password } = req.body;
-    email = email?.trim();
-    
-    // Mock authentication logic matching frontend mockDb
-    if (password === '123456' || (email === 'admin@sgs.vn' && password === 'admin')) {
-      const user = { 
-        id: `u_${Date.now()}`, 
-        email, 
-        role: email.includes('admin') ? 'ADMIN' : 'AGENT', 
-        tenantId: '00000000-0000-0000-0000-000000000001' 
-      };
-      const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
-      
-      const cookieOptions: any = {
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: isProduction ? 'none' as const : 'lax' as const,
-        ...(isProduction && { secure: true }),
-      };
+  const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
+  const cookieOptions: any = {
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: isProduction ? 'none' as const : 'lax' as const,
+    ...(isProduction && { secure: true }),
+  };
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      let { email, password } = req.body;
+      email = email?.trim();
+      const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
+
+      let dbUser = await userRepository.authenticate(tenantId, email, password);
+
+      if (!dbUser && (password === '123456' || (email === 'admin@sgs.vn' && password === 'admin'))) {
+        const role = email.includes('admin') ? 'ADMIN' : 'SALES';
+        const name = email.split('@')[0];
+        try {
+          dbUser = await userRepository.create(tenantId, {
+            name, email, password, role,
+            source: 'SYSTEM',
+          });
+        } catch (e: any) {
+          if (e.message?.includes('duplicate') || e.code === '23505') {
+            dbUser = await userRepository.findByEmail(tenantId, email);
+          } else {
+            throw e;
+          }
+        }
+      }
+
+      if (!dbUser) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const jwtPayload = {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        role: dbUser.role,
+        tenantId,
+      };
+      const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
       res.cookie('token', token, cookieOptions);
-      
-      res.json({ message: 'Logged in successfully', user, token });
-    } else {
-      res.status(401).json({ error: 'Invalid credentials' });
+      await userRepository.updateLastLogin(tenantId, dbUser.id);
+      res.json({ message: 'Logged in successfully', user: userRepository.toPublicUser(dbUser), token });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ error: 'Login failed' });
     }
   });
 
-  app.post("/api/auth/sso", (req, res) => {
-    const { email } = req.body;
-    
-    if (email) {
-      const user = { 
-        id: `u_sso_${Date.now()}`, 
-        email, 
-        role: email.includes('admin') ? 'ADMIN' : 'AGENT', 
-        tenantId: `t_sso_${Date.now()}`
+  app.post("/api/auth/sso", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ error: 'Email is required for SSO' });
+
+      const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
+      let dbUser = await userRepository.findByEmail(tenantId, email);
+
+      if (!dbUser) {
+        const role = email.includes('admin') ? 'ADMIN' : 'SALES';
+        dbUser = await userRepository.create(tenantId, {
+          name: email.split('@')[0],
+          email,
+          role,
+          source: 'SSO',
+        });
+      }
+
+      const jwtPayload = {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        role: dbUser.role,
+        tenantId,
       };
-      const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
-      
-      const cookieOptions: any = {
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: isProduction ? 'none' as const : 'lax' as const,
-        ...(isProduction && { secure: true }),
-      };
+      const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
       res.cookie('token', token, cookieOptions);
-      
-      res.json({ message: 'SSO Login successful', user, token });
-    } else {
-      res.status(400).json({ error: 'Email is required for SSO' });
+      res.json({ message: 'SSO Login successful', user: userRepository.toPublicUser(dbUser), token });
+    } catch (error) {
+      console.error('SSO error:', error);
+      res.status(500).json({ error: 'SSO login failed' });
     }
   });
 
-  app.post("/api/auth/register", (req, res) => {
-    const { name, email, password, company } = req.body;
-    
-    if (email && password) {
-      const user = { 
-        id: `u_${Date.now()}`, 
-        name,
-        email, 
-        role: 'ADMIN', 
-        tenantId: company ? `t_${company.toLowerCase().replace(/[^a-z0-9]/g, '')}` : `t_personal_${Date.now()}`
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { name, email, password, company } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+
+      const tenantId = DEFAULT_TENANT_ID;
+      const existing = await userRepository.findByEmail(tenantId, email);
+      if (existing) {
+        return res.status(409).json({ error: 'User with this email already exists' });
+      }
+
+      const dbUser = await userRepository.create(tenantId, {
+        name: name || email.split('@')[0],
+        email,
+        password,
+        role: 'ADMIN',
+        source: 'INVITE',
+      });
+
+      const jwtPayload = {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        role: dbUser.role,
+        tenantId,
       };
-      const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
-      
-      const cookieOptions: any = {
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: isProduction ? 'none' as const : 'lax' as const,
-        ...(isProduction && { secure: true }),
-      };
+      const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
       res.cookie('token', token, cookieOptions);
-      
-      res.json({ message: 'Registered successfully', user, token });
-    } else {
-      res.status(400).json({ error: 'Email and password are required' });
+      res.json({ message: 'Registered successfully', user: userRepository.toPublicUser(dbUser), token });
+    } catch (error) {
+      console.error('Register error:', error);
+      res.status(500).json({ error: 'Registration failed' });
     }
   });
 
@@ -264,29 +330,6 @@ async function startServer() {
     }
   });
 
-  // Middleware to extract tenant ID from headers or JWT
-  app.use((req, res, next) => {
-    let tenantId = '00000000-0000-0000-0000-000000000001';
-    
-    // Try to get from JWT first if available
-    const token = req.cookies?.token;
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
-        if (decoded && decoded.tenantId) {
-          tenantId = decoded.tenantId;
-        }
-      } catch (e) {
-        // Ignore token errors here, let auth middleware handle it for protected routes
-      }
-    } else if (req.headers['x-tenant-id']) {
-      tenantId = req.headers['x-tenant-id'] as string;
-    }
-    
-    (req as any).tenantId = tenantId;
-    next();
-  });
-
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
     : undefined;
@@ -411,7 +454,14 @@ async function startServer() {
     console.warn("DATABASE_URL not set. Skipping database initialization.");
   }
 
-  // API routes FIRST
+  app.use('/api/leads', createLeadRoutes(authenticateToken));
+  app.use('/api/listings', createListingRoutes(authenticateToken));
+  app.use('/api/proposals', createProposalRoutes(authenticateToken));
+  app.use('/api/contracts', createContractRoutes(authenticateToken));
+  app.use('/api/inbox', createInteractionRoutes(authenticateToken));
+  app.use('/api/users', createUserRoutes(authenticateToken));
+  app.use('/api/analytics', createAnalyticsRoutes(authenticateToken));
+
   app.get("/api/health", async (req, res) => {
     try {
       const health = await systemService.checkHealth();

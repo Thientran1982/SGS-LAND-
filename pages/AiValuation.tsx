@@ -6,7 +6,7 @@ import { Logo } from '../components/Logo';
 import { useTranslation } from '../services/i18n';
 import { formatSmartPrice, formatUnitPrice } from '../utils/textUtils';
 import { aiService } from '../services/aiService';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { User } from '../types';
 
 // --- MOCK CONSTANTS FOR SIMULATION ---

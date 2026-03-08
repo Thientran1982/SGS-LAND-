@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { db } from '../services/mockDb';
+import { db } from '../services/dbApi';
 import { AppManifest, InstalledApp } from '../types';
 import { useTranslation } from '../services/i18n';
 

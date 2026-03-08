@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { db, PLANS } from '../services/mockDb';
+import { db, PLANS } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { PlanTier, Subscription, Invoice, UsageMetrics, Plan } from '../types';
 

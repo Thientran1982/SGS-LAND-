@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, Suspense, memo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
-import { db } from './services/mockDb';
+import { db } from './services/dbApi';
 import { I18nProvider, useTranslation } from './services/i18n';
 import { ThemeProvider } from './services/theme';
 import { TenantProvider } from './services/tenantContext';
