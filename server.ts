@@ -57,12 +57,14 @@ async function startServer() {
       };
       const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
       
-      res.cookie('token', token, {
+      const cookieOptions: any = {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      });
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: isProduction ? 'none' as const : 'lax' as const,
+        ...(isProduction && { secure: true }),
+      };
+
+      res.cookie('token', token, cookieOptions);
       
       res.json({ message: 'Logged in successfully', user, token });
     } else {
@@ -73,7 +75,6 @@ async function startServer() {
   app.post("/api/auth/sso", (req, res) => {
     const { email } = req.body;
     
-    // Mock SSO authentication logic
     if (email) {
       const user = { 
         id: `u_sso_${Date.now()}`, 
@@ -83,12 +84,13 @@ async function startServer() {
       };
       const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
       
-      res.cookie('token', token, {
+      const cookieOptions: any = {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      });
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: isProduction ? 'none' as const : 'lax' as const,
+        ...(isProduction && { secure: true }),
+      };
+      res.cookie('token', token, cookieOptions);
       
       res.json({ message: 'SSO Login successful', user, token });
     } else {
@@ -109,12 +111,13 @@ async function startServer() {
       };
       const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
       
-      res.cookie('token', token, {
+      const cookieOptions: any = {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      });
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: isProduction ? 'none' as const : 'lax' as const,
+        ...(isProduction && { secure: true }),
+      };
+      res.cookie('token', token, cookieOptions);
       
       res.json({ message: 'Registered successfully', user, token });
     } else {
@@ -125,8 +128,8 @@ async function startServer() {
   app.post("/api/auth/logout", (req, res) => {
     res.clearCookie('token', {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none'
+      sameSite: isProduction ? 'none' as const : 'lax' as const,
+      ...(isProduction && { secure: true }),
     });
     res.json({ message: 'Logged out successfully' });
   });
@@ -300,7 +303,10 @@ async function startServer() {
   io.use((socket, next) => {
     try {
       const cookieHeader = socket.handshake.headers.cookie;
-      if (!cookieHeader) return next(new Error('Authentication required'));
+      if (!cookieHeader) {
+        socket.data.authUser = null;
+        return next();
+      }
 
       const cookies: Record<string, string> = {};
       cookieHeader.split(';').forEach(c => {
@@ -309,15 +315,18 @@ async function startServer() {
       });
 
       const token = cookies['token'];
-      if (!token) return next(new Error('Authentication required'));
+      if (!token) {
+        socket.data.authUser = null;
+        return next();
+      }
 
       jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
-        if (err) return next(new Error('Invalid token'));
-        socket.data.authUser = decoded;
+        socket.data.authUser = err ? null : decoded;
         next();
       });
     } catch (e) {
-      next(new Error('Authentication failed'));
+      socket.data.authUser = null;
+      next();
     }
   });
 
@@ -345,9 +354,10 @@ async function startServer() {
 
   server.on('upgrade', (request, socket, head) => {
     const pathname = request.url || '';
+    const protocol = request.headers['sec-websocket-protocol'] || '';
     
-    // Let Vite handle its HMR websocket
-    if (pathname.includes('vite-hmr')) {
+    // Let Vite handle its HMR websocket (protocol header or known paths)
+    if (protocol.includes('vite-hmr') || pathname.includes('vite-hmr') || pathname.includes('__vite')) {
       return;
     }
     
@@ -367,7 +377,11 @@ async function startServer() {
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
       });
+      return;
     }
+
+    // Destroy unmatched upgrade requests to prevent hanging
+    socket.destroy();
   });
 
   // Setup BullMQ Worker
@@ -504,32 +518,38 @@ async function startServer() {
 
   // Socket.IO logic
   io.on("connection", (socket) => {
-    console.log("A user connected:", socket.id);
+    const isAuthenticated = !!socket.data.authUser;
+    console.log(`User connected: ${socket.id} (auth: ${isAuthenticated})`);
 
     socket.on("join_room", (room) => {
+      if (!socket.data.authUser) return;
       socket.join(room);
       console.log(`User ${socket.id} joined room ${room}`);
     });
 
+    const requireAuth = (handler: (...args: any[]) => void) => {
+      return (...args: any[]) => {
+        if (!socket.data.authUser) return;
+        handler(...args);
+      };
+    };
+
     // Collaboration Presence Tracking
-    socket.on("view_lead", async (data) => {
+    socket.on("view_lead", requireAuth(async (data) => {
       const { leadId, user } = data;
       const room = `lead_view_${leadId}`;
       socket.join(room);
       
-      // Store user info in socket data
       socket.data.user = user;
       socket.data.viewingLead = leadId;
       
-      // Broadcast to room
       const sockets = await io.in(room).fetchSockets();
       const users = sockets.map(s => s.data.user).filter(Boolean);
-      // Deduplicate users by ID
       const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
       io.to(room).emit("active_viewers", uniqueUsers);
-    });
+    }));
 
-    socket.on("leave_lead", async (data) => {
+    socket.on("leave_lead", requireAuth(async (data) => {
       const { leadId } = data;
       const room = `lead_view_${leadId}`;
       socket.leave(room);
@@ -539,20 +559,19 @@ async function startServer() {
       const users = sockets.map(s => s.data.user).filter(Boolean);
       const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
       io.to(room).emit("active_viewers", uniqueUsers);
-    });
+    }));
 
-    socket.on("send_message", (data) => {
-      // Broadcast to everyone in the room
+    socket.on("send_message", requireAuth((data) => {
       io.to(data.room).emit("receive_message", data);
-    });
+    }));
 
-    socket.on("lead_updated", (data) => {
+    socket.on("lead_updated", requireAuth((data) => {
       socket.broadcast.emit("lead_updated", data);
-    });
+    }));
 
-    socket.on("lead_created", (data) => {
+    socket.on("lead_created", requireAuth((data) => {
       socket.broadcast.emit("lead_created", data);
-    });
+    }));
 
     socket.on("disconnect", async () => {
       console.log("User disconnected:", socket.id);
