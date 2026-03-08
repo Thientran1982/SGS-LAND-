@@ -379,9 +379,6 @@ async function startServer() {
       });
       return;
     }
-
-    // Destroy unmatched upgrade requests to prevent hanging
-    socket.destroy();
   });
 
   // Setup BullMQ Worker
