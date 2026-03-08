@@ -5,7 +5,8 @@ import { contractApi } from './api/contractApi';
 import { inboxApi } from './api/inboxApi';
 import { userApi } from './api/userApi';
 import { analyticsApi } from './api/analyticsApi';
-import { PlanTier, Plan } from '../types';
+import { PlanTier, Plan, UserRole } from '../types';
+import { ROUTES } from '../config/routes';
 
 export const PLANS: Record<PlanTier, Plan> = {
   [PlanTier.INDIVIDUAL]: {
@@ -620,8 +621,33 @@ class DatabaseApiClient {
     return true;
   }
 
-  async getUserMenu() {
-    return [];
+  async getUserMenu(role?: string) {
+    const core = { id: 'core', labelKey: 'menu.core', items: [
+      { id: 'home', labelKey: 'menu.home', route: ROUTES.LANDING, iconKey: ROUTES.LANDING },
+      { id: 'dash', labelKey: 'menu.dashboard', route: ROUTES.DASHBOARD, iconKey: ROUTES.DASHBOARD },
+      { id: 'leads', labelKey: 'menu.leads', route: ROUTES.LEADS, iconKey: ROUTES.LEADS },
+      { id: 'contracts', labelKey: 'menu.contracts', route: ROUTES.CONTRACTS, iconKey: ROUTES.CONTRACTS },
+      { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
+      { id: 'inbox', labelKey: 'menu.inbox', route: ROUTES.INBOX, iconKey: ROUTES.INBOX },
+      { id: 'fav', labelKey: 'menu.favorites', route: ROUTES.FAVORITES, iconKey: ROUTES.FAVORITES }
+    ]};
+
+    const ops = { id: 'ops', labelKey: 'menu.operations', items: [
+      { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
+      { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
+    ]};
+
+    const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: [
+      { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
+      { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS }
+    ]};
+
+    if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
+      return [core, ops, sys];
+    } else if (role === UserRole.SALES) {
+      return [core, ops];
+    }
+    return [core];
   }
 
   async ping() {
