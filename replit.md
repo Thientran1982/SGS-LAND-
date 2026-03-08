@@ -44,6 +44,13 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `JWT_SECRET` - JWT signing secret (required for production; auto-generated in dev)
 - `FB_VERIFY_TOKEN` - Facebook webhook verification token
 
+## Known Issues (Resolved)
+
+- SVG path error in ListingCard EYE icon: fixed malformed `s` command (13 params → 12)
+- Dashboard AI Deflection Rate circle overflow: fixed with `overflow-hidden`, responsive sizing, `min-w-0`
+- Recharts `ResponsiveContainer` negative dimensions: fixed by adding `minHeight`/`minWidth` to all instances
+- Vite HMR WebSocket in Replit webview: infrastructure limitation, non-blocking (page loads fine, hot reload may not work)
+
 ## Dev Credentials
 
 - Email: `admin@sgs.vn`, Password: `admin` (or any password `123456`)

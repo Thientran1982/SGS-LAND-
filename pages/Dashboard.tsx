@@ -425,13 +425,13 @@ export const Dashboard: React.FC = () => {
 
                 {/* 3. AI Deflection Rate */}
                 <div className="md:col-span-1 lg:col-span-1">
-                    <BentoCard title={t('dash.ai_deflection_rate') || "AI Deflection Rate"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10">
-                        <div className="flex justify-between items-center h-full gap-4">
-                            <div>
-                                <div className="text-4xl font-extrabold text-slate-800 dark:text-white">{analytics.aiDeflectionRate || 0}%</div>
-                                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai') || "Resolved by AI"}</div>
+                    <BentoCard title={t('dash.ai_deflection_rate') || "AI Deflection Rate"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden">
+                        <div className="flex justify-between items-center h-full gap-3 min-w-0">
+                            <div className="min-w-0">
+                                <div className="text-3xl lg:text-4xl font-extrabold text-slate-800 dark:text-white">{analytics.aiDeflectionRate || 0}%</div>
+                                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1 truncate">{t('dash.resolved_by_ai') || "Resolved by AI"}</div>
                             </div>
-                            <div className="h-16 w-16 rounded-full border-4 border-emerald-100 dark:border-emerald-900/30 border-t-emerald-500 dark:border-t-emerald-500 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0">
+                            <div className="h-12 w-12 lg:h-14 lg:w-14 rounded-full border-4 border-emerald-100 dark:border-emerald-900/30 border-t-emerald-500 dark:border-t-emerald-500 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0">
                                 {ICONS.AI}
                             </div>
                         </div>
@@ -533,7 +533,7 @@ export const Dashboard: React.FC = () => {
                             {analytics.marketPulse && analytics.marketPulse.length > 0 ? (
                                 <>
                                     <div className="flex-1 min-h-0">
-                                        <ResponsiveContainer width="100%" height="100%">
+                                        <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
                                             <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />
                                                 <XAxis type="number" dataKey="area" name="Diện tích" unit="m²" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
