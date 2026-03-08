@@ -5,6 +5,8 @@ import { contractApi } from './api/contractApi';
 import { inboxApi } from './api/inboxApi';
 import { userApi } from './api/userApi';
 import { analyticsApi } from './api/analyticsApi';
+import { knowledgeApi } from './api/knowledgeApi';
+import { api } from './api/apiClient';
 import { PlanTier, Plan, UserRole } from '../types';
 import { ROUTES } from '../config/routes';
 
@@ -333,96 +335,196 @@ class DatabaseApiClient {
     }
   }
 
-  async getEnterpriseConfig() {
-    return {
-      sso: { enabled: false, provider: '', entityId: '', ssoUrl: '', certificate: '' },
-      zaloOA: { oaId: '', accessToken: '' },
-      facebookPages: [],
-      dlpRules: [],
-      slaConfig: { responseTimeMinutes: 30, escalationTimeMinutes: 120 },
-    };
+  async getEnterpriseConfig(): Promise<any> {
+    try {
+      const res = await fetch('/api/enterprise/config', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch enterprise config');
+      return await res.json();
+    } catch {
+      return {
+        id: '',
+        tenantId: this.currentTenantId,
+        language: 'vi',
+        onboarding: { completedSteps: [], isDismissed: false, percentage: 0 },
+        domains: [],
+        sso: { enabled: false, provider: 'OIDC' },
+        scim: { enabled: false, token: '', tokenCreatedAt: new Date().toISOString() },
+        facebookPages: [],
+        zalo: { enabled: false, oaId: '', oaName: '', webhookUrl: '' },
+        email: { enabled: false, host: '', port: 587, user: '', password: '' },
+        ipAllowlist: [],
+        sessionTimeoutMins: 480,
+        retention: { days: 365, autoDelete: false },
+        legalHold: false,
+        dlpRules: [],
+        slaConfig: { responseTimeMinutes: 30, escalationTimeMinutes: 120 },
+      };
+    }
   }
 
   async updateEnterpriseConfig(data: any) {
-    return data;
+    const res = await fetch('/api/enterprise/config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update enterprise config');
+    return res.json();
   }
 
   async getScoringConfig() {
-    return {
-      weights: { engagement: 30, budget: 25, timeline: 20, fit: 15, source: 10 },
-      thresholds: { A: 80, B: 60, C: 40, D: 20 },
-    };
+    try {
+      return await api.get<any>('/api/scoring/config');
+    } catch {
+      return {
+        weights: { engagement: 30, budget: 25, timeline: 20, fit: 15, source: 10 },
+        thresholds: { A: 80, B: 60, C: 40, D: 20 },
+      };
+    }
   }
 
   async updateScoringConfig(data: any) {
-    return data;
+    return api.put<any>('/api/scoring/config', data);
   }
 
   async getRoutingRules() {
-    return [];
+    try {
+      const result = await fetch('/api/routing-rules', { credentials: 'include' });
+      if (!result.ok) throw new Error('Failed to fetch routing rules');
+      return await result.json();
+    } catch {
+      return [];
+    }
   }
 
   async createRoutingRule(data: any) {
-    return { id: `rule_${Date.now()}`, ...data };
+    const result = await fetch('/api/routing-rules', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!result.ok) throw new Error('Failed to create routing rule');
+    return result.json();
   }
 
   async updateRoutingRule(id: string, data: any) {
-    return { id, ...data };
+    const result = await fetch(`/api/routing-rules/${id}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!result.ok) throw new Error('Failed to update routing rule');
+    return result.json();
   }
 
   async deleteRoutingRule(id: string) {
+    const result = await fetch(`/api/routing-rules/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!result.ok) throw new Error('Failed to delete routing rule');
     return true;
   }
 
   async getSequences() {
-    return [];
+    try {
+      const result = await fetch('/api/sequences', { credentials: 'include' });
+      if (!result.ok) throw new Error('Failed to fetch sequences');
+      return await result.json();
+    } catch {
+      return [];
+    }
   }
 
   async createSequence(data: any) {
-    return { id: `seq_${Date.now()}`, ...data };
+    const result = await fetch('/api/sequences', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!result.ok) throw new Error('Failed to create sequence');
+    return result.json();
   }
 
   async updateSequence(id: string, data: any) {
-    return { id, ...data };
+    const result = await fetch(`/api/sequences/${id}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!result.ok) throw new Error('Failed to update sequence');
+    return result.json();
   }
 
   async deleteSequence(id: string) {
+    const result = await fetch(`/api/sequences/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!result.ok) throw new Error('Failed to delete sequence');
     return true;
   }
 
   async getTemplates() {
-    return [];
+    try {
+      const result = await fetch('/api/templates', { credentials: 'include' });
+      if (!result.ok) throw new Error('Failed to fetch templates');
+      return await result.json();
+    } catch {
+      return [];
+    }
   }
 
   async getDocuments() {
-    return [];
+    try {
+      const result = await knowledgeApi.getDocuments();
+      return result.data;
+    } catch {
+      return [];
+    }
   }
 
   async createDocument(data: any) {
-    return { id: `doc_${Date.now()}`, ...data };
+    return knowledgeApi.createDocument(data);
   }
 
   async deleteDocument(id: string) {
+    await knowledgeApi.deleteDocument(id);
     return true;
   }
 
   async getArticles() {
-    return [];
+    try {
+      const result = await knowledgeApi.getArticles();
+      return result.data;
+    } catch {
+      return [];
+    }
   }
 
   async getArticleById(id: string) {
-    return null;
+    try {
+      return await knowledgeApi.getArticleById(id);
+    } catch {
+      return null;
+    }
   }
 
   async createArticle(data: any) {
-    return { id: `art_${Date.now()}`, ...data };
+    return knowledgeApi.createArticle(data);
   }
 
   async updateArticle(id: string, data: any) {
-    return { id, ...data };
+    return knowledgeApi.updateArticle(id, data);
   }
 
   async deleteArticle(id: string) {
+    await knowledgeApi.deleteArticle(id);
     return true;
   }
 
@@ -435,12 +537,22 @@ class DatabaseApiClient {
     }
   }
 
-  async generateBiMarts() {
-    return {};
+  async generateBiMarts(timeRange?: string) {
+    try {
+      return await analyticsApi.getBiMarts(timeRange);
+    } catch (error) {
+      console.error('generateBiMarts error:', error);
+      return { funnel: [], attribution: [], conversionByPeriod: [] };
+    }
   }
 
   async updateCampaignCost(data: any) {
-    return data;
+    try {
+      return await analyticsApi.createCampaignCost(data);
+    } catch (error) {
+      console.error('updateCampaignCost error:', error);
+      return data;
+    }
   }
 
   async duplicateLead(id: string) {
@@ -455,7 +567,7 @@ class DatabaseApiClient {
   }
 
   async createUser(data: any) {
-    return data;
+    return userApi.createUser(data);
   }
 
   async updateUser(id: string, data: any) {
@@ -463,7 +575,7 @@ class DatabaseApiClient {
   }
 
   async deleteUser(id: string) {
-    return true;
+    return userApi.deleteUser(id);
   }
 
   async getTenantUsers(page = 1, pageSize = 50, search?: string, role?: string, sort?: any) {
@@ -536,7 +648,7 @@ class DatabaseApiClient {
   }
 
   async inviteUser(data: any) {
-    return { id: `user_${Date.now()}`, ...data };
+    return userApi.inviteUser(data);
   }
 
   async resendInvite(userId: string) {
@@ -598,27 +710,54 @@ class DatabaseApiClient {
   }
 
   async getSubscription() {
-    return { planId: 'ENTERPRISE', status: 'ACTIVE', currentPeriodEnd: new Date(Date.now() + 30 * 86400000).toISOString() };
+    try {
+      return await api.get<any>('/api/billing/subscription');
+    } catch {
+      return { planId: 'ENTERPRISE', status: 'ACTIVE', currentPeriodEnd: new Date(Date.now() + 30 * 86400000).toISOString() };
+    }
   }
 
   async getUsageMetrics() {
-    return { seats: 8, emailsSent: 150, aiRequests: 42 };
+    try {
+      return await api.get<any>('/api/billing/usage');
+    } catch {
+      return { seats: 0, emailsSent: 0, aiRequests: 0 };
+    }
   }
 
   async getInvoices() {
-    return [];
+    try {
+      return await api.get<any[]>('/api/billing/invoices');
+    } catch {
+      return [];
+    }
   }
 
   async upgradeSubscription(planId: string) {
-    return { planId, status: 'ACTIVE' };
+    return api.post<any>('/api/billing/upgrade', { planId });
   }
 
   async getActiveSessions() {
-    return [{ id: '1', ip: '127.0.0.1', userAgent: navigator.userAgent, createdAt: new Date().toISOString() }];
+    try {
+      const result = await fetch('/api/sessions', { credentials: 'include' });
+      if (!result.ok) throw new Error('Failed to fetch sessions');
+      return await result.json();
+    } catch {
+      return [];
+    }
   }
 
   async revokeSession(id: string) {
-    return true;
+    try {
+      const result = await fetch(`/api/sessions/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!result.ok) throw new Error('Failed to revoke session');
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async getUserMenu(role?: string) {
@@ -655,23 +794,36 @@ class DatabaseApiClient {
   }
 
   async getAiConfig() {
-    return { enabled: true, model: 'gemini-2.0-flash', temperature: 0.7 };
+    try {
+      return await api.get<any>('/api/ai/governance/config');
+    } catch {
+      return { enabled: true, allowedModels: ['gemini-3-flash-preview'], defaultModel: 'gemini-3-flash-preview', budgetCapUsd: 100, currentSpendUsd: 0 };
+    }
   }
 
   async saveAiConfig(data: any) {
-    return data;
+    return api.put<any>('/api/ai/governance/config', data);
   }
 
   async getAiSafetyLogs() {
-    return [];
+    try {
+      const result = await api.get<any>('/api/ai/governance/safety-logs');
+      return result.data || result;
+    } catch {
+      return [];
+    }
   }
 
   async getPromptTemplates() {
-    return [];
+    try {
+      return await api.get<any[]>('/api/ai/governance/prompt-templates');
+    } catch {
+      return [];
+    }
   }
 
   async createPromptTemplate(data: any) {
-    return { id: `pt_${Date.now()}`, ...data };
+    return api.post<any>('/api/ai/governance/prompt-templates', data);
   }
 
   async getMarketplaceApps() {
@@ -733,39 +885,61 @@ class DatabaseApiClient {
     return data;
   }
 
-  async connectZaloOA(data: any) {
-    return data;
+  async connectZaloOA(data?: any) {
+    const config = await this.getEnterpriseConfig();
+    config.zalo = { ...config.zalo, enabled: true, oaId: data?.oaId || 'oa_demo', oaName: data?.oaName || 'SGS Land OA', webhookUrl: `${window.location.origin}/api/webhooks/zalo`, connectedAt: new Date().toISOString() };
+    return this.updateEnterpriseConfig({ zalo: config.zalo });
   }
 
   async disconnectZaloOA() {
-    return true;
+    return this.updateEnterpriseConfig({ zalo: { enabled: false, oaId: '', oaName: '', webhookUrl: '' } });
   }
 
   async connectFacebookPage(data: any) {
-    return data;
+    const config = await this.getEnterpriseConfig();
+    const pages = config.facebookPages || [];
+    const pageName = typeof data === 'string' ? data.replace(/https?:\/\/(www\.)?facebook\.com\//, '') : data.name || 'Page';
+    const newPage = { id: `fb_${Date.now()}`, name: pageName, accessToken: '' };
+    pages.push(newPage);
+    await this.updateEnterpriseConfig({ facebookPages: pages });
+    return newPage;
   }
 
   async disconnectFacebookPage(pageId: string) {
+    const config = await this.getEnterpriseConfig();
+    const pages = (config.facebookPages || []).filter((p: any) => p.id !== pageId);
+    await this.updateEnterpriseConfig({ facebookPages: pages });
     return true;
   }
 
   async saveSSOConfig(data: any) {
-    return data;
+    return this.updateEnterpriseConfig({ sso: data });
   }
 
   async saveEmailConfig(data: any) {
-    return data;
+    return this.updateEnterpriseConfig({ email: data });
   }
 
   async addDomain(domain: string) {
-    return { domain, verified: false };
+    const config = await this.getEnterpriseConfig();
+    const domains = config.domains || [];
+    const newDomain = { domain, verified: false, verificationTxtRecord: `sgs-verify=${btoa(domain).slice(0, 16)}` };
+    domains.push(newDomain);
+    await this.updateEnterpriseConfig({ domains });
+    return newDomain;
   }
 
   async removeDomain(domain: string) {
+    const config = await this.getEnterpriseConfig();
+    const domains = (config.domains || []).filter((d: any) => d.domain !== domain);
+    await this.updateEnterpriseConfig({ domains });
     return true;
   }
 
   async verifyDomain(domain: string) {
+    const config = await this.getEnterpriseConfig();
+    const domains = (config.domains || []).map((d: any) => d.domain === domain ? { ...d, verified: true, verifiedAt: new Date().toISOString() } : d);
+    await this.updateEnterpriseConfig({ domains });
     return { domain, verified: true };
   }
 

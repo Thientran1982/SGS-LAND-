@@ -20,6 +20,14 @@ import { createContractRoutes } from "./server/routes/contractRoutes";
 import { createInteractionRoutes } from "./server/routes/interactionRoutes";
 import { createUserRoutes } from "./server/routes/userRoutes";
 import { createAnalyticsRoutes } from "./server/routes/analyticsRoutes";
+import { createScoringRoutes } from "./server/routes/scoringRoutes";
+import { createRoutingRuleRoutes } from "./server/routes/routingRuleRoutes";
+import { createKnowledgeRoutes } from "./server/routes/knowledgeRoutes";
+import { createEnterpriseRoutes } from "./server/routes/enterpriseRoutes";
+import { createSequenceRoutes } from "./server/routes/sequenceRoutes";
+import { createAiGovernanceRoutes } from "./server/routes/aiGovernanceRoutes";
+import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
+import { createBillingRoutes } from "./server/routes/billingRoutes";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
@@ -27,6 +35,7 @@ import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit } from "./se
 import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { interactionRepository } from "./server/repositories/interactionRepository";
+import { sessionRepository } from "./server/repositories/sessionRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
 
 async function startServer() {
@@ -130,6 +139,15 @@ async function startServer() {
       const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
       res.cookie('token', token, cookieOptions);
       await userRepository.updateLastLogin(tenantId, dbUser.id);
+      try {
+        await sessionRepository.create(tenantId, {
+          userId: dbUser.id,
+          ipAddress: req.ip || req.socket.remoteAddress,
+          userAgent: req.headers['user-agent'],
+        });
+      } catch (e) {
+        logger.warn('Could not create session record');
+      }
       writeAuditLog(tenantId, dbUser.id, 'LOGIN', 'auth', dbUser.id, undefined, req.ip);
       res.json({ message: 'Logged in successfully', user: userRepository.toPublicUser(dbUser), token });
     } catch (error) {
@@ -222,9 +240,10 @@ async function startServer() {
   app.post("/api/ai/process-message", authenticateToken, aiRateLimit, validateBody(schemas.aiProcessMessage), async (req, res) => {
     try {
       const { lead, userMessage, history, lang } = req.body;
+      const tenantId = (req as any).tenantId;
       const { aiService } = await import('./server/ai');
       const t = (k: string) => k; // Mock translation for backend
-      const result = await aiService.processMessage(lead, userMessage, history, t);
+      const result = await aiService.processMessage(lead, userMessage, history, t, tenantId);
       res.json(result);
     } catch (error) {
       console.error('AI process message error:', error);
@@ -500,11 +519,41 @@ async function startServer() {
   app.use('/api/inbox', apiRateLimit, createInteractionRoutes(authenticateToken));
   app.use('/api/users', apiRateLimit, createUserRoutes(authenticateToken));
   app.use('/api/analytics', apiRateLimit, createAnalyticsRoutes(authenticateToken));
+  app.use('/api/scoring', apiRateLimit, createScoringRoutes(authenticateToken));
+  app.use('/api/routing-rules', apiRateLimit, createRoutingRuleRoutes(authenticateToken));
+  app.use('/api/sequences', apiRateLimit, createSequenceRoutes(authenticateToken));
+  app.use('/api/knowledge', apiRateLimit, createKnowledgeRoutes(authenticateToken));
+  app.use('/api/billing', apiRateLimit, createBillingRoutes(authenticateToken));
+  app.use('/api/sessions', apiRateLimit, createSessionRoutes(authenticateToken));
+  app.use('/api/templates', apiRateLimit, createTemplateRoutes(authenticateToken));
+  app.use('/api/ai/governance', apiRateLimit, createAiGovernanceRoutes(authenticateToken));
 
   app.get("/api/health", async (req, res) => {
     try {
       const health = await systemService.checkHealth();
-      res.json(health);
+
+      const components: Record<string, any> = {
+        database: { status: health.checks?.database ? 'healthy' : 'down' },
+        aiService: { status: health.checks?.aiService ? 'healthy' : 'unconfigured' },
+        redis: { status: process.env.REDIS_URL ? 'healthy' : 'in-memory-fallback' },
+        websocket: { status: 'healthy', adapter: process.env.REDIS_URL ? 'redis' : 'in-memory' },
+        queue: { status: 'healthy', type: process.env.REDIS_URL ? 'bullmq' : 'in-memory' },
+      };
+
+      try {
+        const dbCheck = await pool.query('SELECT 1');
+        components.database.latencyMs = health.uptime !== undefined ? 'ok' : undefined;
+        components.database.status = 'healthy';
+      } catch {
+        components.database.status = 'down';
+      }
+
+      res.json({
+        ...health,
+        components,
+        connectedClients: io.engine?.clientsCount || 0,
+        lastChecked: new Date().toISOString(),
+      });
     } catch (error) {
       res.status(500).json({ status: "error", message: "Health check failed" });
     }

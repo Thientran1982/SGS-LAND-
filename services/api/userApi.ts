@@ -15,4 +15,13 @@ export const userApi = {
 
   changePassword: (id: string, newPassword: string): Promise<any> =>
     api.post(`/api/users/${id}/password`, { newPassword }),
+
+  createUser: (data: Record<string, any>): Promise<any> =>
+    api.post('/api/users', data),
+
+  deleteUser: (id: string): Promise<any> =>
+    api.delete(`/api/users/${id}`),
+
+  inviteUser: (data: Record<string, any>): Promise<any> =>
+    api.post('/api/users/invite', data),
 };

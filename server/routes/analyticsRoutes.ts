@@ -39,5 +39,37 @@ export function createAnalyticsRoutes(authenticateToken: any) {
     }
   });
 
+  router.get('/bi-marts', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const timeRange = (req.query.timeRange as string) || 'all';
+      const result = await analyticsRepository.generateBiMarts(user.tenantId, timeRange);
+      res.json(result);
+    } catch (error) {
+      console.error('Error generating BI marts:', error);
+      res.status(500).json({ error: 'Failed to generate BI marts' });
+    }
+  });
+
+  router.post('/campaign-costs', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { campaignName, source, cost, period } = req.body;
+      if (!campaignName || !source || cost === undefined || !period) {
+        return res.status(400).json({ error: 'campaignName, source, cost, and period are required' });
+      }
+      const result = await analyticsRepository.createCampaignCost(user.tenantId, {
+        campaignName,
+        source,
+        cost,
+        period,
+      });
+      res.status(201).json(result);
+    } catch (error) {
+      console.error('Error creating campaign cost:', error);
+      res.status(500).json({ error: 'Failed to create campaign cost' });
+    }
+  });
+
   return router;
 }

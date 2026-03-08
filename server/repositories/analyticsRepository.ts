@@ -343,6 +343,128 @@ export class AnalyticsRepository extends BaseRepository {
       };
     });
   }
+
+  async generateBiMarts(tenantId: string, timeRange?: string): Promise<any> {
+    return this.withTenant(tenantId, async (client) => {
+      const days = getDaysInterval(timeRange);
+      const useTimeFilter = timeRange && timeRange !== 'all';
+      const timeFilter = useTimeFilter ? `WHERE created_at >= NOW() - INTERVAL '${days} days'` : '';
+      const timeFilterAnd = useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : '';
+
+      const funnelResult = await client.query(`
+        SELECT stage, COUNT(*)::int as count
+        FROM leads
+        ${timeFilter}
+        GROUP BY stage
+        ORDER BY
+          CASE stage
+            WHEN 'NEW' THEN 1
+            WHEN 'CONTACTED' THEN 2
+            WHEN 'QUALIFIED' THEN 3
+            WHEN 'PROPOSAL' THEN 4
+            WHEN 'NEGOTIATION' THEN 5
+            WHEN 'WON' THEN 6
+            WHEN 'LOST' THEN 7
+            ELSE 8
+          END
+      `);
+
+      const attributionResult = await client.query(`
+        SELECT
+          COALESCE(l.source, 'UNKNOWN') as source,
+          COUNT(l.id)::int as lead_count,
+          COUNT(l.id) FILTER (WHERE l.stage = 'WON')::int as won_count,
+          COALESCE(SUM(p.final_price) FILTER (WHERE l.stage = 'WON'), 0)::numeric as revenue
+        FROM leads l
+        LEFT JOIN proposals p ON l.id = p.lead_id AND p.status = 'APPROVED'
+        WHERE 1=1 ${timeFilterAnd.replace('created_at', 'l.created_at')}
+        GROUP BY l.source
+        ORDER BY revenue DESC
+      `);
+
+      const campaignCostsResult = await client.query(`
+        SELECT source, COALESCE(SUM(cost), 0)::numeric as total_cost
+        FROM campaign_costs
+        WHERE 1=1 ${timeFilterAnd}
+        GROUP BY source
+      `);
+
+      const costsBySource: Record<string, number> = {};
+      for (const row of campaignCostsResult.rows) {
+        costsBySource[row.source] = parseFloat(row.total_cost) || 0;
+      }
+
+      const attribution = attributionResult.rows.map((row: any) => {
+        const revenue = parseFloat(row.revenue) || 0;
+        const cost = costsBySource[row.source] || 0;
+        const roi = cost > 0 ? ((revenue - cost) / cost) * 100 : 0;
+        const conversionRate = row.lead_count > 0
+          ? Math.round((row.won_count / row.lead_count) * 10000) / 100
+          : 0;
+        return {
+          source: row.source,
+          leadCount: row.lead_count,
+          wonCount: row.won_count,
+          revenue,
+          cost,
+          roi: Math.round(roi * 100) / 100,
+          conversionRate,
+        };
+      });
+
+      const conversionByPeriodResult = await client.query(`
+        SELECT
+          TO_CHAR(created_at, 'YYYY-MM') as period,
+          COUNT(*)::int as total,
+          COUNT(*) FILTER (WHERE stage = 'WON')::int as won,
+          COUNT(*) FILTER (WHERE stage = 'LOST')::int as lost
+        FROM leads
+        ${timeFilter}
+        GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+        ORDER BY period DESC
+        LIMIT 12
+      `);
+
+      const conversionByPeriod = conversionByPeriodResult.rows.map((row: any) => ({
+        period: row.period,
+        total: row.total,
+        won: row.won,
+        lost: row.lost,
+        conversionRate: row.total > 0
+          ? Math.round((row.won / row.total) * 10000) / 100
+          : 0,
+      }));
+
+      const funnel = funnelResult.rows.map((row: any) => ({
+        stage: row.stage,
+        count: row.count,
+      }));
+
+      const totalLeads = funnel.reduce((sum: number, f: any) => sum + f.count, 0);
+      const funnelWithPercentage = funnel.map((f: any) => ({
+        ...f,
+        percentage: totalLeads > 0 ? Math.round((f.count / totalLeads) * 10000) / 100 : 0,
+      }));
+
+      return {
+        funnel: funnelWithPercentage,
+        attribution,
+        conversionByPeriod,
+      };
+    });
+  }
+
+  async createCampaignCost(tenantId: string, data: { campaignName: string; source: string; cost: number; period: string }): Promise<any> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `INSERT INTO campaign_costs (campaign_name, source, cost, period)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [data.campaignName, data.source, data.cost, data.period]
+      );
+      return this.rowToEntity(result.rows[0]);
+    });
+  }
 }
 
 export const analyticsRepository = new AnalyticsRepository();

@@ -6,3 +6,4 @@ export { contractApi } from './contractApi';
 export { inboxApi } from './inboxApi';
 export { userApi } from './userApi';
 export { analyticsApi } from './analyticsApi';
+export { knowledgeApi } from './knowledgeApi';

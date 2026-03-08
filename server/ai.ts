@@ -1,5 +1,6 @@
 import { GoogleGenAI, GenerateContentResponse, Type, Schema } from "@google/genai";
 import { Lead, Interaction, AgentTraceStep, AgentArtifact, AgentTraceResponse } from '../types';
+import { listingRepository, ListingFilters } from './repositories/listingRepository';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -63,10 +64,43 @@ const ROUTER_SCHEMA: Schema = {
 // -----------------------------------------------------------------------------
 
 const TOOL_EXECUTOR = {
-    async search_inventory(query: string, priceMax?: number) {
-        // In a real backend, this would query the DB.
-        // For now, returning a mock response.
-        return "SYSTEM_NOTE: Inventory search is currently mocked in backend.";
+    async search_inventory(tenantId: string, query: string, priceMax?: number, propertyType?: string, areaMin?: number) {
+        try {
+            const filters: ListingFilters = {};
+            if (query) {
+                filters.search = query;
+            }
+            if (priceMax) {
+                filters.price_lte = priceMax;
+            }
+            if (propertyType) {
+                filters.type = propertyType;
+            }
+            if (areaMin) {
+                filters.area_gte = areaMin;
+            }
+            filters.status = 'AVAILABLE';
+
+            const result = await listingRepository.findListings(
+                tenantId,
+                { page: 1, pageSize: 10 },
+                filters
+            );
+
+            if (result.data.length === 0) {
+                return "Không tìm thấy bất động sản phù hợp với tiêu chí tìm kiếm.";
+            }
+
+            const formatted = result.data.map((listing: any, i: number) => {
+                const price = listing.price ? `${(listing.price / 1000000000).toFixed(2)} Tỷ` : 'Liên hệ';
+                return `${i + 1}. ${listing.title || listing.code} - ${listing.location || 'N/A'} | Giá: ${price} | DT: ${listing.area || 'N/A'}m² | Loại: ${listing.type || 'N/A'} | Trạng thái: ${listing.status}`;
+            }).join('\n');
+
+            return `Tìm thấy ${result.total} bất động sản (hiển thị ${result.data.length}):\n${formatted}`;
+        } catch (error) {
+            console.error('Inventory search error:', error);
+            return "Lỗi khi tìm kiếm kho hàng. Vui lòng thử lại.";
+        }
     },
 
     async calculate_loan(principal: number, rate: number = 8.5, years: number = 20) {
@@ -123,6 +157,7 @@ export type AgentState = {
     plan?: any;
     t: (k: string) => string;
     error?: Error;
+    tenantId: string;
 };
 
 type NodeFunction = (state: AgentState) => Promise<Partial<AgentState>>;
@@ -262,8 +297,8 @@ class AiEngine {
                  if(match) budgetMax = parseFloat(match[1].replace(',','.')) * 1000000000;
             }
 
-            const searchRes = await TOOL_EXECUTOR.search_inventory(extraction.location_keyword || '', budgetMax);
-            this.updateTrace(state.trace, `Retrieved ${searchRes.split('\n').length} properties.`);
+            const searchRes = await TOOL_EXECUTOR.search_inventory(state.tenantId, extraction.location_keyword || '', budgetMax, extraction.property_type);
+            this.updateTrace(state.trace, `Retrieved inventory results.`);
             return { systemContext: state.systemContext + `\n\n[INVENTORY DATA]:\n${searchRes}` };
         });
 
@@ -439,7 +474,8 @@ class AiEngine {
         lead: Lead, 
         userMessage: string, 
         history: Interaction[],
-        t: (k: string) => string
+        t: (k: string) => string,
+        tenantId?: string
     ): Promise<AgentTraceResponse> {
         
         const initialState: AgentState = {
@@ -450,7 +486,8 @@ class AiEngine {
             systemContext: `Customer: ${lead.name}. Lead Score: ${lead.score?.score || 'N/A'}.`,
             finalResponse: "",
             suggestedAction: 'NONE',
-            t
+            t,
+            tenantId: tenantId || 'default'
         };
 
         const finalState = await this.workflow.compileAndRun(initialState);

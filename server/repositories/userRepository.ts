@@ -184,6 +184,32 @@ export class UserRepository extends BaseRepository {
     });
   }
 
+  async delete(tenantId: string, id: string): Promise<boolean> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `DELETE FROM users WHERE id = $1`,
+        [id]
+      );
+      return (result.rowCount ?? 0) > 0;
+    });
+  }
+
+  async invite(tenantId: string, data: {
+    name: string;
+    email: string;
+    role?: string;
+  }): Promise<UserRow> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `INSERT INTO users (tenant_id, name, email, role, status, source)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, 'PENDING', 'INVITE')
+         RETURNING *`,
+        [data.name, data.email, data.role || 'VIEWER']
+      );
+      return this.rowToEntity<UserRow>(result.rows[0]);
+    });
+  }
+
   toPublicUser(user: UserRow): Omit<UserRow, 'passwordHash'> {
     const { passwordHash, ...publicUser } = user;
     return publicUser;

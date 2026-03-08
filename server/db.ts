@@ -293,6 +293,11 @@ export async function initializeDatabase() {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
 
+    await client.query(`
+      ALTER TABLE enterprise_config DROP CONSTRAINT IF EXISTS enterprise_config_tenant_key;
+      ALTER TABLE enterprise_config ADD CONSTRAINT enterprise_config_tenant_key UNIQUE(tenant_id, config_key);
+    `);
+
     await createTenantTable('favorites', `
       user_id UUID REFERENCES users(id) ON DELETE CASCADE,
       listing_id UUID REFERENCES listings(id) ON DELETE CASCADE,
@@ -323,6 +328,26 @@ export async function initializeDatabase() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
 
+    await createTenantTable('scoring_configs', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      weights JSONB DEFAULT '{}'::jsonb,
+      thresholds JSONB DEFAULT '{}'::jsonb,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await createTenantTable('documents', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      title VARCHAR(500) NOT NULL,
+      type VARCHAR(100) DEFAULT 'document',
+      content TEXT,
+      status VARCHAR(50) DEFAULT 'ACTIVE',
+      file_url TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
     await createTenantTable('articles', `
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
@@ -337,6 +362,84 @@ export async function initializeDatabase() {
       status VARCHAR(50) DEFAULT 'DRAFT',
       view_count INTEGER DEFAULT 0,
       published_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await createTenantTable('user_sessions', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+      ip_address VARCHAR(45),
+      user_agent TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      expires_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours')
+    `);
+
+    await createTenantTable('templates', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      name VARCHAR(255) NOT NULL,
+      category VARCHAR(100) DEFAULT 'general',
+      content TEXT,
+      variables JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await createTenantTable('campaign_costs', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      campaign_name VARCHAR(255) NOT NULL,
+      source VARCHAR(100) NOT NULL,
+      cost NUMERIC NOT NULL DEFAULT 0,
+      period VARCHAR(50) NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await createTenantTable('subscriptions', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      plan_id VARCHAR(50) NOT NULL DEFAULT 'ENTERPRISE',
+      status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+      current_period_start TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      current_period_end TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days'),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await createTenantTable('usage_tracking', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      metric_type VARCHAR(100) NOT NULL,
+      count INTEGER NOT NULL DEFAULT 0,
+      period VARCHAR(50) NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await createTenantTable('ai_safety_logs', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      prompt TEXT,
+      response TEXT,
+      model VARCHAR(255),
+      task_type VARCHAR(100),
+      latency_ms INTEGER DEFAULT 0,
+      cost_usd NUMERIC DEFAULT 0,
+      flagged BOOLEAN DEFAULT false,
+      safety_flags JSONB DEFAULT '[]'::jsonb,
+      reason TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await createTenantTable('prompt_templates', `
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      category VARCHAR(100),
+      active_version INTEGER DEFAULT 1,
+      versions JSONB DEFAULT '[]'::jsonb,
+      variables JSONB DEFAULT '[]'::jsonb,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);

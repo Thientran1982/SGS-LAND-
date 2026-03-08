@@ -49,6 +49,78 @@ export function createUserRoutes(authenticateToken: any) {
     }
   });
 
+  router.post('/', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can create users' });
+      }
+
+      const { name, email, password, role, phone, avatar } = req.body;
+      if (!name || !email) {
+        return res.status(400).json({ error: 'Name and email are required' });
+      }
+
+      const existing = await userRepository.findByEmail(user.tenantId, email);
+      if (existing) {
+        return res.status(409).json({ error: 'User with this email already exists' });
+      }
+
+      const newUser = await userRepository.create(user.tenantId, {
+        name, email, password, role, phone, avatar,
+      });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'USER_CREATED',
+        entityType: 'USER',
+        entityId: newUser.id,
+        details: `Created user ${email} with role ${newUser.role}`,
+        ipAddress: req.ip,
+      });
+
+      res.status(201).json(userRepository.toPublicUser(newUser));
+    } catch (error) {
+      console.error('Error creating user:', error);
+      res.status(500).json({ error: 'Failed to create user' });
+    }
+  });
+
+  router.post('/invite', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can invite users' });
+      }
+
+      const { name, email, role } = req.body;
+      if (!name || !email) {
+        return res.status(400).json({ error: 'Name and email are required' });
+      }
+
+      const existing = await userRepository.findByEmail(user.tenantId, email);
+      if (existing) {
+        return res.status(409).json({ error: 'User with this email already exists' });
+      }
+
+      const invited = await userRepository.invite(user.tenantId, { name, email, role });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'USER_INVITED',
+        entityType: 'USER',
+        entityId: invited.id,
+        details: `Invited user ${email} with role ${invited.role}`,
+        ipAddress: req.ip,
+      });
+
+      res.status(201).json(userRepository.toPublicUser(invited));
+    } catch (error) {
+      console.error('Error inviting user:', error);
+      res.status(500).json({ error: 'Failed to invite user' });
+    }
+  });
+
   router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
@@ -83,6 +155,36 @@ export function createUserRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error updating password:', error);
       res.status(500).json({ error: 'Failed to update password' });
+    }
+  });
+
+  router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can delete users' });
+      }
+
+      if (user.id === req.params.id) {
+        return res.status(400).json({ error: 'Cannot delete your own account' });
+      }
+
+      const deleted = await userRepository.delete(user.tenantId, req.params.id);
+      if (!deleted) return res.status(404).json({ error: 'User not found' });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'USER_DELETED',
+        entityType: 'USER',
+        entityId: req.params.id,
+        details: `Deleted user ${req.params.id}`,
+        ipAddress: req.ip,
+      });
+
+      res.json({ message: 'User deleted' });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ error: 'Failed to delete user' });
     }
   });
 
