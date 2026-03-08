@@ -26,10 +26,10 @@ const SYS_CONFIG = {
 } as const;
 
 const SIMULATION_ROUTES = [
-    { method: 'GET', path: '/api/v1/leads', weight: 0.4 },
-    { method: 'POST', path: '/api/v1/leads', weight: 0.1 },
-    { method: 'GET', path: '/api/v1/auth/session', weight: 0.3 },
-    { method: 'POST', path: '/api/v1/listings/search', weight: 0.2 }
+    { method: 'GET', path: '/api/auth/me', weight: 0.3 },
+    { method: 'POST', path: '/api/ai/score-lead', weight: 0.2 },
+    { method: 'GET', path: '/api/health', weight: 0.3 },
+    { method: 'POST', path: '/api/ai/valuation', weight: 0.2 }
 ];
 
 // -----------------------------------------------------------------------------

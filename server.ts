@@ -474,8 +474,7 @@ async function startServer() {
     }
   });
 
-  // Example API Route: Get all courses
-  app.get("/api/courses", async (req, res) => {
+  app.get("/api/courses", authenticateToken, async (req, res) => {
     try {
       if (!process.env.DATABASE_URL) {
         return res.json([]); // Return empty array if no DB
@@ -491,8 +490,7 @@ async function startServer() {
     }
   });
 
-  // Example API Route: Create a course
-  app.post("/api/courses", async (req, res) => {
+  app.post("/api/courses", authenticateToken, async (req, res) => {
     try {
       if (!process.env.DATABASE_URL) {
         return res.status(503).json({ error: 'Database not configured' });

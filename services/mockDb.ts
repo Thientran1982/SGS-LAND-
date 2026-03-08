@@ -1178,6 +1178,14 @@ class MockDatabase {
     async createLead(data: Partial<Lead>) {
         const currentUser = await this.getCurrentUser();
         
+        // 0. Duplicate Check
+        if (data.phone) {
+            const existing = this.withRLS(this.leads).find(l => l.phone === data.phone);
+            if (existing) {
+                throw new Error(`DUPLICATE_LEAD: Khách hàng với SĐT ${data.phone} đã tồn tại (${existing.name}, ID: ${existing.id})`);
+            }
+        }
+
         // 1. Initial Heuristic Score (Fast)
         let calculatedScore = 50;
         let grade = 'C';
@@ -1384,6 +1392,16 @@ class MockDatabase {
             
             if (data.stage && data.stage !== oldStage) {
                 this.triggerSequencesForLead(this.leads[index]);
+
+                if (data.stage === LeadStage.LOST) {
+                    this.proposals.forEach(p => {
+                        if (p.leadId === id && (p.status === ProposalStatus.PENDING_APPROVAL || p.status === ProposalStatus.DRAFT)) {
+                            p.status = ProposalStatus.REJECTED;
+                            p.updatedAt = new Date().toISOString();
+                        }
+                    });
+                    this.saveProposalsToStorage();
+                }
             }
             this.saveLeadsToStorage();
             return this.leads[index];
@@ -1429,7 +1447,14 @@ class MockDatabase {
     }
 
     async getLeadById(id: string) {
-        return this.leads.find(l => l.id === id) || null;
+        const currentUser = await this.getCurrentUser();
+        const lead = this.withRLS(this.leads).find(l => l.id === id);
+        if (!lead) return null;
+
+        if (currentUser && currentUser.role !== UserRole.ADMIN && currentUser.role !== UserRole.TEAM_LEAD) {
+            if (lead.assignedTo !== currentUser.id) return null;
+        }
+        return lead;
     }
 
     private maskListingSensitiveData(listing: Listing, user: User | null): Listing {
@@ -1780,7 +1805,15 @@ class MockDatabase {
     }
 
     // Proposals
-    async getPendingProposals() { return this.proposals.filter(p => p.status === ProposalStatus.PENDING_APPROVAL); }
+    async getPendingProposals() {
+        const currentUser = await this.getCurrentUser();
+        let scoped = this.withRLS(this.proposals).filter(p => p.status === ProposalStatus.PENDING_APPROVAL);
+        if (currentUser && currentUser.role !== UserRole.ADMIN && currentUser.role !== UserRole.TEAM_LEAD) {
+            const accessibleLeadIds = new Set(this.withRLS(this.leads).filter(l => l.assignedTo === currentUser.id).map(l => l.id));
+            scoped = scoped.filter(p => accessibleLeadIds.has(p.leadId));
+        }
+        return scoped;
+    }
 
     async getProposalByToken(token: string) {
         return this.proposals.find(p => p.token === token) || null;
@@ -2060,7 +2093,11 @@ class MockDatabase {
         
         return threads;
     }
-    async getInteractions(leadId: string) { return this.interactions.filter(i => i.leadId === leadId); }
+    async getInteractions(leadId: string) {
+        const lead = await this.getLeadById(leadId);
+        if (!lead) return [];
+        return this.interactions.filter(i => i.leadId === leadId);
+    }
     async markThreadAsRead(leadId: string) {
         this.interactions.forEach(i => {
             if (i.leadId === leadId && i.direction === Direction.INBOUND && i.status !== 'READ') {
@@ -2101,6 +2138,11 @@ class MockDatabase {
     }
 
     async sendInteraction(leadId: string, content: string, channel: any, options?: { type?: 'TEXT' | 'IMAGE' | 'AUDIO' | 'FILE' | 'SYSTEM' | 'VIDEO', metadata?: any }) {
+        const leadExists = this.leads.some(l => l.id === leadId);
+        if (!leadExists) throw new Error(`Lead not found: ${leadId}`);
+        const lead = await this.getLeadById(leadId);
+        if (!lead) throw new Error(`Access denied: You do not have permission to interact with this lead`);
+
         const msg: Interaction = {
             id: `msg_${Date.now()}` as any,
             leadId: leadId as any,
