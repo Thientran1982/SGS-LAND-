@@ -294,10 +294,7 @@ const mountApp = () => {
         throw new Error(TEXT.ERR_MISSING_ROOT);
     }
 
-    // 2. Check Critical Configuration (Optional but recommended for SaaS)
-    if (typeof process !== 'undefined' && process.env && !process.env.API_KEY) {
-        console.warn("API_KEY not found in environment. AI features may be disabled.");
-    }
+    // 2. AI features are server-side only — no API key check needed on frontend
 
     try {
         const root = ReactDOM.createRoot(rootElement);

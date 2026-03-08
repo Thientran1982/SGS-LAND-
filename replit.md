@@ -20,6 +20,14 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - Port: **5000** (both in dev and production)
 - Host: `0.0.0.0`
 
+## Security
+
+- API keys (GEMINI_API_KEY) are server-side only — never exposed to frontend bundle
+- JWT_SECRET auto-generates a random secret per session if not set (logged as warning)
+- Socket.io connections require JWT auth via httpOnly cookie
+- Yjs WebSocket connections require JWT auth via httpOnly cookie
+- Vite HMR WebSocket is excluded from auth (dev only)
+
 ## Entry Points
 
 - `server.ts` - Express + Vite server entry
@@ -32,8 +40,8 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 - `DATABASE_URL` - PostgreSQL connection string (optional; app runs without it)
 - `REDIS_URL` - Redis connection URL (optional; falls back to in-memory)
-- `GEMINI_API_KEY` or `API_KEY` - Google Gemini API key for AI features
-- `JWT_SECRET` - JWT signing secret (defaults to a hardcoded key)
+- `GEMINI_API_KEY` or `API_KEY` - Google Gemini API key for AI features (server-side only)
+- `JWT_SECRET` - JWT signing secret (required for production; auto-generated in dev)
 - `FB_VERIFY_TOKEN` - Facebook webhook verification token
 
 ## Dev Credentials

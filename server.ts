@@ -21,7 +21,14 @@ async function startServer() {
   app.use(express.json());
   app.use(cookieParser());
 
-  const JWT_SECRET = process.env.JWT_SECRET || 'sgs-land-super-secret-key-2026';
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (!process.env.JWT_SECRET) {
+    if (isProduction) {
+      throw new Error("FATAL: JWT_SECRET environment variable is required in production.");
+    }
+    console.warn("WARNING: JWT_SECRET not set. Generating a random secret for this session. Set JWT_SECRET env var for production.");
+  }
+  const JWT_SECRET = process.env.JWT_SECRET || (await import('crypto')).randomBytes(64).toString('hex');
 
   // Auth Middleware
   const authenticateToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -277,13 +284,58 @@ async function startServer() {
     next();
   });
 
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : undefined;
+
   const server = http.createServer(app);
   const io = new Server(server, {
     cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
+      origin: allowedOrigins || (isProduction ? false : true),
+      methods: ["GET", "POST"],
+      credentials: true
     }
   });
+
+  io.use((socket, next) => {
+    try {
+      const cookieHeader = socket.handshake.headers.cookie;
+      if (!cookieHeader) return next(new Error('Authentication required'));
+
+      const cookies: Record<string, string> = {};
+      cookieHeader.split(';').forEach(c => {
+        const [key, ...vals] = c.trim().split('=');
+        if (key) cookies[key.trim()] = vals.join('=');
+      });
+
+      const token = cookies['token'];
+      if (!token) return next(new Error('Authentication required'));
+
+      jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+        if (err) return next(new Error('Invalid token'));
+        socket.data.authUser = decoded;
+        next();
+      });
+    } catch (e) {
+      next(new Error('Authentication failed'));
+    }
+  });
+
+  const verifyWsCookie = (cookieHeader: string | undefined): any => {
+    if (!cookieHeader) return null;
+    const cookies: Record<string, string> = {};
+    cookieHeader.split(';').forEach(c => {
+      const [key, ...vals] = c.trim().split('=');
+      if (key) cookies[key.trim()] = vals.join('=');
+    });
+    const token = cookies['token'];
+    if (!token) return null;
+    try {
+      return jwt.verify(token, JWT_SECRET);
+    } catch {
+      return null;
+    }
+  };
 
   // Setup Yjs WebSocket server for CRDT
   const wss = new WebSocketServer({ noServer: true });
@@ -299,13 +351,19 @@ async function startServer() {
       return;
     }
     
-    // Let Socket.IO handle its websocket
+    // Let Socket.IO handle its websocket (auth handled by io.use middleware)
     if (pathname.includes('socket.io')) {
       return;
     }
     
-    // Handle Yjs websocket
+    // Handle Yjs websocket with auth
     if (pathname.startsWith('/yjs/')) {
+      const user = verifyWsCookie(request.headers.cookie);
+      if (!user) {
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
+        return;
+      }
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
       });
