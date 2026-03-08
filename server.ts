@@ -15,7 +15,7 @@ import { webhookQueue, setupWebhookWorker } from "./server/queue";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = 5000;
 
   // Middleware to parse JSON bodies
   app.use(express.json());
