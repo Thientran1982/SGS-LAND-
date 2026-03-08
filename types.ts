@@ -911,8 +911,11 @@ export interface AnalyticsSummary {
     aiHighlights: string[];
     conversionRate: number;
     pipelineValue?: number;
+    pipelineValueDelta?: number;
     aiDeflectionRate?: number;
+    aiDeflectionRateDelta?: number;
     salesVelocity?: number;
+    revenue?: number;
     revenueDelta?: number;
     winProbability?: number;
     salesVelocityDelta?: number;

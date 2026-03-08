@@ -37,6 +37,17 @@ export class AnalyticsService {
         return Math.round((aiInteractions.length / totalOutbound) * 100);
     }
 
+    private static getGradeProbability(grade: string): number {
+        switch(grade) {
+            case 'A': return 0.85;
+            case 'B': return 0.6;
+            case 'C': return 0.3;
+            case 'D': return 0.1;
+            case 'F': return 0.01;
+            default: return 0.3;
+        }
+    }
+
     /**
      * Calculates the Pipeline Value
      * Sum of (Proposal Price * Probability based on Lead Score/Grade)
@@ -49,18 +60,32 @@ export class AnalyticsService {
             .reduce((sum, p) => {
                 const lead = leadMap.get(p.leadId);
                 const grade = lead?.score?.grade || 'C';
-                let probability = 0.3;
-                
-                switch(grade) {
-                    case 'A': probability = 0.85; break;
-                    case 'B': probability = 0.6; break;
-                    case 'C': probability = 0.3; break;
-                    case 'D': probability = 0.1; break;
-                    case 'F': probability = 0.01; break;
-                }
-                
+                const probability = this.getGradeProbability(grade);
                 return sum + Math.floor(p.finalPrice * probability);
             }, 0);
+    }
+
+    /**
+     * Calculates the weighted average win probability from pipeline deals
+     */
+    public static calculateWinProbability(proposals: Proposal[], leads: Lead[]): number {
+        const leadMap = new Map(leads.map(l => [l.id, l]));
+        const activeProposals = proposals.filter(p => p.status === ProposalStatus.PENDING_APPROVAL || p.status === ProposalStatus.DRAFT);
+        
+        if (activeProposals.length === 0) return 0;
+
+        let totalWeightedProb = 0;
+        let totalValue = 0;
+
+        for (const p of activeProposals) {
+            const lead = leadMap.get(p.leadId);
+            const grade = lead?.score?.grade || 'C';
+            const probability = this.getGradeProbability(grade);
+            totalWeightedProb += p.finalPrice * probability;
+            totalValue += p.finalPrice;
+        }
+
+        return totalValue > 0 ? Math.round((totalWeightedProb / totalValue) * 100) : 0;
     }
 
     /**
@@ -221,7 +246,23 @@ export class AnalyticsService {
             ? Math.round(((currentSalesVelocity - previousSalesVelocity) / previousSalesVelocity) * 100)
             : 0);
 
-        const winProbability = 30; // Mocked average win probability
+        const currentPipelineValue = this.calculatePipelineValue(currentProposals, currentLeads);
+        const previousPipelineValue = this.calculatePipelineValue(previousProposals, previousLeads);
+        const pipelineValueDelta = timeRange === 'all' ? 0 : (previousPipelineValue > 0
+            ? Math.round(((currentPipelineValue - previousPipelineValue) / previousPipelineValue) * 100)
+            : (currentPipelineValue > 0 ? 100 : 0));
+
+        const winProbability = this.calculateWinProbability(currentProposals, currentLeads);
+
+        const currentAiDeflectionRate = this.calculateAiDeflectionRate(currentInteractions);
+        const previousInteractions = timeRange === 'all' ? [] : interactions.filter(i => {
+            const d = new Date(i.timestamp);
+            return d >= previousStartDate && d < startDate;
+        });
+        const previousAiDeflectionRate = this.calculateAiDeflectionRate(previousInteractions);
+        const aiDeflectionRateDelta = timeRange === 'all' ? 0 : (previousAiDeflectionRate > 0
+            ? Math.round(((currentAiDeflectionRate - previousAiDeflectionRate) / previousAiDeflectionRate) * 100)
+            : (currentAiDeflectionRate > 0 ? 100 : 0));
 
         return {
             totalLeads,
@@ -234,8 +275,10 @@ export class AnalyticsService {
             ],
             aiHighlights: this.generateAiHighlights(currentLeads, currentProposals, language),
             conversionRate,
-            pipelineValue: this.calculatePipelineValue(currentProposals, currentLeads),
-            aiDeflectionRate: this.calculateAiDeflectionRate(currentInteractions),
+            pipelineValue: currentPipelineValue,
+            pipelineValueDelta,
+            aiDeflectionRate: currentAiDeflectionRate,
+            aiDeflectionRateDelta,
             salesVelocity: currentSalesVelocity,
             revenue,
             revenueDelta,
