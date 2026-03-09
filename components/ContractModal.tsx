@@ -7,13 +7,15 @@ import { CollaborativeEditor } from './CollaborativeEditor';
 
 interface ContractModalProps {
     contract?: Contract | null;
+    initialData?: Partial<Contract>;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export const ContractModal: React.FC<ContractModalProps> = ({ contract, onClose, onSuccess }) => {
+export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialData, onClose, onSuccess }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<Contract>>(contract || {
         type: ContractType.DEPOSIT,
         status: ContractStatus.DRAFT,
@@ -32,7 +34,8 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, onClose,
         propertyArea: 0,
         propertyPrice: 0,
         depositAmount: 0,
-        paymentTerms: ''
+        paymentTerms: '',
+        ...initialData,
     });
 
     const handleChange = (field: keyof Contract, value: any) => {
@@ -41,6 +44,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, onClose,
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
         setLoading(true);
         try {
             if (contract?.id) {
@@ -49,8 +53,10 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, onClose,
                 await db.createContract(formData);
             }
             onSuccess();
-        } catch (error) {
-            console.error(error);
+        } catch (err: any) {
+            console.error(err);
+            const msg = err?.data?.error || err?.message || t('common.error_generic') || 'Đã xảy ra lỗi. Vui lòng thử lại.';
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -73,6 +79,12 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, onClose,
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar min-h-0">
+                    {error && (
+                        <div className="mb-4 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                            <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                            <span>{error}</span>
+                        </div>
+                    )}
                     <form id="contract-form" onSubmit={handleSubmit} className="space-y-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>

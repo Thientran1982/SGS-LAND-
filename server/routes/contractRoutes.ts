@@ -39,10 +39,10 @@ export function createContractRoutes(authenticateToken: any) {
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const { leadId, listingId, type } = req.body;
+      const { leadId, type } = req.body;
 
-      if (!leadId || !listingId || !type) {
-        return res.status(400).json({ error: 'Missing required fields: leadId, listingId, type' });
+      if (!leadId || !type) {
+        return res.status(400).json({ error: 'Missing required fields: leadId, type' });
       }
 
       const contract = await contractRepository.create(user.tenantId, {

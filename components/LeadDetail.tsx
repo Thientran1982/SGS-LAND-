@@ -6,6 +6,7 @@ import { db } from '../services/dbApi';
 import { aiService } from '../services/aiService';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from './Dropdown';
+import { ContractModal } from './ContractModal';
 import { useSocket } from '../services/websocket';
 
 const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
@@ -129,7 +130,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     const [activeChannel, setActiveChannel] = useState<Channel>(Channel.ZALO);
     const [messageContent, setMessageContent] = useState('');
     const [isSending, setIsSending] = useState(false);
-    const [isCreatingContract, setIsCreatingContract] = useState(false);
+    const [isContractModalOpen, setIsContractModalOpen] = useState(false);
     const [activeViewers, setActiveViewers] = useState<any[]>([]);
     const { t, formatDateTime, language } = useTranslation();
 
@@ -216,31 +217,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         }
     };
 
-    const handleCreateContract = async () => {
-        setIsCreatingContract(true);
-        try {
-            await db.createContract({
-                leadId: lead.id,
-                type: ContractType.DEPOSIT,
-                status: ContractStatus.SIGNED,
-                partyBName: lead.name,
-                partyBPhone: lead.phone,
-                partyBAddress: lead.address || '',
-                propertyAddress: 'Căn hộ mẫu (Giả lập)',
-                propertyPrice: 3000000000,
-                depositAmount: 50000000
-            });
-            // The mockDb.createContract will automatically update the lead stage to WON
-            // We just need to update the local state and notify the parent
-            setFormData(prev => ({ ...prev, stage: LeadStage.WON }));
-            await onUpdate({ ...formData, stage: LeadStage.WON });
-            alert('Đã tạo hợp đồng thành công và chuyển trạng thái Lead sang WON!');
-        } catch (e) {
-            console.error(e);
-            alert('Lỗi khi tạo hợp đồng');
-        } finally {
-            setIsCreatingContract(false);
-        }
+    const handleCreateContract = () => {
+        setIsContractModalOpen(true);
     };
 
     const handleSave = async () => {
@@ -403,10 +381,10 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             <div className="p-4 border-t border-slate-200 bg-white flex-none z-20 relative flex gap-3">
                 <button 
                     onClick={handleCreateContract} 
-                    disabled={isCreatingContract || formData.stage === LeadStage.WON} 
+                    disabled={formData.stage === LeadStage.WON} 
                     className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isCreatingContract ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     {t('detail.create_contract') || 'Chốt Deal (Tạo Hợp Đồng)'}
                 </button>
                 <button onClick={handleSave} disabled={isSaving} className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]">
@@ -414,6 +392,24 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                     {t('common.save')}
                 </button>
             </div>
+        {isContractModalOpen && (
+            <ContractModal
+                initialData={{
+                    leadId: lead.id,
+                    type: ContractType.DEPOSIT,
+                    status: ContractStatus.DRAFT,
+                    partyBName: lead.name,
+                    partyBPhone: lead.phone,
+                    partyBAddress: lead.address || '',
+                }}
+                onClose={() => setIsContractModalOpen(false)}
+                onSuccess={async () => {
+                    setIsContractModalOpen(false);
+                    setFormData(prev => ({ ...prev, stage: LeadStage.WON }));
+                    await onUpdate({ ...formData, stage: LeadStage.WON });
+                }}
+            />
+        )}
         </div>
     );
 

@@ -68,7 +68,7 @@ export class ContractRepository extends BaseRepository {
   async create(tenantId: string, data: {
     proposalId?: string;
     leadId: string;
-    listingId: string;
+    listingId?: string;
     type: string;
     status?: string;
     partyA?: any;
@@ -96,7 +96,7 @@ export class ContractRepository extends BaseRepository {
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
         ) RETURNING *`,
         [
-          data.proposalId || null, data.leadId, data.listingId, data.type,
+          data.proposalId || null, data.leadId, data.listingId || null, data.type,
           data.status || 'DRAFT', value,
           JSON.stringify(data.partyA || {}), JSON.stringify(data.partyB || {}),
           JSON.stringify(data.propertyDetails || {}),
