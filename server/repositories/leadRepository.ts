@@ -33,50 +33,50 @@ export class LeadRepository extends BaseRepository {
       let paramIndex = 1;
 
       if (userRole === 'SALES' && userId) {
-        conditions.push(`assigned_to = $${paramIndex++}`);
+        conditions.push(`l.assigned_to = $${paramIndex++}`);
         values.push(userId);
       }
 
       if (filters?.stage) {
-        conditions.push(`stage = $${paramIndex++}`);
+        conditions.push(`l.stage = $${paramIndex++}`);
         values.push(filters.stage);
       }
       if (filters?.stage_in && filters.stage_in.length > 0) {
         const placeholders = filters.stage_in.map((_, i) => `$${paramIndex + i}`).join(', ');
-        conditions.push(`stage IN (${placeholders})`);
+        conditions.push(`l.stage IN (${placeholders})`);
         values.push(...filters.stage_in);
         paramIndex += filters.stage_in.length;
       }
       if (filters?.assignedTo) {
-        conditions.push(`assigned_to = $${paramIndex++}`);
+        conditions.push(`l.assigned_to = $${paramIndex++}`);
         values.push(filters.assignedTo);
       }
       if (filters?.source) {
-        conditions.push(`source = $${paramIndex++}`);
+        conditions.push(`l.source = $${paramIndex++}`);
         values.push(filters.source);
       }
       if (filters?.slaBreached !== undefined) {
-        conditions.push(`sla_breached = $${paramIndex++}`);
+        conditions.push(`l.sla_breached = $${paramIndex++}`);
         values.push(filters.slaBreached);
       }
       if (filters?.search) {
-        conditions.push(`(name ILIKE $${paramIndex} OR phone ILIKE $${paramIndex} OR email ILIKE $${paramIndex})`);
+        conditions.push(`(l.name ILIKE $${paramIndex} OR l.phone ILIKE $${paramIndex} OR l.email ILIKE $${paramIndex})`);
         values.push(`%${filters.search}%`);
         paramIndex++;
       }
       if (filters?.createdAt_gte) {
-        conditions.push(`created_at >= $${paramIndex++}`);
+        conditions.push(`l.created_at >= $${paramIndex++}`);
         values.push(filters.createdAt_gte);
       }
       if (filters?.createdAt_lte) {
-        conditions.push(`created_at <= $${paramIndex++}`);
+        conditions.push(`l.created_at <= $${paramIndex++}`);
         values.push(filters.createdAt_lte);
       }
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
       const countResult = await client.query(
-        `SELECT COUNT(*)::int as total FROM leads ${whereClause}`,
+        `SELECT COUNT(*)::int as total FROM leads l ${whereClause}`,
         values
       );
       const total = countResult.rows[0].total;
