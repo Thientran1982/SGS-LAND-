@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 import { userRepository } from '../repositories/userRepository';
 import { auditRepository } from '../repositories/auditRepository';
 
@@ -145,13 +146,23 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Can only change own password or must be admin' });
       }
 
-      const { newPassword } = req.body;
-      if (!newPassword || newPassword.length < 6) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters' });
+      const { currentPassword, newPassword } = req.body;
+      if (!newPassword || newPassword.length < 4) {
+        return res.status(400).json({ error: 'Mật khẩu mới phải ít nhất 4 ký tự' });
+      }
+
+      if (currentPassword) {
+        const existingUser = await userRepository.findByIdDirect(req.params.id);
+        if (existingUser?.passwordHash) {
+          const valid = await bcrypt.compare(currentPassword, existingUser.passwordHash);
+          if (!valid) {
+            return res.status(400).json({ error: 'Mật khẩu hiện tại không đúng' });
+          }
+        }
       }
 
       await userRepository.updatePassword(user.tenantId, req.params.id, newPassword);
-      res.json({ message: 'Password updated' });
+      res.json({ message: 'Đổi mật khẩu thành công' });
     } catch (error) {
       console.error('Error updating password:', error);
       res.status(500).json({ error: 'Failed to update password' });

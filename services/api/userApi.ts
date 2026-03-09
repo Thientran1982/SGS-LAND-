@@ -13,8 +13,8 @@ export const userApi = {
   updateUser: (id: string, data: Record<string, any>): Promise<any> =>
     api.put(`/api/users/${id}`, data),
 
-  changePassword: (id: string, newPassword: string): Promise<any> =>
-    api.post(`/api/users/${id}/password`, { newPassword }),
+  changePassword: (id: string, currentPassword: string, newPassword: string): Promise<any> =>
+    api.post(`/api/users/${id}/password`, { currentPassword, newPassword }),
 
   createUser: (data: Record<string, any>): Promise<any> =>
     api.post('/api/users', data),

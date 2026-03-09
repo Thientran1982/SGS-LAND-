@@ -644,8 +644,8 @@ class DatabaseApiClient {
     return this.authenticate(email, 'sso_token');
   }
 
-  async changeUserPassword(userId: string, newPassword: string) {
-    return userApi.changePassword(userId, newPassword);
+  async changeUserPassword(userId: string, currentPassword: string, newPassword: string) {
+    return userApi.changePassword(userId, currentPassword, newPassword);
   }
 
   async inviteUser(data: any) {
@@ -656,10 +656,8 @@ class DatabaseApiClient {
     return true;
   }
 
-  async updateUserProfile(data: any) {
-    const user = await this.getCurrentUser();
-    if (user) return userApi.updateUser(user.id, data);
-    return data;
+  async updateUserProfile(id: string, data: any) {
+    return userApi.updateUser(id, data);
   }
 
   setTenantContext(tenantId: string) {
