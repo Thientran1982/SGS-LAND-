@@ -25,8 +25,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
         const load = async () => {
             setLoading(true);
             try {
-                // In a real app, we would query by token. Here we use token as ID
-                const id = token;
+                const id = token.replace(/^contract_/, '');
                 const found = await db.getContractById(id);
                 if (found) setContract(found);
             } catch (e) {
@@ -130,7 +129,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-800 py-8 px-4 sm:px-6">
+        <div className="min-h-screen bg-slate-50 text-slate-800 py-8 px-4 sm:px-6" style={{ fontFamily: "'Inter', sans-serif" }}>
             <div className="max-w-4xl mx-auto mb-4 flex justify-between items-center">
                 <button 
                     onClick={() => {
@@ -149,7 +148,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
             </div>
             <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden border border-slate-200">
                 
-                <div ref={contractRef} className="bg-white">
+                <div ref={contractRef} className="bg-white" style={{ fontFamily: "'Noto Serif', 'Times New Roman', Times, serif" }}>
                     {/* Header */}
                     <div className="bg-indigo-600 p-8 text-white text-center relative">
                         <div className="absolute top-6 left-6 flex items-center gap-2 opacity-80">

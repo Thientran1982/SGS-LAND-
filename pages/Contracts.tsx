@@ -263,7 +263,7 @@ const Contracts: React.FC = () => {
                                                     <button 
                                                         onClick={(e) => { 
                                                             e.stopPropagation(); 
-                                                            window.location.hash = `#/p/${c.id}`;
+                                                            window.location.hash = `#/p/contract_${c.id}`;
                                                         }}
                                                         className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                                                         title="Xem & Xuất PDF"
@@ -273,7 +273,7 @@ const Contracts: React.FC = () => {
                                                     <button 
                                                         onClick={(e) => { 
                                                             e.stopPropagation(); 
-                                                            const link = `${window.location.origin}/#/p/${c.id}`;
+                                                            const link = `${window.location.origin}/#/p/contract_${c.id}`;
                                                             setShareLink(link);
                                                         }}
                                                         className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
