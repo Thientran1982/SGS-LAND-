@@ -657,7 +657,11 @@ class DatabaseApiClient {
   }
 
   async updateUserProfile(id: string, data: any) {
-    return userApi.updateUser(id, data);
+    const updated = await userApi.updateUser(id, data);
+    if (updated) {
+      this.cachedCurrentUser = { ...this.cachedCurrentUser, ...updated };
+    }
+    return updated;
   }
 
   setTenantContext(tenantId: string) {
