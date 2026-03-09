@@ -16,6 +16,9 @@ export const userApi = {
   changePassword: (id: string, currentPassword: string, newPassword: string): Promise<any> =>
     api.post(`/api/users/${id}/password`, { currentPassword, newPassword }),
 
+  changeEmail: (id: string, currentPassword: string, newEmail: string): Promise<any> =>
+    api.post(`/api/users/${id}/email`, { currentPassword, newEmail }),
+
   createUser: (data: Record<string, any>): Promise<any> =>
     api.post('/api/users', data),
 

@@ -139,6 +139,60 @@ export function createUserRoutes(authenticateToken: any) {
     }
   });
 
+  router.post('/:id/email', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.id !== req.params.id && user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Chỉ có thể thay đổi email của chính mình hoặc phải là admin' });
+      }
+
+      const { currentPassword, newEmail } = req.body;
+      if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+        return res.status(400).json({ error: 'Email không hợp lệ' });
+      }
+
+      const existingUser = await userRepository.findByIdDirect(req.params.id);
+      if (!existingUser) return res.status(404).json({ error: 'Người dùng không tồn tại' });
+
+      if (newEmail.toLowerCase() === existingUser.email?.toLowerCase()) {
+        return res.status(400).json({ error: 'Email mới phải khác email hiện tại' });
+      }
+
+      if (!currentPassword) {
+        return res.status(400).json({ error: 'Vui lòng nhập mật khẩu để xác nhận' });
+      }
+      if (existingUser.passwordHash) {
+        const valid = await bcrypt.compare(currentPassword, existingUser.passwordHash);
+        if (!valid) {
+          return res.status(400).json({ error: 'Mật khẩu xác nhận không đúng' });
+        }
+      }
+
+      const duplicate = await userRepository.findByEmail(user.tenantId, newEmail);
+      if (duplicate && duplicate.id !== req.params.id) {
+        return res.status(409).json({ error: 'Email này đã được sử dụng' });
+      }
+
+      const { pool } = await import('../db');
+      await pool.query(`UPDATE users SET email = $1 WHERE id = $2`, [newEmail.toLowerCase(), req.params.id]);
+
+      const updated = await userRepository.findByIdDirect(req.params.id);
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'UPDATE',
+        entityType: 'USER',
+        entityId: req.params.id,
+        details: `Email changed to: ${newEmail}`,
+        ipAddress: req.ip,
+      });
+
+      res.json(userRepository.toPublicUser(updated!));
+    } catch (error) {
+      console.error('Error changing email:', error);
+      res.status(500).json({ error: 'Failed to change email' });
+    }
+  });
+
   router.post('/:id/password', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;

@@ -648,6 +648,14 @@ class DatabaseApiClient {
     return userApi.changePassword(userId, currentPassword, newPassword);
   }
 
+  async changeUserEmail(userId: string, currentPassword: string, newEmail: string) {
+    const updated = await userApi.changeEmail(userId, currentPassword, newEmail);
+    if (updated) {
+      this.cachedCurrentUser = { ...this.cachedCurrentUser, ...updated };
+    }
+    return updated;
+  }
+
   async inviteUser(data: any) {
     return userApi.inviteUser(data);
   }

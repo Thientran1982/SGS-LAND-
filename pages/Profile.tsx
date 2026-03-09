@@ -129,6 +129,12 @@ export const Profile: React.FC = () => {
     const [formData, setFormData] = useState({ name: '', phone: '', bio: '', avatar: '' });
     const [passData, setPassData] = useState({ current: '', new: '', confirm: '' });
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Email change state
+    const [emailChangeOpen, setEmailChangeOpen] = useState(false);
+    const [emailData, setEmailData] = useState({ newEmail: '', confirmPass: '' });
+    const [emailSaving, setEmailSaving] = useState(false);
+    const [emailErrors, setEmailErrors] = useState<Record<string, string>>({});
     
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { t } = useTranslation();
@@ -288,7 +294,59 @@ export const Profile: React.FC = () => {
     }, [t]);
 
     const handleRequestEmailChange = () => {
-        setMessage({ text: t('profile.email_change_sent'), type: 'success' });
+        setEmailChangeOpen(true);
+        setEmailData({ newEmail: '', confirmPass: '' });
+        setEmailErrors({});
+    };
+
+    const handleCancelEmailChange = () => {
+        setEmailChangeOpen(false);
+        setEmailData({ newEmail: '', confirmPass: '' });
+        setEmailErrors({});
+    };
+
+    const handleSubmitEmailChange = async () => {
+        if (!user) return;
+        const errs: Record<string, string> = {};
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailData.newEmail) {
+            errs.newEmail = t('profile.err_email_invalid');
+        } else if (!emailRegex.test(emailData.newEmail)) {
+            errs.newEmail = t('profile.err_email_invalid');
+        } else if (emailData.newEmail.toLowerCase() === user.email?.toLowerCase()) {
+            errs.newEmail = t('profile.err_email_same');
+        }
+        if (!emailData.confirmPass) {
+            errs.confirmPass = t('profile.err_pass_required');
+        }
+        if (Object.keys(errs).length > 0) {
+            setEmailErrors(errs);
+            return;
+        }
+
+        setEmailSaving(true);
+        setEmailErrors({});
+        try {
+            const updated = await db.changeUserEmail(user.id, emailData.confirmPass, emailData.newEmail);
+            if (updated) {
+                setUser({ ...user, email: emailData.newEmail });
+                setEmailChangeOpen(false);
+                setEmailData({ newEmail: '', confirmPass: '' });
+                setMessage({ text: t('profile.success_email'), type: 'success' });
+                window.dispatchEvent(new CustomEvent('user-updated', { detail: updated }));
+            }
+        } catch (err: any) {
+            const msg = err?.response?.data?.error || err?.message || '';
+            if (msg.includes('đã được sử dụng') || msg.includes('already in use')) {
+                setEmailErrors({ newEmail: t('profile.err_email_exists') });
+            } else if (msg.includes('không đúng') || msg.includes('incorrect') || msg.includes('wrong')) {
+                setEmailErrors({ confirmPass: t('profile.error_pass_match') });
+            } else {
+                setMessage({ text: msg || t('common.error'), type: 'error' });
+            }
+        } finally {
+            setEmailSaving(false);
+        }
     };
 
     // Calculate dirty state by deep comparing relevant fields
@@ -418,27 +476,77 @@ export const Profile: React.FC = () => {
                                     />
                                 </div>
                                 
-                                <InputField 
-                                    id="email"
-                                    label={t('profile.email')} 
-                                    value={user.email} 
-                                    onChange={() => {}}
-                                    disabled={true} 
-                                    action={
-                                        // SSO users cannot change email easily as it breaks the link
-                                        user.source === 'SSO' ? (
+                                <div className="space-y-1.5">
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-slate-500">{t('profile.email')}</label>
+                                        {user.source === 'SSO' ? (
                                             <span className="text-xs text-slate-400 italic">Managed by Organization</span>
-                                        ) : (
-                                            <button 
+                                        ) : !emailChangeOpen ? (
+                                            <button
                                                 type="button"
                                                 onClick={handleRequestEmailChange}
-                                                className="text-indigo-600 hover:text-indigo-700 font-bold hover:underline"
+                                                className="text-xs text-indigo-600 hover:text-indigo-700 font-bold hover:underline"
                                             >
                                                 {t('profile.btn_change')}
                                             </button>
-                                        )
-                                    }
-                                />
+                                        ) : null}
+                                    </div>
+                                    <input
+                                        value={user.email}
+                                        disabled
+                                        className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-500 cursor-not-allowed outline-none"
+                                    />
+
+                                    {emailChangeOpen && (
+                                        <div className="mt-3 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3 animate-enter">
+                                            <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">{t('profile.email_change_title')}</p>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-slate-500">{t('profile.email_new_label')}</label>
+                                                <input
+                                                    type="email"
+                                                    value={emailData.newEmail}
+                                                    onChange={e => { setEmailData(d => ({ ...d, newEmail: e.target.value })); setEmailErrors(er => ({ ...er, newEmail: '' })); }}
+                                                    placeholder={t('profile.email_new_placeholder')}
+                                                    className={`w-full bg-white border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-slate-400 focus:ring-2
+                                                        ${emailErrors.newEmail ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-slate-200 focus:ring-indigo-500/20 text-slate-800'}`}
+                                                />
+                                                {emailErrors.newEmail && <p className="text-[10px] font-bold text-rose-500 ml-1">{emailErrors.newEmail}</p>}
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-slate-500">{t('profile.email_confirm_pass')}</label>
+                                                <input
+                                                    type="password"
+                                                    value={emailData.confirmPass}
+                                                    onChange={e => { setEmailData(d => ({ ...d, confirmPass: e.target.value })); setEmailErrors(er => ({ ...er, confirmPass: '' })); }}
+                                                    placeholder="••••••••"
+                                                    onKeyDown={e => e.key === 'Enter' && handleSubmitEmailChange()}
+                                                    className={`w-full bg-white border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-slate-400 focus:ring-2
+                                                        ${emailErrors.confirmPass ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-slate-200 focus:ring-indigo-500/20 text-slate-800'}`}
+                                                />
+                                                {emailErrors.confirmPass && <p className="text-[10px] font-bold text-rose-500 ml-1">{emailErrors.confirmPass}</p>}
+                                            </div>
+                                            <div className="flex gap-2 pt-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSubmitEmailChange}
+                                                    disabled={emailSaving}
+                                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2.5 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                                >
+                                                    {emailSaving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
+                                                    {t('profile.email_submit')}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCancelEmailChange}
+                                                    disabled={emailSaving}
+                                                    className="px-5 bg-white hover:bg-slate-50 text-slate-600 text-sm font-bold py-2.5 rounded-xl border border-slate-200 transition-colors"
+                                                >
+                                                    {t('profile.email_cancel')}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
 
                                     <InputField 
                                         id="bio"

@@ -52,7 +52,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `proposalRoutes.ts` — `/api/proposals/*`
 - `contractRoutes.ts` — `/api/contracts/*`
 - `interactionRoutes.ts` — `/api/inbox/*`
-- `userRoutes.ts` — `/api/users/*` (list, create, delete, invite, teams, password)
+- `userRoutes.ts` — `/api/users/*` (list, create, delete, invite, teams, password, email change)
 - `analyticsRoutes.ts` — `/api/analytics/*` (summary, audit-logs, bi-marts, campaign-costs)
 - `routingRuleRoutes.ts` — `/api/routing-rules/*`
 - `sequenceRoutes.ts` — `/api/sequences/*`
