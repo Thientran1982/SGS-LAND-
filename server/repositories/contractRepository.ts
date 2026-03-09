@@ -8,7 +8,7 @@ export class ContractRepository extends BaseRepository {
   async findContracts(
     tenantId: string,
     pagination: PaginationParams,
-    filters?: { status?: string; type?: string; leadId?: string; listingId?: string }
+    filters?: { status?: string; type?: string; leadId?: string; listingId?: string; search?: string }
   ): Promise<PaginatedResult<any>> {
     return this.withTenant(tenantId, async (client) => {
       const conditions: string[] = [];
@@ -31,11 +31,19 @@ export class ContractRepository extends BaseRepository {
         conditions.push(`c.listing_id = $${paramIndex++}`);
         values.push(filters.listingId);
       }
+      if (filters?.search) {
+        conditions.push(`(l.name ILIKE $${paramIndex} OR c.id::text ILIKE $${paramIndex} OR c.type ILIKE $${paramIndex})`);
+        values.push(`%${filters.search}%`);
+        paramIndex++;
+      }
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
       const countResult = await client.query(
-        `SELECT COUNT(*)::int as total FROM contracts c ${whereClause}`,
+        `SELECT COUNT(*)::int as total FROM contracts c
+         LEFT JOIN leads l ON c.lead_id = l.id
+         LEFT JOIN listings li ON c.listing_id = li.id
+         ${whereClause}`,
         values
       );
       const total = countResult.rows[0].total;
@@ -67,7 +75,7 @@ export class ContractRepository extends BaseRepository {
 
   async create(tenantId: string, data: {
     proposalId?: string;
-    leadId: string;
+    leadId?: string;
     listingId?: string;
     type: string;
     status?: string;
@@ -96,7 +104,7 @@ export class ContractRepository extends BaseRepository {
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
         ) RETURNING *`,
         [
-          data.proposalId || null, data.leadId, data.listingId || null, data.type,
+          data.proposalId || null, data.leadId || null, data.listingId || null, data.type,
           data.status || 'DRAFT', value,
           JSON.stringify(data.partyA || {}), JSON.stringify(data.partyB || {}),
           JSON.stringify(data.propertyDetails || {}),

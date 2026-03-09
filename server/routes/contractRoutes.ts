@@ -15,6 +15,7 @@ export function createContractRoutes(authenticateToken: any) {
       if (req.query.status) filters.status = req.query.status;
       if (req.query.type) filters.type = req.query.type;
       if (req.query.leadId) filters.leadId = req.query.leadId;
+      if (req.query.search) filters.search = req.query.search;
 
       const result = await contractRepository.findContracts(user.tenantId, { page, pageSize }, filters);
       res.json(result);
@@ -39,10 +40,10 @@ export function createContractRoutes(authenticateToken: any) {
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const { leadId, type } = req.body;
+      const { type } = req.body;
 
-      if (!leadId || !type) {
-        return res.status(400).json({ error: 'Missing required fields: leadId, type' });
+      if (!type) {
+        return res.status(400).json({ error: 'Missing required fields: type' });
       }
 
       const contract = await contractRepository.create(user.tenantId, {

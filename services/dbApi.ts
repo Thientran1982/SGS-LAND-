@@ -205,7 +205,13 @@ class DatabaseApiClient {
 
   async getContracts(page = 1, pageSize = 20, filters?: any) {
     try {
-      const result = await contractApi.getContracts(page, pageSize, filters);
+      const cleanFilters: Record<string, any> = {};
+      if (filters) {
+        for (const [k, v] of Object.entries(filters)) {
+          if (v && v !== 'ALL') cleanFilters[k] = v;
+        }
+      }
+      const result = await contractApi.getContracts(page, pageSize, cleanFilters);
       return {
         data: result.data,
         total: result.total,
