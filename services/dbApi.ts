@@ -56,10 +56,10 @@ class DatabaseApiClient {
   async getLeads(page = 1, pageSize = 20, filters?: any) {
     try {
       const params: any = {};
-      if (filters?.stage) params.stage = filters.stage;
+      if (filters?.stage && filters.stage !== 'ALL') params.stage = filters.stage;
       if (filters?.stages) params.stages = filters.stages.join(',');
       if (filters?.assignedTo) params.assignedTo = filters.assignedTo;
-      if (filters?.source) params.source = filters.source;
+      if (filters?.source && filters.source !== 'ALL') params.source = filters.source;
       if (filters?.search) params.search = filters.search;
       if (filters?.slaBreached !== undefined) params.slaBreached = filters.slaBreached;
 
@@ -69,6 +69,7 @@ class DatabaseApiClient {
         total: result.total,
         page: result.page,
         pageSize: result.pageSize,
+        totalPages: result.totalPages,
       };
     } catch (error) {
       console.error('getLeads error:', error);

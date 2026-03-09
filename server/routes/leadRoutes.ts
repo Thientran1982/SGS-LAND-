@@ -52,7 +52,7 @@ export function createLeadRoutes(authenticateToken: any) {
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const { name, phone, email, address, source, assignedTo, tags, notes, preferences } = req.body;
+      const { name, phone, email, address, source, stage, assignedTo, tags, notes, preferences } = req.body;
 
       if (!name || !phone) {
         return res.status(400).json({ error: 'Name and phone are required' });
@@ -68,7 +68,7 @@ export function createLeadRoutes(authenticateToken: any) {
       }
 
       const lead = await leadRepository.create(user.tenantId, {
-        name, phone, email, address, source,
+        name, phone, email, address, source, stage,
         assignedTo: assignedTo || user.id,
         tags, notes, preferences,
       });

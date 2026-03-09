@@ -170,6 +170,12 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - Default tenant ID: `00000000-0000-0000-0000-000000000001`
 - 8 users, 20 leads, 15 listings, 7 proposals, 1 contract, 35 interactions seeded
 
+## Important Notes
+
+- **Filter sentinel values**: Frontend uses `'ALL'` as the default for stage/source filters. The `dbApi.ts` `getLeads()` method must NOT pass `'ALL'` to the backend, otherwise the SQL query treats it as a literal `WHERE stage = 'ALL'` and returns 0 results.
+- **Lead column ambiguity**: When JOINing `leads l` with `users u`, ALL WHERE conditions MUST use `l.` prefix (both tables have `name`, `source` columns).
+- **Lead creation stage**: POST `/api/leads` must destructure and pass `stage` from `req.body` to `leadRepository.create()`.
+
 ## Scripts
 
 - `npm run dev` - Start development server (tsx server.ts)
