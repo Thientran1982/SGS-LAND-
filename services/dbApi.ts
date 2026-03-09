@@ -100,9 +100,9 @@ class DatabaseApiClient {
   async getListings(page = 1, pageSize = 20, filters?: any) {
     try {
       const params: any = {};
-      if (filters?.type) params.type = filters.type;
-      if (filters?.status) params.status = filters.status;
-      if (filters?.transaction) params.transaction = filters.transaction;
+      if (filters?.type && filters.type !== 'ALL') params.type = filters.type;
+      if (filters?.status && filters.status !== 'ALL') params.status = filters.status;
+      if (filters?.transaction && filters.transaction !== 'ALL') params.transaction = filters.transaction;
       if (filters?.search) params.search = filters.search;
       if (filters?.priceMin) params.priceMin = filters.priceMin;
       if (filters?.priceMax) params.priceMax = filters.priceMax;
