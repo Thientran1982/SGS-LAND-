@@ -161,11 +161,9 @@ export function createUserRoutes(authenticateToken: any) {
       if (!currentPassword) {
         return res.status(400).json({ error: 'Vui lòng nhập mật khẩu để xác nhận' });
       }
-      if (existingUser.passwordHash) {
-        const valid = await bcrypt.compare(currentPassword, existingUser.passwordHash);
-        if (!valid) {
-          return res.status(400).json({ error: 'Mật khẩu xác nhận không đúng' });
-        }
+      const verified = await userRepository.authenticate(user.tenantId, existingUser.email!, currentPassword);
+      if (!verified) {
+        return res.status(400).json({ error: 'Mật khẩu xác nhận không đúng' });
       }
 
       const duplicate = await userRepository.findByEmail(user.tenantId, newEmail);
@@ -207,9 +205,9 @@ export function createUserRoutes(authenticateToken: any) {
 
       if (currentPassword) {
         const existingUser = await userRepository.findByIdDirect(req.params.id);
-        if (existingUser?.passwordHash) {
-          const valid = await bcrypt.compare(currentPassword, existingUser.passwordHash);
-          if (!valid) {
+        if (existingUser) {
+          const verified = await userRepository.authenticate(user.tenantId, existingUser.email!, currentPassword);
+          if (!verified) {
             return res.status(400).json({ error: 'Mật khẩu hiện tại không đúng' });
           }
         }
