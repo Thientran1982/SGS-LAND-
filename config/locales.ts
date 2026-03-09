@@ -415,6 +415,11 @@ export const DICTIONARY = {
         "contracts.btn_updating": "Đang cập nhật...",
         "contracts.btn_save": "Lưu Thay Đổi",
 
+        "editor.title": "Soạn Thảo Cộng Tác",
+        "editor.status_connected": "Đã kết nối",
+        "editor.status_connecting": "Đang kết nối",
+        "editor.placeholder": "Bắt đầu nhập nội dung hợp đồng...",
+
         "detail.ai_analysis": "AI Phân Tích Chân Dung",
         "detail.placeholder_msg": "Nhập nội dung tin nhắn...",
         "detail.history": "Lịch Sử Tương Tác",
@@ -1542,6 +1547,11 @@ export const DICTIONARY = {
         "contracts.btn_creating": "Creating...",
         "contracts.btn_updating": "Updating...",
         "contracts.btn_save": "Save Changes",
+
+        "editor.title": "Collaborative Editor",
+        "editor.status_connected": "Connected",
+        "editor.status_connecting": "Connecting",
+        "editor.placeholder": "Start typing the contract content...",
 
         "detail.ai_analysis": "Persona Analysis (AI)",
         "detail.placeholder_msg": "Enter message or note...",
