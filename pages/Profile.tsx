@@ -339,8 +339,14 @@ export const Profile: React.FC = () => {
             const msg = err?.response?.data?.error || err?.message || '';
             if (msg.includes('đã được sử dụng') || msg.includes('already in use')) {
                 setEmailErrors({ newEmail: t('profile.err_email_exists') });
-            } else if (msg.includes('không đúng') || msg.includes('incorrect') || msg.includes('wrong')) {
-                setEmailErrors({ confirmPass: t('profile.error_pass_match') });
+            } else if (msg.includes('khác email hiện tại') || msg.includes('different from current')) {
+                setEmailErrors({ newEmail: t('profile.err_email_same') });
+            } else if (msg.includes('không hợp lệ') || msg.includes('Invalid email')) {
+                setEmailErrors({ newEmail: t('profile.err_email_invalid') });
+            } else if (msg.includes('không đúng') || msg.includes('incorrect') || msg.includes('wrong password')) {
+                setEmailErrors({ confirmPass: t('profile.err_pass_wrong') });
+            } else if (msg.includes('nhập mật khẩu') || msg.includes('enter your password')) {
+                setEmailErrors({ confirmPass: t('profile.err_pass_required') });
             } else {
                 setMessage({ text: msg || t('common.error'), type: 'error' });
             }
