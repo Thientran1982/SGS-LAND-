@@ -172,7 +172,8 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 ## Important Notes
 
-- **Filter sentinel values**: Frontend uses `'ALL'` as the default for stage/source filters. The `dbApi.ts` `getLeads()` method must NOT pass `'ALL'` to the backend, otherwise the SQL query treats it as a literal `WHERE stage = 'ALL'` and returns 0 results.
+- **Filter sentinel values**: Frontend uses `'ALL'` as the default for stage/source/type filters. ALL `dbApi.get*()` methods MUST check `!== 'ALL'` before adding to params — otherwise SQL gets `WHERE type = 'ALL'` → 0 results. Fixed for `getLeads`, `getContracts`, `getListings`.
+- **getFavorites returns array**: `db.getFavorites()` returns `Listing[]` (plain array), NOT `{data: Listing[]}`. Any code using `favs.data.some(...)` will crash. Use `favs.some(...)` directly.
 - **Lead column ambiguity**: When JOINing `leads l` with `users u`, ALL WHERE conditions MUST use `l.` prefix (both tables have `name`, `source` columns).
 - **Lead creation stage**: POST `/api/leads` must destructure and pass `stage` from `req.body` to `leadRepository.create()`.
 

@@ -719,21 +719,18 @@ export const ListingDetail: React.FC = () => {
         if (!id) return;
         setLoading(true);
         try {
-            const user = await db.getCurrentUser();
+            const [user, item, favs] = await Promise.all([
+                db.getCurrentUser(),
+                db.getListingById(id),
+                db.getFavorites(),
+            ]);
             setCurrentUser(user);
-            const item = await db.getListingById(id);
             if (item) {
                 const normalizedLocation = normalizeAddress(item.location);
-                
-                // Fetch favorites to check if this listing is favorited
-                const favs = await db.getFavorites(1, 1000);
-                const isFav = favs.data.some(f => f.id === item.id);
-                
+                const isFav = (favs as any[]).some((f: any) => f.id === item.id);
                 setListing({ ...item, location: normalizedLocation, isFavorite: isFav });
-                
                 const sim = await db.getSimilarListings(item.id);
-                // Filter out current listing from similar suggestions
-                setSimilarListings((sim || []).filter(s => s.id !== item.id).map(s => ({...s, isFavorite: favs.data.some(f => f.id === s.id)})));
+                setSimilarListings((sim || []).filter((s: any) => s.id !== item.id).map((s: any) => ({...s, isFavorite: (favs as any[]).some((f: any) => f.id === s.id)})));
             }
         } catch (e) {
             console.error(e);
@@ -931,11 +928,21 @@ export const ListingDetail: React.FC = () => {
                     {ICONS.BACK} {t('common.go_back')}
                 </button>
                 <div className="flex gap-2 items-center">
+                    <button
+                        type="button"
+                        onClick={handleToggleFavorite}
+                        className={`p-2 rounded-full transition-colors ${listing?.isFavorite ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'}`}
+                        title={listing?.isFavorite ? (t('favorites.remove') || 'Bỏ yêu thích') : (t('favorites.add') || 'Yêu thích')}
+                    >
+                        <svg className="w-5 h-5 pointer-events-none" fill={listing?.isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    </button>
                     <button 
                         type="button"
                         onClick={handleShare} 
                         className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-slate-50 transition-colors" 
-                        title={t('common.tips')}
+                        title={t('common.share_link') || 'Chia sẻ'}
                     >
                         {ICONS.SHARE}
                     </button>
