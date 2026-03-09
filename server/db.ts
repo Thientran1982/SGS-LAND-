@@ -269,6 +269,18 @@ export async function initializeDatabase() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='created_by') THEN
           ALTER TABLE contracts ADD COLUMN created_by VARCHAR(255);
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='payment_terms') THEN
+          ALTER TABLE contracts ADD COLUMN payment_terms TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='tax_responsibility') THEN
+          ALTER TABLE contracts ADD COLUMN tax_responsibility VARCHAR(500);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='handover_date') THEN
+          ALTER TABLE contracts ADD COLUMN handover_date DATE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='handover_condition') THEN
+          ALTER TABLE contracts ADD COLUMN handover_condition VARCHAR(500);
+        END IF;
       END $$;
     `);
 

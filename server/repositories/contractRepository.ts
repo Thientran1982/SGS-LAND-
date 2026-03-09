@@ -93,7 +93,7 @@ export class ContractRepository extends BaseRepository {
           metadata, created_by
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
         ) RETURNING *`,
         [
           data.proposalId || null, data.leadId, data.listingId || null, data.type,
