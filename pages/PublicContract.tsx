@@ -100,7 +100,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 heightLeft -= pdfHeight;
             }
             
-            pdf.save(`Hop_Dong_${contract.id}.pdf`);
+            pdf.save(`Hop_Dong_${contract.id.slice(0, 8).toUpperCase()}.pdf`);
         } catch (error) {
             console.error('Error generating PDF:', error);
             alert(t('common.error') || 'Có lỗi xảy ra khi xuất PDF.');
@@ -111,7 +111,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
 
     const handleSendEmail = () => {
         if (!contract) return;
-        const subject = encodeURIComponent(`Hợp đồng ${contract.type === ContractType.DEPOSIT ? 'Đặt cọc' : 'Mua bán'} - Mã: ${contract.id}`);
+        const subject = encodeURIComponent(`Hợp đồng ${contract.type === ContractType.DEPOSIT ? 'Đặt cọc' : 'Mua bán'} - Mã: #${contract.id.slice(0, 8).toUpperCase()}`);
         const body = encodeURIComponent(`Chào bạn,\n\nVui lòng xem chi tiết hợp đồng tại đường link sau:\n${window.location.href}\n\nTrân trọng,\nSGS LAND`);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
     };
@@ -158,7 +158,16 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                         <h1 className="text-3xl font-bold mt-8 mb-2 uppercase tracking-wide">
                             {contract.type === ContractType.DEPOSIT ? t('contracts.type_DEPOSIT') : t('contracts.type_SALES')}
                         </h1>
-                        <p className="opacity-80 text-sm">{t('contracts.contract_id')}: {contract.id} • {t('contracts.created_at')}: {formatDate(contract.createdAt)}</p>
+                        <p className="opacity-80 text-sm">
+                            {t('contracts.contract_id')}: <span
+                                className="font-mono cursor-pointer hover:underline"
+                                title={contract.id}
+                                onClick={() => navigator.clipboard.writeText(contract.id)}
+                            >
+                                #{contract.id.slice(0, 8).toUpperCase()}
+                            </span>
+                            {' '}•{' '}{t('contracts.created_at')}: {formatDate(contract.createdAt)}
+                        </p>
                     </div>
 
                     <div className="p-8 sm:p-12 space-y-10">

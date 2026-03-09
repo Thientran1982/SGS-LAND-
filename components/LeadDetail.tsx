@@ -273,8 +273,12 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             </div>
                         </div>
                         <div className="flex items-center gap-2 px-2 mt-0.5">
-                            <span className="text-[10px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                                {formData.id || 'NEW'}
+                            <span
+                                className="text-[10px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 cursor-pointer hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-colors"
+                                title={formData.id || ''}
+                                onClick={() => formData.id && navigator.clipboard.writeText(formData.id)}
+                            >
+                                {formData.id ? `#${formData.id.slice(0, 8).toUpperCase()}` : 'NEW'}
                             </span>
                             {formData.score && (
                                 <div className="group relative">

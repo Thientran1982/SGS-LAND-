@@ -230,7 +230,13 @@ const Contracts: React.FC = () => {
                                                 <div className="font-medium text-sm text-[var(--text-primary)]">
                                                     {t(`contracts.type_${c.type}`)}
                                                 </div>
-                                                <div className="text-xs text-[var(--text-secondary)] mt-0.5">{c.id}</div>
+                                                <div
+                                                    className="text-xs font-mono text-[var(--text-secondary)] mt-0.5 cursor-pointer hover:text-indigo-500 transition-colors"
+                                                    title={c.id}
+                                                    onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(c.id); }}
+                                                >
+                                                    #{c.id.slice(0, 8).toUpperCase()}
+                                                </div>
                                             </td>
                                             <td className="p-4">
                                                 <div className="font-medium text-sm text-[var(--text-primary)]">{c.partyBName}</div>
