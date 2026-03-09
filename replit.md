@@ -166,7 +166,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 ## Dev Credentials
 
-- Email: `admin@sgs.vn`, Password: `admin`
+- Email: `admin@sgs.vn`, Password: `123456` (all seeded users use `123456`)
 - Default tenant ID: `00000000-0000-0000-0000-000000000001`
 - 8 users, 20 leads, 15 listings, 7 proposals, 1 contract, 35 interactions seeded
 
