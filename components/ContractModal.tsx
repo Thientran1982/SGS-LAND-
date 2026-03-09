@@ -3,7 +3,6 @@ import { useTranslation } from '../services/i18n';
 import { Contract, ContractType, ContractStatus } from '../types';
 import { db } from '../services/dbApi';
 import { Dropdown } from './Dropdown';
-import { CollaborativeEditor } from './CollaborativeEditor';
 
 interface ContractModalProps {
     contract?: Contract | null;
@@ -289,13 +288,13 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                             </div>
                             <div>
                                 <label className={labelClass}>{t('contracts.payment_terms_notes')}</label>
-                                <div className="h-48">
-                                    <CollaborativeEditor 
-                                        roomName={`contract_${contract?.id || 'new'}`}
-                                        initialContent={formData.paymentTerms || ''}
-                                        onChange={(content) => handleChange('paymentTerms', content)}
-                                    />
-                                </div>
+                                <textarea
+                                    value={formData.paymentTerms || ''}
+                                    onChange={e => handleChange('paymentTerms', e.target.value)}
+                                    rows={6}
+                                    className={`${inputClass} resize-none`}
+                                    placeholder={t('contracts.payment_terms_placeholder') || 'Các đợt thanh toán, thời hạn công chứng...'}
+                                />
                             </div>
                         </div>
                     </form>

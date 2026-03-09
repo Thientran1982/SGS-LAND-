@@ -16,33 +16,32 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ roomNa
     const ydocRef = useRef<Y.Doc | null>(null);
     const providerRef = useRef<WebsocketProvider | null>(null);
     const ytextRef = useRef<Y.Text | null>(null);
+    const initializedRef = useRef(false);
 
     useEffect(() => {
         const ydoc = new Y.Doc();
         ydocRef.current = ydoc;
 
-        const wsUrl = window.location.protocol === 'https:' 
-            ? `wss://${window.location.host}/yjs` 
+        const wsUrl = window.location.protocol === 'https:'
+            ? `wss://${window.location.host}/yjs`
             : `ws://${window.location.host}/yjs`;
 
-        const provider = new WebsocketProvider(wsUrl, roomName, ydoc);
+        const provider = new WebsocketProvider(wsUrl, roomName, ydoc, {
+            connect: false,
+        });
         providerRef.current = provider;
 
         const ytext = ydoc.getText('content');
         ytextRef.current = ytext;
 
-        provider.on('status', (event: { status: string }) => {
-            setStatus(event.status);
-        });
-
-        provider.on('sync', (isSynced: boolean) => {
-            if (isSynced && ytext.toString() === '' && initialContent) {
-                ytext.insert(0, initialContent);
-            }
-            if (editorRef.current) {
-                editorRef.current.value = ytext.toString();
-            }
-        });
+        // Initialize content immediately without waiting for WS sync
+        if (initialContent && !initializedRef.current) {
+            initializedRef.current = true;
+            ytext.insert(0, initialContent);
+        }
+        if (editorRef.current) {
+            editorRef.current.value = ytext.toString();
+        }
 
         ytext.observe(() => {
             if (editorRef.current) {
@@ -51,6 +50,25 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ roomNa
                 editorRef.current.setSelectionRange(currentCursor, currentCursor);
                 if (onChange) {
                     onChange(ytext.toString());
+                }
+            }
+        });
+
+        provider.on('status', (event: { status: string }) => {
+            setStatus(event.status);
+        });
+
+        // Try connecting after local init
+        try {
+            provider.connect();
+        } catch {
+            // WS not available — run in offline mode
+        }
+
+        provider.on('sync', (isSynced: boolean) => {
+            if (isSynced) {
+                if (editorRef.current) {
+                    editorRef.current.value = ytext.toString();
                 }
             }
         });
@@ -68,7 +86,6 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ roomNa
         const newValue = e.target.value;
         const oldValue = ytext.toString();
 
-        // Simple diffing for text area (in a real app, use Quill or ProseMirror bindings)
         if (newValue !== oldValue) {
             ytext.delete(0, ytext.length);
             ytext.insert(0, newValue);
