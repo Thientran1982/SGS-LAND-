@@ -81,6 +81,25 @@ export class LeadRepository extends BaseRepository {
       );
       const total = countResult.rows[0].total;
 
+      const statsResult = await client.query(
+        `SELECT
+          COUNT(*)::int                                                         AS total,
+          COUNT(*) FILTER (WHERE stage = 'NEW')::int                           AS new_count,
+          COUNT(*) FILTER (WHERE stage = 'WON')::int                           AS won_count,
+          COALESCE(ROUND(AVG((score->>'score')::numeric)), 0)::int             AS avg_score
+         FROM leads`
+      );
+      const sr = statsResult.rows[0];
+      const globalTotal = sr.total || 0;
+      const wonCount = sr.won_count || 0;
+      const stats = {
+        total:    globalTotal,
+        newCount: sr.new_count || 0,
+        wonCount,
+        avgScore: sr.avg_score || 0,
+        winRate:  globalTotal > 0 ? Math.round((wonCount / globalTotal) * 100) : 0,
+      };
+
       const page = pagination.page;
       const pageSize = pagination.pageSize;
       const offset = (page - 1) * pageSize;
@@ -101,6 +120,7 @@ export class LeadRepository extends BaseRepository {
         page,
         pageSize,
         totalPages: Math.ceil(total / pageSize),
+        stats,
       };
     });
   }

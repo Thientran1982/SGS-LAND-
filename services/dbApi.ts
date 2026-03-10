@@ -70,6 +70,7 @@ class DatabaseApiClient {
         page: result.page,
         pageSize: result.pageSize,
         totalPages: result.totalPages,
+        stats: (result as any).stats,
       };
     } catch (error) {
       console.error('getLeads error:', error);
