@@ -144,11 +144,16 @@ class DatabaseApiClient {
     return listingApi.toggleFavorite(listingId);
   }
 
-  async getFavorites() {
+  async getFavorites(page = 1, pageSize = 1000) {
     try {
-      return await listingApi.getFavorites();
+      const all = (await listingApi.getFavorites()) as any[];
+      const total = all.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const start = (page - 1) * pageSize;
+      const data = all.slice(start, start + pageSize);
+      return { data, total, totalPages, page, pageSize };
     } catch {
-      return [];
+      return { data: [], total: 0, totalPages: 1, page: 1, pageSize };
     }
   }
 

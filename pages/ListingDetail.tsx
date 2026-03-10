@@ -727,10 +727,11 @@ export const ListingDetail: React.FC = () => {
             setCurrentUser(user);
             if (item) {
                 const normalizedLocation = normalizeAddress(item.location);
-                const isFav = (favs as any[]).some((f: any) => f.id === item.id);
+                const favData = (favs as any).data as any[];
+                const isFav = favData.some((f: any) => f.id === item.id);
                 setListing({ ...item, location: normalizedLocation, isFavorite: isFav });
                 const sim = await db.getSimilarListings(item.id);
-                setSimilarListings((sim || []).filter((s: any) => s.id !== item.id).map((s: any) => ({...s, isFavorite: (favs as any[]).some((f: any) => f.id === s.id)})));
+                setSimilarListings((sim || []).filter((s: any) => s.id !== item.id).map((s: any) => ({...s, isFavorite: favData.some((f: any) => f.id === s.id)})));
             }
         } catch (e) {
             console.error(e);

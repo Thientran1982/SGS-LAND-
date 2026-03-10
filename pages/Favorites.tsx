@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '../services/dbApi';
 import { Listing } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -22,13 +22,14 @@ export const Favorites: React.FC = () => {
     // UI State for Removal
     const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+    const removingRef = useRef<Set<string>>(new Set());
 
     const fetchFavorites = useCallback(async () => {
         setLoading(true);
         try {
             const res = await db.getFavorites(page, CONFIG.PAGE_SIZE);
             setFavorites(res.data || []);
-            setTotalPages(res.totalPages);
+            setTotalPages(res.totalPages || 1);
             setTotalCount(res.total || 0); 
         } finally {
             setLoading(false);
@@ -41,6 +42,9 @@ export const Favorites: React.FC = () => {
 
     // Handle unfavorite with animation (Used for both Toggle Heart AND Delete Action)
     const performRemoval = useCallback(async (id: string) => {
+        // Guard against double-click / multiple calls for same id
+        if (removingRef.current.has(id)) return;
+        removingRef.current.add(id);
         // 1. Mark as removed to trigger animation
         setRemovedIds(prev => new Set(prev).add(id));
         
@@ -48,7 +52,6 @@ export const Favorites: React.FC = () => {
         setTimeout(async () => {
             try {
                 await db.removeFromFavorites(id);
-                // Optimistic Update
                 setFavorites(prev => {
                     const updated = (prev || []).filter(l => l.id !== id);
                     if (updated.length === 0 && page > 1) {
@@ -56,23 +59,16 @@ export const Favorites: React.FC = () => {
                     }
                     return updated;
                 });
-                setRemovedIds(prev => {
-                    const next = new Set(prev);
-                    next.delete(id);
-                    return next;
-                });
+                setRemovedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
                 setTotalCount(prev => prev - 1);
             } catch (e) {
                 console.error("Failed to remove favorite", e);
-                // Revert animation state if failed (optional, depending on UX pref)
-                setRemovedIds(prev => {
-                    const next = new Set(prev);
-                    next.delete(id);
-                    return next;
-                });
+                setRemovedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+            } finally {
+                removingRef.current.delete(id);
             }
-        }, 300); // 300ms matches animation duration
-    }, []);
+        }, 300);
+    }, [page]);
 
     const handleConfirmDelete = async () => {
         if (itemToDelete) {
