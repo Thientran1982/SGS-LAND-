@@ -28,7 +28,7 @@ export const Favorites: React.FC = () => {
         setLoading(true);
         try {
             const res = await db.getFavorites(page, CONFIG.PAGE_SIZE);
-            setFavorites(res.data || []);
+            setFavorites((res.data || []).map((item: any) => ({ ...item, isFavorite: true })));
             setTotalPages(res.totalPages || 1);
             setTotalCount(res.total || 0); 
         } finally {
