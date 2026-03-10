@@ -727,8 +727,10 @@ class DatabaseApiClient {
 
   async getSimilarListings(listingId: string) {
     try {
-      const result = await listingApi.getListings(1, 5);
-      return result.data.filter((l: any) => l.id !== listingId);
+      const result = await listingApi.getListings(1, 8, {
+        status: 'AVAILABLE',
+      });
+      return result.data.filter((l: any) => l.id !== listingId).slice(0, 4);
     } catch {
       return [];
     }
