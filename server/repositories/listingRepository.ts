@@ -91,29 +91,28 @@ export class ListingRepository extends BaseRepository {
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-      const [countResult, statsResult, result] = await Promise.all([
-        client.query(
-          `SELECT COUNT(*)::int as total FROM listings ${whereClause}`,
-          values
-        ),
-        client.query(
-          `SELECT
-            COUNT(*) FILTER (WHERE status = 'AVAILABLE')::int AS available_count,
-            COUNT(*) FILTER (WHERE status = 'HOLD')::int       AS hold_count,
-            COUNT(*) FILTER (WHERE status = 'SOLD')::int       AS sold_count,
-            COUNT(*) FILTER (WHERE status = 'RENTED')::int     AS rented_count,
-            COUNT(*) FILTER (WHERE status = 'BOOKING')::int    AS booking_count,
-            COUNT(*) FILTER (WHERE status = 'OPENING')::int    AS opening_count
-           FROM listings`
-        ),
-        client.query(
-          `SELECT * FROM listings ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-          [...values, pagination.pageSize, (pagination.page - 1) * pagination.pageSize]
-        ),
-      ]);
-
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int as total FROM listings ${whereClause}`,
+        values
+      );
       const total = countResult.rows[0].total;
+
+      const statsResult = await client.query(
+        `SELECT
+          COUNT(*) FILTER (WHERE status = 'AVAILABLE')::int AS available_count,
+          COUNT(*) FILTER (WHERE status = 'HOLD')::int       AS hold_count,
+          COUNT(*) FILTER (WHERE status = 'SOLD')::int       AS sold_count,
+          COUNT(*) FILTER (WHERE status = 'RENTED')::int     AS rented_count,
+          COUNT(*) FILTER (WHERE status = 'BOOKING')::int    AS booking_count,
+          COUNT(*) FILTER (WHERE status = 'OPENING')::int    AS opening_count
+         FROM listings`
+      );
       const sr = statsResult.rows[0];
+
+      const result = await client.query(
+        `SELECT * FROM listings ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+        [...values, pagination.pageSize, (pagination.page - 1) * pagination.pageSize]
+      );
 
       return {
         data: this.rowsToEntities(result.rows),
