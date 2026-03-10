@@ -113,6 +113,8 @@ class DatabaseApiClient {
         total: result.total,
         page: result.page,
         pageSize: result.pageSize,
+        totalPages: (result as any).totalPages,
+        stats: (result as any).stats,
       };
     } catch (error) {
       console.error('getListings error:', error);
