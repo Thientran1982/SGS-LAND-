@@ -91,27 +91,44 @@ export class ListingRepository extends BaseRepository {
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-      const countResult = await client.query(
-        `SELECT COUNT(*)::int as total FROM listings ${whereClause}`,
-        values
-      );
+      const [countResult, statsResult, result] = await Promise.all([
+        client.query(
+          `SELECT COUNT(*)::int as total FROM listings ${whereClause}`,
+          values
+        ),
+        client.query(
+          `SELECT
+            COUNT(*) FILTER (WHERE status = 'AVAILABLE')::int AS available_count,
+            COUNT(*) FILTER (WHERE status = 'HOLD')::int       AS hold_count,
+            COUNT(*) FILTER (WHERE status = 'SOLD')::int       AS sold_count,
+            COUNT(*) FILTER (WHERE status = 'RENTED')::int     AS rented_count,
+            COUNT(*) FILTER (WHERE status = 'BOOKING')::int    AS booking_count,
+            COUNT(*) FILTER (WHERE status = 'OPENING')::int    AS opening_count
+           FROM listings`
+        ),
+        client.query(
+          `SELECT * FROM listings ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+          [...values, pagination.pageSize, (pagination.page - 1) * pagination.pageSize]
+        ),
+      ]);
+
       const total = countResult.rows[0].total;
-
-      const page = pagination.page;
-      const pageSize = pagination.pageSize;
-      const offset = (page - 1) * pageSize;
-
-      const result = await client.query(
-        `SELECT * FROM listings ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-        [...values, pageSize, offset]
-      );
+      const sr = statsResult.rows[0];
 
       return {
         data: this.rowsToEntities(result.rows),
         total,
-        page,
-        pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        totalPages: Math.ceil(total / pagination.pageSize),
+        stats: {
+          availableCount: sr.available_count,
+          holdCount:      sr.hold_count,
+          soldCount:      sr.sold_count,
+          rentedCount:    sr.rented_count,
+          bookingCount:   sr.booking_count,
+          openingCount:   sr.opening_count,
+        },
       };
     });
   }

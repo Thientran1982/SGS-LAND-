@@ -363,7 +363,7 @@ export const Inventory: React.FC = () => {
     const { t, formatCurrency } = useTranslation();
     const [listings, setListings] = useState<Listing[]>([]); // Store current page data
     const [totalItems, setTotalItems] = useState(0);
-    const [stats, setStats] = useState({ availableCount: 0, holdCount: 0, soldCount: 0 });
+    const [stats, setStats] = useState({ availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0 });
     const [allFilteredListings, setAllFilteredListings] = useState<Listing[]>([]); // For Kanban board
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
@@ -422,25 +422,22 @@ export const Inventory: React.FC = () => {
         setLoading(true);
         try {
             const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter };
-            
-            // Fetch paginated data for List/Grid
-            const res = await db.getListings(page, pageSize, filters); 
+
+            const fetches: Promise<any>[] = [
+                db.getListings(page, pageSize, filters),
+                db.getFavorites(1, 1000),
+            ];
+            if (viewMode === 'BOARD') {
+                fetches.push(db.getListings(1, 1000, filters));
+            }
+
+            const [res, favs, allRes] = await Promise.all(fetches);
+
             setListings(res.data || []);
             setTotalItems(res.total || 0);
-            if (res.stats) {
-                setStats(res.stats);
-            }
-            
-            // Fetch all matching data for Kanban board (if needed, or limit to a reasonable number)
-            if (viewMode === 'BOARD') {
-                const allRes = await db.getListings(1, 1000, filters);
-                setAllFilteredListings(allRes.data || []);
-            } else {
-                setAllFilteredListings([]);
-            }
-            
-            const favs = await db.getFavorites(1, 1000);
-            setFavorites(new Set(favs.data?.map(f => f.id) || []));
+            if (res.stats) setStats(res.stats);
+            setFavorites(new Set(favs.data?.map((f: any) => f.id) || []));
+            setAllFilteredListings(allRes ? (allRes.data || []) : []);
         } catch (e) {
             console.error(e);
             notify(t('common.error'), 'error');
@@ -578,19 +575,27 @@ export const Inventory: React.FC = () => {
 
             {/* Metrics Section */}
             <div ref={metricsRef} className="px-4 md:px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex overflow-x-auto no-scrollbar gap-3 md:gap-4 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-slate-200 shadow-sm min-w-[120px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate">{t('inventory.total_listings') || 'Tổng số'}</div>
-                    <div className="text-lg md:text-2xl font-black text-slate-800">{totalItems}</div>
+                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-slate-200 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                    <div className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate">{t('inventory.total_listings') || 'Tổng kho'}</div>
+                    <div className="text-lg md:text-2xl font-black text-slate-800">{(stats.availableCount + stats.holdCount + stats.soldCount + stats.rentedCount + stats.bookingCount + stats.openingCount) || totalItems}</div>
                 </div>
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-slate-200 shadow-sm min-w-[120px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-1 truncate">{t('status.AVAILABLE') || 'Đang bán/thuê'}</div>
+                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-emerald-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                    <div className="text-[9px] md:text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-1 truncate">{t('status.AVAILABLE') || 'Đang bán'}</div>
                     <div className="text-lg md:text-2xl font-black text-emerald-600">{stats.availableCount}</div>
                 </div>
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-slate-200 shadow-sm min-w-[120px] md:flex-1 shrink-0">
+                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-amber-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
                     <div className="text-[9px] md:text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1 truncate">{t('status.HOLD') || 'Giữ chỗ'}</div>
                     <div className="text-lg md:text-2xl font-black text-amber-600">{stats.holdCount}</div>
                 </div>
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-slate-200 shadow-sm min-w-[120px] md:flex-1 shrink-0">
+                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-orange-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                    <div className="text-[9px] md:text-[10px] font-bold text-orange-500 uppercase tracking-wider mb-1 truncate">{t('status.BOOKING') || 'Đặt cọc'}</div>
+                    <div className="text-lg md:text-2xl font-black text-orange-600">{stats.bookingCount}</div>
+                </div>
+                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-teal-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                    <div className="text-[9px] md:text-[10px] font-bold text-teal-500 uppercase tracking-wider mb-1 truncate">{t('status.RENTED') || 'Đã thuê'}</div>
+                    <div className="text-lg md:text-2xl font-black text-teal-600">{stats.rentedCount}</div>
+                </div>
+                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-indigo-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
                     <div className="text-[9px] md:text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1 truncate">{t('status.SOLD') || 'Đã bán'}</div>
                     <div className="text-lg md:text-2xl font-black text-indigo-600">{stats.soldCount}</div>
                 </div>

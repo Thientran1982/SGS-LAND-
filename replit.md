@@ -173,7 +173,8 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 ## Important Notes
 
 - **Filter sentinel values**: Frontend uses `'ALL'` as the default for stage/source/type filters. ALL `dbApi.get*()` methods MUST check `!== 'ALL'` before adding to params — otherwise SQL gets `WHERE type = 'ALL'` → 0 results. Fixed for `getLeads`, `getContracts`, `getListings`.
-- **getFavorites returns array**: `db.getFavorites()` returns `Listing[]` (plain array), NOT `{data: Listing[]}`. Any code using `favs.data.some(...)` will crash. Use `favs.some(...)` directly.
+- **getFavorites returns structured object**: `db.getFavorites(page?, pageSize?)` returns `{data: Listing[], total, totalPages, page, pageSize}` (NOT a bare array). Always access `favs.data`, never treat return as array. Items in `data` do NOT have `isFavorite` set from DB — callers must set `isFavorite: true` manually (e.g., Favorites page does `map(item => ({...item, isFavorite: true}))`).
+- **findListings returns stats**: `listingRepository.findListings()` now returns `stats: { availableCount, holdCount, soldCount, rentedCount, bookingCount, openingCount }` alongside `data/total/page/totalPages`. Stats are **global** (unfiltered, full tenant inventory counts).
 - **Lead column ambiguity**: When JOINing `leads l` with `users u`, ALL WHERE conditions MUST use `l.` prefix (both tables have `name`, `source` columns).
 - **Lead creation stage**: POST `/api/leads` must destructure and pass `stage` from `req.body` to `leadRepository.create()`.
 
