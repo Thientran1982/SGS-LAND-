@@ -808,22 +808,17 @@ export const ListingDetail: React.FC = () => {
     };
 
     const handleContact = useCallback(() => {
-        if (!showPhone) {
-            setShowPhone(true);
-            if (!currentUser && listing) {
-                db.createPublicLead({
-                    name: 'Khách quan tâm',
-                    phone: '0000000000',
-                    notes: `📞 XEM SĐT\n📍 Sản phẩm: [${listing.code}] ${listing.title}\n🔗 Link: ${window.location.href}`,
-                    source: 'WEBSITE',
-                    stage: 'NEW',
-                }).catch(() => {});
-            }
-        } else {
-            const phoneNumber = listing?.contactPhone || '0912345678';
-            window.location.href = `tel:${phoneNumber}`;
+        setShowPhone(true);
+        if (!currentUser && listing) {
+            db.createPublicLead({
+                name: 'Khách quan tâm',
+                phone: listing.contactPhone || '0000000000',
+                notes: `📞 XEM SĐT\n📍 Sản phẩm: [${listing.code}] ${listing.title}\n🔗 Link: ${window.location.href}`,
+                source: 'WEBSITE',
+                stage: 'NEW',
+            }).catch(() => {});
         }
-    }, [showPhone, listing, currentUser]);
+    }, [listing, currentUser]);
 
     const handleToggleFavorite = async () => {
         if (!listing) return;
@@ -1227,25 +1222,22 @@ export const ListingDetail: React.FC = () => {
                         <button onClick={() => setBookingOpen(true)} className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2 mb-3">
                             {ICONS.CALENDAR} {t('detail.book_viewing')}
                         </button>
-                        <button 
-                            onClick={handleContact}
-                            className={`w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
-                                showPhone 
-                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100' 
-                                : 'bg-white border-slate-200 text-slate-900 hover:bg-slate-50'
-                            }`}
-                        >
-                            {showPhone ? (
-                                <>
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    {displayPhone}
-                                </>
-                            ) : (
-                                <>
-                                    {ICONS.PHONE} {t('detail.contact_now')}
-                                </>
-                            )}
-                        </button>
+                        {showPhone ? (
+                            <a
+                                href={`tel:${listing.contactPhone || '0912345678'}`}
+                                className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                            >
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                {displayPhone}
+                            </a>
+                        ) : (
+                            <button
+                                onClick={handleContact}
+                                className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-white border-slate-200 text-slate-900 hover:bg-slate-50"
+                            >
+                                {ICONS.PHONE} {t('detail.contact_now')}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

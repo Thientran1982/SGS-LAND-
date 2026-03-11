@@ -342,6 +342,15 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         <DetailField label={t('leads.assigned_to') || 'Người phụ trách'}>
                             <Dropdown value={formData.assignedTo || ''} onChange={(val) => handleInputChange('assignedTo', val)} options={users} className="w-full" />
                         </DetailField>
+                        <DetailField label={formData.notes ? (t('leads.notes') || 'Ghi chú / Lịch hẹn') : (t('leads.notes') || 'Ghi chú')} className="sm:col-span-2">
+                            <textarea
+                                value={formData.notes || ''}
+                                onChange={e => handleInputChange('notes', e.target.value)}
+                                rows={formData.notes ? 6 : 3}
+                                className={`w-full border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none no-scrollbar ${formData.notes ? 'bg-amber-50/60 font-mono text-xs text-slate-700 leading-relaxed' : ''}`}
+                                placeholder={t('leads.notes') || 'Ghi chú về khách hàng...'}
+                            />
+                        </DetailField>
                     </div>
 
                     <div className="mb-8 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
