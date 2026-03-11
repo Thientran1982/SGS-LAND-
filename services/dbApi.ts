@@ -127,7 +127,32 @@ class DatabaseApiClient {
     try {
       return await listingApi.getListingById(id);
     } catch {
-      return null;
+      try {
+        return await api.get<any>(`/api/public/listings/${id}`);
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  async getPublicListings(page = 1, pageSize = 20, filters?: any) {
+    try {
+      const params: any = { page, pageSize };
+      if (filters?.type && filters.type !== 'ALL') params.type = filters.type;
+      if (filters?.transaction && filters.transaction !== 'ALL') params.transaction = filters.transaction;
+      if (filters?.search) params.search = filters.search;
+      if (filters?.priceMin) params.priceMin = filters.priceMin;
+      if (filters?.priceMax) params.priceMax = filters.priceMax;
+      const result = await api.get<any>('/api/public/listings', { params });
+      return {
+        data: result.data || [],
+        total: result.total || 0,
+        page: result.page || 1,
+        pageSize: result.pageSize || pageSize,
+        totalPages: result.totalPages || 0,
+      };
+    } catch {
+      return { data: [], total: 0, page: 1, pageSize, totalPages: 0 };
     }
   }
 
@@ -727,10 +752,9 @@ class DatabaseApiClient {
 
   async getSimilarListings(listingId: string) {
     try {
-      const result = await listingApi.getListings(1, 8, {
-        status: 'AVAILABLE',
-      });
-      return result.data.filter((l: any) => l.id !== listingId).slice(0, 4);
+      const result = await api.get<any>('/api/public/listings', { params: { page: 1, pageSize: 8 } });
+      const items: any[] = result.data || [];
+      return items.filter((l: any) => l.id !== listingId).slice(0, 4);
     } catch {
       return [];
     }

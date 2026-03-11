@@ -13,6 +13,7 @@ import { initializeDatabase, pool, withTenantContext } from "./server/db";
 import { systemService } from "./services/systemService";
 import { webhookQueue, setupWebhookWorker } from "./server/queue";
 import { userRepository } from "./server/repositories/userRepository";
+import { listingRepository } from "./server/repositories/listingRepository";
 import { createLeadRoutes } from "./server/routes/leadRoutes";
 import { createListingRoutes } from "./server/routes/listingRoutes";
 import { createProposalRoutes } from "./server/routes/proposalRoutes";
@@ -511,6 +512,39 @@ async function startServer() {
   } else {
     console.warn("DATABASE_URL not set. Skipping database initialization.");
   }
+
+  const PUBLIC_TENANT = '00000000-0000-0000-0000-000000000001';
+
+  app.get('/api/public/listings', apiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 200);
+      const filters: any = { status: 'AVAILABLE' };
+      if (req.query.type) filters.type = req.query.type as string;
+      if (req.query.types) filters.type_in = (req.query.types as string).split(',');
+      if (req.query.transaction) filters.transaction = req.query.transaction as string;
+      if (req.query.priceMin) filters.price_gte = parseFloat(req.query.priceMin as string);
+      if (req.query.priceMax) filters.price_lte = parseFloat(req.query.priceMax as string);
+      if (req.query.search) filters.search = req.query.search as string;
+      const result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching public listings:', error);
+      res.status(500).json({ error: 'Failed to fetch listings' });
+    }
+  });
+
+  app.get('/api/public/listings/:id', apiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const listing = await listingRepository.findById(PUBLIC_TENANT, req.params.id);
+      if (!listing) return res.status(404).json({ error: 'Listing not found' }) as any;
+      await listingRepository.incrementViewCount(PUBLIC_TENANT, req.params.id);
+      res.json(listing);
+    } catch (error) {
+      console.error('Error fetching public listing:', error);
+      res.status(500).json({ error: 'Failed to fetch listing' });
+    }
+  });
 
   app.use('/api/leads', apiRateLimit, createLeadRoutes(authenticateToken));
   app.use('/api/listings', apiRateLimit, createListingRoutes(authenticateToken));

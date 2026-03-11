@@ -173,10 +173,12 @@ export const ProductSearch: React.FC = () => {
             try {
                 const user = await db.getCurrentUser();
                 setCurrentUser(user);
-                const res = await db.getListings(1, 2000); 
+                const res = await db.getPublicListings(1, 2000);
                 setListings(res.data.filter(l => l.status === ListingStatus.AVAILABLE || l.status === ListingStatus.OPENING || l.status === ListingStatus.BOOKING));
-                const favs = await db.getFavorites(1, 1000);
-                setFavorites(new Set(favs.data.map(f => f.id)));
+                if (user) {
+                    const favs = await db.getFavorites(1, 1000);
+                    setFavorites(new Set(favs.data.map(f => f.id)));
+                }
             } catch (e) {
                 console.error(e);
             } finally {

@@ -172,7 +172,7 @@ export const Landing: React.FC = () => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
         
-        db.getListings(1, 200).then(res => {
+        db.getPublicListings(1, 200).then(res => {
             if (res.data) {
                 // Enterprise Logic: Show Premium/Available Listings First
                 // Filter for "available" OR "opening" to show active inventory
