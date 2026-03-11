@@ -90,6 +90,10 @@ class DatabaseApiClient {
     return leadApi.createLead(data);
   }
 
+  async createPublicLead(data: { name: string; phone: string; notes?: string; source?: string; stage?: string }) {
+    return api.post<any>('/api/public/leads', data);
+  }
+
   async updateLead(id: string, data: any) {
     return leadApi.updateLead(id, data);
   }

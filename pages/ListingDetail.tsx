@@ -773,20 +773,29 @@ export const ListingDetail: React.FC = () => {
     const handleBooking = async (date: string, time: string, note: string, name: string, phone: string) => {
         try {
             const currentUrl = window.location.href;
-            await db.createLead({
-                name,
-                phone,
-                source: 'BOOKING',
-                stage: LeadStage.NEW,
-                notes: `📅 ĐẶT LỊCH XEM NHÀ\n------------------\n📍 Sản phẩm: [${listing?.code}] ${listing?.title}\n⏰ Thời gian: ${time} ngày ${date}\n👤 Khách hàng: ${name}\n📞 SĐT: ${phone}\n📝 Ghi chú: ${note || 'Không có'}\n🔗 Link: ${currentUrl}`,
-                // Gán cho người phụ trách sản phẩm (nếu có) hoặc để hệ thống tự phân bổ
-                assignedTo: listing?.tenantId as any
-            });
-            
-            // Tăng số lượt booking của sản phẩm
-            if (listing?.id) {
-                await db.updateListing(listing.id, {
-                    bookingCount: (listing.bookingCount || 0) + 1
+            const leadNotes = `📅 ĐẶT LỊCH XEM NHÀ\n------------------\n📍 Sản phẩm: [${listing?.code}] ${listing?.title}\n⏰ Thời gian: ${time} ngày ${date}\n👤 Khách hàng: ${name}\n📞 SĐT: ${phone}\n📝 Ghi chú: ${note || 'Không có'}\n🔗 Link: ${currentUrl}`;
+
+            if (currentUser) {
+                await db.createLead({
+                    name,
+                    phone,
+                    source: 'BOOKING',
+                    stage: LeadStage.NEW,
+                    notes: leadNotes,
+                    assignedTo: listing?.tenantId as any,
+                });
+                if (listing?.id) {
+                    await db.updateListing(listing.id, {
+                        bookingCount: (listing.bookingCount || 0) + 1,
+                    });
+                }
+            } else {
+                await db.createPublicLead({
+                    name,
+                    phone,
+                    notes: leadNotes,
+                    source: 'BOOKING',
+                    stage: 'NEW',
                 });
             }
 
@@ -801,13 +810,20 @@ export const ListingDetail: React.FC = () => {
     const handleContact = useCallback(() => {
         if (!showPhone) {
             setShowPhone(true);
+            if (!currentUser && listing) {
+                db.createPublicLead({
+                    name: 'Khách quan tâm',
+                    phone: '0000000000',
+                    notes: `📞 XEM SĐT\n📍 Sản phẩm: [${listing.code}] ${listing.title}\n🔗 Link: ${window.location.href}`,
+                    source: 'WEBSITE',
+                    stage: 'NEW',
+                }).catch(() => {});
+            }
         } else {
-            // Action when phone is visible: Call or Copy
-            // Use contactPhone if available, else default placeholder or fallback logic
             const phoneNumber = listing?.contactPhone || '0912345678';
             window.location.href = `tel:${phoneNumber}`;
         }
-    }, [showPhone, listing]);
+    }, [showPhone, listing, currentUser]);
 
     const handleToggleFavorite = async () => {
         if (!listing) return;

@@ -14,6 +14,7 @@ import { systemService } from "./services/systemService";
 import { webhookQueue, setupWebhookWorker } from "./server/queue";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
+import { leadRepository } from "./server/repositories/leadRepository";
 import { createLeadRoutes } from "./server/routes/leadRoutes";
 import { createListingRoutes } from "./server/routes/listingRoutes";
 import { createProposalRoutes } from "./server/routes/proposalRoutes";
@@ -543,6 +544,24 @@ async function startServer() {
     } catch (error) {
       console.error('Error fetching public listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });
+    }
+  });
+
+  app.post('/api/public/leads', apiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { name, phone, notes, source, stage } = req.body;
+      if (!name || !phone) return res.status(400).json({ error: 'name và phone là bắt buộc' }) as any;
+      const lead = await leadRepository.create(PUBLIC_TENANT, {
+        name: String(name).trim().slice(0, 100),
+        phone: String(phone).trim().slice(0, 20),
+        notes: notes ? String(notes).slice(0, 2000) : undefined,
+        source: source || 'WEBSITE',
+        stage: stage || 'NEW',
+      });
+      res.status(201).json(lead);
+    } catch (error) {
+      console.error('Error creating public lead:', error);
+      res.status(500).json({ error: 'Không thể tạo yêu cầu, vui lòng thử lại' });
     }
   });
 
