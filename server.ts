@@ -519,7 +519,7 @@ async function startServer() {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 200);
-      const filters: any = { status: 'AVAILABLE' };
+      const filters: any = { status_in: ['AVAILABLE', 'OPENING', 'BOOKING'] };
       if (req.query.type) filters.type = req.query.type as string;
       if (req.query.types) filters.type_in = (req.query.types as string).split(',');
       if (req.query.transaction) filters.transaction = req.query.transaction as string;
