@@ -8,7 +8,7 @@
     <meta name="keywords" content="bất động sản, AI real estate, CRM bất động sản, thẩm định giá AI, quản lý kho hàng, SGS LAND" />
     <meta name="theme-color" content="#FAFAFA" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://ais-dev-xlfuvizm4xq7tmrdqyx7c7-243274461503.asia-southeast1.run.app" />
+    <link id="canonical-url" rel="canonical" href="" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏢</text></svg>" />
     
     <!-- Open Graph / Social -->
@@ -28,9 +28,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    <!-- Dependencies (ESM) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
     <style>
       :root {
         /* --- DESIGN TOKENS --- */
@@ -272,33 +269,13 @@
             document.documentElement.classList.add('light');
           }
         } catch (e) {}
-      })();
 
-      // Tailwind Config Injection
-      tailwind.config = {
-        darkMode: 'class', 
-        theme: {
-          extend: {
-            fontFamily: { 
-              sans: ['Inter', 'sans-serif'], 
-              display: ['Inter', 'sans-serif'],
-              mono: ['"JetBrains Mono"', 'monospace'],
-            },
-            colors: {
-              surface: "var(--bg-surface)",
-              primary: { DEFAULT: "var(--primary-600)", 600: "var(--primary-600)" }
-            },
-            animation: {
-              'scale-up': 'scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-              'slide-in-right': 'slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            },
-            keyframes: {
-              scaleUp: { '0%': { opacity: 0, transform: 'scale(0.95)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
-              slideInRight: { '0%': { opacity: 0, transform: 'translateX(20px)' }, '100%': { opacity: 1, transform: 'translateX(0)' } }
-            }
-          }
-        }
-      }
+        // Set canonical URL dynamically based on the current hostname
+        try {
+          var canonical = document.getElementById('canonical-url');
+          if (canonical) canonical.setAttribute('href', window.location.origin);
+        } catch (e) {}
+      })();
     </script>
     
 </head>

@@ -653,6 +653,7 @@ class DatabaseApiClient {
     }
     const data = await res.json();
     this.cachedCurrentUser = data.user;
+    window.dispatchEvent(new CustomEvent('auth:login'));
     return data.user;
   }
 
@@ -673,6 +674,7 @@ class DatabaseApiClient {
   async logout() {
     this.cachedCurrentUser = null;
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    window.dispatchEvent(new CustomEvent('auth:logout'));
   }
 
   async requestPasswordReset(email: string) {

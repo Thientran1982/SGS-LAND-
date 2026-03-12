@@ -4,7 +4,7 @@ AI-powered real estate CRM and management platform for the Vietnamese market.
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript, Tailwind CSS, Framer Motion, TanStack Query, Recharts
+- **Frontend**: React 18 + TypeScript, Tailwind CSS (PostCSS/npm build, NOT CDN), Framer Motion, TanStack Query, Recharts
 - **Backend**: Node.js + Express (unified server with Vite middleware in dev)
 - **Build Tool**: Vite 6
 - **Real-time**: Socket.io, Yjs + y-websocket (CRDT collaboration)

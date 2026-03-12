@@ -281,41 +281,44 @@ const AppShell: React.FC = () => {
     const { t } = useTranslation();
     const [authState, setAuthState] = useState<'LOADING' | 'AUTH' | 'GUEST'>('LOADING');
 
-    // Auth & Route Guard
+    // Auth Initialization — runs once on mount to check session
     useEffect(() => {
-        const checkAuth = async () => {
-            const isPublic = PUBLIC_ROUTES.has(route.base);
-
-            // Redirect root to Landing
-            if (route.base === '') {
-                navigate(ROUTES.LANDING);
-                return;
-            }
-
-            // GUEST Mode for Public Routes
-            if (isPublic) {
-                setAuthState('GUEST'); 
-                return;
-            }
-
-            // AUTH Mode Check
+        const initAuth = async () => {
             try {
-                const user = await db.getCurrentUser(); 
-                if (user) {
-                    setAuthState('AUTH');
-                } else {
-                    // Not logged in AND not a public route -> Redirect Login
-                    setAuthState('GUEST');
-                    navigate(ROUTES.LOGIN); 
-                }
-            } catch (e) {
-                console.error("Auth check failed", e);
+                const user = await db.getCurrentUser();
+                setAuthState(user ? 'AUTH' : 'GUEST');
+            } catch {
                 setAuthState('GUEST');
-                navigate(ROUTES.LOGIN);
             }
         };
-        checkAuth();
-    }, [route.base, navigate]);
+        initAuth();
+
+        // Re-check on explicit auth events (login/logout)
+        const onLogin = () => db.getCurrentUser().then(u => setAuthState(u ? 'AUTH' : 'GUEST')).catch(() => setAuthState('GUEST'));
+        const onLogout = () => setAuthState('GUEST');
+        window.addEventListener('auth:login', onLogin);
+        window.addEventListener('auth:logout', onLogout);
+        return () => {
+            window.removeEventListener('auth:login', onLogin);
+            window.removeEventListener('auth:logout', onLogout);
+        };
+    }, []);
+
+    // Route Guard — reacts to route changes using cached authState
+    useEffect(() => {
+        if (authState === 'LOADING') return;
+
+        // Redirect root to Landing
+        if (route.base === '') {
+            navigate(ROUTES.LANDING);
+            return;
+        }
+
+        const isPublic = PUBLIC_ROUTES.has(route.base);
+        if (!isPublic && authState === 'GUEST') {
+            navigate(ROUTES.LOGIN);
+        }
+    }, [route.base, authState, navigate]);
 
     // Scroll Restoration
     useEffect(() => {
