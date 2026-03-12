@@ -367,13 +367,13 @@ const AppShell: React.FC = () => {
 
         if (route.base === ROUTES.LOGIN) {
             return (
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="sync">
                     <motion.div
                         key={route.fullPath}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
                     >
                         <ErrorBoundary>
                             <Suspense fallback={<LoadingScreen />}>
@@ -391,13 +391,13 @@ const AppShell: React.FC = () => {
             
             if (token?.startsWith('contract_')) {
                 return (
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode="sync">
                         <motion.div
                             key={route.fullPath}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
                             className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
                         >
                             <ErrorBoundary>
@@ -411,13 +411,13 @@ const AppShell: React.FC = () => {
             }
 
             return (
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="sync">
                     <motion.div
                         key={route.fullPath}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
                         className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
                     >
                         <ErrorBoundary>
@@ -434,13 +434,13 @@ const AppShell: React.FC = () => {
         
         if (TargetComponent) {
             return (
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="sync">
                     <motion.div
                         key={route.fullPath}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
                         className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
                     >
                         <ErrorBoundary>
@@ -462,13 +462,13 @@ const AppShell: React.FC = () => {
         const TargetComponent = PAGE_REGISTRY[route.base];
         return (
             <Layout activePage={route.base} onNavigate={navigate} onLogout={handleLogout}>
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="sync">
                     <motion.div 
-                        key={route.fullPath}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3 }}
+                        key={route.base}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
                         className="h-full w-full flex flex-col relative overflow-hidden isolate"
                     >
                         <ErrorBoundary>

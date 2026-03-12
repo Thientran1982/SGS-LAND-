@@ -37,20 +37,27 @@ export const PLANS: Record<PlanTier, Plan> = {
 class DatabaseApiClient {
   private currentTenantId: string = '00000000-0000-0000-0000-000000000001';
   private cachedCurrentUser: any = null;
+  private currentUserPromise: Promise<any> | null = null;
 
   async getCurrentUser() {
     if (this.cachedCurrentUser) return this.cachedCurrentUser;
-    try {
-      const result = await userApi.getMe();
-      this.cachedCurrentUser = result.user;
-      return result.user;
-    } catch {
-      return null;
-    }
+    if (this.currentUserPromise) return this.currentUserPromise;
+    this.currentUserPromise = userApi.getMe()
+      .then(result => {
+        this.cachedCurrentUser = result.user;
+        this.currentUserPromise = null;
+        return result.user;
+      })
+      .catch(() => {
+        this.currentUserPromise = null;
+        return null;
+      });
+    return this.currentUserPromise;
   }
 
   clearUserCache() {
     this.cachedCurrentUser = null;
+    this.currentUserPromise = null;
   }
 
   async getLeads(page = 1, pageSize = 20, filters?: any) {
