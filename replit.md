@@ -109,6 +109,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `withTenantContext` uses UUID-validated string interpolation
 - Audit logging for login, CRUD operations, password changes
 - Session tracking with revocation support
+- Password reset: tokens hashed (SHA-256) in DB, atomic single-use consume, uniform response timing. Reset link format: `/#/reset-password/<token>` → App.tsx redirects to Login with token → Login.tsx auto-populates FORGOT_VERIFY view
 
 ## Business Logic
 
