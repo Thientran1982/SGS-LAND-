@@ -390,7 +390,24 @@ export const ProductSearch: React.FC = () => {
 
             {/* CONTENT VIEWPORT */}
             <div className="flex-1 overflow-hidden relative flex flex-col">
-                <div className="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar">
+
+                {/* MAP VIEW — rendered outside overflow-y-auto so Leaflet gets a real height */}
+                {viewMode === 'MAP' && (
+                    <div className="flex-1 min-h-0 p-4 md:p-6">
+                        <div className="h-full w-full relative z-0 rounded-[24px] overflow-hidden shadow-sm border border-slate-200">
+                            <MapView
+                                listings={filteredListings}
+                                onNavigate={handleNavigate}
+                                formatCurrency={formatCurrency}
+                                formatUnitPrice={formatUnitPrice}
+                                t={t}
+                                language={language}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                <div className={`flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar${viewMode === 'MAP' ? ' hidden' : ''}`}>
                     {/* 1. GRID VIEW */}
                     {viewMode === 'GRID' && (
                         loading ? (
@@ -599,20 +616,6 @@ export const ProductSearch: React.FC = () => {
                                     </div>
                                 );
                             })}
-                        </div>
-                    )}
-
-                    {/* 4. MAP VIEW */}
-                    {viewMode === 'MAP' && (
-                        <div className="h-full w-full relative z-0 rounded-[24px] overflow-hidden shadow-sm border border-slate-200">
-                            <MapView 
-                                listings={filteredListings} 
-                                onNavigate={handleNavigate} 
-                                formatCurrency={formatCurrency} 
-                                formatUnitPrice={formatUnitPrice}
-                                t={t}
-                                language={language}
-                            />
                         </div>
                     )}
 
