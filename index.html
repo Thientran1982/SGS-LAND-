@@ -30,16 +30,24 @@
 
     <style>
       :root {
-        /* --- DESIGN TOKENS --- */
-        --bg-app: #FAFAFA; 
+        /* --- DESIGN TOKENS (Light Mode) --- */
+        --bg-app: #F1F5F9;
         --bg-surface: #FFFFFF;
-        --glass-surface: rgba(255, 255, 255, 0.6);
-        --glass-border: rgba(255, 255, 255, 0.6);
-        --text-primary: #09090B;   
-        --text-secondary: #52525B; 
+        --bg-elevated: #FFFFFF;
+        --glass-surface: rgba(255, 255, 255, 0.70);
+        --glass-surface-hover: rgba(241, 245, 249, 0.90);
+        --glass-border: rgba(226, 232, 240, 1);
+        --text-primary: #0F172A;
+        --text-secondary: #475569;
+        --text-tertiary: #94A3B8;
+        --text-muted: #CBD5E1;
         --primary-600: #4F46E5;
         --rose-500: #F43F5E;
-        
+        --color-success: #10B981;
+        --color-warning: #F59E0B;
+        --color-danger: #F43F5E;
+        --color-info: #3B82F6;
+
         /* Aurora Gradients */
         --aurora-1: #E0E7FF; 
         --aurora-2: #FAE8FF;
@@ -47,13 +55,22 @@
       }
 
       .dark {
-        --bg-app: #050505;
-        --bg-surface: #121212;     
-        --glass-surface: rgba(20, 20, 20, 0.6);
-        --glass-border: rgba(255, 255, 255, 0.08);
-        --text-primary: #FAFAFA;   
-        --text-secondary: #A1A1AA; 
-        
+        --bg-app: #0F172A;
+        --bg-surface: #1E293B;
+        --bg-elevated: #1E293B;
+        --glass-surface: rgba(30, 41, 59, 0.80);
+        --glass-surface-hover: rgba(51, 65, 85, 0.90);
+        --glass-border: rgba(51, 65, 85, 1);
+        --text-primary: #F1F5F9;
+        --text-secondary: #94A3B8;
+        --text-tertiary: #64748B;
+        --text-muted: #475569;
+        --primary-600: #6366F1;
+        --color-success: #34D399;
+        --color-warning: #FBBF24;
+        --color-danger: #FB7185;
+        --color-info: #60A5FA;
+
         --aurora-1: #1e1b4b; 
         --aurora-2: #312e81; 
         --aurora-3: #0f172a;
