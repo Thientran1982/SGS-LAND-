@@ -63,23 +63,22 @@ export const KnowledgeBase: React.FC = () => {
 
         setIsUploading(true);
         try {
-            // Simulate upload delay for better UX
-            await new Promise(resolve => setTimeout(resolve, 800));
-            
+            const uploadResult = await db.uploadFiles([file]);
+            const uploaded = uploadResult.files[0];
+
             let type: 'PDF' | 'DOCX' | 'TXT' = 'TXT';
             if (file.name.toLowerCase().endsWith('.pdf')) type = 'PDF';
             else if (file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc')) type = 'DOCX';
 
-            const dummyDoc: KnowledgeDocument = {
-                id: `doc_${Date.now()}`,
+            const doc = await db.createDocument({
                 title: file.name,
-                type: type as any,
+                type,
+                content: '',
+                status: 'ACTIVE',
+                fileUrl: uploaded.url,
                 sizeKb: Math.round(file.size / 1024),
-                createdAt: new Date().toISOString(),
-                content: t('knowledge.mock_content') || 'Nội dung mô phỏng'
-            };
-            await db.createDocument(dummyDoc);
-            setDocs(prev => [dummyDoc, ...prev]);
+            });
+            setDocs(prev => [doc, ...prev]);
             notify(t('knowledge.upload_success') || 'Tải lên thành công', 'success');
         } catch (error) {
             notify(t('common.error') || 'Đã xảy ra lỗi', 'error');

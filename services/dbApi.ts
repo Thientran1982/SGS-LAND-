@@ -778,6 +778,32 @@ class DatabaseApiClient {
     return this.createListing({ ...data, title: `${data.title} (Copy)` });
   }
 
+  async uploadFiles(files: File[]): Promise<{ files: { filename: string; originalName: string; mimetype: string; size: number; url: string }[] }> {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(err.error || 'Upload failed');
+    }
+    return res.json();
+  }
+
+  async deleteUploadedFile(filename: string): Promise<void> {
+    const res = await fetch(`/api/upload/${encodeURIComponent(filename)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Delete failed' }));
+      throw new Error(err.error || 'Delete failed');
+    }
+  }
+
   async addToFavorites(listingId: string) {
     return this.toggleFavorite(listingId);
   }

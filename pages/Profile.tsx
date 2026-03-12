@@ -260,12 +260,12 @@ export const Profile: React.FC = () => {
         setMessage(null);
     }, [user]);
 
-    const handleAvatarUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Validations
             if (!file.type.startsWith('image/')) {
                 setMessage({ text: t('profile.error_image_only'), type: 'error' });
+                if (fileInputRef.current) fileInputRef.current.value = '';
                 return;
             }
             if (file.size > CONSTANTS.MAX_AVATAR_SIZE_BYTES) {
@@ -275,22 +275,18 @@ export const Profile: React.FC = () => {
             }
 
             setUploading(true);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result as string;
-                setFormData(prev => ({ ...prev, avatar: base64 }));
+            try {
+                const result = await db.uploadFiles([file]);
+                const url = result.files[0].url;
+                setFormData(prev => ({ ...prev, avatar: url }));
                 setMessage({ text: t('profile.msg_avatar_selected'), type: 'success' });
+            } catch (err: any) {
+                setMessage({ text: err.message || t('profile.error_read_file'), type: 'error' });
+            } finally {
                 setUploading(false);
-            };
-            reader.onerror = () => {
-                setMessage({ text: t('profile.error_read_file'), type: 'error' });
-                setUploading(false);
-            };
-            // Simulate network delay for better UX
-            setTimeout(() => reader.readAsDataURL(file), 500);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            }
         }
-        // Always clear input to allow re-selecting same file if needed
-        if (fileInputRef.current) fileInputRef.current.value = '';
     }, [t]);
 
     const handleRequestEmailChange = () => {

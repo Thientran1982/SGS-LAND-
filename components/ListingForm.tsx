@@ -60,8 +60,10 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const [images, setImages] = useState<string[]>([]);
     const [projects, setProjects] = useState<{value: string, label: string}[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isDragging, setIsDragging] = useState(false);
+    const [dragIdx, setDragIdx] = useState<number | null>(null);
     
     // Split Price State for UX
     const [priceShort, setPriceShort] = useState<string>('');
@@ -119,30 +121,31 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         }
     }, [isOpen, initialData]);
 
+    const uploadImageFiles = async (files: File[]) => {
+        const imageFiles = files.filter(f => f.type.startsWith('image/'));
+        if (imageFiles.length === 0) return;
+
+        if (images.length + imageFiles.length > 10) {
+            alert(t('inventory.max_images'));
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const result = await db.uploadFiles(imageFiles);
+            const urls = result.files.map(f => f.url);
+            setImages(prev => [...prev, ...urls]);
+        } catch (err: any) {
+            alert(err.message || t('common.error'));
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            const files: File[] = Array.from(e.target.files);
-            
-            // Limit check
-            if (images.length + files.length > 5) {
-                alert(t('inventory.max_images')); 
-                // Clear input
-                if (fileInputRef.current) fileInputRef.current.value = '';
-                return;
-            }
-
-            // Process files
-            const newImagesPromises = files.map(file => new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.readAsDataURL(file);
-            }));
-
-            const newImages = await Promise.all(newImagesPromises);
-            setImages(prev => [...prev, ...newImages]);
-            
-            // Clear input so same file can be selected again if needed
-            if (fileInputRef.current) fileInputRef.current.value = '';
+            await uploadImageFiles(Array.from(e.target.files));
         }
     };
 
@@ -159,26 +162,20 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
-        
+
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            // Fix: Explicitly cast Array.from result to File[] to avoid 'unknown[]' error
             const droppedFiles = Array.from(e.dataTransfer.files) as File[];
-            const files = droppedFiles.filter(f => f.type.startsWith('image/'));
-            
-            if (images.length + files.length > 5) {
-                alert(t('inventory.max_images'));
-                return;
-            }
-
-            const newImagesPromises = files.map(file => new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.readAsDataURL(file);
-            }));
-
-            const newImages = await Promise.all(newImagesPromises);
-            setImages(prev => [...prev, ...newImages]);
+            await uploadImageFiles(droppedFiles);
         }
+    };
+
+    const handleImageReorder = (fromIdx: number, toIdx: number) => {
+        setImages(prev => {
+            const updated = [...prev];
+            const [moved] = updated.splice(fromIdx, 1);
+            updated.splice(toIdx, 0, moved);
+            return updated;
+        });
     };
 
     const removeImage = (index: number) => {
@@ -587,25 +584,39 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 </div>
                                 <div className="grid grid-cols-3 gap-3 mb-4 max-h-[240px] overflow-y-auto no-scrollbar">
                                     {images.map((img, idx) => (
-                                        <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-100">
+                                        <div 
+                                            key={img + idx} 
+                                            className={`relative aspect-square rounded-xl overflow-hidden group border ${dragIdx === idx ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-slate-100'}`}
+                                            draggable
+                                            onDragStart={() => setDragIdx(idx)}
+                                            onDragOver={(e) => { e.preventDefault(); }}
+                                            onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (dragIdx !== null && dragIdx !== idx) handleImageReorder(dragIdx, idx); setDragIdx(null); }}
+                                            onDragEnd={() => setDragIdx(null)}
+                                        >
                                             <img src={img} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
-                                            {/* Fix: Added type="button" to prevent form submission */}
+                                            {idx === 0 && <span className="absolute top-1 left-1 bg-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">{t('inventory.cover') || 'Cover'}</span>}
                                             <button type="button" onClick={() => removeImage(idx)} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 shadow-sm">
                                                 {ICONS.DELETE}
                                             </button>
                                         </div>
                                     ))}
-                                    {/* Drag and Drop Zone */}
-                                    <div 
-                                        onClick={() => fileInputRef.current?.click()} 
-                                        onDragOver={handleDragOver}
-                                        onDragLeave={handleDragLeave}
-                                        onDrop={handleDrop}
-                                        className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 text-slate-400 hover:border-indigo-400 hover:text-indigo-500 bg-slate-50 hover:bg-indigo-50'}`}
-                                    >
-                                        {ICONS.IMAGE_ADD}
-                                        <span className="text-[10px] font-bold mt-2 text-center px-2">{t('inventory.drag_drop')}</span>
-                                    </div>
+                                    {isUploading && (
+                                        <div className="aspect-square rounded-xl border border-slate-200 flex items-center justify-center bg-slate-50">
+                                            <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                        </div>
+                                    )}
+                                    {images.length < 10 && !isUploading && (
+                                        <div 
+                                            onClick={() => fileInputRef.current?.click()} 
+                                            onDragOver={handleDragOver}
+                                            onDragLeave={handleDragLeave}
+                                            onDrop={handleDrop}
+                                            className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 text-slate-400 hover:border-indigo-400 hover:text-indigo-500 bg-slate-50 hover:bg-indigo-50'}`}
+                                        >
+                                            {ICONS.IMAGE_ADD}
+                                            <span className="text-[10px] font-bold mt-2 text-center px-2">{t('inventory.drag_drop')}</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <input type="file" multiple accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
                             </div>

@@ -60,6 +60,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `knowledgeRoutes.ts` — `/api/knowledge/*` (documents, articles)
 - `scoringRoutes.ts` — `/api/scoring/*` (config get/update)
 - `enterpriseRoutes.ts` — `/api/enterprise/*` (config, audit-logs, test-smtp, send-test-email)
+- `uploadRoutes.ts` — `/api/upload` (POST multi-file upload with multer, DELETE by filename; tenant-isolated storage in `uploads/<tenantId>/`)
 - `billingRoutes.ts` — `/api/billing/*` (subscription, upgrade, usage, invoices)
 - `sessionRoutes.ts` — `/api/sessions/*` (list, revoke)
 - `aiGovernanceRoutes.ts` — `/api/ai/governance/*` (safety-logs, prompt-templates, config)
@@ -79,6 +80,15 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 ### Services (`server/services/`)
 - `emailService.ts` — Nodemailer-based email sending with per-tenant SMTP config from enterprise_config. Falls back to console logging when SMTP not configured. Provides: sendEmail, sendPasswordResetEmail, sendWelcomeEmail, sendSequenceEmail, testSmtpConnection.
+
+### File Upload System
+- **Endpoint**: `POST /api/upload` (multipart/form-data, field name: `files`, max 10 files, 10MB each)
+- **Storage**: Tenant-isolated at `uploads/<tenantId>/` with randomized filenames
+- **Allowed types**: JPEG, PNG, WebP, GIF, PDF, DOCX, DOC
+- **Static serving**: `GET /uploads/<tenantId>/<filename>` served via express.static
+- **Delete**: `DELETE /api/upload/:filename` removes file from tenant directory
+- **Frontend integration**: `db.uploadFiles(files)` / `db.deleteUploadedFile(filename)` in dbApi.ts
+- **Used by**: ListingForm (property images, max 10, drag-to-reorder), KnowledgeBase (document upload), Profile (avatar upload)
 
 ### Database Tables (26 total)
 **Core CRM**: users, leads, listings, proposals, contracts, interactions, tasks, favorites
