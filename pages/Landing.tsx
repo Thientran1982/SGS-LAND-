@@ -228,46 +228,39 @@ export const Landing: React.FC = () => {
     return (
         <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden min-h-screen transition-colors duration-300">
             
-            {/* NAVBAR */}
-            <nav className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 z-50 w-full px-4 flex justify-center pointer-events-none">
-                <div className={`pointer-events-auto relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex items-center justify-between p-2 rounded-full border ${scrolled ? 'bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-slate-200/50 dark:border-white/10 shadow-2xl w-full max-w-5xl' : 'bg-transparent border-transparent w-full max-w-7xl'}`}>
-                    
-                    <div className="flex items-center gap-2 md:gap-3 pl-2 cursor-pointer group z-10 flex-none md:flex-1" onClick={() => navigateTo('')}>
-                        <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 group-hover:scale-105 transition-transform">
-                            <Logo className="w-5 h-5 md:w-6 md:h-6 text-indigo-600 dark:text-indigo-400" />
+            {/* NAVBAR — only shown for guests (when logged in, Layout's CommandCenter handles navigation) */}
+            {!currentUser && (
+                <nav className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 z-50 w-full px-4 flex justify-center pointer-events-none">
+                    <div className={`pointer-events-auto relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex items-center justify-between p-2 rounded-full border ${scrolled ? 'bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-slate-200/50 dark:border-white/10 shadow-2xl w-full max-w-5xl' : 'bg-transparent border-transparent w-full max-w-7xl'}`}>
+                        
+                        <div className="flex items-center gap-2 md:gap-3 pl-2 cursor-pointer group z-10 flex-none md:flex-1" onClick={() => navigateTo('')}>
+                            <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 group-hover:scale-105 transition-transform">
+                                <Logo className="w-5 h-5 md:w-6 md:h-6 text-indigo-600 dark:text-indigo-400" />
+                            </div>
+                            <span className={`font-bold text-base md:text-lg tracking-tight transition-opacity text-slate-900 dark:text-white`}>SGS<span className="text-slate-400">LAND</span></span>
                         </div>
-                        <span className={`font-bold text-base md:text-lg tracking-tight transition-opacity text-slate-900 dark:text-white`}>SGS<span className="text-slate-400">LAND</span></span>
-                    </div>
 
-                    <div className="hidden md:flex items-center gap-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-full border border-slate-200/50 dark:border-slate-700 backdrop-blur-md shadow-sm pointer-events-auto flex-none 
-                        md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-20">
-                        <NavPill onClick={() => navigateTo(ROUTES.SEARCH)}>{t('nav.public_market')}</NavPill>
-                        <NavPill onClick={() => navigateTo(ROUTES.AI_VALUATION)}>{t('footer.link_valuation')}</NavPill>
-                        <NavPill onClick={() => navigateTo(ROUTES.CRM_SOLUTION)}>{t('footer.link_crm')}</NavPill>
-                    </div>
+                        <div className="hidden md:flex items-center gap-1 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-full border border-slate-200/50 dark:border-slate-700 backdrop-blur-md shadow-sm pointer-events-auto flex-none 
+                            md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-20">
+                            <NavPill onClick={() => navigateTo(ROUTES.SEARCH)}>{t('nav.public_market')}</NavPill>
+                            <NavPill onClick={() => navigateTo(ROUTES.AI_VALUATION)}>{t('footer.link_valuation')}</NavPill>
+                            <NavPill onClick={() => navigateTo(ROUTES.CRM_SOLUTION)}>{t('footer.link_crm')}</NavPill>
+                        </div>
 
-                    <div className="flex items-center gap-1 md:gap-2 pr-1 z-10 flex-none ml-auto md:flex-1 md:justify-end">
-                        {currentUser ? (
-                            <button onClick={() => navigateTo(ROUTES.DASHBOARD)} className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 lg:px-6 py-2.5 lg:py-2.5 rounded-full text-[10px] lg:text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/10 active:scale-95 flex items-center gap-2 whitespace-nowrap min-h-[44px]">
-                                {t('menu.dashboard')} <span className="hidden sm:inline">{ICONS.ARROW_RIGHT}</span>
+                        <div className="flex items-center gap-1 md:gap-2 pr-1 z-10 flex-none ml-auto md:flex-1 md:justify-end">
+                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-3 lg:px-5 py-2 lg:py-2.5 text-[10px] lg:text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden lg:flex min-h-[44px] items-center">
+                                {t('auth.btn_login')}
                             </button>
-                        ) : (
-                            <>
-                                <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-3 lg:px-5 py-2 lg:py-2.5 text-[10px] lg:text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden lg:flex min-h-[44px] items-center">
-                                    {t('auth.btn_login')}
-                                </button>
-                                
-                                <button onClick={() => navigateTo(ROUTES.LOGIN)} className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 lg:px-6 py-2.5 lg:py-2.5 rounded-full text-[10px] lg:text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/10 active:scale-95 flex items-center gap-2 whitespace-nowrap min-h-[44px]">
-                                    {t('landing.cta_btn_register')} <span className="hidden sm:inline">{ICONS.ARROW_RIGHT}</span>
-                                </button>
-                            </>
-                        )}
+                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 lg:px-6 py-2.5 lg:py-2.5 rounded-full text-[10px] lg:text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/10 active:scale-95 flex items-center gap-2 whitespace-nowrap min-h-[44px]">
+                                {t('landing.cta_btn_register')} <span className="hidden sm:inline">{ICONS.ARROW_RIGHT}</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </nav>
+                </nav>
+            )}
 
             {/* HERO SECTION */}
-            <section className="relative pt-32 md:pt-40 pb-20 md:pb-32 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center items-center">
+            <section className={`relative ${currentUser ? 'pt-8 md:pt-12' : 'pt-32 md:pt-40'} pb-20 md:pb-32 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center items-center`}>
                 {/* Background Decor */}
                 <motion.div 
                     animate={{ 
