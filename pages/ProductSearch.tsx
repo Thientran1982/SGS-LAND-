@@ -177,7 +177,12 @@ export const ProductSearch: React.FC = () => {
                 setListings(res.data.filter(l => l.status === ListingStatus.AVAILABLE || l.status === ListingStatus.OPENING || l.status === ListingStatus.BOOKING));
                 if (user) {
                     const favs = await db.getFavorites(1, 1000);
-                    setFavorites(new Set(favs.data.map(f => f.id)));
+                    setFavorites(new Set(favs.data.map((f: any) => f.id)));
+                } else {
+                    try {
+                        const stored = JSON.parse(localStorage.getItem('sgs_favorites') || '[]');
+                        setFavorites(new Set(stored));
+                    } catch {}
                 }
             } catch (e) {
                 console.error(e);
@@ -231,12 +236,19 @@ export const ProductSearch: React.FC = () => {
         setToast({ msg: isFav ? t('favorites.removed') || "Đã xóa khỏi yêu thích" : t('favorites.added') || "Đã thêm vào yêu thích", type: 'success' });
         setTimeout(() => setToast(null), 2000);
 
-        try {
-            if (isFav) await db.removeFromFavorites(id);
-            else await db.addToFavorites(id);
-        } catch (e) {
-            console.error(e);
-            setFavorites(favorites);
+        if (currentUser) {
+            try {
+                await db.toggleFavorite(id);
+            } catch (e) {
+                console.error(e);
+                setFavorites(favorites);
+            }
+        } else {
+            try {
+                const stored = JSON.parse(localStorage.getItem('sgs_favorites') || '[]') as string[];
+                const updated = isFav ? stored.filter((x) => x !== id) : [...stored, id];
+                localStorage.setItem('sgs_favorites', JSON.stringify(updated));
+            } catch {}
         }
     };
 
