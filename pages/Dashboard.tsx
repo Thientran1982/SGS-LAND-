@@ -389,7 +389,7 @@ export const Dashboard: React.FC = () => {
                 
                 {/* TIER 1: North Star Metrics (KPI Cards) — Unified Layout */}
                 {/* 1. Revenue (Doanh Thu Hoa Hồng) */}
-                <div className="md:col-span-1 lg:col-span-1 overflow-hidden">
+                <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
                     <BentoCard 
                         title={t('dash.revenue_title')} 
                         className="h-full min-h-[180px] bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none shadow-xl [&_h3]:!text-indigo-200 overflow-hidden"
@@ -414,7 +414,7 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* 2. Pipeline Value (Giá Trị Pipeline) */}
-                <div className="md:col-span-1 lg:col-span-1 overflow-hidden">
+                <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
                     <BentoCard title={t('dash.pipeline_value') || "Pipeline Value"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
