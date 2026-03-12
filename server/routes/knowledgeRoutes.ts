@@ -29,11 +29,12 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       let extractedContent = content || '';
       if (fileUrl && !extractedContent) {
         try {
+          const tenantId = user.tenantId;
           const relativePath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
           const filePath = path.join(process.cwd(), relativePath);
           const resolved = path.resolve(filePath);
-          const uploadsDir = path.resolve(path.join(process.cwd(), 'uploads'));
-          if (resolved.startsWith(uploadsDir)) {
+          const tenantDir = path.resolve(path.join(process.cwd(), 'uploads', tenantId));
+          if (resolved.startsWith(tenantDir + path.sep) || resolved.startsWith(tenantDir + '/')) {
             extractedContent = await extractTextFromFile(resolved);
           }
         } catch (err) {

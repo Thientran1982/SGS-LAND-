@@ -10,7 +10,7 @@ const MAX_FILES = 10;
 
 const ALLOWED_MIMES: Record<string, string[]> = {
   image: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-  document: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'],
+  document: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'],
 };
 
 const ALL_ALLOWED = [...ALLOWED_MIMES.image, ...ALLOWED_MIMES.document];
@@ -23,6 +23,7 @@ const MIME_TO_EXT: Record<string, string> = {
   'application/pdf': '.pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
   'application/msword': '.doc',
+  'text/plain': '.txt',
 };
 
 const SAFE_FILENAME_REGEX = /^[a-zA-Z0-9._-]+$/;
@@ -37,6 +38,7 @@ const EXT_TO_CONTENT_TYPE: Record<string, string> = {
   '.pdf': 'application/pdf',
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   '.doc': 'application/msword',
+  '.txt': 'text/plain',
 };
 
 const storage = multer.diskStorage({
