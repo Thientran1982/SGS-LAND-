@@ -192,7 +192,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
     // 1. Guard Clause: Essential for crash prevention if data is malformed
     if (!item) return null;
 
-    const [viewCount, setViewCount] = useState(item.viewCount || 0);
+    const viewCount = item.viewCount || 0;
     const isProject = item.type === PropertyType.PROJECT;
 
     const handleCardClick = useCallback(() => {

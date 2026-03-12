@@ -237,12 +237,13 @@ export class ListingRepository extends BaseRepository {
     });
   }
 
-  async incrementViewCount(tenantId: string, id: string): Promise<void> {
+  async incrementViewCount(tenantId: string, id: string): Promise<number> {
     return this.withTenant(tenantId, async (client) => {
-      await client.query(
-        `UPDATE listings SET view_count = view_count + 1 WHERE id = $1`,
+      const result = await client.query(
+        `UPDATE listings SET view_count = view_count + 1 WHERE id = $1 RETURNING view_count`,
         [id]
       );
+      return result.rows[0]?.view_count ?? 0;
     });
   }
 }
