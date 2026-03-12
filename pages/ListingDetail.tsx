@@ -1231,7 +1231,11 @@ export const ListingDetail: React.FC = () => {
                             <div className="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">
                                 {listing.type === PropertyType.PROJECT ? t('inventory.min_price') : t('inventory.label_price')}
                             </div>
-                            <div className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight break-words">{formatCurrency(listing.price)}</div>
+                            <div className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                                {formatCompactNumber(listing.price)}
+                                <span className="text-lg font-bold text-slate-500 ml-1">₫</span>
+                            </div>
+                            <div className="text-xs text-slate-400 mt-0.5 tabular-nums">{formatCurrency(listing.price)}</div>
                             {listing.area > 0 && listing.type !== PropertyType.PROJECT && (
                                 <div className="text-sm font-medium text-slate-500 mt-1 italic">
                                     ~ {formatUnitPrice(listing.price, listing.area, t)}
