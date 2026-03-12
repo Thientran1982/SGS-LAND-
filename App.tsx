@@ -156,6 +156,7 @@ const PUBLIC_ROUTES = new Set([
     ROUTES.TERMS,
     ROUTES.COOKIES,
     ROUTES.LOGIN,
+    ROUTES.RESET_PASSWORD,
     ROUTES.PUBLIC_PREFIX,
     ROUTES.LISTING
 ]);
@@ -354,7 +355,16 @@ const AppShell: React.FC = () => {
              return <LoadingScreen />; 
         }
 
-        // Special Case: Login Page
+        if (route.base === ROUTES.RESET_PASSWORD) {
+            const tokenFromUrl = route.params[0] || window.location.hash.match(/token=([a-f0-9]+)/)?.[1] || '';
+            if (tokenFromUrl) {
+                window.location.hash = `#/${ROUTES.LOGIN}?reset_token=${tokenFromUrl}`;
+                return <LoadingScreen />;
+            }
+            navigate(ROUTES.LOGIN);
+            return <LoadingScreen />;
+        }
+
         if (route.base === ROUTES.LOGIN) {
             return (
                 <AnimatePresence mode="wait">

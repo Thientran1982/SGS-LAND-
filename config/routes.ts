@@ -46,7 +46,8 @@ export const ROUTES = {
     SECURITY: 'security',
     AI_GOVERNANCE: 'ai-governance',
     PROFILE: 'profile',
-    MOBILE_APP: 'mobile-app'
+    MOBILE_APP: 'mobile-app',
+    RESET_PASSWORD: 'reset-password'
 } as const;
 
 export const FULL_HEIGHT_PAGES = new Set([ROUTES.INBOX, ROUTES.LEADS]);

@@ -220,6 +220,10 @@ async function startServer() {
       const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
       res.cookie('token', token, cookieOptions);
       res.json({ message: 'Registered successfully', user: userRepository.toPublicUser(dbUser), token });
+
+      emailService.sendWelcomeEmail(tenantId, email, dbUser.name).catch(err => {
+        logger.error(`Failed to send welcome email to ${email}: ${err.message}`);
+      });
     } catch (error) {
       console.error('Register error:', error);
       res.status(500).json({ error: 'Registration failed' });
@@ -259,7 +263,7 @@ async function startServer() {
       const baseUrl = process.env.REPLIT_DEV_DOMAIN
         ? `https://${process.env.REPLIT_DEV_DOMAIN}`
         : `${req.protocol}://${req.get('host')}`;
-      const resetUrl = `${baseUrl}/#/login?reset_token=${rawToken}`;
+      const resetUrl = `${baseUrl}/#/reset-password/${rawToken}`;
 
       const emailResult = await emailService.sendPasswordResetEmail(tenantId, email, resetUrl, user.name);
       if (!emailResult.success) {
