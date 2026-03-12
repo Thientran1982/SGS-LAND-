@@ -390,13 +390,13 @@ export const Dashboard: React.FC = () => {
                 {/* TIER 1: North Star Metrics (KPI Cards) — Unified Layout */}
                 {/* 1. Revenue (Doanh Thu Hoa Hồng) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard 
-                        title={t('dash.revenue_title')} 
+                    <BentoCard
+                        title={t('dash.revenue_title')}
                         className="h-full min-h-[180px] bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none shadow-xl [&_h3]:!text-indigo-200 overflow-hidden"
                     >
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
-                                <div className="text-2xl sm:text-3xl font-black tracking-tight mt-2 text-white break-words">
+                                <div className="text-3xl font-black tracking-tight mt-2 text-white break-words">
                                     {formatCompactNumber(analytics.revenue || 0)}
                                 </div>
                                 <div className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider mt-1">
@@ -404,10 +404,11 @@ export const Dashboard: React.FC = () => {
                                 </div>
                             </div>
                             <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-xs flex items-center gap-2">
-                                <span className={`font-bold ${(analytics.revenueDelta ?? 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                                    {(analytics.revenueDelta ?? 0) >= 0 ? '+' : ''}{analytics.revenueDelta || 0}%
+                                <span className={`font-bold flex items-center gap-1 ${(analytics.revenueDelta ?? 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                                    {(analytics.revenueDelta ?? 0) >= 0 ? ICONS.TREND_UP : ICONS.TREND_DOWN}
+                                    {Math.abs(analytics.revenueDelta || 0)}%
                                 </span>
-                                <span className="opacity-90 font-medium">{t('dash.vs_last_period')}</span>
+                                <span className="text-white/70 font-medium">{t('dash.vs_last_period')}</span>
                             </div>
                         </div>
                     </BentoCard>
@@ -418,7 +419,7 @@ export const Dashboard: React.FC = () => {
                     <BentoCard title={t('dash.pipeline_value') || "Pipeline Value"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
-                                <div className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight mt-2 break-words">
+                                <div className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight mt-2 break-words">
                                     {formatCompactNumber(analytics.pipelineValue || 0)}
                                 </div>
                                 <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
@@ -433,24 +434,24 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* 3. AI Deflection Rate (Tỷ Lệ Tự Động Hóa AI) */}
-                <div className="md:col-span-1 lg:col-span-1">
+                <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
                     <BentoCard title={t('dash.ai_deflection_rate') || "AI Deflection Rate"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div className="relative h-14 w-14 shrink-0">
-                                    <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
-                                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" className="text-emerald-100 dark:text-emerald-900/30" strokeWidth="5" />
-                                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" className="text-emerald-500" strokeWidth="5" strokeLinecap="round"
-                                            strokeDasharray={`${((analytics.aiDeflectionRate || 0) / 100) * 2 * Math.PI * 24} ${2 * Math.PI * 24}`} />
-                                    </svg>
-                                    <div className="absolute inset-0 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                                        {ICONS.AI}
+                            <div>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <div className="relative h-10 w-10 shrink-0">
+                                        <svg className="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
+                                            <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-emerald-100 dark:text-emerald-900/30" strokeWidth="4" />
+                                            <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" className="text-emerald-500" strokeWidth="4" strokeLinecap="round"
+                                                strokeDasharray={`${((analytics.aiDeflectionRate || 0) / 100) * 2 * Math.PI * 16} ${2 * Math.PI * 16}`} />
+                                        </svg>
+                                        <div className="absolute inset-0 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                            {ICONS.AI}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="min-w-0">
                                     <div className="text-3xl font-extrabold text-slate-800 dark:text-white">{analytics.aiDeflectionRate || 0}%</div>
-                                    <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-0.5 truncate">{t('dash.resolved_by_ai') || "Xử lý bởi AI"}</div>
                                 </div>
+                                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai') || "Xử lý bởi AI"}</div>
                             </div>
                             <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 text-xs flex items-center gap-2">
                                 <TrendIndicator value={analytics.aiDeflectionRateDelta || 0} label={t('dash.vs_last_period') || "vs last period"} />
@@ -460,11 +461,11 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* 4. Sales Velocity (Tốc Độ Bán Hàng) */}
-                <div className="md:col-span-1 lg:col-span-1">
-                    <BentoCard title={t('dash.sales_velocity') || "Sales Velocity"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10">
+                <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
+                    <BentoCard title={t('dash.sales_velocity') || "Sales Velocity"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
-                                <div className="text-3xl font-extrabold text-slate-800 dark:text-white">{analytics.salesVelocity || 0}</div>
+                                <div className="text-3xl font-extrabold text-slate-800 dark:text-white mt-2">{analytics.salesVelocity || 0}</div>
                                 <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-1">{t('dash.days_to_close') || "Ngày để chốt deal"}</div>
                             </div>
                             <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 text-xs flex items-center gap-2">
@@ -527,7 +528,7 @@ export const Dashboard: React.FC = () => {
                     </BentoCard>
                 </div>
 
-                <div className="md:col-span-2 lg:col-span-1 h-[420px]">
+                <div className="md:col-span-2 lg:col-span-1 min-h-[420px]">
                     <BentoCard title={t('dash.activity_title')} className="h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col">
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-2">
                             <div className="flex flex-col gap-2">
