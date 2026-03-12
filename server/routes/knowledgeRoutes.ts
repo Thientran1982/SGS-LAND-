@@ -23,7 +23,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.post('/documents', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const { title, type, content, status, fileUrl } = req.body;
+      const { title, type, content, status, fileUrl, sizeKb } = req.body;
       if (!title) return res.status(400).json({ error: 'Title is required' });
 
       let extractedContent = content || '';
@@ -48,6 +48,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
         content: extractedContent,
         status,
         fileUrl,
+        sizeKb,
       });
       res.status(201).json(doc);
     } catch (error) {

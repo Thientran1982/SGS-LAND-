@@ -356,6 +356,7 @@ export async function initializeDatabase() {
       content TEXT,
       status VARCHAR(50) DEFAULT 'ACTIVE',
       file_url TEXT,
+      size_kb INTEGER,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
@@ -469,6 +470,10 @@ export async function initializeDatabase() {
     `);
     await client.query('CREATE INDEX IF NOT EXISTS idx_prt_token ON password_reset_tokens(token);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_prt_user ON password_reset_tokens(user_id);');
+
+    try {
+      await client.query('ALTER TABLE documents ADD COLUMN IF NOT EXISTS size_kb INTEGER;');
+    } catch (e) { /* column may already exist */ }
 
     console.log('Creating indexes...');
     const indexes = [
