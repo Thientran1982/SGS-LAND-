@@ -135,14 +135,12 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
 //  MAIN COMPONENT
 // -----------------------------------------------------------------------------
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  // Enhanced View State: Added 'FORGOT_VERIFY' for better UX
   const [view, setView] = useState<'LOGIN' | 'REGISTER' | 'FORGOT_REQUEST' | 'FORGOT_VERIFY'>('LOGIN');
   
-  // Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [company, setCompany] = useState(''); // New B2B Field
+  const [company, setCompany] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
@@ -163,6 +161,14 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   useEffect(() => {
       const savedEmail = localStorage.getItem('sgs_last_email');
       if (savedEmail) setEmail(savedEmail);
+
+      const hash = window.location.hash;
+      const match = hash.match(/reset_token=([a-f0-9]+)/);
+      if (match) {
+          setOtp(match[1]);
+          setView('FORGOT_VERIFY');
+          window.history.replaceState(null, '', `${window.location.pathname}#/${ROUTES.LOGIN}`);
+      }
   }, []);
 
   // Real-time B2B Email Check
@@ -227,29 +233,24 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     
     try {
-      // 1. FORGOT PASSWORD REQUEST
       const trimmedEmail = email.trim();
       if (view === 'FORGOT_REQUEST') {
-          const token = await db.requestPasswordReset(trimmedEmail);
-          // In real app, token goes to email. Here we simulate it.
-          console.info(`[DEV] Recovery Token for ${trimmedEmail}: ${token}`);
+          await db.requestPasswordReset(trimmedEmail);
           setSuccessMsg(t('auth.success_reset'));
-          // Auto transition to verify step after delay
-          setTimeout(() => {
-              setSuccessMsg('');
-              setView('FORGOT_VERIFY');
-          }, 1500);
+          setLoading(false);
           return;
       }
 
-      // 2. FORGOT PASSWORD VERIFY & RESET
       if (view === 'FORGOT_VERIFY') {
           await db.resetPassword(otp, newPassword);
-          alert(t('auth.pass_changed_success'));
-          setView('LOGIN');
-          setPassword('');
-          setNewPassword('');
-          setOtp('');
+          setSuccessMsg(t('auth.pass_changed_success') || 'Password changed successfully!');
+          setTimeout(() => {
+              setSuccessMsg('');
+              setView('LOGIN');
+              setPassword('');
+              setNewPassword('');
+              setOtp('');
+          }, 2000);
           return;
       }
 
@@ -281,7 +282,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       setGlobalError(msg);
       triggerShake();
     } finally {
-      if (view !== 'FORGOT_REQUEST') setLoading(false);
+      setLoading(false);
     }
   };
 

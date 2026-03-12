@@ -188,12 +188,28 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
     const { t } = useTranslation();
     const [form, setForm] = useState(config.email);
     const [saving, setSaving] = useState(false);
+    const [testing, setTesting] = useState(false);
+    const [sendingTest, setSendingTest] = useState(false);
 
     const handleSave = async () => {
         setSaving(true);
         try { await db.saveEmailConfig(form); notify(t('common.success'), 'success'); onRefresh(); } 
         catch (e: any) { notify(e.message, 'error'); } 
         finally { setSaving(false); }
+    };
+
+    const handleTestConnection = async () => {
+        setTesting(true);
+        try { await db.testSmtpConnection(); notify('SMTP connection successful!', 'success'); }
+        catch (e: any) { notify(e.message || 'SMTP connection failed', 'error'); }
+        finally { setTesting(false); }
+    };
+
+    const handleSendTestEmail = async () => {
+        setSendingTest(true);
+        try { await db.sendTestEmail(); notify('Test email sent!', 'success'); }
+        catch (e: any) { notify(e.message || 'Failed to send test email', 'error'); }
+        finally { setSendingTest(false); }
     };
 
     return (
@@ -215,8 +231,20 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
                         <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_pass')}</label><input type="password" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} placeholder={CONSTANTS.MASK} /></div>
                     </div>
                 </div>
-                <div className="pt-2">
+                <div className="pt-2 flex flex-col gap-3">
                     <button onClick={handleSave} disabled={saving} className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-70 shadow-lg shadow-indigo-500/20">{saving ? t('auth.processing') : t('ent.email_save')}</button>
+                    {form.enabled && (
+                        <div className="flex gap-3">
+                            <button onClick={handleTestConnection} disabled={testing || !form.host} className="flex-1 py-2.5 border-2 border-indigo-200 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2">
+                                {testing && <div className="w-3 h-3 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></div>}
+                                {testing ? 'Testing...' : 'Test Connection'}
+                            </button>
+                            <button onClick={handleSendTestEmail} disabled={sendingTest || !form.host} className="flex-1 py-2.5 border-2 border-emerald-200 text-emerald-600 font-bold rounded-xl hover:bg-emerald-50 transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2">
+                                {sendingTest && <div className="w-3 h-3 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin"></div>}
+                                {sendingTest ? 'Sending...' : 'Send Test Email'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -456,6 +456,20 @@ export async function initializeDatabase() {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        token VARCHAR(255) NOT NULL UNIQUE,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        used_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await client.query('CREATE INDEX IF NOT EXISTS idx_prt_token ON password_reset_tokens(token);');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_prt_user ON password_reset_tokens(user_id);');
+
     console.log('Creating indexes...');
     const indexes = [
       'CREATE INDEX IF NOT EXISTS idx_leads_tenant_stage ON leads(tenant_id, stage)',

@@ -678,11 +678,41 @@ class DatabaseApiClient {
   }
 
   async requestPasswordReset(email: string) {
-    return `reset_${Date.now()}`;
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to request password reset');
+    }
+    return (await res.json()).message;
   }
 
   async resetPassword(token: string, newPassword: string) {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ token, newPassword }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to reset password');
+    }
     return true;
+  }
+
+  async testSmtpConnection() {
+    const res = await api.post<any>('/api/enterprise/test-smtp', {});
+    return res;
+  }
+
+  async sendTestEmail(to?: string) {
+    const res = await api.post<any>('/api/enterprise/send-test-email', { to });
+    return res;
   }
 
   async authenticateViaSSO(email: string) {

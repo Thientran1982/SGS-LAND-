@@ -27,6 +27,7 @@ import { createRoutingRuleRoutes } from "./server/routes/routingRuleRoutes";
 import { createKnowledgeRoutes } from "./server/routes/knowledgeRoutes";
 import { createEnterpriseRoutes } from "./server/routes/enterpriseRoutes";
 import { createSequenceRoutes } from "./server/routes/sequenceRoutes";
+import { emailService } from "./server/services/emailService";
 import { createAiGovernanceRoutes } from "./server/routes/aiGovernanceRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
 import { createBillingRoutes } from "./server/routes/billingRoutes";
@@ -222,6 +223,93 @@ async function startServer() {
     } catch (error) {
       console.error('Register error:', error);
       res.status(500).json({ error: 'Registration failed' });
+    }
+  });
+
+  app.post("/api/auth/forgot-password", authRateLimit, async (req, res) => {
+    const uniformDelay = () => new Promise(r => setTimeout(r, 200 + Math.random() * 300));
+    try {
+      const email = req.body.email?.trim();
+      if (!email) return res.status(400).json({ error: 'Email is required' });
+
+      const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
+      const user = await userRepository.findByEmail(tenantId, email);
+
+      if (!user) {
+        await uniformDelay();
+        return res.json({ message: 'If an account exists, a reset link has been sent.' });
+      }
+
+      const crypto = await import('crypto');
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      await pool.query(
+        `UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL`,
+        [user.id]
+      );
+
+      await pool.query(
+        `INSERT INTO password_reset_tokens (tenant_id, user_id, token, expires_at)
+         VALUES ($1, $2, $3, $4)`,
+        [tenantId, user.id, tokenHash, expiresAt]
+      );
+
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : `${req.protocol}://${req.get('host')}`;
+      const resetUrl = `${baseUrl}/#/login?reset_token=${rawToken}`;
+
+      const emailResult = await emailService.sendPasswordResetEmail(tenantId, email, resetUrl, user.name);
+      if (!emailResult.success) {
+        logger.error(`Failed to send password reset email to ${email}: ${emailResult.error}`);
+      }
+
+      writeAuditLog(tenantId, user.id, 'PASSWORD_RESET_REQUEST', 'auth', user.id, { email }, req.ip);
+      await uniformDelay();
+      res.json({ message: 'If an account exists, a reset link has been sent.' });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ error: 'Failed to process request' });
+    }
+  });
+
+  app.post("/api/auth/reset-password", authRateLimit, async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password are required' });
+      if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+      const crypto = await import('crypto');
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+      const result = await pool.query(
+        `UPDATE password_reset_tokens SET used_at = NOW()
+         WHERE token = $1 AND used_at IS NULL AND expires_at > NOW()
+         RETURNING user_id`,
+        [tokenHash]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(400).json({ error: 'Invalid or expired reset token' });
+      }
+
+      const userId = result.rows[0].user_id;
+
+      const userResult = await pool.query(`SELECT tenant_id FROM users WHERE id = $1`, [userId]);
+      if (userResult.rows.length === 0) {
+        return res.status(400).json({ error: 'User not found' });
+      }
+      const tenantId = userResult.rows[0].tenant_id;
+
+      await userRepository.updatePassword(tenantId, userId, newPassword);
+
+      writeAuditLog(tenantId, userId, 'PASSWORD_RESET_COMPLETE', 'auth', userId, undefined, req.ip);
+      res.json({ message: 'Password has been reset successfully' });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ error: 'Failed to reset password' });
     }
   });
 

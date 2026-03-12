@@ -11,7 +11,8 @@ AI-powered real estate CRM and management platform for the Vietnamese market.
 - **Database**: PostgreSQL with Row Level Security (multi-tenancy), 25 tables
 - **Queue**: BullMQ (falls back to in-memory if no Redis)
 - **AI**: Google Gemini via `@google/genai`
-- **Auth**: JWT with httpOnly cookies, bcrypt password hashing
+- **Auth**: JWT with httpOnly cookies, bcrypt password hashing, password reset tokens
+- **Email**: Nodemailer (SMTP per-tenant from enterprise_config, console fallback)
 
 ## Architecture
 
@@ -58,7 +59,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `sequenceRoutes.ts` — `/api/sequences/*`
 - `knowledgeRoutes.ts` — `/api/knowledge/*` (documents, articles)
 - `scoringRoutes.ts` — `/api/scoring/*` (config get/update)
-- `enterpriseRoutes.ts` — `/api/enterprise/*` (config, audit-logs)
+- `enterpriseRoutes.ts` — `/api/enterprise/*` (config, audit-logs, test-smtp, send-test-email)
 - `billingRoutes.ts` — `/api/billing/*` (subscription, upgrade, usage, invoices)
 - `sessionRoutes.ts` — `/api/sessions/*` (list, revoke)
 - `aiGovernanceRoutes.ts` — `/api/ai/governance/*` (safety-logs, prompt-templates, config)
@@ -76,7 +77,10 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `logger.ts` — Structured JSON logging with request logging middleware
 - `auditLog.ts` — Audit trail writes to PostgreSQL audit_logs table
 
-### Database Tables (25 total)
+### Services (`server/services/`)
+- `emailService.ts` — Nodemailer-based email sending with per-tenant SMTP config from enterprise_config. Falls back to console logging when SMTP not configured. Provides: sendEmail, sendPasswordResetEmail, sendWelcomeEmail, sendSequenceEmail, testSmtpConnection.
+
+### Database Tables (26 total)
 **Core CRM**: users, leads, listings, proposals, contracts, interactions, tasks, favorites
 **Organization**: tenants, teams, team_members
 **Automation**: sequences, routing_rules, templates
@@ -85,7 +89,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 **Configuration**: enterprise_config, scoring_configs
 **Billing**: subscriptions, usage_tracking
 **AI Governance**: ai_safety_logs, prompt_templates
-**Security**: user_sessions
+**Security**: user_sessions, password_reset_tokens
 
 ## Security
 
