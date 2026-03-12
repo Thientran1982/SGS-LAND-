@@ -31,7 +31,7 @@ import { emailService } from "./server/services/emailService";
 import { createAiGovernanceRoutes } from "./server/routes/aiGovernanceRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
 import { createBillingRoutes } from "./server/routes/billingRoutes";
-import { createUploadRoutes } from "./server/routes/uploadRoutes";
+import { createUploadRoutes, createUploadServeRoute } from "./server/routes/uploadRoutes";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
@@ -53,7 +53,6 @@ async function startServer() {
   }));
   app.use(express.json({ limit: '10mb' }));
   app.use(cookieParser());
-  app.use('/uploads', express.static('uploads'));
   app.use(preventParamPollution);
   app.use(sanitizeInput);
   app.use(requestLogger);
@@ -674,6 +673,7 @@ async function startServer() {
   app.use('/api/ai/governance', apiRateLimit, createAiGovernanceRoutes(authenticateToken));
   app.use('/api/enterprise', apiRateLimit, createEnterpriseRoutes(authenticateToken));
   app.use('/api/upload', apiRateLimit, createUploadRoutes(authenticateToken));
+  app.use('/uploads', createUploadServeRoute(authenticateToken));
 
   app.get("/api/health", async (req, res) => {
     try {

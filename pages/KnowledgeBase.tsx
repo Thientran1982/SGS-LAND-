@@ -55,9 +55,9 @@ export const KnowledgeBase: React.FC = () => {
             return;
         }
 
-        const maxSize = 50 * 1024 * 1024; // 50MB
+        const maxSize = 10 * 1024 * 1024;
         if (file.size > maxSize) {
-            notify(t('knowledge.error_size') || 'Kích thước file vượt quá 50MB', 'error');
+            notify(t('knowledge.error_size') || 'Kích thước file vượt quá 10MB', 'error');
             return;
         }
 

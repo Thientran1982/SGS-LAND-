@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
+import path from 'path';
 import { documentRepository } from '../repositories/documentRepository';
 import { articleRepository } from '../repositories/articleRepository';
+import { extractTextFromFile } from '../services/textExtractor';
 
 export function createKnowledgeRoutes(authenticateToken: any) {
   const router = Router();
@@ -23,7 +25,24 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const { title, type, content, status, fileUrl } = req.body;
       if (!title) return res.status(400).json({ error: 'Title is required' });
-      const doc = await documentRepository.create(user.tenantId, { title, type, content, status, fileUrl });
+
+      let extractedContent = content || '';
+      if (fileUrl && !extractedContent) {
+        try {
+          const filePath = path.join(process.cwd(), fileUrl);
+          extractedContent = await extractTextFromFile(filePath);
+        } catch (err) {
+          console.error('Text extraction failed:', err);
+        }
+      }
+
+      const doc = await documentRepository.create(user.tenantId, {
+        title,
+        type,
+        content: extractedContent,
+        status,
+        fileUrl,
+      });
       res.status(201).json(doc);
     } catch (error) {
       console.error('Error creating document:', error);

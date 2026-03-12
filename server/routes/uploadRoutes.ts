@@ -26,6 +26,18 @@ const MIME_TO_EXT: Record<string, string> = {
 };
 
 const SAFE_FILENAME_REGEX = /^[a-zA-Z0-9._-]+$/;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const EXT_TO_CONTENT_TYPE: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.pdf': 'application/pdf',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.doc': 'application/msword',
+};
 
 const storage = multer.diskStorage({
   destination: (req: any, _file, cb) => {
@@ -123,6 +135,52 @@ export function createUploadRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Delete file error:', error);
       res.status(500).json({ error: 'Failed to delete file' });
+    }
+  });
+
+  return router;
+}
+
+export function createUploadServeRoute(authenticateToken: any) {
+  const router = Router();
+
+  router.get('/:tenantId/:filename', authenticateToken, (req: Request, res: Response) => {
+    try {
+      const requestedTenantId = req.params.tenantId;
+      const userTenantId = (req as any).tenantId;
+
+      if (!UUID_REGEX.test(requestedTenantId)) {
+        return res.status(400).json({ error: 'Invalid tenant ID' });
+      }
+
+      if (requestedTenantId !== userTenantId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const filename = path.basename(req.params.filename);
+      if (!SAFE_FILENAME_REGEX.test(filename)) {
+        return res.status(400).json({ error: 'Invalid filename' });
+      }
+
+      const filePath = path.join(UPLOAD_BASE, requestedTenantId, filename);
+      const resolved = path.resolve(filePath);
+      const expectedDir = path.resolve(path.join(UPLOAD_BASE, requestedTenantId));
+      if (!resolved.startsWith(expectedDir)) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      if (!fs.existsSync(resolved)) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+
+      const ext = path.extname(filename).toLowerCase();
+      const contentType = EXT_TO_CONTENT_TYPE[ext] || 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'private, max-age=86400');
+      res.sendFile(resolved);
+    } catch (error) {
+      console.error('Serve file error:', error);
+      res.status(500).json({ error: 'Failed to serve file' });
     }
   });
 

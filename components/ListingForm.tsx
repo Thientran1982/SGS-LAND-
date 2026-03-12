@@ -130,6 +130,13 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             return;
         }
 
+        const MAX_SIZE = 10 * 1024 * 1024;
+        const oversized = imageFiles.find(f => f.size > MAX_SIZE);
+        if (oversized) {
+            alert(t('profile.error_file_size') || 'File too large (max 10MB)');
+            return;
+        }
+
         setIsUploading(true);
         try {
             const result = await db.uploadFiles(imageFiles);

@@ -83,12 +83,14 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 ### File Upload System
 - **Endpoint**: `POST /api/upload` (multipart/form-data, field name: `files`, max 10 files, 10MB each)
-- **Storage**: Tenant-isolated at `uploads/<tenantId>/` with randomized filenames
+- **Storage**: Tenant-isolated at `uploads/<tenantId>/` with randomized filenames (16 bytes entropy)
 - **Allowed types**: JPEG, PNG, WebP, GIF, PDF, DOCX, DOC
-- **Static serving**: `GET /uploads/<tenantId>/<filename>` served via express.static
-- **Delete**: `DELETE /api/upload/:filename` removes file from tenant directory
+- **Serving**: `GET /uploads/<tenantId>/<filename>` — authenticated, tenant-scoped (403 cross-tenant)
+- **Delete**: `DELETE /api/upload/:filename` — authenticated, tenant-scoped, path traversal protected
+- **Text extraction**: PDF (pdf-parse) and DOCX (mammoth) content extracted on KnowledgeBase document upload
 - **Frontend integration**: `db.uploadFiles(files)` / `db.deleteUploadedFile(filename)` in dbApi.ts
-- **Used by**: ListingForm (property images, max 10, drag-to-reorder), KnowledgeBase (document upload), Profile (avatar upload)
+- **Client validation**: 10MB file size limit, MIME type filtering on all upload forms
+- **Used by**: ListingForm (property images, max 10, drag-to-reorder), KnowledgeBase (document upload with text extraction), Profile (avatar upload)
 
 ### Database Tables (26 total)
 **Core CRM**: users, leads, listings, proposals, contracts, interactions, tasks, favorites
