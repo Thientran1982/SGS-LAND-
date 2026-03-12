@@ -38,7 +38,6 @@ import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { interactionRepository } from "./server/repositories/interactionRepository";
 import { sessionRepository } from "./server/repositories/sessionRepository";
-import { leadRepository } from "./server/repositories/leadRepository";
 
 async function startServer() {
   const app = express();
