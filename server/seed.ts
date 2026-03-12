@@ -106,21 +106,21 @@ async function seed() {
 
     console.log('Seeding listings...');
     const listingData = [
-      { code: 'VGP-A1001', title: 'Can ho Vinhomes Grand Park 2PN', location: 'Q9, TP.HCM', price: 3200000000, area: 69, type: 'APARTMENT', bedrooms: 2, bathrooms: 2, status: 'AVAILABLE' },
-      { code: 'VGP-A2003', title: 'Can ho Vinhomes Grand Park 3PN', location: 'Q9, TP.HCM', price: 4800000000, area: 85, type: 'APARTMENT', bedrooms: 3, bathrooms: 2, status: 'AVAILABLE' },
-      { code: 'MAP-PH01', title: 'Penthouse Masteri An Phu', location: 'Q2, TP.HCM', price: 15000000000, area: 200, type: 'PENTHOUSE', bedrooms: 4, bathrooms: 3, status: 'AVAILABLE' },
-      { code: 'PMH-VL05', title: 'Biet thu Phu My Hung Q7', location: 'Q7, TP.HCM', price: 25000000000, area: 300, type: 'VILLA', bedrooms: 5, bathrooms: 4, status: 'AVAILABLE' },
-      { code: 'LAT-01', title: 'Dat nen Long An 100m2', location: 'Ben Luc, Long An', price: 1500000000, area: 100, type: 'LAND', bedrooms: 0, bathrooms: 0, status: 'AVAILABLE' },
-      { code: 'CLT-SH03', title: 'Shophouse Celadon City', location: 'Tan Phu, TP.HCM', price: 8500000000, area: 120, type: 'TOWNHOUSE', bedrooms: 0, bathrooms: 1, status: 'AVAILABLE' },
-      { code: 'TD-NR01', title: 'Nha rieng Thu Duc 4x15m', location: 'Thu Duc, TP.HCM', price: 5200000000, area: 60, type: 'HOUSE', bedrooms: 3, bathrooms: 2, status: 'AVAILABLE' },
-      { code: 'Q1-STD01', title: 'Studio Q1 cho thue', location: 'Q1, TP.HCM', price: 2800000000, area: 35, type: 'APARTMENT', bedrooms: 1, bathrooms: 1, status: 'AVAILABLE' },
-      { code: 'VT-BT01', title: 'Biet thu nghi duong Vung Tau', location: 'Vung Tau', price: 12000000000, area: 250, type: 'VILLA', bedrooms: 4, bathrooms: 3, status: 'HOLD' },
-      { code: 'BT-CH01', title: 'Can ho Binh Thanh 2PN', location: 'Binh Thanh, TP.HCM', price: 3500000000, area: 72, type: 'APARTMENT', bedrooms: 2, bathrooms: 2, status: 'AVAILABLE' },
-      { code: 'Q2-TH01', title: 'Nha pho lien ke Q2', location: 'Q2, TP.HCM', price: 9800000000, area: 100, type: 'TOWNHOUSE', bedrooms: 3, bathrooms: 3, status: 'AVAILABLE' },
-      { code: 'GV-CH01', title: 'Can ho Go Vap 1PN', location: 'Go Vap, TP.HCM', price: 1800000000, area: 45, type: 'APARTMENT', bedrooms: 1, bathrooms: 1, status: 'SOLD' },
-      { code: 'Q7-LP01', title: 'Office-tel Q7 Boulevard', location: 'Q7, TP.HCM', price: 2200000000, area: 40, type: 'OFFICE', bedrooms: 0, bathrooms: 1, status: 'AVAILABLE' },
-      { code: 'DAN-DT01', title: 'Dat nen Dong Nai 200m2', location: 'Bien Hoa, Dong Nai', price: 2000000000, area: 200, type: 'LAND', bedrooms: 0, bathrooms: 0, status: 'AVAILABLE' },
-      { code: 'MAP-2PN02', title: 'Can ho Masteri An Phu 2PN', location: 'Q2, TP.HCM', price: 4500000000, area: 75, type: 'APARTMENT', bedrooms: 2, bathrooms: 2, status: 'AVAILABLE' },
+      { code: 'VGP-A1001', title: 'Can ho Vinhomes Grand Park 2PN', location: 'Q9, TP.HCM', price: 3200000000, area: 69, type: 'APARTMENT', bedrooms: 2, bathrooms: 2, status: 'AVAILABLE', direction: 'East' },
+      { code: 'VGP-A2003', title: 'Can ho Vinhomes Grand Park 3PN', location: 'Q9, TP.HCM', price: 4800000000, area: 85, type: 'APARTMENT', bedrooms: 3, bathrooms: 2, status: 'AVAILABLE', direction: 'SouthEast' },
+      { code: 'MAP-PH01', title: 'Penthouse Masteri An Phu', location: 'Q2, TP.HCM', price: 15000000000, area: 200, type: 'PENTHOUSE', bedrooms: 4, bathrooms: 3, status: 'AVAILABLE', direction: 'South' },
+      { code: 'PMH-VL05', title: 'Biet thu Phu My Hung Q7', location: 'Q7, TP.HCM', price: 25000000000, area: 300, type: 'VILLA', bedrooms: 5, bathrooms: 4, status: 'AVAILABLE', direction: 'SouthEast' },
+      { code: 'LAT-01', title: 'Dat nen Long An 100m2', location: 'Ben Luc, Long An', price: 1500000000, area: 100, type: 'LAND', bedrooms: 0, bathrooms: 0, status: 'AVAILABLE', direction: 'East' },
+      { code: 'CLT-SH03', title: 'Shophouse Celadon City', location: 'Tan Phu, TP.HCM', price: 8500000000, area: 120, type: 'TOWNHOUSE', bedrooms: 0, bathrooms: 1, status: 'AVAILABLE', direction: 'NorthEast' },
+      { code: 'TD-NR01', title: 'Nha rieng Thu Duc 4x15m', location: 'Thu Duc, TP.HCM', price: 5200000000, area: 60, type: 'HOUSE', bedrooms: 3, bathrooms: 2, status: 'AVAILABLE', direction: 'South' },
+      { code: 'Q1-STD01', title: 'Studio Q1 cho thue', location: 'Q1, TP.HCM', price: 2800000000, area: 35, type: 'APARTMENT', bedrooms: 1, bathrooms: 1, status: 'AVAILABLE', direction: 'NorthWest' },
+      { code: 'VT-BT01', title: 'Biet thu nghi duong Vung Tau', location: 'Vung Tau', price: 12000000000, area: 250, type: 'VILLA', bedrooms: 4, bathrooms: 3, status: 'HOLD', direction: 'East' },
+      { code: 'BT-CH01', title: 'Can ho Binh Thanh 2PN', location: 'Binh Thanh, TP.HCM', price: 3500000000, area: 72, type: 'APARTMENT', bedrooms: 2, bathrooms: 2, status: 'AVAILABLE', direction: 'SouthEast' },
+      { code: 'Q2-TH01', title: 'Nha pho lien ke Q2', location: 'Q2, TP.HCM', price: 9800000000, area: 100, type: 'TOWNHOUSE', bedrooms: 3, bathrooms: 3, status: 'AVAILABLE', direction: 'SouthWest' },
+      { code: 'GV-CH01', title: 'Can ho Go Vap 1PN', location: 'Go Vap, TP.HCM', price: 1800000000, area: 45, type: 'APARTMENT', bedrooms: 1, bathrooms: 1, status: 'SOLD', direction: 'NorthWest' },
+      { code: 'Q7-LP01', title: 'Office-tel Q7 Boulevard', location: 'Q7, TP.HCM', price: 2200000000, area: 40, type: 'OFFICE', bedrooms: 0, bathrooms: 1, status: 'AVAILABLE', direction: 'North' },
+      { code: 'DAN-DT01', title: 'Dat nen Dong Nai 200m2', location: 'Bien Hoa, Dong Nai', price: 2000000000, area: 200, type: 'LAND', bedrooms: 0, bathrooms: 0, status: 'AVAILABLE', direction: 'East' },
+      { code: 'MAP-2PN02', title: 'Can ho Masteri An Phu 2PN', location: 'Q2, TP.HCM', price: 4500000000, area: 75, type: 'APARTMENT', bedrooms: 2, bathrooms: 2, status: 'AVAILABLE', direction: 'SouthEast' },
     ];
 
     const listingIds: string[] = [];
@@ -129,7 +129,7 @@ async function seed() {
         `INSERT INTO listings (tenant_id, code, title, location, price, currency, area, bedrooms, bathrooms, type, status, transaction, is_verified, created_by, attributes)
          VALUES ($1, $2, $3, $4, $5, 'VND', $6, $7, $8, $9, $10, 'SALE', true, $11, $12) RETURNING id`,
         [TENANT_ID, li.code, li.title, li.location, li.price, li.area, li.bedrooms, li.bathrooms, li.type, li.status, userIds[0],
-         JSON.stringify({ direction: 'DONG_NAM', legal: 'SO_HONG', landType: 'DAT_O' })]
+         JSON.stringify({ direction: li.direction, legalStatus: 'PinkBook' })]
       );
       listingIds.push(result.rows[0].id);
     }
