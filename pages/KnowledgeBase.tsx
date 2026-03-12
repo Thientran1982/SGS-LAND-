@@ -212,7 +212,7 @@ export const KnowledgeBase: React.FC = () => {
                         {isDragging ? (t('knowledge.drop_here') || 'Thả file vào đây') : (t('knowledge.drag_drop') || 'Kéo thả tài liệu vào đây')}
                     </h3>
                     <p className="text-sm text-slate-500 mb-6 max-w-md">
-                        {t('knowledge.upload_desc') || 'Hỗ trợ định dạng PDF, DOCX, TXT. Kích thước tối đa 50MB mỗi file. Dữ liệu sẽ được tự động vector hóa để AI học.'}
+                        {t('knowledge.upload_desc') || 'Hỗ trợ định dạng PDF, DOCX, TXT. Kích thước tối đa 10MB mỗi file. Dữ liệu sẽ được tự động trích xuất và vector hóa để AI học.'}
                     </p>
                 </div>
                 

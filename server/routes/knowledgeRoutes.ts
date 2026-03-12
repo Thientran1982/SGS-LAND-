@@ -29,8 +29,13 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       let extractedContent = content || '';
       if (fileUrl && !extractedContent) {
         try {
-          const filePath = path.join(process.cwd(), fileUrl);
-          extractedContent = await extractTextFromFile(filePath);
+          const relativePath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
+          const filePath = path.join(process.cwd(), relativePath);
+          const resolved = path.resolve(filePath);
+          const uploadsDir = path.resolve(path.join(process.cwd(), 'uploads'));
+          if (resolved.startsWith(uploadsDir)) {
+            extractedContent = await extractTextFromFile(resolved);
+          }
         } catch (err) {
           console.error('Text extraction failed:', err);
         }

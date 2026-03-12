@@ -30,10 +30,25 @@ export async function extractTextFromFile(filePath: string): Promise<string> {
 }
 
 async function extractPdf(filePath: string): Promise<string> {
-  const pdfParse = (await import('pdf-parse')).default;
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const buffer = fs.readFileSync(filePath);
-  const data = await pdfParse(buffer);
-  return data.text || '';
+  const uint8Array = new Uint8Array(buffer);
+  const doc = await pdfjsLib.getDocument({ data: uint8Array, useSystemFonts: true }).promise;
+
+  const textParts: string[] = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .filter((item: any) => 'str' in item)
+      .map((item: any) => item.str)
+      .join(' ');
+    if (pageText.trim()) {
+      textParts.push(pageText);
+    }
+  }
+
+  return textParts.join('\n');
 }
 
 async function extractDocx(filePath: string): Promise<string> {
