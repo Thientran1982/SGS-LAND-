@@ -719,19 +719,35 @@ export const ListingDetail: React.FC = () => {
         if (!id) return;
         setLoading(true);
         try {
-            const [user, item, favs, sim] = await Promise.all([
+            const [user, item, sim] = await Promise.all([
                 db.getCurrentUser(),
                 db.getListingById(id),
-                db.getFavorites(),
                 db.getSimilarListings(id),
             ]);
             setCurrentUser(user);
             if (item) {
                 const normalizedLocation = normalizeAddress(item.location);
-                const favData = (favs as any).data as any[];
-                const isFav = favData.some((f: any) => f.id === item.id);
+                let isFav = false;
+                let favIds: Set<string> = new Set();
+
+                if (user) {
+                    const favs = await db.getFavorites(1, 1000);
+                    const favData = (favs as any).data as any[];
+                    favIds = new Set(favData.map((f: any) => f.id));
+                    isFav = favIds.has(item.id);
+                } else {
+                    try {
+                        const stored: string[] = JSON.parse(localStorage.getItem('sgs_favorites') || '[]');
+                        favIds = new Set(stored);
+                        isFav = favIds.has(item.id);
+                    } catch {}
+                }
+
                 setListing({ ...item, location: normalizedLocation, isFavorite: isFav });
-                setSimilarListings((sim || []).filter((s: any) => s.id !== item.id).map((s: any) => ({...s, isFavorite: favData.some((f: any) => f.id === s.id)})));
+                setSimilarListings((sim || []).filter((s: any) => s.id !== item.id).map((s: any) => ({
+                    ...s,
+                    isFavorite: favIds.has(s.id),
+                })));
             }
         } catch (e) {
             console.error(e);
@@ -823,22 +839,26 @@ export const ListingDetail: React.FC = () => {
     const handleToggleFavorite = async () => {
         if (!listing) return;
         const newStatus = !listing.isFavorite;
-        
+
         // Optimistic Update
         setListing(prev => prev ? ({ ...prev, isFavorite: newStatus }) : null);
+        notify(newStatus ? (t('favorites.added') || "Đã thêm vào yêu thích") : (t('favorites.removed') || "Đã xóa khỏi yêu thích"), 'success');
 
-        try {
-            if (newStatus) {
-                await db.addToFavorites(listing.id);
-                notify(t('favorites.added') || "Đã thêm vào yêu thích", 'success');
-            } else {
-                await db.removeFromFavorites(listing.id);
-                notify(t('favorites.removed') || "Đã xóa khỏi yêu thích", 'success');
+        if (currentUser) {
+            try {
+                await db.toggleFavorite(listing.id);
+            } catch (e) {
+                console.error("Favorite toggle failed", e);
+                setListing(prev => prev ? ({ ...prev, isFavorite: !newStatus }) : null);
             }
-        } catch (e) {
-            console.error("Favorite toggle failed", e);
-            // Revert on error
-            setListing(prev => prev ? ({ ...prev, isFavorite: !newStatus }) : null);
+        } else {
+            try {
+                const stored: string[] = JSON.parse(localStorage.getItem('sgs_favorites') || '[]');
+                const updated = newStatus
+                    ? [...stored.filter(x => x !== listing.id), listing.id]
+                    : stored.filter(x => x !== listing.id);
+                localStorage.setItem('sgs_favorites', JSON.stringify(updated));
+            } catch {}
         }
     };
 
@@ -1258,12 +1278,21 @@ export const ListingDetail: React.FC = () => {
                                         if (!sim) return;
                                         const newStatus = !sim.isFavorite;
                                         setSimilarListings(prev => prev.map(s => s.id === id ? { ...s, isFavorite: newStatus } : s));
-                                        try {
-                                            if (newStatus) await db.addToFavorites(id);
-                                            else await db.removeFromFavorites(id);
-                                            notify(newStatus ? (t('favorites.added') || "Đã thêm vào yêu thích") : (t('favorites.removed') || "Đã xóa khỏi yêu thích"), 'success');
-                                        } catch (e) {
-                                            setSimilarListings(prev => prev.map(s => s.id === id ? { ...s, isFavorite: !newStatus } : s));
+                                        notify(newStatus ? (t('favorites.added') || "Đã thêm vào yêu thích") : (t('favorites.removed') || "Đã xóa khỏi yêu thích"), 'success');
+                                        if (currentUser) {
+                                            try {
+                                                await db.toggleFavorite(id);
+                                            } catch (e) {
+                                                setSimilarListings(prev => prev.map(s => s.id === id ? { ...s, isFavorite: !newStatus } : s));
+                                            }
+                                        } else {
+                                            try {
+                                                const stored: string[] = JSON.parse(localStorage.getItem('sgs_favorites') || '[]');
+                                                const updated = newStatus
+                                                    ? [...stored.filter(x => x !== id), id]
+                                                    : stored.filter(x => x !== id);
+                                                localStorage.setItem('sgs_favorites', JSON.stringify(updated));
+                                            } catch {}
                                         }
                                     }}
                                     onEdit={() => {}} 
