@@ -262,8 +262,7 @@ async function startServer() {
         const tenantId = (req as any).tenantId;
         try {
           await leadRepository.update(tenantId, leadData.id, {
-            score: result.score || result.totalScore,
-            scoreGrade: result.grade,
+            score: { score: result.score || result.totalScore, grade: result.grade, reasoning: result.reasoning },
           }, (req as any).user?.id, (req as any).user?.role || 'ADMIN');
           logger.info(`AI score persisted for lead ${leadData.id}: ${result.score || result.totalScore}`);
         } catch (e) {
@@ -579,6 +578,7 @@ async function startServer() {
   app.use('/api/sessions', apiRateLimit, createSessionRoutes(authenticateToken));
   app.use('/api/templates', apiRateLimit, createTemplateRoutes(authenticateToken));
   app.use('/api/ai/governance', apiRateLimit, createAiGovernanceRoutes(authenticateToken));
+  app.use('/api/enterprise', apiRateLimit, createEnterpriseRoutes(authenticateToken));
 
   app.get("/api/health", async (req, res) => {
     try {

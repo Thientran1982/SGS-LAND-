@@ -481,6 +481,7 @@ export async function initializeDatabase() {
     console.log('Database schema initialized successfully.');
   } catch (error) {
     console.error('Error initializing database schema:', error);
+    throw error;
   } finally {
     client.release();
   }

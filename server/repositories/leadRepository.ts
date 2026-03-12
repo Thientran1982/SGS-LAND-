@@ -87,7 +87,8 @@ export class LeadRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE stage = 'NEW')::int                           AS new_count,
           COUNT(*) FILTER (WHERE stage = 'WON')::int                           AS won_count,
           COALESCE(ROUND(AVG((score->>'score')::numeric)), 0)::int             AS avg_score
-         FROM leads`
+         FROM leads
+         WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid`
       );
       const sr = statsResult.rows[0];
       const globalTotal = sr.total || 0;

@@ -122,9 +122,11 @@ export class BaseRepository {
       const countResult = await client.query(`SELECT COUNT(*)::int as total FROM ${this.tableName}`);
       const total = countResult.rows[0].total;
 
-      const orderBy = sort
-        ? `ORDER BY ${this.camelToSnake(sort.field)} ${sort.direction}`
-        : `ORDER BY created_at DESC`;
+      const ALLOWED_DIRECTIONS = new Set(['ASC', 'DESC']);
+      const ALLOWED_FIELD_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+      const sortField = sort?.field && ALLOWED_FIELD_PATTERN.test(sort.field) ? this.camelToSnake(sort.field) : 'created_at';
+      const sortDir = sort?.direction && ALLOWED_DIRECTIONS.has(sort.direction) ? sort.direction : 'DESC';
+      const orderBy = `ORDER BY ${sortField} ${sortDir}`;
 
       const page = pagination?.page || 1;
       const pageSize = pagination?.pageSize || 50;

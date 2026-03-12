@@ -86,7 +86,7 @@ export function verifyWebhookSignature(platform: 'zalo' | 'facebook') {
       const body = rawBody || Buffer.from(JSON.stringify(req.body));
       const mac = crypto.createHmac('sha256', oaSecret).update(body).digest('hex');
 
-      if (mac !== signature) {
+      if (!crypto.timingSafeEqual(Buffer.from(mac), Buffer.from(signature))) {
         return res.status(403).json({ error: 'Invalid webhook signature' });
       }
     }

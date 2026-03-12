@@ -87,8 +87,7 @@ export function setupWebhookWorker(io: Server) {
             try {
               const { leadRepository } = await import('./repositories/leadRepository');
               await leadRepository.update(DEFAULT_TENANT_ID, leadId, {
-                score: scoreResult.score || scoreResult.totalScore,
-                scoreGrade: scoreResult.grade,
+                score: { score: scoreResult.score || scoreResult.totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning },
               }, 'ADMIN');
             } catch (e) {
               logger.warn(`Could not persist webhook AI score for lead ${leadId}`);
@@ -150,8 +149,7 @@ export function setupWebhookWorker(io: Server) {
                 try {
                   const { leadRepository } = await import('./repositories/leadRepository');
                   await leadRepository.update(DEFAULT_TENANT_ID, leadId, {
-                    score: scoreResult.score || scoreResult.totalScore,
-                    scoreGrade: scoreResult.grade,
+                    score: { score: scoreResult.score || scoreResult.totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning },
                   }, 'ADMIN');
                 } catch (e) {
                   logger.warn(`Could not persist Facebook webhook AI score for lead ${leadId}`);
