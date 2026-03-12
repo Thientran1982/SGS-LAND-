@@ -66,6 +66,11 @@ export function createListingRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Missing required fields: code, title, location, price, area, type' });
       }
 
+      const images = req.body.images;
+      if (Array.isArray(images) && images.length > 10) {
+        return res.status(400).json({ error: 'Maximum 10 images allowed per listing' });
+      }
+
       const listing = await listingRepository.create(user.tenantId, {
         ...req.body,
         createdBy: user.id,
@@ -90,6 +95,11 @@ export function createListingRoutes(authenticateToken: any) {
   router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      const images = req.body.images;
+      if (Array.isArray(images) && images.length > 10) {
+        return res.status(400).json({ error: 'Maximum 10 images allowed per listing' });
+      }
+
       const listing = await listingRepository.update(user.tenantId, req.params.id, req.body);
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
