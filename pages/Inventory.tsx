@@ -422,31 +422,35 @@ export const Inventory: React.FC = () => {
         setLoading(true);
         try {
             const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter };
-
-            const fetches: Promise<any>[] = [
+            const [res, favs] = await Promise.all([
                 db.getListings(page, pageSize, filters),
                 db.getFavorites(1, 1000),
-            ];
-            if (viewMode === 'BOARD') {
-                fetches.push(db.getListings(1, 1000, filters));
-            }
-
-            const [res, favs, allRes] = await Promise.all(fetches);
-
+            ]);
             setListings(res.data || []);
             setTotalItems(res.total || 0);
             if (res.stats) setStats(res.stats);
             setFavorites(new Set(favs.data?.map((f: any) => f.id) || []));
-            setAllFilteredListings(allRes ? (allRes.data || []) : []);
         } catch (e) {
             console.error(e);
             notify(t('common.error'), 'error');
         } finally {
             setLoading(false);
         }
-    }, [debouncedSearch, typeFilter, statusFilter, transactionFilter, page, pageSize, viewMode, notify, t]);
+    }, [debouncedSearch, typeFilter, statusFilter, transactionFilter, page, pageSize, notify, t]);
+
+    const fetchBoardData = useCallback(async () => {
+        if (viewMode !== 'BOARD') { setAllFilteredListings([]); return; }
+        try {
+            const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter };
+            const allRes = await db.getListings(1, 500, filters);
+            setAllFilteredListings(allRes.data || []);
+        } catch (e) {
+            console.error(e);
+        }
+    }, [viewMode, debouncedSearch, typeFilter, statusFilter, transactionFilter]);
 
     useEffect(() => { fetchListings(); }, [fetchListings]);
+    useEffect(() => { fetchBoardData(); }, [fetchBoardData]);
 
     const totalPages = Math.ceil(totalItems / pageSize);
 
@@ -478,7 +482,7 @@ export const Inventory: React.FC = () => {
         const newFavs = new Set(favorites);
         if (isFav) newFavs.delete(id); else newFavs.add(id);
         setFavorites(newFavs);
-        try { if (isFav) await db.removeFromFavorites(id); else await db.addToFavorites(id); } catch (e) { console.error(e); }
+        try { await db.toggleFavorite(id); } catch (e) { console.error(e); setFavorites(favorites); }
     };
 
     const handleDeleteClick = (id: string) => {
