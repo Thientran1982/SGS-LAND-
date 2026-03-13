@@ -57,6 +57,31 @@ export const PLANS: Record<PlanTier, Plan> = {
   }
 };
 
+const CACHE_TTL = 30_000;
+
+class SimpleCache {
+  private store = new Map<string, { data: any; ts: number }>();
+
+  get(key: string): any | null {
+    const entry = this.store.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.ts > CACHE_TTL) return null;
+    return entry.data;
+  }
+
+  set(key: string, data: any) {
+    this.store.set(key, { data, ts: Date.now() });
+  }
+
+  invalidate(prefix: string) {
+    for (const key of this.store.keys()) {
+      if (key.startsWith(prefix)) this.store.delete(key);
+    }
+  }
+}
+
+const _cache = new SimpleCache();
+
 class DatabaseApiClient {
   private currentTenantId: string = DEFAULT_TENANT_ID;
   private cachedCurrentUser: any = null;
@@ -84,28 +109,41 @@ class DatabaseApiClient {
   }
 
   async getLeads(page = 1, pageSize = 20, filters?: any) {
-    try {
-      const params: any = {};
-      if (filters?.stage && filters.stage !== 'ALL') params.stage = filters.stage;
-      if (filters?.stages) params.stages = filters.stages.join(',');
-      if (filters?.assignedTo) params.assignedTo = filters.assignedTo;
-      if (filters?.source && filters.source !== 'ALL') params.source = filters.source;
-      if (filters?.search) params.search = filters.search;
-      if (filters?.slaBreached !== undefined) params.slaBreached = filters.slaBreached;
+    const params: any = {};
+    if (filters?.stage && filters.stage !== 'ALL') params.stage = filters.stage;
+    if (filters?.stages) params.stages = filters.stages.join(',');
+    if (filters?.assignedTo) params.assignedTo = filters.assignedTo;
+    if (filters?.source && filters.source !== 'ALL') params.source = filters.source;
+    if (filters?.search) params.search = filters.search;
+    if (filters?.slaBreached !== undefined) params.slaBreached = filters.slaBreached;
 
-      const result = await leadApi.getLeads(page, pageSize, params);
-      return {
-        data: result.data,
-        total: result.total,
-        page: result.page,
-        pageSize: result.pageSize,
-        totalPages: result.totalPages,
-        stats: (result as any).stats,
-      };
-    } catch (error) {
-      console.error('getLeads error:', error);
-      return { data: [], total: 0, page: 1, pageSize };
+    const cacheKey = `leads:${page}:${pageSize}:${JSON.stringify(params)}`;
+    const cached = _cache.get(cacheKey);
+
+    const fetchFresh = async () => {
+      try {
+        const result = await leadApi.getLeads(page, pageSize, params);
+        const out = {
+          data: result.data,
+          total: result.total,
+          page: result.page,
+          pageSize: result.pageSize,
+          totalPages: result.totalPages,
+          stats: (result as any).stats,
+        };
+        _cache.set(cacheKey, out);
+        return out;
+      } catch (error) {
+        console.error('getLeads error:', error);
+        return { data: [], total: 0, page: 1, pageSize };
+      }
+    };
+
+    if (cached) {
+      fetchFresh();
+      return cached;
     }
+    return fetchFresh();
   }
 
   async getLeadById(id: string) {
@@ -117,6 +155,7 @@ class DatabaseApiClient {
   }
 
   async createLead(data: any) {
+    _cache.invalidate('leads:');
     return leadApi.createLead(data);
   }
 
@@ -125,36 +164,51 @@ class DatabaseApiClient {
   }
 
   async updateLead(id: string, data: any) {
+    _cache.invalidate('leads:');
     return leadApi.updateLead(id, data);
   }
 
   async deleteLead(id: string) {
+    _cache.invalidate('leads:');
     return leadApi.deleteLead(id);
   }
 
   async getListings(page = 1, pageSize = 20, filters?: any) {
-    try {
-      const params: any = {};
-      if (filters?.type && filters.type !== 'ALL') params.type = filters.type;
-      if (filters?.status && filters.status !== 'ALL') params.status = filters.status;
-      if (filters?.transaction && filters.transaction !== 'ALL') params.transaction = filters.transaction;
-      if (filters?.search) params.search = filters.search;
-      if (filters?.priceMin) params.priceMin = filters.priceMin;
-      if (filters?.priceMax) params.priceMax = filters.priceMax;
+    const params: any = {};
+    if (filters?.type && filters.type !== 'ALL') params.type = filters.type;
+    if (filters?.status && filters.status !== 'ALL') params.status = filters.status;
+    if (filters?.transaction && filters.transaction !== 'ALL') params.transaction = filters.transaction;
+    if (filters?.search) params.search = filters.search;
+    if (filters?.priceMin) params.priceMin = filters.priceMin;
+    if (filters?.priceMax) params.priceMax = filters.priceMax;
 
-      const result = await listingApi.getListings(page, pageSize, params);
-      return {
-        data: result.data,
-        total: result.total,
-        page: result.page,
-        pageSize: result.pageSize,
-        totalPages: (result as any).totalPages,
-        stats: (result as any).stats,
-      };
-    } catch (error) {
-      console.error('getListings error:', error);
-      return { data: [], total: 0, page: 1, pageSize };
+    const cacheKey = `listings:${page}:${pageSize}:${JSON.stringify(params)}`;
+    const cached = _cache.get(cacheKey);
+
+    const fetchFresh = async () => {
+      try {
+        const result = await listingApi.getListings(page, pageSize, params);
+        const out = {
+          data: result.data,
+          total: result.total,
+          page: result.page,
+          pageSize: result.pageSize,
+          totalPages: (result as any).totalPages,
+          stats: (result as any).stats,
+        };
+        _cache.set(cacheKey, out);
+        return out;
+      } catch (error) {
+        console.error('getListings error:', error);
+        return { data: [], total: 0, page: 1, pageSize };
+      }
+    };
+
+    if (cached) {
+      fetchFresh();
+      return cached;
     }
+    return fetchFresh();
   }
 
   async getListingById(id: string) {
@@ -191,14 +245,17 @@ class DatabaseApiClient {
   }
 
   async createListing(data: any) {
+    _cache.invalidate('listings:');
     return listingApi.createListing(data);
   }
 
   async updateListing(id: string, data: any) {
+    _cache.invalidate('listings:');
     return listingApi.updateListing(id, data);
   }
 
   async deleteListing(id: string) {
+    _cache.invalidate('listings:');
     return listingApi.deleteListing(id);
   }
 
@@ -271,25 +328,39 @@ class DatabaseApiClient {
   }
 
   async getContracts(page = 1, pageSize = 20, filters?: any) {
-    try {
-      const cleanFilters: Record<string, any> = {};
-      if (filters) {
-        for (const [k, v] of Object.entries(filters)) {
-          if (v && v !== 'ALL') cleanFilters[k] = v;
-        }
+    const cleanFilters: Record<string, any> = {};
+    if (filters) {
+      for (const [k, v] of Object.entries(filters)) {
+        if (v && v !== 'ALL') cleanFilters[k] = v;
       }
-      const result = await contractApi.getContracts(page, pageSize, cleanFilters);
-      return {
-        data: result.data,
-        total: result.total,
-        page: result.page,
-        pageSize: result.pageSize,
-        totalPages: result.totalPages,
-      };
-    } catch (error) {
-      console.error('getContracts error:', error);
-      return { data: [], total: 0, page: 1, pageSize, totalPages: 0 };
     }
+
+    const cacheKey = `contracts:${page}:${pageSize}:${JSON.stringify(cleanFilters)}`;
+    const cached = _cache.get(cacheKey);
+
+    const fetchFresh = async () => {
+      try {
+        const result = await contractApi.getContracts(page, pageSize, cleanFilters);
+        const out = {
+          data: result.data,
+          total: result.total,
+          page: result.page,
+          pageSize: result.pageSize,
+          totalPages: result.totalPages,
+        };
+        _cache.set(cacheKey, out);
+        return out;
+      } catch (error) {
+        console.error('getContracts error:', error);
+        return { data: [], total: 0, page: 1, pageSize, totalPages: 0 };
+      }
+    };
+
+    if (cached) {
+      fetchFresh();
+      return cached;
+    }
+    return fetchFresh();
   }
 
   async getContractById(id: string) {
@@ -301,10 +372,12 @@ class DatabaseApiClient {
   }
 
   async createContract(data: any) {
+    _cache.invalidate('contracts:');
     return contractApi.createContract(data);
   }
 
   async updateContract(id: string, data: any) {
+    _cache.invalidate('contracts:');
     return contractApi.updateContract(id, data);
   }
 
@@ -801,6 +874,7 @@ class DatabaseApiClient {
   }
 
   async deleteContract(id: string) {
+    _cache.invalidate('contracts:');
     return true;
   }
 

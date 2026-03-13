@@ -14,7 +14,16 @@ import { motion, AnimatePresence } from 'motion/react';
 // 1. LAZY LOADED PAGES
 // -----------------------------------------------------------------------------
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 30_000,
+            gcTime: 5 * 60_000,
+            refetchOnWindowFocus: false,
+            retry: 1,
+        },
+    },
+});
 
 // Public Pages - using lazyLoad wrapper which handles named exports automatically
 const Login = lazyLoad(() => import('./pages/Login'), 'Login');
@@ -498,8 +507,7 @@ const AppShell: React.FC = () => {
                         key={route.fullPath}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
+                        transition={{ duration: 0.1 }}
                     >
                         <ErrorBoundary>
                             <Suspense fallback={SmallSpinner}>
@@ -542,8 +550,7 @@ const AppShell: React.FC = () => {
                         key={route.fullPath}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
+                        transition={{ duration: 0.1 }}
                         className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
                     >
                         <ErrorBoundary>
@@ -565,8 +572,7 @@ const AppShell: React.FC = () => {
                         key={route.fullPath}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
+                        transition={{ duration: 0.1 }}
                         className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
                     >
                         <ErrorBoundary>
@@ -593,8 +599,7 @@ const AppShell: React.FC = () => {
                         key={route.base}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.12 }}
+                        transition={{ duration: 0.08 }}
                         className="h-full w-full flex flex-col relative overflow-hidden isolate"
                     >
                         <ErrorBoundary>
