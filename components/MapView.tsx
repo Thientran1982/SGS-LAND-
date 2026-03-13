@@ -117,19 +117,19 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
 
                     // Modern Pill Shape Marker
                     const pinHtml = `
-                        <div class="relative group cursor-pointer transition-all duration-300 transform hover:scale-110 hover:z-[9999] origin-bottom-center -translate-x-1/2 -translate-y-full mb-2 pointer-events-auto w-max" style="transform-style: preserve-3d;">
-                            <div class="bg-slate-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-2xl shadow-xl border-2 border-white flex items-center gap-1 group-hover:bg-indigo-600 group-hover:border-indigo-200 transition-colors whitespace-nowrap">
+                        <div style="position:absolute; transform:translate(-50%,-100%); transform-origin:bottom center; cursor:pointer; white-space:nowrap;" class="group">
+                            <div style="transition:background-color 0.15s,border-color 0.15s,transform 0.15s; transform-origin:bottom center;" class="bg-slate-900 hover:bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-2xl shadow-xl border-2 border-white hover:border-indigo-200 hover:scale-110 flex items-center gap-1 whitespace-nowrap origin-bottom">
                                 <span>${priceLabel}</span>
                             </div>
-                            <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 rotate-45 border-r-2 border-b-2 border-white group-hover:bg-indigo-600 group-hover:border-indigo-200 transition-colors rounded-br-[2px]"></div>
+                            <div style="position:absolute; bottom:-6px; left:50%; width:12px; height:12px; transform:translateX(-50%) rotate(45deg); border-right:2px solid white; border-bottom:2px solid white; border-radius:0 0 3px 0; background:#0f172a; transition:background-color 0.15s;"></div>
                         </div>
                     `;
 
                     const icon = L.divIcon({
-                        className: 'custom-map-pin-container', 
+                        className: 'custom-map-pin-container',
                         html: pinHtml,
-                        iconSize: [0, 0], 
-                        iconAnchor: [0, 0] 
+                        iconSize: [1, 1],
+                        iconAnchor: [0, 0]
                     });
 
                     const marker = L.marker(point, { icon, zIndexOffset: 100 }).addTo(map);
@@ -210,7 +210,7 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
     return (
         <>
             <style>{`
-                .custom-map-pin-container { background: transparent !important; border: none !important; width: auto !important; height: auto !important; }
+                .custom-map-pin-container { background: transparent !important; border: none !important; width: 1px !important; height: 1px !important; overflow: visible !important; }
                 .custom-leaflet-popup-clean .leaflet-popup-content-wrapper { background: transparent !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; }
                 .custom-leaflet-popup-clean .leaflet-popup-content { margin: 0 !important; width: auto !important; }
                 .custom-leaflet-popup-clean .leaflet-popup-tip-container { display: none !important; }

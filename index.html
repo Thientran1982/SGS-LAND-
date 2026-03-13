@@ -222,11 +222,14 @@
       }
 
       /* --- CUSTOM PIN FIX --- */
-      .custom-map-pin {
+      .custom-map-pin,
+      .custom-map-pin-container {
           background: transparent !important;
           border: none !important;
-          width: auto !important;
-          height: auto !important;
+          overflow: visible !important;
+      }
+      .leaflet-marker-icon.custom-map-pin-container {
+          overflow: visible !important;
       }
 
       /* --- LANDING PAGE ANIMATIONS --- */
