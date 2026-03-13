@@ -164,11 +164,7 @@ export const KnowledgeBase: React.FC = () => {
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{t('knowledge.title') || 'Dữ liệu huấn luyện AI'}</h2>
-                    <p className="text-sm text-slate-500 mt-1">{t('knowledge.subtitle') || 'Tải lên tài liệu để AI học và trả lời khách hàng chính xác hơn.'}</p>
-                </div>
+            <div className="flex justify-end">
                 <div className="w-full md:w-auto">
                     <div className="relative w-full md:w-72 group">
                         <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
