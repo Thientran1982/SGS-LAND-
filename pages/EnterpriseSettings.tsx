@@ -495,7 +495,22 @@ export const EnterpriseSettings: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm gap-4 w-full overflow-hidden">
                 <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-slate-500">{t('ent.tenant_label')}:</span>
-                    <span className="font-mono font-bold text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-600 border border-slate-200">{config.tenantId}</span>
+                    <span
+                        title={config.tenantId}
+                        className="font-mono font-bold text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-600 border border-slate-200 cursor-default"
+                    >
+                        {config.tenantId?.slice(0, 8)}…
+                    </span>
+                    <button
+                        type="button"
+                        title={config.tenantId}
+                        onClick={() => { navigator.clipboard.writeText(config.tenantId ?? ''); }}
+                        className="text-slate-400 hover:text-slate-700 transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
                 </div>
 
                 {/* Mobile Dropdown */}
