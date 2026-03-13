@@ -79,7 +79,7 @@ class SubscriptionRepository extends BaseRepository {
       }
 
       return {
-        seats: usage['seats'] || 0,
+        seatsUsed: usage['seats'] || 0,
         emailsSent: usage['emails'] || 0,
         aiRequests: usage['ai_requests'] || 0,
       };

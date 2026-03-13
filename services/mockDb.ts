@@ -11,30 +11,7 @@ import {
 import { ROUTES } from '../config/routes';
 import { AnalyticsService } from './analyticsService';
 
-// Constants
-export const PLANS: Record<PlanTier, Plan> = {
-    [PlanTier.INDIVIDUAL]: {
-        id: PlanTier.INDIVIDUAL,
-        name: 'Individual',
-        price: 0,
-        features: ['Basic CRM', '1 User', '5 Listings'],
-        limits: { seats: 1, emailsPerMonth: 100, aiRequestsPerMonth: 50 }
-    },
-    [PlanTier.TEAM]: {
-        id: PlanTier.TEAM,
-        name: 'Team',
-        price: 49,
-        features: ['Advanced CRM', '5 Users', 'Unlimited Listings', 'Team Routing'],
-        limits: { seats: 5, emailsPerMonth: 2000, aiRequestsPerMonth: 500 }
-    },
-    [PlanTier.ENTERPRISE]: {
-        id: PlanTier.ENTERPRISE,
-        name: 'Enterprise',
-        price: 199,
-        features: ['Full Suite', 'Unlimited Users', 'API Access', 'Dedicated Support', 'Custom AI Models'],
-        limits: { seats: 999, emailsPerMonth: 100000, aiRequestsPerMonth: 10000 }
-    }
-};
+export { PLANS } from './dbApi';
 
 class MockDatabase {
     private currentTenantId: string = 't1'; // Simulated RLS Context

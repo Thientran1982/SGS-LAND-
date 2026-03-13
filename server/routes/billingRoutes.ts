@@ -11,7 +11,7 @@ export function createBillingRoutes(authenticateToken: any) {
 
       if (!subscription) {
         subscription = await subscriptionRepository.createSubscription(user.tenantId, {
-          planId: 'ENTERPRISE',
+          planId: 'INDIVIDUAL',
           status: 'ACTIVE',
         });
       }

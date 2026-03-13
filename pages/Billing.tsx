@@ -63,8 +63,26 @@ export const Billing: React.FC = () => {
         }
     };
 
-    const handleDownloadInvoice = (id: string) => {
+    const handleDownloadInvoice = (invoice: Invoice) => {
         notify(t('billing.downloading'), 'success');
+        const planLabel = PLANS[(invoice as any).planId as PlanTier]?.name || (invoice as any).planId || 'N/A';
+        const rows = [
+            ['Hóa đơn SGS Land'],
+            [''],
+            ['Mã hóa đơn', invoice.id],
+            ['Ngày phát hành', invoice.created ? new Date(invoice.created).toLocaleDateString('vi-VN') : (invoice as any).createdAt ? new Date((invoice as any).createdAt).toLocaleDateString('vi-VN') : ''],
+            ['Gói cước', planLabel],
+            ['Trạng thái', invoice.status === 'PAID' || invoice.status === 'paid' ? 'Đã thanh toán' : invoice.status],
+            ['Số tiền', `$${(invoice as any).amount ?? invoice.amount ?? 0}`],
+        ];
+        const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sgs-invoice-${invoice.id}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     if (loading) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
@@ -163,14 +181,72 @@ export const Billing: React.FC = () => {
                                         </li>
                                     ))}
                                 </ul>
-                                <button className={`w-full py-2 rounded-xl text-sm font-bold transition-all ${isCurrent ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-slate-900 text-white hover:bg-indigo-600'}`}>
-                                    {isCurrent ? t('billing.current_plan') : t('billing.upgrade')}
+                                <button
+                                    disabled={isCurrent || processingPlan === plan.id}
+                                    onClick={() => !isCurrent && handleUpgrade(plan.id)}
+                                    className={`w-full py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${isCurrent ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-slate-900 text-white hover:bg-indigo-600 cursor-pointer'}`}
+                                >
+                                    {processingPlan === plan.id ? '...' : isCurrent ? t('billing.current_plan') : t('billing.upgrade_btn')}
                                 </button>
                             </div>
                         );
                     })}
                 </div>
             </div>
+
+            {/* Invoice History */}
+            {invoices.length > 0 && (
+                <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+                    <h3 className="font-bold text-slate-800 mb-4">{t('billing.date')} — Lịch sử hóa đơn</h3>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-left text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                                    <th className="pb-3 pr-4">Mã HĐ</th>
+                                    <th className="pb-3 pr-4">Gói cước</th>
+                                    <th className="pb-3 pr-4">Ngày</th>
+                                    <th className="pb-3 pr-4">Số tiền</th>
+                                    <th className="pb-3 pr-4">Trạng thái</th>
+                                    <th className="pb-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {invoices.map((inv) => {
+                                    const anyInv = inv as any;
+                                    const planLabel = PLANS[anyInv.planId as PlanTier]?.name || anyInv.planId || '—';
+                                    const dateStr = inv.created
+                                        ? new Date(inv.created).toLocaleDateString('vi-VN')
+                                        : anyInv.createdAt
+                                        ? new Date(anyInv.createdAt).toLocaleDateString('vi-VN')
+                                        : '—';
+                                    const isPaid = inv.status === 'paid' || (anyInv.status as string) === 'PAID';
+                                    return (
+                                        <tr key={inv.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                            <td className="py-3 pr-4 font-mono text-xs text-slate-500">{inv.id.slice(0, 8)}…</td>
+                                            <td className="py-3 pr-4 font-medium text-slate-700">{planLabel}</td>
+                                            <td className="py-3 pr-4 text-slate-500">{dateStr}</td>
+                                            <td className="py-3 pr-4 font-bold text-slate-800">${anyInv.amount ?? 0}</td>
+                                            <td className="py-3 pr-4">
+                                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
+                                                    {isPaid ? 'Đã thanh toán' : inv.status}
+                                                </span>
+                                            </td>
+                                            <td className="py-3">
+                                                <button
+                                                    onClick={() => handleDownloadInvoice(inv)}
+                                                    className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                >
+                                                    {ICONS.DOWNLOAD} CSV
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

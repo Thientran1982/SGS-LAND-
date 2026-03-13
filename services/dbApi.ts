@@ -15,21 +15,42 @@ export const PLANS: Record<PlanTier, Plan> = {
     id: PlanTier.INDIVIDUAL,
     name: 'Individual',
     price: 0,
-    features: ['Basic CRM', '1 User', '5 Listings'],
+    features: [
+      'CRM cơ bản (quản lý lead, listing)',
+      '1 người dùng',
+      'Tối đa 5 tin đăng',
+      '100 email/tháng',
+      '50 AI request/tháng',
+    ],
     limits: { seats: 1, emailsPerMonth: 100, aiRequestsPerMonth: 50 }
   },
   [PlanTier.TEAM]: {
     id: PlanTier.TEAM,
     name: 'Team',
     price: 49,
-    features: ['Advanced CRM', '5 Users', 'Unlimited Listings', 'Team Routing'],
+    features: [
+      'CRM nâng cao (đầy đủ tính năng)',
+      'Tối đa 5 người dùng',
+      'Tin đăng không giới hạn',
+      'Phân công lead tự động (routing)',
+      '2.000 email/tháng',
+      '500 AI request/tháng',
+    ],
     limits: { seats: 5, emailsPerMonth: 2000, aiRequestsPerMonth: 500 }
   },
   [PlanTier.ENTERPRISE]: {
     id: PlanTier.ENTERPRISE,
     name: 'Enterprise',
     price: 199,
-    features: ['Full Suite', 'Unlimited Users', 'API Access', 'Dedicated Support', 'Custom AI Models'],
+    features: [
+      'Toàn bộ tính năng (Full Suite)',
+      'Người dùng không giới hạn',
+      'Truy cập API & tích hợp',
+      'AI Model tùy chỉnh theo doanh nghiệp',
+      'Hỗ trợ ưu tiên 24/7',
+      '100.000 email/tháng',
+      '10.000 AI request/tháng',
+    ],
     limits: { seats: 999, emailsPerMonth: 100000, aiRequestsPerMonth: 10000 }
   }
 };
