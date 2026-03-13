@@ -9,6 +9,7 @@ import { CommandCenter } from './Navigation';
 import { GlobalSearch } from './GlobalSearch';
 import { Logo } from './Logo';
 import { OnboardingWizard } from './OnboardingWizard';
+import { prefetchRoute } from '../utils/reactUtils';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & ASSETS
@@ -226,6 +227,7 @@ const Sidebar = memo(({
                                         <button
                                             key={item.id}
                                             onClick={() => onNavigate(item.route)}
+                                            onMouseEnter={() => prefetchRoute(item.route)}
                                             title={isCollapsed ? t(item.labelKey) : ''}
                                             className={`
                                                 w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative

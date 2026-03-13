@@ -17,22 +17,18 @@ export const lazyLoad = <T extends React.ComponentType<any>>(
             const tryImport = (attemptsLeft: number) => {
                 importFunc()
                     .then(module => {
-                        // Support both named export and default export fallback
                         const component = module[componentName] || (module as any).default;
                         if (component) {
                             resolve({ default: component });
                         } else {
-                            // If component is missing in module, throw specific error to trigger retry or catch
                             throw new Error(`Component "${componentName}" not found in module.`);
                         }
                     })
                     .catch((error) => {
                         console.warn(`Lazy load failed for ${componentName}. Attempts left: ${attemptsLeft}`, error);
                         if (attemptsLeft > 0) {
-                            // Retry after delay
                             setTimeout(() => tryImport(attemptsLeft - 1), interval);
                         } else {
-                            // On final failure, reject so ErrorBoundary can catch it
                             reject(error);
                         }
                     });
@@ -40,4 +36,34 @@ export const lazyLoad = <T extends React.ComponentType<any>>(
             tryImport(retries);
         });
     });
+};
+
+// ---------------------------------------------------------------------------
+// PREFETCH REGISTRY
+// Allows registering import functions by route key, then calling prefetchRoute()
+// on nav hover to kick off Vite module transform BEFORE the user clicks.
+// ---------------------------------------------------------------------------
+
+const _prefetchDone = new Set<string>();
+const _prefetchRegistry: Record<string, () => Promise<any>> = {};
+
+export const registerPrefetch = (routeKey: string, importFn: () => Promise<any>): void => {
+    _prefetchRegistry[routeKey] = importFn;
+};
+
+/**
+ * Fire-and-forget: starts the dynamic import for `routeKey` if not already done.
+ * Call this onMouseEnter of nav links so the chunk is ready before the click.
+ */
+export const prefetchRoute = (routeKey: string): void => {
+    if (_prefetchDone.has(routeKey) || !_prefetchRegistry[routeKey]) return;
+    _prefetchDone.add(routeKey);
+    _prefetchRegistry[routeKey]().catch(() => {});
+};
+
+/**
+ * Prefetch multiple routes at once (e.g. top pages after auth).
+ */
+export const prefetchRoutes = (routeKeys: string[]): void => {
+    routeKeys.forEach(prefetchRoute);
 };

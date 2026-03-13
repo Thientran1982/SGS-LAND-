@@ -7,7 +7,7 @@ import { I18nProvider, useTranslation } from './services/i18n';
 import { ThemeProvider } from './services/theme';
 import { TenantProvider } from './services/tenantContext';
 import { ROUTES } from './config/routes';
-import { lazyLoad } from './utils/reactUtils';
+import { lazyLoad, registerPrefetch, prefetchRoutes } from './utils/reactUtils';
 import { motion, AnimatePresence } from 'motion/react';
 
 // -----------------------------------------------------------------------------
@@ -64,6 +64,34 @@ const DataPlatform = lazyLoad(() => import('./pages/DataPlatform'), 'DataPlatfor
 const SecurityCompliance = lazyLoad(() => import('./pages/SecurityCompliance'), 'SecurityCompliance');
 const AiGovernance = lazyLoad(() => import('./pages/AiGovernance'), 'AiGovernance');
 const Profile = lazyLoad(() => import('./pages/Profile'), 'Profile');
+
+// ---------------------------------------------------------------------------
+// PREFETCH REGISTRATION — maps each route to its raw import so nav hover
+// can call registerPrefetch(route) before the user clicks.
+// ---------------------------------------------------------------------------
+registerPrefetch(ROUTES.DASHBOARD,            () => import('./pages/Dashboard'));
+registerPrefetch(ROUTES.LEADS,               () => import('./pages/Leads'));
+registerPrefetch(ROUTES.CONTRACTS,           () => import('./pages/Contracts'));
+registerPrefetch(ROUTES.INVENTORY,           () => import('./pages/Inventory'));
+registerPrefetch(ROUTES.INBOX,              () => import('./pages/Inbox'));
+registerPrefetch(ROUTES.FAVORITES,           () => import('./pages/Favorites'));
+registerPrefetch(ROUTES.REPORTS,            () => import('./pages/Reports'));
+registerPrefetch(ROUTES.APPROVALS,           () => import('./pages/ApprovalInbox'));
+registerPrefetch(ROUTES.ROUTING_RULES,       () => import('./pages/RoutingRules'));
+registerPrefetch(ROUTES.SEQUENCES,           () => import('./pages/Sequences'));
+registerPrefetch(ROUTES.SCORING_RULES,       () => import('./pages/ScoringRules'));
+registerPrefetch(ROUTES.KNOWLEDGE,           () => import('./pages/KnowledgeBase'));
+registerPrefetch(ROUTES.SYSTEM,             () => import('./pages/SystemStatus'));
+registerPrefetch(ROUTES.ADMIN_USERS,         () => import('./pages/AdminUsers'));
+registerPrefetch(ROUTES.ENTERPRISE_SETTINGS, () => import('./pages/EnterpriseSettings'));
+registerPrefetch(ROUTES.BILLING,            () => import('./pages/Billing'));
+registerPrefetch(ROUTES.MARKETPLACE,         () => import('./pages/Marketplace'));
+registerPrefetch(ROUTES.DATA_PLATFORM,       () => import('./pages/DataPlatform'));
+registerPrefetch(ROUTES.SECURITY,           () => import('./pages/SecurityCompliance'));
+registerPrefetch(ROUTES.AI_GOVERNANCE,       () => import('./pages/AiGovernance'));
+registerPrefetch(ROUTES.PROFILE,            () => import('./pages/Profile'));
+registerPrefetch(ROUTES.SEARCH,             () => import('./pages/ProductSearch'));
+registerPrefetch(ROUTES.LANDING,            () => import('./pages/Landing'));
 
 // Placeholder for Mobile App
 const MobileApp = () => {
@@ -278,6 +306,16 @@ const AppShell: React.FC = () => {
     const { t } = useTranslation();
     const [authState, setAuthState] = useState<'LOADING' | 'AUTH' | 'GUEST'>(getInitialAuthState);
 
+    // Prefetch top pages as soon as auth is confirmed
+    useEffect(() => {
+        if (authState === 'AUTH') {
+            prefetchRoutes([
+                ROUTES.DASHBOARD, ROUTES.LEADS, ROUTES.INBOX,
+                ROUTES.INVENTORY, ROUTES.CONTRACTS, ROUTES.REPORTS,
+            ]);
+        }
+    }, [authState]);
+
     // Auth Initialization — runs once on mount to check session
     useEffect(() => {
         const initAuth = async () => {
@@ -352,10 +390,34 @@ const AppShell: React.FC = () => {
 
     // --- RENDERER ---
 
-    // Reusable small spinner (never shows "initializing" text)
+    // Full-screen spinner for initial auth check / public page load
     const SmallSpinner = (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--bg-app)]">
             <div className="w-8 h-8 border-2 border-[var(--glass-border)] border-t-[var(--primary-600)] rounded-full animate-spin" />
+        </div>
+    );
+
+    // Skeleton shown inside the main content area while a private page chunk loads.
+    // Sidebar + header remain visible — only the content slot shows this.
+    const PageSkeleton = (
+        <div className="p-4 sm:p-6 space-y-5 animate-pulse w-full">
+            <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                    <div className="h-6 w-44 bg-slate-100 dark:bg-white/5 rounded-xl" />
+                    <div className="h-3 w-28 bg-slate-100 dark:bg-white/5 rounded-lg" />
+                </div>
+                <div className="h-9 w-28 bg-slate-100 dark:bg-white/5 rounded-xl" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-24 bg-slate-100 dark:bg-white/5 rounded-2xl" />
+                ))}
+            </div>
+            <div className="space-y-2.5">
+                {[...Array(6)].map((_, i) => (
+                    <div key={i} className="h-11 bg-slate-100 dark:bg-white/5 rounded-xl" style={{ opacity: 1 - i * 0.12 }} />
+                ))}
+            </div>
         </div>
     );
 
@@ -532,15 +594,11 @@ const AppShell: React.FC = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
+                        transition={{ duration: 0.12 }}
                         className="h-full w-full flex flex-col relative overflow-hidden isolate"
                     >
                         <ErrorBoundary>
-                            <Suspense fallback={
-                                <div className="h-full w-full flex items-center justify-center">
-                                    <div className="w-8 h-8 border-2 border-[var(--glass-border)] border-t-[var(--primary-600)] rounded-full animate-spin"></div>
-                                </div>
-                            }>
+                            <Suspense fallback={PageSkeleton}>
                                 {TargetComponent ? <TargetComponent /> : <NotFound />}
                             </Suspense>
                         </ErrorBoundary>
