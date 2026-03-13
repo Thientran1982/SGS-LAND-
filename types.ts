@@ -558,12 +558,13 @@ export interface ChaosConfig {
 export interface AuditLog {
     id: UUID;
     timestamp: ISOString;
-    actorId: string; // User Email or System
+    actorId: string;
+    actorName?: string; // joined from users table
     action: string;
     entityType: string;
     entityId: string;
     details: string;
-    metadata?: Record<string, unknown>; // Structured changes
+    metadata?: Record<string, unknown>;
     ipAddress?: string;
 }
 

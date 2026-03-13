@@ -191,6 +191,8 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
     const [testing, setTesting] = useState(false);
     const [sendingTest, setSendingTest] = useState(false);
 
+    useEffect(() => { setForm(config.email); }, [config.email]);
+
     const handleSave = async () => {
         setSaving(true);
         try { await db.saveEmailConfig(form); notify(t('common.success'), 'success'); onRefresh(); } 
@@ -256,6 +258,8 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
     const [sso, setSso] = useState(config.sso);
     const [saving, setSaving] = useState(false);
     const [showSecret, setShowSecret] = useState(false);
+
+    useEffect(() => { setSso(config.sso); }, [config.sso]);
 
     const handleSave = async () => {
         if (!sso.issuerUrl || !sso.clientId) { notify(t('ent.sso_save_error'), 'error'); return; }
@@ -385,6 +389,7 @@ const AuditPanel = memo(() => {
 
     return (
         <div className="animate-enter">
+            <SectionHeader title={t('ent.audit_title')} subtitle={t('ent.audit_subtitle')} />
             <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left text-xs min-w-[600px]">
@@ -397,12 +402,17 @@ const AuditPanel = memo(() => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {logs?.map(log => (
+                            {logs.length === 0 && (
+                                <tr>
+                                    <td colSpan={4} className="p-10 text-center text-slate-400 italic">{t('common.no_data') || 'Chưa có nhật ký nào'}</td>
+                                </tr>
+                            )}
+                            {logs.map(log => (
                                 <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="p-4 text-slate-400 font-mono whitespace-nowrap">{formatDateTime(log.timestamp)}</td>
-                                    <td className="p-4 font-bold text-slate-700 whitespace-nowrap">{log.actorId}</td>
+                                    <td className="p-4 font-bold text-slate-700 whitespace-nowrap">{log.actorName || log.actorId}</td>
                                     <td className="p-4 whitespace-nowrap"><span className="px-2 py-1 bg-slate-100 rounded border border-slate-200 font-bold text-slate-600">{log.action}</span></td>
-                                    <td className="p-4 text-slate-600 max-w-[200px] truncate" title={log.details}>{log.details}</td>
+                                    <td className="p-4 text-slate-600 max-w-[200px] truncate" title={log.details}>{log.details || '—'}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -456,8 +466,8 @@ export const EnterpriseSettings: React.FC = () => {
     if (!loading && currentUser && currentUser.role !== UserRole.ADMIN) {
         return (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-enter">
-                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
-                    <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+                    <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m2-6V7m0 0a5 5 0 110 10A5 5 0 0112 7z" /></svg>
                 </div>
                 <h2 className="text-xl font-bold text-slate-800 mb-2">{t('common.access_denied') || "Access Denied"}</h2>
                 <p className="text-slate-500 max-w-md">
@@ -504,7 +514,7 @@ export const EnterpriseSettings: React.FC = () => {
                     <button
                         type="button"
                         title={config.tenantId}
-                        onClick={() => { navigator.clipboard.writeText(config.tenantId ?? ''); }}
+                        onClick={() => { copyToClipboard(config.tenantId ?? ''); notify(t('common.copied'), 'success'); }}
                         className="text-slate-400 hover:text-slate-700 transition-colors"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
