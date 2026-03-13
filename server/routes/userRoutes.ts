@@ -18,6 +18,9 @@ export function createUserRoutes(authenticateToken: any) {
       const filters: any = {};
       if (req.query.role) filters.role = req.query.role;
       if (req.query.status) filters.status = req.query.status;
+      if (req.query.search) filters.search = req.query.search;
+      if (req.query.sortField) filters.sortField = req.query.sortField;
+      if (req.query.sortOrder) filters.sortOrder = req.query.sortOrder;
 
       const result = await userRepository.listUsers(user.tenantId, { page, pageSize }, filters);
       result.data = result.data.map((u: any) => userRepository.toPublicUser(u));
@@ -199,8 +202,8 @@ export function createUserRoutes(authenticateToken: any) {
       }
 
       const { currentPassword, newPassword } = req.body;
-      if (!newPassword || newPassword.length < 4) {
-        return res.status(400).json({ error: 'Mật khẩu mới phải ít nhất 4 ký tự' });
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: 'Mật khẩu mới phải ít nhất 6 ký tự' });
       }
 
       if (currentPassword) {

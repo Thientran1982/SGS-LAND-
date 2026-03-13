@@ -126,7 +126,7 @@ export class UserRepository extends BaseRepository {
     });
   }
 
-  async listUsers(tenantId: string, pagination?: PaginationParams, filters?: { role?: string; status?: string }): Promise<PaginatedResult<UserRow>> {
+  async listUsers(tenantId: string, pagination?: PaginationParams, filters?: { role?: string; status?: string; search?: string; sortField?: string; sortOrder?: string }): Promise<PaginatedResult<UserRow> & { stats: { activeCount: number; pendingCount: number } }> {
     return this.withTenant(tenantId, async (client) => {
       const conditions: string[] = [];
       const values: any[] = [];
@@ -140,17 +140,43 @@ export class UserRepository extends BaseRepository {
         conditions.push(`status = $${paramIndex++}`);
         values.push(filters.status);
       }
+      if (filters?.search) {
+        conditions.push(`(name ILIKE $${paramIndex} OR email ILIKE $${paramIndex})`);
+        values.push(`%${filters.search}%`);
+        paramIndex++;
+      }
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
       const countResult = await client.query(`SELECT COUNT(*)::int as total FROM users ${whereClause}`, values);
       const total = countResult.rows[0].total;
 
+      const statsResult = await client.query(
+        `SELECT
+          COUNT(*) FILTER (WHERE status = 'ACTIVE')::int AS active_count,
+          COUNT(*) FILTER (WHERE status = 'PENDING')::int AS pending_count
+         FROM users`
+      );
+      const stats = {
+        activeCount: statsResult.rows[0].active_count,
+        pendingCount: statsResult.rows[0].pending_count,
+      };
+
       const page = pagination?.page || 1;
       const pageSize = pagination?.pageSize || 50;
       const offset = (page - 1) * pageSize;
 
+      const SORTABLE_FIELDS: Record<string, string> = {
+        name: 'name',
+        role: 'role',
+        status: 'status',
+        lastLoginAt: 'last_login_at',
+        createdAt: 'created_at',
+      };
+      const sortCol = SORTABLE_FIELDS[filters?.sortField || ''] || 'created_at';
+      const sortDir = filters?.sortOrder === 'asc' ? 'ASC' : 'DESC';
+
       const result = await client.query(
-        `SELECT * FROM users ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+        `SELECT * FROM users ${whereClause} ORDER BY ${sortCol} ${sortDir} LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
         [...values, pageSize, offset]
       );
 
@@ -160,6 +186,7 @@ export class UserRepository extends BaseRepository {
         page,
         pageSize,
         totalPages: Math.ceil(total / pageSize),
+        stats,
       };
     });
   }

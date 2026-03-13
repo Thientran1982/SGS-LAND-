@@ -350,7 +350,8 @@ export const AdminUsers: React.FC = () => {
 
     const handleInviteConfirm = async (email: string, role: UserRole) => {
         await new Promise(r => setTimeout(r, 600)); 
-        await db.inviteUser(email, role);
+        const name = email.split('@')[0];
+        await db.inviteUser({ name, email, role });
         notify(t('admin.users.invite_sent', { email }), 'success');
         fetchData();
     };
@@ -509,7 +510,7 @@ export const AdminUsers: React.FC = () => {
                                             </button>
                                         </td>
                                         <td className="hidden md:table-cell p-4 text-slate-500 font-mono text-xs">
-                                            {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : <span className="text-slate-300 italic">Never logged in</span>}
+                                            {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : <span className="text-slate-300 italic">{t('admin.users.never_logged_in')}</span>}
                                         </td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-1 sm:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">

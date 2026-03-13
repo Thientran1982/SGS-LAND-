@@ -672,6 +672,7 @@ export const DICTIONARY = {
         "admin.users.empty_search": "Không tìm thấy thành viên nào",
         "admin.users.active_users": "Người Dùng Hoạt Động",
         "admin.users.pending_invites": "Lời Mời Chờ Xử Lý",
+        "admin.users.never_logged_in": "Chưa đăng nhập",
 
         "ent.title": "Cài Đặt Doanh Nghiệp",
         "ent.subtitle": "Cấu hình tích hợp, bảo mật và thương hiệu.",
@@ -1824,6 +1825,7 @@ export const DICTIONARY = {
         "admin.users.empty_search": "No members found",
         "admin.users.active_users": "Active Users",
         "admin.users.pending_invites": "Pending Invites",
+        "admin.users.never_logged_in": "Never logged in",
 
         "ent.title": "Enterprise Settings",
         "ent.subtitle": "Integration, security and brand configuration.",

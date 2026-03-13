@@ -657,6 +657,8 @@ class DatabaseApiClient {
       const params: any = {};
       if (search) params.search = search;
       if (role) params.role = role;
+      if (sort?.field) params.sortField = sort.field;
+      if (sort?.order) params.sortOrder = sort.order;
       const result = await userApi.getUsers(page, pageSize, params);
       return {
         data: result.data,
@@ -664,9 +666,10 @@ class DatabaseApiClient {
         page: result.page,
         pageSize: result.pageSize,
         totalPages: result.totalPages,
+        stats: (result as any).stats || { activeCount: 0, pendingCount: 0 },
       };
     } catch {
-      return { data: [], total: 0, page: 1, pageSize, totalPages: 0 };
+      return { data: [], total: 0, page: 1, pageSize, totalPages: 0, stats: { activeCount: 0, pendingCount: 0 } };
     }
   }
 
