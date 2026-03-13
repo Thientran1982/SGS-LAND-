@@ -49,8 +49,9 @@ export function createListingRoutes(authenticateToken: any) {
       const listing = await listingRepository.findById(user.tenantId, req.params.id);
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
-      const newCount = await listingRepository.incrementViewCount(user.tenantId, req.params.id);
-      res.json({ ...listing, viewCount: newCount });
+      // Respond immediately, increment view count in background
+      res.json(listing);
+      listingRepository.incrementViewCount(user.tenantId, req.params.id).catch(() => {});
     } catch (error) {
       console.error('Error fetching listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });

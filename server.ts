@@ -629,8 +629,9 @@ async function startServer() {
     try {
       const listing = await listingRepository.findById(PUBLIC_TENANT, req.params.id);
       if (!listing) return res.status(404).json({ error: 'Listing not found' }) as any;
-      const newCount = await listingRepository.incrementViewCount(PUBLIC_TENANT, req.params.id);
-      res.json({ ...listing, viewCount: newCount });
+      // Respond immediately, increment view count in background
+      res.json(listing);
+      listingRepository.incrementViewCount(PUBLIC_TENANT, req.params.id).catch(() => {});
     } catch (error) {
       console.error('Error fetching public listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });

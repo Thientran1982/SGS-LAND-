@@ -727,31 +727,32 @@ export const ListingDetail: React.FC = () => {
             setCurrentUser(user);
             if (item) {
                 const normalizedLocation = normalizeAddress(item.location);
-                let isFav = false;
-                let favIds: Set<string> = new Set();
+                const simFiltered = (sim || []).filter((s: any) => s.id !== item.id);
 
+                // Show listing immediately — don't block on favorites
+                setListing({ ...item, location: normalizedLocation, isFavorite: false });
+                setSimilarListings(simFiltered);
+                setLoading(false);
+
+                // Fetch favorites in background and patch state
                 if (user) {
-                    const favs = await db.getFavorites(1, 1000);
-                    const favData = (favs as any).data as any[];
-                    favIds = new Set(favData.map((f: any) => f.id));
-                    isFav = favIds.has(item.id);
+                    try {
+                        const favs = await db.getFavorites(1, 1000);
+                        const favData = (favs as any).data as any[];
+                        const favIds = new Set(favData.map((f: any) => f.id));
+                        setListing(prev => prev ? { ...prev, isFavorite: favIds.has(prev.id) } : prev);
+                        setSimilarListings(prev => prev.map((s: any) => ({ ...s, isFavorite: favIds.has(s.id) })));
+                    } catch {}
                 } else {
                     try {
                         const stored: string[] = JSON.parse(localStorage.getItem('sgs_favorites') || '[]');
-                        favIds = new Set(stored);
-                        isFav = favIds.has(item.id);
+                        const favIds = new Set(stored);
+                        setListing(prev => prev ? { ...prev, isFavorite: favIds.has(prev.id) } : prev);
                     } catch {}
                 }
-
-                setListing({ ...item, location: normalizedLocation, isFavorite: isFav });
-                setSimilarListings((sim || []).filter((s: any) => s.id !== item.id).map((s: any) => ({
-                    ...s,
-                    isFavorite: favIds.has(s.id),
-                })));
             }
         } catch (e) {
             console.error(e);
-        } finally {
             setLoading(false);
         }
     }, [id]);
