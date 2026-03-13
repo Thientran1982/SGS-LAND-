@@ -213,6 +213,11 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         } else if (!VN_PHONE_REGEX.test(formData.contactPhone)) {
             newErrors.contactPhone = t('validation.phone_invalid');
         }
+
+        // Owner Phone Validation (optional field — only validate if filled)
+        if (formData.ownerPhone?.trim() && !VN_PHONE_REGEX.test(formData.ownerPhone)) {
+            newErrors.ownerPhone = t('validation.owner_phone_invalid');
+        }
         
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -264,6 +269,12 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         { value: 'PERCENT', label: '%' },
         { value: 'FIXED', label: 'VND' }
     ], []);
+
+    const furnitureOptions = useMemo(() => [
+        { value: 'FULL', label: t('furniture.FULL') },
+        { value: 'BASIC', label: t('furniture.BASIC') },
+        { value: 'NONE', label: t('furniture.NONE') },
+    ], [t]);
 
     // --- DYNAMIC FIELDS LOGIC ---
     const isProject = formData.type === PropertyType.PROJECT;
@@ -359,7 +370,15 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                         options={directionOptions}
                     />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1">
+                    <Dropdown
+                        label={t('inventory.label_furniture')}
+                        value={(formData.attributes?.furniture as string) || 'BASIC'}
+                        onChange={v => updateAttribute('furniture', v)}
+                        options={furnitureOptions}
+                    />
+                </div>
+                <div className="col-span-1">
                     <Dropdown
                         label={t('inventory.label_legal')}
                         value={(formData.attributes?.legalStatus as string) || ''}
@@ -454,9 +473,10 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             <input 
                                                 value={formData.ownerPhone || ''} 
                                                 onChange={e => setFormData({...formData, ownerPhone: e.target.value})} 
-                                                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-white font-mono" 
+                                                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-white font-mono ${errors.ownerPhone ? 'border-rose-300 bg-rose-50' : 'border-slate-200'}`}
                                                 placeholder="09..."
                                             />
+                                            {errors.ownerPhone && <p className="text-[10px] text-rose-500 mt-1">{errors.ownerPhone}</p>}
                                         </div>
                                         <div className="col-span-2">
                                             <label className="text-[11px] font-bold text-slate-500 uppercase mb-1 block">{t('inventory.label_commission')}</label>
@@ -532,6 +552,18 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             <span className="absolute right-3 inset-y-0 flex items-center pointer-events-none text-xs text-slate-400 font-bold">m²</span>
                                         </div>
                                     </div>
+                                </div>
+
+                                {/* DESCRIPTION / NOTES */}
+                                <div>
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase mb-1 block">{t('inventory.label_notes')}</label>
+                                    <textarea
+                                        value={(formData.attributes?.notes as string) || ''}
+                                        onChange={e => updateAttribute('notes', e.target.value)}
+                                        rows={3}
+                                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none resize-none"
+                                        placeholder={t('inventory.placeholder_notes')}
+                                    />
                                 </div>
                             </div>
                             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">

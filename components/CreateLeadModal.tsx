@@ -95,11 +95,14 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         
         // 1. Validation
         const newErrors: Record<string, string> = {};
-        if (!VN_PHONE_REGEX.test(formData.phone)) {
-            newErrors.phone = t('profile.error_phone_invalid') || "Invalid phone number";
-        }
         if (!formData.name.trim()) {
             newErrors.name = t('auth.error_name_required');
+        }
+        if (!VN_PHONE_REGEX.test(formData.phone)) {
+            newErrors.phone = t('validation.phone_invalid') || "Invalid phone number";
+        }
+        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = t('validation.email_invalid') || "Invalid email format";
         }
         
         if (Object.keys(newErrors).length > 0) {
@@ -225,7 +228,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 value={formData.email} 
                                 onChange={(v: string) => updateField('email', v)} 
                                 placeholder={t('auth.placeholder_email')}
-                                type="email"
+                                type="text"
+                                error={errors.email}
                             />
                             <FormInput 
                                 label={t('leads.address')} 
@@ -261,7 +265,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 label={t('leads.tags')} 
                                 value={formData.tags} 
                                 onChange={(v: string) => updateField('tags', v)} 
-                                placeholder={t('leads.placeholder_tags')}
+                                placeholder={t('leads.placeholder_tags') + ' (VD: VIP, căn hộ, Q2)'}
                             />
                             <div>
                                 <Dropdown

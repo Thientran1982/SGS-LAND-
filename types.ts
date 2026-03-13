@@ -263,6 +263,9 @@ export interface ListingAttributes {
     // Project Specifics
     developer?: string;
     handoverYear?: string;
+
+    // General
+    notes?: string;
     
     // Index signature for extensibility
     [key: string]: unknown;
