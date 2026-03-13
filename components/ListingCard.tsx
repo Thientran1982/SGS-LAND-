@@ -211,7 +211,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
             </div>
         );
 
-        const wrapperClass = "grid grid-cols-2 sm:grid-cols-3 gap-2 py-2 border-t border-b border-slate-50 dark:border-white/5 mb-2";
+        const wrapperClass = "grid grid-cols-3 gap-2 py-2 border-t border-b border-slate-50 dark:border-white/5 mb-2";
         const attrs = item.attributes || {}; 
 
         if (item.type === PropertyType.PROJECT) {
@@ -292,8 +292,8 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
 
                 {attributeGrid}
 
-                <div className="flex justify-between items-center mt-auto pt-1">
-                    <div>
+                <div className="flex justify-between items-center mt-auto pt-1 gap-2">
+                    <div className="min-w-0 flex-1">
                         <div className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">
                             {isProject ? t('inventory.min_price') : t('inventory.label_price')}
                         </div>
@@ -307,9 +307,9 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                         )}
                     </div>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         {attrs.legalStatus && (
-                            <div className="flex flex-col items-end hidden sm:flex">
+                            <div className="flex flex-col items-end">
                                 <span className="text-[9px] font-bold text-slate-400 uppercase">{t('inventory.label_legal')}</span>
                                 <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded uppercase tracking-wide truncate max-w-[80px]">
                                     {t(`legal.${attrs.legalStatus}`) || (attrs.legalStatus as string)}
@@ -318,7 +318,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                         )}
                         {shouldShowActions && (
                             <>
-                                <div className="w-px h-6 bg-slate-100 dark:bg-white/10 mx-1 hidden sm:block"></div>
+                                {attrs.legalStatus && <div className="w-px h-6 bg-slate-100 dark:bg-white/10 mx-1"></div>}
                                 <ListingActionMenu 
                                     listing={item}
                                     onEdit={() => onEdit(item)}
