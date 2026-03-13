@@ -706,6 +706,22 @@ async function startServer() {
     }
   });
 
+  // Zalo webhook URL verification (some Zalo integrations call GET to verify)
+  app.get("/api/webhooks/zalo", (req, res) => {
+    const verifyToken = process.env.ZALO_VERIFY_TOKEN || "sgs_land_zalo_token";
+    const token = req.query.verifyToken || req.query.verify_token;
+    if (token && token === verifyToken) {
+      console.log('[Zalo Webhook] Verified');
+      res.status(200).send(req.query.challenge || 'OK');
+    } else {
+      res.status(200).json({
+        status: 'active',
+        platform: 'zalo',
+        message: 'SGS LAND Zalo Webhook Endpoint',
+      });
+    }
+  });
+
   app.post("/api/webhooks/zalo", webhookRateLimit, verifyWebhookSignature('zalo'), async (req, res) => {
     try {
       const { sender, message, timestamp, event_name } = req.body;

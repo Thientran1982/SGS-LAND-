@@ -1105,14 +1105,41 @@ class DatabaseApiClient {
     return data;
   }
 
-  async connectZaloOA(data?: any) {
-    const config = await this.getEnterpriseConfig();
-    config.zalo = { ...config.zalo, enabled: true, oaId: data?.oaId || 'oa_demo', oaName: data?.oaName || 'SGS Land OA', webhookUrl: `${window.location.origin}/api/webhooks/zalo`, connectedAt: new Date().toISOString() };
-    return this.updateEnterpriseConfig({ zalo: config.zalo });
+  async getZaloStatus() {
+    try {
+      const res = await fetch('/api/enterprise/zalo/status', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch Zalo status');
+      return res.json();
+    } catch {
+      return { webhookSecretConfigured: false, appIdConfigured: false, webhookUrl: '/api/webhooks/zalo' };
+    }
+  }
+
+  async connectZaloOA(data: { appId: string; oaId: string; oaName: string; appSecret?: string }) {
+    const res = await fetch('/api/enterprise/zalo/connect', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Không thể kết nối Zalo OA');
+    }
+    return res.json();
   }
 
   async disconnectZaloOA() {
-    return this.updateEnterpriseConfig({ zalo: { enabled: false, oaId: '', oaName: '', webhookUrl: '' } });
+    const res = await fetch('/api/enterprise/zalo/disconnect', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Không thể ngắt kết nối Zalo OA');
+    }
+    return res.json();
   }
 
   async connectFacebookPage(data: any) {

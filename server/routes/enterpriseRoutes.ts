@@ -6,6 +6,10 @@ import { emailService } from '../services/emailService';
 export function createEnterpriseRoutes(authenticateToken: any) {
   const router = Router();
 
+  // -----------------------------------------------------------------------
+  // Config (generic)
+  // -----------------------------------------------------------------------
+
   router.get('/config', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
@@ -34,6 +38,10 @@ export function createEnterpriseRoutes(authenticateToken: any) {
     }
   });
 
+  // -----------------------------------------------------------------------
+  // Audit logs
+  // -----------------------------------------------------------------------
+
   router.get('/audit-logs', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
@@ -56,6 +64,10 @@ export function createEnterpriseRoutes(authenticateToken: any) {
       res.status(500).json({ error: 'Failed to fetch audit logs' });
     }
   });
+
+  // -----------------------------------------------------------------------
+  // Email / SMTP
+  // -----------------------------------------------------------------------
 
   router.post('/test-smtp', authenticateToken, async (req: Request, res: Response) => {
     try {
@@ -97,6 +109,108 @@ export function createEnterpriseRoutes(authenticateToken: any) {
     } catch (error: any) {
       console.error('Send test email error:', error);
       res.status(500).json({ error: error.message || 'Failed to send test email' });
+    }
+  });
+
+  // -----------------------------------------------------------------------
+  // Zalo OA
+  // -----------------------------------------------------------------------
+
+  /**
+   * GET /api/enterprise/zalo/status
+   * Returns whether ZALO_OA_SECRET env var is configured (no secret value exposed)
+   */
+  router.get('/zalo/status', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+      res.json({
+        webhookSecretConfigured: !!process.env.ZALO_OA_SECRET,
+        appIdConfigured: !!process.env.ZALO_APP_ID,
+        webhookUrl: `${process.env.PUBLIC_URL || ''}/api/webhooks/zalo`,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
+   * POST /api/enterprise/zalo/connect
+   * Saves Zalo OA credentials (App ID, OA ID, App Secret) to enterprise config.
+   * In a full integration, this would exchange an OAuth code for tokens via Zalo API.
+   */
+  router.post('/zalo/connect', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can connect Zalo OA' });
+      }
+
+      const { appId, oaId, oaName, appSecret } = req.body;
+
+      if (!appId || !oaId || !oaName) {
+        return res.status(400).json({ error: 'appId, oaId và oaName là bắt buộc' });
+      }
+
+      const webhookUrl = `${process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`}/api/webhooks/zalo`;
+
+      const zaloConfig = {
+        enabled: true,
+        appId,
+        oaId,
+        oaName,
+        appSecret: appSecret || undefined,
+        webhookUrl,
+        connectedAt: new Date().toISOString(),
+      };
+
+      await enterpriseConfigRepository.upsertConfig(user.tenantId, { zalo: zaloConfig });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'ZALO_OA_CONNECTED',
+        entityType: 'enterprise_config',
+        entityId: user.tenantId,
+        details: `Zalo OA kết nối: ${oaName} (${oaId})`,
+      });
+
+      console.log(`[Zalo] Tenant ${user.tenantId} connected OA: ${oaName} (${oaId})`);
+      res.json({ success: true, webhookUrl, zalo: zaloConfig });
+    } catch (error: any) {
+      console.error('Zalo connect error:', error);
+      res.status(500).json({ error: error.message || 'Failed to connect Zalo OA' });
+    }
+  });
+
+  /**
+   * POST /api/enterprise/zalo/disconnect
+   * Removes Zalo OA connection from enterprise config.
+   */
+  router.post('/zalo/disconnect', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can disconnect Zalo OA' });
+      }
+
+      const disconnected = { enabled: false, appId: '', oaId: '', oaName: '', webhookUrl: '', appSecret: '' };
+      await enterpriseConfigRepository.upsertConfig(user.tenantId, { zalo: disconnected });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'ZALO_OA_DISCONNECTED',
+        entityType: 'enterprise_config',
+        entityId: user.tenantId,
+        details: 'Zalo OA đã ngắt kết nối',
+      });
+
+      console.log(`[Zalo] Tenant ${user.tenantId} disconnected Zalo OA`);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Zalo disconnect error:', error);
+      res.status(500).json({ error: error.message || 'Failed to disconnect Zalo OA' });
     }
   });
 

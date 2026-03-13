@@ -43,76 +43,246 @@ const StatusBadge: React.FC<{ active: boolean; label: string }> = memo(({ active
 const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig, onRefresh: () => void, notify: (m: string, t: 'success'|'error') => void }) => {
     const { t, formatDate } = useTranslation();
     const [connecting, setConnecting] = useState(false);
+    const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+    const [disconnecting, setDisconnecting] = useState(false);
+    const [zaloStatus, setZaloStatus] = useState<{ webhookSecretConfigured: boolean; appIdConfigured: boolean; webhookUrl: string } | null>(null);
+    const [form, setForm] = useState({ appId: '', oaId: '', oaName: '', appSecret: '' });
+    const [showSecret, setShowSecret] = useState(false);
+
+    useEffect(() => {
+        db.getZaloStatus().then(setZaloStatus);
+    }, []);
 
     const handleConnect = async () => {
+        if (!form.appId.trim() || !form.oaId.trim() || !form.oaName.trim()) {
+            notify(t('ent.zalo_form_required') || 'Vui lòng nhập đầy đủ App ID, OA ID và Tên OA', 'error');
+            return;
+        }
         setConnecting(true);
         try {
-            await db.connectZaloOA();
+            await db.connectZaloOA({
+                appId: form.appId.trim(),
+                oaId: form.oaId.trim(),
+                oaName: form.oaName.trim(),
+                appSecret: form.appSecret.trim() || undefined,
+            });
             notify(t('ent.zalo_success'), 'success');
+            setForm({ appId: '', oaId: '', oaName: '', appSecret: '' });
             onRefresh();
-        } catch (e: any) { notify(e.message, 'error'); } 
+        } catch (e: any) { notify(e.message, 'error'); }
         finally { setConnecting(false); }
     };
 
     const handleDisconnect = async () => {
-        try { await db.disconnectZaloOA(); notify(t('common.success'), 'success'); onRefresh(); } 
-        catch (e: any) { notify(e.message, 'error'); }
+        setDisconnecting(true);
+        try {
+            await db.disconnectZaloOA();
+            notify(t('common.success'), 'success');
+            setConfirmDisconnect(false);
+            onRefresh();
+        } catch (e: any) { notify(e.message, 'error'); }
+        finally { setDisconnecting(false); }
     };
 
-    const copyWebhook = async () => {
-        if (config.zalo.webhookUrl) {
-            await copyToClipboard(config.zalo.webhookUrl);
+    const copyWebhook = async (url: string) => {
+        if (url) {
+            await copyToClipboard(url);
             notify(t('common.copied'), 'success');
         }
     };
 
+    const webhookUrl = config.zalo?.webhookUrl || zaloStatus?.webhookUrl || `${window.location.origin}/api/webhooks/zalo`;
+
     return (
         <div className="animate-enter max-w-4xl">
-            <SectionHeader title={t('ent.zalo_title')} subtitle={t('ent.zalo_subtitle')} action={<StatusBadge active={!!config.zalo?.enabled} label={config.zalo?.enabled ? t('ent.zalo_status_connected') : t('ent.zalo_status_disconnected')} />} />
-            
+            <SectionHeader
+                title={t('ent.zalo_title')}
+                subtitle={t('ent.zalo_subtitle')}
+                action={<StatusBadge active={!!config.zalo?.enabled} label={config.zalo?.enabled ? t('ent.zalo_status_connected') : t('ent.zalo_status_disconnected')} />}
+            />
+
+            {/* Env var warning */}
+            {zaloStatus && !zaloStatus.webhookSecretConfigured && (
+                <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-800 text-xs">
+                    <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>
+                        <span className="font-bold block mb-0.5">{t('ent.zalo_secret_warning') || 'Cần cấu hình biến môi trường'}</span>
+                        {t('ent.zalo_secret_hint') || 'Thêm ZALO_OA_SECRET vào Environment Secrets để bảo mật webhook trên Production.'}
+                    </span>
+                </div>
+            )}
+
             {config.zalo?.enabled ? (
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
-                    <div className="p-6 md:p-8 flex-1">
-                        <div className="flex items-center gap-5 mb-6">
-                            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-blue-500/20 shrink-0">Z</div>
-                            <div className="min-w-0">
-                                <h3 className="text-xl font-bold text-slate-800 break-words">{config.zalo.oaName}</h3>
-                                <div className="inline-flex items-center gap-2 mt-1 px-2 py-1 bg-slate-100 rounded text-xs text-slate-500 font-mono border border-slate-200">ID: {config.zalo.oaId}</div>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t('ent.zalo_role')}</div>
-                                <div className="flex flex-wrap gap-1">
-                                    <span className="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-600">{t('ent.zalo_perm_msg')}</span>
-                                    <span className="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-600">{t('ent.zalo_perm_user')}</span>
+                <>
+                    {/* Connected state */}
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
+                        <div className="p-6 md:p-8 flex-1">
+                            <div className="flex items-center gap-5 mb-6">
+                                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-blue-500/20 shrink-0">Z</div>
+                                <div className="min-w-0">
+                                    <h3 className="text-xl font-bold text-slate-800 break-words">{config.zalo.oaName}</h3>
+                                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                                        <div className="inline-flex items-center px-2 py-1 bg-slate-100 rounded text-xs text-slate-500 font-mono border border-slate-200">OA ID: {config.zalo.oaId}</div>
+                                        {(config.zalo as any).appId && (
+                                            <div className="inline-flex items-center px-2 py-1 bg-slate-100 rounded text-xs text-slate-500 font-mono border border-slate-200">App ID: {(config.zalo as any).appId}</div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t('ent.zalo_connected_at')}</div>
-                                <div className="text-xs font-bold text-slate-700">{config.zalo.connectedAt ? formatDate(config.zalo.connectedAt) : '-'}</div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t('ent.zalo_role')}</div>
+                                    <div className="flex flex-wrap gap-1">
+                                        <span className="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-600">{t('ent.zalo_perm_msg')}</span>
+                                        <span className="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-600">{t('ent.zalo_perm_user')}</span>
+                                    </div>
+                                </div>
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t('ent.zalo_connected_at')}</div>
+                                    <div className="text-xs font-bold text-slate-700">{config.zalo.connectedAt ? formatDate(config.zalo.connectedAt) : '-'}</div>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setConfirmDisconnect(true)}
+                                className="text-rose-600 text-sm font-bold hover:underline decoration-2 underline-offset-4"
+                            >
+                                {t('ent.zalo_disconnect_btn')}
+                            </button>
+                        </div>
+                        <div className="bg-slate-50 border-t md:border-t-0 md:border-l border-slate-200 p-6 md:p-8 w-full md:w-[320px] flex flex-col justify-center gap-5">
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('ent.zalo_webhook')}</label>
+                                <div
+                                    className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-2 group cursor-pointer hover:border-blue-400 transition-colors"
+                                    onClick={() => copyWebhook(webhookUrl)}
+                                >
+                                    <code className="text-[10px] font-mono text-slate-600 flex-1 truncate">{webhookUrl}</code>
+                                    <div className="p-1.5 rounded-lg bg-slate-100 text-slate-400 group-hover:text-blue-500 shrink-0">
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full shrink-0 ${zaloStatus?.webhookSecretConfigured ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
+                                <span className="text-[10px] text-slate-500 font-bold">
+                                    ZALO_OA_SECRET: {zaloStatus?.webhookSecretConfigured ? <span className="text-emerald-600">Đã cấu hình</span> : <span className="text-amber-600">Chưa cấu hình</span>}
+                                </span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                                <span className="font-bold text-blue-600 block mb-1">{t('common.tips')}:</span> {t('ent.zalo_tips')}
                             </div>
                         </div>
-                        <button onClick={handleDisconnect} className="text-rose-600 text-sm font-bold hover:underline decoration-2 underline-offset-4">{t('ent.zalo_disconnect_btn')}</button>
                     </div>
-                    <div className="bg-slate-50 border-t md:border-t-0 md:border-l border-slate-200 p-6 md:p-8 w-full md:w-[320px] flex flex-col justify-center">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('ent.zalo_webhook')}</label>
-                        <div className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-2 mb-4 group cursor-pointer hover:border-blue-400 transition-colors" onClick={copyWebhook}>
-                            <code className="text-[10px] font-mono text-slate-600 flex-1 truncate">{config.zalo.webhookUrl}</code>
-                            <div className="p-1.5 rounded-lg bg-slate-100 text-slate-400 group-hover:text-blue-500 shrink-0">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+
+                    {/* Disconnect confirmation dialog */}
+                    {confirmDisconnect && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-enter">
+                                <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mb-4">
+                                    <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-800 mb-2">{t('ent.zalo_disconnect_btn')}</h3>
+                                <p className="text-sm text-slate-500 mb-6">{t('ent.zalo_disconnect_confirm')}</p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setConfirmDisconnect(false)}
+                                        className="flex-1 py-2.5 border-2 border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-50 transition-colors text-sm"
+                                    >
+                                        {t('common.cancel') || 'Huỷ'}
+                                    </button>
+                                    <button
+                                        onClick={handleDisconnect}
+                                        disabled={disconnecting}
+                                        className="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors text-sm disabled:opacity-70 flex items-center justify-center gap-2"
+                                    >
+                                        {disconnecting && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
+                                        {t('ent.zalo_disconnect_btn')}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div className="text-[10px] text-slate-500 leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">
-                            <span className="font-bold text-blue-600 block mb-1">{t('common.tips')}:</span> {t('ent.zalo_tips')}
-                        </div>
-                    </div>
-                </div>
+                    )}
+                </>
             ) : (
-                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-10 text-center">
-                    <p className="text-slate-500 mb-6 max-w-md mx-auto">{t('ent.zalo_guide')}</p>
-                    <button onClick={handleConnect} disabled={connecting} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2 mx-auto">
-                        {connecting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>} {t('ent.zalo_connect_btn')}
+                /* Connect form */
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 max-w-2xl">
+                    <p className="text-sm text-slate-500 mb-6 leading-relaxed">{t('ent.zalo_guide')}</p>
+
+                    <div className="space-y-4 mb-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                                    App ID <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                                    placeholder="VD: 123456789"
+                                    value={form.appId}
+                                    onChange={e => setForm({ ...form, appId: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                                    OA ID <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                                    placeholder="VD: 987654321"
+                                    value={form.oaId}
+                                    onChange={e => setForm({ ...form, oaId: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                                {t('ent.zalo_oa_name') || 'Tên Official Account'} <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                                className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                                placeholder="VD: SGS Land Official"
+                                value={form.oaName}
+                                onChange={e => setForm({ ...form, oaName: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                                App Secret <span className="text-slate-400 font-normal normal-case">(tuỳ chọn — để bảo mật webhook)</span>
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showSecret ? 'text' : 'password'}
+                                    className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                                    placeholder={CONSTANTS.MASK}
+                                    value={form.appSecret}
+                                    onChange={e => setForm({ ...form, appSecret: e.target.value })}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSecret(!showSecret)}
+                                    className="absolute right-3 top-2.5 text-[10px] font-bold text-blue-600 hover:underline"
+                                >
+                                    {showSecret ? t('ent.sso_hide') : t('ent.sso_show')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6 text-[11px] text-slate-500">
+                        <svg className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <div>
+                            <span className="font-bold text-slate-600 block mb-0.5">Webhook URL sẽ được tạo tự động:</span>
+                            <code className="font-mono text-[10px] break-all text-blue-600">{webhookUrl}</code>
+                            <span className="block mt-1">Sau khi kết nối, copy URL này vào cấu hình Webhook trên Zalo Developers Console.</span>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleConnect}
+                        disabled={connecting}
+                        className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+                    >
+                        {connecting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
+                        {t('ent.zalo_connect_btn')}
                     </button>
                 </div>
             )}
