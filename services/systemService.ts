@@ -53,8 +53,8 @@ const ENV_VARS = {
     NODE_ENV: getEnv('NODE_ENV', 'production'),
     DATABASE_URL: getEnv('DATABASE_URL', 'postgres://mock:5432/db'),
     API_KEY: getEnv('API_KEY', ''), 
-    EMAIL_SERVICE_KEY: getEnv('EMAIL_SERVICE_KEY', 'mock-ses-key'),
-    PUBLIC_BASE_URL: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+    EMAIL_SERVICE_KEY: getEnv('EMAIL_SERVICE_KEY', ''),
+    PUBLIC_BASE_URL: typeof window !== 'undefined' ? window.location.origin : '',
 };
 
 // -----------------------------------------------------------------------------
@@ -144,7 +144,7 @@ class SystemService {
         if (level === 'ERROR') this.errorCountLastMinute++;
 
         const entry: LogEntry = {
-            id: `log_${now}_${Math.random().toString(36).substr(2,5)}`,
+            id: `log_${now}_${Math.random().toString(36).slice(2, 7)}`,
             timestamp: new Date().toISOString(),
             level,
             message,

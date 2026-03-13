@@ -34,10 +34,10 @@ interface BatchResult {
 
 interface ConnectorAdapter {
     /** Validate configuration using the localized translator */
-    validateConfig(config: any, t: (k: string) => string): Promise<boolean>;
-    
+    validateConfig(config: Record<string, unknown>, t: (k: string) => string): Promise<boolean>;
+
     /** Send data batch to external system */
-    sendBatch(batch: any[], config: any): Promise<BatchResult>;
+    sendBatch(batch: unknown[], config: Record<string, unknown>): Promise<BatchResult>;
 }
 
 // --- ADAPTER IMPLEMENTATIONS ---
@@ -123,7 +123,7 @@ class ConnectorService {
         // 2. Determine Compliance Policy (Dynamic PII Redaction)
         const compliance = await db.getComplianceConfig();
         // Default to redaction for external webhooks unless specifically allowed
-        const shouldRedact = compliance.dlpRules.some(r => r.enabled && r.action === 'REDACT'); 
+        const shouldRedact = compliance.dlpRules?.some((r: { enabled: boolean; action: string }) => r.enabled && r.action === 'REDACT') ?? false;
 
         // 3. Init Job
         let job = await db.createSyncJob(connectorId);
@@ -171,7 +171,7 @@ class ConnectorService {
             });
 
             // Update Watermark
-            await db.saveConnectorConfig({
+            await db.saveConnectorConfig(config.id, {
                 ...config,
                 watermark: exportResult.newWatermark,
                 lastSyncAt: new Date().toISOString(),
@@ -209,7 +209,7 @@ class ConnectorService {
                     errors: [...job.errors, errorMsg]
                 });
                 
-                await db.saveConnectorConfig({
+                await db.saveConnectorConfig(config.id, {
                     ...config,
                     lastSyncAt: new Date().toISOString(),
                     lastSyncStatus: SyncStatus.FAILED

@@ -1,8 +1,7 @@
 import { Lead, Interaction, AgentTraceResponse } from '../types';
-import { cleanAiResponse } from '../utils/aiUtils';
 
 class AiApiClient {
-    private async fetchApi(endpoint: string, body: any): Promise<any> {
+    private async fetchApi(endpoint: string, body: unknown): Promise<any> {
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -11,8 +10,8 @@ class AiApiClient {
         });
         if (response.status === 401 || response.status === 403) {
             if (typeof window !== 'undefined') {
-                localStorage.removeItem('sgs_session_token');
-                window.location.href = '/login';
+                localStorage.removeItem('sgs_auth_cached');
+                window.dispatchEvent(new CustomEvent('auth:logout'));
             }
             throw new Error('Authentication required');
         }
@@ -20,7 +19,7 @@ class AiApiClient {
         return await response.json();
     }
 
-    async processMessage(lead: Lead, userMessage: string, history: Interaction[], t: any, lang: string, onStream?: (chunk: string) => void): Promise<AgentTraceResponse> {
+    async processMessage(lead: Lead, userMessage: string, history: Interaction[], lang: string, onStream?: (chunk: string) => void): Promise<AgentTraceResponse> {
         // Since the backend doesn't support streaming for processMessage yet, we'll just return the final response
         const result = await this.fetchApi('/api/ai/process-message', { lead, userMessage, history, lang });
         if (onStream && result.content) {
@@ -33,7 +32,7 @@ class AiApiClient {
         return this.fetchApi('/api/ai/score-lead', { leadData, messageContent, weights, lang });
     }
 
-    async summarizeLead(lead: Lead, logs: any[], lang: string): Promise<string> {
+    async summarizeLead(lead: Lead, logs: unknown[], lang: string): Promise<string> {
         try {
             const result = await this.fetchApi('/api/ai/summarize-lead', { lead, logs, lang });
             return result.summary || (lang === 'vn' ? `Khách hàng ${lead.name} đang được hệ thống AI phân tích chuyên sâu.` : `Lead ${lead.name} is undergoing deep AI analysis.`);

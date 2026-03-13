@@ -156,7 +156,7 @@ export const parseCurrencyString = (raw: string, config: CurrencyConfig = DEFAUL
  * Smartly formats large numbers into Tỷ/Triệu (Billion/Million) for Vietnamese market
  * or compact notation for English.
  */
-export const formatSmartPrice = (price: number, t?: any): string => {
+export const formatSmartPrice = (price: number, t?: (key: string) => string): string => {
     if (!price) return '0';
     const billionLabel = t ? t('format.billion') : 'Tỷ';
     const millionLabel = t ? t('format.million') : 'Tr';
@@ -175,7 +175,7 @@ export const formatSmartPrice = (price: number, t?: any): string => {
  * FIX APPLIED: Clamp decimals to 1 digit to prevent '123,456.79'.
  * Logic: Prioritize Million/m2 for readability.
  */
-export const formatUnitPrice = (price: number, area: number, t?: any): string => {
+export const formatUnitPrice = (price: number, area: number, t?: (key: string) => string): string => {
     if (!price || !area) return '';
     const unit = price / area;
     const billionLabel = t ? t('format.billion') : 'Tỷ';

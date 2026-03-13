@@ -229,7 +229,7 @@ export const Inbox: React.FC = () => {
                     setStreamingMessage('');
                     
                     const newHistory = [...messages, customerMsg];
-                    const aiResult = await aiService.processMessage(currentLead, cleanInput, newHistory, t, language, (chunk) => {
+                    const aiResult = await aiService.processMessage(currentLead, cleanInput, newHistory, language, (chunk) => {
                         setIsThinking(false);
                         setStreamingMessage(prev => prev + chunk);
                         scrollToBottom();
