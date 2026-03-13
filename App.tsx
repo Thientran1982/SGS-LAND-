@@ -366,15 +366,29 @@ const AppShell: React.FC = () => {
 
     // --- RENDERER ---
 
-    if (authState === 'LOADING') return <LoadingScreen />;
+    // While auth is still loading:
+    // - Public routes render immediately (no loading screen)
+    // - Private routes wait silently (brief spinner, not the full-screen "initializing" screen)
+    if (authState === 'LOADING') {
+        const isPublicRoute = route.base === '' || PUBLIC_ROUTES.has(route.base);
+        if (!isPublicRoute) {
+            return (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--bg-app)]">
+                    <div className="w-8 h-8 border-2 border-[var(--glass-border)] border-t-[var(--primary-600)] rounded-full animate-spin" />
+                </div>
+            );
+        }
+        // Fall through to render the public page immediately
+    }
 
     // 2. Public Pages Routing (Guest or Auth user on public page)
-    if (authState === 'GUEST' || (PUBLIC_ROUTES.has(route.base) && authState === 'AUTH' && route.base !== ROUTES.LANDING)) {
+    if (authState === 'LOADING' || authState === 'GUEST' || (PUBLIC_ROUTES.has(route.base) && authState === 'AUTH' && route.base !== ROUTES.LANDING)) {
         
         // Safety Catch: If authState is GUEST but route is NOT public (e.g. manually typed #/dashboard)
-        // Wait for checkAuth to complete and either authenticate or redirect to login
+        // Redirect to login immediately instead of showing a loading screen
         if (authState === 'GUEST' && !PUBLIC_ROUTES.has(route.base) && route.base !== '') {
-             return <LoadingScreen />; 
+            navigate(ROUTES.LOGIN);
+            return null;
         }
 
         if (route.base === ROUTES.RESET_PASSWORD) {
@@ -508,7 +522,7 @@ const AppShell: React.FC = () => {
         );
     }
 
-    return <LoadingScreen />;
+    return null;
 };
 
 const App: React.FC = () => {
