@@ -863,7 +863,9 @@ async function startServer() {
         }
       }
 
-      io.to(data.room).emit("receive_message", data);
+      // Use socket.to() instead of io.to() so the sender does NOT receive
+      // their own message back — they already applied it optimistically on the client
+      socket.to(data.room).emit("receive_message", data);
     }));
 
     socket.on("lead_updated", requireAuth((data) => {

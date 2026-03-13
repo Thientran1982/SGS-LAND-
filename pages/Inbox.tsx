@@ -92,31 +92,42 @@ export const Inbox: React.FC = () => {
         queryKey: ['inboxThreads'],
         queryFn: async () => {
             const data = await db.getInboxThreads();
-            
-            // Init auto-response state if new
-            const newAutoMap = { ...autoResponseMap };
-            data?.forEach(t => {
-                if (newAutoMap[t.lead.id] === undefined) {
-                    newAutoMap[t.lead.id] = t.status !== ThreadStatus.HUMAN_TAKEOVER;
-                }
-            });
-            setAutoResponseMap(newAutoMap);
-            
             return data || [];
         }
     });
+
+    // Sync autoResponseMap when new threads arrive — only initialise entries that
+    // don't exist yet so user-toggled values are never overwritten
+    useEffect(() => {
+        if (!threads.length) return;
+        const currentMap = autoResponseMapRef.current;
+        const additions: Record<string, boolean> = {};
+        threads.forEach(t => {
+            if (currentMap[t.lead.id] === undefined) {
+                additions[t.lead.id] = t.status !== ThreadStatus.HUMAN_TAKEOVER;
+            }
+        });
+        if (Object.keys(additions).length > 0) {
+            setAutoResponseMap(prev => ({ ...additions, ...prev }));
+        }
+    }, [threads]);
 
     const { data: messages = [] } = useQuery({
         queryKey: ['interactions', selectedLeadId],
         queryFn: async () => {
             if (!selectedLeadId) return [];
             const msgs = await db.getInteractions(selectedLeadId);
-            const sorted = (msgs || []).sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-            setTimeout(scrollToBottom, 100);
-            return sorted;
+            return (msgs || []).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
         },
         enabled: !!selectedLeadId
     });
+
+    // Scroll to bottom whenever messages load or change
+    useEffect(() => {
+        if (messages.length > 0) {
+            setTimeout(scrollToBottom, 100);
+        }
+    }, [messages]);
 
     const { data: users = [] } = useQuery({
         queryKey: ['tenantUsers'],
