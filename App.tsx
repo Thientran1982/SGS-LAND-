@@ -366,26 +366,68 @@ const AppShell: React.FC = () => {
 
     // --- RENDERER ---
 
-    // While auth is still loading:
-    // - Public routes render immediately (no loading screen)
-    // - Private routes wait silently (brief spinner, not the full-screen "initializing" screen)
+    // Reusable small spinner (never shows "initializing" text)
+    const SmallSpinner = (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--bg-app)]">
+            <div className="w-8 h-8 border-2 border-[var(--glass-border)] border-t-[var(--primary-600)] rounded-full animate-spin" />
+        </div>
+    );
+
+    // --- LOADING STATE: fully self-contained, never falls through ---
     if (authState === 'LOADING') {
-        const isPublicRoute = route.base === '' || PUBLIC_ROUTES.has(route.base);
-        if (!isPublicRoute) {
-            return (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--bg-app)]">
-                    <div className="w-8 h-8 border-2 border-[var(--glass-border)] border-t-[var(--primary-600)] rounded-full animate-spin" />
-                </div>
-            );
+        // Root path — redirect immediately to landing so no blank page or 404
+        if (route.base === '') {
+            navigate(ROUTES.LANDING);
+            return null;
         }
-        // Fall through to render the public page immediately
+
+        // Known public route — render the page immediately, no spinner
+        if (PUBLIC_ROUTES.has(route.base)) {
+            if (route.base === ROUTES.LOGIN) {
+                return (
+                    <ErrorBoundary>
+                        <Suspense fallback={SmallSpinner}>
+                            <Login onLoginSuccess={handleLoginSuccess} />
+                        </Suspense>
+                    </ErrorBoundary>
+                );
+            }
+            if (route.base === ROUTES.PUBLIC_PREFIX) {
+                const token = route.params[0];
+                return (
+                    <div className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]">
+                        <ErrorBoundary>
+                            <Suspense fallback={SmallSpinner}>
+                                {token?.startsWith('contract_') ? <PublicContract token={token} /> :
+                                 token ? <PublicProposal token={token} /> :
+                                 <ErrorState message={t('pub.not_found')} />}
+                            </Suspense>
+                        </ErrorBoundary>
+                    </div>
+                );
+            }
+            const PublicPage = PAGE_REGISTRY[route.base];
+            if (PublicPage) {
+                return (
+                    <div className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]">
+                        <ErrorBoundary>
+                            <Suspense fallback={SmallSpinner}>
+                                <PublicPage />
+                            </Suspense>
+                        </ErrorBoundary>
+                    </div>
+                );
+            }
+        }
+
+        // Private route or unknown — tiny spinner, no text
+        return SmallSpinner;
     }
 
     // 2. Public Pages Routing (Guest or Auth user on public page)
-    if (authState === 'LOADING' || authState === 'GUEST' || (PUBLIC_ROUTES.has(route.base) && authState === 'AUTH' && route.base !== ROUTES.LANDING)) {
+    if (authState === 'GUEST' || (PUBLIC_ROUTES.has(route.base) && authState === 'AUTH' && route.base !== ROUTES.LANDING)) {
         
-        // Safety Catch: If authState is GUEST but route is NOT public (e.g. manually typed #/dashboard)
-        // Redirect to login immediately instead of showing a loading screen
+        // If unauthenticated on a private route, redirect directly to login
         if (authState === 'GUEST' && !PUBLIC_ROUTES.has(route.base) && route.base !== '') {
             navigate(ROUTES.LOGIN);
             return null;
@@ -395,10 +437,10 @@ const AppShell: React.FC = () => {
             const tokenFromUrl = route.params[0] || window.location.hash.match(/token=([a-f0-9]+)/)?.[1] || '';
             if (tokenFromUrl) {
                 window.location.hash = `#/${ROUTES.LOGIN}?reset_token=${tokenFromUrl}`;
-                return <LoadingScreen />;
+            } else {
+                navigate(ROUTES.LOGIN);
             }
-            navigate(ROUTES.LOGIN);
-            return <LoadingScreen />;
+            return null;
         }
 
         if (route.base === ROUTES.LOGIN) {
@@ -412,7 +454,7 @@ const AppShell: React.FC = () => {
                         transition={{ duration: 0.15 }}
                     >
                         <ErrorBoundary>
-                            <Suspense fallback={<LoadingScreen />}>
+                            <Suspense fallback={SmallSpinner}>
                                 <Login onLoginSuccess={handleLoginSuccess} />
                             </Suspense>
                         </ErrorBoundary>
@@ -437,7 +479,7 @@ const AppShell: React.FC = () => {
                             className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
                         >
                             <ErrorBoundary>
-                                <Suspense fallback={<LoadingScreen />}>
+                                <Suspense fallback={SmallSpinner}>
                                     <PublicContract token={token} />
                                 </Suspense>
                             </ErrorBoundary>
@@ -457,7 +499,7 @@ const AppShell: React.FC = () => {
                         className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
                     >
                         <ErrorBoundary>
-                            <Suspense fallback={<LoadingScreen />}>
+                            <Suspense fallback={SmallSpinner}>
                                 {token ? <PublicProposal token={token} /> : <ErrorState message={t('pub.not_found')} />}
                             </Suspense>
                         </ErrorBoundary>
@@ -480,7 +522,7 @@ const AppShell: React.FC = () => {
                         className="h-[100dvh] w-full overflow-y-auto no-scrollbar bg-[var(--bg-app)]"
                     >
                         <ErrorBoundary>
-                            <Suspense fallback={<LoadingScreen />}>
+                            <Suspense fallback={SmallSpinner}>
                                 <TargetComponent />
                             </Suspense>
                         </ErrorBoundary>
