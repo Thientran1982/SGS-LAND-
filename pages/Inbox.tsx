@@ -238,7 +238,6 @@ export const Inbox: React.FC = () => {
                     // RACE CONDITION CHECK:
                     // If the human agent turned off AI or sent a message while AI was thinking, discard the AI response.
                     if (!autoResponseMapRef.current[selectedLeadId]) {
-                        console.log("Human takeover detected. Discarding AI response.");
                         setIsThinking(false);
                         setStreamingMessage('');
                         return;

@@ -24,7 +24,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 ### Data Access Layers
 
 1. **Real PostgreSQL** (production path): `services/dbApi.ts` → `services/api/*.ts` → HTTP API → `server/routes/*.ts` → `server/repositories/*.ts` → PostgreSQL
-2. **Legacy mockDb** (still exists as `services/mockDb.ts` but NO longer imported by any frontend code)
+2. **Legacy mockDb** (deleted — removed along with 6 other unused service files: analyticsService, vectorStore, facebookService, zaloService, dlpService, webhookService)
 
 ### Repository Pattern (`server/repositories/`)
 - `baseRepository.ts` — `withTenantContext()` for RLS, pagination, error handling
@@ -184,7 +184,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 ## Dev Credentials
 
 - Email: `admin@sgs.vn`, Password: `123456` (all seeded users use `123456`)
-- Default tenant ID: `00000000-0000-0000-0000-000000000001`
+- Default tenant ID: `00000000-0000-0000-0000-000000000001` (canonical const `DEFAULT_TENANT_ID` in `server/constants.ts`; also a module-level const in `services/dbApi.ts`)
 - 8 users, 20 leads, 15 listings, 7 proposals, 1 contract, 35 interactions seeded
 
 ## Important Notes

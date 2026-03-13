@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
-
-const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+import { DEFAULT_TENANT_ID } from '../constants';
 
 interface SmtpConfig {
   enabled: boolean;

@@ -2,6 +2,7 @@ import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { Server } from 'socket.io';
 import { logger } from './middleware/logger';
+import { DEFAULT_TENANT_ID } from './constants';
 
 const redisUrl = process.env.REDIS_URL;
 const useRedis = !!redisUrl;
@@ -35,8 +36,6 @@ if (useRedis) {
     }
   };
 }
-
-const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
 export function setupWebhookWorker(io: Server) {
   const processJob = async (job: any) => {

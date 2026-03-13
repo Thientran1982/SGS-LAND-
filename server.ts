@@ -38,6 +38,7 @@ import { sanitizeInput, validateBody, schemas } from "./server/middleware/valida
 import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit } from "./server/middleware/rateLimiter";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
+import { DEFAULT_TENANT_ID } from "./server/constants";
 import { interactionRepository } from "./server/repositories/interactionRepository";
 import { sessionRepository } from "./server/repositories/sessionRepository";
 
@@ -67,7 +68,7 @@ async function startServer() {
   const JWT_SECRET = process.env.JWT_SECRET || (await import('crypto')).randomBytes(64).toString('hex');
 
   app.use((req, res, next) => {
-    let tenantId = '00000000-0000-0000-0000-000000000001';
+    let tenantId = DEFAULT_TENANT_ID;
     const token = req.cookies?.token;
     if (token) {
       try {
@@ -92,8 +93,6 @@ async function startServer() {
       next();
     });
   };
-
-  const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
   const cookieOptions: any = {
     httpOnly: true,
@@ -605,7 +604,7 @@ async function startServer() {
     console.warn("DATABASE_URL not set. Skipping database initialization.");
   }
 
-  const PUBLIC_TENANT = '00000000-0000-0000-0000-000000000001';
+  const PUBLIC_TENANT = DEFAULT_TENANT_ID;
 
   app.get('/api/public/listings', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {

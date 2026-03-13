@@ -49,15 +49,13 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const dict = DICTIONARY || {};
         const currentDict = dict[language] || dict['vn'] || {};
         
-        // @ts-ignore
-        let text = currentDict[key];
+        let text = (currentDict as Record<string, string>)[key];
 
         // Fallback to the other language if missing
         if (!text) {
             const fallbackLang = language === 'en' ? 'vn' : 'en';
             const fallbackDict = dict[fallbackLang] || {};
-            // @ts-ignore
-            text = fallbackDict[key];
+            text = (fallbackDict as Record<string, string>)[key];
         }
 
         if (!text) return key; // Return key if translation missing entirely

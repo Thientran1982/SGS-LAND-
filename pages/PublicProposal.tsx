@@ -6,6 +6,7 @@ import { useTranslation } from '../services/i18n';
 import { Logo } from '../components/Logo';
 import { useTenant } from '../services/tenantContext';
 import { formatSmartPrice } from '../utils/textUtils';
+import { NO_IMAGE_URL } from '../utils/constants';
 
 interface PublicProposalProps {
     token: string;
@@ -117,7 +118,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                 {/* Hero Card */}
                 <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden mb-8 relative">
                     <div className="aspect-video w-full bg-slate-200 relative overflow-hidden">
-                        <img src={listing.images?.[0] || 'https://via.placeholder.com/800x450'} className="w-full h-full object-cover" alt={listing.title} />
+                        <img src={listing.images?.[0] || NO_IMAGE_URL} className="w-full h-full object-cover" alt={listing.title} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                         <div className="absolute bottom-6 left-6 text-white">
                             <div className="text-xs font-bold bg-indigo-600 px-2 py-1 rounded mb-2 w-fit">{t(`property.${listing.type.toUpperCase()}`)}</div>

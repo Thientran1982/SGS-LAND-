@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef, memo } from 'react';
 import { Listing, PropertyType } from '../types';
+import { NO_IMAGE_URL } from '../utils/constants';
 
 declare const L: any; // Use global Leaflet instance from CDN
 
@@ -135,7 +136,7 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                     const marker = L.marker(point, { icon, zIndexOffset: 100 }).addTo(map);
                     
                     // --- PREMIUM CARD POPUP ---
-                    const imgUrl = listing.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image';
+                    const imgUrl = listing.images?.[0] || NO_IMAGE_URL;
                     const areaDisplay = listing.area ? `${listing.area}m²` : '';
                     const bedDisplay = listing.bedrooms ? ` • ${listing.bedrooms} PN` : '';
                     const unitPriceDisplay = (listing.area > 0 && listing.type !== PropertyType.PROJECT && formatUnitPrice) 

@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import { DEFAULT_TENANT_ID } from '../constants';
 
 const UPLOAD_BASE = path.join(process.cwd(), 'uploads');
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -43,7 +44,7 @@ const EXT_TO_CONTENT_TYPE: Record<string, string> = {
 
 const storage = multer.diskStorage({
   destination: (req: any, _file, cb) => {
-    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || DEFAULT_TENANT_ID;
     const dir = path.join(UPLOAD_BASE, tenantId);
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
@@ -95,7 +96,7 @@ export function createUploadRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'No files uploaded' });
       }
 
-      const tenantId = (req as any).tenantId || '00000000-0000-0000-0000-000000000001';
+      const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
 
       const uploaded = files.map(f => ({
         filename: f.filename,
@@ -114,7 +115,7 @@ export function createUploadRoutes(authenticateToken: any) {
 
   router.delete('/:filename', authenticateToken, (req: Request, res: Response) => {
     try {
-      const tenantId = (req as any).tenantId || '00000000-0000-0000-0000-000000000001';
+      const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
       const filename = path.basename(req.params.filename);
 
       if (!SAFE_FILENAME_REGEX.test(filename)) {

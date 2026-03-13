@@ -10,6 +10,8 @@ import { api } from './api/apiClient';
 import { PlanTier, Plan, UserRole } from '../types';
 import { ROUTES } from '../config/routes';
 
+const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
 export const PLANS: Record<PlanTier, Plan> = {
   [PlanTier.INDIVIDUAL]: {
     id: PlanTier.INDIVIDUAL,
@@ -56,7 +58,7 @@ export const PLANS: Record<PlanTier, Plan> = {
 };
 
 class DatabaseApiClient {
-  private currentTenantId: string = '00000000-0000-0000-0000-000000000001';
+  private currentTenantId: string = DEFAULT_TENANT_ID;
   private cachedCurrentUser: any = null;
   private currentUserPromise: Promise<any> | null = null;
 
