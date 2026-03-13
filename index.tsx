@@ -50,7 +50,7 @@ const getSafeLang = () => {
         if (saved === 'en' || saved === 'vn') return saved;
         
         // System Language Check
-        const sysLang = typeof navigator !== 'undefined' ? (navigator.language || (navigator as any).userLanguage) : '';
+        const sysLang = typeof navigator !== 'undefined' ? navigator.language : '';
         if (sysLang?.startsWith('en')) return 'en';
         
         return 'vn'; // Default to Vietnamese
@@ -68,8 +68,7 @@ const CRITICAL_MESSAGES = {
         BTN_COPY: "Sao chép mã lỗi",
         BTN_COPIED: "Đã sao chép!",
         ERR_UNKNOWN: "Lỗi hệ thống không xác định",
-        ERR_MISSING_ROOT: "Không tìm thấy phần tử gốc (Root Element).",
-        ERR_MISSING_API: "Thiếu API Key cấu hình."
+        ERR_MISSING_ROOT: "Không tìm thấy phần tử gốc (Root Element)."
     },
     en: {
         FATAL_TITLE: "System Critical Failure",
@@ -81,8 +80,7 @@ const CRITICAL_MESSAGES = {
         BTN_COPY: "Copy Debug Info",
         BTN_COPIED: "Copied!",
         ERR_UNKNOWN: "Unknown System Error",
-        ERR_MISSING_ROOT: "Root element missing.",
-        ERR_MISSING_API: "Missing API Key configuration."
+        ERR_MISSING_ROOT: "Root element missing."
     }
 };
 
@@ -153,9 +151,7 @@ window.addEventListener('error', (event) => {
     if (!root || root.innerHTML.trim().length === 0 || root.querySelector('.initial-loader')) {
         renderFatalError(String(event.message));
     }
-    try {
-        console.error("[FATAL]", event.message, event.error);
-    } catch (e) {}
+    console.error("[FATAL]", event.message, event.error);
 });
 
 // -----------------------------------------------------------------------------

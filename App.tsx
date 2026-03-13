@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, Suspense, memo } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
 import { db } from './services/dbApi';
@@ -186,20 +186,6 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
         return this.props.children;
     }
 }
-
-const LoadingScreen: React.FC = () => (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[var(--bg-app)] transition-colors duration-300 text-[var(--text-primary)]">
-        <div className="relative">
-            <div className="w-16 h-16 border-4 border-[var(--glass-border)] border-t-[var(--primary-600)] rounded-full animate-spin"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-2 h-2 bg-[var(--primary-600)] rounded-full animate-pulse"></div>
-            </div>
-        </div>
-        <div className="mt-4 text-xs font-bold uppercase tracking-widest animate-pulse opacity-60">
-            Đang khởi tạo hệ thống...
-        </div>
-    </div>
-);
 
 const ErrorState: React.FC<{ message: string, onRetry?: () => void }> = ({ message, onRetry }) => {
     const { t } = useTranslation();

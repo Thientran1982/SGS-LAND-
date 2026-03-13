@@ -468,7 +468,7 @@ export interface SCIMConfig {
     enabled: boolean;
     token: string;
     tokenCreatedAt: ISOString;
-    }
+}
 
 export interface RetentionPolicy {
     messagesDays: number;
@@ -646,9 +646,9 @@ export interface InteractionMetadata {
     duration?: number;
     mimeType?: string;
     isAgent?: boolean;
-    aiConfidence?: number; // 0.0 to 1.0 (New)
-    aiSentiment?: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'ANGRY'; // (New)
-    agentAction?: 'REPLY' | 'ESCALATE' | 'IGNORE'; // (New)
+    aiConfidence?: number; // 0.0 to 1.0
+    aiSentiment?: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'ANGRY';
+    agentAction?: 'REPLY' | 'ESCALATE' | 'IGNORE';
     artifact?: AgentArtifact;
     systemType?: 'ASSIGNMENT' | 'STATUS_CHANGE' | 'MERGE' | 'ALERT' | 'HANDOFF';
     groundingMetadata?: GroundingMetadata;
@@ -679,8 +679,8 @@ export interface InboxThread {
     lead: Lead;
     lastMessage?: Interaction;
     unreadCount: number;
-    status: ThreadStatus; // (New)
-    aiConfidenceLast?: number; // (New) - Snapshot of last confidence
+    status: ThreadStatus;
+    aiConfidenceLast?: number; // Snapshot of last AI confidence
 }
 
 // Updated models based on Google GenAI SDK rules (Feb 2026 Compatible)
@@ -827,7 +827,7 @@ export enum ConnectorType {
     SALESFORCE = 'SALESFORCE'
 }
 
-export interface ConnectorConfig<T = any> {
+export interface ConnectorConfig<T = Record<string, unknown>> {
     id: UUID;
     type: ConnectorType;
     name: string;
@@ -922,8 +922,8 @@ export interface AnalyticsSummary {
     revenueDelta?: number;
     winProbability?: number;
     salesVelocityDelta?: number;
-    marketPulse?: any;
-    agentLeaderboard?: any;
+    marketPulse?: MarketMetrics & { region?: string; lastUpdated?: ISOString };
+    agentLeaderboard?: Array<{ userId: UserId; name: string; avatar: string; score: number; deals: number }>;
 }
 
 export interface CampaignCost {
@@ -1077,9 +1077,9 @@ export interface Contract {
 }
 
 export interface ISocialProvider {
-    getProfile(userId: string, config?: any): Promise<SocialUserProfile>;
-    sendMessage(userId: string, text: string, config?: any): Promise<{ messageId: string; error?: string }>;
-    verifySignature(signature: string, body: any, secret?: string): boolean;
+    getProfile(userId: string, config?: Record<string, unknown>): Promise<SocialUserProfile>;
+    sendMessage(userId: string, text: string, config?: Record<string, unknown>): Promise<{ messageId: string; error?: string }>;
+    verifySignature(signature: string, body: unknown, secret?: string): boolean;
 }
 
 export interface SocialUserProfile {
