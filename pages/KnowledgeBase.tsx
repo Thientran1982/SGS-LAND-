@@ -130,7 +130,7 @@ export const KnowledgeBase: React.FC = () => {
     if (loading) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading') || 'Đang tải...'}</div>;
 
     return (
-        <div className="space-y-6 pb-20 animate-enter relative max-w-6xl mx-auto px-4 md:px-0">
+        <div className="space-y-6 pt-6 pb-20 animate-enter relative max-w-6xl mx-auto px-4 md:px-6">
             {toast && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             {/* Delete Confirmation Modal */}
