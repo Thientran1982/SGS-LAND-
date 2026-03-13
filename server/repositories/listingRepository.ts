@@ -224,16 +224,28 @@ export class ListingRepository extends BaseRepository {
     });
   }
 
+  async removeFavorite(tenantId: string, userId: string, listingId: string): Promise<void> {
+    return this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `DELETE FROM favorites WHERE user_id = $1 AND listing_id = $2`,
+        [userId, listingId]
+      );
+    });
+  }
+
   async getFavorites(tenantId: string, userId: string): Promise<any[]> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `SELECT l.* FROM listings l
+        `SELECT l.*, true AS is_favorite FROM listings l
          INNER JOIN favorites f ON l.id = f.listing_id
          WHERE f.user_id = $1
          ORDER BY f.created_at DESC`,
         [userId]
       );
-      return this.rowsToEntities(result.rows);
+      return this.rowsToEntities(result.rows).map((item: any) => ({
+        ...item,
+        isFavorite: true,
+      }));
     });
   }
 

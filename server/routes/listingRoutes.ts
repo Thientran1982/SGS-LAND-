@@ -155,5 +155,16 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
+  router.delete('/:id/favorite', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      await listingRepository.removeFavorite(user.tenantId, user.id, req.params.id);
+      res.json({ isFavorite: false });
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+      res.status(500).json({ error: 'Failed to remove favorite' });
+    }
+  });
+
   return router;
 }

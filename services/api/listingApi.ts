@@ -19,6 +19,9 @@ export const listingApi = {
   toggleFavorite: (id: string): Promise<{ isFavorite: boolean }> =>
     api.post(`/api/listings/${id}/favorite`),
 
+  removeFavorite: (id: string): Promise<{ isFavorite: boolean }> =>
+    api.delete(`/api/listings/${id}/favorite`),
+
   getFavorites: (): Promise<any[]> =>
     api.get('/api/listings/favorites'),
 };

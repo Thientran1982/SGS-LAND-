@@ -1,156 +1,266 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { db } from '../services/dbApi';
-import { Listing } from '../types';
+import { Listing, PropertyType } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ListingCard } from '../components/ListingCard';
 import { ROUTES } from '../config/routes';
 import { ConfirmModal } from '../components/ConfirmModal';
 
-const CONFIG = {
-    PAGE_SIZE: 12
+const CONFIG = { PAGE_SIZE: 12 };
+
+const SORT_OPTIONS = [
+    { value: 'date_desc', label: 'Mới thêm nhất' },
+    { value: 'price_asc',  label: 'Giá tăng dần' },
+    { value: 'price_desc', label: 'Giá giảm dần' },
+    { value: 'area_asc',   label: 'Diện tích tăng dần' },
+    { value: 'area_desc',  label: 'Diện tích giảm dần' },
+];
+
+const TYPE_LABELS: Record<string, string> = {
+    [PropertyType.PROJECT]:    'Dự án',
+    [PropertyType.APARTMENT]:  'Căn hộ',
+    [PropertyType.TOWNHOUSE]:  'Nhà phố',
+    [PropertyType.VILLA]:      'Biệt thự',
+    [PropertyType.LAND]:       'Đất nền',
+    [PropertyType.FACTORY]:    'Nhà xưởng',
+    [PropertyType.OFFICE]:     'Văn phòng',
+    [PropertyType.COMMERCIAL]: 'Thương mại',
 };
+
+type Toast = { msg: string; type: 'success' | 'error' };
 
 export const Favorites: React.FC = () => {
     const { t, formatCurrency } = useTranslation();
-    const [favorites, setFavorites] = useState<Listing[]>([]);
+
+    const [allFavorites, setAllFavorites] = useState<Listing[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalCount, setTotalCount] = useState(0);
-    
-    // UI State for Removal
+
+    const [sortBy, setSortBy] = useState('date_desc');
+    const [filterType, setFilterType] = useState<string>('ALL');
+
     const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
     const removingRef = useRef<Set<string>>(new Set());
 
+    const [toast, setToast] = useState<Toast | null>(null);
+
+    const notify = (msg: string, type: Toast['type'] = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const fetchFavorites = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await db.getFavorites(page, CONFIG.PAGE_SIZE);
-            setFavorites((res.data || []).map((item: any) => ({ ...item, isFavorite: true })));
-            setTotalPages(res.totalPages || 1);
-            setTotalCount(res.total || 0); 
+            const res = await db.getFavorites(1, 1000);
+            setAllFavorites(res.data || []);
+        } catch {
+            notify('Không thể tải danh sách quan tâm', 'error');
         } finally {
             setLoading(false);
         }
-    }, [page]);
+    }, []);
 
-    useEffect(() => {
-        fetchFavorites();
-    }, [fetchFavorites]);
+    useEffect(() => { fetchFavorites(); }, [fetchFavorites]);
 
-    // Handle unfavorite with animation (Used for both Toggle Heart AND Delete Action)
+    const filtered = useMemo(() => {
+        let list = filterType === 'ALL'
+            ? allFavorites
+            : allFavorites.filter(l => l.type === filterType);
+
+        list = [...list].sort((a, b) => {
+            if (sortBy === 'price_asc')  return (a.price ?? 0) - (b.price ?? 0);
+            if (sortBy === 'price_desc') return (b.price ?? 0) - (a.price ?? 0);
+            if (sortBy === 'area_asc')   return (a.area ?? 0) - (b.area ?? 0);
+            if (sortBy === 'area_desc')  return (b.area ?? 0) - (a.area ?? 0);
+            return 0;
+        });
+
+        return list;
+    }, [allFavorites, sortBy, filterType]);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / CONFIG.PAGE_SIZE));
+    const pagedItems = filtered.slice((page - 1) * CONFIG.PAGE_SIZE, page * CONFIG.PAGE_SIZE);
+
+    useEffect(() => { setPage(1); }, [sortBy, filterType]);
+
     const performRemoval = useCallback(async (id: string) => {
-        // Guard against double-click / multiple calls for same id
         if (removingRef.current.has(id)) return;
         removingRef.current.add(id);
-        // 1. Mark as removed to trigger animation
         setRemovedIds(prev => new Set(prev).add(id));
-        
-        // 2. Wait for animation then update state and DB
+
         setTimeout(async () => {
             try {
                 await db.removeFromFavorites(id);
-                setFavorites(prev => {
-                    const updated = (prev || []).filter(l => l.id !== id);
-                    if (updated.length === 0 && page > 1) {
-                        setPage(p => p - 1);
-                    }
+                setAllFavorites(prev => {
+                    const updated = prev.filter(l => l.id !== id);
+                    if (pagedItems.length === 1 && page > 1) setPage(p => p - 1);
                     return updated;
                 });
                 setRemovedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-                setTotalCount(prev => prev - 1);
-            } catch (e) {
-                console.error("Failed to remove favorite", e);
+                notify(t('favorites.removed'), 'success');
+            } catch {
                 setRemovedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+                notify('Xóa thất bại, vui lòng thử lại', 'error');
             } finally {
                 removingRef.current.delete(id);
             }
         }, 300);
-    }, [page]);
+    }, [page, pagedItems.length, t]);
 
     const handleConfirmDelete = async () => {
-        if (itemToDelete) {
-            await performRemoval(itemToDelete);
-            setItemToDelete(null);
-        }
+        if (itemToDelete) { await performRemoval(itemToDelete); setItemToDelete(null); }
     };
 
     const handleNavigate = (id: string) => {
         window.location.hash = `#/${ROUTES.LISTING}/${id}`;
     };
 
+    const availableTypes = useMemo(() => {
+        const types = new Set(allFavorites.map(l => l.type).filter(Boolean));
+        return Array.from(types) as string[];
+    }, [allFavorites]);
+
     return (
         <div className="h-full flex flex-col pb-20 animate-enter relative">
-            <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm p-6 mb-6">
-                <h1 className="text-2xl font-bold text-slate-800">{t('favorites.title')}</h1>
-                <p className="text-sm text-slate-500">{t('favorites.subtitle')} ({totalCount})</p>
+            {toast && (
+                <div className={`fixed top-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border transition-all ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            )}
+
+            <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm px-6 py-4 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-800">{t('favorites.title')}</h1>
+                        <p className="text-sm text-slate-500">
+                            {t('favorites.subtitle')}
+                            <span className="ml-1 font-bold text-indigo-600">
+                                ({filtered.length}{filterType !== 'ALL' ? ` / ${allFavorites.length}` : ''})
+                            </span>
+                        </p>
+                    </div>
+
+                    {allFavorites.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-2">
+                            {availableTypes.length > 1 && (
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <button
+                                        onClick={() => setFilterType('ALL')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${filterType === 'ALL' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
+                                    >
+                                        Tất cả
+                                    </button>
+                                    {availableTypes.map(type => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setFilterType(type)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${filterType === type ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
+                                        >
+                                            {TYPE_LABELS[type] || type}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            <select
+                                value={sortBy}
+                                onChange={e => setSortBy(e.target.value)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-indigo-400 cursor-pointer"
+                            >
+                                {SORT_OPTIONS.map(o => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="flex-1 overflow-auto px-6 no-scrollbar">
-                {loading && favorites.length === 0 ? (
+                {loading && allFavorites.length === 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {[1,2,3,4].map(i => <div key={i} className="h-[400px] bg-slate-100 rounded-[24px] animate-pulse"></div>)}
+                        {[1,2,3,4].map(i => (
+                            <div key={i} className="h-[400px] bg-slate-100 rounded-[24px] animate-pulse" />
+                        ))}
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {favorites.map(item => (
-                            <div 
-                                key={item.id} 
+                        {pagedItems.map(item => (
+                            <div
+                                key={item.id}
                                 className={`min-h-full transition-all duration-300 ${removedIds.has(item.id) ? 'opacity-0 scale-90' : 'opacity-100 scale-100'}`}
                             >
-                                <ListingCard 
-                                    item={item} 
-                                    t={t} 
+                                <ListingCard
+                                    item={item}
+                                    t={t}
                                     formatCurrency={formatCurrency}
-                                    onToggleFavorite={performRemoval} // Heart click is instant
+                                    onToggleFavorite={performRemoval}
                                     onEdit={() => {}}
-                                    onDelete={() => setItemToDelete(item.id)} // Trash click asks for confirmation
+                                    onDelete={() => setItemToDelete(item.id)}
                                     onClick={() => handleNavigate(item.id)}
                                     showActions={false}
                                 />
                             </div>
                         ))}
-                        {favorites.length === 0 && (
+
+                        {pagedItems.length === 0 && !loading && (
                             <div className="col-span-full py-20 text-center">
-                                <div className="text-6xl mb-4 opacity-20">❤️</div>
-                                <p className="text-slate-400 italic mb-6">{t('favorites.empty')}</p>
-                                <button 
-                                    onClick={() => window.location.hash = `#/${ROUTES.INVENTORY}`}
-                                    className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-colors"
-                                >
-                                    {t('favorites.btn_browse')}
-                                </button>
+                                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
+                                    <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                </div>
+                                <p className="text-slate-400 italic mb-2 font-medium">
+                                    {filterType !== 'ALL'
+                                        ? `Không có BĐS loại "${TYPE_LABELS[filterType] || filterType}" trong danh sách quan tâm`
+                                        : t('favorites.empty')
+                                    }
+                                </p>
+                                {filterType !== 'ALL' ? (
+                                    <button
+                                        onClick={() => setFilterType('ALL')}
+                                        className="px-5 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors text-sm"
+                                    >
+                                        Xem tất cả loại
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => window.location.hash = `#/${ROUTES.INVENTORY}`}
+                                        className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-colors"
+                                    >
+                                        {t('favorites.btn_browse')}
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
                 )}
-                
-                {totalPages > 1 && favorites.length > 0 && (
+
+                {totalPages > 1 && pagedItems.length > 0 && (
                     <div className="flex justify-center items-center gap-4 mt-8 mb-4">
-                        <button 
+                        <button
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page === 1}
                             className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                            {t('common.prev') || 'Trước'}
+                            {t('common.prev')}
                         </button>
-                        <span className="text-sm font-bold text-slate-500">
-                            {page} / {totalPages}
-                        </span>
-                        <button 
+                        <span className="text-sm font-bold text-slate-500">{page} / {totalPages}</span>
+                        <button
                             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                             disabled={page === totalPages}
                             className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                            {t('common.next') || 'Sau'}
+                            {t('common.next')}
                         </button>
                     </div>
                 )}
             </div>
 
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={!!itemToDelete}
                 title={t('common.delete')}
                 message={t('common.confirm_delete')}

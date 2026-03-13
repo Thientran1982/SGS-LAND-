@@ -837,7 +837,7 @@ class DatabaseApiClient {
   }
 
   async removeFromFavorites(listingId: string) {
-    return this.toggleFavorite(listingId);
+    return listingApi.removeFavorite(listingId);
   }
 
   async getSimilarListings(listingId: string) {
