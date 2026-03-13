@@ -947,17 +947,17 @@ export const ListingDetail: React.FC = () => {
         : '0912 345 678';
 
     return (
-        <article className="h-[100dvh] overflow-y-auto no-scrollbar bg-white pb-20 animate-enter relative">
-            {toast && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
+        <article className="h-[100dvh] overflow-y-auto no-scrollbar bg-white pb-28 lg:pb-20 animate-enter relative">
+            {toast && <div className={`fixed top-6 right-4 md:right-6 z-[100] px-4 md:px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border max-w-[calc(100vw-2rem)] ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm break-words">{toast.msg}</span></div>}
 
             {/* Header */}
-            <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+            <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3 md:px-6 md:py-4 flex justify-between items-center gap-2">
                 <button 
                     type="button" 
                     onClick={handleBack} 
-                    className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors px-3 py-2 rounded-lg hover:bg-slate-50 active:bg-slate-100"
+                    className="flex items-center gap-1.5 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors px-3 py-2 rounded-lg hover:bg-slate-50 active:bg-slate-100 shrink-0"
                 >
-                    {ICONS.BACK} {t('common.go_back')}
+                    {ICONS.BACK} <span className="hidden sm:inline">{t('common.go_back')}</span>
                 </button>
                 <div className="flex gap-2 items-center">
                     <button
@@ -985,7 +985,7 @@ export const ListingDetail: React.FC = () => {
             </div>
 
             {/* Gallery (Bento Grid) */}
-            <div className="max-w-7xl mx-auto px-6 py-8">
+            <div className="max-w-7xl mx-auto px-4 py-5 md:px-6 md:py-8">
                 {/* Dynamic Grid Layout based on image count */}
                 <div className={`grid gap-4 rounded-[32px] overflow-hidden h-[400px] md:h-[500px] relative group
                     ${displayImages.length === 1 ? 'grid-cols-1' : ''}
