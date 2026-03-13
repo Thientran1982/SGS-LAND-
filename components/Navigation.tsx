@@ -31,6 +31,11 @@ const ICONS = {
 const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boolean }) => {
     const [imgError, setImgError] = useState(false);
 
+    // Reset error state whenever the avatar URL changes (e.g., after profile save)
+    React.useEffect(() => {
+        setImgError(false);
+    }, [user.avatar]);
+
     return (
         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full p-0.5 border-2 shadow-lg transition-all duration-300 relative overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-slate-800
             ${isActive 

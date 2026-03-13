@@ -46,8 +46,9 @@ const ICONS = {
     ZALO: <svg className="w-3 h-3 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S16.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm-1 4v4h-4v2h4v4h2v-4h4v-2h-4V6h-2z" fillRule="evenodd" /></svg>,
     GLOBE: <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     VIEW_LIST: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
-    VIEW_BOARD: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2-2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 00-2 2" /></svg>,
-    X: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+    VIEW_BOARD: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" /></svg>,
+    X: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+    USER: <svg className="w-3 h-3 pointer-events-none shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
 };
 
 const getSourceIcon = (source: string) => {
@@ -273,7 +274,10 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
 
             {visibleColumns.has('owner') && (
                 <td className={`px-4 ${paddingY} text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap`}>
-                    {users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || t('inbox.unassigned')}
+                    <div className="flex items-center gap-1.5">
+                        {ICONS.USER}
+                        {users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || t('inbox.unassigned')}
+                    </div>
                 </td>
             )}
 
@@ -332,13 +336,19 @@ const KanbanCard = memo(({ lead, onClick, t, formatDate, users }: { lead: Lead, 
                 <h4 className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors truncate pr-2">{lead.name}</h4>
                 <div className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{lead.score?.score || 0}</div>
             </div>
-            <div className="flex items-center gap-2 mb-2 text-xs text-slate-500">
-                {getSourceIcon(lead.source)}
-                <span className="truncate">{lead.phone}</span>
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-slate-500 font-mono truncate flex-1 mr-2">{lead.phone}</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 shrink-0">
+                    {getSourceIcon(lead.source)}
+                    {t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source}
+                </span>
             </div>
             <div className="flex justify-between items-center text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-50">
                 <span>{formatDate(lead.createdAt)}</span>
-                <span className="font-medium text-slate-500">{users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || 'Unassigned'}</span>
+                <span className="font-medium text-slate-500 flex items-center gap-1">
+                    {ICONS.USER}
+                    {users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || t('inbox.unassigned')}
+                </span>
             </div>
         </div>
     );
