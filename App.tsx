@@ -277,26 +277,46 @@ const useRouter = () => {
 // 5. APPLICATION SHELL
 // -----------------------------------------------------------------------------
 
+const AUTH_CACHE_KEY = 'sgs_auth_cached';
+
+const getInitialAuthState = (): 'LOADING' | 'AUTH' | 'GUEST' => {
+    try {
+        return localStorage.getItem(AUTH_CACHE_KEY) === '1' ? 'AUTH' : 'LOADING';
+    } catch {
+        return 'LOADING';
+    }
+};
+
 const AppShell: React.FC = () => {
     const { route, navigate } = useRouter();
     const { t } = useTranslation();
-    const [authState, setAuthState] = useState<'LOADING' | 'AUTH' | 'GUEST'>('LOADING');
+    const [authState, setAuthState] = useState<'LOADING' | 'AUTH' | 'GUEST'>(getInitialAuthState);
 
     // Auth Initialization — runs once on mount to check session
     useEffect(() => {
         const initAuth = async () => {
             try {
                 const user = await db.getCurrentUser();
-                setAuthState(user ? 'AUTH' : 'GUEST');
+                if (user) {
+                    localStorage.setItem(AUTH_CACHE_KEY, '1');
+                    setAuthState('AUTH');
+                } else {
+                    localStorage.removeItem(AUTH_CACHE_KEY);
+                    setAuthState('GUEST');
+                }
             } catch {
+                localStorage.removeItem(AUTH_CACHE_KEY);
                 setAuthState('GUEST');
             }
         };
         initAuth();
 
         // Re-check on explicit auth events (login/logout)
-        const onLogin = () => db.getCurrentUser().then(u => setAuthState(u ? 'AUTH' : 'GUEST')).catch(() => setAuthState('GUEST'));
-        const onLogout = () => setAuthState('GUEST');
+        const onLogin = () => db.getCurrentUser().then(u => {
+            if (u) { localStorage.setItem(AUTH_CACHE_KEY, '1'); setAuthState('AUTH'); }
+            else { localStorage.removeItem(AUTH_CACHE_KEY); setAuthState('GUEST'); }
+        }).catch(() => { localStorage.removeItem(AUTH_CACHE_KEY); setAuthState('GUEST'); });
+        const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); setAuthState('GUEST'); };
         window.addEventListener('auth:login', onLogin);
         window.addEventListener('auth:logout', onLogout);
         return () => {
@@ -332,12 +352,14 @@ const AppShell: React.FC = () => {
     }, [route.fullPath]);
 
     const handleLoginSuccess = useCallback(() => {
+        localStorage.setItem(AUTH_CACHE_KEY, '1');
         setAuthState('AUTH');
         navigate(ROUTES.DEFAULT_PRIVATE);
     }, [navigate]);
 
     const handleLogout = useCallback(() => {
         db.logout();
+        localStorage.removeItem(AUTH_CACHE_KEY);
         setAuthState('GUEST');
         navigate(ROUTES.LOGIN);
     }, [navigate]);
