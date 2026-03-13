@@ -12,7 +12,7 @@
     "seed": "tsx server/seed.ts"
   },
   "dependencies": {
-    "@google/genai": "^1.44.0",
+    "@google/genai": "^1.45.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "@tanstack/react-query": "^5.90.21",
     "@types/bcrypt": "^6.0.0",
@@ -30,12 +30,12 @@
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.0",
     "lucide-react": "^0.575.0",
-    "mammoth": "^1.11.0",
-    "motion": "^12.35.2",
+    "mammoth": "^1.12.0",
+    "motion": "^12.36.0",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.2",
     "pdf-parse": "^2.4.5",
-    "pdfjs-dist": "^4.0.379",
+    "pdfjs-dist": "^4.10.38",
     "pg": "^8.20.0",
     "postcss": "^8.5.8",
     "qrcode.react": "^4.2.0",
@@ -63,7 +63,7 @@
     "@types/pg": "^8.18.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.4",
+    "@vitejs/plugin-react": "^5.2.0",
     "ioredis-mock": "^8.13.1",
     "typescript": "~5.8.2",
     "vite": "^6.4.1"
