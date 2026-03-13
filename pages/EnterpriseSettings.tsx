@@ -493,15 +493,11 @@ export const EnterpriseSettings: React.FC = () => {
             )}
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm gap-4 w-full overflow-hidden">
-                <div className="shrink-0">
-                    <h2 className="text-xl font-bold text-slate-800">{t('ent.title')}</h2>
-                    <p className="text-sm text-slate-500 mt-1">{t('ent.subtitle')}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-slate-500">{t('ent.tenant_label')}:</span>
-                        <span className="font-mono font-bold text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-600 border border-slate-200">{config.tenantId}</span>
-                    </div>
+                <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-slate-500">{t('ent.tenant_label')}:</span>
+                    <span className="font-mono font-bold text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-600 border border-slate-200">{config.tenantId}</span>
                 </div>
-                
+
                 {/* Mobile Dropdown */}
                 <div className="w-full lg:hidden">
                     <Dropdown 

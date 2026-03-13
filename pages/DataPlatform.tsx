@@ -137,11 +137,7 @@ export const DataPlatform: React.FC = () => {
         <div className="space-y-6 pb-20 animate-enter relative">
             {toast && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
-            <div className="flex justify-between items-center bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
-                <div>
-                    <h2 className="text-xl font-bold text-slate-800">{t('data.title')}</h2>
-                    <p className="text-sm text-slate-500">{t('data.subtitle')}</p>
-                </div>
+            <div className="flex justify-end">
                 <button onClick={() => setIsModalOpen(true)} className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95">
                     {ICONS.ADD} {t('data.btn_new')}
                 </button>

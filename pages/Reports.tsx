@@ -522,13 +522,8 @@ export const Reports: React.FC = () => {
 
     return (
         <div className="space-y-6 pb-20 relative animate-enter">
-            {/* Page Header */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm gap-4 w-full overflow-hidden">
-                <div className="shrink-0">
-                    <h2 className="text-xl font-bold text-slate-800">{t('reports.title')}</h2>
-                    <p className="text-sm text-slate-500">{t('reports.subtitle')}</p>
-                </div>
-                
+            {/* Tab Navigation */}
+            <div className="flex flex-col lg:flex-row justify-end items-start lg:items-center bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm gap-4 w-full overflow-hidden">
                 {/* Mobile Dropdown */}
                 <div className="w-full md:hidden">
                     <Dropdown 

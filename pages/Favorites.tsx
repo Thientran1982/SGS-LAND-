@@ -131,18 +131,11 @@ export const Favorites: React.FC = () => {
                 </div>
             )}
 
-            <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm px-6 py-4 mb-6">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-800">{t('favorites.title')}</h1>
-                        <p className="text-sm text-slate-500">
-                            {t('favorites.subtitle')}
-                            <span className="ml-1 font-bold text-indigo-600">
-                                ({filtered.length}{filterType !== 'ALL' ? ` / ${allFavorites.length}` : ''})
-                            </span>
-                        </p>
-                    </div>
-
+            <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm px-6 py-3 mb-6">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm font-bold text-indigo-600">
+                        {filtered.length}{filterType !== 'ALL' ? ` / ${allFavorites.length}` : ''} {t('favorites.title')}
+                    </span>
                     {allFavorites.length > 0 && (
                         <div className="flex flex-wrap items-center gap-2">
                             {availableTypes.length > 1 && (
@@ -164,7 +157,6 @@ export const Favorites: React.FC = () => {
                                     ))}
                                 </div>
                             )}
-
                             <select
                                 value={sortBy}
                                 onChange={e => setSortBy(e.target.value)}

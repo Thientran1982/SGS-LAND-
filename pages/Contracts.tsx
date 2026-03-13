@@ -129,11 +129,7 @@ const Contracts: React.FC = () => {
 
     return (
         <div className="p-6 h-full flex flex-col animate-enter">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div className="hidden md:block">
-                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t('contracts.title')}</h1>
-                    <p className="text-[var(--text-secondary)] text-sm">{t('contracts.subtitle')}</p>
-                </div>
+            <div className="flex justify-end mb-6">
                 <button 
                     onClick={() => { setEditingContract(null); setIsModalOpen(true); }}
                     className="px-4 py-2 bg-[var(--primary-600)] text-white rounded-xl font-bold text-sm shadow-sm hover:opacity-90 transition-all flex items-center gap-2"
