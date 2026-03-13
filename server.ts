@@ -10,7 +10,7 @@ import { WebSocketServer } from "ws";
 // @ts-ignore
 import { setupWSConnection } from "y-websocket/bin/utils";
 import { initializeDatabase, pool, withTenantContext } from "./server/db";
-import { systemService } from "./services/systemService";
+import { systemService } from "./server/services/systemService";
 import { webhookQueue, setupWebhookWorker } from "./server/queue";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";

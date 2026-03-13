@@ -80,6 +80,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 ### Services (`server/services/`)
 - `emailService.ts` — Nodemailer-based email sending with per-tenant SMTP config from enterprise_config. Falls back to console logging when SMTP not configured. Provides: sendEmail, sendPasswordResetEmail, sendWelcomeEmail, sendSequenceEmail, testSmtpConnection.
+- `systemService.ts` — Server-side health check service. Checks DB connectivity and AI key config. Used by `GET /api/health`.
 
 ### File Upload System
 - **Endpoint**: `POST /api/upload` (multipart/form-data, field name: `files`, max 10 files, 10MB each)
