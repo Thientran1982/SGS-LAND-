@@ -399,48 +399,60 @@ export const AdminUsers: React.FC = () => {
             {toast && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             {/* HEADER */}
-            <div className="flex flex-col gap-4 sm:gap-6 bg-white p-4 sm:p-6 border-b border-slate-100 shrink-0">
-                {/* Metrics Bar */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                     <StatCard label={t('admin.users.active_users')} value={stats.activeCount} color="bg-emerald-500" />
-                     <StatCard label={t('admin.users.pending_invites')} value={stats.pendingCount} color="bg-amber-500" />
+            <div className="flex flex-col bg-white border-b border-slate-100 shrink-0">
+
+                {/* Row 1: Tiêu đề + số thành viên + nút mời */}
+                <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-4">
+                    <div>
+                        <h1 className="text-base sm:text-lg font-black text-slate-800 leading-tight">
+                            {t('admin.users.page_title') || 'Quản trị người dùng'}
+                        </h1>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">
+                            {t('admin.users.total_members', { count: totalUsers })}
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setIsInviteOpen(true)}
+                        className="px-4 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs sm:text-sm shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95"
+                    >
+                        {ICONS.ADD}
+                        <span className="hidden sm:inline">{t('admin.users.invite')}</span>
+                        <span className="sm:hidden">Mời</span>
+                    </button>
                 </div>
 
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                    <div>
-                        <p className="text-sm text-slate-500 font-medium">{t('admin.users.total_members', { count: totalUsers })}</p>
+                {/* Row 2: Thẻ thống kê */}
+                <div className="grid grid-cols-2 gap-3 px-4 sm:px-6 pb-4">
+                    <StatCard label={t('admin.users.active_users')} value={stats.activeCount} color="bg-emerald-500" />
+                    <StatCard label={t('admin.users.pending_invites')} value={stats.pendingCount} color="bg-amber-500" />
+                </div>
+
+                {/* Row 3: Thanh tìm kiếm + bộ lọc */}
+                <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-t border-slate-100 bg-slate-50/60">
+                    <div className="relative flex-1 group">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                            {ICONS.SEARCH}
+                        </div>
+                        <input
+                            className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-slate-400 shadow-sm"
+                            placeholder={t('admin.users.search_placeholder')}
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                        {search && (
+                            <div className="absolute right-2 inset-y-0 flex items-center">
+                                <button
+                                    onClick={() => setSearch('')}
+                                    className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    title={t('common.clear_search') || 'Xóa tìm kiếm'}
+                                >
+                                    {ICONS.X}
+                                </button>
+                            </div>
+                        )}
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                         <div className="relative w-full sm:w-64 group">
-                            <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
-                                {ICONS.SEARCH}
-                            </div>
-                            <input 
-                                className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all outline-none placeholder:text-slate-400"
-                                placeholder={t('admin.users.search_placeholder')}
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                            />
-                            {search && (
-                                <div className="absolute right-2 inset-y-0 flex items-center">
-                                    <button 
-                                        onClick={() => setSearch('')}
-                                        className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
-                                        title={t('common.clear_search') || 'Xóa tìm kiếm'}
-                                    >
-                                        {ICONS.X}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex gap-3 w-full sm:w-auto">
-                            <div className="flex-1 sm:w-48 lg:w-56">
-                                <Dropdown value={roleFilter} onChange={(v) => setRoleFilter(v as string)} options={roleOptions} className="text-xs" />
-                            </div>
-                            <button onClick={() => setIsInviteOpen(true)} className="flex-1 sm:flex-none px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
-                                {ICONS.ADD} {t('admin.users.invite')}
-                            </button>
-                        </div>
+                    <div className="w-40 sm:w-52 shrink-0">
+                        <Dropdown value={roleFilter} onChange={(v) => setRoleFilter(v as string)} options={roleOptions} className="text-xs" />
                     </div>
                 </div>
             </div>
