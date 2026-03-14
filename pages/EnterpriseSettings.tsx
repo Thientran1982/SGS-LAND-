@@ -782,52 +782,170 @@ const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseCon
     );
 });
 
+const ACTION_COLORS: Record<string, string> = {
+    LOGIN: 'bg-blue-50 text-blue-700 border-blue-100',
+    DOMAIN_ADDED: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+    DOMAIN_REMOVED: 'bg-rose-50 text-rose-700 border-rose-100',
+    DOMAIN_VERIFIED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    ZALO_OA_CONNECTED: 'bg-sky-50 text-sky-700 border-sky-100',
+    ZALO_OA_DISCONNECTED: 'bg-orange-50 text-orange-700 border-orange-100',
+    FACEBOOK_PAGE_CONNECTED: 'bg-violet-50 text-violet-700 border-violet-100',
+    FACEBOOK_PAGE_DISCONNECTED: 'bg-pink-50 text-pink-700 border-pink-100',
+    PASSWORD_RESET_REQUEST: 'bg-amber-50 text-amber-700 border-amber-100',
+    PASSWORD_RESET_COMPLETE: 'bg-teal-50 text-teal-700 border-teal-100',
+};
+
+const PAGE_SIZE = 20;
+
 const AuditPanel = memo(() => {
     const [logs, setLogs] = useState<AuditLog[]>([]);
+    const [total, setTotal] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [filterAction, setFilterAction] = useState('');
+    const [filterEntity, setFilterEntity] = useState('');
     const { t, formatDateTime } = useTranslation();
-    
-    useEffect(() => {
-        db.getAuditLogs()
-            .then(data => { setLogs(data || []); setLoading(false); })
-            .catch(err => { setError(err.message); setLoading(false); });
+
+    const load = useCallback(async (p: number, action: string, entity: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const filters: any = {};
+            if (action) filters.action = action;
+            if (entity) filters.entityType = entity;
+            const result = await db.getAuditLogs(p, PAGE_SIZE, filters);
+            setLogs(result.data || []);
+            setTotal(result.total || 0);
+            setTotalPages(result.totalPages || 0);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    if (loading) return <div className="p-10 text-center animate-pulse">{t('common.loading')}</div>;
-    if (error) return <div className="p-10 text-center text-rose-500">{error}</div>;
+    useEffect(() => { load(page, filterAction, filterEntity); }, [load, page, filterAction, filterEntity]);
+
+    const handleFilterChange = (action: string, entity: string) => {
+        setPage(1);
+        setFilterAction(action);
+        setFilterEntity(entity);
+    };
+
+    const ENTITY_OPTIONS = [
+        { value: '', label: 'Tất cả loại' },
+        { value: 'auth', label: 'Xác thực' },
+        { value: 'enterprise_config', label: 'Cài đặt doanh nghiệp' },
+        { value: 'lead', label: 'Lead' },
+        { value: 'listing', label: 'Tin đăng' },
+    ];
 
     return (
         <div className="animate-enter">
             <SectionHeader title={t('ent.audit_title')} subtitle={t('ent.audit_subtitle')} />
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-3 mb-4 items-center">
+                <select
+                    value={filterEntity}
+                    onChange={e => handleFilterChange(filterAction, e.target.value)}
+                    className="border rounded-xl px-3 py-2 text-xs font-medium text-slate-600 bg-white outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+                >
+                    {ENTITY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <input
+                    value={filterAction}
+                    onChange={e => handleFilterChange(e.target.value.toUpperCase(), filterEntity)}
+                    placeholder="Lọc theo action (VD: LOGIN)"
+                    className="border rounded-xl px-3 py-2 text-xs font-mono text-slate-600 bg-white outline-none focus:ring-2 focus:ring-indigo-500/20 w-52"
+                />
+                {(filterAction || filterEntity) && (
+                    <button
+                        onClick={() => handleFilterChange('', '')}
+                        className="text-xs font-bold text-rose-500 hover:underline"
+                    >
+                        Xoá bộ lọc
+                    </button>
+                )}
+                <span className="ml-auto text-xs text-slate-400">{total} bản ghi</span>
+            </div>
+
             <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto no-scrollbar">
-                    <table className="w-full text-left text-xs min-w-[600px]">
+                    <table className="w-full text-left text-xs min-w-[640px]">
                         <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
                             <tr>
                                 <th className="p-4 whitespace-nowrap">{t('ent.audit_time')}</th>
                                 <th className="p-4 whitespace-nowrap">{t('ent.audit_actor')}</th>
                                 <th className="p-4 whitespace-nowrap">{t('ent.audit_action')}</th>
                                 <th className="p-4 whitespace-nowrap">{t('ent.audit_details')}</th>
+                                <th className="p-4 whitespace-nowrap">IP</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {logs.length === 0 && (
-                                <tr>
-                                    <td colSpan={4} className="p-10 text-center text-slate-400 italic">{t('common.no_data') || 'Chưa có nhật ký nào'}</td>
-                                </tr>
+                            {loading && (
+                                <tr><td colSpan={5} className="p-10 text-center text-slate-400 animate-pulse">{t('common.loading')}</td></tr>
                             )}
-                            {logs.map(log => (
+                            {!loading && error && (
+                                <tr><td colSpan={5} className="p-10 text-center text-rose-500">{error}</td></tr>
+                            )}
+                            {!loading && !error && logs.length === 0 && (
+                                <tr><td colSpan={5} className="p-10 text-center text-slate-400 italic">{t('common.no_data') || 'Chưa có nhật ký nào'}</td></tr>
+                            )}
+                            {!loading && logs.map(log => (
                                 <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="p-4 text-slate-400 font-mono whitespace-nowrap">{formatDateTime(log.timestamp)}</td>
-                                    <td className="p-4 font-bold text-slate-700 whitespace-nowrap">{log.actorName || log.actorId}</td>
-                                    <td className="p-4 whitespace-nowrap"><span className="px-2 py-1 bg-slate-100 rounded border border-slate-200 font-bold text-slate-600">{log.action}</span></td>
+                                    <td className="p-4 font-bold text-slate-700 whitespace-nowrap max-w-[120px] truncate" title={log.actorName || log.actorId}>{log.actorName || log.actorId}</td>
+                                    <td className="p-4 whitespace-nowrap">
+                                        <span className={`px-2 py-1 rounded border font-bold text-[10px] uppercase tracking-wide ${ACTION_COLORS[log.action] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                            {log.action}
+                                        </span>
+                                    </td>
                                     <td className="p-4 text-slate-600 max-w-[200px] truncate" title={log.details}>{log.details || '—'}</td>
+                                    <td className="p-4 font-mono text-slate-400 whitespace-nowrap">{log.ipAddress || '—'}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50">
+                        <span className="text-xs text-slate-400">Trang {page} / {totalPages}</span>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 transition-colors"
+                            >
+                                ← Trước
+                            </button>
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                                const pageNum = start + i;
+                                return pageNum <= totalPages ? (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setPage(pageNum)}
+                                        className={`w-8 h-8 text-xs font-bold rounded-lg border transition-colors ${pageNum === page ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-200 text-slate-600 hover:bg-white'}`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                ) : null;
+                            })}
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages}
+                                className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 transition-colors"
+                            >
+                                Sau →
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

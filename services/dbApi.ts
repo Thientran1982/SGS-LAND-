@@ -448,12 +448,12 @@ class DatabaseApiClient {
     }
   }
 
-  async getAuditLogs(page = 1, pageSize = 50) {
+  async getAuditLogs(page = 1, pageSize = 50, filters?: { entityType?: string; action?: string; actorId?: string; since?: string }) {
     try {
-      const result = await analyticsApi.getAuditLogs(page, pageSize);
-      return result.data;
+      const result = await analyticsApi.getAuditLogs(page, pageSize, filters);
+      return result as { data: any[]; total: number; page: number; pageSize: number; totalPages: number };
     } catch {
-      return [];
+      return { data: [], total: 0, page: 1, pageSize, totalPages: 0 };
     }
   }
 

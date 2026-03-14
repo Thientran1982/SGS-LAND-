@@ -240,6 +240,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         entityType: 'enterprise_config',
         entityId: user.tenantId,
         details: `Zalo OA kết nối: ${oaName} (${oaId})`,
+        ipAddress: req.ip,
       });
 
       console.log(`[Zalo] Tenant ${user.tenantId} connected OA: ${oaName} (${oaId})`);
@@ -270,6 +271,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         entityType: 'enterprise_config',
         entityId: user.tenantId,
         details: 'Zalo OA đã ngắt kết nối',
+        ipAddress: req.ip,
       });
 
       console.log(`[Zalo] Tenant ${user.tenantId} disconnected Zalo OA`);
@@ -346,6 +348,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         entityType: 'enterprise_config',
         entityId: user.tenantId,
         details: `Facebook Page kết nối: ${name} (${pageId})`,
+        ipAddress: req.ip,
       });
 
       console.log(`[Facebook] Tenant ${user.tenantId} connected page: ${name} (${pageId})`);
@@ -379,6 +382,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         entityType: 'enterprise_config',
         entityId: user.tenantId,
         details: `Facebook Page ngắt kết nối: ${pageId}`,
+        ipAddress: req.ip,
       });
 
       console.log(`[Facebook] Tenant ${user.tenantId} disconnected page: ${pageId}`);
@@ -430,6 +434,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         entityType: 'enterprise_config',
         entityId: user.tenantId,
         details: `Domain thêm mới: ${normalized}`,
+        ipAddress: req.ip,
       });
 
       res.status(201).json(newDomain);
@@ -460,6 +465,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         entityType: 'enterprise_config',
         entityId: user.tenantId,
         details: `Domain xóa: ${domainName}`,
+        ipAddress: req.ip,
       });
 
       res.json({ success: true });
@@ -519,6 +525,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         entityType: 'enterprise_config',
         entityId: user.tenantId,
         details: `Domain xác minh thành công: ${domainName}`,
+        ipAddress: req.ip,
       });
 
       res.json({ success: true, message: `Domain "${domainName}" verified successfully.` });
