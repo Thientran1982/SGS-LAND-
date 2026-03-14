@@ -847,19 +847,18 @@ const AuditPanel = memo(() => {
             <SectionHeader title={t('ent.audit_title')} subtitle={t('ent.audit_subtitle')} />
 
             {/* Filters */}
-            <div className="flex flex-wrap gap-3 mb-4 items-center">
-                <select
+            <div className="flex flex-wrap gap-3 mb-4 items-center px-4 sm:px-6">
+                <Dropdown
                     value={filterEntity}
-                    onChange={e => handleFilterChange(filterAction, e.target.value)}
-                    className="border rounded-xl px-3 py-2 text-xs font-medium text-slate-600 bg-white outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
-                >
-                    {ENTITY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                    onChange={(val) => handleFilterChange(filterAction, val as string)}
+                    options={ENTITY_OPTIONS}
+                    className="w-52"
+                />
                 <input
                     value={filterAction}
                     onChange={e => handleFilterChange(e.target.value.toUpperCase(), filterEntity)}
                     placeholder="Lọc theo action (VD: LOGIN)"
-                    className="border rounded-xl px-3 py-2 text-xs font-mono text-slate-600 bg-white outline-none focus:ring-2 focus:ring-indigo-500/20 w-52"
+                    className="border rounded-xl px-3 py-2.5 text-xs font-mono text-slate-600 bg-white outline-none focus:ring-2 focus:ring-indigo-500/20 w-52"
                 />
                 {(filterAction || filterEntity) && (
                     <button
@@ -869,7 +868,7 @@ const AuditPanel = memo(() => {
                         Xoá bộ lọc
                     </button>
                 )}
-                <span className="ml-auto text-xs text-slate-400">{total} bản ghi</span>
+                <span className="text-xs text-slate-400 ml-auto pr-1">{total} bản ghi</span>
             </div>
 
             <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
