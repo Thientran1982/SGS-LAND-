@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  h1 {
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold;
+  }
+}
+
 /* ============================================================
    GLOBAL RESETS & UTILITIES
    (Design tokens/variables are defined in index.html <style>)
