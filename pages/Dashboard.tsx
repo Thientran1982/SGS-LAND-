@@ -185,6 +185,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
         <BentoCard 
             title={t('dash.traffic_title')}
             className="h-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900"
+            contentClassName="justify-start"
             icon={<svg className="w-5 h-5 text-sky-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
         >
             <div className="flex justify-between items-end mb-4">
@@ -209,9 +210,9 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                 </div>
             </div>
             
-            <div className="h-[180px] w-full -ml-2 relative">
+            <div className="h-[150px] w-full -ml-2 relative">
                 {data.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={180} minHeight={150} minWidth={150}>
+                    <ResponsiveContainer width="100%" height={150} minHeight={100} minWidth={150}>
                         <ComposedChart data={data}>
                             <defs>
                                 <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
@@ -646,7 +647,7 @@ export const Dashboard: React.FC = () => {
 
                 {/* TIER 4: Realtime Traffic (Admin & Team Lead Only) */}
                 {(analytics.user?.role === 'ADMIN' || analytics.user?.role === 'TEAM_LEAD') && (
-                    <div className="md:col-span-2 lg:col-span-4 h-[300px]">
+                    <div className="md:col-span-2 lg:col-span-4 h-[360px]">
                         <RealtimeTrafficWidget t={t} theme={chartTheme} />
                     </div>
                 )}
