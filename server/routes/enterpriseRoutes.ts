@@ -190,10 +190,12 @@ export function createEnterpriseRoutes(authenticateToken: any) {
       if (user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Forbidden' });
       }
+      const baseUrl = process.env.PUBLIC_URL
+        || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `${req.protocol}://${req.get('host')}`);
       res.json({
         webhookSecretConfigured: !!process.env.ZALO_OA_SECRET,
         appIdConfigured: !!process.env.ZALO_APP_ID,
-        webhookUrl: `${process.env.PUBLIC_URL || ''}/api/webhooks/zalo`,
+        webhookUrl: `${baseUrl}/api/webhooks/zalo`,
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -290,10 +292,12 @@ export function createEnterpriseRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Forbidden' });
+      const baseUrl = process.env.PUBLIC_URL
+        || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `${req.protocol}://${req.get('host')}`);
       res.json({
         appSecretConfigured: !!process.env.FB_APP_SECRET,
         verifyTokenConfigured: !!process.env.FB_VERIFY_TOKEN,
-        webhookUrl: `${process.env.PUBLIC_URL || ''}/api/webhooks/facebook`,
+        webhookUrl: `${baseUrl}/api/webhooks/facebook`,
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
