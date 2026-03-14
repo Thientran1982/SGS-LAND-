@@ -161,8 +161,7 @@ export function PageView() {
           <button className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-xl shrink-0">
             {MENU_ICON}
           </button>
-          {/* FIXED: text-xl (same as sm:text-2xl in real app) */}
-          <h1 className="text-xl font-extrabold text-slate-800 tracking-tight leading-none truncate">
+          <h1 className="text-sm font-extrabold text-slate-800 tracking-tight leading-none truncate">
             Quản lý thành viên
           </h1>
         </div>

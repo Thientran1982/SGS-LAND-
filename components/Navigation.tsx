@@ -88,7 +88,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 </button>
 
                 <div className="flex flex-col justify-center animate-enter min-w-0">
-                    <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] tracking-tight leading-none truncate w-full">
+                    <h1 className="text-sm sm:text-xl font-extrabold text-[var(--text-primary)] tracking-tight leading-none truncate w-full">
                         {title}
                     </h1>
                 </div>
