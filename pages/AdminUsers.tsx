@@ -459,7 +459,7 @@ export const AdminUsers: React.FC = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="flex-1 overflow-auto bg-slate-50/50 no-scrollbar">
+            <div className="flex-1 overflow-auto bg-slate-50/50 no-scrollbar pt-3">
                 <div className="w-full overflow-x-auto bg-white border-b border-slate-100">
                     <table className="w-full min-w-[320px] text-left text-sm">
                         <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
@@ -565,14 +565,16 @@ export const AdminUsers: React.FC = () => {
             </div>
             
             {/* FOOTER - Pagination */}
-            <PaginationControl 
-                page={page} 
-                total={totalUsers} 
-                pageSize={pageSize} 
-                onPageChange={setPage} 
-                onPageSizeChange={(s: number) => { setPageSize(s); setPage(1); }}
-                t={t}
-            />
+            <div className="shrink-0 pb-4 px-4 sm:px-6 pt-3">
+                <PaginationControl 
+                    page={page} 
+                    total={totalUsers} 
+                    pageSize={pageSize} 
+                    onPageChange={setPage} 
+                    onPageSizeChange={(s: number) => { setPageSize(s); setPage(1); }}
+                    t={t}
+                />
+            </div>
 
             {/* Invite Modal */}
             <InviteUserModal 
