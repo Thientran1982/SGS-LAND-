@@ -825,7 +825,24 @@ class DatabaseApiClient {
   }
 
   async authenticateViaSSO(email: string) {
-    return this.authenticate(email, 'sso_token');
+    const res = await fetch('/api/auth/sso', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'SSO login failed' }));
+      throw new Error(err.error || 'SSO login failed');
+    }
+    const data = await res.json();
+    this.cachedCurrentUser = data.user;
+    return data.user;
+  }
+
+  async verifySsoConfig(): Promise<{ success: boolean; error?: string; metadata?: any }> {
+    const res = await api.post<any>('/api/enterprise/verify-sso', {});
+    return res;
   }
 
   async changeUserPassword(userId: string, currentPassword: string, newPassword: string) {

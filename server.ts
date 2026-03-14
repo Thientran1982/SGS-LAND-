@@ -158,12 +158,19 @@ async function startServer() {
     }
   });
 
-  app.post("/api/auth/sso", async (req, res) => {
+  app.post("/api/auth/sso", authRateLimit, async (req, res) => {
     try {
       const { email } = req.body;
       if (!email) return res.status(400).json({ error: 'Email is required for SSO' });
 
       const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
+
+      const { enterpriseConfigRepository } = await import('./server/repositories/enterpriseConfigRepository');
+      const enterpriseConfig = await enterpriseConfigRepository.getConfig(tenantId);
+      if (!enterpriseConfig?.sso?.enabled) {
+        return res.status(403).json({ error: 'SSO is not enabled for this organisation. Please contact your administrator.' });
+      }
+
       let dbUser = await userRepository.findByEmail(tenantId, email);
 
       if (!dbUser) {
@@ -185,6 +192,7 @@ async function startServer() {
       };
       const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
       res.cookie('token', token, cookieOptions);
+      logger.info(`SSO login: ${email} (tenant: ${tenantId})`);
       res.json({ message: 'SSO Login successful', user: userRepository.toPublicUser(dbUser), token });
     } catch (error) {
       console.error('SSO error:', error);

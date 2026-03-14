@@ -69,6 +69,68 @@ export function createEnterpriseRoutes(authenticateToken: any) {
   // Email / SMTP
   // -----------------------------------------------------------------------
 
+  router.post('/verify-sso', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can verify SSO configuration' });
+      }
+
+      const config = await enterpriseConfigRepository.getConfig(user.tenantId);
+      const sso = config?.sso;
+
+      if (!sso?.enabled) {
+        return res.status(400).json({ error: 'SSO is not enabled. Enable SSO and save the configuration first.' });
+      }
+      if (!sso?.issuerUrl) {
+        return res.status(400).json({ error: 'Issuer URL is required to verify OIDC configuration.' });
+      }
+      if (!sso?.clientId) {
+        return res.status(400).json({ error: 'Client ID is required to verify OIDC configuration.' });
+      }
+
+      const discoveryUrl = `${sso.issuerUrl.replace(/\/$/, '')}/.well-known/openid-configuration`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+
+      try {
+        const response = await fetch(discoveryUrl, { signal: controller.signal });
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+          return res.status(400).json({ error: `OIDC discovery endpoint returned HTTP ${response.status}. Verify the Issuer URL is correct.` });
+        }
+
+        const metadata = await response.json();
+        if (!metadata.issuer || !metadata.authorization_endpoint || !metadata.token_endpoint) {
+          return res.status(400).json({ error: 'OIDC discovery response is missing required fields (issuer, authorization_endpoint, token_endpoint).' });
+        }
+
+        return res.json({
+          success: true,
+          message: 'OIDC configuration verified successfully',
+          metadata: {
+            issuer: metadata.issuer,
+            authorizationEndpoint: metadata.authorization_endpoint,
+            tokenEndpoint: metadata.token_endpoint,
+            userinfoEndpoint: metadata.userinfo_endpoint,
+            jwksUri: metadata.jwks_uri,
+            supportedScopes: metadata.scopes_supported,
+          },
+        });
+      } catch (fetchError: any) {
+        clearTimeout(timeout);
+        if (fetchError.name === 'AbortError') {
+          return res.status(400).json({ error: 'Connection to OIDC discovery endpoint timed out after 8 seconds. Check that the Issuer URL is reachable.' });
+        }
+        return res.status(400).json({ error: `Failed to reach OIDC discovery endpoint: ${fetchError.message}` });
+      }
+    } catch (error: any) {
+      console.error('SSO verify error:', error);
+      res.status(500).json({ error: error.message || 'Failed to verify SSO configuration' });
+    }
+  });
+
   router.post('/test-smtp', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
