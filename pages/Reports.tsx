@@ -29,10 +29,18 @@ interface FunnelStep {
     conversionRate: number;
 }
 
+interface ConversionPeriod {
+    period: string;
+    won: number;
+    total: number;
+    conversionRate: number;
+}
+
 interface BiData {
     funnel: FunnelStep[];
     attribution: AttributionData[];
     campaignCosts: CampaignCost[];
+    conversionByPeriod: ConversionPeriod[];
 }
 
 // -----------------------------------------------------------------------------
@@ -147,13 +155,37 @@ const CustomTooltip = memo(({ active, payload, label, formatCurrency, theme }: a
 
 const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartTheme, locale }: { data: BiData, t: any, formatCurrency: any, formatCompactNumber: any, chartTheme: any, locale: string }) => {
     const hasData = data.attribution.length > 0;
-    const colors = chartTheme?.colors || {}; // Safety fallback
+    const hasTrend = data.conversionByPeriod.length > 0;
+    const colors = chartTheme?.colors || {};
+
+    const totalRevenue = data.attribution.reduce((acc, curr) => acc + curr.revenue, 0);
+    const totalSpend = data.attribution.reduce((acc, curr) => acc + curr.spend, 0);
+    const totalLeads = data.attribution.reduce((acc, curr) => acc + curr.leads, 0);
+    const avgRoi = data.attribution.length > 0
+        ? data.attribution.reduce((acc, curr) => acc + curr.roi, 0) / data.attribution.length
+        : 0;
 
     return (
         <div className="space-y-6 animate-enter">
+            {/* KPI Summary Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                    { label: t('reports.metric_revenue'), value: formatCurrency(totalRevenue), color: 'emerald', icon: '↑' },
+                    { label: t('reports.metric_spend'), value: formatCurrency(totalSpend), color: 'rose', icon: '↑' },
+                    { label: t('reports.table_leads'), value: totalLeads.toLocaleString(), color: 'indigo', icon: '↑' },
+                    { label: t('reports.metric_roi'), value: `${avgRoi > 0 ? '+' : ''}${avgRoi.toFixed(1)}%`, color: avgRoi >= 0 ? 'emerald' : 'rose', icon: avgRoi >= 0 ? '↑' : '↓' },
+                ].map(({ label, value, color, icon }) => (
+                    <div key={label} className="bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm relative overflow-hidden group">
+                        <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 relative z-10">{label}</div>
+                        <div className="text-2xl font-extrabold text-slate-800 tracking-tight relative z-10">{value}</div>
+                    </div>
+                ))}
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Efficiency Chart */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[400px] flex flex-col relative">
+                {/* Channel Revenue + ROI Chart */}
+                <div className="lg:col-span-2 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[380px] flex flex-col relative">
                     <h3 className="font-bold text-slate-800 mb-6">{t('reports.chart_source_mix')}</h3>
                     <div className="flex-1 w-full min-h-[250px] relative">
                         {hasData ? (
@@ -210,29 +242,70 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     </div>
                 </div>
 
-                {/* KPI Cards */}
-                <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-full flex flex-col justify-center relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 relative z-10">{t('reports.metric_revenue')}</div>
-                        <div className="text-3xl font-extrabold text-slate-800 tracking-tight relative z-10">
-                            {formatCurrency(data.attribution.reduce((acc, curr) => acc + curr.revenue, 0))}
-                        </div>
-                        <div className="text-xs text-emerald-500 font-bold mt-2 flex items-center gap-1 relative z-10">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                            +12.5%
-                        </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-full flex flex-col justify-center relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 relative z-10">{t('reports.metric_spend')}</div>
-                        <div className="text-3xl font-extrabold text-slate-800 tracking-tight relative z-10">
-                            {formatCurrency(data.attribution.reduce((acc, curr) => acc + curr.spend, 0))}
-                        </div>
-                        <div className="text-xs text-rose-500 font-bold mt-2 flex items-center gap-1 relative z-10">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
-                            +5.2%
-                        </div>
+                {/* Conversion Trend Chart */}
+                <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[380px] flex flex-col relative">
+                    <h3 className="font-bold text-slate-800 mb-1">{t('reports.chart_conversion_trend') || 'Xu hướng chuyển đổi'}</h3>
+                    <p className="text-[11px] text-slate-400 mb-4">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
+                    <div className="flex-1 w-full min-h-[200px] relative">
+                        {hasTrend ? (
+                            <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+                                <AreaChart data={data.conversionByPeriod} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="convGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={colors.primary} stopOpacity={0.3}/>
+                                            <stop offset="95%" stopColor={colors.primary} stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.grid} />
+                                    <XAxis 
+                                        dataKey="period" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{fill: colors.text, fontSize: 10}}
+                                    />
+                                    <YAxis 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{fill: colors.text, fontSize: 10}}
+                                        unit="%"
+                                        domain={[0, 100]}
+                                    />
+                                    <Tooltip 
+                                        cursor={{stroke: colors.grid, strokeWidth: 1}}
+                                        content={({ active, payload, label }) => {
+                                            if (active && payload && payload.length) {
+                                                return (
+                                                    <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs shadow-xl border border-white/10">
+                                                        <div className="font-bold mb-1">{label}</div>
+                                                        <div className="flex gap-3">
+                                                            <span className="text-slate-400">{t('reports.metric_conversion') || 'Tỷ lệ'}:</span>
+                                                            <span className="font-mono text-emerald-400">{payload[0].value}%</span>
+                                                        </div>
+                                                        <div className="flex gap-3">
+                                                            <span className="text-slate-400">Won:</span>
+                                                            <span className="font-mono">{payload[0].payload.won}/{payload[0].payload.total}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}
+                                    />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="conversionRate" 
+                                        stroke={colors.primary} 
+                                        fill="url(#convGradient)"
+                                        strokeWidth={2.5}
+                                        dot={{r: 3, fill: '#fff', stroke: colors.primary, strokeWidth: 2}}
+                                        activeDot={{r: 5}}
+                                        animationDuration={1500}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <EmptyChartState t={t} message={t('common.no_results')} />
+                        )}
                     </div>
                 </div>
             </div>
@@ -492,7 +565,8 @@ export const Reports: React.FC = () => {
             const safeData: BiData = {
                 funnel: res.funnel || [], 
                 attribution: res.attribution || [],
-                campaignCosts: res.campaignCosts || []
+                campaignCosts: res.campaignCosts || [],
+                conversionByPeriod: res.conversionByPeriod || [],
             };
             setData(safeData);
             setCurrentUser(user);
