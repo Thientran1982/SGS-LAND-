@@ -58,9 +58,7 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         let dragged = false;
 
         const onMouseDown = (e: MouseEvent) => {
-            // Ignore inputs
             if ((e.target as HTMLElement).closest('input, textarea')) return;
-            
             isDown = true;
             dragged = false;
             node.classList.add('cursor-grabbing', 'select-none');
@@ -88,9 +86,7 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             e.preventDefault();
             const x = e.pageX - node.offsetLeft;
             const walk = (x - startX) * 2;
-            if (Math.abs(walk) > 5) {
-                dragged = true;
-            }
+            if (Math.abs(walk) > 5) dragged = true;
             node.scrollLeft = scrollLeft - walk;
         };
 
@@ -105,8 +101,7 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         node.addEventListener('mouseleave', onMouseLeave);
         node.addEventListener('mouseup', onMouseUp);
         node.addEventListener('mousemove', onMouseMove);
-        node.addEventListener('click', onClick, true); // Use capture phase
-
+        node.addEventListener('click', onClick, true);
         node.classList.add('cursor-grab');
 
         return () => {
@@ -128,7 +123,6 @@ const EmptyChartState = ({ t, message }: { t: any, message: string }) => (
 );
 
 const CustomTooltip = memo(({ active, payload, label, formatCurrency, theme }: any) => {
-    // Safety check: Ensure theme colors exist and payload is a valid array
     if (active && Array.isArray(payload) && payload.length && theme && theme.colors) {
         return (
             <div className="p-3 rounded-xl border shadow-xl text-xs backdrop-blur-md transition-all z-50" 
@@ -155,7 +149,9 @@ const CustomTooltip = memo(({ active, payload, label, formatCurrency, theme }: a
 
 const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartTheme, locale }: { data: BiData, t: any, formatCurrency: any, formatCompactNumber: any, chartTheme: any, locale: string }) => {
     const hasData = data.attribution.length > 0;
-    const hasTrend = data.conversionByPeriod.length > 0;
+    // Fix: reverse conversionByPeriod so trend chart shows oldest → newest (left → right)
+    const trendData = useMemo(() => [...data.conversionByPeriod].reverse(), [data.conversionByPeriod]);
+    const hasTrend = trendData.length > 0;
     const colors = chartTheme?.colors || {};
 
     const totalRevenue = data.attribution.reduce((acc, curr) => acc + curr.revenue, 0);
@@ -167,7 +163,6 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
 
     return (
         <div className="space-y-6 animate-enter">
-            {/* KPI Summary Row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                     { label: t('reports.metric_revenue'), value: formatCurrency(totalRevenue), color: 'emerald', icon: '↑' },
@@ -184,7 +179,6 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Channel Revenue + ROI Chart */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[380px] flex flex-col relative">
                     <h3 className="font-bold text-slate-800 mb-6">{t('reports.chart_source_mix')}</h3>
                     <div className="flex-1 w-full min-h-[250px] relative">
@@ -244,14 +238,13 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     </div>
                 </div>
 
-                {/* Conversion Trend Chart */}
                 <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[380px] flex flex-col relative">
                     <h3 className="font-bold text-slate-800 mb-1">{t('reports.chart_conversion_trend') || 'Xu hướng chuyển đổi'}</h3>
                     <p className="text-[11px] text-slate-400 mb-4">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
                     <div className="flex-1 w-full min-h-[200px] relative">
                         {hasTrend ? (
                             <ResponsiveContainer width="100%" height="100%" minHeight={200}>
-                                <AreaChart data={data.conversionByPeriod} margin={{ top: 10, right: 16, left: 4, bottom: 0 }}>
+                                <AreaChart data={trendData} margin={{ top: 10, right: 16, left: 4, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="convGradient" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor={colors.primary} stopOpacity={0.3}/>
@@ -394,8 +387,45 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
 
+    // KPI summary computed from attribution data
+    const totalRevenue = data.attribution.reduce((acc, r) => acc + r.revenue, 0);
+    const totalSpend = data.attribution.reduce((acc, r) => acc + r.spend, 0);
+    const totalLeads = data.attribution.reduce((acc, r) => acc + r.leads, 0);
+    const overallRoi = totalSpend > 0 ? ((totalRevenue - totalSpend) / totalSpend) * 100 : null;
+
+    const roiDisplay = (row: AttributionData) => {
+        // Fix: when spend = 0, ROI is meaningless — show N/A instead of 0%
+        if (row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-50 text-slate-400 border border-slate-200">N/A</span>;
+        return (
+            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${row.roi >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                {row.roi > 0 ? '+' : ''}{row.roi.toFixed(1)}%
+            </span>
+        );
+    };
+
     return (
     <div className="space-y-6 animate-enter">
+        {/* KPI Summary */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+                { label: t('reports.metric_revenue'), value: formatCurrency(totalRevenue), color: 'emerald' },
+                { label: t('reports.metric_spend'), value: formatCurrency(totalSpend), color: 'rose' },
+                { label: t('reports.table_leads'), value: totalLeads.toLocaleString(), color: 'indigo' },
+                { 
+                    label: t('reports.metric_roi'), 
+                    value: overallRoi !== null ? `${overallRoi > 0 ? '+' : ''}${overallRoi.toFixed(1)}%` : 'N/A',
+                    color: overallRoi === null ? 'slate' : overallRoi >= 0 ? 'emerald' : 'rose'
+                },
+            ].map(({ label, value, color }) => (
+                <div key={label} className="bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm relative overflow-hidden group min-w-0">
+                    <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 relative z-10 truncate">{label}</div>
+                    <div className="text-lg xl:text-xl font-extrabold text-slate-800 tracking-tight relative z-10 truncate" title={value}>{value}</div>
+                </div>
+            ))}
+        </div>
+
+        {/* Attribution Table */}
         <div className="bg-white p-0 md:p-2 rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
             <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
                 <table className="min-w-[800px] md:min-w-full text-sm text-left">
@@ -420,15 +450,15 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                                         {t(`source.${row.channel}`) !== `source.${row.channel}` ? t(`source.${row.channel}`) : row.channel}
                                     </span>
                                 </td>
-                                <td className="p-5 text-right font-mono text-slate-600">{formatCurrency(row.spend)}</td>
-                                <td className="p-5 text-right font-bold text-slate-700">{row.leads}</td>
-                                <td className="p-5 text-right font-mono text-slate-600">{formatCurrency(row.cac)}</td>
-                                <td className="p-5 text-right font-mono font-bold text-indigo-600">{formatCurrency(row.revenue)}</td>
-                                <td className="p-5 text-right">
-                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${row.roi >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
-                                        {(row.roi > 0 ? '+' : '')}{(row.roi || 0).toFixed(1)}%
-                                    </span>
+                                <td className="p-5 text-right font-mono text-slate-600">
+                                    {row.spend > 0 ? formatCurrency(row.spend) : <span className="text-slate-300">—</span>}
                                 </td>
+                                <td className="p-5 text-right font-bold text-slate-700">{row.leads}</td>
+                                <td className="p-5 text-right font-mono text-slate-600">
+                                    {row.cac > 0 ? formatCurrency(row.cac) : <span className="text-slate-300">—</span>}
+                                </td>
+                                <td className="p-5 text-right font-mono font-bold text-indigo-600">{formatCurrency(row.revenue)}</td>
+                                <td className="p-5 text-right">{roiDisplay(row)}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -446,6 +476,10 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
     const [editingCost, setEditingCost] = useState<CampaignCost | null>(null);
     const [newCostValue, setNewCostValue] = useState('');
 
+    const [isAdding, setIsAdding] = useState(false);
+    const [addForm, setAddForm] = useState({ campaignName: '', source: '', cost: '', period: new Date().toISOString().slice(0, 7) });
+    const [isSaving, setIsSaving] = useState(false);
+
     const canUpdateCosts = currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD';
 
     const handleUpdate = async () => {
@@ -460,11 +494,40 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
         }
     };
 
+    const handleAdd = async () => {
+        if (!addForm.source || !addForm.cost || !addForm.period) return;
+        setIsSaving(true);
+        try {
+            await db.createCampaignCost({
+                campaignName: addForm.campaignName || addForm.source,
+                source: addForm.source,
+                cost: Number(addForm.cost),
+                period: addForm.period,
+            });
+            setIsAdding(false);
+            setAddForm({ campaignName: '', source: '', cost: '', period: new Date().toISOString().slice(0, 7) });
+            onCostUpdated();
+        } catch (error) {
+            console.error('Failed to add cost', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
     <div className="space-y-6 animate-enter">
         <div className="bg-white p-0 md:p-2 rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
                 <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide">{t('reports.cost_history')}</h3>
+                {canUpdateCosts && (
+                    <button
+                        onClick={() => setIsAdding(true)}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow hover:bg-indigo-700 transition-all"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                        {t('reports.btn_add_cost') || 'Thêm Chi Phí'}
+                    </button>
+                )}
             </div>
             
             <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
@@ -508,6 +571,69 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
             </div>
         </div>
 
+        {/* Add Cost Modal */}
+        {isAdding && createPortal(
+            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
+                <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100">
+                    <h3 className="text-lg font-bold text-slate-800 mb-5">{t('reports.btn_add_cost') || 'Thêm Chi Phí Chiến Dịch'}</h3>
+                    <div className="space-y-4 mb-6">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{t('reports.cost_source')} *</label>
+                            <input 
+                                type="text"
+                                value={addForm.source}
+                                onChange={(e) => setAddForm(f => ({ ...f, source: e.target.value }))}
+                                placeholder="Facebook, Google, Zalo..."
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{t('reports.cost_user')}</label>
+                            <input 
+                                type="text"
+                                value={addForm.campaignName}
+                                onChange={(e) => setAddForm(f => ({ ...f, campaignName: e.target.value }))}
+                                placeholder={t('reports.cost_user') || 'Tên chiến dịch'}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{t('reports.cost_month')} *</label>
+                            <input 
+                                type="month"
+                                value={addForm.period}
+                                onChange={(e) => setAddForm(f => ({ ...f, period: e.target.value }))}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{t('reports.cost_amount')} (VNĐ) *</label>
+                            <input 
+                                type="number"
+                                value={addForm.cost}
+                                onChange={(e) => setAddForm(f => ({ ...f, cost: e.target.value }))}
+                                placeholder="0"
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex gap-3 w-full">
+                        <button onClick={() => setIsAdding(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
+                            {t('common.cancel')}
+                        </button>
+                        <button 
+                            onClick={handleAdd} 
+                            disabled={isSaving || !addForm.source || !addForm.cost}
+                            className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isSaving ? '...' : t('common.save')}
+                        </button>
+                    </div>
+                </div>
+            </div>,
+            document.body
+        )}
+
         {/* Update Cost Modal */}
         {isUpdating && editingCost && createPortal(
             <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
@@ -542,13 +668,21 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
 // 4. MAIN COMPONENT
 // -----------------------------------------------------------------------------
 
+const TIME_RANGE_OPTIONS = [
+    { value: '7',   label: '7 ngày' },
+    { value: '30',  label: '30 ngày' },
+    { value: '90',  label: '90 ngày' },
+    { value: '365', label: '12 tháng' },
+    { value: 'all', label: 'Tất cả' },
+];
+
 export const Reports: React.FC = () => {
     const [data, setData] = useState<BiData | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'FUNNEL' | 'ROI' | 'COSTS'>('ROI');
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [timeRange, setTimeRange] = useState<string>('30');
     
-    // Get language for locale detection
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const { chartTheme } = useTheme();
 
@@ -559,11 +693,10 @@ export const Reports: React.FC = () => {
         setLoading(true);
         
         Promise.all([
-            db.generateBiMarts(),
+            db.generateBiMarts(timeRange),
             db.getCurrentUser()
         ]).then(([res, user]) => {
             if (!mounted) return;
-            // Clean handling of potential nulls from backend
             const safeData: BiData = {
                 funnel: res.funnel || [], 
                 attribution: res.attribution || [],
@@ -578,7 +711,7 @@ export const Reports: React.FC = () => {
             if(mounted) setLoading(false);
         });
         return () => { mounted = false; };
-    }, []);
+    }, [timeRange]);
 
     useEffect(() => {
         const cleanup = loadData();
@@ -600,8 +733,28 @@ export const Reports: React.FC = () => {
 
     return (
         <div className="space-y-6 pb-20 relative animate-enter">
-            {/* Tab Navigation */}
-            <div className="flex flex-col lg:flex-row justify-end items-start lg:items-center bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm gap-4 w-full overflow-hidden">
+            {/* Header: Tabs + Time Range Filter */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm gap-4 w-full overflow-hidden">
+                {/* Time Range Filter */}
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Khoảng thời gian:</span>
+                    <div className="flex bg-slate-100 p-0.5 rounded-xl gap-0.5">
+                        {TIME_RANGE_OPTIONS.map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => setTimeRange(opt.value)}
+                                className={`px-3 py-1.5 text-xs font-bold rounded-[10px] transition-all whitespace-nowrap ${
+                                    timeRange === opt.value
+                                    ? 'bg-white shadow text-slate-800 ring-1 ring-black/5'
+                                    : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Mobile Dropdown */}
                 <div className="w-full md:hidden">
                     <Dropdown 

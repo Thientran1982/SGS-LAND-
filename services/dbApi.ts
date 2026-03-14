@@ -705,6 +705,15 @@ class DatabaseApiClient {
     }
   }
 
+  async createCampaignCost(data: { campaignName: string; source: string; cost: number; period: string }) {
+    try {
+      return await analyticsApi.createCampaignCost(data);
+    } catch (error) {
+      console.error('createCampaignCost error:', error);
+      throw error;
+    }
+  }
+
   async duplicateLead(id: string) {
     const lead = await this.getLeadById(id);
     if (!lead) throw new Error('Lead not found');
