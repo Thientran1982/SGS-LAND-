@@ -172,13 +172,7 @@ export function PageView() {
           <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-xl">
             {SEARCH_MOBILE_ICON}
           </button>
-          {/* FIXED: show last name on mobile */}
           <button className="flex items-center gap-2">
-            <div className="text-right leading-tight">
-              <div className="text-sm font-bold text-slate-800 truncate max-w-[80px]">
-                {lastName}
-              </div>
-            </div>
             <img
               src={currentUser.avatar}
               className="w-8 h-8 rounded-full border-2 border-white shadow-md object-cover"

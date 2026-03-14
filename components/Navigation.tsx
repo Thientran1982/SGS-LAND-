@@ -129,12 +129,11 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                     title={t('menu.profile')}
                     aria-label={t('menu.profile')}
                 >
-                    <div className="text-right leading-tight">
-                        <div className={`text-sm font-bold transition-colors truncate max-w-[90px] sm:max-w-none ${isProfileActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-primary)] group-hover:text-indigo-600'}`}>
-                            {user.name.split(' ').pop()}
-                            <span className="hidden sm:inline"> {user.name.split(' ').slice(0, -1).join(' ')}</span>
+                    <div className="text-right hidden sm:block leading-tight">
+                        <div className={`text-sm font-bold transition-colors ${isProfileActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-primary)] group-hover:text-indigo-600'}`}>
+                            {user.name}
                         </div>
-                        <div className="text-[10px] text-[var(--text-tertiary)] font-medium hidden sm:block">
+                        <div className="text-[10px] text-[var(--text-tertiary)] font-medium">
                             {t(`role.${user.role}`) || user.role}
                         </div>
                     </div>
