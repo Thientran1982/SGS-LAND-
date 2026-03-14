@@ -34,6 +34,12 @@ const ROLES: Record<string, { label: string; desc: string }> = {
   },
 };
 
+const USERS = [
+  { name: "Nguyễn Văn Admin", email: "admin@sgs.vn", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin", status: "HĐ", statusColor: "emerald" },
+  { name: "Trần Thị Lan", email: "lan.tran@sgs.vn", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lan", status: "HĐ", statusColor: "emerald" },
+  { name: "Phạm Hồng Nhung", email: "nhung.pham@sgs.vn", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=nhung", status: "Chờ", statusColor: "amber" },
+];
+
 export function InviteModalOpen() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("SALES");
@@ -50,13 +56,21 @@ export function InviteModalOpen() {
 
   return (
     <div
-      className="relative overflow-hidden bg-slate-100"
+      className="relative overflow-hidden bg-slate-100 flex flex-col"
       style={{ width: 390, height: 844, fontFamily: "Inter, sans-serif" }}
     >
-      {/* Blurred background content */}
-      <div className="absolute inset-0 bg-white opacity-40" />
-      <div className="absolute inset-0 flex flex-col pointer-events-none select-none opacity-50">
-        <div className="bg-white border-b border-slate-100 px-4 pt-4 pb-3 flex items-center justify-between">
+      {/* Background content (blurred) */}
+      <div className="absolute inset-0 flex flex-col pointer-events-none select-none">
+        {/* Fake CommandCenter header */}
+        <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between h-14">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-slate-200 rounded-lg" />
+            <span className="text-sm font-bold text-slate-600">Quản lý thành viên</span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-indigo-100 border-2 border-white" />
+        </div>
+        {/* Fake page header */}
+        <div className="bg-white border-b border-slate-100 px-4 pt-3 pb-2 flex items-center justify-between">
           <div className="flex gap-1.5">
             <div className="bg-slate-100 rounded-lg px-2 py-1.5 text-[9px] font-black text-slate-500">Tổng 5</div>
             <div className="bg-emerald-50 rounded-lg px-2 py-1.5 text-[9px] font-black text-emerald-600">HĐ 3</div>
@@ -64,14 +78,10 @@ export function InviteModalOpen() {
           </div>
           <div className="bg-slate-900 text-white rounded-xl px-3 py-2 text-xs font-bold">Mời</div>
         </div>
-        <div className="bg-slate-50 border-b border-slate-100 px-4 py-3">
-          <div className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-400">Tìm theo tên...</div>
+        <div className="bg-slate-50 border-b border-slate-100 px-4 py-2.5">
+          <div className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-400">Tìm theo tên...</div>
         </div>
-        {[
-          { name: "Nguyễn Văn Admin", email: "admin@sgs.vn", role: "ADMIN", status: "HĐ", color: "emerald", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin" },
-          { name: "Trần Thị Lan", email: "lan.tran@sgs.vn", role: "SALES", status: "HĐ", color: "emerald", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lan" },
-          { name: "Phạm Hồng Nhung", email: "nhung.pham@sgs.vn", role: "MARKETING", status: "Chờ", color: "amber", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=nhung" },
-        ].map((u) => (
+        {USERS.map((u) => (
           <div key={u.email} className="bg-white border-b border-slate-50 px-3 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <img src={u.avatar} className="w-8 h-8 rounded-full bg-slate-200" alt="" />
@@ -80,20 +90,24 @@ export function InviteModalOpen() {
                 <div className="text-[10px] text-slate-400">{u.email}</div>
               </div>
             </div>
-            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full bg-${u.color}-50 text-${u.color}-600`}>{u.status}</span>
           </div>
         ))}
       </div>
 
-      {/* Overlay */}
+      {/* Dim overlay */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-      {/* Modal */}
-      <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="bg-white w-full rounded-[24px] p-6 shadow-2xl border border-slate-100 relative z-10">
+      {/* BOTTOM SHEET MODAL — matches fixed code */}
+      <div className="absolute inset-0 flex items-end justify-center">
+        <div className="bg-white w-full rounded-t-[28px] p-6 pb-8 shadow-2xl border border-slate-100 relative z-10 max-h-[92%] overflow-y-auto">
+          {/* Drag handle */}
+          <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
+
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-slate-800">Mời thành viên mới</h3>
-            <button className="text-slate-400">{CLOSE_ICON}</button>
+            <button className="text-slate-400 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100">
+              {CLOSE_ICON}
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,7 +117,7 @@ export function InviteModalOpen() {
               </label>
               <input
                 type="email"
-                className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all ${
+                className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 transition-all ${
                   error
                     ? "border-rose-300 bg-rose-50 focus:ring-rose-500/20"
                     : "border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -111,7 +125,6 @@ export function InviteModalOpen() {
                 placeholder="email@congty.vn"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                autoFocus
               />
               {error && <p className="text-[10px] text-rose-500 font-bold mt-1">{error}</p>}
             </div>
@@ -121,7 +134,7 @@ export function InviteModalOpen() {
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
               >
                 {Object.entries(ROLES).map(([v, { label }]) => (
                   <option key={v} value={v}>{label}</option>
@@ -143,7 +156,7 @@ export function InviteModalOpen() {
               <button
                 type="submit"
                 disabled={!email}
-                className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all disabled:opacity-70 flex items-center justify-center gap-2 active:scale-95"
+                className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
               >
                 Gửi lời mời
               </button>

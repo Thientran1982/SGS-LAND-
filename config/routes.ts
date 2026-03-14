@@ -50,6 +50,15 @@ export const ROUTES = {
     RESET_PASSWORD: 'reset-password'
 } as const;
 
-export const FULL_HEIGHT_PAGES = new Set([ROUTES.INBOX, ROUTES.LEADS]);
+export const FULL_HEIGHT_PAGES = new Set([
+    ROUTES.INBOX,
+    ROUTES.LEADS,
+    ROUTES.ADMIN_USERS,
+    ROUTES.INVENTORY,
+    ROUTES.CONTRACTS,
+    ROUTES.REPORTS,
+    ROUTES.FAVORITES,
+    ROUTES.SYSTEM,
+]);
 
 export type RouteKey = typeof ROUTES[keyof typeof ROUTES];

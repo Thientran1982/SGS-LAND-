@@ -115,9 +115,9 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-            <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100 relative z-10 animate-scale-up">
+            <div className="bg-white w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 pb-8 sm:pb-6 shadow-2xl border border-slate-100 relative z-10 animate-scale-up max-h-[92dvh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-slate-800">{t('admin.users.invite_title')}</h3>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
