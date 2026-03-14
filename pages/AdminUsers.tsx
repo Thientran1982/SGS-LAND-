@@ -17,17 +17,6 @@ const ICONS = {
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 
-// --- SUB-COMPONENT: METRIC CARD ---
-const StatCard = ({ label, value, color }: { label: string, value: number, color: string }) => (
-    <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between">
-        <div>
-            <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">{label}</div>
-            <div className="text-2xl font-black text-slate-800">{value}</div>
-        </div>
-        <div className={`w-2 h-2 rounded-full ${color}`}></div>
-    </div>
-);
-
 // --- SUB-COMPONENT: PAGINATION ---
 const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSizeChange, t }: any) => {
     const totalPages = Math.ceil(total / pageSize);
@@ -401,19 +390,30 @@ export const AdminUsers: React.FC = () => {
             {/* HEADER */}
             <div className="flex flex-col bg-white border-b border-slate-100 shrink-0">
 
-                {/* Row 1: Tiêu đề + số thành viên + nút mời */}
-                <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-4">
-                    <div>
-                        <h1 className="text-base sm:text-lg font-black text-slate-800 leading-tight">
-                            {t('admin.users.page_title') || 'Quản trị người dùng'}
-                        </h1>
-                        <p className="text-xs text-slate-500 font-medium mt-0.5">
-                            {t('admin.users.total_members', { count: totalUsers })}
-                        </p>
+                {/* Row 1: Số liệu thành viên + nút mời */}
+                <div className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-4 pb-3">
+                    {/* Stat chips */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t('admin.users.total') || 'Tổng'}</span>
+                            <span className="text-sm font-black text-slate-800">{totalUsers}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wide">{t('admin.users.active_users') || 'Hoạt động'}</span>
+                            <span className="text-sm font-black text-emerald-700">{stats.activeCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wide hidden sm:inline">{t('admin.users.pending_invites') || 'Chờ duyệt'}</span>
+                            <span className="text-sm font-black text-amber-700">{stats.pendingCount}</span>
+                        </div>
                     </div>
+
+                    {/* Nút mời thành viên */}
                     <button
                         onClick={() => setIsInviteOpen(true)}
-                        className="px-4 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs sm:text-sm shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95"
+                        className="shrink-0 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md hover:bg-slate-800 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95"
                     >
                         {ICONS.ADD}
                         <span className="hidden sm:inline">{t('admin.users.invite')}</span>
@@ -421,14 +421,9 @@ export const AdminUsers: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Row 2: Thẻ thống kê */}
-                <div className="grid grid-cols-2 gap-3 px-4 sm:px-6 pb-4">
-                    <StatCard label={t('admin.users.active_users')} value={stats.activeCount} color="bg-emerald-500" />
-                    <StatCard label={t('admin.users.pending_invites')} value={stats.pendingCount} color="bg-amber-500" />
-                </div>
-
-                {/* Row 3: Thanh tìm kiếm + bộ lọc */}
-                <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-t border-slate-100 bg-slate-50/60">
+                {/* Row 2: Thanh tìm kiếm + bộ lọc vai trò */}
+                <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-t border-slate-100 bg-slate-50/50">
+                    {/* Ô tìm kiếm — kéo dài toàn bộ chiều ngang còn lại */}
                     <div className="relative flex-1 group">
                         <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
                             {ICONS.SEARCH}
@@ -451,7 +446,8 @@ export const AdminUsers: React.FC = () => {
                             </div>
                         )}
                     </div>
-                    <div className="w-40 sm:w-52 shrink-0">
+                    {/* Dropdown lọc vai trò */}
+                    <div className="w-36 sm:w-48 shrink-0">
                         <Dropdown value={roleFilter} onChange={(v) => setRoleFilter(v as string)} options={roleOptions} className="text-xs" />
                     </div>
                 </div>
