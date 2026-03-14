@@ -13,6 +13,12 @@ export const knowledgeApi = {
   getArticles: (page = 1, pageSize = 50, params?: Record<string, any>) =>
     api.get<PaginatedResponse<any>>('/api/knowledge/articles', { page, pageSize, ...params }),
 
+  getPublicArticles: (page = 1, pageSize = 50, params?: Record<string, any>) =>
+    api.get<PaginatedResponse<any>>('/api/public/articles', { page, pageSize, ...params }),
+
+  getPublicArticleById: (id: string) =>
+    api.get<any>(`/api/public/articles/${id}`),
+
   getArticleById: (id: string) =>
     api.get<any>(`/api/knowledge/articles/${id}`),
 

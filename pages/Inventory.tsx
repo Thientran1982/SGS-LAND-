@@ -326,7 +326,7 @@ const InventoryKanbanCard = memo(({ item, onClick, t, formatCurrency }: any) => 
         >
             <div className="flex gap-3">
                 <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden shrink-0">
-                    <img src={item.images?.[0]} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                    <img src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                 </div>
                 <div className="min-w-0">
                     <div className="font-bold text-slate-800 text-xs line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">{item.title}</div>

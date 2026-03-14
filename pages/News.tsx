@@ -7,6 +7,14 @@ import { Article, UserRole, User } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { copyToClipboard } from '../utils/clipboard';
 
+const sanitizeHtml = (html: string): string => {
+    return html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+        .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+        .replace(/javascript\s*:/gi, '');
+};
+
 // -----------------------------------------------------------------------------
 // TYPES & MOCK DATA (2026 CONTEXT)
 // -----------------------------------------------------------------------------
@@ -35,11 +43,16 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
         window.scrollTo(0, 0);
     }, []);
 
+    const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+
     const handleDelete = async () => {
         if (onDelete) {
             setIsDeleting(true);
-            await onDelete(article.id);
-            setIsDeleting(false);
+            try {
+                await onDelete(article.id);
+            } catch {
+                setIsDeleting(false);
+            }
             setIsConfirmOpen(false);
         }
     };
@@ -48,21 +61,14 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
         const url = window.location.href;
         if (navigator.share) {
             try {
-                await navigator.share({
-                    title: article.title,
-                    text: article.excerpt,
-                    url: url,
-                });
+                await navigator.share({ title: article.title, text: article.excerpt, url });
             } catch (err) {
                 console.error('Share failed', err);
             }
         } else {
             const success = await copyToClipboard(url);
-            if (success) {
-                alert('Đã sao chép đường dẫn bài viết!');
-            } else {
-                alert('Không thể sao chép đường dẫn.');
-            }
+            setShareFeedback(success ? 'Đã sao chép đường dẫn!' : 'Không thể sao chép.');
+            setTimeout(() => setShareFeedback(null), 2500);
         }
     };
 
@@ -129,7 +135,12 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                             <div className="text-xs text-slate-500">Ban Biên Tập SGS</div>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                        {shareFeedback && (
+                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 animate-enter">
+                                {shareFeedback}
+                            </span>
+                        )}
                         <button onClick={handleShare} className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-colors" title="Chia sẻ">
                             {ICONS.SHARE}
                         </button>
@@ -151,7 +162,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                     <p className="lead font-medium text-xl text-slate-800 mb-8 not-prose border-l-4 border-indigo-500 pl-4 bg-slate-50 py-2 rounded-r-lg">
                         {article.excerpt}
                     </p>
-                    <div dangerouslySetInnerHTML={{ __html: article.content }} />
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content || '') }} />
                 </div>
 
                 {/* Media Gallery */}
@@ -317,7 +328,7 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
                 </div>
                 <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">URL Hình ảnh chính</label>
-                    <input type="url" name="image" value={formData.image} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
+                    <input type="text" name="image" value={formData.image} onChange={handleChange} placeholder="https://... hoặc tải ảnh lên ở trên" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                 </div>
                 <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">Tags (cách nhau bằng dấu phẩy)</label>
@@ -400,25 +411,30 @@ export const News: React.FC = () => {
     const [subStatus, setSubStatus] = useState<'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR'>('IDLE');
     const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [errorToast, setErrorToast] = useState<string | null>(null);
     
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const PAGE_SIZE = 6; // Number of articles per page (excluding featured)
+
+    const showError = (msg: string) => {
+        setErrorToast(msg);
+        setTimeout(() => setErrorToast(null), 3000);
+    };
     
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                // Fetch all articles to find featured first, then paginate the rest
-                // In a real app, this would be handled better by the backend API
-                const allRes = await db.getArticles(1, 1000);
-                const allArticles = allRes.data;
-                const featuredArticle = allArticles.find(a => a.featured) || allArticles[0];
+                // Fetch articles from public endpoint (no auth required)
+                const allRes = await db.getPublicArticles(1, 100);
+                const allArticles = (allRes as any).data || [];
+                const featuredArticle = allArticles.find((a: Article) => a.featured) || allArticles[0];
                 
                 // Filter out featured article for pagination
-                const otherArticles = allArticles.filter(a => a.id !== featuredArticle?.id);
+                const otherArticles = allArticles.filter((a: Article) => a.id !== featuredArticle?.id);
                 
                 // Calculate pagination
                 const total = otherArticles.length;
@@ -483,7 +499,7 @@ export const News: React.FC = () => {
             }
         } catch (error) {
             console.error("Failed to save article", error);
-            alert("Có lỗi xảy ra khi lưu bài viết.");
+            showError("Có lỗi xảy ra khi lưu bài viết.");
         }
     };
     
@@ -562,7 +578,7 @@ export const News: React.FC = () => {
                                 setSelectedArticleId(null);
                             } catch (error) {
                                 console.error('Failed to delete article', error);
-                                alert('Có lỗi xảy ra khi xóa bài viết.');
+                                showError('Có lỗi xảy ra khi xóa bài viết.');
                             }
                         }}
                     />
@@ -574,6 +590,11 @@ export const News: React.FC = () => {
     // Default: List View
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+            {errorToast && (
+                <div className="fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl bg-rose-900/90 border border-rose-500 text-white flex items-center gap-3 animate-enter">
+                    <span className="font-bold text-sm">{errorToast}</span>
+                </div>
+            )}
             
             {/* Header */}
             <div className="sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">

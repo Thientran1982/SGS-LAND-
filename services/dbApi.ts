@@ -648,18 +648,27 @@ class DatabaseApiClient {
     return true;
   }
 
-  async getArticles() {
+  async getArticles(page = 1, pageSize = 50, params?: Record<string, any>) {
     try {
-      const result = await knowledgeApi.getArticles();
-      return result.data;
+      const result = await knowledgeApi.getArticles(page, pageSize, params);
+      return result;
     } catch {
-      return [];
+      return { data: [], total: 0 };
+    }
+  }
+
+  async getPublicArticles(page = 1, pageSize = 50, params?: Record<string, any>) {
+    try {
+      const result = await knowledgeApi.getPublicArticles(page, pageSize, params);
+      return result;
+    } catch {
+      return { data: [], total: 0 };
     }
   }
 
   async getArticleById(id: string) {
     try {
-      return await knowledgeApi.getArticleById(id);
+      return await knowledgeApi.getPublicArticleById(id);
     } catch {
       return null;
     }

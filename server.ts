@@ -15,6 +15,7 @@ import { webhookQueue, setupWebhookWorker } from "./server/queue";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
+import { articleRepository } from "./server/repositories/articleRepository";
 import { createLeadRoutes } from "./server/routes/leadRoutes";
 import { createListingRoutes } from "./server/routes/listingRoutes";
 import { createProposalRoutes } from "./server/routes/proposalRoutes";
@@ -661,6 +662,32 @@ async function startServer() {
     } catch (error) {
       console.error('Error creating public lead:', error);
       res.status(500).json({ error: 'Không thể tạo yêu cầu, vui lòng thử lại' });
+    }
+  });
+
+  app.get('/api/public/articles', apiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
+      const filters: any = {};
+      if (req.query.category) filters.category = req.query.category;
+      if (req.query.search) filters.search = req.query.search;
+      const result = await articleRepository.findArticles(PUBLIC_TENANT, { page, pageSize }, filters);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching public articles:', error);
+      res.status(500).json({ error: 'Failed to fetch articles' });
+    }
+  });
+
+  app.get('/api/public/articles/:id', apiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const article = await articleRepository.findById(PUBLIC_TENANT, req.params.id);
+      if (!article) return res.status(404).json({ error: 'Article not found' }) as any;
+      res.json(article);
+    } catch (error) {
+      console.error('Error fetching public article:', error);
+      res.status(500).json({ error: 'Failed to fetch article' });
     }
   });
 
