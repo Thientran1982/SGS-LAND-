@@ -90,7 +90,7 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                     </div>
 
                     <div className="h-48 w-full relative">
-                        <ResponsiveContainer width="100%" height="100%" minHeight={150} minWidth={150}>
+                        <ResponsiveContainer width="100%" height={192} minHeight={150} minWidth={150}>
                             <AreaChart data={CHART_DATA}>
                                 <defs>
                                     <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">

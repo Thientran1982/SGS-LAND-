@@ -554,7 +554,7 @@ export const Dashboard: React.FC = () => {
                         <div className="flex-1 w-full h-[320px] relative mt-4 flex flex-col">
                             {analytics.marketPulse && analytics.marketPulse.length > 0 ? (
                                 <>
-                                    <div className="flex-1 min-h-0">
+                                    <div className="flex-1 min-h-[200px]">
                                         <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
                                             <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />

@@ -154,7 +154,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                 {/* Efficiency Chart */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[400px] flex flex-col relative">
                     <h3 className="font-bold text-slate-800 mb-6">{t('reports.chart_source_mix')}</h3>
-                    <div className="flex-1 w-full min-h-0 relative">
+                    <div className="flex-1 w-full min-h-[250px] relative">
                         {hasData ? (
                             <ResponsiveContainer width="100%" height="100%" minHeight={250} minWidth={250}>
                                 <ComposedChart data={data.attribution} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -249,7 +249,7 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                 <h3 className="font-bold text-slate-800 mb-2">{t('reports.chart_funnel')}</h3>
                 <p className="text-xs text-slate-500 mb-6">{t('reports.funnel_desc')}</p>
                 
-                <div className="flex-1 w-full min-h-0 relative">
+                <div className="flex-1 w-full min-h-[300px] relative">
                     {hasData ? (
                         <ResponsiveContainer width="100%" height="100%" minHeight={300} minWidth={300}>
                             <AreaChart 
