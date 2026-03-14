@@ -54,20 +54,38 @@ export function createAnalyticsRoutes(authenticateToken: any) {
   router.post('/campaign-costs', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+        return res.status(403).json({ error: 'Only admins and team leads can create campaign costs' });
+      }
       const { campaignName, source, cost, period } = req.body;
-      if (!campaignName || !source || cost === undefined || !period) {
-        return res.status(400).json({ error: 'campaignName, source, cost, and period are required' });
+      if (!source || cost === undefined || !period) {
+        return res.status(400).json({ error: 'source, cost, and period are required' });
       }
       const result = await analyticsRepository.createCampaignCost(user.tenantId, {
-        campaignName,
+        campaignName: campaignName || source,
         source,
-        cost,
+        cost: Number(cost),
         period,
       });
       res.status(201).json(result);
     } catch (error) {
       console.error('Error creating campaign cost:', error);
       res.status(500).json({ error: 'Failed to create campaign cost' });
+    }
+  });
+
+  router.delete('/campaign-costs/:id', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+        return res.status(403).json({ error: 'Only admins and team leads can delete campaign costs' });
+      }
+      const { id } = req.params;
+      await analyticsRepository.deleteCampaignCost(user.tenantId, id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting campaign cost:', error);
+      res.status(500).json({ error: 'Failed to delete campaign cost' });
     }
   });
 

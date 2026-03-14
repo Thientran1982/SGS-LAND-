@@ -15,4 +15,7 @@ export const analyticsApi = {
 
   updateCampaignCost: (id: string, cost: number): Promise<any> =>
     api.put(`/api/analytics/campaign-costs/${id}`, { cost }),
+
+  deleteCampaignCost: (id: string): Promise<any> =>
+    api.delete(`/api/analytics/campaign-costs/${id}`),
 };

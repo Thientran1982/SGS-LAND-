@@ -480,6 +480,9 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
     const [addForm, setAddForm] = useState({ campaignName: '', source: '', cost: '', period: new Date().toISOString().slice(0, 7) });
     const [isSaving, setIsSaving] = useState(false);
 
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const canUpdateCosts = currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD';
 
     const handleUpdate = async () => {
@@ -514,6 +517,20 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
         }
     };
 
+    const handleDelete = async () => {
+        if (!deletingId) return;
+        setIsDeleting(true);
+        try {
+            await db.deleteCampaignCost(deletingId);
+            setDeletingId(null);
+            onCostUpdated();
+        } catch (error) {
+            console.error('Failed to delete cost', error);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
     <div className="space-y-6 animate-enter">
         <div className="bg-white p-0 md:p-2 rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
@@ -531,13 +548,13 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
             </div>
             
             <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
-                <table className="min-w-[600px] md:min-w-full text-sm text-left">
+                <table className="min-w-[700px] md:min-w-full text-sm text-left">
                     <thead className="bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider">
                         <tr>
                             <th className="p-5">{t('reports.cost_source')}</th>
+                            <th className="p-5">{t('reports.cost_campaign_name') || 'Tên Chiến Dịch'}</th>
                             <th className="p-5">{t('reports.cost_month')}</th>
                             <th className="p-5 text-right">{t('reports.cost_amount')}</th>
-                            <th className="p-5 text-right">{t('reports.cost_user')}</th>
                             {canUpdateCosts && <th className="p-5 text-right"></th>}
                         </tr>
                     </thead>
@@ -546,21 +563,29 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
                             <tr><td colSpan={canUpdateCosts ? 5 : 4} className="p-10 text-center text-slate-400 italic">{t('reports.empty_costs')}</td></tr>
                         ) : (
                             data.campaignCosts.map((cost) => (
-                                <tr key={cost.id} className="hover:bg-slate-50 transition-colors">
+                                <tr key={cost.id} className="hover:bg-slate-50 transition-colors group">
                                     <td className="p-5 font-bold text-slate-700">{cost.source}</td>
+                                    <td className="p-5 text-slate-500 text-xs">
+                                        <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200">{cost.campaignName || '—'}</span>
+                                    </td>
                                     <td className="p-5 font-mono text-xs text-slate-500">{cost.period}</td>
                                     <td className="p-5 text-right font-mono font-bold text-slate-800">{formatCurrency(cost.cost)}</td>
-                                    <td className="p-5 text-right text-xs">
-                                        <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded border border-slate-200">{cost.campaignName}</span>
-                                    </td>
                                     {canUpdateCosts && (
                                         <td className="p-5 text-right">
-                                            <button 
-                                                onClick={() => { setEditingCost(cost); setNewCostValue(cost.cost.toString()); setIsUpdating(true); }}
-                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
-                                            >
-                                                {t('reports.btn_update')}
-                                            </button>
+                                            <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button 
+                                                    onClick={() => { setEditingCost(cost); setNewCostValue(cost.cost.toString()); setIsUpdating(true); }}
+                                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                >
+                                                    {t('reports.btn_update')}
+                                                </button>
+                                                <button 
+                                                    onClick={() => setDeletingId(cost.id)}
+                                                    className="text-xs font-bold text-rose-500 hover:text-rose-700 transition-colors"
+                                                >
+                                                    {t('common.delete') || 'Xóa'}
+                                                </button>
+                                            </div>
                                         </td>
                                     )}
                                 </tr>
@@ -588,12 +613,12 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{t('reports.cost_user')}</label>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{t('reports.cost_campaign_name') || 'Tên Chiến Dịch'}</label>
                             <input 
                                 type="text"
                                 value={addForm.campaignName}
                                 onChange={(e) => setAddForm(f => ({ ...f, campaignName: e.target.value }))}
-                                placeholder={t('reports.cost_user') || 'Tên chiến dịch'}
+                                placeholder="VD: Campaign Q1 2026"
                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                             />
                         </div>
@@ -634,13 +659,40 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
             document.body
         )}
 
+        {/* Delete Confirm Modal */}
+        {deletingId && createPortal(
+            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
+                <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-rose-50 mb-4 mx-auto">
+                        <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </div>
+                    <h3 className="text-base font-bold text-slate-800 text-center mb-2">{t('reports.confirm_delete_cost') || 'Xác nhận xóa chi phí'}</h3>
+                    <p className="text-xs text-slate-500 text-center mb-6">{t('reports.confirm_delete_cost_desc') || 'Hành động này không thể hoàn tác.'}</p>
+                    <div className="flex gap-3 w-full">
+                        <button onClick={() => setDeletingId(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
+                            {t('common.cancel')}
+                        </button>
+                        <button 
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="flex-1 py-3 bg-rose-500 text-white font-bold rounded-xl text-sm shadow hover:bg-rose-600 transition-all disabled:opacity-50"
+                        >
+                            {isDeleting ? '...' : (t('common.delete') || 'Xóa')}
+                        </button>
+                    </div>
+                </div>
+            </div>,
+            document.body
+        )}
+
         {/* Update Cost Modal */}
         {isUpdating && editingCost && createPortal(
             <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
                 <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100 scale-100 animate-scale-up">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">{t('reports.btn_update')} - {editingCost.source}</h3>
+                    <h3 className="text-lg font-bold text-slate-800 mb-1">{t('reports.btn_update')}</h3>
+                    <p className="text-xs text-slate-400 mb-5">{editingCost.source} · {editingCost.period}</p>
                     <div className="mb-6">
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('reports.cost_amount')}</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('reports.cost_amount')} (VNĐ)</label>
                         <input 
                             type="number" 
                             value={newCostValue}

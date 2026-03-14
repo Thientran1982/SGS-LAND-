@@ -714,6 +714,15 @@ class DatabaseApiClient {
     }
   }
 
+  async deleteCampaignCost(id: string) {
+    try {
+      return await analyticsApi.deleteCampaignCost(id);
+    } catch (error) {
+      console.error('deleteCampaignCost error:', error);
+      throw error;
+    }
+  }
+
   async duplicateLead(id: string) {
     const lead = await this.getLeadById(id);
     if (!lead) throw new Error('Lead not found');

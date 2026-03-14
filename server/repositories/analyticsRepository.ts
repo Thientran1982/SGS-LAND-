@@ -446,6 +446,7 @@ export class AnalyticsRepository extends BaseRepository {
       const campaignCostsListResult = await client.query(`
         SELECT id, campaign_name, source, cost, period, created_at
         FROM campaign_costs
+        ${useTimeFilter ? `WHERE period >= TO_CHAR(NOW() - INTERVAL '${days} days', 'YYYY-MM')` : ''}
         ORDER BY created_at DESC
         LIMIT 100
       `);
@@ -482,12 +483,22 @@ export class AnalyticsRepository extends BaseRepository {
   async createCampaignCost(tenantId: string, data: { campaignName: string; source: string; cost: number; period: string }): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `INSERT INTO campaign_costs (campaign_name, source, cost, period)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO campaign_costs (tenant_id, campaign_name, source, cost, period)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [data.campaignName, data.source, data.cost, data.period]
+        [tenantId, data.campaignName, data.source, data.cost, data.period]
       );
       return this.rowToEntity(result.rows[0]);
+    });
+  }
+
+  async deleteCampaignCost(tenantId: string, id: string): Promise<void> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `DELETE FROM campaign_costs WHERE id = $1 RETURNING id`,
+        [id]
+      );
+      if (result.rows.length === 0) throw new Error('Campaign cost not found');
     });
   }
 }
