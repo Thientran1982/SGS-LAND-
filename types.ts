@@ -481,8 +481,9 @@ export interface SLAConfig {
 }
 
 export interface FacebookPage {
-    id: string; // Page ID
+    id: string;
     name: string;
+    pageUrl?: string;
     accessToken: string;
     connectedAt: ISOString;
     connectedBy?: string;

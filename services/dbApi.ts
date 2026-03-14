@@ -1142,21 +1142,40 @@ class DatabaseApiClient {
     return res.json();
   }
 
-  async connectFacebookPage(data: any) {
-    const config = await this.getEnterpriseConfig();
-    const pages = config.facebookPages || [];
-    const pageName = typeof data === 'string' ? data.replace(/https?:\/\/(www\.)?facebook\.com\//, '') : data.name || 'Page';
-    const newPage = { id: `fb_${Date.now()}`, name: pageName, accessToken: '' };
-    pages.push(newPage);
-    await this.updateEnterpriseConfig({ facebookPages: pages });
-    return newPage;
+  async getFacebookStatus() {
+    try {
+      const res = await fetch('/api/enterprise/facebook/status', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch Facebook status');
+      return res.json();
+    } catch {
+      return { appSecretConfigured: false, verifyTokenConfigured: false, webhookUrl: '/api/webhooks/facebook' };
+    }
+  }
+
+  async connectFacebookPage(data: { name: string; pageId: string; pageUrl?: string; accessToken?: string }) {
+    const res = await fetch('/api/enterprise/facebook/connect', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Không thể kết nối Facebook Page');
+    }
+    return res.json();
   }
 
   async disconnectFacebookPage(pageId: string) {
-    const config = await this.getEnterpriseConfig();
-    const pages = (config.facebookPages || []).filter((p: any) => p.id !== pageId);
-    await this.updateEnterpriseConfig({ facebookPages: pages });
-    return true;
+    const res = await fetch(`/api/enterprise/facebook/disconnect/${encodeURIComponent(pageId)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Không thể ngắt kết nối Facebook Page');
+    }
+    return res.json();
   }
 
   async saveSSOConfig(data: any) {

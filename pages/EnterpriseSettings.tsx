@@ -292,64 +292,224 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
 
 const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig, onRefresh: () => void, notify: (m: string, t: 'success'|'error') => void }) => {
     const { t } = useTranslation();
+    const emptyForm = { name: '', pageId: '', pageUrl: '', accessToken: '' };
+    const [form, setForm] = useState(emptyForm);
+    const [showToken, setShowToken] = useState(false);
     const [connecting, setConnecting] = useState(false);
-    const [pageUrl, setPageUrl] = useState('');
+    const [confirmPageId, setConfirmPageId] = useState<string | null>(null);
+    const [disconnecting, setDisconnecting] = useState(false);
+    const [fbStatus, setFbStatus] = useState<{ appSecretConfigured: boolean; verifyTokenConfigured: boolean; webhookUrl: string } | null>(null);
+
+    useEffect(() => {
+        db.getFacebookStatus().then(setFbStatus).catch(() => {});
+    }, []);
 
     const handleConnect = async () => {
-        if (!pageUrl) {
-            notify(t('ent.facebook_empty_url') || 'Please enter a Facebook Page URL', 'error');
+        if (!form.name.trim() || !form.pageId.trim()) {
+            notify(t('ent.facebook_form_required') || 'Vui lòng nhập Tên Page và Page ID', 'error');
             return;
         }
         setConnecting(true);
-        try { 
-            await db.connectFacebookPage(pageUrl); 
-            notify(t('ent.facebook_success'), 'success'); 
-            setPageUrl('');
-            onRefresh(); 
-        } 
-        catch (e: any) { notify(e.message, 'error'); } 
+        try {
+            await db.connectFacebookPage({
+                name: form.name.trim(),
+                pageId: form.pageId.trim(),
+                pageUrl: form.pageUrl.trim() || undefined,
+                accessToken: form.accessToken.trim() || undefined,
+            });
+            notify(t('ent.facebook_success'), 'success');
+            setForm(emptyForm);
+            onRefresh();
+        } catch (e: any) { notify(e.message, 'error'); }
         finally { setConnecting(false); }
     };
 
-    const handleDisconnect = async (id: string) => {
-        try { await db.disconnectFacebookPage(id); notify(t('common.success'), 'success'); onRefresh(); } 
-        catch (e: any) { notify(e.message, 'error'); }
+    const handleDisconnect = async () => {
+        if (!confirmPageId) return;
+        setDisconnecting(true);
+        try {
+            await db.disconnectFacebookPage(confirmPageId);
+            notify(t('common.success'), 'success');
+            setConfirmPageId(null);
+            onRefresh();
+        } catch (e: any) { notify(e.message, 'error'); }
+        finally { setDisconnecting(false); }
     };
+
+    const secretsMissing = fbStatus && (!fbStatus.appSecretConfigured || !fbStatus.verifyTokenConfigured);
 
     return (
         <div className="animate-enter max-w-4xl">
             <SectionHeader title={t('ent.facebook_title')} subtitle={t('ent.facebook_subtitle')} />
-            
-            <div className="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm mb-6">
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <input 
-                        className="flex-1 border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20" 
-                        placeholder="https://facebook.com/your-page-name" 
-                        value={pageUrl} 
-                        onChange={e => setPageUrl(e.target.value)} 
-                        onKeyDown={e => e.key === 'Enter' && handleConnect()} 
-                    />
-                    <button onClick={handleConnect} disabled={connecting} className="px-6 py-3 sm:py-0 bg-[#1877F2] text-white font-bold rounded-xl text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
-                        {connecting && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>} {t('ent.facebook_connect_btn')}
-                    </button>
+
+            {/* Env var warning */}
+            {secretsMissing && (
+                <div className="mb-5 flex gap-3 items-start bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                    <svg className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                    <div>
+                        <p className="text-sm font-bold text-amber-800">{t('ent.facebook_secret_warning')}</p>
+                        <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">{t('ent.facebook_secret_hint')}</p>
+                        <div className="mt-2 flex gap-2 text-[11px] text-amber-700">
+                            <span className={`px-2 py-0.5 rounded-full font-mono ${fbStatus?.appSecretConfigured ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                                FB_APP_SECRET {fbStatus?.appSecretConfigured ? '✓' : '✗'}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full font-mono ${fbStatus?.verifyTokenConfigured ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                                FB_VERIFY_TOKEN {fbStatus?.verifyTokenConfigured ? '✓' : '✗'}
+                            </span>
+                        </div>
+                    </div>
                 </div>
+            )}
+
+            {/* Webhook URL (when env vars are OK) */}
+            {fbStatus && fbStatus.appSecretConfigured && fbStatus.verifyTokenConfigured && (
+                <div className="mb-5 flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4">
+                    <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <div className="min-w-0">
+                        <p className="text-xs font-bold text-green-800">Webhook URL đang hoạt động</p>
+                        <p className="text-xs font-mono text-green-700 truncate mt-0.5">{fbStatus.webhookUrl}</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Connect form */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 max-w-2xl mb-8">
+                <p className="text-sm text-slate-500 mb-5 leading-relaxed">
+                    Nhập thông tin Facebook Page để kết nối. Page ID và Access Token lấy từ{' '}
+                    <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" className="text-blue-500 underline">Facebook for Developers</a>.
+                </p>
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                                {t('ent.facebook_page_name')} <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                                className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                                placeholder="VD: SGS Land Fanpage"
+                                value={form.name}
+                                onChange={e => setForm({ ...form, name: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                                {t('ent.facebook_page_id')} <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                                className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                                placeholder="VD: 123456789012345"
+                                value={form.pageId}
+                                onChange={e => setForm({ ...form, pageId: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                            {t('ent.facebook_page_url')}
+                        </label>
+                        <input
+                            className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                            placeholder="https://facebook.com/your-page"
+                            value={form.pageUrl}
+                            onChange={e => setForm({ ...form, pageUrl: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                            {t('ent.facebook_access_token')}
+                            <span className="ml-1 text-slate-400 font-normal normal-case">(để gửi tin Messenger)</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showToken ? 'text' : 'password'}
+                                className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 pr-10"
+                                placeholder="EAAxxxxx..."
+                                value={form.accessToken}
+                                onChange={e => setForm({ ...form, accessToken: e.target.value })}
+                            />
+                            <button type="button" onClick={() => setShowToken(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                {showToken
+                                    ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                                    : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <button
+                    onClick={handleConnect}
+                    disabled={connecting}
+                    className="mt-6 w-full py-3 bg-[#1877F2] text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                    {connecting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
+                    {t('ent.facebook_connect_btn')}
+                </button>
             </div>
 
+            {/* Connected pages */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {config.facebookPages?.map(page => (
                     <div key={page.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-blue-100 transition-colors">
                         <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0">F</div>
+                            <div className="w-10 h-10 bg-[#1877F2]/10 text-[#1877F2] rounded-full flex items-center justify-center font-bold text-lg shrink-0">f</div>
                             <div className="min-w-0">
                                 <div className="font-bold text-slate-800 text-sm truncate">{page.name}</div>
                                 <div className="text-[10px] text-slate-400 font-mono truncate">ID: {page.id}</div>
+                                {page.pageUrl && (
+                                    <a href={page.pageUrl} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:underline truncate block">{page.pageUrl}</a>
+                                )}
+                                {page.connectedAt && (
+                                    <div className="text-[10px] text-slate-400">{t('ent.facebook_connected_at')}: {new Date(page.connectedAt).toLocaleDateString('vi-VN')}</div>
+                                )}
+                                {page.accessToken && (
+                                    <span className="inline-block mt-0.5 text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Token ✓</span>
+                                )}
                             </div>
                         </div>
-                        <button onClick={() => handleDisconnect(page.id)} className="text-slate-300 hover:text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors shrink-0"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        <button
+                            onClick={() => setConfirmPageId(page.id)}
+                            className="text-slate-300 hover:text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors shrink-0"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
                     </div>
                 ))}
-                {(!config.facebookPages || config.facebookPages.length === 0) && <div className="col-span-full text-center py-10 text-slate-400 italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">{t('ent.facebook_empty')}</div>}
+                {(!config.facebookPages || config.facebookPages.length === 0) && (
+                    <div className="col-span-full text-center py-10 text-slate-400 italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        {t('ent.facebook_empty')}
+                    </div>
+                )}
             </div>
+
+            {/* Disconnect confirmation modal */}
+            {confirmPageId && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full">
+                        <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zm12-5h-4m0 0l2-2m-2 2l2 2" /></svg>
+                        </div>
+                        <h3 className="text-base font-bold text-slate-800 text-center mb-2">{t('ent.facebook_disconnect_confirm')}</h3>
+                        <p className="text-xs text-slate-500 text-center mb-5 font-mono bg-slate-50 rounded-lg px-3 py-2">ID: {confirmPageId}</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmPageId(null)}
+                                disabled={disconnecting}
+                                className="flex-1 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 text-sm"
+                            >
+                                {t('common.cancel') || 'Huỷ'}
+                            </button>
+                            <button
+                                onClick={handleDisconnect}
+                                disabled={disconnecting}
+                                className="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors text-sm disabled:opacity-70 flex items-center justify-center gap-2"
+                            >
+                                {disconnecting && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
+                                {t('ent.disconnect_confirm') || 'Ngắt kết nối'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 });

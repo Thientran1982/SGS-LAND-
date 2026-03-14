@@ -59,7 +59,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `sequenceRoutes.ts` — `/api/sequences/*`
 - `knowledgeRoutes.ts` — `/api/knowledge/*` (documents, articles)
 - `scoringRoutes.ts` — `/api/scoring/*` (config get/update)
-- `enterpriseRoutes.ts` — `/api/enterprise/*` (config, audit-logs, test-smtp, send-test-email)
+- `enterpriseRoutes.ts` — `/api/enterprise/*` (config, audit-logs, test-smtp, send-test-email, zalo/status|connect|disconnect, facebook/status|connect|disconnect/:pageId)
 - `uploadRoutes.ts` — `/api/upload` (POST multi-file upload with multer, DELETE by filename; tenant-isolated storage in `uploads/<tenantId>/`)
 - `billingRoutes.ts` — `/api/billing/*` (subscription, upgrade, usage, invoices)
 - `sessionRoutes.ts` — `/api/sessions/*` (list, revoke)

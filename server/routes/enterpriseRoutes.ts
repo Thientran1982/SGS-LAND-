@@ -214,5 +214,112 @@ export function createEnterpriseRoutes(authenticateToken: any) {
     }
   });
 
+  // -----------------------------------------------------------------------
+  // Facebook Pages
+  // -----------------------------------------------------------------------
+
+  /**
+   * GET /api/enterprise/facebook/status
+   * Returns whether FB_APP_SECRET and FB_VERIFY_TOKEN env vars are configured.
+   */
+  router.get('/facebook/status', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Forbidden' });
+      res.json({
+        appSecretConfigured: !!process.env.FB_APP_SECRET,
+        verifyTokenConfigured: !!process.env.FB_VERIFY_TOKEN,
+        webhookUrl: `${process.env.PUBLIC_URL || ''}/api/webhooks/facebook`,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
+   * POST /api/enterprise/facebook/connect
+   * Adds a Facebook Page entry to enterprise config.
+   */
+  router.post('/facebook/connect', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can connect Facebook Pages' });
+      }
+
+      const { name, pageId, pageUrl, accessToken } = req.body;
+
+      if (!name || !pageId) {
+        return res.status(400).json({ error: 'name và pageId là bắt buộc' });
+      }
+
+      const config = await enterpriseConfigRepository.getConfig(user.tenantId);
+      const pages: any[] = config.facebookPages || [];
+
+      if (pages.find((p: any) => p.id === pageId)) {
+        return res.status(409).json({ error: `Page ID ${pageId} đã được kết nối` });
+      }
+
+      const newPage = {
+        id: pageId,
+        name,
+        pageUrl: pageUrl || `https://facebook.com/${pageId}`,
+        accessToken: accessToken || '',
+        connectedAt: new Date().toISOString(),
+        connectedBy: user.email || user.id,
+      };
+      pages.push(newPage);
+
+      await enterpriseConfigRepository.upsertConfig(user.tenantId, { facebookPages: pages });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'FACEBOOK_PAGE_CONNECTED',
+        entityType: 'enterprise_config',
+        entityId: user.tenantId,
+        details: `Facebook Page kết nối: ${name} (${pageId})`,
+      });
+
+      console.log(`[Facebook] Tenant ${user.tenantId} connected page: ${name} (${pageId})`);
+      res.status(201).json({ success: true, page: newPage });
+    } catch (error: any) {
+      console.error('Facebook connect error:', error);
+      res.status(500).json({ error: error.message || 'Failed to connect Facebook Page' });
+    }
+  });
+
+  /**
+   * DELETE /api/enterprise/facebook/disconnect/:pageId
+   * Removes a Facebook Page from enterprise config.
+   */
+  router.delete('/facebook/disconnect/:pageId', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can disconnect Facebook Pages' });
+      }
+
+      const { pageId } = req.params;
+      const config = await enterpriseConfigRepository.getConfig(user.tenantId);
+      const pages = (config.facebookPages || []).filter((p: any) => p.id !== pageId);
+
+      await enterpriseConfigRepository.upsertConfig(user.tenantId, { facebookPages: pages });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'FACEBOOK_PAGE_DISCONNECTED',
+        entityType: 'enterprise_config',
+        entityId: user.tenantId,
+        details: `Facebook Page ngắt kết nối: ${pageId}`,
+      });
+
+      console.log(`[Facebook] Tenant ${user.tenantId} disconnected page: ${pageId}`);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Facebook disconnect error:', error);
+      res.status(500).json({ error: error.message || 'Failed to disconnect Facebook Page' });
+    }
+  });
+
   return router;
 }
