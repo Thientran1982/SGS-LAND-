@@ -175,10 +175,10 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     { label: t('reports.table_leads'), value: totalLeads.toLocaleString(), color: 'indigo', icon: '↑' },
                     { label: t('reports.metric_roi'), value: `${avgRoi > 0 ? '+' : ''}${avgRoi.toFixed(1)}%`, color: avgRoi >= 0 ? 'emerald' : 'rose', icon: avgRoi >= 0 ? '↑' : '↓' },
                 ].map(({ label, value, color, icon }) => (
-                    <div key={label} className="bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm relative overflow-hidden group">
+                    <div key={label} className="bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm relative overflow-hidden group min-w-0">
                         <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 relative z-10">{label}</div>
-                        <div className="text-2xl font-extrabold text-slate-800 tracking-tight relative z-10">{value}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 relative z-10 truncate">{label}</div>
+                        <div className="text-lg xl:text-xl font-extrabold text-slate-800 tracking-tight relative z-10 truncate" title={value}>{value}</div>
                     </div>
                 ))}
             </div>
@@ -190,7 +190,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     <div className="flex-1 w-full min-h-[250px] relative">
                         {hasData ? (
                             <ResponsiveContainer width="100%" height="100%" minHeight={250} minWidth={250}>
-                                <ComposedChart data={data.attribution} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                <ComposedChart data={data.attribution} margin={{ top: 12, right: 48, bottom: 20, left: 8 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.grid} />
                                     <XAxis 
                                         dataKey="channel" 
@@ -203,6 +203,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                         yAxisId="left"
                                         axisLine={false} 
                                         tickLine={false} 
+                                        width={62}
                                         tick={{fill: colors.text, fontSize: 11}}
                                         tickFormatter={(val) => formatCompactNumber(val)}
                                     />
@@ -211,6 +212,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                         orientation="right"
                                         axisLine={false} 
                                         tickLine={false} 
+                                        width={44}
                                         tick={{fill: colors.text, fontSize: 11}}
                                         unit="%"
                                     />
@@ -249,7 +251,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     <div className="flex-1 w-full min-h-[200px] relative">
                         {hasTrend ? (
                             <ResponsiveContainer width="100%" height="100%" minHeight={200}>
-                                <AreaChart data={data.conversionByPeriod} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <AreaChart data={data.conversionByPeriod} margin={{ top: 10, right: 16, left: 4, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="convGradient" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor={colors.primary} stopOpacity={0.3}/>
@@ -266,6 +268,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                     <YAxis 
                                         axisLine={false} 
                                         tickLine={false} 
+                                        width={40}
                                         tick={{fill: colors.text, fontSize: 10}}
                                         unit="%"
                                         domain={[0, 100]}
