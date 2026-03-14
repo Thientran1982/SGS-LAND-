@@ -1207,26 +1207,42 @@ class DatabaseApiClient {
   }
 
   async addDomain(domain: string) {
-    const config = await this.getEnterpriseConfig();
-    const domains = config.domains || [];
-    const newDomain = { domain, verified: false, verificationTxtRecord: `sgs-verify=${btoa(domain).slice(0, 16)}` };
-    domains.push(newDomain);
-    await this.updateEnterpriseConfig({ domains });
-    return newDomain;
+    const res = await fetch('/api/enterprise/domains', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to add domain' }));
+      throw new Error(err.error || 'Failed to add domain');
+    }
+    return res.json();
   }
 
   async removeDomain(domain: string) {
-    const config = await this.getEnterpriseConfig();
-    const domains = (config.domains || []).filter((d: any) => d.domain !== domain);
-    await this.updateEnterpriseConfig({ domains });
-    return true;
+    const res = await fetch(`/api/enterprise/domains/${encodeURIComponent(domain)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to remove domain' }));
+      throw new Error(err.error || 'Failed to remove domain');
+    }
+    return res.json();
   }
 
   async verifyDomain(domain: string) {
-    const config = await this.getEnterpriseConfig();
-    const domains = (config.domains || []).map((d: any) => d.domain === domain ? { ...d, verified: true, verifiedAt: new Date().toISOString() } : d);
-    await this.updateEnterpriseConfig({ domains });
-    return { domain, verified: true };
+    const res = await fetch(`/api/enterprise/domains/${encodeURIComponent(domain)}/verify`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Domain verification failed' }));
+      throw new Error(err.error || 'Domain verification failed');
+    }
+    return res.json();
   }
 
   async createBackup() {

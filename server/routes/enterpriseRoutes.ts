@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
 import { auditRepository } from '../repositories/auditRepository';
 import { emailService } from '../services/emailService';
+import { randomBytes } from 'crypto';
+import { promises as dns } from 'dns';
 
 export function createEnterpriseRoutes(authenticateToken: any) {
   const router = Router();
@@ -380,6 +382,145 @@ export function createEnterpriseRoutes(authenticateToken: any) {
     } catch (error: any) {
       console.error('Facebook disconnect error:', error);
       res.status(500).json({ error: error.message || 'Failed to disconnect Facebook Page' });
+    }
+  });
+
+  // -----------------------------------------------------------------------
+  // Domain Management
+  // -----------------------------------------------------------------------
+
+  router.post('/domains', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can manage domains' });
+
+      const { domain } = req.body;
+      if (!domain || typeof domain !== 'string') return res.status(400).json({ error: 'Domain name is required' });
+
+      const normalized = domain.trim().toLowerCase().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+      if (!normalized.includes('.') || normalized.length < 4 || !/^[a-z0-9.-]+$/.test(normalized)) {
+        return res.status(400).json({ error: 'Invalid domain format. Use a valid domain like "example.com".' });
+      }
+
+      const config = await enterpriseConfigRepository.getConfig(user.tenantId);
+      const domains: any[] = config.domains || [];
+
+      if (domains.find((d: any) => d.domain === normalized)) {
+        return res.status(409).json({ error: `Domain "${normalized}" is already registered.` });
+      }
+
+      const verificationToken = `sgs-verify=${randomBytes(16).toString('hex')}`;
+      const newDomain = {
+        domain: normalized,
+        verified: false,
+        verificationTxtRecord: verificationToken,
+        addedAt: new Date().toISOString(),
+      };
+
+      domains.push(newDomain);
+      await enterpriseConfigRepository.upsertConfig(user.tenantId, { domains });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'DOMAIN_ADDED',
+        entityType: 'enterprise_config',
+        entityId: user.tenantId,
+        details: `Domain thêm mới: ${normalized}`,
+      });
+
+      res.status(201).json(newDomain);
+    } catch (error: any) {
+      console.error('Add domain error:', error);
+      res.status(500).json({ error: error.message || 'Failed to add domain' });
+    }
+  });
+
+  router.delete('/domains/:domain', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can manage domains' });
+
+      const domainName = decodeURIComponent(req.params.domain);
+      const config = await enterpriseConfigRepository.getConfig(user.tenantId);
+      const domains = (config.domains || []).filter((d: any) => d.domain !== domainName);
+
+      if (domains.length === (config.domains || []).length) {
+        return res.status(404).json({ error: `Domain "${domainName}" not found.` });
+      }
+
+      await enterpriseConfigRepository.upsertConfig(user.tenantId, { domains });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'DOMAIN_REMOVED',
+        entityType: 'enterprise_config',
+        entityId: user.tenantId,
+        details: `Domain xóa: ${domainName}`,
+      });
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Remove domain error:', error);
+      res.status(500).json({ error: error.message || 'Failed to remove domain' });
+    }
+  });
+
+  router.post('/domains/:domain/verify', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can verify domains' });
+
+      const domainName = decodeURIComponent(req.params.domain);
+      const config = await enterpriseConfigRepository.getConfig(user.tenantId);
+      const domainEntry = (config.domains || []).find((d: any) => d.domain === domainName);
+
+      if (!domainEntry) return res.status(404).json({ error: `Domain "${domainName}" not found.` });
+      if (domainEntry.verified) return res.json({ success: true, message: 'Domain is already verified.' });
+
+      const expectedRecord = domainEntry.verificationTxtRecord;
+      if (!expectedRecord) return res.status(400).json({ error: 'No verification record found for this domain. Please remove and re-add the domain.' });
+
+      let txtRecords: string[][] = [];
+      try {
+        txtRecords = await dns.resolveTxt(domainName);
+      } catch (dnsError: any) {
+        if (dnsError.code === 'ENOTFOUND' || dnsError.code === 'ENODATA') {
+          return res.status(400).json({ error: `Domain "${domainName}" not found or has no DNS records. Please check the domain name.` });
+        }
+        if (dnsError.code === 'ENODATA' || dnsError.code === 'ESERVFAIL') {
+          return res.status(400).json({ error: `No TXT records found for "${domainName}". Ensure you have added the DNS TXT record and wait up to 48 hours for DNS propagation.` });
+        }
+        return res.status(400).json({ error: `DNS lookup failed: ${dnsError.message}` });
+      }
+
+      const flatRecords = txtRecords.map(r => r.join(''));
+      const found = flatRecords.some(r => r === expectedRecord || r.includes(expectedRecord));
+
+      if (!found) {
+        return res.status(400).json({
+          error: `Verification TXT record not found. Add the following TXT record to your DNS:\n\nName: @\nValue: ${expectedRecord}\n\nFound records: ${flatRecords.length > 0 ? flatRecords.join(', ') : 'none'}`,
+          expectedRecord,
+          foundRecords: flatRecords,
+        });
+      }
+
+      const updatedDomains = (config.domains || []).map((d: any) =>
+        d.domain === domainName ? { ...d, verified: true, verifiedAt: new Date().toISOString() } : d
+      );
+      await enterpriseConfigRepository.upsertConfig(user.tenantId, { domains: updatedDomains });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'DOMAIN_VERIFIED',
+        entityType: 'enterprise_config',
+        entityId: user.tenantId,
+        details: `Domain xác minh thành công: ${domainName}`,
+      });
+
+      res.json({ success: true, message: `Domain "${domainName}" verified successfully.` });
+    } catch (error: any) {
+      console.error('Verify domain error:', error);
+      res.status(500).json({ error: error.message || 'Failed to verify domain' });
     }
   });
 
