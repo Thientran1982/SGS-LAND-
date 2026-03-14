@@ -209,9 +209,9 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                 </div>
             </div>
             
-            <div className="flex-1 min-h-[120px] w-full -ml-2 relative">
+            <div className="h-[180px] w-full -ml-2 relative">
                 {data.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%" minHeight={150} minWidth={150}>
+                    <ResponsiveContainer width="100%" height={180} minHeight={150} minWidth={150}>
                         <ComposedChart data={data}>
                             <defs>
                                 <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
