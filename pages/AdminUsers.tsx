@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { User, UserRole, CommonStatus } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -114,7 +115,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
             <div className="bg-white w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 pb-8 sm:pb-6 shadow-2xl border border-slate-100 relative z-10 animate-scale-up max-h-[92dvh] overflow-y-auto">
@@ -173,7 +174,8 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
