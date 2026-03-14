@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '../services/i18n';
 import { Contract, ContractType, ContractStatus } from '../types';
 import { db } from '../services/dbApi';
@@ -64,7 +65,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
     const inputClass = "w-full border border-slate-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-slate-50 focus:bg-white";
     const labelClass = "block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1";
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-full flex flex-col animate-enter">
@@ -310,6 +311,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

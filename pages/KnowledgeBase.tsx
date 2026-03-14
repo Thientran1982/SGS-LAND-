@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { KnowledgeDocument } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -134,7 +135,7 @@ export const KnowledgeBase: React.FC = () => {
             {toast && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             {/* Delete Confirmation Modal */}
-            {confirmDeleteId && (
+            {confirmDeleteId && createPortal(
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-enter">
                     <div className="bg-white rounded-[24px] shadow-2xl max-w-sm w-full p-6 animate-enter-scale border border-slate-100">
                         <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
@@ -161,7 +162,8 @@ export const KnowledgeBase: React.FC = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             <div className="flex justify-end">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '../services/i18n';
 import { db } from '../services/dbApi';
 import { Contract, ContractType, ContractStatus } from '../types';
@@ -322,7 +323,7 @@ const Contracts: React.FC = () => {
                 onCancel={() => setContractToDelete(null)}
             />
 
-            {shareLink && (
+            {shareLink && createPortal(
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShareLink(null)}></div>
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col animate-enter p-6">
@@ -353,7 +354,8 @@ const Contracts: React.FC = () => {
                             Đóng
                         </button>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

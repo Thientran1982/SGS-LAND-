@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState, useCallback, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { EnterpriseConfig, AuditLog, User, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -174,7 +175,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                     </div>
 
                     {/* Disconnect confirmation dialog */}
-                    {confirmDisconnect && (
+                    {confirmDisconnect && createPortal(
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                             <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-enter">
                                 <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mb-4">
@@ -199,7 +200,8 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        </div>,
+                        document.body
                     )}
                 </>
             ) : (
@@ -481,7 +483,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
             </div>
 
             {/* Disconnect confirmation modal */}
-            {confirmPageId && (
+            {confirmPageId && createPortal(
                 <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full">
                         <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -507,7 +509,8 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

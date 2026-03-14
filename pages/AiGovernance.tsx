@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { aiService } from '../services/aiService';
 import { AiTenantConfig, PromptTemplate, AiSafetyLog, AiModelType } from '../types';
@@ -405,7 +406,7 @@ export const AiGovernance: React.FC = () => {
             )}
 
             {/* Create Prompt Modal */}
-            {isCreateOpen && (
+            {isCreateOpen && createPortal(
                 <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
                     <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl">
                         <h3 className="font-bold text-lg mb-4">{t('ai.create_title')}</h3>
@@ -430,7 +431,8 @@ export const AiGovernance: React.FC = () => {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { Proposal, Listing, Lead, User, LeadScore } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -92,7 +93,7 @@ const RejectModal = memo(({ isOpen, onClose, onConfirm, t }: RejectModalProps) =
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-enter">
             <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-800 mb-4">{t('approvals.reject_modal_title')}</h3>
@@ -114,7 +115,8 @@ const RejectModal = memo(({ isOpen, onClose, onConfirm, t }: RejectModalProps) =
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 });
 

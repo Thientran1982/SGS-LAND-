@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { ComplianceConfig, DlpRule, SecuritySession } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -17,7 +18,7 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
             <div className="bg-white w-full max-w-md rounded-[24px] shadow-2xl p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -44,7 +45,8 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
                     <button onClick={() => onSave(form)} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl mt-2 hover:bg-slate-800 transition-colors">{t('security.btn_save_rule')}</button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

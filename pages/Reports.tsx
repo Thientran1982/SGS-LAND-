@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState, useMemo, memo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
     ComposedChart, Line, Area, AreaChart 
@@ -433,7 +434,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
         </div>
 
         {/* Update Cost Modal */}
-        {isUpdating && editingCost && (
+        {isUpdating && editingCost && createPortal(
             <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
                 <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100 scale-100 animate-scale-up">
                     <h3 className="text-lg font-bold text-slate-800 mb-4">{t('reports.btn_update')} - {editingCost.source}</h3>
@@ -455,7 +456,8 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
                         </button>
                     </div>
                 </div>
-            </div>
+            </div>,
+            document.body
         )}
     </div>
     );

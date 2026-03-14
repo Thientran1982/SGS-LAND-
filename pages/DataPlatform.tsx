@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { ConnectorConfig, SyncJob, ConnectorType, SyncStatus } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -22,7 +23,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
         setForm(prev => ({ ...prev, config: { ...prev.config, [key]: value } }));
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
             <div className="bg-white w-full max-w-lg rounded-[24px] shadow-2xl p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -67,7 +68,8 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                     <button onClick={() => onSave(form)} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl mt-4 hover:bg-slate-800 shadow-lg">{t('common.save')}</button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

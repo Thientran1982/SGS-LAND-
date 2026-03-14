@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { RoutingRule, RoutingStrategy, User, Team } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -35,7 +36,7 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
         onSave(form);
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
             <div className="bg-white w-full max-w-lg rounded-[24px] shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto no-scrollbar">
                 <div className="flex justify-between items-center mb-6">
@@ -104,7 +105,8 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                     <button onClick={handleSave} className="flex-1 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg">{t('common.save')}</button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

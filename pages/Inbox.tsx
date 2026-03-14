@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/dbApi';
 import { aiService } from '../services/aiService';
@@ -717,6 +718,7 @@ export const Inbox: React.FC = () => {
             />
 
             {/* Widget Settings Modal */}
+            {createPortal(
             <AnimatePresence>
                 {isWidgetModalOpen && (
                     <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm overflow-y-auto no-scrollbar">
@@ -814,7 +816,9 @@ export const Inbox: React.FC = () => {
                         </motion.div>
                     </div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence>,
+            document.body
+            )}
         </div>
     );
 };
