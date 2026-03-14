@@ -349,7 +349,7 @@ const AppShell: React.FC = () => {
             if (u) { localStorage.setItem(AUTH_CACHE_KEY, '1'); setAuthState('AUTH'); }
             else { localStorage.removeItem(AUTH_CACHE_KEY); setAuthState('GUEST'); }
         }).catch(() => { localStorage.removeItem(AUTH_CACHE_KEY); setAuthState('GUEST'); });
-        const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); setAuthState('GUEST'); };
+        const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); db.clearUserCache(); setAuthState('GUEST'); };
         window.addEventListener('auth:login', onLogin);
         window.addEventListener('auth:logout', onLogout);
         return () => {

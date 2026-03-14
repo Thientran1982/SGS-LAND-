@@ -149,6 +149,10 @@ export const Landing: React.FC = () => {
     
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
+
+        const onLogout = () => setCurrentUser(null);
+        window.addEventListener('auth:logout', onLogout);
+        return () => window.removeEventListener('auth:logout', onLogout);
     }, []);
 
     useEffect(() => {
