@@ -5,6 +5,16 @@ const SEARCH_ICON = (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
   </svg>
 );
+const MENU_ICON = (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+);
+const SEARCH_MOBILE_ICON = (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+);
 const ADD_ICON = (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -72,12 +82,13 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   const [role, setRole] = useState("SALES");
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-end justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100 relative z-10">
+      <div className="bg-white w-full rounded-t-[28px] p-6 pb-8 shadow-2xl border border-slate-100 relative z-10 max-h-[92%] overflow-y-auto">
+        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-bold text-slate-800">Mời thành viên mới</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">{CLOSE_ICON}</button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100">{CLOSE_ICON}</button>
         </div>
 
         <div className="space-y-4">
@@ -87,11 +98,10 @@ function InviteModal({ onClose }: { onClose: () => void }) {
             </label>
             <input
               type="email"
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               placeholder="email@congty.vn"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              autoFocus
             />
           </div>
 
@@ -100,36 +110,25 @@ function InviteModal({ onClose }: { onClose: () => void }) {
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
             >
               {Object.entries(ROLES).map(([v, l]) => (
                 <option key={v} value={v}>{l}</option>
               ))}
             </select>
-
             <div className="mt-2 bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex gap-2">
               <div className="shrink-0 mt-0.5">{INFO_ICON}</div>
               <div>
                 <h4 className="text-[10px] font-bold text-indigo-700 uppercase tracking-wide mb-1">Quyền hạn vai trò</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  {role === "ADMIN"
-                    ? "Toàn quyền quản trị hệ thống, bao gồm quản lý người dùng và thanh toán."
-                    : role === "TEAM_LEAD"
-                    ? "Quản lý nhóm kinh doanh, phân công và theo dõi hiệu suất."
-                    : role === "MARKETING"
-                    ? "Tạo chiến dịch, quản lý nội dung và phân tích marketing."
-                    : role === "VIEWER"
-                    ? "Chỉ xem báo cáo và dữ liệu, không thể chỉnh sửa."
-                    : "Quản lý khách hàng tiềm năng, tạo đề xuất và hợp đồng."}
+                  Quản lý khách hàng tiềm năng, tạo đề xuất và hợp đồng.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="pt-2">
-            <button
-              className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95"
-            >
+            <button className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95">
               Gửi lời mời
             </button>
           </div>
@@ -149,11 +148,48 @@ export function PageView() {
       u.email.toLowerCase().includes(search.toLowerCase())
   );
 
+  const currentUser = USERS[0];
+  const lastName = currentUser.name.split(' ').pop();
+
   return (
-    <div className="min-h-screen bg-white flex flex-col" style={{ width: 390, fontFamily: "Inter, sans-serif" }}>
-      {/* HEADER */}
+    <div className="flex flex-col bg-white" style={{ width: 390, height: 844, fontFamily: "Inter, sans-serif" }}>
+
+      {/* ── COMMAND CENTER HEADER (fixed pattern) ── */}
+      <div className="h-16 px-4 flex items-center justify-between relative shrink-0 border-b border-slate-100 bg-white/90 backdrop-blur-xl">
+        {/* Left: hamburger + title */}
+        <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
+          <button className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-xl shrink-0">
+            {MENU_ICON}
+          </button>
+          {/* FIXED: text-xl (same as sm:text-2xl in real app) */}
+          <h1 className="text-xl font-extrabold text-slate-800 tracking-tight leading-none truncate">
+            Quản lý thành viên
+          </h1>
+        </div>
+
+        {/* Right: search icon + user name + avatar */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-xl">
+            {SEARCH_MOBILE_ICON}
+          </button>
+          {/* FIXED: show last name on mobile */}
+          <button className="flex items-center gap-2">
+            <div className="text-right leading-tight">
+              <div className="text-sm font-bold text-slate-800 truncate max-w-[80px]">
+                {lastName}
+              </div>
+            </div>
+            <img
+              src={currentUser.avatar}
+              className="w-8 h-8 rounded-full border-2 border-white shadow-md object-cover"
+              alt=""
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* ── PAGE HEADER ── */}
       <div className="flex flex-col bg-white border-b border-slate-100 shrink-0">
-        {/* Row 1: stats + invite button */}
         <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
           <div className="flex items-center gap-1.5 min-w-0">
             <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 shrink-0">
@@ -180,9 +216,8 @@ export function PageView() {
           </button>
         </div>
 
-        {/* Row 2: search + filter */}
         <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
-          <div className="relative flex-1 group">
+          <div className="relative flex-1">
             <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none">{SEARCH_ICON}</div>
             <input
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-slate-400 shadow-sm"
@@ -193,83 +228,78 @@ export function PageView() {
           </div>
           <select className="w-28 shrink-0 border border-slate-200 rounded-xl px-2 py-2.5 text-xs bg-white text-slate-700 outline-none shadow-sm">
             <option>Tất cả vai trò</option>
-            {Object.entries(ROLES).map(([v, l]) => <option key={v}>{l}</option>)}
           </select>
         </div>
       </div>
 
-      {/* TABLE */}
-      <div className="flex-1 overflow-auto bg-slate-50/50">
-        <div className="w-full overflow-x-auto bg-white border-b border-slate-100">
-          <table className="w-full min-w-[320px] text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
-              <tr>
-                <th className="p-4">Tên thành viên</th>
-                <th className="p-4">Trạng thái</th>
-                <th className="p-4 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {filtered.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50 transition-colors group">
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={user.avatar}
-                        className="w-8 h-8 rounded-full object-cover bg-slate-200 border border-slate-100 shrink-0"
-                        alt=""
-                      />
-                      <div className="min-w-0">
-                        <div className="font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">
-                          <span className="truncate max-w-[130px] text-xs">{user.name}</span>
-                          {user.isMe && (
-                            <span className="text-[8px] bg-indigo-100 text-indigo-700 px-1 py-0.5 rounded shrink-0">Bạn</span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-slate-500 truncate max-w-[130px]">{user.email}</div>
-                        <div className="mt-0.5">
-                          <span className="text-[8px] font-bold text-slate-500 uppercase bg-slate-100 px-1.5 py-0.5 rounded">
-                            {ROLES[user.role]}
-                          </span>
-                        </div>
+      {/* ── TABLE ── */}
+      <div className="flex-1 overflow-auto bg-white">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider sticky top-0 z-10 border-b border-slate-100">
+            <tr>
+              <th className="p-4">Tên thành viên</th>
+              <th className="p-4">Trạng thái</th>
+              <th className="p-4 text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {filtered.map((user) => (
+              <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                <td className="p-3">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={user.avatar}
+                      className="w-8 h-8 rounded-full object-cover bg-slate-200 border border-slate-100 shrink-0"
+                      alt=""
+                    />
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">
+                        <span className="truncate max-w-[130px] text-xs">{user.name}</span>
+                        {user.isMe && (
+                          <span className="text-[8px] bg-indigo-100 text-indigo-700 px-1 py-0.5 rounded shrink-0">Bạn</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate max-w-[130px]">{user.email}</div>
+                      <div className="mt-0.5">
+                        <span className="text-[8px] font-bold text-slate-500 uppercase bg-slate-100 px-1.5 py-0.5 rounded">
+                          {ROLES[user.role]}
+                        </span>
                       </div>
                     </div>
-                  </td>
-                  <td className="p-3">
-                    <StatusBadge status={user.status} />
-                  </td>
-                  <td className="p-3">
-                    <div className="flex justify-end gap-1">
-                      {user.status === "PENDING" && (
-                        <button className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                          {SEND_ICON}
-                        </button>
-                      )}
-                      {!user.isMe && (
-                        <button className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                          {TRASH_ICON}
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </td>
+                <td className="p-3">
+                  <StatusBadge status={user.status} />
+                </td>
+                <td className="p-3">
+                  <div className="flex justify-end gap-1">
+                    {user.status === "PENDING" && (
+                      <button className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                        {SEND_ICON}
+                      </button>
+                    )}
+                    {!user.isMe && (
+                      <button className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                        {TRASH_ICON}
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* PAGINATION */}
-      <div className="flex flex-col sm:flex-row justify-between items-center px-4 py-4 bg-white rounded-2xl border border-slate-200 shadow-sm gap-4 border-t">
-        <div className="flex items-center gap-2 w-full justify-between">
-          <button disabled className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-bold opacity-50 flex items-center justify-center">
-            Trước
-          </button>
-          <span className="text-sm font-bold text-slate-800">1 / 1</span>
-          <button disabled className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-bold opacity-50 flex items-center justify-center">
-            Tiếp
-          </button>
-        </div>
+      {/* ── PAGINATION ── */}
+      <div className="px-4 py-4 bg-white border-t border-slate-200 shadow-sm flex items-center justify-between gap-2 shrink-0">
+        <button disabled className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-bold opacity-50 flex items-center justify-center">
+          Trước
+        </button>
+        <span className="text-sm font-bold text-slate-800 px-2">1 / 1</span>
+        <button disabled className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-bold opacity-50 flex items-center justify-center">
+          Tiếp
+        </button>
       </div>
 
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}

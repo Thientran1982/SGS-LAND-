@@ -88,7 +88,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 </button>
 
                 <div className="flex flex-col justify-center animate-enter min-w-0">
-                    <h1 className="text-lg sm:text-xl font-extrabold text-[var(--text-primary)] tracking-tight leading-none truncate w-full">
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] tracking-tight leading-none truncate w-full">
                         {title}
                     </h1>
                 </div>
@@ -125,15 +125,16 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
 
                 <button 
                     onClick={() => onNavigate(ROUTES.PROFILE)}
-                    className="flex items-center gap-3 pl-1 group cursor-pointer outline-none"
+                    className="flex items-center gap-2 sm:gap-3 pl-1 group cursor-pointer outline-none"
                     title={t('menu.profile')}
                     aria-label={t('menu.profile')}
                 >
-                    <div className="text-right hidden sm:block leading-tight">
-                        <div className={`text-sm font-bold transition-colors ${isProfileActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-primary)] group-hover:text-indigo-600'}`}>
-                            {user.name}
+                    <div className="text-right leading-tight">
+                        <div className={`text-sm font-bold transition-colors truncate max-w-[90px] sm:max-w-none ${isProfileActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-primary)] group-hover:text-indigo-600'}`}>
+                            {user.name.split(' ').pop()}
+                            <span className="hidden sm:inline"> {user.name.split(' ').slice(0, -1).join(' ')}</span>
                         </div>
-                        <div className="text-[10px] text-[var(--text-tertiary)] font-medium">
+                        <div className="text-[10px] text-[var(--text-tertiary)] font-medium hidden sm:block">
                             {t(`role.${user.role}`) || user.role}
                         </div>
                     </div>
