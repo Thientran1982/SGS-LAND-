@@ -982,6 +982,8 @@ export interface KnowledgeDocument {
     sizeKb: number;
     createdAt: ISOString;
     content: string;
+    status: 'ACTIVE' | 'PROCESSING' | 'INACTIVE';
+    fileUrl?: string;
     vectorId?: string;
 }
 

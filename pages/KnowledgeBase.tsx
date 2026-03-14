@@ -26,7 +26,9 @@ export const KnowledgeBase: React.FC = () => {
     const [search, setSearch] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadingCount, setUploadingCount] = useState(0);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const { t, formatDate } = useTranslation();
@@ -39,60 +41,76 @@ export const KnowledgeBase: React.FC = () => {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await db.getDocuments();
+            const [data, user] = await Promise.all([db.getDocuments(), db.getCurrentUser()]);
             setDocs(data || []);
+            setCurrentUser(user);
         } catch (e) { console.error(e); } 
         finally { setLoading(false); }
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    const processFile = async (file: File) => {
-        // Validation
+    const canManage = currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD';
+
+    const processFile = async (file: File): Promise<boolean> => {
         const validTypes = ['.pdf', '.docx', '.doc', '.txt'];
         const isValidType = validTypes.some(type => file.name.toLowerCase().endsWith(type));
         if (!isValidType) {
             notify(t('knowledge.error_type') || 'Chỉ hỗ trợ định dạng PDF, DOCX, TXT', 'error');
-            return;
+            return false;
         }
-
         const maxSize = 10 * 1024 * 1024;
         if (file.size > maxSize) {
-            notify(t('knowledge.error_size') || 'Kích thước file vượt quá 10MB', 'error');
-            return;
+            notify(`${file.name}: ${t('knowledge.error_size') || 'Kích thước file vượt quá 10MB'}`, 'error');
+            return false;
         }
-
-        setIsUploading(true);
         try {
             const uploadResult = await db.uploadFiles([file]);
             const uploaded = uploadResult.files[0];
-
             let type: 'PDF' | 'DOCX' | 'TXT' = 'TXT';
             if (file.name.toLowerCase().endsWith('.pdf')) type = 'PDF';
             else if (file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc')) type = 'DOCX';
-
             const doc = await db.createDocument({
                 title: file.name,
                 type,
                 content: '',
-                status: 'ACTIVE',
                 fileUrl: uploaded.url,
                 sizeKb: Math.round(file.size / 1024),
             });
             setDocs(prev => [doc, ...prev]);
-            notify(t('knowledge.upload_success') || 'Tải lên thành công', 'success');
-        } catch (error) {
-            notify(t('common.error') || 'Đã xảy ra lỗi', 'error');
-        } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
+            return true;
+        } catch {
+            notify(`${file.name}: ${t('common.error') || 'Đã xảy ra lỗi'}`, 'error');
+            return false;
+        }
+    };
+
+    const processFiles = async (files: File[]) => {
+        if (!files.length) return;
+        setIsUploading(true);
+        setUploadingCount(files.length);
+        let successCount = 0;
+        for (const file of files) {
+            const ok = await processFile(file);
+            if (ok) successCount++;
+        }
+        setIsUploading(false);
+        setUploadingCount(0);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (successCount > 0) {
+            notify(
+                files.length === 1
+                    ? (t('knowledge.upload_success') || 'Tải lên thành công')
+                    : `${successCount}/${files.length} file tải lên thành công`,
+                'success'
+            );
         }
     };
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        await processFile(file);
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        await processFiles(files);
     };
 
     const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -108,10 +126,9 @@ export const KnowledgeBase: React.FC = () => {
     const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragging(false);
-        const file = e.dataTransfer.files?.[0];
-        if (!file) return;
-        
-        await processFile(file);
+        const files = Array.from(e.dataTransfer.files || []);
+        if (!files.length) return;
+        await processFiles(files);
     };
 
     const handleDelete = async (id: string) => {
@@ -132,31 +149,35 @@ export const KnowledgeBase: React.FC = () => {
 
     return (
         <div className="space-y-6 pt-6 pb-20 animate-enter relative max-w-6xl mx-auto px-4 md:px-6">
-            {toast && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
+            {toast && (
+            <div className={`fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 sm:max-w-sm z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <span className="font-bold text-sm flex-1">{toast.msg}</span>
+            </div>
+        )}
 
             {/* Delete Confirmation Modal */}
             {confirmDeleteId && createPortal(
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-enter">
-                    <div className="bg-white rounded-[24px] shadow-2xl max-w-sm w-full p-6 animate-enter-scale border border-slate-100">
-                        <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+                <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-enter">
+                    <div className="bg-white rounded-t-[28px] sm:rounded-[24px] shadow-2xl max-w-sm w-full p-6 border border-slate-100">
+                        <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4 mx-auto sm:mx-0">
                             {ICONS.TRASH}
                         </div>
                         <h3 className="text-lg font-bold text-slate-800 mb-2">
                             {t('knowledge.confirm_delete') || 'Bạn có chắc chắn muốn xóa tài liệu này?'}
                         </h3>
                         <p className="text-slate-500 text-sm mb-6">
-                            {t('knowledge.delete_warning') || 'Hành động này không thể hoàn tác. Tài liệu sẽ bị xóa khỏi hệ thống học của AI.'}
+                            {t('knowledge.delete_warning') || 'Hành động này không thể hoàn tác. Tài liệu và file vật lý sẽ bị xóa hoàn toàn khỏi hệ thống.'}
                         </p>
                         <div className="flex gap-3">
                             <button 
                                 onClick={() => setConfirmDeleteId(null)}
-                                className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors"
+                                className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors"
                             >
                                 {t('common.cancel') || 'Hủy'}
                             </button>
                             <button 
                                 onClick={() => handleDelete(confirmDeleteId)}
-                                className="flex-1 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-rose-600/20"
+                                className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-rose-600/20"
                             >
                                 {t('common.delete') || 'Xóa'}
                             </button>
@@ -193,9 +214,10 @@ export const KnowledgeBase: React.FC = () => {
                 </div>
             </div>
 
-            {/* Drag & Drop Upload Zone */}
+            {/* Drag & Drop Upload Zone — only for managers */}
+            {canManage && (
             <div 
-                className={`relative overflow-hidden border-2 border-dashed rounded-[24px] p-10 text-center transition-all duration-300 ${
+                className={`relative overflow-hidden border-2 border-dashed rounded-[24px] p-6 sm:p-10 text-center transition-all duration-300 ${
                     isDragging 
                         ? 'border-indigo-500 bg-indigo-50/50 scale-[1.01]' 
                         : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50'
@@ -206,31 +228,34 @@ export const KnowledgeBase: React.FC = () => {
             >
                 <div className="flex flex-col items-center justify-center pointer-events-none">
                     {ICONS.CLOUD}
-                    <h3 className="text-lg font-bold text-slate-800 mb-2">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-2">
                         {isDragging ? (t('knowledge.drop_here') || 'Thả file vào đây') : (t('knowledge.drag_drop') || 'Kéo thả tài liệu vào đây')}
                     </h3>
-                    <p className="text-sm text-slate-500 mb-6 max-w-md">
-                        {t('knowledge.upload_desc') || 'Hỗ trợ định dạng PDF, DOCX, TXT. Kích thước tối đa 10MB mỗi file. Dữ liệu sẽ được tự động trích xuất và vector hóa để AI học.'}
+                    <p className="text-xs sm:text-sm text-slate-500 mb-5 sm:mb-6 max-w-md">
+                        {t('knowledge.upload_desc') || 'Hỗ trợ PDF, DOCX, TXT. Tối đa 10MB mỗi file. Có thể chọn nhiều file cùng lúc.'}
                     </p>
                 </div>
-                
-                <label className={`relative z-10 inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95 cursor-pointer ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
+                <label className={`relative z-10 inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95 cursor-pointer ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
                     {isUploading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
                         ICONS.UPLOAD
                     )}
-                    {isUploading ? 'Đang xử lý...' : (t('knowledge.btn_upload') || 'Chọn file tải lên')}
+                    {isUploading
+                        ? (uploadingCount > 1 ? `Đang xử lý ${uploadingCount} file...` : 'Đang xử lý...')
+                        : (t('knowledge.btn_upload') || 'Chọn file tải lên')}
                     <input 
                         type="file" 
                         className="hidden" 
                         ref={fileInputRef}
                         onChange={handleUpload} 
-                        accept=".pdf,.docx,.doc,.txt" 
+                        accept=".pdf,.docx,.doc,.txt"
+                        multiple
                         disabled={isUploading}
                     />
                 </label>
             </div>
+            )}
 
             {/* Documents Grid */}
             <div>
@@ -242,35 +267,44 @@ export const KnowledgeBase: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredDocs.map(doc => (
                         <div key={doc.id} className="bg-white p-5 rounded-[20px] border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group relative flex flex-col h-full">
-                            <div className="flex gap-4 items-start mb-4">
+                            <div className="flex gap-3 sm:gap-4 items-start mb-4">
                                 <div className="shrink-0 p-2 bg-slate-50 rounded-xl">
                                     {doc.type === 'PDF' ? ICONS.FILE_PDF : doc.type === 'DOCX' ? ICONS.FILE_DOC : ICONS.FILE_TXT}
                                 </div>
                                 <div className="flex-1 min-w-0 pt-1">
                                     <h3 className="font-bold text-slate-800 text-sm line-clamp-2 leading-snug" title={doc.title}>{doc.title}</h3>
-                                    <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500">
-                                        <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">{doc.sizeKb} KB</span>
-                                        <span>•</span>
+                                    <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500 flex-wrap">
+                                        {doc.sizeKb && <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">{doc.sizeKb} KB</span>}
+                                        <span className="hidden sm:inline">•</span>
                                         <span>{formatDate(doc.createdAt)}</span>
                                     </div>
                                 </div>
                             </div>
                             
                             <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                                <div className="flex items-center gap-1.5">
-                                    <span className="relative flex h-2 w-2">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                    </span>
-                                    <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">{t('knowledge.status_indexed') || 'Đã học xong'}</span>
-                                </div>
-                                <button 
-                                    onClick={() => setConfirmDeleteId(doc.id)} 
-                                    className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                                    title="Xóa tài liệu"
-                                >
-                                    {ICONS.TRASH}
-                                </button>
+                                {doc.status === 'PROCESSING' ? (
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2 h-2 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                                        <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Đang xử lý</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                        </span>
+                                        <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">{t('knowledge.status_indexed') || 'Đã học xong'}</span>
+                                    </div>
+                                )}
+                                {canManage && (
+                                    <button 
+                                        onClick={() => setConfirmDeleteId(doc.id)} 
+                                        className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                        title="Xóa tài liệu"
+                                    >
+                                        {ICONS.TRASH}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}

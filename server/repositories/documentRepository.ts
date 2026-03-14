@@ -33,8 +33,8 @@ class DocumentRepository extends BaseRepository {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
         `INSERT INTO documents (tenant_id, title, type, content, status, file_url, size_kb)
-         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6) RETURNING *`,
-        [data.title, data.type || 'document', data.content || '', data.status || 'ACTIVE', data.fileUrl || null, data.sizeKb || null]
+         VALUES ($7, $1, $2, $3, $4, $5, $6) RETURNING *`,
+        [data.title, data.type || 'document', data.content || '', data.status || 'ACTIVE', data.fileUrl || null, data.sizeKb || null, tenantId]
       );
       return this.rowToEntity(result.rows[0]);
     });

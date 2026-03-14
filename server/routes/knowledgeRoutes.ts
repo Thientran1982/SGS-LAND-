@@ -1,8 +1,12 @@
 import { Router, Request, Response } from 'express';
 import path from 'path';
+import fs from 'fs';
 import { documentRepository } from '../repositories/documentRepository';
 import { articleRepository } from '../repositories/articleRepository';
 import { extractTextFromFile } from '../services/textExtractor';
+
+const UPLOAD_BASE = path.join(process.cwd(), 'uploads');
+const CAN_MANAGE = ['ADMIN', 'TEAM_LEAD'];
 
 export function createKnowledgeRoutes(authenticateToken: any) {
   const router = Router();
@@ -23,6 +27,10 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.post('/documents', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (!CAN_MANAGE.includes(user.role)) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
       const { title, type, content, status, fileUrl, sizeKb } = req.body;
       if (!title) return res.status(400).json({ error: 'Title is required' });
 
@@ -46,7 +54,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
         title,
         type,
         content: extractedContent,
-        status,
+        status: extractedContent ? (status || 'ACTIVE') : 'PROCESSING',
         fileUrl,
         sizeKb,
       });
@@ -84,8 +92,34 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.delete('/documents/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (!CAN_MANAGE.includes(user.role)) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      // Fetch document first to get file_url for physical deletion
+      const doc = await documentRepository.findById(user.tenantId, req.params.id);
+      if (!doc) return res.status(404).json({ error: 'Document not found' });
+
       const deleted = await documentRepository.deleteById(user.tenantId, req.params.id);
       if (!deleted) return res.status(404).json({ error: 'Document not found' });
+
+      // Delete physical file if it exists
+      if (doc.fileUrl) {
+        try {
+          const relativePath = doc.fileUrl.startsWith('/') ? doc.fileUrl.slice(1) : doc.fileUrl;
+          const filePath = path.join(process.cwd(), relativePath);
+          const resolved = path.resolve(filePath);
+          const tenantDir = path.resolve(path.join(UPLOAD_BASE, user.tenantId));
+          if (resolved.startsWith(tenantDir + path.sep) || resolved.startsWith(tenantDir + '/')) {
+            if (fs.existsSync(resolved)) {
+              fs.unlinkSync(resolved);
+            }
+          }
+        } catch (fileErr) {
+          console.error('Failed to delete physical file:', fileErr);
+        }
+      }
+
       res.json({ message: 'Document deleted' });
     } catch (error) {
       console.error('Error deleting document:', error);
