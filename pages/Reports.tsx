@@ -57,6 +57,7 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         let scrollLeft = 0;
         let dragged = false;
 
+        // --- Mouse events ---
         const onMouseDown = (e: MouseEvent) => {
             if ((e.target as HTMLElement).closest('input, textarea')) return;
             isDown = true;
@@ -66,21 +67,18 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             startX = e.pageX - node.offsetLeft;
             scrollLeft = node.scrollLeft;
         };
-
         const onMouseLeave = () => {
             if (!isDown) return;
             isDown = false;
             node.classList.remove('cursor-grabbing', 'select-none');
             node.classList.add('cursor-grab', 'snap-x');
         };
-
         const onMouseUp = () => {
             if (!isDown) return;
             isDown = false;
             node.classList.remove('cursor-grabbing', 'select-none');
             node.classList.add('cursor-grab', 'snap-x');
         };
-
         const onMouseMove = (e: MouseEvent) => {
             if (!isDown) return;
             e.preventDefault();
@@ -89,11 +87,23 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             if (Math.abs(walk) > 5) dragged = true;
             node.scrollLeft = scrollLeft - walk;
         };
-
         const onClick = (e: MouseEvent) => {
-            if (dragged) {
-                e.preventDefault();
-                e.stopPropagation();
+            if (dragged) { e.preventDefault(); e.stopPropagation(); }
+        };
+
+        // --- Touch events (mobile) ---
+        let touchStartX = 0;
+        let touchScrollLeft = 0;
+        const onTouchStart = (e: TouchEvent) => {
+            if ((e.target as HTMLElement).closest('input, textarea, button')) return;
+            touchStartX = e.touches[0].pageX - node.offsetLeft;
+            touchScrollLeft = node.scrollLeft;
+        };
+        const onTouchMove = (e: TouchEvent) => {
+            const x = e.touches[0].pageX - node.offsetLeft;
+            const walk = (x - touchStartX) * 1.5;
+            if (Math.abs(walk) > 8) {
+                node.scrollLeft = touchScrollLeft - walk;
             }
         };
 
@@ -102,6 +112,8 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         node.addEventListener('mouseup', onMouseUp);
         node.addEventListener('mousemove', onMouseMove);
         node.addEventListener('click', onClick, true);
+        node.addEventListener('touchstart', onTouchStart, { passive: true });
+        node.addEventListener('touchmove', onTouchMove, { passive: true });
         node.classList.add('cursor-grab');
 
         return () => {
@@ -110,6 +122,8 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             node.removeEventListener('mouseup', onMouseUp);
             node.removeEventListener('mousemove', onMouseMove);
             node.removeEventListener('click', onClick, true);
+            node.removeEventListener('touchstart', onTouchStart);
+            node.removeEventListener('touchmove', onTouchMove);
             node.classList.remove('cursor-grab', 'cursor-grabbing', 'select-none');
         };
     }, [ref, trigger]);
@@ -163,25 +177,25 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
 
     return (
         <div className="space-y-6 animate-enter">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {[
-                    { label: t('reports.metric_revenue'), value: formatCurrency(totalRevenue), color: 'emerald', icon: '↑' },
-                    { label: t('reports.metric_spend'), value: formatCurrency(totalSpend), color: 'rose', icon: '↑' },
-                    { label: t('reports.table_leads'), value: totalLeads.toLocaleString(), color: 'indigo', icon: '↑' },
-                    { label: t('reports.metric_roi'), value: `${avgRoi > 0 ? '+' : ''}${avgRoi.toFixed(1)}%`, color: avgRoi >= 0 ? 'emerald' : 'rose', icon: avgRoi >= 0 ? '↑' : '↓' },
-                ].map(({ label, value, color, icon }) => (
-                    <div key={label} className="bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm relative overflow-hidden group min-w-0">
+                    { label: t('reports.metric_revenue'), value: formatCurrency(totalRevenue), color: 'emerald' },
+                    { label: t('reports.metric_spend'), value: formatCurrency(totalSpend), color: 'rose' },
+                    { label: t('reports.table_leads'), value: totalLeads.toLocaleString(), color: 'indigo' },
+                    { label: t('reports.metric_roi'), value: `${avgRoi > 0 ? '+' : ''}${avgRoi.toFixed(1)}%`, color: avgRoi >= 0 ? 'emerald' : 'rose' },
+                ].map(({ label, value, color }) => (
+                    <div key={label} className="bg-white p-4 sm:p-5 rounded-[20px] border border-slate-100 shadow-sm relative overflow-hidden group min-w-0">
                         <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 relative z-10 truncate">{label}</div>
-                        <div className="text-lg xl:text-xl font-extrabold text-slate-800 tracking-tight relative z-10 truncate" title={value}>{value}</div>
+                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 relative z-10 truncate">{label}</div>
+                        <div className="text-sm sm:text-base xl:text-xl font-extrabold text-slate-800 tracking-tight relative z-10 truncate" title={value}>{value}</div>
                     </div>
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[380px] flex flex-col relative">
-                    <h3 className="font-bold text-slate-800 mb-6">{t('reports.chart_source_mix')}</h3>
-                    <div className="flex-1 w-full min-h-[250px] relative">
+                <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm h-[260px] sm:h-[380px] flex flex-col relative">
+                    <h3 className="font-bold text-slate-800 mb-3 sm:mb-6 text-sm sm:text-base">{t('reports.chart_source_mix')}</h3>
+                    <div className="flex-1 w-full min-h-[180px] sm:min-h-[250px] relative">
                         {hasData ? (
                             <ResponsiveContainer width="100%" height="100%" minHeight={250} minWidth={250}>
                                 <ComposedChart data={data.attribution} margin={{ top: 12, right: 48, bottom: 20, left: 8 }}>
@@ -238,10 +252,10 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[380px] flex flex-col relative">
-                    <h3 className="font-bold text-slate-800 mb-1">{t('reports.chart_conversion_trend') || 'Xu hướng chuyển đổi'}</h3>
-                    <p className="text-[11px] text-slate-400 mb-4">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
-                    <div className="flex-1 w-full min-h-[200px] relative">
+                <div className="bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm h-[260px] sm:h-[380px] flex flex-col relative">
+                    <h3 className="font-bold text-slate-800 mb-0.5 text-sm sm:text-base">{t('reports.chart_conversion_trend') || 'Xu hướng chuyển đổi'}</h3>
+                    <p className="text-[10px] sm:text-[11px] text-slate-400 mb-2 sm:mb-4">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
+                    <div className="flex-1 w-full min-h-[160px] sm:min-h-[200px] relative">
                         {hasTrend ? (
                             <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                                 <AreaChart data={trendData} margin={{ top: 10, right: 16, left: 4, bottom: 0 }}>
@@ -344,19 +358,19 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                             const barPct = maxCount > 0 ? (step.count / maxCount) * 100 : 0;
                             const color = FUNNEL_COLORS[idx % FUNNEL_COLORS.length];
                             return (
-                                <div key={step.stage} className="flex items-center gap-3 group">
-                                    <div className="w-28 sm:w-36 flex-shrink-0 text-right">
-                                        <span className="text-xs font-bold text-slate-600">{t(`stage.${step.stage}`)}</span>
+                                <div key={step.stage} className="flex items-center gap-2 sm:gap-3 group">
+                                    <div className="w-16 sm:w-28 md:w-36 flex-shrink-0 text-right">
+                                        <span className="text-[10px] sm:text-xs font-bold text-slate-600 leading-tight">{t(`stage.${step.stage}`)}</span>
                                     </div>
-                                    <div className="flex-1 relative h-9 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
+                                    <div className="flex-1 relative h-8 sm:h-9 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
                                         <div
                                             className="h-full rounded-lg transition-all duration-700 ease-out"
                                             style={{ width: `${barPct}%`, backgroundColor: color, opacity: 0.85 }}
                                         />
                                     </div>
-                                    <div className="w-28 sm:w-36 flex-shrink-0 flex items-center gap-2">
-                                        <span className="text-sm font-extrabold text-slate-800">{step.count.toLocaleString()}</span>
-                                        <span className="text-[10px] text-slate-400 font-medium">({step.conversionRate}%)</span>
+                                    <div className="w-16 sm:w-28 md:w-36 flex-shrink-0 flex items-center gap-1 sm:gap-2">
+                                        <span className="text-xs sm:text-sm font-extrabold text-slate-800">{step.count.toLocaleString()}</span>
+                                        <span className="hidden sm:inline text-[10px] text-slate-400 font-medium">({step.conversionRate}%)</span>
                                     </div>
                                 </div>
                             );
@@ -406,7 +420,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
     return (
     <div className="space-y-6 animate-enter">
         {/* KPI Summary */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
                 { label: t('reports.metric_revenue'), value: formatCurrency(totalRevenue), color: 'emerald' },
                 { label: t('reports.metric_spend'), value: formatCurrency(totalSpend), color: 'rose' },
@@ -417,10 +431,10 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                     color: overallRoi === null ? 'slate' : overallRoi >= 0 ? 'emerald' : 'rose'
                 },
             ].map(({ label, value, color }) => (
-                <div key={label} className="bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm relative overflow-hidden group min-w-0">
+                <div key={label} className="bg-white p-4 sm:p-5 rounded-[20px] border border-slate-100 shadow-sm relative overflow-hidden group min-w-0">
                     <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 relative z-10 truncate">{label}</div>
-                    <div className="text-lg xl:text-xl font-extrabold text-slate-800 tracking-tight relative z-10 truncate" title={value}>{value}</div>
+                    <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 relative z-10 truncate">{label}</div>
+                    <div className="text-sm sm:text-base xl:text-xl font-extrabold text-slate-800 tracking-tight relative z-10 truncate" title={value}>{value}</div>
                 </div>
             ))}
         </div>
@@ -571,17 +585,17 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
                                     <td className="p-5 font-mono text-xs text-slate-500">{cost.period}</td>
                                     <td className="p-5 text-right font-mono font-bold text-slate-800">{formatCurrency(cost.cost)}</td>
                                     {canUpdateCosts && (
-                                        <td className="p-5 text-right">
-                                            <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <td className="p-3 sm:p-5 text-right">
+                                            <div className="flex items-center justify-end gap-2 sm:gap-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                 <button 
                                                     onClick={() => { setEditingCost(cost); setNewCostValue(cost.cost.toString()); setIsUpdating(true); }}
-                                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors px-2 py-1 rounded-lg hover:bg-indigo-50"
                                                 >
                                                     {t('reports.btn_update')}
                                                 </button>
                                                 <button 
                                                     onClick={() => setDeletingId(cost.id)}
-                                                    className="text-xs font-bold text-rose-500 hover:text-rose-700 transition-colors"
+                                                    className="text-xs font-bold text-rose-500 hover:text-rose-700 transition-colors px-2 py-1 rounded-lg hover:bg-rose-50"
                                                 >
                                                     {t('common.delete') || 'Xóa'}
                                                 </button>
@@ -598,8 +612,8 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
 
         {/* Add Cost Modal */}
         {isAdding && createPortal(
-            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
-                <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100">
+            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
+                <div className="bg-white w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-slate-100 overflow-y-auto max-h-[92dvh] sm:max-h-[90vh]">
                     <h3 className="text-lg font-bold text-slate-800 mb-5">{t('reports.btn_add_cost') || 'Thêm Chi Phí Chiến Dịch'}</h3>
                     <div className="space-y-4 mb-6">
                         <div>
@@ -661,8 +675,8 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
 
         {/* Delete Confirm Modal */}
         {deletingId && createPortal(
-            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
-                <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100">
+            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
+                <div className="bg-white w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-slate-100">
                     <div className="flex items-center justify-center w-12 h-12 rounded-full bg-rose-50 mb-4 mx-auto">
                         <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </div>
@@ -687,8 +701,8 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
 
         {/* Update Cost Modal */}
         {isUpdating && editingCost && createPortal(
-            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
-                <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100 scale-100 animate-scale-up">
+            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
+                <div className="bg-white w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-slate-100 scale-100 animate-scale-up">
                     <h3 className="text-lg font-bold text-slate-800 mb-1">{t('reports.btn_update')}</h3>
                     <p className="text-xs text-slate-400 mb-5">{editingCost.source} · {editingCost.period}</p>
                     <div className="mb-6">
@@ -786,16 +800,16 @@ export const Reports: React.FC = () => {
     return (
         <div className="space-y-6 pb-20 relative animate-enter">
             {/* Header: Tabs + Time Range Filter */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm gap-4 w-full overflow-hidden">
-                {/* Time Range Filter */}
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Khoảng thời gian:</span>
-                    <div className="flex bg-slate-100 p-0.5 rounded-xl gap-0.5">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm gap-3 w-full">
+                {/* Time Range Filter — scrollable row on mobile */}
+                <div className="flex items-center gap-2 w-full lg:w-auto min-w-0">
+                    <span className="hidden sm:block text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap flex-shrink-0">Thời gian:</span>
+                    <div className="flex bg-slate-100 p-0.5 rounded-xl gap-0.5 overflow-x-auto no-scrollbar flex-1 lg:flex-none">
                         {TIME_RANGE_OPTIONS.map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => setTimeRange(opt.value)}
-                                className={`px-3 py-1.5 text-xs font-bold rounded-[10px] transition-all whitespace-nowrap ${
+                                className={`px-3 py-1.5 text-xs font-bold rounded-[10px] transition-all whitespace-nowrap flex-shrink-0 ${
                                     timeRange === opt.value
                                     ? 'bg-white shadow text-slate-800 ring-1 ring-black/5'
                                     : 'text-slate-500 hover:text-slate-700'
