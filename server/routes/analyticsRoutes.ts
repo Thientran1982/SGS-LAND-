@@ -71,5 +71,24 @@ export function createAnalyticsRoutes(authenticateToken: any) {
     }
   });
 
+  router.put('/campaign-costs/:id', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+        return res.status(403).json({ error: 'Only admins and team leads can update campaign costs' });
+      }
+      const { id } = req.params;
+      const { cost } = req.body;
+      if (cost === undefined || isNaN(Number(cost))) {
+        return res.status(400).json({ error: 'cost is required and must be a number' });
+      }
+      const result = await analyticsRepository.updateCampaignCost(user.tenantId, id, Number(cost));
+      res.json(result);
+    } catch (error) {
+      console.error('Error updating campaign cost:', error);
+      res.status(500).json({ error: 'Failed to update campaign cost' });
+    }
+  });
+
   return router;
 }

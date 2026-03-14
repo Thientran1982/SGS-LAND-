@@ -409,11 +409,11 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
                         ) : (
                             data.campaignCosts.map((cost) => (
                                 <tr key={cost.id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="p-5 font-bold text-slate-700">{t(`source.${cost.source}`) || cost.source}</td>
-                                    <td className="p-5 font-mono text-xs text-slate-500">{cost.month}</td>
-                                    <td className="p-5 text-right font-mono font-bold text-slate-800">{formatCurrency(cost.cost)} <span className="text-[10px] text-slate-400 ml-1">{cost.currency}</span></td>
+                                    <td className="p-5 font-bold text-slate-700">{cost.source}</td>
+                                    <td className="p-5 font-mono text-xs text-slate-500">{cost.period}</td>
+                                    <td className="p-5 text-right font-mono font-bold text-slate-800">{formatCurrency(cost.cost)}</td>
                                     <td className="p-5 text-right text-xs">
-                                        <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded border border-slate-200">{cost.updatedBy}</span>
+                                        <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded border border-slate-200">{cost.campaignName}</span>
                                     </td>
                                     {canUpdateCosts && (
                                         <td className="p-5 text-right">

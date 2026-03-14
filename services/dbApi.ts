@@ -696,12 +696,12 @@ class DatabaseApiClient {
     }
   }
 
-  async updateCampaignCost(data: any) {
+  async updateCampaignCost(id: string, cost: number) {
     try {
-      return await analyticsApi.createCampaignCost(data);
+      return await analyticsApi.updateCampaignCost(id, cost);
     } catch (error) {
       console.error('updateCampaignCost error:', error);
-      return data;
+      throw error;
     }
   }
 

@@ -396,19 +396,17 @@ export class AnalyticsRepository extends BaseRepository {
 
       const attribution = attributionResult.rows.map((row: any) => {
         const revenue = parseFloat(row.revenue) || 0;
-        const cost = costsBySource[row.source] || 0;
-        const roi = cost > 0 ? ((revenue - cost) / cost) * 100 : 0;
-        const conversionRate = row.lead_count > 0
-          ? Math.round((row.won_count / row.lead_count) * 10000) / 100
-          : 0;
+        const spend = costsBySource[row.source] || 0;
+        const roi = spend > 0 ? ((revenue - spend) / spend) * 100 : 0;
+        const leads = row.lead_count || 0;
+        const cac = leads > 0 ? spend / leads : 0;
         return {
-          source: row.source,
-          leadCount: row.lead_count,
-          wonCount: row.won_count,
+          channel: row.source,
+          leads,
           revenue,
-          cost,
+          spend,
+          cac: Math.round(cac),
           roi: Math.round(roi * 100) / 100,
-          conversionRate,
         };
       });
 
@@ -446,11 +444,39 @@ export class AnalyticsRepository extends BaseRepository {
         percentage: totalLeads > 0 ? Math.round((f.count / totalLeads) * 10000) / 100 : 0,
       }));
 
+      const campaignCostsListResult = await client.query(`
+        SELECT id, campaign_name, source, cost, period, created_at
+        FROM campaign_costs
+        ORDER BY created_at DESC
+        LIMIT 100
+      `);
+
+      const campaignCosts = campaignCostsListResult.rows.map((row: any) => ({
+        id: row.id,
+        campaignName: row.campaign_name,
+        source: row.source,
+        cost: parseFloat(row.cost) || 0,
+        period: row.period,
+        createdAt: row.created_at,
+      }));
+
       return {
         funnel: funnelWithPercentage,
         attribution,
         conversionByPeriod,
+        campaignCosts,
       };
+    });
+  }
+
+  async updateCampaignCost(tenantId: string, id: string, cost: number): Promise<any> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `UPDATE campaign_costs SET cost = $1 WHERE id = $2 RETURNING *`,
+        [cost, id]
+      );
+      if (result.rows.length === 0) throw new Error('Campaign cost not found');
+      return this.rowToEntity(result.rows[0]);
     });
   }
 

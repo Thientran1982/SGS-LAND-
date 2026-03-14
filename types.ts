@@ -930,12 +930,11 @@ export interface AnalyticsSummary {
 
 export interface CampaignCost {
     id: UUID;
+    campaignName: string;
     source: string;
-    month: string; // YYYY-MM
+    period: string; // YYYY-MM
     cost: number;
-    currency: string;
-    updatedBy: string;
-    updatedAt: ISOString;
+    createdAt: ISOString;
 }
 
 // Update to include metrics

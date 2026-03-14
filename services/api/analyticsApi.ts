@@ -12,4 +12,7 @@ export const analyticsApi = {
 
   createCampaignCost: (data: { campaignName: string; source: string; cost: number; period: string }): Promise<any> =>
     api.post('/api/analytics/campaign-costs', data),
+
+  updateCampaignCost: (id: string, cost: number): Promise<any> =>
+    api.put(`/api/analytics/campaign-costs/${id}`, { cost }),
 };
