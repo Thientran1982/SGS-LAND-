@@ -391,29 +391,34 @@ export const AdminUsers: React.FC = () => {
             <div className="flex flex-col bg-white border-b border-slate-100 shrink-0">
 
                 {/* Row 1: Số liệu thành viên + nút mời */}
-                <div className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-4 pb-3">
-                    {/* Stat chips */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t('admin.users.total') || 'Tổng'}</span>
-                            <span className="text-sm font-black text-slate-800">{totalUsers}</span>
+                <div className="flex items-center justify-between gap-2 px-4 sm:px-6 pt-4 pb-3">
+                    {/* Stat chips — compact on mobile, full label on sm+ */}
+                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                        {/* Tổng */}
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
+                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t('admin.users.total') || 'Tổng'}</span>
+                            <span className="text-xs sm:text-sm font-black text-slate-800">{totalUsers}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
+                        {/* Hoạt động */}
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wide">{t('admin.users.active_users') || 'Hoạt động'}</span>
-                            <span className="text-sm font-black text-emerald-700">{stats.activeCount}</span>
+                            <span className="hidden sm:inline text-[10px] font-bold text-emerald-600 uppercase tracking-wide">{t('admin.users.active_users') || 'Hoạt động'}</span>
+                            <span className="sm:hidden text-[9px] font-bold text-emerald-600 uppercase">HĐ</span>
+                            <span className="text-xs sm:text-sm font-black text-emerald-700">{stats.activeCount}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5">
+                        {/* Chờ duyệt */}
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wide hidden sm:inline">{t('admin.users.pending_invites') || 'Chờ duyệt'}</span>
-                            <span className="text-sm font-black text-amber-700">{stats.pendingCount}</span>
+                            <span className="hidden sm:inline text-[10px] font-bold text-amber-600 uppercase tracking-wide">{t('admin.users.pending_invites') || 'Chờ duyệt'}</span>
+                            <span className="sm:hidden text-[9px] font-bold text-amber-600 uppercase">Chờ</span>
+                            <span className="text-xs sm:text-sm font-black text-amber-700">{stats.pendingCount}</span>
                         </div>
                     </div>
 
                     {/* Nút mời thành viên */}
                     <button
                         onClick={() => setIsInviteOpen(true)}
-                        className="shrink-0 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md hover:bg-slate-800 transition-all flex items-center gap-2 whitespace-nowrap active:scale-95"
+                        className="shrink-0 px-3 sm:px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md hover:bg-slate-800 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap active:scale-95 min-h-[36px]"
                     >
                         {ICONS.ADD}
                         <span className="hidden sm:inline">{t('admin.users.invite')}</span>
@@ -455,8 +460,8 @@ export const AdminUsers: React.FC = () => {
 
             {/* CONTENT */}
             <div className="flex-1 overflow-auto bg-slate-50/50 no-scrollbar">
-                <div className="min-w-full lg:min-w-[800px] bg-white border-b border-slate-100">
-                    <table className="w-full text-left text-sm">
+                <div className="w-full overflow-x-auto bg-white border-b border-slate-100">
+                    <table className="w-full min-w-[320px] text-left text-sm">
                         <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <SortableHeader field="name" label={t('table.name')} />
@@ -474,18 +479,18 @@ export const AdminUsers: React.FC = () => {
                                 
                                 return (
                                     <tr key={user.id} className="hover:bg-slate-50 transition-colors group">
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-3">
-                                                <img src={user.avatar} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover bg-slate-200 border border-slate-100 shrink-0" alt="" />
+                                        <td className="p-3 sm:p-4">
+                                            <div className="flex items-center gap-2 sm:gap-3">
+                                                <img src={user.avatar} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover bg-slate-200 border border-slate-100 shrink-0" alt="" />
                                                 <div className="min-w-0">
-                                                    <div className="font-bold text-slate-800 flex items-center gap-2 flex-wrap">
-                                                        <span className="truncate max-w-[120px] sm:max-w-[200px]">{user.name}</span>
-                                                        {user.id === currentUser?.id && <span className="text-[9px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
+                                                    <div className="font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">
+                                                        <span className="truncate max-w-[140px] sm:max-w-[200px] text-xs sm:text-sm">{user.name}</span>
+                                                        {user.id === currentUser?.id && <span className="text-[8px] sm:text-[9px] bg-indigo-100 text-indigo-700 px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
                                                     </div>
-                                                    <div className="text-xs text-slate-500 truncate max-w-[120px] sm:max-w-[200px]">{user.email}</div>
+                                                    <div className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
                                                     {/* Show Role on mobile only */}
-                                                    <div className="sm:hidden mt-1">
-                                                        <span className="text-[9px] font-bold text-slate-500 uppercase bg-slate-100 px-1.5 py-0.5 rounded">{t(`role.${user.role}`)}</span>
+                                                    <div className="sm:hidden mt-0.5">
+                                                        <span className="text-[8px] font-bold text-slate-500 uppercase bg-slate-100 px-1.5 py-0.5 rounded">{t(`role.${user.role}`)}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -501,11 +506,11 @@ export const AdminUsers: React.FC = () => {
                                                 />
                                             </div>
                                         </td>
-                                        <td className="p-4">
+                                        <td className="p-3 sm:p-4">
                                             <button 
                                                 onClick={() => user.id !== currentUser?.id && setUserToStatusChange(user)}
                                                 disabled={user.id === currentUser?.id}
-                                                className={`px-2 sm:px-3 py-1 rounded-full text-[10px] font-bold uppercase border min-w-[32px] sm:min-w-[80px] text-center transition-all active:scale-95 flex items-center justify-center gap-1.5
+                                                className={`px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase border whitespace-nowrap text-center transition-all active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5
                                                     ${displayStatus === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' : 
                                                       displayStatus === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' : 
                                                       'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'}
@@ -514,6 +519,10 @@ export const AdminUsers: React.FC = () => {
                                                 title={t(`admin.users.status_${displayStatus.toLowerCase()}`) || displayStatus}
                                             >
                                                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${displayStatus === 'ACTIVE' ? 'bg-emerald-500' : displayStatus === 'PENDING' ? 'bg-amber-500' : 'bg-slate-400'}`}></span>
+                                                {/* Mobile: short label | Desktop: full label */}
+                                                <span className="sm:hidden">
+                                                    {displayStatus === 'ACTIVE' ? 'HĐ' : displayStatus === 'PENDING' ? 'Chờ' : 'Khóa'}
+                                                </span>
                                                 <span className="hidden sm:inline">{t(`admin.users.status_${displayStatus.toLowerCase()}`) || displayStatus}</span>
                                             </button>
                                         </td>
