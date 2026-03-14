@@ -1,5 +1,5 @@
 
-import React, { memo, useState, useMemo } from 'react';
+import React, { memo, useState, useMemo, useRef } from 'react';
 import { Interaction, AgentArtifact, GroundingMetadata, AgentTraceStep, BookingDraftData, LoanScheduleData, Channel, Direction } from '../types';
 import Markdown from 'react-markdown';
 
@@ -188,19 +188,24 @@ export const GroundingPill = memo(({ sources, t }: { sources: GroundingMetadata,
     );
 });
 
-export const AudioBubble = memo(({ duration }: { duration: number }) => (
-    <div className="flex items-center gap-2 md:gap-3 min-w-[120px] w-full">
-        <button className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-indigo-100 hover:text-indigo-600 transition-colors shrink-0">
-            {CHAT_ICONS.PLAY}
-        </button>
-        <div className="flex-1 h-8 flex items-center gap-0.5 opacity-50 overflow-hidden">
-            {[...Array(12)].map((_, i) => (
-                <div key={i} className="w-1 bg-current rounded-full shrink-0" style={{ height: `${Math.random() * 16 + 4}px` }}></div>
-            ))}
+export const AudioBubble = memo(({ duration }: { duration: number }) => {
+    const bars = useMemo(() => Array.from({ length: 12 }, () => Math.random() * 16 + 4), []);
+    return (
+        <div className="flex items-center gap-2 md:gap-3 min-w-[120px] w-full">
+            <button className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-indigo-100 hover:text-indigo-600 transition-colors shrink-0">
+                {CHAT_ICONS.PLAY}
+            </button>
+            <div className="flex-1 h-8 flex items-center gap-0.5 opacity-50 overflow-hidden">
+                {bars.map((h, i) => (
+                    <div key={i} className="w-1 bg-current rounded-full shrink-0" style={{ height: `${h}px` }}></div>
+                ))}
+            </div>
+            <span className="text-[10px] font-mono opacity-70 shrink-0">
+                {duration > 0 ? `0:${String(duration).padStart(2, '0')}` : '0:15'}
+            </span>
         </div>
-        <span className="text-[10px] font-mono opacity-70 shrink-0">0:15</span>
-    </div>
-));
+    );
+});
 
 export const FileBubble = memo(({ name, size, url }: { name: string, size?: number, url?: string }) => (
     <div className="flex items-center gap-2 md:gap-3 p-1 w-full">

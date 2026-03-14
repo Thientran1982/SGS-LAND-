@@ -21,12 +21,15 @@ export default function LiveChat() {
     useEffect(() => {
         const savedLeadId = localStorage.getItem('livechat_lead_id');
         if (savedLeadId) {
-            db.getLeads(1, 100, {}).then(leads => {
-                const l = leads.data.find(x => x.id === savedLeadId);
+            db.getLeadById(savedLeadId).then(l => {
                 if (l) {
                     setLead(l);
-                    db.getInteractions(l.id).then(setMessages);
+                    db.getInteractions(l.id).then(msgs => setMessages(msgs || []));
+                } else {
+                    localStorage.removeItem('livechat_lead_id');
                 }
+            }).catch(() => {
+                localStorage.removeItem('livechat_lead_id');
             });
         }
     }, []);
@@ -35,19 +38,20 @@ export default function LiveChat() {
         if (!lead) return;
         socket.emit("join_room", lead.id);
 
-        const handleNewMessage = (msg: Interaction) => {
-            if (msg.leadId === lead.id) {
-                setMessages(prev => {
-                    if (prev.find(m => m.id === msg.id)) return prev;
-                    return [...prev, msg];
-                });
-                setIsThinking(false);
-            }
+        const handleNewMessage = (data: any) => {
+            const msg: Interaction = data?.message ?? data;
+            if (!msg || msg.leadId !== lead.id) return;
+            setMessages(prev => {
+                if (prev.find(m => m.id === msg.id)) return prev;
+                return [...prev, msg];
+            });
+            setIsThinking(false);
         };
 
         socket.on("receive_message", handleNewMessage);
         return () => {
             socket.off("receive_message", handleNewMessage);
+            socket.emit("leave_room", lead.id);
         };
     }, [lead, socket]);
 
@@ -75,6 +79,8 @@ export default function LiveChat() {
         socket.emit("send_message", { room: newLead.id, message: welcomeMsg });
     };
 
+    const autoReplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const handleSend = async () => {
         if (!input.trim() || !lead) return;
 
@@ -83,26 +89,28 @@ export default function LiveChat() {
 
         // 1. Save customer message
         const msg = await db.sendInteraction(lead.id, content, Channel.WEB, { type: 'TEXT' });
-        // Override direction for mock
         msg.direction = Direction.INBOUND;
-        
-        // Push to local state immediately
         setMessages(prev => [...prev, msg]);
-        
-        // Save to DB and emit
         socket.emit("send_message", { room: lead.id, message: msg });
 
-        // 2. Simulate AI Response if AI is active (Mocking the backend AI response)
+        // 2. Auto-reply with cleanup on unmount
         setIsThinking(true);
-        setTimeout(async () => {
-            // Check if human took over (in a real app, backend handles this)
-            // For demo, we just auto-reply if it's a simple question
-            const aiMsg = await db.sendInteraction(lead.id, t('livechat.auto_reply') || `Cảm ơn bạn đã nhắn tin. Chuyên viên của chúng tôi sẽ phản hồi bạn trong giây lát. (Tin nhắn tự động)`, Channel.WEB, { type: 'TEXT', metadata: { isAgent: true } });
-            setMessages(prev => [...prev, aiMsg]);
-            socket.emit("send_message", { room: lead.id, message: aiMsg });
+        if (autoReplyTimerRef.current) clearTimeout(autoReplyTimerRef.current);
+        autoReplyTimerRef.current = setTimeout(async () => {
+            try {
+                const aiMsg = await db.sendInteraction(lead.id, t('livechat.auto_reply') || `Cảm ơn bạn đã nhắn tin. Chuyên viên của chúng tôi sẽ phản hồi bạn trong giây lát. (Tin nhắn tự động)`, Channel.WEB, { type: 'TEXT', metadata: { isAgent: true } });
+                setMessages(prev => [...prev, aiMsg]);
+                socket.emit("send_message", { room: lead.id, message: aiMsg });
+            } catch (_) {}
             setIsThinking(false);
         }, 2000);
     };
+
+    useEffect(() => {
+        return () => {
+            if (autoReplyTimerRef.current) clearTimeout(autoReplyTimerRef.current);
+        };
+    }, []);
 
     if (!lead) {
         return (
