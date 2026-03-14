@@ -498,7 +498,7 @@ class DatabaseApiClient {
         scim: { enabled: false, token: '', tokenCreatedAt: new Date().toISOString() },
         facebookPages: [],
         zalo: { enabled: false, oaId: '', oaName: '', webhookUrl: '' },
-        email: { enabled: false, host: '', port: 587, user: '', password: '' },
+        email: { enabled: false, host: '', port: 587, secure: false, user: '', password: '', fromName: 'SGS LAND', fromAddress: '' },
         ipAllowlist: [],
         sessionTimeoutMins: 480,
         retention: { days: 365, autoDelete: false },
@@ -516,7 +516,10 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to update enterprise config');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to update enterprise config' }));
+      throw new Error(err.error || 'Failed to update enterprise config');
+    }
     return res.json();
   }
 

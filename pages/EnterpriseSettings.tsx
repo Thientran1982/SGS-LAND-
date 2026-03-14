@@ -556,11 +556,24 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
                 <div className={!form.enabled ? 'pointer-events-none' : ''}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                         <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_host')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.host} onChange={e => setForm({...form, host: e.target.value.trim()})} placeholder="smtp.example.com" /></div>
-                        <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_port')}</label><input type="number" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.port} onChange={e => setForm({...form, port: parseInt(e.target.value)})} placeholder="587" /></div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_port')}</label>
+                            <input type="number" min={1} max={65535} className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={isNaN(form.port) ? '' : form.port} onChange={e => setForm({...form, port: parseInt(e.target.value) || 587})} placeholder="587" />
+                        </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                         <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_user')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.user} onChange={e => setForm({...form, user: e.target.value.trim()})} placeholder="user@example.com" /></div>
                         <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_pass')}</label><input type="password" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} placeholder={CONSTANTS.MASK} /></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                        <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">Tên hiển thị (From Name)</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromName || ''} onChange={e => setForm({...form, fromName: e.target.value})} placeholder="SGS LAND" /></div>
+                        <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">Địa chỉ gửi (From Address)</label><input type="email" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromAddress || ''} onChange={e => setForm({...form, fromAddress: e.target.value.trim()})} placeholder="noreply@company.com" /></div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <input type="checkbox" id="smtp-secure" checked={!!form.secure} onChange={e => setForm({...form, secure: e.target.checked})} className="w-4 h-4 accent-indigo-600 cursor-pointer" />
+                        <label htmlFor="smtp-secure" className="text-sm text-slate-700 cursor-pointer select-none">
+                            <span className="font-semibold">SSL/TLS</span> — Bật nếu dùng port 465. Tắt nếu dùng STARTTLS (port 587).
+                        </label>
                     </div>
                 </div>
                 <div className="pt-2 flex flex-col gap-3">

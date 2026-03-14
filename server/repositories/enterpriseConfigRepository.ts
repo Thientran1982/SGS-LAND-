@@ -26,7 +26,7 @@ export class EnterpriseConfigRepository extends BaseRepository {
         scim: config.scim || { enabled: false, token: '', tokenCreatedAt: new Date().toISOString() },
         facebookPages: config.facebookPages || [],
         zalo: config.zalo || { enabled: false, oaId: '', oaName: '', webhookUrl: '' },
-        email: config.email || { enabled: false, host: '', port: 587, user: '', password: '' },
+        email: config.email || { enabled: false, host: '', port: 587, secure: false, user: '', password: '', fromName: 'SGS LAND', fromAddress: '' },
         ipAllowlist: config.ipAllowlist || [],
         sessionTimeoutMins: config.sessionTimeoutMins || 480,
         retention: config.retention || { days: 365, autoDelete: false },

@@ -6,9 +6,12 @@ interface SmtpConfig {
   enabled: boolean;
   host: string;
   port: number;
+  secure?: boolean;
   user: string;
   password: string;
   from?: string;
+  fromName?: string;
+  fromAddress?: string;
 }
 
 interface EmailOptions {
@@ -37,7 +40,7 @@ function createTransporter(smtp: SmtpConfig): nodemailer.Transporter {
   return nodemailer.createTransport({
     host: smtp.host,
     port: smtp.port,
-    secure: smtp.port === 465,
+    secure: smtp.secure !== undefined ? smtp.secure : smtp.port === 465,
     auth: {
       user: smtp.user,
       pass: smtp.password,
@@ -46,6 +49,14 @@ function createTransporter(smtp: SmtpConfig): nodemailer.Transporter {
     greetingTimeout: 10000,
     socketTimeout: 15000,
   });
+}
+
+function buildFromAddress(smtp: SmtpConfig): string {
+  if (smtp.from) return smtp.from;
+  if (smtp.fromAddress) {
+    return smtp.fromName ? `${smtp.fromName} <${smtp.fromAddress}>` : smtp.fromAddress;
+  }
+  return `SGS LAND <${smtp.user}>`;
 }
 
 async function sendEmail(tenantId: string, options: EmailOptions): Promise<EmailResult> {
@@ -60,7 +71,7 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
 
   try {
     const transporter = createTransporter(smtp);
-    const fromAddress = smtp.from || `SGS LAND <${smtp.user}>`;
+    const fromAddress = buildFromAddress(smtp);
 
     const info = await transporter.sendMail({
       from: fromAddress,
