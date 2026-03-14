@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo, memo, useRef, useCallback } from '
 import { createPortal } from 'react-dom';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-    ComposedChart, Line, Area, AreaChart 
+    ComposedChart, Line, Area, AreaChart
 } from 'recharts';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
@@ -316,76 +316,75 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
     );
 });
 
+const FUNNEL_COLORS = ['#6366f1', '#818cf8', '#a5b4fc', '#7c3aed', '#8b5cf6', '#4f46e5'];
+
 const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTheme: any }) => {
     const hasData = data.funnel.length > 0;
-    const colors = chartTheme?.colors || {}; // Safety fallback
+    const colors = chartTheme?.colors || {};
+
+    const maxCount = hasData ? Math.max(...data.funnel.map(f => f.count)) : 1;
+    const wonStage = data.funnel.find(f => f.stage === 'WON');
+    const newStage = data.funnel.find(f => f.stage === 'NEW');
+    const overallRate = newStage && newStage.count > 0 && wonStage
+        ? ((wonStage.count / newStage.count) * 100).toFixed(1)
+        : null;
 
     return (
         <div className="space-y-6 animate-enter">
-            <div className="bg-white p-6 md:p-8 rounded-[24px] border border-slate-100 shadow-sm h-[500px] flex flex-col relative">
-                <h3 className="font-bold text-slate-800 mb-2">{t('reports.chart_funnel')}</h3>
-                <p className="text-xs text-slate-500 mb-6">{t('reports.funnel_desc')}</p>
-                
-                <div className="flex-1 w-full min-h-[300px] relative">
-                    {hasData ? (
-                        <ResponsiveContainer width="100%" height="100%" minHeight={300} minWidth={300}>
-                            <AreaChart 
-                                layout="vertical" 
-                                data={data.funnel} 
-                                margin={{ top: 10, right: 30, left: 40, bottom: 0 }}
-                            >
-                                <defs>
-                                    <linearGradient id="colorFunnel" x1="0" y1="0" x2="1" y2="0">
-                                        <stop offset="5%" stopColor={colors.primary} stopOpacity={0.8}/>
-                                        <stop offset="95%" stopColor={colors.secondary} stopOpacity={0.4}/>
-                                    </linearGradient>
-                                </defs>
-                                <XAxis type="number" hide />
-                                <YAxis 
-                                    dataKey="stage" 
-                                    type="category" 
-                                    axisLine={false} 
-                                    tickLine={false}
-                                    width={120}
-                                    tick={{fill: colors.text, fontSize: 11, fontWeight: 600}}
-                                    tickFormatter={(val) => t(`stage.${val}`)}
-                                />
-                                <Tooltip 
-                                    cursor={{fill: 'transparent'}}
-                                    content={({ active, payload }) => {
-                                        if (active && payload && payload.length) {
-                                            const d = payload[0].payload;
-                                            return (
-                                                <div className="bg-slate-900 text-white p-3 rounded-xl text-xs shadow-xl border border-white/10">
-                                                    <div className="font-bold mb-1">{t(`stage.${d.stage}`)}</div>
-                                                    <div className="flex justify-between gap-4">
-                                                        <span className="opacity-70">{t('reports.metric_count') || 'Count'}:</span>
-                                                        <span className="font-mono">{d.count}</span>
-                                                    </div>
-                                                    <div className="flex justify-between gap-4">
-                                                        <span className="opacity-70">{t('reports.metric_conversion') || 'Conversion'}:</span>
-                                                        <span className="font-mono text-emerald-400">{d.conversionRate}%</span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    }}
-                                />
-                                <Area 
-                                    type="monotone" 
-                                    dataKey="count" 
-                                    stroke={colors.primary} 
-                                    fill="url(#colorFunnel)" 
-                                    activeDot={{r: 6, fill: '#fff', stroke: colors.primary, strokeWidth: 2}}
-                                    animationDuration={1500}
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <EmptyChartState t={t} message={t('common.no_results')} />
+            <div className="bg-white p-6 md:p-8 rounded-[24px] border border-slate-100 shadow-sm flex flex-col relative">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+                    <div>
+                        <h3 className="font-bold text-slate-800 mb-1">{t('reports.chart_funnel')}</h3>
+                        <p className="text-xs text-slate-500">{t('reports.funnel_desc')}</p>
+                    </div>
+                    {overallRate !== null && (
+                        <div className="flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-[14px] px-4 py-2 text-center">
+                            <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">{t('reports.funnel_overall_rate') || 'Tỷ lệ NEW → WON'}</div>
+                            <div className="text-2xl font-extrabold text-emerald-700">{overallRate}%</div>
+                        </div>
                     )}
                 </div>
+
+                {hasData ? (
+                    <div className="space-y-2">
+                        {data.funnel.map((step, idx) => {
+                            const barPct = maxCount > 0 ? (step.count / maxCount) * 100 : 0;
+                            const color = FUNNEL_COLORS[idx % FUNNEL_COLORS.length];
+                            return (
+                                <div key={step.stage} className="flex items-center gap-3 group">
+                                    <div className="w-28 sm:w-36 flex-shrink-0 text-right">
+                                        <span className="text-xs font-bold text-slate-600">{t(`stage.${step.stage}`)}</span>
+                                    </div>
+                                    <div className="flex-1 relative h-9 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
+                                        <div
+                                            className="h-full rounded-lg transition-all duration-700 ease-out"
+                                            style={{ width: `${barPct}%`, backgroundColor: color, opacity: 0.85 }}
+                                        />
+                                    </div>
+                                    <div className="w-28 sm:w-36 flex-shrink-0 flex items-center gap-2">
+                                        <span className="text-sm font-extrabold text-slate-800">{step.count.toLocaleString()}</span>
+                                        <span className="text-[10px] text-slate-400 font-medium">({step.conversionRate}%)</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="h-[300px] flex items-center justify-center">
+                        <EmptyChartState t={t} message={t('common.no_results')} />
+                    </div>
+                )}
+
+                {hasData && (
+                    <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap gap-3">
+                        {data.funnel.map((step, idx) => (
+                            <div key={step.stage} className="flex items-center gap-1.5">
+                                <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: FUNNEL_COLORS[idx % FUNNEL_COLORS.length] }} />
+                                <span className="text-[11px] text-slate-500">{t(`stage.${step.stage}`)}: <strong className="text-slate-700">{step.count}</strong></span>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

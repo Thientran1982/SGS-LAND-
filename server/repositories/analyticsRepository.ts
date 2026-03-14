@@ -354,7 +354,7 @@ export class AnalyticsRepository extends BaseRepository {
       const funnelResult = await client.query(`
         SELECT stage, COUNT(*)::int as count
         FROM leads
-        ${timeFilter}
+        ${useTimeFilter ? `WHERE stage != 'LOST' AND created_at >= NOW() - INTERVAL '${days} days'` : `WHERE stage != 'LOST'`}
         GROUP BY stage
         ORDER BY
           CASE stage
@@ -364,8 +364,7 @@ export class AnalyticsRepository extends BaseRepository {
             WHEN 'PROPOSAL' THEN 4
             WHEN 'NEGOTIATION' THEN 5
             WHEN 'WON' THEN 6
-            WHEN 'LOST' THEN 7
-            ELSE 8
+            ELSE 7
           END
       `);
 
@@ -441,7 +440,7 @@ export class AnalyticsRepository extends BaseRepository {
       const totalLeads = funnel.reduce((sum: number, f: any) => sum + f.count, 0);
       const funnelWithPercentage = funnel.map((f: any) => ({
         ...f,
-        percentage: totalLeads > 0 ? Math.round((f.count / totalLeads) * 10000) / 100 : 0,
+        conversionRate: totalLeads > 0 ? Math.round((f.count / totalLeads) * 10000) / 100 : 0,
       }));
 
       const campaignCostsListResult = await client.query(`
