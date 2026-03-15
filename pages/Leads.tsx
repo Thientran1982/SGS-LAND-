@@ -403,7 +403,7 @@ export const Leads: React.FC = () => {
     const [pageSize, setPageSize] = useState(20);
     const [totalItems, setTotalItems] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
-    const [serverStats, setServerStats] = useState({ total: 0, newCount: 0, wonCount: 0, avgScore: 0, winRate: 0 });
+    const [serverStats, setServerStats] = useState({ total: 0, newCount: 0, wonCount: 0, lostCount: 0, avgScore: 0, winRate: 0 });
     
     // Refs for drag-to-scroll
     const boardRef = useRef<HTMLDivElement>(null);
@@ -891,9 +891,8 @@ export const Leads: React.FC = () => {
                     <div className="p-1 bg-emerald-50 text-emerald-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
-                    <span className="text-[11px] text-slate-500 whitespace-nowrap">{t('leads.win_rate') || 'Tỉ lệ chốt'}</span>
-                    <span className="text-sm font-black text-emerald-600">{metrics.winRate}%</span>
-                    <span className="text-[10px] font-semibold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-full hidden md:inline">+2.4%</span>
+                    <span className="text-[11px] text-slate-500 whitespace-nowrap" title={t('leads.win_rate_tooltip') || 'Tỉ lệ chốt = Chốt / (Chốt + Thất bại)'}>{t('leads.win_rate') || 'Tỉ lệ chốt'}</span>
+                    <span className="text-sm font-black text-emerald-600" title={`${metrics.wonCount} chốt / ${metrics.wonCount + metrics.lostCount} quyết định`}>{metrics.winRate}%</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0">
                     <div className="p-1 bg-amber-50 text-amber-500 rounded-md shrink-0">

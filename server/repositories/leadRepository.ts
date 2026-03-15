@@ -13,6 +13,8 @@ export interface LeadFilters {
   score_lte?: number;
   createdAt_gte?: string;
   createdAt_lte?: string;
+  sort?: string;
+  order?: 'asc' | 'desc';
 }
 
 export class LeadRepository extends BaseRepository {
@@ -72,6 +74,14 @@ export class LeadRepository extends BaseRepository {
         conditions.push(`l.created_at <= $${paramIndex++}`);
         values.push(filters.createdAt_lte);
       }
+      if (filters?.score_gte !== undefined) {
+        conditions.push(`(l.score->>'score')::numeric >= $${paramIndex++}`);
+        values.push(filters.score_gte);
+      }
+      if (filters?.score_lte !== undefined) {
+        conditions.push(`(l.score->>'score')::numeric <= $${paramIndex++}`);
+        values.push(filters.score_lte);
+      }
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
@@ -86,6 +96,7 @@ export class LeadRepository extends BaseRepository {
           COUNT(*)::int                                                         AS total,
           COUNT(*) FILTER (WHERE stage = 'NEW')::int                           AS new_count,
           COUNT(*) FILTER (WHERE stage = 'WON')::int                           AS won_count,
+          COUNT(*) FILTER (WHERE stage = 'LOST')::int                          AS lost_count,
           COALESCE(ROUND(AVG((score->>'score')::numeric)), 0)::int             AS avg_score
          FROM leads
          WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid`
@@ -93,24 +104,37 @@ export class LeadRepository extends BaseRepository {
       const sr = statsResult.rows[0];
       const globalTotal = sr.total || 0;
       const wonCount = sr.won_count || 0;
+      const lostCount = sr.lost_count || 0;
+      const decidedCount = wonCount + lostCount;
       const stats = {
         total:    globalTotal,
         newCount: sr.new_count || 0,
         wonCount,
+        lostCount,
         avgScore: sr.avg_score || 0,
-        winRate:  globalTotal > 0 ? Math.round((wonCount / globalTotal) * 100) : 0,
+        winRate:  decidedCount > 0 ? Math.round((wonCount / decidedCount) * 100) : 0,
       };
 
       const page = pagination.page;
       const pageSize = pagination.pageSize;
       const offset = (page - 1) * pageSize;
 
+      const sortField = filters?.sort || 'updated_at';
+      const sortDir = (filters?.order || 'desc').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+      const orderBy = sortField === 'score'
+        ? `(l.score->>'score')::numeric ${sortDir} NULLS LAST`
+        : sortField === 'name'
+          ? `l.name ${sortDir}`
+          : sortField === 'created_at'
+            ? `l.created_at ${sortDir}`
+            : `l.updated_at ${sortDir}`;
+
       const result = await client.query(
         `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar
          FROM leads l
          LEFT JOIN users u ON l.assigned_to = u.id
          ${whereClause}
-         ORDER BY l.updated_at DESC
+         ORDER BY ${orderBy}
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
         [...values, pageSize, offset]
       );

@@ -19,6 +19,10 @@ export function createLeadRoutes(authenticateToken: any) {
       if (req.query.source) filters.source = req.query.source;
       if (req.query.search) filters.search = req.query.search;
       if (req.query.slaBreached) filters.slaBreached = req.query.slaBreached === 'true';
+      if (req.query.sort) filters.sort = req.query.sort as string;
+      if (req.query.order) filters.order = req.query.order as 'asc' | 'desc';
+      if (req.query.score_gte) filters.score_gte = parseFloat(req.query.score_gte as string);
+      if (req.query.score_lte) filters.score_lte = parseFloat(req.query.score_lte as string);
 
       const result = await leadRepository.findLeads(
         tenantId,
