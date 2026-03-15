@@ -54,7 +54,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         commissionUnit: 'PERCENT'
     };
 
-    const UNITS = getUnits(t);
+    const UNITS = useMemo(() => getUnits(t), [t]);
 
     const [formData, setFormData] = useState<Partial<Listing>>(defaultState);
     const [images, setImages] = useState<string[]>([]);
