@@ -440,18 +440,22 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                         style={{ overscrollBehaviorY: 'auto', WebkitOverflowScrolling: 'touch' }}
                         id="main-scroll-container"
                     >
-                        {/* FIX: Use flex column structure to properly handle bottom spacing */}
-                        <div className="w-full min-h-full flex flex-col">
-                            <div className="flex-1 w-full relative">
+                        {/* App pages (fixed-height like Inventory/Leads/Board) need h-full for percentage resolution.
+                            Content pages (scrollable like Dashboard/Reports) need min-h-full + flex-1.
+                            CSS spec: min-height creates an "indefinite" height so children's height:100% resolves to auto=0.
+                            h-full creates a "definite" height so children's height:100% resolves correctly. */}
+                        {isAppPage ? (
+                            <div className="w-full h-full">
                                 {children}
                             </div>
-                            
-                            {/* PHYSICAL SPACER: Forces scrollable area to exceed viewport height */}
-                            {/* This is more robust than padding-bottom for ensuring bottom content is visible above mobile nav bars */}
-                            {!isAppPage && (
+                        ) : (
+                            <div className="w-full min-h-full flex flex-col">
+                                <div className="flex-1 w-full relative">
+                                    {children}
+                                </div>
                                 <div className="h-40 w-full shrink-0 opacity-0 pointer-events-none" aria-hidden="true" />
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
