@@ -193,12 +193,12 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm h-[260px] sm:h-[380px] flex flex-col relative">
-                    <h3 className="font-bold text-slate-800 mb-3 sm:mb-6 text-sm sm:text-base">{t('reports.chart_source_mix')}</h3>
-                    <div className="flex-1 w-full min-h-[180px] sm:min-h-[250px] relative">
+                <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col relative">
+                    <h3 className="font-bold text-slate-800 mb-3 sm:mb-4 text-sm sm:text-base">{t('reports.chart_source_mix')}</h3>
+                    <div className="w-full h-[200px] sm:h-[300px]">
                         {hasData ? (
-                            <ResponsiveContainer width="100%" height="100%" minHeight={250} minWidth={250}>
-                                <ComposedChart data={data.attribution} margin={{ top: 12, right: 48, bottom: 20, left: 8 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <ComposedChart data={data.attribution} margin={{ top: 8, right: 48, bottom: 24, left: 8 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.grid} />
                                     <XAxis 
                                         dataKey="channel" 
@@ -252,13 +252,13 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     </div>
                 </div>
 
-                <div className="bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm h-[260px] sm:h-[380px] flex flex-col relative">
+                <div className="bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col relative">
                     <h3 className="font-bold text-slate-800 mb-0.5 text-sm sm:text-base">{t('reports.chart_conversion_trend') || 'Xu hướng chuyển đổi'}</h3>
-                    <p className="text-[10px] sm:text-[11px] text-slate-400 mb-2 sm:mb-4">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
-                    <div className="flex-1 w-full min-h-[160px] sm:min-h-[200px] relative">
+                    <p className="text-[10px] sm:text-[11px] text-slate-400 mb-2 sm:mb-3">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
+                    <div className="w-full h-[160px] sm:h-[265px]">
                         {hasTrend ? (
-                            <ResponsiveContainer width="100%" height="100%" minHeight={200}>
-                                <AreaChart data={trendData} margin={{ top: 10, right: 16, left: 4, bottom: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={trendData} margin={{ top: 8, right: 16, left: 4, bottom: 20 }}>
                                     <defs>
                                         <linearGradient id="convGradient" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor={colors.primary} stopOpacity={0.3}/>
