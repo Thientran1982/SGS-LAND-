@@ -101,8 +101,28 @@ export const AiValuation: React.FC = () => {
         // Fetch real-time data from Gemini
         const areaNum = parseFloat(area) || 50;
         const roadNum = parseFloat(roadWidth) || 3;
-        
-        const aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal);
+
+        let aiResult: any;
+        try {
+            aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal);
+        } catch (_err) {
+            // Fallback: client-side regional estimate when API is unavailable
+            const isHCM = /hcm|hồ chí minh|sài gòn|saigon|bình thạnh|quận [1-9]|thủ đức/i.test(address);
+            const isHanoi = /hà nội|hanoi|cầu giấy|hoàn kiếm|đống đa|hai bà trưng|tây hồ/i.test(address);
+            const legalLabel = legal === 'PINK_BOOK' ? 'Sổ Hồng' : legal === 'CONTRACT' ? 'Hợp đồng mua bán' : 'Vi Bằng';
+            const regionBase = isHCM ? 120_000_000 : isHanoi ? 110_000_000 : 60_000_000;
+            aiResult = {
+                basePrice: regionBase,
+                confidence: 55,
+                marketTrend: "Ước tính theo khu vực — chưa có dữ liệu realtime",
+                factors: [
+                    { label: isHCM ? "Khu vực TP.HCM" : isHanoi ? "Khu vực Hà Nội" : "Khu vực tỉnh/thành khác", impact: 15, isPositive: true },
+                    { label: legalLabel, impact: legal === 'PINK_BOOK' ? 8 : 3, isPositive: legal === 'PINK_BOOK' },
+                    { label: `Lộ giới ${roadNum}m`, impact: roadNum >= 6 ? 10 : roadNum >= 4 ? 5 : 0, isPositive: roadNum >= 4 },
+                    { label: roadNum < 3 ? "Hẻm nhỏ" : "Đường thông thoáng", impact: roadNum < 3 ? 12 : 0, isPositive: roadNum >= 3 },
+                ]
+            };
+        }
         
         if (intervalRef.current) clearInterval(intervalRef.current);
         setProgress(100);
@@ -115,8 +135,10 @@ export const AiValuation: React.FC = () => {
     };
 
     const calculateResults = (aiResult: any, areaNum: number, roadNum: number) => {
-        const estimatedPrice = aiResult.estimatedPrice;
-        const confidence = aiResult.confidence;
+        // basePrice is price-per-m² from server; total = basePrice × area
+        const pricePerM2 = aiResult.basePrice || aiResult.estimatedPrice || BASE_PRICE_PER_M2;
+        const estimatedPrice = pricePerM2 * areaNum;
+        const confidence = aiResult.confidence || 75;
         
         // Variance is inversely proportional to confidence (e.g., 90% conf -> 10% variance)
         const variancePercent = (100 - confidence) / 100; 

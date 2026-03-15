@@ -617,35 +617,45 @@ class AiEngine {
         marketTrend: string;
         factors: { label: string; impact: number; isPositive: boolean }[];
     }> {
+        const legalLabel = legal === 'PINK_BOOK' ? 'Sổ Hồng' : legal === 'CONTRACT' ? 'Hợp đồng mua bán' : 'Vi Bằng';
         try {
+            // Step 1: Use Google Search grounding to fetch raw market data (text, no JSON schema)
+            // NOTE: googleSearch tool and responseMimeType:'application/json' are mutually exclusive in Gemini.
             const searchPrompt = `
                 Bạn là chuyên gia định giá bất động sản tại Việt Nam.
-                Nhiệm vụ: Tìm kiếm thông tin giá nhà đất thực tế hiện tại (real-time) tại khu vực: "${address}".
+                Tìm kiếm thông tin giá nhà đất thực tế hiện tại tại khu vực: "${address}".
                 Thời gian hiện tại: ${new Date().toISOString()}.
-                
-                Thông tin tài sản:
-                - Diện tích: ${area}m2
-                - Lộ giới (đường trước nhà): ${roadWidth}m
-                - Pháp lý: ${legal}
-                
-                Hãy sử dụng công cụ Google Search để tìm giá bán trung bình (VNĐ/m2) của các bất động sản tương tự tại khu vực này trong thời gian gần đây.
-                Sau đó, trích xuất và trả về dữ liệu định giá bất động sản theo đúng định dạng JSON yêu cầu.
+                Thông tin tài sản: Diện tích ${area}m², Lộ giới ${roadWidth}m, Pháp lý: ${legalLabel}.
+                Hãy tìm giá bán trung bình (VNĐ/m2) của các BĐS tương tự tại khu vực này trong 6 tháng gần đây.
+                Nêu rõ: giá/m2, xu hướng giá, các yếu tố tác động (vị trí, tiện ích, pháp lý, lộ giới).
             `;
 
-            const schema: Schema = {
+            const searchResponse = await this.ai.models.generateContent({
+                model: GENAI_CONFIG.MODELS.WRITER,
+                contents: searchPrompt,
+                config: {
+                    tools: [{ googleSearch: {} }]
+                }
+            });
+
+            const marketContext = searchResponse.text || '';
+
+            // Step 2: Structure the raw market data as JSON (no search tool, uses JSON schema)
+            const structureSchema: Schema = {
                 type: Type.OBJECT,
                 properties: {
-                    basePrice: { type: Type.NUMBER, description: "Giá trung bình 1m2 tính bằng VNĐ" },
-                    confidence: { type: Type.NUMBER, description: "Độ tin cậy từ 0-100" },
-                    marketTrend: { type: Type.STRING, description: "Mô tả xu hướng giá" },
+                    basePrice: { type: Type.NUMBER, description: "Giá trung bình 1m² tính bằng VNĐ (ví dụ: 120000000 = 120 triệu/m²)" },
+                    confidence: { type: Type.NUMBER, description: "Độ tin cậy của định giá, từ 0 đến 100" },
+                    marketTrend: { type: Type.STRING, description: "Mô tả ngắn gọn xu hướng giá thị trường (ví dụ: 'Tăng nhẹ 5-7%/năm')" },
                     factors: {
                         type: Type.ARRAY,
+                        description: "Danh sách 4-6 yếu tố tác động đến giá",
                         items: {
                             type: Type.OBJECT,
                             properties: {
-                                label: { type: Type.STRING, description: "Tên yếu tố tác động" },
-                                impact: { type: Type.NUMBER, description: "Phần trăm tác động" },
-                                isPositive: { type: Type.BOOLEAN, description: "Tác động tích cực hay tiêu cực" }
+                                label: { type: Type.STRING, description: "Tên yếu tố (ví dụ: 'Vị trí mặt tiền', 'Sổ Hồng đầy đủ')" },
+                                impact: { type: Type.NUMBER, description: "Phần trăm tác động từ 1-30" },
+                                isPositive: { type: Type.BOOLEAN, description: "true nếu yếu tố làm tăng giá, false nếu làm giảm" }
                             },
                             required: ["label", "impact", "isPositive"]
                         }
@@ -654,32 +664,56 @@ class AiEngine {
                 required: ["basePrice", "confidence", "marketTrend", "factors"]
             };
 
-            const searchResponse = await this.ai.models.generateContent({
-                model: 'gemini-3.1-pro-preview',
-                contents: searchPrompt,
+            const structurePrompt = `
+                Dựa trên thông tin thị trường sau đây, hãy trích xuất và định lượng dữ liệu định giá bất động sản.
+                Địa chỉ: "${address}" | Diện tích: ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legalLabel}
+                
+                Thông tin thị trường thu thập được:
+                ${marketContext}
+                
+                Lưu ý công thức điều chỉnh:
+                - Lộ giới ≥ 8m: +10-15% so với chuẩn 4m
+                - Lộ giới ≥ 5m: +5-8%
+                - Lộ giới < 3m (hẻm nhỏ): -10-20%
+                - Pháp lý Sổ Hồng: giá chuẩn
+                - Pháp lý HĐMB/Vi Bằng: -10-20%
+                - Diện tích > 100m²: +3-5% (lô đất lớn)
+                
+                Trả về basePrice là đơn giá 1m² (VNĐ), KHÔNG phải tổng giá.
+            `;
+
+            const structureResponse = await this.ai.models.generateContent({
+                model: GENAI_CONFIG.MODELS.ROUTER,
+                contents: structurePrompt,
                 config: {
-                    tools: [{ googleSearch: {} }],
                     responseMimeType: 'application/json',
-                    responseSchema: schema
+                    responseSchema: structureSchema
                 }
             });
-            
-            const result = JSON.parse(searchResponse.text || '{}');
-            
+
+            const result = JSON.parse(structureResponse.text || '{}');
+
             return {
-                basePrice: result.basePrice || 100000000,
-                confidence: result.confidence || 80,
+                basePrice: result.basePrice || 100_000_000,
+                confidence: Math.min(100, Math.max(0, result.confidence || 80)),
                 marketTrend: result.marketTrend || "Đang cập nhật",
                 factors: result.factors || []
             };
         } catch (error) {
             console.error("Valuation AI Error:", error);
-            // Fallback
+            // Fallback: estimate based on address keywords
+            const isHCM = /hcm|hồ chí minh|sài gòn|saigon|bình thạnh|quận 1|quận 3|quận 7|thủ đức/i.test(address);
+            const isHanoi = /hà nội|hanoi|cầu giấy|hoàn kiếm|đống đa|hai bà trưng/i.test(address);
+            const fallbackPrice = isHCM ? 120_000_000 : isHanoi ? 110_000_000 : 60_000_000;
             return {
-                basePrice: 100000000,
-                confidence: 60,
-                marketTrend: "Không thể lấy dữ liệu realtime",
-                factors: []
+                basePrice: fallbackPrice,
+                confidence: 55,
+                marketTrend: "Không thể lấy dữ liệu realtime — giá ước tính theo khu vực",
+                factors: [
+                    { label: "Dữ liệu thị trường hạn chế", impact: 10, isPositive: false },
+                    { label: legalLabel, impact: legal === 'PINK_BOOK' ? 8 : 5, isPositive: legal === 'PINK_BOOK' },
+                    { label: `Lộ giới ${roadWidth}m`, impact: roadWidth >= 6 ? 8 : roadWidth >= 4 ? 3 : 0, isPositive: roadWidth >= 4 },
+                ]
             };
         }
     }
