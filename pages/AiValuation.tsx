@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { useTranslation } from '../services/i18n';
-import { formatSmartPrice, formatUnitPrice } from '../utils/textUtils';
+import { formatSmartPrice } from '../utils/textUtils';
 import { aiService } from '../services/aiService';
 import { db } from '../services/dbApi';
 import { User } from '../types';
@@ -65,9 +65,12 @@ export const AiValuation: React.FC = () => {
 
     // Results State
     const [valuation, setValuation] = useState<{
-        price: number;
+        price: number;          // total price (VNĐ)
+        pricePerM2: number;     // adjusted price per m² (after AVM)
         range: [number, number];
-        factors: { label: string; impact: number; isPositive: boolean }[];
+        factors: { label: string; coefficient?: number; impact: number; isPositive: boolean; description?: string }[];
+        coefficients?: { Kd: number; Kp: number; Ka: number };
+        formula?: string;
         confidence: number;
         marketTrend: string;
         chartData: { month: string; price: number }[];
@@ -106,20 +109,44 @@ export const AiValuation: React.FC = () => {
         try {
             aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal);
         } catch (_err) {
-            // Fallback: client-side regional estimate when API is unavailable
-            const isHCM = /hcm|hồ chí minh|sài gòn|saigon|bình thạnh|quận [1-9]|thủ đức/i.test(address);
-            const isHanoi = /hà nội|hanoi|cầu giấy|hoàn kiếm|đống đa|hai bà trưng|tây hồ/i.test(address);
+            // Emergency client-side fallback (network completely down)
+            // Uses same AVM coefficient logic as server/valuationEngine.ts
+            const addr = address.toLowerCase();
+            const isQ1 = /quận 1\b|q\.?1\b/.test(addr);
+            const isHCM = /hcm|hồ chí minh|sài gòn|saigon|bình thạnh|thủ đức/.test(addr) || /quận [0-9]/.test(addr);
+            const isHanoi = /hà nội|hanoi|cầu giấy|hoàn kiếm|đống đa|hai bà trưng|tây hồ/.test(addr);
+            const isDanang = /đà nẵng|da nang/.test(addr);
+            const marketBase = isQ1 ? 280_000_000 : isHCM ? 100_000_000 : isHanoi ? 110_000_000 : isDanang ? 75_000_000 : 25_000_000;
+
+            // Kd: Road Width
+            const Kd = roadNum >= 20 ? 1.30 : roadNum >= 12 ? 1.18 : roadNum >= 8 ? 1.10 :
+                       roadNum >= 6 ? 1.05 : roadNum >= 4 ? 1.00 : roadNum >= 3 ? 0.90 :
+                       roadNum >= 2 ? 0.80 : 0.70;
+            // Kp: Legal
+            const Kp = legal === 'PINK_BOOK' ? 1.00 : legal === 'CONTRACT' ? 0.88 : 0.80;
+            // Ka: Area
+            const Ka = areaNum < 25 ? 0.90 : areaNum < 40 ? 0.95 : areaNum < 60 ? 0.98 :
+                       areaNum < 100 ? 1.00 : areaNum < 150 ? 1.03 : areaNum < 250 ? 1.06 : 1.10;
+
+            const adjPerM2 = Math.round(marketBase * Kd * Kp * Ka);
+            const total = adjPerM2 * areaNum;
+            const margin = 0.25;
             const legalLabel = legal === 'PINK_BOOK' ? 'Sổ Hồng' : legal === 'CONTRACT' ? 'Hợp đồng mua bán' : 'Vi Bằng';
-            const regionBase = isHCM ? 120_000_000 : isHanoi ? 110_000_000 : 60_000_000;
+
             aiResult = {
-                basePrice: regionBase,
-                confidence: 55,
-                marketTrend: "Ước tính theo khu vực — chưa có dữ liệu realtime",
+                basePrice: marketBase,
+                pricePerM2: adjPerM2,
+                totalPrice: total,
+                rangeMin: Math.round(total * (1 - margin)),
+                rangeMax: Math.round(total * (1 + margin)),
+                confidence: 42,
+                marketTrend: "Ước tính offline — không kết nối được server",
+                coefficients: { Kd, Kp, Ka },
+                formula: `${(marketBase/1_000_000).toFixed(0)} tr/m² × Kd(${Kd}) × Kp(${Kp}) × Ka(${Ka}) = ${(adjPerM2/1_000_000).toFixed(0)} tr/m²`,
                 factors: [
-                    { label: isHCM ? "Khu vực TP.HCM" : isHanoi ? "Khu vực Hà Nội" : "Khu vực tỉnh/thành khác", impact: 15, isPositive: true },
-                    { label: legalLabel, impact: legal === 'PINK_BOOK' ? 8 : 3, isPositive: legal === 'PINK_BOOK' },
-                    { label: `Lộ giới ${roadNum}m`, impact: roadNum >= 6 ? 10 : roadNum >= 4 ? 5 : 0, isPositive: roadNum >= 4 },
-                    { label: roadNum < 3 ? "Hẻm nhỏ" : "Đường thông thoáng", impact: roadNum < 3 ? 12 : 0, isPositive: roadNum >= 3 },
+                    { label: roadNum >= 4 ? `Hẻm xe hơi / đường ${roadNum}m` : `Hẻm hẹp ${roadNum}m`, coefficient: Kd, impact: Math.round(Math.abs(Kd - 1) * 100), isPositive: Kd >= 1, description: '' },
+                    { label: legalLabel, coefficient: Kp, impact: Math.round(Math.abs(Kp - 1) * 100), isPositive: Kp >= 1, description: '' },
+                    { label: `Diện tích ${areaNum}m²`, coefficient: Ka, impact: Math.round(Math.abs(Ka - 1) * 100), isPositive: Ka >= 1, description: '' },
                 ]
             };
         }
@@ -134,29 +161,46 @@ export const AiValuation: React.FC = () => {
         }, 500);
     };
 
-    const calculateResults = (aiResult: any, areaNum: number, roadNum: number) => {
-        // basePrice is price-per-m² from server; total = basePrice × area
-        const pricePerM2 = aiResult.basePrice || aiResult.estimatedPrice || BASE_PRICE_PER_M2;
-        const estimatedPrice = pricePerM2 * areaNum;
-        const confidence = aiResult.confidence || 75;
-        
-        // Variance is inversely proportional to confidence (e.g., 90% conf -> 10% variance)
-        const variancePercent = (100 - confidence) / 100; 
-        const variance = estimatedPrice * Math.max(0.05, variancePercent); // Minimum 5% variance
+    const calculateResults = (aiResult: any, areaNum: number, _roadNum: number) => {
+        // Server returns fully computed AVM result.
+        // totalPrice = pricePerM2 × area, already calculated by AVM engine server-side.
+        const totalPrice: number = aiResult.totalPrice || (
+            (aiResult.pricePerM2 || aiResult.basePrice || BASE_PRICE_PER_M2) * areaNum
+        );
+        const pricePerM2: number = aiResult.pricePerM2 || Math.round(totalPrice / areaNum);
+        const confidence: number = aiResult.confidence || 75;
 
-        // Generate dynamic chart data based on estimated price
-        const baseChartPrice = estimatedPrice / 1_000_000_000; // In Billions
+        // Use server's pre-computed range if available, otherwise use confidence margin
+        const rangeMin: number = aiResult.rangeMin || (() => {
+            const margin = confidence >= 88 ? 0.07 : confidence >= 78 ? 0.10 : confidence >= 68 ? 0.14 : confidence >= 55 ? 0.18 : 0.25;
+            return Math.round(totalPrice * (1 - margin));
+        })();
+        const rangeMax: number = aiResult.rangeMax || (() => {
+            const margin = confidence >= 88 ? 0.07 : confidence >= 78 ? 0.10 : confidence >= 68 ? 0.14 : confidence >= 55 ? 0.18 : 0.25;
+            return Math.round(totalPrice * (1 + margin));
+        })();
+
+        // Chart: simulate 12 months around total price in billions
+        const baseBillion = totalPrice / 1_000_000_000;
+        // Trend direction from marketTrend string
+        const isBullish = /tăng|tăng mạnh|tốt/i.test(aiResult.marketTrend || '');
+        const isBearish = /giảm|giảm mạnh/i.test(aiResult.marketTrend || '');
+        const trend = isBullish ? 0.007 : isBearish ? -0.005 : 0.002; // monthly drift
         const chartData = Array.from({ length: 12 }, (_, i) => ({
             month: `T${i + 1}`,
-            price: baseChartPrice * (0.9 + Math.random() * 0.2) // +/- 10% variation
+            // Start from 11 months ago, drift toward current price
+            price: Number((baseBillion * (1 - (11 - i) * trend + (Math.random() - 0.5) * 0.04)).toFixed(3))
         }));
 
         setValuation({
-            price: estimatedPrice,
-            range: [estimatedPrice - variance, estimatedPrice + variance],
-            factors: aiResult.factors,
-            confidence: confidence,
-            marketTrend: aiResult.marketTrend,
+            price: totalPrice,
+            pricePerM2,
+            range: [rangeMin, rangeMax],
+            factors: aiResult.factors || [],
+            coefficients: aiResult.coefficients,
+            formula: aiResult.formula,
+            confidence,
+            marketTrend: aiResult.marketTrend || 'Đang cập nhật',
             chartData
         });
     };
@@ -342,7 +386,8 @@ export const AiValuation: React.FC = () => {
                 {/* STEP 4: RESULT DASHBOARD */}
                 {step === 'RESULT' && valuation && (
                     <div className="animate-enter pb-24">
-                         <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-2xl relative overflow-hidden mb-8">
+                        {/* ── MAIN PRICE CARD ── */}
+                        <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-2xl relative overflow-hidden mb-6">
                             <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-6">
                                 <div>
                                     <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest mb-2 flex items-center gap-2">
@@ -353,32 +398,100 @@ export const AiValuation: React.FC = () => {
                                         {formatSmartPrice(valuation.price, t)} <span className="text-2xl text-emerald-500">VNĐ</span>
                                     </div>
                                     <div className="text-slate-400 text-sm mt-2 font-medium">
-                                        Biên độ: {formatSmartPrice(valuation.range[0], t)} - {formatSmartPrice(valuation.range[1], t)}
+                                        Biên độ: {formatSmartPrice(valuation.range[0], t)} — {formatSmartPrice(valuation.range[1], t)}
                                     </div>
                                 </div>
-                                <div className="flex gap-4">
+                                <div className="flex gap-3 flex-wrap justify-end">
                                     <div className="bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-600 backdrop-blur-sm text-center min-w-[100px]">
                                         <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Độ Tin Cậy</div>
-                                        <div className="text-xl font-bold text-emerald-400">{valuation.confidence}%</div>
+                                        <div className={`text-xl font-bold ${valuation.confidence >= 75 ? 'text-emerald-400' : valuation.confidence >= 55 ? 'text-yellow-400' : 'text-rose-400'}`}>
+                                            {valuation.confidence}%
+                                        </div>
                                     </div>
                                     <div className="bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-600 backdrop-blur-sm text-center min-w-[100px]">
                                         <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Đơn giá / m²</div>
-                                        <div className="text-xl font-bold text-white">{formatUnitPrice(valuation.price, parseFloat(area), t)}</div>
+                                        <div className="text-xl font-bold text-white">
+                                            {valuation.pricePerM2 >= 1_000_000_000
+                                                ? `${(valuation.pricePerM2 / 1_000_000_000).toFixed(1)} Tỷ/m²`
+                                                : `${(valuation.pricePerM2 / 1_000_000).toFixed(0)} Tr/m²`}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* FACTORS EXPLANATION (XAI) */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-700/50">
-                                {valuation.factors.map((factor, i) => (
-                                    <div key={i} className="flex justify-between items-center text-sm border-b border-slate-800 last:border-0 pb-2 last:pb-0">
-                                        <span className="text-slate-400">{factor.label}</span>
-                                        <span className={`font-bold ${factor.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                            {factor.isPositive ? '+' : ''}{factor.impact}%
-                                        </span>
+                            {/* ── AVM FORMULA BOX ── */}
+                            {valuation.formula && (
+                                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl px-5 py-4 mb-6 font-mono text-sm">
+                                    <div className="text-emerald-400/60 text-[10px] uppercase font-bold tracking-widest mb-1">Công thức AVM đã áp dụng</div>
+                                    <div className="text-emerald-300 break-all">{valuation.formula}</div>
+                                </div>
+                            )}
+
+                            {/* ── AVM COEFFICIENT TABLE ── */}
+                            {valuation.coefficients && (
+                                <div className="grid grid-cols-3 gap-3 mb-6">
+                                    {[
+                                        { key: 'Kd', label: 'Hệ số lộ giới', value: valuation.coefficients.Kd, icon: '🛣️' },
+                                        { key: 'Kp', label: 'Hệ số pháp lý', value: valuation.coefficients.Kp, icon: '📋' },
+                                        { key: 'Ka', label: 'Hệ số diện tích', value: valuation.coefficients.Ka, icon: '📐' },
+                                    ].map(c => {
+                                        const delta = c.value - 1.00;
+                                        const isPos = delta >= 0;
+                                        return (
+                                            <div key={c.key} className="bg-slate-900/70 rounded-xl p-4 border border-slate-700 text-center">
+                                                <div className="text-lg mb-1">{c.icon}</div>
+                                                <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">{c.key}</div>
+                                                <div className="text-white font-black text-xl">{c.value.toFixed(2)}</div>
+                                                <div className={`text-xs font-bold mt-1 ${isPos ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                    {isPos ? '+' : ''}{(delta * 100).toFixed(0)}%
+                                                </div>
+                                                <div className="text-slate-600 text-[9px] mt-1 truncate">{c.label}</div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* ── FACTORS BREAKDOWN (XAI) ── */}
+                            {valuation.factors.length > 0 && (
+                                <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+                                    <div className="px-5 py-3 border-b border-slate-700/50">
+                                        <span className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Phân tích yếu tố tác động</span>
                                     </div>
-                                ))}
-                            </div>
+                                    <div className="divide-y divide-slate-800">
+                                        {valuation.factors.map((factor, i) => {
+                                            const sign = factor.isPositive ? '+' : '-';
+                                            const barWidth = Math.min(100, factor.impact * 4); // scale to bar %
+                                            return (
+                                                <div key={i} className="px-5 py-3">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-slate-300 text-sm font-medium">{factor.label}</span>
+                                                        <div className="flex items-center gap-3">
+                                                            {factor.coefficient != null && factor.coefficient !== 1 && (
+                                                                <span className="text-slate-500 text-xs font-mono">×{factor.coefficient.toFixed(2)}</span>
+                                                            )}
+                                                            <span className={`font-bold text-sm ${factor.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                                {factor.impact === 0 ? 'Chuẩn' : `${sign}${factor.impact}%`}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    {factor.description && (
+                                                        <div className="text-slate-600 text-[11px] mb-1.5">{factor.description}</div>
+                                                    )}
+                                                    {factor.impact > 0 && (
+                                                        <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all ${factor.isPositive ? 'bg-emerald-500/60' : 'bg-rose-500/60'}`}
+                                                                style={{ width: `${barWidth}%` }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Chart Simulation */}
