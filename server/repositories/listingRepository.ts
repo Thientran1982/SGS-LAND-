@@ -104,7 +104,9 @@ export class ListingRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE status = 'SOLD')::int       AS sold_count,
           COUNT(*) FILTER (WHERE status = 'RENTED')::int     AS rented_count,
           COUNT(*) FILTER (WHERE status = 'BOOKING')::int    AS booking_count,
-          COUNT(*) FILTER (WHERE status = 'OPENING')::int    AS opening_count
+          COUNT(*) FILTER (WHERE status = 'OPENING')::int    AS opening_count,
+          COUNT(*) FILTER (WHERE status = 'INACTIVE')::int   AS inactive_count,
+          COUNT(*)::int                                       AS total_count
          FROM listings`
       );
       const sr = statsResult.rows[0];
@@ -127,6 +129,8 @@ export class ListingRepository extends BaseRepository {
           rentedCount:    sr.rented_count,
           bookingCount:   sr.booking_count,
           openingCount:   sr.opening_count,
+          inactiveCount:  sr.inactive_count,
+          totalCount:     sr.total_count,
         },
       };
     });
