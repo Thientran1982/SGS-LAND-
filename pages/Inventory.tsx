@@ -568,6 +568,7 @@ export const Inventory: React.FC = () => {
                             <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
                             <button onClick={() => setViewMode('LIST')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title={t('inventory.view_list')}>{ICONS.VIEW_LIST}</button>
                             <button onClick={() => setViewMode('BOARD')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
+                            <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title={t('inventory.view_map') || 'Bản đồ'}>{ICONS.VIEW_MAP}</button>
                         </div>
 
                         <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block"></div>
@@ -672,6 +673,9 @@ export const Inventory: React.FC = () => {
                                                 key={item.id} item={item} 
                                                 onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                 onDelete={handleDeleteClick}
+                                                onDuplicate={async (id: string) => {
+                                                    try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                }}
                                                 onClick={() => handleNavigate(item.id)}
                                                 t={t} formatCurrency={formatCurrency}
                                                 canViewInternal={canViewInternalInfo}
@@ -696,6 +700,19 @@ export const Inventory: React.FC = () => {
                                 
                                 {listings.length === 0 && !loading && <div className="p-12 text-center text-slate-400 italic">{t('common.no_results')}</div>}
                             </div>
+                        </div>
+                    )}
+
+                    {/* MAP VIEW */}
+                    {viewMode === 'MAP' && (
+                        <div className="h-full min-h-[500px] rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                            <MapView
+                                listings={listings}
+                                onNavigate={handleNavigate}
+                                formatCurrency={formatCurrency}
+                                formatUnitPrice={formatUnitPrice}
+                                t={t}
+                            />
                         </div>
                     )}
 
@@ -729,7 +746,7 @@ export const Inventory: React.FC = () => {
                 </div>
 
                 {/* Sticky Pagination Footer */}
-                {viewMode !== 'BOARD' && (
+                {viewMode !== 'BOARD' && viewMode !== 'MAP' && (
                     <PaginationControl 
                         page={page} 
                         totalPages={totalPages} 
