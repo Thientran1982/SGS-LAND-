@@ -726,10 +726,10 @@ export const Inventory: React.FC = () => {
                     </div>
                 )}
 
-                {/* MAP VIEW — direct flex-1 child so Leaflet gets real pixel height */}
+                {/* MAP VIEW — absolute positioning for guaranteed pixel height independent of scroll/flex chain */}
                 {viewMode === 'MAP' && (
-                    <div className="flex-1 min-h-0 p-4 md:p-6 overflow-hidden">
-                        <div className="h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                    <div className="absolute inset-0 p-4 md:p-6" style={{ zIndex: 1 }}>
+                        <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
                             <MapView
                                 listings={allFilteredListings.length > 0 ? allFilteredListings : listings}
                                 onNavigate={handleNavigate}

@@ -46,10 +46,11 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
     useEffect(() => {
         if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-        let timeoutId: ReturnType<typeof setTimeout>;
+        const container = mapContainerRef.current;
+        let ro: ResizeObserver | null = null;
 
         try {
-            const map = L.map(mapContainerRef.current, {
+            const map = L.map(container, {
                 center: HCMC_CENTER,
                 zoom: 13,
                 zoomControl: false,
@@ -66,18 +67,23 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
 
             mapInstanceRef.current = map;
 
-            // Force resize after init to handle tabs/hidden containers
-            timeoutId = setTimeout(() => {
+            // ResizeObserver: fire invalidateSize every time the container changes dimensions
+            // This is far more reliable than a fixed timeout and works with flex/absolute layouts
+            ro = new ResizeObserver(() => {
                 if (mapInstanceRef.current) {
-                    mapInstanceRef.current.invalidateSize();
+                    mapInstanceRef.current.invalidateSize({ animate: false });
                 }
-            }, 250);
+            });
+            ro.observe(container);
+
+            // Also call once immediately in case container already has size
+            map.invalidateSize({ animate: false });
         } catch (e) {
             console.error('Map initialization failed', e);
         }
 
         return () => {
-            clearTimeout(timeoutId);
+            if (ro) ro.disconnect();
             if (mapInstanceRef.current) {
                 try { mapInstanceRef.current.stop(); } catch (_) {}
                 mapInstanceRef.current.remove();
@@ -185,11 +191,6 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
             });
 
             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: false });
-
-            // Ensure tiles render after markers added
-            setTimeout(() => {
-                if (mapInstanceRef.current) mapInstanceRef.current.invalidateSize();
-            }, 100);
         } catch (e) {
             console.error('Error updating map markers', e);
         }
