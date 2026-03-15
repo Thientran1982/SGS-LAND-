@@ -381,7 +381,7 @@ const InventoryKanbanCard = memo(({ item, onClick, t, formatCurrency }: any) => 
 // -----------------------------------------------------------------------------
 
 export const Inventory: React.FC = () => {
-    const { t, formatCurrency } = useTranslation();
+    const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const [listings, setListings] = useState<Listing[]>([]); // Store current page data
     const [totalItems, setTotalItems] = useState(0);
     const [stats, setStats] = useState({ availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0 });
@@ -630,140 +630,148 @@ export const Inventory: React.FC = () => {
 
             {/* Content Area */}
             <div className="flex-1 overflow-hidden bg-white min-h-0 relative flex flex-col">
-                <div className="flex-1 overflow-auto p-4 md:p-6 no-scrollbar">
-                    
-                    {/* GRID VIEW (DEFAULT) */}
-                    {viewMode === 'GRID' && (
-                        loading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-[350px] bg-slate-100 rounded-[24px] animate-pulse"></div>)}
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {listings.map(item => (
-                                    <div key={item.id} className="min-h-full">
-                                        <ListingCard 
-                                            item={{...item, isFavorite: favorites.has(item.id)}} t={t} formatCurrency={formatCurrency}
-                                            onToggleFavorite={handleToggleFavorite}
-                                            onEdit={(l) => { setEditingListing(l); setIsCreateModalOpen(true); }}
-                                            onDelete={handleDeleteClick}
-                                            onDuplicate={async (id) => {
-                                                try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
-                                            }}
-                                            onClick={() => handleNavigate(item.id)}
-                                            showActions={true}
-                                        />
-                                    </div>
-                                ))}
-                                {listings.length === 0 && <div className="col-span-full py-20 text-center text-slate-400 italic">{t('common.no_results')}</div>}
-                            </div>
-                        )
-                    )}
 
-                    {/* LIST VIEW (TABLE) - REFACTORED */}
-                    {viewMode === 'LIST' && (
-                        <div className="bg-white rounded-[24px] md:border border-slate-100 shadow-sm overflow-hidden h-full flex flex-col">
-                            <div ref={tableRef} className="overflow-auto no-scrollbar custom-scrollbar flex-1 min-w-0 w-full cursor-grab active:cursor-grabbing">
-                                <table className="w-full text-left border-collapse relative hidden md:table">
-                                    <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-20 shadow-sm">
-                                        <tr>
-                                            <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase sticky left-0 z-30 bg-slate-50 min-w-[200px] border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                                                {t('inventory.label_title')}
-                                            </th>
-                                            <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">{t('inventory.label_location')}</th>
-                                            {canViewInternalInfo && (
-                                                <>
-                                                    <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">{t('inventory.label_owner')}</th>
-                                                    <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_commission')}</th>
-                                                </>
-                                            )}
-                                            <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">{t('inventory.label_type')}</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_price')}</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_unit_price') || 'Đơn giá'}</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_area')}</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-center">{t('inventory.label_status')}</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right sticky right-0 z-30 bg-slate-50 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] border-l border-slate-100">{t('common.actions')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {listings.map(item => (
-                                            <InventoryRow 
-                                                key={item.id} item={item} 
-                                                onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
+                {/* GRID & LIST — inside overflow-auto so content can scroll */}
+                {(viewMode === 'GRID' || viewMode === 'LIST') && (
+                    <div className="flex-1 overflow-auto p-4 md:p-6 no-scrollbar">
+                        
+                        {/* GRID VIEW (DEFAULT) */}
+                        {viewMode === 'GRID' && (
+                            loading ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-[350px] bg-slate-100 rounded-[24px] animate-pulse"></div>)}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {listings.map(item => (
+                                        <div key={item.id} className="min-h-full">
+                                            <ListingCard 
+                                                item={{...item, isFavorite: favorites.has(item.id)}} t={t} formatCurrency={formatCurrency}
+                                                onToggleFavorite={handleToggleFavorite}
+                                                onEdit={(l) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                 onDelete={handleDeleteClick}
-                                                onDuplicate={async (id: string) => {
+                                                onDuplicate={async (id) => {
                                                     try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                 }}
                                                 onClick={() => handleNavigate(item.id)}
-                                                t={t} formatCurrency={formatCurrency}
+                                                showActions={true}
+                                            />
+                                        </div>
+                                    ))}
+                                    {listings.length === 0 && <div className="col-span-full py-20 text-center text-slate-400 italic">{t('common.no_results')}</div>}
+                                </div>
+                            )
+                        )}
+
+                        {/* LIST VIEW (TABLE) */}
+                        {viewMode === 'LIST' && (
+                            <div className="bg-white rounded-[24px] md:border border-slate-100 shadow-sm overflow-hidden h-full flex flex-col">
+                                <div ref={tableRef} className="overflow-auto no-scrollbar custom-scrollbar flex-1 min-w-0 w-full cursor-grab active:cursor-grabbing">
+                                    <table className="w-full text-left border-collapse relative hidden md:table">
+                                        <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-20 shadow-sm">
+                                            <tr>
+                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase sticky left-0 z-30 bg-slate-50 min-w-[200px] border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                                    {t('inventory.label_title')}
+                                                </th>
+                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">{t('inventory.label_location')}</th>
+                                                {canViewInternalInfo && (
+                                                    <>
+                                                        <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">{t('inventory.label_owner')}</th>
+                                                        <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_commission')}</th>
+                                                    </>
+                                                )}
+                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">{t('inventory.label_type')}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_price')}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_unit_price') || 'Đơn giá'}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_area')}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-center">{t('inventory.label_status')}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right sticky right-0 z-30 bg-slate-50 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] border-l border-slate-100">{t('common.actions')}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {listings.map(item => (
+                                                <InventoryRow 
+                                                    key={item.id} item={item} 
+                                                    onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
+                                                    onDelete={handleDeleteClick}
+                                                    onDuplicate={async (id: string) => {
+                                                        try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                    }}
+                                                    onClick={() => handleNavigate(item.id)}
+                                                    t={t} formatCurrency={formatCurrency}
+                                                    canViewInternal={canViewInternalInfo}
+                                                />
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    
+                                    {/* Mobile Compact List */}
+                                    <div className="md:hidden flex flex-col divide-y divide-slate-100">
+                                        {listings.map(item => (
+                                            <CompactInventoryRow 
+                                                key={item.id} item={item} 
+                                                onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
+                                                onDelete={handleDeleteClick}
+                                                onClick={() => handleNavigate(item.id)}
+                                                t={t}
                                                 canViewInternal={canViewInternalInfo}
                                             />
                                         ))}
-                                    </tbody>
-                                </table>
-                                
-                                {/* Mobile Compact List */}
-                                <div className="md:hidden flex flex-col divide-y divide-slate-100">
-                                    {listings.map(item => (
-                                        <CompactInventoryRow 
-                                            key={item.id} item={item} 
-                                            onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
-                                            onDelete={handleDeleteClick}
-                                            onClick={() => handleNavigate(item.id)}
-                                            t={t}
-                                            canViewInternal={canViewInternalInfo}
-                                        />
-                                    ))}
+                                    </div>
+                                    
+                                    {listings.length === 0 && !loading && <div className="p-12 text-center text-slate-400 italic">{t('common.no_results')}</div>}
                                 </div>
-                                
-                                {listings.length === 0 && !loading && <div className="p-12 text-center text-slate-400 italic">{t('common.no_results')}</div>}
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
+                )}
 
-                    {/* MAP VIEW */}
-                    {viewMode === 'MAP' && (
-                        <div className="h-full min-h-[500px] rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                {/* MAP VIEW — direct flex-1 child so Leaflet gets real pixel height */}
+                {viewMode === 'MAP' && (
+                    <div className="flex-1 min-h-0 p-4 md:p-6 overflow-hidden">
+                        <div className="h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
                             <MapView
                                 listings={listings}
                                 onNavigate={handleNavigate}
                                 formatCurrency={formatCurrency}
                                 formatUnitPrice={formatUnitPrice}
+                                formatCompactNumber={formatCompactNumber}
                                 t={t}
+                                language={language}
                             />
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {/* KANBAN BOARD VIEW */}
-                    {viewMode === 'BOARD' && (
-                        <div ref={boardRef} className="flex h-full overflow-x-auto gap-4 pb-4 no-scrollbar snap-x snap-mandatory overscroll-x-contain cursor-grab active:cursor-grabbing scroll-px-4">
-                            {Object.values(ListingStatus).map(status => {
-                                const style = STATUS_CONFIG[status];
-                                const items = groupedListings[status] || [];
-                                
-                                return (
-                                    <div key={status} className="min-w-[85vw] md:min-w-[280px] w-[85vw] md:w-[280px] flex-shrink-0 flex flex-col h-full bg-slate-50 rounded-2xl border border-slate-200 snap-center">
-                                        <div className={`p-3 border-b border-slate-200 flex justify-between items-center rounded-t-2xl ${style.bg}`}>
-                                            <h3 className={`text-xs font-bold uppercase tracking-wider ${style.color}`}>{t(`status.${status}`)}</h3>
-                                            <span className="text-[10px] font-bold bg-white px-2 py-0.5 rounded-full text-slate-500 shadow-sm border border-slate-100">{items.length}</span>
-                                        </div>
-                                        <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
-                                            {items.map(item => (
-                                                <InventoryKanbanCard 
-                                                    key={item.id} item={item} 
-                                                    onClick={() => handleNavigate(item.id)} 
-                                                    t={t} formatCurrency={formatCurrency} 
-                                                />
-                                            ))}
-                                        </div>
+                {/* KANBAN BOARD VIEW — direct flex-1 child for proper height */}
+                {viewMode === 'BOARD' && (
+                    <div ref={boardRef} className="flex flex-1 min-h-0 overflow-x-auto gap-4 p-4 md:p-6 no-scrollbar snap-x snap-mandatory overscroll-x-contain cursor-grab active:cursor-grabbing scroll-px-4">
+                        {Object.values(ListingStatus).map(status => {
+                            const style = STATUS_CONFIG[status];
+                            const items = groupedListings[status] || [];
+                            
+                            return (
+                                <div key={status} className="min-w-[85vw] md:min-w-[280px] w-[85vw] md:w-[280px] flex-shrink-0 flex flex-col h-full bg-slate-50 rounded-2xl border border-slate-200 snap-center">
+                                    <div className={`p-3 border-b border-slate-200 flex justify-between items-center rounded-t-2xl ${style.bg}`}>
+                                        <h3 className={`text-xs font-bold uppercase tracking-wider ${style.color}`}>{t(`status.${status}`)}</h3>
+                                        <span className="text-[10px] font-bold bg-white px-2 py-0.5 rounded-full text-slate-500 shadow-sm border border-slate-100">{items.length}</span>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
+                                    <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
+                                        {items.map(item => (
+                                            <InventoryKanbanCard 
+                                                key={item.id} item={item} 
+                                                onClick={() => handleNavigate(item.id)} 
+                                                t={t} formatCurrency={formatCurrency} 
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
 
-                {/* Sticky Pagination Footer */}
+                {/* Sticky Pagination Footer — only for GRID / LIST */}
                 {viewMode !== 'BOARD' && viewMode !== 'MAP' && (
                     <PaginationControl 
                         page={page} 
