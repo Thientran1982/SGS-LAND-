@@ -551,7 +551,7 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
             <SectionHeader title={t('ent.email_title')} subtitle={t('ent.email_subtitle')} action={
                 <div className="flex items-center gap-2">
                     <span className={`text-xs font-bold ${form.enabled ? 'text-emerald-600' : 'text-slate-400'}`}>{form.enabled ? t('common.active') : t('common.disabled')}</span>
-                    <input type="checkbox" checked={form.enabled} onChange={e => setForm({...form, enabled: e.target.checked})} className="toggle accent-emerald-500 w-5 h-5 cursor-pointer" />
+                    <input type="checkbox" checked={form.enabled} onChange={e => setForm({...form, enabled: e.target.checked})} className="accent-emerald-500 w-5 h-5 cursor-pointer rounded" />
                 </div>
             } />
             <div className={`bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 transition-opacity ${!form.enabled ? 'opacity-50' : 'opacity-100'}`}>
@@ -560,7 +560,7 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
                         <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_host')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.host} onChange={e => setForm({...form, host: e.target.value.trim()})} placeholder="smtp.example.com" /></div>
                         <div>
                             <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_port')}</label>
-                            <input type="number" min={1} max={65535} className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={isNaN(form.port) ? '' : form.port} onChange={e => setForm({...form, port: parseInt(e.target.value) || 587})} placeholder="587" />
+                            <input type="number" min={1} max={65535} className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={isNaN(form.port) || form.port === 0 ? '' : form.port} onChange={e => { const v = parseInt(e.target.value); setForm({...form, port: isNaN(v) ? 0 : v}); }} onBlur={e => { if (!form.port) setForm({...form, port: 587}); }} placeholder="587" />
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
@@ -611,7 +611,10 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
     useEffect(() => { setSso(config.sso); }, [config.sso]);
 
     const handleSave = async () => {
-        if (!sso.issuerUrl || !sso.clientId) { notify(t('ent.sso_save_error') || 'Issuer URL và Client ID là bắt buộc', 'error'); return; }
+        if (sso.enabled && (!sso.issuerUrl || !sso.clientId)) {
+            notify(t('ent.sso_save_error') || 'Issuer URL và Client ID là bắt buộc khi SSO được bật', 'error');
+            return;
+        }
         setSaving(true);
         try {
             await db.saveSSOConfig(sso);
@@ -639,7 +642,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
             <SectionHeader title={t('ent.sso_title')} subtitle={t('ent.sso_subtitle')} action={
                 <div className="flex items-center gap-2">
                     <span className={`text-xs font-bold ${sso.enabled ? 'text-emerald-600' : 'text-slate-400'}`}>{sso.enabled ? t('common.active') : t('common.disabled')}</span>
-                    <input type="checkbox" checked={sso.enabled} onChange={e => setSso({...sso, enabled: e.target.checked})} className="toggle accent-emerald-500 w-5 h-5 cursor-pointer" />
+                    <input type="checkbox" checked={sso.enabled} onChange={e => setSso({...sso, enabled: e.target.checked})} className="accent-emerald-500 w-5 h-5 cursor-pointer rounded" />
                 </div>
             } />
             <div className={`bg-white p-6 md:p-8 rounded-[24px] border border-slate-200 shadow-sm space-y-6 transition-opacity ${!sso.enabled ? 'opacity-50' : 'opacity-100'}`}>
@@ -787,6 +790,7 @@ const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseCon
 
 const ACTION_COLORS: Record<string, string> = {
     LOGIN: 'bg-blue-50 text-blue-700 border-blue-100',
+    LOGIN_FAILED: 'bg-rose-50 text-rose-700 border-rose-100',
     DOMAIN_ADDED: 'bg-indigo-50 text-indigo-700 border-indigo-100',
     DOMAIN_REMOVED: 'bg-rose-50 text-rose-700 border-rose-100',
     DOMAIN_VERIFIED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
@@ -796,6 +800,9 @@ const ACTION_COLORS: Record<string, string> = {
     FACEBOOK_PAGE_DISCONNECTED: 'bg-pink-50 text-pink-700 border-pink-100',
     PASSWORD_RESET_REQUEST: 'bg-amber-50 text-amber-700 border-amber-100',
     PASSWORD_RESET_COMPLETE: 'bg-teal-50 text-teal-700 border-teal-100',
+    EMAIL_CONFIG_UPDATED: 'bg-cyan-50 text-cyan-700 border-cyan-100',
+    SSO_CONFIG_UPDATED: 'bg-purple-50 text-purple-700 border-purple-100',
+    ENTERPRISE_CONFIG_UPDATED: 'bg-slate-100 text-slate-700 border-slate-200',
 };
 
 const PAGE_SIZE = 20;
