@@ -39,7 +39,7 @@ const STYLES = {
     LABEL: "block text-xs font-bold uppercase mb-1 ml-1 select-none transition-colors",
     BUTTON: "w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border transition-all duration-200 outline-none text-sm group",
     // Menu styles updated for Portal with Dark Mode
-    MENU: "fixed z-[9999] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-slate-100/50 dark:border-white/10 animate-scale-up overflow-y-auto no-scrollbar overscroll-contain text-sm focus:outline-none min-w-[120px]",
+    MENU: "fixed z-[9999] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-slate-100/50 dark:border-white/10 animate-scale-up overflow-y-auto no-scrollbar overscroll-contain text-sm focus:outline-none min-w-[120px] max-h-[240px]",
     OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group border-b border-slate-50 dark:border-white/5 last:border-0 outline-none focus:bg-slate-50 dark:focus:bg-slate-800",
     
     // State variants
@@ -79,20 +79,24 @@ export const Dropdown = memo(<T extends string | number>({
         if (buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
             const GAP = 6;
+            const MIN_WIDTH = 160;
+            const menuWidth = Math.max(rect.width, MIN_WIDTH);
+            // Clamp left so menu never overflows the right edge of the viewport
+            const safeLeft = Math.min(rect.left, window.innerWidth - menuWidth - 8);
 
             if (placement === 'top') {
                 // For 'top', we calculate distance from the BOTTOM of the viewport to the TOP of the button
                 setCoords({
                     bottom: window.innerHeight - rect.top + GAP,
-                    left: rect.left,
-                    width: rect.width
+                    left: safeLeft,
+                    width: menuWidth
                 });
             } else {
                 // Standard 'bottom' behavior
                 setCoords({
                     top: rect.bottom + GAP,
-                    left: rect.left,
-                    width: rect.width
+                    left: safeLeft,
+                    width: menuWidth
                 });
             }
         }

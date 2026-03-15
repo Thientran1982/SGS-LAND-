@@ -149,6 +149,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             onChange={(v) => setRole(v as UserRole)}
                             options={roleOptions}
                             className="w-full"
+                            placement="top"
                         />
                         
                         <div className="mt-2 bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex gap-2 animate-enter">
