@@ -264,9 +264,8 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
     const fetchUnits = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await db.getListings(1, 1000);
-            const projectUnits = res.data.filter(l => l.projectCode === projectCode);
-            setUnits(projectUnits);
+            const res = await db.getListings(1, 500, { projectCode });
+            setUnits(res.data || []);
         } catch (e) {
             console.error(e);
         } finally {

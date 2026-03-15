@@ -108,7 +108,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                     setFormData({
                         ...defaultState,
                         ...initialData,
-                        code: `LST${Date.now().toString().slice(-4)}`,
+                        code: `LST${Date.now().toString().slice(-6)}`,
                         attributes: { ...defaultState.attributes, ...(initialData?.attributes || {}) },
                         contactPhone: user?.phone || '' // Pre-fill
                     });
@@ -486,7 +486,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                     value={formData.commission || ''} 
                                                     onChange={e => setFormData({...formData, commission: Number(e.target.value)})} 
                                                     className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-white font-bold" 
-                                                    placeholder="1.5"
+                                                    placeholder={formData.commissionUnit === 'FIXED' ? '50000000' : '1.5'}
                                                 />
                                                 <div className="w-24 shrink-0">
                                                     <Dropdown
@@ -513,7 +513,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="text-[11px] font-bold text-slate-500 uppercase mb-1 block">Vĩ độ (Lat)</label>
+                                        <label className="text-[11px] font-bold text-slate-500 uppercase mb-1 block">{t('inventory.label_lat') || 'Vĩ độ (Lat)'}</label>
                                         <input
                                             type="number"
                                             step="0.000001"
@@ -527,7 +527,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[11px] font-bold text-slate-500 uppercase mb-1 block">Kinh độ (Lng)</label>
+                                        <label className="text-[11px] font-bold text-slate-500 uppercase mb-1 block">{t('inventory.label_lng') || 'Kinh độ (Lng)'}</label>
                                         <input
                                             type="number"
                                             step="0.000001"
@@ -540,7 +540,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             placeholder="106.700900"
                                         />
                                     </div>
-                                    <p className="col-span-2 text-[10px] text-slate-400 -mt-1">Tuỳ chọn — nhập toạ độ Google Maps để pin hiển thị chính xác trên bản đồ</p>
+                                    <p className="col-span-2 text-[10px] text-slate-400 -mt-1">{t('inventory.coordinates_hint') || 'Tuỳ chọn — nhập toạ độ Google Maps để pin hiển thị chính xác trên bản đồ'}</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     {/* Smart Price Input */}
@@ -585,13 +585,13 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     </div>
                                 </div>
 
-                                {/* DESCRIPTION / NOTES */}
+                                {/* DESCRIPTION */}
                                 <div>
-                                    <label className="text-[11px] font-bold text-slate-500 uppercase mb-1 block">{t('inventory.label_notes')}</label>
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase mb-1 block">{t('inventory.label_desc')}</label>
                                     <textarea
-                                        value={(formData.attributes?.notes as string) || ''}
-                                        onChange={e => updateAttribute('notes', e.target.value)}
-                                        rows={3}
+                                        value={(formData.attributes?.description as string) || ''}
+                                        onChange={e => updateAttribute('description', e.target.value)}
+                                        rows={4}
                                         className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none resize-none"
                                         placeholder={t('inventory.placeholder_notes')}
                                     />
