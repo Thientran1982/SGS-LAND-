@@ -2,35 +2,93 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { useTranslation } from '../services/i18n';
 
-// ─── WINDOW GRID GEOMETRY ──────────────────────────────────────────────────
+// ─── ISOMETRIC GEOMETRY ────────────────────────────────────────────────────
 //
-// LEFT FACE: quadrilateral (240,120) (400,200) (400,440) (240,360)
-//   • 8 columns: x = 240 + col*20  (col 0–7)
-//   • 8 rows:    y at x=240 = 120 + row*30  (row 0–7, step 30)
-//   • Isometric slope going right: +0.5 px-y per px-x → per col (+20px x) → +10px y
-//   ∴  top-y of cell (col,row) at x-left = 120 + row*30 + col*10
+// LEFT FACE  — quadrilateral: (240,120) → (400,200) → (400,440) → (240,360)
+//   Grid: 8 cols × 8 rows  |  col-step: 20px-x  |  row-step: 30px-y
+//   Isometric slope → going right +20px-x: y shifts +10px  (slope = +0.5)
+//   Top-left corner of cell(col, row):
+//     x = 240 + col*20
+//     y = 120 + row*30 + col*10
 //
-// RIGHT FACE: quadrilateral (400,200) (560,120) (560,360) (400,440)
-//   • 8 columns: x = 400 + col*20  (col 0–7)
-//   • 8 rows:    y at x=400 = 200 + row*30  (row 0–7, same row heights)
-//   • Isometric slope going right: −0.5 px-y per px-x → per col (−10px y)
-//   ∴  top-y of cell (col,row) at x-left = 200 + row*30 - col*10
-// ─────────────────────────────────────────────────────────────────────────────
+// RIGHT FACE — quadrilateral: (400,200) → (560,120) → (560,360) → (400,440)
+//   Same grid dimensions, slope = -0.5 (y decreases going right)
+//   Top-left corner of cell(col, row):
+//     x = 400 + col*20
+//     y = 200 + row*30 - col*10
+//
+// Each window is a PARALLELOGRAM polygon (4 corners) so it fits exactly
+// inside its cell without crossing the isometric grid lines.
+// ─────────────────────────────────────────────────────────────────────────
 
-function getLeftWindowPos(col: number, row: number) {
-  const x   = 240 + col * 20;
-  const yTop = 120 + row * 30 + col * 10;
-  return { x: x + 3, y: yTop + 4, w: 14, h: 22 };
+const PX = 3;   // horizontal padding inside cell
+const PY = 4;   // vertical padding inside cell
+
+function leftPoly(col: number, row: number): string {
+  const x0 = 240 + col * 20;
+  const x1 = 240 + (col + 1) * 20;
+  const yTL = 120 + row * 30       + col * 10;
+  const yTR = 120 + row * 30       + (col + 1) * 10;
+  const yBR = 120 + (row + 1) * 30 + (col + 1) * 10;
+  const yBL = 120 + (row + 1) * 30 + col * 10;
+  return `${x0 + PX},${yTL + PY} ${x1 - PX},${yTR + PY} ${x1 - PX},${yBR - PY} ${x0 + PX},${yBL - PY}`;
 }
 
-function getRightWindowPos(col: number, row: number) {
-  const x   = 400 + col * 20;
-  const yTop = 200 + row * 30 - col * 10;
-  return { x: x + 3, y: yTop + 4, w: 14, h: 22 };
+function leftGlarePoly(col: number, row: number): string {
+  // Top-left quarter of the window cell for glass-glare effect
+  const x0 = 240 + col * 20;
+  const xM = 240 + col * 20 + 10;   // mid-x
+  const yTL = 120 + row * 30       + col * 10;
+  const yTM = 120 + row * 30       + (col + 0.5) * 10; // mid top
+  const yML = 120 + (row + 0.45) * 30 + col * 10;      // mid left
+  const yMM = 120 + (row + 0.45) * 30 + (col + 0.5) * 10;
+  return `${x0 + PX + 1},${yTL + PY + 1} ${xM - 1},${yTM + PY + 1} ${xM - 1},${yMM - 1} ${x0 + PX + 1},${yML - 1}`;
 }
 
-// ─── WINDOW DEFINITIONS ───────────────────────────────────────────────────
-// [col, row, hue, speed]  — col/row are grid indices verified against geometry
+function rightPoly(col: number, row: number): string {
+  const x0 = 400 + col * 20;
+  const x1 = 400 + (col + 1) * 20;
+  const yTL = 200 + row * 30       - col * 10;
+  const yTR = 200 + row * 30       - (col + 1) * 10;
+  const yBR = 200 + (row + 1) * 30 - (col + 1) * 10;
+  const yBL = 200 + (row + 1) * 30 - col * 10;
+  return `${x0 + PX},${yTL + PY} ${x1 - PX},${yTR + PY} ${x1 - PX},${yBR - PY} ${x0 + PX},${yBL - PY}`;
+}
+
+function rightGlarePoly(col: number, row: number): string {
+  const x0 = 400 + col * 20;
+  const xM = 400 + col * 20 + 10;
+  const yTL = 200 + row * 30       - col * 10;
+  const yTM = 200 + row * 30       - (col + 0.5) * 10;
+  const yML = 200 + (row + 0.45) * 30 - col * 10;
+  const yMM = 200 + (row + 0.45) * 30 - (col + 0.5) * 10;
+  return `${x0 + PX + 1},${yTL + PY + 1} ${xM - 1},${yTM + PY + 1} ${xM - 1},${yMM - 1} ${x0 + PX + 1},${yML - 1}`;
+}
+
+// Slightly expanded polygon for the glow halo (padding - 2)
+function leftHaloPoly(col: number, row: number): string {
+  const p = PX - 2, py = PY - 2;
+  const x0 = 240 + col * 20;
+  const x1 = 240 + (col + 1) * 20;
+  const yTL = 120 + row * 30       + col * 10;
+  const yTR = 120 + row * 30       + (col + 1) * 10;
+  const yBR = 120 + (row + 1) * 30 + (col + 1) * 10;
+  const yBL = 120 + (row + 1) * 30 + col * 10;
+  return `${x0 + p},${yTL + py} ${x1 - p},${yTR + py} ${x1 - p},${yBR - py} ${x0 + p},${yBL - py}`;
+}
+
+function rightHaloPoly(col: number, row: number): string {
+  const p = PX - 2, py = PY - 2;
+  const x0 = 400 + col * 20;
+  const x1 = 400 + (col + 1) * 20;
+  const yTL = 200 + row * 30       - col * 10;
+  const yTR = 200 + row * 30       - (col + 1) * 10;
+  const yBR = 200 + (row + 1) * 30 - (col + 1) * 10;
+  const yBL = 200 + (row + 1) * 30 - col * 10;
+  return `${x0 + p},${yTL + py} ${x1 - p},${yTR + py} ${x1 - p},${yBR - py} ${x0 + p},${yBL - py}`;
+}
+
+// ─── WINDOW DEFINITIONS ────────────────────────────────────────────────────
 type WinHue   = 'warm' | 'cool';
 type WinSpeed = 'slow' | 'med' | 'fast';
 
@@ -52,7 +110,6 @@ const RIGHT_WINDOWS: [number, number, WinHue, WinSpeed][] = [
 
 const CYCLE_DUR: Record<WinSpeed, number> = { slow: 4.5, med: 2.8, fast: 1.6 };
 
-// 28 staggered delays (prime-spaced) so no two windows flicker together
 const DELAYS = [
   0.00, 0.30, 0.73, 1.10, 1.51, 0.87, 2.13, 0.41,
   1.79, 2.37, 0.62, 1.28, 2.71, 0.19, 1.03, 2.20,
@@ -60,48 +117,54 @@ const DELAYS = [
   2.58, 3.30, 0.35, 1.08,
 ];
 
-// ─── ANIMATED WINDOW COMPONENT ───────────────────────────────────────────
+// ─── ANIMATED WINDOW ────────────────────────────────────────────────────────
 interface LitWindowProps {
-  x: number; y: number; w: number; h: number;
+  winPoints:   string;   // parallelogram window polygon
+  haloPoints:  string;   // slightly larger polygon for glow halo
+  glarePoints: string;   // top-left quarter for glass glare
   hue: WinHue; speed: WinSpeed; delay: number;
 }
 
-const LitWindow: React.FC<LitWindowProps> = ({ x, y, w, h, hue, speed, delay }) => {
+const LitWindow: React.FC<LitWindowProps> = ({
+  winPoints, haloPoints, glarePoints, hue, speed, delay,
+}) => {
   const dur     = CYCLE_DUR[speed];
   const colorOn = hue === 'warm' ? '#FCD34D' : '#93C5FD';
 
   return (
     <motion.g>
-      {/* Soft glow halo (slightly larger, blurred via CSS filter) */}
-      <motion.rect
-        x={x - 3} y={y - 3} width={w + 6} height={h + 6} rx={3}
-        fill={colorOn}
+      {/* Glow halo — expanded parallelogram, blurred */}
+      <motion.g
+        filter="url(#winGlow)"
         initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.28, 0, 0.25, 0] }}
+        animate={{ opacity: [0, 0.55, 0, 0.50, 0] }}
         transition={{ duration: dur, delay, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ filter: 'blur(5px)' }}
-      />
-      {/* Core lit window */}
-      <motion.rect
-        x={x} y={y} width={w} height={h} rx={1.5}
-        fill={colorOn}
-        initial={{ opacity: 0.06 }}
-        animate={{ opacity: [0.06, 0.88, 0.06, 0.82, 0.06] }}
+      >
+        <polygon points={haloPoints} fill={colorOn} />
+      </motion.g>
+
+      {/* Core window — exact parallelogram cell */}
+      <motion.g
+        initial={{ opacity: 0.05 }}
+        animate={{ opacity: [0.05, 0.90, 0.05, 0.85, 0.05] }}
         transition={{ duration: dur, delay, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      {/* Glass-glare: top-left corner highlight */}
-      <motion.rect
-        x={x + 1} y={y + 1} width={Math.floor(w * 0.45)} height={Math.floor(h * 0.35)} rx={1}
-        fill="#ffffff"
+      >
+        <polygon points={winPoints} fill={colorOn} />
+      </motion.g>
+
+      {/* Glass glare — top-left quarter highlight */}
+      <motion.g
         initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.42, 0, 0.38, 0] }}
+        animate={{ opacity: [0, 0.45, 0, 0.40, 0] }}
         transition={{ duration: dur, delay: delay + 0.06, repeat: Infinity, ease: 'easeInOut' }}
-      />
+      >
+        <polygon points={glarePoints} fill="#ffffff" />
+      </motion.g>
     </motion.g>
   );
 };
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────
+// ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 export const Hero3D = () => {
   const { language } = useTranslation();
   const textPrice = language === 'vn' ? '24.5 Tỷ' : '$2.45M';
@@ -121,32 +184,25 @@ export const Hero3D = () => {
       >
         <defs>
           <linearGradient id="glassLeft" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#1E293B" />
-            <stop offset="100%" stopColor="#0F172A" />
+            <stop offset="0%" stopColor="#1E293B" /><stop offset="100%" stopColor="#0F172A" />
           </linearGradient>
           <linearGradient id="glassRight" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#334155" />
-            <stop offset="100%" stopColor="#1E293B" />
+            <stop offset="0%" stopColor="#334155" /><stop offset="100%" stopColor="#1E293B" />
           </linearGradient>
           <linearGradient id="glassTop" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#475569" />
-            <stop offset="100%" stopColor="#334155" />
+            <stop offset="0%" stopColor="#475569" /><stop offset="100%" stopColor="#334155" />
           </linearGradient>
           <linearGradient id="glassLeftSmall" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#312E81" />
-            <stop offset="100%" stopColor="#1E1B4B" />
+            <stop offset="0%" stopColor="#312E81" /><stop offset="100%" stopColor="#1E1B4B" />
           </linearGradient>
           <linearGradient id="glassRightSmall" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4338CA" />
-            <stop offset="100%" stopColor="#312E81" />
+            <stop offset="0%" stopColor="#4338CA" /><stop offset="100%" stopColor="#312E81" />
           </linearGradient>
           <linearGradient id="glassTopSmall" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6366F1" />
-            <stop offset="100%" stopColor="#4F46E5" />
+            <stop offset="0%" stopColor="#6366F1" /><stop offset="100%" stopColor="#4F46E5" />
           </linearGradient>
           <linearGradient id="aiHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6366F1" />
-            <stop offset="100%" stopColor="#8B5CF6" />
+            <stop offset="0%" stopColor="#6366F1" /><stop offset="100%" stopColor="#8B5CF6" />
           </linearGradient>
           <linearGradient id="emeraldGlow" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#10B981" stopOpacity="0" />
@@ -154,13 +210,26 @@ export const Hero3D = () => {
             <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
           </linearGradient>
 
+          {/* Glow for scan beam / pin */}
           <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="5" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
+          {/* Glow halo for windows */}
+          <filter id="winGlow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="4" />
+          </filter>
+          {/* Shadow blur */}
           <filter id="shadowBlur" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="15" />
           </filter>
+          {/* Clip paths so windows cannot escape their face */}
+          <clipPath id="clipLeft">
+            <polygon points="400,440 240,360 240,120 400,200" />
+          </clipPath>
+          <clipPath id="clipRight">
+            <polygon points="400,440 560,360 560,120 400,200" />
+          </clipPath>
         </defs>
 
         {/* ── ISOMETRIC GRID BASE ── */}
@@ -185,87 +254,73 @@ export const Hero3D = () => {
           <polygon points="400,260 320,220 400,180 480,220" fill="url(#glassTopSmall)" stroke="#312E81" strokeWidth="1" />
           <polyline points="320,340 400,380 480,340" fill="none" stroke="#4338CA" strokeWidth="2" strokeLinejoin="round" />
           <line x1="400" y1="380" x2="400" y2="260" stroke="#312E81" strokeWidth="2" />
-          {/* Secondary building animated windows */}
           {([
             [338, 298, 'warm', 1.2, 2.8], [356, 273, 'cool', 2.0, 4.5],
             [428, 302, 'warm', 0.6, 1.6], [448, 274, 'cool', 1.8, 2.8], [370, 315, 'warm', 3.1, 4.5],
           ] as [number, number, WinHue, number, number][]).map(([wx, wy, hue, dl, dur], i) => {
             const colorOn = hue === 'warm' ? '#FCD34D' : '#93C5FD';
             return (
-              <motion.g key={`sb-${i}`}>
-                <motion.rect x={wx - 1} y={wy - 1} width={13} height={9} rx={2}
-                  fill={colorOn}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: [0, 0.3, 0, 0.28, 0] }}
-                  transition={{ duration: dur, delay: dl, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{ filter: 'blur(3px)' }}
-                />
-                <motion.rect x={wx} y={wy} width={11} height={7} rx={1}
-                  fill={colorOn}
-                  initial={{ opacity: 0.06 }}
-                  animate={{ opacity: [0.06, 0.85, 0.06, 0.80, 0.06] }}
-                  transition={{ duration: dur, delay: dl, repeat: Infinity, ease: 'easeInOut' }}
-                />
+              <motion.g key={`sb-${i}`}
+                initial={{ opacity: 0.06 }}
+                animate={{ opacity: [0.06, 0.85, 0.06, 0.80, 0.06] }}
+                transition={{ duration: dur, delay: dl, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <rect x={wx} y={wy} width={11} height={7} rx={1} fill={colorOn} />
               </motion.g>
             );
           })}
         </g>
 
-        {/* ── MAIN BUILDING FACES ── */}
-        {/* Left face */}
+        {/* ── MAIN BUILDING — FACES ── */}
         <polygon points="400,440 240,360 240,120 400,200" fill="url(#glassLeft)" stroke="#0F172A" strokeWidth="1" />
-        {/* Right face */}
         <polygon points="400,440 560,360 560,120 400,200" fill="url(#glassRight)" stroke="#0F172A" strokeWidth="1" />
-        {/* Top face */}
         <polygon points="400,200 240,120 400,40 560,120" fill="url(#glassTop)" stroke="#334155" strokeWidth="1.5" />
-
-        {/* Structural edge lines */}
         <polyline points="240,360 400,440 560,360" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinejoin="round" />
         <line x1="400" y1="440" x2="400" y2="200" stroke="#334155" strokeWidth="2" />
 
         {/* ── WINDOW GRID LINES — Left face ── */}
-        {/* Vertical lines (screen-x columns) */}
-        <path d="M 260,350 L 260,130 M 280,360 L 280,140 M 300,370 L 300,150 M 320,380 L 320,160 M 340,390 L 340,170 M 360,400 L 360,180 M 380,410 L 380,190"
+        <path d="M 260,370 L 260,130 M 280,380 L 280,140 M 300,390 L 300,150 M 320,400 L 320,160 M 340,410 L 340,170 M 360,420 L 360,180 M 380,430 L 380,190"
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
-        {/* Horizontal (isometric-sloped) lines */}
         <path d="M 240,330 L 400,410 M 240,300 L 400,380 M 240,270 L 400,350 M 240,240 L 400,320 M 240,210 L 400,290 M 240,180 L 400,260 M 240,150 L 400,230"
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
 
-        {/* ── ANIMATED LIT WINDOWS — Left face ── */}
-        {LEFT_WINDOWS.map(([col, row, hue, speed], i) => {
-          const wp = getLeftWindowPos(col, row);
-          return (
+        {/* ── ANIMATED WINDOWS — Left face (clipped to face boundary) ── */}
+        <g clipPath="url(#clipLeft)">
+          {LEFT_WINDOWS.map(([col, row, hue, speed], i) => (
             <LitWindow key={`wl-${i}`}
-              x={wp.x} y={wp.y} w={wp.w} h={wp.h}
+              winPoints={leftPoly(col, row)}
+              haloPoints={leftHaloPoly(col, row)}
+              glarePoints={leftGlarePoly(col, row)}
               hue={hue} speed={speed}
               delay={DELAYS[i % DELAYS.length]}
             />
-          );
-        })}
+          ))}
+        </g>
 
         {/* ── WINDOW GRID LINES — Right face ── */}
-        <path d="M 540,350 L 540,130 M 520,360 L 520,140 M 500,370 L 500,150 M 480,380 L 480,160 M 460,390 L 460,170 M 440,400 L 440,180 M 420,410 L 420,190"
+        <path d="M 540,370 L 540,130 M 520,380 L 520,140 M 500,390 L 500,150 M 480,400 L 480,160 M 460,410 L 460,170 M 440,420 L 440,180 M 420,430 L 420,190"
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
         <path d="M 560,330 L 400,410 M 560,300 L 400,380 M 560,270 L 400,350 M 560,240 L 400,320 M 560,210 L 400,290 M 560,180 L 400,260 M 560,150 L 400,230"
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
 
-        {/* ── ANIMATED LIT WINDOWS — Right face ── */}
-        {RIGHT_WINDOWS.map(([col, row, hue, speed], i) => {
-          const wp = getRightWindowPos(col, row);
-          return (
+        {/* ── ANIMATED WINDOWS — Right face (clipped to face boundary) ── */}
+        <g clipPath="url(#clipRight)">
+          {RIGHT_WINDOWS.map(([col, row, hue, speed], i) => (
             <LitWindow key={`wr-${i}`}
-              x={wp.x} y={wp.y} w={wp.w} h={wp.h}
+              winPoints={rightPoly(col, row)}
+              haloPoints={rightHaloPoly(col, row)}
+              glarePoints={rightGlarePoly(col, row)}
               hue={hue} speed={speed}
               delay={DELAYS[(i + 8) % DELAYS.length]}
             />
-          );
-        })}
+          ))}
+        </g>
 
         {/* Top edge highlights */}
         <polyline points="240,120 400,40 560,120" fill="none" stroke="#6366F1" strokeWidth="1.5" opacity="0.5" filter="url(#glow)" />
         <polyline points="240,120 400,200 560,120" fill="none" stroke="#475569" strokeWidth="1" opacity="0.4" />
 
-        {/* ── AI SCANNING LASER — sweeps building body top→bottom ── */}
+        {/* ── AI SCANNING LASER ── */}
         <motion.g
           animate={{ y: [0, 320, 0], opacity: [0.2, 1, 0.2] }}
           transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
