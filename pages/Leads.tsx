@@ -904,11 +904,11 @@ export const Leads: React.FC = () => {
             <div className="flex-1 overflow-hidden bg-white min-h-0 relative flex flex-col">
                 
                 {/* Scrollable Container */}
-                <div className="flex-1 overflow-auto p-4 md:p-6 custom-scrollbar min-h-0">
+                <div className="flex-1 overflow-auto p-4 md:p-6 no-scrollbar min-h-0">
                     {/* VIEW MODE: LIST (TABLE) - Desktop Only */}
                     {viewMode === 'LIST' && (
                         <div className="hidden md:flex flex-col bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden h-full">
-                            <div ref={tableRef} className="overflow-auto custom-scrollbar flex-1 min-w-0 min-h-0 w-full cursor-grab active:cursor-grabbing">
+                            <div ref={tableRef} className="overflow-auto no-scrollbar flex-1 min-w-0 min-h-0 w-full cursor-grab active:cursor-grabbing">
                                 <table className="w-full text-left border-collapse relative">
                                     <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-20 shadow-sm">
                                         <tr>
@@ -967,7 +967,7 @@ export const Leads: React.FC = () => {
                                             <h3 className={`text-xs font-bold uppercase tracking-wider ${style.color}`}>{t(`stage.${stage}`)}</h3>
                                             <span className="text-[10px] font-bold bg-white px-2 py-0.5 rounded-full text-slate-500 shadow-sm border border-slate-100">{groupedLeads[stage]?.length || 0}</span>
                                         </div>
-                                        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar min-h-0">
+                                        <div className="flex-1 overflow-y-auto p-2 no-scrollbar min-h-0">
                                             {groupedLeads[stage]?.map(lead => (
                                                 <KanbanCard key={lead.id} lead={lead} onClick={handleEdit} t={t} formatDate={formatDate} users={users} />
                                             ))}

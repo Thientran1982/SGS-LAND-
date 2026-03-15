@@ -250,7 +250,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
 
     // --- RENDER CONTENT ---
     const content = (
-        <div className={`bg-white ${isModal ? 'fixed inset-0 z-[70] md:inset-y-4 md:inset-x-auto md:right-4 md:w-[80vw] lg:w-[900px] md:rounded-3xl md:shadow-2xl animate-slide-in-right border border-slate-100 overflow-y-auto custom-scrollbar' : 'h-full flex flex-col'}`}>
+        <div className={`bg-white ${isModal ? 'fixed inset-0 z-[70] md:inset-y-4 md:inset-x-auto md:right-4 md:w-[80vw] lg:w-[900px] md:rounded-3xl md:shadow-2xl animate-slide-in-right border border-slate-100 overflow-y-auto no-scrollbar' : 'h-full flex flex-col'}`}>
             
             {/* Header - sticky at top when modal */}
             <div className={`flex justify-between items-center p-4 md:p-6 border-b border-slate-100 bg-white shadow-sm ${isModal ? 'sticky top-0 z-20' : 'flex-none relative z-20'}`}>
@@ -319,7 +319,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             </div>
 
             {/* Scrollable Body */}
-            <div className={`p-4 md:p-6 bg-slate-50/30 ${!isModal ? 'flex-1 min-h-0 overflow-y-auto custom-scrollbar' : ''}`}>
+            <div className={`p-4 md:p-6 bg-slate-50/30 ${!isModal ? 'flex-1 min-h-0 overflow-y-auto no-scrollbar' : ''}`}>
                     <AIAnalysisCard summary={aiSummary} loading={isThinking} t={t} onRefresh={refreshAiSummary} />
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 mb-8">

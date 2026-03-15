@@ -190,7 +190,7 @@ const Contracts: React.FC = () => {
                 </div>
 
                 <div 
-                    className="flex-1 overflow-auto min-w-0 min-h-0 w-full no-scrollbar custom-scrollbar"
+                    className="flex-1 overflow-auto min-w-0 min-h-0 w-full no-scrollbar"
                     ref={scrollRef}
                 >
                     {loading ? (
