@@ -567,7 +567,7 @@ export const Leads: React.FC = () => {
             socket?.emit("lead_updated", updatedLead);
             fetchLeads();
         } catch (e: any) {
-            notify(e.message, 'error');
+            notify(e.message || t('common.error'), 'error');
         }
     };
 
@@ -723,7 +723,7 @@ export const Leads: React.FC = () => {
 
     return (
         <div className="h-full flex flex-col relative">
-            {toast && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
+            {toast && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg || (toast.type === 'success' ? t('common.success') : t('common.error'))}</span></div>}
 
             {/* Header & Controls */}
             <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm p-4 md:p-6 transition-all flex-none">
@@ -904,11 +904,11 @@ export const Leads: React.FC = () => {
             <div className="flex-1 overflow-hidden bg-white min-h-0 relative flex flex-col">
                 
                 {/* Scrollable Container */}
-                <div className="flex-1 overflow-auto p-4 md:p-6 no-scrollbar">
+                <div className="flex-1 overflow-auto p-4 md:p-6 custom-scrollbar">
                     {/* VIEW MODE: LIST (TABLE) - Desktop Only */}
                     {viewMode === 'LIST' && (
                         <div className="hidden md:block bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden h-full flex flex-col">
-                            <div ref={tableRef} className="overflow-auto no-scrollbar custom-scrollbar flex-1 min-w-0 w-full cursor-grab active:cursor-grabbing">
+                            <div ref={tableRef} className="overflow-auto custom-scrollbar flex-1 min-w-0 w-full cursor-grab active:cursor-grabbing">
                                 <table className="w-full text-left border-collapse relative">
                                     <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-20 shadow-sm">
                                         <tr>
@@ -967,7 +967,7 @@ export const Leads: React.FC = () => {
                                             <h3 className={`text-xs font-bold uppercase tracking-wider ${style.color}`}>{t(`stage.${stage}`)}</h3>
                                             <span className="text-[10px] font-bold bg-white px-2 py-0.5 rounded-full text-slate-500 shadow-sm border border-slate-100">{groupedLeads[stage]?.length || 0}</span>
                                         </div>
-                                        <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
+                                        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
                                             {groupedLeads[stage]?.map(lead => (
                                                 <KanbanCard key={lead.id} lead={lead} onClick={handleEdit} t={t} formatDate={formatDate} users={users} />
                                             ))}
