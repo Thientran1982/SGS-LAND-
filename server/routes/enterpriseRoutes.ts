@@ -33,6 +33,26 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins can update enterprise config' });
       }
       const updated = await enterpriseConfigRepository.upsertConfig(user.tenantId, req.body);
+
+      const changedSections = Object.keys(req.body);
+      if (changedSections.length > 0) {
+        const actionMap: Record<string, string> = {
+          email: 'EMAIL_CONFIG_UPDATED',
+          sso: 'SSO_CONFIG_UPDATED',
+        };
+        const action = changedSections.length === 1 && actionMap[changedSections[0]]
+          ? actionMap[changedSections[0]]
+          : 'ENTERPRISE_CONFIG_UPDATED';
+        await auditRepository.log(user.tenantId, {
+          actorId: user.id,
+          action,
+          entityType: 'enterprise_config',
+          entityId: user.tenantId,
+          details: `Cập nhật cấu hình: ${changedSections.join(', ')}`,
+          ipAddress: req.ip,
+        });
+      }
+
       res.json(updated);
     } catch (error) {
       console.error('Error updating enterprise config:', error);
