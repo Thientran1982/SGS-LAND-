@@ -806,12 +806,12 @@ export const Reports: React.FC = () => {
 
     return (
         <div className="space-y-6 pb-20 relative animate-enter">
-            {/* Header: Tabs + Time Range Filter */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm gap-3 w-full">
-                {/* Time Range Filter — scrollable row on mobile */}
-                <div className="flex items-center gap-2 w-full lg:w-auto min-w-0">
-                    <span className="hidden sm:block text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap flex-shrink-0">Thời gian:</span>
-                    <div className="flex bg-slate-100 p-0.5 rounded-xl gap-0.5 overflow-x-auto no-scrollbar flex-1 lg:flex-none">
+            {/* Header: Time Range + Tabs — always stacked in two separate rows */}
+            <div className="bg-white p-4 sm:p-5 rounded-[24px] border border-slate-100 shadow-sm flex flex-col gap-3 w-full">
+                {/* Row 1: Time Range Filter */}
+                <div className="flex items-center gap-2 w-full min-w-0">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap flex-shrink-0">Thời gian:</span>
+                    <div className="flex bg-slate-100 p-0.5 rounded-xl gap-0.5 overflow-x-auto no-scrollbar flex-1">
                         {TIME_RANGE_OPTIONS.map(opt => (
                             <button
                                 key={opt.value}
@@ -828,31 +828,33 @@ export const Reports: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Mobile Dropdown */}
-                <div className="w-full md:hidden">
-                    <Dropdown 
-                        value={activeTab}
-                        onChange={(val) => setActiveTab(val as any)}
-                        options={tabs.map(tab => ({ value: tab.id, label: tab.label }))}
-                        className="w-full"
-                    />
-                </div>
-
-                {/* Desktop Tabs */}
-                <div ref={scrollRef} className="hidden md:flex bg-slate-100 p-1 rounded-xl flex-wrap gap-1 w-full lg:w-auto">
-                    {tabs.map(tab => (
-                        <button 
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
-                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap flex-1 lg:flex-none text-center ${
-                                activeTab === tab.id 
-                                ? 'bg-white shadow text-slate-800 ring-1 ring-black/5' 
-                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
-                            }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
+                {/* Row 2: Tab Navigation — dropdown on mobile, buttons on md+ */}
+                <div className="w-full">
+                    {/* Mobile Dropdown */}
+                    <div className="md:hidden">
+                        <Dropdown 
+                            value={activeTab}
+                            onChange={(val) => setActiveTab(val as any)}
+                            options={tabs.map(tab => ({ value: tab.id, label: tab.label }))}
+                            className="w-full"
+                        />
+                    </div>
+                    {/* Desktop Tab Buttons */}
+                    <div ref={scrollRef} className="hidden md:flex bg-slate-100 p-1 rounded-xl gap-1 w-full overflow-x-auto no-scrollbar">
+                        {tabs.map(tab => (
+                            <button 
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as any)}
+                                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap flex-1 text-center ${
+                                    activeTab === tab.id 
+                                    ? 'bg-white shadow text-slate-800 ring-1 ring-black/5' 
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
