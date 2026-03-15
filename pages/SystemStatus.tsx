@@ -274,7 +274,7 @@ export const SystemStatus: React.FC = () => {
     return (
         <div className="space-y-6 pb-20 animate-enter relative">
             {toast && (
-                <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${
                     toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'
                 }`}>
                     <span className="font-bold text-sm">{toast.msg}</span>

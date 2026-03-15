@@ -116,7 +116,7 @@ export const Marketplace: React.FC = () => {
 
     return (
         <div className="space-y-6 pb-20 animate-enter relative">
-            {toast && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
+            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm gap-4">
                 <div>

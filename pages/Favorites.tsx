@@ -126,7 +126,7 @@ export const Favorites: React.FC = () => {
     return (
         <div className="h-full flex flex-col pb-20 animate-enter relative">
             {toast && (
-                <div className={`fixed top-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border transition-all ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border transition-all ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             )}
