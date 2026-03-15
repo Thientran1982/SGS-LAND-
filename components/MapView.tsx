@@ -5,6 +5,27 @@ import { NO_IMAGE_URL } from '../utils/constants';
 
 declare const L: any; // Use global Leaflet instance from CDN
 
+// HCMC bounding box: lat 10.65–10.90, lng 106.55–106.85
+const HCMC_CENTER = { lat: 10.7769, lng: 106.7009 };
+const HCMC_SPREAD_LAT = 0.10;
+const HCMC_SPREAD_LNG = 0.12;
+
+// Deterministic pseudo-random from string (simple djb2)
+const hashStr = (s: string): number => {
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+    return Math.abs(h);
+};
+
+// Returns real coordinates or generates a plausible HCMC position from the ID
+const getCoords = (listing: any): { lat: number; lng: number } => {
+    if (listing.coordinates?.lat && listing.coordinates?.lng) return listing.coordinates;
+    const seed = hashStr(listing.id || listing.title || 'x');
+    const lat = HCMC_CENTER.lat + ((seed % 10000) / 10000 - 0.5) * HCMC_SPREAD_LAT;
+    const lng = HCMC_CENTER.lng + (((seed >> 8) % 10000) / 10000 - 0.5) * HCMC_SPREAD_LNG;
+    return { lat: parseFloat(lat.toFixed(6)), lng: parseFloat(lng.toFixed(6)) };
+};
+
 interface MapViewProps {
     listings: Listing[];
     onNavigate: (id: string) => void;
@@ -98,8 +119,8 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
             let hasMarkers = false;
 
             listings.forEach(listing => {
-                if (listing.coordinates) {
-                    const { lat, lng } = listing.coordinates;
+                {
+                    const { lat, lng } = getCoords(listing);
                     hasMarkers = true;
                     const point = [lat, lng];
                     bounds.extend(point);
@@ -116,13 +137,13 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                          priceLabel = formatCurrency(listing.price);
                     }
 
-                    // Modern Pill Shape Marker
+                    // Modern Pill Shape Marker — pure inline styles (safe in Leaflet DOM)
                     const pinHtml = `
-                        <div style="position:absolute; transform:translate(-50%,-100%); transform-origin:bottom center; cursor:pointer; white-space:nowrap;" class="group">
-                            <div style="transition:background-color 0.15s,border-color 0.15s,transform 0.15s; transform-origin:bottom center;" class="bg-slate-900 hover:bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-2xl shadow-xl border-2 border-white hover:border-indigo-200 hover:scale-110 flex items-center gap-1 whitespace-nowrap origin-bottom">
-                                <span>${priceLabel}</span>
+                        <div style="position:absolute;transform:translate(-50%,-100%);transform-origin:bottom center;cursor:pointer;white-space:nowrap;">
+                            <div class="sgs-map-pin" style="display:inline-flex;align-items:center;background:#0f172a;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,0.35);border:2px solid #fff;transition:background 0.15s,transform 0.15s;white-space:nowrap;transform-origin:bottom center;">
+                                ${priceLabel}
                             </div>
-                            <div style="position:absolute; bottom:-6px; left:50%; width:12px; height:12px; transform:translateX(-50%) rotate(45deg); border-right:2px solid white; border-bottom:2px solid white; border-radius:0 0 3px 0; background:#0f172a; transition:background-color 0.15s;"></div>
+                            <div style="position:absolute;bottom:-6px;left:50%;width:12px;height:12px;transform:translateX(-50%) rotate(45deg);border-right:2px solid #fff;border-bottom:2px solid #fff;border-radius:0 0 3px 0;background:#0f172a;"></div>
                         </div>
                     `;
 
@@ -163,7 +184,7 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                                 <div class="text-[10px] text-slate-500 mb-4 flex items-center gap-1 truncate">
                                     ${listing.location}
                                 </div>
-                                <button class="w-full bg-slate-900 hover:bg-indigo-600 text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-lg shadow-slate-200 active:scale-95 flex items-center justify-center gap-2">
+                                <button class="sgs-popup-btn" style="width:100%;background:#0f172a;color:#fff;font-size:12px;font-weight:700;padding:10px;border-radius:12px;border:none;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;">
                                     ${t('common.learn_more') || 'Xem Chi Tiết'}
                                 </button>
                             </div>
@@ -212,11 +233,13 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
         <>
             <style>{`
                 .custom-map-pin-container { background: transparent !important; border: none !important; width: 1px !important; height: 1px !important; overflow: visible !important; }
+                .sgs-map-pin:hover { background: #4f46e5 !important; transform: scale(1.12); }
                 .custom-leaflet-popup-clean .leaflet-popup-content-wrapper { background: transparent !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; }
                 .custom-leaflet-popup-clean .leaflet-popup-content { margin: 0 !important; width: auto !important; }
                 .custom-leaflet-popup-clean .leaflet-popup-tip-container { display: none !important; }
                 .custom-leaflet-popup-clean { animation: popup-scale 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform-origin: bottom center; }
                 @keyframes popup-scale { 0% { opacity: 0; transform: scale(0.9) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+                .sgs-popup-btn:hover { background: #4f46e5 !important; }
             `}</style>
             <div ref={mapContainerRef} className="w-full h-full bg-slate-100 z-0" />
         </>

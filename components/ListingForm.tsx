@@ -511,6 +511,37 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     />
                                     {errors.location && <p className="text-[10px] text-rose-500 mt-1">{errors.location}</p>}
                                 </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-500 uppercase mb-1 block">Vĩ độ (Lat)</label>
+                                        <input
+                                            type="number"
+                                            step="0.000001"
+                                            value={formData.coordinates?.lat ?? ''}
+                                            onChange={e => {
+                                                const lat = parseFloat(e.target.value);
+                                                setFormData({ ...formData, coordinates: { lat: isNaN(lat) ? 0 : lat, lng: formData.coordinates?.lng ?? 0 } });
+                                            }}
+                                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-mono focus:border-indigo-500 outline-none"
+                                            placeholder="10.776900"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-500 uppercase mb-1 block">Kinh độ (Lng)</label>
+                                        <input
+                                            type="number"
+                                            step="0.000001"
+                                            value={formData.coordinates?.lng ?? ''}
+                                            onChange={e => {
+                                                const lng = parseFloat(e.target.value);
+                                                setFormData({ ...formData, coordinates: { lat: formData.coordinates?.lat ?? 0, lng: isNaN(lng) ? 0 : lng } });
+                                            }}
+                                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-mono focus:border-indigo-500 outline-none"
+                                            placeholder="106.700900"
+                                        />
+                                    </div>
+                                    <p className="col-span-2 text-[10px] text-slate-400 -mt-1">Tuỳ chọn — nhập toạ độ Google Maps để pin hiển thị chính xác trên bản đồ</p>
+                                </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     {/* Smart Price Input */}
                                     <div className="col-span-2 sm:col-span-1">
