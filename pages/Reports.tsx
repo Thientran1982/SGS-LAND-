@@ -192,7 +192,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm">
                     <h3 className="font-bold text-slate-800 mb-3 sm:mb-4 text-sm sm:text-base">{t('reports.chart_source_mix')}</h3>
                     <div style={{ width: '100%', height: 260 }}>
