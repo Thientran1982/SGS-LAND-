@@ -32,11 +32,11 @@ const ICONS = {
 
 // --- SIMULATED AI ENGINE ---
 const ANALYSIS_STEPS = [
-    "SGS Neural Engine™ initializing...",
-    "Quantizing 1,204,592 spatial data points...",
-    "Running regression on comparable sales...",
-    "Adjusting for legal & liquidity factors...",
-    "Finalizing confidence interval..."
+    "SGS Neural Engine™ đang khởi động...",
+    "Phân tích 1.204.592 điểm dữ liệu không gian...",
+    "Đang chạy hồi quy trên các giao dịch tương đương...",
+    "Điều chỉnh theo yếu tố pháp lý & thanh khoản...",
+    "Hoàn thiện khoảng tin cậy định giá..."
 ];
 
 export const AiValuation: React.FC = () => {
