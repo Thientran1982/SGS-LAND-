@@ -884,8 +884,8 @@ export const Leads: React.FC = () => {
                     <div className="p-1 bg-indigo-50 text-indigo-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     </div>
-                    <span className="text-[11px] text-slate-500 whitespace-nowrap">{t('leads.new_leads') || 'Lead Mới'}</span>
-                    <span className="text-sm font-black text-indigo-600">{metrics.newCount}</span>
+                    <span className="text-[11px] text-slate-500 whitespace-nowrap" title={t('leads.new_leads_tooltip') || 'Khách hàng tạo mới trong 30 ngày gần nhất'}>{t('leads.new_leads') || 'Lead Mới'}</span>
+                    <span className="text-sm font-black text-indigo-600" title={t('leads.new_leads_tooltip') || 'Khách hàng tạo mới trong 30 ngày gần nhất'}>{metrics.newCount}</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0">
                     <div className="p-1 bg-emerald-50 text-emerald-500 rounded-md shrink-0">
