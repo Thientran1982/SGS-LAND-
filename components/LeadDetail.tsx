@@ -250,10 +250,10 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
 
     // --- RENDER CONTENT ---
     const content = (
-        <div className={`bg-white ${isModal ? 'fixed inset-0 z-[70] md:inset-y-4 md:inset-x-auto md:right-4 md:w-[80vw] lg:w-[900px] md:rounded-3xl md:shadow-2xl overflow-hidden animate-slide-in-right border border-slate-100' : 'h-full flex flex-col'}`} style={isModal ? { display: 'grid', gridTemplateRows: 'auto 1fr auto' } : undefined}>
+        <div className={`bg-white ${isModal ? 'fixed inset-0 z-[70] md:inset-y-4 md:inset-x-auto md:right-4 md:w-[80vw] lg:w-[900px] md:rounded-3xl md:shadow-2xl animate-slide-in-right border border-slate-100 overflow-y-auto custom-scrollbar' : 'h-full flex flex-col'}`}>
             
-            {/* Header */}
-            <div className="flex-none flex justify-between items-center p-4 md:p-6 border-b border-slate-100 bg-white z-20 shadow-sm relative">
+            {/* Header - sticky at top when modal */}
+            <div className={`flex justify-between items-center p-4 md:p-6 border-b border-slate-100 bg-white shadow-sm ${isModal ? 'sticky top-0 z-20' : 'flex-none relative z-20'}`}>
                 <div className="flex-1 mr-4 flex items-center gap-4">
                     {/* Visual Anchor: Avatar */}
                     <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xl border-2 border-white shadow-sm shrink-0">
@@ -319,7 +319,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             </div>
 
             {/* Scrollable Body */}
-            <div className={`overflow-y-auto p-4 md:p-6 custom-scrollbar bg-slate-50/30 ${!isModal ? 'flex-1 min-h-0' : ''}`}>
+            <div className={`p-4 md:p-6 bg-slate-50/30 ${!isModal ? 'flex-1 min-h-0 overflow-y-auto custom-scrollbar' : ''}`}>
                     <AIAnalysisCard summary={aiSummary} loading={isThinking} t={t} onRefresh={refreshAiSummary} />
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 mb-8">
@@ -389,7 +389,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                     </div>
             </div>
 
-            <div className="p-4 border-t border-slate-200 bg-white flex-none z-20 relative flex gap-3">
+            <div className={`p-4 border-t border-slate-200 bg-white flex gap-3 ${isModal ? 'sticky bottom-0 z-20' : 'flex-none relative z-20'}`}>
                 <button 
                     onClick={handleCreateContract} 
                     disabled={formData.stage === LeadStage.WON} 
