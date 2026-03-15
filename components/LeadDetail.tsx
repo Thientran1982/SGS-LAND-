@@ -319,7 +319,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             </div>
 
             {/* Scrollable Body */}
-            <div className="flex-1 overflow-y-scroll p-4 md:p-6 custom-scrollbar bg-slate-50/30">
+            <div className="flex-1 min-h-0 overflow-y-scroll p-4 md:p-6 custom-scrollbar bg-slate-50/30">
                     <AIAnalysisCard summary={aiSummary} loading={isThinking} t={t} onRefresh={refreshAiSummary} />
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 mb-8">
