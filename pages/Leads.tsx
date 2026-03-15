@@ -482,14 +482,14 @@ export const Leads: React.FC = () => {
             }
         };
 
-        socket.on("lead_created", handleLeadChange);
-        socket.on("lead_updated", handleLeadChange);
-        socket.on("lead_scored", handleLeadChange);
+        socket?.on("lead_created", handleLeadChange);
+        socket?.on("lead_updated", handleLeadChange);
+        socket?.on("lead_scored", handleLeadChange);
 
         return () => {
-            socket.off("lead_created", handleLeadChange);
-            socket.off("lead_updated", handleLeadChange);
-            socket.off("lead_scored", handleLeadChange);
+            socket?.off("lead_created", handleLeadChange);
+            socket?.off("lead_updated", handleLeadChange);
+            socket?.off("lead_scored", handleLeadChange);
         };
     }, [socket, fetchLeads, notify, t]);
 
@@ -564,7 +564,7 @@ export const Leads: React.FC = () => {
             notify(t('common.success'), 'success');
             setIsDetailOpen(false);
             setEditingLead(null);
-            socket.emit("lead_updated", updatedLead);
+            socket?.emit("lead_updated", updatedLead);
             fetchLeads();
         } catch (e: any) {
             notify(e.message, 'error');
@@ -699,7 +699,7 @@ export const Leads: React.FC = () => {
             
             const createdLead = await db.createLead(newLead);
             notify(t('leads.new_lead_received', { source: randomSource }) || `Đã nhận 1 Lead mới từ ${randomSource}! Hệ thống đang chấm điểm và phân bổ...`, 'success');
-            socket.emit("lead_created", createdLead);
+            socket?.emit("lead_created", createdLead);
             fetchLeads();
         } catch (e) {
             notify(t('common.error'), 'error');

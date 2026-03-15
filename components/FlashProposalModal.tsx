@@ -141,6 +141,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                 listingId: selectedListing.id,
                 basePrice: selectedListing.price,
                 discountAmount: finalCalculations.discountAmt,
+                finalPrice: finalCalculations.finalPrice,
                 validUntil: new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000).toISOString(),
                 metadata: {
                     depositRequired: depositAmount,

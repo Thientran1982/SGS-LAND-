@@ -735,8 +735,14 @@ class DatabaseApiClient {
   async duplicateLead(id: string) {
     const lead = await this.getLeadById(id);
     if (!lead) throw new Error('Lead not found');
-    const { id: _id, createdAt, updatedAt, ...data } = lead;
-    return this.createLead({ ...data, name: `${data.name} (Copy)` });
+    const { id: _id, createdAt, updatedAt, score, ...data } = lead;
+    const uniqueSuffix = Date.now().toString().slice(-8);
+    const placeholderPhone = `09${uniqueSuffix}`;
+    return this.createLead({
+      ...data,
+      name: `${data.name} (Bản sao)`,
+      phone: placeholderPhone,
+    });
   }
 
   async receiveWebhookMessage(data: any) {
