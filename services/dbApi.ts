@@ -924,12 +924,12 @@ class DatabaseApiClient {
   }
 
   async resendInvite(userId: string) {
-    return true;
+    return userApi.resendInvite(userId);
   }
 
   async updateUserProfile(id: string, data: any) {
     const updated = await userApi.updateUser(id, data);
-    if (updated) {
+    if (updated && this.cachedCurrentUser?.id === id) {
       this.cachedCurrentUser = { ...this.cachedCurrentUser, ...updated };
     }
     return updated;

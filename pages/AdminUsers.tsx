@@ -318,9 +318,8 @@ export const AdminUsers: React.FC = () => {
         }
         try {
             await db.deleteUser(userToDelete.id);
-            setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
-            setTotalUsers(prev => prev - 1);
             notify(t('admin.users.delete_success'), 'success');
+            fetchData();
         } catch (e: any) {
             notify(e.message, 'error');
         } finally {
@@ -334,14 +333,13 @@ export const AdminUsers: React.FC = () => {
             await db.resendInvite(user.id);
             notify(t('admin.users.invite_sent', { email: user.email }), 'success');
         } catch (e: any) {
-            notify(t('common.error'), 'error');
+            notify(e.message || t('common.error'), 'error');
         } finally {
             setResendingId(null);
         }
     };
 
     const handleInviteConfirm = async (email: string, role: UserRole) => {
-        await new Promise(r => setTimeout(r, 600)); 
         const name = email.split('@')[0];
         await db.inviteUser({ name, email, role });
         notify(t('admin.users.invite_sent', { email }), 'success');
