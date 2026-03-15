@@ -140,11 +140,18 @@ export const OnboardingWizard: React.FC = () => {
             try {
                 const user = await db.getCurrentUser();
                 if (user?.role !== UserRole.ADMIN) return;
+
+                // Only show once per user — if already seen in this browser, skip
+                const seenKey = `sgs_onboarding_seen_${user.id}`;
+                const alreadySeen = localStorage.getItem(seenKey);
+
                 const config = await db.getEnterpriseConfig();
                 if (mounted && config?.onboarding) {
                     setState(config.onboarding);
-                    if (!config.onboarding.isDismissed && config.onboarding.percentage < 100) {
+                    if (!config.onboarding.isDismissed && config.onboarding.percentage < 100 && !alreadySeen) {
                         setIsVisible(true);
+                        // Mark as seen so it won't auto-show again
+                        localStorage.setItem(seenKey, '1');
                     }
                 }
             } catch (e) {

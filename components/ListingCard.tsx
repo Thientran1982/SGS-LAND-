@@ -90,7 +90,18 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
 
             {hasImages ? (
                 <>
-                    <img src={images![currentIndex]} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
+                    <img 
+                        src={images![currentIndex]} 
+                        alt={title} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            if (!target.src.includes('ui-avatars.com')) {
+                                target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=e2e8f0&color=94a3b8&size=400`;
+                            }
+                        }}
+                    />
                     {images!.length > 1 && (
                         <>
                             <div className="absolute inset-0 flex items-center justify-between p-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20 pointer-events-none">

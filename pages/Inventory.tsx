@@ -182,7 +182,16 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
             <td className="px-4 py-3 sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50 border-r border-slate-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors min-w-[200px] max-w-[250px]">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-100 relative">
-                        <img src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                        <img 
+                            src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} 
+                            className="w-full h-full object-cover" 
+                            alt="" 
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                                const t = e.target as HTMLImageElement;
+                                if (!t.src.includes('ui-avatars.com')) t.src = `https://ui-avatars.com/api/?name=${item.code}&background=random`;
+                            }}
+                        />
                         {item.isVerified && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-bl-md z-10" />}
                     </div>
                     <div className="min-w-0">
@@ -284,7 +293,16 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onClick, t, canViewI
             className="flex md:hidden items-center gap-3 p-3 border-b border-slate-100 dark:border-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800 transition-colors cursor-pointer"
         >
             <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-100 dark:border-slate-700 relative">
-                <img src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                <img 
+                    src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} 
+                    className="w-full h-full object-cover" 
+                    alt="" 
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                        const t = e.target as HTMLImageElement;
+                        if (!t.src.includes('ui-avatars.com')) t.src = `https://ui-avatars.com/api/?name=${item.code}&background=random`;
+                    }}
+                />
                 <div className="absolute top-0 left-0 px-1 bg-black/40 text-[8px] text-white font-mono">{item.code}</div>
             </div>
             
