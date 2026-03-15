@@ -94,7 +94,7 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
     const end = Math.min(page * pageSize, totalItems);
 
     return (
-        <div className="flex flex-col sm:flex-row justify-between items-center px-4 sm:px-6 py-4 bg-white rounded-2xl border border-slate-200 shadow-sm gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center px-3 sm:px-5 py-2 bg-white rounded-xl border border-slate-200 shadow-sm gap-2">
             <div className="hidden sm:flex text-xs text-slate-500 font-medium items-center gap-1">
                 <span>{t('pagination.showing')}</span>
                 <span className="font-bold text-slate-900">{start}-{end}</span>
@@ -103,21 +103,21 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
                 <span className="hidden sm:inline">{t('pagination.results')}</span>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-end">
                 <button 
                     onClick={() => onPageChange(page - 1)} 
                     disabled={page === 1}
-                    className="flex-1 sm:flex-none px-4 py-2.5 min-h-[44px] rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.prev')}
                 </button>
-                <div className="flex items-center gap-1 px-2">
-                    <span className="text-sm font-bold text-slate-800">{page} / {totalPages}</span>
+                <div className="flex items-center gap-1 px-1.5">
+                    <span className="text-xs font-bold text-slate-800 whitespace-nowrap">{page} / {totalPages}</span>
                 </div>
                 <button 
                     onClick={() => onPageChange(page + 1)} 
                     disabled={page === totalPages}
-                    className="flex-1 sm:flex-none px-4 py-2.5 min-h-[44px] rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.next')}
                 </button>
