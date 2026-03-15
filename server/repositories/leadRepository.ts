@@ -93,11 +93,11 @@ export class LeadRepository extends BaseRepository {
 
       const statsResult = await client.query(
         `SELECT
-          COUNT(*)::int                                                         AS total,
-          COUNT(*) FILTER (WHERE stage = 'NEW')::int                           AS new_count,
-          COUNT(*) FILTER (WHERE stage = 'WON')::int                           AS won_count,
-          COUNT(*) FILTER (WHERE stage = 'LOST')::int                          AS lost_count,
-          COALESCE(ROUND(AVG((score->>'score')::numeric)), 0)::int             AS avg_score
+          COUNT(*)::int                                                                           AS total,
+          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::int                 AS new_count,
+          COUNT(*) FILTER (WHERE stage = 'WON')::int                                            AS won_count,
+          COUNT(*) FILTER (WHERE stage = 'LOST')::int                                           AS lost_count,
+          COALESCE(ROUND(AVG((score->>'score')::numeric)), 0)::int                              AS avg_score
          FROM leads
          WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid`
       );
