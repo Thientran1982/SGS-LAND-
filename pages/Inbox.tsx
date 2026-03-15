@@ -1,0 +1,824 @@
+
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { db } from '../services/dbApi';
+import { aiService } from '../services/aiService';
+import { InboxThread, Interaction, LeadId, User, Channel, Direction, ThreadStatus } from '../types';
+import { useTranslation } from '../services/i18n';
+import { MessageBubble } from '../components/ChatUI';
+import { smartMatch } from '../utils/textUtils';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { useSocket } from '../services/websocket';
+import { motion, AnimatePresence } from 'motion/react';
+
+const CONFIG = {
+    TOAST_DURATION: 3000
+};
+
+const ICONS = {
+    SEARCH: <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEND: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
+    TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
+    ATTACH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>,
+    MAGIC: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
+    ZALO: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S16.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm-1 4v4h-4v2h4v4h2v-4h4v-2h-4V6h-2z" fillRule="evenodd" /></svg>,
+    EMAIL: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+    SMS: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
+    BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
+    ROBOT_OFF: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>,
+    ROBOT_ON: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>,
+    ALERT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
+    X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+};
+
+export const Inbox: React.FC = () => {
+    const queryClient = useQueryClient();
+    const { socket } = useSocket();
+    
+    const [selectedLeadId, setSelectedLeadId] = useState<LeadId | null>(null);
+    const [input, setInput] = useState('');
+    const [channel, setChannel] = useState<Channel>(Channel.ZALO);
+    const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [threadToDelete, setThreadToDelete] = useState<LeadId | null>(null);
+
+    // Debounce search
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [search]);
+    const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
+    const [isThinking, setIsThinking] = useState(false);
+    const [streamingMessage, setStreamingMessage] = useState<string>('');
+    const [isAssignOpen, setIsAssignOpen] = useState(false);
+    const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
+    
+    // --- SUPERVISOR STATE ---
+    const [autoResponseMap, setAutoResponseMap] = useState<Record<string, boolean>>({}); // Toggle per thread
+    const autoResponseMapRef = useRef<Record<string, boolean>>({});
+    
+    useEffect(() => {
+        autoResponseMapRef.current = autoResponseMap;
+    }, [autoResponseMap]);
+    
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const assignDropdownRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { t, formatTime, formatCurrency, formatDate, formatDateTime, language } = useTranslation();
+
+    const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), CONFIG.TOAST_DURATION);
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (assignDropdownRef.current && !assignDropdownRef.current.contains(event.target as Node)) {
+                setIsAssignOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // --- DATA LOADING WITH REACT QUERY ---
+    const { data: threads = [], isLoading: loadingThreads } = useQuery({
+        queryKey: ['inboxThreads'],
+        queryFn: async () => {
+            const data = await db.getInboxThreads();
+            return data || [];
+        }
+    });
+
+    // Sync autoResponseMap when new threads arrive — only initialise entries that
+    // don't exist yet so user-toggled values are never overwritten
+    useEffect(() => {
+        if (!threads.length) return;
+        const currentMap = autoResponseMapRef.current;
+        const additions: Record<string, boolean> = {};
+        threads.forEach(t => {
+            if (currentMap[t.lead.id] === undefined) {
+                additions[t.lead.id] = t.status !== ThreadStatus.HUMAN_TAKEOVER;
+            }
+        });
+        if (Object.keys(additions).length > 0) {
+            setAutoResponseMap(prev => ({ ...additions, ...prev }));
+        }
+    }, [threads]);
+
+    const { data: messages = [] } = useQuery({
+        queryKey: ['interactions', selectedLeadId],
+        queryFn: async () => {
+            if (!selectedLeadId) return [];
+            const msgs = await db.getInteractions(selectedLeadId);
+            return (msgs || []).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        },
+        enabled: !!selectedLeadId
+    });
+
+    // Scroll to bottom whenever messages load or change
+    useEffect(() => {
+        if (messages.length > 0) {
+            setTimeout(scrollToBottom, 100);
+        }
+    }, [messages]);
+
+    const { data: users = [] } = useQuery({
+        queryKey: ['tenantUsers'],
+        queryFn: async () => {
+            const res = await db.getTenantUsers(1, 100);
+            return res.data || [];
+        }
+    });
+
+    const { data: currentUser } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: async () => {
+            return await db.getCurrentUser();
+        }
+    });
+
+    // --- WEBSOCKET INTEGRATION ---
+    useEffect(() => {
+        if (selectedLeadId) {
+            socket.emit("join_room", selectedLeadId);
+            
+            // Mark thread as read
+            db.markThreadAsRead(selectedLeadId).then(() => {
+                queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+            });
+        }
+        
+        const handleNewMessage = (data: any) => {
+            // Invalidate queries to refetch data when a new message arrives via WebSocket
+            queryClient.invalidateQueries({ queryKey: ['interactions', data.room] });
+            queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+            
+            // Show notification if it's an inbound message and not for the currently selected lead
+            if (data.message?.direction === 'INBOUND' && data.room !== selectedLeadId) {
+                notify(t('inbox.new_message') || 'Có tin nhắn mới', 'success');
+            }
+        };
+
+        const handleLeadScored = async (data: { leadId: string, score: any }) => {
+            try {
+                await db.updateLead(data.leadId as any, { score: data.score });
+                queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+                queryClient.invalidateQueries({ queryKey: ['leads'] });
+            } catch (e) {
+                console.error("Failed to update lead score", e);
+            }
+        };
+
+        const handleNewInboundMessage = async (data: { leadId: string, message: any }) => {
+            try {
+                await db.receiveWebhookMessage(data.message);
+                queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+                queryClient.invalidateQueries({ queryKey: ['leads'] });
+                queryClient.invalidateQueries({ queryKey: ['interactions', data.leadId] });
+                
+                if (data.leadId !== selectedLeadId) {
+                    notify(t('inbox.new_message') || 'Có tin nhắn mới', 'success');
+                }
+            } catch (e) {
+                console.error("Failed to process inbound message", e);
+            }
+        };
+
+        socket.on("receive_message", handleNewMessage);
+        socket.on("lead_scored", handleLeadScored);
+        socket.on("new_inbound_message", handleNewInboundMessage);
+
+        return () => {
+            socket.off("receive_message", handleNewMessage);
+            socket.off("lead_scored", handleLeadScored);
+            socket.off("new_inbound_message", handleNewInboundMessage);
+        };
+    }, [selectedLeadId, socket, queryClient, notify, t]);
+
+    // --- AI & SEND LOGIC ---
+    const handleSend = async () => {
+        if (!input.trim() || !selectedLeadId) return;
+        
+        const currentLead = threads.find(t => t.lead.id === selectedLeadId)?.lead;
+        if (!currentLead) return;
+
+        const isSimulation = input.startsWith('/');
+        const cleanInput = isSimulation ? input.substring(1).trim() : input;
+
+        try {
+            if (isSimulation) {
+                const customerMsg = await db.sendInteraction(selectedLeadId, cleanInput, channel);
+                customerMsg.direction = Direction.INBOUND;
+                
+                // Optimistic Update
+                queryClient.setQueryData(['interactions', selectedLeadId], (old: any) => [...(old || []), customerMsg]);
+                socket.emit("send_message", { room: selectedLeadId, message: customerMsg });
+                
+                setInput('');
+                scrollToBottom();
+
+                if (autoResponseMap[selectedLeadId]) {
+                    setIsThinking(true);
+                    setStreamingMessage('');
+                    
+                    const newHistory = [...messages, customerMsg];
+                    const aiResult = await aiService.processMessage(currentLead, cleanInput, newHistory, language, (chunk) => {
+                        setIsThinking(false);
+                        setStreamingMessage(prev => prev + chunk);
+                        scrollToBottom();
+                    });
+                    
+                    // RACE CONDITION CHECK:
+                    // If the human agent turned off AI or sent a message while AI was thinking, discard the AI response.
+                    if (!autoResponseMapRef.current[selectedLeadId]) {
+                        setIsThinking(false);
+                        setStreamingMessage('');
+                        return;
+                    }
+                    
+                    const aiMsg = await db.sendInteraction(selectedLeadId, aiResult.content, Channel.ZALO);
+                    
+                    aiMsg.metadata = {
+                        isAgent: true,
+                        trace: aiResult.steps,
+                        artifact: aiResult.artifact,
+                        aiConfidence: aiResult.confidence,
+                        aiSentiment: aiResult.sentiment
+                    };
+
+                    queryClient.setQueryData(['interactions', selectedLeadId], (old: any) => [...(old || []), aiMsg]);
+                    socket.emit("send_message", { room: selectedLeadId, message: aiMsg });
+                    
+                    setIsThinking(false);
+                    setStreamingMessage('');
+                    scrollToBottom();
+                }
+            } else {
+                // Human Takeover: Turn off AI if it was on
+                if (autoResponseMapRef.current[selectedLeadId]) {
+                    setAutoResponseMap(prev => ({ ...prev, [selectedLeadId]: false }));
+                    notify(t('inbox.manual_enabled') || 'Đã chuyển sang chế độ thủ công', "success");
+                }
+
+                const agentMsg = await db.sendInteraction(selectedLeadId, input, channel);
+                queryClient.setQueryData(['interactions', selectedLeadId], (old: any) => [...(old || []), agentMsg]);
+                socket.emit("send_message", { room: selectedLeadId, message: agentMsg });
+                
+                setInput('');
+                scrollToBottom();
+            }
+
+            queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+        } catch (e) {
+            notify(t('common.error'), 'error');
+            setIsThinking(false);
+        }
+    };
+
+    // --- TOGGLE AI MODE ---
+    const toggleAiMode = (e: React.MouseEvent, leadId: LeadId) => {
+        e.stopPropagation();
+        const newState = !autoResponseMap[leadId];
+        setAutoResponseMap(prev => ({ ...prev, [leadId]: newState }));
+        notify(newState ? t('inbox.ai_activated') : t('inbox.manual_enabled'), "success");
+    };
+
+    // --- FILE UPLOAD LOGIC ---
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedLeadId) return;
+
+        // Reset input
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        // Check file size (e.g., max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            notify('File size must be less than 5MB', 'error');
+            return;
+        }
+
+        try {
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64String = reader.result as string;
+                const isImage = file.type.startsWith('image/');
+                
+                // Turn off AI if human sends file
+                if (autoResponseMapRef.current[selectedLeadId]) {
+                    setAutoResponseMap(prev => ({ ...prev, [selectedLeadId]: false }));
+                    notify(t('inbox.manual_enabled') || 'Đã chuyển sang chế độ thủ công', "success");
+                }
+
+                const agentMsg = await db.sendInteraction(selectedLeadId, base64String, channel, {
+                    type: isImage ? 'IMAGE' : 'FILE',
+                    metadata: {
+                        fileName: file.name,
+                        fileSize: file.size,
+                        mimeType: file.type
+                    }
+                });
+
+                queryClient.setQueryData(['interactions', selectedLeadId], (old: any) => [...(old || []), agentMsg]);
+                socket.emit("send_message", { room: selectedLeadId, message: agentMsg });
+                scrollToBottom();
+                queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            notify(t('common.error'), 'error');
+        }
+    };
+
+    // --- DELETE LOGIC ---
+    const requestDelete = (e: React.MouseEvent, id: LeadId) => {
+        e.stopPropagation();
+        setThreadToDelete(id);
+    };
+
+    const handleAssign = async (leadId: LeadId, userId: string) => {
+        try {
+            await db.updateLead(leadId, { assignedTo: userId as any });
+            queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+            notify(t('inbox.assign_success') || 'Đã phân bổ thành công', 'success');
+        } catch (e) {
+            notify(t('common.error'), 'error');
+        }
+    };
+
+    const confirmDelete = async () => {
+        if (!threadToDelete) return;
+        try {
+            await db.deleteConversation(threadToDelete);
+            queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+            if (selectedLeadId === threadToDelete) {
+                setSelectedLeadId(null);
+            }
+            notify(t('common.success'), 'success');
+        } catch (e) {
+            notify(t('common.error'), 'error');
+        } finally {
+            setThreadToDelete(null);
+        }
+    };
+
+    const filteredThreads = useMemo(() => 
+        (threads || []).filter(t => smartMatch((t.lead.name || '') + (t.lead.phone || ''), debouncedSearch)), 
+    [threads, debouncedSearch]);
+
+    const selectedThread = threads.find(t => t.lead.id === selectedLeadId);
+    const isAiActiveForSelected = selectedLeadId ? autoResponseMap[selectedLeadId] : false;
+
+    return (
+        <div className="flex h-[calc(100vh-100px)] md:h-[calc(100vh-140px)] bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden animate-enter relative">
+            {toast && <div className={`fixed top-6 right-6 z-[100] px-4 md:px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border max-w-[90vw] md:max-w-md ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm break-words">{toast.msg}</span></div>}
+
+            {/* Sidebar List */}
+            <div className={`w-full md:w-80 border-r border-slate-100 flex flex-col ${selectedLeadId ? 'hidden md:flex' : 'flex'}`}>
+                <div className="p-4 border-b border-slate-100 bg-white z-10 flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                        <h2 className="font-bold text-slate-800">Inbox</h2>
+                        {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
+                            <button 
+                                onClick={() => setIsWidgetModalOpen(true)}
+                                className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                                {t('inbox.live_chat_widget') || 'Live Chat Widget'}
+                            </button>
+                        )}
+                    </div>
+                    <div className="relative group">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400">
+                            {ICONS.SEARCH}
+                        </div>
+                        <input 
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-10 py-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                            placeholder={t('inbox.select')}
+                        />
+                        {search && (
+                            <div className="absolute right-2 inset-y-0 flex items-center">
+                                <button 
+                                    onClick={() => setSearch('')}
+                                    className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    title={t('common.clear_search') || 'Xóa tìm kiếm'}
+                                >
+                                    {ICONS.X}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+                <div className="flex-1 overflow-y-auto no-scrollbar">
+                    {loadingThreads && threads.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 text-xs italic">{t('common.loading')}</div>
+                    ) : filteredThreads.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 text-xs italic">{t('inbox.empty')}</div>
+                    ) : (
+                        filteredThreads.map(thread => {
+                            const isAiEnabled = autoResponseMap[thread.lead.id];
+                            return (
+                                <div 
+                                    key={thread.lead.id}
+                                    onClick={() => setSelectedLeadId(thread.lead.id)}
+                                    className={`p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors group relative ${selectedLeadId === thread.lead.id ? 'bg-indigo-50/50' : ''}`}
+                                >
+                                    <div className="flex justify-between items-start mb-1 gap-2">
+                                        <div className="font-bold text-sm text-slate-800 flex items-center gap-1.5 min-w-0 flex-1">
+                                            <span className="truncate">{thread.lead.name}</span>
+                                            {/* AI Status Indicator */}
+                                            {isAiEnabled ? (
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" title="AI Active"></span>
+                                            ) : (
+                                                <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" title="Manual Mode"></span>
+                                            )}
+                                        </div>
+                                        {thread.lastMessage && <div className="text-[10px] text-slate-400 whitespace-nowrap shrink-0 mt-0.5">{formatTime(thread.lastMessage.timestamp)}</div>}
+                                    </div>
+                                    <div className="flex justify-between items-center mt-1 gap-2">
+                                        <div className={`text-xs truncate min-w-0 flex-1 ${thread.unreadCount > 0 ? 'font-bold text-slate-900' : 'text-slate-500'}`}>
+                                            {thread.lastMessage?.content || t('inbox.empty')}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            {thread.lead.assignedTo && (
+                                                <div className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded truncate max-w-[60px]" title={users.find((u: any) => u.id === thread.lead.assignedTo)?.name || 'Assigned'}>
+                                                    {users.find((u: any) => u.id === thread.lead.assignedTo)?.name?.split(' ')[0] || thread.lead.assignedTo}
+                                                </div>
+                                            )}
+                                            {thread.unreadCount > 0 && (
+                                                <div className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">{thread.unreadCount}</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Hover Delete Button */}
+                                    {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
+                                        <button 
+                                            onClick={(e) => requestDelete(e, thread.lead.id)}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white shadow-sm border border-slate-200 rounded-full text-slate-400 hover:text-rose-500 hover:border-rose-200 opacity-0 group-hover:opacity-100 transition-all z-10"
+                                            title={t('inbox.menu_delete')}
+                                        >
+                                            {ICONS.TRASH}
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+
+            {/* Chat Area */}
+            {selectedThread ? (
+                <div className={`flex-1 flex flex-col bg-white h-full relative min-w-0 ${selectedLeadId ? 'flex' : 'hidden md:flex'}`}>
+                    {/* Header */}
+                    <div className="p-3 md:p-4 border-b border-slate-100 flex justify-between items-center bg-white/95 backdrop-blur-md z-20 shadow-sm gap-2">
+                        <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                            <button onClick={() => setSelectedLeadId(null)} className="md:hidden text-slate-500 hover:bg-slate-100 p-1.5 rounded-full transition-colors shrink-0 -ml-1">
+                                {ICONS.BACK}
+                            </button>
+                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 border border-slate-200 shrink-0">
+                                {selectedThread.lead.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <div className="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2 min-w-0">
+                                    <span className="truncate">{selectedThread.lead.name}</span>
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded uppercase font-bold border text-emerald-600 bg-emerald-50 border-emerald-100 shrink-0">
+                                        {selectedThread.lead.score?.score || 0} pts
+                                    </span>
+                                </div>
+                                <div className="text-[10px] md:text-xs text-slate-500 flex items-center gap-1.5 truncate">
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isAiActiveForSelected ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                                    <span className="truncate">{isAiActiveForSelected ? t('inbox.ai_agent_active') : t('inbox.human_control')}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 md:gap-2 shrink-0">
+                            {/* Custom Assign Dropdown */}
+                            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
+                                <div className="relative" ref={assignDropdownRef}>
+                                    <button
+                                        onClick={() => setIsAssignOpen(!isAssignOpen)}
+                                        className="flex items-center gap-1.5 text-xs font-bold bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-2 md:px-3 py-1.5 hover:bg-slate-100 transition-colors"
+                                        title={t('inbox.assign_to') || 'Phân bổ cho'}
+                                    >
+                                        <span className="truncate max-w-[60px] lg:max-w-[100px] hidden sm:inline md:hidden lg:inline">
+                                            {selectedThread.lead.assignedTo 
+                                                ? users.find((u: any) => u.id === selectedThread.lead.assignedTo)?.name || selectedThread.lead.assignedTo 
+                                                : (t('inbox.unassigned') || 'Chưa phân bổ')}
+                                        </span>
+                                        <span className="sm:hidden md:inline lg:hidden text-slate-500">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                        </span>
+                                        <svg className={`w-3 h-3 transition-transform hidden sm:block md:hidden lg:block ${isAssignOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                    </button>
+                                    
+                                    {isAssignOpen && (
+                                        <div className="absolute right-0 mt-1 w-48 bg-white border border-slate-100 shadow-xl rounded-xl z-50 overflow-hidden animate-enter">
+                                            <div className="max-h-60 overflow-y-auto no-scrollbar py-1">
+                                                <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">
+                                                    {t('inbox.assign_to') || 'Phân bổ cho'}
+                                                </div>
+                                                {users.map((u: any) => (
+                                                    <button
+                                                        key={u.id}
+                                                        onClick={() => {
+                                                            handleAssign(selectedThread.lead.id, u.id);
+                                                            setIsAssignOpen(false);
+                                                        }}
+                                                        className={`w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 transition-colors flex items-center justify-between gap-2 ${selectedThread.lead.assignedTo === u.id ? 'text-indigo-600 font-bold bg-indigo-50/50' : 'text-slate-700'}`}
+                                                    >
+                                                        <span className="truncate min-w-0 flex-1">{u.name}</span>
+                                                        {selectedThread.lead.assignedTo === u.id && (
+                                                            <svg className="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* AI Toggle / Takeover Button */}
+                            <button 
+                                onClick={(e) => toggleAiMode(e, selectedThread.lead.id)}
+                                className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                                    isAiActiveForSelected 
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
+                                    : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                                }`}
+                                title={t('inbox.toggle_ai') || "Toggle AI Automation"}
+                            >
+                                {isAiActiveForSelected ? ICONS.ROBOT_ON : ICONS.ROBOT_OFF}
+                                <span className="hidden sm:inline md:hidden lg:inline">{isAiActiveForSelected ? t('inbox.auto_pilot') : t('inbox.manual')}</span>
+                            </button>
+
+                            {/* Header Action: Delete */}
+                            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
+                                <button 
+                                    onClick={(e) => requestDelete(e, selectedThread.lead.id)}
+                                    className="p-1.5 md:p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors"
+                                    title={t('inbox.menu_delete')}
+                                >
+                                    {ICONS.TRASH}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Messages List */}
+                    <div className="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-4 no-scrollbar scroll-smooth">
+                        {messages.length === 0 && (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-60">
+                                <div className="text-4xl mb-2">💬</div>
+                                <div className="text-sm">{t('inbox.empty_messages') || 'Chưa có tin nhắn nào'}</div>
+                            </div>
+                        )}
+                        {messages.map((msg, idx) => (
+                            <MessageBubble 
+                                key={msg.id} 
+                                msg={msg} 
+                                t={t} 
+                                formatTime={formatTime} 
+                                formatCurrency={formatCurrency} 
+                                formatDate={formatDate}
+                                formatDateTime={formatDateTime}
+                                showDate={idx === 0 || new Date(msg.timestamp).getDate() !== new Date(messages[idx-1].timestamp).getDate()}
+                            />
+                        ))}
+                        {isThinking && (
+                            <div className="flex justify-start animate-pulse">
+                                <div className="bg-white border border-indigo-100 text-indigo-600 px-4 py-3 rounded-2xl rounded-tl-none text-xs font-bold flex items-center gap-2 shadow-sm">
+                                    <div className="flex gap-1">
+                                        <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
+                                        <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-75"></span>
+                                        <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-150"></span>
+                                    </div>
+                                    {t('inbox.ai_replying') || 'AI đang trả lời...'}
+                                </div>
+                            </div>
+                        )}
+                        {streamingMessage && (
+                            <MessageBubble 
+                                msg={{
+                                    id: 'streaming',
+                                    direction: Direction.OUTBOUND,
+                                    type: 'TEXT',
+                                    content: streamingMessage,
+                                    timestamp: new Date().toISOString(),
+                                    status: 'PENDING',
+                                    metadata: { isAgent: true }
+                                }}
+                                t={t}
+                                formatTime={formatTime}
+                                formatCurrency={formatCurrency}
+                                formatDate={formatDate}
+                                formatDateTime={formatDateTime}
+                                showDate={false}
+                            />
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Input Bar */}
+                    <div className="p-3 md:p-4 bg-white/95 backdrop-blur border-t border-slate-100 z-30 pb-safe">
+                        <div className="flex flex-wrap items-center justify-between mb-2 md:mb-3 gap-2">
+                            <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 overflow-x-auto no-scrollbar max-w-full">
+                                {[Channel.ZALO, Channel.EMAIL, Channel.SMS].map(ch => (
+                                    <button 
+                                        key={ch} 
+                                        onClick={() => setChannel(ch)}
+                                        className={`px-2 md:px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${channel === ch ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                    >
+                                        {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS} {ch}
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            {!isAiActiveForSelected && (
+                                <div className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100 animate-pulse whitespace-nowrap">
+                                    {t('inbox.supervisor_takeover_active')}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-end gap-2 bg-white p-1.5 md:p-2 pl-2 md:pl-3 rounded-2xl border border-slate-200 focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/50 transition-all shadow-sm max-w-full">
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                onChange={handleFileUpload} 
+                                className="hidden" 
+                                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                            />
+                            <button 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-1.5 md:p-2 text-slate-400 hover:text-indigo-600 transition-colors rounded-xl hover:bg-indigo-50 shrink-0 self-end mb-0.5" 
+                                title="Attach"
+                            >
+                                {ICONS.ATTACH}
+                            </button>
+                            
+                            <textarea 
+                                value={input}
+                                onChange={e => setInput(e.target.value)}
+                                onKeyDown={e => {
+                                    if(e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSend();
+                                    }
+                                }}
+                                className="flex-1 min-w-0 bg-transparent border-none text-sm outline-none max-h-32 min-h-[40px] md:min-h-[44px] py-2 md:py-3 resize-none placeholder:text-slate-400 leading-relaxed focus:ring-0 no-scrollbar"
+                                placeholder={isAiActiveForSelected ? t('inbox.type_simulate') : t('inbox.reply_supervisor')}
+                                rows={1}
+                            />
+                            
+                            <button 
+                                onClick={handleSend}
+                                disabled={!input.trim() || isThinking}
+                                className="p-2 md:p-2.5 bg-indigo-600 text-white rounded-xl shadow-md hover:shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:shadow-none active:scale-95 shrink-0 mb-0.5"
+                            >
+                                {ICONS.SEND}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className="hidden md:flex flex-1 items-center justify-center text-slate-400 bg-slate-50/50">
+                    <div className="text-center p-8">
+                        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100">
+                            <div className="text-4xl opacity-50">📬</div>
+                        </div>
+                        <h3 className="font-bold text-slate-600 mb-1">{t('inbox.supervisor_cockpit')}</h3>
+                        <p className="text-sm">{t('inbox.select')}</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirm Delete Modal */}
+            <ConfirmModal 
+                isOpen={!!threadToDelete}
+                title={t('common.delete')}
+                message={t('inbox.delete_confirm_msg')}
+                confirmLabel={t('common.delete')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={confirmDelete}
+                onCancel={() => setThreadToDelete(null)}
+                variant="danger"
+            />
+
+            {/* Widget Settings Modal */}
+            {createPortal(
+            <AnimatePresence>
+                {isWidgetModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm overflow-y-auto no-scrollbar">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col my-auto shrink-0 overflow-hidden"
+                        >
+                            <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-start md:items-center bg-slate-50/50 shrink-0">
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                        <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                                        Live Chat Widget
+                                    </h2>
+                                    <p className="text-xs text-slate-500 mt-1">Tích hợp khung chat trực tiếp lên website của bạn</p>
+                                </div>
+                                <button onClick={() => setIsWidgetModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors shrink-0">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                            
+                            <div className="p-4 md:p-6 overflow-y-auto no-scrollbar">
+                                <div className="space-y-6">
+                                    {/* Link */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Đường dẫn trực tiếp (Direct Link)</label>
+                                        <div className="flex gap-2">
+                                            <input 
+                                                readOnly 
+                                                value={`${window.location.origin}/livechat`} 
+                                                className="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-600 font-mono"
+                                            />
+                                            <button 
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(`${window.location.origin}/livechat`);
+                                                    notify('Đã copy đường dẫn', 'success');
+                                                }}
+                                                className="px-4 py-2 bg-indigo-50 text-indigo-600 font-bold rounded-xl hover:bg-indigo-100 transition-colors text-sm whitespace-nowrap shrink-0"
+                                            >
+                                                Copy Link
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-2">Sử dụng link này để chèn vào các bài đăng quảng cáo Facebook, Zalo, hoặc gửi trực tiếp cho khách hàng.</p>
+                                    </div>
+
+                                    {/* Embed Code */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Mã nhúng Website (Embed Code)</label>
+                                        <div className="relative">
+                                            <textarea 
+                                                readOnly 
+                                                rows={4}
+                                                value={`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/livechat";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`} 
+                                                className="w-full bg-slate-900 text-emerald-400 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono resize-none leading-relaxed no-scrollbar"
+                                            />
+                                            <button 
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/livechat";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`);
+                                                    notify('Đã copy mã nhúng', 'success');
+                                                }}
+                                                className="absolute top-2 right-2 p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-2">Copy đoạn mã này và dán vào trước thẻ <code className="bg-slate-100 px-1 rounded text-slate-700">&lt;/body&gt;</code> trên website của bạn.</p>
+                                    </div>
+
+                                    {/* QR Code */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Mã QR (QR Code)</label>
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                            <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200 shrink-0 mx-auto sm:mx-0">
+                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${window.location.origin}/livechat`)}`} alt="QR Code" className="w-32 h-32" />
+                                            </div>
+                                            <div className="text-center sm:text-left">
+                                                <h4 className="font-bold text-slate-800 text-sm mb-1">In mã QR này</h4>
+                                                <p className="text-xs text-slate-500 mb-4 leading-relaxed">Khách hàng có thể dùng camera điện thoại quét mã này để mở ngay khung chat trên trình duyệt mà không cần cài đặt ứng dụng.</p>
+                                                <a 
+                                                    href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(`${window.location.origin}/livechat`)}`}
+                                                    download="livechat-qr.png"
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors text-sm"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                                    Tải mã QR (HD)
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>,
+            document.body
+            )}
+        </div>
+    );
+};
