@@ -448,6 +448,7 @@ export const Leads: React.FC = () => {
     const [editingLead, setEditingLead] = useState<Lead | null>(null);
     const [proposalLead, setProposalLead] = useState<Lead | null>(null);
     const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+    const [bulkDeletePending, setBulkDeletePending] = useState(false);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const [listings, setListings] = useState<any[]>([]);
     const [users, setUsers] = useState<{value: string, label: string}[]>([]);
@@ -555,6 +556,19 @@ export const Leads: React.FC = () => {
     const handleDeleteClick = useCallback((lead: Lead) => {
         setLeadToDelete(lead);
     }, []);
+
+    const confirmBulkDelete = useCallback(async () => {
+        try {
+            await Promise.all(Array.from(selectedLeads).map(id => db.deleteLead(id)));
+            notify(t('common.success'), 'success');
+            setSelectedLeads(new Set());
+            fetchLeads();
+        } catch {
+            notify(t('common.error'), 'error');
+        } finally {
+            setBulkDeletePending(false);
+        }
+    }, [selectedLeads, notify, t, fetchLeads]);
 
     const confirmDelete = useCallback(async () => {
         if (!leadToDelete) return;
@@ -818,17 +832,7 @@ export const Leads: React.FC = () => {
                         
                         {selectedLeads.size > 0 && (
                             <button 
-                                onClick={() => {
-                                    if (window.confirm(t('common.confirm_delete') || 'Are you sure you want to delete selected items?')) {
-                                        Promise.all(Array.from(selectedLeads).map(id => db.deleteLead(id)))
-                                            .then(() => {
-                                                notify(t('common.success'), 'success');
-                                                setSelectedLeads(new Set());
-                                                fetchLeads();
-                                            })
-                                            .catch(() => notify(t('common.error'), 'error'));
-                                    }
-                                }}
+                                onClick={() => setBulkDeletePending(true)}
                                 className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-rose-50 border border-rose-200 text-rose-700 font-bold rounded-xl text-xs shadow-sm hover:bg-rose-100 transition-all whitespace-nowrap active:scale-95 shrink-0"
                             >
                                 {ICONS.TRASH} {t('common.delete')} ({selectedLeads.size})
@@ -1090,6 +1094,16 @@ export const Leads: React.FC = () => {
                 cancelLabel={t('common.cancel')}
                 onConfirm={confirmDelete}
                 onCancel={() => setLeadToDelete(null)}
+                variant="danger"
+            />
+            <ConfirmModal
+                isOpen={bulkDeletePending}
+                title={t('common.delete')}
+                message={t('leads.bulk_delete_confirm', { count: selectedLeads.size }) || `Xóa ${selectedLeads.size} khách hàng đã chọn? Thao tác này không thể hoàn tác.`}
+                confirmLabel={t('common.delete')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={confirmBulkDelete}
+                onCancel={() => setBulkDeletePending(false)}
                 variant="danger"
             />
         </div>
