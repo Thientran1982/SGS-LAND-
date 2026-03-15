@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { Listing, ListingStatus, PropertyType, TransactionType, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -172,7 +173,28 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
 // --- TABLE ROW (LIST VIEW) ---
 const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, formatCurrency, canViewInternal }: any) => {
     const statusStyle = STATUS_CONFIG[item.status as ListingStatus] || STATUS_CONFIG[ListingStatus.AVAILABLE];
-    
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const menuRef = useRef<HTMLDivElement>(null);
+    const btnRef  = useRef<HTMLButtonElement>(null);
+
+    const openMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        setMenuOpen(v => !v);
+    };
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handler = (e: MouseEvent) => {
+            if (!menuRef.current?.contains(e.target as Node) && !btnRef.current?.contains(e.target as Node))
+                setMenuOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [menuOpen]);
+
     return (
         <tr 
             onClick={() => onClick && onClick(item)}
@@ -268,25 +290,74 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
             </td>
 
             {/* Sticky Actions */}
-            <td className="px-4 py-3 text-right sticky right-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50 border-l border-slate-50 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors">
-                <div className="flex justify-end gap-1">
-                    {canViewInternal && (
-                        <>
-                            <button onClick={(e) => { e.stopPropagation(); onEdit(item); }} title="Chỉnh sửa" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">{ICONS.EDIT}</button>
-                            {onDuplicate && <button onClick={(e) => { e.stopPropagation(); onDuplicate(item.id); }} title="Nhân bản" className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">{ICONS.DUPLICATE}</button>}
-                            <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} title="Xóa" className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">{ICONS.TRASH}</button>
-                        </>
-                    )}
-                </div>
+            <td className="px-3 py-3 text-right sticky right-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50 border-l border-slate-50 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors">
+                {canViewInternal && (
+                    <button
+                        ref={btnRef}
+                        onClick={openMenu}
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
+                        title={t('common.actions') || 'Thao tác'}
+                    >
+                        <svg className="w-4 h-4 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                        </svg>
+                    </button>
+                )}
+                {menuOpen && createPortal(
+                    <div
+                        ref={menuRef}
+                        onClick={e => e.stopPropagation()}
+                        style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+                        className="bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-[160px]"
+                    >
+                        <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                            <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            {t('common.edit') || 'Chỉnh sửa'}
+                        </button>
+                        {onDuplicate && (
+                            <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                                {t('common.duplicate') || 'Nhân bản'}
+                            </button>
+                        )}
+                        <div className="border-t border-slate-100 my-1" />
+                        <button onClick={() => { setMenuOpen(false); onDelete(item.id); }} className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            {t('common.delete') || 'Xóa'}
+                        </button>
+                    </div>,
+                    document.body
+                )}
             </td>
         </tr>
     );
 });
 
 // --- COMPACT ROW (MOBILE LIST VIEW) ---
-const CompactInventoryRow = memo(({ item, onEdit, onDelete, onClick, t, canViewInternal }: any) => {
+const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, canViewInternal }: any) => {
     const statusStyle = STATUS_CONFIG[item.status as ListingStatus] || STATUS_CONFIG[ListingStatus.AVAILABLE];
-    
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const menuRef = useRef<HTMLDivElement>(null);
+    const btnRef  = useRef<HTMLButtonElement>(null);
+
+    const openMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        setMenuOpen(v => !v);
+    };
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handler = (e: MouseEvent) => {
+            if (!menuRef.current?.contains(e.target as Node) && !btnRef.current?.contains(e.target as Node))
+                setMenuOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [menuOpen]);
+
     return (
         <div 
             onClick={() => onClick && onClick(item)}
@@ -319,40 +390,108 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onClick, t, canViewI
                 <div className="text-[10px] text-slate-500 truncate">{item.location}</div>
             </div>
 
-            <div className="text-right shrink-0">
-                <div className="flex flex-col items-end">
-                    {item.type === PropertyType.PROJECT && (
-                        <span className="text-[8px] font-bold text-slate-400 uppercase leading-none">
-                            {t('inventory.min_price')}
-                        </span>
-                    )}
-                    <div className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
-                        {formatSmartPrice(item.price, t)}
+            <div className="flex flex-col items-end gap-1 shrink-0">
+                <div className="text-right">
+                    <div className="flex flex-col items-end">
+                        {item.type === PropertyType.PROJECT && (
+                            <span className="text-[8px] font-bold text-slate-400 uppercase leading-none">
+                                {t('inventory.min_price')}
+                            </span>
+                        )}
+                        <div className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
+                            {formatSmartPrice(item.price, t)}
+                        </div>
+                    </div>
+                    <div className="text-[10px] font-medium text-slate-400">
+                        {item.area} m² {item.area > 0 && item.type !== PropertyType.PROJECT && `• ${formatUnitPrice(item.price, item.area, t)}`}
                     </div>
                 </div>
-                <div className="text-[10px] font-medium text-slate-400">
-                    {item.area} m² {item.area > 0 && item.type !== PropertyType.PROJECT && `• ${formatUnitPrice(item.price, item.area, t)}`}
-                </div>
+                {canViewInternal && (
+                    <button
+                        ref={btnRef}
+                        onClick={openMenu}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
+                    >
+                        <svg className="w-4 h-4 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                        </svg>
+                    </button>
+                )}
             </div>
+
+            {menuOpen && createPortal(
+                <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+                    className="bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-[160px]">
+                    <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        {t('common.edit') || 'Chỉnh sửa'}
+                    </button>
+                    {onDuplicate && (
+                        <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                            {t('common.duplicate') || 'Nhân bản'}
+                        </button>
+                    )}
+                    <div className="border-t border-slate-100 my-1" />
+                    <button onClick={() => { setMenuOpen(false); onDelete(item.id); }} className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        {t('common.delete') || 'Xóa'}
+                    </button>
+                </div>,
+                document.body
+            )}
         </div>
     );
 });
 
 // --- KANBAN CARD (BOARD VIEW) ---
-const InventoryKanbanCard = memo(({ item, onClick, t, formatCurrency }: any) => {
+const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate, canViewInternal, t, formatCurrency }: any) => {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const menuRef = useRef<HTMLDivElement>(null);
+    const btnRef  = useRef<HTMLButtonElement>(null);
+
+    const openMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        setMenuOpen(v => !v);
+    };
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handler = (e: MouseEvent) => {
+            if (!menuRef.current?.contains(e.target as Node) && !btnRef.current?.contains(e.target as Node))
+                setMenuOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [menuOpen]);
+
     return (
         <div 
             onClick={() => onClick(item)}
-            className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-1 mb-3 group flex flex-col gap-2"
+            className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 mb-3 group flex flex-col gap-2 relative"
         >
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-start">
                 <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden shrink-0">
                     <img src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                     <div className="font-bold text-slate-800 text-xs line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">{item.title}</div>
                     <div className="text-[10px] text-slate-500 font-mono mt-1">{item.code}</div>
                 </div>
+                {canViewInternal && (
+                    <button
+                        ref={btnRef}
+                        onClick={openMenu}
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all shrink-0"
+                    >
+                        <svg className="w-3.5 h-3.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                        </svg>
+                    </button>
+                )}
             </div>
             <div className="flex justify-between items-end border-t border-slate-50 pt-2">
                 <div className="flex flex-col">
@@ -372,6 +511,28 @@ const InventoryKanbanCard = memo(({ item, onClick, t, formatCurrency }: any) => 
                     )}
                 </div>
             </div>
+
+            {menuOpen && createPortal(
+                <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+                    className="bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-[160px]">
+                    <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        {t('common.edit') || 'Chỉnh sửa'}
+                    </button>
+                    {onDuplicate && (
+                        <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                            {t('common.duplicate') || 'Nhân bản'}
+                        </button>
+                    )}
+                    <div className="border-t border-slate-100 my-1" />
+                    <button onClick={() => { setMenuOpen(false); onDelete(item.id); }} className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        {t('common.delete') || 'Xóa'}
+                    </button>
+                </div>,
+                document.body
+            )}
         </div>
     );
 });
@@ -719,6 +880,9 @@ export const Inventory: React.FC = () => {
                                                 key={item.id} item={item} 
                                                 onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                 onDelete={handleDeleteClick}
+                                                onDuplicate={async (id: string) => {
+                                                    try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                }}
                                                 onClick={() => handleNavigate(item.id)}
                                                 t={t}
                                                 canViewInternal={canViewInternalInfo}
@@ -767,7 +931,13 @@ export const Inventory: React.FC = () => {
                                         {items.map(item => (
                                             <InventoryKanbanCard 
                                                 key={item.id} item={item} 
-                                                onClick={() => handleNavigate(item.id)} 
+                                                onClick={() => handleNavigate(item.id)}
+                                                onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
+                                                onDelete={handleDeleteClick}
+                                                onDuplicate={async (id: string) => {
+                                                    try { await db.duplicateListing(id); fetchBoardData(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                }}
+                                                canViewInternal={canViewInternalInfo}
                                                 t={t} formatCurrency={formatCurrency} 
                                             />
                                         ))}
