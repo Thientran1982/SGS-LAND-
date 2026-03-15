@@ -9,12 +9,13 @@ import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { smartMatch, formatSmartPrice, formatUnitPrice } from '../utils/textUtils';
 import { ROUTES } from '../config/routes';
+import MapView from '../components/MapView';
 
 // -----------------------------------------------------------------------------
 //  CONSTANTS & CONFIG
 // -----------------------------------------------------------------------------
 
-type ViewMode = 'LIST' | 'BOARD' | 'GRID';
+type ViewMode = 'LIST' | 'BOARD' | 'GRID' | 'MAP';
 
 const ICONS = {
     ADD: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
@@ -24,7 +25,9 @@ const ICONS = {
     VIEW_GRID: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>,
     EDIT: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
     TRASH: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
-    X: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+    DUPLICATE: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>,
+    X: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+    VIEW_MAP: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
 };
 
 const STATUS_CONFIG: Record<ListingStatus, { color: string, bg: string, border: string }> = {
@@ -167,7 +170,6 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
 });
 
 // --- TABLE ROW (LIST VIEW) ---
-// Enhanced with Sticky Columns and Smart Price Logic
 const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, formatCurrency, canViewInternal }: any) => {
     const statusStyle = STATUS_CONFIG[item.status as ListingStatus] || STATUS_CONFIG[ListingStatus.AVAILABLE];
     
@@ -261,8 +263,9 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                 <div className="flex justify-end gap-1">
                     {canViewInternal && (
                         <>
-                            <button onClick={(e) => { e.stopPropagation(); onEdit(item); }} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">{ICONS.EDIT}</button>
-                            <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">{ICONS.TRASH}</button>
+                            <button onClick={(e) => { e.stopPropagation(); onEdit(item); }} title="Chỉnh sửa" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">{ICONS.EDIT}</button>
+                            {onDuplicate && <button onClick={(e) => { e.stopPropagation(); onDuplicate(item.id); }} title="Nhân bản" className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">{ICONS.DUPLICATE}</button>}
+                            <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} title="Xóa" className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">{ICONS.TRASH}</button>
                         </>
                     )}
                 </div>
@@ -366,6 +369,7 @@ export const Inventory: React.FC = () => {
     const [stats, setStats] = useState({ availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0 });
     const [allFilteredListings, setAllFilteredListings] = useState<Listing[]>([]); // For Kanban board
     const [loading, setLoading] = useState(true);
+    const [loadingBoard, setLoadingBoard] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
     
     // Filters & Pagination State
