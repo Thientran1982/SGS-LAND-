@@ -195,15 +195,16 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col relative">
                     <h3 className="font-bold text-slate-800 mb-3 sm:mb-4 text-sm sm:text-base">{t('reports.chart_source_mix')}</h3>
-                    <div className="w-full h-[200px] sm:h-[300px]">
+                    <div className="w-full">
                         {hasData ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <ComposedChart data={data.attribution} margin={{ top: 8, right: 48, bottom: 24, left: 8 }}>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <ComposedChart data={data.attribution} margin={{ top: 8, right: 48, bottom: 36, left: 8 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.grid} />
                                     <XAxis 
                                         dataKey="channel" 
                                         axisLine={false} 
                                         tickLine={false} 
+                                        height={36}
                                         tick={{fill: colors.text, fontSize: 11}}
                                         tickFormatter={(val) => t(`source.${val}`)}
                                     />
@@ -247,7 +248,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                 </ComposedChart>
                             </ResponsiveContainer>
                         ) : (
-                            <EmptyChartState t={t} message={t('common.no_results')} />
+                            <div className="h-[200px]"><EmptyChartState t={t} message={t('common.no_results')} /></div>
                         )}
                     </div>
                 </div>
@@ -255,10 +256,10 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                 <div className="bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col relative">
                     <h3 className="font-bold text-slate-800 mb-0.5 text-sm sm:text-base">{t('reports.chart_conversion_trend') || 'Xu hướng chuyển đổi'}</h3>
                     <p className="text-[10px] sm:text-[11px] text-slate-400 mb-2 sm:mb-3">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
-                    <div className="w-full h-[160px] sm:h-[265px]">
+                    <div className="w-full">
                         {hasTrend ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={trendData} margin={{ top: 8, right: 16, left: 4, bottom: 20 }}>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <AreaChart data={trendData} margin={{ top: 8, right: 16, left: 4, bottom: 36 }}>
                                     <defs>
                                         <linearGradient id="convGradient" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor={colors.primary} stopOpacity={0.3}/>
@@ -270,6 +271,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                         dataKey="period" 
                                         axisLine={false} 
                                         tickLine={false} 
+                                        height={36}
                                         tick={{fill: colors.text, fontSize: 10}}
                                     />
                                     <YAxis 
@@ -314,7 +316,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                 </AreaChart>
                             </ResponsiveContainer>
                         ) : (
-                            <EmptyChartState t={t} message={t('common.no_results')} />
+                            <div className="h-[200px]"><EmptyChartState t={t} message={t('common.no_results')} /></div>
                         )}
                     </div>
                 </div>
