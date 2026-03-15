@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
-import { Lead, LeadStage } from '../types';
+import { Lead, LeadStage, LEAD_SOURCES } from '../types';
 import { useTranslation } from '../services/i18n';
 import { CreateLeadModal } from '../components/CreateLeadModal';
 import { FlashProposalModal } from '../components/FlashProposalModal';
@@ -479,12 +479,14 @@ export const Leads: React.FC = () => {
     const fetchLeads = useCallback(async () => {
         setLoading(true);
         try {
-            // For Board view, we might want to fetch more items to fill columns, 
-            // but for consistent pagination, we stick to pageSize.
-            // If viewMode is BOARD, backend logic might need to be different (grouped query),
-            // but here we just fetch flat list and group client-side for simplicity.
-            const filters = { search: debouncedSearch, stage: stageFilter, source: sourceFilter, sort: 'score', order: 'desc' };
-            const res = await db.getLeads(page, pageSize, filters);
+            const filters: Record<string, any> = { sort: 'score', order: 'desc' };
+            if (debouncedSearch) filters.search = debouncedSearch;
+            if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
+            if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
+            // Board view: fetch all leads (up to 500) so all kanban columns are populated
+            const effectivePageSize = viewMode === 'BOARD' ? 500 : pageSize;
+            const effectivePage    = viewMode === 'BOARD' ? 1   : page;
+            const res = await db.getLeads(effectivePage, effectivePageSize, filters);
             setLeads(res.data || []);
             setTotalPages(res.totalPages);
             setTotalItems(res.total);
@@ -496,7 +498,7 @@ export const Leads: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, debouncedSearch, stageFilter, sourceFilter, notify, t]);
+    }, [page, pageSize, viewMode, debouncedSearch, stageFilter, sourceFilter, notify, t]);
 
     useEffect(() => {
         fetchLeads();
@@ -621,14 +623,17 @@ export const Leads: React.FC = () => {
     };
 
     const stageOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_stages') }, ...Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }))], [t]);
-    const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_sources') }, ...['Facebook', 'Zalo', 'Website'].map(s => ({ value: s, label: s }))], [t]);
+    const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_sources') }, ...LEAD_SOURCES.map(s => ({ value: s, label: s }))], [t]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleExportExcel = async () => {
         try {
             setLoading(true);
-            const filters = { search: debouncedSearch, stage: stageFilter, source: sourceFilter, sort: 'score', order: 'desc' };
+            const filters: Record<string, any> = { sort: 'score', order: 'desc' };
+            if (debouncedSearch) filters.search = debouncedSearch;
+            if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
+            if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
             const res = await db.getLeads(1, 10000, filters);
             const allLeads = res.data || [];
 
