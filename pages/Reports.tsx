@@ -171,8 +171,8 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
     const totalRevenue = data.attribution.reduce((acc, curr) => acc + curr.revenue, 0);
     const totalSpend = data.attribution.reduce((acc, curr) => acc + curr.spend, 0);
     const totalLeads = data.attribution.reduce((acc, curr) => acc + curr.leads, 0);
-    const avgRoi = data.attribution.length > 0
-        ? data.attribution.reduce((acc, curr) => acc + curr.roi, 0) / data.attribution.length
+    const avgRoi = totalSpend > 0
+        ? ((totalRevenue - totalSpend) / totalSpend) * 100
         : 0;
 
     return (
@@ -487,7 +487,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
     );
 });
 
-const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: { data: BiData, t: any, formatCurrency: any, currentUser: any, onCostUpdated: () => void }) => {
+const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, notify }: { data: BiData, t: any, formatCurrency: any, currentUser: any, onCostUpdated: () => void, notify: (msg: string, type?: 'success' | 'error') => void }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -505,13 +505,19 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
 
     const handleUpdate = async () => {
         if (!editingCost) return;
+        const parsed = Number(newCostValue);
+        if (!newCostValue || isNaN(parsed) || parsed < 0) {
+            notify(t('reports.cost_amount_invalid') || 'Chi phí không hợp lệ', 'error');
+            return;
+        }
         try {
-            await db.updateCampaignCost(editingCost.id, Number(newCostValue));
+            await db.updateCampaignCost(editingCost.id, parsed);
             setIsUpdating(false);
             setEditingCost(null);
+            notify(t('reports.cost_updated') || 'Đã cập nhật chi phí', 'success');
             onCostUpdated();
-        } catch (error) {
-            console.error('Failed to update cost', error);
+        } catch (error: any) {
+            notify(error?.message || t('common.error'), 'error');
         }
     };
 
@@ -527,9 +533,10 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
             });
             setIsAdding(false);
             setAddForm({ campaignName: '', source: '', cost: '', period: new Date().toISOString().slice(0, 7) });
+            notify(t('reports.cost_added') || 'Đã thêm chi phí', 'success');
             onCostUpdated();
-        } catch (error) {
-            console.error('Failed to add cost', error);
+        } catch (error: any) {
+            notify(error?.message || t('common.error'), 'error');
         } finally {
             setIsSaving(false);
         }
@@ -541,9 +548,10 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
         try {
             await db.deleteCampaignCost(deletingId);
             setDeletingId(null);
+            notify(t('reports.cost_deleted') || 'Đã xóa chi phí', 'success');
             onCostUpdated();
-        } catch (error) {
-            console.error('Failed to delete cost', error);
+        } catch (error: any) {
+            notify(error?.message || t('common.error'), 'error');
         } finally {
             setIsDeleting(false);
         }
@@ -752,14 +760,20 @@ const TIME_RANGE_OPTIONS = [
 export const Reports: React.FC = () => {
     const [data, setData] = useState<BiData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'FUNNEL' | 'ROI' | 'COSTS'>('ROI');
+    const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'FUNNEL' | 'ROI' | 'COSTS'>('OVERVIEW');
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [timeRange, setTimeRange] = useState<string>('30');
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const { chartTheme } = useTheme();
 
     const locale = language === 'vn' ? 'vi-VN' : 'en-US';
+
+    const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    }, []);
 
     const loadData = useCallback(() => {
         let mounted = true;
@@ -863,8 +877,19 @@ export const Reports: React.FC = () => {
                 {activeTab === 'OVERVIEW' && <OverviewTab data={data} t={t} formatCurrency={formatCurrency} formatCompactNumber={formatCompactNumber} chartTheme={chartTheme} locale={locale} />}
                 {activeTab === 'FUNNEL' && <FunnelTab data={data} t={t} chartTheme={chartTheme} />} 
                 {activeTab === 'ROI' && <RoiTab data={data} t={t} formatCurrency={formatCurrency} />}
-                {activeTab === 'COSTS' && <CostsTab data={data} t={t} formatCurrency={formatCurrency} currentUser={currentUser} onCostUpdated={loadData} />}
+                {activeTab === 'COSTS' && <CostsTab data={data} t={t} formatCurrency={formatCurrency} currentUser={currentUser} onCostUpdated={loadData} notify={notify} />}
             </div>
+
+            {toast && createPortal(
+                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold transition-all animate-enter ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+                    {toast.type === 'success'
+                        ? <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                        : <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                    }
+                    {toast.msg}
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
