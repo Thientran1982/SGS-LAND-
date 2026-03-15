@@ -86,8 +86,10 @@ class DatabaseApiClient {
   private currentTenantId: string = DEFAULT_TENANT_ID;
   private cachedCurrentUser: any = null;
   private currentUserPromise: Promise<any> | null = null;
+  private _isLoggedOut: boolean = false;
 
   async getCurrentUser() {
+    if (this._isLoggedOut) return null;
     if (this.cachedCurrentUser) return this.cachedCurrentUser;
     if (this.currentUserPromise) return this.currentUserPromise;
     this.currentUserPromise = userApi.getMe()
@@ -818,6 +820,7 @@ class DatabaseApiClient {
       throw new Error(err.error || 'Login failed');
     }
     const data = await res.json();
+    this._isLoggedOut = false;
     this.cachedCurrentUser = data.user;
     window.dispatchEvent(new CustomEvent('auth:login'));
     return data.user;
@@ -838,7 +841,8 @@ class DatabaseApiClient {
   }
 
   async logout() {
-    this.cachedCurrentUser = null;
+    this._isLoggedOut = true;
+    this.clearUserCache();
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     window.dispatchEvent(new CustomEvent('auth:logout'));
   }
@@ -893,6 +897,7 @@ class DatabaseApiClient {
       throw new Error(err.error || 'SSO login failed');
     }
     const data = await res.json();
+    this._isLoggedOut = false;
     this.cachedCurrentUser = data.user;
     return data.user;
   }
