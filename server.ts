@@ -939,6 +939,9 @@ async function startServer() {
     });
   });
 
+  // Serve public assets (widget.js, QR codes, etc.) in all environments
+  app.use(express.static("public"));
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

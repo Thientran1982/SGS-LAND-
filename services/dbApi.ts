@@ -7,7 +7,7 @@ import { userApi } from './api/userApi';
 import { analyticsApi } from './api/analyticsApi';
 import { knowledgeApi } from './api/knowledgeApi';
 import { api } from './api/apiClient';
-import { PlanTier, Plan, UserRole } from '../types';
+import { PlanTier, Plan, UserRole, ThreadStatus } from '../types';
 import { ROUTES } from '../config/routes';
 
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
@@ -383,7 +383,31 @@ class DatabaseApiClient {
 
   async getInboxThreads() {
     try {
-      return await inboxApi.getThreads();
+      const raw = await inboxApi.getThreads();
+      return (raw || []).map((r: any) => ({
+        lead: {
+          id: r.leadId,
+          name: r.leadName,
+          phone: r.leadPhone,
+          attributes: { avatar: r.leadAvatar },
+          stage: r.leadStage,
+          assignedTo: r.assignedTo,
+          score: r.leadScore ?? undefined,
+        } as any,
+        lastMessage: r.lastTimestamp ? {
+          id: `thread-${r.leadId}`,
+          content: r.lastMessage || '',
+          channel: r.lastChannel,
+          direction: r.lastDirection,
+          timestamp: r.lastTimestamp,
+          type: r.lastType || 'TEXT',
+          status: 'SENT',
+          leadId: r.leadId,
+          metadata: {},
+        } as any : undefined,
+        unreadCount: r.unreadCount || 0,
+        status: ThreadStatus.AI_ACTIVE,
+      }));
     } catch {
       return [];
     }
