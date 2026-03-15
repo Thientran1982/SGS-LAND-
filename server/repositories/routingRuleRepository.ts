@@ -32,6 +32,56 @@ class RoutingRuleRepository extends BaseRepository {
     });
   }
 
+  async matchLead(tenantId: string, lead: {
+    source?: string;
+    address?: string;
+    tags?: string[];
+    preferences?: any;
+    score?: any;
+  }): Promise<string | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT * FROM routing_rules WHERE is_active = true ORDER BY priority ASC, created_at DESC`
+      );
+      for (const row of result.rows) {
+        const rule = this.rowToEntity(row);
+        const cond: any = rule.conditions || {};
+
+        if (cond.source && cond.source.length > 0) {
+          if (!lead.source || !cond.source.includes(lead.source)) continue;
+        }
+        if (cond.region && cond.region.length > 0) {
+          const addr = (lead.address || '').toLowerCase();
+          if (!cond.region.some((r: string) => addr.includes(r.toLowerCase()))) continue;
+        }
+        if (cond.tags && cond.tags.length > 0) {
+          const leadTags: string[] = lead.tags || [];
+          if (!cond.tags.some((tag: string) => leadTags.includes(tag))) continue;
+        }
+        const budget = lead.preferences?.budget || 0;
+        if (cond.budgetMin && cond.budgetMin > 0 && budget < cond.budgetMin) continue;
+        if (cond.budgetMax && cond.budgetMax > 0 && budget > cond.budgetMax) continue;
+        if (cond.temperature && cond.temperature.length > 0) {
+          const label = lead.score?.label || '';
+          if (!cond.temperature.includes(label)) continue;
+        }
+
+        const action: any = rule.action || {};
+        if (action.type === 'ASSIGN_USER' && action.targetId) {
+          return action.targetId;
+        }
+        if (action.type === 'ASSIGN_TEAM' && action.targetId) {
+          const members = await client.query(
+            `SELECT user_id FROM team_members WHERE team_id = $1 ORDER BY RANDOM() LIMIT 1`,
+            [action.targetId]
+          );
+          if (members.rows[0]) return members.rows[0].user_id;
+        }
+      }
+      return null;
+    });
+  }
+
   async update(tenantId: string, id: string, data: any) {
     return this.withTenant(tenantId, async (client) => {
       const fields: string[] = [];
