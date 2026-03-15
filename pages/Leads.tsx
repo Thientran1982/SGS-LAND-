@@ -360,17 +360,64 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
 });
 
 // --- KANBAN BOARD CARD ---
-const KanbanCard = memo(({ lead, onClick, t, formatDate, users }: { lead: Lead, onClick: (l: Lead) => void, t: any, formatDate: any, users: any[] }) => {
+const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, users }: {
+    lead: Lead;
+    onClick: (l: Lead) => void;
+    onDelete: (l: Lead) => void;
+    onProposal: (l: Lead) => void;
+    t: any;
+    formatDate: any;
+    users: any[];
+}) => {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const menuRef = useRef<HTMLDivElement>(null);
+    const btnRef  = useRef<HTMLButtonElement>(null);
+
+    const openMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        setMenuOpen(v => !v);
+    };
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handler = (e: MouseEvent) => {
+            if (!menuRef.current?.contains(e.target as Node) && !btnRef.current?.contains(e.target as Node)) {
+                setMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [menuOpen]);
+
     return (
-        <div 
+        <div
+            className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 mb-3 group relative"
             onClick={() => onClick(lead)}
-            className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-1 mb-3 group"
             role="button"
         >
-            <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors truncate pr-2">{lead.name}</h4>
-                <div className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{lead.score?.score || 0}</div>
+            {/* Header row: name + score + 3-dot */}
+            <div className="flex justify-between items-start mb-2 gap-1">
+                <h4 className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors truncate flex-1">{lead.name}</h4>
+                <div className="flex items-center gap-1 shrink-0">
+                    <div className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{lead.score?.score || 0}</div>
+                    {/* 3-dot action button */}
+                    <button
+                        ref={btnRef}
+                        onClick={openMenu}
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
+                        title={t('common.actions') || 'Thao tác'}
+                    >
+                        <svg className="w-3.5 h-3.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
+
+            {/* Phone + Source */}
             <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-slate-500 font-mono truncate flex-1 mr-2">{lead.phone}</span>
                 <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 shrink-0">
@@ -378,6 +425,8 @@ const KanbanCard = memo(({ lead, onClick, t, formatDate, users }: { lead: Lead, 
                     {t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source}
                 </span>
             </div>
+
+            {/* Footer: date + assignee */}
             <div className="flex justify-between items-center text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-50">
                 <span>{formatDate(lead.createdAt)}</span>
                 <span className="font-medium text-slate-500 flex items-center gap-1">
@@ -385,6 +434,40 @@ const KanbanCard = memo(({ lead, onClick, t, formatDate, users }: { lead: Lead, 
                     {users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || t('inbox.unassigned')}
                 </span>
             </div>
+
+            {/* Dropdown menu — rendered via portal to escape overflow:hidden ancestors */}
+            {menuOpen && createPortal(
+                <div
+                    ref={menuRef}
+                    onClick={e => e.stopPropagation()}
+                    style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+                    className="bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-[160px]"
+                >
+                    <button
+                        onClick={() => { setMenuOpen(false); onClick(lead); }}
+                        className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        {t('common.edit') || 'Chỉnh sửa'}
+                    </button>
+                    <button
+                        onClick={() => { setMenuOpen(false); onProposal(lead); }}
+                        className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        {t('leads.create_proposal') || 'Tạo báo giá'}
+                    </button>
+                    <div className="border-t border-slate-100 my-1" />
+                    <button
+                        onClick={() => { setMenuOpen(false); onDelete(lead); }}
+                        className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        {t('common.delete') || 'Xóa'}
+                    </button>
+                </div>,
+                document.body
+            )}
         </div>
     );
 });
@@ -980,7 +1063,7 @@ export const Leads: React.FC = () => {
                                         </div>
                                         <div className="flex-1 overflow-y-auto p-2 no-scrollbar min-h-0">
                                             {groupedLeads[stage]?.map(lead => (
-                                                <KanbanCard key={lead.id} lead={lead} onClick={handleEdit} t={t} formatDate={formatDate} users={users} />
+                                                <KanbanCard key={lead.id} lead={lead} onClick={handleEdit} onDelete={handleDeleteClick} onProposal={(l) => setProposalLead(l)} t={t} formatDate={formatDate} users={users} />
                                             ))}
                                         </div>
                                     </div>
