@@ -907,7 +907,7 @@ export const Leads: React.FC = () => {
                 <div className="flex-1 overflow-auto p-4 md:p-6 custom-scrollbar min-h-0">
                     {/* VIEW MODE: LIST (TABLE) - Desktop Only */}
                     {viewMode === 'LIST' && (
-                        <div className="hidden md:block bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden h-full flex flex-col">
+                        <div className="hidden md:flex flex-col bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden h-full">
                             <div ref={tableRef} className="overflow-auto custom-scrollbar flex-1 min-w-0 min-h-0 w-full cursor-grab active:cursor-grabbing">
                                 <table className="w-full text-left border-collapse relative">
                                     <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-20 shadow-sm">
