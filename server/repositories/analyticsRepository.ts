@@ -41,9 +41,8 @@ const GRADE_PROBABILITY: Record<string, number> = {
 
 function getDaysInterval(timeRange?: string): number {
   if (!timeRange || timeRange === 'all') return 365;
-  if (timeRange === '7d') return 7;
-  if (timeRange === '30d') return 30;
-  if (timeRange === '90d') return 90;
+  const n = parseInt(timeRange, 10);
+  if (!isNaN(n) && n > 0) return n;
   return 365;
 }
 
@@ -384,7 +383,7 @@ export class AnalyticsRepository extends BaseRepository {
       const campaignCostsResult = await client.query(`
         SELECT source, COALESCE(SUM(cost), 0)::numeric as total_cost
         FROM campaign_costs
-        WHERE 1=1 ${timeFilterAnd}
+        ${useTimeFilter ? `WHERE period >= TO_CHAR(NOW() - INTERVAL '${days} days', 'YYYY-MM')` : ''}
         GROUP BY source
       `);
 
