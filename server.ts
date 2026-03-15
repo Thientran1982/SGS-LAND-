@@ -401,7 +401,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/ai/valuation", authenticateToken, aiRateLimit, validateBody(schemas.aiValuation), async (req, res) => {
+  app.post("/api/ai/valuation", aiRateLimit, validateBody(schemas.aiValuation), async (req, res) => {
     try {
       const { address, area, roadWidth, legal } = req.body;
       const { aiService } = await import('./server/ai');
