@@ -132,13 +132,62 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Can only update own profile or must be admin' });
       }
 
+      // BUG FIX: Prevent privilege escalation — only ADMIN can change roles
+      if (req.body.role !== undefined && user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can change user roles' });
+      }
+
+      const before = await userRepository.findByIdDirect(req.params.id);
       const updated = await userRepository.update(user.tenantId, req.params.id, req.body);
       if (!updated) return res.status(404).json({ error: 'User not found' });
+
+      const changes: string[] = [];
+      if (req.body.role && before?.role !== req.body.role) changes.push(`role: ${before?.role} → ${req.body.role}`);
+      if (req.body.status && before?.status !== req.body.status) changes.push(`status: ${before?.status} → ${req.body.status}`);
+      if (changes.length > 0) {
+        await auditRepository.log(user.tenantId, {
+          actorId: user.id,
+          action: 'USER_UPDATED',
+          entityType: 'USER',
+          entityId: req.params.id,
+          details: `Updated ${updated.email}: ${changes.join(', ')}`,
+          ipAddress: req.ip,
+        });
+      }
 
       res.json(userRepository.toPublicUser(updated));
     } catch (error) {
       console.error('Error updating user:', error);
       res.status(500).json({ error: 'Failed to update user' });
+    }
+  });
+
+  router.post('/:id/resend-invite', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can resend invites' });
+      }
+
+      const target = await userRepository.findByIdDirect(req.params.id);
+      if (!target) return res.status(404).json({ error: 'User not found' });
+      if (target.status !== 'PENDING') {
+        return res.status(400).json({ error: 'Only pending users can receive re-invites' });
+      }
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'USER_REINVITED',
+        entityType: 'USER',
+        entityId: req.params.id,
+        details: `Re-invite sent to ${target.email}`,
+        ipAddress: req.ip,
+      });
+
+      res.json({ success: true, message: `Invite resent to ${target.email}` });
+    } catch (error) {
+      console.error('Error resending invite:', error);
+      res.status(500).json({ error: 'Failed to resend invite' });
     }
   });
 

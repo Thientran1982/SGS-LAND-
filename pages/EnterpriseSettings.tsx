@@ -803,6 +803,11 @@ const ACTION_COLORS: Record<string, string> = {
     EMAIL_CONFIG_UPDATED: 'bg-cyan-50 text-cyan-700 border-cyan-100',
     SSO_CONFIG_UPDATED: 'bg-purple-50 text-purple-700 border-purple-100',
     ENTERPRISE_CONFIG_UPDATED: 'bg-slate-100 text-slate-700 border-slate-200',
+    USER_CREATED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    USER_INVITED: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+    USER_REINVITED: 'bg-sky-50 text-sky-700 border-sky-100',
+    USER_UPDATED: 'bg-amber-50 text-amber-700 border-amber-100',
+    USER_DELETED: 'bg-rose-50 text-rose-700 border-rose-100',
 };
 
 const PAGE_SIZE = 20;
@@ -847,6 +852,7 @@ const AuditPanel = memo(() => {
     const ENTITY_OPTIONS = [
         { value: '', label: 'Tất cả loại' },
         { value: 'auth', label: 'Xác thực' },
+        { value: 'USER', label: 'Người dùng' },
         { value: 'enterprise_config', label: 'Cài đặt doanh nghiệp' },
         { value: 'lead', label: 'Lead' },
         { value: 'listing', label: 'Tin đăng' },

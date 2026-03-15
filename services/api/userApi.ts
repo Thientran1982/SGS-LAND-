@@ -27,4 +27,7 @@ export const userApi = {
 
   inviteUser: (data: Record<string, any>): Promise<any> =>
     api.post('/api/users/invite', data),
+
+  resendInvite: (userId: string): Promise<any> =>
+    api.post(`/api/users/${userId}/resend-invite`, {}),
 };
