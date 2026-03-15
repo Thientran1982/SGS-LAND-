@@ -223,6 +223,11 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
             if (hasMarkers) {
                 map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: false });
             }
+
+            // Force resize after markers update in case container was hidden/shown
+            setTimeout(() => {
+                if (mapInstanceRef.current) mapInstanceRef.current.invalidateSize();
+            }, 100);
         } catch (e) {
             console.error("Error updating map markers", e);
         }

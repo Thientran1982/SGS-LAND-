@@ -461,7 +461,7 @@ export const Inventory: React.FC = () => {
     }, [debouncedSearch, typeFilter, statusFilter, transactionFilter, page, pageSize, notify, t]);
 
     const fetchBoardData = useCallback(async () => {
-        if (viewMode !== 'BOARD') { setAllFilteredListings([]); return; }
+        if (viewMode !== 'BOARD' && viewMode !== 'MAP') { setAllFilteredListings([]); return; }
         try {
             const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter };
             const allRes = await db.getListings(1, 500, filters);
@@ -731,7 +731,7 @@ export const Inventory: React.FC = () => {
                     <div className="flex-1 min-h-0 p-4 md:p-6 overflow-hidden">
                         <div className="h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
                             <MapView
-                                listings={listings}
+                                listings={allFilteredListings.length > 0 ? allFilteredListings : listings}
                                 onNavigate={handleNavigate}
                                 formatCurrency={formatCurrency}
                                 formatUnitPrice={formatUnitPrice}
