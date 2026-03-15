@@ -579,24 +579,40 @@ export const Leads: React.FC = () => {
     const handleExportExcel = async () => {
         try {
             setLoading(true);
-            // Fetch all leads matching current filters by requesting a large page size
             const filters = { search: debouncedSearch, stage: stageFilter, source: sourceFilter, sort: 'score', order: 'desc' };
             const res = await db.getLeads(1, 10000, filters);
             const allLeads = res.data || [];
 
             const dataToExport = allLeads.map(lead => ({
-                [t('leads.customer_name') || 'Tên khách hàng']: lead.name,
-                [t('leads.phone') || 'Số điện thoại']: lead.phone,
-                [t('leads.source') || 'Nguồn']: lead.source,
-                [t('leads.status') || 'Trạng thái']: t(`stage.${lead.stage}`),
-                [t('leads.score') || 'Điểm số']: lead.score?.score || 0,
-                [t('leads.assigned_to') || 'Người phụ trách']: lead.assignedTo || ''
+                'Tên khách hàng': lead.name,
+                'Số điện thoại': lead.phone,
+                'Email': lead.email || '',
+                'Địa chỉ': lead.address || '',
+                'Nguồn': lead.source,
+                'Trạng thái': t(`stage.${lead.stage}`),
+                'Tags': Array.isArray(lead.tags) ? lead.tags.join(', ') : (lead.tags || ''),
+                'Ghi chú': lead.notes || '',
+                'Điểm số': lead.score?.score || 0,
+                'Người phụ trách': lead.assignedTo || ''
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+            // Force the phone number column ('B') to text format so Excel
+            // doesn't strip the leading zero when the file is opened.
+            const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+            for (let R = range.s.r + 1; R <= range.e.r; R++) {
+                const cellAddr = XLSX.utils.encode_cell({ r: R, c: 1 });
+                if (worksheet[cellAddr]) {
+                    worksheet[cellAddr].t = 's';
+                    worksheet[cellAddr].z = '@';
+                }
+            }
+
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Leads");
             XLSX.writeFile(workbook, "DanhSachKhachHang.xlsx");
+            notify(t('leads.export_success') || 'Xuất dữ liệu thành công', 'success');
         } catch (error) {
             console.error("Export failed", error);
             notify(t('common.error') || 'Lỗi khi xuất dữ liệu', 'error');
@@ -611,30 +627,57 @@ export const Leads: React.FC = () => {
 
         const reader = new FileReader();
         reader.onload = async (evt) => {
-            try {
-                const bstr = evt.target?.result;
-                const wb = XLSX.read(bstr, { type: 'binary' });
-                const wsname = wb.SheetNames[0];
-                const ws = wb.Sheets[wsname];
-                const data = XLSX.utils.sheet_to_json(ws);
-                
-                for (const row of data as any[]) {
-                    const newLead: Partial<Lead> = {
-                        name: row[t('leads.customer_name') || 'Tên khách hàng'] || (t('leads.new_customer') || 'Khách hàng mới'),
-                        phone: row[t('leads.phone') || 'Số điện thoại'] ? String(row[t('leads.phone') || 'Số điện thoại']) : '',
-                        source: row[t('leads.source') || 'Nguồn'] || 'Other',
-                        stage: LeadStage.NEW,
-                        assignedTo: row[t('leads.assigned_to') || 'Người phụ trách'] || 'user_1'
-                    };
-                    await db.createLead(newLead);
+            const arrayBuffer = evt.target?.result;
+            if (!arrayBuffer) return;
+
+            const wb = XLSX.read(arrayBuffer, { type: 'array' });
+            const wsname = wb.SheetNames[0];
+            const ws = wb.Sheets[wsname];
+            const data = XLSX.utils.sheet_to_json(ws, { raw: false });
+
+            let successCount = 0;
+            let skipCount = 0;
+            let errorCount = 0;
+
+            for (const row of data as any[]) {
+                let rawPhone = row['Số điện thoại'] ? String(row['Số điện thoại']).replace(/[^0-9]/g, '') : '';
+                if (rawPhone && !rawPhone.startsWith('0') && rawPhone.length === 9) {
+                    rawPhone = '0' + rawPhone;
                 }
-                notify(t('leads.import_success') || 'Nhập dữ liệu thành công', 'success');
-                fetchLeads();
-            } catch (error) {
-                notify(t('leads.import_error') || 'Lỗi khi nhập dữ liệu', 'error');
+
+                if (!rawPhone) {
+                    skipCount++;
+                    continue;
+                }
+
+                const newLead: Partial<Lead> = {
+                    name: row['Tên khách hàng'] || 'Khách hàng mới',
+                    phone: rawPhone,
+                    email: row['Email'] || '',
+                    address: row['Địa chỉ'] || '',
+                    source: row['Nguồn'] || 'Other',
+                    stage: LeadStage.NEW,
+                    tags: row['Tags'] ? row['Tags'].split(',').map((t: string) => t.trim()).filter(Boolean) : [],
+                    notes: row['Ghi chú'] || '',
+                };
+
+                try {
+                    await db.createLead(newLead);
+                    successCount++;
+                } catch (err: any) {
+                    if (err?.status === 409 || err?.message?.includes('DUPLICATE')) {
+                        skipCount++;
+                    } else {
+                        errorCount++;
+                    }
+                }
             }
+
+            if (successCount > 0) fetchLeads();
+            const msg = `Nhập thành công: ${successCount} | Trùng/bỏ qua: ${skipCount}${errorCount > 0 ? ` | Lỗi: ${errorCount}` : ''}`;
+            notify(msg, successCount > 0 ? 'success' : 'error');
         };
-        reader.readAsBinaryString(file);
+        reader.readAsArrayBuffer(file);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 

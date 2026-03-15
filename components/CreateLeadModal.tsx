@@ -132,7 +132,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             };
 
             const createdLead = await db.createLead(payload);
-            socket.emit("lead_created", createdLead);
+            socket?.emit("lead_created", createdLead);
             
             setTimeout(() => {
                 onSuccess();
@@ -161,7 +161,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             };
 
             await db.updateLead(duplicateLead.id, updatedLead);
-            socket.emit("lead_updated", updatedLead);
+            socket?.emit("lead_updated", updatedLead);
             
             setTimeout(() => {
                 onSuccess();
