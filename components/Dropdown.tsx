@@ -74,25 +74,32 @@ export const Dropdown = memo(<T extends string | number>({
     const listboxRef = useRef<HTMLDivElement>(null);
     const { t } = useTranslation();
 
-    // Calculate position when opening
+    // Calculate position when opening — auto-flips if not enough space below
     const updatePosition = useCallback(() => {
         if (buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
             const GAP = 6;
+            const MAX_MENU_HEIGHT = 240;
             const MIN_WIDTH = 160;
             const menuWidth = Math.max(rect.width, MIN_WIDTH);
             // Clamp left so menu never overflows the right edge of the viewport
             const safeLeft = Math.min(rect.left, window.innerWidth - menuWidth - 8);
 
-            if (placement === 'top') {
-                // For 'top', we calculate distance from the BOTTOM of the viewport to the TOP of the button
+            const spaceBelow = window.innerHeight - rect.bottom - GAP;
+            const spaceAbove = rect.top - GAP;
+
+            // Honour explicit placement prop; for 'bottom' auto-flip when not enough room below
+            const shouldOpenUp =
+                placement === 'top' ||
+                (placement === 'bottom' && spaceBelow < MAX_MENU_HEIGHT && spaceAbove > spaceBelow);
+
+            if (shouldOpenUp) {
                 setCoords({
                     bottom: window.innerHeight - rect.top + GAP,
                     left: safeLeft,
                     width: menuWidth
                 });
             } else {
-                // Standard 'bottom' behavior
                 setCoords({
                     top: rect.bottom + GAP,
                     left: safeLeft,
@@ -214,11 +221,11 @@ export const Dropdown = memo(<T extends string | number>({
                     tabIndex={-1}
                     className={STYLES.MENU}
                     style={{ 
-                        // Conditionally apply top OR bottom based on placement
-                        ...(placement === 'top' ? { bottom: coords.bottom } : { top: coords.top }),
+                        // Use coords directly — auto-flip may have changed direction vs placement prop
+                        ...(coords.bottom !== undefined ? { bottom: coords.bottom } : { top: coords.top }),
                         left: coords.left, 
                         width: coords.width,
-                        transformOrigin: placement === 'top' ? 'bottom center' : 'top center'
+                        transformOrigin: coords.bottom !== undefined ? 'bottom center' : 'top center'
                     }}
                 >
                     {options?.length === 0 ? (
