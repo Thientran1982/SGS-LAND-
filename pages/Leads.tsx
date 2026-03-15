@@ -723,7 +723,7 @@ export const Leads: React.FC = () => {
 
     return (
         <div className="h-full flex flex-col relative">
-            {toast && <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg || (toast.type === 'success' ? t('common.success') : t('common.error'))}</span></div>}
+            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg || (toast.type === 'success' ? t('common.success') : t('common.error'))}</span></div>}
 
             {/* Header & Controls */}
             <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm p-4 md:p-6 transition-all flex-none">

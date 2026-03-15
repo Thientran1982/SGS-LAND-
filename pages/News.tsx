@@ -591,7 +591,7 @@ export const News: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             {errorToast && (
-                <div className="fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl bg-rose-900/90 border border-rose-500 text-white flex items-center gap-3 animate-enter">
+                <div className="fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl bg-rose-900/90 border border-rose-500 text-white flex items-center gap-3 animate-enter">
                     <span className="font-bold text-sm">{errorToast}</span>
                 </div>
             )}
