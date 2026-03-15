@@ -387,7 +387,6 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             {interactions.length === 0 && <div className="text-center py-10 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl text-xs">{t('detail.empty_history')}</div>}
                         </div>
                     </div>
-                </div>
             </div>
 
             <div className="p-4 border-t border-slate-200 bg-white flex-none z-20 relative flex gap-3">
