@@ -798,7 +798,6 @@ export const ListingDetail: React.FC = () => {
                     source: 'BOOKING',
                     stage: LeadStage.NEW,
                     notes: leadNotes,
-                    assignedTo: listing?.tenantId as any,
                 });
                 if (listing?.id) {
                     await db.updateListing(listing.id, {

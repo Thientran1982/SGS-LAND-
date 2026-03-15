@@ -252,6 +252,7 @@ export class LeadRepository extends BaseRepository {
       const jsonFields = ['tags', 'score', 'socialIds', 'optOutChannels', 'attributes', 'preferences'];
 
       for (const [key, col] of Object.entries(fieldMap)) {
+        if (key === 'assignedTo' && userRole === 'SALES') continue;
         if (data[key] !== undefined) {
           updates.push(`${col} = $${paramIndex++}`);
           values.push(data[key]);

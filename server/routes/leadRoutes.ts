@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { leadRepository } from '../repositories/leadRepository';
 import { auditRepository } from '../repositories/auditRepository';
+import { routingRuleRepository } from '../repositories/routingRuleRepository';
 
 export function createLeadRoutes(authenticateToken: any) {
   const router = Router();
@@ -71,9 +72,21 @@ export function createLeadRoutes(authenticateToken: any) {
         });
       }
 
+      let finalAssignedTo = assignedTo || null;
+      if (!assignedTo) {
+        try {
+          const autoAssignId = await routingRuleRepository.matchLead(user.tenantId, {
+            source, address, tags, preferences,
+          });
+          if (autoAssignId) finalAssignedTo = autoAssignId;
+        } catch (routingErr) {
+          console.warn('Routing rules match failed, falling back to creator:', routingErr);
+        }
+      }
+
       const lead = await leadRepository.create(user.tenantId, {
         name, phone, email, address, source, stage,
-        assignedTo: assignedTo || user.id,
+        assignedTo: finalAssignedTo || user.id,
         tags, notes, preferences,
       });
 
