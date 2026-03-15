@@ -666,7 +666,7 @@ export const Inventory: React.FC = () => {
                         {/* LIST VIEW (TABLE) */}
                         {viewMode === 'LIST' && (
                             <div className="bg-white rounded-[24px] md:border border-slate-100 shadow-sm overflow-hidden h-full flex flex-col">
-                                <div ref={tableRef} className="overflow-auto no-scrollbar custom-scrollbar flex-1 min-w-0 w-full cursor-grab active:cursor-grabbing">
+                                <div ref={tableRef} className="overflow-auto no-scrollbar flex-1 min-w-0 w-full cursor-grab active:cursor-grabbing">
                                     <table className="w-full text-left border-collapse relative hidden md:table">
                                         <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-20 shadow-sm">
                                             <tr>
