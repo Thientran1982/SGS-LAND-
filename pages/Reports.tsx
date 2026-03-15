@@ -441,43 +441,47 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
 
         {/* Attribution Table */}
         <div className="bg-white p-0 md:p-2 rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
-            <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
-                <table className="min-w-[800px] md:min-w-full text-sm text-left">
-                    <thead className="bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider sticky top-0 z-10">
-                        <tr>
-                            <th className="p-5">{t('reports.table_channel')}</th>
-                            <th className="p-5 text-right">{t('reports.table_spend')}</th>
-                            <th className="p-5 text-right">{t('reports.table_leads')}</th>
-                            <th className="p-5 text-right">{t('reports.table_cac')}</th>
-                            <th className="p-5 text-right">{t('reports.table_revenue')}</th>
-                            <th className="p-5 text-right">{t('reports.table_roi')}</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {data.attribution.length === 0 && (
-                            <tr><td colSpan={6} className="p-10 text-center text-slate-400">{t('common.no_results')}</td></tr>
-                        )}
-                        {data.attribution.map(row => (
-                            <tr key={row.channel} className="hover:bg-slate-50 transition-colors group">
-                                <td className="p-5 font-bold text-slate-800">
-                                    <span className="bg-slate-100 px-2 py-1 rounded text-xs border border-slate-200 group-hover:bg-white transition-colors">
-                                        {t(`source.${row.channel}`) !== `source.${row.channel}` ? t(`source.${row.channel}`) : row.channel}
-                                    </span>
-                                </td>
-                                <td className="p-5 text-right font-mono text-slate-600">
-                                    {row.spend > 0 ? formatCurrency(row.spend) : <span className="text-slate-300">—</span>}
-                                </td>
-                                <td className="p-5 text-right font-bold text-slate-700">{row.leads}</td>
-                                <td className="p-5 text-right font-mono text-slate-600">
-                                    {row.cac > 0 ? formatCurrency(row.cac) : <span className="text-slate-300">—</span>}
-                                </td>
-                                <td className="p-5 text-right font-mono font-bold text-indigo-600">{formatCurrency(row.revenue)}</td>
-                                <td className="p-5 text-right">{roiDisplay(row)}</td>
+            {data.attribution.length === 0 ? (
+                <div className="p-10 flex flex-col items-center justify-center text-slate-400 gap-2">
+                    <svg className="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    <p className="text-xs font-medium">{t('common.no_results')}</p>
+                </div>
+            ) : (
+                <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
+                    <table className="min-w-[800px] md:min-w-full text-sm text-left">
+                        <thead className="bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider sticky top-0 z-10">
+                            <tr>
+                                <th className="p-5">{t('reports.table_channel')}</th>
+                                <th className="p-5 text-right">{t('reports.table_spend')}</th>
+                                <th className="p-5 text-right">{t('reports.table_leads')}</th>
+                                <th className="p-5 text-right">{t('reports.table_cac')}</th>
+                                <th className="p-5 text-right">{t('reports.table_revenue')}</th>
+                                <th className="p-5 text-right">{t('reports.table_roi')}</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {data.attribution.map(row => (
+                                <tr key={row.channel} className="hover:bg-slate-50 transition-colors group">
+                                    <td className="p-5 font-bold text-slate-800">
+                                        <span className="bg-slate-100 px-2 py-1 rounded text-xs border border-slate-200 group-hover:bg-white transition-colors">
+                                            {t(`source.${row.channel}`) !== `source.${row.channel}` ? t(`source.${row.channel}`) : row.channel}
+                                        </span>
+                                    </td>
+                                    <td className="p-5 text-right font-mono text-slate-600">
+                                        {row.spend > 0 ? formatCurrency(row.spend) : <span className="text-slate-300">—</span>}
+                                    </td>
+                                    <td className="p-5 text-right font-bold text-slate-700">{row.leads}</td>
+                                    <td className="p-5 text-right font-mono text-slate-600">
+                                        {row.cac > 0 ? formatCurrency(row.cac) : <span className="text-slate-300">—</span>}
+                                    </td>
+                                    <td className="p-5 text-right font-mono font-bold text-indigo-600">{formatCurrency(row.revenue)}</td>
+                                    <td className="p-5 text-right">{roiDisplay(row)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     </div>
     );
@@ -561,22 +565,25 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
                 )}
             </div>
             
-            <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
-                <table className="min-w-[700px] md:min-w-full text-sm text-left">
-                    <thead className="bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider">
-                        <tr>
-                            <th className="p-5">{t('reports.cost_source')}</th>
-                            <th className="p-5">{t('reports.cost_campaign_name') || 'Tên Chiến Dịch'}</th>
-                            <th className="p-5">{t('reports.cost_month')}</th>
-                            <th className="p-5 text-right">{t('reports.cost_amount')}</th>
-                            {canUpdateCosts && <th className="p-5 text-right"></th>}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {data.campaignCosts.length === 0 ? (
-                            <tr><td colSpan={canUpdateCosts ? 5 : 4} className="p-10 text-center text-slate-400 italic">{t('reports.empty_costs')}</td></tr>
-                        ) : (
-                            data.campaignCosts.map((cost) => (
+            {data.campaignCosts.length === 0 ? (
+                <div className="p-10 flex flex-col items-center justify-center text-slate-400 gap-2">
+                    <svg className="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    <p className="text-xs font-medium italic">{t('reports.empty_costs')}</p>
+                </div>
+            ) : (
+                <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
+                    <table className="min-w-[700px] md:min-w-full text-sm text-left">
+                        <thead className="bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider">
+                            <tr>
+                                <th className="p-5">{t('reports.cost_source')}</th>
+                                <th className="p-5">{t('reports.cost_campaign_name') || 'Tên Chiến Dịch'}</th>
+                                <th className="p-5">{t('reports.cost_month')}</th>
+                                <th className="p-5 text-right">{t('reports.cost_amount')}</th>
+                                {canUpdateCosts && <th className="p-5 text-right"></th>}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {data.campaignCosts.map((cost) => (
                                 <tr key={cost.id} className="hover:bg-slate-50 transition-colors group">
                                     <td className="p-5 font-bold text-slate-700">{cost.source}</td>
                                     <td className="p-5 text-slate-500 text-xs">
@@ -603,11 +610,11 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated }: 
                                         </td>
                                     )}
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
 
         {/* Add Cost Modal */}
