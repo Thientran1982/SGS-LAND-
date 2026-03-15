@@ -446,7 +446,14 @@ export const Inbox: React.FC = () => {
                                     </div>
                                     <div className="flex justify-between items-center mt-1 gap-2">
                                         <div className={`text-xs truncate min-w-0 flex-1 ${thread.unreadCount > 0 ? 'font-bold text-slate-900' : 'text-slate-500'}`}>
-                                            {thread.lastMessage?.content || t('inbox.empty')}
+                                            {(() => {
+                                                const lm = thread.lastMessage;
+                                                if (!lm) return t('inbox.empty');
+                                                if (lm.type === 'IMAGE') return '📷 Hình ảnh';
+                                                if (lm.type === 'FILE') return '📎 Tệp đính kèm';
+                                                if (lm.type === 'AUDIO') return '🎤 Tin nhắn thoại';
+                                                return lm.content || t('inbox.empty');
+                                            })()}
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             {thread.lead.assignedTo && (
