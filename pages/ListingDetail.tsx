@@ -1194,12 +1194,12 @@ export const ListingDetail: React.FC = () => {
                                     </div>
                                     <div className="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">{t('inventory.label_owner_phone')}</span>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm font-mono font-bold text-indigo-400">{listing.ownerPhone || '--'}</span>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-sm font-mono font-bold text-indigo-400 truncate min-w-0">{listing.ownerPhone || '--'}</span>
                                             {listing.ownerPhone && (
                                                 <button 
                                                     onClick={() => window.location.href = `tel:${listing.ownerPhone}`}
-                                                    className="p-1.5 bg-indigo-500/20 rounded-lg text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all"
+                                                    className="p-1.5 bg-indigo-500/20 rounded-lg text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all flex-shrink-0"
                                                 >
                                                     {ICONS.PHONE}
                                                 </button>
