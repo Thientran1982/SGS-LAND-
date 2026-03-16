@@ -154,9 +154,20 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [shake, setShake] = useState(false);
   const [isPersonalEmail, setIsPersonalEmail] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [devToken, setDevToken] = useState('');
   
   const { t } = useTranslation();
+
+  const localizeServerError = (msg: string): string => {
+      if (!msg) return t('auth.error_generic');
+      const m = msg.toLowerCase();
+      if (m.includes('invalid credentials') || m.includes('invalid email or password')) return t('auth.error_invalid_creds');
+      if (m.includes('already exists') || m.includes('duplicate') || m.includes('already registered')) return t('auth.error_email_exists');
+      if (m.includes('sso is not enabled') || m.includes('sso not enabled')) return t('auth.error_sso_disabled');
+      if (m.includes('invalid or expired') || m.includes('expired reset token')) return t('auth.error_token_expired');
+      if (m.includes('sso login failed') || m.includes('sso error')) return t('auth.error_sso_disabled');
+      return msg;
+  };
 
   useEffect(() => {
       const savedEmail = localStorage.getItem('sgs_last_email');
@@ -235,15 +246,21 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     try {
       const trimmedEmail = email.trim();
       if (view === 'FORGOT_REQUEST') {
-          await db.requestPasswordReset(trimmedEmail);
+          const result = await db.requestPasswordReset(trimmedEmail);
           setSuccessMsg(t('auth.success_reset'));
+          if ((result as any)?.devToken) {
+              setDevToken((result as any).devToken);
+              setOtp((result as any).devToken);
+              setView('FORGOT_VERIFY');
+          }
           setLoading(false);
           return;
       }
 
       if (view === 'FORGOT_VERIFY') {
           await db.resetPassword(otp, newPassword);
-          setSuccessMsg(t('auth.pass_changed_success') || 'Password changed successfully!');
+          setSuccessMsg(t('auth.pass_changed_success'));
+          setDevToken('');
           setTimeout(() => {
               setSuccessMsg('');
               setView('LOGIN');
@@ -260,9 +277,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       } 
       // 4. REGISTER (B2B: Create Tenant)
       else if (view === 'REGISTER') {
-        // Pass company name to trigger Tenant Creation logic
         await db.register(name, trimmedEmail, password, company); 
-        // Auto login after register
         await db.authenticate(trimmedEmail, password);
       } 
       // 5. STANDARD LOGIN
@@ -278,7 +293,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       onLoginSuccess();
 
     } catch (err: any) {
-      const msg = err.message || t('auth.error_generic');
+      const msg = localizeServerError(err.message || '');
       setGlobalError(msg);
       triggerShake();
     } finally {
@@ -286,32 +301,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setGlobalError('');
-    setGoogleLoading(true); // Specific loader for button
-    try {
-        // High-Fidelity Simulation: 
-        // 1. Wait a bit to simulate redirect/popup load
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // 2. Simulate User authenticating at Google (longer delay)
-        // In a real app, this would be where window.open() happens
-        await new Promise(resolve => setTimeout(resolve, 1200));
-
-        // 3. Process result (mock email from Google)
-        // Use the entered email to allow testing different domains, fallback to default
-        const googleUserEmail = email.trim() || 'sarah.connor@skynet.com'; 
-        
-        await db.authenticateViaSSO(googleUserEmail);
-        localStorage.setItem('sgs_last_email', googleUserEmail);
-        
-        onLoginSuccess();
-    } catch (err: any) {
-        setGlobalError(err.message || t('auth.error_generic'));
-        triggerShake();
-    } finally {
-        setGoogleLoading(false);
-    }
+  const handleGoogleLogin = () => {
+    setGlobalError(t('auth.google_coming_soon'));
+    triggerShake();
   };
 
   const getInputClass = useCallback((hasError: boolean) => {
@@ -393,7 +385,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_email')}</label>
                         <div className="relative">
                             <span className="absolute left-3 top-3.5 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></span>
-                            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className={getInputClass(!!fieldErrors.email)} placeholder={t('auth.placeholder_email')} />
+                            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className={getInputClass(!!fieldErrors.email)} placeholder={t('auth.placeholder_email')} autoComplete="email" />
                         </div>
                         {fieldErrors.email && <p className="text-[10px] text-rose-400 ml-1">{fieldErrors.email}</p>}
                         
@@ -412,12 +404,19 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     <>
                         <div className="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20 mb-4 animate-enter">
                             <p className="text-xs text-indigo-200">{t('auth.otp_sent_msg')} <span className="font-bold text-white block mt-1 text-sm">{email}</span></p>
+                            <p className="text-[11px] text-indigo-300 mt-2 leading-relaxed">{t('auth.otp_instruction')}</p>
                         </div>
+                        {devToken && (
+                            <div className="bg-amber-500/10 p-3 rounded-xl border border-amber-500/30 animate-enter">
+                                <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1">{t('auth.dev_token_notice')}</p>
+                                <code className="text-[10px] text-amber-200 break-all font-mono">{devToken}</code>
+                            </div>
+                        )}
                         <div className="space-y-1.5 group">
                             <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.security_token')}</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-3.5 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg></span>
-                                <input value={otp} onChange={e => setOtp(e.target.value)} className={getInputClass(!!fieldErrors.otp)} placeholder={t('auth.placeholder_otp')} />
+                                <input value={otp} onChange={e => setOtp(e.target.value)} className={getInputClass(!!fieldErrors.otp)} placeholder={t('auth.placeholder_otp')} autoComplete="one-time-code" />
                             </div>
                             {fieldErrors.otp && <p className="text-[10px] text-rose-400 ml-1">{fieldErrors.otp}</p>}
                         </div>
@@ -445,6 +444,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                                 onChange={e => view === 'FORGOT_VERIFY' ? setNewPassword(e.target.value) : setPassword(e.target.value)} 
                                 className={`${getInputClass(!!fieldErrors.password || !!fieldErrors.newPassword)} pr-12`}
                                 placeholder={t('auth.placeholder_password')}
+                                autoComplete={view === 'LOGIN' ? 'current-password' : 'new-password'}
                             />
                             <button 
                                 type="button"
@@ -488,7 +488,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
                 <button 
                     type="submit" 
-                    disabled={loading || googleLoading} 
+                    disabled={loading} 
                     className="w-full bg-white text-black font-bold rounded-xl py-3.5 text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] disabled:opacity-70 disabled:hover:scale-100 mt-2"
                 >
                     {loading ? t('auth.processing') : (
@@ -516,15 +516,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         {!isSsoMode && (
                             <button 
                                 onClick={handleGoogleLogin}
-                                disabled={googleLoading || loading}
+                                disabled={loading}
                                 className="w-full bg-white/5 border border-white/10 text-gray-300 font-bold rounded-xl py-3 text-sm hover:bg-white/10 transition-all flex justify-center items-center gap-3 disabled:opacity-50"
                             >
-                                {googleLoading ? (
-                                    <div className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin"></div>
-                                ) : (
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84.81-.06z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                                )}
-                                {googleLoading ? t('auth.connecting_google') : t('auth.google_login')}
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84.81-.06z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                                {t('auth.google_login')}
                             </button>
                         )}
                     </div>

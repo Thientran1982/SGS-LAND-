@@ -858,7 +858,7 @@ class DatabaseApiClient {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.error || 'Failed to request password reset');
     }
-    return (await res.json()).message;
+    return await res.json();
   }
 
   async resetPassword(token: string, newPassword: string) {

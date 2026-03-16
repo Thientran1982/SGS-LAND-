@@ -281,7 +281,11 @@ async function startServer() {
 
       writeAuditLog(tenantId, user.id, 'PASSWORD_RESET_REQUEST', 'auth', user.id, { email }, req.ip);
       await uniformDelay();
-      res.json({ message: 'If an account exists, a reset link has been sent.' });
+      const isDevMode = !isProduction && emailResult.messageId?.startsWith('console-');
+      res.json({
+        message: 'If an account exists, a reset link has been sent.',
+        ...(isDevMode && { devToken: rawToken }),
+      });
     } catch (error) {
       console.error('Forgot password error:', error);
       res.status(500).json({ error: 'Failed to process request' });
