@@ -28,7 +28,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
             <div className="bg-[var(--bg-surface)] w-full max-w-lg rounded-[24px] shadow-2xl p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('data.modal_title')}</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-slate-400">{ICONS.CLOSE}</button>
+                    <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)]">{ICONS.CLOSE}</button>
                 </div>
                 <div className="space-y-4">
                     <div>
@@ -49,7 +49,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('data.spreadsheet_id')}</label>
                             <input className="w-full border rounded-xl px-4 py-2 text-sm font-mono" value={form.config?.spreadsheetId || ''} onChange={e => handleConfigChange('spreadsheetId', e.target.value)} />
-                            <p className="text-[10px] text-slate-400 mt-1">{t('data.hint_gsheet')}</p>
+                            <p className="text-xs2 text-[var(--text-secondary)] mt-1">{t('data.hint_gsheet')}</p>
                         </div>
                     )}
                     {form.type === ConnectorType.WEBHOOK_EXPORT && (
@@ -133,7 +133,7 @@ export const DataPlatform: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
+    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
         <div className="space-y-6 pb-20 animate-enter relative">
@@ -149,7 +149,7 @@ export const DataPlatform: React.FC = () => {
                 {/* Connectors List */}
                 <div className="space-y-4">
                     <h3 className="font-bold text-[var(--text-primary)] px-2">{t('data.active_connectors')}</h3>
-                    {connectors.length === 0 && <div className="p-8 text-center text-slate-400 bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">{t('data.empty_connectors')}</div>}
+                    {connectors.length === 0 && <div className="p-8 text-center text-[var(--text-secondary)] bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">{t('data.empty_connectors')}</div>}
                     {connectors.map(c => (
                         <div key={c.id} className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex justify-between items-center group">
                             <div>
@@ -178,7 +178,7 @@ export const DataPlatform: React.FC = () => {
                             <div key={job.id} className="py-3 flex justify-between items-center text-xs">
                                 <div>
                                     <div className="font-bold text-[var(--text-secondary)]">{connectors.find(c => c.id === job.connectorId)?.name || t('data.unknown')}</div>
-                                    <div className="text-slate-400 font-mono mt-0.5">{formatDateTime(job.startedAt)}</div>
+                                    <div className="text-[var(--text-secondary)] font-mono mt-0.5">{formatDateTime(job.startedAt)}</div>
                                 </div>
                                 <div className="text-right">
                                     <span className={`font-bold px-2 py-0.5 rounded uppercase ${
@@ -191,7 +191,7 @@ export const DataPlatform: React.FC = () => {
                                 </div>
                             </div>
                         ))}
-                        {jobs.length === 0 && <div className="text-center text-slate-400 italic py-4">{t('data.empty_jobs')}</div>}
+                        {jobs.length === 0 && <div className="text-center text-[var(--text-secondary)] italic py-4">{t('data.empty_jobs')}</div>}
                     </div>
                 </div>
             </div>

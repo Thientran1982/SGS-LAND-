@@ -494,7 +494,7 @@ export const ProductSearch: React.FC = () => {
                                                                     <div className="font-bold text-[var(--text-primary)] text-sm mb-0.5 line-clamp-1 max-w-[200px] lg:max-w-[300px]">{item.title}</div>
                                                                     <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                                                                         <span className="lg:hidden truncate max-w-[150px]">{item.location}</span>
-                                                                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${item.transaction === 'SALE' ? 'bg-indigo-50 text-indigo-600' : 'bg-purple-50 text-purple-600'}`}>
+                                                                        <span className={`px-1.5 py-0.5 rounded text-xs2 font-bold uppercase ${item.transaction === 'SALE' ? 'bg-indigo-50 text-indigo-600' : 'bg-purple-50 text-purple-600'}`}>
                                                                             {t(`transaction.${item.transaction}`)}
                                                                         </span>
                                                                     </div>
@@ -502,13 +502,13 @@ export const ProductSearch: React.FC = () => {
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-4 text-right font-mono font-bold text-[var(--text-primary)] whitespace-nowrap">{formatSmartPrice(item.price, t)}</td>
-                                                        <td className="px-4 py-4 text-right text-[11px] font-bold text-indigo-600">
+                                                        <td className="px-4 py-4 text-right text-xs3 font-bold text-indigo-600">
                                                             {item.area > 0 && item.type !== PropertyType.PROJECT ? formatUnitPrice(item.price, item.area, t) : '--'}
                                                         </td>
                                                         <td className="px-4 py-4 text-right text-sm text-[var(--text-secondary)] whitespace-nowrap">{item.area} m²</td>
                                                         <td className="px-4 py-4 hidden lg:table-cell text-sm text-[var(--text-secondary)] max-w-[200px] truncate" title={item.location}>{item.location}</td>
                                                         <td className="px-4 py-4 hidden xl:table-cell">
-                                                            <span className="px-2 py-1 rounded bg-[var(--glass-surface-hover)] text-[10px] font-bold text-[var(--text-tertiary)] uppercase whitespace-nowrap">
+                                                            <span className="px-2 py-1 rounded bg-[var(--glass-surface-hover)] text-xs2 font-bold text-[var(--text-tertiary)] uppercase whitespace-nowrap">
                                                                 {t(`property.${item.type.toUpperCase()}`)}
                                                             </span>
                                                         </td>
@@ -549,7 +549,7 @@ export const ProductSearch: React.FC = () => {
                                                     <div className="pr-8">
                                                         <h4 className="font-bold text-[var(--text-primary)] text-sm truncate">{item.title}</h4>
                                                     </div>
-                                                    <div className="text-[10px] text-[var(--text-tertiary)] line-clamp-1 flex items-center gap-1 mt-0.5">
+                                                    <div className="text-xs2 text-[var(--text-tertiary)] line-clamp-1 flex items-center gap-1 mt-0.5">
                                                         {ICONS.LOCATION} {item.location}
                                                     </div>
                                                 </div>
@@ -558,11 +558,11 @@ export const ProductSearch: React.FC = () => {
                                                             <div className="text-sm font-extrabold text-indigo-600 leading-none">
                                                                 {formatSmartPrice(item.price, t)}
                                                             </div>
-                                                            <div className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                                                            <div className="text-xs2 text-slate-400 mt-0.5 font-medium">
                                                                 {item.area} m² • {item.bedrooms} PN {item.area > 0 && item.type !== PropertyType.PROJECT && `• ${formatUnitPrice(item.price, item.area, t)}`}
                                                             </div>
                                                         </div>
-                                                        <span className="text-[9px] font-bold uppercase bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-2 py-1 rounded-lg border border-[var(--glass-border)]">
+                                                        <span className="text-2xs font-bold uppercase bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-2 py-1 rounded-lg border border-[var(--glass-border)]">
                                                             {t(`property.${item.type.toUpperCase()}`)}
                                                         </span>
                                                     </div>
@@ -604,10 +604,10 @@ export const ProductSearch: React.FC = () => {
                                                     >
                                                         <div className="aspect-video w-full bg-[var(--glass-surface-hover)] rounded-lg mb-3 overflow-hidden relative">
                                                             <img src={item.images?.[0]} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="" referrerPolicy="no-referrer" />
-                                                            <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm z-10 flex flex-col items-end">
+                                                            <div className="absolute top-2 right-2 bg-black/60 text-white text-xs2 font-bold px-1.5 py-0.5 rounded backdrop-blur-sm z-10 flex flex-col items-end">
                                                                 <span>{formatSmartPrice(item.price, t)}</span>
                                                                 {item.area > 0 && item.type !== PropertyType.PROJECT && (
-                                                                    <span className="text-[8px] opacity-80 font-medium">{formatUnitPrice(item.price, item.area, t)}</span>
+                                                                    <span className="text-3xs opacity-80 font-medium">{formatUnitPrice(item.price, item.area, t)}</span>
                                                                 )}
                                                             </div>
                                                             <button 
@@ -618,7 +618,7 @@ export const ProductSearch: React.FC = () => {
                                                             </button>
                                                         </div>
                                                         <h4 className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 mb-2 leading-relaxed">{item.title}</h4>
-                                                        <div className="flex items-center gap-1 text-[10px] text-slate-400 truncate">
+                                                        <div className="flex items-center gap-1 text-xs2 text-slate-400 truncate">
                                                             {ICONS.LOCATION} {item.location}
                                                         </div>
                                                     </div>

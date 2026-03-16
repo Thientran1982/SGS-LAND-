@@ -41,14 +41,14 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
             <div className="flex justify-between items-center p-3 border-b border-white/5 bg-[var(--bg-surface)]/5">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-xs font-mono text-slate-300 font-bold">LIVE LOGS</span>
-                    <span className="text-[10px] bg-[var(--bg-surface)]/10 px-1.5 rounded text-slate-400 font-mono">{logs.length}</span>
+                    <span className="text-xs font-mono text-[var(--text-secondary)] font-bold">LIVE LOGS</span>
+                    <span className="text-xs2 bg-[var(--bg-surface)]/10 px-1.5 rounded text-[var(--text-secondary)] font-mono">{logs.length}</span>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={togglePause} className="p-1.5 hover:bg-[var(--bg-surface)]/10 rounded text-slate-400 hover:text-white transition-colors" title={isPaused ? "Resume" : "Pause"}>
+                    <button onClick={togglePause} className="p-1.5 hover:bg-[var(--bg-surface)]/10 rounded text-[var(--text-secondary)] hover:text-white transition-colors" title={isPaused ? "Resume" : "Pause"}>
                         {isPaused ? ICONS.PLAY : ICONS.PAUSE}
                     </button>
-                    <button onClick={onClear} className="p-1.5 hover:bg-[var(--bg-surface)]/10 rounded text-slate-400 hover:text-rose-400 transition-colors" title="Clear">
+                    <button onClick={onClear} className="p-1.5 hover:bg-[var(--bg-surface)]/10 rounded text-[var(--text-secondary)] hover:text-rose-400 transition-colors" title="Clear">
                         {ICONS.TRASH}
                     </button>
                 </div>
@@ -57,7 +57,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
             <div 
                 ref={containerRef} 
                 onScroll={handleScroll}
-                className="flex-1 overflow-y-auto p-4 space-y-1 font-mono text-[11px] leading-relaxed no-scrollbar"
+                className="flex-1 overflow-y-auto p-4 space-y-1 font-mono text-xs3 leading-relaxed no-scrollbar"
             >
                 {logs?.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center text-[var(--text-secondary)] opacity-50">
@@ -73,7 +73,7 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
                         <span className={`shrink-0 font-bold w-12 ${log.level === 'ERROR' ? 'text-rose-500' : log.level === 'WARN' ? 'text-amber-500' : 'text-emerald-500'}`}>
                             {log.level}
                         </span>
-                        <span className="text-slate-400 group-hover:text-slate-200">
+                        <span className="text-[var(--text-secondary)] group-hover:text-slate-200">
                             <span className="text-indigo-400 font-bold mr-2">[{log.source}]</span>
                             {log.message}
                             {log.context && (
@@ -97,7 +97,7 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
             <div className={`bg-[var(--bg-surface)] p-8 rounded-[32px] border-2 ${borderColor} shadow-lg relative overflow-hidden`}>
                 <div className="absolute top-0 right-0 p-32 bg-gradient-to-br from-current to-transparent opacity-5 rounded-full -mr-16 -mt-16 pointer-events-none" style={{ color: primaryColor }}></div>
                 <div className="relative z-10">
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">{t('system.overview')}</h3>
+                    <h3 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-2">{t('system.overview')}</h3>
                     <div className={`text-3xl md:text-4xl font-black ${statusColor} mb-2`}>
                         {t(`system.status.${health.status}`)}
                     </div>
@@ -112,7 +112,7 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
             <div className="bg-slate-900 p-8 rounded-[32px] text-white shadow-xl flex flex-col justify-between relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                 <div>
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">{t('system.dr_title')}</h3>
+                    <h3 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4">{t('system.dr_title')}</h3>
                     <div className="flex gap-4">
                         <button onClick={onBackup} className="flex-1 bg-[var(--bg-surface)] text-[var(--text-primary)] py-3 rounded-xl font-bold text-xs hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
                             {ICONS.DOWNLOAD} {t('system.btn_backup')}
@@ -123,7 +123,7 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
                         </button>
                     </div>
                 </div>
-                <div className="mt-6 text-[10px] text-[var(--text-tertiary)] font-mono">
+                <div className="mt-6 text-xs2 text-[var(--text-tertiary)] font-mono">
                     BACKUP: FULL SNAPSHOT • JSON FORMAT
                 </div>
             </div>
@@ -139,7 +139,7 @@ const ChaosPanel = memo(({ config, onChange, t }: { config: ChaosConfig, onChang
                 <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('system.chaos_desc')}</p>
             </div>
             <div className="flex items-center gap-3">
-                <span className={`text-[10px] font-bold uppercase tracking-wider ${config.enabled ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`}>
+                <span className={`text-xs2 font-bold uppercase tracking-wider ${config.enabled ? 'text-rose-600 animate-pulse' : 'text-[var(--text-secondary)]'}`}>
                     {config.enabled ? t('system.armed') : t('system.safe_mode')}
                 </span>
                 <button 
@@ -321,9 +321,9 @@ export const SystemStatus: React.FC = () => {
                                 <div key={conf.key} className="flex justify-between items-center text-sm p-2 hover:bg-[var(--glass-surface)] rounded-lg transition-colors group">
                                     <div className="flex items-center gap-3 overflow-hidden">
                                         <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${conf.status === 'OK' ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
-                                        <span className="font-mono text-[var(--text-secondary)] text-[10px] truncate" title={conf.key}>{conf.key}</span>
+                                        <span className="font-mono text-[var(--text-secondary)] text-xs2 truncate" title={conf.key}>{conf.key}</span>
                                     </div>
-                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${conf.status === 'OK' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                    <span className={`text-2xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${conf.status === 'OK' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                                         {conf.status}
                                     </span>
                                 </div>
@@ -338,7 +338,7 @@ export const SystemStatus: React.FC = () => {
                                 <button key={book.id} onClick={book.action} className={`p-4 rounded-xl text-left transition-all border group relative overflow-hidden ${book.variant === 'neutral' ? 'bg-[var(--glass-surface)] border-[var(--glass-border)] hover:border-[var(--glass-border)]' : book.variant === 'warning' ? 'bg-amber-50 border-amber-100 hover:border-amber-300' : 'bg-rose-50 border-rose-100 hover:border-rose-300'}`}>
                                     <div className="flex justify-between items-start relative z-10">
                                         <div>
-                                            <div className={`text-[9px] font-bold uppercase mb-1 ${book.variant === 'danger' ? 'text-rose-600' : book.variant === 'warning' ? 'text-amber-600' : 'text-[var(--text-tertiary)]'}`}>{book.code}</div>
+                                            <div className={`text-2xs font-bold uppercase mb-1 ${book.variant === 'danger' ? 'text-rose-600' : book.variant === 'warning' ? 'text-amber-600' : 'text-[var(--text-tertiary)]'}`}>{book.code}</div>
                                             <div className="font-bold text-[var(--text-primary)] text-xs group-hover:underline decoration-2 underline-offset-2">{book.title}</div>
                                         </div>
                                     </div>

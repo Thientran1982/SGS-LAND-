@@ -201,11 +201,11 @@ export const Favorites: React.FC = () => {
                         {pagedItems.length === 0 && !loading && (
                             <div className="col-span-full py-20 text-center">
                                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--glass-surface-hover)] flex items-center justify-center">
-                                    <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-10 h-10 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                     </svg>
                                 </div>
-                                <p className="text-slate-400 italic mb-2 font-medium">
+                                <p className="text-[var(--text-secondary)] italic mb-2 font-medium">
                                     {filterType !== 'ALL'
                                         ? `Không có BĐS loại "${TYPE_LABELS[filterType] || filterType}" trong danh sách quan tâm`
                                         : t('favorites.empty')

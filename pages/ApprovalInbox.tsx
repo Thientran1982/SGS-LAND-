@@ -166,10 +166,10 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                     </div>
                     <div>
                         <div className="font-bold text-[var(--text-primary)] text-sm">{proposal.createdBy}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">{formatDateTime(proposal.createdAt)}</div>
+                        <div className="text-xs2 text-[var(--text-secondary)] font-mono">{formatDateTime(proposal.createdAt)}</div>
                     </div>
                 </div>
-                <div className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider ${styles.bg} ${styles.text} ${styles.border}`}>
+                <div className={`px-2 py-0.5 rounded text-xs2 font-bold border uppercase tracking-wider ${styles.bg} ${styles.text} ${styles.border}`}>
                     {t(`approvals.risk_${riskAssessment.level.toLowerCase()}`)}
                 </div>
             </div>
@@ -188,7 +188,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                         {listing?.title || t('approvals.unknown_listing')}
                     </div>
                     <div className="flex justify-between items-end">
-                         <div className="text-[10px] text-[var(--text-tertiary)]">
+                         <div className="text-xs2 text-[var(--text-tertiary)]">
                             {t('approvals.price_original')}: <span className="line-through">{formatCurrency(proposal.basePrice)}</span>
                          </div>
                          <div className="text-sm font-bold text-indigo-600">
@@ -204,7 +204,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                     </div>
                     <div className="text-xs text-[var(--text-secondary)] truncate flex-1 font-medium">{lead?.name || t('data.unknown')}</div>
                     {lead?.score && (
-                        <div className={`text-[10px] font-bold px-1.5 rounded border ${lead.score.grade === 'A' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] border-[var(--glass-border)]'}`}>
+                        <div className={`text-xs2 font-bold px-1.5 rounded border ${lead.score.grade === 'A' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] border-[var(--glass-border)]'}`}>
                             {t('approvals.lead_rank')} {lead.score.grade}
                         </div>
                     )}
@@ -212,7 +212,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                 
                 {/* Risk Reasons */}
                 {riskAssessment.reasonKeys.length > 0 && (
-                    <div className="text-[10px] text-[var(--text-tertiary)] mt-2 space-y-1">
+                    <div className="text-xs2 text-[var(--text-tertiary)] mt-2 space-y-1">
                         {riskAssessment.reasonKeys.map(k => (
                             <div key={k} className="flex items-center gap-1.5">
                                 <span className={styles.icon}>{ICONS.WARNING}</span> {t(`approvals.${k}`)}
@@ -358,7 +358,7 @@ export const ApprovalInbox: React.FC = () => {
         } catch (e) { notify(t('common.error'), 'error'); }
     };
 
-    if (loading) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
+    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
         <div className="space-y-6 pb-24 relative animate-enter">
@@ -367,15 +367,15 @@ export const ApprovalInbox: React.FC = () => {
             {/* METRICS BAR */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                 <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between col-span-2 md:col-span-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{t('approvals.metric_pipeline')}</span>
+                    <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest truncate">{t('approvals.metric_pipeline')}</span>
                     <div className="text-xl md:text-2xl font-black text-[var(--text-primary)] tracking-tight mt-1">{formatCurrency(metrics.totalValue)}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{t('approvals.metric_avg_discount')}</span>
+                    <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest truncate">{t('approvals.metric_avg_discount')}</span>
                     <div className="text-xl md:text-2xl font-black text-indigo-600 tracking-tight mt-1">{metrics.avgDiscount.toFixed(1)}%</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{t('approvals.metric_high_risk')}</span>
+                    <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest truncate">{t('approvals.metric_high_risk')}</span>
                     <div className="text-xl md:text-2xl font-black text-rose-500 tracking-tight mt-1">{metrics.highRiskCount}</div>
                 </div>
             </div>
@@ -406,8 +406,8 @@ export const ApprovalInbox: React.FC = () => {
 
             {/* GRID */}
             {sortedProposals.length === 0 ? (
-                <div className="p-20 text-center text-slate-400 flex flex-col items-center border-2 border-dashed border-[var(--glass-border)] rounded-[32px]">
-                    <div className="w-16 h-16 bg-[var(--glass-surface)] rounded-full flex items-center justify-center mb-4 text-slate-300">{ICONS.CHECK_CIRCLE}</div>
+                <div className="p-20 text-center text-[var(--text-secondary)] flex flex-col items-center border-2 border-dashed border-[var(--glass-border)] rounded-[32px]">
+                    <div className="w-16 h-16 bg-[var(--glass-surface)] rounded-full flex items-center justify-center mb-4 text-[var(--text-secondary)]">{ICONS.CHECK_CIRCLE}</div>
                     <p className="font-medium">{t('approvals.empty')}</p>
                 </div>
             ) : (

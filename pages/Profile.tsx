@@ -43,7 +43,7 @@ const TabButton: React.FC<TabButtonProps> = memo(({ active, label, icon, onClick
         className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all duration-200
         ${active ? 'bg-slate-900 text-white shadow-lg' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-secondary)]'}`}
     >
-        <span className={active ? 'text-indigo-200' : 'text-slate-400'}>{icon}</span>
+        <span className={active ? 'text-indigo-200' : 'text-[var(--text-secondary)]'}>{icon}</span>
         {label}
     </button>
 ));
@@ -64,7 +64,7 @@ interface InputFieldProps {
 const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange, disabled, placeholder, type = 'text', isTextArea, error, action }) => (
     <div className="space-y-1.5 group">
         <div className="flex justify-between">
-            <label htmlFor={id} className={`text-[11px] font-bold uppercase tracking-wider ml-1 transition-colors ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] group-focus-within:text-indigo-500'}`}>{label}</label>
+            <label htmlFor={id} className={`text-xs3 font-bold uppercase tracking-wider ml-1 transition-colors ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] group-focus-within:text-indigo-500'}`}>{label}</label>
             {action && <div className="text-xs">{action}</div>}
         </div>
         
@@ -108,7 +108,7 @@ const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange
         </div>
         
         {error && (
-            <p className="text-[10px] font-bold text-rose-500 ml-1 animate-enter">{error}</p>
+            <p className="text-xs2 font-bold text-rose-500 ml-1 animate-enter">{error}</p>
         )}
     </div>
 ));
@@ -480,9 +480,9 @@ export const Profile: React.FC = () => {
                                 
                                 <div className="space-y-1.5">
                                     <div className="flex justify-between items-center">
-                                        <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email')}</label>
+                                        <label className="text-xs3 font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email')}</label>
                                         {user.source === 'SSO' ? (
-                                            <span className="text-xs text-slate-400 italic">Managed by Organization</span>
+                                            <span className="text-xs text-[var(--text-secondary)] italic">Managed by Organization</span>
                                         ) : !emailChangeOpen ? (
                                             <button
                                                 type="button"
@@ -503,7 +503,7 @@ export const Profile: React.FC = () => {
                                         <div className="mt-3 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3 animate-enter">
                                             <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">{t('profile.email_change_title')}</p>
                                             <div className="space-y-1.5">
-                                                <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email_new_label')}</label>
+                                                <label className="text-xs3 font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email_new_label')}</label>
                                                 <input
                                                     type="email"
                                                     value={emailData.newEmail}
@@ -512,10 +512,10 @@ export const Profile: React.FC = () => {
                                                     className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
                                                         ${emailErrors.newEmail ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 text-[var(--text-primary)]'}`}
                                                 />
-                                                {emailErrors.newEmail && <p className="text-[10px] font-bold text-rose-500 ml-1">{emailErrors.newEmail}</p>}
+                                                {emailErrors.newEmail && <p className="text-xs2 font-bold text-rose-500 ml-1">{emailErrors.newEmail}</p>}
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email_confirm_pass')}</label>
+                                                <label className="text-xs3 font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email_confirm_pass')}</label>
                                                 <input
                                                     type="password"
                                                     value={emailData.confirmPass}
@@ -525,7 +525,7 @@ export const Profile: React.FC = () => {
                                                     className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
                                                         ${emailErrors.confirmPass ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 text-[var(--text-primary)]'}`}
                                                 />
-                                                {emailErrors.confirmPass && <p className="text-[10px] font-bold text-rose-500 ml-1">{emailErrors.confirmPass}</p>}
+                                                {emailErrors.confirmPass && <p className="text-xs2 font-bold text-rose-500 ml-1">{emailErrors.confirmPass}</p>}
                                             </div>
                                             <div className="flex gap-2 pt-1">
                                                 <button
@@ -573,7 +573,7 @@ export const Profile: React.FC = () => {
                                         disabled={saving || !isDirty} 
                                         className={`px-8 py-3 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 ${
                                             saving || !isDirty 
-                                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' 
+                                            ? 'bg-slate-200 text-[var(--text-secondary)] cursor-not-allowed shadow-none' 
                                             : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/30'
                                         }`}
                                     >
@@ -640,7 +640,7 @@ export const Profile: React.FC = () => {
                                             disabled={saving || !passData.current || !passData.new || !passData.confirm} 
                                             className={`px-8 py-3 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 ${
                                                 saving || !passData.current || !passData.new || !passData.confirm
-                                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' 
+                                                ? 'bg-slate-200 text-[var(--text-secondary)] cursor-not-allowed shadow-none' 
                                                 : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-500/30'
                                             }`}
                                         >

@@ -218,8 +218,8 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     </div>
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="font-mono text-[10px] font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>
-                            <span className={`text-[8px] font-bold uppercase px-1 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
+                            <span className="font-mono text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>
+                            <span className={`text-3xs font-bold uppercase px-1 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
                                 {t(`transaction.${item.transaction}`)}
                             </span>
                         </div>
@@ -239,7 +239,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                             <span className="font-bold text-[var(--text-secondary)] dark:text-slate-200 truncate max-w-[120px]" title={item.ownerName || '--'}>
                                 {item.ownerName || '--'}
                             </span>
-                            <span className="text-[10px] text-[var(--text-tertiary)] font-mono">
+                            <span className="text-xs2 text-[var(--text-tertiary)] font-mono">
                                 {item.ownerPhone || '--'}
                             </span>
                         </div>
@@ -265,7 +265,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
             <td className="px-4 py-3 text-right">
                 <div className="flex flex-col items-end">
                     {item.type === PropertyType.PROJECT && (
-                        <span className="text-[9px] font-bold text-slate-400 uppercase leading-none mb-0.5">
+                        <span className="text-2xs font-bold text-[var(--text-secondary)] uppercase leading-none mb-0.5">
                             {t('inventory.min_price')}
                         </span>
                     )}
@@ -275,16 +275,16 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                 </div>
             </td>
 
-            <td className="px-4 py-3 text-right text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+            <td className="px-4 py-3 text-right text-xs3 font-bold text-indigo-600 dark:text-indigo-400">
                 {item.area > 0 && item.type !== PropertyType.PROJECT ? formatUnitPrice(item.price, item.area, t) : '--'}
             </td>
 
             <td className="px-4 py-3 text-right text-xs text-[var(--text-secondary)] dark:text-slate-400 font-mono">
-                {item.area} <span className="text-[10px] text-slate-400">m²</span>
+                {item.area} <span className="text-xs2 text-[var(--text-secondary)]">m²</span>
             </td>
 
             <td className="px-4 py-3 text-center">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold border uppercase tracking-wider whitespace-nowrap ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider whitespace-nowrap ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
                     {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') || 'Sẵn sàng' : t(`status.${item.status}`)}
                 </span>
             </td>
@@ -295,7 +295,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     <button
                         ref={btnRef}
                         onClick={openMenu}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all"
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all"
                         title={t('common.actions') || 'Thao tác'}
                     >
                         <svg className="w-4 h-4 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
@@ -316,7 +316,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                         </button>
                         {onDuplicate && (
                             <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                                <svg className="w-3.5 h-3.5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
                                 {t('common.duplicate') || 'Nhân bản'}
                             </button>
                         )}
@@ -374,27 +374,27 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                         if (!t.src.includes('ui-avatars.com')) t.src = `https://ui-avatars.com/api/?name=${item.code}&background=random`;
                     }}
                 />
-                <div className="absolute top-0 left-0 px-1 bg-black/40 text-[8px] text-white font-mono">{item.code}</div>
+                <div className="absolute top-0 left-0 px-1 bg-black/40 text-3xs text-white font-mono">{item.code}</div>
             </div>
             
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className={`text-[8px] font-bold uppercase px-1 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
+                    <span className={`text-3xs font-bold uppercase px-1 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
                         {t(`transaction.${item.transaction}`)}
                     </span>
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
                         {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') || 'Sẵn sàng' : t(`status.${item.status}`)}
                     </span>
                 </div>
                 <h4 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-xs truncate mb-0.5">{item.title}</h4>
-                <div className="text-[10px] text-[var(--text-tertiary)] truncate">{item.location}</div>
+                <div className="text-xs2 text-[var(--text-tertiary)] truncate">{item.location}</div>
             </div>
 
             <div className="flex flex-col items-end gap-1 shrink-0">
                 <div className="text-right">
                     <div className="flex flex-col items-end">
                         {item.type === PropertyType.PROJECT && (
-                            <span className="text-[8px] font-bold text-slate-400 uppercase leading-none">
+                            <span className="text-3xs font-bold text-[var(--text-secondary)] uppercase leading-none">
                                 {t('inventory.min_price')}
                             </span>
                         )}
@@ -402,7 +402,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                             {formatSmartPrice(item.price, t)}
                         </div>
                     </div>
-                    <div className="text-[10px] font-medium text-slate-400">
+                    <div className="text-xs2 font-medium text-[var(--text-secondary)]">
                         {item.area} m² {item.area > 0 && item.type !== PropertyType.PROJECT && `• ${formatUnitPrice(item.price, item.area, t)}`}
                     </div>
                 </div>
@@ -410,7 +410,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                     <button
                         ref={btnRef}
                         onClick={openMenu}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all"
                     >
                         <svg className="w-4 h-4 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
@@ -428,7 +428,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                     </button>
                     {onDuplicate && (
                         <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                            <svg className="w-3.5 h-3.5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
                             {t('common.duplicate') || 'Nhân bản'}
                         </button>
                     )}
@@ -479,13 +479,13 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">{item.title}</div>
-                    <div className="text-[10px] text-[var(--text-tertiary)] font-mono mt-1">{item.code}</div>
+                    <div className="text-xs2 text-[var(--text-tertiary)] font-mono mt-1">{item.code}</div>
                 </div>
                 {canViewInternal && (
                     <button
                         ref={btnRef}
                         onClick={openMenu}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all shrink-0"
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all shrink-0"
                     >
                         <svg className="w-3.5 h-3.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
@@ -496,16 +496,16 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
             <div className="flex justify-between items-end border-t border-slate-50 pt-2">
                 <div className="flex flex-col">
                     {item.type === PropertyType.PROJECT && (
-                        <span className="text-[8px] font-bold text-slate-400 uppercase leading-none mb-0.5">
+                        <span className="text-3xs font-bold text-[var(--text-secondary)] uppercase leading-none mb-0.5">
                             {t('inventory.min_price')}
                         </span>
                     )}
                     <div className="font-extrabold text-[var(--text-primary)] text-sm">{formatSmartPrice(item.price, t)}</div>
                 </div>
                 <div className="text-right">
-                    <div className="text-[10px] text-slate-400">{item.area}m²</div>
+                    <div className="text-xs2 text-[var(--text-secondary)]">{item.area}m²</div>
                     {item.area > 0 && item.type !== PropertyType.PROJECT && (
-                        <div className="text-[9px] font-bold text-indigo-600">
+                        <div className="text-2xs font-bold text-indigo-600">
                             {formatUnitPrice(item.price, item.area, t)}
                         </div>
                     )}
@@ -521,7 +521,7 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                     </button>
                     {onDuplicate && (
                         <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                            <svg className="w-3.5 h-3.5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
                             {t('common.duplicate') || 'Nhân bản'}
                         </button>
                     )}
@@ -710,7 +710,7 @@ export const Inventory: React.FC = () => {
                 <div className="flex flex-col md:flex-row justify-between gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
                                 {ICONS.SEARCH}
                             </div>
                             <input 
@@ -723,7 +723,7 @@ export const Inventory: React.FC = () => {
                                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
                                     <button 
                                         onClick={() => setSearch('')}
-                                        className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                        className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                         title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                     >
                                         {ICONS.X}
@@ -743,10 +743,10 @@ export const Inventory: React.FC = () => {
                         
                         {/* View Switcher */}
                         <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
-                            <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
-                            <button onClick={() => setViewMode('LIST')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_list')}>{ICONS.VIEW_LIST}</button>
-                            <button onClick={() => setViewMode('BOARD')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
-                            <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map') || 'Bản đồ'}>{ICONS.VIEW_MAP}</button>
+                            <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
+                            <button onClick={() => setViewMode('LIST')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_list')}>{ICONS.VIEW_LIST}</button>
+                            <button onClick={() => setViewMode('BOARD')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
+                            <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map') || 'Bản đồ'}>{ICONS.VIEW_MAP}</button>
                         </div>
 
                         <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block"></div>
@@ -763,35 +763,35 @@ export const Inventory: React.FC = () => {
             {/* Metrics Section */}
             <div ref={metricsRef} className="px-4 md:px-6 py-4 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-3 md:gap-4 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate">{t('inventory.total_listings') || 'Tổng kho'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1 truncate">{t('inventory.total_listings') || 'Tổng kho'}</div>
                     <div className="text-lg md:text-2xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-emerald-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-1 truncate">{t('status.AVAILABLE') || 'Đang bán'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-emerald-500 uppercase tracking-wider mb-1 truncate">{t('status.AVAILABLE') || 'Đang bán'}</div>
                     <div className="text-lg md:text-2xl font-black text-emerald-600">{stats.availableCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-amber-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1 truncate">{t('status.HOLD') || 'Giữ chỗ'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-amber-500 uppercase tracking-wider mb-1 truncate">{t('status.HOLD') || 'Giữ chỗ'}</div>
                     <div className="text-lg md:text-2xl font-black text-amber-600">{stats.holdCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-orange-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-orange-500 uppercase tracking-wider mb-1 truncate">{t('status.BOOKING') || 'Đặt cọc'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-orange-500 uppercase tracking-wider mb-1 truncate">{t('status.BOOKING') || 'Đặt cọc'}</div>
                     <div className="text-lg md:text-2xl font-black text-orange-600">{stats.bookingCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-indigo-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1 truncate">{t('status.OPENING') || 'Mở bán'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-indigo-500 uppercase tracking-wider mb-1 truncate">{t('status.OPENING') || 'Mở bán'}</div>
                     <div className="text-lg md:text-2xl font-black text-indigo-600">{stats.openingCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-teal-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-teal-500 uppercase tracking-wider mb-1 truncate">{t('status.RENTED') || 'Đã thuê'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-teal-500 uppercase tracking-wider mb-1 truncate">{t('status.RENTED') || 'Đã thuê'}</div>
                     <div className="text-lg md:text-2xl font-black text-teal-600">{stats.rentedCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 truncate">{t('status.SOLD') || 'Đã bán'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 truncate">{t('status.SOLD') || 'Đã bán'}</div>
                     <div className="text-lg md:text-2xl font-black text-[var(--text-secondary)]">{stats.soldCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-rose-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1 truncate">{t('status.INACTIVE') || 'Ngưng GD'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-rose-500 uppercase tracking-wider mb-1 truncate">{t('status.INACTIVE') || 'Ngưng GD'}</div>
                     <div className="text-lg md:text-2xl font-black text-rose-600">{stats.inactiveCount}</div>
                 </div>
             </div>
@@ -826,7 +826,7 @@ export const Inventory: React.FC = () => {
                                             />
                                         </div>
                                     ))}
-                                    {listings.length === 0 && <div className="col-span-full py-20 text-center text-slate-400 italic">{t('common.no_results')}</div>}
+                                    {listings.length === 0 && <div className="col-span-full py-20 text-center text-[var(--text-secondary)] italic">{t('common.no_results')}</div>}
                                 </div>
                             )
                         )}
@@ -890,7 +890,7 @@ export const Inventory: React.FC = () => {
                                         ))}
                                     </div>
                                     
-                                    {listings.length === 0 && !loading && <div className="p-12 text-center text-slate-400 italic">{t('common.no_results')}</div>}
+                                    {listings.length === 0 && !loading && <div className="p-12 text-center text-[var(--text-secondary)] italic">{t('common.no_results')}</div>}
                                 </div>
                             </div>
                         )}
@@ -925,7 +925,7 @@ export const Inventory: React.FC = () => {
                                 <div key={status} className="min-w-[85vw] md:min-w-[280px] w-[85vw] md:w-[280px] flex-shrink-0 flex flex-col h-full bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] snap-center">
                                     <div className={`p-3 border-b border-[var(--glass-border)] flex justify-between items-center rounded-t-2xl ${style.bg}`}>
                                         <h3 className={`text-xs font-bold uppercase tracking-wider ${style.color}`}>{t(`status.${status}`)}</h3>
-                                        <span className="text-[10px] font-bold bg-[var(--bg-surface)] px-2 py-0.5 rounded-full text-[var(--text-tertiary)] shadow-sm border border-[var(--glass-border)]">{items.length}</span>
+                                        <span className="text-xs2 font-bold bg-[var(--bg-surface)] px-2 py-0.5 rounded-full text-[var(--text-tertiary)] shadow-sm border border-[var(--glass-border)]">{items.length}</span>
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
                                         {items.map(item => (

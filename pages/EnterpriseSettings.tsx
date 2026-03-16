@@ -131,14 +131,14 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                                 <div className="p-4 bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)]">
-                                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t('ent.zalo_role')}</div>
+                                    <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-1">{t('ent.zalo_role')}</div>
                                     <div className="flex flex-wrap gap-1">
-                                        <span className="px-2 py-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded text-[10px] font-bold text-[var(--text-secondary)]">{t('ent.zalo_perm_msg')}</span>
-                                        <span className="px-2 py-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded text-[10px] font-bold text-[var(--text-secondary)]">{t('ent.zalo_perm_user')}</span>
+                                        <span className="px-2 py-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded text-xs2 font-bold text-[var(--text-secondary)]">{t('ent.zalo_perm_msg')}</span>
+                                        <span className="px-2 py-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded text-xs2 font-bold text-[var(--text-secondary)]">{t('ent.zalo_perm_user')}</span>
                                     </div>
                                 </div>
                                 <div className="p-4 bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)]">
-                                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t('ent.zalo_connected_at')}</div>
+                                    <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-1">{t('ent.zalo_connected_at')}</div>
                                     <div className="text-xs font-bold text-[var(--text-secondary)]">{config.zalo.connectedAt ? formatDate(config.zalo.connectedAt) : '-'}</div>
                                 </div>
                             </div>
@@ -151,24 +151,24 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                         </div>
                         <div className="bg-[var(--glass-surface)] border-t md:border-t-0 md:border-l border-[var(--glass-border)] p-6 md:p-8 w-full md:w-[320px] flex flex-col justify-center gap-5">
                             <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('ent.zalo_webhook')}</label>
+                                <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-2 block">{t('ent.zalo_webhook')}</label>
                                 <div
                                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 flex items-center gap-2 group cursor-pointer hover:border-blue-400 transition-colors"
                                     onClick={() => copyWebhook(webhookUrl)}
                                 >
-                                    <code className="text-[10px] font-mono text-[var(--text-secondary)] flex-1 truncate">{webhookUrl}</code>
-                                    <div className="p-1.5 rounded-lg bg-[var(--glass-surface-hover)] text-slate-400 group-hover:text-blue-500 shrink-0">
+                                    <code className="text-xs2 font-mono text-[var(--text-secondary)] flex-1 truncate">{webhookUrl}</code>
+                                    <div className="p-1.5 rounded-lg bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] group-hover:text-blue-500 shrink-0">
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                                     </div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className={`w-2 h-2 rounded-full shrink-0 ${zaloStatus?.webhookSecretConfigured ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
-                                <span className="text-[10px] text-[var(--text-tertiary)] font-bold">
+                                <span className="text-xs2 text-[var(--text-tertiary)] font-bold">
                                     ZALO_OA_SECRET: {zaloStatus?.webhookSecretConfigured ? <span className="text-emerald-600">Đã cấu hình</span> : <span className="text-amber-600">Chưa cấu hình</span>}
                                 </span>
                             </div>
-                            <div className="text-[10px] text-[var(--text-tertiary)] leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                            <div className="text-xs2 text-[var(--text-tertiary)] leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">
                                 <span className="font-bold text-blue-600 block mb-1">{t('common.tips')}:</span> {t('ent.zalo_tips')}
                             </div>
                         </div>
@@ -247,7 +247,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                         </div>
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
-                                App Secret <span className="text-slate-400 font-normal normal-case">(tuỳ chọn — để bảo mật webhook)</span>
+                                App Secret <span className="text-[var(--text-secondary)] font-normal normal-case">(tuỳ chọn — để bảo mật webhook)</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -260,7 +260,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                 <button
                                     type="button"
                                     onClick={() => setShowSecret(!showSecret)}
-                                    className="absolute right-3 top-2.5 text-[10px] font-bold text-blue-600 hover:underline"
+                                    className="absolute right-3 top-2.5 text-xs2 font-bold text-blue-600 hover:underline"
                                 >
                                     {showSecret ? t('ent.sso_hide') : t('ent.sso_show')}
                                 </button>
@@ -268,11 +268,11 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                         </div>
                     </div>
 
-                    <div className="flex items-start gap-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-2xl p-4 mb-6 text-[11px] text-[var(--text-tertiary)]">
+                    <div className="flex items-start gap-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-2xl p-4 mb-6 text-xs3 text-[var(--text-tertiary)]">
                         <svg className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <div>
                             <span className="font-bold text-[var(--text-secondary)] block mb-0.5">Webhook URL sẽ được tạo tự động:</span>
-                            <code className="font-mono text-[10px] break-all text-blue-600">{webhookUrl}</code>
+                            <code className="font-mono text-xs2 break-all text-blue-600">{webhookUrl}</code>
                             <span className="block mt-1">Sau khi kết nối, copy URL này vào cấu hình Webhook trên Zalo Developers Console.</span>
                         </div>
                     </div>
@@ -350,7 +350,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                     <div>
                         <p className="text-sm font-bold text-amber-800">{t('ent.facebook_secret_warning')}</p>
                         <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">{t('ent.facebook_secret_hint')}</p>
-                        <div className="mt-2 flex gap-2 text-[11px] text-amber-700">
+                        <div className="mt-2 flex gap-2 text-xs3 text-amber-700">
                             <span className={`px-2 py-0.5 rounded-full font-mono ${fbStatus?.appSecretConfigured ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                                 FB_APP_SECRET {fbStatus?.appSecretConfigured ? '✓' : '✗'}
                             </span>
@@ -418,7 +418,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                             {t('ent.facebook_access_token')}
-                            <span className="ml-1 text-slate-400 font-normal normal-case">(để gửi tin Messenger)</span>
+                            <span className="ml-1 text-[var(--text-secondary)] font-normal normal-case">(để gửi tin Messenger)</span>
                         </label>
                         <div className="relative">
                             <input
@@ -428,7 +428,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                                 value={form.accessToken}
                                 onChange={e => setForm({ ...form, accessToken: e.target.value })}
                             />
-                            <button type="button" onClick={() => setShowToken(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--text-secondary)]">
+                            <button type="button" onClick={() => setShowToken(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
                                 {showToken
                                     ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
                                     : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -455,28 +455,28 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                             <div className="w-10 h-10 bg-[#1877F2]/10 text-[#1877F2] rounded-full flex items-center justify-center font-bold text-lg shrink-0">f</div>
                             <div className="min-w-0">
                                 <div className="font-bold text-[var(--text-primary)] text-sm truncate">{page.name}</div>
-                                <div className="text-[10px] text-slate-400 font-mono truncate">ID: {page.id}</div>
+                                <div className="text-xs2 text-[var(--text-secondary)] font-mono truncate">ID: {page.id}</div>
                                 {page.pageUrl && (
-                                    <a href={page.pageUrl} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:underline truncate block">{page.pageUrl}</a>
+                                    <a href={page.pageUrl} target="_blank" rel="noreferrer" className="text-xs2 text-blue-400 hover:underline truncate block">{page.pageUrl}</a>
                                 )}
                                 {page.connectedAt && (
-                                    <div className="text-[10px] text-slate-400">{t('ent.facebook_connected_at')}: {new Date(page.connectedAt).toLocaleDateString('vi-VN')}</div>
+                                    <div className="text-xs2 text-[var(--text-secondary)]">{t('ent.facebook_connected_at')}: {new Date(page.connectedAt).toLocaleDateString('vi-VN')}</div>
                                 )}
                                 {page.accessToken && (
-                                    <span className="inline-block mt-0.5 text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Token ✓</span>
+                                    <span className="inline-block mt-0.5 text-2xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Token ✓</span>
                                 )}
                             </div>
                         </div>
                         <button
                             onClick={() => setConfirmPageId(page.id)}
-                            className="text-slate-300 hover:text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors shrink-0"
+                            className="text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors shrink-0"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
                 ))}
                 {(!config.facebookPages || config.facebookPages.length === 0) && (
-                    <div className="col-span-full text-center py-10 text-slate-400 italic bg-[var(--glass-surface)] rounded-2xl border border-dashed border-[var(--glass-border)]">
+                    <div className="col-span-full text-center py-10 text-[var(--text-secondary)] italic bg-[var(--glass-surface)] rounded-2xl border border-dashed border-[var(--glass-border)]">
                         {t('ent.facebook_empty')}
                     </div>
                 )}
@@ -550,7 +550,7 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
         <div className="animate-enter max-w-2xl">
             <SectionHeader title={t('ent.email_title')} subtitle={t('ent.email_subtitle')} action={
                 <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold ${form.enabled ? 'text-emerald-600' : 'text-slate-400'}`}>{form.enabled ? t('common.active') : t('common.disabled')}</span>
+                    <span className={`text-xs font-bold ${form.enabled ? 'text-emerald-600' : 'text-[var(--text-secondary)]'}`}>{form.enabled ? t('common.active') : t('common.disabled')}</span>
                     <input type="checkbox" checked={form.enabled} onChange={e => setForm({...form, enabled: e.target.checked})} className="accent-emerald-500 w-5 h-5 cursor-pointer rounded" />
                 </div>
             } />
@@ -641,7 +641,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
         <div className="animate-enter max-w-3xl">
             <SectionHeader title={t('ent.sso_title')} subtitle={t('ent.sso_subtitle')} action={
                 <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold ${sso.enabled ? 'text-emerald-600' : 'text-slate-400'}`}>{sso.enabled ? t('common.active') : t('common.disabled')}</span>
+                    <span className={`text-xs font-bold ${sso.enabled ? 'text-emerald-600' : 'text-[var(--text-secondary)]'}`}>{sso.enabled ? t('common.active') : t('common.disabled')}</span>
                     <input type="checkbox" checked={sso.enabled} onChange={e => setSso({...sso, enabled: e.target.checked})} className="accent-emerald-500 w-5 h-5 cursor-pointer rounded" />
                 </div>
             } />
@@ -662,7 +662,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_issuer')} {sso.provider === 'OIDC' ? '(Discovery URL)' : ''}</label>
                         <input placeholder={sso.provider === 'SAML' ? 'https://idp.example.com/saml' : 'https://dev-123.okta.com'} className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.issuerUrl || ''} onChange={e => setSso({...sso, issuerUrl: e.target.value.trim()})} />
                         {sso.provider === 'OIDC' && sso.issuerUrl && (
-                            <p className="text-[11px] text-slate-400 mt-1 font-mono">Discovery: {sso.issuerUrl.replace(/\/$/, '')}/.well-known/openid-configuration</p>
+                            <p className="text-xs3 text-[var(--text-secondary)] mt-1 font-mono">Discovery: {sso.issuerUrl.replace(/\/$/, '')}/.well-known/openid-configuration</p>
                         )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -674,23 +674,23 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_client_secret')}</label>
                             <div className="relative">
                                 <input type={showSecret ? "text" : "password"} className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.clientSecret || ''} onChange={e => setSso({...sso, clientSecret: e.target.value})} placeholder={CONSTANTS.MASK} />
-                                <button onClick={() => setShowSecret(!showSecret)} className="absolute right-3 top-3.5 text-[10px] font-bold text-indigo-600 hover:underline">{showSecret ? t('ent.sso_hide') : t('ent.sso_show')}</button>
+                                <button onClick={() => setShowSecret(!showSecret)} className="absolute right-3 top-3.5 text-xs2 font-bold text-indigo-600 hover:underline">{showSecret ? t('ent.sso_hide') : t('ent.sso_show')}</button>
                             </div>
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Login URL <span className="text-slate-300 normal-case font-normal">(tùy chọn — cho SAML hoặc IdP tùy chỉnh)</span></label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Login URL <span className="text-[var(--text-secondary)] normal-case font-normal">(tùy chọn — cho SAML hoặc IdP tùy chỉnh)</span></label>
                         <input type="url" placeholder="https://idp.example.com/sso/login" className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.loginUrl || ''} onChange={e => setSso({...sso, loginUrl: e.target.value.trim()})} />
                     </div>
                     <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
                             <span className="text-xs text-[var(--text-tertiary)] font-bold uppercase shrink-0">{t('ent.redirect_uri')}</span>
                             <div className="flex items-center gap-2 min-w-0">
-                                <code className="text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--bg-surface)] px-2 py-1 rounded border border-[var(--glass-border)] break-all">{redirectUri}</code>
-                                <button onClick={() => { navigator.clipboard?.writeText(redirectUri); notify('Copied!', 'success'); }} className="shrink-0 text-[10px] font-bold text-indigo-600 hover:underline px-1">Copy</button>
+                                <code className="text-xs3 font-mono text-[var(--text-secondary)] bg-[var(--bg-surface)] px-2 py-1 rounded border border-[var(--glass-border)] break-all">{redirectUri}</code>
+                                <button onClick={() => { navigator.clipboard?.writeText(redirectUri); notify('Copied!', 'success'); }} className="shrink-0 text-xs2 font-bold text-indigo-600 hover:underline px-1">Copy</button>
                             </div>
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-2">Thêm URL này vào danh sách Redirect URIs trong cấu hình IdP của bạn.</p>
+                        <p className="text-xs3 text-[var(--text-secondary)] mt-2">Thêm URL này vào danh sách Redirect URIs trong cấu hình IdP của bạn.</p>
                     </div>
 
                     {verifyResult && (
@@ -699,7 +699,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                                 <div>
                                     <p className="font-bold mb-2">✓ OIDC cấu hình hợp lệ</p>
                                     {verifyResult.metadata && (
-                                        <div className="space-y-1 text-[11px] font-mono">
+                                        <div className="space-y-1 text-xs3 font-mono">
                                             <p><span className="text-emerald-600 font-bold">Issuer:</span> {verifyResult.metadata.issuer}</p>
                                             <p><span className="text-emerald-600 font-bold">Auth Endpoint:</span> {verifyResult.metadata.authorizationEndpoint}</p>
                                             <p><span className="text-emerald-600 font-bold">Token Endpoint:</span> {verifyResult.metadata.tokenEndpoint}</p>
@@ -764,16 +764,16 @@ const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseCon
                         <div className="flex justify-between items-start mb-4 gap-4">
                             <div className="min-w-0">
                                 <h3 className="text-lg font-bold text-[var(--text-primary)] break-all">{d.domain}</h3>
-                                <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase mt-1 border ${d.verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                                <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs2 font-bold uppercase mt-1 border ${d.verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full ${d.verified ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                                     {d.verified ? t('ent.domain_verified') : t('ent.domain_pending')}
                                 </div>
                             </div>
-                            <button onClick={() => handleRemove(d.domain)} className="text-slate-300 hover:text-rose-500 p-2 rounded-lg hover:bg-rose-50 transition-colors shrink-0"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                            <button onClick={() => handleRemove(d.domain)} className="text-[var(--text-secondary)] hover:text-rose-500 p-2 rounded-lg hover:bg-rose-50 transition-colors shrink-0"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
                         </div>
                         {!d.verified && (
                             <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
-                                <div className="text-[10px] font-bold text-slate-400 uppercase mb-2">{t('ent.domain_dns_config')}</div>
+                                <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-2">{t('ent.domain_dns_config')}</div>
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs bg-[var(--bg-surface)] p-2 rounded border border-[var(--glass-border)] text-[var(--text-secondary)] gap-3">
                                     <span className="font-mono break-all px-1">TXT @ {d.verificationTxtRecord}</span>
                                     <button onClick={() => handleVerify(d.domain)} disabled={verifying === d.domain} className="text-indigo-600 font-bold hover:underline sm:ml-4 disabled:opacity-50 whitespace-nowrap self-end sm:self-auto">{verifying === d.domain ? t('ent.domain_checking') : t('ent.domain_verify')}</button>
@@ -782,7 +782,7 @@ const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseCon
                         )}
                     </div>
                 ))}
-                {(!config.domains || config.domains.length === 0) && <div className="text-center text-slate-400 italic py-10">{t('ent.domain_empty')}</div>}
+                {(!config.domains || config.domains.length === 0) && <div className="text-center text-[var(--text-secondary)] italic py-10">{t('ent.domain_empty')}</div>}
             </div>
         </div>
     );
@@ -884,7 +884,7 @@ const AuditPanel = memo(() => {
                         Xoá bộ lọc
                     </button>
                 )}
-                <span className="text-xs text-slate-400 ml-auto pr-1">{total} bản ghi</span>
+                <span className="text-xs text-[var(--text-secondary)] ml-auto pr-1">{total} bản ghi</span>
             </div>
 
             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
@@ -901,25 +901,25 @@ const AuditPanel = memo(() => {
                         </thead>
                         <tbody className="divide-y divide-[var(--glass-border)]">
                             {loading && (
-                                <tr><td colSpan={5} className="p-10 text-center text-slate-400 animate-pulse">{t('common.loading')}</td></tr>
+                                <tr><td colSpan={5} className="p-10 text-center text-[var(--text-secondary)] animate-pulse">{t('common.loading')}</td></tr>
                             )}
                             {!loading && error && (
                                 <tr><td colSpan={5} className="p-10 text-center text-rose-500">{error}</td></tr>
                             )}
                             {!loading && !error && logs.length === 0 && (
-                                <tr><td colSpan={5} className="p-10 text-center text-slate-400 italic">{t('common.no_data') || 'Chưa có nhật ký nào'}</td></tr>
+                                <tr><td colSpan={5} className="p-10 text-center text-[var(--text-secondary)] italic">{t('common.no_data') || 'Chưa có nhật ký nào'}</td></tr>
                             )}
                             {!loading && logs.map(log => (
                                 <tr key={log.id} className="hover:bg-[var(--glass-surface)] transition-colors">
-                                    <td className="p-4 text-slate-400 font-mono whitespace-nowrap">{formatDateTime(log.timestamp)}</td>
+                                    <td className="p-4 text-[var(--text-secondary)] font-mono whitespace-nowrap">{formatDateTime(log.timestamp)}</td>
                                     <td className="p-4 font-bold text-[var(--text-secondary)] whitespace-nowrap max-w-[120px] truncate" title={log.actorName || log.actorId}>{log.actorName || log.actorId}</td>
                                     <td className="p-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 rounded border font-bold text-[10px] uppercase tracking-wide ${ACTION_COLORS[log.action] || 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] border-[var(--glass-border)]'}`}>
+                                        <span className={`px-2 py-1 rounded border font-bold text-xs2 uppercase tracking-wide ${ACTION_COLORS[log.action] || 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] border-[var(--glass-border)]'}`}>
                                             {log.action}
                                         </span>
                                     </td>
                                     <td className="p-4 text-[var(--text-secondary)] max-w-[200px] truncate" title={log.details}>{log.details || '—'}</td>
-                                    <td className="p-4 font-mono text-slate-400 whitespace-nowrap">{log.ipAddress || '—'}</td>
+                                    <td className="p-4 font-mono text-[var(--text-secondary)] whitespace-nowrap">{log.ipAddress || '—'}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -929,7 +929,7 @@ const AuditPanel = memo(() => {
                 {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]">
-                        <span className="text-xs text-slate-400">Trang {page} / {totalPages}</span>
+                        <span className="text-xs text-[var(--text-secondary)]">Trang {page} / {totalPages}</span>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -1020,7 +1020,7 @@ export const EnterpriseSettings: React.FC = () => {
         );
     }
 
-    if (loading || !config) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
+    if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     const TABS = [
         { id: 'ZALO', label: t('ent.tab_zalo') },
@@ -1050,7 +1050,7 @@ export const EnterpriseSettings: React.FC = () => {
                     <span className="text-xs text-[var(--text-tertiary)]">{t('ent.tenant_label')}:</span>
                     <span
                         title={config.tenantId}
-                        className="font-mono font-bold text-[10px] bg-[var(--glass-surface-hover)] px-2 py-0.5 rounded text-[var(--text-secondary)] border border-[var(--glass-border)] cursor-default"
+                        className="font-mono font-bold text-xs2 bg-[var(--glass-surface-hover)] px-2 py-0.5 rounded text-[var(--text-secondary)] border border-[var(--glass-border)] cursor-default"
                     >
                         {config.tenantId?.slice(0, 8)}…
                     </span>
@@ -1058,7 +1058,7 @@ export const EnterpriseSettings: React.FC = () => {
                         type="button"
                         title={config.tenantId}
                         onClick={() => { copyToClipboard(config.tenantId ?? ''); notify(t('common.copied'), 'success'); }}
-                        className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors"
+                        className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>

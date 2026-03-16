@@ -12,14 +12,14 @@ export const LISTING_ICONS = {
     HEART_FILLED: <svg className="w-5 h-5 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3.25 7.688 3.25c1.544 0 3.04.99 3.812 2.55.242.49.878.49 1.12 0C13.272 4.24 14.768 3.25 16.312 3.25c2.974 0 5.438 2.072 5.438 5.002 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/></svg>,
     HEART_OUTLINE: <svg className="w-5 h-5 text-white drop-shadow-md" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>,
     VERIFIED: <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" /></svg>,
-    VIEW: <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
+    VIEW: <svg className="w-3.5 h-3.5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
     BUILDING: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 01 1v5m-4 0h4" /></svg>,
     KEY: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>,
     USER: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
     ACTION: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>,
     CHEVRON_LEFT: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>,
     CHEVRON_RIGHT: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>,
-    IMAGE_PLACEHOLDER: <svg className="w-10 h-10 text-slate-300 dark:text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+    IMAGE_PLACEHOLDER: <svg className="w-10 h-10 text-[var(--text-secondary)] dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
     EDIT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     COPY: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>,
@@ -54,12 +54,12 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
             <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 items-start pointer-events-none">
                 <div className="flex gap-1.5">
                     {/* Transaction Type Badge - FIX for Ambiguous Status */}
-                    <div className={`flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-white ${isRent ? 'bg-purple-600/90' : 'bg-blue-600/90'}`}>
+                    <div className={`flex items-center gap-1.5 text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 uppercase tracking-wide text-white ${isRent ? 'bg-purple-600/90' : 'bg-blue-600/90'}`}>
                         {isRent ? t('transaction.RENT') : t('transaction.SALE')}
                     </div>
 
                     {isVerified && (
-                        <div className="flex items-center gap-1.5 bg-emerald-600/95 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20">
+                        <div className="flex items-center gap-1.5 bg-emerald-600/95 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20">
                             {LISTING_ICONS.VERIFIED}
                             <span className="uppercase tracking-wide">{t('inventory.verified')}</span>
                         </div>
@@ -68,13 +68,13 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
 
                 <div className="flex gap-1.5">
                     {bookingCount !== undefined && bookingCount > 0 && (
-                        <div className={`flex items-center gap-1.5 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 ${isHot ? 'bg-gradient-to-r from-red-600 to-rose-500 animate-pulse' : 'bg-slate-900/80'}`}>
+                        <div className={`flex items-center gap-1.5 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/20 ${isHot ? 'bg-gradient-to-r from-red-600 to-rose-500 animate-pulse' : 'bg-slate-900/80'}`}>
                             {isHot ? LISTING_ICONS.FIRE : LISTING_ICONS.USER}
                             <span>{bookingCount}</span>
                         </div>
                     )}
                     
-                    <div className="flex items-center gap-1.5 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/10">
+                    <div className="flex items-center gap-1.5 bg-black/60 text-white text-xs2 font-bold px-2 py-1 rounded-lg shadow-sm backdrop-blur-sm border border-white/10">
                         {LISTING_ICONS.EYE}
                         <span>{viewCount || 0}</span>
                     </div>
@@ -117,7 +117,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                     )}
                 </>
             ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 dark:text-[var(--text-secondary)] bg-[var(--glass-surface)] dark:bg-slate-800">{LISTING_ICONS.IMAGE_PLACEHOLDER}</div>
+                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-secondary)] dark:text-slate-400 bg-[var(--glass-surface)] dark:bg-slate-800">{LISTING_ICONS.IMAGE_PLACEHOLDER}</div>
             )}
             
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 pointer-events-none z-10"></div>
@@ -167,7 +167,7 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
 
     return (
         <>
-            <button ref={buttonRef} onClick={toggleMenu} className={`p-2 rounded-xl transition-colors z-20 relative ${isOpen ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}>{LISTING_ICONS.ACTION}</button>
+            <button ref={buttonRef} onClick={toggleMenu} className={`p-2 rounded-xl transition-colors z-20 relative ${isOpen ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-secondary)] hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}>{LISTING_ICONS.ACTION}</button>
             {isOpen && createPortal(
                 <div 
                     className="fixed z-[9999] w-48 bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 overflow-hidden animate-enter origin-top-right"
@@ -217,7 +217,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
         
         const GridItem = ({ label, value }: { label: string, value: string | number }) => (
             <div className="text-center overflow-hidden">
-                <div className="text-[9px] font-bold text-slate-400 uppercase truncate" title={label}>{label}</div>
+                <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase truncate" title={label}>{label}</div>
                 <div className="text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 truncate mt-0.5" title={String(value)}>{value}</div>
             </div>
         );
@@ -284,9 +284,9 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                     <div className="min-w-0 flex-1 mr-2">
                         <div className="flex items-center gap-2 mb-1">
                             {!isProject && (
-                                <span className="font-mono text-[9px] font-bold bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{item.code}</span>
+                                <span className="font-mono text-2xs font-bold bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{item.code}</span>
                             )}
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${item.status === 'AVAILABLE' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-tertiary)] dark:text-slate-400'}`}>
+                            <span className={`text-2xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${item.status === 'AVAILABLE' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-tertiary)] dark:text-slate-400'}`}>
                                 {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') || 'Sẵn sàng' : t(`status.${item.status}`)}
                             </span>
                         </div>
@@ -296,7 +296,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-[11px] text-[var(--text-tertiary)] dark:text-slate-400 mb-3 truncate">
+                <div className="flex items-center gap-1 text-xs3 text-[var(--text-tertiary)] dark:text-slate-400 mb-3 truncate">
                     {LISTING_ICONS.LOCATION}
                     <span className="truncate">{item.location}</span>
                 </div>
@@ -305,14 +305,14 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
 
                 <div className="flex justify-between items-center mt-auto pt-1 gap-2">
                     <div className="min-w-0 flex-1">
-                        <div className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">
+                        <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase mb-0.5">
                             {isProject ? t('inventory.min_price') : t('inventory.label_price')}
                         </div>
                         <div className="text-lg font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight leading-none">
                             {formatSmartPrice(item.price, t)}
                         </div>
                         {item.area > 0 && item.type !== PropertyType.PROJECT && (
-                            <div className="text-[10px] font-medium text-[var(--text-tertiary)] dark:text-slate-400 mt-0.5">
+                            <div className="text-xs2 font-medium text-[var(--text-tertiary)] dark:text-slate-400 mt-0.5">
                                 {formatUnitPrice(item.price, item.area, t)}
                             </div>
                         )}
@@ -321,15 +321,15 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                     <div className="flex items-center gap-2 shrink-0">
                         {attrs.legalStatus && (
                             <div className="flex flex-col items-end">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase">{t('inventory.label_legal')}</span>
-                                <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded uppercase tracking-wide truncate max-w-[80px]">
+                                <span className="text-2xs font-bold text-[var(--text-secondary)] uppercase">{t('inventory.label_legal')}</span>
+                                <span className="text-2xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded uppercase tracking-wide truncate max-w-[80px]">
                                     {t(`legal.${attrs.legalStatus}`) || (attrs.legalStatus as string)}
                                 </span>
                             </div>
                         )}
                         {shouldShowActions && (
                             <>
-                                {attrs.legalStatus && <div className="w-px h-6 bg-[var(--glass-surface-hover)] dark:bg-[var(--bg-surface)]/10 mx-1"></div>}
+                                {attrs.legalStatus && <div className="w-px h-6 bg-[var(--glass-surface-hover)] dark:bg-white/10 mx-1"></div>}
                                 <ListingActionMenu 
                                     listing={item}
                                     onEdit={() => onEdit(item)}

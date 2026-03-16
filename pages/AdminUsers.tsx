@@ -8,13 +8,13 @@ import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 
 const ICONS = {
-    SEARCH: <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEARCH: <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     SEND: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
     CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     INFO: <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    SORT: <svg className="w-3 h-3 ml-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>,
+    SORT: <svg className="w-3 h-3 ml-1 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>,
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 
@@ -121,7 +121,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
             <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 pb-8 sm:pb-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up max-h-[92dvh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('admin.users.invite_title')}</h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-[var(--text-secondary)]">
+                    <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
                         {ICONS.CLOSE}
                     </button>
                 </div>
@@ -139,7 +139,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             onChange={e => setEmail(e.target.value)}
                             autoFocus
                         />
-                        {error && <p className="text-[10px] text-rose-500 font-bold mt-1">{error}</p>}
+                        {error && <p className="text-xs2 text-rose-500 font-bold mt-1">{error}</p>}
                     </div>
 
                     <div>
@@ -155,7 +155,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                         <div className="mt-2 bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex gap-2 animate-enter">
                             <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                             <div>
-                                <h4 className="text-[10px] font-bold text-indigo-700 uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
+                                <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
                                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                                     {t(`role_desc.${role}`) !== `role_desc.${role}` ? t(`role_desc.${role}`) : "Full system access including billing and user management."}
                                 </p>
@@ -397,21 +397,21 @@ export const AdminUsers: React.FC = () => {
                     <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                         {/* Tổng */}
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
-                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t('admin.users.total') || 'Tổng'}</span>
+                            <span className="text-2xs sm:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wide">{t('admin.users.total') || 'Tổng'}</span>
                             <span className="text-xs sm:text-sm font-black text-[var(--text-primary)]">{totalUsers}</span>
                         </div>
                         {/* Hoạt động */}
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                            <span className="hidden sm:inline text-[10px] font-bold text-emerald-600 uppercase tracking-wide">{t('admin.users.active_users') || 'Hoạt động'}</span>
-                            <span className="sm:hidden text-[9px] font-bold text-emerald-600 uppercase">HĐ</span>
+                            <span className="hidden sm:inline text-xs2 font-bold text-emerald-600 uppercase tracking-wide">{t('admin.users.active_users') || 'Hoạt động'}</span>
+                            <span className="sm:hidden text-2xs font-bold text-emerald-600 uppercase">HĐ</span>
                             <span className="text-xs sm:text-sm font-black text-emerald-700">{stats.activeCount}</span>
                         </div>
                         {/* Chờ duyệt */}
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                            <span className="hidden sm:inline text-[10px] font-bold text-amber-600 uppercase tracking-wide">{t('admin.users.pending_invites') || 'Chờ duyệt'}</span>
-                            <span className="sm:hidden text-[9px] font-bold text-amber-600 uppercase">Chờ</span>
+                            <span className="hidden sm:inline text-xs2 font-bold text-amber-600 uppercase tracking-wide">{t('admin.users.pending_invites') || 'Chờ duyệt'}</span>
+                            <span className="sm:hidden text-2xs font-bold text-amber-600 uppercase">Chờ</span>
                             <span className="text-xs sm:text-sm font-black text-amber-700">{stats.pendingCount}</span>
                         </div>
                     </div>
@@ -431,7 +431,7 @@ export const AdminUsers: React.FC = () => {
                 <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]/50">
                     {/* Ô tìm kiếm — kéo dài toàn bộ chiều ngang còn lại */}
                     <div className="relative flex-1 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input
@@ -444,7 +444,7 @@ export const AdminUsers: React.FC = () => {
                             <div className="absolute right-2 inset-y-0 flex items-center">
                                 <button
                                     onClick={() => setSearch('')}
-                                    className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                     title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                 >
                                     {ICONS.X}
@@ -486,12 +486,12 @@ export const AdminUsers: React.FC = () => {
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5 flex-wrap">
                                                         <span className="truncate max-w-[140px] sm:max-w-[200px] text-xs sm:text-sm">{user.name}</span>
-                                                        {user.id === currentUser?.id && <span className="text-[8px] sm:text-[9px] bg-indigo-100 text-indigo-700 px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
+                                                        {user.id === currentUser?.id && <span className="text-3xs sm:text-2xs bg-indigo-100 text-indigo-700 px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
                                                     </div>
-                                                    <div className="text-[10px] sm:text-xs text-[var(--text-tertiary)] truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
+                                                    <div className="text-xs2 sm:text-xs text-[var(--text-tertiary)] truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
                                                     {/* Show Role on mobile only */}
                                                     <div className="sm:hidden mt-0.5">
-                                                        <span className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase bg-[var(--glass-surface-hover)] px-1.5 py-0.5 rounded">{t(`role.${user.role}`)}</span>
+                                                        <span className="text-3xs font-bold text-[var(--text-tertiary)] uppercase bg-[var(--glass-surface-hover)] px-1.5 py-0.5 rounded">{t(`role.${user.role}`)}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -511,7 +511,7 @@ export const AdminUsers: React.FC = () => {
                                             <button 
                                                 onClick={() => user.id !== currentUser?.id && setUserToStatusChange(user)}
                                                 disabled={user.id === currentUser?.id}
-                                                className={`px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase border whitespace-nowrap text-center transition-all active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5
+                                                className={`px-2 sm:px-3 py-1 rounded-full text-2xs sm:text-xs2 font-bold uppercase border whitespace-nowrap text-center transition-all active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5
                                                     ${displayStatus === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' : 
                                                       displayStatus === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' : 
                                                       'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] hover:bg-slate-200'}
@@ -528,7 +528,7 @@ export const AdminUsers: React.FC = () => {
                                             </button>
                                         </td>
                                         <td className="hidden md:table-cell p-4 text-[var(--text-tertiary)] font-mono text-xs">
-                                            {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : <span className="text-slate-300 italic">{t('admin.users.never_logged_in')}</span>}
+                                            {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : <span className="text-[var(--text-secondary)] italic">{t('admin.users.never_logged_in')}</span>}
                                         </td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-1 sm:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
@@ -537,7 +537,7 @@ export const AdminUsers: React.FC = () => {
                                                     <button 
                                                         onClick={() => handleResendInvite(user)}
                                                         disabled={resendingId === user.id}
-                                                        className="p-1.5 sm:p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors relative group/btn" 
+                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors relative group/btn" 
                                                         title={t('admin.users.resend')}
                                                     >
                                                         {resendingId === user.id ? (
@@ -548,7 +548,7 @@ export const AdminUsers: React.FC = () => {
                                                     </button>
                                                 )}
                                                 {user.id !== currentUser?.id && (
-                                                    <button onClick={() => handleDeleteClick(user)} className="p-1.5 sm:p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title={t('admin.users.delete')}>
+                                                    <button onClick={() => handleDeleteClick(user)} className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title={t('admin.users.delete')}>
                                                         {ICONS.TRASH}
                                                     </button>
                                                 )}
@@ -558,7 +558,7 @@ export const AdminUsers: React.FC = () => {
                                 );
                             })}
                             {users.length === 0 && !loading && (
-                                <tr><td colSpan={5} className="p-12 text-center text-slate-400 italic">{t('admin.users.empty_search')}</td></tr>
+                                <tr><td colSpan={5} className="p-12 text-center text-[var(--text-secondary)] italic">{t('admin.users.empty_search')}</td></tr>
                             )}
                         </tbody>
                     </table>
@@ -618,7 +618,7 @@ export const AdminUsers: React.FC = () => {
                     <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('common.confirm')}</h3>
-                            <button onClick={() => setUserToRoleChange(null)} className="text-slate-400 hover:text-[var(--text-secondary)]">
+                            <button onClick={() => setUserToRoleChange(null)} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
                                 {ICONS.CLOSE}
                             </button>
                         </div>
@@ -629,7 +629,7 @@ export const AdminUsers: React.FC = () => {
                         <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex gap-2 mb-6">
                             <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                             <div>
-                                <h4 className="text-[10px] font-bold text-indigo-700 uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
+                                <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
                                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                                     {t(`role_desc.${userToRoleChange.newRole}`) !== `role_desc.${userToRoleChange.newRole}` ? t(`role_desc.${userToRoleChange.newRole}`) : "Full system access including billing and user management."}
                                 </p>
@@ -645,7 +645,7 @@ export const AdminUsers: React.FC = () => {
                             </button>
                             <button 
                                 onClick={confirmRoleChange}
-                                className="flex-1 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-500 transition-colors"
+                                className="flex-1 py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-colors"
                             >
                                 {t('common.confirm')}
                             </button>

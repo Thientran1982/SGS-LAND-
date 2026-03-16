@@ -20,7 +20,7 @@ interface CommandCenterProps {
 
 const ICONS = {
     MENU: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>,
-    SEARCH: <svg className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEARCH: <svg className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     SEARCH_MOBILE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
 };
 
@@ -99,15 +99,15 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 <button 
                     onClick={onSearch}
                     aria-label={t('common.search')}
-                    className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-[var(--bg-surface)]/5 border border-[var(--glass-border)] dark:border-white/10 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--bg-surface)] dark:hover:bg-[var(--bg-surface)]/10 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/10 active:scale-[0.98]"
+                    className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 border border-[var(--glass-border)] dark:border-white/10 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--bg-surface)] dark:hover:bg-[var(--bg-surface)]/10 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/10 active:scale-[0.98]"
                 >
                     <div className="flex items-center gap-3">
                         {ICONS.SEARCH}
                         <span className="font-medium">{t('common.search')}</span>
                     </div>
                     {/* <div className="hidden lg:flex items-center gap-1">
-                        <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-bold text-slate-400 bg-slate-200 dark:bg-[var(--bg-surface)]/10 rounded border border-slate-300 dark:border-white/20">⌘</kbd>
-                        <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-bold text-slate-400 bg-slate-200 dark:bg-[var(--bg-surface)]/10 rounded border border-slate-300 dark:border-white/20">K</kbd>
+                        <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs2 font-bold text-[var(--text-secondary)] bg-slate-200 dark:bg-white/10 rounded border border-slate-300 dark:border-white/20">⌘</kbd>
+                        <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs2 font-bold text-[var(--text-secondary)] bg-slate-200 dark:bg-white/10 rounded border border-slate-300 dark:border-white/20">K</kbd>
                     </div> */}
                 </button>
             </div>
@@ -133,7 +133,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         <div className={`text-sm font-bold transition-colors ${isProfileActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-primary)] group-hover:text-indigo-600'}`}>
                             {user.name}
                         </div>
-                        <div className="text-[10px] text-[var(--text-tertiary)] font-medium">
+                        <div className="text-xs2 text-[var(--text-tertiary)] font-medium">
                             {t(`role.${user.role}`) || user.role}
                         </div>
                     </div>

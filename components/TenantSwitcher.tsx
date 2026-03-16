@@ -7,9 +7,9 @@ export const TenantSwitcher: React.FC = () => {
     if (!tenant) return null;
 
     return (
-        <div className="flex items-center space-x-2 px-4 py-2 bg-[var(--glass-surface-hover)] dark:bg-[var(--bg-surface)]/5 rounded-xl border border-[var(--glass-border)] dark:border-white/10">
+        <div className="flex items-center space-x-2 px-4 py-2 bg-[var(--glass-surface-hover)] dark:bg-white/5 rounded-xl border border-[var(--glass-border)] dark:border-white/10">
             <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                <span className="text-xs2 font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                     Current Tenant
                 </span>
                 <select 

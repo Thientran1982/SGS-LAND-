@@ -135,7 +135,7 @@ export const CrmLanding: React.FC = () => {
                         <button onClick={handleLogin} className="w-full py-3 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-primary)] font-bold rounded-xl transition-colors">{currentUser ? t('menu.dashboard') : 'Đăng Ký Ngay'}</button>
                     </div>
                     <div className="bg-slate-900 text-white p-8 rounded-[32px] shadow-2xl relative overflow-hidden transform hover:-translate-y-2 transition-all">
-                        <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Phổ Biến</div>
+                        <div className="absolute top-0 right-0 bg-indigo-600 text-white text-xs2 font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Phổ Biến</div>
                         <h3 className="text-lg font-bold text-indigo-300 uppercase tracking-wide mb-2">Doanh Nghiệp</h3>
                         <div className="text-4xl font-black text-white mb-6">1,999k <span className="text-lg font-medium text-[var(--text-tertiary)]">/ tháng</span></div>
                         <ul className="space-y-3 mb-8">
@@ -143,7 +143,7 @@ export const CrmLanding: React.FC = () => {
                             <li className="flex gap-3 text-slate-300"><span className="text-emerald-400">{ICONS.CHECK}</span> Không giới hạn khách hàng</li>
                             <li className="flex gap-3 text-slate-300"><span className="text-emerald-400">{ICONS.CHECK}</span> AI Lead Scoring & Automation</li>
                         </ul>
-                        <button onClick={handleLogin} className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors shadow-lg">{currentUser ? t('menu.dashboard') : 'Dùng Thử Miễn Phí'}</button>
+                        <button onClick={handleLogin} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-lg">{currentUser ? t('menu.dashboard') : 'Dùng Thử Miễn Phí'}</button>
                     </div>
                 </div>
             </section>

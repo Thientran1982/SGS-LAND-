@@ -73,7 +73,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                     <h2 className="text-xl font-bold text-[var(--text-primary)]">
                         {contract ? t('contracts.modal_edit_title') : t('contracts.modal_create_title')}
                     </h2>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors">
+                    <button onClick={onClose} className="p-2 text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>

@@ -184,7 +184,7 @@ export const Contact: React.FC = () => {
                                         value={form.name}
                                         onChange={e => handleInputChange('name', e.target.value)}
                                     />
-                                    {errors.name && <p className="text-[10px] font-bold text-rose-500 ml-1 animate-enter">{errors.name}</p>}
+                                    {errors.name && <p className="text-xs2 font-bold text-rose-500 ml-1 animate-enter">{errors.name}</p>}
                                 </div>
                                 <div className="space-y-1 group">
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-indigo-600 transition-colors">Email <span className="text-rose-500">*</span></label>
@@ -194,7 +194,7 @@ export const Contact: React.FC = () => {
                                         value={form.email}
                                         onChange={e => handleInputChange('email', e.target.value)}
                                     />
-                                    {errors.email && <p className="text-[10px] font-bold text-rose-500 ml-1 animate-enter">{errors.email}</p>}
+                                    {errors.email && <p className="text-xs2 font-bold text-rose-500 ml-1 animate-enter">{errors.email}</p>}
                                 </div>
                             </div>
                             
@@ -218,7 +218,7 @@ export const Contact: React.FC = () => {
                                     value={form.message}
                                     onChange={e => handleInputChange('message', e.target.value)}
                                 ></textarea>
-                                {errors.message && <p className="text-[10px] font-bold text-rose-500 ml-1 animate-enter">{errors.message}</p>}
+                                {errors.message && <p className="text-xs2 font-bold text-rose-500 ml-1 animate-enter">{errors.message}</p>}
                             </div>
 
                             <button 

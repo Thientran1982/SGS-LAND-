@@ -119,7 +119,7 @@ const ProgressRing = memo(({ percentage, size = 44, stroke = 3 }: { percentage: 
                     cy={size / 2}
                 />
             </svg>
-            <span className="absolute text-[9px] font-black text-white leading-none">{percentage}%</span>
+            <span className="absolute text-2xs font-black text-white leading-none">{percentage}%</span>
         </div>
     );
 });
@@ -192,7 +192,7 @@ export const OnboardingWizard: React.FC = () => {
                 <div className="bg-slate-900 dark:bg-slate-950 text-white rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 p-1.5 border border-white/10">
                     <ProgressRing percentage={state.percentage} size={48} stroke={3} />
                 </div>
-                <span className="absolute -top-8 right-0 bg-slate-900 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                <span className="absolute -top-8 right-0 bg-slate-900 text-white text-xs2 font-bold px-2.5 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
                     {t('onboard.title')}
                 </span>
             </button>,
@@ -214,12 +214,12 @@ export const OnboardingWizard: React.FC = () => {
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
+                            <span className="text-xs2 font-bold text-emerald-400 uppercase tracking-widest">
                                 {language === 'en' ? 'Getting Started' : 'Bắt Đầu'}
                             </span>
                         </div>
                         <h3 className="text-white font-black text-sm leading-tight">{t('onboard.title')}</h3>
-                        <p className="text-slate-400 text-[10px] mt-0.5">{t('onboard.subtitle')}</p>
+                        <p className="text-[var(--text-secondary)] text-xs2 mt-0.5">{t('onboard.subtitle')}</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <ProgressRing percentage={state.percentage} size={40} stroke={3} />
@@ -238,10 +238,10 @@ export const OnboardingWizard: React.FC = () => {
                 {/* Progress bar */}
                 <div className="relative">
                     <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-xs2 text-[var(--text-secondary)]">
                             {doneCount}/{totalCount} {language === 'en' ? 'steps done' : 'bước hoàn thành'}
                         </span>
-                        <span className="text-[10px] font-bold text-white">{state.percentage}%</span>
+                        <span className="text-xs2 font-bold text-white">{state.percentage}%</span>
                     </div>
                     <div className="h-1.5 bg-[var(--bg-surface)]/10 rounded-full overflow-hidden">
                         <div
@@ -292,15 +292,15 @@ export const OnboardingWizard: React.FC = () => {
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5">
                                     {!isDone && (
-                                        <span className={`w-4 h-4 rounded-full text-[9px] font-black text-white bg-gradient-to-br ${step.gradient} flex items-center justify-center shrink-0 leading-none`}>
+                                        <span className={`w-4 h-4 rounded-full text-2xs font-black text-white bg-gradient-to-br ${step.gradient} flex items-center justify-center shrink-0 leading-none`}>
                                             {idx + 1}
                                         </span>
                                     )}
-                                    <p className={`text-xs font-bold leading-tight ${isDone ? 'text-slate-400 dark:text-[var(--text-tertiary)] line-through' : 'text-[var(--text-primary)] dark:text-slate-100'}`}>
+                                    <p className={`text-xs font-bold leading-tight ${isDone ? 'text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] line-through' : 'text-[var(--text-primary)] dark:text-slate-100'}`}>
                                         {label}
                                     </p>
                                 </div>
-                                <p className="text-[10px] text-[var(--text-tertiary)] dark:text-slate-400 leading-relaxed">
+                                <p className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 leading-relaxed">
                                     {language === 'en' ? step.desc_en : step.desc_vn}
                                 </p>
                             </div>
@@ -320,12 +320,12 @@ export const OnboardingWizard: React.FC = () => {
 
             {/* ── FOOTER ── */}
             <div className="px-4 py-3 bg-[var(--bg-surface)] dark:bg-slate-900 border-t border-[var(--glass-border)] dark:border-slate-800/60 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400 dark:text-[var(--text-tertiary)]">
+                <span className="text-xs2 text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
                     {language === 'en' ? 'SGS Land CRM Setup' : 'Hệ thống SGS Land CRM'}
                 </span>
                 <button
                     onClick={handleDismiss}
-                    className="text-[10px] font-bold text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 uppercase tracking-widest transition-colors px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                    className="text-xs2 font-bold text-[var(--text-secondary)] hover:text-rose-500 dark:hover:text-rose-400 uppercase tracking-widest transition-colors px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
                 >
                     {t('onboard.dismiss')}
                 </button>

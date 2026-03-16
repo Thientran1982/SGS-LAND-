@@ -115,7 +115,7 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
                 <div>
                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('ai.cap')}</label>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-slate-400 font-bold">$</span>
+                        <span className="text-[var(--text-secondary)] font-bold">$</span>
                         <input 
                             type="number" 
                             className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-mono outline-none focus:border-indigo-500"
@@ -154,7 +154,7 @@ const PromptsTab = memo(({
                     >
                         <div className="flex justify-between items-start">
                             <div className={`font-bold text-sm ${selectedPrompt?.id === p.id ? 'text-indigo-700' : 'text-[var(--text-secondary)]'}`}>{p.name}</div>
-                            <span className="text-[9px] bg-slate-200 text-[var(--text-secondary)] px-1.5 py-0.5 rounded font-mono font-bold">v{p.activeVersion}</span>
+                            <span className="text-2xs bg-slate-200 text-[var(--text-secondary)] px-1.5 py-0.5 rounded font-mono font-bold">v{p.activeVersion}</span>
                         </div>
                         <div className="text-xs text-[var(--text-tertiary)] mt-1 truncate group-hover:text-[var(--text-secondary)]">{p.description}</div>
                     </div>
@@ -168,7 +168,7 @@ const PromptsTab = memo(({
                 <>
                     <div className="flex justify-between items-center mb-4">
                         <div>
-                            <h3 className="font-bold text-[var(--text-primary)] text-lg">{selectedPrompt.name} <span className="text-slate-400 font-normal text-sm ml-1">v{selectedPrompt.activeVersion}</span></h3>
+                            <h3 className="font-bold text-[var(--text-primary)] text-lg">{selectedPrompt.name} <span className="text-[var(--text-secondary)] font-normal text-sm ml-1">v{selectedPrompt.activeVersion}</span></h3>
                             <p className="text-xs text-[var(--text-tertiary)] max-w-md truncate">{selectedPrompt.description}</p>
                         </div>
                         <div className="flex gap-2">
@@ -185,7 +185,7 @@ const PromptsTab = memo(({
                                 <button 
                                     key={v}
                                     onClick={() => onInsertVar(v)}
-                                    className="px-2 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded border border-indigo-100 hover:bg-indigo-100 flex items-center gap-1 shrink-0 transition-colors"
+                                    className="px-2 py-1 bg-indigo-50 text-indigo-600 text-xs2 font-bold rounded border border-indigo-100 hover:bg-indigo-100 flex items-center gap-1 shrink-0 transition-colors"
                                 >
                                     {ICONS.VARIABLE} {v}
                                 </button>
@@ -220,7 +220,7 @@ const PromptsTab = memo(({
                     </div>
                 </>
             ) : (
-                <div className="flex-1 flex items-center justify-center text-slate-400 italic">
+                <div className="flex-1 flex items-center justify-center text-[var(--text-secondary)] italic">
                     {t('ai.select_prompt')}
                 </div>
             )}
@@ -321,7 +321,7 @@ export const AiGovernance: React.FC = () => {
         } catch (e) { notify(t('common.error'), 'error'); }
     };
 
-    if (loading || !config) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('ai.loading')}</div>;
+    if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('ai.loading')}</div>;
 
     return (
         <div className="space-y-6 pb-20 relative animate-enter">
@@ -364,7 +364,7 @@ export const AiGovernance: React.FC = () => {
                 <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm animate-enter">
                     <h3 className="font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                         {t('ai.tab_safety')}
-                        <span className="bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] text-[10px] px-2 py-0.5 rounded-full">
+                        <span className="bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] text-xs2 px-2 py-0.5 rounded-full">
                             {t('ai.events_count', { count: safetyLogs?.length || 0 })}
                         </span>
                     </h3>
@@ -383,7 +383,7 @@ export const AiGovernance: React.FC = () => {
                             <tbody className="divide-y divide-[var(--glass-border)]">
                                 {safetyLogs?.map(log => (
                                     <tr key={log.id} className="hover:bg-[var(--glass-surface)] transition-colors">
-                                        <td className="p-3 text-slate-400 font-mono">{formatTime(log.timestamp)}</td>
+                                        <td className="p-3 text-[var(--text-secondary)] font-mono">{formatTime(log.timestamp)}</td>
                                         <td className="p-3 font-bold text-[var(--text-secondary)]">{log.taskType}</td>
                                         <td className="p-3 font-mono text-[var(--text-secondary)]">{formatModelName(log.model)}</td>
                                         <td className="p-3 text-[var(--text-secondary)]">{log.latencyMs}ms</td>
@@ -392,10 +392,10 @@ export const AiGovernance: React.FC = () => {
                                             {log.safetyFlags.length > 0 ? (
                                                 <div className="flex gap-1">
                                                     {log.safetyFlags.map(f => (
-                                                        <span key={f} className="px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 rounded text-[9px] font-bold uppercase tracking-wide">{f}</span>
+                                                        <span key={f} className="px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-100 rounded text-2xs font-bold uppercase tracking-wide">{f}</span>
                                                     ))}
                                                 </div>
-                                            ) : <span className="text-emerald-500 font-bold text-[10px]">{t('ai.safe')}</span>}
+                                            ) : <span className="text-emerald-500 font-bold text-xs2">{t('ai.safe')}</span>}
                                         </td>
                                     </tr>
                                 ))}

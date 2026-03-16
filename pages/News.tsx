@@ -141,7 +141,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                                 {shareFeedback}
                             </span>
                         )}
-                        <button onClick={handleShare} className="p-2 rounded-full hover:bg-[var(--glass-surface-hover)] text-slate-400 hover:text-indigo-600 transition-colors" title="Chia sẻ">
+                        <button onClick={handleShare} className="p-2 rounded-full hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] hover:text-indigo-600 transition-colors" title="Chia sẻ">
                             {ICONS.SHARE}
                         </button>
                     </div>
@@ -340,7 +340,7 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
                     <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Hình ảnh & Video đính kèm</label>
                     <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:border-indigo-500 transition-colors bg-[var(--glass-surface)]">
                         <div className="space-y-1 text-center">
-                            <svg className="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                            <svg className="mx-auto h-12 w-12 text-[var(--text-secondary)]" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                             <div className="flex text-sm text-[var(--text-secondary)] justify-center">
@@ -614,7 +614,7 @@ export const News: React.FC = () => {
 
             <div className="max-w-6xl mx-auto px-6 py-12 animate-enter">
                 <div className="text-center mb-16 relative">
-                    <span className="inline-block py-1 px-3 rounded-full bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest mb-4">
+                    <span className="inline-block py-1 px-3 rounded-full bg-slate-900 text-white text-xs2 font-bold uppercase tracking-widest mb-4">
                         Cập nhật 2026
                     </span>
                     <h1 className="text-3xl md:text-6xl font-black text-[var(--text-primary)] mb-6 tracking-tight">
@@ -659,7 +659,7 @@ export const News: React.FC = () => {
                             <p className="text-white/90 text-sm md:text-lg mb-6 md:mb-8 line-clamp-3 md:line-clamp-none max-w-3xl leading-relaxed">
                                 {featured.excerpt}
                             </p>
-                            <div className="flex items-center gap-4 md:gap-6 text-white/70 text-[10px] md:text-xs font-bold uppercase tracking-widest">
+                            <div className="flex items-center gap-4 md:gap-6 text-white/70 text-xs2 md:text-xs font-bold uppercase tracking-widest">
                                 <span className="flex items-center gap-2">{ICONS.CALENDAR} {featured.date}</span>
                                 <span className="w-1 h-1 bg-[var(--bg-surface)]/50 rounded-full"></span>
                                 <span>{featured.readTime} đọc</span>
@@ -679,13 +679,13 @@ export const News: React.FC = () => {
                             <div className="aspect-[4/3] overflow-hidden relative isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
                                 <img src={article.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={article.title} />
                                 <div className="absolute top-4 left-4">
-                                    <span className="px-3 py-1 bg-[var(--bg-surface)]/90 backdrop-blur-sm text-[var(--text-primary)] text-[10px] font-bold rounded-lg shadow-sm">
+                                    <span className="px-3 py-1 bg-[var(--bg-surface)]/90 backdrop-blur-sm text-[var(--text-primary)] text-xs2 font-bold rounded-lg shadow-sm">
                                         {article.category}
                                     </span>
                                 </div>
                             </div>
                             <div className="p-8 flex flex-col flex-1">
-                                <div className="text-[10px] font-bold text-slate-400 mb-3 flex items-center gap-2">
+                                <div className="text-xs2 font-bold text-[var(--text-secondary)] mb-3 flex items-center gap-2">
                                     {article.date} <span className="w-1 h-1 bg-slate-300 rounded-full"></span> {article.readTime}
                                 </div>
                                 <h3 className="font-bold text-xl text-[var(--text-primary)] mb-4 line-clamp-3 group-hover:text-indigo-600 transition-colors leading-snug">

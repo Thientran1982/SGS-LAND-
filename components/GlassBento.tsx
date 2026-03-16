@@ -81,7 +81,7 @@ export const GlassBento: React.FC<BentoCardProps> = memo(({
                         <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider leading-tight pt-1 select-none">{title}</h3>
                     </div>
                     {trend && (
-                        <div className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-colors ${CONSTANTS.TREND_STYLES[trend]}`}>
+                        <div className={`text-xs2 font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-colors ${CONSTANTS.TREND_STYLES[trend]}`}>
                             <span className="text-xs">{trend === 'up' ? '↗' : '↘'}</span>
                             <span>{trendValue || "0%"}</span>
                         </div>

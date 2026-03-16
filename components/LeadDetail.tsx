@@ -20,7 +20,7 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
                 </div>
                 <div>
                     <h4 className="font-bold text-indigo-900 text-xs uppercase tracking-widest">{t('detail.ai_analysis')}</h4>
-                    <p className="text-[9px] text-indigo-400 font-medium uppercase tracking-tighter">Gemini 3.1 Intelligence</p>
+                    <p className="text-2xs text-indigo-400 font-medium uppercase tracking-tighter">Gemini 3.1 Intelligence</p>
                 </div>
             </div>
             <button 
@@ -45,7 +45,7 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
                     {summary || t('detail.ai_no_data')}
                 </p>
                 <div className="mt-4 flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-500 text-[9px] font-bold rounded-full uppercase tracking-tighter border border-indigo-100/50">Strategic Insights</span>
+                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-500 text-2xs font-bold rounded-full uppercase tracking-tighter border border-indigo-100/50">Strategic Insights</span>
                     <div className="h-px flex-1 bg-indigo-50"></div>
                 </div>
             </div>
@@ -55,9 +55,9 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
 
 const DetailField = ({ label, children, className, error }: any) => (
     <div className={`space-y-1 ${className}`}>
-        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block tracking-wide">{label}</label>
+        <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase ml-1 block tracking-wide">{label}</label>
         {children}
-        {error && <p className="text-[10px] text-rose-500 font-bold ml-1">{error}</p>}
+        {error && <p className="text-xs2 text-rose-500 font-bold ml-1">{error}</p>}
     </div>
 );
 
@@ -70,7 +70,7 @@ const TimelineItem = ({ item, t, formatDateTime }: any) => {
                 <div className="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-slate-300 ring-4 ring-white"></div>
                 <div className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg p-2 flex items-center justify-between text-xs text-[var(--text-tertiary)]">
                     <span>{item.content}</span>
-                    <span className="text-[10px] font-mono opacity-60">{formatDateTime(item.timestamp)}</span>
+                    <span className="text-xs2 font-mono opacity-60">{formatDateTime(item.timestamp)}</span>
                 </div>
             </div>
         );
@@ -84,8 +84,8 @@ const TimelineItem = ({ item, t, formatDateTime }: any) => {
                     <span className="text-xs font-bold text-[var(--text-secondary)]">
                         {item.direction === Direction.OUTBOUND ? t('detail.timeline_you') : t('detail.timeline_lead')}
                     </span>
-                    <span className="text-[10px] text-slate-400">• {formatDateTime(item.timestamp)}</span>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold ${
+                    <span className="text-xs2 text-[var(--text-secondary)]">• {formatDateTime(item.timestamp)}</span>
+                    <span className={`text-2xs px-1.5 py-0.5 rounded uppercase font-bold ${
                         item.channel === Channel.ZALO ? 'bg-blue-50 text-blue-600' : 
                         item.channel === Channel.EMAIL ? 'bg-amber-50 text-amber-600' : 
                         item.channel === Channel.SMS ? 'bg-emerald-50 text-emerald-600' : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)]'
@@ -104,7 +104,7 @@ const ICONS = {
     ZALO: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S16.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm-1 4v4h-4v2h4v4h2v-4h4v-2h-4V6h-2z" fillRule="evenodd" /></svg>,
     EMAIL: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
     SMS: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
-    EDIT_PEN: <svg className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+    EDIT_PEN: <svg className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
 };
 
 const STYLES = {
@@ -274,7 +274,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         </div>
                         <div className="flex items-center gap-2 px-2 mt-0.5">
                             <span
-                                className="text-[10px] font-mono text-slate-400 bg-[var(--glass-surface)] px-1.5 py-0.5 rounded border border-[var(--glass-border)] cursor-pointer hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-colors"
+                                className="text-xs2 font-mono text-[var(--text-secondary)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded border border-[var(--glass-border)] cursor-pointer hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-colors"
                                 title={formData.id || ''}
                                 onClick={() => formData.id && navigator.clipboard.writeText(formData.id)}
                             >
@@ -282,11 +282,11 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                             </span>
                             {formData.score && (
                                 <div className="group relative">
-                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${scoreColor(formData.score.score)} bg-transparent cursor-help`}>
+                                    <span className={`text-xs2 font-bold px-1.5 py-0.5 rounded border ${scoreColor(formData.score.score)} bg-transparent cursor-help`}>
                                         {formData.score.score} pts
                                     </span>
                                     {formData.score.reasoning && (
-                                        <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-[var(--bg-surface)] dark:bg-slate-800 rounded-xl shadow-xl border border-[var(--glass-border)] dark:border-slate-700 z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity text-[11px] text-[var(--text-secondary)] dark:text-slate-300 leading-relaxed">
+                                        <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-[var(--bg-surface)] dark:bg-slate-800 rounded-xl shadow-xl border border-[var(--glass-border)] dark:border-slate-700 z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity text-xs3 text-[var(--text-secondary)] dark:text-slate-300 leading-relaxed">
                                             <div className="font-bold text-indigo-600 mb-1 uppercase tracking-tighter">AI Reasoning</div>
                                             {formData.score.reasoning}
                                         </div>
@@ -299,12 +299,12 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 <div className="flex items-center ml-2">
                                     <div className="flex -space-x-2">
                                         {activeViewers.map((viewer, idx) => (
-                                            <div key={idx} className="w-6 h-6 rounded-full border-2 border-white bg-indigo-100 flex items-center justify-center text-[8px] font-bold text-indigo-700 shadow-sm" title={viewer.name}>
+                                            <div key={idx} className="w-6 h-6 rounded-full border-2 border-white bg-indigo-100 flex items-center justify-center text-3xs font-bold text-indigo-700 shadow-sm" title={viewer.name}>
                                                 {viewer.name?.charAt(0).toUpperCase()}
                                             </div>
                                         ))}
                                     </div>
-                                    <span className="ml-2 text-[10px] text-[var(--text-tertiary)] flex items-center gap-1">
+                                    <span className="ml-2 text-xs2 text-[var(--text-tertiary)] flex items-center gap-1">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                         Đang xem
                                     </span>
@@ -313,7 +313,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         </div>
                     </div>
                 </div>
-                <button onClick={onClose} className="text-slate-400 hover:text-[var(--text-secondary)] p-2.5 rounded-full hover:bg-[var(--glass-surface-hover)] transition-colors shrink-0">
+                <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] p-2.5 rounded-full hover:bg-[var(--glass-surface-hover)] transition-colors shrink-0">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
@@ -368,7 +368,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 placeholder={t('detail.placeholder_msg')}
                             />
                             <div className="flex justify-between items-center mt-2">
-                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{activeChannel}</span>
+                                <span className="text-xs2 text-[var(--text-secondary)] uppercase font-bold tracking-wider">{activeChannel}</span>
                                 <button onClick={handleSendMessage} disabled={isSending || !messageContent.trim()} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg text-xs hover:bg-indigo-700 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm active:scale-95">
                                     {isSending ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : ICONS.SEND}
                                     {isSending ? t('detail.sending') : t('detail.send')}
@@ -379,12 +379,12 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
 
                     <div>
                         <div className="flex items-center gap-2 mb-4 md:mb-6">
-                            <h4 className="font-bold text-xs text-slate-400 uppercase tracking-widest">{t('detail.history')}</h4>
+                            <h4 className="font-bold text-xs text-[var(--text-secondary)] uppercase tracking-widest">{t('detail.history')}</h4>
                             <div className="h-px bg-slate-200 flex-1"></div>
                         </div>
                         <div className="space-y-0">
                             {interactions.map((i) => <TimelineItem key={i.id} item={i} t={t} formatDateTime={formatDateTime} />)}
-                            {interactions.length === 0 && <div className="text-center py-10 text-slate-400 border-2 border-dashed border-[var(--glass-border)] rounded-2xl text-xs">{t('detail.empty_history')}</div>}
+                            {interactions.length === 0 && <div className="text-center py-10 text-[var(--text-secondary)] border-2 border-dashed border-[var(--glass-border)] rounded-2xl text-xs">{t('detail.empty_history')}</div>}
                         </div>
                     </div>
             </div>
