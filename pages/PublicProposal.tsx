@@ -149,7 +149,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                             
                             {proposal.metadata?.note && (
                                 <div className="mb-6 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl">
-                                    <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2">{t('proposal.label_note')}</div>
+                                    <div className="text-xs2 font-bold text-indigo-400 uppercase tracking-wider mb-2">{t('proposal.label_note')}</div>
                                     <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{proposal.metadata.note}</p>
                                 </div>
                             )}

@@ -223,6 +223,38 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - SVG has `role="img"`, `aria-label`, and `<title>` element for screen readers and crawlers
 - `nav.logo_label` translation key provides the accessible name
 
+## Design System (Audited & Standardized March 2026)
+
+### CSS Design Tokens (`index.html <style>` block)
+Single source of truth for all color variables. Both `:root` (light) and `.dark` (dark) fully specified.
+- **Backgrounds**: `--bg-app`, `--bg-surface`, `--bg-elevated`, `--glass-surface`, `--glass-surface-hover`, `--glass-border`
+- **Text**: `--text-primary`, `--text-secondary`, `--text-tertiary`, `--text-muted`
+- **Brand**: `--primary-600` (indigo-600 light / indigo-500 dark)
+- **Semantic**: `--color-success`, `--color-warning`, `--color-danger`, `--color-info`, `--rose-500`
+- All variables override correctly in `.dark` including `--rose-500` (#F43F5E light → #FB7185 dark)
+
+### Tailwind Config Extensions (`tailwind.config.js`)
+Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-surface`, etc.) and micro font sizes:
+- `text-3xs` (8px), `text-2xs` (9px), `text-xs2` (10px), `text-xs3` (11px)
+
+### Color Usage Rules
+- **Primary CTA buttons**: `bg-indigo-600 hover:bg-indigo-700` (NEVER indigo-500 or lower)
+- **Text**: Use `text-[var(--text-primary/secondary/tertiary/muted)]` in theme-aware pages. Hardcoded `text-slate-*` only inside always-dark pages (Login, AiValuation) or with explicit `dark:` prefix
+- **Surfaces**: `bg-[var(--bg-surface)]` for cards/panels. `bg-slate-900/800` only for intentional always-dark overlays
+- **Always-dark pages**: Login.tsx, AiValuation.tsx (use hardcoded dark colors intentionally)
+
+### Font System
+- Primary: `Inter` (300/400/500/600/700) from Google Fonts
+- Mono: `JetBrains Mono` (400/500)
+- Print: `Noto Serif`
+- Dark mode: `class` strategy on `<html>`, persisted in `localStorage` key `sgs_theme`
+
+### Comprehensive Fix Applied (March 2026)
+- 277 hardcoded `text-slate-400/300/200` + `bg-white` → CSS variables in 34 theme-aware pages/components
+- 382 arbitrary `text-[8px/9px/10px/11px]` → named Tailwind tokens (`text-3xs/2xs/xs2/xs3`)
+- Button hover direction standardized: `hover:bg-indigo-500` → `hover:bg-indigo-700`
+- `--rose-500` added to `.dark` mode override
+
 ## Scripts
 
 - `npm run dev` - Start development server (tsx server.ts)

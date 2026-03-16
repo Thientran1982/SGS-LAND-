@@ -30,7 +30,7 @@ const DEAL_CONFIG = {
 
 const ICONS = {
     CLOSE: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
-    SEARCH: <svg className="w-5 h-5 absolute left-3 top-3 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEARCH: <svg className="w-5 h-5 absolute left-3 top-3 text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     CLEAR: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     WARNING: <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     REFRESH: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
@@ -177,7 +177,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
         <div className="flex flex-col h-full overflow-hidden">
             <div className="p-4 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] shrink-0">
                 <div className="relative group">
-                    <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                    <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
                         {ICONS.SEARCH}
                     </div>
                     <input 
@@ -189,7 +189,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                     />
                     {searchQuery && (
                         <div className="absolute right-2 inset-y-0 flex items-center">
-                            <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>
+                            <button onClick={() => setSearchQuery('')} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>
                                 {ICONS.CLEAR}
                             </button>
                         </div>
@@ -199,7 +199,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             
             <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
                 {availableListings.length === 0 ? (
-                    <div className="text-center py-20 text-slate-400 italic">{t('inventory.empty')}</div>
+                    <div className="text-center py-20 text-[var(--text-secondary)] italic">{t('inventory.empty')}</div>
                 ) : (
                     availableListings.map(item => (
                         <div 
@@ -210,15 +210,15 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                             <div className="flex justify-between items-start relative z-10">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-mono text-[10px] font-bold bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded">{item.code}</span>
-                                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded uppercase">{t(`status.${item.status}`)}</span>
+                                        <span className="font-mono text-xs2 font-bold bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded">{item.code}</span>
+                                        <span className="text-xs2 font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded uppercase">{t(`status.${item.status}`)}</span>
                                     </div>
                                     <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-700 transition-colors line-clamp-1">{item.title}</h4>
                                     <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{item.location}</p>
                                 </div>
                                 <div className="text-right shrink-0 ml-2">
                                     <div className="text-base md:text-lg font-extrabold text-[var(--text-primary)]">{formatCurrency(item.price)}</div>
-                                    <div className="text-[10px] text-slate-400">{item.area}m² • {item.bedrooms} {t('pub.bedrooms')}</div>
+                                    <div className="text-xs2 text-[var(--text-secondary)]">{item.area}m² • {item.bedrooms} {t('pub.bedrooms')}</div>
                                 </div>
                             </div>
                         </div>
@@ -249,11 +249,11 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                         <div className="min-w-0 flex-1">
                             <h4 className="font-bold text-[var(--text-primary)] text-sm md:text-base line-clamp-2">{selectedListing.title}</h4>
                             <div className="flex flex-wrap gap-2 mt-2">
-                                <span className="text-[10px] bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.area} m²</span>
-                                <span className="text-[10px] bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.bedrooms} {t('pub.bedrooms')}</span>
-                                <span className="text-[10px] bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.attributes.direction ? t(`direction.${selectedListing.attributes.direction}`) : '---'}</span>
+                                <span className="text-xs2 bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.area} m²</span>
+                                <span className="text-xs2 bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.bedrooms} {t('pub.bedrooms')}</span>
+                                <span className="text-xs2 bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.attributes.direction ? t(`direction.${selectedListing.attributes.direction}`) : '---'}</span>
                             </div>
-                            <button onClick={() => setStep('SELECT')} className="text-[10px] font-bold text-indigo-600 hover:underline mt-2 flex items-center gap-1">
+                            <button onClick={() => setStep('SELECT')} className="text-xs2 font-bold text-indigo-600 hover:underline mt-2 flex items-center gap-1">
                                 {ICONS.REFRESH}
                                 {t('proposal.change_property')}
                             </button>
@@ -263,13 +263,13 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                     {/* Configuration */}
                     <div className="bg-[var(--bg-surface)] p-4 md:p-6 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-6">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('proposal.config_price')}</h4>
+                            <h4 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">{t('proposal.config_price')}</h4>
                             <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-lg">
                                 {(['PERCENT', 'AMOUNT'] as const).map(type => (
                                     <button 
                                         key={type}
                                         onClick={() => setDiscountType(type)} 
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${discountType === type ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-tertiary)]'}`}
+                                        className={`px-3 py-1 text-xs2 font-bold rounded-md transition-all ${discountType === type ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-tertiary)]'}`}
                                     >
                                         {type === 'PERCENT' ? '%' : '$'}
                                     </button>
@@ -287,7 +287,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                         onChange={e => setDiscountValue(Number(e.target.value))}
                                         className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-4 pr-12 py-3 text-lg font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-[var(--bg-surface)] transition-all"
                                     />
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] font-bold text-xs pointer-events-none">
                                         {discountType === 'PERCENT' ? '%' : 'VND'}
                                     </div>
                                 </div>
@@ -302,7 +302,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 )}
                             </div>
                             {discountType === 'PERCENT' && discountValue > DEAL_CONFIG.HIGH_DISCOUNT_THRESHOLD && (
-                                <div className="text-[10px] text-amber-600 mt-1.5 font-medium flex items-center gap-1">
+                                <div className="text-xs2 text-amber-600 mt-1.5 font-medium flex items-center gap-1">
                                     {ICONS.ALERT}
                                     {t('approvals.reason_deep_discount')}
                                 </div>
@@ -321,12 +321,12 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                     }))}
                                     className="w-full"
                                 />
-                                <p className="text-[10px] text-indigo-500 font-bold mt-1 text-right">
+                                <p className="text-xs2 text-indigo-500 font-bold mt-1 text-right">
                                     → {expiryDate}
                                 </p>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('proposal.label_deposit')}</label>
+                                <label className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('proposal.label_deposit')}</label>
                                 <input 
                                     type="number"
                                     value={depositAmount}
@@ -337,7 +337,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('proposal.label_note')}</label>
+                            <label className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('proposal.label_note')}</label>
                             <textarea 
                                 value={note}
                                 onChange={e => setNote(e.target.value)}
@@ -401,7 +401,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                             <span className="font-mono">{lead.phone}</span>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors">
+                    <button onClick={onClose} className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors">
                         {ICONS.CLOSE}
                     </button>
                 </div>
@@ -431,7 +431,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                             <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('common.success')}</h3>
                             
                             <div className="w-full bg-[var(--glass-surface)] p-4 rounded-xl mt-6 border border-[var(--glass-border)] relative group">
-                                <div className="text-[10px] uppercase font-bold text-slate-400 mb-1 text-left">{t('proposal.public_link_label')}</div>
+                                <div className="text-xs2 uppercase font-bold text-[var(--text-secondary)] mb-1 text-left">{t('proposal.public_link_label')}</div>
                                 <div className="flex items-center gap-2">
                                     <input 
                                         readOnly 

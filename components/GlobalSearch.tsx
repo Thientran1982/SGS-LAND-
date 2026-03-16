@@ -24,14 +24,14 @@ type SearchItem =
     | { type: 'ACTION'; id: string; title: string; subtitle: string; icon: 'ACTION'; route?: string; action?: () => void };
 
 const ICONS = {
-    SEARCH: <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEARCH: <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     LOADING: <div className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>,
     LEAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
     LISTING: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 01 1v4a1 1 0 001 1m-6 0h6" /></svg>,
     USER: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     ACTION: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
     HISTORY: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    ENTER: <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>,
+    ENTER: <svg className="w-3 h-3 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>,
     CLEAR: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 
@@ -40,7 +40,7 @@ const ICONS = {
 // -----------------------------------------------------------------------------
 
 const SectionLabel = memo(({ label }: { label: string }) => (
-    <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-[var(--glass-surface)]/80 sticky top-0 backdrop-blur-md z-10 select-none">
+    <div className="px-4 py-2 text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest bg-[var(--glass-surface)]/80 sticky top-0 backdrop-blur-md z-10 select-none">
         {label}
     </div>
 ));
@@ -212,14 +212,14 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                 onClick={() => handleSelect(item)}
                 className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/70 border-l-4 border-indigo-500 pl-3' : 'hover:bg-[var(--glass-surface)] border-l-4 border-transparent'}`}
             >
-                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-indigo-100 text-indigo-600' : 'bg-[var(--glass-surface-hover)] text-slate-400 group-hover:bg-[var(--bg-surface)] group-hover:shadow-sm'}`}>
+                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-indigo-100 text-indigo-600' : 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] group-hover:bg-[var(--bg-surface)] group-hover:shadow-sm'}`}>
                     {isHistory ? ICONS.HISTORY : Icon}
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className={`font-bold text-sm truncate ${isSelected ? 'text-indigo-900' : 'text-[var(--text-secondary)]'}`}>
                         {query ? <HighlightedText text={item.title} query={query} /> : item.title}
                     </div>
-                    <div className="text-[11px] text-[var(--text-tertiary)] truncate font-medium opacity-80">
+                    <div className="text-xs3 text-[var(--text-tertiary)] truncate font-medium opacity-80">
                         {item.subtitle}
                     </div>
                 </div>
@@ -235,7 +235,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                 
                 {/* INPUT */}
                 <div className="p-4 flex items-center gap-3 bg-[var(--bg-surface)] z-20 border-b border-[var(--glass-border)] group">
-                    <div className="text-slate-400 pl-1 group-focus-within:text-indigo-500 transition-colors pointer-events-none flex items-center justify-center">{loading ? ICONS.LOADING : ICONS.SEARCH}</div>
+                    <div className="text-[var(--text-secondary)] pl-1 group-focus-within:text-indigo-500 transition-colors pointer-events-none flex items-center justify-center">{loading ? ICONS.LOADING : ICONS.SEARCH}</div>
                     <input 
                         ref={inputRef}
                         className="flex-1 text-lg outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)] bg-transparent h-10"
@@ -244,7 +244,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                         onChange={e => setQuery(e.target.value)}
                     />
                     <div className="flex items-center gap-2">
-                        {query && <button onClick={() => { setQuery(''); inputRef.current?.focus(); }} className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>{ICONS.CLEAR}</button>}
+                        {query && <button onClick={() => { setQuery(''); inputRef.current?.focus(); }} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>{ICONS.CLEAR}</button>}
                     </div>
                 </div>
 
@@ -253,7 +253,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                     
                     {/* 0. Empty & No History */}
                     {!query && history.length === 0 && quickActions.length === 0 && (
-                        <div className="p-10 text-center text-slate-400 text-sm italic">{t('search.try_searching')}</div>
+                        <div className="p-10 text-center text-[var(--text-secondary)] text-sm italic">{t('search.try_searching')}</div>
                     )}
 
                     {/* 1. History & Quick Actions (When query is empty) */}
@@ -263,7 +263,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                                 <div className="pb-2">
                                     <div className="flex justify-between items-center pr-4">
                                         <SectionLabel label="Recent" />
-                                        <button onClick={clearHistory} className="text-[10px] text-slate-400 hover:text-rose-500 font-bold uppercase transition-colors z-20">Clear</button>
+                                        <button onClick={clearHistory} className="text-xs2 text-[var(--text-secondary)] hover:text-rose-500 font-bold uppercase transition-colors z-20">Clear</button>
                                     </div>
                                     {history.map((item, idx) => renderRow({...item, isHistory: true} as any, idx))}
                                 </div>
@@ -279,7 +279,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                     {query && (
                         <>
                             {flatResults.length === 0 && !loading ? (
-                                <div className="p-12 text-center text-slate-400">
+                                <div className="p-12 text-center text-[var(--text-secondary)]">
                                     <p className="font-medium text-sm">{t('common.no_results')}</p>
                                 </div>
                             ) : (
@@ -307,7 +307,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
 
                 {/* FOOTER (CLEANED) */}
                 {query && flatResults.length > 0 && (
-                    <div className="px-4 py-2 bg-[var(--glass-surface)] border-t border-[var(--glass-border)] text-[10px] text-[var(--text-tertiary)] flex justify-end items-center select-none">
+                    <div className="px-4 py-2 bg-[var(--glass-surface)] border-t border-[var(--glass-border)] text-xs2 text-[var(--text-tertiary)] flex justify-end items-center select-none">
                         <span className="font-mono">{flatResults.length} matches</span>
                     </div>
                 )}

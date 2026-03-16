@@ -34,7 +34,7 @@ export const ThinkingProcess = memo(({ steps, t }: { steps?: AgentTraceStep[], t
         <div className="mb-3 w-full max-w-full flex justify-end">
             <button 
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center gap-2 text-[10px] font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 transition-colors uppercase tracking-wider px-3 py-1.5 rounded-lg border border-indigo-100 group w-fit max-w-full"
+                className="flex items-center gap-2 text-xs2 font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 transition-colors uppercase tracking-wider px-3 py-1.5 rounded-lg border border-indigo-100 group w-fit max-w-full"
             >
                 <div className={`w-2 h-2 rounded-full shadow-sm transition-all duration-500 shrink-0 ${isExpanded ? 'bg-indigo-500' : 'bg-indigo-400 animate-pulse'}`}></div>
                 <span className="flex-1 text-left flex items-center gap-1 truncate">
@@ -56,15 +56,15 @@ export const ThinkingProcess = memo(({ steps, t }: { steps?: AgentTraceStep[], t
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                                            <span className={`text-[10px] font-bold uppercase tracking-tight ${isRouter ? 'text-[var(--text-tertiary)]' : 'text-indigo-600'}`}>
+                                            <span className={`text-xs2 font-bold uppercase tracking-tight ${isRouter ? 'text-[var(--text-tertiary)]' : 'text-indigo-600'}`}>
                                                 {step.node.replace('_AGENT', '')}
                                             </span>
-                                            <span className="text-[9px] font-mono text-slate-300">
+                                            <span className="text-2xs font-mono text-[var(--text-secondary)]">
                                                 {new Date(step.timestamp).toLocaleTimeString([], {minute:'2-digit', second:'2-digit'})}
                                             </span>
                                         </div>
                                         {step.output && (
-                                            <div className="text-[10px] text-[var(--text-tertiary)] font-mono leading-relaxed bg-[var(--glass-surface)]/50 p-2 rounded border border-[var(--glass-border)] break-words whitespace-pre-wrap overflow-x-auto no-scrollbar">
+                                            <div className="text-xs2 text-[var(--text-tertiary)] font-mono leading-relaxed bg-[var(--glass-surface)]/50 p-2 rounded border border-[var(--glass-border)] break-words whitespace-pre-wrap overflow-x-auto no-scrollbar">
                                                 {typeof step.output === 'object' ? JSON.stringify(step.output) : String(step.output)}
                                             </div>
                                         )}
@@ -86,23 +86,23 @@ export const LoanScheduleWidget = memo(({ data, t, formatCurrency }: { data: Loa
                 <span className="shrink-0">{CHAT_ICONS.LOAN}</span>
                 <span className="truncate">{t('inbox.loan_title')}</span>
             </h4>
-            <span className="text-[10px] font-bold text-[var(--text-tertiary)] bg-[var(--bg-surface)] px-2 py-0.5 rounded border border-[var(--glass-border)] shrink-0">
+            <span className="text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--bg-surface)] px-2 py-0.5 rounded border border-[var(--glass-border)] shrink-0">
                 {t('inbox.loan_rate', { rate: data.input.rate })}
             </span>
         </div>
         <div className="p-4">
             <div className="flex justify-between items-end mb-4">
                 <div>
-                    <div className="text-[10px] text-slate-400 uppercase font-bold">{t('inbox.loan_monthly')}</div>
+                    <div className="text-xs2 text-[var(--text-secondary)] uppercase font-bold">{t('inbox.loan_monthly')}</div>
                     <div className="text-xl font-extrabold text-indigo-600">{formatCurrency(data.monthlyPayment)}</div>
                 </div>
                 <div className="text-right">
-                    <div className="text-[10px] text-slate-400 uppercase font-bold">{t('inbox.loan_total_interest')}</div>
+                    <div className="text-xs2 text-[var(--text-secondary)] uppercase font-bold">{t('inbox.loan_total_interest')}</div>
                     <div className="text-sm font-bold text-[var(--text-secondary)]">{formatCurrency(data.totalInterest)}</div>
                 </div>
             </div>
             
-            <div className="border rounded-lg overflow-hidden text-[10px] overflow-x-auto no-scrollbar">
+            <div className="border rounded-lg overflow-hidden text-xs2 overflow-x-auto no-scrollbar">
                 <table className="w-full text-left min-w-[250px]">
                     <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] font-bold">
                         <tr>
@@ -123,7 +123,7 @@ export const LoanScheduleWidget = memo(({ data, t, formatCurrency }: { data: Loa
                         ))}
                     </tbody>
                 </table>
-                <div className="bg-[var(--glass-surface)] px-2 py-1.5 text-center text-slate-400 italic border-t border-[var(--glass-border)]">
+                <div className="bg-[var(--glass-surface)] px-2 py-1.5 text-center text-[var(--text-secondary)] italic border-t border-[var(--glass-border)]">
                     ... ({data.input.months} {t('inbox.months')})
                 </div>
             </div>
@@ -139,17 +139,17 @@ export const BookingWidget = memo(({ data, t, formatDateTime }: { data: BookingD
         </div>
         <div className="p-4 space-y-3">
             <div className="flex items-start gap-3">
-                <div className="text-slate-400 mt-0.5">{CHAT_ICONS.CALENDAR}</div>
+                <div className="text-[var(--text-secondary)] mt-0.5">{CHAT_ICONS.CALENDAR}</div>
                 <div>
                     <div className="text-sm font-bold text-[var(--text-primary)]">{formatDateTime(data.time)}</div>
-                    <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-bold tracking-wide">{t('inbox.time')}</div>
+                    <div className="text-xs2 text-[var(--text-tertiary)] uppercase font-bold tracking-wide">{t('inbox.time')}</div>
                 </div>
             </div>
             <div className="flex items-start gap-3">
-                <div className="text-slate-400 mt-0.5">{CHAT_ICONS.LOCATION}</div>
+                <div className="text-[var(--text-secondary)] mt-0.5">{CHAT_ICONS.LOCATION}</div>
                 <div>
                     <div className="text-sm font-bold text-[var(--text-primary)]">{data.location}</div>
-                    <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-bold tracking-wide">{t('inbox.location')}</div>
+                    <div className="text-xs2 text-[var(--text-tertiary)] uppercase font-bold tracking-wide">{t('inbox.location')}</div>
                 </div>
             </div>
             <button className="w-full py-2 bg-indigo-600 text-white font-bold rounded-lg text-xs hover:bg-indigo-700 transition-colors shadow-sm">
@@ -164,7 +164,7 @@ export const GroundingPill = memo(({ sources, t }: { sources: GroundingMetadata,
 
     return (
         <div className="mt-2 flex flex-wrap gap-2 justify-end max-w-full">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+            <div className="flex items-center gap-1.5 text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider shrink-0">
                 {CHAT_ICONS.SOURCE} {t('inbox.grounding_sources')}
             </div>
             {sources.groundingChunks.map((chunk, i) => {
@@ -177,7 +177,7 @@ export const GroundingPill = memo(({ sources, t }: { sources: GroundingMetadata,
                         href={url} 
                         target="_blank" 
                         rel="noreferrer"
-                        className="flex items-center gap-1.5 bg-[var(--glass-surface)] hover:bg-[var(--bg-surface)] border border-[var(--glass-border)] hover:border-indigo-300 rounded-full px-2.5 py-1 text-[10px] text-[var(--text-secondary)] transition-all max-w-full truncate group"
+                        className="flex items-center gap-1.5 bg-[var(--glass-surface)] hover:bg-[var(--bg-surface)] border border-[var(--glass-border)] hover:border-indigo-300 rounded-full px-2.5 py-1 text-xs2 text-[var(--text-secondary)] transition-all max-w-full truncate group"
                     >
                         <span className="shrink-0">{CHAT_ICONS.LINK}</span>
                         <span className="truncate group-hover:text-indigo-600">{title}</span>
@@ -200,7 +200,7 @@ export const AudioBubble = memo(({ duration }: { duration: number }) => {
                     <div key={i} className="w-1 bg-current rounded-full shrink-0" style={{ height: `${h}px` }}></div>
                 ))}
             </div>
-            <span className="text-[10px] font-mono opacity-70 shrink-0">
+            <span className="text-xs2 font-mono opacity-70 shrink-0">
                 {duration > 0 ? `0:${String(duration).padStart(2, '0')}` : '0:15'}
             </span>
         </div>
@@ -214,7 +214,7 @@ export const FileBubble = memo(({ name, size, url }: { name: string, size?: numb
         </div>
         <div className="min-w-0 flex-1">
             <div className="text-xs font-bold truncate">{name}</div>
-            <div className="text-[10px] opacity-70">{size ? `${(size / 1024).toFixed(1)} KB` : 'Unknown size'}</div>
+            <div className="text-xs2 opacity-70">{size ? `${(size / 1024).toFixed(1)} KB` : 'Unknown size'}</div>
         </div>
         {url && (
             <a href={url} download={name} className="p-1.5 md:p-2 hover:bg-black/5 rounded-full transition-colors ml-1 md:ml-2 shrink-0">
@@ -238,7 +238,7 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
         <div className={`flex flex-col ${isOutbound ? 'items-end' : 'items-start'} animate-enter`}>
             {showDate && (
                 <div className="w-full text-center my-4">
-                    <span className="text-[10px] font-bold text-slate-400 bg-[var(--glass-surface)] px-3 py-1 rounded-full border border-[var(--glass-border)]">
+                    <span className="text-xs2 font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] px-3 py-1 rounded-full border border-[var(--glass-border)]">
                         {formatDate(msg.timestamp)}
                     </span>
                 </div>
@@ -296,10 +296,10 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
 
                     {/* Metadata & Grounding */}
                     <div className="mt-1 flex flex-col gap-1 w-full">
-                        <div className={`flex items-center gap-2 text-[10px] ${isOutbound ? 'justify-end' : 'justify-start'}`}>
-                            <span className="text-slate-400 font-mono">{formatTime(msg.timestamp)}</span>
+                        <div className={`flex items-center gap-2 text-xs2 ${isOutbound ? 'justify-end' : 'justify-start'}`}>
+                            <span className="text-[var(--text-secondary)] font-mono">{formatTime(msg.timestamp)}</span>
                             {isOutbound && (
-                                <span className={`font-bold ${msg.status === 'READ' ? 'text-indigo-500' : 'text-slate-400'}`}>
+                                <span className={`font-bold ${msg.status === 'READ' ? 'text-indigo-500' : 'text-[var(--text-secondary)]'}`}>
                                     {msg.status === 'PENDING' ? t('inbox.status_sending') : msg.status === 'READ' ? (t('inbox.status_read') || 'Đã xem') : (t('inbox.status_received') || 'Đã nhận')}
                                 </span>
                             )}

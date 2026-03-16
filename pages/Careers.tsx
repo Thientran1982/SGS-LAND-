@@ -140,7 +140,7 @@ export const Careers: React.FC = () => {
                                         <div className="flex items-center gap-3 mb-2">
                                             <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg uppercase tracking-wide">{job.dept}</span>
                                             {job.tags.map(tag => (
-                                                <span key={tag} className="text-[10px] font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-2 py-1 rounded border border-[var(--glass-border)]">{tag}</span>
+                                                <span key={tag} className="text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-2 py-1 rounded border border-[var(--glass-border)]">{tag}</span>
                                             ))}
                                         </div>
                                         <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2 group-hover:text-indigo-600 transition-colors">{job.title}</h3>

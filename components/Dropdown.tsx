@@ -43,7 +43,7 @@ const STYLES = {
     OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group border-b border-slate-50 dark:border-white/5 last:border-0 outline-none focus:bg-[var(--glass-surface)] dark:focus:bg-slate-800",
     
     // State variants
-    DISABLED: "bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-slate-400 dark:text-[var(--text-secondary)] cursor-not-allowed border-[var(--glass-border)] dark:border-slate-700",
+    DISABLED: "bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 cursor-not-allowed border-[var(--glass-border)] dark:border-slate-700",
     ERROR: "bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700 text-rose-900 dark:text-rose-300 focus:ring-2 focus:ring-rose-500/20",
     DEFAULT: "bg-[var(--bg-surface)] dark:bg-slate-800 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-sm focus:ring-2 focus:ring-indigo-500/20 active:scale-[0.99] text-[var(--text-secondary)] dark:text-slate-200",
     OPEN: "border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20"
@@ -197,18 +197,18 @@ export const Dropdown = memo(<T extends string | number>({
                 className={buttonClass}
             >
                 <div className="flex items-center gap-2 truncate flex-1 text-left">
-                    {icon && <span className={error ? "text-rose-400" : "text-slate-400 dark:text-[var(--text-tertiary)]"}>{icon}</span>}
+                    {icon && <span className={error ? "text-rose-400" : "text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]"}>{icon}</span>}
                     {selectedOption ? (
                         <span className="font-medium truncate flex items-center gap-2">
                             {selectedOption.icon}
                             {selectedOption.label}
                         </span>
                     ) : (
-                        <span className={error ? "text-rose-400" : "text-slate-400 dark:text-[var(--text-tertiary)]"}>{displayPlaceholder}</span>
+                        <span className={error ? "text-rose-400" : "text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]"}>{displayPlaceholder}</span>
                     )}
                 </div>
                 
-                <div className={`text-slate-400 dark:text-[var(--text-tertiary)] ${isOpen ? 'rotate-180 text-indigo-500 dark:text-indigo-400' : ''} transition-transform duration-200`}>
+                <div className={`text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] ${isOpen ? 'rotate-180 text-indigo-500 dark:text-indigo-400' : ''} transition-transform duration-200`}>
                     {ICONS.CHEVRON}
                 </div>
             </button>
@@ -229,7 +229,7 @@ export const Dropdown = memo(<T extends string | number>({
                     }}
                 >
                     {options?.length === 0 ? (
-                        <div className="px-4 py-3 text-xs text-slate-400 dark:text-[var(--text-tertiary)] text-center italic select-none">{t('common.no_options')}</div>
+                        <div className="px-4 py-3 text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] text-center italic select-none">{t('common.no_options')}</div>
                     ) : (
                         options?.map((opt) => {
                             const isSelected = opt.value === value;

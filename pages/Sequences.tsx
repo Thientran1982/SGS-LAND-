@@ -16,7 +16,7 @@ const ICONS = {
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     EMAIL: <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
     SMS: <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
-    WAIT: <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    WAIT: <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     TASK: <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
     STATS: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
     ZALO: <svg className="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S16.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm-1 4v4h-4v2h4v4h2v-4h4v-2h-4V6h-2z" fillRule="evenodd" /></svg>,
@@ -42,7 +42,7 @@ const getStepIcon = (type: string, channel?: string) => {
 const StatPill = ({ label, value, color = "bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" }: { label: string, value: string | number, color?: string }) => (
     <div className={`flex flex-col items-center justify-center p-3 rounded-xl border border-transparent ${color}`}>
         <span className="text-xl font-bold">{value}</span>
-        <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">{label}</span>
+        <span className="text-xs2 uppercase font-bold tracking-wider opacity-70">{label}</span>
     </div>
 );
 
@@ -56,7 +56,7 @@ const StepCard = memo(({ step, index, t }: { step: SequenceStep, index: number, 
         </div>
         
         <div className="flex-1 bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--glass-border)] shadow-sm mb-6 relative group hover:border-indigo-200 transition-colors">
-            <div className="absolute top-4 right-4 text-xs font-bold text-slate-400">
+            <div className="absolute top-4 right-4 text-xs font-bold text-[var(--text-secondary)]">
                 +{step.delayHours}{t('seq.hours')}
             </div>
             
@@ -92,7 +92,7 @@ const SequenceDrawer = ({ isOpen, onClose, sequence, onSave, t }: any) => {
                             {sequence.isActive ? t('seq.status_active') : t('seq.status_draft')}
                         </span>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors text-slate-400 hover:text-[var(--text-secondary)]">
+                    <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
                         {ICONS.CLOSE}
                     </button>
                 </div>
@@ -167,27 +167,27 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
         <div className="grid grid-cols-3 gap-2 py-3 border-t border-b border-slate-50 my-4">
             <div className="text-center">
                 <div className="text-lg font-bold text-[var(--text-primary)]">{sequence.stats?.enrolled || 0}</div>
-                <div className="text-[9px] text-slate-400 font-bold uppercase">{t('seq.stat_active')}</div>
+                <div className="text-2xs text-[var(--text-secondary)] font-bold uppercase">{t('seq.stat_active')}</div>
             </div>
             <div className="text-center border-l border-[var(--glass-border)]">
                 <div className="text-lg font-bold text-emerald-600">{sequence.stats?.openRate || 0}%</div>
-                <div className="text-[9px] text-slate-400 font-bold uppercase">{t('seq.stat_open')}</div>
+                <div className="text-2xs text-[var(--text-secondary)] font-bold uppercase">{t('seq.stat_open')}</div>
             </div>
             <div className="text-center border-l border-[var(--glass-border)]">
                 <div className="text-lg font-bold text-indigo-600">{sequence.stats?.replyRate || 0}%</div>
-                <div className="text-[9px] text-slate-400 font-bold uppercase">{t('seq.stat_reply')}</div>
+                <div className="text-2xs text-[var(--text-secondary)] font-bold uppercase">{t('seq.stat_reply')}</div>
             </div>
         </div>
 
         <div className="flex justify-between items-center text-xs text-[var(--text-tertiary)]">
             <span>{t('seq.steps_count', { count: sequence.steps.length })}</span>
-            <span className="font-mono text-[10px] px-2 py-0.5 bg-[var(--glass-surface-hover)] rounded">{t(`stage.${sequence.triggerStage}`)}</span>
+            <span className="font-mono text-xs2 px-2 py-0.5 bg-[var(--glass-surface-hover)] rounded">{t(`stage.${sequence.triggerStage}`)}</span>
         </div>
 
         {/* Delete Action (Hover) */}
         <button 
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="absolute top-4 right-12 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+            className="absolute top-4 right-12 p-2 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
         >
             {ICONS.TRASH}
         </button>
@@ -249,7 +249,7 @@ export const Sequences: React.FC = () => {
         setSelectedSeq(newSeq);
     };
 
-    if (loading) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
+    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
         <div className="space-y-6 pb-20 animate-enter relative">

@@ -20,7 +20,7 @@ import * as XLSX from 'xlsx';
 // Icons with pointer-events-none to prevent click hijacking
 const ICONS = {
     BACK: <svg className="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
-    LOCATION: <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
+    LOCATION: <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
     PHONE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>,
     CALENDAR: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
     SHARE: <svg className="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>,
@@ -62,7 +62,7 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
             <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('common.share_link') || 'Chia sẻ liên kết'}</h3>
-                    <button onClick={onClose} className="p-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-hover)] rounded-full text-slate-400 transition-colors">
+                    <button onClick={onClose} className="p-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)] transition-colors">
                         {ICONS.CLOSE}
                     </button>
                 </div>
@@ -151,7 +151,7 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                     <span className="text-sm font-bold text-indigo-600">{ratio}%</span>
                                 </div>
                                 <input type="range" min="0" max="90" step="5" value={ratio} onChange={e => setRatio(Number(e.target.value))} className="w-full accent-indigo-600 h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
-                                <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                                <div className="flex justify-between text-xs2 text-[var(--text-secondary)] mt-1">
                                     <span>0%</span>
                                     <span>{t('calc.own_capital')}: {formatCurrency(downPayment)}</span>
                                 </div>
@@ -193,7 +193,7 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                     onChange={e => setMonthlyRent(Number(e.target.value))} 
                                     className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-emerald-500" 
                                 />
-                                <div className="text-[10px] text-slate-400 mt-1 text-right">{formatCurrency(monthlyRent)}</div>
+                                <div className="text-xs2 text-[var(--text-secondary)] mt-1 text-right">{formatCurrency(monthlyRent)}</div>
                             </div>
                             <div>
                                 <div className="flex justify-between mb-2">
@@ -530,15 +530,15 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                             <table className="w-full text-left border-collapse min-w-[900px]">
                                 <thead className="bg-[var(--glass-surface)] border-b border-[var(--glass-border)] sticky top-0 z-30">
                                     <tr>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">Mã SP</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">Loại</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Tầng</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Hướng</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Diện tích</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Đơn giá</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Giá</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-center bg-[var(--glass-surface)] sticky z-20 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>Trạng thái</th>
-                                        {canManageUnits && <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)] sticky right-0 z-20" style={{ width: '90px', minWidth: '90px' }}>Thao tác</th>}
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">Mã SP</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">Loại</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Tầng</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Hướng</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Diện tích</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Đơn giá</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Giá</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-center bg-[var(--glass-surface)] sticky z-20 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>Trạng thái</th>
+                                        {canManageUnits && <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)] sticky right-0 z-20" style={{ width: '90px', minWidth: '90px' }}>Thao tác</th>}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
@@ -562,11 +562,11 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                                                 <td className="px-4 py-3 text-xs text-[var(--text-secondary)] font-medium">{t(`property.${unit.type.toUpperCase()}`)}</td>
                                                 <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.attributes?.floor || '--'}</td>
                                                 <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.attributes?.direction ? (t(`direction.${unit.attributes.direction}`) || unit.attributes.direction) : '--'}</td>
-                                                <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.area} <span className="text-[10px] text-slate-400">m²</span></td>
-                                                <td className="px-4 py-3 text-[11px] text-[var(--text-tertiary)] text-right font-medium italic">{formatUnitPrice(unit.price, unit.area, t)}</td>
+                                                <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.area} <span className="text-xs2 text-[var(--text-secondary)]">m²</span></td>
+                                                <td className="px-4 py-3 text-xs3 text-[var(--text-tertiary)] text-right font-medium italic">{formatUnitPrice(unit.price, unit.area, t)}</td>
                                                 <td className="px-4 py-3 text-sm font-bold text-[var(--text-primary)] text-right">{formatCurrency(unit.price)}</td>
                                                 <td className="px-4 py-3 text-center sticky z-10 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] transition-colors shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold border uppercase tracking-wider whitespace-nowrap ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider whitespace-nowrap ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
                                                         {t(`status.${unit.status}`)}
                                                     </span>
                                                 </td>
@@ -575,14 +575,14 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                                                         <div className="flex items-center justify-end gap-2 transition-opacity">
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); handleEditUnit(e, unit); }}
-                                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                                className="p-1.5 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                                                                 title={t('common.edit')}
                                                             >
                                                                 <Edit2 className="w-4 h-4" />
                                                             </button>
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, unit); }}
-                                                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                                                className="p-1.5 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                                                                 title={t('common.delete')}
                                                             >
                                                                 <Trash2 className="w-4 h-4" />
@@ -609,15 +609,15 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex flex-col">
-                                                <span className="font-mono text-[10px] font-bold text-indigo-600 mb-1">{unit.code}</span>
+                                                <span className="font-mono text-xs2 font-bold text-indigo-600 mb-1">{unit.code}</span>
                                                 <h4 className="text-sm font-bold text-[var(--text-primary)]">{unit.title || t(`property.${unit.type.toUpperCase()}`)}</h4>
                                             </div>
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
                                                 {t(`status.${unit.status}`)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between items-end">
-                                            <div className="text-[11px] text-[var(--text-tertiary)] space-y-1">
+                                            <div className="text-xs3 text-[var(--text-tertiary)] space-y-1">
                                                 <div>{unit.area} m² • {unit.attributes?.floor ? `Tầng ${unit.attributes.floor}` : 'N/A'} • {unit.attributes?.direction ? t(`direction.${unit.attributes.direction}`) : 'N/A'}</div>
                                                 <div className="italic">{formatUnitPrice(unit.price, unit.area, t)}</div>
                                             </div>
@@ -895,8 +895,8 @@ export const ListingDetail: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
-    if (!listing) return <div className="p-10 text-center text-slate-400">{t('common.product_not_found')}</div>;
+    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
+    if (!listing) return <div className="p-10 text-center text-[var(--text-secondary)]">{t('common.product_not_found')}</div>;
 
     // --- CONTEXT-AWARE ATTRIBUTE RENDERER ---
     const getAttributes = () => {
@@ -962,7 +962,7 @@ export const ListingDetail: React.FC = () => {
                     <button
                         type="button"
                         onClick={handleToggleFavorite}
-                        className={`p-2 rounded-full transition-colors ${listing?.isFavorite ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'}`}
+                        className={`p-2 rounded-full transition-colors ${listing?.isFavorite ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50'}`}
                         title={listing?.isFavorite ? (t('favorites.remove') || 'Bỏ yêu thích') : (t('favorites.add') || 'Yêu thích')}
                     >
                         <svg className="w-5 h-5 pointer-events-none" fill={listing?.isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
@@ -972,7 +972,7 @@ export const ListingDetail: React.FC = () => {
                     <button 
                         type="button"
                         onClick={handleShare} 
-                        className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-[var(--glass-surface)] transition-colors" 
+                        className="p-2 text-[var(--text-secondary)] hover:text-indigo-600 rounded-full hover:bg-[var(--glass-surface)] transition-colors" 
                         title={t('common.share_link') || 'Chia sẻ'}
                     >
                         {ICONS.SHARE}
@@ -1044,7 +1044,7 @@ export const ListingDetail: React.FC = () => {
                         <h1 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] mb-2 leading-tight">{listing.title}</h1>
                         <div className="flex items-center gap-2 text-[var(--text-tertiary)] font-medium flex-wrap">
                             <span className="flex items-center gap-1">{ICONS.LOCATION} {listing.location}</span>
-                            <span className="mx-2 text-slate-300 hidden sm:inline">|</span>
+                            <span className="mx-2 text-[var(--text-secondary)] hidden sm:inline">|</span>
                             <span className="flex items-center gap-1">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                 {listing.viewCount || 0} {t('common.views') || 'lượt xem'}
@@ -1055,7 +1055,7 @@ export const ListingDetail: React.FC = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {attributes.map((attr, i) => (
                             <div key={i} className="bg-[var(--glass-surface)] p-4 rounded-2xl border border-[var(--glass-border)] hover:bg-[var(--bg-surface)] hover:shadow-md transition-all duration-300 group">
-                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 group-hover:text-indigo-500 transition-colors">{attr.label}</div>
+                                <div className="text-xs2 text-[var(--text-secondary)] font-bold uppercase tracking-wider mb-1 group-hover:text-indigo-500 transition-colors">{attr.label}</div>
                                 <div className="font-bold text-[var(--text-primary)] truncate" title={String(attr.value)}>{String(attr.value ?? '--')}</div>
                             </div>
                         ))}
@@ -1098,7 +1098,7 @@ export const ListingDetail: React.FC = () => {
                                     <button 
                                         onClick={handleAiValuation}
                                         disabled={isValuating}
-                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-slate-400' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
                                     >
                                         {!currentUser && <Lock className="w-3 h-3" />}
                                         {isValuating ? 'Đang thẩm định...' : (!currentUser ? 'Đăng nhập để thẩm định' : 'Bắt đầu thẩm định')}
@@ -1107,7 +1107,7 @@ export const ListingDetail: React.FC = () => {
                                 <div className="p-6 flex-1">
                                     {!valuation && !isValuating && (
                                         <div className="h-full flex flex-col items-center justify-center text-center space-y-3 py-10">
-                                            <div className="w-12 h-12 bg-[var(--glass-surface)] rounded-full flex items-center justify-center text-slate-300">
+                                            <div className="w-12 h-12 bg-[var(--glass-surface)] rounded-full flex items-center justify-center text-[var(--text-secondary)]">
                                                 {ICONS.CALC}
                                             </div>
                                             <p className="text-sm text-[var(--text-tertiary)] max-w-[240px]">
@@ -1131,16 +1131,16 @@ export const ListingDetail: React.FC = () => {
                                         <div className="animate-enter space-y-6">
                                             <div className="flex flex-wrap items-end gap-2">
                                                 <span className="text-2xl md:text-3xl font-black text-[var(--text-primary)] break-words">{formatCurrency(valuation.estimatedPrice)}</span>
-                                                <span className="text-sm font-bold text-slate-400 mb-1">/ tổng diện tích</span>
+                                                <span className="text-sm font-bold text-[var(--text-secondary)] mb-1">/ tổng diện tích</span>
                                             </div>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 min-w-0">
-                                                    <div className="text-[10px] font-bold text-emerald-600 uppercase mb-1 truncate">Độ tin cậy</div>
+                                                    <div className="text-xs2 font-bold text-emerald-600 uppercase mb-1 truncate">Độ tin cậy</div>
                                                     <div className="text-xl font-black text-emerald-900">{(valuation.confidenceScore * 100).toFixed(0)}%</div>
                                                 </div>
                                                 <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 min-w-0">
-                                                    <div className="text-[10px] font-bold text-indigo-600 uppercase mb-1 truncate">Đơn giá m²</div>
+                                                    <div className="text-xs2 font-bold text-indigo-600 uppercase mb-1 truncate">Đơn giá m²</div>
                                                     <div className="text-xl font-black text-indigo-900 break-all">{formatCurrency(valuation.pricePerM2)}</div>
                                                 </div>
                                             </div>
@@ -1183,16 +1183,16 @@ export const ListingDetail: React.FC = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-white">{t('inventory.section_internal')}</h3>
-                                        <p className="text-xs text-slate-400 font-medium">{t('inventory.internal_note')}</p>
+                                        <p className="text-xs text-[var(--text-secondary)] font-medium">{t('inventory.internal_note')}</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                     <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                                        <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_owner_name')}</span>
+                                        <span className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_owner_name')}</span>
                                         <span className="text-sm font-bold text-slate-200">{listing.ownerName || '--'}</span>
                                     </div>
                                     <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                                        <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_owner_phone')}</span>
+                                        <span className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_owner_phone')}</span>
                                         <div className="flex items-center justify-between gap-2">
                                             <span className="text-sm font-mono font-bold text-indigo-400 truncate min-w-0">{listing.ownerPhone || '--'}</span>
                                             {listing.ownerPhone && (
@@ -1206,14 +1206,14 @@ export const ListingDetail: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                                        <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_commission')}</span>
+                                        <span className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_commission')}</span>
                                         <span className="text-sm font-bold text-emerald-400">
                                             {listing.commission ? `${listing.commission}${listing.commissionUnit === 'PERCENT' ? '%' : ' VND'}` : '--'}
                                         </span>
                                     </div>
                                     <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                                        <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_verified')}</span>
-                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider inline-block ${listing.isVerified ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700 text-slate-400 border border-slate-600'}`}>
+                                        <span className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_verified')}</span>
+                                        <span className={`text-xs2 font-bold px-2 py-1 rounded-lg uppercase tracking-wider inline-block ${listing.isVerified ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700 text-[var(--text-secondary)] border border-slate-600'}`}>
                                             {listing.isVerified ? t('inventory.verified') : t('inventory.unverified')}
                                         </span>
                                     </div>
@@ -1234,7 +1234,7 @@ export const ListingDetail: React.FC = () => {
                                 {formatCompactNumber(listing.price)}
                                 <span className="text-lg font-bold text-[var(--text-tertiary)] ml-1">₫</span>
                             </div>
-                            <div className="text-xs text-slate-400 mt-0.5 tabular-nums">{formatCurrency(listing.price)}</div>
+                            <div className="text-xs text-[var(--text-secondary)] mt-0.5 tabular-nums">{formatCurrency(listing.price)}</div>
                             {listing.area > 0 && listing.type !== PropertyType.PROJECT && (
                                 <div className="text-sm font-medium text-[var(--text-tertiary)] mt-1 italic">
                                     ~ {formatUnitPrice(listing.price, listing.area, t)}

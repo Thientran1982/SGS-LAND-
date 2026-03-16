@@ -216,7 +216,7 @@ export default function LiveChat() {
                         <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                     </button>
                 </div>
-                <div className="text-center mt-3 text-[10px] text-slate-400 font-medium">
+                <div className="text-center mt-3 text-xs2 text-slate-400 font-medium">
                     {t('livechat.powered_by') || "Powered by"} <span className="font-bold text-[var(--text-tertiary)]">SGS Land AI</span>
                 </div>
             </div>

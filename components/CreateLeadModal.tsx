@@ -25,7 +25,7 @@ const FormInput = ({ label, value, onChange, placeholder, required, type = 'text
             required={required}
             autoFocus={autoFocus}
         />
-        {error && <p className="text-[10px] text-rose-500 font-bold ml-1">{error}</p>}
+        {error && <p className="text-xs2 text-rose-500 font-bold ml-1">{error}</p>}
     </div>
 );
 
@@ -194,7 +194,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                     <h3 className="text-xl font-bold text-[var(--text-primary)]">
                         {step === 'FORM' ? t('leads.create_modal_title') : t('leads.merge_modal_title')}
                     </h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-[var(--text-secondary)]">✕</button>
+                    <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">✕</button>
                 </div>
 
                 {step === 'FORM' ? (

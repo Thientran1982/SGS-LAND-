@@ -62,7 +62,7 @@ const useCountUp = (end: number, duration: number = 2000, start: boolean = false
 const NavPill = ({ children, onClick }: { children?: React.ReactNode, onClick?: () => void }) => (
     <div 
         onClick={onClick}
-        className="px-3 lg:px-5 py-1.5 lg:py-2.5 rounded-full text-[10px] lg:text-xs font-bold transition-all duration-300 border bg-[var(--bg-surface)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-300 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md cursor-pointer hover:-translate-y-0.5 select-none whitespace-nowrap"
+        className="px-3 lg:px-5 py-1.5 lg:py-2.5 rounded-full text-xs2 lg:text-xs font-bold transition-all duration-300 border bg-[var(--bg-surface)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-300 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md cursor-pointer hover:-translate-y-0.5 select-none whitespace-nowrap"
     >
         {children}
     </div>
@@ -98,12 +98,12 @@ const StatCard = ({ label, value, suffix, trend, prefix = "" }: { label: string,
             transition={{ duration: 0.5 }}
             className="flex flex-col p-6 md:p-8 rounded-[24px] md:rounded-[32px] bg-[var(--bg-surface)] dark:bg-slate-800 border border-[var(--glass-border)] dark:border-slate-700 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)] transition-all group h-full justify-center items-center text-center transform hover:-translate-y-1"
         >
-            <span className="text-[10px] md:text-xs text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-widest mb-3 md:mb-4">{label}</span>
+            <span className="text-xs2 md:text-xs text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-widest mb-3 md:mb-4">{label}</span>
             <div className="flex flex-col items-center gap-2 md:gap-3">
                 <span className="text-3xl md:text-5xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight group-hover:scale-105 transition-transform">
                     {prefix}{count.toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US')}{suffix}
                 </span>
-                <span className="text-[10px] md:text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 whitespace-nowrap">{trend}</span>
+                <span className="text-xs2 md:text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 whitespace-nowrap">{trend}</span>
             </div>
         </motion.div>
     );
@@ -264,10 +264,10 @@ export const Landing: React.FC = () => {
                         </div>
 
                         <div className="flex items-center gap-1 md:gap-2 pr-1 z-10 flex-none ml-auto md:flex-1 md:justify-end">
-                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-3 lg:px-5 py-2 lg:py-2.5 text-[10px] lg:text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden lg:flex min-h-[44px] items-center">
+                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-3 lg:px-5 py-2 lg:py-2.5 text-xs2 lg:text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden lg:flex min-h-[44px] items-center">
                                 {t('auth.btn_login')}
                             </button>
-                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="bg-slate-900 dark:bg-[var(--bg-surface)] text-white dark:text-[var(--text-primary)] px-4 lg:px-6 py-2.5 lg:py-2.5 rounded-full text-[10px] lg:text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/10 active:scale-95 flex items-center gap-2 whitespace-nowrap min-h-[44px]">
+                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="bg-slate-900 dark:bg-[var(--bg-surface)] text-white dark:text-[var(--text-primary)] px-4 lg:px-6 py-2.5 lg:py-2.5 rounded-full text-xs2 lg:text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/10 active:scale-95 flex items-center gap-2 whitespace-nowrap min-h-[44px]">
                                 {t('landing.cta_btn_register')} <span className="hidden sm:inline">{ICONS.ARROW_RIGHT}</span>
                             </button>
                         </div>
@@ -300,7 +300,7 @@ export const Landing: React.FC = () => {
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                               <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600 dark:bg-indigo-400"></span>
                             </span>
-                            <span className="text-[9px] md:text-[10px] font-bold text-indigo-700 dark:text-indigo-300 tracking-widest uppercase">{t('landing.badge_tech')}</span>
+                            <span className="text-2xs md:text-xs2 font-bold text-indigo-700 dark:text-indigo-300 tracking-widest uppercase">{t('landing.badge_tech')}</span>
                         </motion.div>
 
                         <motion.h1 
@@ -346,7 +346,7 @@ export const Landing: React.FC = () => {
                                         {ICONS.X}
                                     </button>
                                 )}
-                                <button onClick={handleSearch} className="bg-slate-900 dark:bg-indigo-600 text-white px-4 md:px-8 py-2.5 md:py-3 rounded-full font-bold text-xs md:text-sm hover:bg-slate-800 dark:hover:bg-indigo-500 transition-colors active:scale-95 shadow-lg shrink-0 ml-1 min-h-[44px]">
+                                <button onClick={handleSearch} className="bg-slate-900 dark:bg-indigo-600 text-white px-4 md:px-8 py-2.5 md:py-3 rounded-full font-bold text-xs md:text-sm hover:bg-slate-800 dark:hover:bg-indigo-700 transition-colors active:scale-95 shadow-lg shrink-0 ml-1 min-h-[44px]">
                                     {t('common.search')}
                                 </button>
                             </div>
@@ -365,7 +365,7 @@ export const Landing: React.FC = () => {
                     transition={{ duration: 1, delay: 0.6 }}
                     className="mt-16 md:mt-24 pt-8 w-full max-w-5xl mx-auto text-center"
                 >
-                    <p className="text-[10px] md:text-xs font-bold text-[var(--text-tertiary)] dark:text-slate-400 uppercase tracking-[0.3em] mb-6 md:mb-8">{t('landing.trust_badge')}</p>
+                    <p className="text-xs2 md:text-xs font-bold text-[var(--text-tertiary)] dark:text-slate-400 uppercase tracking-[0.3em] mb-6 md:mb-8">{t('landing.trust_badge')}</p>
                     
                     {/* TICKER ANIMATION CONTAINER */}
                     <div className="relative overflow-hidden w-full max-w-4xl mx-auto mask-linear-fade">
@@ -575,7 +575,7 @@ export const Landing: React.FC = () => {
                     </div>
                     
                     <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-[10px] md:text-xs">{t('footer.col_product')}</h4>
+                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_product')}</h4>
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
                             <FooterLink label={t('footer.link_marketplace')} route={ROUTES.SEARCH} />
                             <FooterLink label={t('footer.link_valuation')} route={ROUTES.AI_VALUATION} />
@@ -584,7 +584,7 @@ export const Landing: React.FC = () => {
                     </div>
 
                     <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-[10px] md:text-xs">{t('footer.col_company')}</h4>
+                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_company')}</h4>
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
                             <FooterLink label={t('footer.link_about')} route={ROUTES.ABOUT} />
                             <FooterLink label={t('footer.link_careers')} route={ROUTES.CAREERS} />
@@ -593,7 +593,7 @@ export const Landing: React.FC = () => {
                     </div>
 
                     <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-[10px] md:text-xs">{t('footer.col_legal')}</h4>
+                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_legal')}</h4>
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
                             <FooterLink label={t('footer.link_help')} route={ROUTES.HELP_CENTER} />
                             <FooterLink label={t('footer.link_api')} route={ROUTES.API_DOCS} />
@@ -602,7 +602,7 @@ export const Landing: React.FC = () => {
                     </div>
 
                     <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-[10px] md:text-xs">{t('footer.link_terms')}</h4>
+                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.link_terms')}</h4>
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
                             <FooterLink label={t('footer.link_privacy')} route={ROUTES.PRIVACY} />
                             <FooterLink label={t('footer.link_terms')} route={ROUTES.TERMS} />
@@ -610,7 +610,7 @@ export const Landing: React.FC = () => {
                     </div>
                 </div>
                 <div className="max-w-[1400px] mx-auto mt-16 md:mt-20 pt-8 border-t border-[var(--glass-border)] dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <span className="text-slate-400 text-[10px] md:text-xs">
+                    <span className="text-slate-400 text-xs2 md:text-xs">
                         {t('footer.copyright', { year: 2026 })}
                     </span>
                     <div className="flex items-center gap-4 md:gap-6">
@@ -625,7 +625,7 @@ export const Landing: React.FC = () => {
 
                             <button 
                                 onClick={() => setLanguage(language === 'vn' ? 'en' : 'vn')}
-                                className="w-9 h-9 flex items-center justify-center rounded-full text-[10px] font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-[var(--glass-border)] dark:hover:border-slate-700 min-w-[36px] min-h-[36px]"
+                                className="w-9 h-9 flex items-center justify-center rounded-full text-xs2 font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-[var(--glass-border)] dark:hover:border-slate-700 min-w-[36px] min-h-[36px]"
                                 title={t('nav.lang_switch')}
                                 aria-label={t('nav.lang_switch')}
                             >

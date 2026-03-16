@@ -23,7 +23,7 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
             <div className="bg-[var(--bg-surface)] w-full max-w-md rounded-[24px] shadow-2xl p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('security.modal_add_title')}</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-slate-400">{ICONS.CLOSE}</button>
+                    <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)]">{ICONS.CLOSE}</button>
                 </div>
                 <div className="space-y-4">
                     <div>
@@ -122,7 +122,7 @@ export const SecurityCompliance: React.FC = () => {
         setIsEditorOpen(false);
     };
 
-    if (loading || !config) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
+    if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
         <div className="space-y-6 pb-20 animate-enter relative">
@@ -146,7 +146,7 @@ export const SecurityCompliance: React.FC = () => {
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-[var(--text-primary)]">{t('security.retention')}</h3>
                             <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-bold ${config.legalHold ? 'text-rose-600 animate-pulse' : 'text-slate-400'}`}>{t('security.legal_hold')}</span>
+                                <span className={`text-xs2 font-bold ${config.legalHold ? 'text-rose-600 animate-pulse' : 'text-[var(--text-secondary)]'}`}>{t('security.legal_hold')}</span>
                                 <input type="checkbox" checked={config.legalHold} onChange={e => setConfig({...config, legalHold: e.target.checked})} className="toggle accent-rose-500 cursor-pointer" />
                             </div>
                         </div>
@@ -181,21 +181,21 @@ export const SecurityCompliance: React.FC = () => {
                     <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-[var(--text-primary)]">{t('security.dlp_rules')}</h3>
-                            <button onClick={() => setIsEditorOpen(true)} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-slate-400">{ICONS.ADD}</button>
+                            <button onClick={() => setIsEditorOpen(true)} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)]">{ICONS.ADD}</button>
                         </div>
                         <div className="space-y-3">
                             {(config.dlpRules || []).map(rule => (
                                 <div key={rule.id} className="p-4 border rounded-xl flex justify-between items-center group hover:border-indigo-200 transition-colors">
                                     <div>
                                         <div className="font-bold text-sm text-[var(--text-secondary)]">{rule.name}</div>
-                                        <div className="text-[10px] font-mono text-slate-400 truncate max-w-[200px]">{rule.pattern}</div>
+                                        <div className="text-xs2 font-mono text-[var(--text-secondary)] truncate max-w-[200px]">{rule.pattern}</div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${rule.action === 'BLOCK' ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-[var(--glass-surface-hover)] border-[var(--glass-border)] text-[var(--text-tertiary)]'}`}>
+                                        <span className={`text-xs2 font-bold px-2 py-0.5 rounded border ${rule.action === 'BLOCK' ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-[var(--glass-surface-hover)] border-[var(--glass-border)] text-[var(--text-tertiary)]'}`}>
                                             {t(`security.action_${rule.action.toLowerCase().replace('_', '')}`) || rule.action}
                                         </span>
                                         <input type="checkbox" checked={rule.enabled} onChange={() => toggleRule(rule.id)} className="toggle accent-indigo-500 w-4 h-4 cursor-pointer" />
-                                        <button onClick={() => handleDeleteRule(rule.id)} className="text-slate-300 hover:text-rose-500 transition-colors">{ICONS.TRASH}</button>
+                                        <button onClick={() => handleDeleteRule(rule.id)} className="text-[var(--text-secondary)] hover:text-rose-500 transition-colors">{ICONS.TRASH}</button>
                                     </div>
                                 </div>
                             ))}
@@ -233,7 +233,7 @@ export const SecurityCompliance: React.FC = () => {
                                         </td>
                                     </tr>
                                 ))}
-                                {(!sessions || sessions.length === 0) && <tr><td colSpan={5} className="p-8 text-center text-slate-400 italic">{t('sec.no_sessions')}</td></tr>}
+                                {(!sessions || sessions.length === 0) && <tr><td colSpan={5} className="p-8 text-center text-[var(--text-secondary)] italic">{t('sec.no_sessions')}</td></tr>}
                             </tbody>
                         </table>
                     </div>

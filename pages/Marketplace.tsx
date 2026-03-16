@@ -6,7 +6,7 @@ import { useTranslation } from '../services/i18n';
 const ICONS = {
     INSTALL: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>, // Lightning bolt for Connect
     CHECK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
-    SEARCH: <svg className="w-5 h-5 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEARCH: <svg className="w-5 h-5 text-[var(--text-secondary)] absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     CONFIG: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -112,7 +112,7 @@ export const Marketplace: React.FC = () => {
         return label !== key ? label : cat; // Fallback to key if translation missing
     };
 
-    if (loading) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
+    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
         <div className="space-y-6 pb-20 animate-enter relative">
@@ -133,7 +133,7 @@ export const Marketplace: React.FC = () => {
                 {/* Sidebar Categories */}
                 <div className="w-full md:w-64 space-y-2 shrink-0">
                     <div className="relative mb-6 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input 
@@ -146,7 +146,7 @@ export const Marketplace: React.FC = () => {
                             <div className="absolute right-2 inset-y-0 flex items-center">
                                 <button 
                                     onClick={() => setSearch('')}
-                                    className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                     title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                 >
                                     {ICONS.X}
@@ -179,16 +179,16 @@ export const Marketplace: React.FC = () => {
                                     <div className="w-14 h-14 rounded-2xl shadow-sm bg-[var(--glass-surface)] flex items-center justify-center p-2 border border-[var(--glass-border)]">
                                         <img src={app.icon} className="w-full h-full object-contain" alt="" />
                                     </div>
-                                    {isInstalled && <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border border-emerald-100">{t('market.installed_badge')}</span>}
+                                    {isInstalled && <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-xs2 font-bold uppercase tracking-wider border border-emerald-100">{t('market.installed_badge')}</span>}
                                 </div>
                                 <h3 className="font-bold text-[var(--text-primary)] text-lg mb-1 line-clamp-1">{app.name}</h3>
-                                <div className="text-[10px] font-bold text-slate-400 uppercase mb-3">{getCatLabel(app.category)}</div>
+                                <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-3">{getCatLabel(app.category)}</div>
                                 <p className="text-xs text-[var(--text-tertiary)] mb-4 line-clamp-2 flex-1 leading-relaxed">{app.description}</p>
                                 
                                 <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
                                     <div className="flex flex-col">
-                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{app.developer}</span>
-                                         <span className="text-[10px] font-mono text-slate-300">v{app.version}</span>
+                                         <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider">{app.developer}</span>
+                                         <span className="text-xs2 font-mono text-[var(--text-secondary)]">v{app.version}</span>
                                     </div>
                                     
                                     {isInstalled ? (
@@ -196,7 +196,7 @@ export const Marketplace: React.FC = () => {
                                             <button onClick={handleConfigure} className="px-3 py-1.5 bg-[var(--glass-surface)] text-[var(--text-secondary)] rounded-lg text-xs font-bold hover:bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] flex items-center gap-1.5">
                                                 {ICONS.CONFIG} {t('market.btn_config')}
                                             </button>
-                                            <button onClick={() => handleUninstall(app.id)} className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100" title={t('market.btn_uninstall')}>
+                                            <button onClick={() => handleUninstall(app.id)} className="p-1.5 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100" title={t('market.btn_uninstall')}>
                                                 {ICONS.TRASH}
                                             </button>
                                         </div>
@@ -210,7 +210,7 @@ export const Marketplace: React.FC = () => {
                         );
                     })}
                     {filteredApps.length === 0 && (
-                        <div className="col-span-full py-20 text-center text-slate-400 italic">
+                        <div className="col-span-full py-20 text-center text-[var(--text-secondary)] italic">
                             {t('common.no_results')}
                         </div>
                     )}

@@ -7,7 +7,7 @@ import { useTranslation } from '../services/i18n';
 
 const ICONS = {
     UPLOAD: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>,
-    SEARCH: <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEARCH: <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     FILE_PDF: <svg className="w-8 h-8 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M7 3a1 1 0 000 2h10a1 1 0 100-2H7zM5 7a1 1 0 000 2h14a1 1 0 100-2H5zM5 11a1 1 0 000 2h14a1 1 0 100-2H5zM5 15a1 1 0 000 2h14a1 1 0 100-2H5zM5 19a1 1 0 000 2h10a1 1 0 100-2H5z" /></svg>,
     FILE_DOC: <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4a2 2 0 012-2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>,
@@ -145,7 +145,7 @@ export const KnowledgeBase: React.FC = () => {
     const normalizedSearch = normalizeString(search);
     const filteredDocs = docs.filter(d => normalizeString(d.title).includes(normalizedSearch));
 
-    if (loading) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading') || 'Đang tải...'}</div>;
+    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading') || 'Đang tải...'}</div>;
 
     return (
         <div className="space-y-6 pt-6 pb-20 animate-enter relative max-w-6xl mx-auto px-4 md:px-6">
@@ -190,7 +190,7 @@ export const KnowledgeBase: React.FC = () => {
             <div className="flex justify-end">
                 <div className="w-full md:w-auto">
                     <div className="relative w-full md:w-72 group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input 
@@ -203,7 +203,7 @@ export const KnowledgeBase: React.FC = () => {
                             <div className="absolute right-2 inset-y-0 flex items-center">
                                 <button 
                                     onClick={() => setSearch('')}
-                                    className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                     title={t('knowledge.clear_search') || 'Xóa tìm kiếm'}
                                 >
                                     {ICONS.X}
@@ -285,7 +285,7 @@ export const KnowledgeBase: React.FC = () => {
                                 {doc.status === 'PROCESSING' ? (
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2 h-2 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                                        <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Đang xử lý</span>
+                                        <span className="text-xs3 font-bold text-amber-600 uppercase tracking-wider">Đang xử lý</span>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-1.5">
@@ -293,13 +293,13 @@ export const KnowledgeBase: React.FC = () => {
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                         </span>
-                                        <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">{t('knowledge.status_indexed') || 'Đã học xong'}</span>
+                                        <span className="text-xs3 font-bold text-emerald-600 uppercase tracking-wider">{t('knowledge.status_indexed') || 'Đã học xong'}</span>
                                     </div>
                                 )}
                                 {canManage && (
                                     <button 
                                         onClick={() => setConfirmDeleteId(doc.id)} 
-                                        className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                        className="p-1.5 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
                                         title="Xóa tài liệu"
                                     >
                                         {ICONS.TRASH}
@@ -312,7 +312,7 @@ export const KnowledgeBase: React.FC = () => {
                 
                 {filteredDocs.length === 0 && (
                     <div className="py-16 text-center bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
-                        <div className="w-16 h-16 bg-[var(--glass-surface)] rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                        <div className="w-16 h-16 bg-[var(--glass-surface)] rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--text-secondary)]">
                             {ICONS.SEARCH}
                         </div>
                         <h3 className="text-[var(--text-primary)] font-bold mb-1">{t('knowledge.empty_title') || 'Không tìm thấy tài liệu'}</h3>

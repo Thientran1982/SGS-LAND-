@@ -85,7 +85,7 @@ export const Billing: React.FC = () => {
         URL.revokeObjectURL(url);
     };
 
-    if (loading) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
+    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     const currentPlan = PLANS[subscription?.planId as PlanTier] || PLANS.INDIVIDUAL;
 
@@ -102,7 +102,7 @@ export const Billing: React.FC = () => {
                     <div className="flex items-center gap-3 bg-[var(--glass-surface)] px-4 py-2 rounded-xl border border-[var(--glass-border)]">
                         <div className="p-1.5 bg-[var(--bg-surface)] rounded-full shadow-sm text-[var(--text-secondary)]">{ICONS.CREDIT_CARD}</div>
                         <div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{subscription.paymentMethod.brand}</div>
+                            <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider">{subscription.paymentMethod.brand}</div>
                             <div className="text-sm font-mono font-bold text-[var(--text-secondary)]">•••• {subscription.paymentMethod.last4}</div>
                         </div>
                         <button className="text-xs font-bold text-indigo-600 hover:underline ml-2">{t('billing.update_card')}</button>
@@ -115,7 +115,7 @@ export const Billing: React.FC = () => {
                 <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col">
                     <h3 className="font-bold text-[var(--text-primary)] mb-6 flex items-center gap-2">
                         {t('billing.current_usage')}
-                        <span className="bg-emerald-50 text-emerald-600 text-[10px] px-2 py-0.5 rounded-full border border-emerald-100 uppercase">
+                        <span className="bg-emerald-50 text-emerald-600 text-xs2 px-2 py-0.5 rounded-full border border-emerald-100 uppercase">
                             {t(`billing.plan_${currentPlan.name.toLowerCase()}`)}
                         </span>
                     </h3>
@@ -150,7 +150,7 @@ export const Billing: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="mt-6 pt-4 border-t border-[var(--glass-border)] text-xs text-slate-400 text-center">
+                    <div className="mt-6 pt-4 border-t border-[var(--glass-border)] text-xs text-[var(--text-secondary)] text-center">
                         {t('billing.exp')}: <span className="font-mono text-[var(--text-secondary)]">{formatDate(subscription?.currentPeriodEnd || '')}</span>
                     </div>
                 </div>
@@ -169,9 +169,9 @@ export const Billing: React.FC = () => {
                                 </div>
                                 <div className="text-2xl font-extrabold text-[var(--text-primary)] mb-1">
                                     ${plan.price}
-                                    <span className="text-sm font-medium text-slate-400">{t('billing.per_month')}</span>
+                                    <span className="text-sm font-medium text-[var(--text-secondary)]">{t('billing.per_month')}</span>
                                 </div>
-                                <div className="text-xs text-slate-400 mb-6">{t('billing.billed_annually')}</div>
+                                <div className="text-xs text-[var(--text-secondary)] mb-6">{t('billing.billed_annually')}</div>
                                 
                                 <ul className="space-y-3 mb-8 flex-1">
                                     {plan.features.map((f, i) => (
@@ -201,7 +201,7 @@ export const Billing: React.FC = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="text-left text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-[var(--glass-border)]">
+                                <tr className="text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">
                                     <th className="pb-3 pr-4">Mã HĐ</th>
                                     <th className="pb-3 pr-4">Gói cước</th>
                                     <th className="pb-3 pr-4">Ngày</th>
@@ -227,7 +227,7 @@ export const Billing: React.FC = () => {
                                             <td className="py-3 pr-4 text-[var(--text-tertiary)]">{dateStr}</td>
                                             <td className="py-3 pr-4 font-bold text-[var(--text-primary)]">${anyInv.amount ?? 0}</td>
                                             <td className="py-3 pr-4">
-                                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
+                                                <span className={`text-xs3 font-bold px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
                                                     {isPaid ? 'Đã thanh toán' : inv.status}
                                                 </span>
                                             </td>

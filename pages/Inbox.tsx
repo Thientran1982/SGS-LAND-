@@ -17,7 +17,7 @@ const CONFIG = {
 };
 
 const ICONS = {
-    SEARCH: <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEARCH: <svg className="w-4 h-4 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     SEND: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     ATTACH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>,
@@ -396,7 +396,7 @@ export const Inbox: React.FC = () => {
                         )}
                     </div>
                     <div className="relative group">
-                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400">
+                        <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)]">
                             {ICONS.SEARCH}
                         </div>
                         <input 
@@ -409,7 +409,7 @@ export const Inbox: React.FC = () => {
                             <div className="absolute right-2 inset-y-0 flex items-center">
                                 <button 
                                     onClick={() => setSearch('')}
-                                    className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                     title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                 >
                                     {ICONS.X}
@@ -420,9 +420,9 @@ export const Inbox: React.FC = () => {
                 </div>
                 <div className="flex-1 overflow-y-auto no-scrollbar">
                     {loadingThreads && threads.length === 0 ? (
-                        <div className="p-8 text-center text-slate-400 text-xs italic">{t('common.loading')}</div>
+                        <div className="p-8 text-center text-[var(--text-secondary)] text-xs italic">{t('common.loading')}</div>
                     ) : filteredThreads.length === 0 ? (
-                        <div className="p-8 text-center text-slate-400 text-xs italic">{t('inbox.empty')}</div>
+                        <div className="p-8 text-center text-[var(--text-secondary)] text-xs italic">{t('inbox.empty')}</div>
                     ) : (
                         filteredThreads.map(thread => {
                             const isAiEnabled = autoResponseMap[thread.lead.id];
@@ -442,7 +442,7 @@ export const Inbox: React.FC = () => {
                                                 <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" title="Manual Mode"></span>
                                             )}
                                         </div>
-                                        {thread.lastMessage && <div className="text-[10px] text-slate-400 whitespace-nowrap shrink-0 mt-0.5">{formatTime(thread.lastMessage.timestamp)}</div>}
+                                        {thread.lastMessage && <div className="text-xs2 text-[var(--text-secondary)] whitespace-nowrap shrink-0 mt-0.5">{formatTime(thread.lastMessage.timestamp)}</div>}
                                     </div>
                                     <div className="flex justify-between items-center mt-1 gap-2">
                                         <div className={`text-xs truncate min-w-0 flex-1 ${thread.unreadCount > 0 ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}>
@@ -457,12 +457,12 @@ export const Inbox: React.FC = () => {
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             {thread.lead.assignedTo && (
-                                                <div className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded truncate max-w-[60px]" title={users.find((u: any) => u.id === thread.lead.assignedTo)?.name || 'Assigned'}>
+                                                <div className="text-2xs font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded truncate max-w-[60px]" title={users.find((u: any) => u.id === thread.lead.assignedTo)?.name || 'Assigned'}>
                                                     {users.find((u: any) => u.id === thread.lead.assignedTo)?.name?.split(' ')[0] || thread.lead.assignedTo}
                                                 </div>
                                             )}
                                             {thread.unreadCount > 0 && (
-                                                <div className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">{thread.unreadCount}</div>
+                                                <div className="bg-rose-500 text-white text-xs2 font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">{thread.unreadCount}</div>
                                             )}
                                         </div>
                                     </div>
@@ -471,7 +471,7 @@ export const Inbox: React.FC = () => {
                                     {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
                                         <button 
                                             onClick={(e) => requestDelete(e, thread.lead.id)}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-[var(--bg-surface)] shadow-sm border border-[var(--glass-border)] rounded-full text-slate-400 hover:text-rose-500 hover:border-rose-200 opacity-0 group-hover:opacity-100 transition-all z-10"
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-[var(--bg-surface)] shadow-sm border border-[var(--glass-border)] rounded-full text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-200 opacity-0 group-hover:opacity-100 transition-all z-10"
                                             title={t('inbox.menu_delete')}
                                         >
                                             {ICONS.TRASH}
@@ -499,11 +499,11 @@ export const Inbox: React.FC = () => {
                             <div className="min-w-0 flex-1">
                                 <div className="font-bold text-[var(--text-primary)] text-sm md:text-base flex items-center gap-2 min-w-0">
                                     <span className="truncate">{selectedThread.lead.name}</span>
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded uppercase font-bold border text-emerald-600 bg-emerald-50 border-emerald-100 shrink-0">
+                                    <span className="text-2xs px-1.5 py-0.5 rounded uppercase font-bold border text-emerald-600 bg-emerald-50 border-emerald-100 shrink-0">
                                         {selectedThread.lead.score?.score || 0} pts
                                     </span>
                                 </div>
-                                <div className="text-[10px] md:text-xs text-[var(--text-tertiary)] flex items-center gap-1.5 truncate">
+                                <div className="text-xs2 md:text-xs text-[var(--text-tertiary)] flex items-center gap-1.5 truncate">
                                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isAiActiveForSelected ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                                     <span className="truncate">{isAiActiveForSelected ? t('inbox.ai_agent_active') : t('inbox.human_control')}</span>
                                 </div>
@@ -533,7 +533,7 @@ export const Inbox: React.FC = () => {
                                     {isAssignOpen && (
                                         <div className="absolute right-0 mt-1 w-48 bg-[var(--bg-surface)] border border-[var(--glass-border)] shadow-xl rounded-xl z-50 overflow-hidden animate-enter">
                                             <div className="max-h-60 overflow-y-auto no-scrollbar py-1">
-                                                <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-[var(--glass-surface)]/50">
+                                                <div className="px-3 py-2 text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider bg-[var(--glass-surface)]/50">
                                                     {t('inbox.assign_to') || 'Phân bổ cho'}
                                                 </div>
                                                 {users.map((u: any) => (
@@ -575,7 +575,7 @@ export const Inbox: React.FC = () => {
                             {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
                                 <button 
                                     onClick={(e) => requestDelete(e, selectedThread.lead.id)}
-                                    className="p-1.5 md:p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors"
+                                    className="p-1.5 md:p-2 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors"
                                     title={t('inbox.menu_delete')}
                                 >
                                     {ICONS.TRASH}
@@ -587,7 +587,7 @@ export const Inbox: React.FC = () => {
                     {/* Messages List */}
                     <div className="flex-1 overflow-y-auto p-4 bg-[var(--glass-surface)] space-y-4 no-scrollbar scroll-smooth">
                         {messages.length === 0 && (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-60">
+                            <div className="h-full flex flex-col items-center justify-center text-[var(--text-secondary)] opacity-60">
                                 <div className="text-4xl mb-2">💬</div>
                                 <div className="text-sm">{t('inbox.empty_messages') || 'Chưa có tin nhắn nào'}</div>
                             </div>
@@ -646,7 +646,7 @@ export const Inbox: React.FC = () => {
                                     <button 
                                         key={ch} 
                                         onClick={() => setChannel(ch)}
-                                        className={`px-2 md:px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${channel === ch ? 'bg-[var(--bg-surface)] text-indigo-700 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}
+                                        className={`px-2 md:px-3 py-1 rounded-md text-xs2 font-bold uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${channel === ch ? 'bg-[var(--bg-surface)] text-indigo-700 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
                                     >
                                         {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS} {ch}
                                     </button>
@@ -654,7 +654,7 @@ export const Inbox: React.FC = () => {
                             </div>
                             
                             {!isAiActiveForSelected && (
-                                <div className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100 animate-pulse whitespace-nowrap">
+                                <div className="text-xs2 font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100 animate-pulse whitespace-nowrap">
                                     {t('inbox.supervisor_takeover_active')}
                                 </div>
                             )}
@@ -670,7 +670,7 @@ export const Inbox: React.FC = () => {
                             />
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-1.5 md:p-2 text-slate-400 hover:text-indigo-600 transition-colors rounded-xl hover:bg-indigo-50 shrink-0 self-end mb-0.5" 
+                                className="p-1.5 md:p-2 text-[var(--text-secondary)] hover:text-indigo-600 transition-colors rounded-xl hover:bg-indigo-50 shrink-0 self-end mb-0.5" 
                                 title="Attach"
                             >
                                 {ICONS.ATTACH}
@@ -701,7 +701,7 @@ export const Inbox: React.FC = () => {
                     </div>
                 </div>
             ) : (
-                <div className="hidden md:flex flex-1 items-center justify-center text-slate-400 bg-[var(--glass-surface)]/50">
+                <div className="hidden md:flex flex-1 items-center justify-center text-[var(--text-secondary)] bg-[var(--glass-surface)]/50">
                     <div className="text-center p-8">
                         <div className="w-20 h-20 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-[var(--glass-border)]">
                             <div className="text-4xl opacity-50">📬</div>
@@ -743,7 +743,7 @@ export const Inbox: React.FC = () => {
                                     </h2>
                                     <p className="text-xs text-[var(--text-tertiary)] mt-1">Tích hợp khung chat trực tiếp lên website của bạn</p>
                                 </div>
-                                <button onClick={() => setIsWidgetModalOpen(false)} className="p-2 text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-xl transition-colors shrink-0">
+                                <button onClick={() => setIsWidgetModalOpen(false)} className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-xl transition-colors shrink-0">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
                             </div>

@@ -130,7 +130,7 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
 };
 
 const EmptyChartState = ({ t, message }: { t: any, message: string }) => (
-    <div className="flex flex-col items-center justify-center h-full text-slate-400">
+    <div className="flex flex-col items-center justify-center h-full text-[var(--text-secondary)]">
         <svg className="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
         <p className="text-xs font-medium">{message}</p>
     </div>
@@ -186,7 +186,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                 ].map(({ label, value, color }) => (
                     <div key={label} className="bg-[var(--bg-surface)] p-4 sm:p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden group min-w-0">
                         <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
-                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 relative z-10 truncate">{label}</div>
+                        <div className="text-2xs sm:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1.5 relative z-10 truncate">{label}</div>
                         <div className="text-sm sm:text-base xl:text-xl font-extrabold text-[var(--text-primary)] tracking-tight relative z-10 truncate" title={value}>{value}</div>
                     </div>
                 ))}
@@ -255,7 +255,7 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
 
                 <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <h3 className="font-bold text-[var(--text-primary)] mb-0.5 text-sm sm:text-base">{t('reports.chart_conversion_trend') || 'Xu hướng chuyển đổi'}</h3>
-                    <p className="text-[10px] sm:text-[11px] text-slate-400 mb-2 sm:mb-3">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
+                    <p className="text-xs2 sm:text-xs3 text-[var(--text-secondary)] mb-2 sm:mb-3">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
                     <div style={{ width: '100%', height: 260 }}>
                         {hasTrend ? (
                             <ResponsiveContainer width="100%" height="100%">
@@ -290,11 +290,11 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                                     <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs shadow-xl border border-white/10">
                                                         <div className="font-bold mb-1">{label}</div>
                                                         <div className="flex gap-3">
-                                                            <span className="text-slate-400">{t('reports.metric_conversion') || 'Tỷ lệ'}:</span>
+                                                            <span className="text-[var(--text-secondary)]">{t('reports.metric_conversion') || 'Tỷ lệ'}:</span>
                                                             <span className="font-mono text-emerald-400">{payload[0].value}%</span>
                                                         </div>
                                                         <div className="flex gap-3">
-                                                            <span className="text-slate-400">Won:</span>
+                                                            <span className="text-[var(--text-secondary)]">Won:</span>
                                                             <span className="font-mono">{payload[0].payload.won}/{payload[0].payload.total}</span>
                                                         </div>
                                                     </div>
@@ -348,7 +348,7 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                     </div>
                     {overallRate !== null && (
                         <div className="flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-[14px] px-4 py-2 text-center">
-                            <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">{t('reports.funnel_overall_rate') || 'Tỷ lệ NEW → WON'}</div>
+                            <div className="text-xs2 font-bold text-emerald-600 uppercase tracking-wider">{t('reports.funnel_overall_rate') || 'Tỷ lệ NEW → WON'}</div>
                             <div className="text-2xl font-extrabold text-emerald-700">{overallRate}%</div>
                         </div>
                     )}
@@ -362,7 +362,7 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                             return (
                                 <div key={step.stage} className="flex items-center gap-2 sm:gap-3 group">
                                     <div className="w-16 sm:w-28 md:w-36 flex-shrink-0 text-right">
-                                        <span className="text-[10px] sm:text-xs font-bold text-[var(--text-secondary)] leading-tight">{t(`stage.${step.stage}`)}</span>
+                                        <span className="text-xs2 sm:text-xs font-bold text-[var(--text-secondary)] leading-tight">{t(`stage.${step.stage}`)}</span>
                                     </div>
                                     <div className="flex-1 relative h-8 sm:h-9 bg-[var(--glass-surface)] rounded-lg overflow-hidden border border-[var(--glass-border)]">
                                         <div
@@ -372,7 +372,7 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                                     </div>
                                     <div className="w-16 sm:w-28 md:w-36 flex-shrink-0 flex items-center gap-1 sm:gap-2">
                                         <span className="text-xs sm:text-sm font-extrabold text-[var(--text-primary)]">{step.count.toLocaleString()}</span>
-                                        <span className="hidden sm:inline text-[10px] text-slate-400 font-medium">({step.conversionRate}%)</span>
+                                        <span className="hidden sm:inline text-xs2 text-[var(--text-secondary)] font-medium">({step.conversionRate}%)</span>
                                     </div>
                                 </div>
                             );
@@ -389,7 +389,7 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                         {data.funnel.map((step, idx) => (
                             <div key={step.stage} className="flex items-center gap-1.5">
                                 <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: FUNNEL_COLORS[idx % FUNNEL_COLORS.length] }} />
-                                <span className="text-[11px] text-[var(--text-tertiary)]">{t(`stage.${step.stage}`)}: <strong className="text-[var(--text-secondary)]">{step.count}</strong></span>
+                                <span className="text-xs3 text-[var(--text-tertiary)]">{t(`stage.${step.stage}`)}: <strong className="text-[var(--text-secondary)]">{step.count}</strong></span>
                             </div>
                         ))}
                     </div>
@@ -411,7 +411,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
 
     const roiDisplay = (row: AttributionData) => {
         // Fix: when spend = 0, ROI is meaningless — show N/A instead of 0%
-        if (row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--glass-surface)] text-slate-400 border border-[var(--glass-border)]">N/A</span>;
+        if (row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]">N/A</span>;
         return (
             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${row.roi >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
                 {row.roi > 0 ? '+' : ''}{row.roi.toFixed(1)}%
@@ -435,7 +435,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
             ].map(({ label, value, color }) => (
                 <div key={label} className="bg-[var(--bg-surface)] p-4 sm:p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden group min-w-0">
                     <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
-                    <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 relative z-10 truncate">{label}</div>
+                    <div className="text-2xs sm:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1.5 relative z-10 truncate">{label}</div>
                     <div className="text-sm sm:text-base xl:text-xl font-extrabold text-[var(--text-primary)] tracking-tight relative z-10 truncate" title={value}>{value}</div>
                 </div>
             ))}
@@ -444,7 +444,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
         {/* Attribution Table */}
         <div className="bg-[var(--bg-surface)] p-0 md:p-2 rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
             {data.attribution.length === 0 ? (
-                <div className="p-10 flex flex-col items-center justify-center text-slate-400 gap-2">
+                <div className="p-10 flex flex-col items-center justify-center text-[var(--text-secondary)] gap-2">
                     <svg className="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     <p className="text-xs font-medium">{t('common.no_results')}</p>
                 </div>
@@ -470,11 +470,11 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                                         </span>
                                     </td>
                                     <td className="p-5 text-right font-mono text-[var(--text-secondary)]">
-                                        {row.spend > 0 ? formatCurrency(row.spend) : <span className="text-slate-300">—</span>}
+                                        {row.spend > 0 ? formatCurrency(row.spend) : <span className="text-[var(--text-secondary)]">—</span>}
                                     </td>
                                     <td className="p-5 text-right font-bold text-[var(--text-secondary)]">{row.leads}</td>
                                     <td className="p-5 text-right font-mono text-[var(--text-secondary)]">
-                                        {row.cac > 0 ? formatCurrency(row.cac) : <span className="text-slate-300">—</span>}
+                                        {row.cac > 0 ? formatCurrency(row.cac) : <span className="text-[var(--text-secondary)]">—</span>}
                                     </td>
                                     <td className="p-5 text-right font-mono font-bold text-indigo-600">{formatCurrency(row.revenue)}</td>
                                     <td className="p-5 text-right">{roiDisplay(row)}</td>
@@ -576,7 +576,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             </div>
             
             {data.campaignCosts.length === 0 ? (
-                <div className="p-10 flex flex-col items-center justify-center text-slate-400 gap-2">
+                <div className="p-10 flex flex-col items-center justify-center text-[var(--text-secondary)] gap-2">
                     <svg className="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     <p className="text-xs font-medium italic">{t('reports.empty_costs')}</p>
                 </div>
@@ -721,7 +721,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
                 <div className="bg-[var(--bg-surface)] w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] scale-100 animate-scale-up">
                     <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">{t('reports.btn_update')}</h3>
-                    <p className="text-xs text-slate-400 mb-5">{editingCost.source} · {editingCost.period}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mb-5">{editingCost.source} · {editingCost.period}</p>
                     <div className="mb-6">
                         <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">{t('reports.cost_amount')} (VNĐ)</label>
                         <input 
@@ -817,7 +817,7 @@ export const Reports: React.FC = () => {
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
 
-    if (loading) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
+    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
     if (!data) return null;
 
     return (
@@ -846,13 +846,13 @@ export const Reports: React.FC = () => {
                     <div className="w-px h-6 bg-slate-200 shrink-0" />
                     {/* Time filter */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kỳ:</span>
+                        <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest">Kỳ:</span>
                         <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-xl gap-0.5">
                             {TIME_RANGE_OPTIONS.map(opt => (
                                 <button
                                     key={opt.value}
                                     onClick={() => setTimeRange(opt.value)}
-                                    className={`px-2.5 py-1.5 text-[11px] font-bold rounded-[9px] transition-all whitespace-nowrap ${
+                                    className={`px-2.5 py-1.5 text-xs3 font-bold rounded-[9px] transition-all whitespace-nowrap ${
                                         timeRange === opt.value
                                         ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)] ring-1 ring-black/5'
                                         : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'

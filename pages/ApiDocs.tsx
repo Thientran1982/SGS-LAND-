@@ -26,8 +26,8 @@ const CodeBlock = ({ code, language = 'bash' }: { code: string, language?: strin
     return (
         <div className="bg-[#1e1e1e] rounded-xl overflow-hidden border border-white/10 my-4 shadow-lg group">
             <div className="flex justify-between items-center px-4 py-2 bg-[var(--bg-surface)]/5 border-b border-white/5">
-                <span className="text-[10px] font-mono text-slate-400 uppercase">{language}</span>
-                <button onClick={handleCopy} className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
+                <span className="text-xs2 font-mono text-slate-400 uppercase">{language}</span>
+                <button onClick={handleCopy} className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 text-xs2 font-bold uppercase tracking-wider">
                     {copied ? ICONS.CHECK : ICONS.COPY}
                     {copied ? t('api.copied') : t('api.copy')}
                 </button>

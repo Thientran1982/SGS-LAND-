@@ -8,7 +8,7 @@ import { User } from '../types';
 
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
-    SEARCH: <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    SEARCH: <svg className="w-6 h-6 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     GENERAL: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>,
     ACCOUNT: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
     API: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>,
@@ -72,7 +72,7 @@ export const HelpCenter: React.FC = () => {
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900"></div>
                 <div className="relative z-10 max-w-2xl mx-auto animate-enter">
                     <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">{t('help.title')}</h1>
-                    <p className="text-lg text-slate-400 mb-10">{t('help.subtitle')}</p>
+                    <p className="text-lg text-[var(--text-secondary)] mb-10">{t('help.subtitle')}</p>
                     
                     <div className="relative group">
                         <div className="absolute left-5 inset-y-0 flex items-center group-focus-within:text-indigo-500 text-[var(--text-tertiary)] transition-colors pointer-events-none">
@@ -88,7 +88,7 @@ export const HelpCenter: React.FC = () => {
                             <div className="absolute right-4 inset-y-0 flex items-center">
                                 <button 
                                     onClick={() => setSearchQuery('')}
-                                    className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-[var(--glass-surface-hover)] flex items-center justify-center"
+                                    className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-[var(--glass-surface-hover)] flex items-center justify-center"
                                     title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                 >
                                     {ICONS.X}
@@ -119,7 +119,7 @@ export const HelpCenter: React.FC = () => {
                             {filteredFaqs.map(faq => (
                                 <a key={faq.id} href="#" className="flex items-center justify-between py-4 border-b border-[var(--glass-border)] group hover:border-indigo-100 transition-colors">
                                     <span className="font-medium text-[var(--text-secondary)] group-hover:text-indigo-600 transition-colors">{faq.q}</span>
-                                    <span className="text-slate-300 group-hover:text-indigo-400 transition-colors">{ICONS.ARROW}</span>
+                                    <span className="text-[var(--text-secondary)] group-hover:text-indigo-400 transition-colors">{ICONS.ARROW}</span>
                                 </a>
                             ))}
                         </div>

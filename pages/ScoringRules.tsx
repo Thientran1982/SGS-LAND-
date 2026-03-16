@@ -53,8 +53,8 @@ const ScoringSlider: React.FC<ScoringSliderProps> = memo(({ label, value, field,
             </div>
 
             <div className="flex justify-between mt-1">
-                <span className="text-[10px] text-slate-400 font-medium">0</span>
-                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{t('scoring.max_weight')}: {max}</p>
+                <span className="text-xs2 text-[var(--text-secondary)] font-medium">0</span>
+                <p className="text-xs2 text-[var(--text-secondary)] font-medium uppercase tracking-wider">{t('scoring.max_weight')}: {max}</p>
             </div>
         </div>
     );
@@ -139,7 +139,7 @@ export const ScoringRules: React.FC = () => {
         { key: 'velocity', max: CONSTANTS.DEFAULT_MAX_SCORE },
     ], []);
 
-    if (loading || !config) return <div className="p-10 text-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
+    if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
         <div className="space-y-6 pb-20 relative animate-enter">
@@ -158,7 +158,7 @@ export const ScoringRules: React.FC = () => {
                     <p className="text-sm text-[var(--text-tertiary)]">{t('scoring.subtitle')}</p>
                 </div>
                 <div className="text-right bg-[var(--glass-surface)] px-4 py-2 rounded-xl border border-[var(--glass-border)]">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('scoring.version')}</div>
+                    <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider">{t('scoring.version')}</div>
                     <div className="font-mono text-lg font-bold text-[var(--text-primary)]">v{config.version}.0</div>
                 </div>
             </div>
@@ -186,7 +186,7 @@ export const ScoringRules: React.FC = () => {
                     
                     <div>
                         <h3 className="font-bold text-lg mb-1">{t('scoring.sim_title')}</h3>
-                        <p className="text-xs text-slate-400 leading-relaxed">
+                        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                             {t('scoring.sim_desc')}
                         </p>
                     </div>

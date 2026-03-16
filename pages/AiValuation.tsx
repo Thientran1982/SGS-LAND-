@@ -403,13 +403,13 @@ export const AiValuation: React.FC = () => {
                                 </div>
                                 <div className="flex gap-3 flex-wrap justify-end">
                                     <div className="bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-600 backdrop-blur-sm text-center min-w-[100px]">
-                                        <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-bold mb-1">Độ Tin Cậy</div>
+                                        <div className="text-xs2 text-[var(--text-tertiary)] uppercase font-bold mb-1">Độ Tin Cậy</div>
                                         <div className={`text-xl font-bold ${valuation.confidence >= 75 ? 'text-emerald-400' : valuation.confidence >= 55 ? 'text-yellow-400' : 'text-rose-400'}`}>
                                             {valuation.confidence}%
                                         </div>
                                     </div>
                                     <div className="bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-600 backdrop-blur-sm text-center min-w-[100px]">
-                                        <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-bold mb-1">Đơn giá / m²</div>
+                                        <div className="text-xs2 text-[var(--text-tertiary)] uppercase font-bold mb-1">Đơn giá / m²</div>
                                         <div className="text-xl font-bold text-white">
                                             {valuation.pricePerM2 >= 1_000_000_000
                                                 ? `${(valuation.pricePerM2 / 1_000_000_000).toFixed(1)} Tỷ/m²`
@@ -422,7 +422,7 @@ export const AiValuation: React.FC = () => {
                             {/* ── AVM FORMULA BOX ── */}
                             {valuation.formula && (
                                 <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl px-5 py-4 mb-6 font-mono text-sm">
-                                    <div className="text-emerald-400/60 text-[10px] uppercase font-bold tracking-widest mb-1">Công thức AVM đã áp dụng</div>
+                                    <div className="text-emerald-400/60 text-xs2 uppercase font-bold tracking-widest mb-1">Công thức AVM đã áp dụng</div>
                                     <div className="text-emerald-300 break-all">{valuation.formula}</div>
                                 </div>
                             )}
@@ -440,12 +440,12 @@ export const AiValuation: React.FC = () => {
                                         return (
                                             <div key={c.key} className="bg-slate-900/70 rounded-xl p-4 border border-slate-700 text-center">
                                                 <div className="text-lg mb-1">{c.icon}</div>
-                                                <div className="text-[var(--text-tertiary)] text-[10px] uppercase font-bold mb-1">{c.key}</div>
+                                                <div className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold mb-1">{c.key}</div>
                                                 <div className="text-white font-black text-xl">{c.value.toFixed(2)}</div>
                                                 <div className={`text-xs font-bold mt-1 ${isPos ? 'text-emerald-400' : 'text-rose-400'}`}>
                                                     {isPos ? '+' : ''}{(delta * 100).toFixed(0)}%
                                                 </div>
-                                                <div className="text-[var(--text-secondary)] text-[9px] mt-1 truncate">{c.label}</div>
+                                                <div className="text-[var(--text-secondary)] text-2xs mt-1 truncate">{c.label}</div>
                                             </div>
                                         );
                                     })}
@@ -456,7 +456,7 @@ export const AiValuation: React.FC = () => {
                             {valuation.factors.length > 0 && (
                                 <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
                                     <div className="px-5 py-3 border-b border-slate-700/50">
-                                        <span className="text-[var(--text-tertiary)] text-[10px] uppercase font-bold tracking-widest">Phân tích yếu tố tác động</span>
+                                        <span className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold tracking-widest">Phân tích yếu tố tác động</span>
                                     </div>
                                     <div className="divide-y divide-slate-800">
                                         {valuation.factors.map((factor, i) => {
@@ -476,7 +476,7 @@ export const AiValuation: React.FC = () => {
                                                         </div>
                                                     </div>
                                                     {factor.description && (
-                                                        <div className="text-[var(--text-secondary)] text-[11px] mb-1.5">{factor.description}</div>
+                                                        <div className="text-[var(--text-secondary)] text-xs3 mb-1.5">{factor.description}</div>
                                                     )}
                                                     {factor.impact > 0 && (
                                                         <div className="h-1 bg-slate-800 rounded-full overflow-hidden">

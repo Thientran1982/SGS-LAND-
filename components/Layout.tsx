@@ -171,7 +171,7 @@ const Sidebar = memo(({
                         <h1 className="font-bold text-lg leading-none tracking-tight text-[var(--text-primary)]">
                             {t('nav.logo_label')}
                         </h1>
-                        <span className="text-[9px] font-bold text-[var(--text-tertiary)] uppercase tracking-[0.2em]">
+                        <span className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-[0.2em]">
                             {t('nav.brand_subtitle')}
                         </span>
                     </div>
@@ -208,7 +208,7 @@ const Sidebar = memo(({
                             ) : (
                                 <button 
                                     onClick={() => toggleGroup(group.id)}
-                                    className={`w-full flex items-center justify-between px-3 py-2 mb-1 text-[10px] font-bold uppercase tracking-widest transition-colors hover:text-[var(--text-primary)] ${hasActiveChild ? 'text-indigo-600' : 'text-[var(--text-tertiary)]'}`}
+                                    className={`w-full flex items-center justify-between px-3 py-2 mb-1 text-xs2 font-bold uppercase tracking-widest transition-colors hover:text-[var(--text-primary)] ${hasActiveChild ? 'text-indigo-600' : 'text-[var(--text-tertiary)]'}`}
                                 >
                                     <span>{t(group.labelKey)}</span>
                                     <div className={`transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`}>
@@ -247,7 +247,7 @@ const Sidebar = memo(({
                                             )}
                                             
                                             {isCollapsed && (
-                                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl transition-opacity delay-75">
+                                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-slate-800 text-white text-xs2 font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl transition-opacity delay-75">
                                                     {t(item.labelKey)}
                                                 </div>
                                             )}
@@ -282,7 +282,7 @@ const Sidebar = memo(({
                         title={t('nav.lang_switch')}
                         aria-label={t('nav.lang_switch')}
                     >
-                        <span className="w-5 h-5 flex items-center justify-center text-[10px] font-extrabold tracking-tighter transition-transform group-hover:scale-110">
+                        <span className="w-5 h-5 flex items-center justify-center text-xs2 font-extrabold tracking-tighter transition-transform group-hover:scale-110">
                             {lang.toUpperCase()}
                         </span>
                     </button>

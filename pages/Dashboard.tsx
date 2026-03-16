@@ -27,7 +27,7 @@ const ICONS = {
     CLOUD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
     AI: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" /></svg>,
     WARNING: <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
-    EMPTY: <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+    EMPTY: <svg className="w-8 h-8 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
 };
 
 // --- SUB-COMPONENTS ---
@@ -36,7 +36,7 @@ const TrendIndicator = ({ value, label }: { value: number; label: string }) => {
     const safeValue = (typeof value === 'number' && !isNaN(value)) ? value : 0;
     const isPositive = safeValue >= 0;
     return (
-        <div className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+        <div className={`flex items-center gap-1 text-xs2 font-bold uppercase tracking-wider ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
             {isPositive ? ICONS.TREND_UP : ICONS.TREND_DOWN}
             <span>{Math.abs(safeValue)}%</span>
             <span className="text-[var(--text-tertiary)] dark:text-slate-400 font-medium normal-case ml-1">{label}</span>
@@ -62,7 +62,7 @@ const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
             </div>
             <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{activity.content}</p>
-                <p className="text-[10px] text-[var(--text-tertiary)] dark:text-slate-400 font-mono mt-0.5">{activity.time}</p>
+                <p className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-mono mt-0.5">{activity.time}</p>
             </div>
         </div>
     );
@@ -192,11 +192,11 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                 <div className="flex gap-6">
                     <div>
                         <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{stats.rps}</div>
-                        <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.requests_sec')}</div>
+                        <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.requests_sec')}</div>
                     </div>
                     <div>
                         <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{stats.latency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
-                        <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.avg_latency')}</div>
+                        <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.avg_latency')}</div>
                     </div>
                 </div>
                 <div className={`flex items-center gap-2 px-2 py-1 rounded-full border ${isConnected ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
@@ -204,7 +204,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                       <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isConnected ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
                       <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                     </span>
-                    <span className={`text-[10px] font-bold uppercase ${isConnected ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                    <span className={`text-xs2 font-bold uppercase ${isConnected ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
                         {isConnected ? t('dash.live_status') : 'Connecting...'}
                     </span>
                 </div>
@@ -351,7 +351,7 @@ export const Dashboard: React.FC = () => {
                         <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 font-medium">
                             {t('dash.overview_subtitle')}
                         </p>
-                        <span className="text-[10px] text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium border border-[var(--glass-border)] dark:border-slate-700">
+                        <span className="text-xs2 text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium border border-[var(--glass-border)] dark:border-slate-700">
                             {ICONS.REFRESH} {lastUpdated.toLocaleTimeString()}
                         </span>
                     </div>
@@ -400,7 +400,7 @@ export const Dashboard: React.FC = () => {
                                 <div className="text-3xl font-black tracking-tight mt-2 text-white break-words">
                                     {formatCompactNumber(analytics.revenue || 0)}
                                 </div>
-                                <div className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider mt-1">
+                                <div className="text-xs2 text-indigo-200 font-bold uppercase tracking-wider mt-1">
                                     {t('dash.commission_2_percent') || "Hoa hồng 2%"}
                                 </div>
                             </div>
@@ -423,7 +423,7 @@ export const Dashboard: React.FC = () => {
                                 <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight mt-2 break-words">
                                     {formatCompactNumber(analytics.pipelineValue || 0)}
                                 </div>
-                                <div className="text-[10px] text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
+                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
                                     {t('dash.win_probability') || "Xác suất chốt"}: <span className="text-indigo-600 dark:text-indigo-400">{analytics.winProbability || 0}%</span>
                                 </div>
                             </div>
@@ -452,7 +452,7 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                     <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white">{analytics.aiDeflectionRate || 0}%</div>
                                 </div>
-                                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai') || "Xử lý bởi AI"}</div>
+                                <div className="text-xs2 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai') || "Xử lý bởi AI"}</div>
                             </div>
                             <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
                                 <TrendIndicator value={analytics.aiDeflectionRateDelta || 0} label={t('dash.vs_last_period') || "vs last period"} />
@@ -467,7 +467,7 @@ export const Dashboard: React.FC = () => {
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white mt-2">{analytics.salesVelocity || 0}</div>
-                                <div className="text-[10px] text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">{t('dash.days_to_close') || "Ngày để chốt deal"}</div>
+                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">{t('dash.days_to_close') || "Ngày để chốt deal"}</div>
                             </div>
                             <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
                                 <TrendIndicator value={analytics.salesVelocityDelta || 0} label={t('dash.vs_last_period') || "vs last period"} />
@@ -488,7 +488,7 @@ export const Dashboard: React.FC = () => {
                                 <TrendIndicator value={analytics.totalLeadsDelta} label={t('dash.total_leads')} />
                             </div>
                             <div className="text-right hidden sm:block">
-                                <div className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.conversion')}</div>
+                                <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.conversion')}</div>
                                 <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
                             </div>
                         </div>
@@ -583,7 +583,7 @@ export const Dashboard: React.FC = () => {
                                             return (
                                                 <div key={idx} className="flex items-center gap-1.5">
                                                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }}></div>
-                                                    <span className="text-[10px] font-medium text-[var(--text-secondary)] dark:text-slate-400">{loc}</span>
+                                                    <span className="text-xs2 font-medium text-[var(--text-secondary)] dark:text-slate-400">{loc}</span>
                                                 </div>
                                             );
                                         })}
@@ -609,28 +609,28 @@ export const Dashboard: React.FC = () => {
                                             <div className="relative">
                                                 <img src={agent.avatar} alt={agent.name} className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm" referrerPolicy="no-referrer" />
                                                 {idx < 3 && (
-                                                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shadow-sm ${idx === 0 ? 'bg-amber-400' : idx === 1 ? 'bg-slate-400' : 'bg-amber-600'}`}>
+                                                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-3xs font-bold text-white shadow-sm ${idx === 0 ? 'bg-amber-400' : idx === 1 ? 'bg-slate-400' : 'bg-amber-600'}`}>
                                                         {idx + 1}
                                                     </div>
                                                 )}
                                             </div>
                                             <div>
                                                 <div className="font-bold text-sm text-[var(--text-primary)] dark:text-white">{agent.name}</div>
-                                                <div className="text-[10px] text-[var(--text-tertiary)] dark:text-slate-400 font-medium">{agent.deals} deal đã chốt</div>
+                                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-medium">{agent.deals} deal đã chốt</div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4 text-right">
                                             <div>
-                                                <div className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">Tỷ lệ chốt</div>
+                                                <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">Tỷ lệ chốt</div>
                                                 <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">{agent.closeRate}%</div>
                                             </div>
                                             <div className="w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
                                             <div>
-                                                <div className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">Điểm SLA</div>
+                                                <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">Điểm SLA</div>
                                                 <div className="flex items-center gap-1 justify-end">
                                                     <span className={`font-bold text-sm ${agent.slaScore >= 90 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'}`}>{agent.slaScore}/100</span>
                                                 </div>
-                                                <div className="text-[9px] text-slate-400 font-medium">TB: {agent.avgResponseTime}</div>
+                                                <div className="text-2xs text-[var(--text-secondary)] font-medium">TB: {agent.avgResponseTime}</div>
                                             </div>
                                         </div>
                                     </div>
