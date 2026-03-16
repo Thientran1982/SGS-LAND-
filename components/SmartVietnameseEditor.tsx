@@ -69,18 +69,18 @@ export const SmartVietnameseEditor: React.FC = () => {
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex flex-wrap gap-2 items-center justify-between">
+        <div className="w-full max-w-4xl mx-auto bg-[var(--bg-surface)] dark:bg-slate-900 rounded-2xl shadow-sm border border-[var(--glass-border)] dark:border-slate-800 overflow-hidden">
+            <div className="p-4 border-b border-[var(--glass-border)] dark:border-slate-800 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 flex flex-wrap gap-2 items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-indigo-500" />
-                    <span className="font-semibold text-slate-700 dark:text-slate-200 text-sm">Smart VN Editor</span>
+                    <span className="font-semibold text-[var(--text-secondary)] dark:text-slate-200 text-sm">Smart VN Editor</span>
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
                     <button
                         onClick={handleRestoreDiacritics}
                         disabled={isProcessing || !text.trim()}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 dark:text-slate-300"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[var(--bg-surface)] dark:bg-slate-800 border border-[var(--glass-border)] dark:border-slate-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-secondary)] dark:text-slate-300"
                     >
                         {isProcessing && activeAction === 'diacritics' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
                         {t('editor.btn_diacritics') || 'Thêm dấu tự động'}
@@ -89,7 +89,7 @@ export const SmartVietnameseEditor: React.FC = () => {
                     <button
                         onClick={handleFixGrammar}
                         disabled={isProcessing || !text.trim()}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 dark:text-slate-300"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[var(--bg-surface)] dark:bg-slate-800 border border-[var(--glass-border)] dark:border-slate-700 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-secondary)] dark:text-slate-300"
                     >
                         {isProcessing && activeAction === 'grammar' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCheck className="w-3.5 h-3.5" />}
                         {t('editor.btn_grammar') || 'Sửa ngữ pháp'}
@@ -97,25 +97,25 @@ export const SmartVietnameseEditor: React.FC = () => {
 
                     <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1 self-center"></div>
 
-                    <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div className="flex bg-[var(--glass-surface-hover)] dark:bg-slate-800 p-0.5 rounded-lg border border-[var(--glass-border)] dark:border-slate-700">
                         <button
                             onClick={() => handleChangeTone('formal')}
                             disabled={isProcessing || !text.trim()}
-                            className="px-3 py-1 text-xs font-medium rounded-md hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all disabled:opacity-50 text-slate-600 dark:text-slate-300"
+                            className="px-3 py-1 text-xs font-medium rounded-md hover:bg-[var(--bg-surface)] dark:hover:bg-slate-700 hover:shadow-sm transition-all disabled:opacity-50 text-[var(--text-secondary)] dark:text-slate-300"
                         >
                             {t('editor.tone_formal') || 'Trang trọng'}
                         </button>
                         <button
                             onClick={() => handleChangeTone('friendly')}
                             disabled={isProcessing || !text.trim()}
-                            className="px-3 py-1 text-xs font-medium rounded-md hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all disabled:opacity-50 text-slate-600 dark:text-slate-300"
+                            className="px-3 py-1 text-xs font-medium rounded-md hover:bg-[var(--bg-surface)] dark:hover:bg-slate-700 hover:shadow-sm transition-all disabled:opacity-50 text-[var(--text-secondary)] dark:text-slate-300"
                         >
                             {t('editor.tone_friendly') || 'Thân thiện'}
                         </button>
                         <button
                             onClick={() => handleChangeTone('persuasive')}
                             disabled={isProcessing || !text.trim()}
-                            className="px-3 py-1 text-xs font-medium rounded-md hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all disabled:opacity-50 text-slate-600 dark:text-slate-300"
+                            className="px-3 py-1 text-xs font-medium rounded-md hover:bg-[var(--bg-surface)] dark:hover:bg-slate-700 hover:shadow-sm transition-all disabled:opacity-50 text-[var(--text-secondary)] dark:text-slate-300"
                         >
                             {t('editor.tone_persuasive') || 'Thuyết phục'}
                         </button>
@@ -128,7 +128,7 @@ export const SmartVietnameseEditor: React.FC = () => {
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     placeholder={t('editor.placeholder') || "Nhập văn bản tiếng Việt (có thể gõ không dấu: 'toi muon mua can ho 3 phong ngu')..."}
-                    className="w-full h-64 p-6 bg-transparent border-none resize-none focus:ring-0 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 text-base leading-relaxed"
+                    className="w-full h-64 p-6 bg-transparent border-none resize-none focus:ring-0 text-[var(--text-secondary)] dark:text-slate-200 placeholder:text-[var(--text-muted)] dark:placeholder:text-[var(--text-secondary)] text-base leading-relaxed"
                     spellCheck={false}
                 />
                 
@@ -136,9 +136,9 @@ export const SmartVietnameseEditor: React.FC = () => {
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center"
+                        className="absolute inset-0 bg-[var(--bg-surface)]/50 dark:bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center"
                     >
-                        <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                        <div className="bg-[var(--bg-surface)] dark:bg-slate-800 px-4 py-2 rounded-full shadow-lg border border-[var(--glass-border)] dark:border-slate-700 flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
                             <Loader2 className="w-4 h-4 animate-spin" />
                             {t('editor.processing') || 'Đang xử lý ngôn ngữ...'}
                         </div>
@@ -146,10 +146,10 @@ export const SmartVietnameseEditor: React.FC = () => {
                 )}
             </div>
             
-            <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center text-xs text-slate-500">
+            <div className="px-4 py-3 border-t border-[var(--glass-border)] dark:border-slate-800 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 flex justify-between items-center text-xs text-[var(--text-tertiary)]">
                 <span>{text.length} {t('editor.chars') || 'ký tự'} | {text.split(/\s+/).filter(w => w.length > 0).length} {t('editor.words') || 'từ'}</span>
                 <span className="flex items-center gap-1">
-                    Powered by <span className="font-semibold text-slate-700 dark:text-slate-300">Gemini 3.1</span>
+                    Powered by <span className="font-semibold text-[var(--text-secondary)] dark:text-slate-300">Gemini 3.1</span>
                 </span>
             </div>
         </div>

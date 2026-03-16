@@ -119,17 +119,17 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
     if (loading) return <div className="h-screen flex items-center justify-center text-slate-400 font-mono animate-pulse">{t('common.loading') || 'Đang tải hợp đồng...'}</div>;
     
     if (!contract) return (
-        <div className="h-screen flex flex-col items-center justify-center text-slate-500 bg-slate-50">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+        <div className="h-screen flex flex-col items-center justify-center text-[var(--text-tertiary)] bg-[var(--glass-surface)]">
+            <div className="w-16 h-16 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mb-4 shadow-sm">
                 <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             </div>
-            <h1 className="text-xl font-bold text-slate-800 mb-2">{t('contracts.not_found')}</h1>
+            <h1 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('contracts.not_found')}</h1>
             <p>{t('contracts.not_found_desc')}</p>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-800 py-8 px-4 sm:px-6" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <div className="min-h-screen bg-[var(--glass-surface)] text-[var(--text-primary)] py-8 px-4 sm:px-6" style={{ fontFamily: "'Inter', sans-serif" }}>
             <div className="max-w-4xl mx-auto mb-4 flex justify-between items-center">
                 <button 
                     onClick={() => {
@@ -140,15 +140,15 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                             window.location.hash = '#/';
                         }
                     }}
-                    className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-medium"
+                    className="flex items-center gap-2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors font-medium"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                     {t('common.back')}
                 </button>
             </div>
-            <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden border border-slate-200">
+            <div className="max-w-4xl mx-auto bg-[var(--bg-surface)] shadow-xl rounded-2xl overflow-hidden border border-[var(--glass-border)]">
                 
-                <div ref={contractRef} className="bg-white" style={{ fontFamily: "'Noto Serif', 'Times New Roman', Times, serif" }}>
+                <div ref={contractRef} className="bg-[var(--bg-surface)]" style={{ fontFamily: "'Noto Serif', 'Times New Roman', Times, serif" }}>
                     {/* Header */}
                     <div className="bg-indigo-600 p-8 text-white text-center relative">
                         <div className="absolute top-6 left-6 flex items-center gap-2 opacity-80">
@@ -174,48 +174,48 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                         
                         {/* Parties */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+                            <div className="bg-[var(--glass-surface)] p-6 rounded-xl border border-[var(--glass-border)]">
                                 <h3 className="font-bold text-indigo-700 mb-4 flex items-center gap-2">
                                     <span className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-xs">A</span>
                                     {t('contracts.party_a_title')}
                                 </h3>
                                 <div className="space-y-3 text-sm">
-                                    <p><span className="text-slate-500 w-24 inline-block">{t('contracts.party_a_name')}</span> <strong className="text-slate-900">{contract.partyAName}</strong></p>
-                                    {contract.partyARepresentative && <p><span className="text-slate-500 w-24 inline-block">{t('contracts.representative')}</span> <span className="text-slate-900">{contract.partyARepresentative}</span></p>}
-                                    <p><span className="text-slate-500 w-24 inline-block">{t('contracts.phone')}</span> <span className="text-slate-900">{contract.partyAPhone}</span></p>
-                                    <p><span className="text-slate-500 w-24 inline-block">{t('contracts.tax_code')}</span> <span className="text-slate-900">{contract.partyAIdNumber || contract.partyATaxCode}</span></p>
-                                    <p><span className="text-slate-500 w-24 inline-block">{t('contracts.address')}</span> <span className="text-slate-900">{contract.partyAAddress}</span></p>
+                                    <p><span className="text-[var(--text-tertiary)] w-24 inline-block">{t('contracts.party_a_name')}</span> <strong className="text-[var(--text-primary)]">{contract.partyAName}</strong></p>
+                                    {contract.partyARepresentative && <p><span className="text-[var(--text-tertiary)] w-24 inline-block">{t('contracts.representative')}</span> <span className="text-[var(--text-primary)]">{contract.partyARepresentative}</span></p>}
+                                    <p><span className="text-[var(--text-tertiary)] w-24 inline-block">{t('contracts.phone')}</span> <span className="text-[var(--text-primary)]">{contract.partyAPhone}</span></p>
+                                    <p><span className="text-[var(--text-tertiary)] w-24 inline-block">{t('contracts.tax_code')}</span> <span className="text-[var(--text-primary)]">{contract.partyAIdNumber || contract.partyATaxCode}</span></p>
+                                    <p><span className="text-[var(--text-tertiary)] w-24 inline-block">{t('contracts.address')}</span> <span className="text-[var(--text-primary)]">{contract.partyAAddress}</span></p>
                                 </div>
                             </div>
 
-                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+                            <div className="bg-[var(--glass-surface)] p-6 rounded-xl border border-[var(--glass-border)]">
                                 <h3 className="font-bold text-emerald-700 mb-4 flex items-center gap-2">
                                     <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs">B</span>
                                     {t('contracts.party_b_title')}
                                 </h3>
                                 <div className="space-y-3 text-sm">
-                                    <p><span className="text-slate-500 w-24 inline-block">{t('contracts.party_b_name')}</span> <strong className="text-slate-900">{contract.partyBName}</strong></p>
-                                    <p><span className="text-slate-500 w-24 inline-block">{t('contracts.phone')}</span> <span className="text-slate-900">{contract.partyBPhone}</span></p>
-                                    <p><span className="text-slate-500 w-24 inline-block">{t('contracts.id_number')}</span> <span className="text-slate-900">{contract.partyBIdNumber}</span></p>
-                                    <p><span className="text-slate-500 w-24 inline-block">{t('contracts.address')}</span> <span className="text-slate-900">{contract.partyBAddress}</span></p>
+                                    <p><span className="text-[var(--text-tertiary)] w-24 inline-block">{t('contracts.party_b_name')}</span> <strong className="text-[var(--text-primary)]">{contract.partyBName}</strong></p>
+                                    <p><span className="text-[var(--text-tertiary)] w-24 inline-block">{t('contracts.phone')}</span> <span className="text-[var(--text-primary)]">{contract.partyBPhone}</span></p>
+                                    <p><span className="text-[var(--text-tertiary)] w-24 inline-block">{t('contracts.id_number')}</span> <span className="text-[var(--text-primary)]">{contract.partyBIdNumber}</span></p>
+                                    <p><span className="text-[var(--text-tertiary)] w-24 inline-block">{t('contracts.address')}</span> <span className="text-[var(--text-primary)]">{contract.partyBAddress}</span></p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Property Details */}
                         <div>
-                            <h3 className="font-bold text-slate-800 border-b-2 border-slate-100 pb-2 mb-4 uppercase text-sm tracking-wider">{t('contracts.property_info_title')}</h3>
+                            <h3 className="font-bold text-[var(--text-primary)] border-b-2 border-[var(--glass-border)] pb-2 mb-4 uppercase text-sm tracking-wider">{t('contracts.property_info_title')}</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
-                                <p><span className="text-slate-500 block mb-1">{t('contracts.property_address')}</span> <strong className="text-slate-900 text-base">{contract.propertyAddress}</strong></p>
-                                <p><span className="text-slate-500 block mb-1">{t('contracts.property_type')}</span> <span className="text-slate-900">{contract.propertyType || '---'}</span></p>
-                                <p><span className="text-slate-500 block mb-1">{t('contracts.total_area')}</span> <span className="text-slate-900">{contract.propertyArea} m²</span></p>
-                                <p><span className="text-slate-500 block mb-1">{t('contracts.certificate_number')}</span> <span className="text-slate-900">{contract.propertyCertificateNumber || '---'}</span></p>
+                                <p><span className="text-[var(--text-tertiary)] block mb-1">{t('contracts.property_address')}</span> <strong className="text-[var(--text-primary)] text-base">{contract.propertyAddress}</strong></p>
+                                <p><span className="text-[var(--text-tertiary)] block mb-1">{t('contracts.property_type')}</span> <span className="text-[var(--text-primary)]">{contract.propertyType || '---'}</span></p>
+                                <p><span className="text-[var(--text-tertiary)] block mb-1">{t('contracts.total_area')}</span> <span className="text-[var(--text-primary)]">{contract.propertyArea} m²</span></p>
+                                <p><span className="text-[var(--text-tertiary)] block mb-1">{t('contracts.certificate_number')}</span> <span className="text-[var(--text-primary)]">{contract.propertyCertificateNumber || '---'}</span></p>
                             </div>
                         </div>
 
                         {/* Financials */}
                         <div>
-                            <h3 className="font-bold text-slate-800 border-b-2 border-slate-100 pb-2 mb-4 uppercase text-sm tracking-wider">{t('contracts.finance_terms_title')}</h3>
+                            <h3 className="font-bold text-[var(--text-primary)] border-b-2 border-[var(--glass-border)] pb-2 mb-4 uppercase text-sm tracking-wider">{t('contracts.finance_terms_title')}</h3>
                             <div className="bg-amber-50 rounded-xl p-6 border border-amber-100">
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                                     <div>
@@ -245,17 +245,17 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                         </div>
 
                         {/* Signatures */}
-                        <div className="pt-8 border-t-2 border-dashed border-slate-200">
+                        <div className="pt-8 border-t-2 border-dashed border-[var(--glass-border)]">
                             <div className="grid grid-cols-2 gap-8 text-center pt-4">
                                 <div>
-                                    <h4 className="font-bold text-slate-800 mb-1">{t('contracts.party_a_rep_title')}</h4>
-                                    <p className="text-xs text-slate-500 mb-24">{t('contracts.sign_note')}</p>
-                                    <p className="font-bold text-slate-800">{contract.partyARepresentative || contract.partyAName}</p>
+                                    <h4 className="font-bold text-[var(--text-primary)] mb-1">{t('contracts.party_a_rep_title')}</h4>
+                                    <p className="text-xs text-[var(--text-tertiary)] mb-24">{t('contracts.sign_note')}</p>
+                                    <p className="font-bold text-[var(--text-primary)]">{contract.partyARepresentative || contract.partyAName}</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-slate-800 mb-1">{t('contracts.party_b_rep_title')}</h4>
-                                    <p className="text-xs text-slate-500 mb-24">{t('contracts.sign_note')}</p>
-                                    <p className="font-bold text-slate-800">{contract.partyBName}</p>
+                                    <h4 className="font-bold text-[var(--text-primary)] mb-1">{t('contracts.party_b_rep_title')}</h4>
+                                    <p className="text-xs text-[var(--text-tertiary)] mb-24">{t('contracts.sign_note')}</p>
+                                    <p className="font-bold text-[var(--text-primary)]">{contract.partyBName}</p>
                                 </div>
                             </div>
                         </div>
@@ -264,10 +264,10 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 </div>
                 
                 {/* Actions */}
-                <div className="bg-slate-50 p-6 border-t border-slate-200 flex flex-wrap justify-center gap-4 print:hidden">
+                <div className="bg-[var(--glass-surface)] p-6 border-t border-[var(--glass-border)] flex flex-wrap justify-center gap-4 print:hidden">
                     <button 
                         onClick={() => window.print()}
-                        className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
+                        className="px-6 py-2.5 bg-[var(--bg-surface)] border border-slate-300 text-[var(--text-secondary)] rounded-xl font-bold hover:bg-[var(--glass-surface)] transition-colors flex items-center gap-2 shadow-sm"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                         {t('contracts.print')}

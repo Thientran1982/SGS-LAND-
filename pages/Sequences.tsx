@@ -39,7 +39,7 @@ const getStepIcon = (type: string, channel?: string) => {
 // SUB-COMPONENTS
 // -----------------------------------------------------------------------------
 
-const StatPill = ({ label, value, color = "bg-slate-100 text-slate-600" }: { label: string, value: string | number, color?: string }) => (
+const StatPill = ({ label, value, color = "bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" }: { label: string, value: string | number, color?: string }) => (
     <div className={`flex flex-col items-center justify-center p-3 rounded-xl border border-transparent ${color}`}>
         <span className="text-xl font-bold">{value}</span>
         <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">{label}</span>
@@ -51,16 +51,16 @@ const StepCard = memo(({ step, index, t }: { step: SequenceStep, index: number, 
         {/* Connector Line */}
         <div className="absolute left-6 top-8 bottom-[-24px] w-0.5 bg-slate-200 last:hidden"></div>
         
-        <div className="w-12 h-12 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center shadow-sm z-10 shrink-0">
+        <div className="w-12 h-12 rounded-full bg-[var(--bg-surface)] border-2 border-[var(--glass-border)] flex items-center justify-center shadow-sm z-10 shrink-0">
             {getStepIcon(step.type, step.channel)}
         </div>
         
-        <div className="flex-1 bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 relative group hover:border-indigo-200 transition-colors">
+        <div className="flex-1 bg-[var(--bg-surface)] p-4 rounded-xl border border-[var(--glass-border)] shadow-sm mb-6 relative group hover:border-indigo-200 transition-colors">
             <div className="absolute top-4 right-4 text-xs font-bold text-slate-400">
                 +{step.delayHours}{t('seq.hours')}
             </div>
             
-            <h4 className="font-bold text-sm text-slate-800 mb-1">
+            <h4 className="font-bold text-sm text-[var(--text-primary)] mb-1">
                 {step.type === 'WAIT' ? t('seq.step_wait') : 
                  step.type === 'CREATE_TASK' ? t('seq.step_task') : 
                  step.channel === Channel.EMAIL ? t('seq.step_email') : 
@@ -68,7 +68,7 @@ const StepCard = memo(({ step, index, t }: { step: SequenceStep, index: number, 
                  'Send Zalo'}
             </h4>
             
-            <p className="text-xs text-slate-500 line-clamp-1">
+            <p className="text-xs text-[var(--text-tertiary)] line-clamp-1">
                 {step.type === 'WAIT' ? `Wait for ${step.delayHours} ${t('seq.hours')}` : 
                  step.type === 'CREATE_TASK' ? step.taskTitle : 
                  `Template: ${step.templateId || 'Default'}`}
@@ -83,16 +83,16 @@ const SequenceDrawer = ({ isOpen, onClose, sequence, onSave, t }: any) => {
     return createPortal(
         <div className="fixed inset-0 z-[100] flex justify-end">
             <div className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-            <div className="w-full max-w-2xl bg-slate-50 h-full shadow-2xl relative animate-slide-in-right flex flex-col">
+            <div className="w-full max-w-2xl bg-[var(--glass-surface)] h-full shadow-2xl relative animate-slide-in-right flex flex-col">
                 {/* Header */}
-                <div className="bg-white px-6 py-4 border-b border-slate-200 flex justify-between items-center shrink-0">
+                <div className="bg-[var(--bg-surface)] px-6 py-4 border-b border-[var(--glass-border)] flex justify-between items-center shrink-0">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-800">{sequence.name}</h2>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${sequence.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                        <h2 className="text-lg font-bold text-[var(--text-primary)]">{sequence.name}</h2>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${sequence.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)]'}`}>
                             {sequence.isActive ? t('seq.status_active') : t('seq.status_draft')}
                         </span>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600">
+                    <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors text-slate-400 hover:text-[var(--text-secondary)]">
                         {ICONS.CLOSE}
                     </button>
                 </div>
@@ -110,8 +110,8 @@ const SequenceDrawer = ({ isOpen, onClose, sequence, onSave, t }: any) => {
                     )}
 
                     {/* Configuration */}
-                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-8">
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-2">{t('seq.trigger_stage')}</label>
+                    <div className="bg-[var(--bg-surface)] p-5 rounded-xl border border-[var(--glass-border)] shadow-sm mb-8">
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">{t('seq.trigger_stage')}</label>
                         <div className="inline-block px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-bold border border-indigo-100">
                             {t(`stage.${sequence.triggerStage}`)}
                         </div>
@@ -124,17 +124,17 @@ const SequenceDrawer = ({ isOpen, onClose, sequence, onSave, t }: any) => {
                         ))}
                         
                         {/* Add Step Placeholder */}
-                        <div className="flex gap-4 relative opacity-50 hover:opacity-100 transition-opacity cursor-pointer border-2 border-dashed border-slate-300 rounded-xl p-4 items-center justify-center bg-slate-50 hover:bg-white">
+                        <div className="flex gap-4 relative opacity-50 hover:opacity-100 transition-opacity cursor-pointer border-2 border-dashed border-slate-300 rounded-xl p-4 items-center justify-center bg-[var(--glass-surface)] hover:bg-[var(--bg-surface)]">
                             <div className="flex flex-col items-center gap-1">
                                 {ICONS.ADD}
-                                <span className="text-xs font-bold text-slate-500">{t('seq.add_step')}</span>
+                                <span className="text-xs font-bold text-[var(--text-tertiary)]">{t('seq.add_step')}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="bg-white p-4 border-t border-slate-200 shrink-0">
+                <div className="bg-[var(--bg-surface)] p-4 border-t border-[var(--glass-border)] shrink-0">
                     <button className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-all shadow-lg active:scale-95">
                         {t('common.save')}
                     </button>
@@ -148,14 +148,14 @@ const SequenceDrawer = ({ isOpen, onClose, sequence, onSave, t }: any) => {
 const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Sequence, onClick: () => void, onDelete: () => void, t: any }) => (
     <div 
         onClick={onClick}
-        className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden"
+        className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden"
     >
         <div className="flex justify-between items-start mb-4">
             <div>
-                <h3 className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{sequence.name}</h3>
+                <h3 className="font-bold text-[var(--text-primary)] group-hover:text-indigo-600 transition-colors">{sequence.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
                     <span className={`w-2 h-2 rounded-full ${sequence.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-                    <span className="text-xs text-slate-500">{sequence.isActive ? t('seq.status_active') : t('seq.status_draft')}</span>
+                    <span className="text-xs text-[var(--text-tertiary)]">{sequence.isActive ? t('seq.status_active') : t('seq.status_draft')}</span>
                 </div>
             </div>
             <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
@@ -166,22 +166,22 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
         {/* Mini Stats */}
         <div className="grid grid-cols-3 gap-2 py-3 border-t border-b border-slate-50 my-4">
             <div className="text-center">
-                <div className="text-lg font-bold text-slate-800">{sequence.stats?.enrolled || 0}</div>
+                <div className="text-lg font-bold text-[var(--text-primary)]">{sequence.stats?.enrolled || 0}</div>
                 <div className="text-[9px] text-slate-400 font-bold uppercase">{t('seq.stat_active')}</div>
             </div>
-            <div className="text-center border-l border-slate-100">
+            <div className="text-center border-l border-[var(--glass-border)]">
                 <div className="text-lg font-bold text-emerald-600">{sequence.stats?.openRate || 0}%</div>
                 <div className="text-[9px] text-slate-400 font-bold uppercase">{t('seq.stat_open')}</div>
             </div>
-            <div className="text-center border-l border-slate-100">
+            <div className="text-center border-l border-[var(--glass-border)]">
                 <div className="text-lg font-bold text-indigo-600">{sequence.stats?.replyRate || 0}%</div>
                 <div className="text-[9px] text-slate-400 font-bold uppercase">{t('seq.stat_reply')}</div>
             </div>
         </div>
 
-        <div className="flex justify-between items-center text-xs text-slate-500">
+        <div className="flex justify-between items-center text-xs text-[var(--text-tertiary)]">
             <span>{t('seq.steps_count', { count: sequence.steps.length })}</span>
-            <span className="font-mono text-[10px] px-2 py-0.5 bg-slate-100 rounded">{t(`stage.${sequence.triggerStage}`)}</span>
+            <span className="font-mono text-[10px] px-2 py-0.5 bg-[var(--glass-surface-hover)] rounded">{t(`stage.${sequence.triggerStage}`)}</span>
         </div>
 
         {/* Delete Action (Hover) */}
@@ -255,10 +255,10 @@ export const Sequences: React.FC = () => {
         <div className="space-y-6 pb-20 animate-enter relative">
             {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
-            <div className="flex justify-between items-center bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+            <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">{t('seq.title')}</h2>
-                    <p className="text-sm text-slate-500">{t('seq.subtitle')}</p>
+                    <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('seq.title')}</h2>
+                    <p className="text-sm text-[var(--text-tertiary)]">{t('seq.subtitle')}</p>
                 </div>
                 <button onClick={handleCreate} className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95">
                     {ICONS.ADD} {t('seq.btn_new')}

@@ -90,16 +90,16 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                 <div className="flex justify-between items-center mb-8">
                     <button 
                         onClick={onBack}
-                        className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors group"
+                        className="flex items-center gap-2 text-sm font-bold text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors group"
                     >
-                        <span className="p-2 bg-white rounded-full shadow-sm group-hover:shadow-md border border-slate-100 transition-all group-hover:-translate-x-1">
+                        <span className="p-2 bg-[var(--bg-surface)] rounded-full shadow-sm group-hover:shadow-md border border-[var(--glass-border)] transition-all group-hover:-translate-x-1">
                             {ICONS.BACK}
                         </span>
                         Quay lại tin tức
                     </button>
                     {isAdmin && (
                         <div className="flex gap-2">
-                            <button onClick={() => onEdit && onEdit(article)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors">
+                            <button onClick={() => onEdit && onEdit(article)} className="px-4 py-2 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors">
                                 Sửa
                             </button>
                             <button onClick={() => setIsConfirmOpen(true)} className="px-4 py-2 bg-rose-50 text-rose-600 rounded-lg text-sm font-bold hover:bg-rose-100 transition-colors">
@@ -113,26 +113,26 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                     <span className="bg-indigo-600 text-white px-3 py-1 rounded-full shadow-md shadow-indigo-200">
                         {article.category}
                     </span>
-                    <span className="flex items-center gap-1 text-slate-500">
+                    <span className="flex items-center gap-1 text-[var(--text-tertiary)]">
                         {ICONS.CALENDAR} {article.date}
                     </span>
-                    <span className="flex items-center gap-1 text-slate-500">
+                    <span className="flex items-center gap-1 text-[var(--text-tertiary)]">
                         {ICONS.CLOCK} {article.readTime}
                     </span>
                 </div>
 
-                <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-8 leading-tight break-words">
+                <h1 className="text-3xl md:text-5xl font-black text-[var(--text-primary)] mb-8 leading-tight break-words">
                     {article.title}
                 </h1>
 
-                <div className="flex items-center justify-between border-t border-b border-slate-200 py-6 mb-10">
+                <div className="flex items-center justify-between border-t border-b border-[var(--glass-border)] py-6 mb-10">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
                             {article.author.charAt(0)}
                         </div>
                         <div>
-                            <div className="text-sm font-bold text-slate-900">{article.author}</div>
-                            <div className="text-xs text-slate-500">Ban Biên Tập SGS</div>
+                            <div className="text-sm font-bold text-[var(--text-primary)]">{article.author}</div>
+                            <div className="text-xs text-[var(--text-tertiary)]">Ban Biên Tập SGS</div>
                         </div>
                     </div>
                     <div className="flex gap-2 items-center">
@@ -141,7 +141,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                                 {shareFeedback}
                             </span>
                         )}
-                        <button onClick={handleShare} className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-colors" title="Chia sẻ">
+                        <button onClick={handleShare} className="p-2 rounded-full hover:bg-[var(--glass-surface-hover)] text-slate-400 hover:text-indigo-600 transition-colors" title="Chia sẻ">
                             {ICONS.SHARE}
                         </button>
                     </div>
@@ -158,8 +158,8 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
 
             {/* Content Body */}
             <div className="max-w-3xl mx-auto px-6">
-                <div className="prose prose-lg prose-slate prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-a:text-indigo-600 hover:prose-a:text-indigo-700 max-w-none">
-                    <p className="lead font-medium text-xl text-slate-800 mb-8 not-prose border-l-4 border-indigo-500 pl-4 bg-slate-50 py-2 rounded-r-lg">
+                <div className="prose prose-lg prose-slate prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-a:text-indigo-600 hover:prose-a:text-indigo-700 max-w-none">
+                    <p className="lead font-medium text-xl text-[var(--text-primary)] mb-8 not-prose border-l-4 border-indigo-500 pl-4 bg-[var(--glass-surface)] py-2 rounded-r-lg">
                         {article.excerpt}
                     </p>
                     <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content || '') }} />
@@ -167,8 +167,8 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
 
                 {/* Media Gallery */}
                 {(article.images?.length || article.videos?.length) ? (
-                    <div className="mt-12 pt-8 border-t border-slate-200">
-                        <h3 className="text-xl font-bold text-slate-900 mb-6">Thư viện Media</h3>
+                    <div className="mt-12 pt-8 border-t border-[var(--glass-border)]">
+                        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Thư viện Media</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {article.images?.map((url, index) => (
                                 <div key={`img-${index}`} className="aspect-video rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow cursor-pointer isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
@@ -185,10 +185,10 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                 ) : null}
 
                 {/* Tags */}
-                <div className="mt-12 pt-8 border-t border-slate-200">
+                <div className="mt-12 pt-8 border-t border-[var(--glass-border)]">
                     <div className="flex flex-wrap gap-2">
                         {article.tags.map(tag => (
-                            <span key={tag} className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition-colors">
+                            <span key={tag} className="px-3 py-1.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] rounded-lg text-xs font-bold hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition-colors">
                                 #{tag}
                             </span>
                         ))}
@@ -304,53 +304,53 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-[var(--bg-surface)] p-8 rounded-2xl shadow-sm border border-[var(--glass-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Tiêu đề</label>
-                    <input type="text" name="title" value={formData.title} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Tiêu đề</label>
+                    <input type="text" name="title" value={formData.title} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                 </div>
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Tóm tắt (Excerpt)</label>
-                    <textarea name="excerpt" value={formData.excerpt} onChange={handleChange} required rows={3} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none" />
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Tóm tắt (Excerpt)</label>
+                    <textarea name="excerpt" value={formData.excerpt} onChange={handleChange} required rows={3} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none" />
                 </div>
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Nội dung (HTML)</label>
-                    <textarea name="content" value={formData.content} onChange={handleChange} required rows={10} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-mono text-sm" />
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Nội dung (HTML)</label>
+                    <textarea name="content" value={formData.content} onChange={handleChange} required rows={10} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-mono text-sm" />
                 </div>
                 <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Chuyên mục</label>
-                    <input type="text" name="category" value={formData.category} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Chuyên mục</label>
+                    <input type="text" name="category" value={formData.category} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                 </div>
                 <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Tác giả</label>
-                    <input type="text" name="author" value={formData.author} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Tác giả</label>
+                    <input type="text" name="author" value={formData.author} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                 </div>
                 <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">URL Hình ảnh chính</label>
-                    <input type="text" name="image" value={formData.image} onChange={handleChange} placeholder="https://... hoặc tải ảnh lên ở trên" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">URL Hình ảnh chính</label>
+                    <input type="text" name="image" value={formData.image} onChange={handleChange} placeholder="https://... hoặc tải ảnh lên ở trên" className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                 </div>
                 <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Tags (cách nhau bằng dấu phẩy)</label>
-                    <input type="text" value={formData.tags?.join(', ')} onChange={handleTagsChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Tags (cách nhau bằng dấu phẩy)</label>
+                    <input type="text" value={formData.tags?.join(', ')} onChange={handleTagsChange} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                 </div>
                 
                 {/* Media Upload Section */}
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Hình ảnh & Video đính kèm</label>
-                    <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:border-indigo-500 transition-colors bg-slate-50">
+                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Hình ảnh & Video đính kèm</label>
+                    <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:border-indigo-500 transition-colors bg-[var(--glass-surface)]">
                         <div className="space-y-1 text-center">
                             <svg className="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                            <div className="flex text-sm text-slate-600 justify-center">
-                                <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 px-2 py-1 shadow-sm border border-slate-200">
+                            <div className="flex text-sm text-[var(--text-secondary)] justify-center">
+                                <label htmlFor="file-upload" className="relative cursor-pointer bg-[var(--bg-surface)] rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 px-2 py-1 shadow-sm border border-[var(--glass-border)]">
                                     <span>Tải file lên</span>
                                     <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple accept="image/*,video/*" onChange={handleFileChange} />
                                 </label>
                                 <p className="pl-1 py-1">hoặc kéo thả vào đây</p>
                             </div>
-                            <p className="text-xs text-slate-500">PNG, JPG, GIF, MP4 lên đến 50MB</p>
+                            <p className="text-xs text-[var(--text-tertiary)]">PNG, JPG, GIF, MP4 lên đến 50MB</p>
                         </div>
                     </div>
 
@@ -358,7 +358,7 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
                     {(formData.images?.length || formData.videos?.length) ? (
                         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                             {formData.images?.map((url, index) => (
-                                <div key={`img-${index}`} className="relative group rounded-xl overflow-hidden aspect-square border border-slate-200">
+                                <div key={`img-${index}`} className="relative group rounded-xl overflow-hidden aspect-square border border-[var(--glass-border)]">
                                     <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
                                     <button 
                                         type="button" 
@@ -370,7 +370,7 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
                                 </div>
                             ))}
                             {formData.videos?.map((url, index) => (
-                                <div key={`vid-${index}`} className="relative group rounded-xl overflow-hidden aspect-square border border-slate-200 bg-slate-900">
+                                <div key={`vid-${index}`} className="relative group rounded-xl overflow-hidden aspect-square border border-[var(--glass-border)] bg-slate-900">
                                     <video src={url} className="w-full h-full object-cover opacity-80" controls />
                                     <button 
                                         type="button" 
@@ -387,11 +387,11 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
 
                 <div className="md:col-span-2 flex items-center gap-3">
                     <input type="checkbox" id="featured" name="featured" checked={formData.featured} onChange={handleChange} className="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500" />
-                    <label htmlFor="featured" className="text-sm font-bold text-slate-700 cursor-pointer">Bài viết nổi bật</label>
+                    <label htmlFor="featured" className="text-sm font-bold text-[var(--text-secondary)] cursor-pointer">Bài viết nổi bật</label>
                 </div>
             </div>
-            <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
-                <button type="button" onClick={onCancel} className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors">Hủy</button>
+            <div className="flex justify-end gap-3 pt-6 border-t border-[var(--glass-border)]">
+                <button type="button" onClick={onCancel} className="px-6 py-3 rounded-xl font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors">Hủy</button>
                 <button type="submit" className="px-6 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all">Lưu bài viết</button>
             </div>
         </form>
@@ -505,7 +505,7 @@ export const News: React.FC = () => {
     
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--glass-surface)] flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             </div>
         );
@@ -513,10 +513,10 @@ export const News: React.FC = () => {
 
     if (isCreating || editingArticle) {
         return (
-            <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
-                <div className="sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">
+            <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+                <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                     <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-                        <button onClick={() => { setIsCreating(false); setEditingArticle(null); }} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors">
+                        <button onClick={() => { setIsCreating(false); setEditingArticle(null); }} className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors">
                             {ICONS.BACK} <span className="hidden md:inline">Hủy</span>
                         </button>
                         <div className="flex items-center gap-2">
@@ -547,11 +547,11 @@ export const News: React.FC = () => {
         const article = articles.find(a => a.id === selectedArticleId);
         if (article) {
             return (
-                <div className="min-h-screen bg-white font-sans text-slate-900 pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+                <div className="min-h-screen bg-[var(--bg-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
                     {/* Header reused */}
-                    <div className="sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">
+                    <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                         <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-                            <button onClick={() => setSelectedArticleId(null)} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors">
+                            <button onClick={() => setSelectedArticleId(null)} className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors">
                                 {ICONS.BACK} <span className="hidden md:inline">Quay lại</span>
                             </button>
                             <div className="flex items-center gap-2">
@@ -589,7 +589,7 @@ export const News: React.FC = () => {
 
     // Default: List View
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+        <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             {errorToast && (
                 <div className="fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl bg-rose-900/90 border border-rose-500 text-white flex items-center gap-3 animate-enter">
                     <span className="font-bold text-sm">{errorToast}</span>
@@ -597,9 +597,9 @@ export const News: React.FC = () => {
             )}
             
             {/* Header */}
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">
+            <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors">
+                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors">
                         {ICONS.BACK} <span className="hidden md:inline">Trang Chủ</span>
                     </button>
                     <div className="flex items-center gap-2">
@@ -617,10 +617,10 @@ export const News: React.FC = () => {
                     <span className="inline-block py-1 px-3 rounded-full bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest mb-4">
                         Cập nhật 2026
                     </span>
-                    <h1 className="text-3xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight">
+                    <h1 className="text-3xl md:text-6xl font-black text-[var(--text-primary)] mb-6 tracking-tight">
                         Tương Lai Bất Động Sản
                     </h1>
-                    <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+                    <p className="text-[var(--text-tertiary)] text-lg max-w-2xl mx-auto">
                         Thông tin thị trường, xu hướng công nghệ PropTech và phân tích dữ liệu AI độc quyền từ SGS Land.
                     </p>
                     {currentUser?.role === UserRole.ADMIN && (
@@ -645,7 +645,7 @@ export const News: React.FC = () => {
                         <img src={featured.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt={featured.title} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
                         <div className="absolute top-6 left-6 md:top-10 md:left-10 z-10">
-                             <span className="inline-block px-4 py-1.5 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold uppercase tracking-wider shadow-lg">
+                             <span className="inline-block px-4 py-1.5 rounded-xl bg-[var(--bg-surface)]/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold uppercase tracking-wider shadow-lg">
                                 Nổi Bật
                             </span>
                         </div>
@@ -661,7 +661,7 @@ export const News: React.FC = () => {
                             </p>
                             <div className="flex items-center gap-4 md:gap-6 text-white/70 text-[10px] md:text-xs font-bold uppercase tracking-widest">
                                 <span className="flex items-center gap-2">{ICONS.CALENDAR} {featured.date}</span>
-                                <span className="w-1 h-1 bg-white/50 rounded-full"></span>
+                                <span className="w-1 h-1 bg-[var(--bg-surface)]/50 rounded-full"></span>
                                 <span>{featured.readTime} đọc</span>
                             </div>
                         </div>
@@ -674,12 +674,12 @@ export const News: React.FC = () => {
                         <div 
                             key={article.id} 
                             onClick={() => setSelectedArticleId(article.id)}
-                            className="bg-white rounded-2xl md:rounded-[32px] border border-slate-100 overflow-hidden hover:shadow-2xl transition-all duration-300 group cursor-pointer hover:-translate-y-2 flex flex-col h-full isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
+                            className="bg-[var(--bg-surface)] rounded-2xl md:rounded-[32px] border border-[var(--glass-border)] overflow-hidden hover:shadow-2xl transition-all duration-300 group cursor-pointer hover:-translate-y-2 flex flex-col h-full isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
                         >
                             <div className="aspect-[4/3] overflow-hidden relative isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
                                 <img src={article.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={article.title} />
                                 <div className="absolute top-4 left-4">
-                                    <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-slate-800 text-[10px] font-bold rounded-lg shadow-sm">
+                                    <span className="px-3 py-1 bg-[var(--bg-surface)]/90 backdrop-blur-sm text-[var(--text-primary)] text-[10px] font-bold rounded-lg shadow-sm">
                                         {article.category}
                                     </span>
                                 </div>
@@ -688,13 +688,13 @@ export const News: React.FC = () => {
                                 <div className="text-[10px] font-bold text-slate-400 mb-3 flex items-center gap-2">
                                     {article.date} <span className="w-1 h-1 bg-slate-300 rounded-full"></span> {article.readTime}
                                 </div>
-                                <h3 className="font-bold text-xl text-slate-900 mb-4 line-clamp-3 group-hover:text-indigo-600 transition-colors leading-snug">
+                                <h3 className="font-bold text-xl text-[var(--text-primary)] mb-4 line-clamp-3 group-hover:text-indigo-600 transition-colors leading-snug">
                                     {article.title}
                                 </h3>
-                                <p className="text-sm text-slate-500 leading-relaxed line-clamp-3 mb-6 flex-1">
+                                <p className="text-sm text-[var(--text-tertiary)] leading-relaxed line-clamp-3 mb-6 flex-1">
                                     {article.excerpt}
                                 </p>
-                                <div className="flex items-center gap-2 text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-all mt-auto">
+                                <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)] group-hover:text-indigo-600 transition-all mt-auto">
                                     Đọc chi tiết {ICONS.ARROW}
                                 </div>
                             </div>
@@ -708,7 +708,7 @@ export const News: React.FC = () => {
                         <button 
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="p-2 rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         </button>
@@ -721,7 +721,7 @@ export const News: React.FC = () => {
                                     className={`w-10 h-10 rounded-xl text-sm font-bold transition-colors ${
                                         currentPage === page 
                                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
-                                        : 'text-slate-600 hover:bg-slate-100'
+                                        : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'
                                     }`}
                                 >
                                     {page}
@@ -732,7 +732,7 @@ export const News: React.FC = () => {
                         <button 
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="p-2 rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         </button>
@@ -745,7 +745,7 @@ export const News: React.FC = () => {
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-600 rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
                     
                     <div className="relative z-10 max-w-xl mx-auto">
-                        <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-8 backdrop-blur-sm text-white">
+                        <div className="w-16 h-16 bg-[var(--bg-surface)]/10 rounded-2xl flex items-center justify-center mx-auto mb-8 backdrop-blur-sm text-white">
                             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                         </div>
                         <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Đừng bỏ lỡ xu hướng 2026</h2>
@@ -756,7 +756,7 @@ export const News: React.FC = () => {
                         <form onSubmit={handleSubscribe} className={`flex flex-col sm:flex-row gap-3 ${subStatus === 'ERROR' ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
                             <div className="relative flex-1">
                                 <input 
-                                    className={`w-full px-6 py-4 rounded-2xl bg-white/10 border text-white placeholder:text-white/40 focus:bg-white/20 outline-none transition-all focus:ring-2 focus:ring-indigo-500/50 
+                                    className={`w-full px-6 py-4 rounded-2xl bg-[var(--bg-surface)]/10 border text-white placeholder:text-white/40 focus:bg-[var(--bg-surface)]/20 outline-none transition-all focus:ring-2 focus:ring-indigo-500/50 
                                         ${subStatus === 'ERROR' ? 'border-rose-500 focus:border-rose-500' : 'border-white/10'}
                                     `}
                                     placeholder="Nhập email của bạn..."
@@ -779,7 +779,7 @@ export const News: React.FC = () => {
                                 className={`px-8 py-4 font-bold rounded-2xl transition-all whitespace-nowrap shadow-lg flex items-center justify-center gap-2 min-w-[160px]
                                     ${subStatus === 'SUCCESS' 
                                         ? 'bg-emerald-500 text-white cursor-default' 
-                                        : 'bg-white text-slate-900 hover:bg-indigo-50 active:scale-95'}
+                                        : 'bg-[var(--bg-surface)] text-[var(--text-primary)] hover:bg-indigo-50 active:scale-95'}
                                 `}
                             >
                                 {subStatus === 'LOADING' ? (

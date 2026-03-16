@@ -55,61 +55,61 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
-            <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100 relative z-10 animate-scale-up">
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                     <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">{ICONS.CALENDAR}</div>
                     {t('detail.book_viewing')}
                 </h3>
                 
                 <div className="space-y-4">
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">{t('leads.name') || 'Họ và tên'}</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('leads.name') || 'Họ và tên'}</label>
                         <input 
                             type="text" 
                             value={name} 
                             onChange={e => setName(e.target.value)} 
                             disabled={isSubmitting}
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white transition-all font-medium text-slate-700 disabled:opacity-50" 
+                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
                             placeholder="Nguyễn Văn A"
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">{t('leads.phone') || 'Số điện thoại'}</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('leads.phone') || 'Số điện thoại'}</label>
                         <input 
                             type="tel" 
                             value={phone} 
                             onChange={e => setPhone(e.target.value)} 
                             disabled={isSubmitting}
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white transition-all font-medium text-slate-700 disabled:opacity-50" 
+                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
                             placeholder="0912345678"
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">{t('common.date')} & {t('common.time')}</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('common.date')} & {t('common.time')}</label>
                         <div className="grid grid-cols-2 gap-3">
                             <input 
                                 type="date" 
                                 value={date} 
                                 onChange={e => setDate(e.target.value)} 
                                 disabled={isSubmitting}
-                                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white transition-all font-medium text-slate-700 disabled:opacity-50" 
+                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
                             />
                             <input 
                                 type="time" 
                                 value={time} 
                                 onChange={e => setTime(e.target.value)} 
                                 disabled={isSubmitting}
-                                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white transition-all font-medium text-slate-700 disabled:opacity-50" 
+                                className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">{t('leads.notes')}</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('leads.notes')}</label>
                         <textarea 
                             value={note}
                             onChange={e => setNote(e.target.value)}
                             disabled={isSubmitting}
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-slate-50 focus:bg-white transition-all h-24 resize-none placeholder:text-slate-400 disabled:opacity-50"
+                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all h-24 resize-none placeholder:text-[var(--text-muted)] disabled:opacity-50"
                             placeholder={t('leads.placeholder_notes')}
                         />
                     </div>
@@ -119,7 +119,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                     <button 
                         onClick={onClose} 
                         disabled={isSubmitting}
-                        className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors disabled:opacity-50"
+                        className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors disabled:opacity-50"
                     >
                         {t('common.cancel')}
                     </button>

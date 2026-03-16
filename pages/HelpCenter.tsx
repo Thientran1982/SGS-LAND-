@@ -50,11 +50,11 @@ export const HelpCenter: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+        <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             {/* Header */}
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">
+            <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors">
+                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors">
                         {ICONS.BACK} {t('common.go_back')}
                     </button>
                     <div className="flex items-center gap-2">
@@ -75,20 +75,20 @@ export const HelpCenter: React.FC = () => {
                     <p className="text-lg text-slate-400 mb-10">{t('help.subtitle')}</p>
                     
                     <div className="relative group">
-                        <div className="absolute left-5 inset-y-0 flex items-center group-focus-within:text-indigo-500 text-slate-500 transition-colors pointer-events-none">
+                        <div className="absolute left-5 inset-y-0 flex items-center group-focus-within:text-indigo-500 text-[var(--text-tertiary)] transition-colors pointer-events-none">
                             {ICONS.SEARCH}
                         </div>
                         <input 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-16 pl-14 pr-14 rounded-2xl bg-white text-slate-900 text-lg shadow-2xl focus:ring-4 focus:ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400"
+                            className="w-full h-16 pl-14 pr-14 rounded-2xl bg-[var(--bg-surface)] text-[var(--text-primary)] text-lg shadow-2xl focus:ring-4 focus:ring-indigo-500/30 outline-none transition-all placeholder:text-[var(--text-muted)]"
                             placeholder={t('help.search_placeholder')}
                         />
                         {searchQuery && (
                             <div className="absolute right-4 inset-y-0 flex items-center">
                                 <button 
                                     onClick={() => setSearchQuery('')}
-                                    className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-100 flex items-center justify-center"
+                                    className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-[var(--glass-surface-hover)] flex items-center justify-center"
                                     title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                 >
                                     {ICONS.X}
@@ -103,35 +103,35 @@ export const HelpCenter: React.FC = () => {
             <div className="max-w-5xl mx-auto px-6 -mt-10 relative z-20">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
                     {categories.map(cat => (
-                        <div key={cat.id} className="bg-white p-6 rounded-2xl shadow-xl shadow-slate-200/50 hover:-translate-y-1 transition-transform cursor-pointer group border border-slate-100">
+                        <div key={cat.id} className="bg-[var(--bg-surface)] p-6 rounded-2xl shadow-xl shadow-slate-200/50 hover:-translate-y-1 transition-transform cursor-pointer group border border-[var(--glass-border)]">
                             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${cat.color} group-hover:scale-110 transition-transform`}>
                                 {cat.icon}
                             </div>
-                            <h3 className="font-bold text-slate-800 text-lg">{cat.title}</h3>
+                            <h3 className="font-bold text-[var(--text-primary)] text-lg">{cat.title}</h3>
                         </div>
                     ))}
                 </div>
 
-                <div className="bg-white rounded-[32px] border border-slate-200 p-8 md:p-12 shadow-sm">
-                    <h2 className="text-2xl font-bold text-slate-900 mb-8">Bài viết phổ biến</h2>
+                <div className="bg-[var(--bg-surface)] rounded-[32px] border border-[var(--glass-border)] p-8 md:p-12 shadow-sm">
+                    <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-8">Bài viết phổ biến</h2>
                     {filteredFaqs.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                             {filteredFaqs.map(faq => (
-                                <a key={faq.id} href="#" className="flex items-center justify-between py-4 border-b border-slate-100 group hover:border-indigo-100 transition-colors">
-                                    <span className="font-medium text-slate-600 group-hover:text-indigo-600 transition-colors">{faq.q}</span>
+                                <a key={faq.id} href="#" className="flex items-center justify-between py-4 border-b border-[var(--glass-border)] group hover:border-indigo-100 transition-colors">
+                                    <span className="font-medium text-[var(--text-secondary)] group-hover:text-indigo-600 transition-colors">{faq.q}</span>
                                     <span className="text-slate-300 group-hover:text-indigo-400 transition-colors">{ICONS.ARROW}</span>
                                 </a>
                             ))}
                         </div>
                     ) : (
                         <div className="text-center py-12">
-                            <p className="text-slate-500">Không tìm thấy kết quả nào cho "{searchQuery}"</p>
+                            <p className="text-[var(--text-tertiary)]">Không tìm thấy kết quả nào cho "{searchQuery}"</p>
                         </div>
                     )}
                 </div>
 
                 <div className="mt-16 text-center">
-                    <p className="text-slate-500 mb-4">Không tìm thấy nội dung bạn cần?</p>
+                    <p className="text-[var(--text-tertiary)] mb-4">Không tìm thấy nội dung bạn cần?</p>
                     <button 
                         onClick={handleContact}
                         className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95"

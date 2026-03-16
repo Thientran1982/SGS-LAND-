@@ -62,18 +62,18 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
         }
     };
 
-    const inputClass = "w-full border border-slate-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-slate-50 focus:bg-white";
-    const labelClass = "block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1";
+    const inputClass = "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]";
+    const labelClass = "block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1";
 
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-full flex flex-col animate-enter">
-                <div className="flex items-center justify-between p-6 border-b border-slate-100 shrink-0">
-                    <h2 className="text-xl font-bold text-slate-800">
+            <div className="relative bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-full flex flex-col animate-enter">
+                <div className="flex items-center justify-between p-6 border-b border-[var(--glass-border)] shrink-0">
+                    <h2 className="text-xl font-bold text-[var(--text-primary)]">
                         {contract ? t('contracts.modal_edit_title') : t('contracts.modal_create_title')}
                     </h2>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors">
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
@@ -301,8 +301,8 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                     </form>
                 </div>
 
-                <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 rounded-b-2xl shrink-0">
-                    <button type="button" onClick={onClose} className="px-6 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-200 transition-colors">
+                <div className="p-6 border-t border-[var(--glass-border)] flex justify-end gap-3 bg-[var(--glass-surface)] rounded-b-2xl shrink-0">
+                    <button type="button" onClick={onClose} className="px-6 py-2.5 rounded-xl font-bold text-sm text-[var(--text-secondary)] hover:bg-slate-200 transition-colors">
                         {t('common.cancel')}
                     </button>
                     <button type="submit" form="contract-form" disabled={loading} className="px-6 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 text-white hover:bg-indigo-700 shadow-md transition-all disabled:opacity-50 flex items-center gap-2">

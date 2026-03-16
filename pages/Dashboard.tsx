@@ -39,7 +39,7 @@ const TrendIndicator = ({ value, label }: { value: number; label: string }) => {
         <div className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
             {isPositive ? ICONS.TREND_UP : ICONS.TREND_DOWN}
             <span>{Math.abs(safeValue)}%</span>
-            <span className="text-slate-500 dark:text-slate-400 font-medium normal-case ml-1">{label}</span>
+            <span className="text-[var(--text-tertiary)] dark:text-slate-400 font-medium normal-case ml-1">{label}</span>
         </div>
     );
 };
@@ -49,20 +49,20 @@ const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
         switch(type) {
             case 'LEAD': return { icon: ICONS.USER, bg: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' };
             case 'DEAL': return { icon: ICONS.CHECK, bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' };
-            case 'SYSTEM': return { icon: ICONS.CLOUD, bg: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' };
+            case 'SYSTEM': return { icon: ICONS.CLOUD, bg: 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] dark:bg-slate-800 dark:text-slate-300' };
             default: return { icon: ICONS.AI, bg: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' };
         }
     };
     const style = getIcon(activity.type);
 
     return (
-        <div className="flex gap-3 py-3 border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors rounded-lg px-2 -mx-2">
+        <div className="flex gap-3 py-3 border-b border-[var(--glass-border)] dark:border-slate-800/50 last:border-0 hover:bg-[var(--glass-surface)]/50 dark:hover:bg-slate-800/30 transition-colors rounded-lg px-2 -mx-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${style.bg}`}>
                 {style.icon}
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">{activity.content}</p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">{activity.time}</p>
+                <p className="text-xs font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{activity.content}</p>
+                <p className="text-[10px] text-[var(--text-tertiary)] dark:text-slate-400 font-mono mt-0.5">{activity.time}</p>
             </div>
         </div>
     );
@@ -71,15 +71,15 @@ const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
 const CustomTooltip = memo(({ active, payload, label, t, formatCurrency, language }: any) => {
     if (active && Array.isArray(payload) && payload.length) {
         return (
-            <div className="bg-white/95 dark:bg-slate-800/95 p-3 rounded-xl border border-slate-200 dark:border-white/10 shadow-xl text-xs backdrop-blur-md z-50">
-                <p className="font-bold mb-2 text-slate-700 dark:text-slate-200 uppercase tracking-wider">{label}</p>
+            <div className="bg-[var(--bg-surface)]/95 dark:bg-slate-800/95 p-3 rounded-xl border border-[var(--glass-border)] dark:border-white/10 shadow-xl text-xs backdrop-blur-md z-50">
+                <p className="font-bold mb-2 text-[var(--text-secondary)] dark:text-slate-200 uppercase tracking-wider">{label}</p>
                 {payload.map((p: any, i: number) => (
                     <div key={i} className="flex items-center justify-between gap-4 mb-1">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }}></div>
-                            <span className="text-slate-600 dark:text-slate-400 capitalize">{p.name}:</span>
+                            <span className="text-[var(--text-secondary)] dark:text-slate-400 capitalize">{p.name}:</span>
                         </div>
-                        <span className="font-mono font-bold text-slate-800 dark:text-white">
+                        <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">
                             {p.value > 1000 ? (formatCurrency ? formatCurrency(p.value) : p.value.toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US')) : p.value}
                         </span>
                     </div>
@@ -94,18 +94,18 @@ const ScatterTooltip = memo(({ active, payload }: any) => {
     if (active && Array.isArray(payload) && payload.length) {
         const data = payload[0].payload;
         return (
-            <div className="bg-white/95 dark:bg-slate-800/95 p-3 rounded-xl border border-slate-200 dark:border-white/10 shadow-xl text-xs backdrop-blur-md z-50">
-                <p className="font-bold mb-2 text-slate-700 dark:text-slate-200 uppercase tracking-wider">Khu vực: {data.location}</p>
+            <div className="bg-[var(--bg-surface)]/95 dark:bg-slate-800/95 p-3 rounded-xl border border-[var(--glass-border)] dark:border-white/10 shadow-xl text-xs backdrop-blur-md z-50">
+                <p className="font-bold mb-2 text-[var(--text-secondary)] dark:text-slate-200 uppercase tracking-wider">Khu vực: {data.location}</p>
                 <div className="flex items-center justify-between gap-4 mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">Diện tích:</span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-white">{data.area} m²</span>
+                    <span className="text-[var(--text-secondary)] dark:text-slate-400">Diện tích:</span>
+                    <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">{data.area} m²</span>
                 </div>
                 <div className="flex items-center justify-between gap-4 mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">Mức giá:</span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-white">{data.price} Tỷ</span>
+                    <span className="text-[var(--text-secondary)] dark:text-slate-400">Mức giá:</span>
+                    <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">{data.price} Tỷ</span>
                 </div>
                 <div className="flex items-center justify-between gap-4 mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">Mức độ quan tâm:</span>
+                    <span className="text-[var(--text-secondary)] dark:text-slate-400">Mức độ quan tâm:</span>
                     <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{data.interest} lượt hỏi</span>
                 </div>
             </div>
@@ -117,7 +117,7 @@ const ScatterTooltip = memo(({ active, payload }: any) => {
 const EmptyState = ({ message }: { message: string }) => (
     <div className="flex flex-col items-center justify-center h-full w-full opacity-60">
         {ICONS.EMPTY}
-        <p className="text-xs text-slate-500 mt-2 font-medium">{message}</p>
+        <p className="text-xs text-[var(--text-tertiary)] mt-2 font-medium">{message}</p>
     </div>
 );
 
@@ -184,19 +184,19 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
     return (
         <BentoCard 
             title={t('dash.traffic_title')}
-            className="h-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900"
+            className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900"
             contentClassName="justify-start"
             icon={<svg className="w-5 h-5 text-sky-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
         >
             <div className="flex justify-between items-end mb-4">
                 <div className="flex gap-6">
                     <div>
-                        <div className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">{stats.rps}</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t('dash.requests_sec')}</div>
+                        <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{stats.rps}</div>
+                        <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.requests_sec')}</div>
                     </div>
                     <div>
-                        <div className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">{stats.latency}<span className="text-sm text-slate-500 ml-1">ms</span></div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t('dash.avg_latency')}</div>
+                        <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{stats.latency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
+                        <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.avg_latency')}</div>
                     </div>
                 </div>
                 <div className={`flex items-center gap-2 px-2 py-1 rounded-full border ${isConnected ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
@@ -320,8 +320,8 @@ export const Dashboard: React.FC = () => {
                 <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
                     {ICONS.WARNING}
                 </div>
-                <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{t('common.error')}</h2>
-                <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md">
+                <h2 className="text-xl font-bold text-[var(--text-primary)] dark:text-white mb-2">{t('common.error')}</h2>
+                <p className="text-[var(--text-tertiary)] dark:text-slate-400 mb-6 max-w-md">
                     Không thể tải dữ liệu tổng quan. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.
                 </p>
                 <button 
@@ -344,14 +344,14 @@ export const Dashboard: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                 <div>
-                    <h1 className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+                    <h1 className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">
                         {t('dash.greeting_morning')}
                     </h1>
                     <div className="flex items-center gap-2 mt-1">
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                        <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 font-medium">
                             {t('dash.overview_subtitle')}
                         </p>
-                        <span className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium border border-slate-200 dark:border-slate-700">
+                        <span className="text-[10px] text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium border border-[var(--glass-border)] dark:border-slate-700">
                             {ICONS.REFRESH} {lastUpdated.toLocaleTimeString()}
                         </span>
                     </div>
@@ -404,7 +404,7 @@ export const Dashboard: React.FC = () => {
                                     {t('dash.commission_2_percent') || "Hoa hồng 2%"}
                                 </div>
                             </div>
-                            <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-xs flex items-center gap-2">
+                            <div className="bg-[var(--bg-surface)]/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-xs flex items-center gap-2">
                                 <span className={`font-bold flex items-center gap-1 ${(analytics.revenueDelta ?? 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
                                     {(analytics.revenueDelta ?? 0) >= 0 ? ICONS.TREND_UP : ICONS.TREND_DOWN}
                                     {Math.abs(analytics.revenueDelta || 0)}%
@@ -417,17 +417,17 @@ export const Dashboard: React.FC = () => {
 
                 {/* 2. Pipeline Value (Giá Trị Pipeline) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.pipeline_value') || "Pipeline Value"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden">
+                    <BentoCard title={t('dash.pipeline_value') || "Pipeline Value"} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
-                                <div className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight mt-2 break-words">
+                                <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight mt-2 break-words">
                                     {formatCompactNumber(analytics.pipelineValue || 0)}
                                 </div>
-                                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
+                                <div className="text-[10px] text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
                                     {t('dash.win_probability') || "Xác suất chốt"}: <span className="text-indigo-600 dark:text-indigo-400">{analytics.winProbability || 0}%</span>
                                 </div>
                             </div>
-                            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 text-xs flex items-center gap-2">
+                            <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
                                 <TrendIndicator value={analytics.pipelineValueDelta || 0} label={t('dash.vs_last_period') || "vs last period"} />
                             </div>
                         </div>
@@ -436,7 +436,7 @@ export const Dashboard: React.FC = () => {
 
                 {/* 3. AI Deflection Rate (Tỷ Lệ Tự Động Hóa AI) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.ai_deflection_rate') || "AI Deflection Rate"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden">
+                    <BentoCard title={t('dash.ai_deflection_rate') || "AI Deflection Rate"} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="flex items-center gap-2 mt-2">
@@ -450,11 +450,11 @@ export const Dashboard: React.FC = () => {
                                             {ICONS.AI}
                                         </div>
                                     </div>
-                                    <div className="text-3xl font-extrabold text-slate-800 dark:text-white">{analytics.aiDeflectionRate || 0}%</div>
+                                    <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white">{analytics.aiDeflectionRate || 0}%</div>
                                 </div>
                                 <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai') || "Xử lý bởi AI"}</div>
                             </div>
-                            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 text-xs flex items-center gap-2">
+                            <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
                                 <TrendIndicator value={analytics.aiDeflectionRateDelta || 0} label={t('dash.vs_last_period') || "vs last period"} />
                             </div>
                         </div>
@@ -463,13 +463,13 @@ export const Dashboard: React.FC = () => {
 
                 {/* 4. Sales Velocity (Tốc Độ Bán Hàng) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.sales_velocity') || "Sales Velocity"} className="h-full min-h-[180px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden">
+                    <BentoCard title={t('dash.sales_velocity') || "Sales Velocity"} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
-                                <div className="text-3xl font-extrabold text-slate-800 dark:text-white mt-2">{analytics.salesVelocity || 0}</div>
-                                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-1">{t('dash.days_to_close') || "Ngày để chốt deal"}</div>
+                                <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white mt-2">{analytics.salesVelocity || 0}</div>
+                                <div className="text-[10px] text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">{t('dash.days_to_close') || "Ngày để chốt deal"}</div>
                             </div>
-                            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 text-xs flex items-center gap-2">
+                            <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
                                 <TrendIndicator value={analytics.salesVelocityDelta || 0} label={t('dash.vs_last_period') || "vs last period"} />
                             </div>
                         </div>
@@ -480,15 +480,15 @@ export const Dashboard: React.FC = () => {
                 <div className="md:col-span-2 lg:col-span-3 min-h-[420px]">
                     <BentoCard 
                         title={t('dash.pipeline_title')}
-                        className="h-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900"
+                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900"
                     >
                         <div className="flex justify-between items-end mb-4">
                             <div>
-                                <div className="text-4xl font-extrabold text-slate-800 dark:text-white tracking-tight">{analytics.totalLeads}</div>
+                                <div className="text-4xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{analytics.totalLeads}</div>
                                 <TrendIndicator value={analytics.totalLeadsDelta} label={t('dash.total_leads')} />
                             </div>
                             <div className="text-right hidden sm:block">
-                                <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">{t('dash.conversion')}</div>
+                                <div className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.conversion')}</div>
                                 <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{!isNaN(analytics.conversionRate) ? analytics.conversionRate : 0}%</div>
                             </div>
                         </div>
@@ -530,7 +530,7 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="md:col-span-2 lg:col-span-1 min-h-[420px]">
-                    <BentoCard title={t('dash.activity_title')} className="h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col">
+                    <BentoCard title={t('dash.activity_title')} className="h-full bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden flex flex-col">
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-2">
                             <div className="flex flex-col gap-2">
                                 {(analytics.recentActivities || []).map((act, idx) => (
@@ -550,7 +550,7 @@ export const Dashboard: React.FC = () => {
                 <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
                     <BentoCard 
                         title="Nhịp đập thị trường (Market Pulse)"
-                        className="h-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900"
+                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900"
                     >
                         <div className="flex-1 w-full h-[320px] relative mt-4 flex flex-col">
                             {analytics.marketPulse && analytics.marketPulse.length > 0 ? (
@@ -583,7 +583,7 @@ export const Dashboard: React.FC = () => {
                                             return (
                                                 <div key={idx} className="flex items-center gap-1.5">
                                                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }}></div>
-                                                    <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{loc}</span>
+                                                    <span className="text-[10px] font-medium text-[var(--text-secondary)] dark:text-slate-400">{loc}</span>
                                                 </div>
                                             );
                                         })}
@@ -599,12 +599,12 @@ export const Dashboard: React.FC = () => {
                 <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
                     <BentoCard 
                         title="Bảng xếp hạng nhân viên (Agent Leaderboard)"
-                        className="h-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-hidden flex flex-col"
+                        className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900 overflow-hidden flex flex-col"
                     >
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-4">
                             <div className="flex flex-col gap-3">
                                 {(analytics.agentLeaderboard || []).map((agent: any, idx: number) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors">
+                                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
                                                 <img src={agent.avatar} alt={agent.name} className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm" referrerPolicy="no-referrer" />
@@ -615,18 +615,18 @@ export const Dashboard: React.FC = () => {
                                                 )}
                                             </div>
                                             <div>
-                                                <div className="font-bold text-sm text-slate-800 dark:text-white">{agent.name}</div>
-                                                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{agent.deals} deal đã chốt</div>
+                                                <div className="font-bold text-sm text-[var(--text-primary)] dark:text-white">{agent.name}</div>
+                                                <div className="text-[10px] text-[var(--text-tertiary)] dark:text-slate-400 font-medium">{agent.deals} deal đã chốt</div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4 text-right">
                                             <div>
-                                                <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-0.5">Tỷ lệ chốt</div>
+                                                <div className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">Tỷ lệ chốt</div>
                                                 <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">{agent.closeRate}%</div>
                                             </div>
                                             <div className="w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
                                             <div>
-                                                <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-0.5">Điểm SLA</div>
+                                                <div className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">Điểm SLA</div>
                                                 <div className="flex items-center gap-1 justify-end">
                                                     <span className={`font-bold text-sm ${agent.slaScore >= 90 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'}`}>{agent.slaScore}/100</span>
                                                 </div>

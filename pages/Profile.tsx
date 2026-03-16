@@ -41,7 +41,7 @@ const TabButton: React.FC<TabButtonProps> = memo(({ active, label, icon, onClick
         onClick={onClick}
         type="button"
         className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all duration-200
-        ${active ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
+        ${active ? 'bg-slate-900 text-white shadow-lg' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-secondary)]'}`}
     >
         <span className={active ? 'text-indigo-200' : 'text-slate-400'}>{icon}</span>
         {label}
@@ -64,7 +64,7 @@ interface InputFieldProps {
 const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange, disabled, placeholder, type = 'text', isTextArea, error, action }) => (
     <div className="space-y-1.5 group">
         <div className="flex justify-between">
-            <label htmlFor={id} className={`text-[11px] font-bold uppercase tracking-wider ml-1 transition-colors ${error ? 'text-rose-500' : 'text-slate-500 group-focus-within:text-indigo-500'}`}>{label}</label>
+            <label htmlFor={id} className={`text-[11px] font-bold uppercase tracking-wider ml-1 transition-colors ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] group-focus-within:text-indigo-500'}`}>{label}</label>
             {action && <div className="text-xs">{action}</div>}
         </div>
         
@@ -75,11 +75,11 @@ const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange
                     value={value} 
                     onChange={onChange}
                     disabled={disabled}
-                    className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm outline-none transition-all resize-none h-32 placeholder:text-slate-400
+                    className={`w-full bg-[var(--glass-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all resize-none h-32 placeholder:text-[var(--text-muted)]
                         ${error 
                             ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20 bg-rose-50 text-rose-900' 
-                            : 'border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white text-slate-800'}
-                        ${disabled ? 'opacity-60 cursor-not-allowed bg-slate-100' : ''}
+                            : 'border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500/20 focus:bg-[var(--bg-surface)] text-[var(--text-primary)]'}
+                        ${disabled ? 'opacity-60 cursor-not-allowed bg-[var(--glass-surface-hover)]' : ''}
                     `}
                     placeholder={placeholder}
                 />
@@ -90,11 +90,11 @@ const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange
                     value={value} 
                     onChange={onChange}
                     disabled={disabled}
-                    className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-slate-400
+                    className={`w-full bg-[var(--glass-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-[var(--text-muted)]
                         ${error 
                             ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20 bg-rose-50 text-rose-900' 
-                            : 'border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white text-slate-800'}
-                        ${disabled ? 'opacity-60 cursor-not-allowed bg-slate-100' : ''}
+                            : 'border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500/20 focus:bg-[var(--bg-surface)] text-[var(--text-primary)]'}
+                        ${disabled ? 'opacity-60 cursor-not-allowed bg-[var(--glass-surface-hover)]' : ''}
                     `}
                     placeholder={placeholder}
                 />
@@ -378,24 +378,24 @@ export const Profile: React.FC = () => {
     return (
         <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-enter">
             {/* Header Card */}
-            <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
+            <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
                 <div className="absolute top-0 right-0 p-40 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60 pointer-events-none"></div>
                 
                 {/* Avatar */}
                 <div className="relative group cursor-pointer z-10" onClick={() => !saving && !uploading && fileInputRef.current?.click()} role="button" aria-label={t('common.upload')}>
-                    <div className="w-32 h-32 rounded-full p-1 border-4 border-white shadow-xl bg-white overflow-hidden relative">
+                    <div className="w-32 h-32 rounded-full p-1 border-4 border-white shadow-xl bg-[var(--bg-surface)] overflow-hidden relative">
                         {uploading ? (
-                            <div className="w-full h-full flex items-center justify-center bg-slate-100">
+                            <div className="w-full h-full flex items-center justify-center bg-[var(--glass-surface-hover)]">
                                 <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                             </div>
                         ) : (
                             <img src={formData.avatar} className="w-full h-full object-cover rounded-full" alt="Avatar" />
                         )}
                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                            <div className="bg-white/20 p-2 rounded-full text-white">{ICONS.UPLOAD}</div>
+                            <div className="bg-[var(--bg-surface)]/20 p-2 rounded-full text-white">{ICONS.UPLOAD}</div>
                         </div>
                     </div>
-                    <button className="absolute bottom-1 right-1 bg-white text-slate-600 p-2 rounded-full shadow-lg border border-slate-100 hover:text-indigo-600 transition-colors">
+                    <button className="absolute bottom-1 right-1 bg-[var(--bg-surface)] text-[var(--text-secondary)] p-2 rounded-full shadow-lg border border-[var(--glass-border)] hover:text-indigo-600 transition-colors">
                         {ICONS.CAMERA}
                     </button>
                     <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/png, image/jpeg, image/webp" aria-hidden="true" />
@@ -403,12 +403,12 @@ export const Profile: React.FC = () => {
 
                 {/* Identity */}
                 <div className="text-center md:text-left z-10 flex-1">
-                    <h1 className="text-3xl font-bold text-slate-800 tracking-tight mb-2">{user.name}</h1>
+                    <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight mb-2">{user.name}</h1>
                     <div className="flex items-center justify-center md:justify-start gap-3">
                         <span className="px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-md shadow-slate-200">
                             {t(`role.${user.role}`)}
                         </span>
-                        <span className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-500">
+                        <span className="px-3 py-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg text-xs font-mono text-[var(--text-tertiary)]">
                             {user.email}
                         </span>
                         {/* SSO Badge */}
@@ -424,7 +424,7 @@ export const Profile: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Sidebar Navigation */}
                 <div className="lg:col-span-3">
-                    <div className="bg-white p-3 rounded-[24px] border border-slate-100 shadow-sm sticky top-6 space-y-1">
+                    <div className="bg-[var(--bg-surface)] p-3 rounded-[24px] border border-[var(--glass-border)] shadow-sm sticky top-6 space-y-1">
                         <TabButton 
                             active={activeTab === 'GENERAL'} 
                             label={t('profile.tab_general')} 
@@ -442,7 +442,7 @@ export const Profile: React.FC = () => {
 
                 {/* Form Content */}
                 <div className="lg:col-span-9">
-                    <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm min-h-[500px] relative">
+                    <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm min-h-[500px] relative">
                         {/* Toast Notification */}
                         {message && (
                             <div className={`absolute top-6 right-6 left-6 md:left-auto px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-3 animate-enter z-20 shadow-lg ${message.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
@@ -451,8 +451,8 @@ export const Profile: React.FC = () => {
                             </div>
                         )}
 
-                        <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-6">
-                            <h2 className="text-xl font-bold text-slate-800">
+                        <div className="flex justify-between items-center mb-8 border-b border-[var(--glass-border)] pb-6">
+                            <h2 className="text-xl font-bold text-[var(--text-primary)]">
                                 {activeTab === 'GENERAL' ? t('profile.tab_general') : t('profile.tab_security')}
                             </h2>
                         </div>
@@ -480,7 +480,7 @@ export const Profile: React.FC = () => {
                                 
                                 <div className="space-y-1.5">
                                     <div className="flex justify-between items-center">
-                                        <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-slate-500">{t('profile.email')}</label>
+                                        <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email')}</label>
                                         {user.source === 'SSO' ? (
                                             <span className="text-xs text-slate-400 italic">Managed by Organization</span>
                                         ) : !emailChangeOpen ? (
@@ -496,34 +496,34 @@ export const Profile: React.FC = () => {
                                     <input
                                         value={user.email}
                                         disabled
-                                        className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-500 cursor-not-allowed outline-none"
+                                        className="w-full bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-4 py-3 text-sm text-[var(--text-tertiary)] cursor-not-allowed outline-none"
                                     />
 
                                     {emailChangeOpen && (
                                         <div className="mt-3 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-3 animate-enter">
                                             <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">{t('profile.email_change_title')}</p>
                                             <div className="space-y-1.5">
-                                                <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-slate-500">{t('profile.email_new_label')}</label>
+                                                <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email_new_label')}</label>
                                                 <input
                                                     type="email"
                                                     value={emailData.newEmail}
                                                     onChange={e => { setEmailData(d => ({ ...d, newEmail: e.target.value })); setEmailErrors(er => ({ ...er, newEmail: '' })); }}
                                                     placeholder={t('profile.email_new_placeholder')}
-                                                    className={`w-full bg-white border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-slate-400 focus:ring-2
-                                                        ${emailErrors.newEmail ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-slate-200 focus:ring-indigo-500/20 text-slate-800'}`}
+                                                    className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
+                                                        ${emailErrors.newEmail ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 text-[var(--text-primary)]'}`}
                                                 />
                                                 {emailErrors.newEmail && <p className="text-[10px] font-bold text-rose-500 ml-1">{emailErrors.newEmail}</p>}
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-slate-500">{t('profile.email_confirm_pass')}</label>
+                                                <label className="text-[11px] font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email_confirm_pass')}</label>
                                                 <input
                                                     type="password"
                                                     value={emailData.confirmPass}
                                                     onChange={e => { setEmailData(d => ({ ...d, confirmPass: e.target.value })); setEmailErrors(er => ({ ...er, confirmPass: '' })); }}
                                                     placeholder="••••••••"
                                                     onKeyDown={e => e.key === 'Enter' && handleSubmitEmailChange()}
-                                                    className={`w-full bg-white border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-slate-400 focus:ring-2
-                                                        ${emailErrors.confirmPass ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-slate-200 focus:ring-indigo-500/20 text-slate-800'}`}
+                                                    className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
+                                                        ${emailErrors.confirmPass ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 text-[var(--text-primary)]'}`}
                                                 />
                                                 {emailErrors.confirmPass && <p className="text-[10px] font-bold text-rose-500 ml-1">{emailErrors.confirmPass}</p>}
                                             </div>
@@ -541,7 +541,7 @@ export const Profile: React.FC = () => {
                                                     type="button"
                                                     onClick={handleCancelEmailChange}
                                                     disabled={emailSaving}
-                                                    className="px-5 bg-white hover:bg-slate-50 text-slate-600 text-sm font-bold py-2.5 rounded-xl border border-slate-200 transition-colors"
+                                                    className="px-5 bg-[var(--bg-surface)] hover:bg-[var(--glass-surface)] text-[var(--text-secondary)] text-sm font-bold py-2.5 rounded-xl border border-[var(--glass-border)] transition-colors"
                                                 >
                                                     {t('profile.email_cancel')}
                                                 </button>
@@ -564,7 +564,7 @@ export const Profile: React.FC = () => {
                                         type="button"
                                         onClick={handleReset}
                                         disabled={saving || !isDirty}
-                                        className={`px-6 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all ${!isDirty ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                                        className={`px-6 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-slate-200 transition-all ${!isDirty ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                                     >
                                         {t('common.reset')}
                                     </button>
@@ -585,12 +585,12 @@ export const Profile: React.FC = () => {
                         ) : (
                             // Security Tab - Differentiate for SSO vs Standard
                             user.source === 'SSO' ? (
-                                <div className="animate-enter max-w-2xl text-center py-10 bg-slate-50 rounded-2xl border border-slate-200">
+                                <div className="animate-enter max-w-2xl text-center py-10 bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)]">
                                     <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
                                     </div>
-                                    <h3 className="text-lg font-bold text-slate-800 mb-2">Google Workspace Managed</h3>
-                                    <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Google Workspace Managed</h3>
+                                    <p className="text-sm text-[var(--text-tertiary)] max-w-md mx-auto leading-relaxed">
                                         Tài khoản của bạn được quản lý bởi tổ chức thông qua Google. 
                                         Việc thay đổi mật khẩu và bảo mật phải được thực hiện trên trang cài đặt tài khoản Google của bạn.
                                     </p>
@@ -598,7 +598,7 @@ export const Profile: React.FC = () => {
                                         href="https://myaccount.google.com/" 
                                         target="_blank" 
                                         rel="noreferrer"
-                                        className="mt-6 inline-block px-6 py-2 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-50 transition-colors"
+                                        className="mt-6 inline-block px-6 py-2 bg-[var(--bg-surface)] border border-slate-300 text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-[var(--glass-surface)] transition-colors"
                                     >
                                         Quản lý tài khoản Google
                                     </a>

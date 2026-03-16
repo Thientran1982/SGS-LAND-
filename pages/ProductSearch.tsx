@@ -94,12 +94,12 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
     const end = Math.min(page * pageSize, totalItems);
 
     return (
-        <div className="flex flex-col sm:flex-row justify-between items-center px-3 sm:px-5 py-2 bg-white rounded-xl border border-slate-200 shadow-sm gap-2">
-            <div className="hidden sm:flex text-xs text-slate-500 font-medium items-center gap-1">
+        <div className="flex flex-col sm:flex-row justify-between items-center px-3 sm:px-5 py-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+            <div className="hidden sm:flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
                 <span>{t('pagination.showing')}</span>
-                <span className="font-bold text-slate-900">{start}-{end}</span>
+                <span className="font-bold text-[var(--text-primary)]">{start}-{end}</span>
                 <span>{t('pagination.of')}</span>
-                <span className="font-bold text-slate-900">{totalItems}</span>
+                <span className="font-bold text-[var(--text-primary)]">{totalItems}</span>
                 <span className="hidden sm:inline">{t('pagination.results')}</span>
             </div>
 
@@ -107,17 +107,17 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
                 <button 
                     onClick={() => onPageChange(page - 1)} 
                     disabled={page === 1}
-                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.prev')}
                 </button>
                 <div className="flex items-center gap-1 px-1.5">
-                    <span className="text-xs font-bold text-slate-800 whitespace-nowrap">{page} / {totalPages}</span>
+                    <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages}</span>
                 </div>
                 <button 
                     onClick={() => onPageChange(page + 1)} 
                     disabled={page === totalPages}
-                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.next')}
                 </button>
@@ -293,7 +293,7 @@ export const ProductSearch: React.FC = () => {
     }, [paginatedListings]);
 
     return (
-        <div className="h-[100dvh] flex flex-col bg-slate-50 font-sans text-slate-900 overflow-hidden relative">
+        <div className="h-[100dvh] flex flex-col bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] overflow-hidden relative">
             {toast && (
                 <div className="fixed top-20 right-6 z-[100] bg-slate-900 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-bold animate-enter flex items-center gap-2">
                     <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
@@ -302,14 +302,14 @@ export const ProductSearch: React.FC = () => {
             )}
 
             {/* HEADER (Sticky) */}
-            <div className="sticky top-0 bg-white/95 backdrop-blur-xl z-50 border-b border-slate-200 shrink-0">
+            <div className="sticky top-0 bg-[var(--bg-surface)]/95 backdrop-blur-xl z-50 border-b border-[var(--glass-border)] shrink-0">
                 <div className="max-w-[1920px] mx-auto">
                     {/* Top Row: Brand & Search & Login */}
                     <div className="px-4 md:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
                         <div className="flex items-center justify-between w-full sm:w-auto gap-4">
                             {/* Logo / Back */}
                             <div className="flex items-center gap-2 shrink-0">
-                                <button onClick={handleHome} className="p-2 text-slate-500 hover:text-indigo-600 transition-colors rounded-lg hover:bg-slate-100 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                                <button onClick={handleHome} className="p-2 text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-[var(--glass-surface-hover)] min-w-[44px] min-h-[44px] flex items-center justify-center">
                                     {ICONS.BACK}
                                 </button>
                                 <div onClick={handleHome} className="flex items-center gap-2 cursor-pointer">
@@ -335,12 +335,12 @@ export const ProductSearch: React.FC = () => {
                                 <input 
                                     value={query}
                                     onChange={e => setQuery(e.target.value)}
-                                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all outline-none placeholder:text-slate-400"
+                                    className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                                     placeholder={t('search.placeholder')}
                                 />
                                 {query && (
                                     <div className="absolute right-2 inset-y-0 flex items-center">
-                                        <button onClick={() => setQuery('')} className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>
+                                        <button onClick={() => setQuery('')} className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>
                                             {ICONS.X}
                                         </button>
                                     </div>
@@ -357,17 +357,17 @@ export const ProductSearch: React.FC = () => {
                     </div>
 
                     {/* Bottom Row: Toolbar (Filters & Views) */}
-                    <div className="px-4 md:px-6 h-16 flex items-center border-t border-slate-100 bg-white">
+                    <div className="px-4 md:px-6 h-16 flex items-center border-t border-[var(--glass-border)] bg-[var(--bg-surface)]">
                         
                         {/* Scrollable Container for EVERYTHING */}
                         <div ref={filterContainerRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full cursor-grab active:cursor-grabbing select-none pr-4">
                             
                             {/* 1. View Switcher */}
-                            <div className="flex bg-slate-100 p-0.5 rounded-lg shrink-0 mr-2">
-                                <button onClick={() => setViewMode('GRID')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'GRID' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{ICONS.VIEW_GRID}</button>
-                                <button onClick={() => setViewMode('LIST')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'LIST' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{ICONS.VIEW_LIST}</button>
-                                <button onClick={() => setViewMode('BOARD')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'BOARD' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{ICONS.VIEW_BOARD}</button>
-                                <button onClick={() => setViewMode('MAP')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'MAP' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{ICONS.VIEW_MAP}</button>
+                            <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-lg shrink-0 mr-2">
+                                <button onClick={() => setViewMode('GRID')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_GRID}</button>
+                                <button onClick={() => setViewMode('LIST')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_LIST}</button>
+                                <button onClick={() => setViewMode('BOARD')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_BOARD}</button>
+                                <button onClick={() => setViewMode('MAP')} className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}>{ICONS.VIEW_MAP}</button>
                             </div>
 
                             <div className="w-px h-6 bg-slate-200 mx-2 shrink-0"></div>
@@ -380,13 +380,13 @@ export const ProductSearch: React.FC = () => {
                             
                             <button 
                                 onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} 
-                                className={`h-11 px-4 rounded-xl border flex items-center gap-2 transition-all shrink-0 text-xs font-bold ${showFavoritesOnly ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}
+                                className={`h-11 px-4 rounded-xl border flex items-center gap-2 transition-all shrink-0 text-xs font-bold ${showFavoritesOnly ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)] hover:border-[var(--glass-border)]'}`}
                             >
                                 {showFavoritesOnly ? ICONS.HEART_FILLED : ICONS.HEART_OUTLINE} 
                                 <span className="hidden sm:inline">{t('favorites.title')}</span>
                             </button>
 
-                            <button onClick={() => setShowVerifiedOnly(!showVerifiedOnly)} className={`h-11 px-4 rounded-xl border flex items-center gap-2 transition-all shrink-0 text-xs font-bold ${showVerifiedOnly ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                            <button onClick={() => setShowVerifiedOnly(!showVerifiedOnly)} className={`h-11 px-4 rounded-xl border flex items-center gap-2 transition-all shrink-0 text-xs font-bold ${showVerifiedOnly ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)] hover:border-[var(--glass-border)]'}`}>
                                 {ICONS.VERIFIED} <span className="hidden sm:inline">{t('inventory.verified')}</span>
                             </button>
 
@@ -406,7 +406,7 @@ export const ProductSearch: React.FC = () => {
                 {/* MAP VIEW — rendered outside overflow-y-auto so Leaflet gets a real height */}
                 {viewMode === 'MAP' && (
                     <div className="flex-1 min-h-0 p-4 md:p-6">
-                        <div className="h-full w-full relative z-0 rounded-[24px] overflow-hidden shadow-sm border border-slate-200">
+                        <div className="h-full w-full relative z-0 rounded-[24px] overflow-hidden shadow-sm border border-[var(--glass-border)]">
                             <MapView
                                 listings={filteredListings}
                                 onNavigate={handleNavigate}
@@ -456,10 +456,10 @@ export const ProductSearch: React.FC = () => {
                     {/* 2. LIST VIEW */}
                     {viewMode === 'LIST' && (
                         <>
-                            <div className="hidden md:block max-w-[1920px] mx-auto bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="hidden md:block max-w-[1920px] mx-auto bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse">
-                                        <thead className="bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase">
+                                        <thead className="bg-[var(--glass-surface)]/80 border-b border-[var(--glass-border)] text-xs font-bold text-[var(--text-tertiary)] uppercase">
                                             <tr>
                                                 <th className="px-4 py-4 w-12"></th>
                                                 <th className="px-4 py-4">{t('inventory.label_title')}</th>
@@ -471,28 +471,28 @@ export const ProductSearch: React.FC = () => {
                                                 <th className="px-4 py-4 text-right">{t('common.actions')}</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-100">
+                                        <tbody className="divide-y divide-[var(--glass-border)]">
                                             {paginatedListings.map(item => {
                                                 const isFav = favorites.has(item.id);
                                                 return (
-                                                    <tr key={item.id} onClick={() => handleNavigate(item.id)} className="hover:bg-slate-50 cursor-pointer group transition-colors">
+                                                    <tr key={item.id} onClick={() => handleNavigate(item.id)} className="hover:bg-[var(--glass-surface)] cursor-pointer group transition-colors">
                                                         <td className="px-4 py-4">
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); handleToggleFavorite(item.id); }}
-                                                                className={`p-1.5 rounded-full transition-colors ${isFav ? 'text-rose-500 bg-rose-50' : 'text-slate-300 hover:text-rose-400 hover:bg-slate-100'}`}
+                                                                className={`p-1.5 rounded-full transition-colors ${isFav ? 'text-rose-500 bg-rose-50' : 'text-slate-300 hover:text-rose-400 hover:bg-[var(--glass-surface-hover)]'}`}
                                                             >
                                                                 {isFav ? ICONS.HEART_FILLED : ICONS.HEART_OUTLINE}
                                                             </button>
                                                         </td>
                                                         <td className="px-4 py-4">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 relative border border-slate-100">
+                                                                <div className="w-12 h-12 rounded-lg bg-[var(--glass-surface-hover)] overflow-hidden shrink-0 relative border border-[var(--glass-border)]">
                                                                     <img src={item.images?.[0]} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                                                                     {item.isVerified && <div className="absolute bottom-0 right-0 p-0.5 bg-emerald-500 rounded-tl-md text-white flex items-center justify-center"><svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" /></svg></div>}
                                                                 </div>
                                                                 <div>
-                                                                    <div className="font-bold text-slate-800 text-sm mb-0.5 line-clamp-1 max-w-[200px] lg:max-w-[300px]">{item.title}</div>
-                                                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                                    <div className="font-bold text-[var(--text-primary)] text-sm mb-0.5 line-clamp-1 max-w-[200px] lg:max-w-[300px]">{item.title}</div>
+                                                                    <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                                                                         <span className="lg:hidden truncate max-w-[150px]">{item.location}</span>
                                                                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${item.transaction === 'SALE' ? 'bg-indigo-50 text-indigo-600' : 'bg-purple-50 text-purple-600'}`}>
                                                                             {t(`transaction.${item.transaction}`)}
@@ -501,14 +501,14 @@ export const ProductSearch: React.FC = () => {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap">{formatSmartPrice(item.price, t)}</td>
+                                                        <td className="px-4 py-4 text-right font-mono font-bold text-[var(--text-primary)] whitespace-nowrap">{formatSmartPrice(item.price, t)}</td>
                                                         <td className="px-4 py-4 text-right text-[11px] font-bold text-indigo-600">
                                                             {item.area > 0 && item.type !== PropertyType.PROJECT ? formatUnitPrice(item.price, item.area, t) : '--'}
                                                         </td>
-                                                        <td className="px-4 py-4 text-right text-sm text-slate-600 whitespace-nowrap">{item.area} m²</td>
-                                                        <td className="px-4 py-4 hidden lg:table-cell text-sm text-slate-600 max-w-[200px] truncate" title={item.location}>{item.location}</td>
+                                                        <td className="px-4 py-4 text-right text-sm text-[var(--text-secondary)] whitespace-nowrap">{item.area} m²</td>
+                                                        <td className="px-4 py-4 hidden lg:table-cell text-sm text-[var(--text-secondary)] max-w-[200px] truncate" title={item.location}>{item.location}</td>
                                                         <td className="px-4 py-4 hidden xl:table-cell">
-                                                            <span className="px-2 py-1 rounded bg-slate-100 text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">
+                                                            <span className="px-2 py-1 rounded bg-[var(--glass-surface-hover)] text-[10px] font-bold text-[var(--text-tertiary)] uppercase whitespace-nowrap">
                                                                 {t(`property.${item.type.toUpperCase()}`)}
                                                             </span>
                                                         </td>
@@ -539,17 +539,17 @@ export const ProductSearch: React.FC = () => {
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ duration: 0.3, delay: index * 0.05 }}
                                             onClick={() => handleNavigate(item.id)}
-                                            className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex gap-3 active:scale-95 transition-transform cursor-pointer relative"
+                                            className="bg-[var(--bg-surface)] p-3 rounded-2xl border border-[var(--glass-border)] shadow-sm flex gap-3 active:scale-95 transition-transform cursor-pointer relative"
                                         >
-                                            <div className="w-20 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
+                                            <div className="w-20 h-20 rounded-xl bg-[var(--glass-surface-hover)] overflow-hidden shrink-0 relative">
                                                 <img src={item.images?.[0]} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                                             </div>
                                             <div className="flex-1 min-w-0 flex flex-col justify-between">
                                                 <div>
                                                     <div className="pr-8">
-                                                        <h4 className="font-bold text-slate-900 text-sm truncate">{item.title}</h4>
+                                                        <h4 className="font-bold text-[var(--text-primary)] text-sm truncate">{item.title}</h4>
                                                     </div>
-                                                    <div className="text-[10px] text-slate-500 line-clamp-1 flex items-center gap-1 mt-0.5">
+                                                    <div className="text-[10px] text-[var(--text-tertiary)] line-clamp-1 flex items-center gap-1 mt-0.5">
                                                         {ICONS.LOCATION} {item.location}
                                                     </div>
                                                 </div>
@@ -562,14 +562,14 @@ export const ProductSearch: React.FC = () => {
                                                                 {item.area} m² • {item.bedrooms} PN {item.area > 0 && item.type !== PropertyType.PROJECT && `• ${formatUnitPrice(item.price, item.area, t)}`}
                                                             </div>
                                                         </div>
-                                                        <span className="text-[9px] font-bold uppercase bg-slate-100 text-slate-500 px-2 py-1 rounded-lg border border-slate-200">
+                                                        <span className="text-[9px] font-bold uppercase bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-2 py-1 rounded-lg border border-[var(--glass-border)]">
                                                             {t(`property.${item.type.toUpperCase()}`)}
                                                         </span>
                                                     </div>
                                             </div>
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); handleToggleFavorite(item.id); }}
-                                                className={`absolute top-2 right-2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors z-10 ${isFav ? 'text-rose-500 bg-rose-50' : 'text-slate-300 bg-transparent hover:bg-slate-100'}`}
+                                                className={`absolute top-2 right-2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors z-10 ${isFav ? 'text-rose-500 bg-rose-50' : 'text-slate-300 bg-transparent hover:bg-[var(--glass-surface-hover)]'}`}
                                             >
                                                 {isFav ? ICONS.HEART_FILLED : ICONS.HEART_OUTLINE}
                                             </button>
@@ -588,10 +588,10 @@ export const ProductSearch: React.FC = () => {
                                 const listingItems = items as unknown as Listing[];
                                 if (listingItems.length === 0) return null;
                                 return (
-                                    <div key={type} className="min-w-[320px] w-[320px] flex flex-col h-full bg-slate-100/50 rounded-2xl border border-slate-200/60 snap-start">
-                                        <div className="p-4 flex justify-between items-center sticky top-0 bg-slate-100/90 backdrop-blur-sm z-10 rounded-t-2xl border-b border-slate-200/50">
-                                            <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">{t(`property.${type.toUpperCase()}`)}</h3>
-                                            <span className="bg-white px-2 py-0.5 rounded-full text-xs font-bold text-slate-500 shadow-sm">{listingItems.length}</span>
+                                    <div key={type} className="min-w-[320px] w-[320px] flex flex-col h-full bg-[var(--glass-surface-hover)]/50 rounded-2xl border border-[var(--glass-border)]/60 snap-start">
+                                        <div className="p-4 flex justify-between items-center sticky top-0 bg-[var(--glass-surface-hover)]/90 backdrop-blur-sm z-10 rounded-t-2xl border-b border-[var(--glass-border)]/50">
+                                            <h3 className="font-bold text-[var(--text-secondary)] text-sm uppercase tracking-wide">{t(`property.${type.toUpperCase()}`)}</h3>
+                                            <span className="bg-[var(--bg-surface)] px-2 py-0.5 rounded-full text-xs font-bold text-[var(--text-tertiary)] shadow-sm">{listingItems.length}</span>
                                         </div>
                                         <div className="flex-1 overflow-y-auto p-3 space-y-3 no-scrollbar">
                                             {listingItems.map(item => {
@@ -600,9 +600,9 @@ export const ProductSearch: React.FC = () => {
                                                     <div 
                                                         key={item.id} 
                                                         onClick={() => handleNavigate(item.id)}
-                                                        className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-1 group relative"
+                                                        className="bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--glass-border)] shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-1 group relative"
                                                     >
-                                                        <div className="aspect-video w-full bg-slate-100 rounded-lg mb-3 overflow-hidden relative">
+                                                        <div className="aspect-video w-full bg-[var(--glass-surface-hover)] rounded-lg mb-3 overflow-hidden relative">
                                                             <img src={item.images?.[0]} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="" referrerPolicy="no-referrer" />
                                                             <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm z-10 flex flex-col items-end">
                                                                 <span>{formatSmartPrice(item.price, t)}</span>
@@ -617,7 +617,7 @@ export const ProductSearch: React.FC = () => {
                                                                 {isFav ? ICONS.HEART_FILLED : ICONS.HEART_OUTLINE}
                                                             </button>
                                                         </div>
-                                                        <h4 className="font-bold text-slate-800 text-xs line-clamp-2 mb-2 leading-relaxed">{item.title}</h4>
+                                                        <h4 className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 mb-2 leading-relaxed">{item.title}</h4>
                                                         <div className="flex items-center gap-1 text-[10px] text-slate-400 truncate">
                                                             {ICONS.LOCATION} {item.location}
                                                         </div>

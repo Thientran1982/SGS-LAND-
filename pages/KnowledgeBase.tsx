@@ -11,7 +11,7 @@ const ICONS = {
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     FILE_PDF: <svg className="w-8 h-8 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M7 3a1 1 0 000 2h10a1 1 0 100-2H7zM5 7a1 1 0 000 2h14a1 1 0 100-2H5zM5 11a1 1 0 000 2h14a1 1 0 100-2H5zM5 15a1 1 0 000 2h14a1 1 0 100-2H5zM5 19a1 1 0 000 2h10a1 1 0 100-2H5z" /></svg>,
     FILE_DOC: <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4a2 2 0 012-2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>,
-    FILE_TXT: <svg className="w-8 h-8 text-slate-500" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4a2 2 0 012-2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>,
+    FILE_TXT: <svg className="w-8 h-8 text-[var(--text-tertiary)]" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4a2 2 0 012-2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>,
     CLOUD: <svg className="w-10 h-10 text-indigo-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>,
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
@@ -158,20 +158,20 @@ export const KnowledgeBase: React.FC = () => {
             {/* Delete Confirmation Modal */}
             {confirmDeleteId && createPortal(
                 <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-enter">
-                    <div className="bg-white rounded-t-[28px] sm:rounded-[24px] shadow-2xl max-w-sm w-full p-6 border border-slate-100">
+                    <div className="bg-[var(--bg-surface)] rounded-t-[28px] sm:rounded-[24px] shadow-2xl max-w-sm w-full p-6 border border-[var(--glass-border)]">
                         <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4 mx-auto sm:mx-0">
                             {ICONS.TRASH}
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800 mb-2">
+                        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
                             {t('knowledge.confirm_delete') || 'Bạn có chắc chắn muốn xóa tài liệu này?'}
                         </h3>
-                        <p className="text-slate-500 text-sm mb-6">
+                        <p className="text-[var(--text-tertiary)] text-sm mb-6">
                             {t('knowledge.delete_warning') || 'Hành động này không thể hoàn tác. Tài liệu và file vật lý sẽ bị xóa hoàn toàn khỏi hệ thống.'}
                         </p>
                         <div className="flex gap-3">
                             <button 
                                 onClick={() => setConfirmDeleteId(null)}
-                                className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors"
+                                className="flex-1 px-4 py-3 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-secondary)] font-bold rounded-xl transition-colors"
                             >
                                 {t('common.cancel') || 'Hủy'}
                             </button>
@@ -194,7 +194,7 @@ export const KnowledgeBase: React.FC = () => {
                             {ICONS.SEARCH}
                         </div>
                         <input 
-                            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all outline-none placeholder:text-slate-400"
+                            className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                             placeholder={t('knowledge.search_placeholder') || 'Tìm kiếm tài liệu...'}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -203,7 +203,7 @@ export const KnowledgeBase: React.FC = () => {
                             <div className="absolute right-2 inset-y-0 flex items-center">
                                 <button 
                                     onClick={() => setSearch('')}
-                                    className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                     title={t('knowledge.clear_search') || 'Xóa tìm kiếm'}
                                 >
                                     {ICONS.X}
@@ -220,7 +220,7 @@ export const KnowledgeBase: React.FC = () => {
                 className={`relative overflow-hidden border-2 border-dashed rounded-[24px] p-6 sm:p-10 text-center transition-all duration-300 ${
                     isDragging 
                         ? 'border-indigo-500 bg-indigo-50/50 scale-[1.01]' 
-                        : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50'
+                        : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-indigo-300 hover:bg-[var(--glass-surface)]'
                 }`}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
@@ -228,10 +228,10 @@ export const KnowledgeBase: React.FC = () => {
             >
                 <div className="flex flex-col items-center justify-center pointer-events-none">
                     {ICONS.CLOUD}
-                    <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-2">
+                    <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-2">
                         {isDragging ? (t('knowledge.drop_here') || 'Thả file vào đây') : (t('knowledge.drag_drop') || 'Kéo thả tài liệu vào đây')}
                     </h3>
-                    <p className="text-xs sm:text-sm text-slate-500 mb-5 sm:mb-6 max-w-md">
+                    <p className="text-xs sm:text-sm text-[var(--text-tertiary)] mb-5 sm:mb-6 max-w-md">
                         {t('knowledge.upload_desc') || 'Hỗ trợ PDF, DOCX, TXT. Tối đa 10MB mỗi file. Có thể chọn nhiều file cùng lúc.'}
                     </p>
                 </div>
@@ -259,29 +259,29 @@ export const KnowledgeBase: React.FC = () => {
 
             {/* Documents Grid */}
             <div>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                     {t('knowledge.uploaded_docs') || 'Tài liệu đã tải lên'}
-                    <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-bold">{filteredDocs.length}</span>
+                    <span className="px-2.5 py-0.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] rounded-full text-xs font-bold">{filteredDocs.length}</span>
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredDocs.map(doc => (
-                        <div key={doc.id} className="bg-white p-5 rounded-[20px] border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group relative flex flex-col h-full">
+                        <div key={doc.id} className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group relative flex flex-col h-full">
                             <div className="flex gap-3 sm:gap-4 items-start mb-4">
-                                <div className="shrink-0 p-2 bg-slate-50 rounded-xl">
+                                <div className="shrink-0 p-2 bg-[var(--glass-surface)] rounded-xl">
                                     {doc.type === 'PDF' ? ICONS.FILE_PDF : doc.type === 'DOCX' ? ICONS.FILE_DOC : ICONS.FILE_TXT}
                                 </div>
                                 <div className="flex-1 min-w-0 pt-1">
-                                    <h3 className="font-bold text-slate-800 text-sm line-clamp-2 leading-snug" title={doc.title}>{doc.title}</h3>
-                                    <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500 flex-wrap">
-                                        {doc.sizeKb && <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">{doc.sizeKb} KB</span>}
+                                    <h3 className="font-bold text-[var(--text-primary)] text-sm line-clamp-2 leading-snug" title={doc.title}>{doc.title}</h3>
+                                    <div className="flex items-center gap-2 mt-1.5 text-xs text-[var(--text-tertiary)] flex-wrap">
+                                        {doc.sizeKb && <span className="font-mono bg-[var(--glass-surface-hover)] px-1.5 py-0.5 rounded">{doc.sizeKb} KB</span>}
                                         <span className="hidden sm:inline">•</span>
                                         <span>{formatDate(doc.createdAt)}</span>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <div className="mt-auto pt-4 border-t border-[var(--glass-border)] flex items-center justify-between">
                                 {doc.status === 'PROCESSING' ? (
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2 h-2 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
@@ -311,12 +311,12 @@ export const KnowledgeBase: React.FC = () => {
                 </div>
                 
                 {filteredDocs.length === 0 && (
-                    <div className="py-16 text-center bg-white rounded-[24px] border border-slate-100 border-dashed">
-                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                    <div className="py-16 text-center bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
+                        <div className="w-16 h-16 bg-[var(--glass-surface)] rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
                             {ICONS.SEARCH}
                         </div>
-                        <h3 className="text-slate-800 font-bold mb-1">{t('knowledge.empty_title') || 'Không tìm thấy tài liệu'}</h3>
-                        <p className="text-slate-500 text-sm">
+                        <h3 className="text-[var(--text-primary)] font-bold mb-1">{t('knowledge.empty_title') || 'Không tìm thấy tài liệu'}</h3>
+                        <p className="text-[var(--text-tertiary)] text-sm">
                             {search ? (t('knowledge.empty_search') || 'Thử thay đổi từ khóa tìm kiếm') : (t('knowledge.empty_desc') || 'Chưa có tài liệu nào được tải lên')}
                         </p>
                     </div>

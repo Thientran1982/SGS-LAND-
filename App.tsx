@@ -112,7 +112,7 @@ const MobileApp = () => {
             </div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('mobile.title')}</h2>
             <p className="text-slate-500 dark:text-slate-400 max-w-md mb-4">{t('mobile.scan_desc')}</p>
-            <div className="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+            <div className="bg-[var(--bg-surface)] p-4 rounded-xl shadow-lg border border-[var(--glass-border)]">
                 <div className="w-32 h-32 bg-slate-900 mx-auto flex items-center justify-center text-white/50 text-xs">
                     [QR CODE]
                 </div>

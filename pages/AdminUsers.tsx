@@ -25,12 +25,12 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
     const end = Math.min(page * pageSize, total);
 
     return (
-        <div className="flex flex-col sm:flex-row justify-between items-center px-3 sm:px-5 py-2 bg-white rounded-xl border border-slate-200 shadow-sm gap-2">
-            <div className="hidden sm:flex text-xs text-slate-500 font-medium items-center gap-1">
+        <div className="flex flex-col sm:flex-row justify-between items-center px-3 sm:px-5 py-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+            <div className="hidden sm:flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
                 <span>{t('pagination.showing')}</span>
-                <span className="font-bold text-slate-900">{total > 0 ? start : 0}-{end}</span>
+                <span className="font-bold text-[var(--text-primary)]">{total > 0 ? start : 0}-{end}</span>
                 <span>{t('pagination.of')}</span>
-                <span className="font-bold text-slate-900">{total}</span>
+                <span className="font-bold text-[var(--text-primary)]">{total}</span>
                 <span className="hidden sm:inline">{t('pagination.results')}</span>
             </div>
 
@@ -47,17 +47,17 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
                 <button 
                     onClick={() => onPageChange(page - 1)} 
                     disabled={page === 1}
-                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.prev')}
                 </button>
                 <div className="flex items-center gap-1 px-1.5">
-                    <span className="text-xs font-bold text-slate-800 whitespace-nowrap">{page} / {totalPages || 1}</span>
+                    <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages || 1}</span>
                 </div>
                 <button 
                     onClick={() => onPageChange(page + 1)} 
                     disabled={page === totalPages || total === 0}
-                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.next')}
                 </button>
@@ -118,22 +118,22 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-            <div className="bg-white w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 pb-8 sm:pb-6 shadow-2xl border border-slate-100 relative z-10 animate-scale-up max-h-[92dvh] overflow-y-auto">
+            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 pb-8 sm:pb-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up max-h-[92dvh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold text-slate-800">{t('admin.users.invite_title')}</h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('admin.users.invite_title')}</h3>
+                    <button onClick={onClose} className="text-slate-400 hover:text-[var(--text-secondary)]">
                         {ICONS.CLOSE}
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                             {t('admin.users.email_label')} <span className="text-rose-500">*</span>
                         </label>
                         <input 
                             type="email" 
-                            className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all ${error ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'}`}
+                            className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all ${error ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`}
                             placeholder={t('admin.users.placeholder_email')}
                             value={email}
                             onChange={e => setEmail(e.target.value)}
@@ -156,7 +156,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                             <div>
                                 <h4 className="text-[10px] font-bold text-indigo-700 uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
-                                <p className="text-xs text-slate-600 leading-relaxed">
+                                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                                     {t(`role_desc.${role}`) !== `role_desc.${role}` ? t(`role_desc.${role}`) : "Full system access including billing and user management."}
                                 </p>
                             </div>
@@ -356,7 +356,7 @@ export const AdminUsers: React.FC = () => {
     // Header Helper
     const SortableHeader = ({ field, label, className = "" }: { field: string, label: string, className?: string }) => (
         <th 
-            className={`p-4 cursor-pointer hover:bg-slate-100 transition-colors select-none ${className}`}
+            className={`p-4 cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors select-none ${className}`}
             onClick={() => handleSort(field)}
         >
             <div className="flex items-center gap-1">
@@ -376,8 +376,8 @@ export const AdminUsers: React.FC = () => {
                 <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
                     {ICONS.INFO}
                 </div>
-                <h2 className="text-xl font-bold text-slate-800 mb-2">{t('common.access_denied') || "Access Denied"}</h2>
-                <p className="text-slate-500 max-w-md">
+                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('common.access_denied') || "Access Denied"}</h2>
+                <p className="text-[var(--text-tertiary)] max-w-md">
                     {t('admin.users.no_permission') || "You do not have permission to view this page. Only administrators can manage users."}
                 </p>
             </div>
@@ -389,16 +389,16 @@ export const AdminUsers: React.FC = () => {
             {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             {/* HEADER */}
-            <div className="flex flex-col bg-white border-b border-slate-100 shrink-0">
+            <div className="flex flex-col bg-[var(--bg-surface)] border-b border-[var(--glass-border)] shrink-0">
 
                 {/* Row 1: Số liệu thành viên + nút mời */}
                 <div className="flex items-center justify-between gap-2 px-4 sm:px-6 pt-4 pb-3">
                     {/* Stat chips — compact on mobile, full label on sm+ */}
                     <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                         {/* Tổng */}
-                        <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
                             <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t('admin.users.total') || 'Tổng'}</span>
-                            <span className="text-xs sm:text-sm font-black text-slate-800">{totalUsers}</span>
+                            <span className="text-xs sm:text-sm font-black text-[var(--text-primary)]">{totalUsers}</span>
                         </div>
                         {/* Hoạt động */}
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
@@ -428,14 +428,14 @@ export const AdminUsers: React.FC = () => {
                 </div>
 
                 {/* Row 2: Thanh tìm kiếm + bộ lọc vai trò */}
-                <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-t border-slate-100 bg-slate-50/50">
+                <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]/50">
                     {/* Ô tìm kiếm — kéo dài toàn bộ chiều ngang còn lại */}
                     <div className="relative flex-1 group">
                         <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input
-                            className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-slate-400 shadow-sm"
+                            className="w-full pl-10 pr-10 py-2.5 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
                             placeholder={t('admin.users.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -444,7 +444,7 @@ export const AdminUsers: React.FC = () => {
                             <div className="absolute right-2 inset-y-0 flex items-center">
                                 <button
                                     onClick={() => setSearch('')}
-                                    className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                     title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                 >
                                     {ICONS.X}
@@ -460,10 +460,10 @@ export const AdminUsers: React.FC = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="flex-1 overflow-auto bg-slate-50/50 no-scrollbar pt-3">
-                <div className="w-full overflow-x-auto bg-white border-b border-slate-100">
+            <div className="flex-1 overflow-auto bg-[var(--glass-surface)]/50 no-scrollbar pt-3">
+                <div className="w-full overflow-x-auto bg-[var(--bg-surface)] border-b border-[var(--glass-border)]">
                     <table className="w-full min-w-[320px] text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
+                        <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] text-xs font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <SortableHeader field="name" label={t('table.name')} />
                                 <SortableHeader field="role" label={t('table.role')} className="hidden sm:table-cell" />
@@ -479,19 +479,19 @@ export const AdminUsers: React.FC = () => {
                                 const displayStatus = user.status;
                                 
                                 return (
-                                    <tr key={user.id} className="hover:bg-slate-50 transition-colors group">
+                                    <tr key={user.id} className="hover:bg-[var(--glass-surface)] transition-colors group">
                                         <td className="p-3 sm:p-4">
                                             <div className="flex items-center gap-2 sm:gap-3">
-                                                <img src={user.avatar} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover bg-slate-200 border border-slate-100 shrink-0" alt="" />
+                                                <img src={user.avatar} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover bg-slate-200 border border-[var(--glass-border)] shrink-0" alt="" />
                                                 <div className="min-w-0">
-                                                    <div className="font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">
+                                                    <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5 flex-wrap">
                                                         <span className="truncate max-w-[140px] sm:max-w-[200px] text-xs sm:text-sm">{user.name}</span>
                                                         {user.id === currentUser?.id && <span className="text-[8px] sm:text-[9px] bg-indigo-100 text-indigo-700 px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
                                                     </div>
-                                                    <div className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
+                                                    <div className="text-[10px] sm:text-xs text-[var(--text-tertiary)] truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
                                                     {/* Show Role on mobile only */}
                                                     <div className="sm:hidden mt-0.5">
-                                                        <span className="text-[8px] font-bold text-slate-500 uppercase bg-slate-100 px-1.5 py-0.5 rounded">{t(`role.${user.role}`)}</span>
+                                                        <span className="text-[8px] font-bold text-[var(--text-tertiary)] uppercase bg-[var(--glass-surface-hover)] px-1.5 py-0.5 rounded">{t(`role.${user.role}`)}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -514,7 +514,7 @@ export const AdminUsers: React.FC = () => {
                                                 className={`px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase border whitespace-nowrap text-center transition-all active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5
                                                     ${displayStatus === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' : 
                                                       displayStatus === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' : 
-                                                      'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'}
+                                                      'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] hover:bg-slate-200'}
                                                     ${user.id !== currentUser?.id ? 'cursor-pointer hover:shadow-sm' : 'cursor-default opacity-70'}
                                                 `}
                                                 title={t(`admin.users.status_${displayStatus.toLowerCase()}`) || displayStatus}
@@ -527,7 +527,7 @@ export const AdminUsers: React.FC = () => {
                                                 <span className="hidden sm:inline">{t(`admin.users.status_${displayStatus.toLowerCase()}`) || displayStatus}</span>
                                             </button>
                                         </td>
-                                        <td className="hidden md:table-cell p-4 text-slate-500 font-mono text-xs">
+                                        <td className="hidden md:table-cell p-4 text-[var(--text-tertiary)] font-mono text-xs">
                                             {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : <span className="text-slate-300 italic">{t('admin.users.never_logged_in')}</span>}
                                         </td>
                                         <td className="p-4 text-right">
@@ -615,14 +615,14 @@ export const AdminUsers: React.FC = () => {
             {userToRoleChange && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setUserToRoleChange(null)} />
-                    <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100 relative z-10 animate-scale-up">
+                    <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold text-slate-800">{t('common.confirm')}</h3>
-                            <button onClick={() => setUserToRoleChange(null)} className="text-slate-400 hover:text-slate-600">
+                            <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('common.confirm')}</h3>
+                            <button onClick={() => setUserToRoleChange(null)} className="text-slate-400 hover:text-[var(--text-secondary)]">
                                 {ICONS.CLOSE}
                             </button>
                         </div>
-                        <p className="text-sm text-slate-600 mb-4">
+                        <p className="text-sm text-[var(--text-secondary)] mb-4">
                             {t('admin.users.confirm_role_change', { name: userToRoleChange.user.name, role: t(`role.${userToRoleChange.newRole}`) }) || `Change role for ${userToRoleChange.user.name} to ${t(`role.${userToRoleChange.newRole}`)}?`}
                         </p>
                         
@@ -630,7 +630,7 @@ export const AdminUsers: React.FC = () => {
                             <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                             <div>
                                 <h4 className="text-[10px] font-bold text-indigo-700 uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
-                                <p className="text-xs text-slate-600 leading-relaxed">
+                                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                                     {t(`role_desc.${userToRoleChange.newRole}`) !== `role_desc.${userToRoleChange.newRole}` ? t(`role_desc.${userToRoleChange.newRole}`) : "Full system access including billing and user management."}
                                 </p>
                             </div>
@@ -639,7 +639,7 @@ export const AdminUsers: React.FC = () => {
                         <div className="flex gap-3">
                             <button 
                                 onClick={() => setUserToRoleChange(null)}
-                                className="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors"
+                                className="flex-1 py-2.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors"
                             >
                                 {t('common.cancel')}
                             </button>

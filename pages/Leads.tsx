@@ -32,7 +32,7 @@ const STAGE_CONFIG: Record<LeadStage, { color: string, bg: string, border: strin
     [LeadStage.PROPOSAL]: { color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
     [LeadStage.NEGOTIATION]: { color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200' },
     [LeadStage.WON]: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-    [LeadStage.LOST]: { color: 'text-slate-500', bg: 'bg-slate-100', border: 'border-slate-200' },
+    [LeadStage.LOST]: { color: 'text-[var(--text-tertiary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-[var(--glass-border)]' },
 };
 
 // Added pointer-events-none to icons to prevent them from becoming the event target
@@ -138,12 +138,12 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
     ];
 
     return (
-        <div className="flex flex-col sm:flex-row justify-between items-center px-3 sm:px-5 py-2 bg-white rounded-xl border border-slate-200 shadow-sm gap-2">
-            <div className="hidden sm:flex text-xs text-slate-500 font-medium items-center gap-1">
+        <div className="flex flex-col sm:flex-row justify-between items-center px-3 sm:px-5 py-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+            <div className="hidden sm:flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
                 <span>{t('pagination.showing')}</span>
-                <span className="font-bold text-slate-900">{totalItems > 0 ? start : 0}-{end}</span>
+                <span className="font-bold text-[var(--text-primary)]">{totalItems > 0 ? start : 0}-{end}</span>
                 <span>{t('pagination.of')}</span>
-                <span className="font-bold text-slate-900">{totalItems}</span>
+                <span className="font-bold text-[var(--text-primary)]">{totalItems}</span>
                 <span className="hidden sm:inline">{t('pagination.results')}</span>
             </div>
 
@@ -160,17 +160,17 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
                 <button 
                     onClick={() => onPageChange(page - 1)} 
                     disabled={page === 1}
-                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.prev')}
                 </button>
                 <div className="flex items-center gap-1 px-1.5">
-                    <span className="text-xs font-bold text-slate-800 whitespace-nowrap">{page} / {totalPages || 1}</span>
+                    <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages || 1}</span>
                 </div>
                 <button 
                     onClick={() => onPageChange(page + 1)} 
                     disabled={page === totalPages || totalPages === 0}
-                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.next')}
                 </button>
@@ -209,7 +209,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
 
     const stickyClass = isSelected 
         ? 'bg-indigo-50 dark:bg-slate-800' 
-        : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50';
+        : 'bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50';
 
     const paddingY = DENSITY_STYLES[density as RowDensity] || DENSITY_STYLES.normal;
     const scoreValue = lead.score?.score || 0;
@@ -219,7 +219,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
     return (
         <tr 
             onClick={() => onClick(lead)}
-            className={`group border-b border-slate-50 dark:border-slate-800/50 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+            className={`group border-b border-slate-50 dark:border-slate-800/50 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : 'hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800/50'}`}
             tabIndex={0}
         >
             {/* Sticky Checkbox (Left 0) */}
@@ -230,7 +230,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                 <div className="flex items-center justify-center h-full w-full">
                     <button 
                         onClick={() => onSelect(lead.id)}
-                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white dark:bg-slate-800 dark:border-slate-600 hover:border-indigo-400'}`}
+                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-[var(--bg-surface)] dark:bg-slate-800 dark:border-slate-600 hover:border-indigo-400'}`}
                     >
                         {isSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                     </button>
@@ -240,28 +240,28 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             {/* Sticky Name (Left 50px) */}
             <td className={`px-4 ${paddingY} sticky left-[50px] z-10 transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] ${stickyClass} min-w-[220px]`}>
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-[var(--glass-surface-hover)] dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)] dark:text-slate-400 border border-[var(--glass-border)] dark:border-slate-700 shrink-0">
                         {lead.name.charAt(0).toUpperCase()}
                     </div>
-                    <div className="font-bold text-slate-800 dark:text-slate-200 text-sm whitespace-nowrap">{lead.name}</div>
+                    <div className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm whitespace-nowrap">{lead.name}</div>
                 </div>
             </td>
 
             {/* Dynamic Columns */}
             {visibleColumns.has('phone') && (
-                <td className={`px-4 ${paddingY} text-xs text-slate-600 dark:text-slate-400 font-mono`}>
+                <td className={`px-4 ${paddingY} text-xs text-[var(--text-secondary)] dark:text-slate-400 font-mono`}>
                     {lead.phone}
                 </td>
             )}
 
             {visibleColumns.has('email') && (
-                <td className={`px-4 ${paddingY} text-xs text-slate-600 dark:text-slate-400`}>
+                <td className={`px-4 ${paddingY} text-xs text-[var(--text-secondary)] dark:text-slate-400`}>
                     {lead.email || '--'}
                 </td>
             )}
 
             {visibleColumns.has('address') && (
-                <td className={`px-4 ${paddingY} text-xs text-slate-600 dark:text-slate-400 max-w-[200px] truncate`} title={lead.address}>
+                <td className={`px-4 ${paddingY} text-xs text-[var(--text-secondary)] dark:text-slate-400 max-w-[200px] truncate`} title={lead.address}>
                     {lead.address || '--'}
                 </td>
             )}
@@ -276,7 +276,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             
             {visibleColumns.has('source') && (
                 <td className={`px-4 ${paddingY}`}>
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] dark:text-slate-300">
                         <span className="text-slate-400">
                             {getSourceIcon(lead.source)}
                         </span>
@@ -288,19 +288,19 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             {visibleColumns.has('score') && (
                 <td className={`px-4 ${paddingY}`}>
                     <div className="flex items-center gap-2" title={`Grade: ${scoreGrade}`}>
-                        <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div className="w-16 h-1.5 bg-[var(--glass-surface-hover)] dark:bg-slate-800 rounded-full overflow-hidden">
                             <div 
                                 className={`h-full rounded-full ${scoreValue >= 70 ? 'bg-emerald-500' : scoreValue >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} 
                                 style={{ width: `${scoreValue}%` }}
                             />
                         </div>
-                        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 min-w-[20px]">{scoreValue}</span>
+                        <span className="text-[10px] font-bold text-[var(--text-secondary)] dark:text-slate-300 min-w-[20px]">{scoreValue}</span>
                     </div>
                 </td>
             )}
 
             {visibleColumns.has('owner') && (
-                <td className={`px-4 ${paddingY} text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap`}>
+                <td className={`px-4 ${paddingY} text-xs text-[var(--text-tertiary)] dark:text-slate-400 whitespace-nowrap`}>
                     <div className="flex items-center gap-1.5">
                         {ICONS.USER}
                         {users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || t('inbox.unassigned')}
@@ -309,7 +309,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
             )}
 
             {visibleColumns.has('createdAt') && (
-                <td className={`px-4 ${paddingY} text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap font-mono`}>
+                <td className={`px-4 ${paddingY} text-xs text-[var(--text-tertiary)] dark:text-slate-400 whitespace-nowrap font-mono`}>
                     {formatDate(lead.createdAt)}
                 </td>
             )}
@@ -320,7 +320,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     <button
                         ref={btnRef}
                         onClick={openMenu}
-                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-lg transition-colors"
                         title={t('common.actions')}
                     >
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -332,21 +332,21 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     <div
                         ref={menuDivRef}
                         style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                        className="w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 animate-enter"
+                        className="w-48 bg-[var(--bg-surface)] rounded-2xl shadow-xl border border-[var(--glass-border)] py-1.5 animate-enter"
                     >
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onClick(lead); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
                             {ICONS.EDIT} <span>{t('common.edit')}</span>
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onProposal(lead); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
                             {ICONS.PROPOSAL} <span>{t('leads.create_proposal')}</span>
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDuplicate(lead.id); }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
                             {ICONS.DUPLICATE} <span>{t('common.duplicate')}</span>
                         </button>
-                        <div className="my-1 mx-3 border-t border-slate-100" />
+                        <div className="my-1 mx-3 border-t border-[var(--glass-border)]" />
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(lead); }}
                             className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors">
                             {ICONS.TRASH} <span>{t('common.delete')}</span>
@@ -394,20 +394,20 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
 
     return (
         <div
-            className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 mb-3 group relative"
+            className="bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--glass-border)] shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 mb-3 group relative"
             onClick={() => onClick(lead)}
             role="button"
         >
             {/* Header row: name + score + 3-dot */}
             <div className="flex justify-between items-start mb-2 gap-1">
-                <h4 className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors truncate flex-1">{lead.name}</h4>
+                <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-600 transition-colors truncate flex-1">{lead.name}</h4>
                 <div className="flex items-center gap-1 shrink-0">
-                    <div className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{lead.score?.score || 0}</div>
+                    <div className="text-[10px] font-bold text-slate-400 bg-[var(--glass-surface)] px-1.5 py-0.5 rounded">{lead.score?.score || 0}</div>
                     {/* 3-dot action button */}
                     <button
                         ref={btnRef}
                         onClick={openMenu}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all"
                         title={t('common.actions') || 'Thao tác'}
                     >
                         <svg className="w-3.5 h-3.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
@@ -419,8 +419,8 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
 
             {/* Phone + Source */}
             <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-slate-500 font-mono truncate flex-1 mr-2">{lead.phone}</span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 shrink-0">
+                <span className="text-xs text-[var(--text-tertiary)] font-mono truncate flex-1 mr-2">{lead.phone}</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] shrink-0">
                     {getSourceIcon(lead.source)}
                     {t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source}
                 </span>
@@ -429,7 +429,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
             {/* Footer: date + assignee */}
             <div className="flex justify-between items-center text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-50">
                 <span>{formatDate(lead.createdAt)}</span>
-                <span className="font-medium text-slate-500 flex items-center gap-1">
+                <span className="font-medium text-[var(--text-tertiary)] flex items-center gap-1">
                     {ICONS.USER}
                     {users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || t('inbox.unassigned')}
                 </span>
@@ -441,23 +441,23 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
                     ref={menuRef}
                     onClick={e => e.stopPropagation()}
                     style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                    className="bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-[160px]"
+                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]"
                 >
                     <button
                         onClick={() => { setMenuOpen(false); onClick(lead); }}
-                        className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
                     >
                         <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         {t('common.edit') || 'Chỉnh sửa'}
                     </button>
                     <button
                         onClick={() => { setMenuOpen(false); onProposal(lead); }}
-                        className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
                     >
                         <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         {t('leads.create_proposal') || 'Tạo báo giá'}
                     </button>
-                    <div className="border-t border-slate-100 my-1" />
+                    <div className="border-t border-[var(--glass-border)] my-1" />
                     <button
                         onClick={() => { setMenuOpen(false); onDelete(lead); }}
                         className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
@@ -863,7 +863,7 @@ export const Leads: React.FC = () => {
             {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg || (toast.type === 'success' ? t('common.success') : t('common.error'))}</span></div>}
 
             {/* Header & Controls */}
-            <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm px-4 md:px-6 py-3 transition-all flex-none">
+            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-4 md:px-6 py-3 transition-all flex-none">
                 <div className="flex flex-col md:flex-row justify-between gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
@@ -873,14 +873,14 @@ export const Leads: React.FC = () => {
                             <input 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)} 
-                                className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all outline-none placeholder:text-slate-400" 
+                                className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
                                 placeholder={t('leads.search_placeholder')} 
                             />
                             {search && (
                                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
                                     <button 
                                         onClick={() => setSearch('')}
-                                        className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                        className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                         title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                     >
                                         {ICONS.X}
@@ -899,17 +899,17 @@ export const Leads: React.FC = () => {
                         <div className="min-w-[140px] shrink-0"><Dropdown value={sourceFilter} onChange={(val) => setSourceFilter(val as string)} options={sourceOptions} className="text-xs" /></div>
                         
                         {/* View Switcher */}
-                        <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
+                        <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
                             <button 
                                 onClick={() => setViewMode('LIST')} 
-                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}
                                 title={t('leads.view_list')}
                             >
                                 {ICONS.VIEW_LIST}
                             </button>
                             <button 
                                 onClick={() => setViewMode('BOARD')} 
-                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`}
                                 title={t('leads.view_board')}
                             >
                                 {ICONS.VIEW_BOARD}
@@ -936,7 +936,7 @@ export const Leads: React.FC = () => {
                         />
                         <button 
                             onClick={() => fileInputRef.current?.click()} 
-                            className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl text-xs shadow-sm hover:bg-slate-50 transition-all whitespace-nowrap active:scale-95 shrink-0"
+                            className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
                             title={t('leads.import_excel') || "Nhập Excel"}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
@@ -944,7 +944,7 @@ export const Leads: React.FC = () => {
                         </button>
                         <button 
                             onClick={handleExportExcel} 
-                            className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl text-xs shadow-sm hover:bg-slate-50 transition-all whitespace-nowrap active:scale-95 shrink-0"
+                            className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
                             title={t('leads.export_excel') || "Xuất Excel"}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -959,34 +959,34 @@ export const Leads: React.FC = () => {
             </div>
 
             {/* Metrics Bar — compact */}
-            <div ref={metricsRef} className="px-4 md:px-6 py-2 flex gap-1 md:gap-0 items-center border-b border-slate-100 bg-slate-50/60 flex-none overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing divide-x divide-slate-200">
+            <div ref={metricsRef} className="px-4 md:px-6 py-2 flex gap-1 md:gap-0 items-center border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/60 flex-none overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing divide-x divide-[var(--glass-border)]">
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0 first:pl-0">
                     <div className="p-1 bg-blue-50 text-blue-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                     </div>
-                    <span className="text-[11px] text-slate-500 whitespace-nowrap">{t('leads.total_leads') || 'Tổng Lead'}</span>
-                    <span className="text-sm font-black text-slate-800">{metrics.total}</span>
+                    <span className="text-[11px] text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.total_leads') || 'Tổng Lead'}</span>
+                    <span className="text-sm font-black text-[var(--text-primary)]">{metrics.total}</span>
                     <span className="text-[10px] font-semibold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-full hidden md:inline">+12%</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0">
                     <div className="p-1 bg-indigo-50 text-indigo-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     </div>
-                    <span className="text-[11px] text-slate-500 whitespace-nowrap" title={t('leads.new_leads_tooltip') || 'Khách hàng tạo mới trong 30 ngày gần nhất'}>{t('leads.new_leads') || 'Lead Mới'}</span>
+                    <span className="text-[11px] text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.new_leads_tooltip') || 'Khách hàng tạo mới trong 30 ngày gần nhất'}>{t('leads.new_leads') || 'Lead Mới'}</span>
                     <span className="text-sm font-black text-indigo-600" title={t('leads.new_leads_tooltip') || 'Khách hàng tạo mới trong 30 ngày gần nhất'}>{metrics.newCount}</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0">
                     <div className="p-1 bg-emerald-50 text-emerald-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
-                    <span className="text-[11px] text-slate-500 whitespace-nowrap" title={t('leads.win_rate_tooltip') || 'Tỉ lệ chốt = Chốt / (Chốt + Thất bại)'}>{t('leads.win_rate') || 'Tỉ lệ chốt'}</span>
+                    <span className="text-[11px] text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.win_rate_tooltip') || 'Tỉ lệ chốt = Chốt / (Chốt + Thất bại)'}>{t('leads.win_rate') || 'Tỉ lệ chốt'}</span>
                     <span className="text-sm font-black text-emerald-600" title={`${metrics.wonCount} chốt / ${metrics.wonCount + metrics.lostCount} quyết định`}>{metrics.winRate}%</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0">
                     <div className="p-1 bg-amber-50 text-amber-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                     </div>
-                    <span className="text-[11px] text-slate-500 whitespace-nowrap">{t('leads.avg_score') || 'Điểm TB'}</span>
+                    <span className="text-[11px] text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.avg_score') || 'Điểm TB'}</span>
                     <span className="text-sm font-black text-amber-600">{metrics.avgScore}</span>
                     <div className="hidden md:flex w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                         <div className="h-full bg-amber-400 rounded-full" style={{ width: `${metrics.avgScore}%` }} />
@@ -995,32 +995,32 @@ export const Leads: React.FC = () => {
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-hidden bg-white min-h-0 relative flex flex-col">
+            <div className="flex-1 overflow-hidden bg-[var(--bg-surface)] min-h-0 relative flex flex-col">
                 
                 {/* Scrollable Container */}
                 <div className="flex-1 overflow-auto p-2 md:p-3 no-scrollbar min-h-0">
                     {/* VIEW MODE: LIST (TABLE) - Desktop Only */}
                     {viewMode === 'LIST' && (
-                        <div className="hidden md:flex flex-col bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden h-full">
+                        <div className="hidden md:flex flex-col bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden h-full">
                             <div ref={tableRef} className="overflow-auto no-scrollbar flex-1 min-w-0 min-h-0 w-full cursor-grab active:cursor-grabbing">
                                 <table className="w-full text-left border-collapse relative">
-                                    <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-20 shadow-sm">
+                                    <thead className="bg-[var(--glass-surface)] border-b border-[var(--glass-border)] sticky top-0 z-20 shadow-sm">
                                         <tr>
-                                            <th className={`px-4 py-3 w-[50px] border-r border-slate-100 sticky left-0 bg-slate-50 z-30`}>
+                                            <th className={`px-4 py-3 w-[50px] border-r border-[var(--glass-border)] sticky left-0 bg-[var(--glass-surface)] z-30`}>
                                                 <div className="flex items-center justify-center">
                                                     <input type="checkbox" checked={selectedLeads.size === leads.length && leads.length > 0} onChange={handleSelectAll} className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
                                                 </div>
                                             </th>
-                                            <th className={`px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50 sticky left-[50px] z-30`}>{t('leads.name')}</th>
-                                            {visibleColumns.has('phone') && <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">{t('leads.col_phone')}</th>}
-                                            {visibleColumns.has('email') && <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">{t('leads.col_email')}</th>}
-                                            {visibleColumns.has('address') && <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">{t('leads.col_address')}</th>}
-                                            {visibleColumns.has('stage') && <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">{t('leads.stage')}</th>}
-                                            {visibleColumns.has('source') && <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">{t('leads.source')}</th>}
-                                            {visibleColumns.has('score') && <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">{t('leads.score')}</th>}
-                                            {visibleColumns.has('owner') && <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">{t('common.owner')}</th>}
-                                            {visibleColumns.has('createdAt') && <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">{t('leads.col_created')}</th>}
-                                            <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right sticky right-0 bg-slate-50 z-30">{t('common.actions')}</th>
+                                            <th className={`px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)] sticky left-[50px] z-30`}>{t('leads.name')}</th>
+                                            {visibleColumns.has('phone') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_phone')}</th>}
+                                            {visibleColumns.has('email') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_email')}</th>}
+                                            {visibleColumns.has('address') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_address')}</th>}
+                                            {visibleColumns.has('stage') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.stage')}</th>}
+                                            {visibleColumns.has('source') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.source')}</th>}
+                                            {visibleColumns.has('score') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.score')}</th>}
+                                            {visibleColumns.has('owner') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('common.owner')}</th>}
+                                            {visibleColumns.has('createdAt') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_created')}</th>}
+                                            <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right sticky right-0 bg-[var(--glass-surface)] z-30">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
@@ -1056,10 +1056,10 @@ export const Leads: React.FC = () => {
                             {Object.values(LeadStage).map(stage => {
                                 const style = STAGE_CONFIG[stage];
                                 return (
-                                    <div key={stage} className="min-w-[85vw] md:min-w-[320px] w-[85vw] md:w-[320px] flex-shrink-0 flex flex-col h-full bg-slate-50 rounded-2xl border border-slate-200 snap-center">
-                                        <div className={`p-3 border-b border-slate-200 flex justify-between items-center rounded-t-2xl ${style.bg}`}>
+                                    <div key={stage} className="min-w-[85vw] md:min-w-[320px] w-[85vw] md:w-[320px] flex-shrink-0 flex flex-col h-full bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] snap-center">
+                                        <div className={`p-3 border-b border-[var(--glass-border)] flex justify-between items-center rounded-t-2xl ${style.bg}`}>
                                             <h3 className={`text-xs font-bold uppercase tracking-wider ${style.color}`}>{t(`stage.${stage}`)}</h3>
-                                            <span className="text-[10px] font-bold bg-white px-2 py-0.5 rounded-full text-slate-500 shadow-sm border border-slate-100">{groupedLeads[stage]?.length || 0}</span>
+                                            <span className="text-[10px] font-bold bg-[var(--bg-surface)] px-2 py-0.5 rounded-full text-[var(--text-tertiary)] shadow-sm border border-[var(--glass-border)]">{groupedLeads[stage]?.length || 0}</span>
                                         </div>
                                         <div className="flex-1 overflow-y-auto p-2 no-scrollbar min-h-0">
                                             {groupedLeads[stage]?.map(lead => (
@@ -1078,16 +1078,16 @@ export const Leads: React.FC = () => {
                             {leads?.map(lead => (
                                 <div 
                                     key={lead.id} 
-                                    className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm active:scale-[0.98] transition-all hover:border-indigo-100" 
+                                    className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm active:scale-[0.98] transition-all hover:border-indigo-100" 
                                     onClick={() => handleEdit(lead)}
                                 >
                                     <div className="flex justify-between items-start mb-3">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-sm font-bold text-slate-500 border border-slate-100">
+                                            <div className="w-10 h-10 rounded-full bg-[var(--glass-surface)] flex items-center justify-center text-sm font-bold text-[var(--text-tertiary)] border border-[var(--glass-border)]">
                                                 {lead.name.charAt(0).toUpperCase()}
                                             </div>
                                             <div>
-                                                <div className="font-bold text-slate-800 text-sm">{lead.name}</div>
+                                                <div className="font-bold text-[var(--text-primary)] text-sm">{lead.name}</div>
                                                 <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
                                                     {getSourceIcon(lead.source)}
                                                     {lead.source} • {formatDate(lead.createdAt)}
@@ -1102,15 +1102,15 @@ export const Leads: React.FC = () => {
                                     <div className="grid grid-cols-2 gap-4 mb-4 py-3 border-t border-b border-slate-50">
                                         <div>
                                             <div className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">{t('leads.col_phone')}</div>
-                                            <div className="text-xs font-bold text-slate-700 font-mono">{lead.phone}</div>
+                                            <div className="text-xs font-bold text-[var(--text-secondary)] font-mono">{lead.phone}</div>
                                         </div>
                                         <div className="text-right">
                                             <div className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">{t('leads.score')}</div>
                                             <div className="flex items-center justify-end gap-1.5">
-                                                <div className="w-12 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                <div className="w-12 h-1 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
                                                     <div className={`h-full ${lead.score?.score >= 70 ? 'bg-emerald-500' : lead.score?.score >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${lead.score?.score || 0}%` }} />
                                                 </div>
-                                                <span className="text-xs font-bold text-slate-700">{lead.score?.score || 0}</span>
+                                                <span className="text-xs font-bold text-[var(--text-secondary)]">{lead.score?.score || 0}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1132,7 +1132,7 @@ export const Leads: React.FC = () => {
                                 </div>
                             ))}
                             {leads?.length === 0 && !loading && (
-                                <div className="p-12 text-center text-slate-400 italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                <div className="p-12 text-center text-slate-400 italic bg-[var(--glass-surface)] rounded-2xl border border-dashed border-[var(--glass-border)]">
                                     {t('common.no_results')}
                                 </div>
                             )}
