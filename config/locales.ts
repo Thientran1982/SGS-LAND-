@@ -1463,6 +1463,7 @@ export const DICTIONARY = {
         "menu.home": "Home",
         "menu.dashboard": "Dashboard",
         "menu.leads": "Leads (CRM)",
+        "menu.contracts": "Contracts",
         "menu.inventory": "Inventory",
         "menu.inbox": "Omnichannel Inbox",
         "menu.favorites": "Watchlist",
