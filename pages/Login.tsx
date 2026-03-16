@@ -156,7 +156,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [isPersonalEmail, setIsPersonalEmail] = useState(false);
   const [devToken, setDevToken] = useState('');
   
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
 
   const localizeServerError = (msg: string): string => {
       if (!msg) return t('auth.error_generic');
@@ -325,12 +325,22 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <Logo className="w-8 h-8 text-white" strokeWidth={2.5} />
                 <span className="font-bold text-lg tracking-tight">SGS<span className="text-gray-500">ID</span></span>
              </div>
-             <button 
-                onClick={() => window.location.hash = `#/${ROUTES.LANDING}`}
-                className="text-xs font-bold text-gray-500 hover:text-white transition-colors"
-             >
-                {t('legal.back_home')}
-             </button>
+             <div className="flex items-center gap-3">
+                <button
+                    onClick={() => setLanguage(language === 'vn' ? 'en' : 'vn')}
+                    title={t('nav.lang_switch')}
+                    aria-label={t('nav.lang_switch')}
+                    className="w-9 h-9 flex items-center justify-center rounded-full text-[10px] font-extrabold text-gray-400 hover:text-white border border-white/10 hover:border-white/30 hover:bg-white/5 transition-all tracking-tighter"
+                >
+                    {language.toUpperCase()}
+                </button>
+                <button 
+                    onClick={() => window.location.hash = `#/${ROUTES.LANDING}`}
+                    className="text-xs font-bold text-gray-500 hover:text-white transition-colors"
+                >
+                    {t('legal.back_home')}
+                </button>
+             </div>
         </div>
 
         <div className="flex-1 flex flex-col px-8 md:px-14 justify-center min-h-[600px]">
