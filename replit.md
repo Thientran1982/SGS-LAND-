@@ -202,6 +202,27 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **Lead column ambiguity**: When JOINing `leads l` with `users u`, ALL WHERE conditions MUST use `l.` prefix (both tables have `name`, `source` columns).
 - **Lead creation stage**: POST `/api/leads` must destructure and pass `stage` from `req.body` to `leadRepository.create()`.
 
+## SEO & Internationalization
+
+### Translation Keys (`config/locales.ts`)
+- **Structure**: Two-language dictionary (`vn` and `en`) with dot-notation keys (`landing.hero_title`, `routing.title`, etc.)
+- **Added keys**: `landing.hero_title`, `admin.users.no_permission`, `admin.users.confirm_role_change`, `table.*` (time, task, model, latency, cost, flags, records, ip_address, device), `inbox.*` (new_message, assign_success, empty_messages), `leads.export_success`, `leads.new_lead_received`, `reports.cost_*`, `routing.*` (full routing rules page translations), `scoring.*` (full scoring config page translations), `detail.ai_no_data`, `editor.*` (AI text editor tools)
+- **Pattern to check missing keys**: `node -e "const fs=require('fs'); const content=fs.readFileSync('config/locales.ts','utf8'); const keys=new Set([...content.matchAll(/\"([^\"]+)\":\s*\"/g)].map(m=>m[1])); ..."`
+
+### SEO Configuration (`index.html`)
+- **Title**: `SGS LAND | Hệ Điều Hành Bất Động Sản Thế Hệ Mới`
+- **Meta description**: Vietnamese-optimized, 155-char limit compliant
+- **Keywords**: Real estate focused VN keywords
+- **Favicon**: Inline SVG of the stack logo (indigo brand color `#4F46E5`)
+- **Open Graph**: `og:title`, `og:description`, `og:image` (1200×630 branded SVG), `og:url` (dynamic), `og:locale` (vi_VN), `og:site_name`, `og:type`
+- **Twitter Card**: `summary_large_image` with all required fields
+- **Structured Data (JSON-LD)**: `Organization` schema + `SoftwareApplication` schema for rich results
+- **Dynamic updates**: `Landing.tsx` updates all meta tags on language change via `useEffect`
+
+### Logo SEO (`components/Logo.tsx`)
+- SVG has `role="img"`, `aria-label`, and `<title>` element for screen readers and crawlers
+- `nav.logo_label` translation key provides the accessible name
+
 ## Scripts
 
 - `npm run dev` - Start development server (tsx server.ts)

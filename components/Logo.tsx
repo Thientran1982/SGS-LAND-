@@ -31,7 +31,9 @@ export const Logo: React.FC<LogoProps> = memo(({
             strokeLinejoin="round"
             role="img"
             aria-label={label}
+            xmlns="http://www.w3.org/2000/svg"
         >
+            <title>{label}</title>
             {/* Top Layer - The Interface */}
             <path d="M12 2L2 7l10 5 10-5-10-5z" className="opacity-100" />
             {/* Middle Layer - The Data */}

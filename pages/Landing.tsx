@@ -156,8 +156,20 @@ export const Landing: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        document.title = `SGS LAND | ${t('landing.hero_title') || 'Enterprise OS'}`;
-    }, [t]);
+        const heroTitle = t('landing.hero_title');
+        document.title = `SGS LAND | ${heroTitle}`;
+        // Update meta description dynamically for SPA SEO
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) metaDesc.setAttribute('content', t('landing.hero_desc'));
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle) ogTitle.setAttribute('content', `SGS LAND | ${heroTitle}`);
+        const ogDesc = document.querySelector('meta[property="og:description"]');
+        if (ogDesc) ogDesc.setAttribute('content', t('landing.hero_desc'));
+        const twTitle = document.querySelector('meta[name="twitter:title"]');
+        if (twTitle) twTitle.setAttribute('content', `SGS LAND | ${heroTitle}`);
+        const twDesc = document.querySelector('meta[name="twitter:description"]');
+        if (twDesc) twDesc.setAttribute('content', t('landing.hero_desc'));
+    }, [t, language]);
 
     useEffect(() => {
         const fullText = t('landing.typewriter');
