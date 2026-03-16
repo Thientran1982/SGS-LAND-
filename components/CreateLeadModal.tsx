@@ -13,14 +13,14 @@ const ICONS = {
 
 const FormInput = ({ label, value, onChange, placeholder, required, type = 'text', autoFocus, error, className = "" }: any) => (
     <div className={`space-y-1 ${className}`}>
-        <label className="text-xs font-bold text-slate-500 uppercase ml-1 block">
+        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 block">
             {label} {required && <span className="text-rose-500">*</span>}
         </label>
         <input 
             type={type}
             value={value}
             onChange={e => onChange(e.target.value)}
-            className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all ${error ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50' : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'}`}
+            className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all ${error ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`}
             placeholder={placeholder}
             required={required}
             autoFocus={autoFocus}
@@ -31,11 +31,11 @@ const FormInput = ({ label, value, onChange, placeholder, required, type = 'text
 
 const FormTextArea = ({ label, value, onChange, placeholder }: any) => (
     <div className="space-y-1">
-        <label className="text-xs font-bold text-slate-500 uppercase ml-1 block">{label}</label>
+        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 block">{label}</label>
         <textarea 
             value={value}
             onChange={e => onChange(e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none h-20"
+            className="w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none h-20"
             placeholder={placeholder}
         />
     </div>
@@ -189,12 +189,12 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
             
             {/* Modal */}
-            <div className="bg-white w-full max-w-2xl rounded-[24px] p-8 shadow-2xl border border-slate-100 relative z-10 animate-scale-up max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div className="bg-[var(--bg-surface)] w-full max-w-2xl rounded-[24px] p-8 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up max-h-[90vh] overflow-y-auto no-scrollbar">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-slate-800">
+                    <h3 className="text-xl font-bold text-[var(--text-primary)]">
                         {step === 'FORM' ? t('leads.create_modal_title') : t('leads.merge_modal_title')}
                     </h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600">✕</button>
+                    <button onClick={onClose} className="text-slate-400 hover:text-[var(--text-secondary)]">✕</button>
                 </div>
 
                 {step === 'FORM' ? (
@@ -285,11 +285,11 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                             placeholder={t('leads.placeholder_notes')}
                         />
 
-                        <div className="pt-4 flex gap-3 border-t border-slate-100 mt-2">
+                        <div className="pt-4 flex gap-3 border-t border-[var(--glass-border)] mt-2">
                             <button 
                                 type="button" 
                                 onClick={onClose} 
-                                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors"
+                                className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors"
                             >
                                 {t('common.cancel')}
                             </button>
@@ -314,7 +314,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 </div>
                             </div>
                             
-                            <div className="bg-white/60 p-3 rounded-lg mt-3 text-xs border border-amber-200/50">
+                            <div className="bg-[var(--bg-surface)]/60 p-3 rounded-lg mt-3 text-xs border border-amber-200/50">
                                 <div className="grid grid-cols-[60px_1fr] gap-1">
                                     <span className="text-amber-700/60 font-bold">{t('leads.name')}:</span>
                                     <span className="font-bold">{duplicateLead?.name}</span>
@@ -332,7 +332,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                             <button 
                                 type="button" 
                                 onClick={() => setStep('FORM')} 
-                                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors"
+                                className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors"
                             >
                                 {t('common.cancel')}
                             </button>

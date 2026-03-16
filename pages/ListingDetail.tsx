@@ -59,23 +59,23 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
     return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-            <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100 relative z-10 animate-scale-up">
+            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-slate-800">{t('common.share_link') || 'Chia sẻ liên kết'}</h3>
-                    <button onClick={onClose} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('common.share_link') || 'Chia sẻ liên kết'}</h3>
+                    <button onClick={onClose} className="p-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-hover)] rounded-full text-slate-400 transition-colors">
                         {ICONS.CLOSE}
                     </button>
                 </div>
                 
-                <p className="text-sm text-slate-500 mb-4 leading-relaxed">
+                <p className="text-sm text-[var(--text-tertiary)] mb-4 leading-relaxed">
                     {t('common.share_desc') || 'Sao chép đường dẫn bên dưới để gửi cho khách hàng hoặc đồng nghiệp.'}
                 </p>
 
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-2 mb-4 group focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                <div className="bg-[var(--glass-surface)] p-3 rounded-xl border border-[var(--glass-border)] flex items-center gap-2 mb-4 group focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
                     <input 
                         readOnly 
                         value={url} 
-                        className="bg-transparent text-sm text-slate-600 flex-1 outline-none font-mono truncate select-all"
+                        className="bg-transparent text-sm text-[var(--text-secondary)] flex-1 outline-none font-mono truncate select-all"
                         onClick={(e) => e.currentTarget.select()} // Auto-select on click
                     />
                 </div>
@@ -124,18 +124,18 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
     const grossYield = price > 0 ? (annualRevenue / price) * 100 : 0;
 
     return (
-        <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden h-full">
-            <div className="flex border-b border-slate-100">
+        <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden h-full">
+            <div className="flex border-b border-[var(--glass-border)]">
                 <button 
                     onClick={() => setMode('LOAN')} 
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'LOAN' ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'LOAN' ? 'text-indigo-600 bg-indigo-50/50' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
                 >
                     {ICONS.CALC} {t('calc.loan')}
                 </button>
-                <div className="w-px bg-slate-100"></div>
+                <div className="w-px bg-[var(--glass-surface-hover)]"></div>
                 <button 
                     onClick={() => setMode('RENT')} 
-                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'RENT' ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'RENT' ? 'text-emerald-600 bg-emerald-50/50' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
                 >
                     {ICONS.CHART} {t('calc.rent')}
                 </button>
@@ -147,10 +147,10 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                         <div className="space-y-5">
                             <div>
                                 <div className="flex justify-between mb-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase">{t('calc.loan_ratio')}</label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('calc.loan_ratio')}</label>
                                     <span className="text-sm font-bold text-indigo-600">{ratio}%</span>
                                 </div>
-                                <input type="range" min="0" max="90" step="5" value={ratio} onChange={e => setRatio(Number(e.target.value))} className="w-full accent-indigo-600 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer" />
+                                <input type="range" min="0" max="90" step="5" value={ratio} onChange={e => setRatio(Number(e.target.value))} className="w-full accent-indigo-600 h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
                                 <div className="flex justify-between text-[10px] text-slate-400 mt-1">
                                     <span>0%</span>
                                     <span>{t('calc.own_capital')}: {formatCurrency(downPayment)}</span>
@@ -158,12 +158,12 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('calc.term_years')}</label>
-                                    <input type="number" value={term} onChange={e => setTerm(Number(e.target.value))} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500" />
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.term_years')}</label>
+                                    <input type="number" value={term} onChange={e => setTerm(Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500" />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('calc.interest_rate')}</label>
-                                    <input type="number" value={rate} onChange={e => setRate(Number(e.target.value))} className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500" />
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.interest_rate')}</label>
+                                    <input type="number" value={rate} onChange={e => setRate(Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500" />
                                 </div>
                             </div>
                         </div>
@@ -186,21 +186,21 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-enter">
                         <div className="space-y-5">
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('calc.expected_rent')}</label>
+                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.expected_rent')}</label>
                                 <input 
                                     type="number" 
                                     value={monthlyRent} 
                                     onChange={e => setMonthlyRent(Number(e.target.value))} 
-                                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500" 
+                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-emerald-500" 
                                 />
                                 <div className="text-[10px] text-slate-400 mt-1 text-right">{formatCurrency(monthlyRent)}</div>
                             </div>
                             <div>
                                 <div className="flex justify-between mb-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase">{t('calc.occupancy_rate')}</label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('calc.occupancy_rate')}</label>
                                     <span className="text-sm font-bold text-emerald-600">{occupancy}%</span>
                                 </div>
-                                <input type="range" min="50" max="100" step="5" value={occupancy} onChange={e => setOccupancy(Number(e.target.value))} className="w-full accent-emerald-600 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer" />
+                                <input type="range" min="50" max="100" step="5" value={occupancy} onChange={e => setOccupancy(Number(e.target.value))} className="w-full accent-emerald-600 h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
                             </div>
                         </div>
                         <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-100 flex flex-col justify-center min-w-0">
@@ -229,7 +229,7 @@ const STATUS_CONFIG: Record<string, { color: string, bg: string, border: string 
     OPENING: { color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
     AVAILABLE: { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
     HOLD: { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
-    SOLD: { color: 'text-slate-600', bg: 'bg-slate-100', border: 'border-slate-300' },
+    SOLD: { color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-slate-300' },
     RENTED: { color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200' },
     INACTIVE: { color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
 };
@@ -466,7 +466,7 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
         reader.readAsArrayBuffer(file);
     };
 
-    if (loading) return <div className="animate-pulse h-40 bg-slate-100 rounded-[24px] mt-8"></div>;
+    if (loading) return <div className="animate-pulse h-40 bg-[var(--glass-surface-hover)] rounded-[24px] mt-8"></div>;
 
     if (!isAuth) return null;
 
@@ -474,7 +474,7 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
         <div className="mt-8 relative">
             {toast && <div className={`absolute top-0 right-0 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                <h3 className="text-xl font-bold text-slate-900">{t('inventory.project_units') || 'Danh sách sản phẩm thuộc dự án'}</h3>
+                <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('inventory.project_units') || 'Danh sách sản phẩm thuộc dự án'}</h3>
                 {canManageUnits && (
                     <div className="flex flex-wrap items-center gap-2">
                         <input 
@@ -486,7 +486,7 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                         />
                         <button 
                             onClick={() => fileInputRef.current?.click()}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+                            className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm"
                             title={t('inventory.import_excel') || 'Nhập Excel'}
                         >
                             <Upload className="w-4 h-4" />
@@ -494,7 +494,7 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                         </button>
                         <button 
                             onClick={handleExportExcel}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+                            className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm"
                             title={t('inventory.export_excel') || 'Xuất Excel'}
                         >
                             <Download className="w-4 h-4" />
@@ -511,9 +511,9 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                 )}
             </div>
             
-            <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
                 {units.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 text-sm">
+                    <div className="p-8 text-center text-[var(--text-tertiary)] text-sm">
                         {t('inventory.empty') || 'Kho hàng trống'}
                     </div>
                 ) : (
@@ -528,17 +528,17 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                             onMouseMove={handleMouseMove}
                         >
                             <table className="w-full text-left border-collapse min-w-[900px]">
-                                <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-30">
+                                <thead className="bg-[var(--glass-surface)] border-b border-[var(--glass-border)] sticky top-0 z-30">
                                     <tr>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Mã SP</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Loại</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right bg-slate-50">Tầng</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right bg-slate-50">Hướng</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right bg-slate-50">Diện tích</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right bg-slate-50">Đơn giá</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right bg-slate-50">Giá</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50 sticky z-20 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>Trạng thái</th>
-                                        {canManageUnits && <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right bg-slate-50 sticky right-0 z-20" style={{ width: '90px', minWidth: '90px' }}>Thao tác</th>}
+                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">Mã SP</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">Loại</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Tầng</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Hướng</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Diện tích</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Đơn giá</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Giá</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-center bg-[var(--glass-surface)] sticky z-20 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>Trạng thái</th>
+                                        {canManageUnits && <th className="px-4 py-4 text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)] sticky right-0 z-20" style={{ width: '90px', minWidth: '90px' }}>Thao tác</th>}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
@@ -547,7 +547,7 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                                         return (
                                             <tr 
                                                 key={unit.id} 
-                                                className="hover:bg-slate-50 cursor-pointer transition-colors group" 
+                                                className="hover:bg-[var(--glass-surface)] cursor-pointer transition-colors group" 
                                                 onClick={(e) => {
                                                     if (hasDragged) {
                                                         e.preventDefault();
@@ -559,19 +559,19 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                                                 <td className="px-4 py-3">
                                                     <span className="font-mono text-xs font-bold text-indigo-600 group-hover:text-indigo-700">{unit.code}</span>
                                                 </td>
-                                                <td className="px-4 py-3 text-xs text-slate-600 font-medium">{t(`property.${unit.type.toUpperCase()}`)}</td>
-                                                <td className="px-4 py-3 text-xs text-slate-600 text-right font-mono">{unit.attributes?.floor || '--'}</td>
-                                                <td className="px-4 py-3 text-xs text-slate-600 text-right font-mono">{unit.attributes?.direction ? (t(`direction.${unit.attributes.direction}`) || unit.attributes.direction) : '--'}</td>
-                                                <td className="px-4 py-3 text-xs text-slate-600 text-right font-mono">{unit.area} <span className="text-[10px] text-slate-400">m²</span></td>
-                                                <td className="px-4 py-3 text-[11px] text-slate-500 text-right font-medium italic">{formatUnitPrice(unit.price, unit.area, t)}</td>
-                                                <td className="px-4 py-3 text-sm font-bold text-slate-900 text-right">{formatCurrency(unit.price)}</td>
-                                                <td className="px-4 py-3 text-center sticky z-10 bg-white group-hover:bg-slate-50 transition-colors shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>
+                                                <td className="px-4 py-3 text-xs text-[var(--text-secondary)] font-medium">{t(`property.${unit.type.toUpperCase()}`)}</td>
+                                                <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.attributes?.floor || '--'}</td>
+                                                <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.attributes?.direction ? (t(`direction.${unit.attributes.direction}`) || unit.attributes.direction) : '--'}</td>
+                                                <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.area} <span className="text-[10px] text-slate-400">m²</span></td>
+                                                <td className="px-4 py-3 text-[11px] text-[var(--text-tertiary)] text-right font-medium italic">{formatUnitPrice(unit.price, unit.area, t)}</td>
+                                                <td className="px-4 py-3 text-sm font-bold text-[var(--text-primary)] text-right">{formatCurrency(unit.price)}</td>
+                                                <td className="px-4 py-3 text-center sticky z-10 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] transition-colors shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold border uppercase tracking-wider whitespace-nowrap ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
                                                         {t(`status.${unit.status}`)}
                                                     </span>
                                                 </td>
                                                 {canManageUnits && (
-                                                    <td className="px-4 py-3 text-right sticky right-0 bg-white group-hover:bg-slate-50 z-10 transition-colors" style={{ width: '90px', minWidth: '90px' }}>
+                                                    <td className="px-4 py-3 text-right sticky right-0 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] z-10 transition-colors" style={{ width: '90px', minWidth: '90px' }}>
                                                         <div className="flex items-center justify-end gap-2 transition-opacity">
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); handleEditUnit(e, unit); }}
@@ -598,31 +598,31 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                         </div>
 
                         {/* Mobile Compact View */}
-                        <div className="md:hidden divide-y divide-slate-100">
+                        <div className="md:hidden divide-y divide-[var(--glass-border)]">
                             {units.map(unit => {
                                 const statusStyle = STATUS_CONFIG[unit.status] || STATUS_CONFIG.AVAILABLE;
                                 return (
                                     <div 
                                         key={unit.id} 
-                                        className="p-4 active:bg-slate-50 transition-colors cursor-pointer"
+                                        className="p-4 active:bg-[var(--glass-surface)] transition-colors cursor-pointer"
                                         onClick={() => window.location.hash = `#/${ROUTES.LISTING}/${unit.id}`}
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex flex-col">
                                                 <span className="font-mono text-[10px] font-bold text-indigo-600 mb-1">{unit.code}</span>
-                                                <h4 className="text-sm font-bold text-slate-900">{unit.title || t(`property.${unit.type.toUpperCase()}`)}</h4>
+                                                <h4 className="text-sm font-bold text-[var(--text-primary)]">{unit.title || t(`property.${unit.type.toUpperCase()}`)}</h4>
                                             </div>
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
                                                 {t(`status.${unit.status}`)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between items-end">
-                                            <div className="text-[11px] text-slate-500 space-y-1">
+                                            <div className="text-[11px] text-[var(--text-tertiary)] space-y-1">
                                                 <div>{unit.area} m² • {unit.attributes?.floor ? `Tầng ${unit.attributes.floor}` : 'N/A'} • {unit.attributes?.direction ? t(`direction.${unit.attributes.direction}`) : 'N/A'}</div>
                                                 <div className="italic">{formatUnitPrice(unit.price, unit.area, t)}</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-base font-black text-slate-900">{formatCurrency(unit.price)}</div>
+                                                <div className="text-base font-black text-[var(--text-primary)]">{formatCurrency(unit.price)}</div>
                                             </div>
                                         </div>
                                         {canManageUnits && (
@@ -946,15 +946,15 @@ export const ListingDetail: React.FC = () => {
         : '0912 345 678';
 
     return (
-        <article className="h-[100dvh] overflow-y-auto no-scrollbar bg-white pb-28 lg:pb-20 animate-enter relative">
+        <article className="h-[100dvh] overflow-y-auto no-scrollbar bg-[var(--bg-surface)] pb-28 lg:pb-20 animate-enter relative">
             {toast && <div className={`fixed top-6 right-4 md:right-6 z-[100] px-4 md:px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border max-w-[calc(100vw-2rem)] ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm break-words">{toast.msg}</span></div>}
 
             {/* Header */}
-            <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3 md:px-6 md:py-4 flex justify-between items-center gap-2">
+            <div className="sticky top-0 z-40 bg-[var(--bg-surface)]/80 backdrop-blur-md border-b border-[var(--glass-border)] px-4 py-3 md:px-6 md:py-4 flex justify-between items-center gap-2">
                 <button 
                     type="button" 
                     onClick={handleBack} 
-                    className="flex items-center gap-1.5 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors px-3 py-2 rounded-lg hover:bg-slate-50 active:bg-slate-100 shrink-0"
+                    className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors px-3 py-2 rounded-lg hover:bg-[var(--glass-surface)] active:bg-[var(--glass-surface-hover)] shrink-0"
                 >
                     {ICONS.BACK} <span className="hidden sm:inline">{t('common.go_back')}</span>
                 </button>
@@ -972,7 +972,7 @@ export const ListingDetail: React.FC = () => {
                     <button 
                         type="button"
                         onClick={handleShare} 
-                        className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-slate-50 transition-colors" 
+                        className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-[var(--glass-surface)] transition-colors" 
                         title={t('common.share_link') || 'Chia sẻ'}
                     >
                         {ICONS.SHARE}
@@ -1026,7 +1026,7 @@ export const ListingDetail: React.FC = () => {
                     {/* "View All" Button (Floating, visible on Mobile & Desktop) - Updated without ICON */}
                     <button 
                         onClick={() => { setLightboxIndex(0); setLightboxOpen(true); }}
-                        className="absolute bottom-4 right-4 z-20 bg-white/90 backdrop-blur-md hover:bg-white text-slate-800 px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition-all hover:scale-105 active:scale-95 border border-white/20"
+                        className="absolute bottom-4 right-4 z-20 bg-[var(--bg-surface)]/90 backdrop-blur-md hover:bg-[var(--bg-surface)] text-[var(--text-primary)] px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition-all hover:scale-105 active:scale-95 border border-white/20"
                     >
                         {t('common.view_all') || 'Xem tất cả'} ({images.length})
                     </button>
@@ -1041,8 +1041,8 @@ export const ListingDetail: React.FC = () => {
                             <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border border-indigo-100">{t(`property.${listing.type.toUpperCase()}`)}</span>
                             <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border border-emerald-100">{t(`status.${listing.status}`)}</span>
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2 leading-tight">{listing.title}</h1>
-                        <div className="flex items-center gap-2 text-slate-500 font-medium flex-wrap">
+                        <h1 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] mb-2 leading-tight">{listing.title}</h1>
+                        <div className="flex items-center gap-2 text-[var(--text-tertiary)] font-medium flex-wrap">
                             <span className="flex items-center gap-1">{ICONS.LOCATION} {listing.location}</span>
                             <span className="mx-2 text-slate-300 hidden sm:inline">|</span>
                             <span className="flex items-center gap-1">
@@ -1054,23 +1054,23 @@ export const ListingDetail: React.FC = () => {
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {attributes.map((attr, i) => (
-                            <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md transition-all duration-300 group">
+                            <div key={i} className="bg-[var(--glass-surface)] p-4 rounded-2xl border border-[var(--glass-border)] hover:bg-[var(--bg-surface)] hover:shadow-md transition-all duration-300 group">
                                 <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 group-hover:text-indigo-500 transition-colors">{attr.label}</div>
-                                <div className="font-bold text-slate-800 truncate" title={String(attr.value)}>{String(attr.value ?? '--')}</div>
+                                <div className="font-bold text-[var(--text-primary)] truncate" title={String(attr.value)}>{String(attr.value ?? '--')}</div>
                             </div>
                         ))}
                     </div>
 
                     <div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-4">{t('detail.info_title')}</h3>
-                        <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
+                        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-4">{t('detail.info_title')}</h3>
+                        <p className="text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
                             {(listing.attributes.description as string) || t('inventory.label_desc')}
                         </p>
                     </div>
 
                     {/* Map */}
                     {listing.coordinates && (
-                        <div className="h-80 rounded-[24px] overflow-hidden border border-slate-200 shadow-sm relative z-0">
+                        <div className="h-80 rounded-[24px] overflow-hidden border border-[var(--glass-border)] shadow-sm relative z-0">
                             <MapView listings={[listing]} onNavigate={() => {}} formatCurrency={formatCurrency} formatUnitPrice={formatUnitPrice} t={t} language={language} />
                         </div>
                     )}
@@ -1087,18 +1087,18 @@ export const ListingDetail: React.FC = () => {
                                 <FinancialSuite price={listing.price} formatCurrency={formatCurrency} t={t} />
                             </div>
                             
-                            <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden flex flex-col min-w-0">
-                                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-indigo-50/30">
+                            <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col min-w-0">
+                                <div className="p-6 border-b border-[var(--glass-border)] flex justify-between items-center bg-indigo-50/30">
                                     <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
                                             <Sparkles className="w-4 h-4" />
                                         </div>
-                                        <h3 className="font-bold text-slate-800">Thẩm định AI (Real-time)</h3>
+                                        <h3 className="font-bold text-[var(--text-primary)]">Thẩm định AI (Real-time)</h3>
                                     </div>
                                     <button 
                                         onClick={handleAiValuation}
                                         disabled={isValuating}
-                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${isValuating ? 'bg-slate-100 text-slate-400' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-slate-400' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
                                     >
                                         {!currentUser && <Lock className="w-3 h-3" />}
                                         {isValuating ? 'Đang thẩm định...' : (!currentUser ? 'Đăng nhập để thẩm định' : 'Bắt đầu thẩm định')}
@@ -1107,10 +1107,10 @@ export const ListingDetail: React.FC = () => {
                                 <div className="p-6 flex-1">
                                     {!valuation && !isValuating && (
                                         <div className="h-full flex flex-col items-center justify-center text-center space-y-3 py-10">
-                                            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-300">
+                                            <div className="w-12 h-12 bg-[var(--glass-surface)] rounded-full flex items-center justify-center text-slate-300">
                                                 {ICONS.CALC}
                                             </div>
-                                            <p className="text-sm text-slate-500 max-w-[240px]">
+                                            <p className="text-sm text-[var(--text-tertiary)] max-w-[240px]">
                                                 Sử dụng AI & Thuật toán nâng cao để phân tích giá thị trường thực tế tại khu vực này.
                                             </p>
                                         </div>
@@ -1118,11 +1118,11 @@ export const ListingDetail: React.FC = () => {
 
                                     {isValuating && (
                                         <div className="space-y-4 animate-pulse">
-                                            <div className="h-8 bg-slate-100 rounded-lg w-3/4"></div>
-                                            <div className="h-20 bg-slate-100 rounded-lg"></div>
+                                            <div className="h-8 bg-[var(--glass-surface-hover)] rounded-lg w-3/4"></div>
+                                            <div className="h-20 bg-[var(--glass-surface-hover)] rounded-lg"></div>
                                             <div className="grid grid-cols-2 gap-4">
-                                                <div className="h-16 bg-slate-100 rounded-lg"></div>
-                                                <div className="h-16 bg-slate-100 rounded-lg"></div>
+                                                <div className="h-16 bg-[var(--glass-surface-hover)] rounded-lg"></div>
+                                                <div className="h-16 bg-[var(--glass-surface-hover)] rounded-lg"></div>
                                             </div>
                                         </div>
                                     )}
@@ -1130,7 +1130,7 @@ export const ListingDetail: React.FC = () => {
                                     {valuation && (
                                         <div className="animate-enter space-y-6">
                                             <div className="flex flex-wrap items-end gap-2">
-                                                <span className="text-2xl md:text-3xl font-black text-slate-900 break-words">{formatCurrency(valuation.estimatedPrice)}</span>
+                                                <span className="text-2xl md:text-3xl font-black text-[var(--text-primary)] break-words">{formatCurrency(valuation.estimatedPrice)}</span>
                                                 <span className="text-sm font-bold text-slate-400 mb-1">/ tổng diện tích</span>
                                             </div>
 
@@ -1146,20 +1146,20 @@ export const ListingDetail: React.FC = () => {
                                             </div>
 
                                             <div className="space-y-3">
-                                                <h4 className="text-xs font-bold text-slate-500 uppercase">Phân tích thị trường</h4>
-                                                <p className="text-sm text-slate-600 leading-relaxed italic">
+                                                <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Phân tích thị trường</h4>
+                                                <p className="text-sm text-[var(--text-secondary)] leading-relaxed italic">
                                                     "{valuation.reasoning}"
                                                 </p>
                                             </div>
 
                                             {valuation.comparables && valuation.comparables.length > 0 && (
                                                 <div className="space-y-3">
-                                                    <h4 className="text-xs font-bold text-slate-500 uppercase">Tài sản so sánh</h4>
+                                                    <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Tài sản so sánh</h4>
                                                     <div className="space-y-2">
                                                         {valuation.comparables.map((comp: any, idx: number) => (
-                                                            <div key={idx} className="flex justify-between items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 flex-wrap">
-                                                                <span className="text-xs font-medium text-slate-600 truncate flex-1 min-w-[120px]">{comp.address}</span>
-                                                                <span className="text-xs font-bold text-slate-900 whitespace-nowrap">{formatCurrency(comp.price)}</span>
+                                                            <div key={idx} className="flex justify-between items-center gap-2 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] flex-wrap">
+                                                                <span className="text-xs font-medium text-[var(--text-secondary)] truncate flex-1 min-w-[120px]">{comp.address}</span>
+                                                                <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{formatCurrency(comp.price)}</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -1187,12 +1187,12 @@ export const ListingDetail: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <div className="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">{t('inventory.label_owner_name')}</span>
+                                    <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
+                                        <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_owner_name')}</span>
                                         <span className="text-sm font-bold text-slate-200">{listing.ownerName || '--'}</span>
                                     </div>
-                                    <div className="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">{t('inventory.label_owner_phone')}</span>
+                                    <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
+                                        <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_owner_phone')}</span>
                                         <div className="flex items-center justify-between gap-2">
                                             <span className="text-sm font-mono font-bold text-indigo-400 truncate min-w-0">{listing.ownerPhone || '--'}</span>
                                             {listing.ownerPhone && (
@@ -1205,14 +1205,14 @@ export const ListingDetail: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">{t('inventory.label_commission')}</span>
+                                    <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
+                                        <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_commission')}</span>
                                         <span className="text-sm font-bold text-emerald-400">
                                             {listing.commission ? `${listing.commission}${listing.commissionUnit === 'PERCENT' ? '%' : ' VND'}` : '--'}
                                         </span>
                                     </div>
-                                    <div className="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">{t('inventory.label_verified')}</span>
+                                    <div className="bg-[var(--bg-surface)]/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
+                                        <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest block mb-2">{t('inventory.label_verified')}</span>
                                         <span className={`text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider inline-block ${listing.isVerified ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700 text-slate-400 border border-slate-600'}`}>
                                             {listing.isVerified ? t('inventory.verified') : t('inventory.unverified')}
                                         </span>
@@ -1225,18 +1225,18 @@ export const ListingDetail: React.FC = () => {
 
                 {/* Sidebar */}
                 <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-xl sticky top-24">
+                    <div className="bg-[var(--bg-surface)] p-6 rounded-[32px] border border-[var(--glass-border)] shadow-xl sticky top-24">
                         <div className="mb-6">
-                            <div className="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">
+                            <div className="text-sm text-[var(--text-tertiary)] font-bold uppercase tracking-wider mb-1">
                                 {listing.type === PropertyType.PROJECT ? t('inventory.min_price') : t('inventory.label_price')}
                             </div>
-                            <div className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                            <div className="text-3xl font-black text-[var(--text-primary)] tracking-tight leading-tight">
                                 {formatCompactNumber(listing.price)}
-                                <span className="text-lg font-bold text-slate-500 ml-1">₫</span>
+                                <span className="text-lg font-bold text-[var(--text-tertiary)] ml-1">₫</span>
                             </div>
                             <div className="text-xs text-slate-400 mt-0.5 tabular-nums">{formatCurrency(listing.price)}</div>
                             {listing.area > 0 && listing.type !== PropertyType.PROJECT && (
-                                <div className="text-sm font-medium text-slate-500 mt-1 italic">
+                                <div className="text-sm font-medium text-[var(--text-tertiary)] mt-1 italic">
                                     ~ {formatUnitPrice(listing.price, listing.area, t)}
                                 </div>
                             )}
@@ -1256,7 +1256,7 @@ export const ListingDetail: React.FC = () => {
                         ) : (
                             <button
                                 onClick={handleContact}
-                                className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-white border-slate-200 text-slate-900 hover:bg-slate-50"
+                                className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-primary)] hover:bg-[var(--glass-surface)]"
                             >
                                 {ICONS.PHONE} {t('detail.contact_now')}
                             </button>
@@ -1267,8 +1267,8 @@ export const ListingDetail: React.FC = () => {
 
             {/* Similar Listings */}
             {similarListings.length > 0 && (
-                <div className="max-w-7xl mx-auto px-6 py-12 border-t border-slate-100 mt-12">
-                    <h3 className="text-2xl font-bold text-slate-900 mb-8">{t('detail.similar_listings')}</h3>
+                <div className="max-w-7xl mx-auto px-6 py-12 border-t border-[var(--glass-border)] mt-12">
+                    <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-8">{t('detail.similar_listings')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {similarListings.map(item => (
                             <div key={item.id} className="min-h-full" onClick={() => window.location.hash = `#/${ROUTES.LISTING}/${item.id}`}>

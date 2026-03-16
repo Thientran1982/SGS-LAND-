@@ -62,14 +62,14 @@ const PROMPT_VARIABLES = ['{{name}}', '{{role}}', '{{context}}', '{{history}}', 
 
 const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
-        <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
-            <h3 className="font-bold text-slate-800 mb-4">{t('ai.policy')}</h3>
+        <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+            <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('ai.policy')}</h3>
             <div className="space-y-4">
                 <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase">{t('ai.allowed')}</label>
+                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('ai.allowed')}</label>
                     <div className="flex flex-wrap gap-2 mt-2">
                         {SUPPORTED_MODELS.map(m => (
-                            <label key={m} className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${config.allowedModels?.includes(m) ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                            <label key={m} className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${config.allowedModels?.includes(m) ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)]'}`}>
                                 <input 
                                     type="checkbox" 
                                     className="hidden" 
@@ -88,9 +88,9 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
                     </div>
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase">{t('ai.default')}</label>
+                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('ai.default')}</label>
                     <select 
-                        className="w-full mt-1 border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                        className="w-full mt-1 border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm bg-[var(--bg-surface)] outline-none focus:ring-2 focus:ring-indigo-500/20"
                         value={config.defaultModel}
                         onChange={(e) => onUpdateConfig('defaultModel', e.target.value)}
                     >
@@ -100,25 +100,25 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
             </div>
         </div>
 
-        <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
-            <h3 className="font-bold text-slate-800 mb-4">{t('ai.budget_title')}</h3>
+        <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+            <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('ai.budget_title')}</h3>
             <div className="space-y-6">
                 <div>
                     <div className="flex justify-between text-xs mb-1">
-                        <span className="font-bold text-slate-500">{t('ai.spend')}</span>
-                        <span className="font-mono text-slate-700">${(config.currentSpendUsd || 0).toFixed(2)}</span>
+                        <span className="font-bold text-[var(--text-tertiary)]">{t('ai.spend')}</span>
+                        <span className="font-mono text-[var(--text-secondary)]">${(config.currentSpendUsd || 0).toFixed(2)}</span>
                     </div>
-                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
                         <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, ((config.currentSpendUsd || 0) / config.budgetCapUsd) * 100)}%` }}></div>
                     </div>
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase">{t('ai.cap')}</label>
+                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('ai.cap')}</label>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-slate-400 font-bold">$</span>
                         <input 
                             type="number" 
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono outline-none focus:border-indigo-500"
+                            className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-mono outline-none focus:border-indigo-500"
                             value={config.budgetCapUsd}
                             onChange={(e) => onUpdateConfig('budgetCapUsd', Number(e.target.value))}
                         />
@@ -138,9 +138,9 @@ const PromptsTab = memo(({
 }: PromptsTabProps) => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-enter">
         {/* LIST */}
-        <div className="bg-white p-4 rounded-[24px] border border-slate-100 shadow-sm h-[600px] flex flex-col">
+        <div className="bg-[var(--bg-surface)] p-4 rounded-[24px] border border-[var(--glass-border)] shadow-sm h-[600px] flex flex-col">
             <div className="flex justify-between items-center mb-4 px-2">
-                <h3 className="font-bold text-slate-800">{t('ai.tab_prompts')}</h3>
+                <h3 className="font-bold text-[var(--text-primary)]">{t('ai.tab_prompts')}</h3>
                 <button onClick={onCreateOpen} className="bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg text-indigo-600 transition-colors" title={t('ai.btn_create')}>
                     {ICONS.ADD}
                 </button>
@@ -150,29 +150,29 @@ const PromptsTab = memo(({
                     <div 
                         key={p.id} 
                         onClick={() => onSelect(p)}
-                        className={`p-4 rounded-xl border cursor-pointer transition-all group ${selectedPrompt?.id === p.id ? 'bg-indigo-50 border-indigo-200 shadow-sm ring-1 ring-indigo-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`}
+                        className={`p-4 rounded-xl border cursor-pointer transition-all group ${selectedPrompt?.id === p.id ? 'bg-indigo-50 border-indigo-200 shadow-sm ring-1 ring-indigo-200' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] hover:bg-[var(--glass-surface)]'}`}
                     >
                         <div className="flex justify-between items-start">
-                            <div className={`font-bold text-sm ${selectedPrompt?.id === p.id ? 'text-indigo-700' : 'text-slate-700'}`}>{p.name}</div>
-                            <span className="text-[9px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold">v{p.activeVersion}</span>
+                            <div className={`font-bold text-sm ${selectedPrompt?.id === p.id ? 'text-indigo-700' : 'text-[var(--text-secondary)]'}`}>{p.name}</div>
+                            <span className="text-[9px] bg-slate-200 text-[var(--text-secondary)] px-1.5 py-0.5 rounded font-mono font-bold">v{p.activeVersion}</span>
                         </div>
-                        <div className="text-xs text-slate-500 mt-1 truncate group-hover:text-slate-700">{p.description}</div>
+                        <div className="text-xs text-[var(--text-tertiary)] mt-1 truncate group-hover:text-[var(--text-secondary)]">{p.description}</div>
                     </div>
                 ))}
             </div>
         </div>
 
         {/* EDITOR */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col h-[600px]">
+        <div className="lg:col-span-2 bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col h-[600px]">
             {selectedPrompt ? (
                 <>
                     <div className="flex justify-between items-center mb-4">
                         <div>
-                            <h3 className="font-bold text-slate-800 text-lg">{selectedPrompt.name} <span className="text-slate-400 font-normal text-sm ml-1">v{selectedPrompt.activeVersion}</span></h3>
-                            <p className="text-xs text-slate-500 max-w-md truncate">{selectedPrompt.description}</p>
+                            <h3 className="font-bold text-[var(--text-primary)] text-lg">{selectedPrompt.name} <span className="text-slate-400 font-normal text-sm ml-1">v{selectedPrompt.activeVersion}</span></h3>
+                            <p className="text-xs text-[var(--text-tertiary)] max-w-md truncate">{selectedPrompt.description}</p>
                         </div>
                         <div className="flex gap-2">
-                            <button onClick={() => onSaveVersion('DRAFT')} className="px-3 py-1.5 border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-slate-50 transition-colors">{t('ai.draft')}</button>
+                            <button onClick={() => onSaveVersion('DRAFT')} className="px-3 py-1.5 border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold text-xs rounded-lg hover:bg-[var(--glass-surface)] transition-colors">{t('ai.draft')}</button>
                             <button onClick={() => onSaveVersion('APPROVED')} className="px-3 py-1.5 bg-slate-900 text-white font-bold text-xs rounded-lg shadow hover:bg-slate-800 transition-colors flex items-center gap-2">
                                 {ICONS.SAVE} {t('ai.publish')}
                             </button>
@@ -192,17 +192,17 @@ const PromptsTab = memo(({
                             ))}
                         </div>
                         <textarea 
-                            className="flex-1 w-full bg-slate-50 border border-slate-200 rounded-xl p-4 font-mono text-sm outline-none focus:border-indigo-500 resize-none leading-relaxed"
+                            className="flex-1 w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl p-4 font-mono text-sm outline-none focus:border-indigo-500 resize-none leading-relaxed"
                             value={editContent}
                             onChange={(e) => onEditContent(e.target.value)}
                         />
                     </div>
 
                     {/* SIMULATOR */}
-                    <div className="mt-4 pt-4 border-t border-slate-100">
+                    <div className="mt-4 pt-4 border-t border-[var(--glass-border)]">
                         <div className="flex gap-3">
                             <input 
-                                className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500"
+                                className="flex-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm outline-none focus:border-indigo-500"
                                 placeholder={t('ai.sim_placeholder')}
                                 value={testInput}
                                 onChange={(e) => onSetTestInput(e.target.value)}
@@ -213,7 +213,7 @@ const PromptsTab = memo(({
                             </button>
                         </div>
                         {lastEvalRun && (
-                            <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono text-slate-600 max-h-24 overflow-y-auto">
+                            <div className="mt-3 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] text-xs font-mono text-[var(--text-secondary)] max-h-24 overflow-y-auto">
                                 <span className="text-emerald-600 font-bold">OUTPUT:</span> {lastEvalRun}
                             </div>
                         )}
@@ -327,15 +327,15 @@ export const AiGovernance: React.FC = () => {
         <div className="space-y-6 pb-20 relative animate-enter">
             {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
-            <div className="flex justify-between items-center bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+            <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">{t('ai.title')}</h2>
-                    <p className="text-sm text-slate-500">{t('ai.subtitle')}</p>
+                    <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('ai.title')}</h2>
+                    <p className="text-sm text-[var(--text-tertiary)]">{t('ai.subtitle')}</p>
                 </div>
-                <div className="flex bg-slate-100 p-1 rounded-xl">
-                    <button onClick={() => setActiveTab('CONFIG')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'CONFIG' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{t('ai.tab_config')}</button>
-                    <button onClick={() => setActiveTab('PROMPTS')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'PROMPTS' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{t('ai.tab_prompts')}</button>
-                    <button onClick={() => setActiveTab('SAFETY')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'SAFETY' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{t('ai.tab_safety')}</button>
+                <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl">
+                    <button onClick={() => setActiveTab('CONFIG')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'CONFIG' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_config')}</button>
+                    <button onClick={() => setActiveTab('PROMPTS')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'PROMPTS' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_prompts')}</button>
+                    <button onClick={() => setActiveTab('SAFETY')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'SAFETY' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_safety')}</button>
                 </div>
             </div>
 
@@ -361,16 +361,16 @@ export const AiGovernance: React.FC = () => {
             )}
 
             {activeTab === 'SAFETY' && (
-                <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm animate-enter">
-                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm animate-enter">
+                    <h3 className="font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                         {t('ai.tab_safety')}
-                        <span className="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full">
+                        <span className="bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] text-[10px] px-2 py-0.5 rounded-full">
                             {t('ai.events_count', { count: safetyLogs?.length || 0 })}
                         </span>
                     </h3>
                     <div className="overflow-x-auto no-scrollbar">
                         <table className="min-w-full text-xs text-left">
-                            <thead className="bg-slate-50 text-slate-500">
+                            <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)]">
                                 <tr>
                                     <th className="p-3 rounded-l-lg">{t('table.time')}</th>
                                     <th className="p-3">{t('table.task')}</th>
@@ -380,13 +380,13 @@ export const AiGovernance: React.FC = () => {
                                     <th className="p-3 rounded-r-lg">{t('table.flags')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-[var(--glass-border)]">
                                 {safetyLogs?.map(log => (
-                                    <tr key={log.id} className="hover:bg-slate-50 transition-colors">
+                                    <tr key={log.id} className="hover:bg-[var(--glass-surface)] transition-colors">
                                         <td className="p-3 text-slate-400 font-mono">{formatTime(log.timestamp)}</td>
-                                        <td className="p-3 font-bold text-slate-700">{log.taskType}</td>
-                                        <td className="p-3 font-mono text-slate-600">{formatModelName(log.model)}</td>
-                                        <td className="p-3 text-slate-600">{log.latencyMs}ms</td>
+                                        <td className="p-3 font-bold text-[var(--text-secondary)]">{log.taskType}</td>
+                                        <td className="p-3 font-mono text-[var(--text-secondary)]">{formatModelName(log.model)}</td>
+                                        <td className="p-3 text-[var(--text-secondary)]">{log.latencyMs}ms</td>
                                         <td className="p-3 text-emerald-600 font-mono">${(log.costUsd || 0).toFixed(4)}</td>
                                         <td className="p-3">
                                             {log.safetyFlags.length > 0 ? (
@@ -408,7 +408,7 @@ export const AiGovernance: React.FC = () => {
             {/* Create Prompt Modal */}
             {isCreateOpen && createPortal(
                 <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
-                    <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl">
+                    <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl">
                         <h3 className="font-bold text-lg mb-4">{t('ai.create_title')}</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault();
@@ -417,15 +417,15 @@ export const AiGovernance: React.FC = () => {
                         }}>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ai.prompt_name')}</label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ai.prompt_name')}</label>
                                     <input name="name" required className="w-full border rounded-xl px-3 py-2 text-sm" autoFocus />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ai.prompt_desc')}</label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ai.prompt_desc')}</label>
                                     <input name="desc" className="w-full border rounded-xl px-3 py-2 text-sm" />
                                 </div>
                                 <div className="flex gap-3 pt-2">
-                                    <button type="button" onClick={() => setIsCreateOpen(false)} className="flex-1 py-2 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm">{t('common.cancel')}</button>
+                                    <button type="button" onClick={() => setIsCreateOpen(false)} className="flex-1 py-2 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm">{t('common.cancel')}</button>
                                     <button type="submit" className="flex-1 py-2 bg-slate-900 text-white font-bold rounded-xl text-sm">{t('common.create')}</button>
                                 </div>
                             </div>

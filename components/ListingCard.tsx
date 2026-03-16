@@ -19,7 +19,7 @@ export const LISTING_ICONS = {
     ACTION: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>,
     CHEVRON_LEFT: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>,
     CHEVRON_RIGHT: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>,
-    IMAGE_PLACEHOLDER: <svg className="w-10 h-10 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+    IMAGE_PLACEHOLDER: <svg className="w-10 h-10 text-slate-300 dark:text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
     EDIT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     COPY: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>,
@@ -49,7 +49,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
     const isRent = transaction === 'RENT';
 
     return (
-        <div className="relative aspect-[4/3] w-full bg-slate-100 dark:bg-slate-800 group overflow-hidden cursor-pointer isolate z-0" onClick={onClick}>
+        <div className="relative aspect-[4/3] w-full bg-[var(--glass-surface-hover)] dark:bg-slate-800 group overflow-hidden cursor-pointer isolate z-0" onClick={onClick}>
             {/* Status Badges - Z-index elevated */}
             <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5 items-start pointer-events-none">
                 <div className="flex gap-1.5">
@@ -105,19 +105,19 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                     {images!.length > 1 && (
                         <>
                             <div className="absolute inset-0 flex items-center justify-between p-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
-                                <button onClick={prevImage} className="p-2.5 rounded-full bg-white/90 shadow-md text-slate-800 hover:bg-white pointer-events-auto transition-transform hover:scale-110 min-w-[40px] min-h-[40px] flex items-center justify-center">{LISTING_ICONS.CHEVRON_LEFT}</button>
-                                <button onClick={nextImage} className="p-2.5 rounded-full bg-white/90 shadow-md text-slate-800 hover:bg-white pointer-events-auto transition-transform hover:scale-110 min-w-[40px] min-h-[40px] flex items-center justify-center">{LISTING_ICONS.CHEVRON_RIGHT}</button>
+                                <button onClick={prevImage} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[40px] min-h-[40px] flex items-center justify-center">{LISTING_ICONS.CHEVRON_LEFT}</button>
+                                <button onClick={nextImage} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[40px] min-h-[40px] flex items-center justify-center">{LISTING_ICONS.CHEVRON_RIGHT}</button>
                             </div>
                             <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-none">
                                 {images!.map((_, idx) => (
-                                    <div key={idx} className={`h-1.5 rounded-full shadow-sm transition-all duration-300 ${idx === currentIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`} />
+                                    <div key={idx} className={`h-1.5 rounded-full shadow-sm transition-all duration-300 ${idx === currentIndex ? 'w-4 bg-[var(--bg-surface)]' : 'w-1.5 bg-[var(--bg-surface)]/50'}`} />
                                 ))}
                             </div>
                         </>
                     )}
                 </>
             ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 bg-slate-50 dark:bg-slate-800">{LISTING_ICONS.IMAGE_PLACEHOLDER}</div>
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 dark:text-[var(--text-secondary)] bg-[var(--glass-surface)] dark:bg-slate-800">{LISTING_ICONS.IMAGE_PLACEHOLDER}</div>
             )}
             
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 pointer-events-none z-10"></div>
@@ -170,14 +170,14 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
             <button ref={buttonRef} onClick={toggleMenu} className={`p-2 rounded-xl transition-colors z-20 relative ${isOpen ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}>{LISTING_ICONS.ACTION}</button>
             {isOpen && createPortal(
                 <div 
-                    className="fixed z-[9999] w-48 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden animate-enter origin-top-right"
+                    className="fixed z-[9999] w-48 bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 overflow-hidden animate-enter origin-top-right"
                     style={{ top: coords.top, left: coords.left }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.EDIT} {t('inventory.action_edit')}</button>
-                    {onCopy && <button onClick={(e) => { e.stopPropagation(); handleCopyCode(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.COPY} {t('inventory.action_copy_code')}</button>}
-                    <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDuplicate(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.DUPLICATE} {t('common.duplicate') || 'Nhân bản'}</button>
-                    <div className="h-px bg-slate-50 dark:bg-slate-800 my-1"></div>
+                    <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.EDIT} {t('inventory.action_edit')}</button>
+                    {onCopy && <button onClick={(e) => { e.stopPropagation(); handleCopyCode(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.COPY} {t('inventory.action_copy_code')}</button>}
+                    <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDuplicate(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.DUPLICATE} {t('common.duplicate') || 'Nhân bản'}</button>
+                    <div className="h-px bg-[var(--glass-surface)] dark:bg-slate-800 my-1"></div>
                     <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDelete(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2">{LISTING_ICONS.TRASH} {t('inventory.action_delete')}</button>
                 </div>,
                 document.body
@@ -218,7 +218,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
         const GridItem = ({ label, value }: { label: string, value: string | number }) => (
             <div className="text-center overflow-hidden">
                 <div className="text-[9px] font-bold text-slate-400 uppercase truncate" title={label}>{label}</div>
-                <div className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate mt-0.5" title={String(value)}>{value}</div>
+                <div className="text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 truncate mt-0.5" title={String(value)}>{value}</div>
             </div>
         );
 
@@ -260,7 +260,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
     return (
         <div 
             onClick={handleCardClick}
-            className="bg-white dark:bg-slate-900 rounded-[24px] shadow-sm group h-full relative overflow-hidden transform-gpu will-change-transform transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.15)] dark:hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.1)] border border-slate-100 dark:border-white/10 hover:border-indigo-500/40 dark:hover:border-indigo-400/40 isolate cursor-pointer flex flex-col"
+            className="bg-[var(--bg-surface)] dark:bg-slate-900 rounded-[24px] shadow-sm group h-full relative overflow-hidden transform-gpu will-change-transform transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.15)] dark:hover:shadow-[0_12px_30px_-10px_rgba(79,70,229,0.1)] border border-[var(--glass-border)] dark:border-white/10 hover:border-indigo-500/40 dark:hover:border-indigo-400/40 isolate cursor-pointer flex flex-col"
             style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
         >
             <div className="shrink-0">
@@ -279,24 +279,24 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                 />
             </div>
 
-            <div className="p-4 flex flex-col flex-1 bg-white dark:bg-slate-900 relative z-10 min-h-0">
+            <div className="p-4 flex flex-col flex-1 bg-[var(--bg-surface)] dark:bg-slate-900 relative z-10 min-h-0">
                 <div className="flex justify-between items-start mb-1">
                     <div className="min-w-0 flex-1 mr-2">
                         <div className="flex items-center gap-2 mb-1">
                             {!isProject && (
-                                <span className="font-mono text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{item.code}</span>
+                                <span className="font-mono text-[9px] font-bold bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{item.code}</span>
                             )}
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${item.status === 'AVAILABLE' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${item.status === 'AVAILABLE' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-tertiary)] dark:text-slate-400'}`}>
                                 {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') || 'Sẵn sàng' : t(`status.${item.status}`)}
                             </span>
                         </div>
-                        <h3 className="font-bold text-slate-800 dark:text-slate-200 text-sm leading-tight line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={item.title}>
+                        <h3 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-tight line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={item.title}>
                             {item.title}
                         </h3>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 mb-3 truncate">
+                <div className="flex items-center gap-1 text-[11px] text-[var(--text-tertiary)] dark:text-slate-400 mb-3 truncate">
                     {LISTING_ICONS.LOCATION}
                     <span className="truncate">{item.location}</span>
                 </div>
@@ -308,11 +308,11 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                         <div className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">
                             {isProject ? t('inventory.min_price') : t('inventory.label_price')}
                         </div>
-                        <div className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight leading-none">
+                        <div className="text-lg font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight leading-none">
                             {formatSmartPrice(item.price, t)}
                         </div>
                         {item.area > 0 && item.type !== PropertyType.PROJECT && (
-                            <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                            <div className="text-[10px] font-medium text-[var(--text-tertiary)] dark:text-slate-400 mt-0.5">
                                 {formatUnitPrice(item.price, item.area, t)}
                             </div>
                         )}
@@ -329,7 +329,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                         )}
                         {shouldShowActions && (
                             <>
-                                {attrs.legalStatus && <div className="w-px h-6 bg-slate-100 dark:bg-white/10 mx-1"></div>}
+                                {attrs.legalStatus && <div className="w-px h-6 bg-[var(--glass-surface-hover)] dark:bg-[var(--bg-surface)]/10 mx-1"></div>}
                                 <ListingActionMenu 
                                     listing={item}
                                     onEdit={() => onEdit(item)}

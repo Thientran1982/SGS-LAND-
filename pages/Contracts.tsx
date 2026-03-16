@@ -151,13 +151,13 @@ const Contracts: React.FC = () => {
                             placeholder={t('contracts.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all outline-none placeholder:text-slate-400"
+                            className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                         />
                         {search && (
                             <div className="absolute right-2 inset-y-0 flex items-center">
                                 <button 
                                     onClick={() => setSearch('')}
-                                    className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                     title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -253,7 +253,7 @@ const Contracts: React.FC = () => {
                                                     c.status === ContractStatus.SIGNED ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
                                                     c.status === ContractStatus.PENDING_SIGNATURE ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
                                                     c.status === ContractStatus.CANCELLED ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400' :
-                                                    'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400'
+                                                    'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] dark:bg-slate-500/20 dark:text-slate-400'
                                                 }`}>
                                                     {t(`contracts.status_${c.status}`)}
                                                 </span>
@@ -326,10 +326,10 @@ const Contracts: React.FC = () => {
             {shareLink && createPortal(
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShareLink(null)}></div>
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col animate-enter p-6">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">Chia sẻ hợp đồng</h3>
-                        <p className="text-sm text-slate-500 mb-4">Sao chép đường dẫn bên dưới để gửi cho khách hàng:</p>
-                        <div className="flex items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div className="relative bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-md flex flex-col animate-enter p-6">
+                        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Chia sẻ hợp đồng</h3>
+                        <p className="text-sm text-[var(--text-tertiary)] mb-4">Sao chép đường dẫn bên dưới để gửi cho khách hàng:</p>
+                        <div className="flex items-center gap-2 bg-[var(--glass-surface)] p-3 rounded-xl border border-[var(--glass-border)]">
                             <input 
                                 type="text" 
                                 readOnly 

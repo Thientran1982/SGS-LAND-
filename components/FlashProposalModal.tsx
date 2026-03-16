@@ -175,7 +175,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
     // Render Steps
     const renderSelectionStep = () => (
         <div className="flex flex-col h-full overflow-hidden">
-            <div className="p-4 border-b border-slate-100 bg-white shrink-0">
+            <div className="p-4 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] shrink-0">
                 <div className="relative group">
                     <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
                         {ICONS.SEARCH}
@@ -184,12 +184,12 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                         ref={searchInputRef}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all outline-none placeholder:text-slate-400"
+                        className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                         placeholder={t('inventory.search_hint')}
                     />
                     {searchQuery && (
                         <div className="absolute right-2 inset-y-0 flex items-center">
-                            <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>
+                            <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>
                                 {ICONS.CLEAR}
                             </button>
                         </div>
@@ -205,19 +205,19 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                         <div 
                             key={item.id} 
                             onClick={() => { setSelectedListing(item); setStep('CONFIRM'); }} 
-                            className="bg-white p-4 rounded-2xl border border-slate-200 cursor-pointer hover:border-indigo-500 hover:shadow-lg hover:scale-[1.01] transition-all group relative overflow-hidden active:scale-95"
+                            className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] cursor-pointer hover:border-indigo-500 hover:shadow-lg hover:scale-[1.01] transition-all group relative overflow-hidden active:scale-95"
                         >
                             <div className="flex justify-between items-start relative z-10">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-mono text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{item.code}</span>
+                                        <span className="font-mono text-[10px] font-bold bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded">{item.code}</span>
                                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded uppercase">{t(`status.${item.status}`)}</span>
                                     </div>
-                                    <h4 className="font-bold text-slate-800 text-sm group-hover:text-indigo-700 transition-colors line-clamp-1">{item.title}</h4>
-                                    <p className="text-xs text-slate-500 mt-0.5">{item.location}</p>
+                                    <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-700 transition-colors line-clamp-1">{item.title}</h4>
+                                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{item.location}</p>
                                 </div>
                                 <div className="text-right shrink-0 ml-2">
-                                    <div className="text-base md:text-lg font-extrabold text-slate-900">{formatCurrency(item.price)}</div>
+                                    <div className="text-base md:text-lg font-extrabold text-[var(--text-primary)]">{formatCurrency(item.price)}</div>
                                     <div className="text-[10px] text-slate-400">{item.area}m² • {item.bedrooms} {t('pub.bedrooms')}</div>
                                 </div>
                             </div>
@@ -242,16 +242,16 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                     )}
 
                     {/* Listing Preview */}
-                    <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex gap-4 items-start">
+                    <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm flex gap-4 items-start">
                         <div className="w-16 h-16 md:w-20 md:h-20 bg-slate-200 rounded-xl flex-shrink-0 overflow-hidden">
                             <img src={`https://ui-avatars.com/api/?name=${selectedListing.code}&background=random`} className="w-full h-full object-cover" alt="" />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <h4 className="font-bold text-slate-800 text-sm md:text-base line-clamp-2">{selectedListing.title}</h4>
+                            <h4 className="font-bold text-[var(--text-primary)] text-sm md:text-base line-clamp-2">{selectedListing.title}</h4>
                             <div className="flex flex-wrap gap-2 mt-2">
-                                <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-600 font-medium">{selectedListing.area} m²</span>
-                                <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-600 font-medium">{selectedListing.bedrooms} {t('pub.bedrooms')}</span>
-                                <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-600 font-medium">{selectedListing.attributes.direction ? t(`direction.${selectedListing.attributes.direction}`) : '---'}</span>
+                                <span className="text-[10px] bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.area} m²</span>
+                                <span className="text-[10px] bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.bedrooms} {t('pub.bedrooms')}</span>
+                                <span className="text-[10px] bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-[var(--text-secondary)] font-medium">{selectedListing.attributes.direction ? t(`direction.${selectedListing.attributes.direction}`) : '---'}</span>
                             </div>
                             <button onClick={() => setStep('SELECT')} className="text-[10px] font-bold text-indigo-600 hover:underline mt-2 flex items-center gap-1">
                                 {ICONS.REFRESH}
@@ -261,15 +261,15 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                     </div>
 
                     {/* Configuration */}
-                    <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                    <div className="bg-[var(--bg-surface)] p-4 md:p-6 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-6">
                         <div className="flex items-center justify-between">
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('proposal.config_price')}</h4>
-                            <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                            <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-lg">
                                 {(['PERCENT', 'AMOUNT'] as const).map(type => (
                                     <button 
                                         key={type}
                                         onClick={() => setDiscountType(type)} 
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${discountType === type ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
+                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${discountType === type ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-tertiary)]'}`}
                                     >
                                         {type === 'PERCENT' ? '%' : '$'}
                                     </button>
@@ -285,7 +285,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                         min="0"
                                         value={discountValue}
                                         onChange={e => setDiscountValue(Number(e.target.value))}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-12 py-3 text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all"
+                                        className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-4 pr-12 py-3 text-lg font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-[var(--bg-surface)] transition-all"
                                     />
                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
                                         {discountType === 'PERCENT' ? '%' : 'VND'}
@@ -326,41 +326,41 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 </p>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">{t('proposal.label_deposit')}</label>
+                                <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('proposal.label_deposit')}</label>
                                 <input 
                                     type="number"
                                     value={depositAmount}
                                     onChange={e => setDepositAmount(Number(e.target.value))}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-500"
+                                    className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-500"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">{t('proposal.label_note')}</label>
+                            <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('proposal.label_note')}</label>
                             <textarea 
                                 value={note}
                                 onChange={e => setNote(e.target.value)}
                                 placeholder={t('proposal.placeholder_note')}
                                 rows={2}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-500 resize-none"
+                                className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-500 resize-none"
                             />
                         </div>
 
                         {/* Breakdown */}
-                        <div className="bg-slate-50 rounded-xl p-4 space-y-2 border border-slate-200/60">
+                        <div className="bg-[var(--glass-surface)] rounded-xl p-4 space-y-2 border border-[var(--glass-border)]/60">
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">{t('proposal.price_original')}</span>
-                                <span className="font-mono text-slate-600 line-through decoration-slate-400">{formatCurrency(selectedListing.price)}</span>
+                                <span className="text-[var(--text-tertiary)]">{t('proposal.price_original')}</span>
+                                <span className="font-mono text-[var(--text-secondary)] line-through decoration-slate-400">{formatCurrency(selectedListing.price)}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">{t('proposal.amount_discount')}</span>
+                                <span className="text-[var(--text-tertiary)]">{t('proposal.amount_discount')}</span>
                                 <span className="font-mono text-rose-500 font-bold">-{formatCurrency(finalCalculations.discountAmt)}</span>
                             </div>
-                            <div className="border-t border-slate-200 my-2"></div>
+                            <div className="border-t border-[var(--glass-border)] my-2"></div>
                             <div className="flex justify-between items-end">
-                                <span className="font-bold text-slate-800 text-sm">{t('proposal.price_final')}</span>
-                                <span className="text-xl md:text-2xl font-extrabold text-emerald-600 tracking-tight bg-white px-2 rounded shadow-sm border border-emerald-100">
+                                <span className="font-bold text-[var(--text-primary)] text-sm">{t('proposal.price_final')}</span>
+                                <span className="text-xl md:text-2xl font-extrabold text-emerald-600 tracking-tight bg-[var(--bg-surface)] px-2 rounded shadow-sm border border-emerald-100">
                                     {formatCurrency(finalCalculations.finalPrice)}
                                 </span>
                             </div>
@@ -368,7 +368,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                     </div>
                 </div>
 
-                <div className="p-4 bg-white border-t border-slate-100 shrink-0 safe-area-pb">
+                <div className="p-4 bg-[var(--bg-surface)] border-t border-[var(--glass-border)] shrink-0 safe-area-pb">
                     <button 
                         onClick={handleCreate} 
                         disabled={processing} 
@@ -389,25 +389,25 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" aria-hidden="true" />
             
             {/* Modal Content */}
-            <div className="bg-white w-full max-w-2xl rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl shadow-slate-900/20 border border-white/20 relative flex flex-col max-h-[85vh] sm:max-h-[90vh] animate-scale-up z-10" onClick={e => e.stopPropagation()}>
+            <div className="bg-[var(--bg-surface)] w-full max-w-2xl rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl shadow-slate-900/20 border border-white/20 relative flex flex-col max-h-[85vh] sm:max-h-[90vh] animate-scale-up z-10" onClick={e => e.stopPropagation()}>
                 
                 {/* Header */}
-                <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
+                <div className="px-4 md:px-6 py-4 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
                     <div>
-                        <h3 className="font-bold text-slate-800 text-base md:text-lg">{t('proposal.flash_title')}</h3>
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <h3 className="font-bold text-[var(--text-primary)] text-base md:text-lg">{t('proposal.flash_title')}</h3>
+                        <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                             <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold max-w-[120px] truncate">{lead.name}</span>
                             <span>•</span>
                             <span className="font-mono">{lead.phone}</span>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors">
                         {ICONS.CLOSE}
                     </button>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-hidden flex flex-col bg-slate-50/50 min-h-0">
+                <div className="flex-1 overflow-hidden flex flex-col bg-[var(--glass-surface)]/50 min-h-0">
                     {step === 'SELECT' && renderSelectionStep()}
                     
                     {step === 'CONFIRM' && renderConfirmStep()}
@@ -417,9 +417,9 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                             <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-4">
                                 {ICONS.PENDING}
                             </div>
-                            <h3 className="text-xl font-bold text-slate-800">{t('approvals.pending_title')}</h3>
-                            <p className="text-slate-500 mt-2 mb-6 text-sm max-w-xs">{t('approvals.subtitle')}</p>
-                            <button onClick={() => { onClose(); onSuccess(); }} className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors">{t('common.close')}</button>
+                            <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('approvals.pending_title')}</h3>
+                            <p className="text-[var(--text-tertiary)] mt-2 mb-6 text-sm max-w-xs">{t('approvals.subtitle')}</p>
+                            <button onClick={() => { onClose(); onSuccess(); }} className="px-6 py-2.5 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-secondary)] font-bold rounded-xl text-sm transition-colors">{t('common.close')}</button>
                         </div>
                     )}
 
@@ -428,9 +428,9 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-sm shrink-0">
                                 {ICONS.SUCCESS}
                             </div>
-                            <h3 className="text-xl font-bold text-slate-800">{t('common.success')}</h3>
+                            <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('common.success')}</h3>
                             
-                            <div className="w-full bg-slate-50 p-4 rounded-xl mt-6 border border-slate-200 relative group">
+                            <div className="w-full bg-[var(--glass-surface)] p-4 rounded-xl mt-6 border border-[var(--glass-border)] relative group">
                                 <div className="text-[10px] uppercase font-bold text-slate-400 mb-1 text-left">{t('proposal.public_link_label')}</div>
                                 <div className="flex items-center gap-2">
                                     <input 

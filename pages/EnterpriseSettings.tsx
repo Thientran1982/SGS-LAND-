@@ -22,15 +22,15 @@ const CONSTANTS = {
 const SectionHeader: React.FC<{ title: string; subtitle: string; action?: React.ReactNode }> = memo(({ title, subtitle, action }) => (
     <div className="flex justify-between items-start gap-4 mb-6 px-4 sm:px-6">
         <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-bold text-slate-800 break-words">{title}</h3>
-            <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] break-words">{title}</h3>
+            <p className="text-sm text-[var(--text-tertiary)] mt-1">{subtitle}</p>
         </div>
         {action && <div className="shrink-0 mt-1">{action}</div>}
     </div>
 ));
 
 const StatusBadge: React.FC<{ active: boolean; label: string }> = memo(({ active, label }) => (
-    <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-2 ${active ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+    <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-2 ${active ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)]'}`}>
         <span className={`w-2 h-2 rounded-full shrink-0 ${active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
         {label}
     </span>
@@ -115,31 +115,31 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
             {config.zalo?.enabled ? (
                 <>
                     {/* Connected state */}
-                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
+                    <div className="bg-[var(--bg-surface)] rounded-3xl border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col md:flex-row">
                         <div className="p-6 md:p-8 flex-1">
                             <div className="flex items-center gap-5 mb-6">
                                 <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-blue-500/20 shrink-0">Z</div>
                                 <div className="min-w-0">
-                                    <h3 className="text-xl font-bold text-slate-800 break-words">{config.zalo.oaName}</h3>
+                                    <h3 className="text-xl font-bold text-[var(--text-primary)] break-words">{config.zalo.oaName}</h3>
                                     <div className="flex flex-wrap items-center gap-2 mt-1">
-                                        <div className="inline-flex items-center px-2 py-1 bg-slate-100 rounded text-xs text-slate-500 font-mono border border-slate-200">OA ID: {config.zalo.oaId}</div>
+                                        <div className="inline-flex items-center px-2 py-1 bg-[var(--glass-surface-hover)] rounded text-xs text-[var(--text-tertiary)] font-mono border border-[var(--glass-border)]">OA ID: {config.zalo.oaId}</div>
                                         {(config.zalo as any).appId && (
-                                            <div className="inline-flex items-center px-2 py-1 bg-slate-100 rounded text-xs text-slate-500 font-mono border border-slate-200">App ID: {(config.zalo as any).appId}</div>
+                                            <div className="inline-flex items-center px-2 py-1 bg-[var(--glass-surface-hover)] rounded text-xs text-[var(--text-tertiary)] font-mono border border-[var(--glass-border)]">App ID: {(config.zalo as any).appId}</div>
                                         )}
                                     </div>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <div className="p-4 bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)]">
                                     <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t('ent.zalo_role')}</div>
                                     <div className="flex flex-wrap gap-1">
-                                        <span className="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-600">{t('ent.zalo_perm_msg')}</span>
-                                        <span className="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-600">{t('ent.zalo_perm_user')}</span>
+                                        <span className="px-2 py-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded text-[10px] font-bold text-[var(--text-secondary)]">{t('ent.zalo_perm_msg')}</span>
+                                        <span className="px-2 py-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded text-[10px] font-bold text-[var(--text-secondary)]">{t('ent.zalo_perm_user')}</span>
                                     </div>
                                 </div>
-                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <div className="p-4 bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)]">
                                     <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t('ent.zalo_connected_at')}</div>
-                                    <div className="text-xs font-bold text-slate-700">{config.zalo.connectedAt ? formatDate(config.zalo.connectedAt) : '-'}</div>
+                                    <div className="text-xs font-bold text-[var(--text-secondary)]">{config.zalo.connectedAt ? formatDate(config.zalo.connectedAt) : '-'}</div>
                                 </div>
                             </div>
                             <button
@@ -149,26 +149,26 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                 {t('ent.zalo_disconnect_btn')}
                             </button>
                         </div>
-                        <div className="bg-slate-50 border-t md:border-t-0 md:border-l border-slate-200 p-6 md:p-8 w-full md:w-[320px] flex flex-col justify-center gap-5">
+                        <div className="bg-[var(--glass-surface)] border-t md:border-t-0 md:border-l border-[var(--glass-border)] p-6 md:p-8 w-full md:w-[320px] flex flex-col justify-center gap-5">
                             <div>
                                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('ent.zalo_webhook')}</label>
                                 <div
-                                    className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-2 group cursor-pointer hover:border-blue-400 transition-colors"
+                                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 flex items-center gap-2 group cursor-pointer hover:border-blue-400 transition-colors"
                                     onClick={() => copyWebhook(webhookUrl)}
                                 >
-                                    <code className="text-[10px] font-mono text-slate-600 flex-1 truncate">{webhookUrl}</code>
-                                    <div className="p-1.5 rounded-lg bg-slate-100 text-slate-400 group-hover:text-blue-500 shrink-0">
+                                    <code className="text-[10px] font-mono text-[var(--text-secondary)] flex-1 truncate">{webhookUrl}</code>
+                                    <div className="p-1.5 rounded-lg bg-[var(--glass-surface-hover)] text-slate-400 group-hover:text-blue-500 shrink-0">
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                                     </div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className={`w-2 h-2 rounded-full shrink-0 ${zaloStatus?.webhookSecretConfigured ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
-                                <span className="text-[10px] text-slate-500 font-bold">
+                                <span className="text-[10px] text-[var(--text-tertiary)] font-bold">
                                     ZALO_OA_SECRET: {zaloStatus?.webhookSecretConfigured ? <span className="text-emerald-600">Đã cấu hình</span> : <span className="text-amber-600">Chưa cấu hình</span>}
                                 </span>
                             </div>
-                            <div className="text-[10px] text-slate-500 leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                            <div className="text-[10px] text-[var(--text-tertiary)] leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">
                                 <span className="font-bold text-blue-600 block mb-1">{t('common.tips')}:</span> {t('ent.zalo_tips')}
                             </div>
                         </div>
@@ -177,16 +177,16 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                     {/* Disconnect confirmation dialog */}
                     {confirmDisconnect && createPortal(
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-enter">
+                            <div className="bg-[var(--bg-surface)] rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-enter">
                                 <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mb-4">
                                     <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                 </div>
-                                <h3 className="text-lg font-bold text-slate-800 mb-2">{t('ent.zalo_disconnect_btn')}</h3>
-                                <p className="text-sm text-slate-500 mb-6">{t('ent.zalo_disconnect_confirm')}</p>
+                                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{t('ent.zalo_disconnect_btn')}</h3>
+                                <p className="text-sm text-[var(--text-tertiary)] mb-6">{t('ent.zalo_disconnect_confirm')}</p>
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setConfirmDisconnect(false)}
-                                        className="flex-1 py-2.5 border-2 border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-50 transition-colors text-sm"
+                                        className="flex-1 py-2.5 border-2 border-[var(--glass-border)] rounded-xl text-[var(--text-secondary)] font-bold hover:bg-[var(--glass-surface)] transition-colors text-sm"
                                     >
                                         {t('common.cancel') || 'Huỷ'}
                                     </button>
@@ -206,13 +206,13 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                 </>
             ) : (
                 /* Connect form */
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 max-w-2xl">
-                    <p className="text-sm text-slate-500 mb-6 leading-relaxed">{t('ent.zalo_guide')}</p>
+                <div className="bg-[var(--bg-surface)] rounded-3xl border border-[var(--glass-border)] shadow-sm p-6 md:p-8 max-w-2xl">
+                    <p className="text-sm text-[var(--text-tertiary)] mb-6 leading-relaxed">{t('ent.zalo_guide')}</p>
 
                     <div className="space-y-4 mb-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                                     App ID <span className="text-rose-500">*</span>
                                 </label>
                                 <input
@@ -223,7 +223,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                                     OA ID <span className="text-rose-500">*</span>
                                 </label>
                                 <input
@@ -235,7 +235,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             </div>
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                                 {t('ent.zalo_oa_name') || 'Tên Official Account'} <span className="text-rose-500">*</span>
                             </label>
                             <input
@@ -246,7 +246,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                                 App Secret <span className="text-slate-400 font-normal normal-case">(tuỳ chọn — để bảo mật webhook)</span>
                             </label>
                             <div className="relative">
@@ -268,10 +268,10 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                         </div>
                     </div>
 
-                    <div className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6 text-[11px] text-slate-500">
+                    <div className="flex items-start gap-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-2xl p-4 mb-6 text-[11px] text-[var(--text-tertiary)]">
                         <svg className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <div>
-                            <span className="font-bold text-slate-600 block mb-0.5">Webhook URL sẽ được tạo tự động:</span>
+                            <span className="font-bold text-[var(--text-secondary)] block mb-0.5">Webhook URL sẽ được tạo tự động:</span>
                             <code className="font-mono text-[10px] break-all text-blue-600">{webhookUrl}</code>
                             <span className="block mt-1">Sau khi kết nối, copy URL này vào cấu hình Webhook trên Zalo Developers Console.</span>
                         </div>
@@ -374,15 +374,15 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
             )}
 
             {/* Connect form */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 max-w-2xl mb-8">
-                <p className="text-sm text-slate-500 mb-5 leading-relaxed">
+            <div className="bg-[var(--bg-surface)] rounded-3xl border border-[var(--glass-border)] shadow-sm p-6 md:p-8 max-w-2xl mb-8">
+                <p className="text-sm text-[var(--text-tertiary)] mb-5 leading-relaxed">
                     Nhập thông tin Facebook Page để kết nối. Page ID và Access Token lấy từ{' '}
                     <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" className="text-blue-500 underline">Facebook for Developers</a>.
                 </p>
                 <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                                 {t('ent.facebook_page_name')} <span className="text-rose-500">*</span>
                             </label>
                             <input
@@ -393,7 +393,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                                 {t('ent.facebook_page_id')} <span className="text-rose-500">*</span>
                             </label>
                             <input
@@ -405,7 +405,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                             {t('ent.facebook_page_url')}
                         </label>
                         <input
@@ -416,7 +416,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                             {t('ent.facebook_access_token')}
                             <span className="ml-1 text-slate-400 font-normal normal-case">(để gửi tin Messenger)</span>
                         </label>
@@ -428,7 +428,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                                 value={form.accessToken}
                                 onChange={e => setForm({ ...form, accessToken: e.target.value })}
                             />
-                            <button type="button" onClick={() => setShowToken(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <button type="button" onClick={() => setShowToken(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--text-secondary)]">
                                 {showToken
                                     ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
                                     : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -450,11 +450,11 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
             {/* Connected pages */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {config.facebookPages?.map(page => (
-                    <div key={page.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-blue-100 transition-colors">
+                    <div key={page.id} className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm flex items-center justify-between group hover:border-blue-100 transition-colors">
                         <div className="flex items-center gap-3 overflow-hidden">
                             <div className="w-10 h-10 bg-[#1877F2]/10 text-[#1877F2] rounded-full flex items-center justify-center font-bold text-lg shrink-0">f</div>
                             <div className="min-w-0">
-                                <div className="font-bold text-slate-800 text-sm truncate">{page.name}</div>
+                                <div className="font-bold text-[var(--text-primary)] text-sm truncate">{page.name}</div>
                                 <div className="text-[10px] text-slate-400 font-mono truncate">ID: {page.id}</div>
                                 {page.pageUrl && (
                                     <a href={page.pageUrl} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:underline truncate block">{page.pageUrl}</a>
@@ -476,7 +476,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                     </div>
                 ))}
                 {(!config.facebookPages || config.facebookPages.length === 0) && (
-                    <div className="col-span-full text-center py-10 text-slate-400 italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <div className="col-span-full text-center py-10 text-slate-400 italic bg-[var(--glass-surface)] rounded-2xl border border-dashed border-[var(--glass-border)]">
                         {t('ent.facebook_empty')}
                     </div>
                 )}
@@ -485,17 +485,17 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
             {/* Disconnect confirmation modal */}
             {confirmPageId && createPortal(
                 <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full">
+                    <div className="bg-[var(--bg-surface)] rounded-3xl shadow-2xl p-6 max-w-sm w-full">
                         <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zm12-5h-4m0 0l2-2m-2 2l2 2" /></svg>
                         </div>
-                        <h3 className="text-base font-bold text-slate-800 text-center mb-2">{t('ent.facebook_disconnect_confirm')}</h3>
-                        <p className="text-xs text-slate-500 text-center mb-5 font-mono bg-slate-50 rounded-lg px-3 py-2">ID: {confirmPageId}</p>
+                        <h3 className="text-base font-bold text-[var(--text-primary)] text-center mb-2">{t('ent.facebook_disconnect_confirm')}</h3>
+                        <p className="text-xs text-[var(--text-tertiary)] text-center mb-5 font-mono bg-[var(--glass-surface)] rounded-lg px-3 py-2">ID: {confirmPageId}</p>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setConfirmPageId(null)}
                                 disabled={disconnecting}
-                                className="flex-1 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 text-sm"
+                                className="flex-1 py-2.5 border border-[var(--glass-border)] rounded-xl text-[var(--text-secondary)] font-medium hover:bg-[var(--glass-surface)] text-sm"
                             >
                                 {t('common.cancel') || 'Huỷ'}
                             </button>
@@ -554,26 +554,26 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
                     <input type="checkbox" checked={form.enabled} onChange={e => setForm({...form, enabled: e.target.checked})} className="accent-emerald-500 w-5 h-5 cursor-pointer rounded" />
                 </div>
             } />
-            <div className={`bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 transition-opacity ${!form.enabled ? 'opacity-50' : 'opacity-100'}`}>
+            <div className={`bg-[var(--bg-surface)] p-6 rounded-3xl border border-[var(--glass-border)] shadow-sm space-y-5 transition-opacity ${!form.enabled ? 'opacity-50' : 'opacity-100'}`}>
                 <div className={!form.enabled ? 'pointer-events-none' : ''}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_host')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.host} onChange={e => setForm({...form, host: e.target.value.trim()})} placeholder="smtp.example.com" /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_host')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.host} onChange={e => setForm({...form, host: e.target.value.trim()})} placeholder="smtp.example.com" /></div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_port')}</label>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_port')}</label>
                             <input type="number" min={1} max={65535} className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={isNaN(form.port) || form.port === 0 ? '' : form.port} onChange={e => { const v = parseInt(e.target.value); setForm({...form, port: isNaN(v) ? 0 : v}); }} onBlur={e => { if (!form.port) setForm({...form, port: 587}); }} placeholder="587" />
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_user')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.user} onChange={e => setForm({...form, user: e.target.value.trim()})} placeholder="user@example.com" /></div>
-                        <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.email_pass')}</label><input type="password" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} placeholder={CONSTANTS.MASK} /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_user')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.user} onChange={e => setForm({...form, user: e.target.value.trim()})} placeholder="user@example.com" /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_pass')}</label><input type="password" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} placeholder={CONSTANTS.MASK} /></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">Tên hiển thị (From Name)</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromName || ''} onChange={e => setForm({...form, fromName: e.target.value})} placeholder="SGS LAND" /></div>
-                        <div><label className="text-xs font-bold text-slate-500 uppercase block mb-1">Địa chỉ gửi (From Address)</label><input type="email" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromAddress || ''} onChange={e => setForm({...form, fromAddress: e.target.value.trim()})} placeholder="noreply@company.com" /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Tên hiển thị (From Name)</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromName || ''} onChange={e => setForm({...form, fromName: e.target.value})} placeholder="SGS LAND" /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Địa chỉ gửi (From Address)</label><input type="email" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromAddress || ''} onChange={e => setForm({...form, fromAddress: e.target.value.trim()})} placeholder="noreply@company.com" /></div>
                     </div>
-                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <div className="flex items-center gap-3 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
                         <input type="checkbox" id="smtp-secure" checked={!!form.secure} onChange={e => setForm({...form, secure: e.target.checked})} className="w-4 h-4 accent-indigo-600 cursor-pointer" />
-                        <label htmlFor="smtp-secure" className="text-sm text-slate-700 cursor-pointer select-none">
+                        <label htmlFor="smtp-secure" className="text-sm text-[var(--text-secondary)] cursor-pointer select-none">
                             <span className="font-semibold">SSL/TLS</span> — Bật nếu dùng port 465. Tắt nếu dùng STARTTLS (port 587).
                         </label>
                     </div>
@@ -645,21 +645,21 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                     <input type="checkbox" checked={sso.enabled} onChange={e => setSso({...sso, enabled: e.target.checked})} className="accent-emerald-500 w-5 h-5 cursor-pointer rounded" />
                 </div>
             } />
-            <div className={`bg-white p-6 md:p-8 rounded-[24px] border border-slate-200 shadow-sm space-y-6 transition-opacity ${!sso.enabled ? 'opacity-50' : 'opacity-100'}`}>
+            <div className={`bg-[var(--bg-surface)] p-6 md:p-8 rounded-[24px] border border-[var(--glass-border)] shadow-sm space-y-6 transition-opacity ${!sso.enabled ? 'opacity-50' : 'opacity-100'}`}>
                 <div className={`space-y-6 ${!sso.enabled ? 'pointer-events-none' : ''}`}>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Provider</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Provider</label>
                         <div className="flex gap-3">
                             {(['OIDC', 'SAML'] as const).map(p => (
                                 <button key={p} onClick={() => setSso({...sso, provider: p})}
-                                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-colors ${sso.provider === p ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-colors ${sso.provider === p ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-[var(--glass-border)] text-[var(--text-tertiary)] hover:border-[var(--glass-border)]'}`}>
                                     {p}
                                 </button>
                             ))}
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.sso_issuer')} {sso.provider === 'OIDC' ? '(Discovery URL)' : ''}</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_issuer')} {sso.provider === 'OIDC' ? '(Discovery URL)' : ''}</label>
                         <input placeholder={sso.provider === 'SAML' ? 'https://idp.example.com/saml' : 'https://dev-123.okta.com'} className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.issuerUrl || ''} onChange={e => setSso({...sso, issuerUrl: e.target.value.trim()})} />
                         {sso.provider === 'OIDC' && sso.issuerUrl && (
                             <p className="text-[11px] text-slate-400 mt-1 font-mono">Discovery: {sso.issuerUrl.replace(/\/$/, '')}/.well-known/openid-configuration</p>
@@ -667,11 +667,11 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.sso_client_id')}</label>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_client_id')}</label>
                             <input className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.clientId || ''} onChange={e => setSso({...sso, clientId: e.target.value.trim()})} placeholder="your-client-id" />
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('ent.sso_client_secret')}</label>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_client_secret')}</label>
                             <div className="relative">
                                 <input type={showSecret ? "text" : "password"} className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.clientSecret || ''} onChange={e => setSso({...sso, clientSecret: e.target.value})} placeholder={CONSTANTS.MASK} />
                                 <button onClick={() => setShowSecret(!showSecret)} className="absolute right-3 top-3.5 text-[10px] font-bold text-indigo-600 hover:underline">{showSecret ? t('ent.sso_hide') : t('ent.sso_show')}</button>
@@ -679,14 +679,14 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Login URL <span className="text-slate-300 normal-case font-normal">(tùy chọn — cho SAML hoặc IdP tùy chỉnh)</span></label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Login URL <span className="text-slate-300 normal-case font-normal">(tùy chọn — cho SAML hoặc IdP tùy chỉnh)</span></label>
                         <input type="url" placeholder="https://idp.example.com/sso/login" className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.loginUrl || ''} onChange={e => setSso({...sso, loginUrl: e.target.value.trim()})} />
                     </div>
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-                            <span className="text-xs text-slate-500 font-bold uppercase shrink-0">{t('ent.redirect_uri')}</span>
+                            <span className="text-xs text-[var(--text-tertiary)] font-bold uppercase shrink-0">{t('ent.redirect_uri')}</span>
                             <div className="flex items-center gap-2 min-w-0">
-                                <code className="text-[11px] font-mono text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 break-all">{redirectUri}</code>
+                                <code className="text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--bg-surface)] px-2 py-1 rounded border border-[var(--glass-border)] break-all">{redirectUri}</code>
                                 <button onClick={() => { navigator.clipboard?.writeText(redirectUri); notify('Copied!', 'success'); }} className="shrink-0 text-[10px] font-bold text-indigo-600 hover:underline px-1">Copy</button>
                             </div>
                         </div>
@@ -752,7 +752,7 @@ const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseCon
     return (
         <div className="animate-enter max-w-4xl">
             <SectionHeader title={t('ent.domain_title')} subtitle={t('ent.domain_subtitle')} />
-            <div className="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm mb-6">
+            <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm mb-6">
                 <div className="flex flex-col sm:flex-row gap-3">
                     <input className="flex-1 border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" placeholder={t('ent.domain_placeholder')} value={newDomain} onChange={e => setNewDomain(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()} />
                     <button onClick={handleAdd} className="px-6 py-3 sm:py-0 bg-slate-900 text-white font-bold rounded-xl text-sm hover:bg-slate-800 transition-colors">{t('ent.domain_add')}</button>
@@ -760,10 +760,10 @@ const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseCon
             </div>
             <div className="space-y-4">
                 {config.domains?.map(d => (
-                    <div key={d.domain} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm group">
+                    <div key={d.domain} className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm group">
                         <div className="flex justify-between items-start mb-4 gap-4">
                             <div className="min-w-0">
-                                <h3 className="text-lg font-bold text-slate-800 break-all">{d.domain}</h3>
+                                <h3 className="text-lg font-bold text-[var(--text-primary)] break-all">{d.domain}</h3>
                                 <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase mt-1 border ${d.verified ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full ${d.verified ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                                     {d.verified ? t('ent.domain_verified') : t('ent.domain_pending')}
@@ -772,9 +772,9 @@ const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseCon
                             <button onClick={() => handleRemove(d.domain)} className="text-slate-300 hover:text-rose-500 p-2 rounded-lg hover:bg-rose-50 transition-colors shrink-0"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
                         </div>
                         {!d.verified && (
-                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                                 <div className="text-[10px] font-bold text-slate-400 uppercase mb-2">{t('ent.domain_dns_config')}</div>
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs bg-white p-2 rounded border border-slate-200 text-slate-600 gap-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs bg-[var(--bg-surface)] p-2 rounded border border-[var(--glass-border)] text-[var(--text-secondary)] gap-3">
                                     <span className="font-mono break-all px-1">TXT @ {d.verificationTxtRecord}</span>
                                     <button onClick={() => handleVerify(d.domain)} disabled={verifying === d.domain} className="text-indigo-600 font-bold hover:underline sm:ml-4 disabled:opacity-50 whitespace-nowrap self-end sm:self-auto">{verifying === d.domain ? t('ent.domain_checking') : t('ent.domain_verify')}</button>
                                 </div>
@@ -802,7 +802,7 @@ const ACTION_COLORS: Record<string, string> = {
     PASSWORD_RESET_COMPLETE: 'bg-teal-50 text-teal-700 border-teal-100',
     EMAIL_CONFIG_UPDATED: 'bg-cyan-50 text-cyan-700 border-cyan-100',
     SSO_CONFIG_UPDATED: 'bg-purple-50 text-purple-700 border-purple-100',
-    ENTERPRISE_CONFIG_UPDATED: 'bg-slate-100 text-slate-700 border-slate-200',
+    ENTERPRISE_CONFIG_UPDATED: 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] border-[var(--glass-border)]',
     USER_CREATED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
     USER_INVITED: 'bg-indigo-50 text-indigo-700 border-indigo-100',
     USER_REINVITED: 'bg-sky-50 text-sky-700 border-sky-100',
@@ -874,7 +874,7 @@ const AuditPanel = memo(() => {
                     value={filterAction}
                     onChange={e => handleFilterChange(e.target.value.toUpperCase(), filterEntity)}
                     placeholder="Lọc theo action (VD: LOGIN)"
-                    className="border rounded-xl px-3 py-2.5 text-xs font-mono text-slate-600 bg-white outline-none focus:ring-2 focus:ring-indigo-500/20 w-52"
+                    className="border rounded-xl px-3 py-2.5 text-xs font-mono text-[var(--text-secondary)] bg-[var(--bg-surface)] outline-none focus:ring-2 focus:ring-indigo-500/20 w-52"
                 />
                 {(filterAction || filterEntity) && (
                     <button
@@ -887,10 +887,10 @@ const AuditPanel = memo(() => {
                 <span className="text-xs text-slate-400 ml-auto pr-1">{total} bản ghi</span>
             </div>
 
-            <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
+            <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
                 <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left text-xs min-w-[640px]">
-                        <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
+                        <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] border-b border-[var(--glass-border)]">
                             <tr>
                                 <th className="p-4 whitespace-nowrap">{t('ent.audit_time')}</th>
                                 <th className="p-4 whitespace-nowrap">{t('ent.audit_actor')}</th>
@@ -899,7 +899,7 @@ const AuditPanel = memo(() => {
                                 <th className="p-4 whitespace-nowrap">IP</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-[var(--glass-border)]">
                             {loading && (
                                 <tr><td colSpan={5} className="p-10 text-center text-slate-400 animate-pulse">{t('common.loading')}</td></tr>
                             )}
@@ -910,15 +910,15 @@ const AuditPanel = memo(() => {
                                 <tr><td colSpan={5} className="p-10 text-center text-slate-400 italic">{t('common.no_data') || 'Chưa có nhật ký nào'}</td></tr>
                             )}
                             {!loading && logs.map(log => (
-                                <tr key={log.id} className="hover:bg-slate-50 transition-colors">
+                                <tr key={log.id} className="hover:bg-[var(--glass-surface)] transition-colors">
                                     <td className="p-4 text-slate-400 font-mono whitespace-nowrap">{formatDateTime(log.timestamp)}</td>
-                                    <td className="p-4 font-bold text-slate-700 whitespace-nowrap max-w-[120px] truncate" title={log.actorName || log.actorId}>{log.actorName || log.actorId}</td>
+                                    <td className="p-4 font-bold text-[var(--text-secondary)] whitespace-nowrap max-w-[120px] truncate" title={log.actorName || log.actorId}>{log.actorName || log.actorId}</td>
                                     <td className="p-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 rounded border font-bold text-[10px] uppercase tracking-wide ${ACTION_COLORS[log.action] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                        <span className={`px-2 py-1 rounded border font-bold text-[10px] uppercase tracking-wide ${ACTION_COLORS[log.action] || 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] border-[var(--glass-border)]'}`}>
                                             {log.action}
                                         </span>
                                     </td>
-                                    <td className="p-4 text-slate-600 max-w-[200px] truncate" title={log.details}>{log.details || '—'}</td>
+                                    <td className="p-4 text-[var(--text-secondary)] max-w-[200px] truncate" title={log.details}>{log.details || '—'}</td>
                                     <td className="p-4 font-mono text-slate-400 whitespace-nowrap">{log.ipAddress || '—'}</td>
                                 </tr>
                             ))}
@@ -928,13 +928,13 @@ const AuditPanel = memo(() => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50">
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]">
                         <span className="text-xs text-slate-400">Trang {page} / {totalPages}</span>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 transition-colors"
+                                className="px-3 py-1.5 text-xs font-bold rounded-lg border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] disabled:opacity-40 transition-colors"
                             >
                                 ← Trước
                             </button>
@@ -945,7 +945,7 @@ const AuditPanel = memo(() => {
                                     <button
                                         key={pageNum}
                                         onClick={() => setPage(pageNum)}
-                                        className={`w-8 h-8 text-xs font-bold rounded-lg border transition-colors ${pageNum === page ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-200 text-slate-600 hover:bg-white'}`}
+                                        className={`w-8 h-8 text-xs font-bold rounded-lg border transition-colors ${pageNum === page ? 'bg-slate-900 text-white border-slate-900' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'}`}
                                     >
                                         {pageNum}
                                     </button>
@@ -954,7 +954,7 @@ const AuditPanel = memo(() => {
                             <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
-                                className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 transition-colors"
+                                className="px-3 py-1.5 text-xs font-bold rounded-lg border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] disabled:opacity-40 transition-colors"
                             >
                                 Sau →
                             </button>
@@ -1012,8 +1012,8 @@ export const EnterpriseSettings: React.FC = () => {
                 <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
                     <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m2-6V7m0 0a5 5 0 110 10A5 5 0 0112 7z" /></svg>
                 </div>
-                <h2 className="text-xl font-bold text-slate-800 mb-2">{t('common.access_denied') || "Access Denied"}</h2>
-                <p className="text-slate-500 max-w-md">
+                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('common.access_denied') || "Access Denied"}</h2>
+                <p className="text-[var(--text-tertiary)] max-w-md">
                     {t('ent.no_permission') || "You do not have permission to view this page. Only administrators can manage enterprise settings."}
                 </p>
             </div>
@@ -1045,12 +1045,12 @@ export const EnterpriseSettings: React.FC = () => {
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm gap-4 w-full overflow-hidden">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm gap-4 w-full overflow-hidden">
                 <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-slate-500">{t('ent.tenant_label')}:</span>
+                    <span className="text-xs text-[var(--text-tertiary)]">{t('ent.tenant_label')}:</span>
                     <span
                         title={config.tenantId}
-                        className="font-mono font-bold text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-600 border border-slate-200 cursor-default"
+                        className="font-mono font-bold text-[10px] bg-[var(--glass-surface-hover)] px-2 py-0.5 rounded text-[var(--text-secondary)] border border-[var(--glass-border)] cursor-default"
                     >
                         {config.tenantId?.slice(0, 8)}…
                     </span>
@@ -1058,7 +1058,7 @@ export const EnterpriseSettings: React.FC = () => {
                         type="button"
                         title={config.tenantId}
                         onClick={() => { copyToClipboard(config.tenantId ?? ''); notify(t('common.copied'), 'success'); }}
-                        className="text-slate-400 hover:text-slate-700 transition-colors"
+                        className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
@@ -1077,12 +1077,12 @@ export const EnterpriseSettings: React.FC = () => {
                 </div>
 
                 {/* Desktop Tabs */}
-                <div className="hidden lg:flex w-full lg:w-auto lg:max-w-3xl bg-slate-100 p-1 rounded-xl overflow-x-auto no-scrollbar min-w-0" onWheel={handleTabWheel}>
+                <div className="hidden lg:flex w-full lg:w-auto lg:max-w-3xl bg-[var(--glass-surface-hover)] p-1 rounded-xl overflow-x-auto no-scrollbar min-w-0" onWheel={handleTabWheel}>
                     {TABS.map(tab => (
                         <button 
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
                         >
                             {tab.label}
                         </button>

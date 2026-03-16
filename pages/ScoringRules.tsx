@@ -30,9 +30,9 @@ const ScoringSlider: React.FC<ScoringSliderProps> = memo(({ label, value, field,
     const percent = (value / max) * 100;
     
     return (
-        <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm transition-all hover:shadow-md group">
+        <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm transition-all hover:shadow-md group">
             <div className="flex justify-between mb-4 items-center">
-                <label className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">{label}</label>
+                <label className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-600 transition-colors">{label}</label>
                 <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg text-xs border border-indigo-100 min-w-[60px] text-center">
                     {value} {t('scoring.pts')}
                 </span>
@@ -152,14 +152,14 @@ export const ScoringRules: React.FC = () => {
                 </div>
             )}
 
-            <div className="flex justify-between items-center bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+            <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">{t('scoring.title')}</h2>
-                    <p className="text-sm text-slate-500">{t('scoring.subtitle')}</p>
+                    <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('scoring.title')}</h2>
+                    <p className="text-sm text-[var(--text-tertiary)]">{t('scoring.subtitle')}</p>
                 </div>
-                <div className="text-right bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
+                <div className="text-right bg-[var(--glass-surface)] px-4 py-2 rounded-xl border border-[var(--glass-border)]">
                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('scoring.version')}</div>
-                    <div className="font-mono text-lg font-bold text-slate-800">v{config.version}.0</div>
+                    <div className="font-mono text-lg font-bold text-[var(--text-primary)]">v{config.version}.0</div>
                 </div>
             </div>
 
@@ -182,7 +182,7 @@ export const ScoringRules: React.FC = () => {
 
                 {/* Live Preview Card */}
                 <div className="bg-gradient-to-br from-slate-900 to-indigo-900 text-white p-6 rounded-[24px] shadow-xl flex flex-col justify-between relative overflow-hidden h-[300px]">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10"></div>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--bg-surface)]/10 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10"></div>
                     
                     <div>
                         <h3 className="font-bold text-lg mb-1">{t('scoring.sim_title')}</h3>
@@ -208,21 +208,21 @@ export const ScoringRules: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-[24px] border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="bg-[var(--glass-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex items-start gap-4">
-                    <div className="p-3 bg-white rounded-xl border border-slate-200 text-amber-500 shadow-sm">
+                    <div className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] text-amber-500 shadow-sm">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     </div>
                     <div>
-                        <h4 className="font-bold text-slate-800 text-sm">{t('scoring.note_title')}</h4>
-                        <p className="text-xs text-slate-500 mt-1 max-w-md leading-relaxed">{t('scoring.note_desc')}</p>
+                        <h4 className="font-bold text-[var(--text-primary)] text-sm">{t('scoring.note_title')}</h4>
+                        <p className="text-xs text-[var(--text-tertiary)] mt-1 max-w-md leading-relaxed">{t('scoring.note_desc')}</p>
                     </div>
                 </div>
                 <div className="flex gap-3 w-full sm:w-auto">
                     <button 
                         onClick={() => loadData()}
                         disabled={saving}
-                        className="flex-1 sm:flex-none px-6 py-3 bg-white border border-slate-300 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50"
+                        className="flex-1 sm:flex-none px-6 py-3 bg-[var(--bg-surface)] border border-slate-300 text-[var(--text-secondary)] font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors disabled:opacity-50"
                     >
                         {t('common.reset')}
                     </button>

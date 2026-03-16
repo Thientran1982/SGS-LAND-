@@ -25,14 +25,14 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
 
     return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
-            <div className="bg-white w-full max-w-lg rounded-[24px] shadow-2xl p-6">
+            <div className="bg-[var(--bg-surface)] w-full max-w-lg rounded-[24px] shadow-2xl p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-slate-800">{t('data.modal_title')}</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400">{ICONS.CLOSE}</button>
+                    <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('data.modal_title')}</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-slate-400">{ICONS.CLOSE}</button>
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('data.type')}</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('data.type')}</label>
                         <Dropdown 
                             value={form.type || ConnectorType.GOOGLE_SHEETS}
                             onChange={(v) => setForm({...form, type: v as ConnectorType})}
@@ -40,27 +40,27 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('data.name')}</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('data.name')}</label>
                         <input className="w-full border rounded-xl px-4 py-2 text-sm" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                     </div>
                     
                     {/* Dynamic Config Fields */}
                     {form.type === ConnectorType.GOOGLE_SHEETS && (
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('data.spreadsheet_id')}</label>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('data.spreadsheet_id')}</label>
                             <input className="w-full border rounded-xl px-4 py-2 text-sm font-mono" value={form.config?.spreadsheetId || ''} onChange={e => handleConfigChange('spreadsheetId', e.target.value)} />
                             <p className="text-[10px] text-slate-400 mt-1">{t('data.hint_gsheet')}</p>
                         </div>
                     )}
                     {form.type === ConnectorType.WEBHOOK_EXPORT && (
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('data.target_url')}</label>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('data.target_url')}</label>
                             <input className="w-full border rounded-xl px-4 py-2 text-sm font-mono" value={form.config?.targetUrl || ''} onChange={e => handleConfigChange('targetUrl', e.target.value)} />
                         </div>
                     )}
                     {(form.type === ConnectorType.HUBSPOT || form.type === ConnectorType.SALESFORCE) && (
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('data.api_key')}</label>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('data.api_key')}</label>
                             <input type="password" className="w-full border rounded-xl px-4 py-2 text-sm font-mono" value={form.config?.apiKey || ''} onChange={e => handleConfigChange('apiKey', e.target.value)} />
                         </div>
                     )}
@@ -148,17 +148,17 @@ export const DataPlatform: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Connectors List */}
                 <div className="space-y-4">
-                    <h3 className="font-bold text-slate-800 px-2">{t('data.active_connectors')}</h3>
-                    {connectors.length === 0 && <div className="p-8 text-center text-slate-400 bg-white rounded-[24px] border border-slate-100 border-dashed">{t('data.empty_connectors')}</div>}
+                    <h3 className="font-bold text-[var(--text-primary)] px-2">{t('data.active_connectors')}</h3>
+                    {connectors.length === 0 && <div className="p-8 text-center text-slate-400 bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">{t('data.empty_connectors')}</div>}
                     {connectors.map(c => (
-                        <div key={c.id} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex justify-between items-center group">
+                        <div key={c.id} className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex justify-between items-center group">
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className={`w-2 h-2 rounded-full ${c.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                    <h4 className="font-bold text-slate-800">{c.name}</h4>
+                                    <h4 className="font-bold text-[var(--text-primary)]">{c.name}</h4>
                                 </div>
-                                <div className="text-xs text-slate-500 mt-1 flex gap-2">
-                                    <span className="font-mono bg-slate-50 px-1.5 py-0.5 rounded">{t(`data.type_${c.type}`)}</span>
+                                <div className="text-xs text-[var(--text-tertiary)] mt-1 flex gap-2">
+                                    <span className="font-mono bg-[var(--glass-surface)] px-1.5 py-0.5 rounded">{t(`data.type_${c.type}`)}</span>
                                     <span>• {t('data.last_sync')}: {c.lastSyncAt ? formatDateTime(c.lastSyncAt) : t('data.never')}</span>
                                 </div>
                             </div>
@@ -171,13 +171,13 @@ export const DataPlatform: React.FC = () => {
                 </div>
 
                 {/* Job History */}
-                <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-fit">
-                    <h3 className="font-bold text-slate-800 mb-4">{t('data.sync_history')}</h3>
+                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm h-fit">
+                    <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('data.sync_history')}</h3>
                     <div className="space-y-0 divide-y divide-slate-50">
                         {jobs.slice(0, 5).map(job => (
                             <div key={job.id} className="py-3 flex justify-between items-center text-xs">
                                 <div>
-                                    <div className="font-bold text-slate-700">{connectors.find(c => c.id === job.connectorId)?.name || t('data.unknown')}</div>
+                                    <div className="font-bold text-[var(--text-secondary)]">{connectors.find(c => c.id === job.connectorId)?.name || t('data.unknown')}</div>
                                     <div className="text-slate-400 font-mono mt-0.5">{formatDateTime(job.startedAt)}</div>
                                 </div>
                                 <div className="text-right">
@@ -187,7 +187,7 @@ export const DataPlatform: React.FC = () => {
                                     }`}>
                                         {t(`data.status_${job.status.toLowerCase()}`)}
                                     </span>
-                                    <div className="mt-1 text-slate-500">{job.recordsProcessed} {t('table.records')}</div>
+                                    <div className="mt-1 text-[var(--text-tertiary)]">{job.recordsProcessed} {t('table.records')}</div>
                                 </div>
                             </div>
                         ))}

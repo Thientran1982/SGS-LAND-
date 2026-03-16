@@ -84,7 +84,7 @@ export const Contact: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 overflow-y-auto h-[100dvh] no-scrollbar relative">
+        <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar relative">
             
             {/* Toast Notification */}
             {toast && (
@@ -97,9 +97,9 @@ export const Contact: React.FC = () => {
             )}
 
             {/* Header */}
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">
+            <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors">
+                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors">
                         {ICONS.BACK} Trang Chủ
                     </button>
                     <div className="flex items-center gap-2">
@@ -114,23 +114,23 @@ export const Contact: React.FC = () => {
 
             <div className="max-w-7xl mx-auto px-6 py-12 md:py-20 animate-enter">
                 <div className="text-center mb-16">
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">Liên Hệ Với Chúng Tôi</h1>
-                    <p className="text-slate-500 text-lg max-w-2xl mx-auto">Đội ngũ SGS Land luôn sẵn sàng hỗ trợ bạn 24/7. Hãy để lại tin nhắn hoặc ghé thăm văn phòng của chúng tôi.</p>
+                    <h1 className="text-4xl md:text-5xl font-black text-[var(--text-primary)] mb-4 tracking-tight">Liên Hệ Với Chúng Tôi</h1>
+                    <p className="text-[var(--text-tertiary)] text-lg max-w-2xl mx-auto">Đội ngũ SGS Land luôn sẵn sàng hỗ trợ bạn 24/7. Hãy để lại tin nhắn hoặc ghé thăm văn phòng của chúng tôi.</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
                     {/* Contact Info */}
                     <div className="space-y-10">
-                        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl">
-                            <h3 className="text-xl font-bold text-slate-900 mb-6">Thông Tin Liên Lạc</h3>
+                        <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-xl">
+                            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Thông Tin Liên Lạc</h3>
                             <div className="space-y-6">
                                 <div className="flex items-start gap-4">
                                     <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0">
                                         {ICONS.MAP_PIN}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-slate-800">Trụ Sở Chính</h4>
-                                        <p className="text-slate-500 text-sm mt-1">122 - 124 B2, KĐT Sala, Thủ Đức,<br/>TP. Hồ Chí Minh</p>
+                                        <h4 className="font-bold text-[var(--text-primary)]">Trụ Sở Chính</h4>
+                                        <p className="text-[var(--text-tertiary)] text-sm mt-1">122 - 124 B2, KĐT Sala, Thủ Đức,<br/>TP. Hồ Chí Minh</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4">
@@ -138,8 +138,8 @@ export const Contact: React.FC = () => {
                                         {ICONS.PHONE}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-slate-800">Hotline Hỗ Trợ</h4>
-                                        <p className="text-slate-500 text-sm mt-1">0971 132 378 (24/7)</p>
+                                        <h4 className="font-bold text-[var(--text-primary)]">Hotline Hỗ Trợ</h4>
+                                        <p className="text-[var(--text-tertiary)] text-sm mt-1">0971 132 378 (24/7)</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4">
@@ -147,15 +147,15 @@ export const Contact: React.FC = () => {
                                         {ICONS.EMAIL}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-slate-800">Email</h4>
-                                        <p className="text-slate-500 text-sm mt-1">info@sgsgroup.vn</p>
+                                        <h4 className="font-bold text-[var(--text-primary)]">Email</h4>
+                                        <p className="text-[var(--text-tertiary)] text-sm mt-1">info@sgsgroup.vn</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Map Preview (Updated to point to Sala with specific street for PIN) */}
-                        <div className="rounded-[32px] overflow-hidden border border-slate-200 h-64 bg-slate-100 relative group cursor-pointer shadow-sm hover:shadow-md transition-all">
+                        <div className="rounded-[32px] overflow-hidden border border-[var(--glass-border)] h-64 bg-[var(--glass-surface-hover)] relative group cursor-pointer shadow-sm hover:shadow-md transition-all">
                             <iframe 
                                 title="map"
                                 width="100%" 
@@ -170,16 +170,16 @@ export const Contact: React.FC = () => {
                     </div>
 
                     {/* Contact Form */}
-                    <div className="bg-white p-8 md:p-10 rounded-[40px] border border-slate-100 shadow-2xl relative overflow-hidden">
+                    <div className="bg-[var(--bg-surface)] p-8 md:p-10 rounded-[40px] border border-[var(--glass-border)] shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-[80px] -mr-20 -mt-20 opacity-60 pointer-events-none"></div>
                         
-                        <h3 className="text-2xl font-bold text-slate-900 mb-6 relative z-10">Gửi Tin Nhắn</h3>
+                        <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-6 relative z-10">Gửi Tin Nhắn</h3>
                         <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div className="space-y-1 group">
-                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1 group-focus-within:text-indigo-600 transition-colors">Họ Tên <span className="text-rose-500">*</span></label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-indigo-600 transition-colors">Họ Tên <span className="text-rose-500">*</span></label>
                                     <input 
-                                        className={`w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 transition-all ${errors.name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-slate-50 border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white'}`}
+                                        className={`w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 transition-all ${errors.name ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)]'}`}
                                         placeholder="Nguyễn Văn A"
                                         value={form.name}
                                         onChange={e => handleInputChange('name', e.target.value)}
@@ -187,9 +187,9 @@ export const Contact: React.FC = () => {
                                     {errors.name && <p className="text-[10px] font-bold text-rose-500 ml-1 animate-enter">{errors.name}</p>}
                                 </div>
                                 <div className="space-y-1 group">
-                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1 group-focus-within:text-indigo-600 transition-colors">Email <span className="text-rose-500">*</span></label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-indigo-600 transition-colors">Email <span className="text-rose-500">*</span></label>
                                     <input 
-                                        className={`w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 transition-all ${errors.email ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-slate-50 border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white'}`}
+                                        className={`w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 transition-all ${errors.email ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)]'}`}
                                         placeholder="name@example.com"
                                         value={form.email}
                                         onChange={e => handleInputChange('email', e.target.value)}
@@ -210,10 +210,10 @@ export const Contact: React.FC = () => {
                             </div>
 
                             <div className="space-y-1 group">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-1 group-focus-within:text-indigo-600 transition-colors">Nội Dung <span className="text-rose-500">*</span></label>
+                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase ml-1 group-focus-within:text-indigo-600 transition-colors">Nội Dung <span className="text-rose-500">*</span></label>
                                 <textarea 
                                     rows={5}
-                                    className={`w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 transition-all resize-none ${errors.message ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-slate-50 border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white'}`}
+                                    className={`w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 transition-all resize-none ${errors.message ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)]'}`}
                                     placeholder="Chi tiết yêu cầu của bạn..."
                                     value={form.message}
                                     onChange={e => handleInputChange('message', e.target.value)}

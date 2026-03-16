@@ -141,11 +141,11 @@ const CustomTooltip = memo(({ active, payload, label, formatCurrency, theme }: a
         return (
             <div className="p-3 rounded-xl border shadow-xl text-xs backdrop-blur-md transition-all z-50" 
                  style={{ backgroundColor: theme.colors.tooltipBg, borderColor: theme.colors.grid }}>
-                <p className="font-bold mb-2 text-slate-800 dark:text-white">{label}</p>
+                <p className="font-bold mb-2 text-[var(--text-primary)] dark:text-white">{label}</p>
                 {payload.map((p: any, i: number) => (
                     <div key={i} className="flex items-center gap-2 mb-1">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }}></div>
-                        <span className="capitalize text-slate-500 dark:text-slate-400">{p.name}:</span>
+                        <span className="capitalize text-[var(--text-tertiary)] dark:text-slate-400">{p.name}:</span>
                         <span className="font-mono font-bold" style={{ color: p.color }}>
                             {typeof p.value === 'number' && p.value > 1000 ? formatCurrency(p.value) : p.value}
                         </span>
@@ -184,17 +184,17 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     { label: t('reports.table_leads'), value: totalLeads.toLocaleString(), color: 'indigo' },
                     { label: t('reports.metric_roi'), value: `${avgRoi > 0 ? '+' : ''}${avgRoi.toFixed(1)}%`, color: avgRoi >= 0 ? 'emerald' : 'rose' },
                 ].map(({ label, value, color }) => (
-                    <div key={label} className="bg-white p-4 sm:p-5 rounded-[20px] border border-slate-100 shadow-sm relative overflow-hidden group min-w-0">
+                    <div key={label} className="bg-[var(--bg-surface)] p-4 sm:p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden group min-w-0">
                         <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
                         <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 relative z-10 truncate">{label}</div>
-                        <div className="text-sm sm:text-base xl:text-xl font-extrabold text-slate-800 tracking-tight relative z-10 truncate" title={value}>{value}</div>
+                        <div className="text-sm sm:text-base xl:text-xl font-extrabold text-[var(--text-primary)] tracking-tight relative z-10 truncate" title={value}>{value}</div>
                     </div>
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm">
-                    <h3 className="font-bold text-slate-800 mb-3 sm:mb-4 text-sm sm:text-base">{t('reports.chart_source_mix')}</h3>
+                <div className="lg:col-span-2 bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+                    <h3 className="font-bold text-[var(--text-primary)] mb-3 sm:mb-4 text-sm sm:text-base">{t('reports.chart_source_mix')}</h3>
                     <div style={{ width: '100%', height: 260 }}>
                         {hasData ? (
                             <ResponsiveContainer width="100%" height="100%">
@@ -253,8 +253,8 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                     </div>
                 </div>
 
-                <div className="bg-white p-4 sm:p-6 rounded-[24px] border border-slate-100 shadow-sm">
-                    <h3 className="font-bold text-slate-800 mb-0.5 text-sm sm:text-base">{t('reports.chart_conversion_trend') || 'Xu hướng chuyển đổi'}</h3>
+                <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+                    <h3 className="font-bold text-[var(--text-primary)] mb-0.5 text-sm sm:text-base">{t('reports.chart_conversion_trend') || 'Xu hướng chuyển đổi'}</h3>
                     <p className="text-[10px] sm:text-[11px] text-slate-400 mb-2 sm:mb-3">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
                     <div style={{ width: '100%', height: 260 }}>
                         {hasTrend ? (
@@ -340,11 +340,11 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
 
     return (
         <div className="space-y-6 animate-enter">
-            <div className="bg-white p-6 md:p-8 rounded-[24px] border border-slate-100 shadow-sm flex flex-col relative">
+            <div className="bg-[var(--bg-surface)] p-6 md:p-8 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col relative">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
                     <div>
-                        <h3 className="font-bold text-slate-800 mb-1">{t('reports.chart_funnel')}</h3>
-                        <p className="text-xs text-slate-500">{t('reports.funnel_desc')}</p>
+                        <h3 className="font-bold text-[var(--text-primary)] mb-1">{t('reports.chart_funnel')}</h3>
+                        <p className="text-xs text-[var(--text-tertiary)]">{t('reports.funnel_desc')}</p>
                     </div>
                     {overallRate !== null && (
                         <div className="flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-[14px] px-4 py-2 text-center">
@@ -362,16 +362,16 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                             return (
                                 <div key={step.stage} className="flex items-center gap-2 sm:gap-3 group">
                                     <div className="w-16 sm:w-28 md:w-36 flex-shrink-0 text-right">
-                                        <span className="text-[10px] sm:text-xs font-bold text-slate-600 leading-tight">{t(`stage.${step.stage}`)}</span>
+                                        <span className="text-[10px] sm:text-xs font-bold text-[var(--text-secondary)] leading-tight">{t(`stage.${step.stage}`)}</span>
                                     </div>
-                                    <div className="flex-1 relative h-8 sm:h-9 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
+                                    <div className="flex-1 relative h-8 sm:h-9 bg-[var(--glass-surface)] rounded-lg overflow-hidden border border-[var(--glass-border)]">
                                         <div
                                             className="h-full rounded-lg transition-all duration-700 ease-out"
                                             style={{ width: `${barPct}%`, backgroundColor: color, opacity: 0.85 }}
                                         />
                                     </div>
                                     <div className="w-16 sm:w-28 md:w-36 flex-shrink-0 flex items-center gap-1 sm:gap-2">
-                                        <span className="text-xs sm:text-sm font-extrabold text-slate-800">{step.count.toLocaleString()}</span>
+                                        <span className="text-xs sm:text-sm font-extrabold text-[var(--text-primary)]">{step.count.toLocaleString()}</span>
                                         <span className="hidden sm:inline text-[10px] text-slate-400 font-medium">({step.conversionRate}%)</span>
                                     </div>
                                 </div>
@@ -385,11 +385,11 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                 )}
 
                 {hasData && (
-                    <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap gap-3">
+                    <div className="mt-6 pt-4 border-t border-[var(--glass-border)] flex flex-wrap gap-3">
                         {data.funnel.map((step, idx) => (
                             <div key={step.stage} className="flex items-center gap-1.5">
                                 <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: FUNNEL_COLORS[idx % FUNNEL_COLORS.length] }} />
-                                <span className="text-[11px] text-slate-500">{t(`stage.${step.stage}`)}: <strong className="text-slate-700">{step.count}</strong></span>
+                                <span className="text-[11px] text-[var(--text-tertiary)]">{t(`stage.${step.stage}`)}: <strong className="text-[var(--text-secondary)]">{step.count}</strong></span>
                             </div>
                         ))}
                     </div>
@@ -411,7 +411,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
 
     const roiDisplay = (row: AttributionData) => {
         // Fix: when spend = 0, ROI is meaningless — show N/A instead of 0%
-        if (row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-50 text-slate-400 border border-slate-200">N/A</span>;
+        if (row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--glass-surface)] text-slate-400 border border-[var(--glass-border)]">N/A</span>;
         return (
             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${row.roi >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
                 {row.roi > 0 ? '+' : ''}{row.roi.toFixed(1)}%
@@ -433,16 +433,16 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                     color: overallRoi === null ? 'slate' : overallRoi >= 0 ? 'emerald' : 'rose'
                 },
             ].map(({ label, value, color }) => (
-                <div key={label} className="bg-white p-4 sm:p-5 rounded-[20px] border border-slate-100 shadow-sm relative overflow-hidden group min-w-0">
+                <div key={label} className="bg-[var(--bg-surface)] p-4 sm:p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden group min-w-0">
                     <div className={`absolute top-0 right-0 w-20 h-20 bg-${color}-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}></div>
                     <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 relative z-10 truncate">{label}</div>
-                    <div className="text-sm sm:text-base xl:text-xl font-extrabold text-slate-800 tracking-tight relative z-10 truncate" title={value}>{value}</div>
+                    <div className="text-sm sm:text-base xl:text-xl font-extrabold text-[var(--text-primary)] tracking-tight relative z-10 truncate" title={value}>{value}</div>
                 </div>
             ))}
         </div>
 
         {/* Attribution Table */}
-        <div className="bg-white p-0 md:p-2 rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-[var(--bg-surface)] p-0 md:p-2 rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
             {data.attribution.length === 0 ? (
                 <div className="p-10 flex flex-col items-center justify-center text-slate-400 gap-2">
                     <svg className="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -451,7 +451,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
             ) : (
                 <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
                     <table className="min-w-[800px] md:min-w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider sticky top-0 z-10">
+                        <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] font-bold text-xs uppercase tracking-wider sticky top-0 z-10">
                             <tr>
                                 <th className="p-5">{t('reports.table_channel')}</th>
                                 <th className="p-5 text-right">{t('reports.table_spend')}</th>
@@ -461,19 +461,19 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                                 <th className="p-5 text-right">{t('reports.table_roi')}</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-[var(--glass-border)]">
                             {data.attribution.map(row => (
-                                <tr key={row.channel} className="hover:bg-slate-50 transition-colors group">
-                                    <td className="p-5 font-bold text-slate-800">
-                                        <span className="bg-slate-100 px-2 py-1 rounded text-xs border border-slate-200 group-hover:bg-white transition-colors">
+                                <tr key={row.channel} className="hover:bg-[var(--glass-surface)] transition-colors group">
+                                    <td className="p-5 font-bold text-[var(--text-primary)]">
+                                        <span className="bg-[var(--glass-surface-hover)] px-2 py-1 rounded text-xs border border-[var(--glass-border)] group-hover:bg-[var(--bg-surface)] transition-colors">
                                             {t(`source.${row.channel}`) !== `source.${row.channel}` ? t(`source.${row.channel}`) : row.channel}
                                         </span>
                                     </td>
-                                    <td className="p-5 text-right font-mono text-slate-600">
+                                    <td className="p-5 text-right font-mono text-[var(--text-secondary)]">
                                         {row.spend > 0 ? formatCurrency(row.spend) : <span className="text-slate-300">—</span>}
                                     </td>
-                                    <td className="p-5 text-right font-bold text-slate-700">{row.leads}</td>
-                                    <td className="p-5 text-right font-mono text-slate-600">
+                                    <td className="p-5 text-right font-bold text-[var(--text-secondary)]">{row.leads}</td>
+                                    <td className="p-5 text-right font-mono text-[var(--text-secondary)]">
                                         {row.cac > 0 ? formatCurrency(row.cac) : <span className="text-slate-300">—</span>}
                                     </td>
                                     <td className="p-5 text-right font-mono font-bold text-indigo-600">{formatCurrency(row.revenue)}</td>
@@ -561,9 +561,9 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
 
     return (
     <div className="space-y-6 animate-enter">
-        <div className="bg-white p-0 md:p-2 rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
-                <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide">{t('reports.cost_history')}</h3>
+        <div className="bg-[var(--bg-surface)] p-0 md:p-2 rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]">
+                <h3 className="font-bold text-[var(--text-primary)] text-sm uppercase tracking-wide">{t('reports.cost_history')}</h3>
                 {canUpdateCosts && (
                     <button
                         onClick={() => setIsAdding(true)}
@@ -583,7 +583,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             ) : (
                 <div ref={scrollRef} className="overflow-x-auto no-scrollbar overscroll-contain">
                     <table className="min-w-[700px] md:min-w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-500 font-bold text-xs uppercase tracking-wider">
+                        <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] font-bold text-xs uppercase tracking-wider">
                             <tr>
                                 <th className="p-5">{t('reports.cost_source')}</th>
                                 <th className="p-5">{t('reports.cost_campaign_name') || 'Tên Chiến Dịch'}</th>
@@ -592,15 +592,15 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                 {canUpdateCosts && <th className="p-5 text-right"></th>}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-[var(--glass-border)]">
                             {data.campaignCosts.map((cost) => (
-                                <tr key={cost.id} className="hover:bg-slate-50 transition-colors group">
-                                    <td className="p-5 font-bold text-slate-700">{cost.source}</td>
-                                    <td className="p-5 text-slate-500 text-xs">
-                                        <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200">{cost.campaignName || '—'}</span>
+                                <tr key={cost.id} className="hover:bg-[var(--glass-surface)] transition-colors group">
+                                    <td className="p-5 font-bold text-[var(--text-secondary)]">{cost.source}</td>
+                                    <td className="p-5 text-[var(--text-tertiary)] text-xs">
+                                        <span className="bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-2 py-1 rounded border border-[var(--glass-border)]">{cost.campaignName || '—'}</span>
                                     </td>
-                                    <td className="p-5 font-mono text-xs text-slate-500">{cost.period}</td>
-                                    <td className="p-5 text-right font-mono font-bold text-slate-800">{formatCurrency(cost.cost)}</td>
+                                    <td className="p-5 font-mono text-xs text-[var(--text-tertiary)]">{cost.period}</td>
+                                    <td className="p-5 text-right font-mono font-bold text-[var(--text-primary)]">{formatCurrency(cost.cost)}</td>
                                     {canUpdateCosts && (
                                         <td className="p-3 sm:p-5 text-right">
                                             <div className="flex items-center justify-end gap-2 sm:gap-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
@@ -630,51 +630,51 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
         {/* Add Cost Modal */}
         {isAdding && createPortal(
             <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
-                <div className="bg-white w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-slate-100 overflow-y-auto max-h-[92dvh] sm:max-h-[90vh]">
-                    <h3 className="text-lg font-bold text-slate-800 mb-5">{t('reports.btn_add_cost') || 'Thêm Chi Phí Chiến Dịch'}</h3>
+                <div className="bg-[var(--bg-surface)] w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] overflow-y-auto max-h-[92dvh] sm:max-h-[90vh]">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-5">{t('reports.btn_add_cost') || 'Thêm Chi Phí Chiến Dịch'}</h3>
                     <div className="space-y-4 mb-6">
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{t('reports.cost_source')} *</label>
+                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_source')} *</label>
                             <input 
                                 type="text"
                                 value={addForm.source}
                                 onChange={(e) => setAddForm(f => ({ ...f, source: e.target.value }))}
                                 placeholder="Facebook, Google, Zalo..."
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{t('reports.cost_campaign_name') || 'Tên Chiến Dịch'}</label>
+                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_campaign_name') || 'Tên Chiến Dịch'}</label>
                             <input 
                                 type="text"
                                 value={addForm.campaignName}
                                 onChange={(e) => setAddForm(f => ({ ...f, campaignName: e.target.value }))}
                                 placeholder="VD: Campaign Q1 2026"
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{t('reports.cost_month')} *</label>
+                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_month')} *</label>
                             <input 
                                 type="month"
                                 value={addForm.period}
                                 onChange={(e) => setAddForm(f => ({ ...f, period: e.target.value }))}
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{t('reports.cost_amount')} (VNĐ) *</label>
+                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_amount')} (VNĐ) *</label>
                             <input 
                                 type="number"
                                 value={addForm.cost}
                                 onChange={(e) => setAddForm(f => ({ ...f, cost: e.target.value }))}
                                 placeholder="0"
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                                className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
                     </div>
                     <div className="flex gap-3 w-full">
-                        <button onClick={() => setIsAdding(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
+                        <button onClick={() => setIsAdding(false)} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
                             {t('common.cancel')}
                         </button>
                         <button 
@@ -693,14 +693,14 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
         {/* Delete Confirm Modal */}
         {deletingId && createPortal(
             <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
-                <div className="bg-white w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-slate-100">
+                <div className="bg-[var(--bg-surface)] w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)]">
                     <div className="flex items-center justify-center w-12 h-12 rounded-full bg-rose-50 mb-4 mx-auto">
                         <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </div>
-                    <h3 className="text-base font-bold text-slate-800 text-center mb-2">{t('reports.confirm_delete_cost') || 'Xác nhận xóa chi phí'}</h3>
-                    <p className="text-xs text-slate-500 text-center mb-6">{t('reports.confirm_delete_cost_desc') || 'Hành động này không thể hoàn tác.'}</p>
+                    <h3 className="text-base font-bold text-[var(--text-primary)] text-center mb-2">{t('reports.confirm_delete_cost') || 'Xác nhận xóa chi phí'}</h3>
+                    <p className="text-xs text-[var(--text-tertiary)] text-center mb-6">{t('reports.confirm_delete_cost_desc') || 'Hành động này không thể hoàn tác.'}</p>
                     <div className="flex gap-3 w-full">
-                        <button onClick={() => setDeletingId(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
+                        <button onClick={() => setDeletingId(null)} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
                             {t('common.cancel')}
                         </button>
                         <button 
@@ -719,20 +719,20 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
         {/* Update Cost Modal */}
         {isUpdating && editingCost && createPortal(
             <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
-                <div className="bg-white w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-slate-100 scale-100 animate-scale-up">
-                    <h3 className="text-lg font-bold text-slate-800 mb-1">{t('reports.btn_update')}</h3>
+                <div className="bg-[var(--bg-surface)] w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] scale-100 animate-scale-up">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">{t('reports.btn_update')}</h3>
                     <p className="text-xs text-slate-400 mb-5">{editingCost.source} · {editingCost.period}</p>
                     <div className="mb-6">
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('reports.cost_amount')} (VNĐ)</label>
+                        <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">{t('reports.cost_amount')} (VNĐ)</label>
                         <input 
                             type="number" 
                             value={newCostValue}
                             onChange={(e) => setNewCostValue(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                            className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
                         />
                     </div>
                     <div className="flex gap-3 w-full">
-                        <button onClick={() => { setIsUpdating(false); setEditingCost(null); }} className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
+                        <button onClick={() => { setIsUpdating(false); setEditingCost(null); }} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
                             {t('common.cancel')}
                         </button>
                         <button onClick={handleUpdate} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all">
@@ -823,19 +823,19 @@ export const Reports: React.FC = () => {
     return (
         <div className="space-y-4 pb-20 relative animate-enter">
             {/* Header: single bar — Tabs (left) + Time Filter (right) on desktop; stacked on mobile */}
-            <div className="bg-white px-4 sm:px-5 py-3 rounded-[24px] border border-slate-100 shadow-sm">
+            <div className="bg-[var(--bg-surface)] px-4 sm:px-5 py-3 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 {/* Desktop: one row */}
                 <div className="hidden md:flex items-center gap-3">
                     {/* Tabs */}
-                    <div ref={scrollRef} className="flex bg-slate-100 p-1 rounded-xl gap-1 flex-1 overflow-x-auto no-scrollbar">
+                    <div ref={scrollRef} className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl gap-1 flex-1 overflow-x-auto no-scrollbar">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap flex-1 text-center ${
                                     activeTab === tab.id
-                                    ? 'bg-white shadow text-slate-800 ring-1 ring-black/5'
-                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                                    ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)] ring-1 ring-black/5'
+                                    : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-slate-200/50'
                                 }`}
                             >
                                 {tab.label}
@@ -847,15 +847,15 @@ export const Reports: React.FC = () => {
                     {/* Time filter */}
                     <div className="flex items-center gap-1.5 shrink-0">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kỳ:</span>
-                        <div className="flex bg-slate-100 p-0.5 rounded-xl gap-0.5">
+                        <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-xl gap-0.5">
                             {TIME_RANGE_OPTIONS.map(opt => (
                                 <button
                                     key={opt.value}
                                     onClick={() => setTimeRange(opt.value)}
                                     className={`px-2.5 py-1.5 text-[11px] font-bold rounded-[9px] transition-all whitespace-nowrap ${
                                         timeRange === opt.value
-                                        ? 'bg-white shadow text-slate-800 ring-1 ring-black/5'
-                                        : 'text-slate-500 hover:text-slate-700'
+                                        ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)] ring-1 ring-black/5'
+                                        : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                                     }`}
                                 >
                                     {opt.label}
@@ -872,15 +872,15 @@ export const Reports: React.FC = () => {
                         options={tabs.map(tab => ({ value: tab.id, label: tab.label }))}
                         className="w-full"
                     />
-                    <div className="flex bg-slate-100 p-0.5 rounded-xl gap-0.5 overflow-x-auto no-scrollbar">
+                    <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-xl gap-0.5 overflow-x-auto no-scrollbar">
                         {TIME_RANGE_OPTIONS.map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => setTimeRange(opt.value)}
                                 className={`px-3 py-1.5 text-xs font-bold rounded-[10px] transition-all whitespace-nowrap flex-1 ${
                                     timeRange === opt.value
-                                    ? 'bg-white shadow text-slate-800 ring-1 ring-black/5'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)] ring-1 ring-black/5'
+                                    : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                                 }`}
                             >
                                 {opt.label}

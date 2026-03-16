@@ -95,17 +95,17 @@ const RejectModal = memo(({ isOpen, onClose, onConfirm, t }: RejectModalProps) =
 
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-enter">
-            <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100">
-                <h3 className="text-lg font-bold text-slate-800 mb-4">{t('approvals.reject_modal_title')}</h3>
+            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)]">
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">{t('approvals.reject_modal_title')}</h3>
                 <textarea 
                     value={reason}
                     onChange={e => setReason(e.target.value)}
-                    className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500/20 outline-none h-24 resize-none mb-4 bg-slate-50 focus:bg-white transition-colors"
+                    className="w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500/20 outline-none h-24 resize-none mb-4 bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-colors"
                     placeholder={t('approvals.reject_reason_placeholder')}
                     autoFocus
                 />
                 <div className="flex gap-3">
-                    <button onClick={onClose} className="flex-1 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">{t('common.cancel')}</button>
+                    <button onClick={onClose} className="flex-1 py-2.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">{t('common.cancel')}</button>
                     <button 
                         onClick={() => { if(reason.trim()) { onConfirm(reason); setReason(''); } }} 
                         disabled={!reason.trim()} 
@@ -151,8 +151,8 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
 
     return (
         <div 
-            className={`bg-white rounded-[20px] border shadow-sm relative overflow-hidden transition-all duration-300 group flex flex-col h-full
-                ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10' : `border-slate-200 hover:border-slate-300 hover:shadow-md`}`}
+            className={`bg-[var(--bg-surface)] rounded-[20px] border shadow-sm relative overflow-hidden transition-all duration-300 group flex flex-col h-full
+                ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10' : `border-[var(--glass-border)] hover:border-[var(--glass-border)] hover:shadow-md`}`}
             onClick={() => onToggleSelect(proposal.id)}
         >
             {/* Header / Selection */}
@@ -160,12 +160,12 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                 <div className="flex items-center gap-3">
                     <div 
                         className={`w-5 h-5 rounded border transition-colors flex items-center justify-center
-                            ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300 text-transparent group-hover:border-indigo-400'}`}
+                            ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-[var(--bg-surface)] border-slate-300 text-transparent group-hover:border-indigo-400'}`}
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                     </div>
                     <div>
-                        <div className="font-bold text-slate-800 text-sm">{proposal.createdBy}</div>
+                        <div className="font-bold text-[var(--text-primary)] text-sm">{proposal.createdBy}</div>
                         <div className="text-[10px] text-slate-400 font-mono">{formatDateTime(proposal.createdAt)}</div>
                     </div>
                 </div>
@@ -178,17 +178,17 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
             <div className="px-4 pb-4 flex-1">
                 {/* Discount Highlight */}
                 <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-3xl font-black text-slate-900">{discountPercent.toFixed(1)}%</span>
-                    <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">{t('approvals.discount')}</span>
+                    <span className="text-3xl font-black text-[var(--text-primary)]">{discountPercent.toFixed(1)}%</span>
+                    <span className="text-xs text-[var(--text-tertiary)] font-medium uppercase tracking-wide">{t('approvals.discount')}</span>
                 </div>
 
                 {/* Listing & Price Context */}
-                <div className="bg-slate-50 rounded-xl p-3 mb-3 border border-slate-100">
-                    <div className="text-xs font-bold text-slate-700 truncate mb-1" title={listing?.title}>
+                <div className="bg-[var(--glass-surface)] rounded-xl p-3 mb-3 border border-[var(--glass-border)]">
+                    <div className="text-xs font-bold text-[var(--text-secondary)] truncate mb-1" title={listing?.title}>
                         {listing?.title || t('approvals.unknown_listing')}
                     </div>
                     <div className="flex justify-between items-end">
-                         <div className="text-[10px] text-slate-500">
+                         <div className="text-[10px] text-[var(--text-tertiary)]">
                             {t('approvals.price_original')}: <span className="line-through">{formatCurrency(proposal.basePrice)}</span>
                          </div>
                          <div className="text-sm font-bold text-indigo-600">
@@ -199,12 +199,12 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
 
                 {/* Lead Context */}
                 <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                    <div className="w-6 h-6 rounded-full bg-[var(--glass-surface-hover)] flex items-center justify-center text-[var(--text-tertiary)]">
                         {ICONS.USER}
                     </div>
-                    <div className="text-xs text-slate-600 truncate flex-1 font-medium">{lead?.name || t('data.unknown')}</div>
+                    <div className="text-xs text-[var(--text-secondary)] truncate flex-1 font-medium">{lead?.name || t('data.unknown')}</div>
                     {lead?.score && (
-                        <div className={`text-[10px] font-bold px-1.5 rounded border ${lead.score.grade === 'A' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                        <div className={`text-[10px] font-bold px-1.5 rounded border ${lead.score.grade === 'A' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)] border-[var(--glass-border)]'}`}>
                             {t('approvals.lead_rank')} {lead.score.grade}
                         </div>
                     )}
@@ -212,7 +212,7 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                 
                 {/* Risk Reasons */}
                 {riskAssessment.reasonKeys.length > 0 && (
-                    <div className="text-[10px] text-slate-500 mt-2 space-y-1">
+                    <div className="text-[10px] text-[var(--text-tertiary)] mt-2 space-y-1">
                         {riskAssessment.reasonKeys.map(k => (
                             <div key={k} className="flex items-center gap-1.5">
                                 <span className={styles.icon}>{ICONS.WARNING}</span> {t(`approvals.${k}`)}
@@ -223,10 +223,10 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
             </div>
 
             {/* Footer Actions */}
-            <div className="p-3 border-t border-slate-100 flex gap-2 bg-slate-50/50">
+            <div className="p-3 border-t border-[var(--glass-border)] flex gap-2 bg-[var(--glass-surface)]/50">
                 <button 
                     onClick={(e) => { e.stopPropagation(); onReject(proposal.id); }}
-                    className="flex-1 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors"
+                    className="flex-1 py-2 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-bold hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors"
                 >
                     {t('approvals.btn_reject')}
                 </button>
@@ -366,28 +366,28 @@ export const ApprovalInbox: React.FC = () => {
 
             {/* METRICS BAR */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-                <div className="bg-white p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-slate-100 shadow-sm flex flex-col justify-between col-span-2 md:col-span-1">
+                <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between col-span-2 md:col-span-1">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{t('approvals.metric_pipeline')}</span>
-                    <div className="text-xl md:text-2xl font-black text-slate-800 tracking-tight mt-1">{formatCurrency(metrics.totalValue)}</div>
+                    <div className="text-xl md:text-2xl font-black text-[var(--text-primary)] tracking-tight mt-1">{formatCurrency(metrics.totalValue)}</div>
                 </div>
-                <div className="bg-white p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-slate-100 shadow-sm flex flex-col justify-between">
+                <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{t('approvals.metric_avg_discount')}</span>
                     <div className="text-xl md:text-2xl font-black text-indigo-600 tracking-tight mt-1">{metrics.avgDiscount.toFixed(1)}%</div>
                 </div>
-                <div className="bg-white p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-slate-100 shadow-sm flex flex-col justify-between">
+                <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl md:rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col justify-between">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{t('approvals.metric_high_risk')}</span>
                     <div className="text-xl md:text-2xl font-black text-rose-500 tracking-tight mt-1">{metrics.highRiskCount}</div>
                 </div>
             </div>
 
             {/* TOOLBAR */}
-            <div className="flex flex-wrap justify-between items-center bg-white p-4 rounded-[24px] border border-slate-100 shadow-sm gap-4 sticky top-0 z-20 backdrop-blur-md bg-white/90">
+            <div className="flex flex-wrap justify-between items-center bg-[var(--bg-surface)] p-4 rounded-[24px] border border-[var(--glass-border)] shadow-sm gap-4 sticky top-0 z-20 backdrop-blur-md bg-[var(--bg-surface)]/90">
                 <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-bold text-slate-800">{t('approvals.title')}</h2>
-                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-bold">{pending.length}</span>
+                    <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('approvals.title')}</h2>
+                    <span className="bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-2 py-0.5 rounded-full text-xs font-bold">{pending.length}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={handleSelectAll} className="text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors">
+                    <button onClick={handleSelectAll} className="text-xs font-bold text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors">
                         {selectedIds.size === pending.length ? t('approvals.deselect_all') : t('approvals.select_all')}
                     </button>
                     <div className="h-4 w-px bg-slate-200"></div>
@@ -406,8 +406,8 @@ export const ApprovalInbox: React.FC = () => {
 
             {/* GRID */}
             {sortedProposals.length === 0 ? (
-                <div className="p-20 text-center text-slate-400 flex flex-col items-center border-2 border-dashed border-slate-100 rounded-[32px]">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">{ICONS.CHECK_CIRCLE}</div>
+                <div className="p-20 text-center text-slate-400 flex flex-col items-center border-2 border-dashed border-[var(--glass-border)] rounded-[32px]">
+                    <div className="w-16 h-16 bg-[var(--glass-surface)] rounded-full flex items-center justify-center mb-4 text-slate-300">{ICONS.CHECK_CIRCLE}</div>
                     <p className="font-medium">{t('approvals.empty')}</p>
                 </div>
             ) : (
@@ -440,7 +440,7 @@ export const ApprovalInbox: React.FC = () => {
                     </div>
                     <button 
                         onClick={() => processApproval(Array.from(selectedIds))}
-                        className="bg-white text-slate-900 px-6 py-2 rounded-xl text-xs font-bold hover:bg-indigo-50 transition-colors shadow-lg active:scale-95"
+                        className="bg-[var(--bg-surface)] text-[var(--text-primary)] px-6 py-2 rounded-xl text-xs font-bold hover:bg-indigo-50 transition-colors shadow-lg active:scale-95"
                     >
                         {t('approvals.approve_selection')}
                     </button>

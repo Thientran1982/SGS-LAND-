@@ -93,21 +93,21 @@ export const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ roomNa
     };
 
     return (
-        <div className="flex flex-col w-full h-full border border-slate-200 rounded-xl overflow-hidden bg-white">
-            <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-200">
-                <span className="text-xs font-bold text-slate-500 uppercase">{t('editor.title')}</span>
+        <div className="flex flex-col w-full h-full border border-[var(--glass-border)] rounded-xl overflow-hidden bg-[var(--bg-surface)]">
+            <div className="flex items-center justify-between px-4 py-2 bg-[var(--glass-surface)] border-b border-[var(--glass-border)]">
+                <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('editor.title')}</span>
                 <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
                         <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status === 'connected' ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
                         <span className={`relative inline-flex rounded-full h-2 w-2 ${status === 'connected' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                     </span>
-                    <span className="text-xs text-slate-500">{status === 'connected' ? t('editor.status_connected') : t('editor.status_connecting')}</span>
+                    <span className="text-xs text-[var(--text-tertiary)]">{status === 'connected' ? t('editor.status_connected') : t('editor.status_connecting')}</span>
                 </div>
             </div>
             <textarea
                 ref={editorRef}
                 onChange={handleInput}
-                className="flex-1 w-full p-4 resize-none outline-none text-sm text-slate-700"
+                className="flex-1 w-full p-4 resize-none outline-none text-sm text-[var(--text-secondary)]"
                 placeholder={t('editor.placeholder') || 'Bắt đầu nhập nội dung hợp đồng...'}
             />
         </div>

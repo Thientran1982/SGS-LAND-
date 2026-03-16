@@ -12,8 +12,8 @@ const ICONS = {
 };
 
 const ServiceBar = ({ name, status = 'operational' }: { name: string, status?: 'operational' | 'degraded' }) => (
-    <div className="flex justify-between items-center py-4 border-b border-slate-100 last:border-0 group">
-        <span className="font-bold text-slate-700 group-hover:text-slate-900 transition-colors">{name}</span>
+    <div className="flex justify-between items-center py-4 border-b border-[var(--glass-border)] last:border-0 group">
+        <span className="font-bold text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{name}</span>
         <div className="flex items-center gap-2">
             <span className={`text-xs font-bold uppercase tracking-wider ${status === 'operational' ? 'text-emerald-600' : 'text-amber-600'}`}>
                 {status === 'operational' ? 'Hoạt động tốt' : 'Hiệu năng giảm'}
@@ -47,11 +47,11 @@ export const PublicStatus: React.FC = () => {
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+        <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             {/* Header */}
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">
+            <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors">
+                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors">
                         {ICONS.BACK} {t('common.go_back')}
                     </button>
                     <div className="flex items-center gap-2">
@@ -70,13 +70,13 @@ export const PublicStatus: React.FC = () => {
                         <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('status.operational')}</h1>
                         <p className="text-emerald-100 font-medium">Cập nhật lúc: {formatDateTime(new Date().toISOString())}</p>
                     </div>
-                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <div className="w-16 h-16 bg-[var(--bg-surface)]/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
                         <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm p-8 mb-12">
-                    <h2 className="text-xl font-bold text-slate-900 mb-6">{t('status.uptime')}</h2>
+                <div className="bg-[var(--bg-surface)] rounded-[32px] border border-[var(--glass-border)] shadow-sm p-8 mb-12">
+                    <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6">{t('status.uptime')}</h2>
                     <UptimeGraph />
                     <div className="flex justify-between text-xs font-bold text-slate-400 mt-3 uppercase tracking-wider">
                         <span>90 ngày trước</span>
@@ -85,7 +85,7 @@ export const PublicStatus: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-[var(--bg-surface)] rounded-[32px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
                     <div className="p-8">
                         <ServiceBar name={t('status.service_api')} />
                         <ServiceBar name={t('status.service_dashboard')} />
@@ -95,8 +95,8 @@ export const PublicStatus: React.FC = () => {
                 </div>
 
                 <div className="mt-16">
-                    <h2 className="text-xl font-bold text-slate-900 mb-6">{t('status.past_incidents')}</h2>
-                    <div className="text-slate-500 text-sm italic border-l-4 border-slate-200 pl-4 py-2">
+                    <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6">{t('status.past_incidents')}</h2>
+                    <div className="text-[var(--text-tertiary)] text-sm italic border-l-4 border-[var(--glass-border)] pl-4 py-2">
                         {t('status.no_incidents')}
                     </div>
                 </div>

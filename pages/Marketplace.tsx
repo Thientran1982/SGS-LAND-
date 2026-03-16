@@ -118,14 +118,14 @@ export const Marketplace: React.FC = () => {
         <div className="space-y-6 pb-20 animate-enter relative">
             {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm gap-4">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">{t('market.title')}</h2>
-                    <p className="text-sm text-slate-500">{t('market.subtitle')}</p>
+                    <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('market.title')}</h2>
+                    <p className="text-sm text-[var(--text-tertiary)]">{t('market.subtitle')}</p>
                 </div>
-                <div className="flex bg-slate-100 p-1 rounded-xl">
-                    <button onClick={() => setActiveTab('BROWSE')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'BROWSE' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{t('market.tab_browse')}</button>
-                    <button onClick={() => setActiveTab('INSTALLED')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'INSTALLED' ? 'bg-white shadow text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>{t('market.tab_installed')}</button>
+                <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl">
+                    <button onClick={() => setActiveTab('BROWSE')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'BROWSE' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('market.tab_browse')}</button>
+                    <button onClick={() => setActiveTab('INSTALLED')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'INSTALLED' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('market.tab_installed')}</button>
                 </div>
             </div>
 
@@ -137,7 +137,7 @@ export const Marketplace: React.FC = () => {
                             {ICONS.SEARCH}
                         </div>
                         <input 
-                            className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-slate-400"
+                            className="w-full pl-10 pr-10 py-2.5 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-[var(--text-muted)]"
                             placeholder={t('common.search')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -146,7 +146,7 @@ export const Marketplace: React.FC = () => {
                             <div className="absolute right-2 inset-y-0 flex items-center">
                                 <button 
                                     onClick={() => setSearch('')}
-                                    className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                     title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                 >
                                     {ICONS.X}
@@ -158,7 +158,7 @@ export const Marketplace: React.FC = () => {
                         <button 
                             key={cat}
                             onClick={() => setCategory(cat)}
-                            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all uppercase tracking-wide ${category === cat ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'}`}
+                            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all uppercase tracking-wide ${category === cat ? 'bg-indigo-600 text-white shadow-lg' : 'bg-[var(--bg-surface)] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)] border border-[var(--glass-border)]'}`}
                         >
                             {getCatLabel(cat)}
                         </button>
@@ -172,18 +172,18 @@ export const Marketplace: React.FC = () => {
                         const isProcessing = processingId === app.id;
 
                         return (
-                            <div key={app.id} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-lg transition-all group flex flex-col h-full relative overflow-hidden">
-                                {isProcessing && <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-center justify-center"><div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}
+                            <div key={app.id} className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm hover:shadow-lg transition-all group flex flex-col h-full relative overflow-hidden">
+                                {isProcessing && <div className="absolute inset-0 bg-[var(--bg-surface)]/60 backdrop-blur-sm z-10 flex items-center justify-center"><div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}
                                 
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className="w-14 h-14 rounded-2xl shadow-sm bg-slate-50 flex items-center justify-center p-2 border border-slate-100">
+                                    <div className="w-14 h-14 rounded-2xl shadow-sm bg-[var(--glass-surface)] flex items-center justify-center p-2 border border-[var(--glass-border)]">
                                         <img src={app.icon} className="w-full h-full object-contain" alt="" />
                                     </div>
                                     {isInstalled && <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border border-emerald-100">{t('market.installed_badge')}</span>}
                                 </div>
-                                <h3 className="font-bold text-slate-800 text-lg mb-1 line-clamp-1">{app.name}</h3>
+                                <h3 className="font-bold text-[var(--text-primary)] text-lg mb-1 line-clamp-1">{app.name}</h3>
                                 <div className="text-[10px] font-bold text-slate-400 uppercase mb-3">{getCatLabel(app.category)}</div>
-                                <p className="text-xs text-slate-500 mb-4 line-clamp-2 flex-1 leading-relaxed">{app.description}</p>
+                                <p className="text-xs text-[var(--text-tertiary)] mb-4 line-clamp-2 flex-1 leading-relaxed">{app.description}</p>
                                 
                                 <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
                                     <div className="flex flex-col">
@@ -193,7 +193,7 @@ export const Marketplace: React.FC = () => {
                                     
                                     {isInstalled ? (
                                         <div className="flex gap-2">
-                                            <button onClick={handleConfigure} className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+                                            <button onClick={handleConfigure} className="px-3 py-1.5 bg-[var(--glass-surface)] text-[var(--text-secondary)] rounded-lg text-xs font-bold hover:bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] flex items-center gap-1.5">
                                                 {ICONS.CONFIG} {t('market.btn_config')}
                                             </button>
                                             <button onClick={() => handleUninstall(app.id)} className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100" title={t('market.btn_uninstall')}>

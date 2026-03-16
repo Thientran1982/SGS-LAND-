@@ -74,7 +74,7 @@ export const GlassBento: React.FC<BentoCardProps> = memo(({
                 <div className="flex justify-between items-start mb-4 w-full flex-shrink-0">
                     <div className="flex items-center gap-3">
                         {icon && (
-                            <div className="text-[var(--text-tertiary)] p-2.5 bg-white/40 dark:bg-white/5 rounded-2xl border border-white/20 shadow-sm group-hover:scale-110 group-hover:text-[var(--primary)] group-hover:bg-white/60 dark:group-hover:bg-white/10 transition-all duration-300 backdrop-blur-md">
+                            <div className="text-[var(--text-tertiary)] p-2.5 bg-[var(--bg-surface)]/40 dark:bg-[var(--bg-surface)]/5 rounded-2xl border border-white/20 shadow-sm group-hover:scale-110 group-hover:text-[var(--primary)] group-hover:bg-[var(--bg-surface)]/60 dark:group-hover:bg-[var(--bg-surface)]/10 transition-all duration-300 backdrop-blur-md">
                                 {icon}
                             </div>
                         )}

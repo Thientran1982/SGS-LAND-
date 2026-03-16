@@ -202,7 +202,7 @@ export const OnboardingWizard: React.FC = () => {
 
     // ── Full panel ─────────────────────────────────────────────────────────────
     return createPortal(
-        <div className="fixed bottom-6 right-6 z-50 w-[320px] flex flex-col shadow-2xl rounded-2xl overflow-hidden animate-enter border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-900">
+        <div className="fixed bottom-6 right-6 z-50 w-[320px] flex flex-col shadow-2xl rounded-2xl overflow-hidden animate-enter border border-[var(--glass-border)]/80 dark:border-slate-700/60 bg-[var(--bg-surface)] dark:bg-slate-900">
 
             {/* ── HEADER ── */}
             <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 pt-4 pb-5 overflow-hidden">
@@ -225,7 +225,7 @@ export const OnboardingWizard: React.FC = () => {
                         <ProgressRing percentage={state.percentage} size={40} stroke={3} />
                         <button
                             onClick={() => setIsMinimized(true)}
-                            className="text-slate-500 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10 ml-1"
+                            className="text-[var(--text-tertiary)] hover:text-white transition-colors p-1 rounded-lg hover:bg-[var(--bg-surface)]/10 ml-1"
                             title={language === 'en' ? 'Minimize' : 'Thu nhỏ'}
                         >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +243,7 @@ export const OnboardingWizard: React.FC = () => {
                         </span>
                         <span className="text-[10px] font-bold text-white">{state.percentage}%</span>
                     </div>
-                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-[var(--bg-surface)]/10 rounded-full overflow-hidden">
                         <div
                             className="h-full rounded-full transition-all duration-700 ease-out"
                             style={{
@@ -260,7 +260,7 @@ export const OnboardingWizard: React.FC = () => {
             </div>
 
             {/* ── STEPS LIST ── */}
-            <div className="flex-1 overflow-y-auto no-scrollbar bg-slate-50/80 dark:bg-slate-900/80 p-2 space-y-1.5">
+            <div className="flex-1 overflow-y-auto no-scrollbar bg-[var(--glass-surface)]/80 dark:bg-slate-900/80 p-2 space-y-1.5">
                 {STEP_CONFIG.map((step, idx) => {
                     const isDone = state.completedSteps.includes(step.id);
                     const label = t(step.labelKey);
@@ -268,8 +268,8 @@ export const OnboardingWizard: React.FC = () => {
                         <div key={step.id} className={`
                             relative flex items-start gap-3 p-3 rounded-xl border transition-all duration-200 group
                             ${isDone
-                                ? 'bg-slate-50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-800/50 opacity-60'
-                                : `bg-white dark:bg-slate-800/60 ${step.borderColor} hover:shadow-md hover:-translate-y-[1px] cursor-pointer`
+                                ? 'bg-[var(--glass-surface)] dark:bg-slate-800/30 border-[var(--glass-border)] dark:border-slate-800/50 opacity-60'
+                                : `bg-[var(--bg-surface)] dark:bg-slate-800/60 ${step.borderColor} hover:shadow-md hover:-translate-y-[1px] cursor-pointer`
                             }
                         `}
                             onClick={!isDone ? () => { window.location.hash = `#/${step.route}`; handleStepComplete(step.id); } : undefined}
@@ -296,11 +296,11 @@ export const OnboardingWizard: React.FC = () => {
                                             {idx + 1}
                                         </span>
                                     )}
-                                    <p className={`text-xs font-bold leading-tight ${isDone ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-800 dark:text-slate-100'}`}>
+                                    <p className={`text-xs font-bold leading-tight ${isDone ? 'text-slate-400 dark:text-[var(--text-tertiary)] line-through' : 'text-[var(--text-primary)] dark:text-slate-100'}`}>
                                         {label}
                                     </p>
                                 </div>
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                <p className="text-[10px] text-[var(--text-tertiary)] dark:text-slate-400 leading-relaxed">
                                     {language === 'en' ? step.desc_en : step.desc_vn}
                                 </p>
                             </div>
@@ -319,8 +319,8 @@ export const OnboardingWizard: React.FC = () => {
             </div>
 
             {/* ── FOOTER ── */}
-            <div className="px-4 py-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <div className="px-4 py-3 bg-[var(--bg-surface)] dark:bg-slate-900 border-t border-[var(--glass-border)] dark:border-slate-800/60 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 dark:text-[var(--text-tertiary)]">
                     {language === 'en' ? 'SGS Land CRM Setup' : 'Hệ thống SGS Land CRM'}
                 </span>
                 <button

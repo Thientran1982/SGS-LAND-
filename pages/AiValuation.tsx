@@ -228,7 +228,7 @@ export const AiValuation: React.FC = () => {
                         <Logo className="w-6 h-6 text-emerald-400" />
                         <span className="font-bold text-lg tracking-wider">SGS <span className="text-emerald-400">NEURAL ENGINE™</span></span>
                     </div>
-                    <button onClick={handleLogin} className="px-6 py-2 bg-emerald-500 text-slate-900 font-bold rounded-xl hover:bg-emerald-400 transition-colors shadow-lg active:scale-95 text-sm">
+                    <button onClick={handleLogin} className="px-6 py-2 bg-emerald-500 text-[var(--text-primary)] font-bold rounded-xl hover:bg-emerald-400 transition-colors shadow-lg active:scale-95 text-sm">
                         {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
                     </button>
                 </div>
@@ -260,7 +260,7 @@ export const AiValuation: React.FC = () => {
                             <input 
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
-                                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-slate-500 text-lg h-14"
+                                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-[var(--text-tertiary)] text-lg h-14"
                                 placeholder="Nhập địa chỉ nhà, tên dự án (VD: 123 Lê Lợi...)"
                                 onKeyDown={(e) => e.key === 'Enter' && address && setStep('DETAILS')}
                                 autoFocus
@@ -277,7 +277,7 @@ export const AiValuation: React.FC = () => {
                             <button 
                                 onClick={() => setStep('DETAILS')}
                                 disabled={!address}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold px-8 h-14 rounded-full transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
+                                className="bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold px-8 h-14 rounded-full transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
                             >
                                 Bắt Đầu
                             </button>
@@ -303,7 +303,7 @@ export const AiValuation: React.FC = () => {
                                 {/* Inputs */}
                                 <div className="grid grid-cols-2 gap-6">
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Diện Tích (m²)</label>
+                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Diện Tích (m²)</label>
                                         <div className="relative">
                                             <input 
                                                 type="number" 
@@ -314,11 +314,11 @@ export const AiValuation: React.FC = () => {
                                                 min="1"
                                                 autoFocus
                                             />
-                                            <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-slate-500 text-sm">{ICONS.HOME}</div>
+                                            <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-[var(--text-tertiary)] text-sm">{ICONS.HOME}</div>
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Lộ Giới (m)</label>
+                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Lộ Giới (m)</label>
                                         <div className="relative">
                                             <input 
                                                 type="number" 
@@ -328,13 +328,13 @@ export const AiValuation: React.FC = () => {
                                                 placeholder="5"
                                                 min="1"
                                             />
-                                            <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-slate-500 text-sm">{ICONS.ROAD}</div>
+                                            <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-[var(--text-tertiary)] text-sm">{ICONS.ROAD}</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Tình Trạng Pháp Lý</label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tình Trạng Pháp Lý</label>
                                     <div className="grid grid-cols-3 gap-3">
                                         {[
                                             { id: 'PINK_BOOK', label: 'Sổ Hồng' },
@@ -344,7 +344,7 @@ export const AiValuation: React.FC = () => {
                                             <button
                                                 key={opt.id}
                                                 onClick={() => setLegal(opt.id as any)}
-                                                className={`py-3 rounded-xl text-xs font-bold transition-all border ${legal === opt.id ? 'bg-emerald-500 text-slate-900 border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                                className={`py-3 rounded-xl text-xs font-bold transition-all border ${legal === opt.id ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
                                             >
                                                 {opt.label}
                                             </button>
@@ -355,7 +355,7 @@ export const AiValuation: React.FC = () => {
                                 <button 
                                     onClick={runCalculation}
                                     disabled={!area || !roadWidth || parseFloat(area) <= 0}
-                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-4 text-lg"
+                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-4 text-lg"
                                 >
                                     Định Giá Ngay
                                 </button>
@@ -403,13 +403,13 @@ export const AiValuation: React.FC = () => {
                                 </div>
                                 <div className="flex gap-3 flex-wrap justify-end">
                                     <div className="bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-600 backdrop-blur-sm text-center min-w-[100px]">
-                                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Độ Tin Cậy</div>
+                                        <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-bold mb-1">Độ Tin Cậy</div>
                                         <div className={`text-xl font-bold ${valuation.confidence >= 75 ? 'text-emerald-400' : valuation.confidence >= 55 ? 'text-yellow-400' : 'text-rose-400'}`}>
                                             {valuation.confidence}%
                                         </div>
                                     </div>
                                     <div className="bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-600 backdrop-blur-sm text-center min-w-[100px]">
-                                        <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Đơn giá / m²</div>
+                                        <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-bold mb-1">Đơn giá / m²</div>
                                         <div className="text-xl font-bold text-white">
                                             {valuation.pricePerM2 >= 1_000_000_000
                                                 ? `${(valuation.pricePerM2 / 1_000_000_000).toFixed(1)} Tỷ/m²`
@@ -440,12 +440,12 @@ export const AiValuation: React.FC = () => {
                                         return (
                                             <div key={c.key} className="bg-slate-900/70 rounded-xl p-4 border border-slate-700 text-center">
                                                 <div className="text-lg mb-1">{c.icon}</div>
-                                                <div className="text-slate-500 text-[10px] uppercase font-bold mb-1">{c.key}</div>
+                                                <div className="text-[var(--text-tertiary)] text-[10px] uppercase font-bold mb-1">{c.key}</div>
                                                 <div className="text-white font-black text-xl">{c.value.toFixed(2)}</div>
                                                 <div className={`text-xs font-bold mt-1 ${isPos ? 'text-emerald-400' : 'text-rose-400'}`}>
                                                     {isPos ? '+' : ''}{(delta * 100).toFixed(0)}%
                                                 </div>
-                                                <div className="text-slate-600 text-[9px] mt-1 truncate">{c.label}</div>
+                                                <div className="text-[var(--text-secondary)] text-[9px] mt-1 truncate">{c.label}</div>
                                             </div>
                                         );
                                     })}
@@ -456,7 +456,7 @@ export const AiValuation: React.FC = () => {
                             {valuation.factors.length > 0 && (
                                 <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
                                     <div className="px-5 py-3 border-b border-slate-700/50">
-                                        <span className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Phân tích yếu tố tác động</span>
+                                        <span className="text-[var(--text-tertiary)] text-[10px] uppercase font-bold tracking-widest">Phân tích yếu tố tác động</span>
                                     </div>
                                     <div className="divide-y divide-slate-800">
                                         {valuation.factors.map((factor, i) => {
@@ -468,7 +468,7 @@ export const AiValuation: React.FC = () => {
                                                         <span className="text-slate-300 text-sm font-medium">{factor.label}</span>
                                                         <div className="flex items-center gap-3">
                                                             {factor.coefficient != null && factor.coefficient !== 1 && (
-                                                                <span className="text-slate-500 text-xs font-mono">×{factor.coefficient.toFixed(2)}</span>
+                                                                <span className="text-[var(--text-tertiary)] text-xs font-mono">×{factor.coefficient.toFixed(2)}</span>
                                                             )}
                                                             <span className={`font-bold text-sm ${factor.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
                                                                 {factor.impact === 0 ? 'Chuẩn' : `${sign}${factor.impact}%`}
@@ -476,7 +476,7 @@ export const AiValuation: React.FC = () => {
                                                         </div>
                                                     </div>
                                                     {factor.description && (
-                                                        <div className="text-slate-600 text-[11px] mb-1.5">{factor.description}</div>
+                                                        <div className="text-[var(--text-secondary)] text-[11px] mb-1.5">{factor.description}</div>
                                                     )}
                                                     {factor.impact > 0 && (
                                                         <div className="h-1 bg-slate-800 rounded-full overflow-hidden">

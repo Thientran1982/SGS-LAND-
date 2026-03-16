@@ -36,7 +36,7 @@ const STATUS_CONFIG: Record<ListingStatus, { color: string, bg: string, border: 
     [ListingStatus.OPENING]: { color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
     [ListingStatus.AVAILABLE]: { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
     [ListingStatus.HOLD]: { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
-    [ListingStatus.SOLD]: { color: 'text-slate-600', bg: 'bg-slate-100', border: 'border-slate-300' },
+    [ListingStatus.SOLD]: { color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-slate-300' },
     [ListingStatus.RENTED]: { color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200' },
     [ListingStatus.INACTIVE]: { color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
 };
@@ -129,12 +129,12 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
     ];
 
     return (
-        <div className="flex flex-col sm:flex-row justify-between items-center px-3 sm:px-5 py-2 bg-white rounded-xl border border-slate-200 shadow-sm gap-2">
-            <div className="hidden sm:flex text-xs text-slate-500 font-medium items-center gap-1">
+        <div className="flex flex-col sm:flex-row justify-between items-center px-3 sm:px-5 py-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+            <div className="hidden sm:flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
                 <span>{t('pagination.showing')}</span>
-                <span className="font-bold text-slate-900">{totalItems > 0 ? start : 0}-{end}</span>
+                <span className="font-bold text-[var(--text-primary)]">{totalItems > 0 ? start : 0}-{end}</span>
                 <span>{t('pagination.of')}</span>
-                <span className="font-bold text-slate-900">{totalItems}</span>
+                <span className="font-bold text-[var(--text-primary)]">{totalItems}</span>
                 <span className="hidden sm:inline">{t('pagination.results')}</span>
             </div>
 
@@ -151,17 +151,17 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
                 <button 
                     onClick={() => onPageChange(page - 1)} 
                     disabled={page === 1}
-                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.prev')}
                 </button>
                 <div className="flex items-center gap-1 px-1.5">
-                    <span className="text-xs font-bold text-slate-800 whitespace-nowrap">{page} / {totalPages || 1}</span>
+                    <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages || 1}</span>
                 </div>
                 <button 
                     onClick={() => onPageChange(page + 1)} 
                     disabled={page === totalPages || totalPages === 0}
-                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.next')}
                 </button>
@@ -198,12 +198,12 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
     return (
         <tr 
             onClick={() => onClick && onClick(item)}
-            className="group border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer hidden md:table-row"
+            className="group border-b border-slate-50 dark:border-slate-800/50 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800/50 transition-colors cursor-pointer hidden md:table-row"
         >
             {/* Sticky Code & Image */}
-            <td className="px-4 py-3 sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50 border-r border-slate-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors min-w-[200px] max-w-[250px]">
+            <td className="px-4 py-3 sticky left-0 z-10 bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50 border-r border-slate-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors min-w-[200px] max-w-[250px]">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-100 relative">
+                    <div className="w-10 h-10 rounded-lg bg-[var(--glass-surface-hover)] dark:bg-slate-800 overflow-hidden shrink-0 border border-[var(--glass-border)] relative">
                         <img 
                             src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} 
                             className="w-full h-full object-cover" 
@@ -218,17 +218,17 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     </div>
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="font-mono text-[10px] font-bold text-slate-500 bg-slate-100 px-1 py-0.5 rounded">{item.code}</span>
+                            <span className="font-mono text-[10px] font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>
                             <span className={`text-[8px] font-bold uppercase px-1 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
                                 {t(`transaction.${item.transaction}`)}
                             </span>
                         </div>
-                        <div className="font-bold text-slate-800 dark:text-slate-200 text-xs truncate max-w-[180px]" title={item.title}>{item.title}</div>
+                        <div className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-xs truncate max-w-[180px]" title={item.title}>{item.title}</div>
                     </div>
                 </div>
             </td>
 
-            <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400 max-w-[150px] truncate" title={item.location}>
+            <td className="px-4 py-3 text-xs text-[var(--text-secondary)] dark:text-slate-400 max-w-[150px] truncate" title={item.location}>
                 {item.location}
             </td>
 
@@ -236,10 +236,10 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                 <>
                     <td className="px-4 py-3 text-xs">
                         <div className="flex flex-col">
-                            <span className="font-bold text-slate-700 dark:text-slate-200 truncate max-w-[120px]" title={item.ownerName || '--'}>
+                            <span className="font-bold text-[var(--text-secondary)] dark:text-slate-200 truncate max-w-[120px]" title={item.ownerName || '--'}>
                                 {item.ownerName || '--'}
                             </span>
-                            <span className="text-[10px] text-slate-500 font-mono">
+                            <span className="text-[10px] text-[var(--text-tertiary)] font-mono">
                                 {item.ownerPhone || '--'}
                             </span>
                         </div>
@@ -256,7 +256,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
             )}
             
             <td className="px-4 py-3 text-xs">
-                <span className="font-bold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 whitespace-nowrap">
+                <span className="font-bold text-[var(--text-secondary)] dark:text-slate-300 bg-[var(--glass-surface)] dark:bg-slate-800 px-2 py-1 rounded border border-[var(--glass-border)] dark:border-slate-700 whitespace-nowrap">
                     {t(`property.${item.type.toUpperCase()}`)}
                 </span>
             </td>
@@ -269,7 +269,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                             {t('inventory.min_price')}
                         </span>
                     )}
-                    <span className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    <span className="text-sm font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">
                         {formatSmartPrice(item.price, t)}
                     </span>
                 </div>
@@ -279,7 +279,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                 {item.area > 0 && item.type !== PropertyType.PROJECT ? formatUnitPrice(item.price, item.area, t) : '--'}
             </td>
 
-            <td className="px-4 py-3 text-right text-xs text-slate-600 dark:text-slate-400 font-mono">
+            <td className="px-4 py-3 text-right text-xs text-[var(--text-secondary)] dark:text-slate-400 font-mono">
                 {item.area} <span className="text-[10px] text-slate-400">m²</span>
             </td>
 
@@ -290,12 +290,12 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
             </td>
 
             {/* Sticky Actions */}
-            <td className="px-3 py-3 text-right sticky right-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50 border-l border-slate-50 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors">
+            <td className="px-3 py-3 text-right sticky right-0 z-10 bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50 border-l border-slate-50 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors">
                 {canViewInternal && (
                     <button
                         ref={btnRef}
                         onClick={openMenu}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all"
                         title={t('common.actions') || 'Thao tác'}
                     >
                         <svg className="w-4 h-4 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
@@ -308,19 +308,19 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                         ref={menuRef}
                         onClick={e => e.stopPropagation()}
                         style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                        className="bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-[160px]"
+                        className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]"
                     >
-                        <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                        <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                             <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             {t('common.edit') || 'Chỉnh sửa'}
                         </button>
                         {onDuplicate && (
-                            <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                            <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                                 <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
                                 {t('common.duplicate') || 'Nhân bản'}
                             </button>
                         )}
-                        <div className="border-t border-slate-100 my-1" />
+                        <div className="border-t border-[var(--glass-border)] my-1" />
                         <button onClick={() => { setMenuOpen(false); onDelete(item.id); }} className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             {t('common.delete') || 'Xóa'}
@@ -361,9 +361,9 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
     return (
         <div 
             onClick={() => onClick && onClick(item)}
-            className="flex md:hidden items-center gap-3 p-3 border-b border-slate-100 dark:border-slate-800/50 active:bg-slate-50 dark:active:bg-slate-800 transition-colors cursor-pointer"
+            className="flex md:hidden items-center gap-3 p-3 border-b border-[var(--glass-border)] dark:border-slate-800/50 active:bg-[var(--glass-surface)] dark:active:bg-slate-800 transition-colors cursor-pointer"
         >
-            <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-100 dark:border-slate-700 relative">
+            <div className="w-14 h-14 rounded-xl bg-[var(--glass-surface-hover)] dark:bg-slate-800 overflow-hidden shrink-0 border border-[var(--glass-border)] dark:border-slate-700 relative">
                 <img 
                     src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} 
                     className="w-full h-full object-cover" 
@@ -386,8 +386,8 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                         {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') || 'Sẵn sàng' : t(`status.${item.status}`)}
                     </span>
                 </div>
-                <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs truncate mb-0.5">{item.title}</h4>
-                <div className="text-[10px] text-slate-500 truncate">{item.location}</div>
+                <h4 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-xs truncate mb-0.5">{item.title}</h4>
+                <div className="text-[10px] text-[var(--text-tertiary)] truncate">{item.location}</div>
             </div>
 
             <div className="flex flex-col items-end gap-1 shrink-0">
@@ -398,7 +398,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                                 {t('inventory.min_price')}
                             </span>
                         )}
-                        <div className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
+                        <div className="text-sm font-black text-[var(--text-primary)] dark:text-white tracking-tight">
                             {formatSmartPrice(item.price, t)}
                         </div>
                     </div>
@@ -410,7 +410,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                     <button
                         ref={btnRef}
                         onClick={openMenu}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all"
                     >
                         <svg className="w-4 h-4 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
@@ -421,18 +421,18 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
 
             {menuOpen && createPortal(
                 <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                    className="bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-[160px]">
-                    <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]">
+                    <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                         <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         {t('common.edit') || 'Chỉnh sửa'}
                     </button>
                     {onDuplicate && (
-                        <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                        <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                             <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
                             {t('common.duplicate') || 'Nhân bản'}
                         </button>
                     )}
-                    <div className="border-t border-slate-100 my-1" />
+                    <div className="border-t border-[var(--glass-border)] my-1" />
                     <button onClick={() => { setMenuOpen(false); onDelete(item.id); }} className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         {t('common.delete') || 'Xóa'}
@@ -471,21 +471,21 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
     return (
         <div 
             onClick={() => onClick(item)}
-            className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 mb-3 group flex flex-col gap-2 relative"
+            className="bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--glass-border)] shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 mb-3 group flex flex-col gap-2 relative"
         >
             <div className="flex gap-3 items-start">
-                <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                <div className="w-12 h-12 rounded-lg bg-[var(--glass-surface-hover)] overflow-hidden shrink-0">
                     <img src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <div className="font-bold text-slate-800 text-xs line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">{item.title}</div>
-                    <div className="text-[10px] text-slate-500 font-mono mt-1">{item.code}</div>
+                    <div className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">{item.title}</div>
+                    <div className="text-[10px] text-[var(--text-tertiary)] font-mono mt-1">{item.code}</div>
                 </div>
                 {canViewInternal && (
                     <button
                         ref={btnRef}
                         onClick={openMenu}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all shrink-0"
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all shrink-0"
                     >
                         <svg className="w-3.5 h-3.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
@@ -500,7 +500,7 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                             {t('inventory.min_price')}
                         </span>
                     )}
-                    <div className="font-extrabold text-slate-900 text-sm">{formatSmartPrice(item.price, t)}</div>
+                    <div className="font-extrabold text-[var(--text-primary)] text-sm">{formatSmartPrice(item.price, t)}</div>
                 </div>
                 <div className="text-right">
                     <div className="text-[10px] text-slate-400">{item.area}m²</div>
@@ -514,18 +514,18 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
 
             {menuOpen && createPortal(
                 <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
-                    className="bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-[160px]">
-                    <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]">
+                    <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                         <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         {t('common.edit') || 'Chỉnh sửa'}
                     </button>
                     {onDuplicate && (
-                        <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                        <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                             <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
                             {t('common.duplicate') || 'Nhân bản'}
                         </button>
                     )}
-                    <div className="border-t border-slate-100 my-1" />
+                    <div className="border-t border-[var(--glass-border)] my-1" />
                     <button onClick={() => { setMenuOpen(false); onDelete(item.id); }} className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         {t('common.delete') || 'Xóa'}
@@ -706,7 +706,7 @@ export const Inventory: React.FC = () => {
             {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             {/* Header & Controls */}
-            <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm p-4 md:p-6 transition-all flex-none">
+            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm p-4 md:p-6 transition-all flex-none">
                 <div className="flex flex-col md:flex-row justify-between gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
@@ -716,14 +716,14 @@ export const Inventory: React.FC = () => {
                             <input 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)} 
-                                className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all outline-none placeholder:text-slate-400" 
+                                className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
                                 placeholder={t('inventory.search_hint')} 
                             />
                             {search && (
                                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
                                     <button 
                                         onClick={() => setSearch('')}
-                                        className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                        className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                         title={t('common.clear_search') || 'Xóa tìm kiếm'}
                                     >
                                         {ICONS.X}
@@ -742,11 +742,11 @@ export const Inventory: React.FC = () => {
                         <div className="min-w-[140px] shrink-0"><Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} className="text-xs" /></div>
                         
                         {/* View Switcher */}
-                        <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
-                            <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
-                            <button onClick={() => setViewMode('LIST')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title={t('inventory.view_list')}>{ICONS.VIEW_LIST}</button>
-                            <button onClick={() => setViewMode('BOARD')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
-                            <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title={t('inventory.view_map') || 'Bản đồ'}>{ICONS.VIEW_MAP}</button>
+                        <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
+                            <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
+                            <button onClick={() => setViewMode('LIST')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_list')}>{ICONS.VIEW_LIST}</button>
+                            <button onClick={() => setViewMode('BOARD')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
+                            <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map') || 'Bản đồ'}>{ICONS.VIEW_MAP}</button>
                         </div>
 
                         <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block"></div>
@@ -761,43 +761,43 @@ export const Inventory: React.FC = () => {
             </div>
 
             {/* Metrics Section */}
-            <div ref={metricsRef} className="px-4 md:px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex overflow-x-auto no-scrollbar gap-3 md:gap-4 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-slate-200 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+            <div ref={metricsRef} className="px-4 md:px-6 py-4 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-3 md:gap-4 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
+                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[110px] md:flex-1 shrink-0">
                     <div className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate">{t('inventory.total_listings') || 'Tổng kho'}</div>
-                    <div className="text-lg md:text-2xl font-black text-slate-800">{stats.totalCount || totalItems}</div>
+                    <div className="text-lg md:text-2xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
                 </div>
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-emerald-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-emerald-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
                     <div className="text-[9px] md:text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-1 truncate">{t('status.AVAILABLE') || 'Đang bán'}</div>
                     <div className="text-lg md:text-2xl font-black text-emerald-600">{stats.availableCount}</div>
                 </div>
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-amber-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-amber-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
                     <div className="text-[9px] md:text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1 truncate">{t('status.HOLD') || 'Giữ chỗ'}</div>
                     <div className="text-lg md:text-2xl font-black text-amber-600">{stats.holdCount}</div>
                 </div>
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-orange-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-orange-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
                     <div className="text-[9px] md:text-[10px] font-bold text-orange-500 uppercase tracking-wider mb-1 truncate">{t('status.BOOKING') || 'Đặt cọc'}</div>
                     <div className="text-lg md:text-2xl font-black text-orange-600">{stats.bookingCount}</div>
                 </div>
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-indigo-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-indigo-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
                     <div className="text-[9px] md:text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1 truncate">{t('status.OPENING') || 'Mở bán'}</div>
                     <div className="text-lg md:text-2xl font-black text-indigo-600">{stats.openingCount}</div>
                 </div>
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-teal-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-teal-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
                     <div className="text-[9px] md:text-[10px] font-bold text-teal-500 uppercase tracking-wider mb-1 truncate">{t('status.RENTED') || 'Đã thuê'}</div>
                     <div className="text-lg md:text-2xl font-black text-teal-600">{stats.rentedCount}</div>
                 </div>
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-slate-200 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 truncate">{t('status.SOLD') || 'Đã bán'}</div>
-                    <div className="text-lg md:text-2xl font-black text-slate-600">{stats.soldCount}</div>
+                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                    <div className="text-[9px] md:text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 truncate">{t('status.SOLD') || 'Đã bán'}</div>
+                    <div className="text-lg md:text-2xl font-black text-[var(--text-secondary)]">{stats.soldCount}</div>
                 </div>
-                <div className="bg-white px-3 md:px-4 py-3 rounded-xl border border-rose-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
+                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-rose-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
                     <div className="text-[9px] md:text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1 truncate">{t('status.INACTIVE') || 'Ngưng GD'}</div>
                     <div className="text-lg md:text-2xl font-black text-rose-600">{stats.inactiveCount}</div>
                 </div>
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-hidden bg-white min-h-0 relative flex flex-col">
+            <div className="flex-1 overflow-hidden bg-[var(--bg-surface)] min-h-0 relative flex flex-col">
 
                 {/* GRID & LIST — inside overflow-auto so content can scroll */}
                 {(viewMode === 'GRID' || viewMode === 'LIST') && (
@@ -807,7 +807,7 @@ export const Inventory: React.FC = () => {
                         {viewMode === 'GRID' && (
                             loading ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-[350px] bg-slate-100 rounded-[24px] animate-pulse"></div>)}
+                                    {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-[350px] bg-[var(--glass-surface-hover)] rounded-[24px] animate-pulse"></div>)}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -833,27 +833,27 @@ export const Inventory: React.FC = () => {
 
                         {/* LIST VIEW (TABLE) */}
                         {viewMode === 'LIST' && (
-                            <div className="bg-white rounded-[24px] md:border border-slate-100 shadow-sm overflow-hidden h-full flex flex-col">
+                            <div className="bg-[var(--bg-surface)] rounded-[24px] md:border border-[var(--glass-border)] shadow-sm overflow-hidden h-full flex flex-col">
                                 <div ref={tableRef} className="overflow-auto no-scrollbar flex-1 min-w-0 w-full cursor-grab active:cursor-grabbing">
                                     <table className="w-full text-left border-collapse relative hidden md:table">
-                                        <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-20 shadow-sm">
+                                        <thead className="bg-[var(--glass-surface)] border-b border-[var(--glass-border)] sticky top-0 z-20 shadow-sm">
                                             <tr>
-                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase sticky left-0 z-30 bg-slate-50 min-w-[200px] border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase sticky left-0 z-30 bg-[var(--glass-surface)] min-w-[200px] border-r border-[var(--glass-border)] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                                                     {t('inventory.label_title')}
                                                 </th>
-                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">{t('inventory.label_location')}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('inventory.label_location')}</th>
                                                 {canViewInternalInfo && (
                                                     <>
-                                                        <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">{t('inventory.label_owner')}</th>
-                                                        <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_commission')}</th>
+                                                        <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('inventory.label_owner')}</th>
+                                                        <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_commission')}</th>
                                                     </>
                                                 )}
-                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">{t('inventory.label_type')}</th>
-                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_price')}</th>
-                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_unit_price') || 'Đơn giá'}</th>
-                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">{t('inventory.label_area')}</th>
-                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-center">{t('inventory.label_status')}</th>
-                                                <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right sticky right-0 z-30 bg-slate-50 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] border-l border-slate-100">{t('common.actions')}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('inventory.label_type')}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_price')}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_unit_price') || 'Đơn giá'}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_area')}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-center">{t('inventory.label_status')}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right sticky right-0 z-30 bg-[var(--glass-surface)] shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] border-l border-[var(--glass-border)]">{t('common.actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
@@ -874,7 +874,7 @@ export const Inventory: React.FC = () => {
                                     </table>
                                     
                                     {/* Mobile Compact List */}
-                                    <div className="md:hidden flex flex-col divide-y divide-slate-100">
+                                    <div className="md:hidden flex flex-col divide-y divide-[var(--glass-border)]">
                                         {listings.map(item => (
                                             <CompactInventoryRow 
                                                 key={item.id} item={item} 
@@ -900,7 +900,7 @@ export const Inventory: React.FC = () => {
                 {/* MAP VIEW — absolute positioning for guaranteed pixel height independent of scroll/flex chain */}
                 {viewMode === 'MAP' && (
                     <div className="absolute inset-0 p-4 md:p-6" style={{ zIndex: 1 }}>
-                        <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                        <div className="w-full h-full rounded-2xl overflow-hidden border border-[var(--glass-border)] shadow-sm">
                             <MapView
                                 listings={allFilteredListings.length > 0 ? allFilteredListings : listings}
                                 onNavigate={handleNavigate}
@@ -922,10 +922,10 @@ export const Inventory: React.FC = () => {
                             const items = groupedListings[status] || [];
                             
                             return (
-                                <div key={status} className="min-w-[85vw] md:min-w-[280px] w-[85vw] md:w-[280px] flex-shrink-0 flex flex-col h-full bg-slate-50 rounded-2xl border border-slate-200 snap-center">
-                                    <div className={`p-3 border-b border-slate-200 flex justify-between items-center rounded-t-2xl ${style.bg}`}>
+                                <div key={status} className="min-w-[85vw] md:min-w-[280px] w-[85vw] md:w-[280px] flex-shrink-0 flex flex-col h-full bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] snap-center">
+                                    <div className={`p-3 border-b border-[var(--glass-border)] flex justify-between items-center rounded-t-2xl ${style.bg}`}>
                                         <h3 className={`text-xs font-bold uppercase tracking-wider ${style.color}`}>{t(`status.${status}`)}</h3>
-                                        <span className="text-[10px] font-bold bg-white px-2 py-0.5 rounded-full text-slate-500 shadow-sm border border-slate-100">{items.length}</span>
+                                        <span className="text-[10px] font-bold bg-[var(--bg-surface)] px-2 py-0.5 rounded-full text-[var(--text-tertiary)] shadow-sm border border-[var(--glass-border)]">{items.length}</span>
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
                                         {items.map(item => (

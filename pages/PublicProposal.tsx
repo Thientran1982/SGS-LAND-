@@ -65,11 +65,11 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
     if (loading) return <div className="h-screen flex items-center justify-center text-slate-400 font-mono animate-pulse">Loading secure proposal...</div>;
     
     if (!proposal || !listing) return (
-        <div className="h-screen flex flex-col items-center justify-center text-slate-500">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+        <div className="h-screen flex flex-col items-center justify-center text-[var(--text-tertiary)]">
+            <div className="w-16 h-16 bg-[var(--glass-surface-hover)] rounded-full flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
             </div>
-            <h1 className="text-xl font-bold text-slate-800 mb-2">{t('pub.error_title')}</h1>
+            <h1 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('pub.error_title')}</h1>
             <p>{t('pub.not_found')}</p>
         </div>
     );
@@ -78,7 +78,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
         // FIX: Added no-scrollbar to ensure consistent clean UI
         <div className="fixed inset-0 h-[100dvh] w-full bg-[#f8fafc] font-sans selection:bg-indigo-500/30 overflow-y-auto no-scrollbar">
             {/* Header / Brand */}
-            <div className="bg-white border-b border-slate-100 sticky top-0 z-30 bg-white/80 backdrop-blur-md">
+            <div className="bg-[var(--bg-surface)] border-b border-[var(--glass-border)] sticky top-0 z-30 bg-[var(--bg-surface)]/80 backdrop-blur-md">
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button 
@@ -90,13 +90,13 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                     window.location.hash = '#/';
                                 }
                             }}
-                            className="p-2 -ml-2 text-slate-400 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100"
+                            className="p-2 -ml-2 text-slate-400 hover:text-[var(--text-primary)] transition-colors rounded-full hover:bg-[var(--glass-surface-hover)]"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                         </button>
                         <div className="flex items-center gap-2">
                             <Logo className="w-6 h-6 text-indigo-600" />
-                            <span className="font-bold text-lg text-slate-900">SGS LAND</span>
+                            <span className="font-bold text-lg text-[var(--text-primary)]">SGS LAND</span>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
@@ -116,7 +116,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                 )}
 
                 {/* Hero Card */}
-                <div className="bg-white rounded-[24px] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden mb-8 relative">
+                <div className="bg-[var(--bg-surface)] rounded-[24px] shadow-xl shadow-slate-200/50 border border-[var(--glass-border)] overflow-hidden mb-8 relative">
                     <div className="aspect-video w-full bg-slate-200 relative overflow-hidden">
                         <img src={listing.images?.[0] || NO_IMAGE_URL} className="w-full h-full object-cover" alt={listing.title} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -130,19 +130,19 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                     </div>
                     
                     <div className="p-6 md:p-8">
-                        <div className="flex flex-wrap gap-4 mb-8 text-sm text-slate-600">
-                            <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                        <div className="flex flex-wrap gap-4 mb-8 text-sm text-[var(--text-secondary)]">
+                            <span className="flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)]">
                                 {ICONS.AREA} <strong>{listing.area} m²</strong>
                             </span>
-                            <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                            <span className="flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)]">
                                 {ICONS.BED} <strong>{listing.bedrooms} {t('pub.bedrooms')}</strong>
                             </span>
-                            <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                            <span className="flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)]">
                                 <strong>{listing.attributes.direction}</strong>
                             </span>
                         </div>
 
-                        <div className="border-t border-slate-100 pt-8">
+                        <div className="border-t border-[var(--glass-border)] pt-8">
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
                                 {t('pub.exclusive_offer_for')} <span className="text-indigo-600">{lead?.name}</span>
                             </p>
@@ -150,7 +150,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                             {proposal.metadata?.note && (
                                 <div className="mb-6 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl">
                                     <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2">{t('proposal.label_note')}</div>
-                                    <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{proposal.metadata.note}</p>
+                                    <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{proposal.metadata.note}</p>
                                 </div>
                             )}
                             
@@ -160,7 +160,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                         <span className="text-sm text-slate-400 line-through decoration-slate-300">{formatCurrency(proposal.basePrice)}</span>
                                         <span className="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded">-{formatCurrency(proposal.discountAmount)}</span>
                                     </div>
-                                    <div className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+                                    <div className="text-4xl md:text-5xl font-black text-[var(--text-primary)] tracking-tight">
                                         {formatSmartPrice(proposal.finalPrice, t)}
                                     </div>
                                     {!isExpired && (
@@ -169,7 +169,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                                 {ICONS.CLOCK} {t('pub.valid_until')}: {formatDate(proposal.validUntil)}
                                             </div>
                                             {proposal.metadata?.depositRequired && (
-                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-tertiary)]">
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                                     {t('proposal.label_deposit')}: {formatCurrency(proposal.metadata.depositRequired)}
                                                 </div>
@@ -183,7 +183,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                         onClick={() => setAccepted(true)}
                                         disabled={isExpired || accepted}
                                         className={`w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg shadow-xl shadow-indigo-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-2
-                                            ${isExpired ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : accepted ? 'bg-emerald-500 text-white cursor-default' : 'bg-slate-900 text-white hover:bg-slate-800'}
+                                            ${isExpired ? 'bg-[var(--glass-surface-hover)] text-slate-400 cursor-not-allowed' : accepted ? 'bg-emerald-500 text-white cursor-default' : 'bg-slate-900 text-white hover:bg-slate-800'}
                                         `}
                                     >
                                         {accepted ? (
@@ -195,8 +195,8 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                         )}
                                     </button>
                                     
-                                    <div className="text-right text-xs text-slate-500">
-                                        {t('proposal.prepared_by')}: <span className="font-bold text-slate-700">{proposal.createdBy}</span>
+                                    <div className="text-right text-xs text-[var(--text-tertiary)]">
+                                        {t('proposal.prepared_by')}: <span className="font-bold text-[var(--text-secondary)]">{proposal.createdBy}</span>
                                     </div>
                                 </div>
                             </div>

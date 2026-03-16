@@ -48,7 +48,7 @@ export const Lightbox: React.FC<LightboxProps> = memo(({ images, initialIndex, o
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-20 text-white/80">
                 <span className="font-mono text-xs">{index + 1} / {images.length}</span>
-                <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                <button onClick={onClose} className="p-2 hover:bg-[var(--bg-surface)]/10 rounded-full transition-colors">
                     {ICONS.CLOSE}
                 </button>
             </div>
@@ -69,13 +69,13 @@ export const Lightbox: React.FC<LightboxProps> = memo(({ images, initialIndex, o
                     <>
                         <button 
                             onClick={handlePrev}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 text-white/50 hover:text-white hover:bg-[var(--bg-surface)]/10 rounded-full transition-all"
                         >
                             {ICONS.PREV}
                         </button>
                         <button 
                             onClick={handleNext}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-white/50 hover:text-white hover:bg-[var(--bg-surface)]/10 rounded-full transition-all"
                         >
                             {ICONS.NEXT}
                         </button>
@@ -89,7 +89,7 @@ export const Lightbox: React.FC<LightboxProps> = memo(({ images, initialIndex, o
                     <button 
                         key={i}
                         onClick={(e) => { e.stopPropagation(); setIndex(i); }}
-                        className={`w-2 h-2 rounded-full transition-all ${i === index ? 'bg-white scale-125' : 'bg-white/30 hover:bg-white/60'}`}
+                        className={`w-2 h-2 rounded-full transition-all ${i === index ? 'bg-[var(--bg-surface)] scale-125' : 'bg-[var(--bg-surface)]/30 hover:bg-[var(--bg-surface)]/60'}`}
                     />
                 ))}
             </div>

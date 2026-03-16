@@ -40,7 +40,7 @@ const ICONS = {
 // -----------------------------------------------------------------------------
 
 const SectionLabel = memo(({ label }: { label: string }) => (
-    <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/80 sticky top-0 backdrop-blur-md z-10 select-none">
+    <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-[var(--glass-surface)]/80 sticky top-0 backdrop-blur-md z-10 select-none">
         {label}
     </div>
 ));
@@ -210,16 +210,16 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                 key={`${item.type}-${item.id}`} 
                 data-index={idx}
                 onClick={() => handleSelect(item)}
-                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/70 border-l-4 border-indigo-500 pl-3' : 'hover:bg-slate-50 border-l-4 border-transparent'}`}
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/70 border-l-4 border-indigo-500 pl-3' : 'hover:bg-[var(--glass-surface)] border-l-4 border-transparent'}`}
             >
-                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400 group-hover:bg-white group-hover:shadow-sm'}`}>
+                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-indigo-100 text-indigo-600' : 'bg-[var(--glass-surface-hover)] text-slate-400 group-hover:bg-[var(--bg-surface)] group-hover:shadow-sm'}`}>
                     {isHistory ? ICONS.HISTORY : Icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                    <div className={`font-bold text-sm truncate ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
+                    <div className={`font-bold text-sm truncate ${isSelected ? 'text-indigo-900' : 'text-[var(--text-secondary)]'}`}>
                         {query ? <HighlightedText text={item.title} query={query} /> : item.title}
                     </div>
-                    <div className="text-[11px] text-slate-500 truncate font-medium opacity-80">
+                    <div className="text-[11px] text-[var(--text-tertiary)] truncate font-medium opacity-80">
                         {item.subtitle}
                     </div>
                 </div>
@@ -231,25 +231,25 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
         <div className="fixed inset-0 z-[150] flex items-start justify-center pt-[10vh] px-4" onKeyDown={handleKeyDown}>
             <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity animate-fade-in" onClick={onClose} />
             
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden relative z-10 flex flex-col max-h-[65vh] animate-scale-up ring-1 ring-black/10">
+            <div className="w-full max-w-2xl bg-[var(--bg-surface)] rounded-2xl shadow-2xl overflow-hidden relative z-10 flex flex-col max-h-[65vh] animate-scale-up ring-1 ring-black/10">
                 
                 {/* INPUT */}
-                <div className="p-4 flex items-center gap-3 bg-white z-20 border-b border-slate-100 group">
+                <div className="p-4 flex items-center gap-3 bg-[var(--bg-surface)] z-20 border-b border-[var(--glass-border)] group">
                     <div className="text-slate-400 pl-1 group-focus-within:text-indigo-500 transition-colors pointer-events-none flex items-center justify-center">{loading ? ICONS.LOADING : ICONS.SEARCH}</div>
                     <input 
                         ref={inputRef}
-                        className="flex-1 text-lg outline-none text-slate-800 placeholder:text-slate-400 bg-transparent h-10"
+                        className="flex-1 text-lg outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)] bg-transparent h-10"
                         placeholder={t('common.search_advanced')}
                         value={query}
                         onChange={e => setQuery(e.target.value)}
                     />
                     <div className="flex items-center gap-2">
-                        {query && <button onClick={() => { setQuery(''); inputRef.current?.focus(); }} className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>{ICONS.CLEAR}</button>}
+                        {query && <button onClick={() => { setQuery(''); inputRef.current?.focus(); }} className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>{ICONS.CLEAR}</button>}
                     </div>
                 </div>
 
                 {/* RESULTS */}
-                <div ref={listRef} className="overflow-y-auto flex-1 bg-white scroll-smooth relative min-h-[120px] no-scrollbar">
+                <div ref={listRef} className="overflow-y-auto flex-1 bg-[var(--bg-surface)] scroll-smooth relative min-h-[120px] no-scrollbar">
                     
                     {/* 0. Empty & No History */}
                     {!query && history.length === 0 && quickActions.length === 0 && (
@@ -307,7 +307,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
 
                 {/* FOOTER (CLEANED) */}
                 {query && flatResults.length > 0 && (
-                    <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 text-[10px] text-slate-500 flex justify-end items-center select-none">
+                    <div className="px-4 py-2 bg-[var(--glass-surface)] border-t border-[var(--glass-border)] text-[10px] text-[var(--text-tertiary)] flex justify-end items-center select-none">
                         <span className="font-mono">{flatResults.length} matches</span>
                     </div>
                 )}

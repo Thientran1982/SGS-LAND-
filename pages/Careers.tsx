@@ -68,11 +68,11 @@ export const Careers: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white font-sans text-slate-900 pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+        <div className="min-h-screen bg-[var(--bg-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             {/* Header */}
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">
+            <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors">
+                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors">
                         {ICONS.BACK} Trang Chủ
                     </button>
                     <div className="flex items-center gap-2">
@@ -98,53 +98,53 @@ export const Careers: React.FC = () => {
                     <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-12 leading-relaxed">
                         Gia nhập đội ngũ những người tiên phong, đam mê công nghệ và khát khao thay đổi thị trường bất động sản Việt Nam.
                     </p>
-                    <button onClick={() => document.getElementById('jobs')?.scrollIntoView({behavior: 'smooth'})} className="px-8 py-4 bg-white text-slate-900 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-xl">
+                    <button onClick={() => document.getElementById('jobs')?.scrollIntoView({behavior: 'smooth'})} className="px-8 py-4 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-xl">
                         Xem Vị Trí Đang Tuyển
                     </button>
                 </div>
             </section>
 
             {/* Values */}
-            <section className="py-24 bg-slate-50 border-b border-slate-200">
+            <section className="py-24 bg-[var(--glass-surface)] border-b border-[var(--glass-border)]">
                 <div className="max-w-6xl mx-auto px-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                         <div className="space-y-4">
                             <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-bold text-xl">1</div>
-                            <h3 className="text-2xl font-bold text-slate-900">Đổi Mới Không Ngừng</h3>
-                            <p className="text-slate-500 leading-relaxed">Chúng tôi không làm theo lối mòn. Tại SGS, bạn được khuyến khích thử nghiệm, sai và học hỏi từ những công nghệ mới nhất.</p>
+                            <h3 className="text-2xl font-bold text-[var(--text-primary)]">Đổi Mới Không Ngừng</h3>
+                            <p className="text-[var(--text-tertiary)] leading-relaxed">Chúng tôi không làm theo lối mòn. Tại SGS, bạn được khuyến khích thử nghiệm, sai và học hỏi từ những công nghệ mới nhất.</p>
                         </div>
                         <div className="space-y-4">
                             <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center font-bold text-xl">2</div>
-                            <h3 className="text-2xl font-bold text-slate-900">Con Người Là Trung Tâm</h3>
-                            <p className="text-slate-500 leading-relaxed">Môi trường làm việc cởi mở, tôn trọng sự khác biệt. Phúc lợi toàn diện cho bạn và gia đình.</p>
+                            <h3 className="text-2xl font-bold text-[var(--text-primary)]">Con Người Là Trung Tâm</h3>
+                            <p className="text-[var(--text-tertiary)] leading-relaxed">Môi trường làm việc cởi mở, tôn trọng sự khác biệt. Phúc lợi toàn diện cho bạn và gia đình.</p>
                         </div>
                         <div className="space-y-4">
                             <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center font-bold text-xl">3</div>
-                            <h3 className="text-2xl font-bold text-slate-900">Tác Động Thực Tế</h3>
-                            <p className="text-slate-500 leading-relaxed">Mỗi dòng code, mỗi chiến dịch của bạn đều góp phần minh bạch hóa thị trường BĐS hàng tỷ đô la.</p>
+                            <h3 className="text-2xl font-bold text-[var(--text-primary)]">Tác Động Thực Tế</h3>
+                            <p className="text-[var(--text-tertiary)] leading-relaxed">Mỗi dòng code, mỗi chiến dịch của bạn đều góp phần minh bạch hóa thị trường BĐS hàng tỷ đô la.</p>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* Job Listings */}
-            <section id="jobs" className="py-24 px-6 bg-white">
+            <section id="jobs" className="py-24 px-6 bg-[var(--bg-surface)]">
                 <div className="max-w-5xl mx-auto">
-                    <h2 className="text-3xl font-bold text-slate-900 mb-12 text-center">Vị Trí Đang Tuyển</h2>
+                    <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-12 text-center">Vị Trí Đang Tuyển</h2>
                     <div className="space-y-6">
                         {JOBS.map(job => (
-                            <div key={job.id} className="group bg-white border border-slate-200 rounded-[24px] p-6 hover:border-indigo-200 hover:shadow-xl transition-all duration-300 relative overflow-hidden">
+                            <div key={job.id} className="group bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-[24px] p-6 hover:border-indigo-200 hover:shadow-xl transition-all duration-300 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
                                             <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg uppercase tracking-wide">{job.dept}</span>
                                             {job.tags.map(tag => (
-                                                <span key={tag} className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200">{tag}</span>
+                                                <span key={tag} className="text-[10px] font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-2 py-1 rounded border border-[var(--glass-border)]">{tag}</span>
                                             ))}
                                         </div>
-                                        <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors">{job.title}</h3>
-                                        <div className="flex items-center gap-4 text-sm text-slate-500">
+                                        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2 group-hover:text-indigo-600 transition-colors">{job.title}</h3>
+                                        <div className="flex items-center gap-4 text-sm text-[var(--text-tertiary)]">
                                             <span className="flex items-center gap-1.5">{ICONS.LOCATION} {job.location}</span>
                                             <span className="flex items-center gap-1.5">{ICONS.CLOCK} {job.type}</span>
                                             <span className="flex items-center gap-1.5 text-emerald-600 font-bold">{ICONS.MONEY} {job.salary}</span>

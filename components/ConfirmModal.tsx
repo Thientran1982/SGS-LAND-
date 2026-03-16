@@ -38,7 +38,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = memo(({
             />
             
             {/* Modal */}
-            <div className="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-slate-100 relative z-10 animate-scale-up">
+            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                 <div className="flex flex-col items-center text-center">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${variant === 'danger' ? 'bg-rose-50 text-rose-500' : 'bg-indigo-50 text-indigo-500'}`}>
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,14 +46,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = memo(({
                         </svg>
                     </div>
                     
-                    <h3 className="text-lg font-bold text-slate-800 mb-2">{title}</h3>
-                    <p className="text-sm text-slate-500 mb-6 leading-relaxed">{message}</p>
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{title}</h3>
+                    <p className="text-sm text-[var(--text-tertiary)] mb-6 leading-relaxed">{message}</p>
                     
                     <div className="flex gap-3 w-full">
                         <button 
                             onClick={onCancel} 
                             disabled={processing}
-                            className="flex-1 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors disabled:opacity-70"
+                            className="flex-1 py-2.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors disabled:opacity-70"
                         >
                             {cancelLabel}
                         </button>

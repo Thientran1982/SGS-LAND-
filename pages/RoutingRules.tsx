@@ -38,24 +38,24 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
 
     return createPortal(
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-enter">
-            <div className="bg-white w-full max-w-lg rounded-[24px] shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div className="bg-[var(--bg-surface)] w-full max-w-lg rounded-[24px] shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto no-scrollbar">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-slate-800">{t('routing.modal_title')}</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400">{ICONS.CLOSE}</button>
+                    <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('routing.modal_title')}</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-slate-400">{ICONS.CLOSE}</button>
                 </div>
                 
                 <div className="space-y-4">
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('routing.rule_name')}</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('routing.rule_name')}</label>
                         <input className="w-full border rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase block mb-1">{t('routing.priority')}</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('routing.priority')}</label>
                         <input type="number" className="w-full border rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none" value={form.priority} onChange={e => setForm({...form, priority: Number(e.target.value)})} />
                     </div>
                     
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <h4 className="font-bold text-sm text-slate-700 mb-3">{t('routing.conditions')}</h4>
+                    <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
+                        <h4 className="font-bold text-sm text-[var(--text-secondary)] mb-3">{t('routing.conditions')}</h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">{t('routing.cond_source')}</label>
@@ -100,8 +100,8 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                     </div>
                 </div>
 
-                <div className="pt-6 mt-6 border-t border-slate-100 flex gap-3">
-                    <button onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors">{t('common.cancel')}</button>
+                <div className="pt-6 mt-6 border-t border-[var(--glass-border)] flex gap-3">
+                    <button onClick={onClose} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-slate-200 transition-colors">{t('common.cancel')}</button>
                     <button onClick={handleSave} className="flex-1 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg">{t('common.save')}</button>
                 </div>
             </div>
@@ -202,10 +202,10 @@ export const RoutingRules: React.FC = () => {
         <div className="space-y-6 pb-20 animate-enter relative">
             {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
-            <div className="flex justify-between items-center bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
+            <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">{t('routing.title')}</h2>
-                    <p className="text-sm text-slate-500">{t('routing.subtitle')}</p>
+                    <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('routing.title')}</h2>
+                    <p className="text-sm text-[var(--text-tertiary)]">{t('routing.subtitle')}</p>
                 </div>
                 <button onClick={() => { setEditingRule(undefined); setIsModalOpen(true); }} className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95">
                     {ICONS.ADD} {t('routing.btn_add')}
@@ -215,16 +215,16 @@ export const RoutingRules: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* RULES LIST */}
                 <div className="lg:col-span-2 space-y-4">
-                    {rules.length === 0 && <div className="text-center p-10 text-slate-400 italic bg-white rounded-[24px] border border-slate-100">{t('common.no_results')}</div>}
+                    {rules.length === 0 && <div className="text-center p-10 text-slate-400 italic bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)]">{t('common.no_results')}</div>}
                     {rules.map(rule => (
-                        <div key={rule.id} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-all group relative">
+                        <div key={rule.id} className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm hover:shadow-md transition-all group relative">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded uppercase tracking-wider">{t('routing.priority')}: {rule.priority}</span>
+                                        <span className="text-[10px] font-bold bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-2 py-0.5 rounded uppercase tracking-wider">{t('routing.priority')}: {rule.priority}</span>
                                         {rule.enabled ? <span className="w-2 h-2 bg-emerald-500 rounded-full"></span> : <span className="w-2 h-2 bg-slate-300 rounded-full"></span>}
                                     </div>
-                                    <h3 className="font-bold text-slate-800">{rule.name}</h3>
+                                    <h3 className="font-bold text-[var(--text-primary)]">{rule.name}</h3>
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => { setEditingRule(rule); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">{ICONS.EDIT}</button>
@@ -233,9 +233,9 @@ export const RoutingRules: React.FC = () => {
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4 text-xs">
-                                <div className="bg-slate-50 p-3 rounded-xl">
-                                    <div className="font-bold text-slate-500 uppercase text-[10px] mb-1">{t('routing.conditions')}</div>
-                                    <div className="space-y-1 font-mono text-slate-600">
+                                <div className="bg-[var(--glass-surface)] p-3 rounded-xl">
+                                    <div className="font-bold text-[var(--text-tertiary)] uppercase text-[10px] mb-1">{t('routing.conditions')}</div>
+                                    <div className="space-y-1 font-mono text-[var(--text-secondary)]">
                                         {Object.entries(rule.conditions || {}).map(([k, v]) => (
                                             <div key={k} className="flex justify-between">
                                                 <span>{k}:</span>
@@ -256,8 +256,8 @@ export const RoutingRules: React.FC = () => {
                 </div>
 
                 {/* SIMULATOR */}
-                <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-fit">
-                    <h3 className="font-bold text-slate-800 mb-4">{t('routing.tab_sim')}</h3>
+                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm h-fit">
+                    <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('routing.tab_sim')}</h3>
                     <div className="space-y-4 mb-6">
                         <div>
                             <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('routing.cond_source')}</label>
@@ -277,7 +277,7 @@ export const RoutingRules: React.FC = () => {
                     </div>
 
                     {simResult && (
-                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 animate-enter">
+                        <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)] animate-enter">
                             <div className="text-xs font-bold text-slate-400 uppercase mb-2">{t('routing.sim_result')}</div>
                             {simResult.matchedRule ? (
                                 <div className="space-y-2">
@@ -285,7 +285,7 @@ export const RoutingRules: React.FC = () => {
                                         <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                                         {simResult.matchedRule.name}
                                     </div>
-                                    <div className="text-slate-700 text-sm">
+                                    <div className="text-[var(--text-secondary)] text-sm">
                                         <span className="text-slate-400 text-xs mr-2">➔</span>
                                         <span className="font-bold">{simResult.assigned}</span>
                                     </div>

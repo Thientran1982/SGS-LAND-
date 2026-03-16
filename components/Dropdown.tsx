@@ -39,13 +39,13 @@ const STYLES = {
     LABEL: "block text-xs font-bold uppercase mb-1 ml-1 select-none transition-colors",
     BUTTON: "w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border transition-all duration-200 outline-none text-sm group",
     // Menu styles updated for Portal with Dark Mode
-    MENU: "fixed z-[9999] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-slate-100/50 dark:border-white/10 animate-scale-up overflow-y-auto no-scrollbar overscroll-contain text-sm focus:outline-none min-w-[120px] max-h-[320px]",
-    OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group border-b border-slate-50 dark:border-white/5 last:border-0 outline-none focus:bg-slate-50 dark:focus:bg-slate-800",
+    MENU: "fixed z-[9999] bg-[var(--bg-surface)]/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-[var(--glass-border)]/50 dark:border-white/10 animate-scale-up overflow-y-auto no-scrollbar overscroll-contain text-sm focus:outline-none min-w-[120px] max-h-[320px]",
+    OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group border-b border-slate-50 dark:border-white/5 last:border-0 outline-none focus:bg-[var(--glass-surface)] dark:focus:bg-slate-800",
     
     // State variants
-    DISABLED: "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed border-slate-200 dark:border-slate-700",
+    DISABLED: "bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-slate-400 dark:text-[var(--text-secondary)] cursor-not-allowed border-[var(--glass-border)] dark:border-slate-700",
     ERROR: "bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700 text-rose-900 dark:text-rose-300 focus:ring-2 focus:ring-rose-500/20",
-    DEFAULT: "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-sm focus:ring-2 focus:ring-indigo-500/20 active:scale-[0.99] text-slate-700 dark:text-slate-200",
+    DEFAULT: "bg-[var(--bg-surface)] dark:bg-slate-800 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-sm focus:ring-2 focus:ring-indigo-500/20 active:scale-[0.99] text-[var(--text-secondary)] dark:text-slate-200",
     OPEN: "border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20"
 };
 
@@ -180,7 +180,7 @@ export const Dropdown = memo(<T extends string | number>({
     return (
         <div className={`relative ${className}`} ref={containerRef}>
             {label && (
-                <label className={`${STYLES.LABEL} ${error ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400 group-focus-within:text-indigo-500 dark:group-focus-within:text-indigo-400'}`}>
+                <label className={`${STYLES.LABEL} ${error ? 'text-rose-500' : 'text-[var(--text-tertiary)] dark:text-slate-400 group-focus-within:text-indigo-500 dark:group-focus-within:text-indigo-400'}`}>
                     {label}
                 </label>
             )}
@@ -197,18 +197,18 @@ export const Dropdown = memo(<T extends string | number>({
                 className={buttonClass}
             >
                 <div className="flex items-center gap-2 truncate flex-1 text-left">
-                    {icon && <span className={error ? "text-rose-400" : "text-slate-400 dark:text-slate-500"}>{icon}</span>}
+                    {icon && <span className={error ? "text-rose-400" : "text-slate-400 dark:text-[var(--text-tertiary)]"}>{icon}</span>}
                     {selectedOption ? (
                         <span className="font-medium truncate flex items-center gap-2">
                             {selectedOption.icon}
                             {selectedOption.label}
                         </span>
                     ) : (
-                        <span className={error ? "text-rose-400" : "text-slate-400 dark:text-slate-500"}>{displayPlaceholder}</span>
+                        <span className={error ? "text-rose-400" : "text-slate-400 dark:text-[var(--text-tertiary)]"}>{displayPlaceholder}</span>
                     )}
                 </div>
                 
-                <div className={`text-slate-400 dark:text-slate-500 ${isOpen ? 'rotate-180 text-indigo-500 dark:text-indigo-400' : ''} transition-transform duration-200`}>
+                <div className={`text-slate-400 dark:text-[var(--text-tertiary)] ${isOpen ? 'rotate-180 text-indigo-500 dark:text-indigo-400' : ''} transition-transform duration-200`}>
                     {ICONS.CHEVRON}
                 </div>
             </button>
@@ -229,7 +229,7 @@ export const Dropdown = memo(<T extends string | number>({
                     }}
                 >
                     {options?.length === 0 ? (
-                        <div className="px-4 py-3 text-xs text-slate-400 dark:text-slate-500 text-center italic select-none">{t('common.no_options')}</div>
+                        <div className="px-4 py-3 text-xs text-slate-400 dark:text-[var(--text-tertiary)] text-center italic select-none">{t('common.no_options')}</div>
                     ) : (
                         options?.map((opt) => {
                             const isSelected = opt.value === value;
@@ -240,7 +240,7 @@ export const Dropdown = memo(<T extends string | number>({
                                     aria-selected={isSelected}
                                     type="button"
                                     onClick={() => handleSelect(opt.value as T)}
-                                    className={`${STYLES.OPTION} ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}`}
+                                    className={`${STYLES.OPTION} ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
                                 >
                                     {opt.icon && (
                                         <span className={`transition-transform duration-200 ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}>
