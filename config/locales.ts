@@ -72,6 +72,12 @@ export const DICTIONARY = {
         "404.title": "Không tìm thấy trang",
         "404.desc": "Trang bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.",
 
+        "mobile.title": "Ứng Dụng Di Động SGS Land",
+        "mobile.scan_desc": "Quét mã QR bằng điện thoại để tải ứng dụng SGS Land và trải nghiệm đầy đủ tính năng mọi lúc mọi nơi.",
+        "mobile.features": "Tất cả tính năng • Thông báo tức thì • Hoạt động ngoại tuyến",
+
+        "error.unexpected": "Đã xảy ra lỗi không mong muốn.",
+
         "role.ADMIN": "Quản Trị Viên",
         "role.SALES": "Chuyên Viên Kinh Doanh",
         "role.TEAM_LEAD": "Trưởng Nhóm",
@@ -1345,6 +1351,14 @@ export const DICTIONARY = {
         "calc.payback_period": "Payback Period",
         "calc.per_year": " / year",
         "calc.years": " years",
+        "404.title": "Page Not Found",
+        "404.desc": "The page you are looking for does not exist or has been removed.",
+
+        "mobile.title": "SGS Land Mobile App",
+        "mobile.scan_desc": "Scan the QR code with your phone to download the SGS Land app and access all features anytime, anywhere.",
+        "mobile.features": "All features • Real-time notifications • Offline support",
+
+        "error.unexpected": "An unexpected error has occurred.",
 
         "role.ADMIN": "Administrator",
         "role.SALES": "Sales Agent",

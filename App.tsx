@@ -218,7 +218,9 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 
     render() {
         if (this.state.hasError) {
-            return <ErrorState message="Đã xảy ra lỗi không mong muốn." onRetry={() => window.location.reload()} />;
+            const lang = typeof window !== 'undefined' ? localStorage.getItem('sgs_lang') : 'vn';
+            const msg = lang === 'en' ? 'An unexpected error has occurred.' : 'Đã xảy ra lỗi không mong muốn.';
+            return <ErrorState message={msg} onRetry={() => window.location.reload()} />;
         }
         return this.props.children;
     }
