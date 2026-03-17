@@ -192,7 +192,7 @@ export class AnalyticsRepository extends BaseRepository {
       const agentLeaderboardResult = await client.query(`
         SELECT
           u.name,
-          COALESCE(u.avatar, 'https://api.dicebear.com/7.x/initials/svg?seed=' || u.name) as avatar,
+          COALESCE(NULLIF(TRIM(u.avatar), ''), 'https://api.dicebear.com/7.x/initials/svg?seed=' || encode(u.name::bytea, 'base64')) as avatar,
           COUNT(l.id) FILTER (WHERE l.stage = 'WON')::int as deals,
           CASE
             WHEN COUNT(l.id)::int > 0

@@ -74,7 +74,7 @@ export class UserRepository extends BaseRepository {
         `INSERT INTO users (tenant_id, name, email, password_hash, role, avatar, phone, source, metadata, status)
          VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6, $7, $8, 'ACTIVE')
          RETURNING *`,
-        [data.name, data.email, passwordHash, data.role || 'VIEWER', data.avatar || '', data.phone || null, data.source || 'SYSTEM', data.metadata ? JSON.stringify(data.metadata) : null]
+        [data.name, data.email, passwordHash, data.role || 'VIEWER', data.avatar || null, data.phone || null, data.source || 'SYSTEM', data.metadata ? JSON.stringify(data.metadata) : null]
       );
       return this.rowToEntity<UserRow>(result.rows[0]);
     });
