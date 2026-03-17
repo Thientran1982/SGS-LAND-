@@ -211,12 +211,19 @@ async function startServer() {
         return res.status(409).json({ error: 'User with this email already exists' });
       }
 
+      // First user in the tenant becomes ADMIN (account owner), all subsequent users are AGENT
+      const existingCount = await pool.query(
+        `SELECT COUNT(*)::int AS cnt FROM users WHERE tenant_id = $1`,
+        [tenantId]
+      );
+      const isFirstUser = (existingCount.rows[0]?.cnt ?? 1) === 0;
+
       const dbUser = await userRepository.create(tenantId, {
         name: name || email.split('@')[0],
         email,
         password,
-        role: 'ADMIN',
-        source: 'INVITE',
+        role: isFirstUser ? 'ADMIN' : 'AGENT',
+        source: 'REGISTER',
       });
 
       const jwtPayload = {
