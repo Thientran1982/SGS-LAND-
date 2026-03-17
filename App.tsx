@@ -305,11 +305,10 @@ const useRouter = () => {
 const AUTH_CACHE_KEY = 'sgs_auth_cached';
 
 const getInitialAuthState = (): 'LOADING' | 'AUTH' | 'GUEST' => {
-    try {
-        return localStorage.getItem(AUTH_CACHE_KEY) === '1' ? 'AUTH' : 'LOADING';
-    } catch {
-        return 'LOADING';
-    }
+    // Always start with LOADING so the server session check runs before rendering
+    // any private content. Using localStorage as AUTH directly caused a flash of
+    // private pages when the session had expired but the cache flag was still set.
+    return 'LOADING';
 };
 
 const AppShell: React.FC = () => {

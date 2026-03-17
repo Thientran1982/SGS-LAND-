@@ -113,6 +113,8 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - Input validation on all POST/PUT routes with schema-based validation
 - XSS prevention via input sanitization
 - Webhook signature verification for Facebook (HMAC-SHA256) and Zalo
+- **Auth guard fixed (App.tsx)**: `getInitialAuthState()` now always returns `'LOADING'` — server session check MUST complete before any private page renders. Prevents flash of private content on expired sessions.
+- **Register role fixed (server.ts)**: `/api/auth/register` counts existing users in tenant; first user → `ADMIN`, subsequent users → `AGENT`. Previously all registrations hardcoded to `ADMIN`. `source` changed from `INVITE` to `REGISTER`.
 - Parameter pollution prevention
 - API keys (GEMINI_API_KEY) server-side only
 - JWT with httpOnly cookies, 24h expiry
