@@ -485,17 +485,19 @@ class DatabaseApiClient {
 
   async globalSearch(query: string) {
     try {
-      const [leadsRes, listingsRes] = await Promise.all([
+      const [leadsRes, listingsRes, usersRes] = await Promise.all([
         leadApi.getLeads(1, 5, { search: query }),
         listingApi.getListings(1, 5, { search: query }),
+        userApi.getUsers(1, 5, { search: query }),
       ]);
       return {
-        leads: leadsRes.data,
-        listings: listingsRes.data,
-        total: leadsRes.total + listingsRes.total,
+        leads: leadsRes.data || [],
+        listings: listingsRes.data || [],
+        users: usersRes.data || [],
+        total: (leadsRes.total || 0) + (listingsRes.total || 0) + (usersRes.total || 0),
       };
     } catch {
-      return { leads: [], listings: [], total: 0 };
+      return { leads: [], listings: [], users: [], total: 0 };
     }
   }
 
