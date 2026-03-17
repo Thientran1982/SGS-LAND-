@@ -16,7 +16,6 @@ interface GlobalSearchProps {
     onNavigate: (type: string, id: string) => void;
 }
 
-// Unified Search Item Type
 type SearchItem = 
     | { type: 'LEAD'; id: string; title: string; subtitle: string; icon: 'LEAD' }
     | { type: 'LISTING'; id: string; title: string; subtitle: string; icon: 'LISTING' }
@@ -24,14 +23,13 @@ type SearchItem =
     | { type: 'ACTION'; id: string; title: string; subtitle: string; icon: 'ACTION'; route?: string; action?: () => void };
 
 const ICONS = {
-    SEARCH: <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
-    LOADING: <div className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>,
+    SEARCH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    LOADING: <div className="w-4 h-4 border-2 border-indigo-500/40 border-t-indigo-500 rounded-full animate-spin"></div>,
     LEAD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
     LISTING: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 01 1v4a1 1 0 001 1m-6 0h6" /></svg>,
     USER: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     ACTION: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
     HISTORY: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    ENTER: <svg className="w-3 h-3 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>,
     CLEAR: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 
@@ -40,7 +38,7 @@ const ICONS = {
 // -----------------------------------------------------------------------------
 
 const SectionLabel = memo(({ label }: { label: string }) => (
-    <div className="px-4 py-2 text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest bg-[var(--glass-surface)]/80 sticky top-0 backdrop-blur-md z-10 select-none">
+    <div className="px-4 py-1.5 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-widest bg-[var(--bg-app)]/60 sticky top-0 backdrop-blur-md z-10 select-none border-b border-[var(--glass-border)]/50">
         {label}
     </div>
 ));
@@ -52,7 +50,7 @@ const HighlightedText = memo(({ text, query }: { text: string, query: string }) 
         <span>
             {parts.map((part, i) => 
                 part.toLowerCase() === query.toLowerCase() ? (
-                    <span key={i} className="text-indigo-600 bg-indigo-50 font-bold px-0.5 rounded">{part}</span>
+                    <span key={i} className="text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/20 font-bold px-0.5 rounded">{part}</span>
                 ) : ( <span key={i}>{part}</span> )
             )}
         </span>
@@ -76,32 +74,25 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
     const listRef = useRef<HTMLDivElement>(null);
     const { t } = useTranslation();
 
-    // 1. QUICK ACTIONS DEFINITION
+    // 1. QUICK ACTIONS
     const quickActions: SearchItem[] = useMemo(() => [
-        { type: 'ACTION', id: 'act_dash', title: t('menu.dashboard'), subtitle: 'Go to Dashboard', icon: 'ACTION', route: ROUTES.DASHBOARD },
-        { type: 'ACTION', id: 'act_lead', title: t('leads.create_modal_title'), subtitle: 'Quick Create', icon: 'ACTION', route: ROUTES.LEADS }, // Ideally this opens modal, but simplified for nav
-        { type: 'ACTION', id: 'act_inv', title: t('inventory.create_title'), subtitle: 'Post Property', icon: 'ACTION', route: ROUTES.INVENTORY },
-        { type: 'ACTION', id: 'act_rep', title: t('menu.reports'), subtitle: 'View Analytics', icon: 'ACTION', route: ROUTES.REPORTS },
+        { type: 'ACTION', id: 'act_dash', title: t('menu.dashboard'), subtitle: t('search.quick_actions'), icon: 'ACTION', route: ROUTES.DASHBOARD },
+        { type: 'ACTION', id: 'act_lead', title: t('leads.create_modal_title'), subtitle: t('search.quick_actions'), icon: 'ACTION', route: ROUTES.LEADS },
+        { type: 'ACTION', id: 'act_inv', title: t('inventory.create_title'), subtitle: t('search.quick_actions'), icon: 'ACTION', route: ROUTES.INVENTORY },
+        { type: 'ACTION', id: 'act_rep', title: t('menu.reports'), subtitle: t('search.quick_actions'), icon: 'ACTION', route: ROUTES.REPORTS },
     ], [t]);
 
-    // 2. NORMALIZE & FLATTEN RESULTS
+    // 2. FLATTEN RESULTS
     const flatResults = useMemo<SearchItem[]>(() => {
-        // If Query is Empty -> Show History + Actions
         if (!query.trim()) {
             return [
-                ...history.map(h => ({ ...h, isHistory: true })), // Tag history items
+                ...history.map(h => ({ ...h, isHistory: true })),
                 ...quickActions
             ];
         }
-
-        // If Query Exists -> Show Search Results
         const items: SearchItem[] = [];
-        
-        // Priority 1: Actions (matching query)
         const matchedActions = quickActions.filter(a => normalizeForSearch(a.title).includes(normalizeForSearch(query)));
         matchedActions.forEach(a => items.push(a));
-
-        // Priority 2: Data
         (rawResults.leads || []).forEach(l => items.push({ 
             type: 'LEAD', id: l.id, title: l.name, subtitle: `${l.phone} • ${l.source}`, icon: 'LEAD' 
         }));
@@ -111,7 +102,6 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
         (rawResults.users || []).forEach(u => items.push({ 
             type: 'USER', id: u.id, title: u.name, subtitle: u.email, icon: 'USER' 
         }));
-
         return items;
     }, [query, rawResults, history, quickActions]);
 
@@ -126,7 +116,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
         }
     }, [isOpen]);
 
-    // 4. SEARCH EXECUTION
+    // 4. SEARCH EXECUTION (debounced 200ms)
     useEffect(() => {
         if (!query.trim()) {
             setLoading(false);
@@ -136,26 +126,27 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
         const handler = setTimeout(async () => {
             try {
                 const res = await db.globalSearch(query);
-                setRawResults(res || { leads: [], listings: [], users: [] });
-                setSelectedIndex(0); // Reset selection on new results
+                setRawResults({
+                    leads: res.leads || [],
+                    listings: res.listings || [],
+                    users: (res as any).users || [],
+                });
+                setSelectedIndex(0);
             } catch (e) { console.error(e); } 
             finally { setLoading(false); }
         }, 200);
         return () => clearTimeout(handler);
     }, [query]);
 
-    // 5. SELECTION HANDLER
+    // 5. SELECT HANDLER
     const handleSelect = useCallback((item: SearchItem) => {
-        // Save to History (if not an action)
         if (item.type !== 'ACTION') {
             const newHistory = [item, ...history.filter(h => h.id !== item.id)].slice(0, 5);
             setHistory(newHistory);
             localStorage.setItem('sgs_search_history', JSON.stringify(newHistory));
         }
-
-        // Execute
         if (item.type === 'ACTION' && item.route) {
-            onNavigate('ROUTE', item.route); // Special type for direct route
+            onNavigate('ROUTE', item.route);
         } else {
             onNavigate(item.type, item.id);
         }
@@ -174,11 +165,11 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault();
-                setSelectedIndex(prev => (prev + 1) % flatResults.length);
+                setSelectedIndex(prev => (prev + 1) % Math.max(flatResults.length, 1));
                 break;
             case 'ArrowUp':
                 e.preventDefault();
-                setSelectedIndex(prev => (prev - 1 + flatResults.length) % flatResults.length);
+                setSelectedIndex(prev => (prev - 1 + Math.max(flatResults.length, 1)) % Math.max(flatResults.length, 1));
                 break;
             case 'Enter':
                 e.preventDefault();
@@ -191,7 +182,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
         }
     };
 
-    // Auto-scroll
+    // Auto-scroll selected into view
     useEffect(() => {
         const el = listRef.current?.querySelector(`[data-index="${selectedIndex}"]`);
         el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -199,7 +190,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
 
     if (!isOpen) return null;
 
-    // --- RENDER HELPER ---
+    // --- RENDER ROW ---
     const renderRow = (item: SearchItem, idx: number) => {
         const isSelected = idx === selectedIndex;
         const Icon = ICONS[item.icon] || ICONS.SEARCH;
@@ -207,94 +198,144 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
 
         return (
             <div 
-                key={`${item.type}-${item.id}`} 
+                key={`${item.type}-${item.id}-${idx}`} 
                 data-index={idx}
                 onClick={() => handleSelect(item)}
-                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/70 border-l-4 border-indigo-500 pl-3' : 'hover:bg-[var(--glass-surface)] border-l-4 border-transparent'}`}
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all group border-l-[3px] ${
+                    isSelected 
+                        ? 'bg-indigo-50 dark:bg-indigo-500/15 border-indigo-500' 
+                        : 'hover:bg-[var(--glass-surface)] border-transparent'
+                }`}
             >
-                <div className={`p-2 rounded-lg transition-colors ${isSelected ? 'bg-indigo-100 text-indigo-600' : 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] group-hover:bg-[var(--bg-surface)] group-hover:shadow-sm'}`}>
+                <div className={`p-2 rounded-xl transition-colors shrink-0 ${
+                    isSelected 
+                        ? 'bg-indigo-100 dark:bg-indigo-500/25 text-indigo-600 dark:text-indigo-300' 
+                        : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface)] group-hover:text-[var(--text-secondary)]'
+                }`}>
                     {isHistory ? ICONS.HISTORY : Icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                    <div className={`font-bold text-sm truncate ${isSelected ? 'text-indigo-900' : 'text-[var(--text-secondary)]'}`}>
+                    <div className={`font-semibold text-sm truncate ${
+                        isSelected 
+                            ? 'text-indigo-700 dark:text-indigo-200' 
+                            : 'text-[var(--text-primary)]'
+                    }`}>
                         {query ? <HighlightedText text={item.title} query={query} /> : item.title}
                     </div>
-                    <div className="text-xs3 text-[var(--text-tertiary)] truncate font-medium opacity-80">
+                    <div className="text-xs2 text-[var(--text-tertiary)] truncate font-medium mt-0.5">
                         {item.subtitle}
                     </div>
                 </div>
+                {isSelected && (
+                    <div className="shrink-0 text-xs2 text-indigo-400 dark:text-indigo-400 font-mono bg-indigo-100 dark:bg-indigo-500/20 px-1.5 py-0.5 rounded-md opacity-80">
+                        ↵
+                    </div>
+                )}
             </div>
         );
     };
 
+    const totalResults = (rawResults.leads?.length || 0) + (rawResults.listings?.length || 0) + (rawResults.users?.length || 0);
+
     return (
-        <div className="fixed inset-0 z-[150] flex items-start justify-center pt-[10vh] px-4" onKeyDown={handleKeyDown}>
-            <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity animate-fade-in" onClick={onClose} />
+        <div className="fixed inset-0 z-[150] flex items-start justify-center pt-[8vh] sm:pt-[10vh] px-4" onKeyDown={handleKeyDown}>
+            {/* Backdrop */}
+            <div 
+                className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm" 
+                onClick={onClose} 
+            />
             
-            <div className="w-full max-w-2xl bg-[var(--bg-surface)] rounded-2xl shadow-2xl overflow-hidden relative z-10 flex flex-col max-h-[65vh] animate-scale-up ring-1 ring-black/10">
+            {/* Modal */}
+            <div className="w-full max-w-2xl bg-[var(--bg-surface)] rounded-2xl shadow-2xl overflow-hidden relative z-10 flex flex-col max-h-[70vh] animate-scale-up ring-1 ring-black/10 dark:ring-white/10">
                 
-                {/* INPUT */}
-                <div className="p-4 flex items-center gap-3 bg-[var(--bg-surface)] z-20 border-b border-[var(--glass-border)] group">
-                    <div className="text-[var(--text-secondary)] pl-1 group-focus-within:text-indigo-500 transition-colors pointer-events-none flex items-center justify-center">{loading ? ICONS.LOADING : ICONS.SEARCH}</div>
+                {/* SEARCH INPUT */}
+                <div className="flex items-center gap-3 px-4 py-3.5 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] group">
+                    <div className={`shrink-0 transition-colors ${loading ? 'text-indigo-500' : 'text-[var(--text-tertiary)] group-focus-within:text-indigo-500'}`}>
+                        {loading ? ICONS.LOADING : ICONS.SEARCH}
+                    </div>
                     <input 
                         ref={inputRef}
-                        className="flex-1 text-lg outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)] bg-transparent h-10"
+                        className="flex-1 text-base sm:text-lg outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)] bg-transparent h-9"
                         placeholder={t('common.search_advanced')}
                         value={query}
-                        onChange={e => setQuery(e.target.value)}
+                        onChange={e => { setQuery(e.target.value); setSelectedIndex(0); }}
                     />
-                    <div className="flex items-center gap-2">
-                        {query && <button onClick={() => { setQuery(''); inputRef.current?.focus(); }} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>{ICONS.CLEAR}</button>}
+                    <div className="flex items-center gap-2 shrink-0">
+                        {query && (
+                            <button 
+                                onClick={() => { setQuery(''); inputRef.current?.focus(); }} 
+                                className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors p-1.5 rounded-full hover:bg-[var(--glass-surface-hover)] flex items-center justify-center" 
+                                title={t('common.clear_search')}
+                            >
+                                {ICONS.CLEAR}
+                            </button>
+                        )}
+                        <kbd className="hidden sm:flex items-center text-xs2 text-[var(--text-muted)] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] px-1.5 py-0.5 rounded-md font-mono">
+                            ESC
+                        </kbd>
                     </div>
                 </div>
 
-                {/* RESULTS */}
-                <div ref={listRef} className="overflow-y-auto flex-1 bg-[var(--bg-surface)] scroll-smooth relative min-h-[120px] no-scrollbar">
+                {/* RESULTS LIST */}
+                <div ref={listRef} className="overflow-y-auto flex-1 bg-[var(--bg-surface)] scroll-smooth relative min-h-[100px] no-scrollbar">
                     
-                    {/* 0. Empty & No History */}
-                    {!query && history.length === 0 && quickActions.length === 0 && (
-                        <div className="p-10 text-center text-[var(--text-secondary)] text-sm italic">{t('search.try_searching')}</div>
+                    {/* Empty state - no query, no history */}
+                    {!query && history.length === 0 && (
+                        <div className="p-10 text-center text-[var(--text-tertiary)] text-sm">
+                            <div className="text-2xl mb-3 opacity-30">⌘K</div>
+                            <p>{t('search.try_searching')}</p>
+                        </div>
                     )}
 
-                    {/* 1. History & Quick Actions (When query is empty) */}
+                    {/* History + Quick Actions (empty query) */}
                     {!query && (
                         <>
                             {history.length > 0 && (
-                                <div className="pb-2">
-                                    <div className="flex justify-between items-center pr-4">
-                                        <SectionLabel label="Recent" />
-                                        <button onClick={clearHistory} className="text-xs2 text-[var(--text-secondary)] hover:text-rose-500 font-bold uppercase transition-colors z-20">Clear</button>
+                                <div>
+                                    <div className="flex justify-between items-center pr-3 sticky top-0 z-10 bg-[var(--bg-app)]/60 backdrop-blur-md border-b border-[var(--glass-border)]/50">
+                                        <div className="px-4 py-1.5 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-widest select-none">
+                                            {t('search.recent')}
+                                        </div>
+                                        <button 
+                                            onClick={clearHistory} 
+                                            className="text-xs2 text-[var(--text-tertiary)] hover:text-rose-500 font-bold uppercase transition-colors px-2 py-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                                        >
+                                            {t('search.history_clear')}
+                                        </button>
                                     </div>
                                     {history.map((item, idx) => renderRow({...item, isHistory: true} as any, idx))}
                                 </div>
                             )}
-                            <div className="pb-2">
-                                <SectionLabel label="Quick Actions" />
-                                {quickActions.map((item, idx) => renderRow(item, idx + history.length))}
-                            </div>
+                            {quickActions.length > 0 && (
+                                <div>
+                                    <SectionLabel label={t('search.quick_actions')} />
+                                    {quickActions.map((item, idx) => renderRow(item, idx + history.length))}
+                                </div>
+                            )}
                         </>
                     )}
 
-                    {/* 2. Search Results */}
+                    {/* Search Results */}
                     {query && (
                         <>
                             {flatResults.length === 0 && !loading ? (
                                 <div className="p-12 text-center text-[var(--text-secondary)]">
-                                    <p className="font-medium text-sm">{t('common.no_results')}</p>
+                                    <svg className="w-10 h-10 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                    <p className="font-medium text-sm">{t('search.no_results')}</p>
+                                    <p className="text-xs2 text-[var(--text-tertiary)] mt-1">"{query}"</p>
                                 </div>
                             ) : (
                                 flatResults.map((item, idx) => {
-                                    // Visual grouping logic
                                     const prev = flatResults[idx - 1];
                                     const showHeader = !prev || prev.type !== item.type;
-                                    let headerLabel = "";
-                                    if (item.type === 'ACTION') headerLabel = "Commands";
-                                    else if (item.type === 'LEAD') headerLabel = t('menu.leads');
-                                    else if (item.type === 'LISTING') headerLabel = t('menu.inventory');
-                                    else if (item.type === 'USER') headerLabel = t('menu.admin-users');
+                                    let headerLabel = '';
+                                    if (item.type === 'ACTION') headerLabel = t('search.commands');
+                                    else if (item.type === 'LEAD') headerLabel = t('search.leads');
+                                    else if (item.type === 'LISTING') headerLabel = t('search.listings');
+                                    else if (item.type === 'USER') headerLabel = t('search.users');
 
                                     return (
-                                        <div key={`${item.type}-${item.id}`}>
+                                        <div key={`${item.type}-${item.id}-${idx}`}>
                                             {showHeader && <SectionLabel label={headerLabel} />}
                                             {renderRow(item, idx)}
                                         </div>
@@ -305,12 +346,24 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                     )}
                 </div>
 
-                {/* FOOTER (CLEANED) */}
-                {query && flatResults.length > 0 && (
-                    <div className="px-4 py-2 bg-[var(--glass-surface)] border-t border-[var(--glass-border)] text-xs2 text-[var(--text-tertiary)] flex justify-end items-center select-none">
-                        <span className="font-mono">{flatResults.length} matches</span>
+                {/* FOOTER */}
+                <div className="px-4 py-2 bg-[var(--glass-surface)] border-t border-[var(--glass-border)] flex justify-between items-center select-none">
+                    <div className="flex items-center gap-3 text-xs2 text-[var(--text-muted)]">
+                        <span className="hidden sm:flex items-center gap-1">
+                            <kbd className="bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] px-1 py-0.5 rounded text-xs2 font-mono">↑↓</kbd>
+                            <span>di chuyển</span>
+                        </span>
+                        <span className="hidden sm:flex items-center gap-1">
+                            <kbd className="bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] px-1 py-0.5 rounded text-xs2 font-mono">↵</kbd>
+                            <span>chọn</span>
+                        </span>
                     </div>
-                )}
+                    {query && totalResults > 0 && (
+                        <span className="text-xs2 font-mono text-[var(--text-tertiary)]">
+                            {totalResults} {t('search.matches')}
+                        </span>
+                    )}
+                </div>
             </div>
         </div>
     );
