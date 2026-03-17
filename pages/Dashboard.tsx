@@ -121,6 +121,32 @@ const EmptyState = ({ message }: { message: string }) => (
     </div>
 );
 
+// --- AGENT AVATAR with initials fallback ---
+const AVATAR_COLORS = [
+    'bg-indigo-500', 'bg-violet-500', 'bg-sky-500', 'bg-emerald-500',
+    'bg-rose-500', 'bg-amber-500', 'bg-teal-500', 'bg-pink-500',
+];
+const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
+    const [broken, setBroken] = React.useState(false);
+    const initials = (name || '?').split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+    const colorClass = AVATAR_COLORS[(name || '').charCodeAt(0) % AVATAR_COLORS.length];
+    const isValidSrc = !broken && avatar && avatar.trim() !== '';
+
+    return isValidSrc ? (
+        <img
+            src={avatar}
+            alt={name}
+            className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm object-cover"
+            referrerPolicy="no-referrer"
+            onError={() => setBroken(true)}
+        />
+    ) : (
+        <div className={`w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm flex items-center justify-center ${colorClass} select-none`}>
+            <span className="text-xs font-bold text-white tracking-tight">{initials}</span>
+        </div>
+    );
+};
+
 // --- REALTIME TRAFFIC WIDGET ---
 const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
     const [data, setData] = useState<any[]>([]);
@@ -607,7 +633,7 @@ export const Dashboard: React.FC = () => {
                                     <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
-                                                <img src={agent.avatar} alt={agent.name} className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm" referrerPolicy="no-referrer" />
+                                                <AgentAvatar name={agent.name} avatar={agent.avatar} />
                                                 {idx < 3 && (
                                                     <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-3xs font-bold text-white shadow-sm ${idx === 0 ? 'bg-amber-400' : idx === 1 ? 'bg-slate-400' : 'bg-amber-600'}`}>
                                                         {idx + 1}

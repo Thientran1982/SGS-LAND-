@@ -222,7 +222,7 @@ async function startServer() {
         name: name || email.split('@')[0],
         email,
         password,
-        role: isFirstUser ? 'ADMIN' : 'AGENT',
+        role: isFirstUser ? 'ADMIN' : 'SALES',
         source: 'REGISTER',
       });
 
