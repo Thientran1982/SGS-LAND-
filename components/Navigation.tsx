@@ -36,13 +36,15 @@ const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boolean })
         setImgError(false);
     }, [user.avatar]);
 
+    const hasAvatar = !!user.avatar && !imgError;
+
     return (
         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full p-0.5 border-2 shadow-lg transition-all duration-300 relative overflow-hidden flex items-center justify-center bg-[var(--glass-surface-hover)] dark:bg-slate-800
             ${isActive 
                 ? 'border-indigo-500 shadow-indigo-500/20' 
                 : 'border-white dark:border-white/10 group-hover:border-indigo-500 group-hover:shadow-indigo-500/20'}`
         }>
-            {!imgError ? (
+            {hasAvatar ? (
                 <img 
                     src={user.avatar} 
                     className="w-full h-full rounded-full object-cover" 
@@ -51,7 +53,7 @@ const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boolean })
                 />
             ) : (
                 <span className="text-sm font-bold text-[var(--text-tertiary)]">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user.name?.charAt(0).toUpperCase() ?? '?'}
                 </span>
             )}
         </div>
