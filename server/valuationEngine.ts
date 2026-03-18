@@ -31,6 +31,7 @@ export interface AVMFactor {
   impact: number;            // percentage change vs standard: e.g. +18 or -12
   isPositive: boolean;
   description: string;
+  type: 'AVM' | 'LOCATION';  // AVM = applied to price; LOCATION = context only (reflected in base price)
 }
 
 export interface AVMOutput {
@@ -210,7 +211,8 @@ export function applyAVM(input: AVMInput): AVMOutput {
     coefficient: Kd,
     impact: Math.abs(kdImpact),
     isPositive: Kd >= 1.00,
-    description: Kd_data.description
+    description: Kd_data.description,
+    type: 'AVM'
   });
 
   // Legal factor
@@ -220,7 +222,8 @@ export function applyAVM(input: AVMInput): AVMOutput {
     coefficient: Kp,
     impact: Math.abs(kpImpact),
     isPositive: Kp >= 1.00,
-    description: Kp_data.description
+    description: Kp_data.description,
+    type: 'AVM'
   });
 
   // Area factor
@@ -230,7 +233,8 @@ export function applyAVM(input: AVMInput): AVMOutput {
     coefficient: Ka,
     impact: Math.abs(kaImpact),
     isPositive: Ka >= 1.00,
-    description: Ka_data.description
+    description: Ka_data.description,
+    type: 'AVM'
   });
 
   const formula = `${(marketBasePrice / 1_000_000).toFixed(0)} tr/m² × Kd(${Kd}) × Kp(${Kp}) × Ka(${Ka}) = ${(pricePerM2 / 1_000_000).toFixed(0)} tr/m²`;
