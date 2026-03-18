@@ -612,17 +612,20 @@ class AiEngine {
         }
     }
 
-    async getRealtimeValuation(address: string, area: number, roadWidth: number, legal: string): Promise<{
+    async getRealtimeValuation(address: string, area: number, roadWidth: number, legal: string, propertyType?: string): Promise<{
         basePrice: number;
         pricePerM2: number;
         totalPrice: number;
+        compsPrice: number;
         rangeMin: number;
         rangeMax: number;
         confidence: number;
         marketTrend: string;
-        factors: { label: string; coefficient: number; impact: number; isPositive: boolean; description: string }[];
+        factors: { label: string; coefficient: number; impact: number; isPositive: boolean; description: string; type: 'AVM' | 'LOCATION' }[];
         coefficients: { Kd: number; Kp: number; Ka: number };
         formula: string;
+        incomeApproach?: import('./valuationEngine').IncomeApproachResult;
+        reconciliation?: { compsWeight: number; incomeWeight: number; compsValue: number; incomeValue: number; finalValue: number };
     }> {
         try {
             // ── STEP 1: Google Search grounding → get RAW market text data ──────────
@@ -661,7 +664,7 @@ class AiEngine {
             const marketContext = searchResponse.text || '';
 
             // ── STEP 2: Extract structured data from market context ───────────────
-            // Schema ONLY asks for marketBasePrice (raw, pre-AVM) + confidence + trend
+            // Schema asks for marketBasePrice, rent estimate, property type, location factors
             const extractSchema: Schema = {
                 type: Type.OBJECT,
                 properties: {
@@ -677,6 +680,15 @@ class AiEngine {
                         type: Type.STRING,
                         description: "Xu hướng giá ngắn gọn, ví dụ: 'Tăng 8-12%/năm', 'Ổn định', 'Giảm nhẹ 3-5%'"
                     },
+                    monthlyRentEstimate: {
+                        type: Type.NUMBER,
+                        description: `Ước tính giá cho thuê hàng tháng (TRIỆU VNĐ/THÁNG) cho BĐS ${area}m² tại khu vực này. Ví dụ: 15 = 15 triệu/tháng. Đây là tiền thuê thực tế thị trường, không phải tiền triệu đồng.`
+                    },
+                    propertyTypeEstimate: {
+                        type: Type.STRING,
+                        enum: ['apartment_center','apartment_suburb','townhouse_center','townhouse_suburb','villa','shophouse','land_urban','land_suburban'] as string[],
+                        description: `Loại BĐS phù hợp nhất dựa vào địa chỉ "${address}" và diện tích ${area}m². Mặc định: townhouse_center cho nhà phố nội đô.`
+                    },
                     locationFactors: {
                         type: Type.ARRAY,
                         description: "2-3 yếu tố vĩ mô về vị trí/khu vực ảnh hưởng đến giá (không phải lộ giới/pháp lý/diện tích)",
@@ -691,20 +703,24 @@ class AiEngine {
                         }
                     }
                 },
-                required: ["marketBasePrice", "confidence", "marketTrend", "locationFactors"]
+                required: ["marketBasePrice", "confidence", "marketTrend", "monthlyRentEstimate", "propertyTypeEstimate", "locationFactors"]
             };
 
             const extractPrompt = `
                 Dựa trên thông tin thị trường thu thập được, hãy trích xuất số liệu định giá.
                 
-                Khu vực: "${address}"
+                Khu vực: "${address}" | Diện tích: ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legal}
                 Thông tin thị trường:
                 ${marketContext}
                 
                 YÊU CẦU:
                 - marketBasePrice: Giá 1m² cho BẤT ĐỘNG SẢN THAM CHIẾU CHUẨN (Sổ Hồng, 4m road, 60-100m²)
-                - Đây là GIÁ GỐC TRƯỚC ĐIỀU CHỈNH — hệ thống sẽ tự nhân với hệ số lộ giới/pháp lý/diện tích
-                - locationFactors: chỉ gồm các yếu tố KHU VỰC (quy hoạch, tiện ích, kinh tế) — không lặp lại pháp lý/lộ giới/diện tích
+                  Đây là GIÁ GỐC TRƯỚC ĐIỀU CHỈNH — hệ thống sẽ tự nhân với hệ số Kd/Kp/Ka
+                - monthlyRentEstimate: Giá thuê thị trường (triệu VNĐ/tháng) cho BĐS ${area}m² tại khu vực này
+                  Dùng để tính phương pháp thu nhập (Income Approach). Phải thực tế, không phỏng đoán xa.
+                - propertyTypeEstimate: Loại BĐS phù hợp nhất
+                - locationFactors: Chỉ gồm các yếu tố KHU VỰC (quy hoạch, tiện ích, kinh tế)
+                  KHÔNG lặp lại pháp lý/lộ giới/diện tích vì đã có Kd/Kp/Ka xử lý
             `;
 
             const extractResponse = await this.ai.models.generateContent({
