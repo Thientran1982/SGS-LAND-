@@ -211,12 +211,15 @@ async function startServer() {
         return res.status(409).json({ error: 'User with this email already exists' });
       }
 
-      // First user in the tenant becomes ADMIN (account owner), all subsequent users are AGENT
-      const existingCount = await pool.query(
-        `SELECT COUNT(*)::int AS cnt FROM users WHERE tenant_id = $1`,
-        [tenantId]
-      );
-      const isFirstUser = (existingCount.rows[0]?.cnt ?? 1) === 0;
+      // First user in the tenant becomes ADMIN (account owner), all subsequent users are SALES
+      // IMPORTANT: Must use withTenantContext because the users table has RLS enabled.
+      // A raw pool.query() without tenant context always returns 0 rows (RLS blocks them),
+      // causing every registration to incorrectly receive the ADMIN role.
+      const existingCount = await withTenantContext(tenantId, async (client) => {
+        const r = await client.query(`SELECT COUNT(*)::int AS cnt FROM users`);
+        return r.rows[0]?.cnt ?? 0;
+      });
+      const isFirstUser = existingCount === 0;
 
       const dbUser = await userRepository.create(tenantId, {
         name: name || email.split('@')[0],
