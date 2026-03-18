@@ -9,11 +9,11 @@ import { applyAVM, getRegionalBasePrice, LegalStatus } from './valuationEngine';
 
 const GENAI_CONFIG = {
     MODELS: {
-        // Updated to official Gemini 3.1 Pro for reasoning capabilities
-        ROUTER: 'gemini-3-flash-preview', 
-        WRITER: 'gemini-3.1-pro-preview'
+        // gemini-2.0-flash: supports Google Search grounding + JSON schema output
+        ROUTER: 'gemini-2.0-flash',
+        WRITER: 'gemini-2.0-flash'
     },
-    THINKING_BUDGET: 2048 
+    THINKING_BUDGET: 2048
 };
 
 // GLOBAL SYSTEM PERSONA
@@ -551,7 +551,7 @@ class AiEngine {
             };
 
             const response = await this.ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
+                model: GENAI_CONFIG.MODELS.ROUTER,
                 contents: prompt,
                 config: {
                     responseMimeType: 'application/json',
@@ -598,7 +598,7 @@ class AiEngine {
             `;
 
             const response = await this.ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
+                model: GENAI_CONFIG.MODELS.WRITER,
                 contents: prompt,
                 config: {
                     systemInstruction: "Bạn là một chuyên gia tư vấn BĐS kỳ cựu với khả năng thấu cảm khách hàng cực tốt."
@@ -733,6 +733,8 @@ class AiEngine {
             });
 
             // Merge location factors (from AI) with AVM coefficients (deterministic)
+            // NOTE: locationFactors are CONTEXT ONLY — they are already reflected in
+            //       the AI-extracted marketBasePrice. They are NOT multiplied into the price again.
             const allFactors = [
                 ...avmResult.factors,
                 ...locationFactors.map((f: any) => ({
@@ -740,7 +742,8 @@ class AiEngine {
                     coefficient: f.isPositive ? 1 + f.impact / 100 : 1 - f.impact / 100,
                     impact: f.impact,
                     isPositive: f.isPositive,
-                    description: ''
+                    description: 'Đã phản ánh trong giá thị trường cơ sở',
+                    type: 'LOCATION' as const
                 }))
             ];
 

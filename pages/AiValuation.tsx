@@ -9,12 +9,6 @@ import { aiService } from '../services/aiService';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 
-// --- MOCK CONSTANTS FOR SIMULATION ---
-const BASE_PRICE_PER_M2 = 120_000_000; // 120tr/m2 reference
-const MONTHLY_DATA = Array.from({ length: 12 }, (_, i) => ({
-    month: `T${i + 1}`,
-    price: 100 + Math.random() * 20 - 10 // Variation around 100 base
-}));
 
 const ICONS = {
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
@@ -65,10 +59,10 @@ export const AiValuation: React.FC = () => {
 
     // Results State
     const [valuation, setValuation] = useState<{
-        price: number;          // total price (VNĐ)
-        pricePerM2: number;     // adjusted price per m² (after AVM)
+        price: number;
+        pricePerM2: number;
         range: [number, number];
-        factors: { label: string; coefficient?: number; impact: number; isPositive: boolean; description?: string }[];
+        factors: { label: string; coefficient?: number; impact: number; isPositive: boolean; description?: string; type?: 'AVM' | 'LOCATION' }[];
         coefficients?: { Kd: number; Kp: number; Ka: number };
         formula?: string;
         confidence: number;
@@ -144,9 +138,9 @@ export const AiValuation: React.FC = () => {
                 coefficients: { Kd, Kp, Ka },
                 formula: `${(marketBase/1_000_000).toFixed(0)} tr/m² × Kd(${Kd}) × Kp(${Kp}) × Ka(${Ka}) = ${(adjPerM2/1_000_000).toFixed(0)} tr/m²`,
                 factors: [
-                    { label: roadNum >= 4 ? `Hẻm xe hơi / đường ${roadNum}m` : `Hẻm hẹp ${roadNum}m`, coefficient: Kd, impact: Math.round(Math.abs(Kd - 1) * 100), isPositive: Kd >= 1, description: '' },
-                    { label: legalLabel, coefficient: Kp, impact: Math.round(Math.abs(Kp - 1) * 100), isPositive: Kp >= 1, description: '' },
-                    { label: `Diện tích ${areaNum}m²`, coefficient: Ka, impact: Math.round(Math.abs(Ka - 1) * 100), isPositive: Ka >= 1, description: '' },
+                    { label: roadNum >= 4 ? `Hẻm xe hơi / đường ${roadNum}m` : `Hẻm hẹp ${roadNum}m`, coefficient: Kd, impact: Math.round(Math.abs(Kd - 1) * 100), isPositive: Kd >= 1, description: '', type: 'AVM' as const },
+                    { label: legalLabel, coefficient: Kp, impact: Math.round(Math.abs(Kp - 1) * 100), isPositive: Kp >= 1, description: '', type: 'AVM' as const },
+                    { label: `Diện tích ${areaNum}m²`, coefficient: Ka, impact: Math.round(Math.abs(Ka - 1) * 100), isPositive: Ka >= 1, description: '', type: 'AVM' as const },
                 ]
             };
         }
@@ -164,10 +158,8 @@ export const AiValuation: React.FC = () => {
     const calculateResults = (aiResult: any, areaNum: number, _roadNum: number) => {
         // Server returns fully computed AVM result.
         // totalPrice = pricePerM2 × area, already calculated by AVM engine server-side.
-        const totalPrice: number = aiResult.totalPrice || (
-            (aiResult.pricePerM2 || aiResult.basePrice || BASE_PRICE_PER_M2) * areaNum
-        );
-        const pricePerM2: number = aiResult.pricePerM2 || Math.round(totalPrice / areaNum);
+        const pricePerM2: number = aiResult.pricePerM2 || (aiResult.basePrice || 0);
+        const totalPrice: number = aiResult.totalPrice || Math.round(pricePerM2 * areaNum);
         const confidence: number = aiResult.confidence || 75;
 
         // Use server's pre-computed range if available, otherwise use confidence margin
@@ -453,45 +445,68 @@ export const AiValuation: React.FC = () => {
                             )}
 
                             {/* ── FACTORS BREAKDOWN (XAI) ── */}
-                            {valuation.factors.length > 0 && (
-                                <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
-                                    <div className="px-5 py-3 border-b border-slate-700/50">
-                                        <span className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold tracking-widest">Phân tích yếu tố tác động</span>
-                                    </div>
-                                    <div className="divide-y divide-slate-800">
-                                        {valuation.factors.map((factor, i) => {
-                                            const sign = factor.isPositive ? '+' : '-';
-                                            const barWidth = Math.min(100, factor.impact * 4); // scale to bar %
-                                            return (
-                                                <div key={i} className="px-5 py-3">
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        <span className="text-slate-300 text-sm font-medium">{factor.label}</span>
-                                                        <div className="flex items-center gap-3">
-                                                            {factor.coefficient != null && factor.coefficient !== 1 && (
-                                                                <span className="text-[var(--text-tertiary)] text-xs font-mono">×{factor.coefficient.toFixed(2)}</span>
-                                                            )}
-                                                            <span className={`font-bold text-sm ${factor.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                                {factor.impact === 0 ? 'Chuẩn' : `${sign}${factor.impact}%`}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    {factor.description && (
-                                                        <div className="text-[var(--text-secondary)] text-xs3 mb-1.5">{factor.description}</div>
+                            {valuation.factors.length > 0 && (() => {
+                                const avmFactors = valuation.factors.filter(f => f.type !== 'LOCATION');
+                                const locationFactors = valuation.factors.filter(f => f.type === 'LOCATION');
+                                const renderFactor = (factor: typeof valuation.factors[0], i: number) => {
+                                    const sign = factor.isPositive ? '+' : '-';
+                                    const barWidth = Math.min(100, factor.impact * 4);
+                                    return (
+                                        <div key={i} className="px-5 py-3">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-slate-300 text-sm font-medium">{factor.label}</span>
+                                                <div className="flex items-center gap-3">
+                                                    {factor.coefficient != null && factor.coefficient !== 1 && (
+                                                        <span className="text-[var(--text-tertiary)] text-xs font-mono">×{factor.coefficient.toFixed(2)}</span>
                                                     )}
-                                                    {factor.impact > 0 && (
-                                                        <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                                                            <div
-                                                                className={`h-full rounded-full transition-all ${factor.isPositive ? 'bg-emerald-500/60' : 'bg-rose-500/60'}`}
-                                                                style={{ width: `${barWidth}%` }}
-                                                            />
-                                                        </div>
-                                                    )}
+                                                    <span className={`font-bold text-sm ${factor.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                        {factor.impact === 0 ? 'Chuẩn' : `${sign}${factor.impact}%`}
+                                                    </span>
                                                 </div>
-                                            );
-                                        })}
+                                            </div>
+                                            {factor.description && (
+                                                <div className="text-[var(--text-secondary)] text-xs3 mb-1.5">{factor.description}</div>
+                                            )}
+                                            {factor.impact > 0 && (
+                                                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all ${factor.isPositive ? 'bg-emerald-500/60' : 'bg-rose-500/60'}`}
+                                                        style={{ width: `${barWidth}%` }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                };
+                                return (
+                                    <div className="space-y-3">
+                                        {/* AVM Factors — applied to price */}
+                                        {avmFactors.length > 0 && (
+                                            <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+                                                <div className="px-5 py-3 border-b border-slate-700/50 flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                                                    <span className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold tracking-widest">Điều chỉnh AVM — đã áp dụng vào giá</span>
+                                                </div>
+                                                <div className="divide-y divide-slate-800">
+                                                    {avmFactors.map(renderFactor)}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {/* Location Factors — context only */}
+                                        {locationFactors.length > 0 && (
+                                            <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+                                                <div className="px-5 py-3 border-b border-slate-700/50 flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-blue-400 inline-block"></span>
+                                                    <span className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold tracking-widest">Yếu tố khu vực — đã phản ánh trong giá cơ sở</span>
+                                                </div>
+                                                <div className="divide-y divide-slate-800">
+                                                    {locationFactors.map(renderFactor)}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            )}
+                                );
+                            })()}
                         </div>
 
                         {/* Chart Simulation */}
