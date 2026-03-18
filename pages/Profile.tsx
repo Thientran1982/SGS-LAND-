@@ -127,6 +127,7 @@ export const Profile: React.FC = () => {
     
     // Form Data
     const [formData, setFormData] = useState({ name: '', phone: '', bio: '', avatar: '' });
+    const [avatarError, setAvatarError] = useState(false);
     const [passData, setPassData] = useState({ current: '', new: '', confirm: '' });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -148,13 +149,17 @@ export const Profile: React.FC = () => {
                 name: u.name, 
                 phone: u.phone || '', 
                 bio: u.bio || '', 
-                avatar: u.avatar 
+                avatar: u.avatar || '' 
             });
+            setAvatarError(false);
         }
         setLoading(false);
     }, []);
 
     useEffect(() => { loadData(); }, [loadData]);
+
+    // Reset avatarError whenever the avatar URL is changed (new upload or load)
+    useEffect(() => { setAvatarError(false); }, [formData.avatar]);
 
     useEffect(() => {
         if (message) {
@@ -204,7 +209,7 @@ export const Profile: React.FC = () => {
                 name: updatedUser.name,
                 phone: updatedUser.phone || '',
                 bio: updatedUser.bio || '',
-                avatar: updatedUser.avatar
+                avatar: updatedUser.avatar || ''
             });
             
             window.dispatchEvent(new Event('user-updated'));
@@ -254,7 +259,7 @@ export const Profile: React.FC = () => {
             name: user.name,
             phone: user.phone || '',
             bio: user.bio || '',
-            avatar: user.avatar
+            avatar: user.avatar || ''
         });
         setErrors({});
         setMessage(null);
@@ -366,7 +371,7 @@ export const Profile: React.FC = () => {
             name: user.name,
             phone: user.phone || '',
             bio: user.bio || '',
-            avatar: user.avatar
+            avatar: user.avatar || ''
         };
         
         return JSON.stringify(current) !== JSON.stringify(original);
@@ -388,8 +393,19 @@ export const Profile: React.FC = () => {
                             <div className="w-full h-full flex items-center justify-center bg-[var(--glass-surface-hover)]">
                                 <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                             </div>
+                        ) : formData.avatar && !avatarError ? (
+                            <img 
+                                src={formData.avatar} 
+                                className="w-full h-full object-cover rounded-full" 
+                                alt="Avatar"
+                                onError={() => setAvatarError(true)}
+                            />
                         ) : (
-                            <img src={formData.avatar} className="w-full h-full object-cover rounded-full" alt="Avatar" />
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/40 dark:to-violet-900/40 rounded-full">
+                                <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-300 select-none">
+                                    {formData.name?.charAt(0).toUpperCase() ?? '?'}
+                                </span>
+                            </div>
                         )}
                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                             <div className="bg-[var(--bg-surface)]/20 p-2 rounded-full text-white">{ICONS.UPLOAD}</div>
