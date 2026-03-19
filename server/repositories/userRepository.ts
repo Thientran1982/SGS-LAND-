@@ -37,22 +37,24 @@ export class UserRepository extends BaseRepository {
     });
   }
 
-  async findByIdDirect(id: string): Promise<UserRow | null> {
+  async findByIdDirect(id: string, tenantId?: string): Promise<UserRow | null> {
+    if (tenantId) {
+      return this.withTenant(tenantId, async (client) => {
+        const result = await client.query(`SELECT * FROM users WHERE id = $1`, [id]);
+        return result.rows[0] ? this.rowToEntity<UserRow>(result.rows[0]) : null;
+      });
+    }
+    // Fallback: dùng findById qua withTenant với DEFAULT_TENANT_ID không được gọi ở production.
+    // Chỉ dùng cho context nội bộ đã xác thực (VD: /me route truyền tenantId từ JWT).
     const { pool } = await import('../db');
-    const result = await pool.query(
-      `SELECT * FROM users WHERE id = $1`,
-      [id]
-    );
+    const result = await pool.query(`SELECT * FROM users WHERE id = $1`, [id]);
     return result.rows[0] ? this.rowToEntity<UserRow>(result.rows[0]) : null;
   }
 
   async authenticate(tenantId: string, email: string, password: string): Promise<UserRow | null> {
     const user = await this.findByEmail(tenantId, email);
     if (!user) return null;
-    if (!user.passwordHash) {
-      if (password === '123456' || password === 'admin') return user;
-      return null;
-    }
+    if (!user.passwordHash) return null;
     const valid = await bcrypt.compare(password, user.passwordHash);
     return valid ? user : null;
   }

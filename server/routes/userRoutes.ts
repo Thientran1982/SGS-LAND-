@@ -14,7 +14,7 @@ export function createUserRoutes(authenticateToken: any) {
       }
 
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 50;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
       const filters: any = {};
       if (req.query.role) filters.role = req.query.role;
       if (req.query.status) filters.status = req.query.status;
@@ -34,7 +34,7 @@ export function createUserRoutes(authenticateToken: any) {
   router.get('/me', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const dbUser = await userRepository.findByIdDirect(user.id);
+      const dbUser = await userRepository.findByIdDirect(user.id, user.tenantId);
       if (!dbUser) return res.json({ user });
       res.json({ user: userRepository.toPublicUser(dbUser) });
     } catch (error) {
@@ -137,7 +137,7 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins can change user roles' });
       }
 
-      const before = await userRepository.findByIdDirect(req.params.id);
+      const before = await userRepository.findByIdDirect(req.params.id, user.tenantId);
       const updated = await userRepository.update(user.tenantId, req.params.id, req.body);
       if (!updated) return res.status(404).json({ error: 'User not found' });
 
@@ -169,7 +169,7 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins can resend invites' });
       }
 
-      const target = await userRepository.findByIdDirect(req.params.id);
+      const target = await userRepository.findByIdDirect(req.params.id, user.tenantId);
       if (!target) return res.status(404).json({ error: 'User not found' });
       if (target.status !== 'PENDING') {
         return res.status(400).json({ error: 'Only pending users can receive re-invites' });
@@ -203,7 +203,7 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Email không hợp lệ' });
       }
 
-      const existingUser = await userRepository.findByIdDirect(req.params.id);
+      const existingUser = await userRepository.findByIdDirect(req.params.id, user.tenantId);
       if (!existingUser) return res.status(404).json({ error: 'Người dùng không tồn tại' });
 
       if (newEmail.toLowerCase() === existingUser.email?.toLowerCase()) {
@@ -226,7 +226,7 @@ export function createUserRoutes(authenticateToken: any) {
       const { pool } = await import('../db');
       await pool.query(`UPDATE users SET email = $1 WHERE id = $2`, [newEmail.toLowerCase(), req.params.id]);
 
-      const updated = await userRepository.findByIdDirect(req.params.id);
+      const updated = await userRepository.findByIdDirect(req.params.id, user.tenantId);
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'UPDATE',
@@ -256,7 +256,7 @@ export function createUserRoutes(authenticateToken: any) {
       }
 
       if (currentPassword) {
-        const existingUser = await userRepository.findByIdDirect(req.params.id);
+        const existingUser = await userRepository.findByIdDirect(req.params.id, user.tenantId);
         if (existingUser) {
           const verified = await userRepository.authenticate(user.tenantId, existingUser.email!, currentPassword);
           if (!verified) {

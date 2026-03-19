@@ -1,3 +1,4 @@
+import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { sequenceRepository } from '../repositories/sequenceRepository';
 import { emailService } from '../services/emailService';

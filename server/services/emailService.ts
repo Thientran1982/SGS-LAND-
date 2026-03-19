@@ -2,6 +2,15 @@ import nodemailer from 'nodemailer';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
 import { DEFAULT_TENANT_ID } from '../constants';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 interface SmtpConfig {
   enabled: boolean;
   host: string;
@@ -164,20 +173,22 @@ async function sendWelcomeEmail(tenantId: string, to: string, userName: string):
 }
 
 async function sendSequenceEmail(tenantId: string, to: string, subject: string, content: string): Promise<EmailResult> {
+  const safeContent = escapeHtml(content);
+  const plainText = content.replace(/<[^>]*>/g, '');
   return sendEmail(tenantId, {
     to,
     subject,
     html: `
       <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px;">
-          ${content}
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px; white-space: pre-wrap;">
+          ${safeContent}
         </div>
         <p style="color: #CBD5E1; font-size: 11px; text-align: center; margin-top: 24px;">
           Sent via SGS LAND Automation
         </p>
       </div>
     `,
-    text: content.replace(/<[^>]*>/g, ''),
+    text: plainText,
   });
 }
 
