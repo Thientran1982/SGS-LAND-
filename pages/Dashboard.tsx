@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/dbApi';
+import { analyticsApi } from '../services/api/analyticsApi';
 import { systemService } from '../services/systemService';
 import { AnalyticsSummary } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -145,6 +146,121 @@ const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
         </div>
     );
 };
+
+// --- GEOLOCATION TABLE ---
+const GeoLocationTable = memo(({ t }: { t: any }) => {
+    const { data: visitorStats, isLoading } = useQuery({
+        queryKey: ['visitorStats'],
+        queryFn: () => analyticsApi.getVisitorStats(30),
+        staleTime: 60000,
+        retry: 1,
+    });
+
+    const countries: { country: string; countryCode: string; count: number }[] = visitorStats?.topCountries || [];
+    const cities: { city: string; count: number }[] = visitorStats?.topCities || [];
+    const totalVisits: number = visitorStats?.totalVisits || 0;
+    const uniqueIps: number = visitorStats?.uniqueIps || 0;
+
+    const FLAG_BASE = 'https://flagcdn.com/16x12';
+
+    return (
+        <BentoCard
+            title="Geolocation & Lưu lượng khách"
+            className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900 overflow-hidden flex flex-col"
+            icon={<svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+        >
+            {isLoading ? (
+                <div className="flex items-center justify-center h-40">
+                    <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-4 flex-1 min-h-0">
+                    <div className="flex gap-4">
+                        <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
+                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">Tổng lượt truy cập</div>
+                            <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{totalVisits.toLocaleString()}</div>
+                        </div>
+                        <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
+                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">IP Duy nhất</div>
+                            <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{uniqueIps.toLocaleString()}</div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
+                        <div className="flex flex-col min-h-0">
+                            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Top Quốc gia</div>
+                            {countries.length === 0 ? (
+                                <div className="flex items-center justify-center h-20 text-xs text-[var(--text-tertiary)] opacity-60">Chưa có dữ liệu</div>
+                            ) : (
+                                <div className="overflow-y-auto no-scrollbar space-y-1.5 flex-1">
+                                    {countries.slice(0, 8).map((c, i) => {
+                                        const maxCount = countries[0]?.count || 1;
+                                        const pct = Math.round((c.count / maxCount) * 100);
+                                        return (
+                                            <div key={i} className="flex items-center gap-2 group">
+                                                <img
+                                                    src={`${FLAG_BASE}/${(c.countryCode || 'vn').toLowerCase()}.png`}
+                                                    alt={c.countryCode}
+                                                    className="w-4 h-3 object-cover rounded-sm shrink-0"
+                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-center mb-0.5">
+                                                        <span className="text-xs2 font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{c.country || 'Không rõ'}</span>
+                                                        <span className="text-xs2 font-mono font-bold text-[var(--text-tertiary)] ml-1 shrink-0">{c.count}</span>
+                                                    </div>
+                                                    <div className="h-1 bg-[var(--glass-surface-hover)] dark:bg-slate-700 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                                                            style={{ width: `${pct}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col min-h-0">
+                            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Top Thành phố</div>
+                            {cities.length === 0 ? (
+                                <div className="flex items-center justify-center h-20 text-xs text-[var(--text-tertiary)] opacity-60">Chưa có dữ liệu</div>
+                            ) : (
+                                <div className="overflow-y-auto no-scrollbar space-y-1.5 flex-1">
+                                    {cities.slice(0, 8).map((c, i) => {
+                                        const maxCount = cities[0]?.count || 1;
+                                        const pct = Math.round((c.count / maxCount) * 100);
+                                        return (
+                                            <div key={i} className="flex items-center gap-2">
+                                                <div className="w-4 h-4 rounded-full flex items-center justify-center bg-sky-100 dark:bg-sky-900/40 shrink-0">
+                                                    <span className="text-3xs font-bold text-sky-600 dark:text-sky-400">{i + 1}</span>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-center mb-0.5">
+                                                        <span className="text-xs2 font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{c.city || 'Không rõ'}</span>
+                                                        <span className="text-xs2 font-mono font-bold text-[var(--text-tertiary)] ml-1 shrink-0">{c.count}</span>
+                                                    </div>
+                                                    <div className="h-1 bg-[var(--glass-surface-hover)] dark:bg-slate-700 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-sky-500 rounded-full transition-all duration-500"
+                                                            style={{ width: `${pct}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </BentoCard>
+    );
+});
 
 // --- REALTIME TRAFFIC WIDGET ---
 const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
@@ -686,9 +802,16 @@ export const Dashboard: React.FC = () => {
                     </BentoCard>
                 </div>
 
+                {/* TIER 4: Geolocation Table (Admin & Team Lead Only) */}
+                {(analytics.user?.role === 'ADMIN' || analytics.user?.role === 'TEAM_LEAD') && (
+                    <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
+                        <GeoLocationTable t={t} />
+                    </div>
+                )}
+
                 {/* TIER 4: Realtime Traffic (Admin & Team Lead Only) */}
                 {(analytics.user?.role === 'ADMIN' || analytics.user?.role === 'TEAM_LEAD') && (
-                    <div className="md:col-span-2 lg:col-span-4 h-[360px]">
+                    <div className="md:col-span-2 lg:col-span-2 h-[400px]">
                         <RealtimeTrafficWidget t={t} theme={chartTheme} />
                     </div>
                 )}
