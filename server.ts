@@ -33,6 +33,7 @@ import { createAiGovernanceRoutes } from "./server/routes/aiGovernanceRoutes";
 import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessionRoutes";
 import { createBillingRoutes } from "./server/routes/billingRoutes";
 import { createUploadRoutes, createUploadServeRoute } from "./server/routes/uploadRoutes";
+import { createScimRoutes } from "./server/routes/scimRoutes";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
@@ -706,6 +707,8 @@ async function startServer() {
   app.use('/api/enterprise', apiRateLimit, createEnterpriseRoutes(authenticateToken));
   app.use('/api/upload', apiRateLimit, createUploadRoutes(authenticateToken));
   app.use('/uploads', createUploadServeRoute(authenticateToken));
+  // SCIM 2.0 provisioning — uses its own Bearer token auth (no JWT required)
+  app.use('/scim/v2', express.json({ type: ['application/json', 'application/scim+json'] }), createScimRoutes());
 
   app.get("/api/health", async (req, res) => {
     try {

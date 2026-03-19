@@ -126,6 +126,18 @@ export class ProposalRepository extends BaseRepository {
     });
   }
 
+  async updateAml(tenantId: string, id: string, data: { amlVerified: boolean; amlNotes?: string }): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `UPDATE proposals
+         SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb
+         WHERE id = $2 RETURNING *`,
+        [JSON.stringify({ amlVerified: data.amlVerified, amlNotes: data.amlNotes ?? null, amlReviewedAt: new Date().toISOString() }), id]
+      );
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
+
   async getPendingApprovals(
     tenantId: string,
     userId?: string,
