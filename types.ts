@@ -191,6 +191,8 @@ export interface LeadPreferences {
     regions?: string[];
 }
 
+export type AmlStatus = 'PENDING' | 'CLEAR' | 'FLAGGED' | 'BLOCKED';
+
 export interface Lead {
     id: LeadId;
     tenantId?: TenantId;
@@ -207,15 +209,21 @@ export interface Lead {
     slaBreached?: boolean;
     createdAt: ISOString;
     updatedAt: ISOString;
-    socialIds?: { 
-        zalo?: string; 
-        facebook?: string; 
+    socialIds?: {
+        zalo?: string;
+        facebook?: string;
         telegram?: string;
     };
     optOutChannels: string[]; // e.g. ['SMS', 'EMAIL']
-    
+
+    // AML / Compliance
+    amlStatus?: AmlStatus;
+    amlRiskScore?: number;   // 0–100; higher = riskier
+    amlCheckedAt?: ISOString;
+    amlNotes?: string;
+
     // Flexible attributes but prefer strongly typed preferences for matching
-    attributes?: Record<string, string | number | boolean | string[]>; 
+    attributes?: Record<string, string | number | boolean | string[]>;
     preferences?: LeadPreferences;
 }
 
@@ -351,6 +359,8 @@ export interface Proposal {
     createdById?: UserId;
     createdAt: ISOString;
     metadata?: ProposalMetadata;
+    // AML clearance flag — set to true after compliance review before APPROVED
+    amlVerified?: boolean;
 }
 
 // =============================================================================

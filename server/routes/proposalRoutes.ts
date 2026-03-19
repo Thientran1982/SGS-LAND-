@@ -2,6 +2,7 @@ import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { proposalRepository } from '../repositories/proposalRepository';
 import { auditRepository } from '../repositories/auditRepository';
+import { amlProposalCheck, requireAmlClearance } from '../middleware/aml';
 
 export function createProposalRoutes(authenticateToken: any) {
   const router = Router();
@@ -69,7 +70,7 @@ export function createProposalRoutes(authenticateToken: any) {
     }
   });
 
-  router.post('/', authenticateToken, async (req: Request, res: Response) => {
+  router.post('/', authenticateToken, amlProposalCheck, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const { leadId, listingId, basePrice, discountAmount, finalPrice, currency, validUntil, metadata } = req.body;
@@ -84,6 +85,8 @@ export function createProposalRoutes(authenticateToken: any) {
       if (isNaN(bpNum) || bpNum < 0) return res.status(400).json({ error: 'Invalid basePrice: must be a non-negative number' });
       if (isNaN(fpNum) || fpNum < 0) return res.status(400).json({ error: 'Invalid finalPrice: must be a non-negative number' });
       if (isNaN(discNum) || discNum < 0) return res.status(400).json({ error: 'Invalid discountAmount: must be a non-negative number' });
+
+      const amlCheck = (req as any).amlCheck;
 
       const proposal = await proposalRepository.create(user.tenantId, {
         leadId, listingId, basePrice,
@@ -100,11 +103,25 @@ export function createProposalRoutes(authenticateToken: any) {
         action: 'CREATE',
         entityType: 'PROPOSAL',
         entityId: proposal.id,
-        details: `Created proposal for lead ${leadId} - Status: ${proposal.status}`,
+        details: `Created proposal for lead ${leadId} - Status: ${proposal.status}${amlCheck?.required ? ` [AML: ${amlCheck.status}, score=${amlCheck.riskScore}]` : ''}`,
         ipAddress: req.ip,
       });
 
-      res.status(201).json(proposal);
+      const responseBody: any = { ...proposal };
+      if (amlCheck?.required) {
+        responseBody.amlCheck = {
+          status: amlCheck.status,
+          riskScore: amlCheck.riskScore,
+          reasons: amlCheck.reasons,
+          message: amlCheck.status === 'PENDING'
+            ? 'Giao dịch giá trị cao — cần xem xét AML trước khi phê duyệt.'
+            : amlCheck.status === 'FLAGGED'
+              ? 'Cảnh báo AML: giao dịch có dấu hiệu rủi ro cao, cần kiểm tra thủ công.'
+              : undefined,
+        };
+      }
+
+      res.status(201).json(responseBody);
     } catch (error) {
       console.error('Error creating proposal:', error);
       res.status(500).json({ error: 'Failed to create proposal' });
@@ -124,6 +141,21 @@ export function createProposalRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins and team leads can approve proposals' });
       }
 
+      // AML clearance check before APPROVED
+      if (status === 'APPROVED') {
+        const existing = await proposalRepository.findById(user.tenantId, req.params.id);
+        if (existing) {
+          (req as any).proposalForAml = existing;
+          const { requireAmlClearance: checkAml } = await import('../middleware/aml');
+          const blocked = await new Promise<boolean>((resolve) => {
+            checkAml(req, res, () => resolve(false));
+            // If res.headersSent after calling checkAml, it blocked the request
+            if (res.headersSent) resolve(true);
+          });
+          if (blocked || res.headersSent) return;
+        }
+      }
+
       const proposal = await proposalRepository.updateStatus(user.tenantId, req.params.id, status);
       if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
 
@@ -140,6 +172,38 @@ export function createProposalRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error updating proposal status:', error);
       res.status(500).json({ error: 'Failed to update proposal' });
+    }
+  });
+
+  // PATCH /:id/aml — allow ADMIN/TEAM_LEAD to manually set AML clearance
+  router.patch('/:id/aml', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+        return res.status(403).json({ error: 'Only admins and team leads can update AML status' });
+      }
+
+      const { amlVerified, amlNotes } = req.body;
+      if (typeof amlVerified !== 'boolean') {
+        return res.status(400).json({ error: 'amlVerified (boolean) is required' });
+      }
+
+      const proposal = await proposalRepository.updateAml(user.tenantId, req.params.id, { amlVerified, amlNotes });
+      if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'AML_REVIEW',
+        entityType: 'PROPOSAL',
+        entityId: req.params.id,
+        details: `AML review: amlVerified=${amlVerified}${amlNotes ? `, notes: ${amlNotes}` : ''}`,
+        ipAddress: req.ip,
+      });
+
+      res.json(proposal);
+    } catch (error) {
+      console.error('Error updating AML status:', error);
+      res.status(500).json({ error: 'Failed to update AML status' });
     }
   });
 
