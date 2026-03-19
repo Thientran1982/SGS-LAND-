@@ -1,3 +1,4 @@
+import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { sequenceRepository } from '../repositories/sequenceRepository';
 import { emailService } from '../services/emailService';
@@ -38,7 +39,7 @@ export function createSequenceRoutes(authenticateToken: any) {
     }
   });
 
-  router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
@@ -54,9 +55,12 @@ export function createSequenceRoutes(authenticateToken: any) {
     }
   });
 
-  router.post('/:id/execute', authenticateToken, async (req: Request, res: Response) => {
+  router.post('/:id/execute', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+        return res.status(403).json({ error: 'Only admins and team leads can execute sequences' });
+      }
       const sequence = await sequenceRepository.findById(user.tenantId, req.params.id as string);
       if (!sequence) return res.status(404).json({ error: 'Sequence not found' });
       if (!sequence.isActive) return res.status(400).json({ error: 'Sequence is not active' });
@@ -100,7 +104,7 @@ export function createSequenceRoutes(authenticateToken: any) {
     }
   });
 
-  router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {

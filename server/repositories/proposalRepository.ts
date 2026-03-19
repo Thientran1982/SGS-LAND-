@@ -1,4 +1,5 @@
 import { BaseRepository, PaginatedResult, PaginationParams } from './baseRepository';
+import { pool } from '../db';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ProposalRepository extends BaseRepository {
@@ -18,7 +19,8 @@ export class ProposalRepository extends BaseRepository {
       const values: any[] = [];
       let paramIndex = 1;
 
-      if (userRole === 'SALES' && userId) {
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
         conditions.push(`p.created_by_id = $${paramIndex++}`);
         values.push(userId);
       }
@@ -104,7 +106,9 @@ export class ProposalRepository extends BaseRepository {
         [
           data.leadId, data.listingId, data.basePrice, data.discountAmount || 0,
           data.finalPrice, data.currency || 'VND', status, token,
-          data.validUntil || null, data.createdBy, data.createdById,
+          data.validUntil || null,
+          data.createdBy,    // VARCHAR display name
+          data.createdById,  // UUID — used for RBAC
           data.metadata ? JSON.stringify(data.metadata) : null,
         ]
       );
@@ -137,7 +141,8 @@ export class ProposalRepository extends BaseRepository {
       `;
       const values: any[] = [];
 
-      if (userRole === 'SALES' && userId) {
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
         query += ` AND p.created_by_id = $1`;
         values.push(userId);
       }
@@ -148,28 +153,21 @@ export class ProposalRepository extends BaseRepository {
     });
   }
 
-  async rejectProposalsForLead(tenantId: string, leadId: string): Promise<number> {
-    return this.withTenant(tenantId, async (client) => {
-      const result = await client.query(
-        `UPDATE proposals SET status = 'REJECTED' WHERE lead_id = $1 AND status IN ('PENDING_APPROVAL', 'DRAFT')`,
-        [leadId]
-      );
-      return result.rowCount ?? 0;
-    });
-  }
-
-  async findByToken(tenantId: string, token: string): Promise<any | null> {
-    return this.withTenant(tenantId, async (client) => {
-      const result = await client.query(
-        `SELECT p.*, l.name as lead_name, li.title as listing_title, li.location as listing_location
-         FROM proposals p
-         LEFT JOIN leads l ON p.lead_id = l.id
-         LEFT JOIN listings li ON p.listing_id = li.id
-         WHERE p.token = $1`,
-        [token]
-      );
-      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
-    });
+  // Public token lookup: bypasses RLS — the token itself is the auth credential.
+  // Do NOT expose tenant-controlled data beyond what the token authorises.
+  async findByTokenGlobal(token: string): Promise<any | null> {
+    const result = await pool.query(
+      `SELECT p.id, p.token, p.status, p.base_price, p.discount_amount, p.final_price,
+              p.notes, p.created_at, p.updated_at,
+              l.name as lead_name, li.title as listing_title, li.location as listing_location
+       FROM proposals p
+       LEFT JOIN leads l ON p.lead_id = l.id
+       LEFT JOIN listings li ON p.listing_id = li.id
+       WHERE p.token = $1
+       LIMIT 1`,
+      [token]
+    );
+    return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
   }
 }
 

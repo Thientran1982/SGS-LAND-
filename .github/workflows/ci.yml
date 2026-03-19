@@ -1,1 +1,70 @@
+name: CI
 
+on:
+  push:
+    branches: [main, master, 'claude/**']
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  build:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  pr-view:
+    name: PR Info
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: View PR details via gh CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Pull Request Details ==="
+          gh pr view ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --json number,title,author,state,body,labels,reviewDecision,additions,deletions,changedFiles \
+            --jq '
+              "PR #\(.number): \(.title)",
+              "Author: \(.author.login)",
+              "State: \(.state)",
+              "Changed files: \(.changedFiles) (+\(.additions) -\(.deletions))",
+              "Labels: \([ .labels[].name ] | join(", "))",
+              "Review: \(.reviewDecision // "PENDING")"
+            '
+
+      - name: Show PR diff stats
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Changed Files ==="
+          gh pr diff ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --name-only

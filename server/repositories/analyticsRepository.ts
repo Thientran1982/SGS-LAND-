@@ -42,7 +42,8 @@ const GRADE_PROBABILITY: Record<string, number> = {
 function getDaysInterval(timeRange?: string): number {
   if (!timeRange || timeRange === 'all') return 365;
   const n = parseInt(timeRange, 10);
-  if (!isNaN(n) && n > 0) return n;
+  // Clamp to [1, 3650] so the interpolated value in INTERVAL is always a safe integer.
+  if (!isNaN(n) && n > 0) return Math.min(n, 3650);
   return 365;
 }
 
@@ -62,6 +63,9 @@ function getTimeAgo(date: Date): string {
   const diffDays = Math.floor(diffHours / 24);
   return `${diffDays} ngày trước`;
 }
+
+// Reusable tenant filter expression for use in WHERE clauses
+const TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
 
 export class AnalyticsRepository extends BaseRepository {
   constructor() {
@@ -84,42 +88,64 @@ export class AnalyticsRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE stage = 'WON')::int as won_leads,
           COUNT(*) FILTER (WHERE stage = 'LOST')::int as lost_leads
         FROM leads l
-        WHERE 1=1 ${timeFilter}
+        WHERE l.${TENANT_FILTER} ${timeFilter}
       `);
 
       const prevLeadsResult = useTimeFilter
-        ? await client.query(`SELECT COUNT(*)::int as total FROM leads l WHERE 1=1 ${prevTimeFilter}`)
+        ? await client.query(`SELECT COUNT(*)::int as total FROM leads l WHERE l.${TENANT_FILTER} ${prevTimeFilter}`)
         : { rows: [{ total: 0 }] };
 
-      const leadsByStageResult = await client.query(`SELECT stage, COUNT(*)::int as count FROM leads GROUP BY stage`);
+      const leadsByStageResult = await client.query(`
+        SELECT stage, COUNT(*)::int as count
+        FROM leads
+        WHERE ${TENANT_FILTER}
+        GROUP BY stage
+      `);
 
-      const leadsBySourceResult = await client.query(`SELECT COALESCE(source, 'UNKNOWN') as source, COUNT(*)::int as count FROM leads GROUP BY source`);
+      const leadsBySourceResult = await client.query(`
+        SELECT COALESCE(source, 'UNKNOWN') as source, COUNT(*)::int as count
+        FROM leads
+        WHERE ${TENANT_FILTER}
+        GROUP BY source
+      `);
 
       const listingsResult = await client.query(`
-        SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE status = 'AVAILABLE')::int as available FROM listings
+        SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE status = 'AVAILABLE')::int as available
+        FROM listings
+        WHERE ${TENANT_FILTER}
       `);
 
       const proposalsResult = await client.query(`
-        SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE status = 'APPROVED')::int as approved FROM proposals
+        SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE status = 'APPROVED')::int as approved
+        FROM proposals
+        WHERE ${TENANT_FILTER}
       `);
 
       const contractsResult = await client.query(`
-        SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE status = 'SIGNED')::int as signed FROM contracts
+        SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE status = 'SIGNED')::int as signed
+        FROM contracts
+        WHERE ${TENANT_FILTER}
       `);
 
+      const commissionRate = parseFloat(process.env.COMMISSION_RATE || '0.02');
+
       const revenueResult = await client.query(`
-        SELECT COALESCE(SUM(final_price * 0.02), 0)::numeric as revenue
-        FROM proposals WHERE status = 'APPROVED'
-        ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : ''}
-      `);
+        SELECT COALESCE(SUM(final_price * $1), 0)::numeric as revenue
+        FROM proposals
+        WHERE ${TENANT_FILTER}
+          AND status = 'APPROVED'
+          ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : ''}
+      `, [commissionRate]);
 
       const prevRevenueResult = useTimeFilter
         ? await client.query(`
-            SELECT COALESCE(SUM(final_price * 0.02), 0)::numeric as revenue
-            FROM proposals WHERE status = 'APPROVED'
-            AND created_at >= NOW() - INTERVAL '${days * 2} days'
-            AND created_at < NOW() - INTERVAL '${days} days'
-          `)
+            SELECT COALESCE(SUM(final_price * $1), 0)::numeric as revenue
+            FROM proposals
+            WHERE ${TENANT_FILTER}
+              AND status = 'APPROVED'
+              AND created_at >= NOW() - INTERVAL '${days * 2} days'
+              AND created_at < NOW() - INTERVAL '${days} days'
+          `, [commissionRate])
         : { rows: [{ revenue: '0' }] };
 
       const pipelineResult = await client.query(`
@@ -129,8 +155,10 @@ export class AnalyticsRepository extends BaseRepository {
           COALESCE(SUM(p.final_price), 0)::numeric as total_value,
           COUNT(p.id)::int as deal_count
         FROM leads l
-        INNER JOIN proposals p ON l.id = p.lead_id
-        WHERE l.stage NOT IN ('WON', 'LOST') AND p.status IN ('APPROVED', 'PENDING_APPROVAL')
+        INNER JOIN proposals p ON l.id = p.lead_id AND p.tenant_id = l.tenant_id
+        WHERE l.${TENANT_FILTER}
+          AND l.stage NOT IN ('WON', 'LOST')
+          AND p.status IN ('APPROVED', 'PENDING_APPROVAL')
         GROUP BY l.stage, l.score->>'grade'
       `);
 
@@ -139,20 +167,25 @@ export class AnalyticsRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE direction = 'OUTBOUND')::int as total_outbound,
           COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND (metadata->>'isAi')::boolean = true)::int as ai_outbound
         FROM interactions
+        WHERE ${TENANT_FILTER}
       `);
 
       const salesVelocityResult = await client.query(`
         SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400), 0)::numeric as avg_days
-        FROM leads WHERE stage = 'WON'
-        ${useTimeFilter ? `AND updated_at >= NOW() - INTERVAL '${days} days'` : ''}
+        FROM leads
+        WHERE ${TENANT_FILTER}
+          AND stage = 'WON'
+          ${useTimeFilter ? `AND updated_at >= NOW() - INTERVAL '${days} days'` : ''}
       `);
 
       const prevSalesVelocityResult = useTimeFilter
         ? await client.query(`
             SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400), 0)::numeric as avg_days
-            FROM leads WHERE stage = 'WON'
-            AND updated_at >= NOW() - INTERVAL '${days * 2} days'
-            AND updated_at < NOW() - INTERVAL '${days} days'
+            FROM leads
+            WHERE ${TENANT_FILTER}
+              AND stage = 'WON'
+              AND updated_at >= NOW() - INTERVAL '${days * 2} days'
+              AND updated_at < NOW() - INTERVAL '${days} days'
           `)
         : { rows: [{ avg_days: '0' }] };
 
@@ -161,7 +194,8 @@ export class AnalyticsRepository extends BaseRepository {
           TO_CHAR(created_at, 'DD/MM') as date,
           COUNT(*)::int as count
         FROM leads
-        ${useTimeFilter ? `WHERE created_at >= NOW() - INTERVAL '${days} days'` : `WHERE created_at >= NOW() - INTERVAL '30 days'`}
+        WHERE ${TENANT_FILTER}
+          ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : `AND created_at >= NOW() - INTERVAL '30 days'`}
         GROUP BY TO_CHAR(created_at, 'DD/MM'), DATE(created_at)
         ORDER BY DATE(created_at) ASC
       `);
@@ -173,7 +207,8 @@ export class AnalyticsRepository extends BaseRepository {
           i.timestamp as created_at,
           l.name as lead_name
         FROM interactions i
-        LEFT JOIN leads l ON i.lead_id = l.id
+        LEFT JOIN leads l ON i.lead_id = l.id AND l.tenant_id = i.tenant_id
+        WHERE i.${TENANT_FILTER}
         ORDER BY i.timestamp DESC
         LIMIT 10
       `);
@@ -184,7 +219,8 @@ export class AnalyticsRepository extends BaseRepository {
           COALESCE((attributes->>'area')::numeric, 80) as area,
           COALESCE(price, 1000000000) / 1000000000.0 as price_ty
         FROM listings
-        WHERE status = 'AVAILABLE'
+        WHERE ${TENANT_FILTER}
+          AND status = 'AVAILABLE'
         ORDER BY created_at DESC
         LIMIT 20
       `);
@@ -201,8 +237,9 @@ export class AnalyticsRepository extends BaseRepository {
           END::int as close_rate,
           COUNT(l.id)::int as total_leads
         FROM users u
-        LEFT JOIN leads l ON l.assigned_to = u.id
-        WHERE u.role IN ('SALES', 'TEAM_LEAD')
+        LEFT JOIN leads l ON l.assigned_to = u.id AND l.tenant_id = u.tenant_id
+        WHERE u.${TENANT_FILTER}
+          AND u.role IN ('SALES', 'TEAM_LEAD')
         GROUP BY u.id, u.name, u.avatar
         ORDER BY deals DESC
         LIMIT 10
@@ -211,13 +248,14 @@ export class AnalyticsRepository extends BaseRepository {
       const revenueByMonthResult = await client.query(`
         SELECT
           TO_CHAR(created_at, 'YYYY-MM') as month,
-          SUM(final_price * 0.02)::numeric as revenue
+          SUM(final_price * $1)::numeric as revenue
         FROM proposals
-        WHERE status = 'APPROVED'
+        WHERE ${TENANT_FILTER}
+          AND status = 'APPROVED'
         GROUP BY TO_CHAR(created_at, 'YYYY-MM')
         ORDER BY month DESC
         LIMIT 12
-      `);
+      `, [commissionRate]);
 
       let pipelineValue = 0;
       let weightedProbSum = 0;
@@ -347,13 +385,14 @@ export class AnalyticsRepository extends BaseRepository {
     return this.withTenant(tenantId, async (client) => {
       const days = getDaysInterval(timeRange);
       const useTimeFilter = timeRange && timeRange !== 'all';
-      const timeFilter = useTimeFilter ? `WHERE created_at >= NOW() - INTERVAL '${days} days'` : '';
       const timeFilterAnd = useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : '';
 
       const funnelResult = await client.query(`
         SELECT stage, COUNT(*)::int as count
         FROM leads
-        ${useTimeFilter ? `WHERE stage != 'LOST' AND created_at >= NOW() - INTERVAL '${days} days'` : `WHERE stage != 'LOST'`}
+        WHERE ${TENANT_FILTER}
+          AND stage != 'LOST'
+          ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : ''}
         GROUP BY stage
         ORDER BY
           CASE stage
@@ -374,8 +413,9 @@ export class AnalyticsRepository extends BaseRepository {
           COUNT(l.id) FILTER (WHERE l.stage = 'WON')::int as won_count,
           COALESCE(SUM(p.final_price) FILTER (WHERE l.stage = 'WON'), 0)::numeric as revenue
         FROM leads l
-        LEFT JOIN proposals p ON l.id = p.lead_id AND p.status = 'APPROVED'
-        WHERE 1=1 ${timeFilterAnd.replace('created_at', 'l.created_at')}
+        LEFT JOIN proposals p ON l.id = p.lead_id AND p.tenant_id = l.tenant_id AND p.status = 'APPROVED'
+        WHERE l.${TENANT_FILTER}
+          ${timeFilterAnd.replace('created_at', 'l.created_at')}
         GROUP BY l.source
         ORDER BY revenue DESC
       `);
@@ -383,7 +423,8 @@ export class AnalyticsRepository extends BaseRepository {
       const campaignCostsResult = await client.query(`
         SELECT source, COALESCE(SUM(cost), 0)::numeric as total_cost
         FROM campaign_costs
-        ${useTimeFilter ? `WHERE period >= TO_CHAR(NOW() - INTERVAL '${days} days', 'YYYY-MM')` : ''}
+        WHERE ${TENANT_FILTER}
+          ${useTimeFilter ? `AND period >= TO_CHAR(NOW() - INTERVAL '${days} days', 'YYYY-MM')` : ''}
         GROUP BY source
       `);
 
@@ -415,7 +456,8 @@ export class AnalyticsRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE stage = 'WON')::int as won,
           COUNT(*) FILTER (WHERE stage = 'LOST')::int as lost
         FROM leads
-        ${timeFilter}
+        WHERE ${TENANT_FILTER}
+          ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : ''}
         GROUP BY TO_CHAR(created_at, 'YYYY-MM')
         ORDER BY period DESC
         LIMIT 12
@@ -445,7 +487,8 @@ export class AnalyticsRepository extends BaseRepository {
       const campaignCostsListResult = await client.query(`
         SELECT id, campaign_name, source, cost, period, created_at
         FROM campaign_costs
-        ${useTimeFilter ? `WHERE period >= TO_CHAR(NOW() - INTERVAL '${days} days', 'YYYY-MM')` : ''}
+        WHERE ${TENANT_FILTER}
+          ${useTimeFilter ? `AND period >= TO_CHAR(NOW() - INTERVAL '${days} days', 'YYYY-MM')` : ''}
         ORDER BY created_at DESC
         LIMIT 100
       `);
@@ -471,7 +514,7 @@ export class AnalyticsRepository extends BaseRepository {
   async updateCampaignCost(tenantId: string, id: string, cost: number): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `UPDATE campaign_costs SET cost = $1 WHERE id = $2 RETURNING *`,
+        `UPDATE campaign_costs SET cost = $1 WHERE id = $2 AND ${TENANT_FILTER} RETURNING *`,
         [cost, id]
       );
       if (result.rows.length === 0) throw new Error('Campaign cost not found');
@@ -494,7 +537,7 @@ export class AnalyticsRepository extends BaseRepository {
   async deleteCampaignCost(tenantId: string, id: string): Promise<void> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `DELETE FROM campaign_costs WHERE id = $1 RETURNING id`,
+        `DELETE FROM campaign_costs WHERE id = $1 AND ${TENANT_FILTER} RETURNING id`,
         [id]
       );
       if (result.rows.length === 0) throw new Error('Campaign cost not found');

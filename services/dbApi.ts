@@ -91,17 +91,17 @@ class DatabaseApiClient {
   async getCurrentUser() {
     if (this._isLoggedOut) return null;
     if (this.cachedCurrentUser) return this.cachedCurrentUser;
-    if (this.currentUserPromise) return this.currentUserPromise;
-    this.currentUserPromise = userApi.getMe()
-      .then(result => {
-        this.cachedCurrentUser = result.user;
-        this.currentUserPromise = null;
-        return result.user;
-      })
-      .catch(() => {
-        this.currentUserPromise = null;
-        return null;
-      });
+    if (!this.currentUserPromise) {
+      this.currentUserPromise = userApi.getMe()
+        .then(result => {
+          this.cachedCurrentUser = result.user;
+          return result.user;
+        })
+        .catch(() => null)
+        .finally(() => {
+          this.currentUserPromise = null;
+        });
+    }
     return this.currentUserPromise;
   }
 
@@ -265,7 +265,7 @@ class DatabaseApiClient {
     return listingApi.toggleFavorite(listingId);
   }
 
-  async getFavorites(page = 1, pageSize = 1000) {
+  async getFavorites(page = 1, pageSize = 100) {
     try {
       const all = (await listingApi.getFavorites()) as any[];
       const total = all.length;
@@ -1321,7 +1321,7 @@ class DatabaseApiClient {
     return { data: [], format: params?.format || 'json', exportedAt: new Date().toISOString() };
   }
 
-  async updateOnboardingProgress(step: number) {
+  async updateOnboardingProgress(step: number, _completed?: boolean) {
     return { step, completed: step >= 5 };
   }
 
@@ -1329,21 +1329,6 @@ class DatabaseApiClient {
     return true;
   }
 
-  async aggregate(query: any) {
-    return [];
-  }
-
-  async exec(sql: string) {
-    return [];
-  }
-
-  async prepare(sql: string) {
-    return { execute: async () => [] };
-  }
-
-  async getListingWithSensitiveData(id: string) {
-    return this.getListingById(id);
-  }
 }
 
 const dbApi = new DatabaseApiClient();

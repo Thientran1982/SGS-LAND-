@@ -1,3 +1,4 @@
+import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { leadRepository } from '../repositories/leadRepository';
 import { auditRepository } from '../repositories/auditRepository';
@@ -10,8 +11,8 @@ export function createLeadRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const tenantId = user.tenantId;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 20;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 200));
 
       const filters: any = {};
       if (req.query.stage) filters.stage = req.query.stage;
@@ -22,8 +23,10 @@ export function createLeadRoutes(authenticateToken: any) {
       if (req.query.slaBreached) filters.slaBreached = req.query.slaBreached === 'true';
       if (req.query.sort) filters.sort = req.query.sort as string;
       if (req.query.order) filters.order = req.query.order as 'asc' | 'desc';
-      if (req.query.score_gte) filters.score_gte = parseFloat(req.query.score_gte as string);
-      if (req.query.score_lte) filters.score_lte = parseFloat(req.query.score_lte as string);
+      const scoreGte = parseFloat(req.query.score_gte as string);
+      const scoreLte = parseFloat(req.query.score_lte as string);
+      if (req.query.score_gte && !isNaN(scoreGte)) filters.score_gte = scoreGte;
+      if (req.query.score_lte && !isNaN(scoreLte)) filters.score_lte = scoreLte;
 
       const result = await leadRepository.findLeads(
         tenantId,
@@ -40,7 +43,7 @@ export function createLeadRoutes(authenticateToken: any) {
     }
   });
 
-  router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const lead = await leadRepository.findByIdWithAccess(
@@ -106,7 +109,7 @@ export function createLeadRoutes(authenticateToken: any) {
     }
   });
 
-  router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const lead = await leadRepository.update(
@@ -130,7 +133,7 @@ export function createLeadRoutes(authenticateToken: any) {
     }
   });
 
-  router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {

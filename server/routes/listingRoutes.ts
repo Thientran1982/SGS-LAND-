@@ -1,3 +1,4 @@
+import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
@@ -8,23 +9,27 @@ export function createListingRoutes(authenticateToken: any) {
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 20;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 200));
 
       const filters: any = {};
       if (req.query.type) filters.type = req.query.type;
       if (req.query.types) filters.type_in = (req.query.types as string).split(',');
       if (req.query.status) filters.status = req.query.status;
       if (req.query.transaction) filters.transaction = req.query.transaction;
-      if (req.query.priceMin) filters.price_gte = parseFloat(req.query.priceMin as string);
-      if (req.query.priceMax) filters.price_lte = parseFloat(req.query.priceMax as string);
-      if (req.query.areaMin) filters.area_gte = parseFloat(req.query.areaMin as string);
-      if (req.query.areaMax) filters.area_lte = parseFloat(req.query.areaMax as string);
+      const priceMin = parseFloat(req.query.priceMin as string);
+      const priceMax = parseFloat(req.query.priceMax as string);
+      const areaMin = parseFloat(req.query.areaMin as string);
+      const areaMax = parseFloat(req.query.areaMax as string);
+      if (req.query.priceMin && !isNaN(priceMin)) filters.price_gte = priceMin;
+      if (req.query.priceMax && !isNaN(priceMax)) filters.price_lte = priceMax;
+      if (req.query.areaMin && !isNaN(areaMin)) filters.area_gte = areaMin;
+      if (req.query.areaMax && !isNaN(areaMax)) filters.area_lte = areaMax;
       if (req.query.search) filters.search = req.query.search;
       if (req.query.projectCode) filters.projectCode = req.query.projectCode;
       if (req.query.isVerified) filters.isVerified = req.query.isVerified === 'true';
 
-      const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters);
+      const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
       res.json(result);
     } catch (error) {
       console.error('Error fetching listings:', error);
@@ -43,11 +48,16 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
-  router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const listing = await listingRepository.findById(user.tenantId, req.params.id);
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(user.role) && (listing as any).createdBy !== user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
 
       // Respond immediately, increment view count in background
       res.json(listing);
@@ -93,12 +103,21 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
-  router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const images = req.body.images;
       if (Array.isArray(images) && images.length > 10) {
         return res.status(400).json({ error: 'Maximum 10 images allowed per listing' });
+      }
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(user.role)) {
+        const existing = await listingRepository.findById(user.tenantId, req.params.id);
+        if (!existing) return res.status(404).json({ error: 'Listing not found' });
+        if ((existing as any).createdBy !== user.id) {
+          return res.status(403).json({ error: 'You can only edit listings you created' });
+        }
       }
 
       const listing = await listingRepository.update(user.tenantId, req.params.id, req.body);
@@ -120,7 +139,7 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
-  router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {

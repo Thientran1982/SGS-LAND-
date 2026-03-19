@@ -6,9 +6,9 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
 
   router.get('/safety-logs', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 50;
+      const tenantId = (req as any).user?.tenantId;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 50, 200));
       const result = await aiGovernanceRepository.getSafetyLogs(tenantId, page, pageSize);
       res.json(result);
     } catch (error) {
@@ -19,7 +19,7 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
 
   router.get('/prompt-templates', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+      const tenantId = (req as any).user?.tenantId;
       const templates = await aiGovernanceRepository.getPromptTemplates(tenantId);
       res.json(templates);
     } catch (error) {
@@ -30,7 +30,7 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
 
   router.post('/prompt-templates', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+      const tenantId = (req as any).user?.tenantId;
       const user = (req as any).user;
       if (user?.role !== 'ADMIN' && user?.role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Only admins can create prompt templates' });
@@ -45,7 +45,7 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
 
   router.put('/prompt-templates/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+      const tenantId = (req as any).user?.tenantId;
       const user = (req as any).user;
       if (user?.role !== 'ADMIN' && user?.role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Only admins can update prompt templates' });
@@ -61,7 +61,7 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
 
   router.delete('/prompt-templates/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+      const tenantId = (req as any).user?.tenantId;
       const user = (req as any).user;
       if (user?.role !== 'ADMIN' && user?.role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Only admins can delete prompt templates' });
@@ -77,7 +77,7 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
 
   router.get('/config', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+      const tenantId = (req as any).user?.tenantId;
       const config = await aiGovernanceRepository.getAiConfig(tenantId);
       res.json(config);
     } catch (error) {
@@ -88,7 +88,7 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
 
   router.put('/config', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+      const tenantId = (req as any).user?.tenantId;
       const user = (req as any).user;
       if (user?.role !== 'ADMIN' && user?.role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Only admins can update AI config' });

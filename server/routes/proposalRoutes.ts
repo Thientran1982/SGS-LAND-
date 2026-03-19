@@ -1,7 +1,7 @@
+import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { proposalRepository } from '../repositories/proposalRepository';
 import { auditRepository } from '../repositories/auditRepository';
-import { DEFAULT_TENANT_ID } from '../constants';
 
 export function createProposalRoutes(authenticateToken: any) {
   const router = Router();
@@ -9,8 +9,8 @@ export function createProposalRoutes(authenticateToken: any) {
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 20;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 200));
 
       const filters: any = {};
       if (req.query.status) filters.status = req.query.status;
@@ -41,8 +41,8 @@ export function createProposalRoutes(authenticateToken: any) {
 
   router.get('/token/:token', async (req: Request, res: Response) => {
     try {
-      const tenantId = (req.query.tenantId as string) || DEFAULT_TENANT_ID;
-      const proposal = await proposalRepository.findByToken(tenantId, req.params.token);
+      // Global lookup — token is the only credential needed (no tenantId from caller).
+      const proposal = await proposalRepository.findByTokenGlobal(req.params.token);
       if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
       res.json(proposal);
     } catch (error) {
@@ -51,11 +51,17 @@ export function createProposalRoutes(authenticateToken: any) {
     }
   });
 
-  router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const proposal = await proposalRepository.findById(user.tenantId, req.params.id);
       if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(user.role) && (proposal as any).createdById !== user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
       res.json(proposal);
     } catch (error) {
       console.error('Error fetching proposal:', error);
@@ -71,6 +77,13 @@ export function createProposalRoutes(authenticateToken: any) {
       if (!leadId || !listingId || !basePrice || !finalPrice) {
         return res.status(400).json({ error: 'Missing required fields: leadId, listingId, basePrice, finalPrice' });
       }
+
+      const bpNum = Number(basePrice);
+      const fpNum = Number(finalPrice);
+      const discNum = Number(discountAmount || 0);
+      if (isNaN(bpNum) || bpNum < 0) return res.status(400).json({ error: 'Invalid basePrice: must be a non-negative number' });
+      if (isNaN(fpNum) || fpNum < 0) return res.status(400).json({ error: 'Invalid finalPrice: must be a non-negative number' });
+      if (isNaN(discNum) || discNum < 0) return res.status(400).json({ error: 'Invalid discountAmount: must be a non-negative number' });
 
       const proposal = await proposalRepository.create(user.tenantId, {
         leadId, listingId, basePrice,
@@ -130,7 +143,7 @@ export function createProposalRoutes(authenticateToken: any) {
     }
   });
 
-  router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const proposal = await proposalRepository.findById(user.tenantId, req.params.id);

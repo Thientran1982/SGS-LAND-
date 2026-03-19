@@ -492,6 +492,9 @@ export async function initializeDatabase() {
       'CREATE INDEX IF NOT EXISTS idx_tasks_tenant_assigned ON tasks(tenant_id, assigned_to)',
       'CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON audit_logs(tenant_id, timestamp DESC)',
       'CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role)',
+      'CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(tenant_id, created_at DESC)',
+      'CREATE INDEX IF NOT EXISTS idx_user_sessions_user_expires ON user_sessions(user_id, expires_at)',
+      'CREATE INDEX IF NOT EXISTS idx_interactions_lead_dir ON interactions(lead_id, direction, timestamp DESC)',
     ];
     for (const idx of indexes) {
       await client.query(idx);

@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import { analyticsRepository } from '../repositories/analyticsRepository';
-import { auditRepository } from '../repositories/auditRepository';
 
 export function createAnalyticsRoutes(authenticateToken: any) {
   const router = Router();
@@ -17,27 +16,8 @@ export function createAnalyticsRoutes(authenticateToken: any) {
     }
   });
 
-  router.get('/audit-logs', authenticateToken, async (req: Request, res: Response) => {
-    try {
-      const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Only admins can view audit logs' });
-      }
-
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 50;
-      const filters: any = {};
-      if (req.query.entityType) filters.entityType = req.query.entityType;
-      if (req.query.action) filters.action = req.query.action;
-      if (req.query.since) filters.since = req.query.since;
-
-      const result = await auditRepository.findLogs(user.tenantId, { page, pageSize }, filters);
-      res.json(result);
-    } catch (error) {
-      console.error('Error fetching audit logs:', error);
-      res.status(500).json({ error: 'Failed to fetch audit logs' });
-    }
-  });
+  // audit-logs endpoint lives in enterpriseRoutes (/api/enterprise/audit-logs)
+  // to avoid duplicate routes and to keep enterprise/compliance endpoints together
 
   router.get('/bi-marts', authenticateToken, async (req: Request, res: Response) => {
     try {
@@ -61,10 +41,14 @@ export function createAnalyticsRoutes(authenticateToken: any) {
       if (!source || cost === undefined || !period) {
         return res.status(400).json({ error: 'source, cost, and period are required' });
       }
+      const parsedCost = Number(cost);
+      if (isNaN(parsedCost) || parsedCost < 0) {
+        return res.status(400).json({ error: 'cost must be a non-negative number' });
+      }
       const result = await analyticsRepository.createCampaignCost(user.tenantId, {
         campaignName: campaignName || source,
         source,
-        cost: Number(cost),
+        cost: parsedCost,
         period,
       });
       res.status(201).json(result);

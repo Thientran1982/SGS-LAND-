@@ -7,6 +7,17 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
+    "img-src 'self' data: https:; " +
+    "connect-src 'self' wss: https://generativelanguage.googleapis.com; " +
+    "frame-ancestors 'none';"
+  );
 
   if (process.env.NODE_ENV === 'production') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -28,7 +39,8 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
       res.setHeader('Access-Control-Allow-Origin', origin);
     }
   } else if (!isProduction) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    const devOrigin = origin || 'http://localhost:5000';
+    res.setHeader('Access-Control-Allow-Origin', devOrigin);
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
