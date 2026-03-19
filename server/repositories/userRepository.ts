@@ -227,13 +227,14 @@ export class UserRepository extends BaseRepository {
     name: string;
     email: string;
     role?: string;
+    phone?: string;
   }): Promise<UserRow> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `INSERT INTO users (tenant_id, name, email, role, status, source)
-         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, 'PENDING', 'INVITE')
+        `INSERT INTO users (tenant_id, name, email, phone, role, status, source)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, 'PENDING', 'INVITE')
          RETURNING *`,
-        [data.name, data.email, data.role || 'VIEWER']
+        [data.name, data.email, data.phone || null, data.role || 'VIEWER']
       );
       return this.rowToEntity<UserRow>(result.rows[0]);
     });
