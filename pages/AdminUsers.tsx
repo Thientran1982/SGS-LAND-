@@ -67,83 +67,136 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
 });
 
 // --- SUB-COMPONENT: INVITE MODAL ---
+interface InviteFormData { name: string; email: string; role: UserRole; phone: string; }
 interface InviteModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (email: string, role: UserRole) => Promise<void>;
+    onConfirm: (data: InviteFormData) => Promise<void>;
     t: any;
 }
 
+const VN_PHONE_RE = /^(03|05|07|08|09)\d{8}$/;
+
 const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfirm, t }) => {
+    const [name, setName]   = useState('');
     const [email, setEmail] = useState('');
-    const [role, setRole] = useState<UserRole>(UserRole.SALES);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [phone, setPhone] = useState('');
+    const [role, setRole]   = useState<UserRole>(UserRole.SALES);
+    const [loading, setLoading]   = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         if (isOpen) {
-            setEmail('');
-            setRole(UserRole.SALES);
-            setError('');
-            setLoading(false);
+            setName(''); setEmail(''); setPhone('');
+            setRole(UserRole.SALES); setErrors({}); setLoading(false);
         }
     }, [isOpen]);
 
+    const validate = (): boolean => {
+        const errs: Record<string, string> = {};
+        if (!name.trim()) errs.name = 'Họ tên không được để trống';
+        if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errs.email = t('auth.error_email_invalid');
+        if (phone && !VN_PHONE_RE.test(phone.replace(/\s/g, '')))
+            errs.phone = 'Số điện thoại không hợp lệ (VD: 0901234567)';
+        setErrors(errs);
+        return Object.keys(errs).length === 0;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-
-        if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-            setError(t('auth.error_email_invalid'));
-            return;
-        }
-
+        if (!validate()) return;
         setLoading(true);
         try {
-            await onConfirm(email, role);
+            await onConfirm({ name: name.trim(), email: email.trim().toLowerCase(), role, phone: phone.trim() });
             onClose();
         } catch (err: any) {
-            setError(err.message || t('common.error'));
+            setErrors({ submit: err.message || t('common.error') });
         } finally {
             setLoading(false);
         }
     };
 
-    const roleOptions = useMemo(() => 
+    const roleOptions = useMemo(() =>
         Object.values(UserRole).map(r => ({ value: r, label: t(`role.${r}`) }))
     , [t]);
 
     if (!isOpen) return null;
 
+    const inputCls = (field: string) =>
+        `w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
+        ${errors[field] ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-400' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`;
+
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
             <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 pb-8 sm:pb-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up max-h-[92dvh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('admin.users.invite_title')}</h3>
-                    <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
+                <div className="flex justify-between items-center mb-5">
+                    <div>
+                        <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('admin.users.invite_title')}</h3>
+                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Thành viên sẽ nhận email để đặt mật khẩu</p>
+                    </div>
+                    <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[var(--glass-surface-hover)] transition-colors">
                         {ICONS.CLOSE}
                     </button>
                 </div>
 
+                {errors.submit && (
+                    <div className="mb-4 px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-600 font-medium">
+                        {errors.submit}
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Họ tên */}
                     <div>
-                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">
+                            Họ và tên <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            className={inputCls('name')}
+                            placeholder="Nguyễn Văn A"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            autoFocus
+                        />
+                        {errors.name && <p className="text-xs text-rose-500 font-medium mt-1">{errors.name}</p>}
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">
                             {t('admin.users.email_label')} <span className="text-rose-500">*</span>
                         </label>
-                        <input 
-                            type="email" 
-                            className={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all ${error ? 'border-rose-300 bg-rose-50 focus:ring-rose-500/20' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`}
+                        <input
+                            type="email"
+                            className={inputCls('email')}
                             placeholder={t('admin.users.placeholder_email')}
                             value={email}
                             onChange={e => setEmail(e.target.value)}
-                            autoFocus
                         />
-                        {error && <p className="text-xs2 text-rose-500 font-bold mt-1">{error}</p>}
+                        {errors.email && <p className="text-xs text-rose-500 font-medium mt-1">{errors.email}</p>}
                     </div>
 
+                    {/* Số điện thoại (optional) */}
                     <div>
-                        <Dropdown 
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5 flex items-center gap-1">
+                            Số điện thoại
+                            <span className="text-3xs font-normal text-[var(--text-muted)] normal-case">(không bắt buộc)</span>
+                        </label>
+                        <input
+                            type="tel"
+                            className={inputCls('phone')}
+                            placeholder="0901 234 567"
+                            value={phone}
+                            onChange={e => setPhone(e.target.value)}
+                        />
+                        {errors.phone && <p className="text-xs text-rose-500 font-medium mt-1">{errors.phone}</p>}
+                    </div>
+
+                    {/* Vai trò */}
+                    <div>
+                        <Dropdown
                             label={t('admin.users.role_label')}
                             value={role}
                             onChange={(v) => setRole(v as UserRole)}
@@ -151,26 +204,27 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             className="w-full"
                             placement="top"
                         />
-                        
-                        <div className="mt-2 bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex gap-2 animate-enter">
+                        <div className="mt-2 bg-indigo-50/60 border border-indigo-100 rounded-xl p-3 flex gap-2">
                             <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
                             <div>
-                                <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
+                                <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-0.5">{t('admin.users.role_permissions')}</h4>
                                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                                    {t(`role_desc.${role}`) !== `role_desc.${role}` ? t(`role_desc.${role}`) : "Full system access including billing and user management."}
+                                    {t(`role_desc.${role}`) !== `role_desc.${role}` ? t(`role_desc.${role}`) : 'Full system access including billing and user management.'}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="pt-2">
-                        <button 
-                            type="submit" 
-                            disabled={loading || !email}
-                            className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all disabled:opacity-70 flex items-center justify-center gap-2 active:scale-95"
+                    <div className="pt-1">
+                        <button
+                            type="submit"
+                            disabled={loading || !name.trim() || !email.trim()}
+                            className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center justify-center gap-2 active:scale-95"
                         >
-                            {loading && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
-                            {t('admin.users.btn_send')}
+                            {loading
+                                ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                : ICONS.SEND}
+                            {loading ? 'Đang gửi lời mời…' : t('admin.users.btn_send')}
                         </button>
                     </div>
                 </form>
@@ -198,6 +252,7 @@ export const AdminUsers: React.FC = () => {
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('ALL');
+    const [statusFilter, setStatusFilter] = useState('ALL');
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [sort, setSort] = useState<{ field: string, order: 'asc' | 'desc' }>({ field: 'createdAt', order: 'desc' });
@@ -224,7 +279,7 @@ export const AdminUsers: React.FC = () => {
 
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, roleFilter, sort]);
+    }, [debouncedSearch, roleFilter, statusFilter, sort]);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -238,7 +293,7 @@ export const AdminUsers: React.FC = () => {
                 return;
             }
 
-            const usersData = await db.getTenantUsers(page, pageSize, debouncedSearch, roleFilter === 'ALL' ? undefined : roleFilter, sort);
+            const usersData = await db.getTenantUsers(page, pageSize, debouncedSearch, roleFilter === 'ALL' ? undefined : roleFilter, sort, statusFilter === 'ALL' ? undefined : statusFilter);
             setUsers(usersData?.data || []);
             setTotalUsers(usersData?.total || 0);
             setStats(usersData?.stats || { activeCount: 0, pendingCount: 0 });
@@ -248,7 +303,7 @@ export const AdminUsers: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [debouncedSearch, roleFilter, page, pageSize, sort]);
+    }, [debouncedSearch, roleFilter, statusFilter, page, pageSize, sort]);
 
     useEffect(() => {
         fetchData();
@@ -339,16 +394,22 @@ export const AdminUsers: React.FC = () => {
         }
     };
 
-    const handleInviteConfirm = async (email: string, role: UserRole) => {
-        const name = email.split('@')[0];
-        await db.inviteUser({ name, email, role });
-        notify(t('admin.users.invite_sent', { email }), 'success');
+    const handleInviteConfirm = async (data: InviteFormData) => {
+        await db.inviteUser({ name: data.name, email: data.email, role: data.role, phone: data.phone || undefined });
+        notify(t('admin.users.invite_sent', { email: data.email }), 'success');
         fetchData();
     };
 
     const roleOptions = useMemo(() => [
         { value: 'ALL', label: t('admin.users.all_roles') },
         ...Object.values(UserRole).map(r => ({ value: r, label: t(`role.${r}`) }))
+    ], [t]);
+
+    const statusOptions = useMemo(() => [
+        { value: 'ALL', label: t('admin.users.all_statuses') || 'Tất cả TT' },
+        { value: CommonStatus.ACTIVE, label: t('admin.users.status_active') || 'Hoạt động' },
+        { value: CommonStatus.PENDING, label: t('admin.users.status_pending') || 'Chờ duyệt' },
+        { value: CommonStatus.INACTIVE, label: t('admin.users.status_inactive') || 'Đã khóa' },
     ], [t]);
 
     const userRoleOptions = useMemo(() => Object.values(UserRole).map(r => ({ value: r, label: t(`role.${r}`) })), [t]);
@@ -453,8 +514,12 @@ export const AdminUsers: React.FC = () => {
                         )}
                     </div>
                     {/* Dropdown lọc vai trò */}
-                    <div className="w-36 sm:w-48 shrink-0">
+                    <div className="w-32 sm:w-44 shrink-0">
                         <Dropdown value={roleFilter} onChange={(v) => setRoleFilter(v as string)} options={roleOptions} className="text-xs" />
+                    </div>
+                    {/* Dropdown lọc trạng thái */}
+                    <div className="w-28 sm:w-36 shrink-0">
+                        <Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} className="text-xs" />
                     </div>
                 </div>
             </div>

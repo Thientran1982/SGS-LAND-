@@ -789,11 +789,12 @@ class DatabaseApiClient {
     return userApi.deleteUser(id);
   }
 
-  async getTenantUsers(page = 1, pageSize = 50, search?: string, role?: string, sort?: any) {
+  async getTenantUsers(page = 1, pageSize = 50, search?: string, role?: string, sort?: any, status?: string) {
     try {
       const params: any = {};
       if (search) params.search = search;
       if (role) params.role = role;
+      if (status) params.status = status;
       if (sort?.field) params.sortField = sort.field;
       if (sort?.order) params.sortOrder = sort.order;
       const result = await userApi.getUsers(page, pageSize, params);
