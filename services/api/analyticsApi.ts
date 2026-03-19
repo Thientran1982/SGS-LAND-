@@ -21,4 +21,7 @@ export const analyticsApi = {
 
   getVisitorStats: (days?: number): Promise<any> =>
     api.get('/api/analytics/visitors', days ? { days } : undefined),
+
+  getSystemMetrics: (): Promise<any> =>
+    api.get('/api/system/metrics'),
 };

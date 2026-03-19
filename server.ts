@@ -61,6 +61,26 @@ async function startServer() {
   app.use(sanitizeInput);
   app.use(requestLogger);
 
+  // Real-time request metrics (rolling 60-second window)
+  interface RequestSample { ts: number; durationMs: number; status: number; }
+  const requestSamples: RequestSample[] = [];
+  const METRICS_WINDOW_MS = 60_000;
+
+  app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      const durationMs = Date.now() - start;
+      const now = Date.now();
+      requestSamples.push({ ts: now, durationMs, status: res.statusCode });
+      // Evict samples older than the window
+      const cutoff = now - METRICS_WINDOW_MS;
+      while (requestSamples.length > 0 && requestSamples[0].ts < cutoff) {
+        requestSamples.shift();
+      }
+    });
+    next();
+  });
+
   const isProduction = process.env.NODE_ENV === 'production';
   if (!process.env.JWT_SECRET) {
     if (isProduction) {
@@ -773,6 +793,42 @@ async function startServer() {
       });
     } catch (error) {
       res.status(500).json({ status: "error", message: "Health check failed" });
+    }
+  });
+
+  // Real server-side traffic metrics (no auth required — public status endpoint)
+  app.get("/api/system/metrics", async (_req, res) => {
+    try {
+      const now = Date.now();
+      const window60s = requestSamples.filter(s => s.ts >= now - 60_000);
+      const window5s  = requestSamples.filter(s => s.ts >= now - 5_000);
+
+      const totalRequests60s = window60s.length;
+      const rps = Math.round((window5s.length / 5) * 10) / 10;
+      const avgLatencyMs = window60s.length > 0
+        ? Math.round(window60s.reduce((sum, s) => sum + s.durationMs, 0) / window60s.length)
+        : 0;
+      const errorCount = window60s.filter(s => s.status >= 500).length;
+
+      // Real DB latency from a quick ping
+      let dbLatencyMs = 0;
+      try {
+        const pingStart = Date.now();
+        await pool.query('SELECT 1');
+        dbLatencyMs = Date.now() - pingStart;
+      } catch { /* leave at 0 */ }
+
+      res.json({
+        rps,
+        totalRequests60s,
+        avgLatencyMs,
+        dbLatencyMs,
+        errorCount,
+        connectedClients: io.engine?.clientsCount || 0,
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
+      res.status(500).json({ error: 'metrics unavailable' });
     }
   });
 

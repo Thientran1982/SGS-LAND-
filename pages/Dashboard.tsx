@@ -9,7 +9,6 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/dbApi';
 import { analyticsApi } from '../services/api/analyticsApi';
-import { systemService } from '../services/systemService';
 import { AnalyticsSummary } from '../types';
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
@@ -149,7 +148,7 @@ const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
 
 // --- GEOLOCATION TABLE ---
 const GeoLocationTable = memo(({ t }: { t: any }) => {
-    const { data: visitorStats, isLoading } = useQuery({
+    const { data: visitorStats, isLoading, isError } = useQuery({
         queryKey: ['visitorStats'],
         queryFn: () => analyticsApi.getVisitorStats(30),
         staleTime: 60000,
@@ -160,6 +159,8 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
     const cities: { city: string; count: number }[] = visitorStats?.topCities || [];
     const totalVisits: number = visitorStats?.totalVisits || 0;
     const uniqueIps: number = visitorStats?.uniqueIps || 0;
+    const geoVisits: number = countries.reduce((sum, c) => sum + c.count, 0);
+    const geoCoverage: number = totalVisits > 0 ? Math.round((geoVisits / totalVisits) * 100) : 0;
 
     const FLAG_BASE = 'https://flagcdn.com/16x12';
 
@@ -173,16 +174,28 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                 <div className="flex items-center justify-center h-40">
                     <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
+            ) : isError ? (
+                <div className="flex flex-col items-center justify-center h-40 gap-2 text-[var(--text-tertiary)]">
+                    <svg className="w-8 h-8 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span className="text-xs">Không thể tải dữ liệu địa lý</span>
+                </div>
             ) : (
                 <div className="flex flex-col gap-4 flex-1 min-h-0">
-                    <div className="flex gap-4">
+                    <div className="flex gap-3">
                         <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
                             <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">Tổng lượt truy cập</div>
                             <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{totalVisits.toLocaleString()}</div>
+                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">30 ngày gần nhất</div>
                         </div>
                         <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
                             <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">IP Duy nhất</div>
                             <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{uniqueIps.toLocaleString()}</div>
+                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">Nguồn truy cập</div>
+                        </div>
+                        <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
+                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">Có dữ liệu GEO</div>
+                            <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{geoCoverage}<span className="text-sm ml-0.5">%</span></div>
+                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">{geoVisits}/{totalVisits} lượt</div>
                         </div>
                     </div>
 
@@ -190,7 +203,10 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                         <div className="flex flex-col min-h-0">
                             <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Top Quốc gia</div>
                             {countries.length === 0 ? (
-                                <div className="flex items-center justify-center h-20 text-xs text-[var(--text-tertiary)] opacity-60">Chưa có dữ liệu</div>
+                                <div className="flex flex-col items-center justify-center h-20 gap-1">
+                                    <span className="text-xs text-[var(--text-tertiary)] opacity-60">Chưa có dữ liệu IP công khai</span>
+                                    <span className="text-3xs text-[var(--text-tertiary)] opacity-40">Truy cập từ localhost không có GEO</span>
+                                </div>
                             ) : (
                                 <div className="overflow-y-auto no-scrollbar space-y-1.5 flex-1">
                                     {countries.slice(0, 8).map((c, i) => {
@@ -226,7 +242,10 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                         <div className="flex flex-col min-h-0">
                             <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Top Thành phố</div>
                             {cities.length === 0 ? (
-                                <div className="flex items-center justify-center h-20 text-xs text-[var(--text-tertiary)] opacity-60">Chưa có dữ liệu</div>
+                                <div className="flex flex-col items-center justify-center h-20 gap-1">
+                                    <span className="text-xs text-[var(--text-tertiary)] opacity-60">Chưa có dữ liệu thành phố</span>
+                                    <span className="text-3xs text-[var(--text-tertiary)] opacity-40">Truy cập từ localhost không có GEO</span>
+                                </div>
                             ) : (
                                 <div className="overflow-y-auto no-scrollbar space-y-1.5 flex-1">
                                     {cities.slice(0, 8).map((c, i) => {
@@ -265,60 +284,34 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
 // --- REALTIME TRAFFIC WIDGET ---
 const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
     const [data, setData] = useState<any[]>([]);
-    const [stats, setStats] = useState({ rps: 0, latency: 0 });
+    const [stats, setStats] = useState({ rps: 0, latency: 0, dbLatency: 0, errors: 0 });
     const colors = theme?.colors || {};
-    const { socket, isConnected } = useSocket();
+    const { isConnected } = useSocket();
     const { language } = useTranslation();
 
+    // Poll real server metrics every 5 seconds
     useEffect(() => {
-        // Start simulation backend
-        systemService.startTrafficSimulation(false, 0.05);
-        
-        // Listen to WebSocket for real-time traffic data if connected
-        if (isConnected) {
-            const handleTraffic = (trafficData: any) => {
-                // Assuming the server broadcasts 'traffic_update'
-                // For this demo, we'll still use the mock service but driven by interval
-                // In a real app, this would be:
-                // setStats({ rps: trafficData.rps, latency: trafficData.latency });
-                // setData(prev => [...prev.slice(-19), { time: trafficData.time, rps: trafficData.rps, latency: trafficData.latency }]);
-            };
-            socket.on('traffic_update', handleTraffic);
-            return () => { socket.off('traffic_update', handleTraffic); };
-        }
-    }, [isConnected, socket]);
-
-    // Fallback/Mock logic driven by interval (simulating WS stream)
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const now = Date.now();
-            const logs = systemService.getRecentLogs();
-            const recentTraffic = logs.filter(l => l.source === 'TRAFFIC' && (now - new Date(l.timestamp).getTime()) < 2000);
-
-            let count = recentTraffic.length;
-            if (count === 0 && Math.random() > 0.3) count = Math.floor(Math.random() * 5) + 2; 
-            
-            let totalLatency = 0;
-            if (recentTraffic.length > 0) {
-                recentTraffic.forEach(l => {
-                    const match = l.message.match(/\((\d+)ms\)/);
-                    if (match) totalLatency += parseInt(match[1]);
+        const fetchMetrics = async () => {
+            try {
+                const m = await analyticsApi.getSystemMetrics();
+                const rps = typeof m.rps === 'number' ? m.rps : 0;
+                const latency = typeof m.avgLatencyMs === 'number' ? m.avgLatencyMs : 0;
+                const dbLatency = typeof m.dbLatencyMs === 'number' ? m.dbLatencyMs : 0;
+                const errors = typeof m.errorCount === 'number' ? m.errorCount : 0;
+                setStats({ rps, latency, dbLatency, errors });
+                setData(prev => {
+                    const timeLabel = new Date().toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' });
+                    const newData = [...prev, { time: timeLabel, rps, latency }];
+                    if (newData.length > 20) newData.shift();
+                    return newData;
                 });
-            } else {
-                totalLatency = count * (Math.floor(Math.random() * 40) + 20);
+            } catch {
+                // Leave stats unchanged if API fails
             }
+        };
 
-            const avgLatency = count > 0 ? Math.round(totalLatency / count) : 0;
-            const rps = Math.round(count / 2);
-
-            setStats({ rps, latency: avgLatency });
-            setData(prev => {
-                const timeLabel = new Date().toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' });
-                const newData = [...prev, { time: timeLabel, rps, latency: avgLatency }]; 
-                if (newData.length > 20) newData.shift();
-                return newData;
-            });
-        }, 2000); 
+        fetchMetrics();
+        const interval = setInterval(fetchMetrics, 5000);
         return () => clearInterval(interval);
     }, []);
 
@@ -329,8 +322,8 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
             contentClassName="justify-start"
             icon={<svg className="w-5 h-5 text-sky-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
         >
-            <div className="flex justify-between items-end mb-4">
-                <div className="flex gap-6">
+            <div className="flex justify-between items-start mb-4">
+                <div className="flex gap-5 flex-wrap">
                     <div>
                         <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{stats.rps}</div>
                         <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.requests_sec')}</div>
@@ -339,8 +332,16 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                         <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{stats.latency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
                         <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.avg_latency')}</div>
                     </div>
+                    <div>
+                        <div className="text-2xl font-extrabold text-indigo-500 dark:text-indigo-400 tracking-tight">{stats.dbLatency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
+                        <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">DB Latency</div>
+                    </div>
+                    <div>
+                        <div className={`text-2xl font-extrabold tracking-tight ${stats.errors > 0 ? 'text-red-500' : 'text-emerald-500 dark:text-emerald-400'}`}>{stats.errors}</div>
+                        <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Lỗi / 60s</div>
+                    </div>
                 </div>
-                <div className={`flex items-center gap-2 px-2 py-1 rounded-full border ${isConnected ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
+                <div className={`flex items-center gap-2 px-2 py-1 rounded-full border shrink-0 ${isConnected ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
                     <span className="relative flex h-2 w-2">
                       <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isConnected ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
                       <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
@@ -351,7 +352,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                 </div>
             </div>
             
-            <div className="h-[150px] w-full -ml-2 relative">
+            <div className="h-[130px] w-full -ml-2 relative">
                 {data.length > 0 ? (
                     <ResponsiveContainer width="100%" height={150} minHeight={100} minWidth={150}>
                         <ComposedChart data={data}>
