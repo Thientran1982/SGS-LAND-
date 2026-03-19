@@ -737,8 +737,10 @@ class AiEngine {
             const confidence = Math.min(100, Math.max(40, aiData.confidence || 80));
             const marketTrend = aiData.marketTrend || 'Đang cập nhật';
             const locationFactors = aiData.locationFactors || [];
+            const monthlyRent: number = aiData.monthlyRentEstimate || 0;
+            const resolvedPropertyType = (propertyType || aiData.propertyTypeEstimate || 'townhouse_center') as import('./valuationEngine').PropertyType;
 
-            // ── STEP 3: Apply AVM coefficient matrix ─────────────────────────────
+            // ── STEP 3: Apply AVM (Comps) + Income Approach + Reconciliation ──────
             const avmResult = applyAVM({
                 marketBasePrice,
                 area,
@@ -746,11 +748,11 @@ class AiEngine {
                 legal: legal as LegalStatus,
                 confidence,
                 marketTrend,
+                propertyType: resolvedPropertyType,
+                monthlyRent: monthlyRent > 0 ? monthlyRent : undefined,
             });
 
-            // Merge location factors (from AI) with AVM coefficients (deterministic)
-            // NOTE: locationFactors are CONTEXT ONLY — they are already reflected in
-            //       the AI-extracted marketBasePrice. They are NOT multiplied into the price again.
+            // Merge location factors (CONTEXT ONLY — already in marketBasePrice, NOT re-applied)
             const allFactors = [
                 ...avmResult.factors,
                 ...locationFactors.map((f: any) => ({
@@ -767,6 +769,7 @@ class AiEngine {
                 basePrice: marketBasePrice,
                 pricePerM2: avmResult.pricePerM2,
                 totalPrice: avmResult.totalPrice,
+                compsPrice: avmResult.compsPrice,
                 rangeMin: avmResult.rangeMin,
                 rangeMax: avmResult.rangeMax,
                 confidence: avmResult.confidence,
@@ -774,13 +777,17 @@ class AiEngine {
                 factors: allFactors,
                 coefficients: avmResult.coefficients,
                 formula: avmResult.formula,
+                incomeApproach: avmResult.incomeApproach,
+                reconciliation: avmResult.reconciliation,
             };
 
         } catch (error) {
             console.error("Valuation AI Error:", error);
 
-            // ── FALLBACK: Use regional base price table + full AVM ────────────────
+            // ── FALLBACK: Regional base price table + AVM + estimated income ──────
             const regional = getRegionalBasePrice(address);
+            const resolvedPropertyType = (propertyType || 'townhouse_center') as import('./valuationEngine').PropertyType;
+            const { estimateFallbackRent } = await import('./valuationEngine');
             const avmResult = applyAVM({
                 marketBasePrice: regional.price,
                 area,
@@ -788,12 +795,19 @@ class AiEngine {
                 legal: legal as LegalStatus,
                 confidence: regional.confidence,
                 marketTrend: `Ước tính theo khu vực ${regional.region} — không có dữ liệu realtime`,
+                propertyType: resolvedPropertyType,
+                monthlyRent: estimateFallbackRent(
+                    Math.round(regional.price * area),
+                    resolvedPropertyType,
+                    area
+                ),
             });
 
             return {
                 basePrice: regional.price,
                 pricePerM2: avmResult.pricePerM2,
                 totalPrice: avmResult.totalPrice,
+                compsPrice: avmResult.compsPrice,
                 rangeMin: avmResult.rangeMin,
                 rangeMax: avmResult.rangeMax,
                 confidence: avmResult.confidence,
@@ -801,6 +815,8 @@ class AiEngine {
                 factors: avmResult.factors,
                 coefficients: avmResult.coefficients,
                 formula: avmResult.formula,
+                incomeApproach: avmResult.incomeApproach,
+                reconciliation: avmResult.reconciliation,
             };
         }
     }
