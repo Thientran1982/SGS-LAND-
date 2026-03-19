@@ -10,6 +10,9 @@
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "seed": "tsx server/seed.ts",
+    "migrate": "tsx server/migrations/runner.ts",
+    "migrate:dry": "tsx server/migrations/runner.ts --dry-run",
+    "migrate:rollback": "tsx server/migrations/runner.ts --rollback",
     "test:e2e": "playwright test",
     "audit:security": "npm audit --audit-level=high"
   },
@@ -26,9 +29,9 @@
     "bcrypt": "^6.0.0",
     "bullmq": "^5.71.0",
     "cookie-parser": "^1.4.7",
+    "dompurify": "^3.2.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "framer-motion": "^12.36.0",
     "helmet": "^8.1.0",
     "html2canvas": "^1.4.1",
     "ioredis": "^5.10.0",
@@ -61,6 +64,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "@types/dompurify": "^3.0.5",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/ioredis-mock": "^8.2.7",

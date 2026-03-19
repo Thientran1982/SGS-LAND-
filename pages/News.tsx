@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { db } from '../services/dbApi';
@@ -7,13 +8,11 @@ import { Article, UserRole, User } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { copyToClipboard } from '../utils/clipboard';
 
-const sanitizeHtml = (html: string): string => {
-    return html
-        .replace(/<script[\s\S]*?<\/script>/gi, '')
-        .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
-        .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
-        .replace(/javascript\s*:/gi, '');
-};
+const sanitizeHtml = (html: string): string => DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'span', 'div'],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'target', 'rel'],
+    ALLOW_DATA_ATTR: false,
+});
 
 // -----------------------------------------------------------------------------
 // TYPES & MOCK DATA (2026 CONTEXT)
