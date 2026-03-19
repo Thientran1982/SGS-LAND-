@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
+import { NO_IMAGE_URL } from '../utils/constants';
 import { db } from '../services/dbApi';
 import { Lead, Listing, ListingStatus, ProposalStatus } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -244,7 +245,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                     {/* Listing Preview */}
                     <div className="bg-[var(--bg-surface)] p-4 md:p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm flex gap-4 items-start">
                         <div className="w-16 h-16 md:w-20 md:h-20 bg-slate-200 rounded-xl flex-shrink-0 overflow-hidden">
-                            <img src={`https://ui-avatars.com/api/?name=${selectedListing.code}&background=random`} className="w-full h-full object-cover" alt="" />
+                            <img src={selectedListing.images?.[0] || NO_IMAGE_URL} className="w-full h-full object-cover" alt="" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
                         </div>
                         <div className="min-w-0 flex-1">
                             <h4 className="font-bold text-[var(--text-primary)] text-sm md:text-base line-clamp-2">{selectedListing.title}</h4>

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
+import { NO_IMAGE_URL } from '../utils/constants';
 import { db } from '../services/dbApi';
 import { Listing, ListingStatus, PropertyType, TransactionType, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -205,14 +206,11 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[var(--glass-surface-hover)] dark:bg-slate-800 overflow-hidden shrink-0 border border-[var(--glass-border)] relative">
                         <img 
-                            src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} 
-                            className="w-full h-full object-cover" 
-                            alt="" 
-                            referrerPolicy="no-referrer"
-                            onError={(e) => {
-                                const t = e.target as HTMLImageElement;
-                                if (!t.src.includes('ui-avatars.com')) t.src = `https://ui-avatars.com/api/?name=${item.code}&background=random`;
-                            }}
+                            src={item.images?.[0] || NO_IMAGE_URL}
+                            className="w-full h-full object-cover"
+                            alt=""
+                            loading="lazy"
+                            onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }}
                         />
                         {item.isVerified && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-bl-md z-10" />}
                     </div>
@@ -364,15 +362,12 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
             className="flex md:hidden items-center gap-3 p-3 border-b border-[var(--glass-border)] dark:border-slate-800/50 active:bg-[var(--glass-surface)] dark:active:bg-slate-800 transition-colors cursor-pointer"
         >
             <div className="w-14 h-14 rounded-xl bg-[var(--glass-surface-hover)] dark:bg-slate-800 overflow-hidden shrink-0 border border-[var(--glass-border)] dark:border-slate-700 relative">
-                <img 
-                    src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} 
-                    className="w-full h-full object-cover" 
-                    alt="" 
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                        const t = e.target as HTMLImageElement;
-                        if (!t.src.includes('ui-avatars.com')) t.src = `https://ui-avatars.com/api/?name=${item.code}&background=random`;
-                    }}
+                <img
+                    src={item.images?.[0] || NO_IMAGE_URL}
+                    className="w-full h-full object-cover"
+                    alt=""
+                    loading="lazy"
+                    onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }}
                 />
                 <div className="absolute top-0 left-0 px-1 bg-black/40 text-3xs text-white font-mono">{item.code}</div>
             </div>
@@ -475,7 +470,7 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
         >
             <div className="flex gap-3 items-start">
                 <div className="w-12 h-12 rounded-lg bg-[var(--glass-surface-hover)] overflow-hidden shrink-0">
-                    <img src={item.images?.[0] || `https://ui-avatars.com/api/?name=${item.code}&background=random`} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                    <img src={item.images?.[0] || NO_IMAGE_URL} className="w-full h-full object-cover" alt="" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">{item.title}</div>

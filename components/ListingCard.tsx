@@ -3,6 +3,7 @@ import React, { useState, memo, useCallback, useMemo, useRef, useEffect } from '
 import { createPortal } from 'react-dom';
 import { Listing, PropertyType, TransactionType, ListingStatus } from '../types';
 import { db } from '../services/dbApi';
+import { NO_IMAGE_URL } from '../utils/constants';
 import { copyToClipboard } from '../utils/clipboard';
 import { ROUTES } from '../config/routes';
 import { formatSmartPrice, formatUnitPrice } from '../utils/textUtils';
@@ -29,19 +30,23 @@ export const LISTING_ICONS = {
     EYE: <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
 };
 
+
 const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFavorite, t, bookingCount, viewCount, onClick, type, transaction }: { images?: string[], title: string, isVerified: boolean, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void, t: any, bookingCount?: number, viewCount?: number, onClick?: () => void, type: PropertyType, transaction?: TransactionType }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const hasImages = images && images.length > 0;
+    const [imgError, setImgError] = useState(false);
+    const hasImages = images && images.length > 0 && !imgError;
 
     const nextImage = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!hasImages) return;
+        if (!images?.length) return;
+        setImgError(false);
         setCurrentIndex((prev) => (prev + 1) % images!.length);
     };
 
     const prevImage = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!hasImages) return;
+        if (!images?.length) return;
+        setImgError(false);
         setCurrentIndex((prev) => (prev - 1 + images!.length) % images!.length);
     };
 
@@ -90,17 +95,13 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
 
             {hasImages ? (
                 <>
-                    <img 
-                        src={images![currentIndex]} 
-                        alt={title} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            if (!target.src.includes('ui-avatars.com')) {
-                                target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=e2e8f0&color=94a3b8&size=400`;
-                            }
-                        }}
+                    <img
+                        src={images![currentIndex]}
+                        alt={title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        loading="lazy"
+                        decoding="async"
+                        onError={() => setImgError(true)}
                     />
                     {images!.length > 1 && (
                         <>
@@ -117,7 +118,12 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                     )}
                 </>
             ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-secondary)] dark:text-slate-400 bg-[var(--glass-surface)] dark:bg-slate-800">{LISTING_ICONS.IMAGE_PLACEHOLDER}</div>
+                <img
+                    src={NO_IMAGE_URL}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                    aria-hidden="true"
+                />
             )}
             
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 pointer-events-none z-10"></div>
