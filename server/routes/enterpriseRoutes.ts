@@ -71,8 +71,8 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins can view audit logs' });
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 50, 200));
       const filters: any = {};
       if (req.query.entityType) filters.entityType = req.query.entityType;
       if (req.query.action) filters.action = req.query.action;

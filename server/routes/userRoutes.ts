@@ -13,8 +13,8 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 50, 200));
       const filters: any = {};
       if (req.query.role) filters.role = req.query.role;
       if (req.query.status) filters.status = req.query.status;
@@ -223,8 +223,13 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(409).json({ error: 'Email này đã được sử dụng' });
       }
 
-      const { pool } = await import('../db');
-      await pool.query(`UPDATE users SET email = $1 WHERE id = $2`, [newEmail.toLowerCase(), req.params.id]);
+      const { withTenantContext } = await import('../db');
+      await withTenantContext(user.tenantId, async (client) => {
+        await client.query(
+          `UPDATE users SET email = $1 WHERE id = $2 AND tenant_id = $3`,
+          [newEmail.toLowerCase(), req.params.id, user.tenantId]
+        );
+      });
 
       const updated = await userRepository.findByIdDirect(req.params.id, user.tenantId);
       await auditRepository.log(user.tenantId, {

@@ -10,8 +10,8 @@ export function createProposalRoutes(authenticateToken: any) {
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 200);
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 200));
 
       const filters: any = {};
       if (req.query.status) filters.status = req.query.status;
@@ -72,6 +72,13 @@ export function createProposalRoutes(authenticateToken: any) {
       if (!leadId || !listingId || !basePrice || !finalPrice) {
         return res.status(400).json({ error: 'Missing required fields: leadId, listingId, basePrice, finalPrice' });
       }
+
+      const bpNum = Number(basePrice);
+      const fpNum = Number(finalPrice);
+      const discNum = Number(discountAmount || 0);
+      if (isNaN(bpNum) || bpNum < 0) return res.status(400).json({ error: 'Invalid basePrice: must be a non-negative number' });
+      if (isNaN(fpNum) || fpNum < 0) return res.status(400).json({ error: 'Invalid finalPrice: must be a non-negative number' });
+      if (isNaN(discNum) || discNum < 0) return res.status(400).json({ error: 'Invalid discountAmount: must be a non-negative number' });
 
       const proposal = await proposalRepository.create(user.tenantId, {
         leadId, listingId, basePrice,
