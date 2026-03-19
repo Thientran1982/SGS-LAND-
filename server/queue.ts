@@ -280,6 +280,92 @@ export function setupWebhookWorker(io: Server) {
         }
       }
     }
+
+    // -----------------------------------------------------------------------
+    // EMAIL INBOUND
+    // -----------------------------------------------------------------------
+    else if (platform === 'email') {
+      const { from, fromName, subject, body, to, tenantId: payloadTenantId } = payload;
+
+      if (!from) {
+        logger.warn('[Email Webhook] Missing from address');
+        return;
+      }
+
+      const tenantId = payloadTenantId || DEFAULT_TENANT_ID;
+
+      // Normalize email address (strip display name if any)
+      const fromEmail = (from.match(/<(.+?)>/) || [])[1] || from.trim();
+      const senderName = fromName || (from.match(/^(.+?)\s*</) || [])[1]?.trim() || fromEmail.split('@')[0];
+
+      const { leadRepository } = await import('./repositories/leadRepository');
+      const { interactionRepository } = await import('./repositories/interactionRepository');
+
+      // Find existing lead by email or create new one
+      let lead: any;
+      try {
+        // Use withTenant to search by email
+        const { pool } = await import('./db');
+        const { withTenantContext } = await import('./db');
+        const existingResult = await withTenantContext(tenantId, async (client) => {
+          return client.query(
+            `SELECT * FROM leads WHERE LOWER(email) = LOWER($1) LIMIT 1`,
+            [fromEmail]
+          );
+        });
+
+        if (existingResult.rows[0]) {
+          // Use existing lead
+          const { BaseRepository } = await import('./repositories/baseRepository');
+          const br = new BaseRepository('leads');
+          lead = (br as any).rowToEntity(existingResult.rows[0]);
+          logger.info(`[Email] Matched existing lead ${lead.id} for ${fromEmail}`);
+        } else {
+          // Create new lead
+          lead = await leadRepository.create(tenantId, {
+            name: senderName,
+            phone: '',
+            email: fromEmail,
+            source: 'Email',
+            stage: 'NEW',
+            tags: ['Email'],
+          });
+          logger.info(`[Email] Created new lead ${lead.id} from ${fromEmail}`);
+        }
+      } catch (err) {
+        logger.error('[Email] Lead lookup/create error:', err);
+        return;
+      }
+
+      // Build interaction content — subject + body
+      const content = subject
+        ? `**${subject}**\n\n${body || ''}`
+        : (body || '[Email không có nội dung]');
+
+      try {
+        const savedInteraction = await interactionRepository.create(tenantId, {
+          leadId: lead.id,
+          channel: 'EMAIL',
+          direction: 'INBOUND',
+          type: 'TEXT',
+          content: content.slice(0, 5000),
+          metadata: {
+            platform: 'email',
+            fromEmail,
+            fromName: senderName,
+            subject,
+            to,
+          },
+        });
+
+        logger.info(`[Email] Inbound email stored as interaction ${savedInteraction.id}`);
+
+        io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
+        io.emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Email' });
+      } catch (err) {
+        logger.error('[Email] Failed to create interaction:', err);
+      }
+    }
   };
 
   if (useRedis) {

@@ -243,7 +243,23 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     <div className="w-8 h-8 rounded-full bg-[var(--glass-surface-hover)] dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)] dark:text-slate-400 border border-[var(--glass-border)] dark:border-slate-700 shrink-0">
                         {lead.name.charAt(0).toUpperCase()}
                     </div>
-                    <div className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm whitespace-nowrap">{lead.name}</div>
+                    <div>
+                        <div className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm whitespace-nowrap">{lead.name}</div>
+                        {lead.tags && lead.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {lead.tags.slice(0, 3).map((tag: string) => (
+                                    <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800 whitespace-nowrap">
+                                        {tag}
+                                    </span>
+                                ))}
+                                {lead.tags.length > 3 && (
+                                    <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                        +{lead.tags.length - 3}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </td>
 
@@ -425,6 +441,22 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
                     {t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source}
                 </span>
             </div>
+
+            {/* Tags */}
+            {lead.tags && lead.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                    {lead.tags.slice(0, 4).map((tag: string) => (
+                        <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 whitespace-nowrap">
+                            {tag}
+                        </span>
+                    ))}
+                    {lead.tags.length > 4 && (
+                        <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-slate-500">
+                            +{lead.tags.length - 4}
+                        </span>
+                    )}
+                </div>
+            )}
 
             {/* Footer: date + assignee */}
             <div className="flex justify-between items-center text-xs2 text-[var(--text-secondary)] mt-2 pt-2 border-t border-slate-50">
@@ -1092,6 +1124,18 @@ export const Leads: React.FC = () => {
                                                     {getSourceIcon(lead.source)}
                                                     {lead.source} • {formatDate(lead.createdAt)}
                                                 </div>
+                                                {lead.tags && lead.tags.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {lead.tags.slice(0, 3).map((tag: string) => (
+                                                            <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                                                {tag}
+                                                            </span>
+                                                        ))}
+                                                        {lead.tags.length > 3 && (
+                                                            <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-slate-500">+{lead.tags.length - 3}</span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <span className={`text-2xs px-2 py-0.5 rounded-full font-bold uppercase border ${STAGE_CONFIG[lead.stage].bg} ${STAGE_CONFIG[lead.stage].color} ${STAGE_CONFIG[lead.stage].border}`}>
