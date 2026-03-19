@@ -158,11 +158,11 @@ async function startServer() {
       let dbUser = await userRepository.findByEmail(tenantId, email);
 
       if (!dbUser) {
-        const role = email.includes('admin') ? 'ADMIN' : 'SALES';
+        // Always assign SALES for new SSO users — promote to ADMIN manually via admin panel.
         dbUser = await userRepository.create(tenantId, {
           name: email.split('@')[0],
           email,
-          role,
+          role: 'SALES',
           source: 'SSO',
         });
       }

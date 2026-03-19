@@ -17,10 +17,14 @@ export function createListingRoutes(authenticateToken: any) {
       if (req.query.types) filters.type_in = (req.query.types as string).split(',');
       if (req.query.status) filters.status = req.query.status;
       if (req.query.transaction) filters.transaction = req.query.transaction;
-      if (req.query.priceMin) filters.price_gte = parseFloat(req.query.priceMin as string);
-      if (req.query.priceMax) filters.price_lte = parseFloat(req.query.priceMax as string);
-      if (req.query.areaMin) filters.area_gte = parseFloat(req.query.areaMin as string);
-      if (req.query.areaMax) filters.area_lte = parseFloat(req.query.areaMax as string);
+      const priceMin = parseFloat(req.query.priceMin as string);
+      const priceMax = parseFloat(req.query.priceMax as string);
+      const areaMin = parseFloat(req.query.areaMin as string);
+      const areaMax = parseFloat(req.query.areaMax as string);
+      if (req.query.priceMin && !isNaN(priceMin)) filters.price_gte = priceMin;
+      if (req.query.priceMax && !isNaN(priceMax)) filters.price_lte = priceMax;
+      if (req.query.areaMin && !isNaN(areaMin)) filters.area_gte = areaMin;
+      if (req.query.areaMax && !isNaN(areaMax)) filters.area_lte = areaMax;
       if (req.query.search) filters.search = req.query.search;
       if (req.query.projectCode) filters.projectCode = req.query.projectCode;
       if (req.query.isVerified) filters.isVerified = req.query.isVerified === 'true';

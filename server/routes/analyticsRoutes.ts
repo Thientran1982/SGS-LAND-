@@ -41,10 +41,14 @@ export function createAnalyticsRoutes(authenticateToken: any) {
       if (!source || cost === undefined || !period) {
         return res.status(400).json({ error: 'source, cost, and period are required' });
       }
+      const parsedCost = Number(cost);
+      if (isNaN(parsedCost) || parsedCost < 0) {
+        return res.status(400).json({ error: 'cost must be a non-negative number' });
+      }
       const result = await analyticsRepository.createCampaignCost(user.tenantId, {
         campaignName: campaignName || source,
         source,
-        cost: Number(cost),
+        cost: parsedCost,
         period,
       });
       res.status(201).json(result);

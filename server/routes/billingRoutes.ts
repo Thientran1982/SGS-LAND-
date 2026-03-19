@@ -26,6 +26,9 @@ export function createBillingRoutes(authenticateToken: any) {
   router.post('/upgrade', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can upgrade the subscription plan' });
+      }
       const { planId } = req.body;
 
       if (!planId) {

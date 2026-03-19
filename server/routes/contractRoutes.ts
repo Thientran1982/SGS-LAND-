@@ -82,7 +82,7 @@ export function createContractRoutes(authenticateToken: any) {
       if (req.body.status) {
         const current = await contractRepository.findById(user.tenantId, req.params.id);
         if (!current) return res.status(404).json({ error: 'Contract not found' });
-        const currentStatus = (current as any).status?.toUpperCase();
+        const currentStatus = ((current as any).status || 'DRAFT').toUpperCase();
         const newStatus = String(req.body.status).toUpperCase();
         const allowed = CONTRACT_VALID_TRANSITIONS[currentStatus] ?? [];
         if (currentStatus !== newStatus && !allowed.includes(newStatus)) {

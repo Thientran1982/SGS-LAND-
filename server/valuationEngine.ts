@@ -256,17 +256,20 @@ function applyIncomeApproach(
   vacancyRate = DEFAULT_VACANCY_RATE,
   opexRate = DEFAULT_OPEX_RATE,
 ): IncomeApproachResult {
+  // Clamp rates to valid ranges [0, 1]
+  const safeVacancyRate = Math.min(1, Math.max(0, vacancyRate));
+  const safeOpexRate = Math.min(1, Math.max(0, opexRate));
   const capRate = DEFAULT_CAP_RATES[propertyType];
   const grossIncomeTrieu = monthlyRent * 12;                     // triệu/năm
-  const vacancyLossTrieu = grossIncomeTrieu * vacancyRate;
-  const effectiveIncomeTrieu = grossIncomeTrieu * (1 - vacancyRate);
-  const opexTrieu = grossIncomeTrieu * opexRate;
-  const noiTrieu = effectiveIncomeTrieu - opexTrieu;             // triệu/năm
+  const vacancyLossTrieu = grossIncomeTrieu * safeVacancyRate;
+  const effectiveIncomeTrieu = grossIncomeTrieu * (1 - safeVacancyRate);
+  const opexTrieu = grossIncomeTrieu * safeOpexRate;
+  const noiTrieu = Math.max(0, effectiveIncomeTrieu - opexTrieu); // NOI cannot be negative
 
   // Convert to VNĐ for capital value
   const noiVND = noiTrieu * 1_000_000;
   const safeCapRate = capRate > 0 ? capRate : DEFAULT_CAP_RATE;
-  const capitalValue = Math.round(noiVND / safeCapRate);
+  const capitalValue = Math.max(0, Math.round(noiVND / safeCapRate));
 
   const grossRentalYield = totalPrice > 0
     ? (grossIncomeTrieu * 1_000_000) / totalPrice * 100
@@ -304,9 +307,10 @@ export function applyAVM(input: AVMInput): AVMOutput {
   const Ka = Ka_data.value;
 
   // ── Method 1: AVM/Comps ─────────────────────────────────────
-  const safeArea = Math.max(1, area); // guard against zero/negative area
-  const rawPricePerM2 = marketBasePrice * Kd * Kp * Ka;
-  const pricePerM2 = Math.max(0, Math.round(rawPricePerM2)); // guard against negative
+  const safeArea = Math.max(1, area);                          // guard against zero/negative area
+  const safeMarketBase = Math.max(0, marketBasePrice);         // guard against negative base price
+  const rawPricePerM2 = safeMarketBase * Kd * Kp * Ka;
+  const pricePerM2 = Math.max(0, Math.round(rawPricePerM2));   // guard against negative
   const compsPrice = Math.max(0, Math.round(pricePerM2 * safeArea));
 
   // ── Method 2: Income Approach (if rent data available) ──────

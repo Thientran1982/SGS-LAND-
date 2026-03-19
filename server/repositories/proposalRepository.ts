@@ -1,4 +1,5 @@
 import { BaseRepository, PaginatedResult, PaginationParams } from './baseRepository';
+import { pool } from '../db';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ProposalRepository extends BaseRepository {
@@ -170,6 +171,23 @@ export class ProposalRepository extends BaseRepository {
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
     });
+  }
+
+  // Public token lookup: bypasses RLS — the token itself is the auth credential.
+  // Do NOT expose tenant-controlled data beyond what the token authorises.
+  async findByTokenGlobal(token: string): Promise<any | null> {
+    const result = await pool.query(
+      `SELECT p.id, p.token, p.status, p.base_price, p.discount_amount, p.final_price,
+              p.notes, p.created_at, p.updated_at,
+              l.name as lead_name, li.title as listing_title, li.location as listing_location
+       FROM proposals p
+       LEFT JOIN leads l ON p.lead_id = l.id
+       LEFT JOIN listings li ON p.listing_id = li.id
+       WHERE p.token = $1
+       LIMIT 1`,
+      [token]
+    );
+    return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
   }
 }
 

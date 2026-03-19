@@ -2,7 +2,6 @@ import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { proposalRepository } from '../repositories/proposalRepository';
 import { auditRepository } from '../repositories/auditRepository';
-import { DEFAULT_TENANT_ID } from '../constants';
 
 export function createProposalRoutes(authenticateToken: any) {
   const router = Router();
@@ -42,8 +41,8 @@ export function createProposalRoutes(authenticateToken: any) {
 
   router.get('/token/:token', async (req: Request, res: Response) => {
     try {
-      const tenantId = (req.query.tenantId as string) || DEFAULT_TENANT_ID;
-      const proposal = await proposalRepository.findByToken(tenantId, req.params.token);
+      // Global lookup — token is the only credential needed (no tenantId from caller).
+      const proposal = await proposalRepository.findByTokenGlobal(req.params.token);
       if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
       res.json(proposal);
     } catch (error) {
