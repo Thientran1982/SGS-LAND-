@@ -295,8 +295,14 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                                         </div>
                                                         <div className="flex gap-3">
                                                             <span className="text-[var(--text-secondary)]">Won:</span>
-                                                            <span className="font-mono">{payload[0].payload.won}/{payload[0].payload.total}</span>
+                                                            <span className="font-mono text-emerald-400">{payload[0].payload.won}/{payload[0].payload.total}</span>
                                                         </div>
+                                                        {payload[0].payload.lost > 0 && (
+                                                            <div className="flex gap-3">
+                                                                <span className="text-[var(--text-secondary)]">Lost:</span>
+                                                                <span className="font-mono text-rose-400">{payload[0].payload.lost}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 );
                                             }
@@ -345,6 +351,7 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                     <div>
                         <h3 className="font-bold text-[var(--text-primary)] mb-1">{t('reports.chart_funnel')}</h3>
                         <p className="text-xs text-[var(--text-tertiary)]">{t('reports.funnel_desc')}</p>
+                        <p className="text-xs2 text-[var(--text-secondary)] mt-0.5">{t('reports.funnel_rate_note') || '% tính trên tổng leads mới (NEW)'}</p>
                     </div>
                     {overallRate !== null && (
                         <div className="flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-[14px] px-4 py-2 text-center">
@@ -492,9 +499,10 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
 const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, notify }: { data: BiData, t: any, formatCurrency: any, currentUser: any, onCostUpdated: () => void, notify: (msg: string, type?: 'success' | 'error') => void }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
-    const [isUpdating, setIsUpdating] = useState(false);
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [editingCost, setEditingCost] = useState<CampaignCost | null>(null);
     const [newCostValue, setNewCostValue] = useState('');
+    const [isSavingUpdate, setIsSavingUpdate] = useState(false);
 
     const [isAdding, setIsAdding] = useState(false);
     const [addForm, setAddForm] = useState({ campaignName: '', source: '', cost: '', period: new Date().toISOString().slice(0, 7) });
@@ -512,25 +520,33 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             notify(t('reports.cost_amount_invalid') || 'Chi phí không hợp lệ', 'error');
             return;
         }
+        setIsSavingUpdate(true);
         try {
             await db.updateCampaignCost(editingCost.id, parsed);
-            setIsUpdating(false);
+            setShowUpdateModal(false);
             setEditingCost(null);
             notify(t('reports.cost_updated') || 'Đã cập nhật chi phí', 'success');
             onCostUpdated();
         } catch (error: any) {
             notify(error?.message || t('common.error'), 'error');
+        } finally {
+            setIsSavingUpdate(false);
         }
     };
 
     const handleAdd = async () => {
         if (!addForm.source || !addForm.cost || !addForm.period) return;
+        const parsedCost = Number(addForm.cost);
+        if (isNaN(parsedCost) || parsedCost < 0) {
+            notify(t('reports.cost_amount_invalid') || 'Chi phí không hợp lệ (phải là số không âm)', 'error');
+            return;
+        }
         setIsSaving(true);
         try {
             await db.createCampaignCost({
                 campaignName: addForm.campaignName || addForm.source,
                 source: addForm.source,
-                cost: Number(addForm.cost),
+                cost: parsedCost,
                 period: addForm.period,
             });
             setIsAdding(false);
@@ -605,7 +621,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                         <td className="p-3 sm:p-5 text-right">
                                             <div className="flex items-center justify-end gap-2 sm:gap-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                 <button 
-                                                    onClick={() => { setEditingCost(cost); setNewCostValue(cost.cost.toString()); setIsUpdating(true); }}
+                                                    onClick={() => { setEditingCost(cost); setNewCostValue(cost.cost.toString()); setShowUpdateModal(true); }}
                                                     className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors px-2 py-1 rounded-lg hover:bg-indigo-50"
                                                 >
                                                     {t('reports.btn_update')}
@@ -717,7 +733,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
         )}
 
         {/* Update Cost Modal */}
-        {isUpdating && editingCost && createPortal(
+        {showUpdateModal && editingCost && createPortal(
             <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
                 <div className="bg-[var(--bg-surface)] w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] scale-100 animate-scale-up">
                     <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">{t('reports.btn_update')}</h3>
@@ -732,11 +748,12 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                         />
                     </div>
                     <div className="flex gap-3 w-full">
-                        <button onClick={() => { setIsUpdating(false); setEditingCost(null); }} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
+                        <button onClick={() => { setShowUpdateModal(false); setEditingCost(null); }} disabled={isSavingUpdate} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors disabled:opacity-50">
                             {t('common.cancel')}
                         </button>
-                        <button onClick={handleUpdate} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all">
-                            {t('common.save')}
+                        <button onClick={handleUpdate} disabled={isSavingUpdate} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+                            {isSavingUpdate && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                            {isSavingUpdate ? '...' : t('common.save')}
                         </button>
                     </div>
                 </div>
