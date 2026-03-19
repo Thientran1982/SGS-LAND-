@@ -42,7 +42,8 @@ const GRADE_PROBABILITY: Record<string, number> = {
 function getDaysInterval(timeRange?: string): number {
   if (!timeRange || timeRange === 'all') return 365;
   const n = parseInt(timeRange, 10);
-  if (!isNaN(n) && n > 0) return n;
+  // Clamp to [1, 3650] so the interpolated value in INTERVAL is always a safe integer.
+  if (!isNaN(n) && n > 0) return Math.min(n, 3650);
   return 365;
 }
 

@@ -80,6 +80,9 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.put('/documents/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (!CAN_MANAGE.includes(user.role)) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
       const doc = await documentRepository.update(user.tenantId, req.params.id, req.body);
       if (!doc) return res.status(404).json({ error: 'Document not found' });
       res.json(doc);
