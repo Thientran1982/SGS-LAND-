@@ -186,19 +186,76 @@ export function createLeadRoutes(authenticateToken: any) {
       );
       if (!lead) return res.status(404).json({ error: 'Lead not found or access denied' });
 
+      // ── Attempt outbound delivery for social channels ──────────────────────
+      let deliveryStatus = 'SENT';
+      let deliveryError: string | undefined;
+
+      const resolvedChannel = (channel || 'INTERNAL').toUpperCase();
+
+      if (resolvedChannel === 'ZALO' && lead.socialIds?.zalo) {
+        try {
+          const { sendZaloTextMessage, getZaloAccessToken } = await import('../services/zaloService');
+          const accessToken = await getZaloAccessToken(user.tenantId);
+          if (accessToken) {
+            const result = await sendZaloTextMessage(accessToken, lead.socialIds.zalo, content);
+            if (!result.success) {
+              deliveryStatus = 'FAILED';
+              deliveryError = result.error;
+            }
+          } else {
+            deliveryStatus = 'PENDING'; // No token configured yet
+            deliveryError = 'Zalo OA Access Token chưa được cấu hình';
+          }
+        } catch (err: any) {
+          deliveryStatus = 'FAILED';
+          deliveryError = err.message;
+          console.error('[Zalo] Outbound send error:', err);
+        }
+      }
+
+      if (resolvedChannel === 'FACEBOOK' && lead.socialIds?.facebook) {
+        try {
+          const { sendFacebookTextMessage, getFacebookDefaultPage } = await import('../services/facebookService');
+          const page = await getFacebookDefaultPage(user.tenantId);
+          if (page) {
+            const result = await sendFacebookTextMessage(page.accessToken, lead.socialIds.facebook, content);
+            if (!result.success) {
+              deliveryStatus = 'FAILED';
+              deliveryError = result.error;
+            }
+          } else {
+            deliveryStatus = 'PENDING';
+            deliveryError = 'Chưa có Facebook Page nào được kết nối với Access Token';
+          }
+        } catch (err: any) {
+          deliveryStatus = 'FAILED';
+          deliveryError = err.message;
+          console.error('[Facebook] Outbound send error:', err);
+        }
+      }
+      // ── End outbound delivery ───────────────────────────────────────────────
+
       const { interactionRepository } = await import('../repositories/interactionRepository');
       const interaction = await interactionRepository.create(user.tenantId, {
         leadId: req.params.id,
-        channel: channel || 'INTERNAL',
+        channel: resolvedChannel,
         direction: 'OUTBOUND',
         type: type || 'TEXT',
         content,
-        metadata,
+        metadata: {
+          ...metadata,
+          ...(deliveryError ? { deliveryError } : {}),
+        },
         senderId: user.id,
-        status: 'SENT',
+        status: deliveryStatus,
       });
 
-      res.status(201).json(interaction);
+      // Return 201 even when delivery fails — the message is still recorded.
+      // The client can detect failure via interaction.status === 'FAILED'.
+      res.status(201).json({
+        ...interaction,
+        ...(deliveryError ? { deliveryWarning: deliveryError } : {}),
+      });
     } catch (error) {
       console.error('Error creating interaction:', error);
       res.status(500).json({ error: 'Failed to create interaction' });

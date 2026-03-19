@@ -234,7 +234,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins can connect Zalo OA' });
       }
 
-      const { appId, oaId, oaName, appSecret } = req.body;
+      const { appId, oaId, oaName, appSecret, accessToken } = req.body;
 
       if (!appId || !oaId || !oaName) {
         return res.status(400).json({ error: 'appId, oaId và oaName là bắt buộc' });
@@ -248,6 +248,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         oaId,
         oaName,
         appSecret: appSecret || undefined,
+        accessToken: accessToken || undefined,
         webhookUrl,
         connectedAt: new Date().toISOString(),
       };
@@ -268,6 +269,53 @@ export function createEnterpriseRoutes(authenticateToken: any) {
     } catch (error: any) {
       console.error('Zalo connect error:', error);
       res.status(500).json({ error: error.message || 'Failed to connect Zalo OA' });
+    }
+  });
+
+  /**
+   * PATCH /api/enterprise/zalo/token
+   * Update only the OA Access Token (and optional Refresh Token) without reconnecting.
+   * Useful when the token expires and admin needs to refresh it.
+   */
+  router.patch('/zalo/token', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can update Zalo token' });
+      }
+
+      const { accessToken, refreshToken } = req.body;
+      if (!accessToken) {
+        return res.status(400).json({ error: 'accessToken là bắt buộc' });
+      }
+
+      const config = await enterpriseConfigRepository.getConfig(user.tenantId);
+      if (!config.zalo?.enabled) {
+        return res.status(400).json({ error: 'Zalo OA chưa được kết nối' });
+      }
+
+      const updatedZalo = {
+        ...config.zalo,
+        accessToken,
+        ...(refreshToken ? { refreshToken } : {}),
+      };
+
+      await enterpriseConfigRepository.upsertConfig(user.tenantId, { zalo: updatedZalo });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'ZALO_OA_CONNECTED',
+        entityType: 'enterprise_config',
+        entityId: user.tenantId,
+        details: 'Cập nhật Zalo OA Access Token',
+        ipAddress: req.ip,
+      });
+
+      console.log(`[Zalo] Tenant ${user.tenantId} updated OA access token`);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Zalo token update error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update Zalo token' });
     }
   });
 
