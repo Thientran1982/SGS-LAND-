@@ -277,7 +277,7 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                             <FileBubble name={msg.metadata?.fileName || 'File'} size={msg.metadata?.fileSize} url={msg.content} />
                         ) : msg.type === 'IMAGE' ? (
                             <div className="max-w-xs md:max-w-sm rounded-lg overflow-hidden border border-current/10">
-                                <img src={msg.content} alt={msg.metadata?.fileName || 'Attached Image'} className="w-full h-auto object-cover" referrerPolicy="no-referrer" />
+                                <img src={msg.content} alt={msg.metadata?.fileName || 'Attached Image'} className="w-full h-auto object-cover" loading="lazy" />
                             </div>
                         ) : (
                             <div className="markdown-body text-sm leading-relaxed break-words">

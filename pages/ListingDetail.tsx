@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { NO_IMAGE_URL } from '../utils/constants';
 import { db } from '../services/dbApi';
 import { Listing, PropertyType, ListingStatus, TransactionType, LeadStage, User, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -998,7 +999,7 @@ export const ListingDetail: React.FC = () => {
                         `}
                         onClick={() => { setLightboxIndex(0); setLightboxOpen(true); }}
                     >
-                        <img src={displayImages[0]} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt="Main" referrerPolicy="no-referrer" />
+                        <img src={displayImages[0] || NO_IMAGE_URL} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt="Main" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
                         <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors"></div>
                     </div>
 
@@ -1011,7 +1012,7 @@ export const ListingDetail: React.FC = () => {
                         `}>
                             {displayImages.slice(1).map((img, idx) => (
                                 <div key={idx} className="relative cursor-pointer overflow-hidden h-full w-full" onClick={() => { setLightboxIndex(idx + 1); setLightboxOpen(true); }}>
-                                    <img src={img} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt={`Gallery ${idx}`} referrerPolicy="no-referrer" />
+                                    <img src={img || NO_IMAGE_URL} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" alt={`Gallery ${idx}`} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
                                     {/* Overlay for +More on the last item if needed */}
                                     {idx === displayImages.length - 2 && hasMoreImages && (
                                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-xl backdrop-blur-sm">

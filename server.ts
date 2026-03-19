@@ -789,6 +789,82 @@ async function startServer() {
     }
   });
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Email Inbound Webhook
+  // Compatible with: Mailgun, SendGrid Inbound Parse, Postmark Inbound,
+  //                  and generic JSON webhooks from any email provider.
+  //
+  // Required env var: EMAIL_WEBHOOK_TOKEN (optional — skip if not set)
+  // Set it in your email provider dashboard as a header or query param.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  app.post("/api/webhooks/email", webhookRateLimit, async (req, res) => {
+    try {
+      // Optional token-based auth (simple shared secret)
+      const configuredToken = process.env.EMAIL_WEBHOOK_TOKEN;
+      if (configuredToken) {
+        const incoming =
+          req.headers['x-webhook-token'] ||
+          req.headers['x-mail-token'] ||
+          req.query.token;
+        if (incoming !== configuredToken) {
+          return res.status(403).json({ error: 'Invalid webhook token' });
+        }
+      }
+
+      const body = req.body;
+
+      // ── Parse different email provider formats ─────────────────────────────
+      // Mailgun: { sender, from, subject, 'body-plain' }
+      // SendGrid: { from, subject, text }
+      // Postmark: { From, FromName, Subject, TextBody }
+      // Generic:  { from, fromName, subject, body }
+
+      const from =
+        body.sender ||            // Mailgun
+        body.From ||              // Postmark
+        body.from;                // SendGrid / Generic
+
+      const fromName =
+        body.FromName ||          // Postmark
+        body.fromName;            // Generic
+
+      const subject =
+        body.subject ||           // Mailgun, SendGrid, Generic
+        body.Subject;             // Postmark
+
+      const emailBody =
+        body['body-plain'] ||     // Mailgun
+        body.TextBody ||          // Postmark
+        body['stripped-text'] ||  // Mailgun (cleaned)
+        body.text ||              // SendGrid
+        body.body;                // Generic
+
+      const to =
+        body.recipient ||         // Mailgun
+        body.To ||                // Postmark
+        body.to;                  // SendGrid / Generic
+
+      if (!from) {
+        logger.warn('[Email Webhook] Missing from address in payload');
+        return res.status(400).json({ error: 'Missing from address' });
+      }
+
+      logger.info(`[Email Webhook] Inbound from ${from}, subject: ${subject || '(no subject)'}`);
+
+      await webhookQueue.add('email-event', {
+        platform: 'email',
+        payload: { from, fromName, subject, body: emailBody, to },
+      });
+
+      // Most email providers expect a 200 response quickly
+      res.status(200).json({ message: 'OK' });
+    } catch (error) {
+      console.error('[Email Webhook] Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Facebook Webhook Verification
   app.get("/api/webhooks/facebook", (req, res) => {
     const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;

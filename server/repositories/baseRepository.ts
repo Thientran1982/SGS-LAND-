@@ -47,9 +47,10 @@ export class BaseRepository {
 
   async findById(tenantId: string, id: string): Promise<any | null> {
     return this.withTenant(tenantId, async (client) => {
+      // Include explicit tenant_id filter as defense-in-depth (RLS also enforces this)
       const result = await client.query(
-        `SELECT * FROM ${this.tableName} WHERE id = $1`,
-        [id]
+        `SELECT * FROM ${this.tableName} WHERE id = $1 AND tenant_id = $2`,
+        [id, tenantId]
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
     });
@@ -57,9 +58,10 @@ export class BaseRepository {
 
   async deleteById(tenantId: string, id: string): Promise<boolean> {
     return this.withTenant(tenantId, async (client) => {
+      // Include explicit tenant_id filter as defense-in-depth (RLS also enforces this)
       const result = await client.query(
-        `DELETE FROM ${this.tableName} WHERE id = $1`,
-        [id]
+        `DELETE FROM ${this.tableName} WHERE id = $1 AND tenant_id = $2`,
+        [id, tenantId]
       );
       return (result.rowCount ?? 0) > 0;
     });

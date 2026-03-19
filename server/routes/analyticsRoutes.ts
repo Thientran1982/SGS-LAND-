@@ -8,7 +8,13 @@ export function createAnalyticsRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const timeRange = (req.query.timeRange as string) || 'all';
-      const summary = await analyticsRepository.getSummary(user.tenantId, timeRange);
+      // Pass userId + role so analytics queries can apply RBAC filtering
+      const summary = await analyticsRepository.getSummary(
+        user.tenantId,
+        timeRange,
+        user.id,
+        user.role,
+      );
       res.json(summary);
     } catch (error) {
       console.error('Error fetching analytics summary:', error);
@@ -23,7 +29,12 @@ export function createAnalyticsRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const timeRange = (req.query.timeRange as string) || 'all';
-      const result = await analyticsRepository.generateBiMarts(user.tenantId, timeRange);
+      const result = await analyticsRepository.generateBiMarts(
+        user.tenantId,
+        timeRange,
+        user.id,
+        user.role,
+      );
       res.json(result);
     } catch (error) {
       console.error('Error generating BI marts:', error);

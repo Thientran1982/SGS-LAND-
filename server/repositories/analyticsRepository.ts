@@ -29,6 +29,8 @@ export interface AnalyticsSummary {
   recentActivities: { type: string; content: string; time: string }[];
   marketPulse: { location: string; area: number; price: number; interest: number }[];
   agentLeaderboard: { name: string; avatar: string; deals: number; closeRate: number; slaScore: number; avgResponseTime: string }[];
+  // Scope context for the frontend to display correctly
+  scopeLabel: string;   // e.g. "Toàn công ty" | "Dữ liệu của bạn"
 }
 
 const GRADE_PROBABILITY: Record<string, number> = {
@@ -38,6 +40,9 @@ const GRADE_PROBABILITY: Record<string, number> = {
   D: 0.10,
   F: 0.01,
 };
+
+// Roles that see the full tenant scope
+const FULL_SCOPE_ROLES = new Set(['ADMIN', 'TEAM_LEAD', 'MARKETING', 'VIEWER']);
 
 function getDaysInterval(timeRange?: string): number {
   if (!timeRange || timeRange === 'all') return 365;
@@ -72,7 +77,24 @@ export class AnalyticsRepository extends BaseRepository {
     super('leads');
   }
 
-  async getSummary(tenantId: string, timeRange?: string): Promise<AnalyticsSummary> {
+  /**
+   * Get analytics summary.
+   * @param tenantId  - tenant isolation (required)
+   * @param timeRange - "7d" | "30d" | "all"
+   * @param userId    - current user's UUID (required for RBAC)
+   * @param role      - current user's role (required for RBAC)
+   *
+   * RBAC rules:
+   *   SALES      → sees only leads assigned to themselves
+   *   TEAM_LEAD  → sees full tenant data (manage their team)
+   *   ADMIN / MARKETING / VIEWER → sees full tenant data
+   */
+  async getSummary(
+    tenantId: string,
+    timeRange?: string,
+    userId?: string,
+    role?: string,
+  ): Promise<AnalyticsSummary> {
     return this.withTenant(tenantId, async (client) => {
       const days = getDaysInterval(timeRange);
       const useTimeFilter = timeRange && timeRange !== 'all';
@@ -81,6 +103,18 @@ export class AnalyticsRepository extends BaseRepository {
         ? `AND l.created_at >= NOW() - INTERVAL '${days * 2} days' AND l.created_at < NOW() - INTERVAL '${days} days'`
         : '';
 
+      // ── RBAC: SALES agents only see their own assigned leads ──────────────
+      const isSalesScope = role === 'SALES' && userId;
+      // Sanitize userId — must be a valid UUID
+      const safeUserId = userId ? userId.replace(/[^a-f0-9\-]/gi, '') : null;
+      const userLeadFilter = isSalesScope && safeUserId
+        ? `AND l.assigned_to = '${safeUserId}'`
+        : '';
+      const userLeadFilterNoAlias = isSalesScope && safeUserId
+        ? `AND assigned_to = '${safeUserId}'`
+        : '';
+      const scopeLabel = isSalesScope ? 'Dữ liệu của bạn' : 'Toàn công ty';
+
       const leadsResult = await client.query(`
         SELECT
           COUNT(*)::int as total,
@@ -88,63 +122,77 @@ export class AnalyticsRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE stage = 'WON')::int as won_leads,
           COUNT(*) FILTER (WHERE stage = 'LOST')::int as lost_leads
         FROM leads l
-        WHERE l.${TENANT_FILTER} ${timeFilter}
+        WHERE l.${TENANT_FILTER} ${timeFilter} ${userLeadFilter}
       `);
 
       const prevLeadsResult = useTimeFilter
-        ? await client.query(`SELECT COUNT(*)::int as total FROM leads l WHERE l.${TENANT_FILTER} ${prevTimeFilter}`)
+        ? await client.query(`SELECT COUNT(*)::int as total FROM leads l WHERE l.${TENANT_FILTER} ${prevTimeFilter} ${userLeadFilter}`)
         : { rows: [{ total: 0 }] };
 
       const leadsByStageResult = await client.query(`
         SELECT stage, COUNT(*)::int as count
         FROM leads
-        WHERE ${TENANT_FILTER}
+        WHERE ${TENANT_FILTER} ${userLeadFilterNoAlias}
         GROUP BY stage
       `);
 
       const leadsBySourceResult = await client.query(`
         SELECT COALESCE(source, 'UNKNOWN') as source, COUNT(*)::int as count
         FROM leads
-        WHERE ${TENANT_FILTER}
+        WHERE ${TENANT_FILTER} ${userLeadFilterNoAlias}
         GROUP BY source
       `);
 
+      // Listings are shared company assets — always full-scope
       const listingsResult = await client.query(`
         SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE status = 'AVAILABLE')::int as available
         FROM listings
         WHERE ${TENANT_FILTER}
       `);
 
+      // Proposals: for SALES, only proposals linked to their leads
+      const proposalLeadJoin = isSalesScope && safeUserId
+        ? `INNER JOIN leads lp ON p.lead_id = lp.id AND lp.tenant_id = p.tenant_id AND lp.assigned_to = '${safeUserId}'`
+        : '';
       const proposalsResult = await client.query(`
-        SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE status = 'APPROVED')::int as approved
-        FROM proposals
-        WHERE ${TENANT_FILTER}
+        SELECT COUNT(p.id)::int as total, COUNT(p.id) FILTER (WHERE p.status = 'APPROVED')::int as approved
+        FROM proposals p
+        ${proposalLeadJoin}
+        WHERE p.${TENANT_FILTER}
       `);
 
+      // Contracts: for SALES, only contracts linked to their leads
+      const contractLeadJoin = isSalesScope && safeUserId
+        ? `INNER JOIN proposals cp ON c.proposal_id = cp.id AND cp.tenant_id = c.tenant_id
+           INNER JOIN leads cl ON cp.lead_id = cl.id AND cl.tenant_id = c.tenant_id AND cl.assigned_to = '${safeUserId}'`
+        : '';
       const contractsResult = await client.query(`
-        SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE status = 'SIGNED')::int as signed
-        FROM contracts
-        WHERE ${TENANT_FILTER}
+        SELECT COUNT(c.id)::int as total, COUNT(c.id) FILTER (WHERE c.status = 'SIGNED')::int as signed
+        FROM contracts c
+        ${contractLeadJoin}
+        WHERE c.${TENANT_FILTER}
       `);
 
       const commissionRate = parseFloat(process.env.COMMISSION_RATE || '0.02');
 
       const revenueResult = await client.query(`
-        SELECT COALESCE(SUM(final_price * $1), 0)::numeric as revenue
-        FROM proposals
-        WHERE ${TENANT_FILTER}
-          AND status = 'APPROVED'
-          ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : ''}
+        SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
+        FROM proposals p
+        ${proposalLeadJoin}
+        WHERE p.${TENANT_FILTER}
+          AND p.status = 'APPROVED'
+          ${useTimeFilter ? `AND p.created_at >= NOW() - INTERVAL '${days} days'` : ''}
       `, [commissionRate]);
 
       const prevRevenueResult = useTimeFilter
         ? await client.query(`
-            SELECT COALESCE(SUM(final_price * $1), 0)::numeric as revenue
-            FROM proposals
-            WHERE ${TENANT_FILTER}
-              AND status = 'APPROVED'
-              AND created_at >= NOW() - INTERVAL '${days * 2} days'
-              AND created_at < NOW() - INTERVAL '${days} days'
+            SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
+            FROM proposals p
+            ${proposalLeadJoin}
+            WHERE p.${TENANT_FILTER}
+              AND p.status = 'APPROVED'
+              AND p.created_at >= NOW() - INTERVAL '${days * 2} days'
+              AND p.created_at < NOW() - INTERVAL '${days} days'
           `, [commissionRate])
         : { rows: [{ revenue: '0' }] };
 
@@ -159,15 +207,20 @@ export class AnalyticsRepository extends BaseRepository {
         WHERE l.${TENANT_FILTER}
           AND l.stage NOT IN ('WON', 'LOST')
           AND p.status IN ('APPROVED', 'PENDING_APPROVAL')
+          ${isSalesScope && safeUserId ? `AND l.assigned_to = '${safeUserId}'` : ''}
         GROUP BY l.stage, l.score->>'grade'
       `);
 
+      // Interactions: for SALES, only from their leads
+      const interactionLeadFilter = isSalesScope && safeUserId
+        ? `AND i.lead_id IN (SELECT id FROM leads WHERE ${TENANT_FILTER} AND assigned_to = '${safeUserId}')`
+        : '';
       const interactionStats = await client.query(`
         SELECT
           COUNT(*) FILTER (WHERE direction = 'OUTBOUND')::int as total_outbound,
           COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND (metadata->>'isAi')::boolean = true)::int as ai_outbound
-        FROM interactions
-        WHERE ${TENANT_FILTER}
+        FROM interactions i
+        WHERE i.${TENANT_FILTER} ${interactionLeadFilter}
       `);
 
       const salesVelocityResult = await client.query(`
@@ -175,6 +228,7 @@ export class AnalyticsRepository extends BaseRepository {
         FROM leads
         WHERE ${TENANT_FILTER}
           AND stage = 'WON'
+          ${userLeadFilterNoAlias}
           ${useTimeFilter ? `AND updated_at >= NOW() - INTERVAL '${days} days'` : ''}
       `);
 
@@ -184,6 +238,7 @@ export class AnalyticsRepository extends BaseRepository {
             FROM leads
             WHERE ${TENANT_FILTER}
               AND stage = 'WON'
+              ${userLeadFilterNoAlias}
               AND updated_at >= NOW() - INTERVAL '${days * 2} days'
               AND updated_at < NOW() - INTERVAL '${days} days'
           `)
@@ -195,6 +250,7 @@ export class AnalyticsRepository extends BaseRepository {
           COUNT(*)::int as count
         FROM leads
         WHERE ${TENANT_FILTER}
+          ${userLeadFilterNoAlias}
           ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : `AND created_at >= NOW() - INTERVAL '30 days'`}
         GROUP BY TO_CHAR(created_at, 'DD/MM'), DATE(created_at)
         ORDER BY DATE(created_at) ASC
@@ -209,10 +265,12 @@ export class AnalyticsRepository extends BaseRepository {
         FROM interactions i
         LEFT JOIN leads l ON i.lead_id = l.id AND l.tenant_id = i.tenant_id
         WHERE i.${TENANT_FILTER}
+          ${interactionLeadFilter}
         ORDER BY i.timestamp DESC
         LIMIT 10
       `);
 
+      // Market pulse: always full-scope (shared listings data)
       const marketPulseResult = await client.query(`
         SELECT
           COALESCE(attributes->>'district', attributes->>'city', 'Khác') as location,
@@ -225,6 +283,7 @@ export class AnalyticsRepository extends BaseRepository {
         LIMIT 20
       `);
 
+      // Agent leaderboard: always full-scope (context for entire team)
       const agentLeaderboardResult = await client.query(`
         SELECT
           u.name,
@@ -247,16 +306,18 @@ export class AnalyticsRepository extends BaseRepository {
 
       const revenueByMonthResult = await client.query(`
         SELECT
-          TO_CHAR(created_at, 'YYYY-MM') as month,
-          SUM(final_price * $1)::numeric as revenue
-        FROM proposals
-        WHERE ${TENANT_FILTER}
-          AND status = 'APPROVED'
-        GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+          TO_CHAR(p.created_at, 'YYYY-MM') as month,
+          SUM(p.final_price * $1)::numeric as revenue
+        FROM proposals p
+        ${proposalLeadJoin}
+        WHERE p.${TENANT_FILTER}
+          AND p.status = 'APPROVED'
+        GROUP BY TO_CHAR(p.created_at, 'YYYY-MM')
         ORDER BY month DESC
         LIMIT 12
       `, [commissionRate]);
 
+      // ── Compute aggregates ────────────────────────────────────────────────
       let pipelineValue = 0;
       let weightedProbSum = 0;
       let totalDeals = 0;
@@ -377,21 +438,37 @@ export class AnalyticsRepository extends BaseRepository {
         recentActivities,
         marketPulse,
         agentLeaderboard,
+        scopeLabel,
       };
     });
   }
 
-  async generateBiMarts(tenantId: string, timeRange?: string): Promise<any> {
+  async generateBiMarts(
+    tenantId: string,
+    timeRange?: string,
+    userId?: string,
+    role?: string,
+  ): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const days = getDaysInterval(timeRange);
       const useTimeFilter = timeRange && timeRange !== 'all';
       const timeFilterAnd = useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : '';
+
+      const isSalesScope = role === 'SALES' && userId;
+      const safeUserId = userId ? userId.replace(/[^a-f0-9\-]/gi, '') : null;
+      const userLeadFilter = isSalesScope && safeUserId
+        ? `AND assigned_to = '${safeUserId}'`
+        : '';
+      const userLeadFilterL = isSalesScope && safeUserId
+        ? `AND l.assigned_to = '${safeUserId}'`
+        : '';
 
       const funnelResult = await client.query(`
         SELECT stage, COUNT(*)::int as count
         FROM leads
         WHERE ${TENANT_FILTER}
           AND stage != 'LOST'
+          ${userLeadFilter}
           ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : ''}
         GROUP BY stage
         ORDER BY
@@ -415,11 +492,13 @@ export class AnalyticsRepository extends BaseRepository {
         FROM leads l
         LEFT JOIN proposals p ON l.id = p.lead_id AND p.tenant_id = l.tenant_id AND p.status = 'APPROVED'
         WHERE l.${TENANT_FILTER}
+          ${userLeadFilterL}
           ${timeFilterAnd.replace('created_at', 'l.created_at')}
         GROUP BY l.source
         ORDER BY revenue DESC
       `);
 
+      // Campaign costs: always full-scope (company-level marketing spend)
       const campaignCostsResult = await client.query(`
         SELECT source, COALESCE(SUM(cost), 0)::numeric as total_cost
         FROM campaign_costs
@@ -457,6 +536,7 @@ export class AnalyticsRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE stage = 'LOST')::int as lost
         FROM leads
         WHERE ${TENANT_FILTER}
+          ${userLeadFilter}
           ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : ''}
         GROUP BY TO_CHAR(created_at, 'YYYY-MM')
         ORDER BY period DESC
