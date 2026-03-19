@@ -64,8 +64,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "@types/dompurify": "^3.0.5",
     "@types/cookie-parser": "^1.4.10",
+    "@types/dompurify": "^3.0.5",
     "@types/express": "^5.0.6",
     "@types/ioredis-mock": "^8.2.7",
     "@types/jsonwebtoken": "^9.0.10",

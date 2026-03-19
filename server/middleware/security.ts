@@ -15,7 +15,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: https:; " +
-    "connect-src 'self' wss: https://generativelanguage.googleapis.com; " +
+    "connect-src 'self' ws: wss: https://generativelanguage.googleapis.com; " +
     "frame-ancestors 'none';"
   );
 
