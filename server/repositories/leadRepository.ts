@@ -288,6 +288,20 @@ export class LeadRepository extends BaseRepository {
     });
   }
 
+  /**
+   * Find a lead by a specific social channel ID (zalo, facebook, telegram, ...).
+   * e.g. findBySocialId(tenantId, 'zalo', '123456789')
+   */
+  async findBySocialId(tenantId: string, channel: 'zalo' | 'facebook' | 'telegram', socialId: string): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT * FROM leads WHERE social_ids->>'${channel}' = $1 LIMIT 1`,
+        [socialId]
+      );
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
+
 }
 
 export const leadRepository = new LeadRepository();

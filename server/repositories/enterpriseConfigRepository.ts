@@ -1,8 +1,41 @@
 import { BaseRepository } from './baseRepository';
+import { pool } from '../db';
 
 export class EnterpriseConfigRepository extends BaseRepository {
   constructor() {
     super('enterprise_config');
+  }
+
+  /**
+   * Cross-tenant lookup: find the tenantId that has a given Zalo OA ID configured.
+   * Uses raw pool (bypasses RLS) because we need to search across all tenants.
+   */
+  async findTenantByZaloOaId(oaId: string): Promise<string | null> {
+    const result = await pool.query(
+      `SELECT tenant_id FROM enterprise_config
+       WHERE config_key = 'zalo'
+         AND config_value->>'oaId' = $1
+         AND (config_value->>'enabled')::boolean = true
+       LIMIT 1`,
+      [oaId]
+    );
+    return result.rows[0]?.tenant_id ?? null;
+  }
+
+  /**
+   * Cross-tenant lookup: find the tenantId that has a given Facebook Page ID configured.
+   * Uses raw pool (bypasses RLS) because we need to search across all tenants.
+   */
+  async findTenantByFacebookPageId(pageId: string): Promise<string | null> {
+    // facebookPages is stored as a JSON array: [{id: "pageId", ...}, ...]
+    const result = await pool.query(
+      `SELECT tenant_id FROM enterprise_config
+       WHERE config_key = 'facebookPages'
+         AND config_value @> $1::jsonb
+       LIMIT 1`,
+      [JSON.stringify([{ id: pageId }])]
+    );
+    return result.rows[0]?.tenant_id ?? null;
   }
 
   async getConfig(tenantId: string): Promise<any> {
