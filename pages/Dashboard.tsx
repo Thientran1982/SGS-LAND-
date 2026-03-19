@@ -137,7 +137,6 @@ const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
             src={avatar}
             alt={name}
             className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm object-cover"
-            referrerPolicy="no-referrer"
             onError={() => setBroken(true)}
         />
     ) : (
