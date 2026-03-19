@@ -34,7 +34,8 @@ export class LeadRepository extends BaseRepository {
       const values: any[] = [];
       let paramIndex = 1;
 
-      if (userRole === 'SALES' && userId) {
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
         conditions.push(`l.assigned_to = $${paramIndex++}`);
         values.push(userId);
       }
@@ -168,7 +169,8 @@ export class LeadRepository extends BaseRepository {
 
       const lead = this.rowToEntity<any>(result.rows[0]);
 
-      if (userRole === 'SALES' && userId && lead.assignedTo !== userId) {
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId && lead.assignedTo !== userId) {
         return null;
       }
 
@@ -235,7 +237,8 @@ export class LeadRepository extends BaseRepository {
 
   async update(tenantId: string, id: string, data: Record<string, any>, userId?: string, userRole?: string): Promise<any | null> {
     return this.withTenant(tenantId, async (client) => {
-      if (userRole === 'SALES' && userId) {
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
         const check = await client.query(`SELECT assigned_to FROM leads WHERE id = $1`, [id]);
         if (!check.rows[0] || check.rows[0].assigned_to !== userId) return null;
       }
@@ -285,32 +288,6 @@ export class LeadRepository extends BaseRepository {
     });
   }
 
-  async getStageDistribution(tenantId: string): Promise<Record<string, number>> {
-    return this.withTenant(tenantId, async (client) => {
-      const result = await client.query(
-        `SELECT stage, COUNT(*)::int as count FROM leads GROUP BY stage`
-      );
-      const dist: Record<string, number> = {};
-      for (const row of result.rows) {
-        dist[row.stage] = row.count;
-      }
-      return dist;
-    });
-  }
-
-  async getRecentLeads(tenantId: string, limit: number = 10): Promise<any[]> {
-    return this.withTenant(tenantId, async (client) => {
-      const result = await client.query(
-        `SELECT l.*, u.name as assigned_to_name
-         FROM leads l
-         LEFT JOIN users u ON l.assigned_to = u.id
-         ORDER BY l.created_at DESC
-         LIMIT $1`,
-        [limit]
-      );
-      return this.rowsToEntities(result.rows);
-    });
-  }
 }
 
 export const leadRepository = new LeadRepository();

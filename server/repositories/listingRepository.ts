@@ -24,12 +24,20 @@ export class ListingRepository extends BaseRepository {
   async findListings(
     tenantId: string,
     pagination: PaginationParams,
-    filters?: ListingFilters
+    filters?: ListingFilters,
+    userId?: string,
+    userRole?: string
   ): Promise<PaginatedResult<any>> {
     return this.withTenant(tenantId, async (client) => {
       const conditions: string[] = [];
       const values: any[] = [];
       let paramIndex = 1;
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
+        conditions.push(`created_by = $${paramIndex++}`);
+        values.push(userId);
+      }
 
       if (filters?.type) {
         conditions.push(`type = $${paramIndex++}`);
@@ -107,7 +115,8 @@ export class ListingRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE status = 'OPENING')::int    AS opening_count,
           COUNT(*) FILTER (WHERE status = 'INACTIVE')::int   AS inactive_count,
           COUNT(*)::int                                       AS total_count
-         FROM listings`
+         FROM listings ${whereClause}`,
+        values
       );
       const sr = statsResult.rows[0];
 

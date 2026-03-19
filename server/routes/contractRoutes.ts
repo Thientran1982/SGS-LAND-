@@ -18,7 +18,7 @@ export function createContractRoutes(authenticateToken: any) {
       if (req.query.leadId) filters.leadId = req.query.leadId;
       if (req.query.search) filters.search = req.query.search;
 
-      const result = await contractRepository.findContracts(user.tenantId, { page, pageSize }, filters);
+      const result = await contractRepository.findContracts(user.tenantId, { page, pageSize }, filters, user.id, user.role);
       res.json(result);
     } catch (error) {
       console.error('Error fetching contracts:', error);
@@ -31,6 +31,12 @@ export function createContractRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const contract = await contractRepository.findById(user.tenantId, req.params.id);
       if (!contract) return res.status(404).json({ error: 'Contract not found' });
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(user.role) && (contract as any).createdById !== user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
       res.json(contract);
     } catch (error) {
       console.error('Error fetching contract:', error);
@@ -50,6 +56,7 @@ export function createContractRoutes(authenticateToken: any) {
       const contract = await contractRepository.create(user.tenantId, {
         ...req.body,
         createdBy: user.name || user.email,
+        createdById: user.id,
       });
 
       await auditRepository.log(user.tenantId, {
@@ -78,10 +85,17 @@ export function createContractRoutes(authenticateToken: any) {
   router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+
+      // Fetch the contract for state machine and ownership checks
+      const current = await contractRepository.findById(user.tenantId, req.params.id);
+      if (!current) return res.status(404).json({ error: 'Contract not found' });
+
+      if (RESTRICTED.includes(user.role) && (current as any).createdById !== user.id) {
+        return res.status(403).json({ error: 'You can only edit contracts you created' });
+      }
 
       if (req.body.status) {
-        const current = await contractRepository.findById(user.tenantId, req.params.id);
-        if (!current) return res.status(404).json({ error: 'Contract not found' });
         const currentStatus = ((current as any).status || 'DRAFT').toUpperCase();
         const newStatus = String(req.body.status).toUpperCase();
         const allowed = CONTRACT_VALID_TRANSITIONS[currentStatus] ?? [];
