@@ -17,8 +17,8 @@ import { motion, AnimatePresence } from 'motion/react';
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: 30_000,
-            gcTime: 5 * 60_000,
+            staleTime: 2 * 60_000,   // 2 min — data stays fresh, no flicker on return
+            gcTime: 15 * 60_000,     // 15 min — keep data in memory much longer
             refetchOnWindowFocus: false,
             retry: 1,
         },
@@ -316,7 +316,10 @@ const AppShell: React.FC = () => {
     const { t } = useTranslation();
     const [authState, setAuthState] = useState<'LOADING' | 'AUTH' | 'GUEST'>(getInitialAuthState);
 
-    // Prefetch top pages as soon as auth is confirmed
+    // Tracks which private pages have been mounted — CSS show/hide instead of unmount/remount
+    const [mountedPrivateRoutes, setMountedPrivateRoutes] = useState<Set<string>>(new Set());
+
+    // Prefetch JS chunks as soon as auth is confirmed
     useEffect(() => {
         if (authState === 'AUTH') {
             prefetchRoutes([
@@ -325,6 +328,18 @@ const AppShell: React.FC = () => {
             ]);
         }
     }, [authState]);
+
+    // Add private route to mounted set on navigation (lazy — only routes the user visits)
+    useEffect(() => {
+        if (authState === 'AUTH' && route.base && !PUBLIC_ROUTES.has(route.base) && PAGE_REGISTRY[route.base]) {
+            setMountedPrivateRoutes(prev => {
+                if (prev.has(route.base)) return prev;
+                const next = new Set(prev);
+                next.add(route.base);
+                return next;
+            });
+        }
+    }, [route.base, authState]);
 
     // Auth Initialization — runs once on mount to check session
     useEffect(() => {
@@ -592,24 +607,31 @@ const AppShell: React.FC = () => {
 
     // 3. Authenticated App Layout (Private Pages)
     if (authState === 'AUTH') {
-        const TargetComponent = PAGE_REGISTRY[route.base];
+        const hasKnownPage = !!PAGE_REGISTRY[route.base];
         return (
             <Layout activePage={route.base} onNavigate={navigate} onLogout={handleLogout}>
-                <AnimatePresence mode="sync">
-                    <motion.div 
-                        key={route.base}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.08 }}
-                        className="h-full w-full flex flex-col relative overflow-hidden isolate"
-                    >
-                        <ErrorBoundary>
-                            <Suspense fallback={PageSkeleton}>
-                                {TargetComponent ? <TargetComponent /> : <NotFound />}
-                            </Suspense>
-                        </ErrorBoundary>
-                    </motion.div>
-                </AnimatePresence>
+                {/* Page persistence layer — keeps visited pages alive to avoid re-mount/re-fetch */}
+                <div className="h-full w-full relative overflow-hidden">
+                    {[...mountedPrivateRoutes].map(routeKey => {
+                        const Comp = PAGE_REGISTRY[routeKey];
+                        if (!Comp) return null;
+                        const isActive = routeKey === route.base;
+                        return (
+                            <div
+                                key={routeKey}
+                                className="h-full w-full flex flex-col absolute inset-0 isolate"
+                                style={{ display: isActive ? 'flex' : 'none' }}
+                            >
+                                <ErrorBoundary>
+                                    <Suspense fallback={PageSkeleton}>
+                                        <Comp />
+                                    </Suspense>
+                                </ErrorBoundary>
+                            </div>
+                        );
+                    })}
+                    {!hasKnownPage && mountedPrivateRoutes.size > 0 && <NotFound />}
+                </div>
             </Layout>
         );
     }
