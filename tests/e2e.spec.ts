@@ -16,9 +16,9 @@ import { test, expect, type Page } from '@playwright/test';
 
 // --- 1. CONFIGURATION LAYER ---
 const ENV = {
-    BASE_URL: process.env.BASE_URL || 'http://localhost:3000',
+    BASE_URL: process.env.BASE_URL || 'http://localhost:5000',
     ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@sgs.vn',
-    ADMIN_PASS: process.env.ADMIN_PASS || '123456',
+    ADMIN_PASS: process.env.ADMIN_PASS || '',
     TIMEOUTS: {
         NAV: 15000,
         ACTION: 5000,

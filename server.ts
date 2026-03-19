@@ -740,10 +740,13 @@ async function startServer() {
 
   // Zalo webhook URL verification (some Zalo integrations call GET to verify)
   app.get("/api/webhooks/zalo", (req, res) => {
-    const verifyToken = process.env.ZALO_VERIFY_TOKEN || "sgs_land_zalo_token";
+    const verifyToken = process.env.ZALO_VERIFY_TOKEN;
     const token = req.query.verifyToken || req.query.verify_token;
+    if (!verifyToken) {
+      return res.status(200).json({ status: 'active', platform: 'zalo' });
+    }
     if (token && token === verifyToken) {
-      console.log('[Zalo Webhook] Verified');
+      logger.info('[Zalo Webhook] Verified');
       res.status(200).send(req.query.challenge || 'OK');
     } else {
       res.status(200).json({
@@ -788,14 +791,15 @@ async function startServer() {
 
   // Facebook Webhook Verification
   app.get("/api/webhooks/facebook", (req, res) => {
-    const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN || "sgs_land_token";
+    const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
+    if (!VERIFY_TOKEN) return res.sendStatus(503);
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
     if (mode && token) {
       if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-        console.log('WEBHOOK_VERIFIED');
+        logger.info('Facebook webhook verified');
         res.status(200).send(challenge);
       } else {
         res.sendStatus(403);
