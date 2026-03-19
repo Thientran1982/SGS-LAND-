@@ -122,7 +122,7 @@ export const schemas = {
   },
   register: {
     email: { required: true, type: 'email' as const },
-    password: { required: true, type: 'string' as const, minLength: 4 },
+    password: { required: true, type: 'string' as const, minLength: 6 },
     name: { required: false, type: 'string' as const, maxLength: 200 },
   },
   createLead: {

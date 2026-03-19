@@ -159,6 +159,9 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.post('/articles', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (!CAN_MANAGE.includes(user.role)) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
       const { title, content, excerpt, category, tags, author, coverImage, status, slug } = req.body;
       if (!title) return res.status(400).json({ error: 'Title is required' });
       const article = await articleRepository.create(user.tenantId, {
@@ -175,6 +178,9 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.put('/articles/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (!CAN_MANAGE.includes(user.role)) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
       const article = await articleRepository.update(user.tenantId, req.params.id, req.body);
       if (!article) return res.status(404).json({ error: 'Article not found' });
       res.json(article);
@@ -187,6 +193,9 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.delete('/articles/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (!CAN_MANAGE.includes(user.role)) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
       const deleted = await articleRepository.deleteById(user.tenantId, req.params.id);
       if (!deleted) return res.status(404).json({ error: 'Article not found' });
       res.json({ message: 'Article deleted' });

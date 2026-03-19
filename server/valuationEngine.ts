@@ -18,6 +18,8 @@
  *    where weights depend on property type and data availability.
  */
 
+import { DEFAULT_VACANCY_RATE, DEFAULT_OPEX_RATE, DEFAULT_CAP_RATE } from './constants';
+
 export type LegalStatus = 'PINK_BOOK' | 'CONTRACT' | 'WAITING';
 
 export type PropertyType =
@@ -251,8 +253,8 @@ function applyIncomeApproach(
   monthlyRent: number,       // triệu VNĐ/tháng
   totalPrice: number,        // VNĐ (comps value — used to compute yield)
   propertyType: PropertyType,
-  vacancyRate = 0.08,        // 8% vacancy
-  opexRate = 0.20,           // 20% of gross income
+  vacancyRate = DEFAULT_VACANCY_RATE,
+  opexRate = DEFAULT_OPEX_RATE,
 ): IncomeApproachResult {
   const capRate = DEFAULT_CAP_RATES[propertyType];
   const grossIncomeTrieu = monthlyRent * 12;                     // triệu/năm
@@ -263,7 +265,8 @@ function applyIncomeApproach(
 
   // Convert to VNĐ for capital value
   const noiVND = noiTrieu * 1_000_000;
-  const capitalValue = Math.round(noiVND / capRate);
+  const safeCapRate = capRate > 0 ? capRate : DEFAULT_CAP_RATE;
+  const capitalValue = Math.round(noiVND / safeCapRate);
 
   const grossRentalYield = totalPrice > 0
     ? (grossIncomeTrieu * 1_000_000) / totalPrice * 100
@@ -301,8 +304,10 @@ export function applyAVM(input: AVMInput): AVMOutput {
   const Ka = Ka_data.value;
 
   // ── Method 1: AVM/Comps ─────────────────────────────────────
-  const pricePerM2 = Math.round(marketBasePrice * Kd * Kp * Ka);
-  const compsPrice = Math.round(pricePerM2 * area);
+  const safeArea = Math.max(1, area); // guard against zero/negative area
+  const rawPricePerM2 = marketBasePrice * Kd * Kp * Ka;
+  const pricePerM2 = Math.max(0, Math.round(rawPricePerM2)); // guard against negative
+  const compsPrice = Math.max(0, Math.round(pricePerM2 * safeArea));
 
   // ── Method 2: Income Approach (if rent data available) ──────
   let incomeApproach: IncomeApproachResult | undefined;
@@ -449,14 +454,16 @@ export function estimateFallbackRent(
   area: number,
 ): number {
   const capRate = DEFAULT_CAP_RATES[propertyType];
-  const grossYield = capRate + 0.015;  // gross ≈ cap rate + 1.5% (before vacancy/opex)
+  const safeArea = area > 0 ? area : 1; // guard against zero area
+  const safeCap = capRate > 0 ? capRate : DEFAULT_CAP_RATE;
+  const grossYield = safeCap + 0.015;  // gross ≈ cap rate + 1.5% (before vacancy/opex)
   const annualRentVND = compsPrice * grossYield;
   const monthlyRentTrieu = (annualRentVND / 12) / 1_000_000;
-  // Sanity check: rent/m² should be 0.1–2 triệu/m²/tháng
-  const rentPerM2 = monthlyRentTrieu / area;
+  // Sanity check: rent/m² should be 0.05–5 triệu/m²/tháng
+  const rentPerM2 = monthlyRentTrieu / safeArea;
   if (rentPerM2 < 0.05 || rentPerM2 > 5) {
     // Fallback: use a simple heuristic
-    return Math.round(area * 0.25 * 10) / 10;  // ~0.25 triệu/m²/tháng
+    return Math.round(safeArea * 0.25 * 10) / 10;  // ~0.25 triệu/m²/tháng
   }
   return Math.round(monthlyRentTrieu * 10) / 10;
 }
