@@ -255,7 +255,7 @@ class AiEngine {
         graph.addNode('ROUTER', async (state) => {
             state.trace.push({ id: `step_1`, node: 'ROUTER', status: 'RUNNING', timestamp: Date.now() });
             
-            const historyText = state.history.slice(-4) 
+            const historyText = state.history.slice(-15)
                 .map(h => `${h.direction === 'INBOUND' ? 'USER' : 'AGENT'}: "${h.content}"`)
                 .join('\n');
 

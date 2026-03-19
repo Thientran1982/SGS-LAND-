@@ -14,8 +14,8 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.get('/documents', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 50, 200));
       const result = await documentRepository.findDocuments(user.tenantId, { page, pageSize });
       res.json(result);
     } catch (error) {
@@ -130,8 +130,8 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.get('/articles', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 50, 200));
       const filters: any = {};
       if (req.query.category) filters.category = req.query.category;
       if (req.query.status) filters.status = req.query.status;

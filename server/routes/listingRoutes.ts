@@ -9,8 +9,8 @@ export function createListingRoutes(authenticateToken: any) {
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 200);
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 200));
 
       const filters: any = {};
       if (req.query.type) filters.type = req.query.type;
