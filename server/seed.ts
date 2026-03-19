@@ -20,7 +20,12 @@ async function seed() {
     }
 
     console.log('Seeding users...');
-    const defaultHash = await bcrypt.hash('123456', SALT_ROUNDS);
+    // Use SEED_PASSWORD env var; never default to a weak password in production
+    const seedPassword = process.env.SEED_PASSWORD;
+    if (!seedPassword) {
+      throw new Error('SEED_PASSWORD environment variable is required. Set it to a strong password before seeding.');
+    }
+    const defaultHash = await bcrypt.hash(seedPassword, SALT_ROUNDS);
 
     const users = [
       { name: 'Admin SGS', email: 'admin@sgs.vn', hash: defaultHash, role: 'ADMIN', avatar: '' },

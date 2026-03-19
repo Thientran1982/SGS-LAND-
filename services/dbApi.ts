@@ -1321,7 +1321,7 @@ class DatabaseApiClient {
     return { data: [], format: params?.format || 'json', exportedAt: new Date().toISOString() };
   }
 
-  async updateOnboardingProgress(step: number) {
+  async updateOnboardingProgress(step: number, _completed?: boolean) {
     return { step, completed: step >= 5 };
   }
 
@@ -1329,21 +1329,6 @@ class DatabaseApiClient {
     return true;
   }
 
-  async aggregate(query: any) {
-    return [];
-  }
-
-  async exec(sql: string) {
-    return [];
-  }
-
-  async prepare(sql: string) {
-    return { execute: async () => [] };
-  }
-
-  async getListingWithSensitiveData(id: string) {
-    return this.getListingById(id);
-  }
 }
 
 const dbApi = new DatabaseApiClient();

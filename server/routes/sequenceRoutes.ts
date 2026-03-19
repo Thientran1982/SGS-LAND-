@@ -39,7 +39,7 @@ export function createSequenceRoutes(authenticateToken: any) {
     }
   });
 
-  router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
@@ -55,7 +55,7 @@ export function createSequenceRoutes(authenticateToken: any) {
     }
   });
 
-  router.post('/:id/execute', authenticateToken, async (req: Request, res: Response) => {
+  router.post('/:id/execute', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const sequence = await sequenceRepository.findById(user.tenantId, req.params.id as string);
@@ -101,7 +101,7 @@ export function createSequenceRoutes(authenticateToken: any) {
     }
   });
 
-  router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
