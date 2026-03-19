@@ -1,22 +1,42 @@
 import { BaseRepository } from './baseRepository';
 
+const TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
+
 class DocumentRepository extends BaseRepository {
   constructor() {
     super('documents');
   }
 
-  async findDocuments(tenantId: string, pagination?: { page: number; pageSize: number }) {
+  async findDocuments(
+    tenantId: string,
+    pagination?: { page: number; pageSize: number },
+    filters?: { search?: string }
+  ) {
     return this.withTenant(tenantId, async (client) => {
       const page = pagination?.page || 1;
       const pageSize = pagination?.pageSize || 50;
       const offset = (page - 1) * pageSize;
 
-      const countResult = await client.query('SELECT COUNT(*)::int as total FROM documents');
+      const conditions: string[] = [`${TENANT_FILTER}`];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      if (filters?.search) {
+        conditions.push(`title ILIKE $${paramIndex++}`);
+        values.push(`%${filters.search}%`);
+      }
+
+      const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int as total FROM documents ${whereClause}`,
+        values
+      );
       const total = countResult.rows[0].total;
 
       const result = await client.query(
-        'SELECT * FROM documents ORDER BY created_at DESC LIMIT $1 OFFSET $2',
-        [pageSize, offset]
+        `SELECT * FROM documents ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+        [...values, pageSize, offset]
       );
 
       return {
@@ -57,7 +77,7 @@ class DocumentRepository extends BaseRepository {
 
       updates.push(`updated_at = CURRENT_TIMESTAMP`);
       const result = await client.query(
-        `UPDATE documents SET ${updates.join(', ')} WHERE id = $1 RETURNING *`,
+        `UPDATE documents SET ${updates.join(', ')} WHERE id = $1 AND ${TENANT_FILTER} RETURNING *`,
         values
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;

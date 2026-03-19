@@ -1,8 +1,8 @@
 import { api, PaginatedResponse } from './apiClient';
 
 export const knowledgeApi = {
-  getDocuments: (page = 1, pageSize = 50) =>
-    api.get<PaginatedResponse<any>>('/api/knowledge/documents', { page, pageSize }),
+  getDocuments: (page = 1, pageSize = 50, search?: string) =>
+    api.get<PaginatedResponse<any>>('/api/knowledge/documents', { page, pageSize, ...(search ? { search } : {}) }),
 
   createDocument: (data: any) =>
     api.post<any>('/api/knowledge/documents', data),

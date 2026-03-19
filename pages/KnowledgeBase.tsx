@@ -24,10 +24,12 @@ export const KnowledgeBase: React.FC = () => {
     const [docs, setDocs] = useState<KnowledgeDocument[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadingCount, setUploadingCount] = useState(0);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
@@ -38,17 +40,27 @@ export const KnowledgeBase: React.FC = () => {
         setTimeout(() => setToast(null), 3000);
     }, []);
 
-    const fetchData = useCallback(async () => {
+    // Debounce search input — wait 350ms before hitting server
+    useEffect(() => {
+        const handler = setTimeout(() => setDebouncedSearch(search), 350);
+        return () => clearTimeout(handler);
+    }, [search]);
+
+    const fetchData = useCallback(async (searchTerm?: string) => {
         setLoading(true);
         try {
-            const [data, user] = await Promise.all([db.getDocuments(), db.getCurrentUser()]);
+            const [data, user] = await Promise.all([
+                db.getDocuments(searchTerm || undefined),
+                db.getCurrentUser(),
+            ]);
             setDocs(data || []);
             setCurrentUser(user);
-        } catch (e) { console.error(e); } 
+        } catch (e) { console.error(e); }
         finally { setLoading(false); }
     }, []);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    // Initial load + re-fetch when debounced search changes
+    useEffect(() => { fetchData(debouncedSearch || undefined); }, [fetchData, debouncedSearch]);
 
     const canManage = currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD';
 
@@ -79,8 +91,9 @@ export const KnowledgeBase: React.FC = () => {
             });
             setDocs(prev => [doc, ...prev]);
             return true;
-        } catch {
-            notify(`${file.name}: ${t('common.error') || 'Đã xảy ra lỗi'}`, 'error');
+        } catch (err: any) {
+            console.error('[KnowledgeBase] Upload failed:', err);
+            notify(`${file.name}: ${err?.message || t('common.error') || 'Đã xảy ra lỗi'}`, 'error');
             return false;
         }
     };
@@ -132,18 +145,18 @@ export const KnowledgeBase: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
+        setIsDeleting(true);
         try {
             await db.deleteDocument(id);
             setDocs(prev => (prev || []).filter(d => d.id !== id));
             notify(t('knowledge.delete_success') || 'Xóa thành công', 'success');
             setConfirmDeleteId(null);
-        } catch (error) {
-            notify(t('common.error') || 'Đã xảy ra lỗi', 'error');
+        } catch (error: any) {
+            notify(error?.message || t('common.error') || 'Đã xảy ra lỗi', 'error');
+        } finally {
+            setIsDeleting(false);
         }
     };
-
-    const normalizedSearch = normalizeString(search);
-    const filteredDocs = docs.filter(d => normalizeString(d.title).includes(normalizedSearch));
 
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading') || 'Đang tải...'}</div>;
 
@@ -169,17 +182,20 @@ export const KnowledgeBase: React.FC = () => {
                             {t('knowledge.delete_warning') || 'Hành động này không thể hoàn tác. Tài liệu và file vật lý sẽ bị xóa hoàn toàn khỏi hệ thống.'}
                         </p>
                         <div className="flex gap-3">
-                            <button 
+                            <button
                                 onClick={() => setConfirmDeleteId(null)}
-                                className="flex-1 px-4 py-3 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-secondary)] font-bold rounded-xl transition-colors"
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-3 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-secondary)] font-bold rounded-xl transition-colors disabled:opacity-50"
                             >
                                 {t('common.cancel') || 'Hủy'}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => handleDelete(confirmDeleteId)}
-                                className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-rose-600/20"
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-rose-600/20 disabled:opacity-60 flex items-center justify-center gap-2"
                             >
-                                {t('common.delete') || 'Xóa'}
+                                {isDeleting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                                {isDeleting ? '...' : (t('common.delete') || 'Xóa')}
                             </button>
                         </div>
                     </div>
@@ -261,11 +277,11 @@ export const KnowledgeBase: React.FC = () => {
             <div>
                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                     {t('knowledge.uploaded_docs') || 'Tài liệu đã tải lên'}
-                    <span className="px-2.5 py-0.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] rounded-full text-xs font-bold">{filteredDocs.length}</span>
+                    <span className="px-2.5 py-0.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] rounded-full text-xs font-bold">{docs.length}</span>
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredDocs.map(doc => (
+                    {docs.map(doc => (
                         <div key={doc.id} className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group relative flex flex-col h-full">
                             <div className="flex gap-3 sm:gap-4 items-start mb-4">
                                 <div className="shrink-0 p-2 bg-[var(--glass-surface)] rounded-xl">
@@ -280,12 +296,17 @@ export const KnowledgeBase: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="mt-auto pt-4 border-t border-[var(--glass-border)] flex items-center justify-between">
                                 {doc.status === 'PROCESSING' ? (
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2 h-2 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                                        <span className="text-xs3 font-bold text-amber-600 uppercase tracking-wider">Đang xử lý</span>
+                                        <span className="text-xs3 font-bold text-amber-600 uppercase tracking-wider">{t('knowledge.status_processing') || 'Đang xử lý'}</span>
+                                    </div>
+                                ) : doc.status === 'INACTIVE' ? (
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
+                                        <span className="text-xs3 font-bold text-[var(--text-secondary)] uppercase tracking-wider">{t('knowledge.status_inactive') || 'Không hoạt động'}</span>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-1.5">
@@ -297,10 +318,10 @@ export const KnowledgeBase: React.FC = () => {
                                     </div>
                                 )}
                                 {canManage && (
-                                    <button 
-                                        onClick={() => setConfirmDeleteId(doc.id)} 
+                                    <button
+                                        onClick={() => setConfirmDeleteId(doc.id)}
                                         className="p-1.5 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                                        title="Xóa tài liệu"
+                                        title={t('knowledge.delete_doc') || 'Xóa tài liệu'}
                                     >
                                         {ICONS.TRASH}
                                     </button>
@@ -309,15 +330,17 @@ export const KnowledgeBase: React.FC = () => {
                         </div>
                     ))}
                 </div>
-                
-                {filteredDocs.length === 0 && (
+
+                {docs.length === 0 && !loading && (
                     <div className="py-16 text-center bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
                         <div className="w-16 h-16 bg-[var(--glass-surface)] rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--text-secondary)]">
-                            {ICONS.SEARCH}
+                            {debouncedSearch ? ICONS.SEARCH : ICONS.CLOUD}
                         </div>
-                        <h3 className="text-[var(--text-primary)] font-bold mb-1">{t('knowledge.empty_title') || 'Không tìm thấy tài liệu'}</h3>
+                        <h3 className="text-[var(--text-primary)] font-bold mb-1">
+                            {debouncedSearch ? (t('knowledge.empty_title') || 'Không tìm thấy tài liệu') : (t('knowledge.empty_title_no_docs') || 'Chưa có tài liệu nào')}
+                        </h3>
                         <p className="text-[var(--text-tertiary)] text-sm">
-                            {search ? (t('knowledge.empty_search') || 'Thử thay đổi từ khóa tìm kiếm') : (t('knowledge.empty_desc') || 'Chưa có tài liệu nào được tải lên')}
+                            {debouncedSearch ? (t('knowledge.empty_search') || 'Thử thay đổi từ khóa tìm kiếm') : (t('knowledge.empty_desc') || 'Tải lên tài liệu để AI học và trả lời khách hàng chính xác hơn')}
                         </p>
                     </div>
                 )}

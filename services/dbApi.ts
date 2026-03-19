@@ -658,9 +658,9 @@ class DatabaseApiClient {
     }
   }
 
-  async getDocuments() {
+  async getDocuments(search?: string) {
     try {
-      const result = await knowledgeApi.getDocuments();
+      const result = await knowledgeApi.getDocuments(1, 50, search);
       return result.data;
     } catch {
       return [];
