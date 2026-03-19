@@ -1199,7 +1199,7 @@ class DatabaseApiClient {
     }
   }
 
-  async connectZaloOA(data: { appId: string; oaId: string; oaName: string; appSecret?: string }) {
+  async connectZaloOA(data: { appId: string; oaId: string; oaName: string; appSecret?: string; accessToken?: string }) {
     const res = await fetch('/api/enterprise/zalo/connect', {
       method: 'POST',
       credentials: 'include',
@@ -1209,6 +1209,20 @@ class DatabaseApiClient {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Không thể kết nối Zalo OA');
+    }
+    return res.json();
+  }
+
+  async updateZaloToken(accessToken: string, refreshToken?: string) {
+    const res = await fetch('/api/enterprise/zalo/token', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken, refreshToken }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Không thể cập nhật Zalo Access Token');
     }
     return res.json();
   }

@@ -46,8 +46,12 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
     const [confirmDisconnect, setConfirmDisconnect] = useState(false);
     const [disconnecting, setDisconnecting] = useState(false);
     const [zaloStatus, setZaloStatus] = useState<{ webhookSecretConfigured: boolean; appIdConfigured: boolean; webhookUrl: string } | null>(null);
-    const [form, setForm] = useState({ appId: '', oaId: '', oaName: '', appSecret: '' });
+    const [form, setForm] = useState({ appId: '', oaId: '', oaName: '', appSecret: '', accessToken: '' });
     const [showSecret, setShowSecret] = useState(false);
+    const [showAccessToken, setShowAccessToken] = useState(false);
+    const [tokenForm, setTokenForm] = useState('');
+    const [updatingToken, setUpdatingToken] = useState(false);
+    const [showTokenForm, setShowTokenForm] = useState(false);
 
     useEffect(() => {
         db.getZaloStatus().then(setZaloStatus);
@@ -65,9 +69,10 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                 oaId: form.oaId.trim(),
                 oaName: form.oaName.trim(),
                 appSecret: form.appSecret.trim() || undefined,
+                accessToken: form.accessToken.trim() || undefined,
             });
             notify(t('ent.zalo_success'), 'success');
-            setForm({ appId: '', oaId: '', oaName: '', appSecret: '' });
+            setForm({ appId: '', oaId: '', oaName: '', appSecret: '', accessToken: '' });
             onRefresh();
         } catch (e: any) { notify(e.message, 'error'); }
         finally { setConnecting(false); }
@@ -89,6 +94,22 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
             await copyToClipboard(url);
             notify(t('common.copied'), 'success');
         }
+    };
+
+    const handleUpdateToken = async () => {
+        if (!tokenForm.trim()) {
+            notify('Vui lòng nhập Access Token', 'error');
+            return;
+        }
+        setUpdatingToken(true);
+        try {
+            await db.updateZaloToken(tokenForm.trim());
+            notify('Cập nhật Access Token thành công', 'success');
+            setTokenForm('');
+            setShowTokenForm(false);
+            onRefresh();
+        } catch (e: any) { notify(e.message, 'error'); }
+        finally { setUpdatingToken(false); }
     };
 
     const webhookUrl = config.zalo?.webhookUrl || zaloStatus?.webhookUrl || `${window.location.origin}/api/webhooks/zalo`;
@@ -142,12 +163,42 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                     <div className="text-xs font-bold text-[var(--text-secondary)]">{config.zalo.connectedAt ? formatDate(config.zalo.connectedAt) : '-'}</div>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setConfirmDisconnect(true)}
-                                className="text-rose-600 text-sm font-bold hover:underline decoration-2 underline-offset-4"
-                            >
-                                {t('ent.zalo_disconnect_btn')}
-                            </button>
+                            <div className="flex items-center gap-4 flex-wrap">
+                                <button
+                                    onClick={() => setShowTokenForm(s => !s)}
+                                    className="text-blue-600 text-sm font-bold hover:underline decoration-2 underline-offset-4"
+                                >
+                                    {config.zalo?.accessToken ? 'Cập nhật Access Token' : '+ Thêm Access Token để gửi tin'}
+                                </button>
+                                <button
+                                    onClick={() => setConfirmDisconnect(true)}
+                                    className="text-rose-600 text-sm font-bold hover:underline decoration-2 underline-offset-4"
+                                >
+                                    {t('ent.zalo_disconnect_btn')}
+                                </button>
+                            </div>
+                            {showTokenForm && (
+                                <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
+                                    <p className="text-xs text-blue-700 font-bold mb-2">OA Access Token mới</p>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="password"
+                                            className="flex-1 border rounded-xl px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-400/20 focus:border-blue-400"
+                                            placeholder="Dán token từ Zalo Developers Console..."
+                                            value={tokenForm}
+                                            onChange={e => setTokenForm(e.target.value)}
+                                        />
+                                        <button
+                                            onClick={handleUpdateToken}
+                                            disabled={updatingToken}
+                                            className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 disabled:opacity-70 flex items-center gap-2 shrink-0"
+                                        >
+                                            {updatingToken && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
+                                            Lưu
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div className="bg-[var(--glass-surface)] border-t md:border-t-0 md:border-l border-[var(--glass-border)] p-6 md:p-8 w-full md:w-[320px] flex flex-col justify-center gap-5">
                             <div>
@@ -166,6 +217,12 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                 <div className={`w-2 h-2 rounded-full shrink-0 ${zaloStatus?.webhookSecretConfigured ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
                                 <span className="text-xs2 text-[var(--text-tertiary)] font-bold">
                                     ZALO_OA_SECRET: {zaloStatus?.webhookSecretConfigured ? <span className="text-emerald-600">Đã cấu hình</span> : <span className="text-amber-600">Chưa cấu hình</span>}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full shrink-0 ${config.zalo?.accessToken ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
+                                <span className="text-xs2 text-[var(--text-tertiary)] font-bold">
+                                    OA Access Token: {config.zalo?.accessToken ? <span className="text-emerald-600">Đã cấu hình — gửi tin ✓</span> : <span className="text-amber-600">Chưa có — không thể gửi tin</span>}
                                 </span>
                             </div>
                             <div className="text-xs2 text-[var(--text-tertiary)] leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">
@@ -265,6 +322,30 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                     {showSecret ? t('ent.sso_hide') : t('ent.sso_show')}
                                 </button>
                             </div>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
+                                OA Access Token <span className="text-[var(--text-secondary)] font-normal normal-case">(để gửi tin nhắn phản hồi cho khách)</span>
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showAccessToken ? 'text' : 'password'}
+                                    className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                                    placeholder={CONSTANTS.MASK}
+                                    value={form.accessToken}
+                                    onChange={e => setForm({ ...form, accessToken: e.target.value })}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAccessToken(!showAccessToken)}
+                                    className="absolute right-3 top-2.5 text-xs2 font-bold text-blue-600 hover:underline"
+                                >
+                                    {showAccessToken ? t('ent.sso_hide') : t('ent.sso_show')}
+                                </button>
+                            </div>
+                            <p className="mt-1 text-xs2 text-[var(--text-tertiary)]">
+                                Lấy token tại <a href="https://developers.zalo.me" target="_blank" rel="noreferrer" className="text-blue-500 underline">Zalo Developers Console</a> → Official Account → OA Access Token.
+                            </p>
                         </div>
                     </div>
 
