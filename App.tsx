@@ -6,7 +6,7 @@ import { db } from './services/dbApi';
 import { I18nProvider, useTranslation } from './services/i18n';
 import { ThemeProvider } from './services/theme';
 import { TenantProvider } from './services/tenantContext';
-import { ROUTES } from './config/routes';
+import { ROUTES, FULL_HEIGHT_PAGES } from './config/routes';
 import { lazyLoad, registerPrefetch, prefetchRoutes } from './utils/reactUtils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -330,8 +330,11 @@ const AppShell: React.FC = () => {
     }, [authState]);
 
     // Add private route to mounted set on navigation (lazy — only routes the user visits)
+    // Also allow ROUTES.LANDING for authenticated users since the route guard keeps them in the AUTH block
     useEffect(() => {
-        if (authState === 'AUTH' && route.base && !PUBLIC_ROUTES.has(route.base) && PAGE_REGISTRY[route.base]) {
+        const isAllowed = authState === 'AUTH' && route.base && PAGE_REGISTRY[route.base] &&
+            (!PUBLIC_ROUTES.has(route.base) || route.base === ROUTES.LANDING);
+        if (isAllowed) {
             setMountedPrivateRoutes(prev => {
                 if (prev.has(route.base)) return prev;
                 const next = new Set(prev);
@@ -610,8 +613,11 @@ const AppShell: React.FC = () => {
         const hasKnownPage = !!PAGE_REGISTRY[route.base];
         return (
             <Layout activePage={route.base} onNavigate={navigate} onLogout={handleLogout}>
-                {/* Page persistence layer — keeps visited pages alive to avoid re-mount/re-fetch */}
-                <div className="h-full w-full relative overflow-hidden">
+                {/* Page persistence layer — keeps visited pages alive to avoid re-mount/re-fetch.
+                    Each page fills the content area via absolute inset-0 and handles its own
+                    scrolling via overflow-y-auto, so both fixed-height pages (Leads, Inbox)
+                    and scrollable pages (Dashboard, Reports) work correctly. */}
+                <div className="relative w-full h-full">
                     {[...mountedPrivateRoutes].map(routeKey => {
                         const Comp = PAGE_REGISTRY[routeKey];
                         if (!Comp) return null;
@@ -619,8 +625,13 @@ const AppShell: React.FC = () => {
                         return (
                             <div
                                 key={routeKey}
-                                className="h-full w-full flex flex-col absolute inset-0 isolate"
-                                style={{ display: isActive ? 'flex' : 'none' }}
+                                id={isActive ? 'main-scroll-container' : undefined}
+                                className="absolute inset-0 flex flex-col isolate overflow-y-auto overflow-x-hidden no-scrollbar"
+                                style={{
+                                    display: isActive ? 'flex' : 'none',
+                                    overscrollBehaviorY: 'contain',
+                                    WebkitOverflowScrolling: 'touch',
+                                } as React.CSSProperties}
                             >
                                 <ErrorBoundary>
                                     <Suspense fallback={PageSkeleton}>

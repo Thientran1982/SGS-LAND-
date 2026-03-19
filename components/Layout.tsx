@@ -4,7 +4,7 @@ import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
 import { db } from '../services/dbApi';
 import { User, NavGroup } from '../types';
-import { ROUTES, FULL_HEIGHT_PAGES } from '../config/routes';
+import { ROUTES } from '../config/routes';
 import { CommandCenter } from './Navigation';
 import { GlobalSearch } from './GlobalSearch';
 import { Logo } from './Logo';
@@ -356,7 +356,6 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
     }, [onLogout]);
 
     const pageTitle = t(`menu.${activePage}`) || activePage;
-    const isAppPage = FULL_HEIGHT_PAGES.has(activePage as any);
 
     const sidebarProps = useMemo(() => ({
         activePage,
@@ -432,31 +431,10 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                     )}
                 </div>
                 
-                {/* Content Area - SCROLL VIEWPORT */}
+                {/* Content Area — each page mounts as absolute inset-0 inside children
+                    and manages its own overflow/scrolling via overflow-y-auto. */}
                 <div className="flex-1 relative w-full min-h-0">
-                    {/* Absolute positioning strategy to enforce viewport constraints */}
-                    <div 
-                        className="absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth isolate touch-auto no-scrollbar"
-                        style={{ overscrollBehaviorY: 'auto', WebkitOverflowScrolling: 'touch' }}
-                        id="main-scroll-container"
-                    >
-                        {/* App pages (fixed-height like Inventory/Leads/Board) need h-full for percentage resolution.
-                            Content pages (scrollable like Dashboard/Reports) need min-h-full + flex-1.
-                            CSS spec: min-height creates an "indefinite" height so children's height:100% resolves to auto=0.
-                            h-full creates a "definite" height so children's height:100% resolves correctly. */}
-                        {isAppPage ? (
-                            <div className="w-full h-full">
-                                {children}
-                            </div>
-                        ) : (
-                            <div className="w-full min-h-full flex flex-col">
-                                <div className="flex-1 w-full relative">
-                                    {children}
-                                </div>
-                                <div className="h-40 w-full shrink-0 opacity-0 pointer-events-none" aria-hidden="true" />
-                            </div>
-                        )}
-                    </div>
+                    {children}
                 </div>
             </main>
 
