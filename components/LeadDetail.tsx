@@ -338,6 +338,35 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         <DetailField label={t('leads.source')}>
                             <Dropdown value={formData.source} onChange={(val) => handleInputChange('source', val)} options={sourceOptions} className="w-full" />
                         </DetailField>
+                        {/* Social Profiles — auto-populated from Zalo/Facebook webhooks */}
+                        {(lead.socialIds?.zalo || lead.socialIds?.facebook || lead.socialIds?.telegram) && (
+                            <div className="sm:col-span-2">
+                                <div className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-2 tracking-wider">Tài khoản mạng xã hội</div>
+                                <div className="flex flex-wrap gap-2">
+                                    {lead.socialIds?.zalo && (
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 rounded-xl text-xs font-mono">
+                                            <span className="w-5 h-5 bg-blue-600 text-white rounded font-bold text-xs flex items-center justify-center shrink-0">Z</span>
+                                            <span className="font-medium">Zalo:</span>
+                                            <span className="select-all">{lead.socialIds.zalo}</span>
+                                        </div>
+                                    )}
+                                    {lead.socialIds?.facebook && (
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2]/5 border border-[#1877F2]/20 text-[#1877F2] rounded-xl text-xs font-mono">
+                                            <span className="w-5 h-5 bg-[#1877F2] text-white rounded-full font-bold text-xs flex items-center justify-center shrink-0">f</span>
+                                            <span className="font-medium">Facebook:</span>
+                                            <span className="select-all">{lead.socialIds.facebook}</span>
+                                        </div>
+                                    )}
+                                    {lead.socialIds?.telegram && (
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-100 text-sky-700 rounded-xl text-xs font-mono">
+                                            <span className="w-5 h-5 bg-sky-500 text-white rounded-full font-bold text-xs flex items-center justify-center shrink-0">✈</span>
+                                            <span className="font-medium">Telegram:</span>
+                                            <span className="select-all">{lead.socialIds.telegram}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                         <DetailField label={t('leads.assigned_to') || 'Người phụ trách'}>
                             <Dropdown value={formData.assignedTo || ''} onChange={(val) => handleInputChange('assignedTo', val)} options={users} className="w-full" />
                         </DetailField>

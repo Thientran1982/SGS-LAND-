@@ -445,15 +445,35 @@ export const Inbox: React.FC = () => {
                                         {thread.lastMessage && <div className="text-xs2 text-[var(--text-secondary)] whitespace-nowrap shrink-0 mt-0.5">{formatTime(thread.lastMessage.timestamp)}</div>}
                                     </div>
                                     <div className="flex justify-between items-center mt-1 gap-2">
-                                        <div className={`text-xs truncate min-w-0 flex-1 ${thread.unreadCount > 0 ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}>
-                                            {(() => {
-                                                const lm = thread.lastMessage;
-                                                if (!lm) return t('inbox.empty');
-                                                if (lm.type === 'IMAGE') return '📷 Hình ảnh';
-                                                if (lm.type === 'FILE') return '📎 Tệp đính kèm';
-                                                if (lm.type === 'AUDIO') return '🎤 Tin nhắn thoại';
-                                                return lm.content || t('inbox.empty');
+                                        <div className={`text-xs truncate min-w-0 flex-1 flex items-center gap-1.5 ${thread.unreadCount > 0 ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}>
+                                            {/* Channel badge */}
+                                            {thread.lastChannel && thread.lastChannel !== 'INTERNAL' && (() => {
+                                                const ch = thread.lastChannel;
+                                                const styles: Record<string, string> = {
+                                                    ZALO: 'bg-blue-100 text-blue-700',
+                                                    FACEBOOK: 'bg-[#1877F2]/10 text-[#1877F2]',
+                                                    EMAIL: 'bg-indigo-50 text-indigo-600',
+                                                    SMS: 'bg-emerald-50 text-emerald-600',
+                                                };
+                                                const labels: Record<string, string> = {
+                                                    ZALO: 'Z', FACEBOOK: 'f', EMAIL: '@', SMS: 'SMS',
+                                                };
+                                                return (
+                                                    <span className={`text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 ${styles[ch] || 'bg-slate-100 text-slate-500'}`}>
+                                                        {labels[ch] || ch}
+                                                    </span>
+                                                );
                                             })()}
+                                            <span className="truncate">
+                                                {(() => {
+                                                    const lm = thread.lastMessage;
+                                                    if (!lm) return t('inbox.empty');
+                                                    if (lm.type === 'IMAGE') return '📷 Hình ảnh';
+                                                    if (lm.type === 'FILE') return '📎 Tệp đính kèm';
+                                                    if (lm.type === 'AUDIO') return '🎤 Tin nhắn thoại';
+                                                    return lm.content || t('inbox.empty');
+                                                })()}
+                                            </span>
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             {thread.lead.assignedTo && (
