@@ -34,6 +34,8 @@ import { createSessionRoutes, createTemplateRoutes } from "./server/routes/sessi
 import { createBillingRoutes } from "./server/routes/billingRoutes";
 import { createUploadRoutes, createUploadServeRoute } from "./server/routes/uploadRoutes";
 import { createScimRoutes } from "./server/routes/scimRoutes";
+import { createValuationRoutes } from "./server/routes/valuationRoutes";
+import { marketDataService } from "./server/services/marketDataService";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
@@ -403,7 +405,14 @@ async function startServer() {
     try {
       const { address, area, roadWidth, legal, propertyType } = req.body;
       const { aiService } = await import('./server/ai');
-      const result = await aiService.getRealtimeValuation(address, area, roadWidth, legal, propertyType);
+
+      // Run AI valuation in parallel with cache warm-up (non-blocking)
+      const [result] = await Promise.all([
+        aiService.getRealtimeValuation(address, area, roadWidth, legal, propertyType),
+        // Populate/warm the market data cache from this request (fire-and-forget)
+        marketDataService.getMarketData(address).catch(() => null),
+      ]);
+
       res.json(result);
     } catch (error) {
       logger.error('AI valuation error:', error);
@@ -584,6 +593,9 @@ async function startServer() {
   // Setup BullMQ Worker
   setupWebhookWorker(io);
 
+  // Start market data service — in-memory cache with 6h TTL + background refresh
+  marketDataService.start(io);
+
   // Redis Adapter Setup
   if (process.env.REDIS_URL) {
     try {
@@ -709,6 +721,8 @@ async function startServer() {
   app.use('/uploads', createUploadServeRoute(authenticateToken));
   // SCIM 2.0 provisioning — uses its own Bearer token auth (no JWT required)
   app.use('/scim/v2', express.json({ type: ['application/json', 'application/scim+json'] }), createScimRoutes());
+  // Advanced valuation: multi-source, 7-coefficient AVM + market cache
+  app.use('/api/valuation', apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit));
 
   app.get("/api/health", async (req, res) => {
     try {
@@ -1047,6 +1061,10 @@ async function startServer() {
         await webhookQueue.close();
         logger.info('BullMQ queue closed.');
       } catch (e) { /* queue may not be initialized */ }
+      try {
+        marketDataService.stop();
+        logger.info('Market data service stopped.');
+      } catch (e) { /* ignore */ }
       try {
         await pool.end();
         logger.info('Database pool closed.');

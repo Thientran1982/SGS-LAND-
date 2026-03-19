@@ -271,6 +271,122 @@ export class ListingRepository extends BaseRepository {
       return result.rows[0]?.view_count ?? 0;
     });
   }
+
+  /**
+   * Find comparable listings for valuation (internal comps engine).
+   *
+   * Matching criteria:
+   *   - Same location (district-level ILIKE match)
+   *   - Area within ±40% of target area
+   *   - Same or similar property type
+   *   - Active or recently sold listings only
+   *   - price > 0 and area > 0 (valid entries only)
+   *
+   * Returns aggregate stats (median, avg, percentiles) + sample listings.
+   */
+  async findComparables(
+    tenantId: string,
+    params: {
+      location: string;
+      area: number;
+      propertyType?: string;
+      maxSamples?: number;
+    }
+  ): Promise<{
+    count: number;
+    medianPricePerM2: number;
+    avgPricePerM2: number;
+    p25PricePerM2: number;
+    p75PricePerM2: number;
+    minPricePerM2: number;
+    maxPricePerM2: number;
+    samples: Array<{ id: string; title: string; location: string; price: number; area: number; pricePerM2: number; type: string }>;
+  }> {
+    return this.withTenant(tenantId, async (client) => {
+      const areaMin = params.area * 0.60;
+      const areaMax = params.area * 1.60;
+
+      // Extract district-level keyword from location for fuzzy matching
+      // e.g. "123 Nguyễn Văn Linh, Quận 7, TP.HCM" → search for "quận 7" or "q.7"
+      const locationParts = params.location.split(/[,;]/);
+      const district = (locationParts[1] || locationParts[0] || params.location).trim().slice(0, 50);
+
+      const maxSamples = params.maxSamples || 20;
+
+      // Map broad property type category
+      const typeFilter = params.propertyType
+        ? `AND type ILIKE $4`
+        : '';
+      const values: any[] = [areaMin, areaMax, `%${district}%`];
+      if (params.propertyType) values.push(`%${params.propertyType.split('_')[0]}%`);
+
+      const query = `
+        SELECT
+          id, title, location, price, area, type,
+          CASE WHEN area > 0 THEN price / area ELSE 0 END AS price_per_m2
+        FROM listings
+        WHERE area BETWEEN $1 AND $2
+          AND location ILIKE $3
+          AND price > 0
+          AND area > 0
+          AND status IN ('AVAILABLE', 'SOLD', 'HOLD')
+          ${typeFilter}
+        ORDER BY updated_at DESC
+        LIMIT ${maxSamples * 3}
+      `;
+
+      const result = await client.query(query, values);
+
+      if (result.rows.length === 0) {
+        return {
+          count: 0, medianPricePerM2: 0, avgPricePerM2: 0,
+          p25PricePerM2: 0, p75PricePerM2: 0, minPricePerM2: 0, maxPricePerM2: 0,
+          samples: [],
+        };
+      }
+
+      const prices = result.rows
+        .map((r: any) => Number(r.price_per_m2))
+        .filter((p: number) => p > 0 && p < 1_000_000_000)  // sanity filter
+        .sort((a: number, b: number) => a - b);
+
+      if (prices.length === 0) {
+        return {
+          count: 0, medianPricePerM2: 0, avgPricePerM2: 0,
+          p25PricePerM2: 0, p75PricePerM2: 0, minPricePerM2: 0, maxPricePerM2: 0,
+          samples: [],
+        };
+      }
+
+      const median = prices[Math.floor(prices.length / 2)];
+      const avg = Math.round(prices.reduce((s: number, p: number) => s + p, 0) / prices.length);
+      const p25 = prices[Math.floor(prices.length * 0.25)];
+      const p75 = prices[Math.floor(prices.length * 0.75)];
+
+      const samples = result.rows
+        .slice(0, maxSamples)
+        .map((r: any) => ({
+          id: r.id,
+          title: r.title,
+          location: r.location,
+          price: Number(r.price),
+          area: Number(r.area),
+          pricePerM2: Math.round(Number(r.price_per_m2)),
+          type: r.type,
+        }));
+
+      return {
+        count: prices.length,
+        medianPricePerM2: Math.round(median),
+        avgPricePerM2: avg,
+        p25PricePerM2: Math.round(p25),
+        p75PricePerM2: Math.round(p75),
+        minPricePerM2: Math.round(prices[0]),
+        maxPricePerM2: Math.round(prices[prices.length - 1]),
+        samples,
+      };
+    });
+  }
 }
 
 export const listingRepository = new ListingRepository();
