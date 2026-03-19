@@ -16,7 +16,9 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 50, 200));
-      const result = await documentRepository.findDocuments(user.tenantId, { page, pageSize });
+      const filters: { search?: string } = {};
+      if (req.query.search) filters.search = req.query.search as string;
+      const result = await documentRepository.findDocuments(user.tenantId, { page, pageSize }, filters);
       res.json(result);
     } catch (error) {
       console.error('Error fetching documents:', error);
