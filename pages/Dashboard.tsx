@@ -329,8 +329,10 @@ export const Dashboard: React.FC = () => {
     const { data: analytics, isLoading, isError, refetch, dataUpdatedAt } = useQuery({
         queryKey: ['dashboardAnalytics', timeRange, language],
         queryFn: async () => {
-            const data = await db.getAnalytics(timeRange, language);
-            const user = await db.getCurrentUser();
+            const [data, user] = await Promise.all([
+                db.getAnalytics(timeRange, language),
+                db.getCurrentUser(),
+            ]);
             return { ...data, user };
         },
         refetchInterval: 30000, // Auto-refresh every 30s
@@ -363,19 +365,33 @@ export const Dashboard: React.FC = () => {
 
     const lastUpdated = new Date(dataUpdatedAt || Date.now());
 
+    const currentUser = (analytics as any)?.user;
+    const userName = currentUser?.name ? currentUser.name.split(' ').slice(-1)[0] : '';
+    const scopeLabel: string = (analytics as any)?.scopeLabel || 'Toàn công ty';
+    const isSalesScope = scopeLabel === 'Dữ liệu của bạn';
+
     return (
         <div className="space-y-6 p-4 md:p-6 pb-24 animate-enter max-w-[1600px] mx-auto">
-            
+
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                 <div>
                     <h1 className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">
-                        {t('dash.greeting_morning')}
+                        {userName ? `Xin chào, ${userName}! 👋` : t('dash.greeting_morning')}
                     </h1>
                     <div className="flex items-center gap-2 mt-1">
                         <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 font-medium">
                             {t('dash.overview_subtitle')}
                         </p>
+                        {/* Scope badge: indicates whether stats are personal or company-wide */}
+                        <span className={`text-xs2 font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                            isSalesScope
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-700'
+                                : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                        }`}>
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                            {scopeLabel}
+                        </span>
                         <span className="text-xs2 text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium border border-[var(--glass-border)] dark:border-slate-700">
                             {ICONS.REFRESH} {lastUpdated.toLocaleTimeString()}
                         </span>

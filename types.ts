@@ -926,6 +926,8 @@ export interface AnalyticsSummary {
     salesVelocityDelta?: number;
     marketPulse?: MarketMetrics & { region?: string; lastUpdated?: ISOString };
     agentLeaderboard?: Array<{ userId: UserId; name: string; avatar: string; score: number; deals: number }>;
+    /** Describes data scope: "Toàn công ty" | "Dữ liệu của bạn" */
+    scopeLabel?: string;
 }
 
 export interface CampaignCost {
