@@ -42,6 +42,8 @@ import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
 import { interactionRepository } from "./server/repositories/interactionRepository";
 import { sessionRepository } from "./server/repositories/sessionRepository";
+import { visitorRepository } from "./server/repositories/visitorRepository";
+import { lookupIp, getClientIp } from "./server/services/geoService";
 
 async function startServer() {
   const app = express();
@@ -625,6 +627,24 @@ async function startServer() {
       if (req.query.search) filters.search = req.query.search as string;
       const result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
       res.json(result);
+      // Log visitor in background (only page 1, to avoid spamming on pagination)
+      if (page === 1) {
+        const ip = getClientIp(req);
+        lookupIp(ip).then(geo => visitorRepository.log({
+          tenantId: PUBLIC_TENANT,
+          ipAddress: ip,
+          country: geo?.country,
+          countryCode: geo?.countryCode,
+          region: geo?.region,
+          city: geo?.city,
+          lat: geo?.lat,
+          lon: geo?.lon,
+          isp: geo?.isp,
+          page: '/listings',
+          userAgent: req.headers['user-agent'],
+          referrer: req.headers['referer'],
+        })).catch(() => {});
+      }
     } catch (error) {
       console.error('Error fetching public listings:', error);
       res.status(500).json({ error: 'Failed to fetch listings' });
@@ -635,9 +655,27 @@ async function startServer() {
     try {
       const listing = await listingRepository.findById(PUBLIC_TENANT, req.params.id);
       if (!listing) return res.status(404).json({ error: 'Listing not found' }) as any;
-      // Respond immediately, increment view count in background
       res.json(listing);
-      listingRepository.incrementViewCount(PUBLIC_TENANT, req.params.id).catch(() => {});
+      // Increment view count and log visitor in background (non-blocking)
+      const ip = getClientIp(req);
+      Promise.all([
+        listingRepository.incrementViewCount(PUBLIC_TENANT, req.params.id),
+        lookupIp(ip).then(geo => visitorRepository.log({
+          tenantId: PUBLIC_TENANT,
+          ipAddress: ip,
+          country: geo?.country,
+          countryCode: geo?.countryCode,
+          region: geo?.region,
+          city: geo?.city,
+          lat: geo?.lat,
+          lon: geo?.lon,
+          isp: geo?.isp,
+          page: `/listings/${req.params.id}`,
+          listingId: req.params.id,
+          userAgent: req.headers['user-agent'],
+          referrer: req.headers['referer'],
+        })),
+      ]).catch(() => {});
     } catch (error) {
       console.error('Error fetching public listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });
