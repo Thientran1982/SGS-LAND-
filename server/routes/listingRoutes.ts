@@ -29,7 +29,7 @@ export function createListingRoutes(authenticateToken: any) {
       if (req.query.projectCode) filters.projectCode = req.query.projectCode;
       if (req.query.isVerified) filters.isVerified = req.query.isVerified === 'true';
 
-      const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters);
+      const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
       res.json(result);
     } catch (error) {
       console.error('Error fetching listings:', error);
@@ -53,6 +53,11 @@ export function createListingRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const listing = await listingRepository.findById(user.tenantId, req.params.id);
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(user.role) && (listing as any).createdBy !== user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
 
       // Respond immediately, increment view count in background
       res.json(listing);
@@ -104,6 +109,15 @@ export function createListingRoutes(authenticateToken: any) {
       const images = req.body.images;
       if (Array.isArray(images) && images.length > 10) {
         return res.status(400).json({ error: 'Maximum 10 images allowed per listing' });
+      }
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(user.role)) {
+        const existing = await listingRepository.findById(user.tenantId, req.params.id);
+        if (!existing) return res.status(404).json({ error: 'Listing not found' });
+        if ((existing as any).createdBy !== user.id) {
+          return res.status(403).json({ error: 'You can only edit listings you created' });
+        }
       }
 
       const listing = await listingRepository.update(user.tenantId, req.params.id, req.body);

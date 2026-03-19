@@ -8,12 +8,20 @@ export class ContractRepository extends BaseRepository {
   async findContracts(
     tenantId: string,
     pagination: PaginationParams,
-    filters?: { status?: string; type?: string; leadId?: string; listingId?: string; search?: string }
+    filters?: { status?: string; type?: string; leadId?: string; listingId?: string; search?: string },
+    userId?: string,
+    userRole?: string
   ): Promise<PaginatedResult<any>> {
     return this.withTenant(tenantId, async (client) => {
       const conditions: string[] = [];
       const values: any[] = [];
       let paramIndex = 1;
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
+        conditions.push(`c.created_by_id = $${paramIndex++}`);
+        values.push(userId);
+      }
 
       if (filters?.status) {
         conditions.push(`c.status = $${paramIndex++}`);
@@ -90,6 +98,7 @@ export class ContractRepository extends BaseRepository {
     handoverCondition?: string;
     metadata?: any;
     createdBy?: string;
+    createdById?: string;
   }): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const value = data.propertyPrice || 0;
@@ -98,10 +107,10 @@ export class ContractRepository extends BaseRepository {
           tenant_id, proposal_id, lead_id, listing_id, type, status, value,
           party_a, party_b, property_details, property_price, deposit_amount,
           payment_terms, tax_responsibility, handover_date, handover_condition,
-          metadata, created_by
+          metadata, created_by, created_by_id
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
         ) RETURNING *`,
         [
           data.proposalId || null, data.leadId || null, data.listingId || null, data.type,
@@ -111,7 +120,9 @@ export class ContractRepository extends BaseRepository {
           data.propertyPrice || null, data.depositAmount || null,
           data.paymentTerms || null, data.taxResponsibility || null,
           data.handoverDate || null, data.handoverCondition || null,
-          data.metadata ? JSON.stringify(data.metadata) : null, data.createdBy || null,
+          data.metadata ? JSON.stringify(data.metadata) : null,
+          data.createdBy || null,
+          data.createdById || null,
         ]
       );
       return this.rowToEntity(result.rows[0]);

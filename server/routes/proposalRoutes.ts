@@ -56,6 +56,12 @@ export function createProposalRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const proposal = await proposalRepository.findById(user.tenantId, req.params.id);
       if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(user.role) && (proposal as any).createdById !== user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
       res.json(proposal);
     } catch (error) {
       console.error('Error fetching proposal:', error);

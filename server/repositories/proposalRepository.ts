@@ -19,7 +19,8 @@ export class ProposalRepository extends BaseRepository {
       const values: any[] = [];
       let paramIndex = 1;
 
-      if (userRole === 'SALES' && userId) {
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
         conditions.push(`p.created_by_id = $${paramIndex++}`);
         values.push(userId);
       }
@@ -105,7 +106,9 @@ export class ProposalRepository extends BaseRepository {
         [
           data.leadId, data.listingId, data.basePrice, data.discountAmount || 0,
           data.finalPrice, data.currency || 'VND', status, token,
-          data.validUntil || null, data.createdBy, data.createdById,
+          data.validUntil || null,
+          data.createdBy,    // VARCHAR display name
+          data.createdById,  // UUID — used for RBAC
           data.metadata ? JSON.stringify(data.metadata) : null,
         ]
       );
@@ -138,7 +141,8 @@ export class ProposalRepository extends BaseRepository {
       `;
       const values: any[] = [];
 
-      if (userRole === 'SALES' && userId) {
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
         query += ` AND p.created_by_id = $1`;
         values.push(userId);
       }
@@ -146,30 +150,6 @@ export class ProposalRepository extends BaseRepository {
       query += ` ORDER BY p.created_at DESC`;
       const result = await client.query(query, values);
       return this.rowsToEntities(result.rows);
-    });
-  }
-
-  async rejectProposalsForLead(tenantId: string, leadId: string): Promise<number> {
-    return this.withTenant(tenantId, async (client) => {
-      const result = await client.query(
-        `UPDATE proposals SET status = 'REJECTED' WHERE lead_id = $1 AND status IN ('PENDING_APPROVAL', 'DRAFT')`,
-        [leadId]
-      );
-      return result.rowCount ?? 0;
-    });
-  }
-
-  async findByToken(tenantId: string, token: string): Promise<any | null> {
-    return this.withTenant(tenantId, async (client) => {
-      const result = await client.query(
-        `SELECT p.*, l.name as lead_name, li.title as listing_title, li.location as listing_location
-         FROM proposals p
-         LEFT JOIN leads l ON p.lead_id = l.id
-         LEFT JOIN listings li ON p.listing_id = li.id
-         WHERE p.token = $1`,
-        [token]
-      );
-      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
     });
   }
 
