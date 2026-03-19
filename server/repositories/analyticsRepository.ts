@@ -558,10 +558,12 @@ export class AnalyticsRepository extends BaseRepository {
         count: row.count,
       }));
 
-      const totalLeads = funnel.reduce((sum: number, f: any) => sum + f.count, 0);
+      // conversionRate = each stage's count / NEW stage count (top-of-funnel %)
+      // e.g. WON: 5 out of 100 NEW = 5.00% — tells you how many leads made it through
+      const newStageCount = funnel.find((f: any) => f.stage === 'NEW')?.count || 0;
       const funnelWithPercentage = funnel.map((f: any) => ({
         ...f,
-        conversionRate: totalLeads > 0 ? Math.round((f.count / totalLeads) * 10000) / 100 : 0,
+        conversionRate: newStageCount > 0 ? Math.round((f.count / newStageCount) * 10000) / 100 : 0,
       }));
 
       const campaignCostsListResult = await client.query(`

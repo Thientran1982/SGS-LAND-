@@ -729,7 +729,7 @@ class DatabaseApiClient {
       return await analyticsApi.getBiMarts(timeRange);
     } catch (error) {
       console.error('generateBiMarts error:', error);
-      return { funnel: [], attribution: [], conversionByPeriod: [] };
+      return { funnel: [], attribution: [], conversionByPeriod: [], campaignCosts: [] };
     }
   }
 
