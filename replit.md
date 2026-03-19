@@ -154,7 +154,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `POST /api/ai/process-message` — Multi-agent LangGraph workflow with Gemini (inventory search now uses real DB)
 - `POST /api/ai/score-lead` — Scores lead, persists score back to DB
 - `POST /api/ai/summarize-lead` — Reads interactions from DB if not provided
-- `POST /api/ai/valuation` — Real-time valuation with Google Search grounding
+- `POST /api/ai/valuation` — Real-time valuation with Google Search grounding; body: `{address, area, roadWidth, legal, propertyType?}`; returns `{totalPrice, compsPrice, incomeApproach, reconciliation, ...}`
 - `POST /api/ai/generate-content` — Generic Gemini proxy with streaming SSE
 - `POST /api/ai/embed-content` — Vector embeddings via text-embedding-004
 - `GET/PUT /api/ai/governance/config` — AI configuration management

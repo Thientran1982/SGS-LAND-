@@ -42,8 +42,8 @@ class AiApiClient {
         }
     }
 
-    async getRealtimeValuation(address: string, area: number, roadWidth: number, legal: string): Promise<any> {
-        return this.fetchApi('/api/ai/valuation', { address, area, roadWidth, legal });
+    async getRealtimeValuation(address: string, area: number, roadWidth: number, legal: string, propertyType?: string): Promise<any> {
+        return this.fetchApi('/api/ai/valuation', { address, area, roadWidth, legal, propertyType });
     }
 
     async parseSearchQuery(query: string): Promise<any> {

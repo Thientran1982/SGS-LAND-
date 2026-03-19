@@ -417,9 +417,9 @@ async function startServer() {
 
   app.post("/api/ai/valuation", aiRateLimit, validateBody(schemas.aiValuation), async (req, res) => {
     try {
-      const { address, area, roadWidth, legal } = req.body;
+      const { address, area, roadWidth, legal, propertyType } = req.body;
       const { aiService } = await import('./server/ai');
-      const result = await aiService.getRealtimeValuation(address, area, roadWidth, legal);
+      const result = await aiService.getRealtimeValuation(address, area, roadWidth, legal, propertyType);
       res.json(result);
     } catch (error) {
       logger.error('AI valuation error:', error);

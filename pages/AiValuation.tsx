@@ -52,7 +52,8 @@ export const AiValuation: React.FC = () => {
     const [area, setArea] = useState<string>('');
     const [roadWidth, setRoadWidth] = useState<string>('');
     const [legal, setLegal] = useState<'PINK_BOOK' | 'CONTRACT' | 'WAITING'>('PINK_BOOK');
-    
+    const [propertyType, setPropertyType] = useState<string>('townhouse_center');
+
     // Process State
     const [analysisLog, setAnalysisLog] = useState<string>('');
     const [progress, setProgress] = useState(0);
@@ -60,6 +61,7 @@ export const AiValuation: React.FC = () => {
     // Results State
     const [valuation, setValuation] = useState<{
         price: number;
+        compsPrice?: number;
         pricePerM2: number;
         range: [number, number];
         factors: { label: string; coefficient?: number; impact: number; isPositive: boolean; description?: string; type?: 'AVM' | 'LOCATION' }[];
@@ -68,6 +70,16 @@ export const AiValuation: React.FC = () => {
         confidence: number;
         marketTrend: string;
         chartData: { month: string; price: number }[];
+        incomeApproach?: {
+            monthlyRent: number; grossIncome: number; vacancyLoss: number;
+            effectiveIncome: number; opex: number; noi: number;
+            capRate: number; capitalValue: number;
+            grossRentalYield: number; paybackYears: number;
+        };
+        reconciliation?: {
+            compsWeight: number; incomeWeight: number;
+            compsValue: number; incomeValue: number; finalValue: number;
+        };
     } | null>(null);
 
     // Ref for interval cleanup
@@ -101,7 +113,7 @@ export const AiValuation: React.FC = () => {
 
         let aiResult: any;
         try {
-            aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal);
+            aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal, propertyType);
         } catch (_err) {
             // Emergency client-side fallback (network completely down)
             // Uses same AVM coefficient logic as server/valuationEngine.ts
@@ -186,6 +198,7 @@ export const AiValuation: React.FC = () => {
 
         setValuation({
             price: totalPrice,
+            compsPrice: aiResult.compsPrice,
             pricePerM2,
             range: [rangeMin, rangeMax],
             factors: aiResult.factors || [],
@@ -193,7 +206,9 @@ export const AiValuation: React.FC = () => {
             formula: aiResult.formula,
             confidence,
             marketTrend: aiResult.marketTrend || 'Đang cập nhật',
-            chartData
+            chartData,
+            incomeApproach: aiResult.incomeApproach,
+            reconciliation: aiResult.reconciliation,
         });
     };
 
@@ -205,6 +220,7 @@ export const AiValuation: React.FC = () => {
         setAddress('');
         setArea('');
         setRoadWidth('');
+        setPropertyType('townhouse_center');
         setStep('ADDRESS');
     };
 
@@ -344,6 +360,30 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 </div>
 
+                                <div>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Loại Bất Động Sản</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { id: 'townhouse_center', label: '🏘️ Nhà phố nội đô' },
+                                            { id: 'townhouse_suburb', label: '🏠 Nhà phố ngoại thành' },
+                                            { id: 'apartment_center', label: '🏢 Căn hộ trung tâm' },
+                                            { id: 'apartment_suburb', label: '🏬 Căn hộ ngoại ô' },
+                                            { id: 'shophouse', label: '🏪 Nhà phố thương mại' },
+                                            { id: 'villa', label: '🏰 Biệt thự' },
+                                            { id: 'land_urban', label: '🗺️ Đất thổ cư nội đô' },
+                                            { id: 'land_suburban', label: '🌿 Đất ngoại thành' },
+                                        ].map(opt => (
+                                            <button
+                                                key={opt.id}
+                                                onClick={() => setPropertyType(opt.id)}
+                                                className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all border text-left ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <button 
                                     onClick={runCalculation}
                                     disabled={!area || !roadWidth || parseFloat(area) <= 0}
@@ -384,7 +424,9 @@ export const AiValuation: React.FC = () => {
                                 <div>
                                     <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest mb-2 flex items-center gap-2">
                                         <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                                        Giá trị thị trường ước tính
+                                        {valuation.reconciliation
+                                            ? `Giá trị tổng hợp (${(valuation.reconciliation.compsWeight * 100).toFixed(0)}% Comps + ${(valuation.reconciliation.incomeWeight * 100).toFixed(0)}% Income)`
+                                            : 'Giá trị thị trường ước tính'}
                                     </h3>
                                     <div className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-slate-400 tracking-tight">
                                         {formatSmartPrice(valuation.price, t)} <span className="text-2xl text-emerald-500">VNĐ</span>
@@ -508,6 +550,86 @@ export const AiValuation: React.FC = () => {
                                 );
                             })()}
                         </div>
+
+                        {/* ── PHƯƠNG PHÁP THU NHẬP + TỔNG HỢP ── */}
+                        {valuation.incomeApproach && (
+                            <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-2xl mb-6">
+                                <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest mb-6 flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
+                                    Phân tích đa phương pháp (Multi-Method Valuation)
+                                </h3>
+
+                                {/* Two-column: Comps vs Income */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    {/* Comps Method */}
+                                    <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                                            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Phương pháp So sánh (AVM/Comps)</span>
+                                        </div>
+                                        <div className="text-2xl font-black text-white mb-1">
+                                            {formatSmartPrice(valuation.compsPrice || valuation.price, t)} <span className="text-sm text-emerald-400">VNĐ</span>
+                                        </div>
+                                        <div className="text-slate-400 text-xs">{valuation.formula}</div>
+                                        {valuation.reconciliation && (
+                                            <div className="mt-3 text-xs bg-emerald-500/10 rounded-lg px-3 py-1.5 inline-block">
+                                                Trọng số: <span className="font-bold text-emerald-300">{(valuation.reconciliation.compsWeight * 100).toFixed(0)}%</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Income Method */}
+                                    <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-5">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 flex-shrink-0"></span>
+                                            <span className="text-indigo-400 text-xs font-bold uppercase tracking-widest">Phương pháp Thu nhập (Income Cap.)</span>
+                                        </div>
+                                        <div className="text-2xl font-black text-white mb-1">
+                                            {formatSmartPrice(valuation.incomeApproach.capitalValue, t)} <span className="text-sm text-indigo-400">VNĐ</span>
+                                        </div>
+                                        <div className="text-slate-400 text-xs font-mono">
+                                            NOI {valuation.incomeApproach.noi.toFixed(1)} Tr/năm ÷ Cap {(valuation.incomeApproach.capRate * 100).toFixed(1)}%
+                                        </div>
+                                        {valuation.reconciliation && (
+                                            <div className="mt-3 text-xs bg-indigo-500/10 rounded-lg px-3 py-1.5 inline-block">
+                                                Trọng số: <span className="font-bold text-indigo-300">{(valuation.reconciliation.incomeWeight * 100).toFixed(0)}%</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Income Details breakdown */}
+                                <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden mb-4">
+                                    <div className="px-5 py-3 border-b border-slate-700/50">
+                                        <span className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold tracking-widest">Chi tiết Phương pháp Thu nhập</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-slate-800">
+                                        {[
+                                            { label: 'Tiền thuê/tháng', value: `${valuation.incomeApproach.monthlyRent.toFixed(1)} Tr`, hint: 'Ước tính thị trường' },
+                                            { label: 'NOI ròng/năm', value: `${valuation.incomeApproach.noi.toFixed(1)} Tr`, hint: 'Sau khấu trống & OPEX' },
+                                            { label: 'Cap Rate', value: `${(valuation.incomeApproach.capRate * 100).toFixed(1)}%`, hint: 'Thị trường VN 2024-25' },
+                                            { label: 'Thời gian hoàn vốn', value: `${valuation.incomeApproach.paybackYears.toFixed(1)} năm`, hint: 'Theo NOI hiện tại' },
+                                        ].map((item, i) => (
+                                            <div key={i} className="px-4 py-3 text-center">
+                                                <div className="text-[var(--text-tertiary)] text-xs2 mb-1">{item.label}</div>
+                                                <div className="text-white font-bold text-base">{item.value}</div>
+                                                <div className="text-[var(--text-secondary)] text-xs3 mt-0.5">{item.hint}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Gross Rental Yield */}
+                                <div className="flex items-center gap-3 text-sm">
+                                    <span className="text-slate-400">Gross Rental Yield (GRY):</span>
+                                    <span className={`font-bold ${valuation.incomeApproach.grossRentalYield >= 5 ? 'text-emerald-400' : valuation.incomeApproach.grossRentalYield >= 3 ? 'text-yellow-400' : 'text-rose-400'}`}>
+                                        {valuation.incomeApproach.grossRentalYield.toFixed(2)}%/năm
+                                    </span>
+                                    <span className="text-slate-600">|</span>
+                                    <span className="text-slate-400">Vacancy Rate: 8% | OPEX: 20%</span>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Chart Simulation */}
                         <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-sm relative">
