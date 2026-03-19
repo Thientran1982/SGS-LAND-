@@ -8,7 +8,7 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
     try {
       const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 50;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
       const result = await aiGovernanceRepository.getSafetyLogs(tenantId, page, pageSize);
       res.json(result);
     } catch (error) {

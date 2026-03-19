@@ -1,3 +1,4 @@
+import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { routingRuleRepository } from '../repositories/routingRuleRepository';
 

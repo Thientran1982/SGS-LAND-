@@ -1,3 +1,4 @@
+import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { leadRepository } from '../repositories/leadRepository';
 import { auditRepository } from '../repositories/auditRepository';
@@ -11,7 +12,7 @@ export function createLeadRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const tenantId = user.tenantId;
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 20;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 200);
 
       const filters: any = {};
       if (req.query.stage) filters.stage = req.query.stage;
@@ -40,7 +41,7 @@ export function createLeadRoutes(authenticateToken: any) {
     }
   });
 
-  router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const lead = await leadRepository.findByIdWithAccess(
@@ -106,7 +107,7 @@ export function createLeadRoutes(authenticateToken: any) {
     }
   });
 
-  router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const lead = await leadRepository.update(
@@ -130,7 +131,7 @@ export function createLeadRoutes(authenticateToken: any) {
     }
   });
 
-  router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {

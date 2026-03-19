@@ -25,7 +25,7 @@ export function createAnalyticsRoutes(authenticateToken: any) {
       }
 
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 50;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
       const filters: any = {};
       if (req.query.entityType) filters.entityType = req.query.entityType;
       if (req.query.action) filters.action = req.query.action;

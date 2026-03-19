@@ -15,7 +15,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 50;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
       const result = await documentRepository.findDocuments(user.tenantId, { page, pageSize });
       res.json(result);
     } catch (error) {
@@ -131,7 +131,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 50;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 200);
       const filters: any = {};
       if (req.query.category) filters.category = req.query.category;
       if (req.query.status) filters.status = req.query.status;

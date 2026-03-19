@@ -30,9 +30,13 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     if (queryString) url += `?${queryString}`;
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
   const config: RequestInit = {
     method,
     credentials: 'include',
+    signal: controller.signal,
     headers: {
       'Content-Type': 'application/json',
       ...headers,
@@ -43,7 +47,12 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     config.body = JSON.stringify(body);
   }
 
-  const response = await fetch(url, config);
+  let response!: Response;
+  try {
+    response = await fetch(url, config);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (response.status === 401) {
     window.dispatchEvent(new CustomEvent('auth:unauthorized'));

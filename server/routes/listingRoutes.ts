@@ -1,3 +1,4 @@
+import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
@@ -9,7 +10,7 @@ export function createListingRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 20;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 200);
 
       const filters: any = {};
       if (req.query.type) filters.type = req.query.type;
@@ -43,7 +44,7 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
-  router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const listing = await listingRepository.findById(user.tenantId, req.params.id);
@@ -93,7 +94,7 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
-  router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const images = req.body.images;
@@ -120,7 +121,7 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
-  router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {

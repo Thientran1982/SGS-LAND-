@@ -167,3 +167,11 @@ export const webhookRateLimit = rateLimit({
   maxRequests: 100,
   keyFn: (req) => req.ip || 'anonymous',
 });
+
+export const publicLeadRateLimit = rateLimit({
+  name: 'public_lead',
+  windowMs: 60_000,
+  maxRequests: 5,
+  keyFn: (req) => req.ip || 'anonymous',
+  message: 'Too many lead submissions from this IP. Please try again later.',
+});

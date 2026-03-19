@@ -36,7 +36,7 @@ import { createUploadRoutes, createUploadServeRoute } from "./server/routes/uplo
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
-import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit } from "./server/middleware/rateLimiter";
+import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit } from "./server/middleware/rateLimiter";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
@@ -75,9 +75,9 @@ async function startServer() {
       try {
         const decoded = jwt.verify(token, JWT_SECRET) as any;
         if (decoded?.tenantId) tenantId = decoded.tenantId;
-      } catch (e) {}
-    } else if (req.headers['x-tenant-id']) {
-      tenantId = req.headers['x-tenant-id'] as string;
+      } catch (e) {
+        logger.warn('Invalid JWT token in tenant middleware', { ip: req.ip });
+      }
     }
     (req as any).tenantId = tenantId;
     next();
@@ -109,23 +109,6 @@ async function startServer() {
       const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
 
       let dbUser = await userRepository.authenticate(tenantId, email, password);
-
-      if (!dbUser && (password === '123456' || (email === 'admin@sgs.vn' && password === 'admin'))) {
-        const role = email.includes('admin') ? 'ADMIN' : 'SALES';
-        const name = email.split('@')[0];
-        try {
-          dbUser = await userRepository.create(tenantId, {
-            name, email, password, role,
-            source: 'SYSTEM',
-          });
-        } catch (e: any) {
-          if (e.message?.includes('duplicate') || e.code === '23505') {
-            dbUser = await userRepository.findByEmail(tenantId, email);
-          } else {
-            throw e;
-          }
-        }
-      }
 
       if (!dbUser) {
         writeAuditLog(tenantId, email, 'LOGIN_FAILED', 'auth', undefined, { email }, req.ip);
@@ -661,7 +644,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/public/leads', apiRateLimit, async (req: express.Request, res: express.Response) => {
+  app.post('/api/public/leads', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const { name, phone, notes, source, stage } = req.body;
       if (!name || !phone) return res.status(400).json({ error: 'name và phone là bắt buộc' }) as any;
@@ -908,8 +891,8 @@ async function startServer() {
       const user = socket.data.authUser;
       const tenantId = user?.tenantId || DEFAULT_TENANT_ID;
 
-      if (data.leadId && data.content) {
-        try {
+      try {
+        if (data.leadId && data.content) {
           const saved = await interactionRepository.create(tenantId, {
             leadId: data.leadId,
             content: data.content,
@@ -923,14 +906,14 @@ async function startServer() {
           data.timestamp = saved.timestamp || saved.createdAt;
           data.senderId = user?.id;
           data.senderName = user?.name;
-        } catch (err) {
-          logger.error('Failed to persist socket message to DB', err);
         }
-      }
 
-      // Use socket.to() instead of io.to() so the sender does NOT receive
-      // their own message back — they already applied it optimistically on the client
-      socket.to(data.room).emit("receive_message", data);
+        // Emit only after successful DB save — emit to room but not back to sender
+        socket.to(data.room).emit("receive_message", data);
+      } catch (err) {
+        logger.error('Failed to persist socket message to DB', err);
+        socket.emit('send_message_error', { error: 'Failed to send message. Please try again.' });
+      }
     }));
 
     socket.on("lead_updated", requireAuth((data) => {
@@ -972,6 +955,29 @@ async function startServer() {
   server.listen(PORT, "0.0.0.0", () => {
     logger.info(`Server running on http://localhost:${PORT}`);
   });
+
+  const shutdown = async (signal: string) => {
+    logger.info(`Received ${signal}. Shutting down gracefully...`);
+    server.close(async () => {
+      logger.info('HTTP server closed.');
+      try {
+        await webhookQueue.close();
+        logger.info('BullMQ queue closed.');
+      } catch (e) { /* queue may not be initialized */ }
+      try {
+        await pool.end();
+        logger.info('Database pool closed.');
+      } catch (e) { /* ignore */ }
+      process.exit(0);
+    });
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout.');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 startServer();

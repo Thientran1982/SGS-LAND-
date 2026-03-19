@@ -1,3 +1,4 @@
+import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { contractRepository } from '../repositories/contractRepository';
 import { auditRepository } from '../repositories/auditRepository';
@@ -9,7 +10,7 @@ export function createContractRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 20;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 200);
 
       const filters: any = {};
       if (req.query.status) filters.status = req.query.status;
@@ -25,7 +26,7 @@ export function createContractRoutes(authenticateToken: any) {
     }
   });
 
-  router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const contract = await contractRepository.findById(user.tenantId, req.params.id);
@@ -67,7 +68,7 @@ export function createContractRoutes(authenticateToken: any) {
     }
   });
 
-  router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+  router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const contract = await contractRepository.update(user.tenantId, req.params.id, req.body);
