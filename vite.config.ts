@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => {
           'recharts',
           'motion/react',
           'lucide-react',
-          '@google/generative-ai',
+          '@google/genai',
         ],
       },
       build: {
