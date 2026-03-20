@@ -474,6 +474,10 @@ export const DICTIONARY = {
         "contracts.btn_creating": "Đang tạo...",
         "contracts.btn_updating": "Đang cập nhật...",
         "contracts.btn_save": "Lưu Thay Đổi",
+        "contracts.share_title": "Chia sẻ hợp đồng",
+        "contracts.share_desc": "Sao chép đường dẫn bên dưới để gửi cho khách hàng:",
+        "contracts.view_export_pdf": "Xem & Xuất PDF",
+        "contracts.deposit_label": "Cọc",
 
         "editor.title": "Soạn Thảo Cộng Tác",
         "editor.status_connected": "Đã kết nối",
@@ -1836,6 +1840,10 @@ export const DICTIONARY = {
         "contracts.btn_creating": "Creating...",
         "contracts.btn_updating": "Updating...",
         "contracts.btn_save": "Save Changes",
+        "contracts.share_title": "Share Contract",
+        "contracts.share_desc": "Copy the link below to share with your customer:",
+        "contracts.view_export_pdf": "View & Export PDF",
+        "contracts.deposit_label": "Deposit",
 
         "editor.title": "Collaborative Editor",
         "editor.status_connected": "Connected",
