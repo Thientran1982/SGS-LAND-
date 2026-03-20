@@ -371,18 +371,18 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {view === 'REGISTER' && (
                     <>
                         <div className="space-y-1.5 group">
-                            <label className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_name')}</label>
+                            <label htmlFor="auth-name" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_name')}</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></span>
-                                <input value={name} onChange={e => setName(e.target.value)} className={getInputClass(!!fieldErrors.name)} placeholder={t('auth.placeholder_name')} />
+                                <input id="auth-name" value={name} onChange={e => setName(e.target.value)} className={getInputClass(!!fieldErrors.name)} placeholder={t('auth.placeholder_name')} aria-describedby={fieldErrors.name ? 'err-name' : undefined} />
                             </div>
-                            {fieldErrors.name && <p className="text-xs2 text-rose-400 ml-1">{fieldErrors.name}</p>}
+                            {fieldErrors.name && <p id="err-name" className="text-xs2 text-rose-400 ml-1">{fieldErrors.name}</p>}
                         </div>
                         <div className="space-y-1.5 group">
-                            <label className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_company')} <span className="text-gray-500 font-normal lowercase">{t('auth.optional')}</span></label>
+                            <label htmlFor="auth-company" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_company')} <span className="text-gray-500 font-normal lowercase">{t('auth.optional')}</span></label>
                             <div className="relative">
-                                <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 01 1v5m-4 0h4" /></svg></span>
-                                <input value={company} onChange={e => setCompany(e.target.value)} className={getInputClass(!!fieldErrors.company)} placeholder={t('auth.placeholder_company')} />
+                                <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></span>
+                                <input id="auth-company" value={company} onChange={e => setCompany(e.target.value)} className={getInputClass(!!fieldErrors.company)} placeholder={t('auth.placeholder_company')} />
                             </div>
                             {fieldErrors.company && <p className="text-xs2 text-rose-400 ml-1">{fieldErrors.company}</p>}
                         </div>
@@ -392,12 +392,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {/* --- EMAIL INPUT (Shared) --- */}
                 {view !== 'FORGOT_VERIFY' && (
                     <div className="space-y-1.5 group">
-                        <label className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_email')}</label>
+                        <label htmlFor="auth-email" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.label_email')}</label>
                         <div className="relative">
                             <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></span>
-                            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className={getInputClass(!!fieldErrors.email)} placeholder={t('auth.placeholder_email')} autoComplete="email" />
+                            <input id="auth-email" type="email" value={email} onChange={e => setEmail(e.target.value)} className={getInputClass(!!fieldErrors.email)} placeholder={t('auth.placeholder_email')} autoComplete="email" aria-describedby={fieldErrors.email ? 'err-email' : undefined} />
                         </div>
-                        {fieldErrors.email && <p className="text-xs2 text-rose-400 ml-1">{fieldErrors.email}</p>}
+                        {fieldErrors.email && <p id="err-email" className="text-xs2 text-rose-400 ml-1">{fieldErrors.email}</p>}
                         
                         {/* B2B Nudge */}
                         {isPersonalEmail && view === 'REGISTER' && (
@@ -423,12 +423,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             </div>
                         )}
                         <div className="space-y-1.5 group">
-                            <label className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.security_token')}</label>
+                            <label htmlFor="auth-otp" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.security_token')}</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg></span>
-                                <input value={otp} onChange={e => setOtp(e.target.value)} className={getInputClass(!!fieldErrors.otp)} placeholder={t('auth.placeholder_otp')} autoComplete="one-time-code" />
+                                <input id="auth-otp" value={otp} onChange={e => setOtp(e.target.value)} className={getInputClass(!!fieldErrors.otp)} placeholder={t('auth.placeholder_otp')} autoComplete="one-time-code" aria-describedby={fieldErrors.otp ? 'err-otp' : undefined} />
                             </div>
-                            {fieldErrors.otp && <p className="text-xs2 text-rose-400 ml-1">{fieldErrors.otp}</p>}
+                            {fieldErrors.otp && <p id="err-otp" className="text-xs2 text-rose-400 ml-1">{fieldErrors.otp}</p>}
                         </div>
                     </>
                 )}
@@ -437,7 +437,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {(view !== 'FORGOT_REQUEST' && !isSsoMode) && (
                     <div className="space-y-1.5 group">
                         <div className="flex justify-between ml-1 items-center">
-                            <label className="text-xs3 font-bold uppercase tracking-wider text-gray-400">
+                            <label htmlFor="auth-password" className="text-xs3 font-bold uppercase tracking-wider text-gray-400">
                                 {view === 'FORGOT_VERIFY' ? t('auth.new_pass_label') : t('auth.label_password')}
                             </label>
                             {view === 'LOGIN' && (
@@ -448,29 +448,39 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         </div>
                         <div className="relative">
                             <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></span>
-                            <input 
-                                type={showPassword ? "text" : "password"} 
-                                value={view === 'FORGOT_VERIFY' ? newPassword : password} 
-                                onChange={e => view === 'FORGOT_VERIFY' ? setNewPassword(e.target.value) : setPassword(e.target.value)} 
+                            <input
+                                id="auth-password"
+                                type={showPassword ? "text" : "password"}
+                                value={view === 'FORGOT_VERIFY' ? newPassword : password}
+                                onChange={e => view === 'FORGOT_VERIFY' ? setNewPassword(e.target.value) : setPassword(e.target.value)}
                                 className={`${getInputClass(!!fieldErrors.password || !!fieldErrors.newPassword)} pr-12`}
                                 placeholder={t('auth.placeholder_password')}
                                 autoComplete={view === 'LOGIN' ? 'current-password' : 'new-password'}
+                                aria-describedby={(fieldErrors.password || fieldErrors.newPassword) ? 'err-password' : undefined}
                             />
-                            <button 
+                            <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? t('auth.hide_password') : t('auth.show_password')}
+                                aria-pressed={showPassword}
                                 className="absolute right-3 top-3 p-1 text-white/40 hover:text-white transition-colors rounded-lg hover:bg-white/10"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showPassword ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" : "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"} /></svg>
                             </button>
                         </div>
-                        {(fieldErrors.password || fieldErrors.newPassword) && <p className="text-xs2 text-rose-400 ml-1">{fieldErrors.password || fieldErrors.newPassword}</p>}
+                        {(fieldErrors.password || fieldErrors.newPassword) && <p id="err-password" className="text-xs2 text-rose-400 ml-1">{fieldErrors.password || fieldErrors.newPassword}</p>}
                         
                         {(view === 'REGISTER' || view === 'FORGOT_VERIFY') && (
                             <div className="pt-2 flex items-center gap-2">
                                 <div className="h-1 flex-1 bg-gray-800 rounded-full overflow-hidden">
-                                    <div className={`h-full transition-all duration-500 ease-out 
-                                        ${calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) < 2 ? 'bg-rose-500' : calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) < 4 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                                    <div
+                                        role="progressbar"
+                                        aria-valuenow={calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) * 25}
+                                        aria-valuemin={0}
+                                        aria-valuemax={100}
+                                        aria-label={t('auth.password_strength')}
+                                        className={`h-full transition-all duration-500 ease-out
+                                        ${calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) < 2 ? 'bg-rose-500' : calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) < 4 ? 'bg-amber-500' : 'bg-emerald-500'}`}
                                         style={{ width: `${(calculatePasswordStrength(view === 'FORGOT_VERIFY' ? newPassword : password) / 4) * 100}%` }}>
                                     </div>
                                 </div>
@@ -519,12 +529,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </div>
 
                     <div className="space-y-3">
-                        <button onClick={() => { setIsSsoMode(!isSsoMode); setGlobalError(''); }} className="w-full bg-white/5 border border-white/10 text-white/70 font-bold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all flex justify-center items-center gap-3">
+                        <button type="button" onClick={() => { setIsSsoMode(!isSsoMode); setGlobalError(''); }} className="w-full bg-white/5 border border-white/10 text-white/70 font-bold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all flex justify-center items-center gap-3">
                             {isSsoMode ? t('auth.password_login') : t('auth.sso_login')}
                         </button>
                         
                         {!isSsoMode && (
-                            <button 
+                            <button
+                                type="button"
                                 onClick={handleGoogleLogin}
                                 disabled={loading}
                                 className="w-full bg-white/5 border border-white/10 text-white/70 font-bold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all flex justify-center items-center gap-3 disabled:opacity-50"
@@ -541,13 +552,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {view === 'REGISTER' ? t('auth.has_account') : view.startsWith('FORGOT') ? '' : t('auth.no_account')}
                 
                 {!view.startsWith('FORGOT') && (
-                    <button onClick={() => { setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN'); setGlobalError(''); setFieldErrors({}); setPassword(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
+                    <button type="button" onClick={() => { setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN'); setGlobalError(''); setFieldErrors({}); setPassword(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
                         {view === 'REGISTER' ? t('auth.login_link') : t('auth.register_link')}
                     </button>
                 )}
                 
                 {view.startsWith('FORGOT') && (
-                    <button onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
+                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
                         ← {t('auth.back_to_login')}
                     </button>
                 )}
