@@ -91,7 +91,7 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
 
 // --- PAGINATION COMPONENT ---
 const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPageChange, t }: any) => {
-    const start = (page - 1) * pageSize + 1;
+    const start = totalItems > 0 ? (page - 1) * pageSize + 1 : 0;
     const end = Math.min(page * pageSize, totalItems);
 
     return (
@@ -117,7 +117,7 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
                 </div>
                 <button 
                     onClick={() => onPageChange(page + 1)} 
-                    disabled={page === totalPages}
+                    disabled={page === totalPages || totalPages === 0}
                     className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                 >
                     {t('pagination.next')}
@@ -130,7 +130,7 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
 type ViewMode = 'GRID' | 'LIST' | 'BOARD' | 'MAP';
 
 export const ProductSearch: React.FC = () => {
-    const { t, formatCurrency, language } = useTranslation();
+    const { t, formatCurrency, language, formatCompactNumber } = useTranslation();
     const [listings, setListings] = useState<Listing[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -286,12 +286,12 @@ export const ProductSearch: React.FC = () => {
         [PropertyType.APARTMENT, PropertyType.VILLA, PropertyType.TOWNHOUSE, PropertyType.LAND, PropertyType.PROJECT].forEach(type => {
             groups[type] = [];
         });
-        paginatedListings.forEach(l => {
+        filteredListings.slice(0, 500).forEach(l => {
             if (!groups[l.type]) groups[l.type] = [];
             groups[l.type].push(l);
         });
         return groups;
-    }, [paginatedListings]);
+    }, [filteredListings]);
 
     return (
         <div className="h-[100dvh] flex flex-col bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] overflow-hidden relative">
@@ -413,9 +413,17 @@ export const ProductSearch: React.FC = () => {
                                 onNavigate={handleNavigate}
                                 formatCurrency={formatCurrency}
                                 formatUnitPrice={formatUnitPrice}
+                                formatCompactNumber={formatCompactNumber}
                                 t={t}
                                 language={language}
                             />
+                            {!loading && filteredListings.length === 0 && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-surface)]/80 backdrop-blur-sm z-10 gap-3">
+                                    <svg className="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                                    <p className="text-slate-400 font-medium">{t('common.no_results')}</p>
+                                    <button onClick={clearFilters} className="text-indigo-600 font-bold hover:underline text-sm">{t('search.clear_filters')}</button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -425,7 +433,20 @@ export const ProductSearch: React.FC = () => {
                     {viewMode === 'GRID' && (
                         loading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 max-w-[1920px] mx-auto">
-                                {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-[400px] bg-slate-200 rounded-[24px] animate-pulse"></div>)}
+                                {[1,2,3,4,5,6,7,8].map(i => (
+                                    <div key={i} className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] overflow-hidden animate-pulse">
+                                        <div className="aspect-[4/3] bg-slate-200 w-full" />
+                                        <div className="p-4 space-y-3">
+                                            <div className="h-3 bg-slate-200 rounded-full w-3/4" />
+                                            <div className="h-3 bg-slate-100 rounded-full w-1/2" />
+                                            <div className="h-5 bg-slate-200 rounded-full w-2/3 mt-2" />
+                                            <div className="flex justify-between mt-3">
+                                                <div className="h-3 bg-slate-100 rounded-full w-1/3" />
+                                                <div className="h-3 bg-slate-100 rounded-full w-1/4" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 max-w-[1920px] mx-auto">
@@ -469,11 +490,31 @@ export const ProductSearch: React.FC = () => {
                                                 <th className="px-4 py-4 text-right">{t('inventory.label_area')}</th>
                                                 <th className="px-4 py-4 hidden lg:table-cell">{t('inventory.label_location')}</th>
                                                 <th className="px-4 py-4 hidden xl:table-cell">{t('inventory.label_type')}</th>
-                                                <th className="px-4 py-4 text-right">{t('common.actions')}</th>
+                                                <th className="px-4 py-4 text-right">{t('common.learn_more')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[var(--glass-border)]">
-                                            {paginatedListings.map(item => {
+                                            {loading && [1,2,3,4,5,6,7,8].map(i => (
+                                                <tr key={i} className="animate-pulse">
+                                                    <td className="px-4 py-4"><div className="w-8 h-8 rounded-full bg-slate-200" /></td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-12 h-12 rounded-lg bg-slate-200 shrink-0" />
+                                                            <div className="space-y-2">
+                                                                <div className="h-3 bg-slate-200 rounded-full w-40" />
+                                                                <div className="h-2.5 bg-slate-100 rounded-full w-24" />
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-right"><div className="h-3 bg-slate-200 rounded-full w-20 ml-auto" /></td>
+                                                    <td className="px-4 py-4 text-right"><div className="h-3 bg-slate-100 rounded-full w-16 ml-auto" /></td>
+                                                    <td className="px-4 py-4 text-right"><div className="h-3 bg-slate-100 rounded-full w-12 ml-auto" /></td>
+                                                    <td className="px-4 py-4 hidden lg:table-cell"><div className="h-3 bg-slate-100 rounded-full w-32" /></td>
+                                                    <td className="px-4 py-4 hidden xl:table-cell"><div className="h-5 bg-slate-100 rounded w-16" /></td>
+                                                    <td className="px-4 py-4 text-right"><div className="h-7 bg-slate-100 rounded-lg w-20 ml-auto" /></td>
+                                                </tr>
+                                            ))}
+                                            {!loading && paginatedListings.map(item => {
                                                 const isFav = favorites.has(item.id);
                                                 return (
                                                     <tr key={item.id} onClick={() => handleNavigate(item.id)} className="hover:bg-[var(--glass-surface)] cursor-pointer group transition-colors">
@@ -521,8 +562,8 @@ export const ProductSearch: React.FC = () => {
                                                     </tr>
                                                 );
                                             })}
-                                            {paginatedListings.length === 0 && (
-                                                <tr><td colSpan={7} className="p-12 text-center text-slate-400 italic">{t('common.no_results')}</td></tr>
+                                            {paginatedListings.length === 0 && !loading && (
+                                                <tr><td colSpan={8} className="p-12 text-center text-slate-400 italic">{t('common.no_results')}</td></tr>
                                             )}
                                         </tbody>
                                     </table>
@@ -560,7 +601,7 @@ export const ProductSearch: React.FC = () => {
                                                                 {formatSmartPrice(item.price, t)}
                                                             </div>
                                                             <div className="text-xs2 text-slate-400 mt-0.5 font-medium">
-                                                                {item.area} m² • {item.bedrooms} PN {item.area > 0 && item.type !== PropertyType.PROJECT && `• ${formatUnitPrice(item.price, item.area, t)}`}
+                                                                {item.area} m²{item.bedrooms ? ` • ${item.bedrooms} PN` : ''}{item.area > 0 && item.type !== PropertyType.PROJECT ? ` • ${formatUnitPrice(item.price, item.area, t)}` : ''}
                                                             </div>
                                                         </div>
                                                         <span className="text-2xs font-bold uppercase bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-2 py-1 rounded-lg border border-[var(--glass-border)]">
@@ -585,7 +626,25 @@ export const ProductSearch: React.FC = () => {
                     {/* 3. BOARD VIEW */}
                     {viewMode === 'BOARD' && (
                         <div ref={boardContainerRef} className="h-full overflow-x-auto pb-4 no-scrollbar flex gap-6 snap-x cursor-grab active:cursor-grabbing">
-                            {Object.entries(groupedListings).map(([type, items]) => {
+                            {loading ? (
+                                [1,2,3,4].map(i => (
+                                    <div key={i} className="min-w-[320px] w-[320px] flex flex-col h-full bg-[var(--glass-surface-hover)]/50 rounded-2xl border border-[var(--glass-border)]/60 snap-start animate-pulse">
+                                        <div className="p-4 border-b border-[var(--glass-border)]/50 flex justify-between items-center">
+                                            <div className="h-3 bg-slate-200 rounded-full w-24" />
+                                            <div className="h-5 w-8 bg-slate-200 rounded-full" />
+                                        </div>
+                                        <div className="flex-1 p-3 space-y-3">
+                                            {[1,2,3].map(j => (
+                                                <div key={j} className="bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--glass-border)]">
+                                                    <div className="aspect-video w-full bg-slate-200 rounded-lg mb-3" />
+                                                    <div className="h-3 bg-slate-200 rounded-full w-3/4 mb-2" />
+                                                    <div className="h-3 bg-slate-100 rounded-full w-1/2" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : Object.entries(groupedListings).map(([type, items]) => {
                                 const listingItems = items as unknown as Listing[];
                                 if (listingItems.length === 0) return null;
                                 return (
@@ -652,8 +711,10 @@ export const ProductSearch: React.FC = () => {
 };
 
 const EmptyState = ({ t, onClear }: any) => (
-    <div className="col-span-full py-20 text-center">
-        <div className="text-6xl mb-4 opacity-30">🏠</div>
+    <div className="col-span-full py-20 text-center flex flex-col items-center">
+        <svg className="w-20 h-20 text-slate-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
         <p className="text-slate-400 text-lg font-medium">{t('common.no_results')}</p>
         <button onClick={onClear} className="mt-4 text-indigo-600 font-bold hover:underline">
             {t('search.clear_filters')}
