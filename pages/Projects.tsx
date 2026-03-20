@@ -100,7 +100,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                     </div>
                     <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
+                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto no-scrollbar max-h-[70vh]">
                     {err && <p className="text-rose-600 text-sm bg-rose-50 border border-rose-200 rounded-xl px-3 py-2" role="alert">{err}</p>}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
@@ -226,7 +226,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
                     <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
                 </div>
 
-                <div className="overflow-y-auto flex-1 p-6 space-y-6">
+                <div className="overflow-y-auto no-scrollbar flex-1 p-6 space-y-6">
                     {/* Grant form */}
                     <form onSubmit={handleGrant} className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4 space-y-3">
                         <p className="text-sm font-bold text-indigo-700 dark:text-indigo-300">{t('project.grant_access')}</p>
@@ -413,7 +413,7 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
                     </div>
 
                     {/* Table */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto no-scrollbar">
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
                                 <div className="w-7 h-7 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
@@ -656,7 +656,7 @@ export function Projects() {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto no-scrollbar p-6">
                 {error && (
                     <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-4 py-3 mb-4 text-sm" role="alert">{error}</div>
                 )}

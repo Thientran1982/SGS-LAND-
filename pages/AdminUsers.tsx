@@ -129,7 +129,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 pb-8 sm:pb-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up max-h-[92dvh] overflow-y-auto">
+            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 pb-8 sm:pb-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up max-h-[92dvh] overflow-y-auto no-scrollbar">
                 <div className="flex justify-between items-center mb-5">
                     <div>
                         <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('admin.users.invite_title')}</h3>
@@ -526,7 +526,7 @@ export const AdminUsers: React.FC = () => {
 
             {/* CONTENT */}
             <div className="flex-1 overflow-auto bg-[var(--glass-surface)]/50 no-scrollbar pt-3">
-                <div className="w-full overflow-x-auto bg-[var(--bg-surface)] border-b border-[var(--glass-border)]">
+                <div className="w-full overflow-x-auto no-scrollbar bg-[var(--bg-surface)] border-b border-[var(--glass-border)]">
                     <table className="w-full min-w-[320px] text-left text-sm">
                         <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] text-xs font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
                             <tr>
