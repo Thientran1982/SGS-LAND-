@@ -97,7 +97,10 @@ class DatabaseApiClient {
           this.cachedCurrentUser = result.user;
           return result.user;
         })
-        .catch(() => null)
+        .catch((err) => {
+          console.warn('[dbApi] getCurrentUser cache error:', err?.message || err);
+          return null;
+        })
         .finally(() => {
           this.currentUserPromise = null;
         });

@@ -297,10 +297,22 @@ export class LeadRepository extends BaseRepository {
    * e.g. findBySocialId(tenantId, 'zalo', '123456789')
    */
   async findBySocialId(tenantId: string, channel: 'zalo' | 'facebook' | 'telegram', socialId: string): Promise<any | null> {
+    const ALLOWED_CHANNELS = ['zalo', 'facebook', 'telegram'] as const;
+    if (!(ALLOWED_CHANNELS as readonly string[]).includes(channel)) {
+      throw new Error(`Invalid channel: ${channel}`);
+    }
     return this.withTenant(tenantId, async (client) => {
+      // Use CASE to avoid dynamic key interpolation in JSONB operator
       const result = await client.query(
-        `SELECT * FROM leads WHERE social_ids->>'${channel}' = $1 LIMIT 1`,
-        [socialId]
+        `SELECT * FROM leads
+         WHERE CASE $1::text
+           WHEN 'zalo'     THEN social_ids->>'zalo'     = $2
+           WHEN 'facebook' THEN social_ids->>'facebook' = $2
+           WHEN 'telegram' THEN social_ids->>'telegram' = $2
+           ELSE false
+         END
+         LIMIT 1`,
+        [channel, socialId]
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
     });

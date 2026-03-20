@@ -621,7 +621,7 @@ class AiEngine {
         rangeMax: number;
         confidence: number;
         marketTrend: string;
-        factors: { label: string; coefficient: number; impact: number; isPositive: boolean; description: string; type: 'AVM' | 'LOCATION' }[];
+        factors: { label: string; coefficient: number; impact: number; isPositive: boolean; description: string; type: 'AVM' | 'LOCATION' | 'MULTI_SOURCE' }[];
         coefficients: { Kd: number; Kp: number; Ka: number };
         formula: string;
         incomeApproach?: import('./valuationEngine').IncomeApproachResult;

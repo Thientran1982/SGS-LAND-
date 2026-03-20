@@ -155,7 +155,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                         <input
                             type="text"
                             className={inputCls('name')}
-                            placeholder="Nguyễn Văn A"
+                            placeholder={t('common.placeholder_fullname')}
                             value={name}
                             onChange={e => setName(e.target.value)}
                             autoFocus
@@ -187,7 +187,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                         <input
                             type="tel"
                             className={inputCls('phone')}
-                            placeholder="0901 234 567"
+                            placeholder={t('common.placeholder_phone')}
                             value={phone}
                             onChange={e => setPhone(e.target.value)}
                         />

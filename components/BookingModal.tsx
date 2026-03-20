@@ -70,7 +70,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                             onChange={e => setName(e.target.value)} 
                             disabled={isSubmitting}
                             className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-all font-medium text-[var(--text-secondary)] disabled:opacity-50" 
-                            placeholder="Nguyễn Văn A"
+                            placeholder={t('common.placeholder_fullname')}
                         />
                     </div>
                     <div>

@@ -44,8 +44,9 @@ export function createProposalRoutes(authenticateToken: any) {
     try {
       // Global lookup — token is the only credential needed (no tenantId from caller).
       const proposal = await proposalRepository.findByTokenGlobal(req.params.token);
-      if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
-      res.json(proposal);
+      // Always return 200 even when not found — prevents token enumeration attacks
+      if (!proposal) return res.status(200).json({ found: false });
+      res.json({ found: true, ...proposal });
     } catch (error) {
       console.error('Error fetching proposal by token:', error);
       res.status(500).json({ error: 'Failed to fetch proposal' });

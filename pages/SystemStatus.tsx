@@ -6,6 +6,7 @@ import { chaosService } from '../services/chaosService';
 import { SystemHealth, ChaosConfig, LogEntry, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 const ICONS = {
     REFRESH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
@@ -184,6 +185,9 @@ export const SystemStatus: React.FC = () => {
     const [isRestoring, setIsRestoring] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
+    const [confirmRestore, setConfirmRestore] = useState(false);
+    const [confirmClearLogs, setConfirmClearLogs] = useState(false);
+    const [confirmFailover, setConfirmFailover] = useState(false);
     
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { t } = useTranslation();
@@ -231,18 +235,15 @@ export const SystemStatus: React.FC = () => {
         }
     };
 
-    const handleRestore = () => {
-        if (confirm(t('system.alert.restore_confirm'))) {
-            fileInputRef.current?.click();
-        }
-    };
-    
-    const handleClearLogs = () => {
-        if(confirm("Clear local logs?")) {
-            systemService.clearLogs(); 
-            setLogs([]);
-            notify("Logs cleared", 'success');
-        }
+    const handleRestore = () => setConfirmRestore(true);
+
+    const handleClearLogs = () => setConfirmClearLogs(true);
+
+    const executeClearLogs = () => {
+        systemService.clearLogs();
+        setLogs([]);
+        notify(t('system.clear_logs_success'), 'success');
+        setConfirmClearLogs(false);
     };
 
     const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -265,7 +266,7 @@ export const SystemStatus: React.FC = () => {
 
     const runbooks = [
         { id: 1, title: t('system.runbook.sop1_title'), code: 'SOP-001', variant: 'warning', action: () => {
-            if(confirm(t('system.alert.failover_confirm'))) notify(t('system.alert.failover_triggered'), 'success');
+            setConfirmFailover(true);
         }},
         { id: 2, title: t('system.runbook.sop2_title'), code: 'SOP-002', variant: 'neutral', action: () => notify('AI Engine Restarted', 'success') },
         { id: 3, title: t('system.runbook.sop3_title'), code: 'SOP-003', variant: 'danger', action: () => notify('Emergency Shutdown Sequence Initiated', 'error') },
@@ -350,6 +351,37 @@ export const SystemStatus: React.FC = () => {
             </div>
             
             <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={onFileSelected} />
+
+            <ConfirmModal
+                isOpen={confirmRestore}
+                title={t('system.alert.restore_confirm')}
+                message={t('system.alert.restore_confirm')}
+                confirmLabel={t('common.confirm')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={() => { setConfirmRestore(false); fileInputRef.current?.click(); }}
+                onCancel={() => setConfirmRestore(false)}
+                variant="warning"
+            />
+            <ConfirmModal
+                isOpen={confirmClearLogs}
+                title={t('system.clear_logs_confirm')}
+                message={t('system.clear_logs_confirm')}
+                confirmLabel={t('common.confirm')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={executeClearLogs}
+                onCancel={() => setConfirmClearLogs(false)}
+                variant="warning"
+            />
+            <ConfirmModal
+                isOpen={confirmFailover}
+                title={t('system.alert.failover_confirm')}
+                message={t('system.alert.failover_confirm')}
+                confirmLabel={t('common.confirm')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={() => { setConfirmFailover(false); notify(t('system.alert.failover_triggered'), 'success'); }}
+                onCancel={() => setConfirmFailover(false)}
+                variant="danger"
+            />
         </div>
     );
 };
