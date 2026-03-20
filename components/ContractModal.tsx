@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '../services/i18n';
-import { Contract, ContractType, ContractStatus } from '../types';
+import { Contract, ContractType, ContractStatus, PaymentMilestone } from '../types';
 import { db } from '../services/dbApi';
 import { Dropdown } from './Dropdown';
+import { PaymentScheduleEditor } from './PaymentScheduleEditor';
 
 interface ContractModalProps {
     contract?: Contract | null;
@@ -297,11 +298,24 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 <textarea
                                     value={formData.paymentTerms || ''}
                                     onChange={e => handleChange('paymentTerms', e.target.value)}
-                                    rows={6}
+                                    rows={3}
                                     className={`${inputClass} resize-none`}
                                     placeholder={t('contracts.payment_terms_placeholder')}
                                 />
                             </div>
+                        </div>
+
+                        {/* PAYMENT SCHEDULE */}
+                        <div className="space-y-4">
+                            <h3 className="font-bold text-indigo-600 border-b border-indigo-100 pb-2 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                {t('payment.schedule_title')}
+                            </h3>
+                            <PaymentScheduleEditor
+                                milestones={formData.paymentSchedule || []}
+                                totalPrice={formData.propertyPrice || 0}
+                                onChange={(ms: PaymentMilestone[]) => handleChange('paymentSchedule', ms)}
+                            />
                         </div>
                     </form>
                 </div>
