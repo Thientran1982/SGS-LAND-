@@ -47,7 +47,8 @@ export const ROUTES = {
     AI_GOVERNANCE: 'ai-governance',
     PROFILE: 'profile',
     MOBILE_APP: 'mobile-app',
-    RESET_PASSWORD: 'reset-password'
+    RESET_PASSWORD: 'reset-password',
+    PROJECTS: 'projects',
 } as const;
 
 export const FULL_HEIGHT_PAGES = new Set([
@@ -58,6 +59,7 @@ export const FULL_HEIGHT_PAGES = new Set([
     ROUTES.CONTRACTS,
     ROUTES.FAVORITES,
     ROUTES.SYSTEM,
+    ROUTES.PROJECTS,
 ]);
 
 export type RouteKey = typeof ROUTES[keyof typeof ROUTES];
