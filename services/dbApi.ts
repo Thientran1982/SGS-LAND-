@@ -1088,7 +1088,17 @@ class DatabaseApiClient {
       { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS }
     ]};
 
+    const partnerCore = { id: 'partner-core', labelKey: 'menu.partner_core', items: [
+      { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
+      { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
+    ]};
+
+    if (role === 'PARTNER_ADMIN' || role === 'PARTNER_AGENT') {
+      return [partnerCore];
+    }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
+      const projectsItem = { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS };
+      core.items.splice(3, 0, projectsItem); // insert after contracts
       return [core, ops, sys];
     } else if (role === UserRole.SALES) {
       return [core, ops];
@@ -1323,6 +1333,81 @@ class DatabaseApiClient {
       const err = await res.json().catch(() => ({ error: 'Domain verification failed' }));
       throw new Error(err.error || 'Domain verification failed');
     }
+    return res.json();
+  }
+
+  // -------------------------------------------------------------------------
+  // Projects (B2B2C)
+  // -------------------------------------------------------------------------
+
+  async getProjects(page = 1, pageSize = 20, filters?: { status?: string; search?: string }) {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.search) params.set('search', filters.search);
+    const res = await fetch(`/api/projects?${params}`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch projects');
+    return res.json();
+  }
+
+  async getProjectById(id: string) {
+    const res = await fetch(`/api/projects/${id}`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Project not found');
+    return res.json();
+  }
+
+  async createProject(data: any) {
+    const res = await fetch('/api/projects', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to create project'); }
+    return res.json();
+  }
+
+  async updateProject(id: string, data: any) {
+    const res = await fetch(`/api/projects/${id}`, {
+      method: 'PUT', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to update project'); }
+    return res.json();
+  }
+
+  async deleteProject(id: string) {
+    const res = await fetch(`/api/projects/${id}`, { method: 'DELETE', credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to delete project');
+    return res.json();
+  }
+
+  async getProjectAccess(projectId: string) {
+    const res = await fetch(`/api/projects/${projectId}/access`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch access');
+    return res.json();
+  }
+
+  async grantProjectAccess(projectId: string, data: { partnerTenantId: string; expiresAt?: string; note?: string }) {
+    const res = await fetch(`/api/projects/${projectId}/access`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to grant access'); }
+    return res.json();
+  }
+
+  async revokeProjectAccess(projectId: string, partnerTenantId: string) {
+    const res = await fetch(`/api/projects/${projectId}/access/${partnerTenantId}`, {
+      method: 'DELETE', credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to revoke access');
+    return res.json();
+  }
+
+  async listTenants() {
+    const res = await fetch('/api/projects/tenants', { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch tenants');
     return res.json();
   }
 

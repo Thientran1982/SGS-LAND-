@@ -98,7 +98,41 @@ export enum UserRole {
     SALES = 'SALES',
     TEAM_LEAD = 'TEAM_LEAD',
     MARKETING = 'MARKETING',
-    VIEWER = 'VIEWER'
+    VIEWER = 'VIEWER',
+    // B2B2C: Broker/Exchange partner roles
+    PARTNER_ADMIN = 'PARTNER_ADMIN',  // Quản trị viên sàn đối tác
+    PARTNER_AGENT = 'PARTNER_AGENT',  // Nhân viên môi giới sàn đối tác
+}
+
+// B2B2C: Dự án do chủ đầu tư sở hữu
+export interface Project {
+    id: UUID;
+    tenantId: TenantId;         // Chủ đầu tư (developer tenant)
+    name: string;
+    code?: string;              // Mã dự án
+    description?: string;
+    location?: string;
+    totalUnits?: number;
+    status: 'ACTIVE' | 'COMPLETED' | 'ON_HOLD' | 'SUSPENDED';
+    openDate?: ISOString;       // Ngày mở bán
+    handoverDate?: ISOString;   // Ngày bàn giao dự kiến
+    metadata?: Record<string, unknown>;
+    createdAt: ISOString;
+    updatedAt: ISOString;
+}
+
+// B2B2C: Cấp quyền sàn đối tác xem/bán dự án
+export interface ProjectAccess {
+    id: UUID;
+    projectId: UUID;
+    partnerTenantId: TenantId;  // Sàn giao dịch BDS
+    partnerTenantName?: string;
+    partnerTenantDomain?: string;
+    grantedBy?: UUID;
+    grantedAt: ISOString;
+    expiresAt?: ISOString;
+    status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
+    note?: string;              // Ghi chú điều kiện hợp tác
 }
 
 export type Permission = 

@@ -15,16 +15,17 @@ import { prefetchRoute } from '../utils/reactUtils';
 // 1. CONFIGURATION & ASSETS
 // -----------------------------------------------------------------------------
 
-import { 
-    LayoutDashboard, Users, FileText, Package, Inbox, Star, CheckSquare, 
-    GitMerge, Target, Share2, BookOpen, BarChart2, Store, Shield, 
-    Database, Activity, Settings, CreditCard, Lock, Smartphone, 
-    User as UserIcon, Moon, Sun, LogOut, ChevronLeft, ChevronDown, Languages, Home
+import {
+    LayoutDashboard, Users, FileText, Package, Inbox, Star, CheckSquare,
+    GitMerge, Target, Share2, BookOpen, BarChart2, Store, Shield,
+    Database, Activity, Settings, CreditCard, Lock, Smartphone,
+    User as UserIcon, Moon, Sun, LogOut, ChevronLeft, ChevronDown, Languages, Home, Building2
 } from 'lucide-react';
 
 // Icons mapping - SYNCHRONIZED with mockDb.ts iconKeys
 const NAV_ICONS: Record<string, React.ReactNode> = {
     // Core
+    [ROUTES.PROJECTS]: <Building2 size={20} strokeWidth={2} />,
     [ROUTES.LANDING]: <Home size={20} strokeWidth={2} />,
     [ROUTES.DASHBOARD]: <LayoutDashboard size={20} strokeWidth={2} />,
     [ROUTES.LEADS]: <Users size={20} strokeWidth={2} />,
