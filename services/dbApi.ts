@@ -770,8 +770,7 @@ class DatabaseApiClient {
     const lead = await this.getLeadById(id);
     if (!lead) throw new Error('Lead not found');
     const { id: _id, createdAt, updatedAt, score, ...data } = lead;
-    const uniqueSuffix = Date.now().toString().slice(-8);
-    const placeholderPhone = `09${uniqueSuffix}`;
+    const placeholderPhone = `09${Math.floor(10000000 + Math.random() * 89999999)}`;
     return this.createLead({
       ...data,
       name: `${data.name} (Bản sao)`,
@@ -1024,7 +1023,7 @@ class DatabaseApiClient {
     try {
       return await api.get<any>('/api/billing/subscription');
     } catch {
-      return { planId: 'ENTERPRISE', status: 'ACTIVE', currentPeriodEnd: new Date(Date.now() + 30 * 86400000).toISOString() };
+      return null;
     }
   }
 

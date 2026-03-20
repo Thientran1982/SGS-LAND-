@@ -105,8 +105,9 @@ export class AnalyticsRepository extends BaseRepository {
 
       // ── RBAC: SALES agents only see their own assigned leads ──────────────
       const isSalesScope = role === 'SALES' && userId;
-      // Sanitize userId — must be a valid UUID
-      const safeUserId = userId ? userId.replace(/[^a-f0-9\-]/gi, '') : null;
+      // Validate userId is a proper UUID (strict format check, not just char stripping)
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const safeUserId = userId && UUID_RE.test(userId) ? userId : null;
       const userLeadFilter = isSalesScope && safeUserId
         ? `AND l.assigned_to = '${safeUserId}'`
         : '';
@@ -529,7 +530,8 @@ export class AnalyticsRepository extends BaseRepository {
       const timeFilterAnd = useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : '';
 
       const isSalesScope = role === 'SALES' && userId;
-      const safeUserId = userId ? userId.replace(/[^a-f0-9\-]/gi, '') : null;
+      const UUID_RE_L = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const safeUserId = userId && UUID_RE_L.test(userId) ? userId : null;
       const userLeadFilter = isSalesScope && safeUserId
         ? `AND assigned_to = '${safeUserId}'`
         : '';
