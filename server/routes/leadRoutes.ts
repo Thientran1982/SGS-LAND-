@@ -12,7 +12,8 @@ export function createLeadRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const tenantId = user.tenantId;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
-      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 200));
+      // Allow up to 500 for Kanban board view (client sends 500); default cap is 200
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 500));
 
       const filters: any = {};
       if (req.query.stage) filters.stage = req.query.stage;
