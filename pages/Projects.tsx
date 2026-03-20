@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/dbApi';
-import { Project, ProjectAccess, UserRole, PropertyType, ListingStatus, TransactionType } from '../types';
+import { Project, ProjectAccess, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
+import { Dropdown } from '../components/Dropdown';
+import { ListingForm } from '../components/ListingForm';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Icons
@@ -122,12 +124,12 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
                             <textarea id="pj-desc" className={inputCls} rows={3} value={form.description} onChange={e => set('description', e.target.value)} />
                         </div>
                         <div>
-                            <label htmlFor="pj-status" className={labelCls}>{t('project.status')}</label>
-                            <select id="pj-status" className={inputCls} value={form.status} onChange={e => set('status', e.target.value)}>
-                                {['ACTIVE','COMPLETED','ON_HOLD','SUSPENDED'].map(s => (
-                                    <option key={s} value={s}>{t('project.status_' + s)}</option>
-                                ))}
-                            </select>
+                            <label className={labelCls}>{t('project.status')}</label>
+                            <Dropdown
+                                value={form.status}
+                                onChange={v => set('status', v as string)}
+                                options={['ACTIVE','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) }))}
+                            />
                         </div>
                         <div>
                             <label htmlFor="pj-open" className={labelCls}>{t('project.open_date')}</label>
@@ -293,133 +295,6 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
     );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Quick Listing Form Modal  (Tạo nhanh sản phẩm trong dự án)
-// ─────────────────────────────────────────────────────────────────────────────
-const PROPERTY_TYPES = Object.values(PropertyType);
-const LISTING_STATUSES = [ListingStatus.AVAILABLE, ListingStatus.BOOKING, ListingStatus.OPENING, ListingStatus.INACTIVE];
-
-interface QuickListingModalProps {
-    project: any;
-    onSave: (listing: any) => void;
-    onClose: () => void;
-    t: (k: string) => string;
-}
-
-function QuickListingModal({ project, onSave, onClose, t }: QuickListingModalProps) {
-    const [form, setForm] = useState({
-        code: '',
-        title: '',
-        location: project.location || '',
-        price: '',
-        area: '',
-        type: PropertyType.APARTMENT,
-        status: ListingStatus.AVAILABLE,
-        transaction: TransactionType.SALE,
-    });
-    const [saving, setSaving] = useState(false);
-    const [err, setErr] = useState('');
-
-    const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!form.code.trim() || !form.title.trim() || !form.location.trim() || !form.price || !form.area) {
-            setErr(t('project.listing_required_fields'));
-            return;
-        }
-        setSaving(true);
-        setErr('');
-        try {
-            const listing = await db.createListing({
-                code: form.code.trim(),
-                title: form.title.trim(),
-                location: form.location.trim(),
-                price: Number(form.price),
-                area: Number(form.area),
-                type: form.type,
-                status: form.status,
-                transaction: form.transaction,
-                projectCode: project.code || undefined,
-            });
-            onSave(listing);
-        } catch (e: any) {
-            setErr(e.message || t('common.error_generic'));
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500';
-    const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
-
-    return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
-            <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-lg border border-[var(--glass-border)] overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
-                    <div className="flex items-center gap-2 text-emerald-600">
-                        {IC.HOME}
-                        <div>
-                            <h2 className="text-base font-bold">{t('project.add_listing')}</h2>
-                            <p className="text-xs text-[var(--text-secondary)]">{project.name}</p>
-                        </div>
-                    </div>
-                    <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
-                </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
-                    {err && <p className="text-rose-600 text-sm bg-rose-50 border border-rose-200 rounded-xl px-3 py-2" role="alert">{err}</p>}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className={labelCls}>{t('project.listing_code')} *</label>
-                            <input className={inputCls} placeholder="VD: BT-01" value={form.code} onChange={e => set('code', e.target.value)} required />
-                        </div>
-                        <div>
-                            <label className={labelCls}>{t('project.listing_type')}</label>
-                            <select className={inputCls} value={form.type} onChange={e => set('type', e.target.value)}>
-                                {PROPERTY_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
-                            </select>
-                        </div>
-                        <div className="col-span-2">
-                            <label className={labelCls}>{t('project.listing_title')} *</label>
-                            <input className={inputCls} placeholder={t('project.listing_title_placeholder')} value={form.title} onChange={e => set('title', e.target.value)} required />
-                        </div>
-                        <div className="col-span-2">
-                            <label className={labelCls}>{t('project.listing_location')} *</label>
-                            <input className={inputCls} value={form.location} onChange={e => set('location', e.target.value)} required />
-                        </div>
-                        <div>
-                            <label className={labelCls}>{t('project.listing_price')} (VNĐ) *</label>
-                            <input type="number" min="0" className={inputCls} placeholder="0" value={form.price} onChange={e => set('price', e.target.value)} required />
-                        </div>
-                        <div>
-                            <label className={labelCls}>{t('project.listing_area')} (m²) *</label>
-                            <input type="number" min="0" step="0.1" className={inputCls} placeholder="0" value={form.area} onChange={e => set('area', e.target.value)} required />
-                        </div>
-                        <div>
-                            <label className={labelCls}>{t('project.listing_status')}</label>
-                            <select className={inputCls} value={form.status} onChange={e => set('status', e.target.value)}>
-                                {LISTING_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className={labelCls}>{t('project.listing_transaction')}</label>
-                            <select className={inputCls} value={form.transaction} onChange={e => set('transaction', e.target.value)}>
-                                <option value={TransactionType.SALE}>{t('project.listing_sale')}</option>
-                                <option value={TransactionType.RENT}>{t('project.listing_rent')}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="flex gap-3 justify-end pt-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">{t('common.cancel')}</button>
-                        <button type="submit" disabled={saving} className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2">
-                            {IC.PLUS}{saving ? t('common.loading') : t('common.save')}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Project Listings Panel  (Danh mục sản phẩm trong dự án)
@@ -468,7 +343,11 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
 
     useEffect(() => { load(); }, [load]);
 
-    const handleListingCreated = (listing: any) => {
+    const handleListingSubmit = async (data: any) => {
+        const listing = await db.createListing({
+            ...data,
+            projectCode: project.code || data.projectCode,
+        });
         setListings(prev => [listing, ...prev]);
         if (stats) setStats((s: any) => ({ ...s, availableCount: (s.availableCount || 0) + 1, totalCount: (s.totalCount || 0) + 1 }));
         setShowCreate(false);
@@ -593,14 +472,13 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
                 </div>
             </div>
 
-            {showCreate && (
-                <QuickListingModal
-                    project={project}
-                    onSave={handleListingCreated}
-                    onClose={() => setShowCreate(false)}
-                    t={t}
-                />
-            )}
+            <ListingForm
+                isOpen={showCreate}
+                onClose={() => setShowCreate(false)}
+                onSubmit={handleListingSubmit}
+                initialData={{ projectCode: project.code, location: project.location } as any}
+                t={t}
+            />
         </>
     );
 }
@@ -764,16 +642,15 @@ export function Projects() {
                         />
                     </div>
                     {!isPartner && (
-                        <select
+                        <Dropdown
                             value={statusFilter}
-                            onChange={e => setStatusFilter(e.target.value)}
-                            className="border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                            <option value="">{t('project.status')} — {t('common.filter')}</option>
-                            {['ACTIVE','COMPLETED','ON_HOLD','SUSPENDED'].map(s => (
-                                <option key={s} value={s}>{t('project.status_' + s)}</option>
-                            ))}
-                        </select>
+                            onChange={v => setStatusFilter(v as string)}
+                            options={[
+                                { value: '', label: `${t('project.status')} — ${t('common.filter')}` },
+                                ...(['ACTIVE','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) })))
+                            ]}
+                            className="min-w-[180px]"
+                        />
                     )}
                 </div>
             </div>
