@@ -2,7 +2,7 @@ import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { Server } from 'socket.io';
 import { logger } from './middleware/logger';
-import { DEFAULT_TENANT_ID } from './constants';
+
 
 const redisUrl = process.env.REDIS_URL;
 const useRedis = !!redisUrl;
@@ -117,13 +117,18 @@ export function setupWebhookWorker(io: Server) {
 
       // recipient.id = OA ID → use it to find the correct tenant
       const oaId = recipient?.id as string | undefined;
-
-      let tenantId = DEFAULT_TENANT_ID;
-      if (oaId) {
-        const { enterpriseConfigRepository } = await import('./repositories/enterpriseConfigRepository');
-        const found = await enterpriseConfigRepository.findTenantByZaloOaId(oaId);
-        if (found) tenantId = found;
+      if (!oaId) {
+        logger.warn('[Zalo Webhook] Missing recipient.id (OA ID), cannot resolve tenant — dropping event');
+        return;
       }
+
+      const { enterpriseConfigRepository } = await import('./repositories/enterpriseConfigRepository');
+      const foundTenant = await enterpriseConfigRepository.findTenantByZaloOaId(oaId);
+      if (!foundTenant) {
+        logger.warn(`[Zalo Webhook] OA ID ${oaId} not registered to any tenant — dropping event`);
+        return;
+      }
+      const tenantId = foundTenant;
 
       const senderId = sender?.id as string | undefined;
       if (!senderId) {
@@ -212,13 +217,18 @@ export function setupWebhookWorker(io: Server) {
       for (const pageEntry of entry) {
         // pageEntry.id = Page ID → use it to find the correct tenant
         const pageId = pageEntry.id as string | undefined;
-
-        let tenantId = DEFAULT_TENANT_ID;
-        if (pageId) {
-          const { enterpriseConfigRepository } = await import('./repositories/enterpriseConfigRepository');
-          const found = await enterpriseConfigRepository.findTenantByFacebookPageId(pageId);
-          if (found) tenantId = found;
+        if (!pageId) {
+          logger.warn('[Facebook Webhook] Missing pageEntry.id, cannot resolve tenant — skipping entry');
+          continue;
         }
+
+        const { enterpriseConfigRepository } = await import('./repositories/enterpriseConfigRepository');
+        const foundTenant = await enterpriseConfigRepository.findTenantByFacebookPageId(pageId);
+        if (!foundTenant) {
+          logger.warn(`[Facebook Webhook] Page ID ${pageId} not registered to any tenant — skipping entry`);
+          continue;
+        }
+        const tenantId = foundTenant;
 
         const messagingEvents: any[] = pageEntry.messaging || [];
 
@@ -319,7 +329,11 @@ export function setupWebhookWorker(io: Server) {
         return;
       }
 
-      const tenantId = payloadTenantId || DEFAULT_TENANT_ID;
+      if (!payloadTenantId) {
+        logger.warn('[Email Webhook] Missing tenantId in payload — dropping event');
+        return;
+      }
+      const tenantId = payloadTenantId;
 
       // Normalize email address (strip display name if any)
       const fromEmail = (from.match(/<(.+?)>/) || [])[1] || from.trim();
