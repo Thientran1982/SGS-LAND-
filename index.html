@@ -82,49 +82,96 @@
     <style>
       :root {
         /* --- DESIGN TOKENS (Light Mode) --- */
-        --bg-app: #F1F5F9;
-        --bg-surface: #FFFFFF;
-        --bg-elevated: #FFFFFF;
-        --glass-surface: rgba(255, 255, 255, 0.70);
-        --glass-surface-hover: rgba(241, 245, 249, 0.90);
-        --glass-border: rgba(226, 232, 240, 1);
-        --text-primary: #0F172A;
-        --text-secondary: #475569;
-        --text-tertiary: #94A3B8;
-        --text-muted: #CBD5E1;
-        --primary-600: #4F46E5;
-        --rose-500: #F43F5E;
-        --color-success: #10B981;
-        --color-warning: #F59E0B;
-        --color-danger: #F43F5E;
-        --color-info: #3B82F6;
+        /* Backgrounds — 3-layer depth system */
+        --bg-app:         #EEF2F7;   /* app shell — slightly cooler gray */
+        --bg-surface:     #FFFFFF;   /* cards, panels */
+        --bg-elevated:    #F8FAFC;   /* modals, dropdowns, popovers */
+        --bg-sidebar:     #F4F6FA;   /* sidebar background */
+        --bg-input:       #FAFBFC;   /* form input background */
+
+        /* Glass / Overlay */
+        --glass-surface:       rgba(255, 255, 255, 0.72);
+        --glass-surface-hover: rgba(241, 245, 249, 0.92);
+        --glass-border:        rgba(213, 221, 232, 1);      /* slightly darker border */
+
+        /* Text hierarchy */
+        --text-primary:   #0D1526;   /* near-black, slightly warmer */
+        --text-secondary: #44556B;   /* mid gray-blue */
+        --text-tertiary:  #8B9BB2;   /* soft muted */
+        --text-muted:     #C4CDD9;   /* very muted / placeholder */
+        --text-inverse:   #FFFFFF;
+
+        /* Brand / Primary */
+        --primary-600:    #4F46E5;   /* indigo-600 */
+        --primary-hover:  #4338CA;   /* indigo-700 */
+        --primary-subtle: #EEF2FF;   /* indigo-50 bg */
+
+        /* Semantic */
+        --color-success: #0EA569;   /* slightly deeper emerald */
+        --color-warning: #E8930A;   /* slightly deeper amber */
+        --color-danger:  #E53E5C;   /* slightly deeper rose */
+        --color-info:    #2B7FE8;   /* slightly deeper blue */
+        --rose-500:      #E53E5C;
+
+        /* Borders */
+        --border-default: rgba(213, 221, 232, 1);
+        --border-strong:  rgba(180, 192, 207, 1);
+
+        /* Shadows */
+        --shadow-sm:  0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+        --shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+        --shadow-lg:  0 10px 30px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.05);
 
         /* Aurora Gradients */
-        --aurora-1: #E0E7FF; 
-        --aurora-2: #FAE8FF;
-        --aurora-3: #D1FAE5;
+        --aurora-1: #DDE5FF;
+        --aurora-2: #F5E8FF;
+        --aurora-3: #D1F5EA;
       }
 
       .dark {
-        --bg-app: #0F172A;
-        --bg-surface: #1E293B;
-        --bg-elevated: #1E293B;
-        --glass-surface: rgba(30, 41, 59, 0.80);
-        --glass-surface-hover: rgba(51, 65, 85, 0.90);
-        --glass-border: rgba(51, 65, 85, 1);
-        --text-primary: #F1F5F9;
-        --text-secondary: #94A3B8;
-        --text-tertiary: #64748B;
-        --text-muted: #475569;
-        --primary-600: #6366F1;
+        /* Backgrounds */
+        --bg-app:         #0B1120;   /* deeper near-black */
+        --bg-surface:     #161F2E;   /* card surface */
+        --bg-elevated:    #1E2B3F;   /* modal / elevated panels */
+        --bg-sidebar:     #111827;   /* sidebar slightly darker */
+        --bg-input:       #1A2336;   /* input field bg */
+
+        /* Glass */
+        --glass-surface:       rgba(22, 31, 46, 0.82);
+        --glass-surface-hover: rgba(40, 55, 78, 0.92);
+        --glass-border:        rgba(45, 60, 82, 1);
+
+        /* Text */
+        --text-primary:   #EEF2F8;
+        --text-secondary: #8EA4BF;
+        --text-tertiary:  #516278;
+        --text-muted:     #364559;
+        --text-inverse:   #0D1526;
+
+        /* Brand */
+        --primary-600:    #6366F1;
+        --primary-hover:  #818CF8;
+        --primary-subtle: #1E1B4B;
+
+        /* Semantic */
         --color-success: #34D399;
         --color-warning: #FBBF24;
-        --color-danger: #FB7185;
-        --color-info: #60A5FA;
-        --rose-500: #FB7185;
+        --color-danger:  #FB7185;
+        --color-info:    #60A5FA;
+        --rose-500:      #FB7185;
 
-        --aurora-1: #1e1b4b; 
-        --aurora-2: #312e81; 
+        /* Borders */
+        --border-default: rgba(45, 60, 82, 1);
+        --border-strong:  rgba(65, 85, 110, 1);
+
+        /* Shadows */
+        --shadow-sm:  0 1px 3px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15);
+        --shadow-md:  0 4px 12px rgba(0,0,0,0.30), 0 2px 4px rgba(0,0,0,0.15);
+        --shadow-lg:  0 10px 30px rgba(0,0,0,0.40), 0 4px 8px rgba(0,0,0,0.20);
+
+        /* Aurora */
+        --aurora-1: #1e1b4b;
+        --aurora-2: #312e81;
         --aurora-3: #0f172a;
       }
 
@@ -139,6 +186,7 @@
         margin: 0; padding: 0;
         overflow: hidden;
         font-family: 'Inter', sans-serif;
+        font-size: 15px; /* Compact density — scales all rem spacing ~6% smaller */
         background-color: var(--bg-app);
         color: var(--text-primary);
         -webkit-font-smoothing: antialiased;
@@ -173,9 +221,23 @@
 
       .glass-card {
         background: var(--glass-surface);
-        backdrop-filter: blur(24px) saturate(180%);
-        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
         border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* --- COMPACT BUTTON SYSTEM --- */
+      /* Surface card elevation */
+      .card-surface {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        box-shadow: var(--shadow-sm);
+      }
+      .card-elevated {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-default);
+        box-shadow: var(--shadow-md);
       }
 
       .animate-enter { animation: soft-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
