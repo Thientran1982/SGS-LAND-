@@ -86,9 +86,11 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                 </div>
             </div>
 
-            <button 
+            <button
                 onClick={onToggleFavorite}
-                className="absolute top-3 right-3 z-30 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all active:scale-95 pointer-events-auto"
+                className="absolute top-3 right-3 z-30 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-all active:scale-95 pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label={isFavorite ? t('favorites.remove') : t('favorites.add')}
+                aria-pressed={isFavorite}
             >
                 {isFavorite ? LISTING_ICONS.HEART_FILLED : LISTING_ICONS.HEART_OUTLINE}
             </button>
@@ -106,8 +108,8 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
                     {images!.length > 1 && (
                         <>
                             <div className="absolute inset-0 flex items-center justify-between p-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
-                                <button onClick={prevImage} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[40px] min-h-[40px] flex items-center justify-center">{LISTING_ICONS.CHEVRON_LEFT}</button>
-                                <button onClick={nextImage} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[40px] min-h-[40px] flex items-center justify-center">{LISTING_ICONS.CHEVRON_RIGHT}</button>
+                                <button onClick={prevImage} aria-label={t('common.prev')} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{LISTING_ICONS.CHEVRON_LEFT}</button>
+                                <button onClick={nextImage} aria-label={t('common.next')} className="p-2.5 rounded-full bg-[var(--bg-surface)]/90 shadow-md text-[var(--text-primary)] hover:bg-[var(--bg-surface)] pointer-events-auto transition-transform hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{LISTING_ICONS.CHEVRON_RIGHT}</button>
                             </div>
                             <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-none">
                                 {images!.map((_, idx) => (
@@ -182,7 +184,7 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
                 >
                     <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.EDIT} {t('inventory.action_edit')}</button>
                     {onCopy && <button onClick={(e) => { e.stopPropagation(); handleCopyCode(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.COPY} {t('inventory.action_copy_code')}</button>}
-                    <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDuplicate(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.DUPLICATE} {t('common.duplicate') || 'Nhân bản'}</button>
+                    <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDuplicate(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.DUPLICATE} {t('common.duplicate')}</button>
                     <div className="h-px bg-[var(--glass-surface)] dark:bg-slate-800 my-1"></div>
                     <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDelete(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2">{LISTING_ICONS.TRASH} {t('inventory.action_delete')}</button>
                 </div>,
@@ -293,7 +295,7 @@ export const ListingCard = memo(({ item, t, formatCurrency, onToggleFavorite, on
                                 <span className="font-mono text-2xs font-bold bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{item.code}</span>
                             )}
                             <span className={`text-2xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${item.status === 'AVAILABLE' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-tertiary)] dark:text-slate-400'}`}>
-                                {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') || 'Sẵn sàng' : t(`status.${item.status}`)}
+                                {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
                             </span>
                         </div>
                         <h3 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm leading-tight line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={item.title}>

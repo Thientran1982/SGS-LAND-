@@ -9,24 +9,13 @@ import { ConfirmModal } from '../components/ConfirmModal';
 
 const CONFIG = { PAGE_SIZE: 12 };
 
-const SORT_OPTIONS = [
-    { value: 'date_desc', label: 'Mới thêm nhất' },
-    { value: 'price_asc',  label: 'Giá tăng dần' },
-    { value: 'price_desc', label: 'Giá giảm dần' },
-    { value: 'area_asc',   label: 'Diện tích tăng dần' },
-    { value: 'area_desc',  label: 'Diện tích giảm dần' },
+const SORT_KEYS = [
+    { value: 'date_desc',  key: 'favorites.sort_date_desc' },
+    { value: 'price_asc',  key: 'favorites.sort_price_asc' },
+    { value: 'price_desc', key: 'favorites.sort_price_desc' },
+    { value: 'area_asc',   key: 'favorites.sort_area_asc' },
+    { value: 'area_desc',  key: 'favorites.sort_area_desc' },
 ];
-
-const TYPE_LABELS: Record<string, string> = {
-    [PropertyType.PROJECT]:    'Dự án',
-    [PropertyType.APARTMENT]:  'Căn hộ',
-    [PropertyType.TOWNHOUSE]:  'Nhà phố',
-    [PropertyType.VILLA]:      'Biệt thự',
-    [PropertyType.LAND]:       'Đất nền',
-    [PropertyType.FACTORY]:    'Nhà xưởng',
-    [PropertyType.OFFICE]:     'Văn phòng',
-    [PropertyType.COMMERCIAL]: 'Thương mại',
-};
 
 type Toast = { msg: string; type: 'success' | 'error' };
 
@@ -57,7 +46,7 @@ export const Favorites: React.FC = () => {
             const res = await db.getFavorites(1, 1000);
             setAllFavorites(res.data || []);
         } catch {
-            notify('Không thể tải danh sách quan tâm', 'error');
+            notify(t('favorites.load_error'), 'error');
         } finally {
             setLoading(false);
         }
@@ -71,6 +60,7 @@ export const Favorites: React.FC = () => {
             : allFavorites.filter(l => l.type === filterType);
 
         list = [...list].sort((a, b) => {
+            if (sortBy === 'date_desc')  return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
             if (sortBy === 'price_asc')  return (a.price ?? 0) - (b.price ?? 0);
             if (sortBy === 'price_desc') return (b.price ?? 0) - (a.price ?? 0);
             if (sortBy === 'area_asc')   return (a.area ?? 0) - (b.area ?? 0);
@@ -103,7 +93,7 @@ export const Favorites: React.FC = () => {
                 notify(t('favorites.removed'), 'success');
             } catch {
                 setRemovedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-                notify('Xóa thất bại, vui lòng thử lại', 'error');
+                notify(t('favorites.remove_error'), 'error');
             } finally {
                 removingRef.current.delete(id);
             }
@@ -126,7 +116,12 @@ export const Favorites: React.FC = () => {
     return (
         <div className="h-full flex flex-col pb-20 animate-enter relative">
             {toast && (
-                <div className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border transition-all ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                <div
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border transition-all ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}
+                >
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             )}
@@ -142,17 +137,17 @@ export const Favorites: React.FC = () => {
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                     <button
                                         onClick={() => setFilterType('ALL')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${filterType === 'ALL' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                                        className={`px-3 py-2 min-h-[36px] rounded-lg text-xs font-bold border transition-all ${filterType === 'ALL' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
                                     >
-                                        Tất cả
+                                        {t('favorites.all_types')}
                                     </button>
                                     {availableTypes.map(type => (
                                         <button
                                             key={type}
                                             onClick={() => setFilterType(type)}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${filterType === type ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                                            className={`px-3 py-2 min-h-[36px] rounded-lg text-xs font-bold border transition-all ${filterType === type ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
                                         >
-                                            {TYPE_LABELS[type] || type}
+                                            {t(`property.${type}`) || type}
                                         </button>
                                     ))}
                                 </div>
@@ -160,10 +155,10 @@ export const Favorites: React.FC = () => {
                             <select
                                 value={sortBy}
                                 onChange={e => setSortBy(e.target.value)}
-                                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:border-indigo-400 cursor-pointer"
+                                className="px-3 py-2 min-h-[36px] rounded-lg text-xs font-bold border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:border-indigo-400 cursor-pointer"
                             >
-                                {SORT_OPTIONS.map(o => (
-                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                {SORT_KEYS.map(o => (
+                                    <option key={o.value} value={o.value}>{t(o.key)}</option>
                                 ))}
                             </select>
                         </div>
@@ -207,16 +202,16 @@ export const Favorites: React.FC = () => {
                                 </div>
                                 <p className="text-[var(--text-secondary)] italic mb-2 font-medium">
                                     {filterType !== 'ALL'
-                                        ? `Không có BĐS loại "${TYPE_LABELS[filterType] || filterType}" trong danh sách quan tâm`
+                                        ? `${t('favorites.filter_empty_type')} "${t(`property.${filterType}`) || filterType}"`
                                         : t('favorites.empty')
                                     }
                                 </p>
                                 {filterType !== 'ALL' ? (
                                     <button
                                         onClick={() => setFilterType('ALL')}
-                                        className="px-5 py-2 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-slate-200 transition-colors text-sm"
+                                        className="px-5 py-2 min-h-[44px] bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-slate-200 transition-colors text-sm"
                                     >
-                                        Xem tất cả loại
+                                        {t('favorites.see_all_types')}
                                     </button>
                                 ) : (
                                     <button
@@ -236,15 +231,15 @@ export const Favorites: React.FC = () => {
                         <button
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page === 1}
-                            className="px-4 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-4 py-2 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                         >
                             {t('common.prev')}
                         </button>
-                        <span className="text-sm font-bold text-[var(--text-tertiary)]">{page} / {totalPages}</span>
+                        <span className="text-sm font-bold text-[var(--text-tertiary)]" aria-live="polite">{page} / {totalPages}</span>
                         <button
                             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                             disabled={page === totalPages}
-                            className="px-4 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-4 py-2 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                         >
                             {t('common.next')}
                         </button>
