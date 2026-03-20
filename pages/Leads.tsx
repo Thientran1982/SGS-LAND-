@@ -751,8 +751,18 @@ export const Leads: React.FC = () => {
             if (debouncedSearch) filters.search = debouncedSearch;
             if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
             if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
-            const res = await db.getLeads(1, 10000, filters);
-            const allLeads = res.data || [];
+
+            // Paginate through all pages (server caps at 200/page)
+            const EXPORT_PAGE_SIZE = 200;
+            let allLeads: any[] = [];
+            let exportPage = 1;
+            let totalPages = 1;
+            do {
+                const res = await db.getLeads(exportPage, EXPORT_PAGE_SIZE, filters);
+                allLeads = allLeads.concat(res.data || []);
+                totalPages = res.totalPages || 1;
+                exportPage++;
+            } while (exportPage <= totalPages);
 
             const dataToExport = allLeads.map(lead => ({
                 'Tên khách hàng': lead.name,
@@ -764,13 +774,13 @@ export const Leads: React.FC = () => {
                 'Tags': Array.isArray(lead.tags) ? lead.tags.join(', ') : (lead.tags || ''),
                 'Ghi chú': lead.notes || '',
                 'Điểm số': lead.score?.score || 0,
-                'Người phụ trách': lead.assignedTo || ''
+                'Người phụ trách': lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || '',
+                'Ngày tạo': lead.createdAt ? formatDate(lead.createdAt) : '',
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
 
-            // Force the phone number column ('B') to text format so Excel
-            // doesn't strip the leading zero when the file is opened.
+            // Force phone column ('B') to text so Excel doesn't strip leading zeros
             const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
             for (let R = range.s.r + 1; R <= range.e.r; R++) {
                 const cellAddr = XLSX.utils.encode_cell({ r: R, c: 1 });
@@ -783,7 +793,7 @@ export const Leads: React.FC = () => {
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Leads");
             XLSX.writeFile(workbook, "DanhSachKhachHang.xlsx");
-            notify(t('leads.export_success') || 'Xuất dữ liệu thành công', 'success');
+            notify(`${t('leads.export_success') || 'Xuất thành công'} (${allLeads.length} khách hàng)`, 'success');
         } catch (error) {
             console.error("Export failed", error);
             notify(t('common.error') || 'Lỗi khi xuất dữ liệu', 'error');
@@ -795,61 +805,74 @@ export const Leads: React.FC = () => {
     const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        // Clear input early so the same file can be re-selected if needed
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        const normalizeVNPhone = (raw: string): string => {
+            // Strip all non-digit chars (spaces, dashes, parens, +)
+            let p = raw.replace(/[^0-9]/g, '');
+            // Convert +84 / 84 country-code prefix → leading 0
+            if (p.startsWith('84') && p.length === 11) p = '0' + p.slice(2);
+            // Handle 9-digit numbers (leading 0 dropped)
+            if (!p.startsWith('0') && p.length === 9) p = '0' + p;
+            return p;
+        };
 
         const reader = new FileReader();
         reader.onload = async (evt) => {
             const arrayBuffer = evt.target?.result;
             if (!arrayBuffer) return;
 
-            const wb = XLSX.read(arrayBuffer, { type: 'array' });
-            const wsname = wb.SheetNames[0];
-            const ws = wb.Sheets[wsname];
-            const data = XLSX.utils.sheet_to_json(ws, { raw: false });
+            setLoading(true);
+            try {
+                const wb = XLSX.read(arrayBuffer, { type: 'array' });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                const data = XLSX.utils.sheet_to_json(ws, { raw: false });
 
-            let successCount = 0;
-            let skipCount = 0;
-            let errorCount = 0;
+                let successCount = 0;
+                let skipCount = 0;
+                let errorCount = 0;
 
-            for (const row of data as any[]) {
-                let rawPhone = row['Số điện thoại'] ? String(row['Số điện thoại']).replace(/[^0-9]/g, '') : '';
-                if (rawPhone && !rawPhone.startsWith('0') && rawPhone.length === 9) {
-                    rawPhone = '0' + rawPhone;
-                }
+                for (const row of data as any[]) {
+                    const rawPhone = row['Số điện thoại'] ? String(row['Số điện thoại']) : '';
+                    const phone = normalizeVNPhone(rawPhone);
 
-                if (!rawPhone) {
-                    skipCount++;
-                    continue;
-                }
-
-                const newLead: Partial<Lead> = {
-                    name: row['Tên khách hàng'] || 'Khách hàng mới',
-                    phone: rawPhone,
-                    email: row['Email'] || '',
-                    address: row['Địa chỉ'] || '',
-                    source: row['Nguồn'] || 'Other',
-                    stage: LeadStage.NEW,
-                    tags: row['Tags'] ? row['Tags'].split(',').map((t: string) => t.trim()).filter(Boolean) : [],
-                    notes: row['Ghi chú'] || '',
-                };
-
-                try {
-                    await db.createLead(newLead);
-                    successCount++;
-                } catch (err: any) {
-                    if (err?.status === 409 || err?.message?.includes('DUPLICATE')) {
+                    if (!phone) {
                         skipCount++;
-                    } else {
-                        errorCount++;
+                        continue;
+                    }
+
+                    const newLead: Partial<Lead> = {
+                        name: row['Tên khách hàng'] || 'Khách hàng mới',
+                        phone,
+                        email: row['Email'] || '',
+                        address: row['Địa chỉ'] || '',
+                        source: row['Nguồn'] || 'Other',
+                        stage: LeadStage.NEW,
+                        tags: row['Tags'] ? row['Tags'].split(',').map((tag: string) => tag.trim()).filter(Boolean) : [],
+                        notes: row['Ghi chú'] || '',
+                    };
+
+                    try {
+                        await db.createLead(newLead);
+                        successCount++;
+                    } catch (err: any) {
+                        if (err?.status === 409 || err?.message?.includes('DUPLICATE')) {
+                            skipCount++;
+                        } else {
+                            errorCount++;
+                        }
                     }
                 }
-            }
 
-            if (successCount > 0) fetchLeads();
-            const msg = `Nhập thành công: ${successCount} | Trùng/bỏ qua: ${skipCount}${errorCount > 0 ? ` | Lỗi: ${errorCount}` : ''}`;
-            notify(msg, successCount > 0 ? 'success' : 'error');
+                if (successCount > 0) fetchLeads();
+                const msg = `Nhập thành công: ${successCount} | Trùng/bỏ qua: ${skipCount}${errorCount > 0 ? ` | Lỗi: ${errorCount}` : ''}`;
+                notify(msg, successCount > 0 ? 'success' : 'error');
+            } finally {
+                setLoading(false);
+            }
         };
         reader.readAsArrayBuffer(file);
-        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     const handleSimulateInbound = async () => {

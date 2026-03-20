@@ -118,6 +118,8 @@ class DatabaseApiClient {
     if (filters?.source && filters.source !== 'ALL') params.source = filters.source;
     if (filters?.search) params.search = filters.search;
     if (filters?.slaBreached !== undefined) params.slaBreached = filters.slaBreached;
+    if (filters?.sort) params.sort = filters.sort;
+    if (filters?.order) params.order = filters.order;
 
     const cacheKey = `leads:${page}:${pageSize}:${JSON.stringify(params)}`;
     const cached = _cache.get(cacheKey);
