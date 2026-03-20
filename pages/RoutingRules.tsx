@@ -5,6 +5,7 @@ import { db } from '../services/dbApi';
 import { RoutingRule, RoutingStrategy, User, Team } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
@@ -117,6 +118,7 @@ export const RoutingRules: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRule, setEditingRule] = useState<RoutingRule | undefined>(undefined);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     
     // Sim State
@@ -147,14 +149,16 @@ export const RoutingRules: React.FC = () => {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleDelete = async (id: string) => {
-        if (!confirm(t('routing.confirm_delete'))) return;
+    const handleDelete = async () => {
+        if (!deleteConfirmId) return;
         try {
-            await db.deleteRoutingRule(id);
-            setRules(prev => (prev || []).filter(r => r.id !== id));
+            await db.deleteRoutingRule(deleteConfirmId);
+            setRules(prev => (prev || []).filter(r => r.id !== deleteConfirmId));
             notify(t('routing.delete_success'), 'success');
         } catch (e) {
             notify(t('common.error'), 'error');
+        } finally {
+            setDeleteConfirmId(null);
         }
     };
 
@@ -228,7 +232,7 @@ export const RoutingRules: React.FC = () => {
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => { setEditingRule(rule); setIsModalOpen(true); }} className="p-2 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">{ICONS.EDIT}</button>
-                                    <button onClick={() => handleDelete(rule.id)} className="p-2 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">{ICONS.TRASH}</button>
+                                    <button onClick={() => setDeleteConfirmId(rule.id)} className="p-2 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">{ICONS.TRASH}</button>
                                 </div>
                             </div>
                             
@@ -300,12 +304,22 @@ export const RoutingRules: React.FC = () => {
 
             <RuleModal 
                 isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                onSave={handleSave} 
-                rule={editingRule} 
-                users={users} 
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSave}
+                rule={editingRule}
+                users={users}
                 teams={teams}
                 t={t}
+            />
+            <ConfirmModal
+                isOpen={!!deleteConfirmId}
+                title={t('common.delete')}
+                message={t('routing.confirm_delete')}
+                confirmLabel={t('common.delete')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteConfirmId(null)}
+                variant="danger"
             />
         </div>
     );

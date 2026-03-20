@@ -6,6 +6,7 @@ import { ConnectorConfig, SyncJob, ConnectorType, SyncStatus } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { connectorService } from '../services/connectorService';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
@@ -78,6 +79,7 @@ export const DataPlatform: React.FC = () => {
     const [jobs, setJobs] = useState<SyncJob[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const { t, formatDateTime } = useTranslation();
 
@@ -114,13 +116,15 @@ export const DataPlatform: React.FC = () => {
         }
     };
 
-    const handleDeleteConnector = async (id: string) => {
-        if (!confirm(t('data.confirm_delete'))) return;
+    const handleDeleteConnector = async () => {
+        if (!deleteConfirmId) return;
         try {
-            await db.deleteConnectorConfig(id);
-            setConnectors(prev => (prev || []).filter(c => c.id !== id));
+            await db.deleteConnectorConfig(deleteConfirmId);
+            setConnectors(prev => (prev || []).filter(c => c.id !== deleteConfirmId));
             notify(t('data.delete_success'), 'success');
-        } catch (e: any) { notify(e.message, 'error'); }
+        } catch (e: any) { notify(e.message, 'error'); } finally {
+            setDeleteConfirmId(null);
+        }
     };
 
     const handleSync = async (id: string) => {
@@ -164,7 +168,7 @@ export const DataPlatform: React.FC = () => {
                             </div>
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button onClick={() => handleSync(c.id)} className="p-2 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100" title={t('data.sync_now')}>{ICONS.SYNC}</button>
-                                <button onClick={() => handleDeleteConnector(c.id)} className="p-2 text-rose-600 bg-rose-50 rounded-lg hover:bg-rose-100" title={t('common.delete')}>{ICONS.TRASH}</button>
+                                <button onClick={() => setDeleteConfirmId(c.id)} className="p-2 text-rose-600 bg-rose-50 rounded-lg hover:bg-rose-100" title={t('common.delete')}>{ICONS.TRASH}</button>
                             </div>
                         </div>
                     ))}
@@ -197,6 +201,16 @@ export const DataPlatform: React.FC = () => {
             </div>
 
             <ConnectorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleCreate} t={t} />
+            <ConfirmModal
+                isOpen={!!deleteConfirmId}
+                title={t('common.delete')}
+                message={t('data.confirm_delete')}
+                confirmLabel={t('common.delete')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={handleDeleteConnector}
+                onCancel={() => setDeleteConfirmId(null)}
+                variant="danger"
+            />
         </div>
     );
 };

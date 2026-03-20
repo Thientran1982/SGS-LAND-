@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { db, PLANS } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { PlanTier, Subscription, Invoice, UsageMetrics, Plan } from '../types';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 const ICONS = {
     CHECK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
@@ -17,6 +18,7 @@ export const Billing: React.FC = () => {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+    const [upgradeConfirmPlan, setUpgradeConfirmPlan] = useState<PlanTier | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
 
     const { t, formatDate, formatCurrency } = useTranslation();
@@ -48,11 +50,12 @@ export const Billing: React.FC = () => {
         setTimeout(() => setToast(null), 3000);
     };
 
-    const handleUpgrade = async (planId: PlanTier) => {
-        if (!confirm(t('billing.confirm_upgrade', { plan: planId }))) return;
-        setProcessingPlan(planId);
+    const handleUpgrade = async () => {
+        if (!upgradeConfirmPlan) return;
+        setProcessingPlan(upgradeConfirmPlan);
+        setUpgradeConfirmPlan(null);
         try {
-            await db.upgradeSubscription(planId);
+            await db.upgradeSubscription(upgradeConfirmPlan);
             const sub = await db.getSubscription();
             setSubscription(sub);
             notify(t('billing.upgrade_success'), 'success');
@@ -183,7 +186,7 @@ export const Billing: React.FC = () => {
                                 </ul>
                                 <button
                                     disabled={isCurrent || processingPlan === plan.id}
-                                    onClick={() => !isCurrent && handleUpgrade(plan.id)}
+                                    onClick={() => !isCurrent && setUpgradeConfirmPlan(plan.id)}
                                     className={`w-full py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${isCurrent ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-slate-900 text-white hover:bg-indigo-600 cursor-pointer'}`}
                                 >
                                     {processingPlan === plan.id ? '...' : isCurrent ? t('billing.current_plan') : t('billing.upgrade_btn')}
@@ -247,6 +250,16 @@ export const Billing: React.FC = () => {
                     </div>
                 </div>
             )}
+        <ConfirmModal
+            isOpen={!!upgradeConfirmPlan}
+            title={t('billing.confirm_upgrade', { plan: upgradeConfirmPlan || '' })}
+            message={t('billing.confirm_upgrade', { plan: upgradeConfirmPlan || '' })}
+            confirmLabel={t('common.confirm')}
+            cancelLabel={t('common.cancel')}
+            onConfirm={handleUpgrade}
+            onCancel={() => setUpgradeConfirmPlan(null)}
+            variant="info"
+        />
         </div>
     );
 };

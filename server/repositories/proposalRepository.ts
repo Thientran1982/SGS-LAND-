@@ -89,10 +89,9 @@ export class ProposalRepository extends BaseRepository {
     metadata?: any;
   }): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
-      const discountPercent = data.basePrice > 0
-        ? (data.discountAmount || 0) / data.basePrice * 100
-        : 0;
-      const status = discountPercent <= 10 ? 'APPROVED' : 'PENDING_APPROVAL';
+      // Always require explicit approval — never auto-approve based on discount
+      // Auto-approval bypassed AML checks for high-value deals
+      const status = 'PENDING_APPROVAL';
       const token = uuidv4();
 
       const result = await client.query(

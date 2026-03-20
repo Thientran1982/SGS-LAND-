@@ -133,7 +133,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **Lead → LOST**: Auto-rejects all PENDING_APPROVAL and DRAFT proposals
 - **Lead Scoring**: Heuristic score + AI scoring (persisted to DB via background queue)
 - **Scoring Config**: Customizable weights/thresholds stored in PostgreSQL per tenant
-- **Proposal Smart Approval**: Auto-approves if discount <= 10%
+- **Proposal Smart Approval**: All new proposals start as `PENDING_APPROVAL` — explicit approval required via dedicated endpoint (AML check enforced)
 - **Revenue**: 2% commission on APPROVED proposals' finalPrice
 - **Pipeline Value**: finalPrice x probability (A=85%, B=60%, C=30%, D=10%, F=1%)
 - **Win Probability**: Weighted average from actual pipeline data
@@ -184,6 +184,8 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `FB_APP_SECRET` - Facebook app secret for webhook signature verification
 - `ZALO_OA_SECRET` - Zalo OA secret for webhook signature verification
 - `ALLOWED_ORIGINS` - Comma-separated allowed CORS origins (production)
+- `COMMISSION_RATE` - Commission rate for revenue calculation (default: `0.02` = 2%)
+- `SEED_PASSWORD` - Password used for all seeded demo users (required for `npm run seed`)
 - `LOG_LEVEL` - Logging level: DEBUG, INFO, WARN, ERROR (default: INFO)
 
 ## Dev Credentials

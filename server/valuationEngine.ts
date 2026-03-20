@@ -110,6 +110,8 @@ export interface AVMOutput {
   rangeMin: number;
   rangeMax: number;
   confidence: number;
+  confidenceLevel: 'HIGH' | 'MEDIUM' | 'LOW';
+  confidenceInterval: string; // e.g. "±10%"
   marketTrend: string;
   factors: AVMFactor[];
   coefficients: { Kd: number; Kp: number; Ka: number; Kfl?: number; Kdir?: number; Kmf?: number; Kfurn?: number };
@@ -622,10 +624,26 @@ export function applyAVM(input: AVMInput): AVMOutput {
     totalPrice = finalValue;
   }
 
-  // ── Confidence Interval ───────────────────────────────────────
-  const margin = getConfidenceMargin(effectiveConfidence);
+  // ── Confidence Interval & Level ───────────────────────────────
+  let finalConfidence = effectiveConfidence;
+
+  // If income approach is available, check method divergence
+  if (incomeApproach && compsPrice > 0 && incomeApproach.capitalValue > 0) {
+    const methodDeviation = Math.abs(compsPrice - incomeApproach.capitalValue) / Math.max(compsPrice, incomeApproach.capitalValue);
+    if (methodDeviation > 0.30) {
+      // Methods diverge >30% — cap confidence at LOW
+      finalConfidence = Math.min(finalConfidence, 54);
+    }
+  }
+
+  const margin = getConfidenceMargin(finalConfidence);
   const rangeMin = Math.round(totalPrice * (1 - margin));
   const rangeMax = Math.round(totalPrice * (1 + margin));
+
+  const confidenceLevel: 'HIGH' | 'MEDIUM' | 'LOW' =
+    finalConfidence >= 78 ? 'HIGH' :
+    finalConfidence >= 55 ? 'MEDIUM' : 'LOW';
+  const confidenceInterval = `±${Math.round(margin * 100)}%`;
 
   // ── Factors ───────────────────────────────────────────────────
   const factors: AVMFactor[] = [];
@@ -699,7 +717,9 @@ export function applyAVM(input: AVMInput): AVMOutput {
     compsPrice,
     rangeMin,
     rangeMax,
-    confidence: effectiveConfidence,
+    confidence: finalConfidence,
+    confidenceLevel,
+    confidenceInterval,
     marketTrend,
     factors,
     coefficients: { Kd, Kp, Ka, ...(Kfl_data && { Kfl }), ...(Kdir_data && { Kdir }), ...(Kmf_data && { Kmf }), ...(Kfurn_data && { Kfurn }) },

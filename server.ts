@@ -727,7 +727,8 @@ async function startServer() {
         source: source || 'WEBSITE',
         stage: stage || 'NEW',
       });
-      res.status(201).json(lead);
+      // Return only non-sensitive confirmation — never expose PII to anonymous callers
+      res.status(201).json({ id: lead.id, success: true });
     } catch (error) {
       console.error('Error creating public lead:', error);
       res.status(500).json({ error: 'Không thể tạo yêu cầu, vui lòng thử lại' });
@@ -820,6 +821,7 @@ async function startServer() {
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
 
   app.get("/api/health", async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     try {
       const health = await systemService.checkHealth();
 
@@ -839,10 +841,36 @@ async function startServer() {
         components.database.status = 'down';
       }
 
+      // Migration version
+      let migrationVersion: string | null = null;
+      try {
+        const migResult = await pool.query('SELECT version FROM schema_versions ORDER BY id DESC LIMIT 1');
+        migrationVersion = migResult.rows[0]?.version ?? null;
+      } catch { /* schema_versions may not exist yet */ }
+
+      // Queue depth (BullMQ only)
+      let queueDepth: number | null = null;
+      try {
+        if (webhookQueue?.getWaitingCount) {
+          queueDepth = await webhookQueue.getWaitingCount();
+        }
+      } catch { /* ignore */ }
+
+      // Memory usage
+      const mem = process.memoryUsage();
+      const memoryUsage = {
+        rss_mb: Math.round(mem.rss / 1024 / 1024),
+        heap_used_mb: Math.round(mem.heapUsed / 1024 / 1024),
+        heap_total_mb: Math.round(mem.heapTotal / 1024 / 1024),
+      };
+
       res.json({
         ...health,
         components,
         connectedClients: io.engine?.clientsCount || 0,
+        migration_version: migrationVersion,
+        queue_depth: queueDepth,
+        memory_usage: memoryUsage,
         lastChecked: new Date().toISOString(),
       });
     } catch (error) {
@@ -1161,6 +1189,7 @@ async function startServer() {
         const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
         io.to(room).emit("active_viewers", uniqueUsers);
       }
+      socket.removeAllListeners();
     });
   });
 

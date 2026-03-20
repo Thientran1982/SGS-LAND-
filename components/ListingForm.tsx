@@ -471,7 +471,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                 value={formData.ownerName || ''} 
                                                 onChange={e => setFormData({...formData, ownerName: e.target.value})} 
                                                 className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--bg-surface)]" 
-                                                placeholder="Nguyễn Văn A"
+                                                placeholder={t('common.placeholder_fullname')}
                                             />
                                         </div>
                                         <div>
