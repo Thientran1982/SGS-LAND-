@@ -37,35 +37,40 @@ const useCountUp = (end: number, duration: number = 2000, start: boolean = false
 
     useEffect(() => {
         if (!start) return;
-        
+
+        let animId: number;
         let startTime: number | null = null;
         const animate = (currentTime: number) => {
             if (!startTime) startTime = currentTime;
             const progress = currentTime - startTime;
             const percentage = Math.min(progress / duration, 1);
-            
+
             // Easing function (easeOutExpo)
             const ease = percentage === 1 ? 1 : 1 - Math.pow(2, -10 * percentage);
-            
-            setCount(Math.floor(ease * end));
+
+            // Preserve decimal places for fractional `end` values
+            const raw = ease * end;
+            setCount(Number.isInteger(end) ? Math.floor(raw) : Math.round(raw * 100) / 100);
 
             if (progress < duration) {
-                requestAnimationFrame(animate);
+                animId = requestAnimationFrame(animate);
             }
         };
-        requestAnimationFrame(animate);
+        animId = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(animId);
     }, [end, duration, start]);
 
     return count;
 };
 
 const NavPill = ({ children, onClick }: { children?: React.ReactNode, onClick?: () => void }) => (
-    <div 
+    <button
+        type="button"
         onClick={onClick}
-        className="px-3 lg:px-5 py-1.5 lg:py-2.5 rounded-full text-xs2 lg:text-xs font-bold transition-all duration-300 border bg-[var(--bg-surface)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-300 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md cursor-pointer hover:-translate-y-0.5 select-none whitespace-nowrap"
+        className="px-3 lg:px-5 py-1.5 lg:py-2.5 rounded-full text-xs2 lg:text-xs font-bold transition-all duration-300 border bg-[var(--bg-surface)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-300 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md cursor-pointer hover:-translate-y-0.5 select-none whitespace-nowrap min-h-[44px]"
     >
         {children}
-    </div>
+    </button>
 );
 
 // Enhanced Stat Card with Intersection Observer for Animation
@@ -101,7 +106,7 @@ const StatCard = ({ label, value, suffix, trend, prefix = "" }: { label: string,
             <span className="text-xs2 md:text-xs text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-widest mb-3 md:mb-4">{label}</span>
             <div className="flex flex-col items-center gap-2 md:gap-3">
                 <span className="text-3xl md:text-5xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight group-hover:scale-105 transition-transform">
-                    {prefix}{count.toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US')}{suffix}
+                    {prefix}{Number.isInteger(value) ? count.toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US') : count.toFixed(2)}{suffix}
                 </span>
                 <span className="text-xs2 md:text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 whitespace-nowrap">{trend}</span>
             </div>
@@ -190,18 +195,14 @@ export const Landing: React.FC = () => {
         
         db.getPublicListings(1, 200).then(res => {
             if (res.data) {
-                // Enterprise Logic: Show Premium/Available Listings First
-                // Filter for "available" OR "opening" to show active inventory
-                const validListings = res.data.filter(l => 
-                    l.status === ListingStatus.AVAILABLE || 
-                    l.status === ListingStatus.OPENING || 
+                const validListings = res.data.filter(l =>
+                    l.status === ListingStatus.AVAILABLE ||
+                    l.status === ListingStatus.OPENING ||
                     l.status === ListingStatus.BOOKING
                 );
-                // Sort by Price Descending (Show luxury first)
-                const sorted = validListings.sort((a, b) => b.price - a.price);
-                setAllListings(sorted);
+                setAllListings(validListings.sort((a, b) => b.price - a.price));
             }
-        });
+        }).catch(e => console.error('Failed to load listings', e));
         
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
@@ -465,7 +466,7 @@ export const Landing: React.FC = () => {
                             {[
                                 { id: 'ALL', label: t('dash.filter_all') },
                                 { id: 'PROJECT', label: t('property.PROJECT') },
-                                { id: 'UNIT', label: t('property.APARTMENT') }
+                                { id: 'UNIT', label: t('landing.category_unit') || t('inventory.label_type') }
                             ].map(cat => (
                                 <button
                                     key={cat.id}
@@ -483,31 +484,42 @@ export const Landing: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                        {displayedListings.length > 0 ? displayedListings.map((item, index) => (
-                            <motion.div 
-                                key={item.id} 
+                        {allListings.length === 0 ? (
+                            /* Initial loading — data not yet fetched */
+                            [1,2,3].map(i => (
+                                <div key={i} className="bg-[var(--bg-surface)] dark:bg-slate-800 rounded-[24px] border border-[var(--glass-border)] dark:border-slate-700 overflow-hidden animate-pulse">
+                                    <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-700 w-full" />
+                                    <div className="p-5 space-y-3">
+                                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full w-3/4" />
+                                        <div className="h-3 bg-slate-100 dark:bg-slate-600 rounded-full w-1/2" />
+                                        <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded-full w-2/5 mt-2" />
+                                    </div>
+                                </div>
+                            ))
+                        ) : displayedListings.length > 0 ? displayedListings.map((item, index) => (
+                            <motion.div
+                                key={item.id}
                                 className="min-h-full"
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: "-50px" }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
+                                transition={{ duration: 0.5, delay: Math.min(index, 5) * 0.1 }}
                             >
-                                {/* Use Shared ListingCard Component for Consistency */}
-                                <ListingCard 
-                                    item={item} 
-                                    t={t} 
-                                    formatCurrency={formatCurrency} 
-                                    onToggleFavorite={() => navigateTo(ROUTES.LOGIN)} 
-                                    onEdit={() => {}} 
-                                    onDelete={() => {}} 
-                                    onClick={() => navigateTo(`${ROUTES.LISTING}/${item.id}`)} 
+                                <ListingCard
+                                    item={item}
+                                    t={t}
+                                    formatCurrency={formatCurrency}
+                                    onToggleFavorite={() => navigateTo(ROUTES.LOGIN)}
+                                    onEdit={() => {}}
+                                    onDelete={() => {}}
+                                    onClick={() => navigateTo(`${ROUTES.LISTING}/${item.id}`)}
                                     showActions={false}
                                 />
                             </motion.div>
                         )) : (
+                            /* Data loaded but category filter returns 0 results */
                             <div className="col-span-3 text-center py-20">
-                                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse mx-auto mb-4"></div>
-                                <p className="text-slate-400 font-medium">{t('common.loading') || 'Updating market data...'}</p>
+                                <p className="text-slate-400 font-medium">{t('common.no_results')}</p>
                             </div>
                         )}
                     </div>
@@ -602,7 +614,7 @@ export const Landing: React.FC = () => {
                     </div>
 
                     <div>
-                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.link_terms')}</h4>
+                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_terms')}</h4>
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
                             <FooterLink label={t('footer.link_privacy')} route={ROUTES.PRIVACY} />
                             <FooterLink label={t('footer.link_terms')} route={ROUTES.TERMS} />
@@ -611,21 +623,21 @@ export const Landing: React.FC = () => {
                 </div>
                 <div className="max-w-[1400px] mx-auto mt-16 md:mt-20 pt-8 border-t border-[var(--glass-border)] dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
                     <span className="text-slate-400 text-xs2 md:text-xs">
-                        {t('footer.copyright', { year: 2026 })}
+                        {t('footer.copyright', { year: new Date().getFullYear() })}
                     </span>
                     <div className="flex items-center gap-4 md:gap-6">
                         <div className="flex items-center gap-2 border-r border-[var(--glass-border)] dark:border-slate-700 pr-4 md:pr-6">
-                            <button 
+                            <button
                                 onClick={toggleTheme}
-                                className="p-2 rounded-full text-[var(--text-tertiary)] dark:text-slate-400 hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-800 transition-colors flex items-center justify-center min-w-[36px] min-h-[36px]"
-                                aria-label="Toggle Theme"
+                                className="p-2 rounded-full text-[var(--text-tertiary)] dark:text-slate-400 hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-800 transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
+                                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                             >
-                                {theme === 'dark' ? ICONS.MOON : ICONS.SUN}
+                                {theme === 'dark' ? ICONS.SUN : ICONS.MOON}
                             </button>
 
-                            <button 
+                            <button
                                 onClick={() => setLanguage(language === 'vn' ? 'en' : 'vn')}
-                                className="w-9 h-9 flex items-center justify-center rounded-full text-xs2 font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-[var(--glass-border)] dark:hover:border-slate-700 min-w-[36px] min-h-[36px]"
+                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-xs2 font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-[var(--glass-border)] dark:hover:border-slate-700"
                                 title={t('nav.lang_switch')}
                                 aria-label={t('nav.lang_switch')}
                             >

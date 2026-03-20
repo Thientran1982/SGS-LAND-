@@ -121,12 +121,16 @@ export const Hero3D = () => {
   const textPrice = language === 'vn' ? '24.5 Tỷ' : '$2.45M';
   const textMatch = language === 'vn' ? 'Độ khớp 98%' : '98% Match';
   const textTrend = language === 'vn' ? '↑ +5.2% / Năm' : '↑ +5.2% YoY';
+  const labelPrice = language === 'vn' ? 'GIÁ ƯỚC TÍNH' : 'EST. PRICE';
+  const labelMatch = language === 'vn' ? 'ĐỘ CHÍNH XÁC' : 'ACCURACY';
+  const labelTrend = language === 'vn' ? 'XU HƯỚNG THỊ TRƯỜNG' : 'MARKET TREND';
 
   return (
     <div className="relative w-full max-w-2xl mx-auto">
       <div className="absolute inset-0 bg-indigo-500/20 dark:bg-indigo-500/30 blur-[100px] rounded-full pointer-events-none" />
 
       <motion.svg viewBox="0 0 800 650" className="w-full h-auto drop-shadow-2xl relative z-10"
+        role="img" aria-label={language === 'vn' ? 'Minh họa tòa nhà 3D với dữ liệu định giá AI' : '3D building illustration with AI valuation data'}
         initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1, ease: 'easeOut' }}
       >
@@ -386,7 +390,7 @@ export const Hero3D = () => {
           <line x1="560" y1="240" x2="628" y2="192" stroke="#8B5CF6" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.7" />
           <circle cx="628" cy="192" r="4.5" fill="#8B5CF6" filter="url(#glow)" />
           <rect x="640" y="170" width="110" height="44" rx="8" fill="#1E293B" stroke="#8B5CF6" strokeWidth="1.5" />
-          <text x="695" y="188" fill="#A78BFA" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1">GIÁ ƯỚC TÍNH</text>
+          <text x="695" y="188" fill="#A78BFA" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1">{labelPrice}</text>
           <text x="695" y="206" fill="#fff" fontSize="14" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textPrice}</text>
         </motion.g>
 
@@ -395,7 +399,7 @@ export const Hero3D = () => {
           <line x1="240" y1="280" x2="162" y2="232" stroke="#10B981" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.7" />
           <circle cx="162" cy="232" r="4.5" fill="#10B981" filter="url(#glow)" />
           <rect x="30" y="210" width="127" height="44" rx="8" fill="#1E293B" stroke="#10B981" strokeWidth="1.5" />
-          <text x="93" y="228" fill="#34D399" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1">ĐỘ CHÍNH XÁC</text>
+          <text x="93" y="228" fill="#34D399" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1">{labelMatch}</text>
           <text x="93" y="246" fill="#fff" fontSize="14" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textMatch}</text>
         </motion.g>
 
@@ -404,7 +408,7 @@ export const Hero3D = () => {
           <line x1="400" y1="445" x2="400" y2="497" stroke="#3B82F6" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.7" />
           <circle cx="400" cy="497" r="4.5" fill="#3B82F6" filter="url(#glow)" />
           <rect x="326" y="505" width="148" height="44" rx="8" fill="#1E293B" stroke="#3B82F6" strokeWidth="1.5" />
-          <text x="400" y="523" fill="#93C5FD" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1">XU HƯỚNG THỊ TRƯỜNG</text>
+          <text x="400" y="523" fill="#93C5FD" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1">{labelTrend}</text>
           <text x="400" y="541" fill="#fff" fontSize="13" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textTrend}</text>
         </motion.g>
 
