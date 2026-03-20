@@ -176,6 +176,8 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
     const [grantForm, setGrantForm] = useState({ partnerTenantId: '', expiresAt: '', note: '' });
     const [granting, setGranting] = useState(false);
     const [err, setErr] = useState('');
+    const [revokeTarget, setRevokeTarget] = useState<string | null>(null); // partnerTenantId pending confirm
+    const [revokeErr, setRevokeErr] = useState('');
 
     useEffect(() => {
         Promise.all([
@@ -212,16 +214,21 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
     };
 
     const handleRevoke = async (partnerTenantId: string) => {
-        if (!window.confirm(t('project.confirm_revoke'))) return;
+        setRevokeErr('');
         try {
             await db.revokeProjectAccess(project.id, partnerTenantId);
             setAccesses(prev => prev.map(a =>
                 a.partner_tenant_id === partnerTenantId ? { ...a, status: 'REVOKED' } : a
             ));
+            setRevokeTarget(null);
         } catch (e: any) {
-            setErr(e.message || t('common.error_generic'));
+            setRevokeErr(e.message || t('common.error_generic'));
         }
     };
+
+    // Tenants not yet ACTIVE in this project
+    const activePartnerIds = new Set(accesses.filter(a => a.status === 'ACTIVE').map(a => a.partner_tenant_id));
+    const availableTenants = tenants.filter(t2 => !activePartnerIds.has(t2.id));
 
     const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
@@ -250,7 +257,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
                                 <label htmlFor="pa-tenant" className={labelCls}>{t('project.partner_tenant')} *</label>
                                 <select id="pa-tenant" className={inputCls} value={grantForm.partnerTenantId} onChange={e => setGrantForm(f => ({ ...f, partnerTenantId: e.target.value }))}>
                                     <option value="">{t('common.select')}</option>
-                                    {tenants.map(t2 => <option key={t2.id} value={t2.id}>{t2.name} ({t2.domain})</option>)}
+                                    {availableTenants.map(t2 => <option key={t2.id} value={t2.id}>{t2.name} ({t2.domain})</option>)}
                                 </select>
                             </div>
                             <div>
@@ -288,15 +295,31 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
                                             {a.note && <span className="italic">"{a.note}"</span>}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 shrink-0">
+                                    <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ACCESS_COLOR[a.status] || 'bg-slate-100 text-slate-600'}`}>
                                             {t('project.access_status_' + a.status)}
                                         </span>
-                                        {a.status === 'ACTIVE' && (
-                                            <button type="button" onClick={() => handleRevoke(a.partner_tenant_id)}
+                                        {a.status === 'ACTIVE' && revokeTarget !== a.partner_tenant_id && (
+                                            <button type="button" onClick={() => { setRevokeTarget(a.partner_tenant_id); setRevokeErr(''); }}
                                                 className="text-xs font-semibold text-rose-600 hover:bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">
                                                 {t('project.revoke_access')}
                                             </button>
+                                        )}
+                                        {revokeTarget === a.partner_tenant_id && (
+                                            <div className="flex flex-col items-end gap-1">
+                                                {revokeErr && <p className="text-xs text-rose-600">{revokeErr}</p>}
+                                                <p className="text-xs text-[var(--text-secondary)]">{t('project.confirm_revoke')}</p>
+                                                <div className="flex gap-1.5">
+                                                    <button type="button" onClick={() => setRevokeTarget(null)}
+                                                        className="text-xs px-2 py-1 rounded-lg border border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]">
+                                                        {t('common.cancel')}
+                                                    </button>
+                                                    <button type="button" onClick={() => handleRevoke(a.partner_tenant_id)}
+                                                        className="text-xs font-bold px-2 py-1 rounded-lg bg-rose-600 text-white hover:bg-rose-700">
+                                                        {t('project.revoke_access')}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -642,6 +665,8 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
     const [grantForm, setGrantForm] = useState({ partnerTenantId: '', expiresAt: '', note: '' });
     const [granting, setGranting] = useState(false);
     const [err, setErr] = useState('');
+    // Inline revoke confirm: key = `${listingId}::${partnerTenantId}`
+    const [revokeKey, setRevokeKey] = useState<string | null>(null);
 
     const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-500';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
@@ -692,7 +717,6 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
     };
 
     const handleRevoke = async (listingId: string, partnerTenantId: string) => {
-        if (!window.confirm(t('project.listing_access_revoke_confirm'))) return;
         try {
             await db.revokeListingAccess(listingId, partnerTenantId);
             setAccesses(prev => ({
@@ -701,6 +725,7 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                     a.partner_tenant_id === partnerTenantId ? { ...a, status: 'REVOKED' } : a
                 ),
             }));
+            setRevokeKey(null);
         } catch (e: any) {
             setErr(e.message || t('common.error_generic'));
         }
@@ -792,15 +817,30 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                                                         {a.note && <span className="italic">"{a.note}"</span>}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 shrink-0">
+                                                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                                                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ACCESS_COLOR[a.status] || 'bg-slate-100 text-slate-500'}`}>
                                                         {t('project.access_status_' + a.status)}
                                                     </span>
-                                                    {a.status === 'ACTIVE' && (
-                                                        <button type="button" onClick={() => handleRevoke(l.id, a.partner_tenant_id)}
+                                                    {a.status === 'ACTIVE' && revokeKey !== `${l.id}::${a.partner_tenant_id}` && (
+                                                        <button type="button" onClick={() => setRevokeKey(`${l.id}::${a.partner_tenant_id}`)}
                                                             className="text-xs font-semibold text-rose-600 hover:bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">
                                                             {t('project.listing_access_revoke_btn')}
                                                         </button>
+                                                    )}
+                                                    {revokeKey === `${l.id}::${a.partner_tenant_id}` && (
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <p className="text-xs text-[var(--text-secondary)]">{t('project.listing_access_revoke_confirm')}</p>
+                                                            <div className="flex gap-1.5">
+                                                                <button type="button" onClick={() => setRevokeKey(null)}
+                                                                    className="text-xs px-2 py-1 rounded-lg border border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]">
+                                                                    {t('common.cancel')}
+                                                                </button>
+                                                                <button type="button" onClick={() => handleRevoke(l.id, a.partner_tenant_id)}
+                                                                    className="text-xs font-bold px-2 py-1 rounded-lg bg-rose-600 text-white hover:bg-rose-700">
+                                                                    {t('project.listing_access_revoke_btn')}
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -880,7 +920,8 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                             {IC.SHIELD} {t('project.tab_access')}
                         </button>
                         <button type="button" onClick={onDelete}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors ml-auto">
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors ml-auto"
+                            title={t('common.delete')}>
                             {IC.TRASH} {t('common.delete')}
                         </button>
                     </>
@@ -905,6 +946,8 @@ export function Projects() {
     const [formTarget, setFormTarget] = useState<Project | null | 'new'>(null);
     const [accessTarget, setAccessTarget] = useState<Project | null>(null);
     const [listingsTarget, setListingsTarget] = useState<any | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+    const [deleting, setDeleting] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
     const isAdmin = user?.role === UserRole.ADMIN || user?.role === 'ADMIN';
@@ -950,14 +993,18 @@ export function Projects() {
         setFormTarget(null);
     };
 
-    const handleDelete = async (project: any) => {
-        if (!window.confirm(t('project.confirm_delete'))) return;
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
         try {
-            await db.deleteProject(project.id);
-            setProjects(prev => prev.filter(p => p.id !== project.id));
+            await db.deleteProject(deleteTarget.id);
+            setProjects(prev => prev.filter(p => p.id !== deleteTarget.id));
             showToast(t('project.delete_success'));
+            setDeleteTarget(null);
         } catch (e: any) {
             showToast(e.message || t('common.error_generic'), 'error');
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -1041,7 +1088,7 @@ export function Projects() {
                                 isAdmin={isAdmin}
                                 isPartner={isPartner}
                                 onEdit={() => setFormTarget(project)}
-                                onDelete={() => handleDelete(project)}
+                                onDelete={() => setDeleteTarget(project)}
                                 onAccess={() => setAccessTarget(project)}
                                 onListings={() => setListingsTarget(project)}
                                 t={t}
@@ -1075,6 +1122,42 @@ export function Projects() {
                     onClose={() => setListingsTarget(null)}
                     t={t}
                 />
+            )}
+
+            {/* Delete confirmation modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+                    <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-sm border border-[var(--glass-border)]">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
+                            <div className="flex items-center gap-2 text-rose-600">
+                                {IC.TRASH}
+                                <h2 className="text-base font-bold">{t('common.delete')}</h2>
+                            </div>
+                            <button type="button" onClick={() => setDeleteTarget(null)} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
+                        </div>
+                        <div className="px-6 py-5 space-y-4">
+                            <p className="text-sm text-[var(--text-primary)]">
+                                {t('project.confirm_delete')}
+                            </p>
+                            <div className="bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 text-sm font-semibold text-rose-700 truncate">
+                                {deleteTarget.name}
+                            </div>
+                            <div className="flex gap-3 justify-end pt-1">
+                                <button type="button" onClick={() => setDeleteTarget(null)} disabled={deleting}
+                                    className="px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] disabled:opacity-50">
+                                    {t('common.cancel')}
+                                </button>
+                                <button type="button" onClick={handleDelete} disabled={deleting}
+                                    className="px-4 py-2 rounded-xl bg-rose-600 text-white text-sm font-bold hover:bg-rose-700 disabled:opacity-50 flex items-center gap-2">
+                                    {deleting
+                                        ? <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>{t('common.loading')}</>
+                                        : <>{IC.TRASH}{t('common.delete')}</>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {toast && createPortal(
