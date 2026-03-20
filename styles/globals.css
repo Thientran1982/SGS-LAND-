@@ -40,15 +40,6 @@ body::-webkit-scrollbar,
   scrollbar-width: none;
 }
 
-/* custom-scrollbar is aliased to no-scrollbar for consistent hidden UI */
-.custom-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.custom-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
 /* Glassmorphism utility */
 .glass-card {
   background: var(--glass-surface);
