@@ -55,6 +55,7 @@ const JOBS = [
 
 export const Careers: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [appliedJob, setAppliedJob] = useState<string | null>(null);
 
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
@@ -64,7 +65,8 @@ export const Careers: React.FC = () => {
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
 
     const handleApply = (jobTitle: string) => {
-        alert(`Cảm ơn bạn đã quan tâm vị trí ${jobTitle}. Vui lòng gửi CV về careers@sgsland.vn`);
+        setAppliedJob(jobTitle);
+        setTimeout(() => setAppliedJob(null), 5000);
     };
 
     return (
@@ -162,6 +164,17 @@ export const Careers: React.FC = () => {
                     </div>
                 </div>
             </section>
+
+            {/* Apply success toast */}
+            {appliedJob && (
+                <div className="fixed bottom-6 right-6 z-[100] max-w-sm px-5 py-4 rounded-xl shadow-2xl flex items-start gap-3 animate-enter border bg-emerald-900/90 border-emerald-500 text-white">
+                    <svg className="w-5 h-5 text-emerald-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <div>
+                        <p className="font-bold text-sm">Cảm ơn bạn đã quan tâm!</p>
+                        <p className="text-xs text-emerald-200 mt-0.5">Vị trí: <span className="font-semibold">{appliedJob}</span>. Vui lòng gửi CV về <span className="font-semibold">careers@sgsland.vn</span></p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

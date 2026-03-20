@@ -75,8 +75,19 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
     
     // Search State
     const [searchQuery, setSearchQuery] = useState('');
-    const debouncedSearch = useDebounce(searchQuery, DEAL_CONFIG.DEBOUNCE_MS); 
+    const debouncedSearch = useDebounce(searchQuery, DEAL_CONFIG.DEBOUNCE_MS);
     const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // Escape key + body scroll lock
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape' && !processing && step !== 'DONE') onClose(); };
+        document.addEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = '';
+        };
+    }, [processing, step, onClose]);
     
     const { t, formatCurrency, formatDate } = useTranslation();
 
@@ -385,7 +396,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
 
     // Use React Portal to render at document.body to avoid z-index stacking context issues with parent transforms
     return createPortal(
-        <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center" onClick={onClose}>
+        <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="flash-proposal-title" onClick={!processing ? onClose : undefined}>
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" aria-hidden="true" />
             
@@ -395,7 +406,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                 {/* Header */}
                 <div className="px-4 md:px-6 py-4 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
                     <div>
-                        <h3 className="font-bold text-[var(--text-primary)] text-base md:text-lg">{t('proposal.flash_title')}</h3>
+                        <h3 id="flash-proposal-title" className="font-bold text-[var(--text-primary)] text-base md:text-lg">{t('proposal.flash_title')}</h3>
                         <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                             <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold max-w-[120px] truncate">{lead.name}</span>
                             <span>•</span>
