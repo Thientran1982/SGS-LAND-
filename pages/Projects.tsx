@@ -66,7 +66,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.name.trim()) { setErr(t('project.name') + ' is required'); return; }
+        if (!form.name.trim()) { setErr(t('project.name') + ' là bắt buộc'); return; }
         setSaving(true);
         setErr('');
         try {
@@ -179,7 +179,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
 
     const handleGrant = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!grantForm.partnerTenantId) { setErr(t('project.partner_tenant') + ' is required'); return; }
+        if (!grantForm.partnerTenantId) { setErr(t('project.partner_tenant') + ' là bắt buộc'); return; }
         setGranting(true);
         setErr('');
         try {

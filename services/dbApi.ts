@@ -1346,13 +1346,13 @@ class DatabaseApiClient {
     if (filters?.status) params.set('status', filters.status);
     if (filters?.search) params.set('search', filters.search);
     const res = await fetch(`/api/projects?${params}`, { credentials: 'include' });
-    if (!res.ok) throw new Error('Failed to fetch projects');
+    if (!res.ok) throw new Error('Không thể tải danh sách dự án');
     return res.json();
   }
 
   async getProjectById(id: string) {
     const res = await fetch(`/api/projects/${id}`, { credentials: 'include' });
-    if (!res.ok) throw new Error('Project not found');
+    if (!res.ok) throw new Error('Không tìm thấy dự án');
     return res.json();
   }
 
@@ -1362,7 +1362,7 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to create project'); }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Không thể tạo dự án'); }
     return res.json();
   }
 
@@ -1372,19 +1372,19 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to update project'); }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Không thể cập nhật dự án'); }
     return res.json();
   }
 
   async deleteProject(id: string) {
     const res = await fetch(`/api/projects/${id}`, { method: 'DELETE', credentials: 'include' });
-    if (!res.ok) throw new Error('Failed to delete project');
+    if (!res.ok) throw new Error('Không thể xóa dự án');
     return res.json();
   }
 
   async getProjectAccess(projectId: string) {
     const res = await fetch(`/api/projects/${projectId}/access`, { credentials: 'include' });
-    if (!res.ok) throw new Error('Failed to fetch access');
+    if (!res.ok) throw new Error('Không thể tải danh sách quyền truy cập');
     return res.json();
   }
 
@@ -1394,7 +1394,7 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to grant access'); }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Không thể cấp quyền truy cập'); }
     return res.json();
   }
 
@@ -1402,13 +1402,13 @@ class DatabaseApiClient {
     const res = await fetch(`/api/projects/${projectId}/access/${partnerTenantId}`, {
       method: 'DELETE', credentials: 'include',
     });
-    if (!res.ok) throw new Error('Failed to revoke access');
+    if (!res.ok) throw new Error('Không thể thu hồi quyền truy cập');
     return res.json();
   }
 
   async listTenants() {
     const res = await fetch('/api/projects/tenants', { credentials: 'include' });
-    if (!res.ok) throw new Error('Failed to fetch tenants');
+    if (!res.ok) throw new Error('Không thể tải danh sách đối tác');
     return res.json();
   }
 

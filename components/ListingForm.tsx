@@ -76,13 +76,16 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     useEffect(() => {
         if (isOpen) {
             setErrors({});
-            // Load Projects for Dropdown
-            db.getListings(1, 1000).then(res => {
+            // Load Projects for Dropdown from the Projects API
+            db.getProjects(1, 200).then(res => {
                 const projectList = (res.data || [])
-                    .filter(l => l.type === PropertyType.PROJECT)
-                    .map(p => ({ value: p.code, label: p.title }));
+                    .filter((p: any) => p.status !== 'SUSPENDED')
+                    .map((p: any) => ({
+                        value: p.code || p.id,
+                        label: p.name + (p.code ? ` (${p.code})` : '') + (p.location ? ` — ${p.location}` : '')
+                    }));
                 setProjects(projectList);
-            });
+            }).catch(() => setProjects([]));
 
             if (initialData && initialData.id) {
                 setFormData(JSON.parse(JSON.stringify(initialData)));
