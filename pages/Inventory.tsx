@@ -952,19 +952,39 @@ export const Inventory: React.FC = () => {
                                     
                                     {/* Mobile Compact List */}
                                     <div className="md:hidden flex flex-col divide-y divide-[var(--glass-border)]">
-                                        {listings.map(item => (
-                                            <CompactInventoryRow 
-                                                key={item.id} item={item} 
-                                                onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
-                                                onDelete={handleDeleteClick}
-                                                onDuplicate={async (id: string) => {
-                                                    try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
-                                                }}
-                                                onClick={() => handleNavigate(item.id)}
-                                                t={t}
-                                                canViewInternal={canViewInternalInfo}
-                                            />
-                                        ))}
+                                        {loading ? (
+                                            Array.from({ length: 8 }).map((_, i) => (
+                                                <div key={i} className="flex items-center gap-3 p-3 border-b border-[var(--glass-border)]">
+                                                    <div className="w-14 h-14 rounded-xl bg-slate-100 animate-pulse shrink-0" />
+                                                    <div className="flex-1 space-y-2">
+                                                        <div className="flex gap-1.5">
+                                                            <div className="h-4 bg-slate-100 animate-pulse rounded w-12" />
+                                                            <div className="h-4 bg-slate-100 animate-pulse rounded w-14" />
+                                                        </div>
+                                                        <div className="h-3.5 bg-slate-100 animate-pulse rounded-full w-3/4" />
+                                                        <div className="h-3 bg-slate-100 animate-pulse rounded-full w-1/2" />
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                                        <div className="h-5 bg-slate-100 animate-pulse rounded w-20" />
+                                                        <div className="h-3 bg-slate-100 animate-pulse rounded w-14" />
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            listings.map(item => (
+                                                <CompactInventoryRow
+                                                    key={item.id} item={item}
+                                                    onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
+                                                    onDelete={handleDeleteClick}
+                                                    onDuplicate={async (id: string) => {
+                                                        try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                    }}
+                                                    onClick={() => handleNavigate(item.id)}
+                                                    t={t}
+                                                    canViewInternal={canViewInternalInfo}
+                                                />
+                                            ))
+                                        )}
                                     </div>
                                     
                                     {listings.length === 0 && !loading && (
