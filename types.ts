@@ -1037,6 +1037,25 @@ export enum ContractStatus {
     CANCELLED = 'CANCELLED'
 }
 
+export enum PaymentStatus {
+    PENDING = 'PENDING',
+    PAID = 'PAID',
+    OVERDUE = 'OVERDUE',
+    WAIVED = 'WAIVED'
+}
+
+export interface PaymentMilestone {
+    id: string;
+    name: string;        // "Đợt 1 - Đặt cọc", "Đợt 2 - Ký HĐMB"
+    dueDate: string;     // ISO date string
+    amount: number;      // Số tiền VND
+    percentage: number;  // % trên tổng giá trị hợp đồng
+    status: PaymentStatus;
+    paidDate?: string;   // Ngày thanh toán thực tế
+    paidAmount?: number; // Số tiền đã thanh toán thực tế
+    note?: string;
+}
+
 export interface Contract {
     id: UUID;
     tenantId?: string;
@@ -1081,6 +1100,7 @@ export interface Contract {
     // Payment & Terms
     depositAmount?: number;
     paymentTerms: string;
+    paymentSchedule?: PaymentMilestone[];
     taxResponsibility?: string; // Trách nhiệm nộp thuế/phí
     handoverDate?: string; // Ngày bàn giao dự kiến
     handoverCondition?: string; // Tình trạng bàn giao
