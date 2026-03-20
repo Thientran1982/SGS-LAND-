@@ -19,6 +19,8 @@ const IC = {
     SEARCH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>,
     LIST: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>,
     HOME: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
+    LOCK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>,
+    CHECK_ALL: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>,
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -325,16 +327,25 @@ function fmtPrice(p: number) {
 interface ProjectListingsPanelProps {
     project: any;
     canCreate: boolean;
+    isAdmin: boolean;
     onClose: () => void;
     t: (k: string) => string;
 }
 
-function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListingsPanelProps) {
+function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, t }: ProjectListingsPanelProps) {
     const [listings, setListings] = useState<any[]>([]);
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
     const [search, setSearch] = useState('');
+    // Checkbox selection
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    // Bulk status
+    const [bulkStatus, setBulkStatus] = useState('');
+    const [bulkWorking, setBulkWorking] = useState(false);
+    // Listing access modal
+    const [accessListings, setAccessListings] = useState<any[] | null>(null);
+    const [tenants, setTenants] = useState<any[]>([]);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -348,6 +359,11 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
     }, [project.code]);
 
     useEffect(() => { load(); }, [load]);
+
+    // Preload tenants for access panel (admin only)
+    useEffect(() => {
+        if (isAdmin) db.listTenants().then(setTenants).catch(() => {});
+    }, [isAdmin]);
 
     const handleListingSubmit = async (data: any) => {
         const listing = await db.createListing({
@@ -363,10 +379,48 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
         ? listings.filter(l => l.title?.toLowerCase().includes(search.toLowerCase()) || l.code?.toLowerCase().includes(search.toLowerCase()))
         : listings;
 
+    // ── Checkbox helpers ──────────────────────────────────────────────────────
+    const allFilteredIds = filtered.map(l => l.id);
+    const allSelected = allFilteredIds.length > 0 && allFilteredIds.every(id => selected.has(id));
+    const someSelected = allFilteredIds.some(id => selected.has(id));
+
+    const toggleAll = () => {
+        if (allSelected) {
+            setSelected(prev => { const next = new Set(prev); allFilteredIds.forEach(id => next.delete(id)); return next; });
+        } else {
+            setSelected(prev => new Set([...prev, ...allFilteredIds]));
+        }
+    };
+
+    const toggleOne = (id: string) => {
+        setSelected(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
+
+    // ── Bulk status change ────────────────────────────────────────────────────
+    const handleBulkStatus = async () => {
+        if (!bulkStatus || selected.size === 0) return;
+        setBulkWorking(true);
+        try {
+            const ids = [...selected];
+            await Promise.all(ids.map(id => db.updateListing(id, { status: bulkStatus })));
+            setListings(prev => prev.map(l => selected.has(l.id) ? { ...l, status: bulkStatus } : l));
+            setSelected(new Set());
+            setBulkStatus('');
+        } finally {
+            setBulkWorking(false);
+        }
+    };
+
+    const selectedListings = filtered.filter(l => selected.has(l.id));
+
     return (
         <>
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
-                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-4xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
+                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-5xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
                         <div>
@@ -404,18 +458,49 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
                         </div>
                     )}
 
-                    {/* Search */}
-                    <div className="px-6 py-3 border-b border-[var(--glass-border)] shrink-0">
-                        <div className="relative max-w-xs">
+                    {/* Search + Bulk action bar */}
+                    <div className="px-6 py-3 border-b border-[var(--glass-border)] shrink-0 flex flex-wrap items-center gap-3">
+                        <div className="relative flex-1 min-w-[200px] max-w-xs">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">{IC.SEARCH}</span>
                             <input
                                 type="text"
                                 placeholder={t('common.search') + '...'}
                                 value={search}
-                                onChange={e => setSearch(e.target.value)}
+                                onChange={e => { setSearch(e.target.value); setSelected(new Set()); }}
                                 className="w-full pl-9 pr-3 py-2 border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             />
                         </div>
+
+                        {/* Bulk actions — visible when rows selected */}
+                        {selected.size > 0 && isAdmin && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs font-semibold text-[var(--text-secondary)] bg-[var(--bg-app)] border border-[var(--glass-border)] px-3 py-2 rounded-xl">
+                                    {selected.size} đã chọn
+                                </span>
+                                <select
+                                    value={bulkStatus}
+                                    onChange={e => setBulkStatus(e.target.value)}
+                                    className="border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                >
+                                    <option value="">Đổi trạng thái...</option>
+                                    {['AVAILABLE','HOLD','INACTIVE','OPENING','BOOKING'].map(s => (
+                                        <option key={s} value={s}>{s}</option>
+                                    ))}
+                                </select>
+                                <button type="button" onClick={handleBulkStatus} disabled={!bulkStatus || bulkWorking}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 disabled:opacity-40 transition-colors">
+                                    {IC.CHECK_ALL} {bulkWorking ? '...' : 'Áp dụng'}
+                                </button>
+                                <button type="button" onClick={() => setAccessListings(selectedListings)}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors">
+                                    {IC.LOCK} Phân quyền xem
+                                </button>
+                                <button type="button" onClick={() => setSelected(new Set())}
+                                    className="text-xs text-[var(--text-secondary)] hover:text-rose-600 px-2 py-2">
+                                    Bỏ chọn
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Table */}
@@ -438,6 +523,17 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
                             <table className="w-full text-sm">
                                 <thead className="sticky top-0 bg-[var(--bg-surface)] border-b border-[var(--glass-border)]">
                                     <tr>
+                                        {isAdmin && (
+                                            <th className="px-4 py-3 w-10">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={allSelected}
+                                                    ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                                                    onChange={toggleAll}
+                                                    className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
+                                                />
+                                            </th>
+                                        )}
                                         {[
                                             t('project.listing_col_code'),
                                             t('project.listing_col_title'),
@@ -448,11 +544,25 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
                                         ].map(h => (
                                             <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                                         ))}
+                                        {isAdmin && (
+                                            <th className="px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide whitespace-nowrap">Quyền xem</th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[var(--glass-border)]">
                                     {filtered.map(l => (
-                                        <tr key={l.id} className="hover:bg-[var(--glass-surface-hover)] transition-colors">
+                                        <tr key={l.id}
+                                            className={`hover:bg-[var(--glass-surface-hover)] transition-colors ${selected.has(l.id) ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`}>
+                                            {isAdmin && (
+                                                <td className="px-4 py-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selected.has(l.id)}
+                                                        onChange={() => toggleOne(l.id)}
+                                                        className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
+                                                    />
+                                                </td>
+                                            )}
                                             <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)] whitespace-nowrap">{l.code}</td>
                                             <td className="px-4 py-3 font-semibold text-[var(--text-primary)] max-w-[200px] truncate">{l.title}</td>
                                             <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap">{l.type}</td>
@@ -463,6 +573,17 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
                                             </td>
                                             <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap">{l.area ? `${l.area} m²` : '—'}</td>
                                             <td className="px-4 py-3 font-semibold text-emerald-700 whitespace-nowrap">{fmtPrice(l.price)}</td>
+                                            {isAdmin && (
+                                                <td className="px-4 py-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAccessListings([l])}
+                                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-violet-600 hover:bg-violet-50 border border-violet-200 transition-colors"
+                                                    >
+                                                        {IC.LOCK} Phân quyền
+                                                    </button>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
@@ -472,7 +593,7 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
 
                     {/* Footer */}
                     <div className="px-6 py-3 border-t border-[var(--glass-border)] flex items-center justify-between shrink-0 text-xs text-[var(--text-secondary)]">
-                        <span>{filtered.length} {t('project.listing_count')}</span>
+                        <span>{filtered.length} {t('project.listing_count')}{selected.size > 0 ? ` · ${selected.size} đã chọn` : ''}</span>
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold hover:bg-[var(--glass-surface-hover)]">{t('common.close')}</button>
                     </div>
                 </div>
@@ -485,7 +606,207 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
                 initialData={{ projectCode: project.code, location: project.location } as any}
                 t={t}
             />
+
+            {accessListings && (
+                <ListingAccessPanel
+                    listings={accessListings}
+                    tenants={tenants}
+                    onClose={() => setAccessListings(null)}
+                    t={t}
+                />
+            )}
         </>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Listing Access Panel  (Phân quyền xem từng sản phẩm)
+// ─────────────────────────────────────────────────────────────────────────────
+interface ListingAccessPanelProps {
+    listings: any[];      // 1 hoặc nhiều listing được chọn
+    tenants: any[];
+    onClose: () => void;
+    t: (k: string) => string;
+}
+
+function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPanelProps) {
+    const isBulk = listings.length > 1;
+    const [accesses, setAccesses] = useState<Record<string, any[]>>({});   // listingId → access[]
+    const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
+    const [grantForm, setGrantForm] = useState({ partnerTenantId: '', expiresAt: '', note: '' });
+    const [granting, setGranting] = useState(false);
+    const [err, setErr] = useState('');
+
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-500';
+    const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
+
+    // Load access list for each listing
+    useEffect(() => {
+        listings.forEach(l => {
+            setLoadingIds(prev => new Set([...prev, l.id]));
+            db.getListingAccess(l.id).then(data => {
+                setAccesses(prev => ({ ...prev, [l.id]: data }));
+            }).catch(() => {
+                setAccesses(prev => ({ ...prev, [l.id]: [] }));
+            }).finally(() => {
+                setLoadingIds(prev => { const next = new Set(prev); next.delete(l.id); return next; });
+            });
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleGrant = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!grantForm.partnerTenantId) { setErr('Vui lòng chọn sàn đối tác'); return; }
+        setGranting(true); setErr('');
+        try {
+            // Grant to all selected listings
+            const results = await Promise.all(
+                listings.map(l => db.grantListingAccess(l.id, {
+                    partnerTenantId: grantForm.partnerTenantId,
+                    expiresAt: grantForm.expiresAt || undefined,
+                    note: grantForm.note || undefined,
+                }))
+            );
+            // Update local state
+            listings.forEach((l, i) => {
+                setAccesses(prev => {
+                    const list = [...(prev[l.id] || [])];
+                    const idx = list.findIndex(a => a.partner_tenant_id === grantForm.partnerTenantId);
+                    if (idx >= 0) list[idx] = results[i]; else list.unshift(results[i]);
+                    return { ...prev, [l.id]: list };
+                });
+            });
+            setGrantForm({ partnerTenantId: '', expiresAt: '', note: '' });
+        } catch (e: any) {
+            setErr(e.message || 'Có lỗi xảy ra');
+        } finally {
+            setGranting(false);
+        }
+    };
+
+    const handleRevoke = async (listingId: string, partnerTenantId: string) => {
+        if (!window.confirm('Thu hồi quyền xem sản phẩm này?')) return;
+        try {
+            await db.revokeListingAccess(listingId, partnerTenantId);
+            setAccesses(prev => ({
+                ...prev,
+                [listingId]: (prev[listingId] || []).map(a =>
+                    a.partner_tenant_id === partnerTenantId ? { ...a, status: 'REVOKED' } : a
+                ),
+            }));
+        } catch (e: any) {
+            setErr(e.message || 'Có lỗi xảy ra');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+            <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-2xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
+                    <div>
+                        <div className="flex items-center gap-2 text-violet-600">
+                            {IC.LOCK}
+                            <h2 className="text-base font-bold">Phân quyền xem sản phẩm</h2>
+                        </div>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                            {isBulk
+                                ? `${listings.length} sản phẩm được chọn`
+                                : listings[0]?.title || listings[0]?.code}
+                        </p>
+                    </div>
+                    <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label="Đóng">{IC.X}</button>
+                </div>
+
+                <div className="overflow-y-auto no-scrollbar flex-1 p-6 space-y-6">
+                    {/* Info box */}
+                    <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 rounded-xl px-4 py-3 text-xs text-violet-700 dark:text-violet-300">
+                        <strong>Lưu ý:</strong> Nếu sản phẩm có bất kỳ quyền xem nào được cấu hình, chỉ các sàn được cấp quyền mới thấy sản phẩm đó. Sản phẩm chưa cấu hình quyền sẽ hiển thị cho tất cả sàn có quyền truy cập dự án.
+                    </div>
+
+                    {/* Grant form */}
+                    <form onSubmit={handleGrant} className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 rounded-xl p-4 space-y-3">
+                        <p className="text-sm font-bold text-violet-700 dark:text-violet-300">Cấp quyền xem cho sàn đối tác</p>
+                        {err && <p className="text-rose-600 text-xs bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5" role="alert">{err}</p>}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="col-span-2">
+                                <label className={labelCls}>Sàn đối tác *</label>
+                                <select className={inputCls} value={grantForm.partnerTenantId} onChange={e => setGrantForm(f => ({ ...f, partnerTenantId: e.target.value }))}>
+                                    <option value="">-- Chọn sàn --</option>
+                                    {tenants.map(t2 => <option key={t2.id} value={t2.id}>{t2.name} ({t2.domain})</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className={labelCls}>Hết hạn</label>
+                                <input type="date" className={inputCls} value={grantForm.expiresAt} onChange={e => setGrantForm(f => ({ ...f, expiresAt: e.target.value }))} />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Ghi chú</label>
+                                <input className={inputCls} value={grantForm.note} onChange={e => setGrantForm(f => ({ ...f, note: e.target.value }))} placeholder="Điều kiện hợp tác..." />
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <button type="submit" disabled={granting}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 disabled:opacity-50">
+                                {IC.SHIELD}
+                                {granting ? 'Đang cấp...' : isBulk ? `Cấp quyền cho ${listings.length} sản phẩm` : 'Cấp quyền xem'}
+                            </button>
+                        </div>
+                    </form>
+
+                    {/* Access list per listing */}
+                    {listings.map(l => {
+                        const list = accesses[l.id] || [];
+                        const isLoading = loadingIds.has(l.id);
+                        const activeList = list.filter(a => a.status === 'ACTIVE');
+                        return (
+                            <div key={l.id} className="space-y-2">
+                                {isBulk && (
+                                    <p className="text-xs font-bold text-[var(--text-primary)] truncate border-b border-[var(--glass-border)] pb-1">
+                                        {l.title || l.code}
+                                        {activeList.length > 0 && (
+                                            <span className="ml-2 text-violet-600">({activeList.length} sàn)</span>
+                                        )}
+                                    </p>
+                                )}
+                                {isLoading ? (
+                                    <p className="text-xs text-[var(--text-tertiary)]">Đang tải...</p>
+                                ) : list.length === 0 ? (
+                                    <p className="text-xs text-[var(--text-tertiary)] italic">Chưa có phân quyền — hiển thị mặc định theo dự án</p>
+                                ) : (
+                                    <div className="space-y-1.5">
+                                        {list.map(a => (
+                                            <div key={a.id} className="flex items-center justify-between gap-3 bg-[var(--bg-app)] border border-[var(--glass-border)] rounded-xl px-4 py-2.5">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-sm text-[var(--text-primary)] truncate">{a.partner_tenant_name || a.partner_tenant_id}</p>
+                                                    <div className="flex gap-3 mt-0.5 text-xs text-[var(--text-tertiary)]">
+                                                        <span>Cấp: {fmtDate(a.granted_at)}</span>
+                                                        {a.expires_at && <span>Hết hạn: {fmtDate(a.expires_at)}</span>}
+                                                        {a.note && <span className="italic">"{a.note}"</span>}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ACCESS_COLOR[a.status] || 'bg-slate-100 text-slate-500'}`}>
+                                                        {a.status === 'ACTIVE' ? 'Đang hoạt động' : a.status === 'REVOKED' ? 'Đã thu hồi' : 'Hết hạn'}
+                                                    </span>
+                                                    {a.status === 'ACTIVE' && (
+                                                        <button type="button" onClick={() => handleRevoke(l.id, a.partner_tenant_id)}
+                                                            className="text-xs font-semibold text-rose-600 hover:bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">
+                                                            Thu hồi
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -744,6 +1065,7 @@ export function Projects() {
                 <ProjectListingsPanel
                     project={listingsTarget}
                     canCreate={isAdmin || user?.role === 'TEAM_LEAD'}
+                    isAdmin={isAdmin}
                     onClose={() => setListingsTarget(null)}
                     t={t}
                 />

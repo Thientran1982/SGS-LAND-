@@ -256,6 +256,79 @@ export class ProjectRepository extends BaseRepository {
         );
         return result.rows;
     }
+
+    // -------------------------------------------------------------------------
+    // Listing Access (B2B2C: per-listing partner view permission)
+    // -------------------------------------------------------------------------
+
+    // Get all listing_access grants for a specific listing (cross-tenant)
+    async getListingAccess(listingId: string): Promise<any[]> {
+        const { pool } = await import('../db');
+        const result = await pool.query(
+            `SELECT la.*, t.name as partner_tenant_name, t.domain as partner_tenant_domain
+             FROM listing_access la
+             JOIN tenants t ON t.id = la.partner_tenant_id
+             WHERE la.listing_id = $1
+             ORDER BY la.granted_at DESC`,
+            [listingId]
+        );
+        return result.rows;
+    }
+
+    // Grant a partner tenant access to a specific listing
+    async grantListingAccess(data: {
+        listingId: string;
+        partnerTenantId: string;
+        grantedBy: string;
+        expiresAt?: string;
+        note?: string;
+    }): Promise<any> {
+        const { pool } = await import('../db');
+
+        const partnerCheck = await pool.query(
+            `SELECT id, name, domain FROM tenants WHERE id = $1`,
+            [data.partnerTenantId]
+        );
+        if (!partnerCheck.rows[0]) throw new Error('Partner tenant not found');
+
+        const result = await pool.query(
+            `INSERT INTO listing_access (listing_id, partner_tenant_id, granted_by, expires_at, note, status)
+             VALUES ($1, $2, $3, $4, $5, 'ACTIVE')
+             ON CONFLICT (listing_id, partner_tenant_id)
+             DO UPDATE SET status = 'ACTIVE', expires_at = $4, note = $5, granted_by = $3, granted_at = NOW()
+             RETURNING *`,
+            [data.listingId, data.partnerTenantId, data.grantedBy, data.expiresAt || null, data.note || null]
+        );
+        return {
+            ...result.rows[0],
+            partner_tenant_name: partnerCheck.rows[0].name,
+            partner_tenant_domain: partnerCheck.rows[0].domain,
+        };
+    }
+
+    // Revoke a partner tenant's access to a specific listing
+    async revokeListingAccess(listingId: string, partnerTenantId: string): Promise<boolean> {
+        const { pool } = await import('../db');
+        const result = await pool.query(
+            `UPDATE listing_access SET status = 'REVOKED'
+             WHERE listing_id = $1 AND partner_tenant_id = $2`,
+            [listingId, partnerTenantId]
+        );
+        return (result.rowCount ?? 0) > 0;
+    }
+
+    // Check if a partner has explicit listing_access for a specific listing
+    async checkPartnerListingAccess(partnerTenantId: string, listingId: string): Promise<boolean> {
+        const { pool } = await import('../db');
+        const result = await pool.query(
+            `SELECT 1 FROM listing_access
+             WHERE listing_id = $1 AND partner_tenant_id = $2
+               AND status = 'ACTIVE'
+               AND (expires_at IS NULL OR expires_at > NOW())`,
+            [listingId, partnerTenantId]
+        );
+        return (result.rowCount ?? 0) > 0;
+    }
 }
 
 export const projectRepository = new ProjectRepository();

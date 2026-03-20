@@ -1412,6 +1412,32 @@ class DatabaseApiClient {
     return res.json();
   }
 
+  // ── Listing-level access (per-listing partner view permission) ──────────────
+
+  async getListingAccess(listingId: string) {
+    const res = await fetch(`/api/projects/listings/${listingId}/access`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch listing access');
+    return res.json();
+  }
+
+  async grantListingAccess(listingId: string, data: { partnerTenantId: string; expiresAt?: string; note?: string }) {
+    const res = await fetch(`/api/projects/listings/${listingId}/access`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to grant listing access'); }
+    return res.json();
+  }
+
+  async revokeListingAccess(listingId: string, partnerTenantId: string) {
+    const res = await fetch(`/api/projects/listings/${listingId}/access/${partnerTenantId}`, {
+      method: 'DELETE', credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to revoke listing access');
+    return res.json();
+  }
+
   async createBackup() {
     return { id: `backup_${Date.now()}`, createdAt: new Date().toISOString() };
   }
