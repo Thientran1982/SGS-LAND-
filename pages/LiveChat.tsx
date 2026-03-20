@@ -7,7 +7,7 @@ import { MessageBubble } from '../components/ChatUI';
 import { motion } from 'motion/react';
 
 export default function LiveChat() {
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const { socket } = useSocket();
     const [lead, setLead] = useState<Lead | null>(null);
     const [name, setName] = useState('');
@@ -15,6 +15,7 @@ export default function LiveChat() {
     const [messages, setMessages] = useState<Interaction[]>([]);
     const [input, setInput] = useState('');
     const [isThinking, setIsThinking] = useState(false);
+    const [startError, setStartError] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Load lead from localStorage if exists
@@ -62,21 +63,27 @@ export default function LiveChat() {
     const handleStartChat = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim() || !phone.trim()) return;
+        setStartError('');
 
-        const newLead = await db.createLead({
-            name,
-            phone,
-            source: 'WEB',
-            tags: ['Live Chat']
-        });
-        setLead(newLead);
-        localStorage.setItem('livechat_lead_id', newLead.id);
-        socket.emit("lead_created", newLead);
+        try {
+            const newLead = await db.createLead({
+                name,
+                phone,
+                source: 'WEB',
+                tags: ['Live Chat']
+            });
+            setLead(newLead);
+            localStorage.setItem('livechat_lead_id', newLead.id);
+            socket.emit("lead_created", newLead);
 
-        // Send welcome message from system
-        const welcomeMsg = await db.sendInteraction(newLead.id, t('livechat.welcome_msg', { name }) || `Xin chào ${name}, cảm ơn bạn đã liên hệ. Chúng tôi có thể giúp gì cho bạn?`, Channel.WEB, { type: 'TEXT', metadata: { isAgent: true } });
-        setMessages([welcomeMsg]);
-        socket.emit("send_message", { room: newLead.id, message: welcomeMsg });
+            // Send welcome message — interpolate {name} manually since t() returns raw string
+            const welcomeContent = t('livechat.welcome_msg').replace('{name}', name);
+            const welcomeMsg = await db.sendInteraction(newLead.id, welcomeContent, Channel.WEB, { type: 'TEXT', metadata: { isAgent: true } });
+            setMessages([welcomeMsg]);
+            socket.emit("send_message", { room: newLead.id, message: welcomeMsg });
+        } catch (_err) {
+            setStartError(t('auth.error_generic'));
+        }
     };
 
     const autoReplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,17 +100,40 @@ export default function LiveChat() {
         setMessages(prev => [...prev, msg]);
         socket.emit("send_message", { room: lead.id, message: msg });
 
-        // 2. Auto-reply with cleanup on unmount
+        // 2. Call real AI — with cleanup on unmount
         setIsThinking(true);
         if (autoReplyTimerRef.current) clearTimeout(autoReplyTimerRef.current);
+
         autoReplyTimerRef.current = setTimeout(async () => {
             try {
-                const aiMsg = await db.sendInteraction(lead.id, t('livechat.auto_reply') || `Cảm ơn bạn đã nhắn tin. Chuyên viên của chúng tôi sẽ phản hồi bạn trong giây lát. (Tin nhắn tự động)`, Channel.WEB, { type: 'TEXT', metadata: { isAgent: true } });
-                setMessages(prev => [...prev, aiMsg]);
-                socket.emit("send_message", { room: lead.id, message: aiMsg });
-            } catch (_) {}
-            setIsThinking(false);
-        }, 2000);
+                const res = await fetch('/api/public/ai/livechat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leadId: lead.id, message: content, lang: language })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const aiMsg: Interaction = data.reply;
+                    setMessages(prev => {
+                        if (prev.find(m => m.id === aiMsg.id)) return prev;
+                        return [...prev, aiMsg];
+                    });
+                    socket.emit("send_message", { room: lead.id, message: aiMsg });
+                } else {
+                    // Fallback to polite canned reply on AI error
+                    const fallbackMsg = await db.sendInteraction(lead.id, t('livechat.auto_reply'), Channel.WEB, { type: 'TEXT', metadata: { isAgent: true } });
+                    setMessages(prev => [...prev, fallbackMsg]);
+                    socket.emit("send_message", { room: lead.id, message: fallbackMsg });
+                }
+            } catch (_) {
+                // Network error — silent fallback
+                const fallbackMsg = await db.sendInteraction(lead.id, t('livechat.auto_reply'), Channel.WEB, { type: 'TEXT', metadata: { isAgent: true } }).catch(() => null);
+                if (fallbackMsg) setMessages(prev => [...prev, fallbackMsg]);
+            } finally {
+                setIsThinking(false);
+            }
+        }, 500);
     };
 
     useEffect(() => {
@@ -120,20 +150,26 @@ export default function LiveChat() {
                     <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-200">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                     </div>
-                    <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2 leading-tight py-1">{t('livechat.title') || "Chat với chúng tôi"}</h1>
-                    <p className="text-[var(--text-tertiary)] mb-6 text-sm">{t('livechat.subtitle') || "Vui lòng để lại thông tin để chúng tôi hỗ trợ bạn tốt nhất."}</p>
-                    
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2 leading-tight py-1">{t('livechat.title')}</h1>
+                    <p className="text-[var(--text-tertiary)] mb-6 text-sm">{t('livechat.subtitle')}</p>
+
+                    {startError && (
+                        <div className="mb-4 text-rose-600 text-sm bg-rose-50 border border-rose-200 rounded-xl px-4 py-3" role="alert">
+                            {startError}
+                        </div>
+                    )}
+
                     <form onSubmit={handleStartChat} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">{t('livechat.name_label') || "Họ và tên"}</label>
-                            <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder={t('livechat.name_placeholder') || "Nhập tên của bạn"} />
+                            <label htmlFor="lc-name" className="block text-sm font-bold text-[var(--text-secondary)] mb-1">{t('livechat.name_label')}</label>
+                            <input id="lc-name" type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder={t('livechat.name_placeholder')} />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">{t('livechat.phone_label') || "Số điện thoại"}</label>
-                            <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder={t('livechat.phone_placeholder') || "Nhập số điện thoại"} />
+                            <label htmlFor="lc-phone" className="block text-sm font-bold text-[var(--text-secondary)] mb-1">{t('livechat.phone_label')}</label>
+                            <input id="lc-phone" type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder={t('livechat.phone_placeholder')} />
                         </div>
                         <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-colors shadow-md shadow-indigo-200 mt-2">
-                            {t('livechat.start_chat') || "Bắt đầu Chat"}
+                            {t('livechat.start_chat')}
                         </button>
                     </form>
                 </motion.div>
@@ -151,26 +187,30 @@ export default function LiveChat() {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     </div>
                     <div className="min-w-0">
-                        <h2 className="font-bold text-lg leading-tight truncate py-0.5">{t('livechat.support_online') || "Hỗ trợ trực tuyến"}</h2>
+                        <h2 className="font-bold text-lg leading-tight truncate py-0.5">{t('livechat.support_online')}</h2>
                         <div className="flex items-center gap-1.5 text-indigo-100 text-xs">
                             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shrink-0"></span>
-                            <span className="truncate">{t('livechat.we_are_online') || "Chúng tôi đang online"}</span>
+                            <span className="truncate">{t('livechat.we_are_online')}</span>
                         </div>
                     </div>
                 </div>
-                <button onClick={() => { localStorage.removeItem('livechat_lead_id'); setLead(null); }} className="text-indigo-200 hover:text-white transition-colors text-xs font-bold bg-indigo-700/50 px-3 py-1.5 rounded-lg shrink-0 ml-2">
-                    {t('livechat.end_chat') || "Kết thúc"}
+                <button
+                    type="button"
+                    onClick={() => { localStorage.removeItem('livechat_lead_id'); setLead(null); }}
+                    className="text-indigo-200 hover:text-white transition-colors text-xs font-bold bg-indigo-700/50 px-3 py-1.5 rounded-lg shrink-0 ml-2"
+                >
+                    {t('livechat.end_chat')}
                 </button>
             </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 bg-[var(--glass-surface)]/50">
                 {messages.map((msg, idx) => (
-                    <MessageBubble 
-                        key={msg.id} 
-                        msg={msg} 
-                        t={t} 
-                        formatTime={(iso: string) => new Date(iso).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} 
+                    <MessageBubble
+                        key={msg.id}
+                        msg={msg}
+                        t={t}
+                        formatTime={(iso: string) => new Date(iso).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         formatDate={(iso: string) => new Date(iso).toLocaleDateString()}
                         formatCurrency={(v: number) => v.toLocaleString() + 'đ'}
                         formatDateTime={(iso: string) => new Date(iso).toLocaleString()}
@@ -185,7 +225,7 @@ export default function LiveChat() {
                                 <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-75"></span>
                                 <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-150"></span>
                             </div>
-                            {t('livechat.replying') || "Đang trả lời..."}
+                            {t('livechat.replying')}
                         </div>
                     </div>
                 )}
@@ -195,7 +235,7 @@ export default function LiveChat() {
             {/* Input */}
             <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-[var(--bg-surface)] border-t border-[var(--glass-border)] shrink-0">
                 <div className="flex items-end gap-2 bg-[var(--glass-surface)] p-2 rounded-2xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
-                    <textarea 
+                    <textarea
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         onKeyDown={e => {
@@ -205,19 +245,22 @@ export default function LiveChat() {
                             }
                         }}
                         className="flex-1 bg-transparent border-none text-sm outline-none max-h-32 min-h-[40px] py-2 px-2 resize-none placeholder:text-[var(--text-muted)] no-scrollbar"
-                        placeholder={t('livechat.input_placeholder') || "Nhập tin nhắn..."}
+                        placeholder={t('livechat.input_placeholder')}
                         rows={1}
+                        aria-label={t('livechat.input_placeholder')}
                     />
-                    <button 
+                    <button
+                        type="button"
                         onClick={handleSend}
-                        disabled={!input.trim()}
+                        disabled={!input.trim() || isThinking}
                         className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shrink-0 disabled:opacity-50 disabled:bg-slate-300 transition-colors"
+                        aria-label={t('livechat.replying')}
                     >
                         <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                     </button>
                 </div>
                 <div className="text-center mt-3 text-xs2 text-slate-400 font-medium">
-                    {t('livechat.powered_by') || "Powered by"} <span className="font-bold text-[var(--text-tertiary)]">SGS Land AI</span>
+                    {t('livechat.powered_by')} <span className="font-bold text-[var(--text-tertiary)]">SGS Land AI</span>
                 </div>
             </div>
         </div>

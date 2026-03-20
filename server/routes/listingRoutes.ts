@@ -3,9 +3,13 @@ import { Router, Request, Response } from 'express';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
 
+const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
+const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
+
 export function createListingRoutes(authenticateToken: any) {
   const router = Router();
 
+  // ── GET /api/listings ────────────────────────────────────────────────────────
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
@@ -29,6 +33,12 @@ export function createListingRoutes(authenticateToken: any) {
       if (req.query.projectCode) filters.projectCode = req.query.projectCode;
       if (req.query.isVerified) filters.isVerified = req.query.isVerified === 'true';
 
+      // PARTNER roles: only see listings from projects they have been granted access to
+      if (PARTNER_ROLES.includes(user.role)) {
+        const result = await listingRepository.findListingsForPartner(user.tenantId, { page, pageSize }, filters);
+        return res.json(result);
+      }
+
       const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
       res.json(result);
     } catch (error) {
@@ -37,9 +47,14 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
+  // ── GET /api/listings/favorites ──────────────────────────────────────────────
   router.get('/favorites', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      // Partners cannot use the favourites feature (they have no tenant context for listings)
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.json([]);
+      }
       const favorites = await listingRepository.getFavorites(user.tenantId, user.id);
       res.json(favorites);
     } catch (error) {
@@ -48,14 +63,24 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
+  // ── GET /api/listings/:id ────────────────────────────────────────────────────
   router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+
+      // PARTNER: use cross-tenant project-scoped lookup
+      if (PARTNER_ROLES.includes(user.role)) {
+        const listing = await listingRepository.findByIdForPartner(user.tenantId, req.params.id);
+        if (!listing) return res.status(404).json({ error: 'Listing not found or access denied' });
+        res.json(listing);
+        listingRepository.incrementViewCount((listing as any).tenantId, req.params.id).catch(() => {});
+        return;
+      }
+
       const listing = await listingRepository.findById(user.tenantId, req.params.id);
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
-      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
-      if (RESTRICTED.includes(user.role) && (listing as any).createdBy !== user.id) {
+      if (RESTRICTED_ROLES.includes(user.role) && (listing as any).createdBy !== user.id) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -68,11 +93,17 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
+  // ── POST /api/listings ───────────────────────────────────────────────────────
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const { code, title, location, price, area, type } = req.body;
 
+      // PARTNER roles cannot create listings (read-only access to developer listings)
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Partners cannot create listings directly' });
+      }
+
+      const { code, title, location, price, area, type } = req.body;
       if (!code || !title || !location || !price || !area || !type) {
         return res.status(400).json({ error: 'Missing required fields: code, title, location, price, area, type' });
       }
@@ -103,16 +134,22 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
+  // ── PUT /api/listings/:id ────────────────────────────────────────────────────
   router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+
+      // PARTNER roles: read-only
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Partners cannot modify listings' });
+      }
+
       const images = req.body.images;
       if (Array.isArray(images) && images.length > 10) {
         return res.status(400).json({ error: 'Maximum 10 images allowed per listing' });
       }
 
-      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
-      if (RESTRICTED.includes(user.role)) {
+      if (RESTRICTED_ROLES.includes(user.role)) {
         const existing = await listingRepository.findById(user.tenantId, req.params.id);
         if (!existing) return res.status(404).json({ error: 'Listing not found' });
         if ((existing as any).createdBy !== user.id) {
@@ -139,9 +176,12 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
+  // ── DELETE /api/listings/:id ─────────────────────────────────────────────────
   router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+
+      // Only developer ADMIN / TEAM_LEAD can delete listings
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }

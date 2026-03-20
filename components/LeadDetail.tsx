@@ -20,7 +20,7 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
                 </div>
                 <div>
                     <h4 className="font-bold text-indigo-900 text-xs uppercase tracking-widest">{t('detail.ai_analysis')}</h4>
-                    <p className="text-2xs text-indigo-400 font-medium uppercase tracking-tighter">Gemini 3.1 Intelligence</p>
+                    <p className="text-2xs text-indigo-400 font-medium uppercase tracking-tighter">{t('detail.ai_badge')}</p>
                 </div>
             </div>
             <button 
@@ -45,7 +45,7 @@ const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
                     {summary || t('detail.ai_no_data')}
                 </p>
                 <div className="mt-4 flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-500 text-2xs font-bold rounded-full uppercase tracking-tighter border border-indigo-100/50">Strategic Insights</span>
+                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-500 text-2xs font-bold rounded-full uppercase tracking-tighter border border-indigo-100/50">{t('detail.ai_insights')}</span>
                     <div className="h-px flex-1 bg-indigo-50"></div>
                 </div>
             </div>
@@ -143,7 +143,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             const analysis = await aiService.summarizeLead(lead, history, language);
             setAiSummary(analysis);
         } catch (e) {
-            setAiSummary("AI Analysis unavailable.");
+            setAiSummary(t('detail.ai_unavailable'));
         } finally {
             setIsThinking(false);
         }
@@ -160,7 +160,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             try {
                 const res = await db.getTenantUsers(1, 100);
                 setUsers([
-                    { value: '', label: t('inbox.unassigned') || 'Unassigned' },
+                    { value: '', label: t('inbox.unassigned') },
                     ...res.data.map(u => ({ value: u.id, label: u.name }))
                 ]);
             } catch (e) {
@@ -306,14 +306,14 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                     </div>
                                     <span className="ml-2 text-xs2 text-[var(--text-tertiary)] flex items-center gap-1">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        Đang xem
+                                        {t('detail.viewing')}
                                     </span>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-                <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] p-2.5 rounded-full hover:bg-[var(--glass-surface-hover)] transition-colors shrink-0">
+                <button type="button" onClick={onClose} aria-label={t('common.close')} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] p-2.5 rounded-full hover:bg-[var(--glass-surface-hover)] transition-colors shrink-0">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
@@ -367,16 +367,16 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                 </div>
                             </div>
                         )}
-                        <DetailField label={t('leads.assigned_to') || 'Người phụ trách'}>
+                        <DetailField label={t('leads.assigned_to')}>
                             <Dropdown value={formData.assignedTo || ''} onChange={(val) => handleInputChange('assignedTo', val)} options={users} className="w-full" />
                         </DetailField>
-                        <DetailField label={formData.notes ? (t('leads.notes') || 'Ghi chú / Lịch hẹn') : (t('leads.notes') || 'Ghi chú')} className="sm:col-span-2">
+                        <DetailField label={t('leads.notes')} className="sm:col-span-2">
                             <textarea
                                 value={formData.notes || ''}
                                 onChange={e => handleInputChange('notes', e.target.value)}
                                 rows={formData.notes ? 6 : 3}
                                 className={`w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none no-scrollbar ${formData.notes ? 'bg-amber-50/60 font-mono text-xs text-[var(--text-secondary)] leading-relaxed' : ''}`}
-                                placeholder={t('leads.notes') || 'Ghi chú về khách hàng...'}
+                                placeholder={t('leads.notes_placeholder')}
                             />
                         </DetailField>
                     </div>
@@ -419,13 +419,14 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             </div>
 
             <div className={`p-4 border-t border-[var(--glass-border)] bg-[var(--bg-surface)] flex gap-3 ${isModal ? 'sticky bottom-0 z-20' : 'flex-none relative z-20'}`}>
-                <button 
-                    onClick={handleCreateContract} 
-                    disabled={formData.stage === LeadStage.WON} 
+                <button
+                    type="button"
+                    onClick={handleCreateContract}
+                    disabled={formData.stage === LeadStage.WON}
                     className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    {t('detail.create_contract') || 'Chốt Deal (Tạo Hợp Đồng)'}
+                    {t('detail.create_contract')}
                 </button>
                 <button onClick={handleSave} disabled={isSaving} className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-[0.98]">
                     {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}

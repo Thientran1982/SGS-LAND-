@@ -98,7 +98,41 @@ export enum UserRole {
     SALES = 'SALES',
     TEAM_LEAD = 'TEAM_LEAD',
     MARKETING = 'MARKETING',
-    VIEWER = 'VIEWER'
+    VIEWER = 'VIEWER',
+    // B2B2C: Broker/Exchange partner roles
+    PARTNER_ADMIN = 'PARTNER_ADMIN',  // Quản trị viên sàn đối tác
+    PARTNER_AGENT = 'PARTNER_AGENT',  // Nhân viên môi giới sàn đối tác
+}
+
+// B2B2C: Dự án do chủ đầu tư sở hữu
+export interface Project {
+    id: UUID;
+    tenantId: TenantId;         // Chủ đầu tư (developer tenant)
+    name: string;
+    code?: string;              // Mã dự án
+    description?: string;
+    location?: string;
+    totalUnits?: number;
+    status: 'ACTIVE' | 'COMPLETED' | 'ON_HOLD' | 'SUSPENDED';
+    openDate?: ISOString;       // Ngày mở bán
+    handoverDate?: ISOString;   // Ngày bàn giao dự kiến
+    metadata?: Record<string, unknown>;
+    createdAt: ISOString;
+    updatedAt: ISOString;
+}
+
+// B2B2C: Cấp quyền sàn đối tác xem/bán dự án
+export interface ProjectAccess {
+    id: UUID;
+    projectId: UUID;
+    partnerTenantId: TenantId;  // Sàn giao dịch BDS
+    partnerTenantName?: string;
+    partnerTenantDomain?: string;
+    grantedBy?: UUID;
+    grantedAt: ISOString;
+    expiresAt?: ISOString;
+    status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
+    note?: string;              // Ghi chú điều kiện hợp tác
 }
 
 export type Permission = 
@@ -297,7 +331,8 @@ export interface Listing {
     holdExpiresAt?: ISOString;
     images?: string[];
     projectCode?: string;
-    
+    projectId?: UUID; // FK to projects.id (B2B2C: scoped listing access via project_access)
+
     // Contact Info
     contactPhone?: string; // Explicit contact number for this listing
 
@@ -1037,6 +1072,25 @@ export enum ContractStatus {
     CANCELLED = 'CANCELLED'
 }
 
+export enum PaymentStatus {
+    PENDING = 'PENDING',
+    PAID = 'PAID',
+    OVERDUE = 'OVERDUE',
+    WAIVED = 'WAIVED'
+}
+
+export interface PaymentMilestone {
+    id: string;
+    name: string;        // "Đợt 1 - Đặt cọc", "Đợt 2 - Ký HĐMB"
+    dueDate: string;     // ISO date string
+    amount: number;      // Số tiền VND
+    percentage: number;  // % trên tổng giá trị hợp đồng
+    status: PaymentStatus;
+    paidDate?: string;   // Ngày thanh toán thực tế
+    paidAmount?: number; // Số tiền đã thanh toán thực tế
+    note?: string;
+}
+
 export interface Contract {
     id: UUID;
     tenantId?: string;
@@ -1081,6 +1135,7 @@ export interface Contract {
     // Payment & Terms
     depositAmount?: number;
     paymentTerms: string;
+    paymentSchedule?: PaymentMilestone[];
     taxResponsibility?: string; // Trách nhiệm nộp thuế/phí
     handoverDate?: string; // Ngày bàn giao dự kiến
     handoverCondition?: string; // Tình trạng bàn giao

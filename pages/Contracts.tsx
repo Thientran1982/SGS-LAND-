@@ -94,6 +94,7 @@ const Contracts: React.FC = () => {
     
     const [contractToDelete, setContractToDelete] = useState<string | null>(null);
     const [shareLink, setShareLink] = useState<string | null>(null);
+    const [linkCopied, setLinkCopied] = useState(false);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
@@ -131,9 +132,9 @@ const Contracts: React.FC = () => {
     return (
         <div className="p-6 h-full flex flex-col animate-enter">
             <div className="flex justify-end mb-6">
-                <button 
+                <button
                     onClick={() => { setEditingContract(null); setIsModalOpen(true); }}
-                    className="px-4 py-2 bg-[var(--primary-600)] text-white rounded-xl font-bold text-sm shadow-sm hover:opacity-90 transition-all flex items-center gap-2"
+                    className="px-4 py-2 min-h-[44px] bg-[var(--primary-600)] text-white rounded-xl font-bold text-sm shadow-sm hover:opacity-90 transition-all flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
                     {t('contracts.btn_create')}
@@ -158,7 +159,7 @@ const Contracts: React.FC = () => {
                                 <button 
                                     onClick={() => setSearch('')}
                                     className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
-                                    title={t('common.clear_search') || 'Xóa tìm kiếm'}
+                                    title={t('common.clear_search')}
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
@@ -216,12 +217,12 @@ const Contracts: React.FC = () => {
                                 </thead>
                                 <tbody className="divide-y divide-[var(--glass-border)]">
                                     {contracts.map(c => (
-                                        <tr 
-                                            key={c.id} 
-                                            onClick={(e) => {
-                                                handleEdit(c);
-                                            }} 
-                                            className="cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors group"
+                                        <tr
+                                            key={c.id}
+                                            tabIndex={0}
+                                            onClick={() => handleEdit(c)}
+                                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleEdit(c); } }}
+                                            className="cursor-pointer hover:bg-[var(--glass-surface-hover)] transition-colors group focus-visible:outline-none focus-visible:bg-indigo-50/50"
                                         >
                                             <td className="p-4">
                                                 <div className="font-medium text-sm text-[var(--text-primary)]">
@@ -230,7 +231,7 @@ const Contracts: React.FC = () => {
                                                 <div
                                                     className="text-xs font-mono text-[var(--text-secondary)] mt-0.5 cursor-pointer hover:text-indigo-500 transition-colors"
                                                     title={c.id}
-                                                    onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(c.id); }}
+                                                    onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(c.id).catch(() => {}); }}
                                                 >
                                                     #{c.id.slice(0, 8).toUpperCase()}
                                                 </div>
@@ -245,7 +246,7 @@ const Contracts: React.FC = () => {
                                             <td className="p-4">
                                                 <div className="font-medium text-sm text-[var(--text-primary)]">{formatCurrency(c.propertyPrice || 0)}</div>
                                                 {c.type === ContractType.DEPOSIT && (
-                                                    <div className="text-xs text-indigo-500 mt-0.5">Cọc: {formatCurrency(c.depositAmount || 0)}</div>
+                                                    <div className="text-xs text-indigo-500 mt-0.5">{t('contracts.deposit_label')}: {formatCurrency(c.depositAmount || 0)}</div>
                                                 )}
                                             </td>
                                             <td className="p-4">
@@ -263,30 +264,33 @@ const Contracts: React.FC = () => {
                                             </td>
                                             <td className="p-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <button 
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
                                                             window.location.hash = `#/p/contract_${c.id}`;
                                                         }}
-                                                        className="p-1.5 text-[var(--text-secondary)] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                                                        title="Xem & Xuất PDF"
+                                                        aria-label={t('contracts.view_export_pdf')}
+                                                        className="p-2 min-h-[36px] min-w-[36px] text-[var(--text-secondary)] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center"
+                                                        title={t('contracts.view_export_pdf')}
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                                     </button>
-                                                    <button 
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
-                                                            const link = `${window.location.origin}/#/p/contract_${c.id}`;
-                                                            setShareLink(link);
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setShareLink(`${window.location.origin}/#/p/contract_${c.id}`);
+                                                            setLinkCopied(false);
                                                         }}
-                                                        className="p-1.5 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                        aria-label={t('common.share_link')}
+                                                        className="p-2 min-h-[36px] min-w-[36px] text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center"
                                                         title={t('common.share_link')}
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={(e) => { e.stopPropagation(); setContractToDelete(c.id); }}
-                                                        className="p-1.5 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                        aria-label={t('common.delete')}
+                                                        className="p-2 min-h-[36px] min-w-[36px] text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center"
                                                         title={t('common.delete')}
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -325,33 +329,47 @@ const Contracts: React.FC = () => {
 
             {shareLink && createPortal(
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShareLink(null)}></div>
-                    <div className="relative bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-md flex flex-col animate-enter p-6">
-                        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Chia sẻ hợp đồng</h3>
-                        <p className="text-sm text-[var(--text-tertiary)] mb-4">Sao chép đường dẫn bên dưới để gửi cho khách hàng:</p>
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShareLink(null)} aria-hidden="true"></div>
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="share-modal-title"
+                        className="relative bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-md flex flex-col animate-enter p-6"
+                    >
+                        <h3 id="share-modal-title" className="text-lg font-bold text-[var(--text-primary)] mb-4">{t('contracts.share_title')}</h3>
+                        <p className="text-sm text-[var(--text-tertiary)] mb-4">{t('contracts.share_desc')}</p>
                         <div className="flex items-center gap-2 bg-[var(--glass-surface)] p-3 rounded-xl border border-[var(--glass-border)]">
-                            <input 
-                                type="text" 
-                                readOnly 
-                                value={shareLink} 
+                            <input
+                                type="text"
+                                readOnly
+                                value={shareLink}
                                 className="bg-transparent outline-none flex-1 text-sm font-mono text-indigo-600"
                                 onClick={(e) => e.currentTarget.select()}
                             />
-                            <button 
+                            <button
+                                aria-label={t('common.copied')}
                                 onClick={() => {
-                                    navigator.clipboard.writeText(shareLink);
-                                    alert(t('common.copied'));
+                                    navigator.clipboard.writeText(shareLink).then(() => {
+                                        setLinkCopied(true);
+                                        setTimeout(() => setLinkCopied(false), 2000);
+                                    }).catch(() => {});
                                 }}
-                                className="p-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors"
+                                className="p-2 min-h-[36px] min-w-[36px] rounded-lg transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                {linkCopied ? (
+                                    <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                                ) : (
+                                    <svg className="w-4 h-4 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                )}
                             </button>
                         </div>
-                        <button 
+                        {linkCopied && <p role="status" aria-live="polite" className="mt-2 text-xs text-emerald-600 font-bold">{t('common.copied')}</p>}
+                        <button
                             onClick={() => setShareLink(null)}
-                            className="mt-6 w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors"
+                            aria-label={t('common.close')}
+                            className="mt-6 w-full py-2.5 min-h-[44px] bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
                         >
-                            Đóng
+                            {t('common.close')}
                         </button>
                     </div>
                 </div>,

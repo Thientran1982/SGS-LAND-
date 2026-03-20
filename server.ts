@@ -35,6 +35,7 @@ import { createBillingRoutes } from "./server/routes/billingRoutes";
 import { createUploadRoutes, createUploadServeRoute } from "./server/routes/uploadRoutes";
 import { createScimRoutes } from "./server/routes/scimRoutes";
 import { createValuationRoutes } from "./server/routes/valuationRoutes";
+import { createProjectRoutes } from "./server/routes/projectRoutes";
 import { marketDataService } from "./server/services/marketDataService";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
@@ -733,6 +734,40 @@ async function startServer() {
     }
   });
 
+  // Public AI endpoint: LiveChat widget AI reply (no auth required — uses rate limiting only)
+  app.post('/api/public/ai/livechat', publicLeadRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { leadId, message, lang } = req.body;
+      if (!leadId || !String(message || '').trim()) {
+        return res.status(400).json({ error: 'leadId và message là bắt buộc' }) as any;
+      }
+      const msgContent = String(message).trim().slice(0, 2000);
+
+      const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
+      if (!lead) return res.status(404).json({ error: 'Lead not found' }) as any;
+
+      const history = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
+
+      const { aiService } = await import('./server/ai');
+      const t = (k: string) => k;
+      const result = await aiService.processMessage(lead, msgContent, history, t, PUBLIC_TENANT);
+
+      const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
+        leadId,
+        channel: 'WEB',
+        direction: 'OUTBOUND',
+        type: 'TEXT',
+        content: result.content,
+        metadata: { isAgent: true }
+      });
+
+      res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
+    } catch (error) {
+      console.error('Public AI livechat error:', error);
+      res.status(500).json({ error: 'AI đang bận, vui lòng thử lại sau' });
+    }
+  });
+
   app.get('/api/public/articles', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -781,6 +816,8 @@ async function startServer() {
   app.use('/scim/v2', express.json({ type: ['application/json', 'application/scim+json'] }), createScimRoutes());
   // Advanced valuation: multi-source, 7-coefficient AVM + market cache
   app.use('/api/valuation', apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit));
+  // B2B2C: project management + partner access control
+  app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
 
   app.get("/api/health", async (req, res) => {
     try {
