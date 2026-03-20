@@ -81,18 +81,19 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
 
             {/* LEFT: Context Breadcrumbs & Mobile Menu */}
             <div className="flex items-center gap-3 sm:gap-4 relative z-10 min-w-0 flex-1 sm:flex-none mr-2">
-                <button 
+                <button
                     onClick={onMenuClick}
-                    className="md:hidden p-2 -ml-2 text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] dark:hover:bg-[var(--bg-surface)]/10 rounded-xl transition-colors active:scale-95 shrink-0"
+                    className="md:hidden p-3 -ml-2 min-h-[44px] min-w-[44px] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] dark:hover:bg-[var(--bg-surface)]/10 rounded-xl transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 shrink-0"
                     aria-label={t('common.menu')}
+                    aria-expanded={false}
                 >
                     {ICONS.MENU}
                 </button>
 
                 <div className="flex flex-col justify-center animate-enter min-w-0">
-                    <h1 className="text-sm sm:text-xl font-extrabold text-[var(--text-primary)] tracking-tight leading-none truncate w-full">
+                    <p className="text-sm sm:text-xl font-extrabold text-[var(--text-primary)] tracking-tight leading-none truncate w-full" aria-live="polite">
                         {title}
-                    </h1>
+                    </p>
                 </div>
             </div>
 
@@ -121,13 +122,17 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 </div> */}
 
                 {/* Mobile Search Icon */}
-                <button onClick={onSearch} className="md:hidden p-2 text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] rounded-xl active:scale-95 transition-transform">
+                <button
+                    onClick={onSearch}
+                    className="md:hidden p-3 min-h-[44px] min-w-[44px] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] rounded-xl active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    aria-label={t('common.search')}
+                >
                     {ICONS.SEARCH_MOBILE}
                 </button>
 
-                <button 
+                <button
                     onClick={() => onNavigate(ROUTES.PROFILE)}
-                    className="flex items-center gap-2 sm:gap-3 pl-1 group cursor-pointer outline-none"
+                    className="flex items-center gap-2 sm:gap-3 pl-1 group cursor-pointer min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded-xl"
                     title={t('menu.profile')}
                     aria-label={t('menu.profile')}
                 >

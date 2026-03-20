@@ -178,16 +178,21 @@ const Sidebar = memo(({
                 </button>
                 
                 {isCollapsed && (
-                    <button onClick={() => onNavigate(ROUTES.DASHBOARD)} className="w-8 h-8 text-indigo-600 animate-scale-up absolute">
+                    <button
+                        onClick={() => onNavigate(ROUTES.DASHBOARD)}
+                        className="w-8 h-8 text-indigo-600 animate-scale-up absolute"
+                        aria-label={t('nav.go_to_dashboard') || "Đi đến Tổng quan"}
+                    >
                         <Logo className="w-full h-full" />
                     </button>
                 )}
                 
                 {!isMobile && (
-                    <button 
+                    <button
                         onClick={onToggleCollapse}
-                        className={`absolute -right-3 top-8 w-6 h-6 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:text-indigo-600 shadow-sm z-50 hover:scale-110 transition-all ${isCollapsed ? 'rotate-180' : ''}`}
+                        className={`absolute -right-3 top-8 w-6 h-6 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:text-indigo-600 shadow-sm z-50 hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isCollapsed ? 'rotate-180' : ''}`}
                         aria-label={t('nav.toggle_sidebar') || "Đóng mở thanh bên"}
+                        style={{ minWidth: '44px', minHeight: '44px', margin: '-9px' }}
                     >
                         {NAV_ICONS['toggle']}
                     </button>
@@ -204,7 +209,7 @@ const Sidebar = memo(({
                         <div key={group.id} className="relative">
                             {/* Group Header */}
                             {isCollapsed ? (
-                                <div className="h-px bg-[var(--glass-border)] mx-4 my-4 opacity-50" title={t(group.labelKey)}></div>
+                                <div className="h-px bg-[var(--glass-border)] mx-4 my-4 opacity-50" aria-hidden="true"></div>
                             ) : (
                                 <button 
                                     onClick={() => toggleGroup(group.id)}
@@ -228,11 +233,12 @@ const Sidebar = memo(({
                                             key={item.id}
                                             onClick={() => onNavigate(item.route)}
                                             onMouseEnter={() => prefetchRoute(item.route)}
-                                            title={isCollapsed ? t(item.labelKey) : ''}
+                                            title={isCollapsed ? t(item.labelKey) : undefined}
+                                            aria-current={isActive ? 'page' : undefined}
                                             className={`
-                                                w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative
-                                                ${isActive 
-                                                    ? 'bg-gradient-to-r from-indigo-50 to-transparent dark:from-indigo-900/20 text-indigo-700 dark:text-indigo-300 shadow-sm border-l-4 border-indigo-500' 
+                                                w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
+                                                ${isActive
+                                                    ? 'bg-gradient-to-r from-indigo-50 to-transparent dark:from-indigo-900/20 text-indigo-700 dark:text-indigo-300 shadow-sm border-l-4 border-indigo-500'
                                                     : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] border-l-4 border-transparent'}
                                             `}
                                         >
@@ -247,7 +253,7 @@ const Sidebar = memo(({
                                             )}
                                             
                                             {isCollapsed && (
-                                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-slate-800 text-white text-xs2 font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl transition-opacity delay-75">
+                                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-slate-800 text-white text-xs2 font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl transition-opacity delay-75" aria-hidden="true">
                                                     {t(item.labelKey)}
                                                 </div>
                                             )}
@@ -264,9 +270,9 @@ const Sidebar = memo(({
             {/* 3. Footer Controls */}
             <div className="p-3 border-t border-[var(--glass-border)] space-y-2 shrink-0 bg-[var(--bg-surface)] z-20 rounded-b-[24px]">
                 <div className={`grid ${isCollapsed ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
-                    <button 
-                        onClick={onToggleTheme} 
-                        className="flex items-center justify-center p-2.5 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors border border-transparent hover:border-[var(--glass-border)] group relative"
+                    <button
+                        onClick={onToggleTheme}
+                        className="flex items-center justify-center min-h-[44px] p-2.5 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 group relative"
                         title={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
                         aria-label={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
                     >
@@ -276,9 +282,9 @@ const Sidebar = memo(({
                         {!isCollapsed && <span className="sr-only">{t('nav.mode_switch')}</span>}
                     </button>
 
-                    <button 
-                        onClick={onToggleLang} 
-                        className="flex items-center justify-center p-2.5 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors border border-transparent hover:border-[var(--glass-border)] group"
+                    <button
+                        onClick={onToggleLang}
+                        className="flex items-center justify-center min-h-[44px] p-2.5 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 group"
                         title={t('nav.lang_switch')}
                         aria-label={t('nav.lang_switch')}
                     >
@@ -288,9 +294,9 @@ const Sidebar = memo(({
                     </button>
                 </div>
 
-                <button 
+                <button
                     onClick={onLogoutClick}
-                    className={`w-full flex items-center justify-center p-2.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors border border-transparent hover:border-rose-100 cursor-pointer ${!isCollapsed ? 'gap-2' : ''}`}
+                    className={`w-full flex items-center justify-center min-h-[44px] p-2.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors border border-transparent hover:border-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer ${!isCollapsed ? 'gap-2' : ''}`}
                     title={t('menu.logout')}
                     aria-label={t('menu.logout')}
                 >
@@ -399,7 +405,12 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                 aria-hidden="true"
             />
             
-            <div className={`fixed inset-y-0 left-0 w-72 bg-[var(--bg-surface)] shadow-2xl z-[101] md:hidden transition-transform duration-300 ease-out transform flex flex-col no-scrollbar ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div
+                className={`fixed inset-y-0 left-0 w-72 bg-[var(--bg-surface)] shadow-2xl z-[101] md:hidden transition-transform duration-300 ease-out transform flex flex-col no-scrollbar ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                role="dialog"
+                aria-modal="true"
+                aria-label={t('common.menu')}
+            >
                 <Sidebar 
                     {...sidebarProps} 
                     isMobile={true} 
