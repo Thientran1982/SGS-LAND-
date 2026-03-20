@@ -519,6 +519,7 @@ export const Leads: React.FC = () => {
     const [totalItems, setTotalItems] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
     const [serverStats, setServerStats] = useState({ total: 0, newCount: 0, wonCount: 0, lostCount: 0, avgScore: 0, winRate: 0 });
+    const [currentUser, setCurrentUser] = useState<any>(null);
     
     // Refs for drag-to-scroll
     const boardRef = useRef<HTMLDivElement>(null);
@@ -617,6 +618,7 @@ export const Leads: React.FC = () => {
 
     useEffect(() => {
         fetchLeads();
+        db.getCurrentUser().then(setCurrentUser);
         db.getListings(1, 100).then(res => setListings(res.data));
         db.getTenantUsers(1, 100).then(res => {
             setUsers([
@@ -889,6 +891,8 @@ export const Leads: React.FC = () => {
 
     // Calculate Metrics
     const metrics = serverStats;
+    const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
+    const isScopedView = currentUser && RESTRICTED_ROLES.includes(currentUser.role);
 
     return (
         <div className="h-full flex flex-col relative">
@@ -992,13 +996,21 @@ export const Leads: React.FC = () => {
 
             {/* Metrics Bar — compact */}
             <div ref={metricsRef} className="px-4 md:px-6 py-2 flex gap-1 md:gap-0 items-center border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/60 flex-none overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing divide-x divide-[var(--glass-border)]">
+                {/* Scope badge — shown when the user sees their own data only */}
+                {isScopedView && (
+                    <div className="flex items-center pr-3 md:pr-4 shrink-0">
+                        <span className="text-xs2 font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1 whitespace-nowrap">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            {t('leads.scope_mine') || 'Dữ liệu của bạn'}
+                        </span>
+                    </div>
+                )}
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0 first:pl-0">
                     <div className="p-1 bg-blue-50 text-blue-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.total_leads') || 'Tổng Lead'}</span>
                     <span className="text-sm font-black text-[var(--text-primary)]">{metrics.total}</span>
-                    <span className="text-xs2 font-semibold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-full hidden md:inline">+12%</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0">
                     <div className="p-1 bg-indigo-50 text-indigo-500 rounded-md shrink-0">
