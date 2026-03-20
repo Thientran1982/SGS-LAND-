@@ -137,6 +137,8 @@ export const ProductSearch: React.FC = () => {
     const [pageSize] = useState(20);
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
+    const [fetchError, setFetchError] = useState(false);
+    const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>(() => {
         try { return (localStorage.getItem('sgs_public_view') as ViewMode) || 'GRID'; } catch { return 'GRID'; }
@@ -149,6 +151,7 @@ export const ProductSearch: React.FC = () => {
     useDraggableScroll(boardContainerRef, viewMode);
 
     const [query, setQuery] = useState('');
+    const [debouncedQuery, setDebouncedQuery] = useState('');
     const [selectedType, setSelectedType] = useState('ALL');
     const [selectedTransaction, setSelectedTransaction] = useState('ALL');
     const [selectedLocation, setSelectedLocation] = useState('ALL');
@@ -157,6 +160,11 @@ export const ProductSearch: React.FC = () => {
     const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
 
     useEffect(() => { localStorage.setItem('sgs_public_view', viewMode); }, [viewMode]);
+
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedQuery(query), 300);
+        return () => clearTimeout(t);
+    }, [query]);
 
     useEffect(() => {
         const hash = window.location.hash;
@@ -169,8 +177,13 @@ export const ProductSearch: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        return () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); };
+    }, []);
+
+    useEffect(() => {
         const load = async () => {
             setLoading(true);
+            setFetchError(false);
             try {
                 const user = await db.getCurrentUser();
                 setCurrentUser(user);
@@ -187,6 +200,7 @@ export const ProductSearch: React.FC = () => {
                 }
             } catch (e) {
                 console.error(e);
+                setFetchError(true);
             } finally {
                 setLoading(false);
             }
@@ -201,7 +215,7 @@ export const ProductSearch: React.FC = () => {
     const filteredListings = useMemo(() => {
         return listings.filter(l => {
             const typeStr = t(`property.${l.type.toUpperCase()}`) || '';
-            const matchesQuery = smartMatch((l.title || '') + ' ' + (l.location || '') + ' ' + (l.code || '') + ' ' + typeStr, query);
+            const matchesQuery = smartMatch((l.title || '') + ' ' + (l.location || '') + ' ' + (l.code || '') + ' ' + typeStr, debouncedQuery);
             const matchesType = selectedType === 'ALL' || l.type === selectedType;
             const matchesTrans = selectedTransaction === 'ALL' || l.transaction === selectedTransaction;
             const matchesLoc = selectedLocation === 'ALL' || (l.location || '').includes(selectedLocation);
@@ -217,7 +231,7 @@ export const ProductSearch: React.FC = () => {
 
             return matchesQuery && matchesType && matchesTrans && matchesLoc && matchesPrice && matchesFav && matchesVerified;
         });
-    }, [listings, query, selectedType, selectedTransaction, selectedLocation, priceFilter, showFavoritesOnly, showVerifiedOnly, favorites, t]);
+    }, [listings, debouncedQuery, selectedType, selectedTransaction, selectedLocation, priceFilter, showFavoritesOnly, showVerifiedOnly, favorites, t]);
 
     const paginatedListings = useMemo(() => {
         const start = (page - 1) * pageSize;
@@ -226,7 +240,7 @@ export const ProductSearch: React.FC = () => {
 
     const totalPages = Math.ceil(filteredListings.length / pageSize);
 
-    useEffect(() => { setPage(1); }, [query, selectedType, selectedTransaction, selectedLocation, priceFilter, showFavoritesOnly, showVerifiedOnly]);
+    useEffect(() => { setPage(1); }, [debouncedQuery, selectedType, selectedTransaction, selectedLocation, priceFilter, showFavoritesOnly, showVerifiedOnly]);
 
     const handleToggleFavorite = async (id: string) => {
         const isFav = favorites.has(id);
@@ -235,7 +249,8 @@ export const ProductSearch: React.FC = () => {
         setFavorites(newSet);
 
         setToast({ msg: isFav ? t('favorites.removed') || "Đã xóa khỏi yêu thích" : t('favorites.added') || "Đã thêm vào yêu thích", type: 'success' });
-        setTimeout(() => setToast(null), 2000);
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = setTimeout(() => setToast(null), 2000);
 
         if (currentUser) {
             try {
@@ -273,6 +288,7 @@ export const ProductSearch: React.FC = () => {
 
     const clearFilters = () => {
         setQuery('');
+        setDebouncedQuery('');
         setSelectedType('ALL');
         setSelectedTransaction('ALL');
         setSelectedLocation('ALL');
@@ -401,15 +417,29 @@ export const ProductSearch: React.FC = () => {
                 </div>
             </div>
 
+            {/* FETCH ERROR */}
+            {fetchError && (
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
+                    <svg className="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                    <p className="text-slate-500 font-medium text-center">{t('common.error_loading') || 'Không thể tải dữ liệu. Vui lòng thử lại.'}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors text-sm"
+                    >
+                        {t('common.retry') || 'Thử lại'}
+                    </button>
+                </div>
+            )}
+
             {/* CONTENT VIEWPORT */}
-            <div className="flex-1 overflow-hidden relative flex flex-col">
+            {!fetchError && <div className="flex-1 overflow-hidden relative flex flex-col">
 
                 {/* MAP VIEW — rendered outside overflow-y-auto so Leaflet gets a real height */}
                 {viewMode === 'MAP' && (
                     <div className="flex-1 min-h-0 p-4 md:p-6">
                         <div className="h-full w-full relative z-0 rounded-[24px] overflow-hidden shadow-sm border border-[var(--glass-border)]">
                             <MapView
-                                listings={filteredListings}
+                                listings={filteredListings.slice(0, 1000)}
                                 onNavigate={handleNavigate}
                                 formatCurrency={formatCurrency}
                                 formatUnitPrice={formatUnitPrice}
@@ -553,7 +583,7 @@ export const ProductSearch: React.FC = () => {
                                                         <td className="px-4 py-4 text-right text-xs3 font-bold text-indigo-600">
                                                             {item.area > 0 && item.type !== PropertyType.PROJECT ? formatUnitPrice(item.price, item.area, t) : '--'}
                                                         </td>
-                                                        <td className="px-4 py-4 text-right text-sm text-[var(--text-secondary)] whitespace-nowrap">{item.area} m²</td>
+                                                        <td className="px-4 py-4 text-right text-sm text-[var(--text-secondary)] whitespace-nowrap">{item.area > 0 ? `${item.area} m²` : '--'}</td>
                                                         <td className="px-4 py-4 hidden lg:table-cell text-sm text-[var(--text-secondary)] max-w-[200px] truncate" title={item.location}>{item.location}</td>
                                                         <td className="px-4 py-4 hidden xl:table-cell">
                                                             <span className="px-2 py-1 rounded bg-[var(--glass-surface-hover)] text-xs2 font-bold text-[var(--text-tertiary)] uppercase whitespace-nowrap">
@@ -595,7 +625,7 @@ export const ProductSearch: React.FC = () => {
                                             key={item.id} 
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
-                                            transition={{ duration: 0.3, delay: index * 0.05 }}
+                                            transition={{ duration: 0.3, delay: Math.min(index, 8) * 0.05 }}
                                             onClick={() => handleNavigate(item.id)}
                                             className="bg-[var(--bg-surface)] p-3 rounded-2xl border border-[var(--glass-border)] shadow-sm flex gap-3 active:scale-95 transition-transform cursor-pointer relative"
                                         >
@@ -617,7 +647,7 @@ export const ProductSearch: React.FC = () => {
                                                                 {formatSmartPrice(item.price, t)}
                                                             </div>
                                                             <div className="text-xs2 text-slate-400 mt-0.5 font-medium">
-                                                                {item.area} m²{item.bedrooms ? ` • ${item.bedrooms} PN` : ''}{item.area > 0 && item.type !== PropertyType.PROJECT ? ` • ${formatUnitPrice(item.price, item.area, t)}` : ''}
+                                                                {item.area > 0 ? `${item.area} m²` : ''}{item.bedrooms ? ` • ${item.bedrooms} PN` : ''}{item.area > 0 && item.type !== PropertyType.PROJECT ? ` • ${formatUnitPrice(item.price, item.area, t)}` : ''}
                                                             </div>
                                                         </div>
                                                         <span className="text-2xs font-bold uppercase bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-2 py-1 rounded-lg border border-[var(--glass-border)]">
@@ -690,9 +720,9 @@ export const ProductSearch: React.FC = () => {
                                                                     <span className="text-3xs opacity-80 font-medium">{formatUnitPrice(item.price, item.area, t)}</span>
                                                                 )}
                                                             </div>
-                                                            <button 
+                                                            <button
                                                                 onClick={(e) => { e.stopPropagation(); handleToggleFavorite(item.id); }}
-                                                                className="absolute top-2 left-2 p-1.5 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm text-white z-20 transition-colors"
+                                                                className="absolute top-2 left-2 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm text-white z-20 transition-colors"
                                                             >
                                                                 {isFav ? ICONS.HEART_FILLED : ICONS.HEART_OUTLINE}
                                                             </button>
@@ -725,7 +755,7 @@ export const ProductSearch: React.FC = () => {
                         </div>
                     )}
                 </div>
-            </div>
+            </div>}
         </div>
     );
 };
