@@ -331,7 +331,8 @@ export interface Listing {
     holdExpiresAt?: ISOString;
     images?: string[];
     projectCode?: string;
-    
+    projectId?: UUID; // FK to projects.id (B2B2C: scoped listing access via project_access)
+
     // Contact Info
     contactPhone?: string; // Explicit contact number for this listing
 

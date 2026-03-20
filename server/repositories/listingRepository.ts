@@ -16,9 +16,187 @@ export interface ListingFilters {
   isVerified?: boolean;
 }
 
+const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
+
 export class ListingRepository extends BaseRepository {
   constructor() {
     super('listings');
+  }
+
+  /** Build filter conditions (shared between standard and partner queries). */
+  private buildFilterConditions(
+    filters: ListingFilters | undefined,
+    startIndex: number
+  ): { conditions: string[]; values: any[]; nextIndex: number } {
+    const conditions: string[] = [];
+    const values: any[] = [];
+    let paramIndex = startIndex;
+
+    if (filters?.type) { conditions.push(`type = $${paramIndex++}`); values.push(filters.type); }
+    if (filters?.type_in?.length) {
+      const ph = filters.type_in.map((_, i) => `$${paramIndex + i}`).join(', ');
+      conditions.push(`type IN (${ph})`);
+      values.push(...filters.type_in);
+      paramIndex += filters.type_in.length;
+    }
+    if (filters?.status) { conditions.push(`status = $${paramIndex++}`); values.push(filters.status); }
+    if (filters?.status_in?.length) {
+      const ph = filters.status_in.map((_, i) => `$${paramIndex + i}`).join(', ');
+      conditions.push(`status IN (${ph})`);
+      values.push(...filters.status_in);
+      paramIndex += filters.status_in.length;
+    }
+    if (filters?.transaction) { conditions.push(`transaction = $${paramIndex++}`); values.push(filters.transaction); }
+    if (filters?.price_gte !== undefined) { conditions.push(`price >= $${paramIndex++}`); values.push(filters.price_gte); }
+    if (filters?.price_lte !== undefined) { conditions.push(`price <= $${paramIndex++}`); values.push(filters.price_lte); }
+    if (filters?.area_gte !== undefined) { conditions.push(`area >= $${paramIndex++}`); values.push(filters.area_gte); }
+    if (filters?.area_lte !== undefined) { conditions.push(`area <= $${paramIndex++}`); values.push(filters.area_lte); }
+    if (filters?.bedrooms_gte !== undefined) { conditions.push(`bedrooms >= $${paramIndex++}`); values.push(filters.bedrooms_gte); }
+    if (filters?.projectCode) { conditions.push(`project_code = $${paramIndex++}`); values.push(filters.projectCode); }
+    if (filters?.isVerified !== undefined) { conditions.push(`is_verified = $${paramIndex++}`); values.push(filters.isVerified); }
+    if (filters?.search) {
+      conditions.push(`(title ILIKE $${paramIndex} OR location ILIKE $${paramIndex} OR code ILIKE $${paramIndex})`);
+      values.push(`%${filters.search}%`);
+      paramIndex++;
+    }
+
+    return { conditions, values, nextIndex: paramIndex };
+  }
+
+  /** Compute stats row from a raw result. */
+  private computeStats(rows: any[]) {
+    const counts = { available: 0, hold: 0, sold: 0, rented: 0, booking: 0, opening: 0, inactive: 0 };
+    for (const r of rows) {
+      const s = (r.status || '').toUpperCase();
+      if (s === 'AVAILABLE') counts.available++;
+      else if (s === 'HOLD') counts.hold++;
+      else if (s === 'SOLD') counts.sold++;
+      else if (s === 'RENTED') counts.rented++;
+      else if (s === 'BOOKING') counts.booking++;
+      else if (s === 'OPENING') counts.opening++;
+      else if (s === 'INACTIVE') counts.inactive++;
+    }
+    return {
+      availableCount: counts.available, holdCount: counts.hold, soldCount: counts.sold,
+      rentedCount: counts.rented, bookingCount: counts.booking, openingCount: counts.opening,
+      inactiveCount: counts.inactive, totalCount: rows.length,
+    };
+  }
+
+  /**
+   * Find listings accessible to a PARTNER tenant.
+   * Returns only listings whose project_id is in an ACTIVE project_access grant for partnerTenantId.
+   * Sensitive internal fields (ownerPhone, ownerName, commission) are redacted.
+   */
+  async findListingsForPartner(
+    partnerTenantId: string,
+    pagination: PaginationParams,
+    filters?: ListingFilters
+  ): Promise<PaginatedResult<any>> {
+    const { pool } = await import('../db');
+
+    const empty: PaginatedResult<any> = {
+      data: [], total: 0, page: pagination.page, pageSize: pagination.pageSize, totalPages: 0,
+      stats: { availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0, inactiveCount: 0, totalCount: 0 },
+    };
+
+    // Resolve accessible project IDs (cross-tenant — no RLS context needed)
+    const accessResult = await pool.query(
+      `SELECT pa.project_id
+       FROM project_access pa
+       JOIN projects p ON p.id = pa.project_id
+       WHERE pa.partner_tenant_id = $1
+         AND pa.status = 'ACTIVE'
+         AND (pa.expires_at IS NULL OR pa.expires_at > NOW())
+         AND p.status = 'ACTIVE'`,
+      [partnerTenantId]
+    );
+
+    if (accessResult.rows.length === 0) return empty;
+    const projectIds = accessResult.rows.map((r: any) => r.project_id);
+
+    // Start conditions: listings must belong to an accessible project
+    const conditions: string[] = [`project_id = ANY($1)`];
+    const baseValues: any[] = [projectIds];
+
+    const { conditions: filterConds, values: filterValues, nextIndex } =
+      this.buildFilterConditions(filters, 2);
+
+    const allConditions = [...conditions, ...filterConds];
+    const allValues = [...baseValues, ...filterValues];
+    const whereClause = `WHERE ${allConditions.join(' AND ')}`;
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS total FROM listings ${whereClause}`,
+      allValues
+    );
+    const total = countResult.rows[0].total;
+
+    const dataResult = await pool.query(
+      `SELECT id, tenant_id, code, title, location, price, currency, area, bedrooms, bathrooms,
+              type, status, transaction, attributes, images, project_code, project_id,
+              contact_phone, coordinates, is_verified, view_count, booking_count,
+              total_units, available_units, hold_expires_at, created_by, authorized_agents,
+              created_at, updated_at
+       FROM listings ${whereClause}
+       ORDER BY created_at DESC
+       LIMIT $${nextIndex} OFFSET $${nextIndex + 1}`,
+      [...allValues, pagination.pageSize, (pagination.page - 1) * pagination.pageSize]
+    );
+
+    // Redact sensitive internal fields for partners
+    const data = this.rowsToEntities(dataResult.rows).map((l: any) => ({
+      ...l,
+      ownerName: undefined,
+      ownerPhone: undefined,
+      commission: undefined,
+      commissionUnit: undefined,
+    }));
+
+    return {
+      data,
+      total,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      totalPages: Math.ceil(total / pagination.pageSize),
+      stats: this.computeStats(dataResult.rows),
+    };
+  }
+
+  /**
+   * Find a single listing by ID for a PARTNER tenant.
+   * Returns null if listing has no project_id or the partner has no active grant for that project.
+   */
+  async findByIdForPartner(partnerTenantId: string, listingId: string): Promise<any | null> {
+    const { pool } = await import('../db');
+
+    const result = await pool.query(
+      `SELECT l.id, l.tenant_id, l.code, l.title, l.location, l.price, l.currency,
+              l.area, l.bedrooms, l.bathrooms, l.type, l.status, l.transaction,
+              l.attributes, l.images, l.project_code, l.project_id,
+              l.contact_phone, l.coordinates, l.is_verified, l.view_count, l.booking_count,
+              l.total_units, l.available_units, l.hold_expires_at, l.created_by, l.authorized_agents,
+              l.created_at, l.updated_at
+       FROM listings l
+       JOIN project_access pa ON pa.project_id = l.project_id
+       WHERE l.id = $1
+         AND pa.partner_tenant_id = $2
+         AND pa.status = 'ACTIVE'
+         AND (pa.expires_at IS NULL OR pa.expires_at > NOW())`,
+      [listingId, partnerTenantId]
+    );
+
+    if (!result.rows[0]) return null;
+
+    const listing = this.rowToEntity<any>(result.rows[0]);
+    // Redact sensitive internal fields unless partner agent is explicitly authorized
+    return {
+      ...listing,
+      ownerName: undefined,
+      ownerPhone: undefined,
+      commission: undefined,
+      commissionUnit: undefined,
+    };
   }
 
   async findListings(
@@ -39,63 +217,11 @@ export class ListingRepository extends BaseRepository {
         values.push(userId);
       }
 
-      if (filters?.type) {
-        conditions.push(`type = $${paramIndex++}`);
-        values.push(filters.type);
-      }
-      if (filters?.type_in?.length) {
-        const ph = filters.type_in.map((_, i) => `$${paramIndex + i}`).join(', ');
-        conditions.push(`type IN (${ph})`);
-        values.push(...filters.type_in);
-        paramIndex += filters.type_in.length;
-      }
-      if (filters?.status) {
-        conditions.push(`status = $${paramIndex++}`);
-        values.push(filters.status);
-      }
-      if (filters?.status_in?.length) {
-        const ph = filters.status_in.map((_, i) => `$${paramIndex + i}`).join(', ');
-        conditions.push(`status IN (${ph})`);
-        values.push(...filters.status_in);
-        paramIndex += filters.status_in.length;
-      }
-      if (filters?.transaction) {
-        conditions.push(`transaction = $${paramIndex++}`);
-        values.push(filters.transaction);
-      }
-      if (filters?.price_gte !== undefined) {
-        conditions.push(`price >= $${paramIndex++}`);
-        values.push(filters.price_gte);
-      }
-      if (filters?.price_lte !== undefined) {
-        conditions.push(`price <= $${paramIndex++}`);
-        values.push(filters.price_lte);
-      }
-      if (filters?.area_gte !== undefined) {
-        conditions.push(`area >= $${paramIndex++}`);
-        values.push(filters.area_gte);
-      }
-      if (filters?.area_lte !== undefined) {
-        conditions.push(`area <= $${paramIndex++}`);
-        values.push(filters.area_lte);
-      }
-      if (filters?.bedrooms_gte !== undefined) {
-        conditions.push(`bedrooms >= $${paramIndex++}`);
-        values.push(filters.bedrooms_gte);
-      }
-      if (filters?.projectCode) {
-        conditions.push(`project_code = $${paramIndex++}`);
-        values.push(filters.projectCode);
-      }
-      if (filters?.isVerified !== undefined) {
-        conditions.push(`is_verified = $${paramIndex++}`);
-        values.push(filters.isVerified);
-      }
-      if (filters?.search) {
-        conditions.push(`(title ILIKE $${paramIndex} OR location ILIKE $${paramIndex} OR code ILIKE $${paramIndex})`);
-        values.push(`%${filters.search}%`);
-        paramIndex++;
-      }
+      const { conditions: filterConds, values: filterValues, nextIndex } =
+        this.buildFilterConditions(filters, paramIndex);
+      conditions.push(...filterConds);
+      values.push(...filterValues);
+      paramIndex = nextIndex;
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 

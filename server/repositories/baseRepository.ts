@@ -12,6 +12,7 @@ export interface PaginatedResult<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+  stats?: Record<string, number>;
 }
 
 export class BaseRepository {
