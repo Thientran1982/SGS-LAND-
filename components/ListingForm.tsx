@@ -62,6 +62,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [uploadError, setUploadError] = useState<string>('');
     const [isDragging, setIsDragging] = useState(false);
     const [dragIdx, setDragIdx] = useState<number | null>(null);
     
@@ -125,15 +126,17 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         const imageFiles = files.filter(f => f.type.startsWith('image/'));
         if (imageFiles.length === 0) return;
 
+        setUploadError('');
+
         if (images.length + imageFiles.length > 10) {
-            alert(t('inventory.max_images'));
+            setUploadError(t('inventory.max_images') || 'Tối đa 10 ảnh');
             return;
         }
 
         const MAX_SIZE = 10 * 1024 * 1024;
         const oversized = imageFiles.find(f => f.size > MAX_SIZE);
         if (oversized) {
-            alert(t('profile.error_file_size') || 'File too large (max 10MB)');
+            setUploadError(t('profile.error_file_size') || 'File quá lớn (tối đa 10MB)');
             return;
         }
 
@@ -143,7 +146,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             const urls = result.files.map(f => f.url);
             setImages(prev => [...prev, ...urls]);
         } catch (err: any) {
-            alert(err.message || t('common.error'));
+            setUploadError(err.message || t('common.error'));
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -567,8 +570,9 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             </div>
                                         </div>
                                         {/* Real-time Raw Value Preview */}
+                                        {errors.price && <p className="text-xs2 text-rose-500 mt-1">{errors.price}</p>}
                                         <div className="text-xs2 text-[var(--text-secondary)] font-mono mt-1 text-right truncate">
-                                            = {formatCurrency(parseFloat(priceShort || '0') * priceUnit)}
+                                            = {formatCurrency((isNaN(parseFloat(priceShort)) ? 0 : parseFloat(priceShort)) * priceUnit)}
                                         </div>
                                     </div>
                                     <div className="col-span-2 sm:col-span-1">
@@ -582,6 +586,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             />
                                             <span className="absolute right-3 inset-y-0 flex items-center pointer-events-none text-xs text-[var(--text-secondary)] font-bold">m²</span>
                                         </div>
+                                        {errors.area && <p className="text-xs2 text-rose-500 mt-1">{errors.area}</p>}
                                     </div>
                                 </div>
 
@@ -652,6 +657,15 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wide">{t('inventory.label_images')}</h4>
                                     <span className="text-xs2 text-[var(--text-secondary)] font-bold bg-[var(--glass-surface-hover)] px-2 py-1 rounded">{t('inventory.files_selected', {count: images.length})}</span>
                                 </div>
+                                {uploadError && (
+                                    <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-600 font-medium">
+                                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                        <span>{uploadError}</span>
+                                        <button onClick={() => setUploadError('')} className="ml-auto text-rose-400 hover:text-rose-600 shrink-0">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    </div>
+                                )}
                                 <div className="grid grid-cols-3 gap-3 mb-4 max-h-[240px] overflow-y-auto no-scrollbar">
                                     {images.map((img, idx) => (
                                         <div 
