@@ -198,7 +198,7 @@ export const Billing: React.FC = () => {
             {invoices.length > 0 && (
                 <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('billing.date')} — Lịch sử hóa đơn</h3>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto no-scrollbar">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">

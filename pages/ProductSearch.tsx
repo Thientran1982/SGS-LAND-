@@ -515,7 +515,7 @@ export const ProductSearch: React.FC = () => {
                     {viewMode === 'LIST' && (
                         <>
                             <div className="hidden md:block max-w-[1920px] mx-auto bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
-                                <div className="overflow-x-auto">
+                                <div className="overflow-x-auto no-scrollbar">
                                     <table className="w-full text-left border-collapse">
                                         <thead className="bg-[var(--glass-surface)]/80 border-b border-[var(--glass-border)] text-xs font-bold text-[var(--text-tertiary)] uppercase">
                                             <tr>
