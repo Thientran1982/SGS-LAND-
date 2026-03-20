@@ -19,41 +19,53 @@ export default {
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       fontSize: {
-        // Custom micro sizes (unchanged)
-        '3xs': ['8px',  { lineHeight: '12px' }],
-        '2xs': ['9px',  { lineHeight: '13px' }],
-        'xs2': ['10px', { lineHeight: '14px' }],
-        'xs3': ['11px', { lineHeight: '15px' }],
-        // Override Tailwind defaults — reduce each step by ~1-4px
-        'xs':   ['11px', { lineHeight: '15px' }],   // was 12px
-        'sm':   ['12px', { lineHeight: '17px' }],   // was 14px
-        'base': ['13px', { lineHeight: '19px' }],   // was 16px
-        'lg':   ['15px', { lineHeight: '21px' }],   // was 18px
-        'xl':   ['17px', { lineHeight: '23px' }],   // was 20px
-        '2xl':  ['20px', { lineHeight: '27px' }],   // was 24px
-        '3xl':  ['24px', { lineHeight: '30px' }],   // was 30px
-        '4xl':  ['28px', { lineHeight: '34px' }],   // was 36px
-        '5xl':  ['36px', { lineHeight: '42px' }],   // was 48px
-        '6xl':  ['44px', { lineHeight: '50px' }],   // was 60px
+        // Custom micro sizes
+        '3xs': ['7px',  { lineHeight: '11px' }],
+        '2xs': ['8px',  { lineHeight: '12px' }],
+        'xs2': ['9px',  { lineHeight: '13px' }],
+        'xs3': ['10px', { lineHeight: '14px' }],
+        // Compact scale — each step 1-2px smaller than previous sprint
+        'xs':   ['10px', { lineHeight: '14px' }],   // was 11px
+        'sm':   ['11px', { lineHeight: '16px' }],   // was 12px
+        'base': ['12px', { lineHeight: '18px' }],   // was 13px
+        'lg':   ['14px', { lineHeight: '20px' }],   // was 15px
+        'xl':   ['16px', { lineHeight: '22px' }],   // was 17px
+        '2xl':  ['19px', { lineHeight: '26px' }],   // was 20px
+        '3xl':  ['22px', { lineHeight: '28px' }],   // was 24px
+        '4xl':  ['26px', { lineHeight: '32px' }],   // was 28px
+        '5xl':  ['32px', { lineHeight: '38px' }],   // was 36px
+        '6xl':  ['40px', { lineHeight: '46px' }],   // was 44px
       },
       colors: {
-        surface: 'var(--bg-surface)',
+        surface:          'var(--bg-surface)',
         'surface-elevated': 'var(--bg-elevated)',
-        'app-bg': 'var(--bg-app)',
+        'app-bg':         'var(--bg-app)',
+        sidebar:          'var(--bg-sidebar)',
+        input:            'var(--bg-input)',
         primary: {
           DEFAULT: 'var(--primary-600)',
-          600: 'var(--primary-600)',
+          600:     'var(--primary-600)',
+          hover:   'var(--primary-hover)',
+          subtle:  'var(--primary-subtle)',
         },
-        'text-primary': 'var(--text-primary)',
+        'text-primary':   'var(--text-primary)',
         'text-secondary': 'var(--text-secondary)',
-        'text-tertiary': 'var(--text-tertiary)',
-        'text-muted': 'var(--text-muted)',
+        'text-tertiary':  'var(--text-tertiary)',
+        'text-muted':     'var(--text-muted)',
+        'text-inverse':   'var(--text-inverse)',
         'status-success': 'var(--color-success)',
         'status-warning': 'var(--color-warning)',
-        'status-danger': 'var(--color-danger)',
-        'status-info': 'var(--color-info)',
-        'glass': 'var(--glass-surface)',
-        'glass-border': 'var(--glass-border)',
+        'status-danger':  'var(--color-danger)',
+        'status-info':    'var(--color-info)',
+        'glass':          'var(--glass-surface)',
+        'glass-border':   'var(--glass-border)',
+        'border-default': 'var(--border-default)',
+        'border-strong':  'var(--border-strong)',
+      },
+      boxShadow: {
+        'token-sm': 'var(--shadow-sm)',
+        'token-md': 'var(--shadow-md)',
+        'token-lg': 'var(--shadow-lg)',
       },
       animation: {
         'scale-up': 'scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
