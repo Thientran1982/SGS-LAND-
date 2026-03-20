@@ -19,10 +19,22 @@ export default {
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       fontSize: {
-        '3xs': ['8px', { lineHeight: '12px' }],
-        '2xs': ['9px', { lineHeight: '13px' }],
+        // Custom micro sizes (unchanged)
+        '3xs': ['8px',  { lineHeight: '12px' }],
+        '2xs': ['9px',  { lineHeight: '13px' }],
         'xs2': ['10px', { lineHeight: '14px' }],
         'xs3': ['11px', { lineHeight: '15px' }],
+        // Override Tailwind defaults — reduce each step by ~1-4px
+        'xs':   ['11px', { lineHeight: '15px' }],   // was 12px
+        'sm':   ['12px', { lineHeight: '17px' }],   // was 14px
+        'base': ['13px', { lineHeight: '19px' }],   // was 16px
+        'lg':   ['15px', { lineHeight: '21px' }],   // was 18px
+        'xl':   ['17px', { lineHeight: '23px' }],   // was 20px
+        '2xl':  ['20px', { lineHeight: '27px' }],   // was 24px
+        '3xl':  ['24px', { lineHeight: '30px' }],   // was 30px
+        '4xl':  ['28px', { lineHeight: '34px' }],   // was 36px
+        '5xl':  ['36px', { lineHeight: '42px' }],   // was 48px
+        '6xl':  ['44px', { lineHeight: '50px' }],   // was 60px
       },
       colors: {
         surface: 'var(--bg-surface)',
