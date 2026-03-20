@@ -543,6 +543,7 @@ export const Inventory: React.FC = () => {
     const [stats, setStats] = useState({ availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0, inactiveCount: 0, totalCount: 0 });
     const [allFilteredListings, setAllFilteredListings] = useState<Listing[]>([]); // For Kanban board
     const [loading, setLoading] = useState(true);
+    const [boardLoading, setBoardLoading] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
     
     // Filters & Pagination State
@@ -617,12 +618,15 @@ export const Inventory: React.FC = () => {
 
     const fetchBoardData = useCallback(async () => {
         if (viewMode !== 'BOARD' && viewMode !== 'MAP') { setAllFilteredListings([]); return; }
+        setBoardLoading(true);
         try {
             const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter };
             const allRes = await db.getListings(1, 500, filters);
             setAllFilteredListings(allRes.data || []);
         } catch (e) {
             console.error(e);
+        } finally {
+            setBoardLoading(false);
         }
     }, [viewMode, debouncedSearch, typeFilter, statusFilter, transactionFilter]);
 
@@ -903,7 +907,7 @@ export const Inventory: React.FC = () => {
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_unit_price') || 'Đơn giá'}</th>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_area')}</th>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-center">{t('inventory.label_status')}</th>
-                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right sticky right-0 z-30 bg-[var(--glass-surface)] shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] border-l border-[var(--glass-border)]">{t('common.actions')}</th>
+                                                {canViewInternalInfo && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right sticky right-0 z-30 bg-[var(--glass-surface)] shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] border-l border-[var(--glass-border)]">{t('common.actions')}</th>}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
@@ -929,7 +933,7 @@ export const Inventory: React.FC = () => {
                                                         <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-16 ml-auto" /></td>
                                                         <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-12 ml-auto" /></td>
                                                         <td className="px-4 py-3"><div className="h-5 bg-slate-100 animate-pulse rounded-full w-16 mx-auto" /></td>
-                                                        <td className="px-3 py-3 sticky right-0 bg-[var(--bg-surface)]"><div className="w-6 h-6 rounded-lg bg-slate-100 animate-pulse ml-auto" /></td>
+                                                        {canViewInternalInfo && <td className="px-3 py-3 sticky right-0 bg-[var(--bg-surface)]"><div className="w-6 h-6 rounded-lg bg-slate-100 animate-pulse ml-auto" /></td>}
                                                     </tr>
                                                 ))
                                             ) : (
@@ -1029,7 +1033,7 @@ export const Inventory: React.FC = () => {
                 {/* MAP VIEW — absolute positioning for guaranteed pixel height independent of scroll/flex chain */}
                 {viewMode === 'MAP' && (
                     <div className="absolute inset-0 p-4 md:p-6" style={{ zIndex: 1 }}>
-                        <div className="w-full h-full rounded-2xl overflow-hidden border border-[var(--glass-border)] shadow-sm">
+                        <div className="w-full h-full rounded-2xl overflow-hidden border border-[var(--glass-border)] shadow-sm relative">
                             <MapView
                                 listings={allFilteredListings.length > 0 ? allFilteredListings : listings}
                                 onNavigate={handleNavigate}
@@ -1039,6 +1043,14 @@ export const Inventory: React.FC = () => {
                                 t={t}
                                 language={language}
                             />
+                            {boardLoading && (
+                                <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center rounded-2xl z-10">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
+                                        <p className="text-xs font-bold text-slate-600">{t('common.loading') || 'Đang tải...'}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -1070,7 +1082,7 @@ export const Inventory: React.FC = () => {
                                                 t={t} formatCurrency={formatCurrency}
                                             />
                                         ))}
-                                        {items.length === 0 && !loading && (
+                                        {items.length === 0 && !boardLoading && (
                                             <div className="flex flex-col items-center justify-center h-28 gap-2 text-center">
                                                 <div className={`w-9 h-9 rounded-xl ${style.bg} flex items-center justify-center`}>
                                                     <svg className={`w-5 h-5 ${style.color} opacity-50`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
