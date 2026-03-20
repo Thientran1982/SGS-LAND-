@@ -889,7 +889,7 @@ export const Inventory: React.FC = () => {
                         {viewMode === 'LIST' && (
                             <div className="bg-[var(--bg-surface)] rounded-[24px] md:border border-[var(--glass-border)] shadow-sm overflow-hidden h-full flex flex-col">
                                 <div ref={tableRef} className="overflow-auto no-scrollbar flex-1 min-w-0 w-full cursor-grab active:cursor-grabbing">
-                                    <table className="w-full text-left border-collapse relative hidden md:table">
+                                    {(loading || listings.length > 0) && <table className="w-full text-left border-collapse relative hidden md:table">
                                         <thead className="bg-[var(--glass-surface)] border-b border-[var(--glass-border)] sticky top-0 z-20 shadow-sm">
                                             <tr>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase sticky left-0 z-30 bg-[var(--glass-surface)] min-w-[200px] border-r border-[var(--glass-border)] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
@@ -952,10 +952,10 @@ export const Inventory: React.FC = () => {
                                                 ))
                                             )}
                                         </tbody>
-                                    </table>
-                                    
+                                    </table>}
+
                                     {/* Mobile Compact List */}
-                                    <div className="md:hidden flex flex-col divide-y divide-[var(--glass-border)]">
+                                    {(loading || listings.length > 0) && <div className="md:hidden flex flex-col divide-y divide-[var(--glass-border)]">
                                         {loading ? (
                                             Array.from({ length: 8 }).map((_, i) => (
                                                 <div key={i} className="flex items-center gap-3 p-3 border-b border-[var(--glass-border)]">
@@ -989,8 +989,8 @@ export const Inventory: React.FC = () => {
                                                 />
                                             ))
                                         )}
-                                    </div>
-                                    
+                                    </div>}
+
                                     {listings.length === 0 && !loading && (
                                         <div className="flex flex-col items-center gap-4 py-16 px-4 text-center">
                                             {debouncedSearch || typeFilter !== 'ALL' || statusFilter !== 'ALL' || transactionFilter !== 'ALL' ? (
@@ -1069,7 +1069,23 @@ export const Inventory: React.FC = () => {
                                         <span className="text-xs2 font-bold bg-[var(--bg-surface)] px-2 py-0.5 rounded-full text-[var(--text-tertiary)] shadow-sm border border-[var(--glass-border)]">{items.length}</span>
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
-                                        {items.map(item => (
+                                        {boardLoading ? (
+                                            [1,2,3].map(i => (
+                                                <div key={i} className="bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--glass-border)] mb-3 animate-pulse">
+                                                    <div className="flex gap-3 items-start mb-3">
+                                                        <div className="w-12 h-12 rounded-lg bg-slate-100 shrink-0" />
+                                                        <div className="flex-1 space-y-2 pt-1">
+                                                            <div className="h-2.5 bg-slate-100 rounded-full w-3/4" />
+                                                            <div className="h-2 bg-slate-100 rounded-full w-1/2" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="border-t border-slate-50 pt-2 flex justify-between">
+                                                        <div className="h-4 bg-slate-100 rounded-full w-1/2" />
+                                                        <div className="h-3 bg-slate-100 rounded-full w-1/4" />
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : items.map(item => (
                                             <InventoryKanbanCard
                                                 key={item.id} item={item}
                                                 onClick={() => handleNavigate(item.id)}

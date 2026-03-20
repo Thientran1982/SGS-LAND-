@@ -42,7 +42,8 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                 
                 if (found) {
                     setProposal(found);
-                    
+                    if (found.status === 'ACCEPTED') setAccepted(true);
+
                     const l = await db.getListingById(found.listingId);
                     if (l) setListing(l);
 
@@ -161,10 +162,12 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                             
                             <div className="flex flex-col md:flex-row justify-between items-end gap-6">
                                 <div>
-                                    <div className="flex items-baseline gap-3 mb-1">
-                                        <span className="text-sm text-slate-400 line-through decoration-slate-300">{formatCurrency(proposal.basePrice)}</span>
-                                        <span className="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded">-{formatCurrency(proposal.discountAmount)}</span>
-                                    </div>
+                                    {proposal.discountAmount > 0 && (
+                                        <div className="flex items-baseline gap-3 mb-1">
+                                            <span className="text-sm text-slate-400 line-through decoration-slate-300">{formatCurrency(proposal.basePrice)}</span>
+                                            <span className="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded">-{formatCurrency(proposal.discountAmount)}</span>
+                                        </div>
+                                    )}
                                     <div className="text-4xl md:text-5xl font-black text-[var(--text-primary)] tracking-tight">
                                         {formatSmartPrice(proposal.finalPrice, t)}
                                     </div>
