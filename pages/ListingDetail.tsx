@@ -113,9 +113,11 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
     const downPayment = price - loanAmount;
     const monthlyRate = rate / 100 / 12;
     const totalMonths = term * 12;
-    // Standard amortization formula
-    const monthlyPayment = loanAmount > 0 
-        ? (loanAmount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -totalMonths))
+    // Standard amortization formula (guard: 0% rate → divide evenly; term=0 → 0)
+    const monthlyPayment = loanAmount > 0 && term > 0
+        ? (monthlyRate === 0
+            ? loanAmount / totalMonths
+            : (loanAmount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -totalMonths)))
         : 0;
     const totalPayment = monthlyPayment * totalMonths;
     const totalInterest = totalPayment - loanAmount;
@@ -160,11 +162,11 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.term_years')}</label>
-                                    <input type="number" value={term} onChange={e => setTerm(Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500" />
+                                    <input type="number" min="1" max="50" value={term} onChange={e => setTerm(Math.max(1, Number(e.target.value)))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500" />
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.interest_rate')}</label>
-                                    <input type="number" value={rate} onChange={e => setRate(Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500" />
+                                    <input type="number" min="0" max="50" step="0.1" value={rate} onChange={e => setRate(Math.max(0, Number(e.target.value)))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500" />
                                 </div>
                             </div>
                         </div>
@@ -188,11 +190,12 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                         <div className="space-y-5">
                             <div>
                                 <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.expected_rent')}</label>
-                                <input 
-                                    type="number" 
-                                    value={monthlyRent} 
-                                    onChange={e => setMonthlyRent(Number(e.target.value))} 
-                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-emerald-500" 
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={monthlyRent}
+                                    onChange={e => setMonthlyRent(Math.max(0, Number(e.target.value)))}
+                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-emerald-500"
                                 />
                                 <div className="text-xs2 text-[var(--text-secondary)] mt-1 text-right">{formatCurrency(monthlyRent)}</div>
                             </div>
@@ -458,10 +461,10 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                 
                 fetchUnits();
                 if (fileInputRef.current) fileInputRef.current.value = '';
-                alert(t('inventory.import_success') || 'Nhập dữ liệu thành công!');
+                notify(t('inventory.import_success') || 'Nhập dữ liệu thành công!', 'success');
             } catch (error) {
                 console.error("Error importing excel:", error);
-                alert(t('inventory.import_error') || 'Có lỗi xảy ra khi nhập dữ liệu.');
+                notify(t('inventory.import_error') || 'Có lỗi xảy ra khi nhập dữ liệu.', 'error');
             }
         };
         reader.readAsArrayBuffer(file);
@@ -473,7 +476,7 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
 
     return (
         <div className="mt-8 relative">
-            {toast && <div className={`absolute top-0 right-0 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
+            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('inventory.project_units') || 'Danh sách sản phẩm thuộc dự án'}</h3>
                 {canManageUnits && (
@@ -514,8 +517,23 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
             
             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
                 {units.length === 0 ? (
-                    <div className="p-8 text-center text-[var(--text-tertiary)] text-sm">
-                        {t('inventory.empty') || 'Kho hàng trống'}
+                    <div className="flex flex-col items-center gap-4 py-16 px-6 text-center">
+                        <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                        </div>
+                        <div>
+                            <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty') || 'Kho hàng trống'}</p>
+                            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_units_hint') || 'Dự án chưa có sản phẩm nào. Thêm căn hộ/sản phẩm đầu tiên.'}</p>
+                        </div>
+                        {canManageUnits && (
+                            <button
+                                onClick={handleAddUnit}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                            >
+                                <Plus className="w-4 h-4" />
+                                {t('inventory.add_unit') || 'Thêm sản phẩm'}
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <>
@@ -531,15 +549,15 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                             <table className="w-full text-left border-collapse min-w-[900px]">
                                 <thead className="bg-[var(--glass-surface)] border-b border-[var(--glass-border)] sticky top-0 z-30">
                                     <tr>
-                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">Mã SP</th>
-                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">Loại</th>
-                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Tầng</th>
-                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Hướng</th>
-                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Diện tích</th>
-                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Đơn giá</th>
-                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">Giá</th>
-                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-center bg-[var(--glass-surface)] sticky z-20 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>Trạng thái</th>
-                                        {canManageUnits && <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)] sticky right-0 z-20" style={{ width: '90px', minWidth: '90px' }}>Thao tác</th>}
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('inventory.label_code')}</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('inventory.label_type')}</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">{t('inventory.label_floor')}</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">{t('inventory.label_direction')}</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">{t('inventory.label_area')}</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">{t('inventory.label_unit_price')}</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">{t('inventory.label_price')}</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-center bg-[var(--glass-surface)] sticky z-20 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>{t('inventory.label_status')}</th>
+                                        {canManageUnits && <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)] sticky right-0 z-20" style={{ width: '90px', minWidth: '90px' }}>{t('common.actions')}</th>}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
@@ -767,19 +785,16 @@ export const ListingDetail: React.FC = () => {
         fetchListingData();
     }, [fetchListingData]);
 
-    const handleBack = useCallback(async () => {
+    const handleBack = useCallback(() => {
         // SMART CONTEXT AWARE BACK BUTTON
-        // If user has a session token, they are likely an Agent/Admin -> Go to Inventory
-        // If no session, they are likely a Public Guest -> Go to Marketplace Search
-        const user = await db.getCurrentUser();
-        const isAuth = !!user;
-
-        if (isAuth) {
+        // If user has a session, they are an Agent/Admin -> Go to Inventory
+        // If no session, they are a Public Guest -> Go to Marketplace Search
+        if (currentUser) {
             window.location.hash = `#/${ROUTES.INVENTORY}`;
         } else {
             window.location.hash = `#/${ROUTES.SEARCH}`;
         }
-    }, []);
+    }, [currentUser]);
 
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
 
@@ -942,9 +957,9 @@ export const ListingDetail: React.FC = () => {
     const displayImages = images.slice(0, 5); // Take max 5 for grid
 
     // Format contact phone for display (add spaces for readability)
-    const displayPhone = listing.contactPhone 
-        ? listing.contactPhone.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3') 
-        : '0912 345 678';
+    const displayPhone = listing.contactPhone
+        ? listing.contactPhone.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3')
+        : (t('common.contact_on_site') || 'Liên hệ trực tiếp');
 
     return (
         <article className="h-[100dvh] overflow-y-auto no-scrollbar bg-[var(--bg-surface)] pb-28 lg:pb-20 animate-enter relative">
@@ -1247,13 +1262,20 @@ export const ListingDetail: React.FC = () => {
                             {ICONS.CALENDAR} {t('detail.book_viewing')}
                         </button>
                         {showPhone ? (
-                            <a
-                                href={`tel:${listing.contactPhone || '0912345678'}`}
-                                className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
-                            >
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                {displayPhone}
-                            </a>
+                            listing.contactPhone ? (
+                                <a
+                                    href={`tel:${listing.contactPhone}`}
+                                    className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                                >
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    {displayPhone}
+                                </a>
+                            ) : (
+                                <div className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-700">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    {displayPhone}
+                                </div>
+                            )
                         ) : (
                             <button
                                 onClick={handleContact}
@@ -1272,7 +1294,7 @@ export const ListingDetail: React.FC = () => {
                     <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-8">{t('detail.similar_listings')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {similarListings.map(item => (
-                            <div key={item.id} className="min-h-full" onClick={() => window.location.hash = `#/${ROUTES.LISTING}/${item.id}`}>
+                            <div key={item.id} className="min-h-full cursor-pointer" onClick={() => window.location.hash = `#/${ROUTES.LISTING}/${item.id}`}>
                                 <ListingCard 
                                     item={item} 
                                     t={t} 

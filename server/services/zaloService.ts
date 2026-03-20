@@ -9,6 +9,7 @@
 
 import { logger } from '../middleware/logger';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
+import { withRetry, isTransientError } from '../utils/retry';
 
 const ZALO_OA_API = 'https://openapi.zalo.me/v2.0/oa/message/cs';
 
@@ -35,16 +36,27 @@ export async function sendZaloTextMessage(
       message: { text: text.slice(0, 2000) },
     };
 
-    const response = await fetch(ZALO_OA_API, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        access_token: accessToken,
+    const json: any = await withRetry(
+      async () => {
+        const response = await fetch(ZALO_OA_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            access_token: accessToken,
+          },
+          body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+          const err: any = new Error(`HTTP ${response.status}`);
+          err.status = response.status;
+          throw err;
+        }
+        return response.json();
       },
-      body: JSON.stringify(body),
-    });
-
-    const json: any = await response.json();
+      3,
+      2000,
+      isTransientError
+    );
 
     if (json.error !== 0) {
       logger.warn(`[Zalo] Send failed: error=${json.error} message=${json.message}`);

@@ -172,6 +172,37 @@ async function sendWelcomeEmail(tenantId: string, to: string, userName: string):
   });
 }
 
+async function sendInviteEmail(tenantId: string, to: string, userName: string, role: string, loginUrl: string): Promise<EmailResult> {
+  const safeUser = escapeHtml(userName);
+  const safeRole = escapeHtml(role);
+  const safeUrl = escapeHtml(loginUrl);
+  return sendEmail(tenantId, {
+    to,
+    subject: 'Bạn được mời tham gia SGS LAND',
+    html: `
+      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <h1 style="color: #4F46E5; font-size: 24px; font-weight: 700; margin: 0;">SGS LAND</h1>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px;">
+          <h2 style="color: #0F172A; font-size: 18px; font-weight: 600; margin: 0 0 16px;">Xin chào ${safeUser}!</h2>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
+            Bạn đã được mời tham gia SGS LAND với vai trò <strong>${safeRole}</strong>.
+          </p>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
+            Vui lòng nhấn vào nút bên dưới để đặt mật khẩu và kích hoạt tài khoản.
+          </p>
+          <div style="text-align: center; margin-bottom: 24px;">
+            <a href="${safeUrl}" style="display: inline-block; padding: 12px 32px; background: #4F46E5; color: #FFFFFF; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;">Kích hoạt tài khoản</a>
+          </div>
+          <p style="color: #94A3B8; font-size: 12px; margin: 0;">Nếu bạn không yêu cầu lời mời này, vui lòng bỏ qua email này.</p>
+        </div>
+      </div>
+    `,
+    text: `Xin chào ${userName}!\n\nBạn được mời tham gia SGS LAND với vai trò ${role}.\nĐăng nhập tại: ${loginUrl}`,
+  });
+}
+
 async function sendSequenceEmail(tenantId: string, to: string, subject: string, content: string): Promise<EmailResult> {
   const safeContent = escapeHtml(content);
   const plainText = content.replace(/<[^>]*>/g, '');
@@ -196,6 +227,7 @@ export const emailService = {
   sendEmail,
   sendPasswordResetEmail,
   sendWelcomeEmail,
+  sendInviteEmail,
   sendSequenceEmail,
   testSmtpConnection,
   getSmtpConfig,

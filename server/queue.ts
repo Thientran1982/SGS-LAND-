@@ -13,12 +13,39 @@ export let webhookQueue: any;
 const inMemoryJobs: any[] = [];
 let inMemoryProcessor: ((job: any) => Promise<void>) | null = null;
 
+const MAX_IN_MEMORY_ATTEMPTS = 3;
+const IN_MEMORY_BACKOFF_MS = 2000;
+
+function runWithRetry(job: any, attempt = 1): void {
+  setTimeout(async () => {
+    try {
+      await inMemoryProcessor!(job);
+    } catch (err: any) {
+      if (attempt < MAX_IN_MEMORY_ATTEMPTS) {
+        const wait = IN_MEMORY_BACKOFF_MS * Math.pow(2, attempt - 1);
+        logger.warn(`[Queue] Job ${job.id} attempt ${attempt} failed: ${err.message}. Retrying in ${wait}ms…`);
+        runWithRetry(job, attempt + 1);
+      } else {
+        logger.error(`[Queue] Job ${job.id} permanently failed after ${MAX_IN_MEMORY_ATTEMPTS} attempts`, err);
+      }
+    }
+  }, attempt === 1 ? 0 : IN_MEMORY_BACKOFF_MS * Math.pow(2, attempt - 2));
+}
+
 if (useRedis) {
   connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
   connection.on('error', (err: any) => {
     logger.error('Redis connection error in queue:', err);
   });
-  webhookQueue = new Queue('webhook-events', { connection });
+  webhookQueue = new Queue('webhook-events', {
+    connection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 2000 },
+      removeOnComplete: 100,
+      removeOnFail: 500,
+    },
+  });
   webhookQueue.on('error', (err: any) => {
     logger.error('Webhook queue error:', err);
   });
@@ -28,7 +55,7 @@ if (useRedis) {
     add: async (name: string, data: any) => {
       const job = { name, data, id: `mock-${Date.now()}` };
       if (inMemoryProcessor) {
-        setTimeout(() => inMemoryProcessor!(job).catch((e) => logger.error('Job processing error', e)), 0);
+        runWithRetry(job);
       } else {
         inMemoryJobs.push(job);
       }
@@ -388,7 +415,7 @@ export function setupWebhookWorker(io: Server) {
     inMemoryProcessor = processJob;
     while (inMemoryJobs.length > 0) {
       const job = inMemoryJobs.shift();
-      setTimeout(() => inMemoryProcessor!(job).catch((e) => logger.error('Job error', e)), 0);
+      runWithRetry(job);
     }
     return {
       on: () => {},

@@ -519,6 +519,7 @@ export const Leads: React.FC = () => {
     const [totalItems, setTotalItems] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
     const [serverStats, setServerStats] = useState({ total: 0, newCount: 0, wonCount: 0, lostCount: 0, avgScore: 0, winRate: 0 });
+    const [currentUser, setCurrentUser] = useState<any>(null);
     
     // Refs for drag-to-scroll
     const boardRef = useRef<HTMLDivElement>(null);
@@ -552,9 +553,10 @@ export const Leads: React.FC = () => {
         return () => clearTimeout(handler);
     }, [search]);
 
-    // Reset page to 1 when filters change
+    // Reset page to 1 AND clear stale selections when filters change
     useEffect(() => {
         setPage(1);
+        setSelectedLeads(new Set());
     }, [debouncedSearch, stageFilter, sourceFilter]);
     
     // UI State
@@ -567,6 +569,9 @@ export const Leads: React.FC = () => {
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const [listings, setListings] = useState<any[]>([]);
     const [users, setUsers] = useState<{value: string, label: string}[]>([]);
+    const [showColumnSettings, setShowColumnSettings] = useState(false);
+    const colSettingsBtnRef = useRef<HTMLButtonElement>(null);
+    const colSettingsPanelRef = useRef<HTMLDivElement>(null);
 
     // --- VIEW SETTINGS STATE (PERSISTED) ---
     const [density, setDensity] = useState<RowDensity>(() => {
@@ -585,6 +590,19 @@ export const Leads: React.FC = () => {
     useEffect(() => { localStorage.setItem('sgs_leads_density', density); }, [density]);
     useEffect(() => { localStorage.setItem('sgs_leads_columns', JSON.stringify(Array.from(visibleColumns))); }, [visibleColumns]);
     useEffect(() => { localStorage.setItem('sgs_leads_view', viewMode); }, [viewMode]);
+
+    // Close column settings panel on outside click
+    useEffect(() => {
+        if (!showColumnSettings) return;
+        const close = (e: MouseEvent) => {
+            const t = e.target as Node;
+            if (!colSettingsBtnRef.current?.contains(t) && !colSettingsPanelRef.current?.contains(t)) {
+                setShowColumnSettings(false);
+            }
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, [showColumnSettings]);
 
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
@@ -617,6 +635,7 @@ export const Leads: React.FC = () => {
 
     useEffect(() => {
         fetchLeads();
+        db.getCurrentUser().then(setCurrentUser);
         db.getListings(1, 100).then(res => setListings(res.data));
         db.getTenantUsers(1, 100).then(res => {
             setUsers([
@@ -749,8 +768,18 @@ export const Leads: React.FC = () => {
             if (debouncedSearch) filters.search = debouncedSearch;
             if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
             if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
-            const res = await db.getLeads(1, 10000, filters);
-            const allLeads = res.data || [];
+
+            // Paginate through all pages (server caps at 200/page)
+            const EXPORT_PAGE_SIZE = 200;
+            let allLeads: any[] = [];
+            let exportPage = 1;
+            let totalPages = 1;
+            do {
+                const res = await db.getLeads(exportPage, EXPORT_PAGE_SIZE, filters);
+                allLeads = allLeads.concat(res.data || []);
+                totalPages = res.totalPages || 1;
+                exportPage++;
+            } while (exportPage <= totalPages);
 
             const dataToExport = allLeads.map(lead => ({
                 'Tên khách hàng': lead.name,
@@ -762,13 +791,13 @@ export const Leads: React.FC = () => {
                 'Tags': Array.isArray(lead.tags) ? lead.tags.join(', ') : (lead.tags || ''),
                 'Ghi chú': lead.notes || '',
                 'Điểm số': lead.score?.score || 0,
-                'Người phụ trách': lead.assignedTo || ''
+                'Người phụ trách': lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || '',
+                'Ngày tạo': lead.createdAt ? formatDate(lead.createdAt) : '',
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
 
-            // Force the phone number column ('B') to text format so Excel
-            // doesn't strip the leading zero when the file is opened.
+            // Force phone column ('B') to text so Excel doesn't strip leading zeros
             const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
             for (let R = range.s.r + 1; R <= range.e.r; R++) {
                 const cellAddr = XLSX.utils.encode_cell({ r: R, c: 1 });
@@ -781,7 +810,7 @@ export const Leads: React.FC = () => {
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Leads");
             XLSX.writeFile(workbook, "DanhSachKhachHang.xlsx");
-            notify(t('leads.export_success') || 'Xuất dữ liệu thành công', 'success');
+            notify(`${t('leads.export_success') || 'Xuất thành công'} (${allLeads.length} khách hàng)`, 'success');
         } catch (error) {
             console.error("Export failed", error);
             notify(t('common.error') || 'Lỗi khi xuất dữ liệu', 'error');
@@ -793,61 +822,74 @@ export const Leads: React.FC = () => {
     const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        // Clear input early so the same file can be re-selected if needed
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        const normalizeVNPhone = (raw: string): string => {
+            // Strip all non-digit chars (spaces, dashes, parens, +)
+            let p = raw.replace(/[^0-9]/g, '');
+            // Convert +84 / 84 country-code prefix → leading 0
+            if (p.startsWith('84') && p.length === 11) p = '0' + p.slice(2);
+            // Handle 9-digit numbers (leading 0 dropped)
+            if (!p.startsWith('0') && p.length === 9) p = '0' + p;
+            return p;
+        };
 
         const reader = new FileReader();
         reader.onload = async (evt) => {
             const arrayBuffer = evt.target?.result;
             if (!arrayBuffer) return;
 
-            const wb = XLSX.read(arrayBuffer, { type: 'array' });
-            const wsname = wb.SheetNames[0];
-            const ws = wb.Sheets[wsname];
-            const data = XLSX.utils.sheet_to_json(ws, { raw: false });
+            setLoading(true);
+            try {
+                const wb = XLSX.read(arrayBuffer, { type: 'array' });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                const data = XLSX.utils.sheet_to_json(ws, { raw: false });
 
-            let successCount = 0;
-            let skipCount = 0;
-            let errorCount = 0;
+                let successCount = 0;
+                let skipCount = 0;
+                let errorCount = 0;
 
-            for (const row of data as any[]) {
-                let rawPhone = row['Số điện thoại'] ? String(row['Số điện thoại']).replace(/[^0-9]/g, '') : '';
-                if (rawPhone && !rawPhone.startsWith('0') && rawPhone.length === 9) {
-                    rawPhone = '0' + rawPhone;
-                }
+                for (const row of data as any[]) {
+                    const rawPhone = row['Số điện thoại'] ? String(row['Số điện thoại']) : '';
+                    const phone = normalizeVNPhone(rawPhone);
 
-                if (!rawPhone) {
-                    skipCount++;
-                    continue;
-                }
-
-                const newLead: Partial<Lead> = {
-                    name: row['Tên khách hàng'] || 'Khách hàng mới',
-                    phone: rawPhone,
-                    email: row['Email'] || '',
-                    address: row['Địa chỉ'] || '',
-                    source: row['Nguồn'] || 'Other',
-                    stage: LeadStage.NEW,
-                    tags: row['Tags'] ? row['Tags'].split(',').map((t: string) => t.trim()).filter(Boolean) : [],
-                    notes: row['Ghi chú'] || '',
-                };
-
-                try {
-                    await db.createLead(newLead);
-                    successCount++;
-                } catch (err: any) {
-                    if (err?.status === 409 || err?.message?.includes('DUPLICATE')) {
+                    if (!phone) {
                         skipCount++;
-                    } else {
-                        errorCount++;
+                        continue;
+                    }
+
+                    const newLead: Partial<Lead> = {
+                        name: row['Tên khách hàng'] || 'Khách hàng mới',
+                        phone,
+                        email: row['Email'] || '',
+                        address: row['Địa chỉ'] || '',
+                        source: row['Nguồn'] || 'Other',
+                        stage: LeadStage.NEW,
+                        tags: row['Tags'] ? row['Tags'].split(',').map((tag: string) => tag.trim()).filter(Boolean) : [],
+                        notes: row['Ghi chú'] || '',
+                    };
+
+                    try {
+                        await db.createLead(newLead);
+                        successCount++;
+                    } catch (err: any) {
+                        if (err?.status === 409 || err?.message?.includes('DUPLICATE')) {
+                            skipCount++;
+                        } else {
+                            errorCount++;
+                        }
                     }
                 }
-            }
 
-            if (successCount > 0) fetchLeads();
-            const msg = `Nhập thành công: ${successCount} | Trùng/bỏ qua: ${skipCount}${errorCount > 0 ? ` | Lỗi: ${errorCount}` : ''}`;
-            notify(msg, successCount > 0 ? 'success' : 'error');
+                if (successCount > 0) fetchLeads();
+                const msg = `Nhập thành công: ${successCount} | Trùng/bỏ qua: ${skipCount}${errorCount > 0 ? ` | Lỗi: ${errorCount}` : ''}`;
+                notify(msg, successCount > 0 ? 'success' : 'error');
+            } finally {
+                setLoading(false);
+            }
         };
         reader.readAsArrayBuffer(file);
-        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     const handleSimulateInbound = async () => {
@@ -889,6 +931,8 @@ export const Leads: React.FC = () => {
 
     // Calculate Metrics
     const metrics = serverStats;
+    const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
+    const isScopedView = currentUser && RESTRICTED_ROLES.includes(currentUser.role);
 
     return (
         <div className="h-full flex flex-col relative">
@@ -948,8 +992,93 @@ export const Leads: React.FC = () => {
                             </button>
                         </div>
 
+                        {/* Active filter chip */}
+                        {(stageFilter !== 'ALL' || sourceFilter !== 'ALL') && (
+                            <button
+                                onClick={() => { setStageFilter('ALL'); setSourceFilter('ALL'); }}
+                                className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
+                                title={t('leads.reset_filters') || 'Xóa bộ lọc'}
+                            >
+                                <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse shrink-0" />
+                                {t('leads.reset_filters') || 'Xóa bộ lọc'}
+                                <span className="ml-0.5 opacity-70">×</span>
+                            </button>
+                        )}
+
+                        {/* Column settings button (LIST only) */}
+                        {viewMode === 'LIST' && (
+                            <div className="relative shrink-0 hidden md:block">
+                                <button
+                                    ref={colSettingsBtnRef}
+                                    onClick={() => setShowColumnSettings(v => !v)}
+                                    className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-bold transition-all ${showColumnSettings ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
+                                    title="Cài đặt cột & mật độ"
+                                >
+                                    <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                                </button>
+                                {showColumnSettings && createPortal(
+                                    <div
+                                        ref={colSettingsPanelRef}
+                                        style={{
+                                            position: 'fixed',
+                                            top: (colSettingsBtnRef.current?.getBoundingClientRect().bottom ?? 0) + 6,
+                                            right: window.innerWidth - (colSettingsBtnRef.current?.getBoundingClientRect().right ?? 0),
+                                            zIndex: 9999,
+                                        }}
+                                        className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-2xl p-4 w-64"
+                                    >
+                                        <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider mb-3">Cột hiển thị</p>
+                                        <div className="space-y-1.5 mb-4">
+                                            {[
+                                                { key: 'phone', label: t('leads.col_phone') },
+                                                { key: 'email', label: t('leads.col_email') },
+                                                { key: 'address', label: t('leads.col_address') },
+                                                { key: 'stage', label: t('leads.stage') },
+                                                { key: 'source', label: t('leads.source') },
+                                                { key: 'score', label: t('leads.score') },
+                                                { key: 'owner', label: t('common.owner') },
+                                                { key: 'createdAt', label: t('leads.col_created') },
+                                            ].map(col => (
+                                                <label key={col.key} className="flex items-center gap-2 cursor-pointer py-1 px-2 rounded-lg hover:bg-[var(--glass-surface)] transition-colors group">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={visibleColumns.has(col.key)}
+                                                        onChange={() => {
+                                                            setVisibleColumns(prev => {
+                                                                const next = new Set(prev);
+                                                                if (next.has(col.key)) next.delete(col.key);
+                                                                else next.add(col.key);
+                                                                return next;
+                                                            });
+                                                        }}
+                                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                    />
+                                                    <span className="text-xs font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{col.label}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <div className="border-t border-[var(--glass-border)] pt-3">
+                                            <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider mb-2">Mật độ hàng</p>
+                                            <div className="flex gap-2">
+                                                {(['compact', 'normal', 'relaxed'] as RowDensity[]).map(d => (
+                                                    <button
+                                                        key={d}
+                                                        onClick={() => setDensity(d)}
+                                                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${density === d ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                                    >
+                                                        {d === 'compact' ? 'Gọn' : d === 'normal' ? 'Vừa' : 'Rộng'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>,
+                                    document.body
+                                )}
+                            </div>
+                        )}
+
                         <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block"></div>
-                        
+
                         {selectedLeads.size > 0 && (
                             <button 
                                 onClick={() => setBulkDeletePending(true)}
@@ -992,13 +1121,21 @@ export const Leads: React.FC = () => {
 
             {/* Metrics Bar — compact */}
             <div ref={metricsRef} className="px-4 md:px-6 py-2 flex gap-1 md:gap-0 items-center border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/60 flex-none overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing divide-x divide-[var(--glass-border)]">
+                {/* Scope badge — shown when the user sees their own data only */}
+                {isScopedView && (
+                    <div className="flex items-center pr-3 md:pr-4 shrink-0">
+                        <span className="text-xs2 font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1 whitespace-nowrap">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            {t('leads.scope_mine') || 'Dữ liệu của bạn'}
+                        </span>
+                    </div>
+                )}
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0 first:pl-0">
                     <div className="p-1 bg-blue-50 text-blue-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                     </div>
                     <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.total_leads') || 'Tổng Lead'}</span>
                     <span className="text-sm font-black text-[var(--text-primary)]">{metrics.total}</span>
-                    <span className="text-xs2 font-semibold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-full hidden md:inline">+12%</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0">
                     <div className="p-1 bg-indigo-50 text-indigo-500 rounded-md shrink-0">
@@ -1056,25 +1193,84 @@ export const Leads: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
-                                        {leads?.map(lead => (
-                                            <LeadRow 
-                                                key={lead.id} 
-                                                lead={lead} 
-                                                isSelected={selectedLeads.has(lead.id)}
-                                                onSelect={handleSelectOne}
-                                                onClick={handleEdit}
-                                                onProposal={() => setProposalLead(lead)}
-                                                onDuplicate={handleDuplicate}
-                                                onDelete={handleDeleteClick}
-                                                t={t}
-                                                visibleColumns={visibleColumns}
-                                                density={density}
-                                                formatDate={formatDate}
-                                                users={users}
-                                            />
-                                        ))}
-                                        {leads?.length === 0 && !loading && (
-                                            <tr><td colSpan={12} className="p-12 text-center text-[var(--text-secondary)] italic">{t('common.no_results')}</td></tr>
+                                        {loading ? (
+                                            /* Skeleton rows while loading */
+                                            Array.from({ length: 8 }).map((_, i) => (
+                                                <tr key={i} className="border-b border-slate-50">
+                                                    <td className="px-4 py-3 w-[50px] sticky left-0 bg-[var(--bg-surface)]"><div className="w-4 h-4 rounded bg-slate-100 animate-pulse mx-auto" /></td>
+                                                    <td className="px-4 py-3 sticky left-[50px] bg-[var(--bg-surface)] min-w-[220px]">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse shrink-0" />
+                                                            <div className="space-y-1.5 flex-1">
+                                                                <div className="h-3 bg-slate-100 animate-pulse rounded-full w-3/4" />
+                                                                <div className="h-2.5 bg-slate-100 animate-pulse rounded-full w-1/2" />
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    {visibleColumns.has('phone') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-24" /></td>}
+                                                    {visibleColumns.has('email') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-32" /></td>}
+                                                    {visibleColumns.has('address') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-28" /></td>}
+                                                    {visibleColumns.has('stage') && <td className="px-4 py-3"><div className="h-5 bg-slate-100 animate-pulse rounded-full w-20" /></td>}
+                                                    {visibleColumns.has('source') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-16" /></td>}
+                                                    {visibleColumns.has('score') && <td className="px-4 py-3"><div className="h-2 bg-slate-100 animate-pulse rounded-full w-20" /></td>}
+                                                    {visibleColumns.has('owner') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-20" /></td>}
+                                                    {visibleColumns.has('createdAt') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-16" /></td>}
+                                                    <td className="px-4 py-3 sticky right-0 bg-[var(--bg-surface)]"><div className="w-6 h-6 rounded-lg bg-slate-100 animate-pulse ml-auto" /></td>
+                                                </tr>
+                                            ))
+                                        ) : leads?.length > 0 ? (
+                                            leads.map(lead => (
+                                                <LeadRow
+                                                    key={lead.id}
+                                                    lead={lead}
+                                                    isSelected={selectedLeads.has(lead.id)}
+                                                    onSelect={handleSelectOne}
+                                                    onClick={handleEdit}
+                                                    onProposal={() => setProposalLead(lead)}
+                                                    onDuplicate={handleDuplicate}
+                                                    onDelete={handleDeleteClick}
+                                                    t={t}
+                                                    visibleColumns={visibleColumns}
+                                                    density={density}
+                                                    formatDate={formatDate}
+                                                    users={users}
+                                                />
+                                            ))
+                                        ) : (
+                                            /* Empty state */
+                                            <tr>
+                                                <td colSpan={12} className="py-20 text-center">
+                                                    <div className="flex flex-col items-center gap-4">
+                                                        {debouncedSearch || stageFilter !== 'ALL' || sourceFilter !== 'ALL' ? (
+                                                            <>
+                                                                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-[var(--text-primary)] text-sm">{t('common.no_results')}</p>
+                                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint') || 'Thử xóa bộ lọc hoặc tìm kiếm khác'}</p>
+                                                                </div>
+                                                                <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                                                    {t('leads.reset_filters') || 'Xóa bộ lọc'}
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-[var(--text-primary)] text-sm">{t('leads.empty_title') || 'Chưa có khách hàng nào'}</p>
+                                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_hint') || 'Thêm khách hàng đầu tiên hoặc nhập từ Excel'}</p>
+                                                                </div>
+                                                                <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                                                    {ICONS.ADD} {t('common.add_new')}
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         )}
                                     </tbody>
                                 </table>
@@ -1097,6 +1293,14 @@ export const Leads: React.FC = () => {
                                             {groupedLeads[stage]?.map(lead => (
                                                 <KanbanCard key={lead.id} lead={lead} onClick={handleEdit} onDelete={handleDeleteClick} onProposal={(l) => setProposalLead(l)} t={t} formatDate={formatDate} users={users} />
                                             ))}
+                                            {(!groupedLeads[stage] || groupedLeads[stage].length === 0) && !loading && (
+                                                <div className="flex flex-col items-center justify-center h-28 gap-2 text-center">
+                                                    <div className={`w-9 h-9 rounded-xl ${style.bg} flex items-center justify-center`}>
+                                                        <svg className={`w-5 h-5 ${style.color} opacity-50`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                                                    </div>
+                                                    <p className="text-xs text-[var(--text-tertiary)]">{t('leads.kanban_empty') || 'Chưa có khách hàng'}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -1176,24 +1380,52 @@ export const Leads: React.FC = () => {
                                 </div>
                             ))}
                             {leads?.length === 0 && !loading && (
-                                <div className="p-12 text-center text-[var(--text-secondary)] italic bg-[var(--glass-surface)] rounded-2xl border border-dashed border-[var(--glass-border)]">
-                                    {t('common.no_results')}
+                                <div className="flex flex-col items-center gap-4 py-16 px-4 text-center bg-[var(--glass-surface)] rounded-2xl border border-dashed border-[var(--glass-border)]">
+                                    {debouncedSearch || stageFilter !== 'ALL' || sourceFilter !== 'ALL' ? (
+                                        <>
+                                            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
+                                                <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint') || 'Thử xóa bộ lọc hoặc tìm kiếm khác'}</p>
+                                            </div>
+                                            <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                                {t('leads.reset_filters') || 'Xóa bộ lọc'}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-sm text-[var(--text-primary)]">{t('leads.empty_title') || 'Chưa có khách hàng nào'}</p>
+                                                <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_hint') || 'Thêm khách hàng đầu tiên hoặc nhập từ Excel'}</p>
+                                            </div>
+                                            <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                                {ICONS.ADD} {t('common.add_new')}
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
                     )}
                 </div>
 
-                {/* Pagination Footer - Fixed at bottom */}
-                <PaginationControl 
-                    page={page} 
-                    totalPages={totalPages} 
-                    totalItems={totalItems} 
-                    pageSize={pageSize}
-                    onPageChange={handlePageChange}
-                    onPageSizeChange={handlePageSizeChange}
-                    t={t}
-                />
+                {/* Pagination Footer - only shown in LIST view */}
+                {viewMode === 'LIST' && (
+                    <PaginationControl
+                        page={page}
+                        totalPages={totalPages}
+                        totalItems={totalItems}
+                        pageSize={pageSize}
+                        onPageChange={handlePageChange}
+                        onPageSizeChange={handlePageSizeChange}
+                        t={t}
+                    />
+                )}
             </div>
 
             {/* Modals */}

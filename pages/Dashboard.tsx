@@ -90,23 +90,23 @@ const CustomTooltip = memo(({ active, payload, label, t, formatCurrency, languag
     return null;
 });
 
-const ScatterTooltip = memo(({ active, payload }: any) => {
+const ScatterTooltip = memo(({ active, payload, t }: any) => {
     if (active && Array.isArray(payload) && payload.length) {
         const data = payload[0].payload;
         return (
             <div className="bg-[var(--bg-surface)]/95 dark:bg-slate-800/95 p-3 rounded-xl border border-[var(--glass-border)] dark:border-white/10 shadow-xl text-xs backdrop-blur-md z-50">
-                <p className="font-bold mb-2 text-[var(--text-secondary)] dark:text-slate-200 uppercase tracking-wider">Khu vực: {data.location}</p>
+                <p className="font-bold mb-2 text-[var(--text-secondary)] dark:text-slate-200 uppercase tracking-wider">{data.location}</p>
                 <div className="flex items-center justify-between gap-4 mb-1">
-                    <span className="text-[var(--text-secondary)] dark:text-slate-400">Diện tích:</span>
+                    <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_area')}:</span>
                     <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">{data.area} m²</span>
                 </div>
                 <div className="flex items-center justify-between gap-4 mb-1">
-                    <span className="text-[var(--text-secondary)] dark:text-slate-400">Mức giá:</span>
+                    <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_price')}:</span>
                     <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">{data.price} Tỷ</span>
                 </div>
                 <div className="flex items-center justify-between gap-4 mb-1">
-                    <span className="text-[var(--text-secondary)] dark:text-slate-400">Mức độ quan tâm:</span>
-                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{data.interest} lượt hỏi</span>
+                    <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_interest')}:</span>
+                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{data.interest} {t('dash.scatter_interest_unit')}</span>
                 </div>
             </div>
         );
@@ -347,7 +347,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                       <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                     </span>
                     <span className={`text-xs2 font-bold uppercase ${isConnected ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
-                        {isConnected ? t('dash.live_status') : 'Connecting...'}
+                        {isConnected ? t('dash.live_status') : t('dash.connecting')}
                     </span>
                 </div>
             </div>
@@ -385,7 +385,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                         </ComposedChart>
                     </ResponsiveContainer>
                 ) : (
-                    <EmptyState message="Waiting for traffic data..." />
+                    <EmptyState message={t('dash.traffic_waiting')} />
                 )}
             </div>
         </BentoCard>
@@ -436,7 +436,7 @@ export const Dashboard: React.FC = () => {
             pdf.save(`SGS_LAND_Report_${timeRange}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('Export failed:', error);
-            alert('Lỗi khi xuất báo cáo. Vui lòng thử lại.');
+            alert(t('dash.export_error'));
         } finally {
             setIsExporting(false);
         }
@@ -466,7 +466,7 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <h2 className="text-xl font-bold text-[var(--text-primary)] dark:text-white mb-2">{t('common.error')}</h2>
                 <p className="text-[var(--text-tertiary)] dark:text-slate-400 mb-6 max-w-md">
-                    Không thể tải dữ liệu tổng quan. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.
+                    {t('dash.error_message')}
                 </p>
                 <button 
                     onClick={() => refetch()}
@@ -484,8 +484,8 @@ export const Dashboard: React.FC = () => {
 
     const currentUser = (analytics as any)?.user;
     const userName = currentUser?.name ? currentUser.name.split(' ').slice(-1)[0] : '';
-    const scopeLabel: string = (analytics as any)?.scopeLabel || 'Toàn công ty';
-    const isSalesScope = scopeLabel === 'Dữ liệu của bạn';
+    const scopeLabel: string = (analytics as any)?.scopeLabel || t('dash.scope_company');
+    const isSalesScope = scopeLabel === t('dash.scope_personal') || scopeLabel === 'Dữ liệu của bạn' || scopeLabel === 'Your data';
 
     return (
         <div className="space-y-6 p-4 md:p-6 pb-24 animate-enter max-w-[1600px] mx-auto">
@@ -494,7 +494,7 @@ export const Dashboard: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                 <div>
                     <h1 className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">
-                        {userName ? `Xin chào, ${userName}! 👋` : t('dash.greeting_morning')}
+                        {userName ? `${t('dash.greeting_morning')} ${userName}! 👋` : t('dash.greeting_morning')}
                     </h1>
                     <div className="flex items-center gap-2 mt-1">
                         <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 font-medium">
@@ -538,7 +538,7 @@ export const Dashboard: React.FC = () => {
                         ) : (
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         )}
-                        {isExporting ? 'Exporting...' : t('common.export')}
+                        {isExporting ? t('dash.exporting') : t('common.export')}
                     </button>
                 </div>
             </div>
@@ -681,7 +681,7 @@ export const Dashboard: React.FC = () => {
                                     </ComposedChart>
                                 </ResponsiveContainer>
                             ) : (
-                                <EmptyState message="Không có dữ liệu biểu đồ" />
+                                <EmptyState message={t('dash.chart_empty')} />
                             )}
                         </div>
                     </BentoCard>
@@ -692,7 +692,7 @@ export const Dashboard: React.FC = () => {
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-2">
                             <div className="flex flex-col gap-2">
                                 {(analytics.recentActivities || []).map((act, idx) => (
-                                    <ActivityItem key={idx} activity={act} />
+                                    <ActivityItem key={act.id ?? idx} activity={act} />
                                 ))}
                                 {(!analytics.recentActivities || analytics.recentActivities.length === 0) && (
                                     <div className="py-10">
@@ -706,8 +706,8 @@ export const Dashboard: React.FC = () => {
 
                 {/* TIER 3: Market Pulse & Leaderboard */}
                 <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
-                    <BentoCard 
-                        title="Nhịp đập thị trường (Market Pulse)"
+                    <BentoCard
+                        title={t('dash.market_pulse_title')}
                         className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900"
                     >
                         <div className="flex-1 w-full h-[320px] relative mt-4 flex flex-col">
@@ -720,7 +720,7 @@ export const Dashboard: React.FC = () => {
                                                 <XAxis type="number" dataKey="area" name="Diện tích" unit="m²" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
                                                 <YAxis type="number" dataKey="price" name="Mức giá" unit=" Tỷ" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
                                                 <ZAxis type="number" dataKey="interest" range={[100, 1000]} name="Mức độ quan tâm" />
-                                                <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ScatterTooltip />} />
+                                                <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ScatterTooltip t={t} />} />
                                                 <Scatter name="Market Interest" data={analytics.marketPulse} opacity={0.7}>
                                                     {analytics.marketPulse.map((entry: any, index: number) => {
                                                         // Generate a color based on location
@@ -748,21 +748,21 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                 </>
                             ) : (
-                                <EmptyState message="Không có dữ liệu Nhịp đập thị trường" />
+                                <EmptyState message={t('dash.market_pulse_empty')} />
                             )}
                         </div>
                     </BentoCard>
                 </div>
 
                 <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
-                    <BentoCard 
-                        title="Bảng xếp hạng nhân viên (Agent Leaderboard)"
+                    <BentoCard
+                        title={t('dash.leaderboard_title')}
                         className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900 overflow-hidden flex flex-col"
                     >
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-4">
                             <div className="flex flex-col gap-3">
                                 {(analytics.agentLeaderboard || []).map((agent: any, idx: number) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors">
+                                    <div key={agent.id ?? agent.name ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-[var(--glass-surface)] dark:bg-slate-800/50 border border-[var(--glass-border)] dark:border-slate-700/50 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
                                                 <AgentAvatar name={agent.name} avatar={agent.avatar} />
@@ -774,28 +774,28 @@ export const Dashboard: React.FC = () => {
                                             </div>
                                             <div>
                                                 <div className="font-bold text-sm text-[var(--text-primary)] dark:text-white">{agent.name}</div>
-                                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-medium">{agent.deals} deal đã chốt</div>
+                                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-medium">{agent.deals} {t('dash.deals_closed')}</div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4 text-right">
                                             <div>
-                                                <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">Tỷ lệ chốt</div>
+                                                <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">{t('dash.close_rate')}</div>
                                                 <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">{agent.closeRate}%</div>
                                             </div>
                                             <div className="w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
                                             <div>
-                                                <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">Điểm SLA</div>
+                                                <div className="text-xs2 uppercase font-bold text-[var(--text-tertiary)] tracking-wider mb-0.5">{t('dash.sla_score')}</div>
                                                 <div className="flex items-center gap-1 justify-end">
                                                     <span className={`font-bold text-sm ${agent.slaScore >= 90 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'}`}>{agent.slaScore}/100</span>
                                                 </div>
-                                                <div className="text-2xs text-[var(--text-secondary)] font-medium">TB: {agent.avgResponseTime}</div>
+                                                <div className="text-2xs text-[var(--text-secondary)] font-medium">{t('dash.avg_abbr')}: {agent.avgResponseTime}</div>
                                             </div>
                                         </div>
                                     </div>
                                 ))}
                                 {(!analytics.agentLeaderboard || analytics.agentLeaderboard.length === 0) && (
                                     <div className="py-10">
-                                        <EmptyState message="Không có dữ liệu Bảng xếp hạng" />
+                                        <EmptyState message={t('dash.leaderboard_empty')} />
                                     </div>
                                 )}
                             </div>

@@ -194,7 +194,7 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
         } catch (e) {
             console.error('Error updating map markers', e);
         }
-    }, [listings, formatCurrency, onNavigate]);
+    }, [listings, formatCurrency, onNavigate, t, formatUnitPrice, formatCompactNumber, language]);
 
     return (
         <>

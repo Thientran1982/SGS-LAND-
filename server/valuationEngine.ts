@@ -1,21 +1,33 @@
 /**
- * SGS Land — Vietnamese Real Estate Valuation Engine v2
+ * SGS Land — Vietnamese Real Estate Valuation Engine v3
  *
- * Three-method approach (industry standard):
+ * Multi-source, multi-coefficient approach:
  *
  *  Method 1 — AVM/Comps (Sales Comparison):
- *    P_adjusted/m² = P_market × Kd × Kp × Ka
+ *    P_adjusted/m² = P_blended × Kd × Kp × Ka × Kfl × Kdir × Kmf × Kfurn
  *    P_comps       = P_adjusted/m² × Area
- *    where P_market is the AI-researched median price for a STANDARD reference
- *    property (Sổ Hồng, 4m road, 60-100m²) in the target area.
+ *    where P_blended = weighted blend of:
+ *      - AI-researched market price (Google Search grounding)
+ *      - Internal comparable listings from DB
+ *      - Cached market index (6-hour TTL)
+ *
+ *  Coefficients:
+ *    Kd   — Road width (lộ giới)         : 0.70 – 1.30
+ *    Kp   — Legal status (pháp lý)       : 0.80 – 1.00
+ *    Ka   — Area size (diện tích)         : 0.90 – 1.10
+ *    Kfl  — Floor level (tầng)           : 0.88 – 1.12  [apartments only]
+ *    Kdir — Building direction (hướng)   : 0.95 – 1.05
+ *    Kmf  — Frontage width (mặt tiền)    : 0.92 – 1.20
+ *    Kfurn— Furnishing (nội thất)         : 0.95 – 1.07
  *
  *  Method 2 — Income Capitalization:
  *    NOI           = Effective Gross Income − Operating Expenses
  *    P_income      = NOI / Cap Rate
  *
- *  Method 3 — Reconciliation:
+ *  Method 3 — Reconciliation (weighted average):
  *    P_final       = P_comps × W_comps + P_income × W_income
- *    where weights depend on property type and data availability.
+ *
+ *  Confidence = f(data_freshness, comps_count, market_liquidity, source_diversity)
  */
 
 import { DEFAULT_VACANCY_RATE, DEFAULT_OPEX_RATE, DEFAULT_CAP_RATE } from './constants';
@@ -41,6 +53,31 @@ export interface AVMInput {
   marketTrend: string;
   propertyType?: PropertyType;
   monthlyRent?: number;      // triệu VNĐ/tháng (for income approach)
+
+  // Enhanced inputs (optional — only applied when provided)
+  floorLevel?: number;           // tầng (1 = trệt; for apartments)
+  direction?: string;            // hướng: 'S','SE','E','NE','N','NW','W','SW'
+  frontageWidth?: number;        // mặt tiền (m) — width of the property facing the road
+  furnishing?: 'FULL' | 'BASIC' | 'NONE';  // nội thất
+
+  // Multi-source data
+  internalCompsMedian?: number;  // VNĐ/m² from internal comparable listings DB
+  internalCompsCount?: number;   // number of internal comparables found
+  cachedMarketPrice?: number;    // VNĐ/m² from market data cache (6h TTL)
+  cachedConfidence?: number;     // confidence from cache entry
+}
+
+// Source breakdown for multi-source transparency
+export interface ValuationSources {
+  aiPrice: number;
+  aiWeight: number;
+  internalCompsPrice: number;
+  internalCompsCount: number;
+  internalCompsWeight: number;
+  cachedPrice: number;
+  cachedWeight: number;
+  blendedPrice: number;          // final weighted average used as marketBasePrice
+  confidenceBoost: number;       // bonus confidence from having multiple sources agree
 }
 
 export interface AVMFactor {
@@ -49,7 +86,7 @@ export interface AVMFactor {
   impact: number;
   isPositive: boolean;
   description: string;
-  type: 'AVM' | 'LOCATION';
+  type: 'AVM' | 'LOCATION' | 'MULTI_SOURCE';
 }
 
 export interface IncomeApproachResult {
@@ -75,7 +112,7 @@ export interface AVMOutput {
   confidence: number;
   marketTrend: string;
   factors: AVMFactor[];
-  coefficients: { Kd: number; Kp: number; Ka: number };
+  coefficients: { Kd: number; Kp: number; Ka: number; Kfl?: number; Kdir?: number; Kmf?: number; Kfurn?: number };
   formula: string;
   incomeApproach?: IncomeApproachResult;
   reconciliation?: {
@@ -85,6 +122,7 @@ export interface AVMOutput {
     incomeValue: number;    // VNĐ
     finalValue: number;     // VNĐ
   };
+  sources?: ValuationSources;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -234,6 +272,218 @@ function getKa(area: number): { value: number; label: string; description: strin
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 4a. Hệ số tầng (Kfl — Floor Level Coefficient) — for apartments only
+//     Standard reference: floors 4-10
+//     Source: CBRE Vietnam 2024, floor premium analysis
+// ─────────────────────────────────────────────────────────────────────────────
+export function getKfl(floorLevel: number, propertyType?: PropertyType): { value: number; label: string; description: string } | null {
+  // Only apply for apartments
+  const isApartment = !propertyType || propertyType.startsWith('apartment');
+  if (!isApartment) return null;
+
+  if (floorLevel <= 1) return {
+    value: 0.88,
+    label: `Tầng trệt`,
+    description: 'Tầng trệt căn hộ — ít riêng tư, ồn ào, dễ ngập (-12%)'
+  };
+  if (floorLevel <= 3) return {
+    value: 0.93,
+    label: `Tầng thấp (${floorLevel})`,
+    description: 'Tầng 2-3 — có thể ảnh hưởng bởi tiếng ồn và ít view (-7%)'
+  };
+  if (floorLevel <= 10) return {
+    value: 1.00,
+    label: `Tầng trung (${floorLevel})`,
+    description: 'Tầng 4-10 — chuẩn tham chiếu, cân bằng view và giá cả'
+  };
+  if (floorLevel <= 20) return {
+    value: 1.05,
+    label: `Tầng cao (${floorLevel})`,
+    description: 'Tầng 11-20 — view đẹp, thoáng mát (+5%)'
+  };
+  if (floorLevel <= 30) return {
+    value: 1.09,
+    label: `Tầng rất cao (${floorLevel})`,
+    description: 'Tầng 21-30 — view toàn cảnh, penthouse range (+9%)'
+  };
+  return {
+    value: 1.12,
+    label: `Penthouse / Tầng thượng (${floorLevel})`,
+    description: 'Tầng 31+ — premium penthouse, view độc quyền (+12%)'
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4b. Hệ số hướng nhà (Kdir — Building Direction Coefficient)
+//     Standard reference: Đông (East)
+//     Source: Feng shui + climate studies in VN; South-facing commands premium
+// ─────────────────────────────────────────────────────────────────────────────
+export function getKdir(direction: string): { value: number; label: string; description: string } | null {
+  if (!direction) return null;
+  const d = direction.toUpperCase().trim();
+  const map: Record<string, { value: number; label: string; description: string }> = {
+    'S':  { value: 1.05, label: 'Hướng Nam', description: 'Mát mẻ quanh năm, phong thủy tốt (+5%)' },
+    'SE': { value: 1.04, label: 'Hướng Đông Nam', description: 'Đón nắng sáng, thoáng gió (+4%)' },
+    'E':  { value: 1.00, label: 'Hướng Đông', description: 'Đón nắng sáng sớm — chuẩn tham chiếu' },
+    'NE': { value: 0.98, label: 'Hướng Đông Bắc', description: 'Đón nắng sáng, hơi lạnh về mùa đông (-2%)' },
+    'N':  { value: 0.96, label: 'Hướng Bắc', description: 'Ít nắng, tối và lạnh (-4%)' },
+    'NW': { value: 0.97, label: 'Hướng Tây Bắc', description: 'Chiều nắng tây, nóng (-3%)' },
+    'W':  { value: 0.95, label: 'Hướng Tây', description: 'Nắng chiều tây rất nóng — kém nhất (-5%)' },
+    'SW': { value: 0.97, label: 'Hướng Tây Nam', description: 'Nắng chiều, hơi nóng (-3%)' },
+    // Vietnamese full names
+    'NAM': { value: 1.05, label: 'Hướng Nam', description: 'Mát mẻ quanh năm, phong thủy tốt (+5%)' },
+    'DONG NAM': { value: 1.04, label: 'Hướng Đông Nam', description: 'Đón nắng sáng, thoáng gió (+4%)' },
+    'ĐÔNG NAM': { value: 1.04, label: 'Hướng Đông Nam', description: 'Đón nắng sáng, thoáng gió (+4%)' },
+    'DONG': { value: 1.00, label: 'Hướng Đông', description: 'Đón nắng sáng sớm — chuẩn tham chiếu' },
+    'ĐÔNG': { value: 1.00, label: 'Hướng Đông', description: 'Đón nắng sáng sớm — chuẩn tham chiếu' },
+    'BAC': { value: 0.96, label: 'Hướng Bắc', description: 'Ít nắng, tối và lạnh (-4%)' },
+    'BẮC': { value: 0.96, label: 'Hướng Bắc', description: 'Ít nắng, tối và lạnh (-4%)' },
+    'TAY': { value: 0.95, label: 'Hướng Tây', description: 'Nắng chiều tây rất nóng (-5%)' },
+    'TÂY': { value: 0.95, label: 'Hướng Tây', description: 'Nắng chiều tây rất nóng (-5%)' },
+  };
+  return map[d] || null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4c. Hệ số mặt tiền (Kmf — Frontage Width Coefficient)
+//     Standard reference: 4m frontage (mặt tiền chuẩn)
+//     Applies primarily to townhouses, shophouses, land (not apartments)
+// ─────────────────────────────────────────────────────────────────────────────
+export function getKmf(frontageWidth: number, propertyType?: PropertyType): { value: number; label: string; description: string } | null {
+  // Not applicable for apartments (uses Kfl instead)
+  if (propertyType?.startsWith('apartment')) return null;
+  if (!frontageWidth || frontageWidth <= 0) return null;
+
+  if (frontageWidth >= 10) return {
+    value: 1.20,
+    label: `Mặt tiền siêu rộng ${frontageWidth}m`,
+    description: 'Mặt tiền ≥ 10m — lý tưởng cho thương mại, rất hiếm (+20%)'
+  };
+  if (frontageWidth >= 7) return {
+    value: 1.12,
+    label: `Mặt tiền rộng ${frontageWidth}m`,
+    description: 'Mặt tiền 7-10m — thuận lợi kinh doanh, showroom (+12%)'
+  };
+  if (frontageWidth >= 5) return {
+    value: 1.06,
+    label: `Mặt tiền đẹp ${frontageWidth}m`,
+    description: 'Mặt tiền 5-7m — chuẩn nhà phố thương mại (+6%)'
+  };
+  if (frontageWidth >= 4) return {
+    value: 1.00,
+    label: `Mặt tiền chuẩn ${frontageWidth}m`,
+    description: 'Mặt tiền 4-5m — chuẩn tham chiếu thị trường'
+  };
+  if (frontageWidth >= 3) return {
+    value: 0.96,
+    label: `Mặt tiền hẹp ${frontageWidth}m`,
+    description: 'Mặt tiền 3-4m — hơi chật, khó cải tạo mặt tiền (-4%)'
+  };
+  return {
+    value: 0.92,
+    label: `Mặt tiền rất hẹp ${frontageWidth}m`,
+    description: 'Mặt tiền < 3m — hẹp, hạn chế khai thác thương mại (-8%)'
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4d. Hệ số nội thất (Kfurn — Furnishing Coefficient)
+//     Standard reference: BASIC (nội thất cơ bản)
+// ─────────────────────────────────────────────────────────────────────────────
+export function getKfurn(furnishing: 'FULL' | 'BASIC' | 'NONE' | undefined): { value: number; label: string; description: string } | null {
+  if (!furnishing) return null;
+  switch (furnishing) {
+    case 'FULL': return {
+      value: 1.07,
+      label: 'Nội thất cao cấp đầy đủ',
+      description: 'Full nội thất cao cấp — vào ở ngay, giá trị thêm +7%'
+    };
+    case 'BASIC': return {
+      value: 1.00,
+      label: 'Nội thất cơ bản',
+      description: 'Nội thất cơ bản — chuẩn tham chiếu thị trường'
+    };
+    case 'NONE': return {
+      value: 0.95,
+      label: 'Không có nội thất (nhà thô)',
+      description: 'Nhà thô — người mua tự hoàn thiện, giảm 5% so với chuẩn'
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Multi-source price blending
+// Combines: AI market research + internal DB comps + cached market index
+// Returns blended price/m² and source breakdown
+// ─────────────────────────────────────────────────────────────────────────────
+export function computeBlendedBasePrice(params: {
+  aiPrice: number;
+  aiConfidence: number;
+  internalCompsMedian?: number;
+  internalCompsCount?: number;
+  cachedMarketPrice?: number;
+  cachedConfidence?: number;
+}): { blendedPrice: number; confidenceBoost: number; sources: ValuationSources } {
+  const { aiPrice, aiConfidence, internalCompsMedian, internalCompsCount = 0, cachedMarketPrice, cachedConfidence = 0 } = params;
+
+  // Determine weights based on data availability and quality
+  // AI is always present; internal comps and cache are bonuses
+  let wAi = 1.0;
+  let wInternal = 0.0;
+  let wCached = 0.0;
+
+  // Internal comps contribution: increases with sample count
+  if (internalCompsMedian && internalCompsMedian > 0 && internalCompsCount > 0) {
+    if (internalCompsCount >= 10) wInternal = 0.40;       // Strong comps dataset → 40%
+    else if (internalCompsCount >= 5) wInternal = 0.25;   // Moderate dataset → 25%
+    else if (internalCompsCount >= 2) wInternal = 0.12;   // Few comps → 12%
+  }
+
+  // Cached market data contribution
+  if (cachedMarketPrice && cachedMarketPrice > 0 && cachedConfidence >= 50) {
+    wCached = 0.15 * (cachedConfidence / 100);  // Scale by cache confidence
+  }
+
+  // Normalize weights to sum to 1.0
+  const total = wAi + wInternal + wCached;
+  wAi /= total;
+  wInternal /= total;
+  wCached /= total;
+
+  const blendedPrice = Math.round(
+    aiPrice * wAi +
+    (internalCompsMedian || aiPrice) * wInternal +
+    (cachedMarketPrice || aiPrice) * wCached
+  );
+
+  // Confidence boost: multiple sources agreeing increases confidence
+  const aiVsInternal = internalCompsMedian ? Math.abs(aiPrice - internalCompsMedian) / aiPrice : 1;
+  const aiVsCached = cachedMarketPrice ? Math.abs(aiPrice - cachedMarketPrice) / aiPrice : 1;
+  const sourceDivergence = Math.min(aiVsInternal, aiVsCached, 1);
+
+  // Boost = 0 to 12 points based on agreement between sources
+  const sourcesUsed = (wInternal > 0 ? 1 : 0) + (wCached > 0 ? 1 : 0);
+  const agreementBonus = sourcesUsed * Math.max(0, 1 - sourceDivergence * 3) * 6;
+  const confidenceBoost = Math.round(Math.min(12, agreementBonus));
+
+  return {
+    blendedPrice,
+    confidenceBoost,
+    sources: {
+      aiPrice,
+      aiWeight: Math.round(wAi * 100) / 100,
+      internalCompsPrice: internalCompsMedian || 0,
+      internalCompsCount,
+      internalCompsWeight: Math.round(wInternal * 100) / 100,
+      cachedPrice: cachedMarketPrice || 0,
+      cachedWeight: Math.round(wCached * 100) / 100,
+      blendedPrice,
+      confidenceBoost,
+    }
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 4. Confidence Interval Margin
 // ─────────────────────────────────────────────────────────────────────────────
 function getConfidenceMargin(confidence: number): number {
@@ -293,11 +543,35 @@ function applyIncomeApproach(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. MAIN AVM + RECONCILIATION ENGINE
+// 6. MAIN AVM + RECONCILIATION ENGINE (v3 — multi-source, 7 coefficients)
 // ─────────────────────────────────────────────────────────────────────────────
 export function applyAVM(input: AVMInput): AVMOutput {
-  const { marketBasePrice, area, roadWidth, legal, confidence, marketTrend, propertyType, monthlyRent } = input;
+  const {
+    marketBasePrice, area, roadWidth, legal, confidence, marketTrend, propertyType, monthlyRent,
+    floorLevel, direction, frontageWidth, furnishing,
+    internalCompsMedian, internalCompsCount, cachedMarketPrice, cachedConfidence,
+  } = input;
 
+  // ── Multi-source blending: determine actual base price ────────
+  let effectiveBasePrice = marketBasePrice;
+  let effectiveConfidence = confidence;
+  let sources: ValuationSources | undefined;
+
+  if (internalCompsMedian || cachedMarketPrice) {
+    const blended = computeBlendedBasePrice({
+      aiPrice: marketBasePrice,
+      aiConfidence: confidence,
+      internalCompsMedian,
+      internalCompsCount,
+      cachedMarketPrice,
+      cachedConfidence,
+    });
+    effectiveBasePrice = blended.blendedPrice;
+    effectiveConfidence = Math.min(98, confidence + blended.confidenceBoost);
+    sources = blended.sources;
+  }
+
+  // ── Core coefficients ─────────────────────────────────────────
   const Kd_data = getKd(roadWidth);
   const Kp_data = getKp(legal);
   const Ka_data = getKa(area);
@@ -306,24 +580,34 @@ export function applyAVM(input: AVMInput): AVMOutput {
   const Kp = Kp_data.value;
   const Ka = Ka_data.value;
 
-  // ── Method 1: AVM/Comps ─────────────────────────────────────
-  const safeArea = Math.max(1, area);                          // guard against zero/negative area
-  const safeMarketBase = Math.max(0, marketBasePrice);         // guard against negative base price
-  const rawPricePerM2 = safeMarketBase * Kd * Kp * Ka;
-  const pricePerM2 = Math.max(0, Math.round(rawPricePerM2));   // guard against negative
+  // ── Optional coefficients ─────────────────────────────────────
+  const pType = propertyType || 'townhouse_center';
+  const Kfl_data = (floorLevel !== undefined && floorLevel > 0) ? getKfl(floorLevel, pType) : null;
+  const Kdir_data = direction ? getKdir(direction) : null;
+  const Kmf_data = (frontageWidth !== undefined && frontageWidth > 0) ? getKmf(frontageWidth, pType) : null;
+  const Kfurn_data = furnishing ? getKfurn(furnishing) : null;
+
+  const Kfl = Kfl_data?.value ?? 1.0;
+  const Kdir = Kdir_data?.value ?? 1.0;
+  const Kmf = Kmf_data?.value ?? 1.0;
+  const Kfurn = Kfurn_data?.value ?? 1.0;
+
+  // ── Method 1: AVM/Comps ────────────────────────────────────────
+  const safeArea = Math.max(1, area);
+  const safeMarketBase = Math.max(0, effectiveBasePrice);
+  const rawPricePerM2 = safeMarketBase * Kd * Kp * Ka * Kfl * Kdir * Kmf * Kfurn;
+  const pricePerM2 = Math.max(0, Math.round(rawPricePerM2));
   const compsPrice = Math.max(0, Math.round(pricePerM2 * safeArea));
 
-  // ── Method 2: Income Approach (if rent data available) ──────
+  // ── Method 2: Income Approach (if rent data available) ────────
   let incomeApproach: IncomeApproachResult | undefined;
   let reconciliation: AVMOutput['reconciliation'] | undefined;
   let totalPrice = compsPrice;
 
-  const pType = propertyType || 'townhouse_center';
-
   if (monthlyRent && monthlyRent > 0) {
     incomeApproach = applyIncomeApproach(monthlyRent, compsPrice, pType);
 
-    // ── Method 3: Reconciliation ─────────────────────────────
+    // ── Method 3: Reconciliation ──────────────────────────────
     const weights = RECONCILE_WEIGHTS[pType];
     const finalValue = Math.round(
       compsPrice * weights.comps + incomeApproach.capitalValue * weights.income
@@ -338,60 +622,91 @@ export function applyAVM(input: AVMInput): AVMOutput {
     totalPrice = finalValue;
   }
 
-  // ── Confidence Interval (applied to final reconciled value) ──
-  const margin = getConfidenceMargin(confidence);
+  // ── Confidence Interval ───────────────────────────────────────
+  const margin = getConfidenceMargin(effectiveConfidence);
   const rangeMin = Math.round(totalPrice * (1 - margin));
   const rangeMax = Math.round(totalPrice * (1 + margin));
 
-  // ── Factors ──────────────────────────────────────────────────
+  // ── Factors ───────────────────────────────────────────────────
   const factors: AVMFactor[] = [];
 
-  const kdImpact = Math.round((Kd - 1.00) * 100);
   factors.push({
-    label: Kd_data.label,
-    coefficient: Kd,
-    impact: Math.abs(kdImpact),
-    isPositive: Kd >= 1.00,
-    description: Kd_data.description,
-    type: 'AVM'
+    label: Kd_data.label, coefficient: Kd,
+    impact: Math.abs(Math.round((Kd - 1.00) * 100)),
+    isPositive: Kd >= 1.00, description: Kd_data.description, type: 'AVM'
+  });
+  factors.push({
+    label: Kp_data.label, coefficient: Kp,
+    impact: Math.abs(Math.round((Kp - 1.00) * 100)),
+    isPositive: Kp >= 1.00, description: Kp_data.description, type: 'AVM'
+  });
+  factors.push({
+    label: Ka_data.label, coefficient: Ka,
+    impact: Math.abs(Math.round((Ka - 1.00) * 100)),
+    isPositive: Ka >= 1.00, description: Ka_data.description, type: 'AVM'
   });
 
-  const kpImpact = Math.round((Kp - 1.00) * 100);
-  factors.push({
-    label: Kp_data.label,
-    coefficient: Kp,
-    impact: Math.abs(kpImpact),
-    isPositive: Kp >= 1.00,
-    description: Kp_data.description,
-    type: 'AVM'
+  if (Kfl_data) factors.push({
+    label: Kfl_data.label, coefficient: Kfl,
+    impact: Math.abs(Math.round((Kfl - 1.00) * 100)),
+    isPositive: Kfl >= 1.00, description: Kfl_data.description, type: 'AVM'
+  });
+  if (Kdir_data) factors.push({
+    label: Kdir_data.label, coefficient: Kdir,
+    impact: Math.abs(Math.round((Kdir - 1.00) * 100)),
+    isPositive: Kdir >= 1.00, description: Kdir_data.description, type: 'AVM'
+  });
+  if (Kmf_data) factors.push({
+    label: Kmf_data.label, coefficient: Kmf,
+    impact: Math.abs(Math.round((Kmf - 1.00) * 100)),
+    isPositive: Kmf >= 1.00, description: Kmf_data.description, type: 'AVM'
+  });
+  if (Kfurn_data) factors.push({
+    label: Kfurn_data.label, coefficient: Kfurn,
+    impact: Math.abs(Math.round((Kfurn - 1.00) * 100)),
+    isPositive: Kfurn >= 1.00, description: Kfurn_data.description, type: 'AVM'
   });
 
-  const kaImpact = Math.round((Ka - 1.00) * 100);
-  factors.push({
-    label: Ka_data.label,
-    coefficient: Ka,
-    impact: Math.abs(kaImpact),
-    isPositive: Ka >= 1.00,
-    description: Ka_data.description,
-    type: 'AVM'
-  });
+  // Multi-source factor
+  if (sources && sources.confidenceBoost > 0) {
+    const srcParts: string[] = [];
+    if (sources.internalCompsCount > 0) srcParts.push(`${sources.internalCompsCount} BĐS tương đồng nội bộ`);
+    if (sources.cachedPrice > 0) srcParts.push('dữ liệu thị trường cache');
+    factors.push({
+      label: `Đa nguồn dữ liệu (${srcParts.join(' + ')})`,
+      coefficient: sources.blendedPrice / (sources.aiPrice || 1),
+      impact: sources.confidenceBoost,
+      isPositive: true,
+      description: `Blended: AI ${Math.round(sources.aiWeight * 100)}% + Nội bộ ${Math.round(sources.internalCompsWeight * 100)}% + Cache ${Math.round(sources.cachedWeight * 100)}%`,
+      type: 'MULTI_SOURCE'
+    });
+  }
 
-  const formula = `${(marketBasePrice / 1_000_000).toFixed(0)} tr/m² × Kd(${Kd}) × Kp(${Kp}) × Ka(${Ka}) = ${(pricePerM2 / 1_000_000).toFixed(0)} tr/m²`;
+  // Build formula string showing all active coefficients
+  const activeCoeffs: string[] = [`Kd(${Kd})`];
+  activeCoeffs.push(`Kp(${Kp})`);
+  activeCoeffs.push(`Ka(${Ka})`);
+  if (Kfl !== 1.0) activeCoeffs.push(`Kfl(${Kfl})`);
+  if (Kdir !== 1.0) activeCoeffs.push(`Kdir(${Kdir})`);
+  if (Kmf !== 1.0) activeCoeffs.push(`Kmf(${Kmf})`);
+  if (Kfurn !== 1.0) activeCoeffs.push(`Kfurn(${Kfurn})`);
+  const formula = `${(effectiveBasePrice / 1_000_000).toFixed(0)} tr/m² × ${activeCoeffs.join(' × ')} = ${(pricePerM2 / 1_000_000).toFixed(0)} tr/m²`;
 
   return {
-    marketBasePrice,
+    marketBasePrice: effectiveBasePrice,
     pricePerM2,
     totalPrice,
     compsPrice,
     rangeMin,
     rangeMax,
-    confidence,
+    confidence: effectiveConfidence,
     marketTrend,
     factors,
-    coefficients: { Kd, Kp, Ka },
+    coefficients: { Kd, Kp, Ka, ...(Kfl_data && { Kfl }), ...(Kdir_data && { Kdir }), ...(Kmf_data && { Kmf }), ...(Kfurn_data && { Kfurn }) },
     formula,
     incomeApproach,
     reconciliation,
+    sources,
   };
 }
 

@@ -548,6 +548,7 @@ export const Inventory: React.FC = () => {
     const [stats, setStats] = useState({ availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0, inactiveCount: 0, totalCount: 0 });
     const [allFilteredListings, setAllFilteredListings] = useState<Listing[]>([]); // For Kanban board
     const [loading, setLoading] = useState(true);
+    const [boardLoading, setBoardLoading] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
     
     // Filters & Pagination State
@@ -622,12 +623,15 @@ export const Inventory: React.FC = () => {
 
     const fetchBoardData = useCallback(async () => {
         if (viewMode !== 'BOARD' && viewMode !== 'MAP') { setAllFilteredListings([]); return; }
+        setBoardLoading(true);
         try {
             const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter };
             const allRes = await db.getListings(1, 500, filters);
             setAllFilteredListings(allRes.data || []);
         } catch (e) {
             console.error(e);
+        } finally {
+            setBoardLoading(false);
         }
     }, [viewMode, debouncedSearch, typeFilter, statusFilter, transactionFilter]);
 
@@ -749,8 +753,21 @@ export const Inventory: React.FC = () => {
                             <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map') || 'Bản đồ'}>{ICONS.VIEW_MAP}</button>
                         </div>
 
+                        {/* Active filter chip */}
+                        {(typeFilter !== 'ALL' || statusFilter !== 'ALL' || transactionFilter !== 'ALL') && (
+                            <button
+                                onClick={() => { setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }}
+                                className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
+                                title={t('inventory.reset_filters') || 'Xóa bộ lọc'}
+                            >
+                                <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse shrink-0" />
+                                {t('inventory.reset_filters') || 'Xóa bộ lọc'}
+                                <span className="ml-0.5 opacity-70">×</span>
+                            </button>
+                        )}
+
                         <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block"></div>
-                        
+
                         {canViewInternalInfo && (
                             <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
                                 {ICONS.ADD} {t('inventory.create_title')}
@@ -805,15 +822,26 @@ export const Inventory: React.FC = () => {
                         
                         {/* GRID VIEW (DEFAULT) */}
                         {viewMode === 'GRID' && (
-                            loading ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-[350px] bg-[var(--glass-surface-hover)] rounded-[24px] animate-pulse"></div>)}
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {listings.map(item => (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {loading ? (
+                                    [1,2,3,4,5,6,7,8].map(i => (
+                                        <div key={i} className="bg-[var(--glass-surface-hover)] rounded-[24px] animate-pulse flex flex-col overflow-hidden">
+                                            <div className="h-[200px] bg-slate-100/80" />
+                                            <div className="p-4 space-y-3">
+                                                <div className="h-3 bg-slate-100 rounded-full w-1/3" />
+                                                <div className="h-4 bg-slate-100 rounded-full w-full" />
+                                                <div className="h-3 bg-slate-100 rounded-full w-2/3" />
+                                                <div className="flex justify-between items-center pt-2">
+                                                    <div className="h-5 bg-slate-100 rounded-full w-1/2" />
+                                                    <div className="h-5 bg-slate-100 rounded-full w-1/4" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : listings.length > 0 ? (
+                                    listings.map(item => (
                                         <div key={item.id} className="min-h-full">
-                                            <ListingCard 
+                                            <ListingCard
                                                 item={{...item, isFavorite: favorites.has(item.id)}} t={t} formatCurrency={formatCurrency}
                                                 onToggleFavorite={handleToggleFavorite}
                                                 onEdit={(l) => { setEditingListing(l); setIsCreateModalOpen(true); }}
@@ -825,17 +853,48 @@ export const Inventory: React.FC = () => {
                                                 showActions={true}
                                             />
                                         </div>
-                                    ))}
-                                    {listings.length === 0 && <div className="col-span-full py-20 text-center text-[var(--text-secondary)] italic">{t('common.no_results')}</div>}
-                                </div>
-                            )
+                                    ))
+                                ) : (
+                                    <div className="col-span-full flex flex-col items-center gap-4 py-20 text-center">
+                                        {debouncedSearch || typeFilter !== 'ALL' || statusFilter !== 'ALL' || transactionFilter !== 'ALL' ? (
+                                            <>
+                                                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
+                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_filter_hint') || 'Thử xóa bộ lọc hoặc tìm kiếm khác'}</p>
+                                                </div>
+                                                <button onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                                    {t('inventory.reset_filters') || 'Xóa bộ lọc'}
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty_title') || 'Chưa có sản phẩm nào'}</p>
+                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_hint') || 'Thêm sản phẩm bất động sản đầu tiên vào kho'}</p>
+                                                </div>
+                                                {canViewInternalInfo && (
+                                                    <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                                        {ICONS.ADD} {t('inventory.create_title')}
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         )}
 
                         {/* LIST VIEW (TABLE) */}
                         {viewMode === 'LIST' && (
                             <div className="bg-[var(--bg-surface)] rounded-[24px] md:border border-[var(--glass-border)] shadow-sm overflow-hidden h-full flex flex-col">
                                 <div ref={tableRef} className="overflow-auto no-scrollbar flex-1 min-w-0 w-full cursor-grab active:cursor-grabbing">
-                                    <table className="w-full text-left border-collapse relative hidden md:table">
+                                    {(loading || listings.length > 0) && <table className="w-full text-left border-collapse relative hidden md:table">
                                         <thead className="bg-[var(--glass-surface)] border-b border-[var(--glass-border)] sticky top-0 z-20 shadow-sm">
                                             <tr>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase sticky left-0 z-30 bg-[var(--glass-surface)] min-w-[200px] border-r border-[var(--glass-border)] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
@@ -853,44 +912,123 @@ export const Inventory: React.FC = () => {
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_unit_price') || 'Đơn giá'}</th>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_area')}</th>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-center">{t('inventory.label_status')}</th>
-                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right sticky right-0 z-30 bg-[var(--glass-surface)] shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] border-l border-[var(--glass-border)]">{t('common.actions')}</th>
+                                                {canViewInternalInfo && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right sticky right-0 z-30 bg-[var(--glass-surface)] shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] border-l border-[var(--glass-border)]">{t('common.actions')}</th>}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
-                                            {listings.map(item => (
-                                                <InventoryRow 
-                                                    key={item.id} item={item} 
+                                            {loading ? (
+                                                Array.from({ length: 8 }).map((_, i) => (
+                                                    <tr key={i} className="border-b border-slate-50 hidden md:table-row">
+                                                        <td className="px-4 py-3 sticky left-0 bg-[var(--bg-surface)] min-w-[200px]">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-lg bg-slate-100 animate-pulse shrink-0" />
+                                                                <div className="space-y-1.5 flex-1">
+                                                                    <div className="h-2.5 bg-slate-100 animate-pulse rounded-full w-16" />
+                                                                    <div className="h-3 bg-slate-100 animate-pulse rounded-full w-3/4" />
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-28" /></td>
+                                                        {canViewInternalInfo && <>
+                                                            <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-20" /></td>
+                                                            <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-12 ml-auto" /></td>
+                                                        </>}
+                                                        <td className="px-4 py-3"><div className="h-5 bg-slate-100 animate-pulse rounded-full w-16" /></td>
+                                                        <td className="px-4 py-3"><div className="h-4 bg-slate-100 animate-pulse rounded-full w-24 ml-auto" /></td>
+                                                        <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-16 ml-auto" /></td>
+                                                        <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-12 ml-auto" /></td>
+                                                        <td className="px-4 py-3"><div className="h-5 bg-slate-100 animate-pulse rounded-full w-16 mx-auto" /></td>
+                                                        {canViewInternalInfo && <td className="px-3 py-3 sticky right-0 bg-[var(--bg-surface)]"><div className="w-6 h-6 rounded-lg bg-slate-100 animate-pulse ml-auto" /></td>}
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                listings.map(item => (
+                                                    <InventoryRow
+                                                        key={item.id} item={item}
+                                                        onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
+                                                        onDelete={handleDeleteClick}
+                                                        onDuplicate={async (id: string) => {
+                                                            try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                        }}
+                                                        onClick={() => handleNavigate(item.id)}
+                                                        t={t} formatCurrency={formatCurrency}
+                                                        canViewInternal={canViewInternalInfo}
+                                                    />
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>}
+
+                                    {/* Mobile Compact List */}
+                                    {(loading || listings.length > 0) && <div className="md:hidden flex flex-col divide-y divide-[var(--glass-border)]">
+                                        {loading ? (
+                                            Array.from({ length: 8 }).map((_, i) => (
+                                                <div key={i} className="flex items-center gap-3 p-3 border-b border-[var(--glass-border)]">
+                                                    <div className="w-14 h-14 rounded-xl bg-slate-100 animate-pulse shrink-0" />
+                                                    <div className="flex-1 space-y-2">
+                                                        <div className="flex gap-1.5">
+                                                            <div className="h-4 bg-slate-100 animate-pulse rounded w-12" />
+                                                            <div className="h-4 bg-slate-100 animate-pulse rounded w-14" />
+                                                        </div>
+                                                        <div className="h-3.5 bg-slate-100 animate-pulse rounded-full w-3/4" />
+                                                        <div className="h-3 bg-slate-100 animate-pulse rounded-full w-1/2" />
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                                        <div className="h-5 bg-slate-100 animate-pulse rounded w-20" />
+                                                        <div className="h-3 bg-slate-100 animate-pulse rounded w-14" />
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            listings.map(item => (
+                                                <CompactInventoryRow
+                                                    key={item.id} item={item}
                                                     onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                     onDelete={handleDeleteClick}
                                                     onDuplicate={async (id: string) => {
                                                         try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                     }}
                                                     onClick={() => handleNavigate(item.id)}
-                                                    t={t} formatCurrency={formatCurrency}
+                                                    t={t}
                                                     canViewInternal={canViewInternalInfo}
                                                 />
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                    
-                                    {/* Mobile Compact List */}
-                                    <div className="md:hidden flex flex-col divide-y divide-[var(--glass-border)]">
-                                        {listings.map(item => (
-                                            <CompactInventoryRow 
-                                                key={item.id} item={item} 
-                                                onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
-                                                onDelete={handleDeleteClick}
-                                                onDuplicate={async (id: string) => {
-                                                    try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
-                                                }}
-                                                onClick={() => handleNavigate(item.id)}
-                                                t={t}
-                                                canViewInternal={canViewInternalInfo}
-                                            />
-                                        ))}
-                                    </div>
-                                    
-                                    {listings.length === 0 && !loading && <div className="p-12 text-center text-[var(--text-secondary)] italic">{t('common.no_results')}</div>}
+                                            ))
+                                        )}
+                                    </div>}
+
+                                    {listings.length === 0 && !loading && (
+                                        <div className="flex flex-col items-center gap-4 py-16 px-4 text-center">
+                                            {debouncedSearch || typeFilter !== 'ALL' || statusFilter !== 'ALL' || transactionFilter !== 'ALL' ? (
+                                                <>
+                                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
+                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_filter_hint') || 'Thử xóa bộ lọc hoặc tìm kiếm khác'}</p>
+                                                    </div>
+                                                    <button onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                                        {t('inventory.reset_filters') || 'Xóa bộ lọc'}
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty_title') || 'Chưa có sản phẩm nào'}</p>
+                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_hint') || 'Thêm sản phẩm bất động sản đầu tiên vào kho'}</p>
+                                                    </div>
+                                                    {canViewInternalInfo && (
+                                                        <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                                            {ICONS.ADD} {t('inventory.create_title')}
+                                                        </button>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -900,7 +1038,7 @@ export const Inventory: React.FC = () => {
                 {/* MAP VIEW — absolute positioning for guaranteed pixel height independent of scroll/flex chain */}
                 {viewMode === 'MAP' && (
                     <div className="absolute inset-0 p-4 md:p-6" style={{ zIndex: 1 }}>
-                        <div className="w-full h-full rounded-2xl overflow-hidden border border-[var(--glass-border)] shadow-sm">
+                        <div className="w-full h-full rounded-2xl overflow-hidden border border-[var(--glass-border)] shadow-sm relative">
                             <MapView
                                 listings={allFilteredListings.length > 0 ? allFilteredListings : listings}
                                 onNavigate={handleNavigate}
@@ -910,6 +1048,14 @@ export const Inventory: React.FC = () => {
                                 t={t}
                                 language={language}
                             />
+                            {boardLoading && (
+                                <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center rounded-2xl z-10">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
+                                        <p className="text-xs font-bold text-slate-600">{t('common.loading') || 'Đang tải...'}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -928,9 +1074,25 @@ export const Inventory: React.FC = () => {
                                         <span className="text-xs2 font-bold bg-[var(--bg-surface)] px-2 py-0.5 rounded-full text-[var(--text-tertiary)] shadow-sm border border-[var(--glass-border)]">{items.length}</span>
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
-                                        {items.map(item => (
-                                            <InventoryKanbanCard 
-                                                key={item.id} item={item} 
+                                        {boardLoading ? (
+                                            [1,2,3].map(i => (
+                                                <div key={i} className="bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--glass-border)] mb-3 animate-pulse">
+                                                    <div className="flex gap-3 items-start mb-3">
+                                                        <div className="w-12 h-12 rounded-lg bg-slate-100 shrink-0" />
+                                                        <div className="flex-1 space-y-2 pt-1">
+                                                            <div className="h-2.5 bg-slate-100 rounded-full w-3/4" />
+                                                            <div className="h-2 bg-slate-100 rounded-full w-1/2" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="border-t border-slate-50 pt-2 flex justify-between">
+                                                        <div className="h-4 bg-slate-100 rounded-full w-1/2" />
+                                                        <div className="h-3 bg-slate-100 rounded-full w-1/4" />
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : items.map(item => (
+                                            <InventoryKanbanCard
+                                                key={item.id} item={item}
                                                 onClick={() => handleNavigate(item.id)}
                                                 onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                 onDelete={handleDeleteClick}
@@ -938,9 +1100,17 @@ export const Inventory: React.FC = () => {
                                                     try { await db.duplicateListing(id); fetchBoardData(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                 }}
                                                 canViewInternal={canViewInternalInfo}
-                                                t={t} formatCurrency={formatCurrency} 
+                                                t={t} formatCurrency={formatCurrency}
                                             />
                                         ))}
+                                        {items.length === 0 && !boardLoading && (
+                                            <div className="flex flex-col items-center justify-center h-28 gap-2 text-center">
+                                                <div className={`w-9 h-9 rounded-xl ${style.bg} flex items-center justify-center`}>
+                                                    <svg className={`w-5 h-5 ${style.color} opacity-50`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                                                </div>
+                                                <p className="text-xs text-[var(--text-tertiary)]">{t('inventory.kanban_empty') || 'Chưa có sản phẩm'}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             );

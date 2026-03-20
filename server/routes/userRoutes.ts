@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { userRepository } from '../repositories/userRepository';
 import { auditRepository } from '../repositories/auditRepository';
+import { emailService } from '../services/emailService';
 
 export function createUserRoutes(authenticateToken: any) {
   const router = Router();
@@ -97,7 +98,7 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins can invite users' });
       }
 
-      const { name, email, role } = req.body;
+      const { name, email, role, phone } = req.body;
       if (!name || !email) {
         return res.status(400).json({ error: 'Name and email are required' });
       }
@@ -107,7 +108,7 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(409).json({ error: 'User with this email already exists' });
       }
 
-      const invited = await userRepository.invite(user.tenantId, { name, email, role });
+      const invited = await userRepository.invite(user.tenantId, { name, email, role, phone });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
@@ -116,6 +117,11 @@ export function createUserRoutes(authenticateToken: any) {
         entityId: invited.id,
         details: `Invited user ${email} with role ${invited.role}`,
         ipAddress: req.ip,
+      });
+
+      const loginUrl = `${process.env.APP_URL || 'https://app.sgsland.vn'}/auth/set-password?email=${encodeURIComponent(email)}`;
+      emailService.sendInviteEmail(user.tenantId, email, name, invited.role, loginUrl).catch((err: any) => {
+        console.error('[Invite] Failed to send invite email:', err.message);
       });
 
       res.status(201).json(userRepository.toPublicUser(invited));
@@ -182,6 +188,11 @@ export function createUserRoutes(authenticateToken: any) {
         entityId: req.params.id,
         details: `Re-invite sent to ${target.email}`,
         ipAddress: req.ip,
+      });
+
+      const loginUrl = `${process.env.APP_URL || 'https://app.sgsland.vn'}/auth/set-password?email=${encodeURIComponent(target.email || '')}`;
+      emailService.sendInviteEmail(user.tenantId, target.email!, target.name || target.email!, target.role, loginUrl).catch((err: any) => {
+        console.error('[Invite] Failed to resend invite email:', err.message);
       });
 
       res.json({ success: true, message: `Invite resent to ${target.email}` });

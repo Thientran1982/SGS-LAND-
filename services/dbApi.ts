@@ -118,6 +118,8 @@ class DatabaseApiClient {
     if (filters?.source && filters.source !== 'ALL') params.source = filters.source;
     if (filters?.search) params.search = filters.search;
     if (filters?.slaBreached !== undefined) params.slaBreached = filters.slaBreached;
+    if (filters?.sort) params.sort = filters.sort;
+    if (filters?.order) params.order = filters.order;
 
     const cacheKey = `leads:${page}:${pageSize}:${JSON.stringify(params)}`;
     const cached = _cache.get(cacheKey);
@@ -658,9 +660,9 @@ class DatabaseApiClient {
     }
   }
 
-  async getDocuments() {
+  async getDocuments(search?: string) {
     try {
-      const result = await knowledgeApi.getDocuments();
+      const result = await knowledgeApi.getDocuments(1, 50, search);
       return result.data;
     } catch {
       return [];
@@ -729,7 +731,7 @@ class DatabaseApiClient {
       return await analyticsApi.getBiMarts(timeRange);
     } catch (error) {
       console.error('generateBiMarts error:', error);
-      return { funnel: [], attribution: [], conversionByPeriod: [] };
+      return { funnel: [], attribution: [], conversionByPeriod: [], campaignCosts: [] };
     }
   }
 
@@ -789,11 +791,12 @@ class DatabaseApiClient {
     return userApi.deleteUser(id);
   }
 
-  async getTenantUsers(page = 1, pageSize = 50, search?: string, role?: string, sort?: any) {
+  async getTenantUsers(page = 1, pageSize = 50, search?: string, role?: string, sort?: any, status?: string) {
     try {
       const params: any = {};
       if (search) params.search = search;
       if (role) params.role = role;
+      if (status) params.status = status;
       if (sort?.field) params.sortField = sort.field;
       if (sort?.order) params.sortOrder = sort.order;
       const result = await userApi.getUsers(page, pageSize, params);
