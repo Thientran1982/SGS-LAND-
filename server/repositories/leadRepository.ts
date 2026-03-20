@@ -92,6 +92,8 @@ export class LeadRepository extends BaseRepository {
       );
       const total = countResult.rows[0].total;
 
+      const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
+      const isRestricted = RESTRICTED_ROLES.includes(userRole || '') && !!userId;
       const statsResult = await client.query(
         `SELECT
           COUNT(*)::int                                                                           AS total,
@@ -100,7 +102,9 @@ export class LeadRepository extends BaseRepository {
           COUNT(*) FILTER (WHERE stage = 'LOST')::int                                           AS lost_count,
           COALESCE(ROUND(AVG((score->>'score')::numeric)), 0)::int                              AS avg_score
          FROM leads
-         WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid`
+         WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           ${isRestricted ? 'AND assigned_to = $1' : ''}`,
+        isRestricted ? [userId] : []
       );
       const sr = statsResult.rows[0];
       const globalTotal = sr.total || 0;
@@ -162,7 +166,7 @@ export class LeadRepository extends BaseRepository {
         `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar
          FROM leads l
          LEFT JOIN users u ON l.assigned_to = u.id
-         WHERE l.id = $1`,
+         WHERE l.id = $1 AND l.tenant_id = current_setting('app.current_tenant_id', true)::uuid`,
         [id]
       );
       if (!result.rows[0]) return null;
@@ -239,7 +243,7 @@ export class LeadRepository extends BaseRepository {
     return this.withTenant(tenantId, async (client) => {
       const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
       if (RESTRICTED.includes(userRole || '') && userId) {
-        const check = await client.query(`SELECT assigned_to FROM leads WHERE id = $1`, [id]);
+        const check = await client.query(`SELECT assigned_to FROM leads WHERE id = $1 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid`, [id]);
         if (!check.rows[0] || check.rows[0].assigned_to !== userId) return null;
       }
 
@@ -271,7 +275,7 @@ export class LeadRepository extends BaseRepository {
       if (updates.length <= 1) return this.findById(tenantId, id);
 
       const result = await client.query(
-        `UPDATE leads SET ${updates.join(', ')} WHERE id = $1 RETURNING *`,
+        `UPDATE leads SET ${updates.join(', ')} WHERE id = $1 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid RETURNING *`,
         [id, ...values]
       );
 

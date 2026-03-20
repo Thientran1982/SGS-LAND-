@@ -70,8 +70,8 @@ export function createLeadRoutes(authenticateToken: any) {
       if (duplicate) {
         return res.status(409).json({
           error: 'DUPLICATE_LEAD',
-          message: `A lead with phone ${phone} already exists: ${duplicate.name}`,
-          existingLead: duplicate,
+          message: `A lead with this phone number already exists`,
+          existingLeadId: duplicate.id,
         });
       }
 

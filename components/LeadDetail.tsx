@@ -180,7 +180,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             try {
                 const currentUser = await db.getCurrentUser();
                 if (currentUser) {
-                    socket.emit("view_lead", { leadId: lead.id, user: currentUser });
+                    socket?.emit("view_lead", { leadId: lead.id, user: currentUser });
                 }
             } catch (e) {
                 console.error("Failed to get current user for presence", e);
@@ -193,11 +193,11 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             setActiveViewers(viewers);
         };
 
-        socket.on("active_viewers", handleActiveViewers);
+        socket?.on("active_viewers", handleActiveViewers);
 
         return () => {
-            socket.emit("leave_lead", { leadId: lead.id });
-            socket.off("active_viewers", handleActiveViewers);
+            socket?.emit("leave_lead", { leadId: lead.id });
+            socket?.off("active_viewers", handleActiveViewers);
         };
     }, [lead.id, socket]);
 
