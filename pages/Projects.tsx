@@ -96,16 +96,22 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
-            <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-lg border border-[var(--glass-border)] overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
+            <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-lg border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
+                {/* Header — luôn hiển thị, không scroll */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
                     <div className="flex items-center gap-2 text-indigo-600">
                         {IC.BLDG}
                         <h2 className="text-base font-bold">{project ? t('project.edit') : t('project.new')}</h2>
                     </div>
                     <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto no-scrollbar max-h-[70vh]">
-                    {err && <p className="text-rose-600 text-sm bg-rose-50 border border-rose-200 rounded-xl px-3 py-2" role="alert">{err}</p>}
+                {/* Error — nằm ngoài scroll area, luôn hiển thị dưới header */}
+                {err && (
+                    <div className="shrink-0 px-6 pt-3" role="alert">
+                        <p className="text-rose-600 text-sm bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{err}</p>
+                    </div>
+                )}
+                <form onSubmit={handleSubmit} className="overflow-y-auto no-scrollbar flex-1 p-6 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
                             <label htmlFor="pj-name" className={labelCls}>{t('project.name')} *</label>
