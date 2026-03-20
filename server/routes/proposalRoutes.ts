@@ -83,9 +83,11 @@ export function createProposalRoutes(authenticateToken: any) {
       const bpNum = Number(basePrice);
       const fpNum = Number(finalPrice);
       const discNum = Number(discountAmount || 0);
-      if (isNaN(bpNum) || bpNum < 0) return res.status(400).json({ error: 'Invalid basePrice: must be a non-negative number' });
-      if (isNaN(fpNum) || fpNum < 0) return res.status(400).json({ error: 'Invalid finalPrice: must be a non-negative number' });
+      if (isNaN(bpNum) || bpNum <= 0) return res.status(400).json({ error: 'Invalid basePrice: must be a positive number' });
+      if (isNaN(fpNum) || fpNum <= 0) return res.status(400).json({ error: 'Invalid finalPrice: must be a positive number' });
       if (isNaN(discNum) || discNum < 0) return res.status(400).json({ error: 'Invalid discountAmount: must be a non-negative number' });
+      if (discNum >= bpNum) return res.status(400).json({ error: 'discountAmount must be less than basePrice' });
+      if (fpNum > bpNum) return res.status(400).json({ error: 'finalPrice cannot exceed basePrice' });
 
       const amlCheck = (req as any).amlCheck;
 
