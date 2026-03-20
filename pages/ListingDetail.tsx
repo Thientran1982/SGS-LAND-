@@ -458,10 +458,10 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                 
                 fetchUnits();
                 if (fileInputRef.current) fileInputRef.current.value = '';
-                alert(t('inventory.import_success') || 'Nhập dữ liệu thành công!');
+                notify(t('inventory.import_success') || 'Nhập dữ liệu thành công!', 'success');
             } catch (error) {
                 console.error("Error importing excel:", error);
-                alert(t('inventory.import_error') || 'Có lỗi xảy ra khi nhập dữ liệu.');
+                notify(t('inventory.import_error') || 'Có lỗi xảy ra khi nhập dữ liệu.', 'error');
             }
         };
         reader.readAsArrayBuffer(file);
@@ -473,7 +473,7 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
 
     return (
         <div className="mt-8 relative">
-            {toast && <div className={`absolute top-0 right-0 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
+            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('inventory.project_units') || 'Danh sách sản phẩm thuộc dự án'}</h3>
                 {canManageUnits && (
@@ -514,8 +514,23 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
             
             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
                 {units.length === 0 ? (
-                    <div className="p-8 text-center text-[var(--text-tertiary)] text-sm">
-                        {t('inventory.empty') || 'Kho hàng trống'}
+                    <div className="flex flex-col items-center gap-4 py-16 px-6 text-center">
+                        <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                        </div>
+                        <div>
+                            <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty') || 'Kho hàng trống'}</p>
+                            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_units_hint') || 'Dự án chưa có sản phẩm nào. Thêm căn hộ/sản phẩm đầu tiên.'}</p>
+                        </div>
+                        {canManageUnits && (
+                            <button
+                                onClick={handleAddUnit}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                            >
+                                <Plus className="w-4 h-4" />
+                                {t('inventory.add_unit') || 'Thêm sản phẩm'}
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <>
@@ -942,9 +957,9 @@ export const ListingDetail: React.FC = () => {
     const displayImages = images.slice(0, 5); // Take max 5 for grid
 
     // Format contact phone for display (add spaces for readability)
-    const displayPhone = listing.contactPhone 
-        ? listing.contactPhone.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3') 
-        : '0912 345 678';
+    const displayPhone = listing.contactPhone
+        ? listing.contactPhone.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3')
+        : (t('common.contact_on_site') || 'Liên hệ trực tiếp');
 
     return (
         <article className="h-[100dvh] overflow-y-auto no-scrollbar bg-[var(--bg-surface)] pb-28 lg:pb-20 animate-enter relative">

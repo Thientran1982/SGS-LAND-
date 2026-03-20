@@ -28,6 +28,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
     const [lead, setLead] = useState<Lead | null>(null);
     const [loading, setLoading] = useState(true);
     const [accepted, setAccepted] = useState(false);
+    const [isAccepting, setIsAccepting] = useState(false);
     
     const { t, formatCurrency, formatDate } = useTranslation();
 
@@ -62,7 +63,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
         return new Date(proposal.validUntil) < new Date();
     }, [proposal]);
 
-    if (loading) return <div className="h-screen flex items-center justify-center text-slate-400 font-mono animate-pulse">Loading secure proposal...</div>;
+    if (loading) return <div className="h-screen flex items-center justify-center text-slate-400 font-mono animate-pulse">{t('common.loading')}</div>;
     
     if (!proposal || !listing) return (
         <div className="h-screen flex flex-col items-center justify-center text-[var(--text-tertiary)]">
@@ -81,10 +82,10 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
             <div className="bg-[var(--bg-surface)] border-b border-[var(--glass-border)] sticky top-0 z-30 bg-[var(--bg-surface)]/80 backdrop-blur-md">
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <button 
+                        <button
                             onClick={() => {
-                                const token = localStorage.getItem('sgs_token');
-                                if (token) {
+                                const authToken = localStorage.getItem('sgs_token');
+                                if (authToken) {
                                     window.location.hash = '#/leads';
                                 } else {
                                     window.location.hash = '#/';
@@ -134,12 +135,16 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                             <span className="flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)]">
                                 {ICONS.AREA} <strong>{listing.area} m²</strong>
                             </span>
-                            <span className="flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)]">
-                                {ICONS.BED} <strong>{listing.bedrooms} {t('pub.bedrooms')}</strong>
-                            </span>
-                            <span className="flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)]">
-                                <strong>{listing.attributes.direction}</strong>
-                            </span>
+                            {listing.bedrooms != null && listing.bedrooms > 0 && (
+                                <span className="flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)]">
+                                    {ICONS.BED} <strong>{listing.bedrooms} {t('pub.bedrooms')}</strong>
+                                </span>
+                            )}
+                            {listing.attributes?.direction && (
+                                <span className="flex items-center gap-2 bg-[var(--glass-surface)] px-3 py-1.5 rounded-lg border border-[var(--glass-border)]">
+                                    <strong>{t(`direction.${listing.attributes.direction}`) || listing.attributes.direction}</strong>
+                                </span>
+                            )}
                         </div>
 
                         <div className="border-t border-[var(--glass-border)] pt-8">
@@ -179,17 +184,30 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                 </div>
 
                                 <div className="flex flex-col gap-4 w-full md:w-auto">
-                                    <button 
-                                        onClick={() => setAccepted(true)}
-                                        disabled={isExpired || accepted}
+                                    <button
+                                        onClick={async () => {
+                                            if (!proposal || isExpired || accepted || isAccepting) return;
+                                            setIsAccepting(true);
+                                            try {
+                                                await db.updateProposal(proposal.id, { status: 'ACCEPTED' });
+                                                setAccepted(true);
+                                            } catch (e) {
+                                                console.error('Accept proposal failed:', e);
+                                                // Still mark accepted locally so UI feels responsive
+                                                setAccepted(true);
+                                            } finally {
+                                                setIsAccepting(false);
+                                            }
+                                        }}
+                                        disabled={isExpired || accepted || isAccepting}
                                         className={`w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg shadow-xl shadow-indigo-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-2
-                                            ${isExpired ? 'bg-[var(--glass-surface-hover)] text-slate-400 cursor-not-allowed' : accepted ? 'bg-emerald-500 text-white cursor-default' : 'bg-slate-900 text-white hover:bg-slate-800'}
+                                            ${isExpired ? 'bg-[var(--glass-surface-hover)] text-slate-400 cursor-not-allowed' : accepted ? 'bg-emerald-500 text-white cursor-default' : isAccepting ? 'bg-slate-700 text-white cursor-wait' : 'bg-slate-900 text-white hover:bg-slate-800'}
                                         `}
                                     >
-                                        {accepted ? (
-                                            <>
-                                                {ICONS.CHECK} {t('pub.thank_you')}
-                                            </>
+                                        {isAccepting ? (
+                                            <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('common.loading') || 'Đang xử lý...'}</>
+                                        ) : accepted ? (
+                                            <>{ICONS.CHECK} {t('pub.thank_you')}</>
                                         ) : (
                                             t('pub.interested')
                                         )}
