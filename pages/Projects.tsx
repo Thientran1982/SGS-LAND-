@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { Project, ProjectAccess, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -49,15 +50,16 @@ interface ProjectFormProps {
 }
 
 function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
+    const p = project as any;
     const [form, setForm] = useState({
-        name: project?.name || '',
-        code: project?.code || '',
-        description: project?.description || '',
-        location: project?.location || '',
-        totalUnits: project?.totalUnits != null ? String(project.totalUnits) : '',
-        status: project?.status || 'ACTIVE',
-        openDate: project?.openDate || '',
-        handoverDate: project?.handoverDate || '',
+        name: p?.name || '',
+        code: p?.code || '',
+        description: p?.description || '',
+        location: p?.location || '',
+        totalUnits: (p?.total_units ?? p?.totalUnits) != null ? String(p?.total_units ?? p?.totalUnits) : '',
+        status: p?.status || 'ACTIVE',
+        openDate: p?.open_date || p?.openDate || '',
+        handoverDate: p?.handover_date || p?.handoverDate || '',
     });
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState('');
@@ -66,7 +68,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.name.trim()) { setErr(t('project.name') + ' is required'); return; }
+        if (!form.name.trim()) { setErr(t('project.error_name_required')); return; }
         setSaving(true);
         setErr('');
         try {
@@ -179,7 +181,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
 
     const handleGrant = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!grantForm.partnerTenantId) { setErr(t('project.partner_tenant') + ' is required'); return; }
+        if (!grantForm.partnerTenantId) { setErr(t('project.error_partner_required')); return; }
         setGranting(true);
         setErr('');
         try {
@@ -203,10 +205,14 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
 
     const handleRevoke = async (partnerTenantId: string) => {
         if (!window.confirm(t('project.confirm_revoke'))) return;
-        await db.revokeProjectAccess(project.id, partnerTenantId);
-        setAccesses(prev => prev.map(a =>
-            a.partner_tenant_id === partnerTenantId ? { ...a, status: 'REVOKED' } : a
-        ));
+        try {
+            await db.revokeProjectAccess(project.id, partnerTenantId);
+            setAccesses(prev => prev.map(a =>
+                a.partner_tenant_id === partnerTenantId ? { ...a, status: 'REVOKED' } : a
+            ));
+        } catch (e: any) {
+            setErr(e.message || t('common.error_generic'));
+        }
     };
 
     const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
@@ -333,7 +339,7 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const result = await db.getListings(1, 200, { projectCode: project.code });
+            const result = await db.getListings(1, 500, { projectCode: project.code });
             setListings(result.data || []);
             setStats((result as any).stats || null);
         } finally {
@@ -567,26 +573,39 @@ export function Projects() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [formTarget, setFormTarget] = useState<Project | null | 'new'>(null);
     const [accessTarget, setAccessTarget] = useState<Project | null>(null);
     const [listingsTarget, setListingsTarget] = useState<any | null>(null);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
     const isAdmin = user?.role === UserRole.ADMIN || user?.role === 'ADMIN';
     const isPartner = user?.role === 'PARTNER_ADMIN' || user?.role === 'PARTNER_AGENT';
+
+    const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    }, []);
+
+    // Debounce search input
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(search), 350);
+        return () => clearTimeout(timer);
+    }, [search]);
 
     const load = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
-            const result = await db.getProjects(1, 100, { search: search || undefined, status: statusFilter || undefined });
+            const result = await db.getProjects(1, 100, { search: debouncedSearch || undefined, status: statusFilter || undefined });
             setProjects(result.data || result);
         } catch (e: any) {
             setError(e.message || t('common.error_generic'));
         } finally {
             setLoading(false);
         }
-    }, [search, statusFilter, t]);
+    }, [debouncedSearch, statusFilter, t]);
 
     useEffect(() => { db.getCurrentUser().then(setUser); }, []);
     useEffect(() => { if (user) load(); }, [user, load]);
@@ -595,17 +614,24 @@ export function Projects() {
         if (formTarget === 'new') {
             const created = await db.createProject(data);
             setProjects(prev => [created, ...prev]);
+            showToast(t('project.create_success'));
         } else if (formTarget) {
             const updated = await db.updateProject((formTarget as Project).id, data);
             setProjects(prev => prev.map(p => p.id === updated.id ? updated : p));
+            showToast(t('project.update_success'));
         }
         setFormTarget(null);
     };
 
     const handleDelete = async (project: any) => {
         if (!window.confirm(t('project.confirm_delete'))) return;
-        await db.deleteProject(project.id);
-        setProjects(prev => prev.filter(p => p.id !== project.id));
+        try {
+            await db.deleteProject(project.id);
+            setProjects(prev => prev.filter(p => p.id !== project.id));
+            showToast(t('project.delete_success'));
+        } catch (e: any) {
+            showToast(e.message || t('common.error_generic'), 'error');
+        }
     };
 
     return (
@@ -721,6 +747,17 @@ export function Projects() {
                     onClose={() => setListingsTarget(null)}
                     t={t}
                 />
+            )}
+
+            {toast && createPortal(
+                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold transition-all animate-enter ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+                    {toast.type === 'success'
+                        ? <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                        : <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/></svg>
+                    }
+                    {toast.msg}
+                </div>,
+                document.body
             )}
         </div>
     );
