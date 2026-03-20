@@ -417,6 +417,12 @@ export const ProductSearch: React.FC = () => {
                                 t={t}
                                 language={language}
                             />
+                            {loading && (
+                                <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-10">
+                                    <div className="w-10 h-10 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
+                                    <p className="text-xs font-bold text-slate-600">{t('common.loading') || 'Đang tải...'}</p>
+                                </div>
+                            )}
                             {!loading && filteredListings.length === 0 && (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-surface)]/80 backdrop-blur-sm z-10 gap-3">
                                     <svg className="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
@@ -456,7 +462,7 @@ export const ProductSearch: React.FC = () => {
                                         className="min-h-full"
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.4, delay: index * 0.05 }}
+                                        transition={{ duration: 0.4, delay: Math.min(index, 8) * 0.05 }}
                                     >
                                         <ListingCard 
                                             item={{...item, isFavorite: favorites.has(item.id)}} 
@@ -572,7 +578,17 @@ export const ProductSearch: React.FC = () => {
 
                             {/* MOBILE LIST */}
                             <div className="md:hidden space-y-3 pb-6">
-                                {paginatedListings.map((item, index) => {
+                                {loading && [1,2,3,4,5,6].map(i => (
+                                    <div key={i} className="bg-[var(--bg-surface)] p-3 rounded-2xl border border-[var(--glass-border)] shadow-sm flex gap-3 animate-pulse">
+                                        <div className="w-20 h-20 rounded-xl bg-slate-200 shrink-0" />
+                                        <div className="flex-1 space-y-2 pt-1">
+                                            <div className="h-3 bg-slate-200 rounded-full w-3/4" />
+                                            <div className="h-2.5 bg-slate-100 rounded-full w-1/2" />
+                                            <div className="h-4 bg-slate-200 rounded-full w-2/5 mt-2" />
+                                        </div>
+                                    </div>
+                                ))}
+                                {!loading && paginatedListings.map((item, index) => {
                                     const isFav = favorites.has(item.id);
                                     return (
                                         <motion.div 
@@ -618,7 +634,7 @@ export const ProductSearch: React.FC = () => {
                                         </motion.div>
                                     );
                                 })}
-                                {paginatedListings.length === 0 && <EmptyState t={t} onClear={clearFilters} />}
+                                {!loading && paginatedListings.length === 0 && <EmptyState t={t} onClear={clearFilters} />}
                             </div>
                         </>
                     )}
@@ -644,6 +660,10 @@ export const ProductSearch: React.FC = () => {
                                         </div>
                                     </div>
                                 ))
+                            ) : filteredListings.length === 0 ? (
+                                <div className="flex-1 flex items-center justify-center">
+                                    <EmptyState t={t} onClear={clearFilters} />
+                                </div>
                             ) : Object.entries(groupedListings).map(([type, items]) => {
                                 const listingItems = items as unknown as Listing[];
                                 if (listingItems.length === 0) return null;
@@ -691,12 +711,12 @@ export const ProductSearch: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Pagination */}
-                    {viewMode !== 'MAP' && totalPages > 1 && (
+                    {/* Pagination — BOARD renders all filtered items so pagination doesn't apply */}
+                    {(viewMode === 'GRID' || viewMode === 'LIST') && !loading && filteredListings.length > 0 && (
                         <div className="mt-6">
-                            <PaginationControl 
-                                page={page} 
-                                totalPages={totalPages} 
+                            <PaginationControl
+                                page={page}
+                                totalPages={totalPages}
                                 totalItems={filteredListings.length}
                                 pageSize={pageSize}
                                 onPageChange={setPage}
