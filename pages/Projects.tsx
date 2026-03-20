@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { Project, ProjectAccess, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -320,10 +321,11 @@ interface ProjectListingsPanelProps {
     project: any;
     canCreate: boolean;
     onClose: () => void;
+    onListingCreated?: () => void;
     t: (k: string) => string;
 }
 
-function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListingsPanelProps) {
+function ProjectListingsPanel({ project, canCreate, onClose, onListingCreated, t }: ProjectListingsPanelProps) {
     const [listings, setListings] = useState<any[]>([]);
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -351,6 +353,7 @@ function ProjectListingsPanel({ project, canCreate, onClose, t }: ProjectListing
         setListings(prev => [listing, ...prev]);
         if (stats) setStats((s: any) => ({ ...s, availableCount: (s.availableCount || 0) + 1, totalCount: (s.totalCount || 0) + 1 }));
         setShowCreate(false);
+        onListingCreated?.();
     };
 
     const filtered = search
@@ -498,6 +501,28 @@ interface ProjectCardProps {
 }
 
 function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, onListings, t }: ProjectCardProps) {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const menuRef = useRef<HTMLDivElement>(null);
+    const btnRef = useRef<HTMLButtonElement>(null);
+
+    const openMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        setMenuOpen(v => !v);
+    };
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handler = (e: MouseEvent) => {
+            if (!menuRef.current?.contains(e.target as Node) && !btnRef.current?.contains(e.target as Node))
+                setMenuOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [menuOpen]);
+
     return (
         <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between gap-3 mb-3">
@@ -511,16 +536,30 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                     )}
                     {project.location && <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">{project.location}</p>}
                 </div>
-                <span className={`shrink-0 text-xs font-bold px-2.5 py-1 rounded-full border ${STATUS_COLOR[project.status] || 'bg-slate-100 text-slate-600'}`}>
-                    {t('project.status_' + project.status)}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${STATUS_COLOR[project.status] || 'bg-slate-100 text-slate-600'}`}>
+                        {t('project.status_' + project.status)}
+                    </span>
+                    {/* 3-dot menu */}
+                    <button
+                        ref={btnRef}
+                        type="button"
+                        onClick={openMenu}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors"
+                        title={t('common.actions') || 'Thao tác'}
+                    >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             {project.description && (
                 <p className="text-xs text-[var(--text-secondary)] mb-3 line-clamp-2">{project.description}</p>
             )}
 
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--text-tertiary)] mb-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--text-tertiary)]">
                 {project.total_units != null && <span>{project.total_units} {t('project.total_units')}</span>}
                 {project.listing_count != null && <span>{project.listing_count} {t('project.listing_count')}</span>}
                 {!isPartner && project.partner_count != null && <span>{project.partner_count} {t('project.partner_count')}</span>}
@@ -528,31 +567,42 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                 {project.handover_date && <span>{t('project.handover_date')}: {fmtDate(project.handover_date)}</span>}
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 pt-3 border-t border-[var(--glass-border)] flex-wrap">
-                {/* Danh mục sản phẩm — visible to all roles */}
-                <button type="button" onClick={onListings}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-700 hover:bg-emerald-50 border border-emerald-200 transition-colors">
-                    {IC.LIST} {t('project.view_listings')}
-                </button>
-
-                {isAdmin && (
-                    <>
-                        <button type="button" onClick={onEdit}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-600 hover:bg-indigo-50 border border-indigo-200 transition-colors">
-                            {IC.EDIT} {t('common.edit')}
-                        </button>
-                        <button type="button" onClick={onAccess}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-violet-600 hover:bg-violet-50 border border-violet-200 transition-colors">
-                            {IC.SHIELD} {t('project.tab_access')}
-                        </button>
-                        <button type="button" onClick={onDelete}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors ml-auto">
-                            {IC.TRASH} {t('common.delete')}
-                        </button>
-                    </>
-                )}
-            </div>
+            {/* Portal dropdown menu */}
+            {menuOpen && createPortal(
+                <div
+                    ref={menuRef}
+                    onClick={e => e.stopPropagation()}
+                    style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[180px]"
+                >
+                    <button onClick={() => { setMenuOpen(false); onListings(); }}
+                        className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
+                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                        {t('project.view_listings')}
+                    </button>
+                    {isAdmin && (
+                        <>
+                            <button onClick={() => { setMenuOpen(false); onEdit(); }}
+                                className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
+                                <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                {t('common.edit')}
+                            </button>
+                            <button onClick={() => { setMenuOpen(false); onAccess(); }}
+                                className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
+                                <svg className="w-3.5 h-3.5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                {t('project.tab_access')}
+                            </button>
+                            <div className="border-t border-[var(--glass-border)] my-1" />
+                            <button onClick={() => { setMenuOpen(false); onDelete(); }}
+                                className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                {t('common.delete')}
+                            </button>
+                        </>
+                    )}
+                </div>,
+                document.body
+            )}
         </div>
     );
 }
@@ -719,6 +769,13 @@ export function Projects() {
                     project={listingsTarget}
                     canCreate={isAdmin || user?.role === 'TEAM_LEAD'}
                     onClose={() => setListingsTarget(null)}
+                    onListingCreated={() => {
+                        setProjects(prev => prev.map(p =>
+                            p.id === listingsTarget.id
+                                ? { ...p, listing_count: (p.listing_count || 0) + 1 }
+                                : p
+                        ));
+                    }}
                     t={t}
                 />
             )}
