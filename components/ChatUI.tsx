@@ -2,6 +2,7 @@
 import React, { memo, useState, useMemo, useRef } from 'react';
 import { Interaction, AgentArtifact, GroundingMetadata, AgentTraceStep, BookingDraftData, LoanScheduleData, Channel, Direction } from '../types';
 import Markdown from 'react-markdown';
+import { useTranslation } from '../services/i18n';
 
 // Icons
 const CHAT_ICONS = {
@@ -152,7 +153,7 @@ export const BookingWidget = memo(({ data, t, formatDateTime }: { data: BookingD
                     <div className="text-xs2 text-[var(--text-tertiary)] uppercase font-bold tracking-wide">{t('inbox.location')}</div>
                 </div>
             </div>
-            <button className="w-full py-2 bg-indigo-600 text-white font-bold rounded-lg text-xs hover:bg-indigo-700 transition-colors shadow-sm">
+            <button type="button" className="w-full py-2 bg-indigo-600 text-white font-bold rounded-lg text-xs hover:bg-indigo-700 transition-colors shadow-sm">
                 {t('inbox.booking_confirm')}
             </button>
         </div>
@@ -189,10 +190,11 @@ export const GroundingPill = memo(({ sources, t }: { sources: GroundingMetadata,
 });
 
 export const AudioBubble = memo(({ duration }: { duration: number }) => {
+    const { t } = useTranslation();
     const bars = useMemo(() => Array.from({ length: 12 }, () => Math.random() * 16 + 4), []);
     return (
         <div className="flex items-center gap-2 md:gap-3 min-w-[120px] w-full">
-            <button className="w-8 h-8 rounded-full bg-[var(--glass-surface-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:bg-indigo-100 hover:text-indigo-600 transition-colors shrink-0">
+            <button aria-label={t('inbox.play_audio')} className="w-8 h-8 rounded-full bg-[var(--glass-surface-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:bg-indigo-100 hover:text-indigo-600 transition-colors shrink-0">
                 {CHAT_ICONS.PLAY}
             </button>
             <div className="flex-1 h-8 flex items-center gap-0.5 opacity-50 overflow-hidden">
@@ -207,22 +209,25 @@ export const AudioBubble = memo(({ duration }: { duration: number }) => {
     );
 });
 
-export const FileBubble = memo(({ name, size, url }: { name: string, size?: number, url?: string }) => (
-    <div className="flex items-center gap-2 md:gap-3 p-1 w-full">
-        <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center shrink-0">
-            {CHAT_ICONS.FILE}
+export const FileBubble = memo(({ name, size, url }: { name: string, size?: number, url?: string }) => {
+    const { t } = useTranslation();
+    return (
+        <div className="flex items-center gap-2 md:gap-3 p-1 w-full">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center shrink-0">
+                {CHAT_ICONS.FILE}
+            </div>
+            <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold truncate">{name}</div>
+                <div className="text-xs2 opacity-70">{size ? `${(size / 1024).toFixed(1)} KB` : 'Unknown size'}</div>
+            </div>
+            {url && (
+                <a href={url} download={name} aria-label={t('inbox.download_file')} className="p-1.5 md:p-2 hover:bg-black/5 rounded-full transition-colors ml-1 md:ml-2 shrink-0">
+                    {CHAT_ICONS.DOWNLOAD}
+                </a>
+            )}
         </div>
-        <div className="min-w-0 flex-1">
-            <div className="text-xs font-bold truncate">{name}</div>
-            <div className="text-xs2 opacity-70">{size ? `${(size / 1024).toFixed(1)} KB` : 'Unknown size'}</div>
-        </div>
-        {url && (
-            <a href={url} download={name} className="p-1.5 md:p-2 hover:bg-black/5 rounded-full transition-colors ml-1 md:ml-2 shrink-0">
-                {CHAT_ICONS.DOWNLOAD}
-            </a>
-        )}
-    </div>
-));
+    );
+});
 
 export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatDate, formatDateTime, showDate }: any) => {
     // DIRECTION LOGIC:
@@ -300,7 +305,7 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                             <span className="text-[var(--text-secondary)] font-mono">{formatTime(msg.timestamp)}</span>
                             {isOutbound && (
                                 <span className={`font-bold ${msg.status === 'READ' ? 'text-indigo-500' : 'text-[var(--text-secondary)]'}`}>
-                                    {msg.status === 'PENDING' ? t('inbox.status_sending') : msg.status === 'READ' ? (t('inbox.status_read') || 'Đã xem') : (t('inbox.status_received') || 'Đã nhận')}
+                                    {msg.status === 'PENDING' ? t('inbox.status_sending') : msg.status === 'READ' ? t('inbox.status_read') : t('inbox.status_received')}
                                 </span>
                             )}
                         </div>
