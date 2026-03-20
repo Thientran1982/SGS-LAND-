@@ -28,7 +28,7 @@ export function createProjectRoutes(authenticateToken: any) {
       res.json(result);
     } catch (error) {
       console.error('Error fetching projects:', error);
-      res.status(500).json({ error: 'Failed to fetch projects' });
+      res.status(500).json({ error: 'Không thể tải danh sách dự án' });
     }
   });
 
@@ -36,12 +36,12 @@ export function createProjectRoutes(authenticateToken: any) {
   router.get('/tenants', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền truy cập' });
       const tenants = await projectRepository.listTenants(user.tenantId);
       res.json(tenants);
     } catch (error) {
       console.error('Error fetching tenants:', error);
-      res.status(500).json({ error: 'Failed to fetch tenants' });
+      res.status(500).json({ error: 'Không thể tải danh sách đối tác' });
     }
   });
 
@@ -53,18 +53,18 @@ export function createProjectRoutes(authenticateToken: any) {
 
       if (PARTNER_ROLES.includes(user.role)) {
         const hasAccess = await projectRepository.checkPartnerAccess(user.tenantId, id);
-        if (!hasAccess) return res.status(403).json({ error: 'Access denied' });
+        if (!hasAccess) return res.status(403).json({ error: 'Không có quyền truy cập dự án này' });
         const projects = await projectRepository.findAccessibleProjects(user.tenantId);
         const project = projects.find(p => p.id === id);
-        return project ? res.json(project) : res.status(404).json({ error: 'Project not found' });
+        return project ? res.json(project) : res.status(404).json({ error: 'Không tìm thấy dự án' });
       }
 
       const project = await projectRepository.findById(user.tenantId, id);
-      if (!project) return res.status(404).json({ error: 'Project not found' });
+      if (!project) return res.status(404).json({ error: 'Không tìm thấy dự án' });
       res.json(project);
     } catch (error) {
       console.error('Error fetching project:', error);
-      res.status(500).json({ error: 'Failed to fetch project' });
+      res.status(500).json({ error: 'Không thể tải thông tin dự án' });
     }
   });
 
@@ -72,14 +72,14 @@ export function createProjectRoutes(authenticateToken: any) {
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
       const { name, code, description, location, totalUnits, status, openDate, handoverDate, metadata } = req.body;
       if (!name || typeof name !== 'string' || !name.trim()) {
-        return res.status(400).json({ error: 'Project name is required' });
+        return res.status(400).json({ error: 'Tên dự án là bắt buộc' });
       }
       if (totalUnits != null && (isNaN(Number(totalUnits)) || Number(totalUnits) < 0)) {
-        return res.status(400).json({ error: 'totalUnits must be a non-negative number' });
+        return res.status(400).json({ error: 'Số căn phải là số không âm' });
       }
 
       const project = await projectRepository.create(user.tenantId, {
@@ -96,7 +96,7 @@ export function createProjectRoutes(authenticateToken: any) {
       res.status(201).json(project);
     } catch (error) {
       console.error('Error creating project:', error);
-      res.status(500).json({ error: 'Failed to create project' });
+      res.status(500).json({ error: 'Không thể tạo dự án' });
     }
   });
 
@@ -104,13 +104,13 @@ export function createProjectRoutes(authenticateToken: any) {
   router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
       const id = req.params.id as string;
       const { name, code, description, location, totalUnits, status, openDate, handoverDate, metadata } = req.body;
 
       if (totalUnits != null && (isNaN(Number(totalUnits)) || Number(totalUnits) < 0)) {
-        return res.status(400).json({ error: 'totalUnits must be a non-negative number' });
+        return res.status(400).json({ error: 'Số căn phải là số không âm' });
       }
 
       const updated = await projectRepository.update(user.tenantId, id, {
@@ -124,11 +124,11 @@ export function createProjectRoutes(authenticateToken: any) {
         handoverDate,
         metadata,
       });
-      if (!updated) return res.status(404).json({ error: 'Project not found' });
+      if (!updated) return res.status(404).json({ error: 'Không tìm thấy dự án' });
       res.json(updated);
     } catch (error) {
       console.error('Error updating project:', error);
-      res.status(500).json({ error: 'Failed to update project' });
+      res.status(500).json({ error: 'Không thể cập nhật dự án' });
     }
   });
 
@@ -136,14 +136,14 @@ export function createProjectRoutes(authenticateToken: any) {
   router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
       const deleted = await projectRepository.delete(user.tenantId, req.params.id as string);
-      if (!deleted) return res.status(404).json({ error: 'Project not found' });
+      if (!deleted) return res.status(404).json({ error: 'Không tìm thấy dự án' });
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting project:', error);
-      res.status(500).json({ error: 'Failed to delete project' });
+      res.status(500).json({ error: 'Không thể xóa dự án' });
     }
   });
 
@@ -151,13 +151,13 @@ export function createProjectRoutes(authenticateToken: any) {
   router.get('/:id/access', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
       const accesses = await projectRepository.getProjectAccess(user.tenantId, req.params.id as string);
       res.json(accesses);
     } catch (error) {
       console.error('Error fetching project access:', error);
-      res.status(500).json({ error: 'Failed to fetch project access' });
+      res.status(500).json({ error: 'Không thể tải danh sách quyền truy cập' });
     }
   });
 
@@ -165,10 +165,10 @@ export function createProjectRoutes(authenticateToken: any) {
   router.post('/:id/access', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
       const { partnerTenantId, expiresAt, note } = req.body;
-      if (!partnerTenantId) return res.status(400).json({ error: 'partnerTenantId is required' });
+      if (!partnerTenantId) return res.status(400).json({ error: 'Vui lòng chọn đối tác' });
 
       const access = await projectRepository.grantAccess(user.tenantId, {
         projectId: req.params.id as string,
@@ -180,7 +180,7 @@ export function createProjectRoutes(authenticateToken: any) {
       res.status(201).json(access);
     } catch (error: any) {
       console.error('Error granting access:', error);
-      const msg = error?.message?.includes('not found') ? error.message : 'Failed to grant access';
+      const msg = error?.message?.includes('not found') ? 'Không tìm thấy dự án hoặc đối tác' : 'Không thể cấp quyền truy cập';
       res.status(error?.message?.includes('not found') ? 404 : 500).json({ error: msg });
     }
   });
@@ -189,16 +189,16 @@ export function createProjectRoutes(authenticateToken: any) {
   router.delete('/:id/access/:partnerTenantId', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền thực hiện' });
 
       const id = req.params.id as string;
       const partnerTenantId = req.params.partnerTenantId as string;
       const revoked = await projectRepository.revokeAccess(user.tenantId, id, partnerTenantId);
-      if (!revoked) return res.status(404).json({ error: 'Access record not found' });
+      if (!revoked) return res.status(404).json({ error: 'Không tìm thấy bản ghi quyền truy cập' });
       res.json({ success: true });
     } catch (error) {
       console.error('Error revoking access:', error);
-      res.status(500).json({ error: 'Failed to revoke access' });
+      res.status(500).json({ error: 'Không thể thu hồi quyền truy cập' });
     }
   });
 
