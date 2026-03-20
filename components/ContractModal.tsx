@@ -19,7 +19,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
     const [formData, setFormData] = useState<Partial<Contract>>(contract || {
         type: ContractType.DEPOSIT,
         status: ContractStatus.DRAFT,
-        partyAName: t('contracts.party_a_default_name') || 'Công ty CP BĐS SGS LAND',
+        partyAName: t('contracts.party_a_default_name'),
         partyARepresentative: '',
         partyAAddress: '',
         partyATaxCode: '',
@@ -55,7 +55,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
             onSuccess();
         } catch (err: any) {
             console.error(err);
-            const msg = err?.data?.error || err?.message || t('common.error_generic') || 'Đã xảy ra lỗi. Vui lòng thử lại.';
+            const msg = err?.data?.error || err?.message || t('common.error_generic');
             setError(msg);
         } finally {
             setLoading(false);
@@ -67,20 +67,25 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
 
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="relative bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-full flex flex-col animate-enter">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true"></div>
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="contract-modal-title"
+                className="relative bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-full flex flex-col animate-enter"
+            >
                 <div className="flex items-center justify-between p-6 border-b border-[var(--glass-border)] shrink-0">
-                    <h2 className="text-xl font-bold text-[var(--text-primary)]">
+                    <h2 id="contract-modal-title" className="text-xl font-bold text-[var(--text-primary)]">
                         {contract ? t('contracts.modal_edit_title') : t('contracts.modal_create_title')}
                     </h2>
-                    <button onClick={onClose} className="p-2 text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors">
+                    <button onClick={onClose} aria-label={t('common.close')} className="p-2 min-h-[44px] min-w-[44px] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 no-scrollbar min-h-0">
                     {error && (
-                        <div className="mb-4 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                        <div role="alert" className="mb-4 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
                             <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
                             <span>{error}</span>
                         </div>
@@ -89,26 +94,26 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <Dropdown
-                                    label={t('contracts.contract_type') || "Loại Hợp Đồng"}
+                                    label={t('contracts.contract_type')}
                                     value={formData.type as string}
                                     onChange={val => handleChange('type', val)}
                                     options={[
-                                        { value: ContractType.DEPOSIT, label: t('contracts.type_DEPOSIT') || 'Thoả thuận đặt cọc' },
-                                        { value: ContractType.SALES, label: t('contracts.type_SALES') || 'Hợp đồng mua bán' }
+                                        { value: ContractType.DEPOSIT, label: t('contracts.type_DEPOSIT') },
+                                        { value: ContractType.SALES, label: t('contracts.type_SALES') }
                                     ]}
                                     className="w-full"
                                 />
                             </div>
                             <div>
                                 <Dropdown
-                                    label={t('contracts.status_label') || "Trạng Thái"}
+                                    label={t('contracts.status_label')}
                                     value={formData.status as string}
                                     onChange={val => handleChange('status', val)}
                                     options={[
-                                        { value: ContractStatus.DRAFT, label: t('contracts.status_DRAFT') || 'Bản nháp' },
-                                        { value: ContractStatus.PENDING_SIGNATURE, label: t('contracts.status_PENDING_SIGNATURE') || 'Chờ ký' },
-                                        { value: ContractStatus.SIGNED, label: t('contracts.status_SIGNED') || 'Đã ký' },
-                                        { value: ContractStatus.CANCELLED, label: t('contracts.status_CANCELLED') || 'Đã hủy' }
+                                        { value: ContractStatus.DRAFT, label: t('contracts.status_DRAFT') },
+                                        { value: ContractStatus.PENDING_SIGNATURE, label: t('contracts.status_PENDING_SIGNATURE') },
+                                        { value: ContractStatus.SIGNED, label: t('contracts.status_SIGNED') },
+                                        { value: ContractStatus.CANCELLED, label: t('contracts.status_CANCELLED') }
                                     ]}
                                     className="w-full"
                                 />
@@ -294,7 +299,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                     onChange={e => handleChange('paymentTerms', e.target.value)}
                                     rows={6}
                                     className={`${inputClass} resize-none`}
-                                    placeholder={t('contracts.payment_terms_placeholder') || 'Các đợt thanh toán, thời hạn công chứng...'}
+                                    placeholder={t('contracts.payment_terms_placeholder')}
                                 />
                             </div>
                         </div>
@@ -302,10 +307,10 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                 </div>
 
                 <div className="p-6 border-t border-[var(--glass-border)] flex justify-end gap-3 bg-[var(--glass-surface)] rounded-b-2xl shrink-0">
-                    <button type="button" onClick={onClose} className="px-6 py-2.5 rounded-xl font-bold text-sm text-[var(--text-secondary)] hover:bg-slate-200 transition-colors">
+                    <button type="button" onClick={onClose} className="px-6 py-2.5 min-h-[44px] rounded-xl font-bold text-sm text-[var(--text-secondary)] hover:bg-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
                         {t('common.cancel')}
                     </button>
-                    <button type="submit" form="contract-form" disabled={loading} className="px-6 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 text-white hover:bg-indigo-700 shadow-md transition-all disabled:opacity-50 flex items-center gap-2">
+                    <button type="submit" form="contract-form" disabled={loading} className="px-6 py-2.5 min-h-[44px] rounded-xl font-bold text-sm bg-indigo-600 text-white hover:bg-indigo-700 shadow-md transition-all disabled:opacity-50 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
                         {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
                         {loading ? (contract ? t('contracts.btn_updating') : t('contracts.btn_creating')) : (contract ? t('contracts.btn_save') : t('contracts.btn_create'))}
                     </button>
