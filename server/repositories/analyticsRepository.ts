@@ -223,6 +223,38 @@ export class AnalyticsRepository extends BaseRepository {
         WHERE i.${TENANT_FILTER} ${interactionLeadFilter}
       `);
 
+      // Previous-period AI deflection rate (for delta calculation)
+      const prevInteractionStats = useTimeFilter
+        ? await client.query(`
+            SELECT
+              COUNT(*) FILTER (WHERE direction = 'OUTBOUND')::int as total_outbound,
+              COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND (metadata->>'isAi')::boolean = true)::int as ai_outbound
+            FROM interactions i
+            WHERE i.${TENANT_FILTER} ${interactionLeadFilter}
+              AND i.timestamp >= NOW() - INTERVAL '${days * 2} days'
+              AND i.timestamp < NOW() - INTERVAL '${days} days'
+          `)
+        : { rows: [{ total_outbound: 0, ai_outbound: 0 }] };
+
+      // Previous-period pipeline value (for pipelineValueDelta)
+      const prevPipelineResult = useTimeFilter
+        ? await client.query(`
+            SELECT
+              l.score->>'grade' as grade,
+              COALESCE(SUM(p.final_price), 0)::numeric as total_value,
+              COUNT(p.id)::int as deal_count
+            FROM leads l
+            INNER JOIN proposals p ON l.id = p.lead_id AND p.tenant_id = l.tenant_id
+            WHERE l.${TENANT_FILTER}
+              AND l.stage NOT IN ('WON', 'LOST')
+              AND p.status IN ('APPROVED', 'PENDING_APPROVAL')
+              AND l.created_at >= NOW() - INTERVAL '${days * 2} days'
+              AND l.created_at < NOW() - INTERVAL '${days} days'
+              ${isSalesScope && safeUserId ? `AND l.assigned_to = '${safeUserId}'` : ''}
+            GROUP BY l.score->>'grade'
+          `)
+        : { rows: [] };
+
       const salesVelocityResult = await client.query(`
         SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400), 0)::numeric as avg_days
         FROM leads
@@ -284,8 +316,10 @@ export class AnalyticsRepository extends BaseRepository {
       `);
 
       // Agent leaderboard: always full-scope (context for entire team)
+      // avgResponseMinutes: median time from first INBOUND to first OUTBOUND per lead, per agent
       const agentLeaderboardResult = await client.query(`
         SELECT
+          u.id,
           u.name,
           COALESCE(NULLIF(TRIM(u.avatar), ''), 'https://api.dicebear.com/7.x/initials/svg?seed=' || encode(u.name::bytea, 'base64')) as avatar,
           COUNT(l.id) FILTER (WHERE l.stage = 'WON')::int as deals,
@@ -294,7 +328,25 @@ export class AnalyticsRepository extends BaseRepository {
             THEN ROUND((COUNT(l.id) FILTER (WHERE l.stage = 'WON')::numeric / COUNT(l.id)::numeric) * 100)
             ELSE 0
           END::int as close_rate,
-          COUNT(l.id)::int as total_leads
+          COUNT(l.id)::int as total_leads,
+          (
+            SELECT ROUND(AVG(EXTRACT(EPOCH FROM (first_out.ts - first_in.ts)) / 60))::int
+            FROM (
+              SELECT lead_id, MIN(timestamp) as ts
+              FROM interactions
+              WHERE direction = 'INBOUND' AND ${TENANT_FILTER}
+                AND lead_id IN (SELECT id FROM leads WHERE assigned_to = u.id AND ${TENANT_FILTER})
+              GROUP BY lead_id
+            ) first_in
+            JOIN LATERAL (
+              SELECT MIN(timestamp) as ts
+              FROM interactions
+              WHERE lead_id = first_in.lead_id
+                AND direction = 'OUTBOUND'
+                AND timestamp > first_in.ts
+                AND ${TENANT_FILTER}
+            ) first_out ON first_out.ts IS NOT NULL
+          ) as avg_response_minutes
         FROM users u
         LEFT JOIN leads l ON l.assigned_to = u.id AND l.tenant_id = u.tenant_id
         WHERE u.${TENANT_FILTER}
@@ -332,11 +384,25 @@ export class AnalyticsRepository extends BaseRepository {
         totalDeals += count;
       }
 
+      // Previous pipeline value (for delta)
+      let prevPipelineValue = 0;
+      for (const row of prevPipelineResult.rows) {
+        const grade = row.grade || 'C';
+        const prob = GRADE_PROBABILITY[grade] || 0.30;
+        const val = parseFloat(row.total_value) || 0;
+        prevPipelineValue += val * prob;
+      }
+
       const winProbability = totalDeals > 0 ? (weightedProbSum / totalDeals) * 100 : 0;
 
       const totalOutbound = interactionStats.rows[0]?.total_outbound || 0;
       const aiOutbound = interactionStats.rows[0]?.ai_outbound || 0;
       const aiDeflectionRate = totalOutbound > 0 ? (aiOutbound / totalOutbound) * 100 : 0;
+
+      // Previous-period AI deflection rate (for delta)
+      const prevTotalOutbound = prevInteractionStats.rows[0]?.total_outbound || 0;
+      const prevAiOutbound = prevInteractionStats.rows[0]?.ai_outbound || 0;
+      const prevAiDeflectionRate = prevTotalOutbound > 0 ? (prevAiOutbound / prevTotalOutbound) * 100 : 0;
 
       const leadStats = leadsResult.rows[0];
       const prevLeadTotal = prevLeadsResult.rows[0]?.total || 0;
@@ -392,14 +458,22 @@ export class AnalyticsRepository extends BaseRepository {
       }));
 
       const agentLeaderboard = agentLeaderboardResult.rows.map((row: any) => {
-        const slaScore = Math.min(100, Math.max(0, row.close_rate + Math.min(row.total_leads * 5, 50)));
+        // slaScore = close_rate (70%) + response speed bonus (30%)
+        // Response speed: ≤10 min → 30pts, ≤30 min → 20pts, ≤60 min → 10pts, >60 min → 0pts
+        const avgMins = row.avg_response_minutes != null ? Number(row.avg_response_minutes) : null;
+        const responseBonus = avgMins == null ? 0
+          : avgMins <= 10 ? 30
+          : avgMins <= 30 ? 20
+          : avgMins <= 60 ? 10
+          : 0;
+        const slaScore = Math.min(100, Math.round(row.close_rate * 0.7 + responseBonus));
         return {
           name: row.name,
           avatar: row.avatar,
           deals: row.deals,
           closeRate: row.close_rate,
           slaScore,
-          avgResponseTime: row.total_leads > 0 ? `${Math.max(5, 30 - row.deals * 3)} phút` : 'N/A',
+          avgResponseTime: avgMins != null ? `${avgMins} phút` : 'N/A',
         };
       });
 
@@ -417,10 +491,10 @@ export class AnalyticsRepository extends BaseRepository {
         revenue,
         revenueDelta: calcDelta(revenue, prevRevenue),
         pipelineValue,
-        pipelineValueDelta: 0,
+        pipelineValueDelta: calcDelta(pipelineValue, prevPipelineValue),
         winProbability: Math.round(winProbability * 100) / 100,
         aiDeflectionRate: Math.round(aiDeflectionRate * 100) / 100,
-        aiDeflectionRateDelta: 0,
+        aiDeflectionRateDelta: prevAiDeflectionRate > 0 ? calcDelta(aiDeflectionRate, prevAiDeflectionRate) : 0,
         salesVelocity,
         salesVelocityDelta: prevSalesVelocity > 0 ? calcDelta(salesVelocity, prevSalesVelocity) : 0,
         conversionRate,

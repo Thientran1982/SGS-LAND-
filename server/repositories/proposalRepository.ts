@@ -117,8 +117,9 @@ export class ProposalRepository extends BaseRepository {
 
   async updateStatus(tenantId: string, id: string, status: string): Promise<any | null> {
     return this.withTenant(tenantId, async (client) => {
+      // Defense-in-depth: explicit tenant_id filter in addition to RLS
       const result = await client.query(
-        `UPDATE proposals SET status = $1 WHERE id = $2 RETURNING *`,
+        `UPDATE proposals SET status = $1 WHERE id = $2 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid RETURNING *`,
         [status, id]
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
