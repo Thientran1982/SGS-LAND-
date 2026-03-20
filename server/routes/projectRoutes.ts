@@ -202,5 +202,62 @@ export function createProjectRoutes(authenticateToken: any) {
     }
   });
 
+  // ── Listing-level access (per-listing partner view permission) ─────────────
+
+  // GET /api/projects/listings/:listingId/access — list listing_access grants (ADMIN only)
+  router.get('/listings/:listingId/access', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+      const accesses = await projectRepository.getListingAccess(req.params.listingId as string);
+      res.json(accesses);
+    } catch (error) {
+      console.error('Error fetching listing access:', error);
+      res.status(500).json({ error: 'Failed to fetch listing access' });
+    }
+  });
+
+  // POST /api/projects/listings/:listingId/access — grant listing access (ADMIN only)
+  router.post('/listings/:listingId/access', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+
+      const { partnerTenantId, expiresAt, note } = req.body;
+      if (!partnerTenantId) return res.status(400).json({ error: 'partnerTenantId is required' });
+
+      const access = await projectRepository.grantListingAccess({
+        listingId: req.params.listingId as string,
+        partnerTenantId,
+        grantedBy: user.id,
+        expiresAt,
+        note,
+      });
+      res.status(201).json(access);
+    } catch (error: any) {
+      console.error('Error granting listing access:', error);
+      const msg = error?.message?.includes('not found') ? error.message : 'Failed to grant listing access';
+      res.status(error?.message?.includes('not found') ? 404 : 500).json({ error: msg });
+    }
+  });
+
+  // DELETE /api/projects/listings/:listingId/access/:partnerTenantId — revoke listing access (ADMIN only)
+  router.delete('/listings/:listingId/access/:partnerTenantId', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!ADMIN_ROLES.includes(user.role)) return res.status(403).json({ error: 'Forbidden' });
+
+      const revoked = await projectRepository.revokeListingAccess(
+        req.params.listingId as string,
+        req.params.partnerTenantId as string
+      );
+      if (!revoked) return res.status(404).json({ error: 'Listing access record not found' });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error revoking listing access:', error);
+      res.status(500).json({ error: 'Failed to revoke listing access' });
+    }
+  });
+
   return router;
 }

@@ -116,11 +116,29 @@ export class ListingRepository extends BaseRepository {
     const projectIds = accessResult.rows.map((r: any) => r.project_id);
 
     // Start conditions: listings must belong to an accessible project
-    const conditions: string[] = [`project_id = ANY($1)`];
-    const baseValues: any[] = [projectIds];
+    // AND apply listing_access granular filter:
+    //   - if a listing has active listing_access rows → partner needs explicit grant
+    //   - if no listing_access rows for a listing → all project-level partners see it (default open)
+    const conditions: string[] = [
+      `project_id = ANY($1)`,
+      `(
+        NOT EXISTS (
+          SELECT 1 FROM listing_access la2
+          WHERE la2.listing_id = listings.id AND la2.status = 'ACTIVE'
+            AND (la2.expires_at IS NULL OR la2.expires_at > NOW())
+        )
+        OR EXISTS (
+          SELECT 1 FROM listing_access la3
+          WHERE la3.listing_id = listings.id AND la3.partner_tenant_id = $2
+            AND la3.status = 'ACTIVE'
+            AND (la3.expires_at IS NULL OR la3.expires_at > NOW())
+        )
+      )`,
+    ];
+    const baseValues: any[] = [projectIds, partnerTenantId];
 
     const { conditions: filterConds, values: filterValues, nextIndex } =
-      this.buildFilterConditions(filters, 2);
+      this.buildFilterConditions(filters, 3);
 
     const allConditions = [...conditions, ...filterConds];
     const allValues = [...baseValues, ...filterValues];
