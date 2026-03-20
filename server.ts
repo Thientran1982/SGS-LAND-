@@ -320,10 +320,11 @@ async function startServer() {
       const crypto = await import('crypto');
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
+      // Retrieve tenant_id from the token table itself — avoids a second cross-tenant pool.query()
       const result = await pool.query(
         `UPDATE password_reset_tokens SET used_at = NOW()
          WHERE token = $1 AND used_at IS NULL AND expires_at > NOW()
-         RETURNING user_id`,
+         RETURNING user_id, tenant_id`,
         [tokenHash]
       );
 
@@ -332,12 +333,7 @@ async function startServer() {
       }
 
       const userId = result.rows[0].user_id;
-
-      const userResult = await pool.query(`SELECT tenant_id FROM users WHERE id = $1`, [userId]);
-      if (userResult.rows.length === 0) {
-        return res.status(400).json({ error: 'User not found' });
-      }
-      const tenantId = userResult.rows[0].tenant_id;
+      const tenantId = result.rows[0].tenant_id;
 
       await userRepository.updatePassword(tenantId, userId, newPassword);
 
