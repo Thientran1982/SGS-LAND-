@@ -104,7 +104,7 @@ const renderFatalError = (message: string) => {
 
     // Container: Allow scrolling (overflow-y-auto) in case of small screens/long errors
     const container = document.createElement('div');
-    container.className = "fixed inset-0 h-[100dvh] w-screen flex flex-col items-center justify-center bg-[var(--bg-app)] p-6 z-[9999] overflow-y-auto";
+    container.className = "fixed inset-0 h-[100dvh] w-screen flex flex-col items-center justify-center bg-[var(--bg-app)] p-6 z-[9999] overflow-y-auto no-scrollbar";
 
     const card = document.createElement('div');
     card.className = "max-w-md w-full glass-card p-8 rounded-3xl border border-[var(--glass-border)] shadow-2xl text-center relative shrink-0 my-auto";
@@ -123,7 +123,7 @@ const renderFatalError = (message: string) => {
     desc.textContent = TEXT.FATAL_DESC;
 
     const codeBox = document.createElement('div');
-    codeBox.className = "bg-black/5 dark:bg-black/30 p-4 rounded-xl text-left overflow-auto max-h-48 mb-6 border border-black/5";
+    codeBox.className = "bg-black/5 dark:bg-black/30 p-4 rounded-xl text-left overflow-auto no-scrollbar max-h-48 mb-6 border border-black/5";
     
     const code = document.createElement('code');
     code.className = "text-[10px] font-mono text-rose-600 dark:text-rose-400 whitespace-pre-wrap break-words font-bold";
@@ -224,7 +224,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-[100dvh] flex items-center justify-center bg-[var(--bg-app)] font-sans p-6 py-12 text-[var(--text-primary)] overflow-y-auto">
+        <div className="min-h-[100dvh] flex items-center justify-center bg-[var(--bg-app)] font-sans p-6 py-12 text-[var(--text-primary)] overflow-y-auto no-scrollbar">
           <div className="max-w-md w-full glass-card p-8 rounded-[32px] border border-[var(--glass-border)] shadow-2xl relative overflow-hidden animate-enter my-auto">
             
             {/* Visual Indicator */}
@@ -238,7 +238,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             
             {/* Error Stack */}
             <div className="bg-slate-50 dark:bg-black/30 rounded-xl p-4 mb-8 relative group border border-slate-100 dark:border-white/5">
-               <code className="text-[10px] font-mono text-rose-600 dark:text-rose-400 block whitespace-pre-wrap break-words max-h-48 overflow-y-auto font-bold">
+               <code className="text-[10px] font-mono text-rose-600 dark:text-rose-400 block whitespace-pre-wrap break-words max-h-48 overflow-y-auto no-scrollbar font-bold">
                    {this.state.error?.message || TEXT.ERR_UNKNOWN}
                </code>
                <button 

@@ -170,29 +170,10 @@
       /* --- UTILITIES --- */
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      
-      /* GLOBAL CUSTOM SCROLLBAR (Elegant Thin) */
-      @media (min-width: 1024px) {
-          .custom-scrollbar::-webkit-scrollbar {
-              display: block;
-              width: 5px; /* Thin but visible */
-              height: 5px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-track {
-              background: transparent;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-              background-color: rgba(156, 163, 175, 0.3); /* Subtle Gray */
-              border-radius: 20px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-              background-color: rgba(156, 163, 175, 0.5); /* Darker on hover */
-          }
-          .custom-scrollbar {
-              -ms-overflow-style: auto;
-              scrollbar-width: thin;
-          }
-      }
+
+      /* custom-scrollbar aliased to no-scrollbar — consistent hidden scrollbar UI */
+      .custom-scrollbar::-webkit-scrollbar { display: none; }
+      .custom-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       
       .glass-card {
         background: var(--glass-surface);
