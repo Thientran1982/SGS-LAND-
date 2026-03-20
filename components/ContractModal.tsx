@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '../services/i18n';
 import { Contract, ContractType, ContractStatus, PaymentMilestone } from '../types';
@@ -16,6 +16,17 @@ interface ContractModalProps {
 export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialData, onClose, onSuccess }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
+
+    // Escape key + body scroll lock
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape' && !loading) onClose(); };
+        document.addEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = '';
+        };
+    }, [loading, onClose]);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<Contract>>(contract || {
         type: ContractType.DEPOSIT,

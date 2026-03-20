@@ -16,6 +16,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
     const [contract, setContract] = useState<Contract | null>(null);
     const [loading, setLoading] = useState(true);
     const [exporting, setExporting] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const { t, formatCurrency, formatDate } = useTranslation();
     const contractRef = useRef<HTMLDivElement>(null);
 
@@ -103,7 +104,8 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
             pdf.save(`Hop_Dong_${contract.id.slice(0, 8).toUpperCase()}.pdf`);
         } catch (error) {
             console.error('Error generating PDF:', error);
-            alert(t('common.error') || 'Có lỗi xảy ra khi xuất PDF.');
+            setErrorMsg(t('common.error') || 'Có lỗi xảy ra khi xuất PDF.');
+            setTimeout(() => setErrorMsg(null), 4000);
         } finally {
             setExporting(false);
         }
@@ -295,6 +297,13 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                     </button>
                 </div>
             </div>
+
+            {/* Error toast */}
+            {errorMsg && (
+                <div className="fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border bg-rose-900/90 border-rose-500 text-white text-sm font-medium">
+                    {errorMsg}
+                </div>
+            )}
         </div>
     );
 };

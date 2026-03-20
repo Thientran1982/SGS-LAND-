@@ -397,6 +397,12 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
 export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
     const [isExporting, setIsExporting] = useState(false);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+    const notify = (msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
     const dashboardRef = useRef<HTMLDivElement>(null);
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const { chartTheme } = useTheme();
@@ -436,7 +442,7 @@ export const Dashboard: React.FC = () => {
             pdf.save(`SGS_LAND_Report_${timeRange}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('Export failed:', error);
-            alert(t('dash.export_error'));
+            notify(t('dash.export_error'), 'error');
         } finally {
             setIsExporting(false);
         }
@@ -818,6 +824,13 @@ export const Dashboard: React.FC = () => {
                 )}
 
             </div>
+
+            {/* Toast notification */}
+            {toast && (
+                <div className={`fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border text-sm font-medium ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    {toast.msg}
+                </div>
+            )}
         </div>
     );
 };
