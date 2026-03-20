@@ -166,7 +166,15 @@ export const KnowledgeBase: React.FC = () => {
             <div className={`fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 sm:max-w-sm z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                 <span className="font-bold text-sm flex-1">{toast.msg}</span>
             </div>
-        )}
+            )}
+
+            {/* Page Header */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                    <h1 className="text-xl font-extrabold text-[var(--text-primary)]">{t('knowledge.title')}</h1>
+                    <p className="text-sm text-[var(--text-secondary)] mt-0.5">{t('knowledge.subtitle')}</p>
+                </div>
+            </div>
 
             {/* Delete Confirmation Modal */}
             {confirmDeleteId && createPortal(
@@ -258,8 +266,8 @@ export const KnowledgeBase: React.FC = () => {
                         ICONS.UPLOAD
                     )}
                     {isUploading
-                        ? (uploadingCount > 1 ? `Đang xử lý ${uploadingCount} file...` : 'Đang xử lý...')
-                        : (t('knowledge.btn_upload') || 'Chọn file tải lên')}
+                        ? (uploadingCount > 1 ? t('knowledge.uploading_many', { count: uploadingCount }) : t('knowledge.uploading_one'))
+                        : t('knowledge.btn_upload')}
                     <input 
                         type="file" 
                         className="hidden" 
@@ -331,16 +339,16 @@ export const KnowledgeBase: React.FC = () => {
                     ))}
                 </div>
 
-                {docs.length === 0 && !loading && (
+                {docs.length === 0 && !loading && (debouncedSearch || !canManage) && (
                     <div className="py-16 text-center bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
                         <div className="w-16 h-16 bg-[var(--glass-surface)] rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--text-secondary)]">
                             {debouncedSearch ? ICONS.SEARCH : ICONS.CLOUD}
                         </div>
                         <h3 className="text-[var(--text-primary)] font-bold mb-1">
-                            {debouncedSearch ? (t('knowledge.empty_title') || 'Không tìm thấy tài liệu') : (t('knowledge.empty_title_no_docs') || 'Chưa có tài liệu nào')}
+                            {debouncedSearch ? t('knowledge.empty_title') : t('knowledge.empty_title_no_docs')}
                         </h3>
                         <p className="text-[var(--text-tertiary)] text-sm">
-                            {debouncedSearch ? (t('knowledge.empty_search') || 'Thử thay đổi từ khóa tìm kiếm') : (t('knowledge.empty_desc') || 'Tải lên tài liệu để AI học và trả lời khách hàng chính xác hơn')}
+                            {debouncedSearch ? t('knowledge.empty_search') : t('knowledge.empty_desc')}
                         </p>
                     </div>
                 )}
