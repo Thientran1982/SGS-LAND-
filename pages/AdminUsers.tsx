@@ -94,10 +94,10 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
 
     const validate = (): boolean => {
         const errs: Record<string, string> = {};
-        if (!name.trim()) errs.name = 'Họ tên không được để trống';
+        if (!name.trim()) errs.name = t('admin.users.name_required');
         if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errs.email = t('auth.error_email_invalid');
         if (phone && !VN_PHONE_RE.test(phone.replace(/\s/g, '')))
-            errs.phone = 'Số điện thoại không hợp lệ (VD: 0901234567)';
+            errs.phone = t('admin.users.phone_invalid');
         setErrors(errs);
         return Object.keys(errs).length === 0;
     };
@@ -133,7 +133,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                 <div className="flex justify-between items-center mb-5">
                     <div>
                         <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('admin.users.invite_title')}</h3>
-                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Thành viên sẽ nhận email để đặt mật khẩu</p>
+                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{t('admin.users.invite_hint')}</p>
                     </div>
                     <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[var(--glass-surface-hover)] transition-colors">
                         {ICONS.CLOSE}
@@ -150,7 +150,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                     {/* Họ tên */}
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">
-                            Họ và tên <span className="text-rose-500">*</span>
+                            {t('admin.users.name_label')} <span className="text-rose-500">*</span>
                         </label>
                         <input
                             type="text"
@@ -181,8 +181,8 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                     {/* Số điện thoại (optional) */}
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5 flex items-center gap-1">
-                            Số điện thoại
-                            <span className="text-3xs font-normal text-[var(--text-muted)] normal-case">(không bắt buộc)</span>
+                            {t('admin.users.phone_label')}
+                            <span className="text-3xs font-normal text-[var(--text-muted)] normal-case">{t('admin.users.phone_optional')}</span>
                         </label>
                         <input
                             type="tel"
@@ -224,7 +224,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             {loading
                                 ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                 : ICONS.SEND}
-                            {loading ? 'Đang gửi lời mời…' : t('admin.users.btn_send')}
+                            {loading ? t('admin.users.sending') : t('admin.users.btn_send')}
                         </button>
                     </div>
                 </form>
