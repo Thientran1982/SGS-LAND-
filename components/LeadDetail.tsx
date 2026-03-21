@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Lead, LeadStage, Interaction, Channel, Direction, LEAD_SOURCES, VN_PHONE_REGEX, ContractStatus, ContractType } from '../types';
+import { Lead, LeadStage, Interaction, Channel, Direction, LEAD_SOURCES, VN_PHONE_REGEX, ContractStatus, ContractType, Contract, PaymentMilestone } from '../types';
 import { db } from '../services/dbApi';
 import { aiService } from '../services/aiService';
 import { useTranslation } from '../services/i18n';
@@ -132,6 +132,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     const [messageContent, setMessageContent] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [isContractModalOpen, setIsContractModalOpen] = useState(false);
+    const [leadContracts, setLeadContracts] = useState<Contract[]>([]);
+    const [editingContract, setEditingContract] = useState<Contract | null>(null);
     const [activeViewers, setActiveViewers] = useState<any[]>([]);
     const { t, formatDateTime, language } = useTranslation();
 
@@ -166,6 +168,13 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                 ]);
             } catch (e) {
                 console.error(e);
+            }
+
+            try {
+                const contractRes = await db.getContracts(1, 50, { leadId: lead.id });
+                setLeadContracts(contractRes.data || []);
+            } catch (e) {
+                console.error('Failed to fetch lead contracts', e);
             }
 
             refreshAiSummary();
@@ -412,6 +421,69 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         </DetailField>
                     </div>
 
+                    {leadContracts.length > 0 && (
+                        <div className="mb-8">
+                            <div className="flex items-center gap-2 mb-3">
+                                <h4 className="font-bold text-xs text-[var(--text-secondary)] uppercase tracking-widest">{t('detail.linked_contracts') || 'Hợp đồng liên kết'}</h4>
+                                <div className="h-px bg-slate-200 flex-1"></div>
+                            </div>
+                            <div className="space-y-3">
+                                {leadContracts.map(c => {
+                                    const schedule: PaymentMilestone[] = c.paymentSchedule || [];
+                                    const paid = schedule.filter(m => m.status === 'PAID').length;
+                                    const total = schedule.length;
+                                    const paidPct = total > 0 ? Math.round((paid / total) * 100) : 0;
+                                    const statusColor = c.status === ContractStatus.ACTIVE ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : c.status === ContractStatus.COMPLETED ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-amber-600 bg-amber-50 border-amber-200';
+                                    return (
+                                        <div key={c.id} className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-4 shadow-sm">
+                                            <div className="flex items-start justify-between gap-2 mb-3">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="font-bold text-sm text-[var(--text-primary)] truncate">{c.contractNumber || `HĐ-${c.id?.slice(-6)}`}</span>
+                                                        <span className={`px-2 py-0.5 rounded-lg text-xs font-bold border ${statusColor}`}>{t(`contract_status.${c.status}`) || c.status}</span>
+                                                    </div>
+                                                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">{t(`contract_type.${c.type}`) || c.type} {c.value ? `· ${c.value.toLocaleString('vi-VN')} đ` : ''}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => setEditingContract(c)}
+                                                    className="flex-none px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-1.5 shadow-sm active:scale-95"
+                                                >
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                    {t('common.edit') || 'Sửa'}
+                                                </button>
+                                            </div>
+                                            {schedule.length > 0 ? (
+                                                <div>
+                                                    <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1.5">
+                                                        <span>{t('leads.col_payment_progress') || 'Tiến độ TT'}</span>
+                                                        <span className="font-bold">{paid}/{total} đợt ({paidPct}%)</span>
+                                                    </div>
+                                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div className={`h-full rounded-full transition-all ${paidPct === 100 ? 'bg-emerald-500' : paidPct >= 50 ? 'bg-blue-500' : 'bg-amber-500'}`} style={{ width: `${paidPct}%` }} />
+                                                    </div>
+                                                    <div className="mt-2 space-y-1">
+                                                        {schedule.map((m, idx) => (
+                                                            <div key={idx} className="flex items-center gap-2 text-xs">
+                                                                <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-none text-white text-[10px] font-bold ${m.status === 'PAID' ? 'bg-emerald-500' : 'bg-slate-200 text-slate-500'}`}>
+                                                                    {m.status === 'PAID' ? '✓' : idx + 1}
+                                                                </span>
+                                                                <span className="flex-1 text-[var(--text-secondary)] truncate">{m.label || `Đợt ${idx + 1}`}</span>
+                                                                <span className="text-[var(--text-secondary)]">{m.dueDate ? new Date(m.dueDate).toLocaleDateString('vi-VN') : ''}</span>
+                                                                <span className={`font-bold ${m.status === 'PAID' ? 'text-emerald-600' : 'text-[var(--text-primary)]'}`}>{m.amount ? m.amount.toLocaleString('vi-VN') + ' đ' : (m.percentage ? m.percentage + '%' : '')}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-[var(--text-secondary)] italic">{t('contracts.no_payment_schedule') || 'Chưa có tiến độ thanh toán'}</p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="mb-8 bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm">
                         <div className="flex items-center gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
                             {[Channel.ZALO, Channel.EMAIL, Channel.SMS].map(ch => (
@@ -479,6 +551,19 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                     setIsContractModalOpen(false);
                     setFormData(prev => ({ ...prev, stage: LeadStage.WON }));
                     await onUpdate({ ...formData, stage: LeadStage.WON });
+                    const contractRes = await db.getContracts(1, 50, { leadId: lead.id });
+                    setLeadContracts(contractRes.data || []);
+                }}
+            />
+        )}
+        {editingContract && (
+            <ContractModal
+                contract={editingContract}
+                onClose={() => setEditingContract(null)}
+                onSuccess={async () => {
+                    setEditingContract(null);
+                    const contractRes = await db.getContracts(1, 50, { leadId: lead.id });
+                    setLeadContracts(contractRes.data || []);
                 }}
             />
         )}
