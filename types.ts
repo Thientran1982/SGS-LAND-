@@ -253,6 +253,7 @@ export interface Lead {
     source: string;
     stage: LeadStage;
     assignedTo: UserId;
+    assignedToName?: string;
     tags: string[];
     notes?: string;
     score?: LeadScore;

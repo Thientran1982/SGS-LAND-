@@ -334,7 +334,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                     <span className="font-mono">{duplicateLead?.phone}</span>
                                     
                                     <span className="text-amber-700/60 font-bold">{t('common.owner')}:</span>
-                                    <span>{duplicateLead?.assignedTo || t('inbox.unassigned')}</span>
+                                    <span>{duplicateLead?.assignedToName || duplicateLead?.assignedTo || t('inbox.unassigned')}</span>
                                 </div>
                             </div>
                         </div>

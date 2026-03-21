@@ -482,8 +482,8 @@ export const Inbox: React.FC = () => {
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             {thread.lead.assignedTo && (
-                                                <div className="text-2xs font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded truncate max-w-[60px]" title={users.find((u: any) => u.id === thread.lead.assignedTo)?.name || 'Assigned'}>
-                                                    {users.find((u: any) => u.id === thread.lead.assignedTo)?.name?.split(' ')[0] || thread.lead.assignedTo}
+                                                <div className="text-2xs font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded truncate max-w-[60px]" title={thread.lead.assignedToName || users.find((u: any) => u.id === thread.lead.assignedTo)?.name || t('inbox.unassigned')}>
+                                                    {(thread.lead.assignedToName || users.find((u: any) => u.id === thread.lead.assignedTo)?.name || '')?.split(' ').pop() || ''}
                                                 </div>
                                             )}
                                             {thread.unreadCount > 0 && (
@@ -546,7 +546,7 @@ export const Inbox: React.FC = () => {
                                     >
                                         <span className="truncate max-w-[60px] lg:max-w-[100px] hidden sm:inline md:hidden lg:inline">
                                             {selectedThread.lead.assignedTo 
-                                                ? users.find((u: any) => u.id === selectedThread.lead.assignedTo)?.name || selectedThread.lead.assignedTo 
+                                                ? (selectedThread.lead.assignedToName || users.find((u: any) => u.id === selectedThread.lead.assignedTo)?.name || t('inbox.unassigned'))
                                                 : t('inbox.unassigned')}
                                         </span>
                                         <span className="sm:hidden md:inline lg:hidden text-[var(--text-tertiary)]">

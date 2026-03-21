@@ -319,7 +319,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                 <td className={`px-4 ${paddingY} text-xs text-[var(--text-tertiary)] dark:text-slate-400 whitespace-nowrap`}>
                     <div className="flex items-center gap-1.5">
                         {ICONS.USER}
-                        {users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || t('inbox.unassigned')}
+                        {lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || t('inbox.unassigned')}
                     </div>
                 </td>
             )}
@@ -463,7 +463,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
                 <span>{formatDate(lead.createdAt)}</span>
                 <span className="font-medium text-[var(--text-tertiary)] flex items-center gap-1">
                     {ICONS.USER}
-                    {users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || t('inbox.unassigned')}
+                    {lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || t('inbox.unassigned')}
                 </span>
             </div>
 
