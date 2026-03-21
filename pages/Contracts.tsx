@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '../services/i18n';
 import { db } from '../services/dbApi';
@@ -19,7 +19,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
 
         const onMouseDown = (e: MouseEvent) => {
             if ((e.target as HTMLElement).closest('button, a, input, [role="button"]')) return;
-            
             isDown = true;
             dragged = false;
             node.classList.add('cursor-grabbing', 'select-none');
@@ -47,17 +46,12 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
             e.preventDefault();
             const x = e.pageX - node.offsetLeft;
             const walk = (x - startX) * 2;
-            if (Math.abs(walk) > 5) {
-                dragged = true;
-            }
+            if (Math.abs(walk) > 5) dragged = true;
             node.scrollLeft = scrollLeft - walk;
         };
 
         const onClick = (e: MouseEvent) => {
-            if (dragged) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
+            if (dragged) { e.preventDefault(); e.stopPropagation(); }
         };
 
         node.addEventListener('mousedown', onMouseDown);
@@ -65,7 +59,6 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
         node.addEventListener('mouseup', onMouseUp);
         node.addEventListener('mousemove', onMouseMove);
         node.addEventListener('click', onClick, true);
-
         node.classList.add('cursor-grab');
 
         return () => {
@@ -79,6 +72,100 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
     }, [ref, trigger]);
 };
 
+/* ── Row action dropdown (3 dots) ── */
+interface RowMenuProps {
+    contract: Contract;
+    onEdit: () => void;
+    onViewPDF: () => void;
+    onShare: () => void;
+    onDelete: () => void;
+}
+
+const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare, onDelete }) => {
+    const [open, setOpen] = useState(false);
+    const [pos, setPos] = useState({ top: 0, left: 0 });
+    const btnRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    const toggle = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!open && btnRef.current) {
+            const rect = btnRef.current.getBoundingClientRect();
+            const menuW = 192;
+            const left = rect.right - menuW < 0 ? rect.left : rect.right - menuW;
+            setPos({ top: rect.bottom + 4, left });
+        }
+        setOpen(v => !v);
+    };
+
+    useEffect(() => {
+        if (!open) return;
+        const close = (e: MouseEvent) => {
+            if (
+                menuRef.current && !menuRef.current.contains(e.target as Node) &&
+                btnRef.current && !btnRef.current.contains(e.target as Node)
+            ) setOpen(false);
+        };
+        const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+        document.addEventListener('mousedown', close);
+        document.addEventListener('keydown', esc);
+        return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
+    }, [open]);
+
+    const item = (label: string, icon: React.ReactNode, action: () => void, danger = false) => (
+        <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); action(); }}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors text-left
+                ${danger
+                    ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10'
+                    : 'text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)]'
+                }`}
+        >
+            <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center">{icon}</span>
+            {label}
+        </button>
+    );
+
+    return (
+        <>
+            <button
+                ref={btnRef}
+                onClick={toggle}
+                aria-label="Tùy chọn"
+                className="p-2 min-h-[36px] min-w-[36px] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                </svg>
+            </button>
+
+            {open && createPortal(
+                <div
+                    ref={menuRef}
+                    style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999, width: 192 }}
+                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl p-1.5 animate-enter"
+                >
+                    {item('Chỉnh sửa', (
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    ), onEdit)}
+                    {item('Xem / Xuất PDF', (
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    ), onViewPDF)}
+                    {item('Chia sẻ link', (
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    ), onShare)}
+                    <div className="my-1 border-t border-[var(--glass-border)]" />
+                    {item('Xóa hợp đồng', (
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    ), onDelete, true)}
+                </div>,
+                document.body
+            )}
+        </>
+    );
+};
+
+/* ── Main page ── */
 const Contracts: React.FC = () => {
     const { t, formatCurrency, formatDate } = useTranslation();
     const [contracts, setContracts] = useState<Contract[]>([]);
@@ -88,10 +175,10 @@ const Contracts: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState<ContractStatus | 'ALL'>('ALL');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingContract, setEditingContract] = useState<Contract | null>(null);
-    
+
     const [contractToDelete, setContractToDelete] = useState<string | null>(null);
     const [shareLink, setShareLink] = useState<string | null>(null);
     const [linkCopied, setLinkCopied] = useState(false);
@@ -99,7 +186,7 @@ const Contracts: React.FC = () => {
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
 
-    const loadContracts = async () => {
+    const loadContracts = useCallback(async () => {
         setLoading(true);
         try {
             const res = await db.getContracts(page, 20, { search, type: typeFilter, status: statusFilter });
@@ -110,11 +197,9 @@ const Contracts: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        loadContracts();
     }, [page, search, typeFilter, statusFilter]);
+
+    useEffect(() => { loadContracts(); }, [loadContracts]);
 
     const handleDelete = async () => {
         if (!contractToDelete) return;
@@ -146,13 +231,14 @@ const Contracts: React.FC = () => {
             </div>
 
             <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm flex-1 flex flex-col overflow-hidden">
+                {/* Filter bar */}
                 <div className="p-4 border-b border-[var(--glass-border)] flex flex-wrap gap-4 items-center">
                     <div className="relative flex-1 min-w-[200px] group">
                         <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             placeholder={t('contracts.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -160,12 +246,12 @@ const Contracts: React.FC = () => {
                         />
                         {search && (
                             <div className="absolute right-2 inset-y-0 flex items-center">
-                                <button 
+                                <button
                                     onClick={() => setSearch('')}
                                     className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
                                     title={t('common.clear_search')}
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                             </div>
                         )}
@@ -194,10 +280,8 @@ const Contracts: React.FC = () => {
                     />
                 </div>
 
-                <div 
-                    className="flex-1 overflow-auto min-w-0 min-h-0 w-full no-scrollbar"
-                    ref={scrollRef}
-                >
+                {/* Table */}
+                <div className="flex-1 overflow-auto min-w-0 min-h-0 w-full no-scrollbar" ref={scrollRef}>
                     {loading ? (
                         <div className="p-8 text-center text-[var(--text-secondary)]">{t('common.loading')}</div>
                     ) : contracts.length === 0 ? (
@@ -217,7 +301,7 @@ const Contracts: React.FC = () => {
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_payment_progress')}</th>
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_status')}</th>
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_date')}</th>
-                                        <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)] text-right"></th>
+                                        <th className="p-4 border-b border-[var(--glass-border)] w-12"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[var(--glass-border)]">
@@ -296,39 +380,13 @@ const Contracts: React.FC = () => {
                                                 {formatDate(c.createdAt)}
                                             </td>
                                             <td className="p-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            window.location.hash = `#/p/contract_${c.id}`;
-                                                        }}
-                                                        aria-label={t('contracts.view_export_pdf')}
-                                                        className="p-2 min-h-[36px] min-w-[36px] text-[var(--text-secondary)] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center"
-                                                        title={t('contracts.view_export_pdf')}
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setShareLink(`${window.location.origin}/#/p/contract_${c.id}`);
-                                                            setLinkCopied(false);
-                                                        }}
-                                                        aria-label={t('common.share_link')}
-                                                        className="p-2 min-h-[36px] min-w-[36px] text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center"
-                                                        title={t('common.share_link')}
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); setContractToDelete(c.id); }}
-                                                        aria-label={t('common.delete')}
-                                                        className="p-2 min-h-[36px] min-w-[36px] text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center"
-                                                        title={t('common.delete')}
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                    </button>
-                                                </div>
+                                                <RowMenu
+                                                    contract={c}
+                                                    onEdit={() => handleEdit(c)}
+                                                    onViewPDF={() => { window.location.hash = `#/p/contract_${c.id}`; }}
+                                                    onShare={() => { setShareLink(`${window.location.origin}/#/p/contract_${c.id}`); setLinkCopied(false); }}
+                                                    onDelete={() => setContractToDelete(c.id)}
+                                                />
                                             </td>
                                         </tr>
                                     ))}
@@ -337,20 +395,40 @@ const Contracts: React.FC = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="p-4 border-t border-[var(--glass-border)] flex items-center justify-between">
+                        <span className="text-sm text-[var(--text-secondary)]">Trang {page} / {totalPages}</span>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page <= 1}
+                                className="px-3 py-1.5 rounded-lg border border-[var(--glass-border)] text-sm disabled:opacity-40 hover:bg-[var(--glass-surface-hover)] transition-colors"
+                            >
+                                ← Trước
+                            </button>
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page >= totalPages}
+                                className="px-3 py-1.5 rounded-lg border border-[var(--glass-border)] text-sm disabled:opacity-40 hover:bg-[var(--glass-surface-hover)] transition-colors"
+                            >
+                                Sau →
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {isModalOpen && (
-                <ContractModal 
+                <ContractModal
                     contract={editingContract}
                     onClose={() => setIsModalOpen(false)}
-                    onSuccess={() => {
-                        setIsModalOpen(false);
-                        loadContracts();
-                    }}
+                    onSuccess={() => { setIsModalOpen(false); loadContracts(); }}
                 />
             )}
 
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={!!contractToDelete}
                 title={t('common.delete')}
                 message={t('contracts.delete_confirm')}
@@ -362,7 +440,7 @@ const Contracts: React.FC = () => {
 
             {shareLink && createPortal(
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShareLink(null)} aria-hidden="true"></div>
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShareLink(null)} aria-hidden="true" />
                     <div
                         role="dialog"
                         aria-modal="true"
