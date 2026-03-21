@@ -551,7 +551,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 {/* ── FOOTER ── */}
                 <div style={{ marginTop: '32px', paddingTop: '12px', borderTop: '1px solid #ccc', textAlign: 'center' }}>
                     <p style={{ fontSize: '10pt', color: '#888', fontFamily: FONT_SANS, margin: 0 }}>
-                        Tài liệu số: {contract.id} · Được tạo bởi <strong>SGS LAND</strong> · {fmtShortDate(contract.createdAt)}
+                        Số hợp đồng: <strong>{contractNum}</strong> · Hệ thống quản lý: <strong>SGS LAND</strong> · Ngày tạo: {fmtShortDate(contract.createdAt)}
                     </p>
                 </div>
             </div>
