@@ -7,6 +7,7 @@ import { I18nProvider, useTranslation } from './services/i18n';
 import { ThemeProvider } from './services/theme';
 import { TenantProvider } from './services/tenantContext';
 import { ROUTES, FULL_HEIGHT_PAGES } from './config/routes';
+import type { User } from './types';
 import { lazyLoad, registerPrefetch, prefetchRoutes } from './utils/reactUtils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -329,7 +330,8 @@ const AppShell: React.FC = () => {
     const { route, navigate } = useRouter();
     const { t } = useTranslation();
     const [authState, setAuthState] = useState<'LOADING' | 'AUTH' | 'GUEST'>(getInitialAuthState);
-    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [accessDenied, setAccessDenied] = useState(false);
 
     // Tracks which private pages have been mounted — CSS show/hide instead of unmount/remount
     const [mountedPrivateRoutes, setMountedPrivateRoutes] = useState<Set<string>>(new Set());
@@ -414,8 +416,16 @@ const AppShell: React.FC = () => {
         // RBAC: redirect non-admin roles away from admin-only routes
         if (authState === 'AUTH' && ADMIN_ONLY_ROUTES.has(route.base) && currentUser && !ADMIN_ROLES.has(currentUser.role)) {
             navigate(ROUTES.DASHBOARD);
+            setAccessDenied(true);
         }
     }, [route.base, authState, currentUser, navigate]);
+
+    // Auto-dismiss access denied banner
+    useEffect(() => {
+        if (!accessDenied) return;
+        const timer = setTimeout(() => setAccessDenied(false), 4000);
+        return () => clearTimeout(timer);
+    }, [accessDenied]);
 
     // Scroll Restoration
     useEffect(() => {
@@ -639,6 +649,23 @@ const AppShell: React.FC = () => {
         const hasKnownPage = !!PAGE_REGISTRY[route.base];
         return (
             <Layout activePage={route.base} onNavigate={navigate} onLogout={handleLogout}>
+                {/* Access-denied toast for RBAC redirects */}
+                <AnimatePresence>
+                    {accessDenied && (
+                        <motion.div
+                            key="access-denied-banner"
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute top-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2 px-4 py-2.5 bg-rose-600 text-white text-sm font-medium rounded-xl shadow-lg pointer-events-none"
+                            role="alert"
+                        >
+                            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            {t('rbac.access_denied') || 'Bạn không có quyền truy cập trang này'}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
                 {/* Page persistence layer — keeps visited pages alive to avoid re-mount/re-fetch.
                     Each page fills the content area via absolute inset-0 and handles its own
                     scrolling via overflow-y-auto, so both fixed-height pages (Leads, Inbox)
