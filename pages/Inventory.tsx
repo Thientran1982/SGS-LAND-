@@ -720,7 +720,7 @@ export const Inventory: React.FC = () => {
                             <input 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)} 
-                                className="w-full pl-10 pr-10 py-2.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
+                                className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
                                 placeholder={t('inventory.search_hint')} 
                             />
                             {search && (
@@ -757,7 +757,7 @@ export const Inventory: React.FC = () => {
                         {(typeFilter !== 'ALL' || statusFilter !== 'ALL' || transactionFilter !== 'ALL') && (
                             <button
                                 onClick={() => { setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }}
-                                className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
+                                className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
                                 title={t('inventory.reset_filters') || 'Xóa bộ lọc'}
                             >
                                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse shrink-0" />

@@ -496,7 +496,7 @@ export const AdminUsers: React.FC = () => {
                             {ICONS.SEARCH}
                         </div>
                         <input
-                            className="w-full pl-10 pr-10 py-2.5 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
+                            className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
                             placeholder={t('admin.users.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
