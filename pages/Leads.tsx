@@ -336,17 +336,19 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                 if (!schedule.length) {
                     return <td className={`px-4 ${paddingY} text-center text-[var(--text-tertiary)] text-xs`}>—</td>;
                 }
-                const paidCount = schedule.filter((i: any) => i.status === 'PAID').length;
-                const pct = Math.round((paidCount / schedule.length) * 100);
                 const now = new Date();
-                const overdueCount = schedule.filter((i: any) => i.status !== 'PAID' && new Date(i.dueDate) < now).length;
+                const totalPaidAmt = schedule.filter((i: any) => i.status === 'PAID').reduce((s: number, i: any) => s + (i.paidAmount ?? i.amount ?? 0), 0);
+                const totalScheduledAmt = schedule.reduce((s: number, i: any) => s + (i.amount || 0), 0);
+                const denominator = (lead.contractValue as number) || totalScheduledAmt;
+                const pct = denominator > 0 ? Math.min(100, Math.round((totalPaidAmt / denominator) * 100)) : Math.round((schedule.filter((i: any) => i.status === 'PAID').length / schedule.length) * 100);
+                const overdueCount = schedule.filter((i: any) => i.status === 'OVERDUE' || (i.status === 'PENDING' && i.dueDate && new Date(i.dueDate) < now)).length;
                 const barColor = overdueCount > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-emerald-500' : 'bg-indigo-500';
                 return (
                     <td className={`px-4 ${paddingY}`}>
-                        <div className="flex flex-col gap-1 min-w-[80px]">
+                        <div className="flex flex-col gap-1 min-w-[90px]">
                             <div className="flex items-center gap-1.5">
                                 <div className="flex-1 h-1.5 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+                                    <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
                                 </div>
                                 <span className="text-xs font-bold text-[var(--text-secondary)] tabular-nums">{pct}%</span>
                             </div>

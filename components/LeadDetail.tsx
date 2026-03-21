@@ -461,9 +461,13 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         }
 
                         const schedule: PaymentMilestone[] = localContractSchedule ?? localContractInfo?.contractPaymentSchedule ?? lead.contractPaymentSchedule ?? [];
-                        const paid = schedule.filter(m => m.status === 'PAID').length;
+                        const paidCount = schedule.filter(m => m.status === 'PAID').length;
                         const total = schedule.length;
-                        const paidPct = total > 0 ? Math.round((paid / total) * 100) : 0;
+                        const totalPaidAmt = schedule.filter(m => m.status === 'PAID').reduce((s, m) => s + (m.paidAmount ?? m.amount ?? 0), 0);
+                        const totalScheduledAmt = schedule.reduce((s, m) => s + (m.amount || 0), 0);
+                        const denominator = (effectiveValue as number) || totalScheduledAmt;
+                        const paidPct = denominator > 0 ? Math.min(100, Math.round((totalPaidAmt / denominator) * 100)) : (total > 0 ? Math.round((paidCount / total) * 100) : 0);
+                        const overdueInDetail = schedule.filter(m => m.status === 'OVERDUE' || (m.status === 'PENDING' && m.dueDate && new Date(m.dueDate) < new Date())).length;
                         const statusColor = effectiveStatus === ContractStatus.SIGNED ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : effectiveStatus === ContractStatus.CANCELLED ? 'text-rose-600 bg-rose-50 border-rose-200' : 'text-amber-600 bg-amber-50 border-amber-200';
                         return (
                             <div className="mb-8">
@@ -510,23 +514,50 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                         <div>
                                             <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1.5">
                                                 <span>{t('leads.col_payment_progress') || 'Tiến độ TT'}</span>
-                                                <span className="font-bold">{paid}/{total} đợt ({paidPct}%)</span>
+                                                <span className={`font-bold ${overdueInDetail > 0 ? 'text-rose-600' : 'text-[var(--text-primary)]'}`}>
+                                                    {paidCount}/{total} đợt · {paidPct}%
+                                                    {overdueInDetail > 0 && ` · ${overdueInDetail} quá hạn`}
+                                                </span>
                                             </div>
                                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                <div className={`h-full rounded-full transition-all ${paidPct === 100 ? 'bg-emerald-500' : paidPct >= 50 ? 'bg-blue-500' : 'bg-amber-500'}`} style={{ width: `${paidPct}%` }} />
+                                                <div className={`h-full rounded-full transition-all duration-500 ${overdueInDetail > 0 ? 'bg-rose-500' : paidPct === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${paidPct}%` }} />
                                             </div>
-                                            <div className="mt-2 space-y-1">
-                                                {schedule.map((m, idx) => (
-                                                    <div key={idx} className="flex items-center gap-2 text-xs">
-                                                        <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-none text-white text-[10px] font-bold ${m.status === 'PAID' ? 'bg-emerald-500' : 'bg-slate-200 text-slate-500'}`}>
-                                                            {m.status === 'PAID' ? '✓' : idx + 1}
-                                                        </span>
-                                                        <span className="flex-1 text-[var(--text-secondary)] truncate">{m.name || `Đợt ${idx + 1}`}</span>
-                                                        <span className="text-[var(--text-secondary)]">{m.dueDate ? new Date(m.dueDate).toLocaleDateString('vi-VN') : ''}</span>
-                                                        <span className={`font-bold ${m.status === 'PAID' ? 'text-emerald-600' : 'text-[var(--text-primary)]'}`}>{m.amount ? m.amount.toLocaleString('vi-VN') + ' đ' : (m.percentage ? m.percentage + '%' : '')}</span>
-                                                    </div>
-                                                ))}
+                                            <div className="mt-3 space-y-1.5">
+                                                {schedule.map((m, idx) => {
+                                                    const isActuallyOverdue = m.status === 'OVERDUE' || (m.status === 'PENDING' && m.dueDate && new Date(m.dueDate) < new Date());
+                                                    const dotCls = m.status === 'PAID'
+                                                        ? 'bg-emerald-500 text-white'
+                                                        : m.status === 'WAIVED'
+                                                        ? 'bg-slate-300 text-slate-500'
+                                                        : isActuallyOverdue
+                                                        ? 'bg-rose-500 text-white animate-pulse'
+                                                        : 'bg-slate-200 text-slate-500';
+                                                    const amtCls = m.status === 'PAID'
+                                                        ? 'text-emerald-600'
+                                                        : isActuallyOverdue
+                                                        ? 'text-rose-600'
+                                                        : m.status === 'WAIVED'
+                                                        ? 'text-slate-400 line-through'
+                                                        : 'text-[var(--text-primary)]';
+                                                    return (
+                                                        <div key={m.id || idx} className={`flex items-center gap-2 text-xs py-1 px-1.5 rounded-lg ${isActuallyOverdue ? 'bg-rose-50' : m.status === 'PAID' ? 'bg-emerald-50/50' : ''}`}>
+                                                            <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-none text-[10px] font-bold ${dotCls}`}>
+                                                                {m.status === 'PAID' ? '✓' : m.status === 'WAIVED' ? '—' : idx + 1}
+                                                            </span>
+                                                            <span className="flex-1 text-[var(--text-secondary)] truncate">{m.name || `Đợt ${idx + 1}`}</span>
+                                                            <span className="text-[var(--text-tertiary)] tabular-nums">{m.dueDate ? new Date(m.dueDate).toLocaleDateString('vi-VN') : ''}</span>
+                                                            {m.percentage > 0 && <span className="text-[var(--text-tertiary)] text-[10px]">{m.percentage}%</span>}
+                                                            <span className={`font-bold tabular-nums ${amtCls}`}>{m.amount ? m.amount.toLocaleString('vi-VN') + ' đ' : ''}</span>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
+                                            {totalScheduledAmt > 0 && (
+                                                <div className="mt-2 pt-2 border-t border-[var(--glass-border)] flex justify-between text-xs">
+                                                    <span className="text-[var(--text-tertiary)]">{t('payment.total_paid') || 'Đã thanh toán'}</span>
+                                                    <span className="font-bold text-emerald-600">{totalPaidAmt.toLocaleString('vi-VN')} đ / {totalScheduledAmt.toLocaleString('vi-VN')} đ</span>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <p className="text-xs text-[var(--text-secondary)] italic">{t('contracts.no_payment_schedule') || 'Chưa có tiến độ thanh toán'}</p>
