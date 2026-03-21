@@ -196,15 +196,21 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
     const isDeposit = contract.type === ContractType.DEPOSIT;
     const schedule: PaymentMilestone[] = contract.paymentSchedule || [];
     const now = new Date();
-    const signDate = contract.signedAt || contract.createdAt;
-    const contractNum = `HĐ-${contract.id.slice(0, 8).toUpperCase()}`;
     const isSigned = contract.status === ContractStatus.SIGNED;
+    // signDate: ngày ký thực tế (dùng cho badge "Đã ký kết" và footer)
+    const signDate = contract.signedAt || contract.createdAt;
+    // contractDate: ngày ký cho phần "Hôm nay" và chữ ký — để trống nếu chưa ký
+    const contractDate = isSigned ? (contract.signedAt || contract.createdAt) : null;
+    const contractNum = `HĐ-${contract.id.slice(0, 8).toUpperCase()}`;
 
     const legalRefs = isDeposit
         ? ['Bộ Luật Dân sự năm 2015;', 'Luật Kinh doanh Bất động sản năm 2023;', 'Nhu cầu và sự thỏa thuận của hai bên.']
         : ['Bộ Luật Dân sự năm 2015;', 'Luật Đất đai năm 2024;', 'Luật Kinh doanh Bất động sản năm 2023;', 'Nhu cầu và sự thỏa thuận của hai bên.'];
 
+    // articleOffset: +1 nếu có lịch thanh toán (Điều 4)
     const articleOffset = schedule.length > 0 ? 1 : 0;
+    // handoverOffset: +1 nếu có thông tin bàn giao
+    const handoverOffset = (contract.handoverDate || contract.handoverCondition) ? 1 : 0;
 
     /* ── Render ── */
     return (
@@ -278,8 +284,8 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
 
                 {/* MỞ ĐẦU */}
                 <p style={{ margin: '12px 0' }}>
-                    Hôm nay, {fmtDate(signDate)}, tại{' '}
-                    <span style={{ ...blankField, minWidth: '220px' }}>&nbsp;</span>
+                    Hôm nay, {fmtDate(contractDate)}, tại{' '}
+                    <span style={{ ...blankField, minWidth: '200px' }}>&nbsp;</span>
                     {' '}(tỉnh/thành phố), chúng tôi gồm:
                 </p>
 
@@ -499,7 +505,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 )}
 
                 {/* ── ĐIỀU: GIẢI QUYẾT TRANH CHẤP ── */}
-                <ArticleTitle num={(contract.handoverDate || contract.handoverCondition) ? 7 + articleOffset : 6 + articleOffset} title="Giải Quyết Tranh Chấp" />
+                <ArticleTitle num={6 + articleOffset + handoverOffset} title="Giải Quyết Tranh Chấp" />
                 <div style={{ paddingLeft: '16px' }}>
                     {contract.disputeResolution ? (
                         <p style={{ margin: '4px 0' }}>{contract.disputeResolution}</p>
@@ -512,7 +518,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 </div>
 
                 {/* ── ĐIỀU KHOẢN CHUNG ── */}
-                <ArticleTitle num="Cuối" title="Điều Khoản Chung" />
+                <ArticleTitle num={7 + articleOffset + handoverOffset} title="Điều Khoản Chung" />
                 <div style={{ paddingLeft: '16px' }}>
                     <p style={{ margin: '3px 0' }}>- Hợp đồng này có hiệu lực kể từ ngày ký.</p>
                     <p style={{ margin: '3px 0' }}>- Hợp đồng được lập thành <strong>02 (hai) bản</strong>, có giá trị pháp lý như nhau; mỗi bên giữ <strong>01 (một) bản</strong>.</p>
@@ -524,7 +530,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 <div style={{ marginTop: '40px' }}>
                     <p style={{ textAlign: 'right', marginBottom: '4px', fontStyle: 'italic' }}>
                         <span style={{ ...blankField, minWidth: '140px' }}>&nbsp;</span>
-                        , {fmtDate(signDate)}
+                        , {fmtDate(contractDate)}
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '16px' }}>
                         {/* Bên A */}
