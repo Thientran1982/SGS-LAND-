@@ -24,8 +24,16 @@ const migration: Migration = {
     `);
 
     // Copy existing plain `password` values into `password_hash` where not already set
+    // Guard: only run if the `password` column exists (may have been created by 001 or not)
     await client.query(`
-      UPDATE users SET password_hash = password WHERE password_hash IS NULL AND password IS NOT NULL;
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'users' AND column_name = 'password'
+        ) THEN
+          UPDATE users SET password_hash = password WHERE password_hash IS NULL AND password IS NOT NULL;
+        END IF;
+      END $$;
     `);
 
     // ── audit_logs: relax actor_id and entity_id to VARCHAR ─────────────────

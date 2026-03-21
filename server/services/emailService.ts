@@ -32,6 +32,7 @@ interface EmailOptions {
 
 interface EmailResult {
   success: boolean;
+  status: 'sent' | 'queued_no_smtp' | 'failed';
   messageId?: string;
   error?: string;
 }
@@ -75,7 +76,7 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
     console.log(`[EmailService] SMTP not configured for tenant ${tenantId}. Email queued but not sent.`);
     console.log(`  To: ${options.to}`);
     console.log(`  Subject: ${options.subject}`);
-    return { success: true, messageId: `console-${Date.now()}` };
+    return { success: true, status: 'queued_no_smtp', messageId: `console-${Date.now()}` };
   }
 
   try {
@@ -91,10 +92,10 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
     });
 
     console.log(`[EmailService] Email sent successfully: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    return { success: true, status: 'sent', messageId: info.messageId };
   } catch (error: any) {
     console.error(`[EmailService] Failed to send email:`, error.message);
-    return { success: false, error: error.message };
+    return { success: false, status: 'failed', error: error.message };
   }
 }
 
@@ -102,15 +103,15 @@ async function testSmtpConnection(tenantId: string): Promise<EmailResult> {
   const smtp = await getSmtpConfig(tenantId);
 
   if (!smtp.enabled || !smtp.host || !smtp.user) {
-    return { success: false, error: 'SMTP is not configured or disabled' };
+    return { success: false, status: 'failed', error: 'SMTP is not configured or disabled' };
   }
 
   try {
     const transporter = createTransporter(smtp);
     await transporter.verify();
-    return { success: true };
+    return { success: true, status: 'sent' };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { success: false, status: 'failed', error: error.message };
   }
 }
 

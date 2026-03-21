@@ -8,7 +8,8 @@ import jwt from "jsonwebtoken";
 import { WebSocketServer } from "ws";
 // @ts-ignore
 import { setupWSConnection } from "y-websocket/bin/utils";
-import { initializeDatabase, pool, withTenantContext } from "./server/db";
+import { pool, withTenantContext } from "./server/db";
+import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
 import { webhookQueue, setupWebhookWorker } from "./server/queue";
 import { userRepository } from "./server/repositories/userRepository";
@@ -311,13 +312,15 @@ async function startServer() {
       const resetUrl = `${baseUrl}/#/reset-password/${rawToken}`;
 
       const emailResult = await emailService.sendPasswordResetEmail(tenantId, email, resetUrl, user.name);
-      if (!emailResult.success) {
+      if (emailResult.status === 'failed') {
         logger.error(`Failed to send password reset email to ${email}: ${emailResult.error}`);
+      } else if (emailResult.status === 'queued_no_smtp') {
+        logger.warn(`Password reset email for ${email} not sent — SMTP not configured.`);
       }
 
       writeAuditLog(tenantId, user.id, 'PASSWORD_RESET_REQUEST', 'auth', user.id, { email }, req.ip);
       await uniformDelay();
-      const isDevMode = !isProduction && emailResult.messageId?.startsWith('console-');
+      const isDevMode = !isProduction && emailResult.status === 'queued_no_smtp';
       res.json({
         message: 'If an account exists, a reset link has been sent.',
         ...(isDevMode && { devToken: rawToken }),
@@ -658,11 +661,11 @@ async function startServer() {
     console.log("No REDIS_URL provided, using in-memory adapter for Socket.io");
   }
 
-  // Initialize DB schema
+  // Initialize DB schema via migration runner
   if (process.env.DATABASE_URL) {
-    await initializeDatabase();
+    await runPendingMigrations(pool);
   } else {
-    console.warn("DATABASE_URL not set. Skipping database initialization.");
+    console.warn("DATABASE_URL not set. Skipping database migrations.");
   }
 
   const PUBLIC_TENANT = DEFAULT_TENANT_ID;

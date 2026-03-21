@@ -92,6 +92,7 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
     const statusColor = health.status === 'HEALTHY' ? 'text-emerald-500' : health.status === 'DEGRADED' ? 'text-amber-500' : 'text-rose-500';
     const borderColor = health.status === 'HEALTHY' ? 'border-emerald-500' : health.status === 'DEGRADED' ? 'border-amber-500' : 'border-rose-500';
     const primaryColor = theme?.colors?.primary || '#4F46E5';
+    const DR_COMING_SOON = 'Tính năng đang phát triển';
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
@@ -115,13 +116,28 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
                 <div>
                     <h3 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4">{t('system.dr_title')}</h3>
                     <div className="flex gap-4">
-                        <button onClick={onBackup} className="flex-1 bg-[var(--bg-surface)] text-[var(--text-primary)] py-3 rounded-xl font-bold text-xs hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
-                            {ICONS.DOWNLOAD} {t('system.btn_backup')}
-                        </button>
-                        <button onClick={onRestore} disabled={isRestoring} className="flex-1 bg-[var(--bg-surface)]/10 text-white border border-white/20 py-3 rounded-xl font-bold text-xs hover:bg-[var(--bg-surface)]/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                            {isRestoring ? <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin"></div> : ICONS.UPLOAD}
-                            {t('system.btn_restore')}
-                        </button>
+                        <div className="flex-1 relative group" title={DR_COMING_SOON}>
+                            <button
+                                disabled
+                                className="w-full bg-[var(--bg-surface)]/40 text-[var(--text-primary)]/50 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed opacity-50"
+                            >
+                                {ICONS.DOWNLOAD} {t('system.btn_backup')}
+                            </button>
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-800 text-white text-xs rounded-lg px-3 py-1.5 whitespace-nowrap shadow-xl z-10 border border-white/10">
+                                {DR_COMING_SOON}
+                            </span>
+                        </div>
+                        <div className="flex-1 relative group" title={DR_COMING_SOON}>
+                            <button
+                                disabled
+                                className="w-full bg-[var(--bg-surface)]/10 text-white/50 border border-white/10 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed opacity-50"
+                            >
+                                {ICONS.UPLOAD} {t('system.btn_restore')}
+                            </button>
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-800 text-white text-xs rounded-lg px-3 py-1.5 whitespace-nowrap shadow-xl z-10 border border-white/10">
+                                {DR_COMING_SOON}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <div className="mt-6 text-xs2 text-[var(--text-tertiary)] font-mono">
