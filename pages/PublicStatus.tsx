@@ -11,12 +11,12 @@ const ICONS = {
     CHECK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
 };
 
-const ServiceBar = ({ name, status = 'operational' }: { name: string, status?: 'operational' | 'degraded' }) => (
+const ServiceBar = ({ name, status = 'operational', statusLabel, degradedLabel }: { name: string, status?: 'operational' | 'degraded', statusLabel: string, degradedLabel: string }) => (
     <div className="flex justify-between items-center py-4 border-b border-[var(--glass-border)] last:border-0 group">
         <span className="font-bold text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{name}</span>
         <div className="flex items-center gap-2">
             <span className={`text-xs font-bold uppercase tracking-wider ${status === 'operational' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {status === 'operational' ? 'Hoạt động tốt' : 'Hiệu năng giảm'}
+                {status === 'operational' ? statusLabel : degradedLabel}
             </span>
             <div className={`w-2 h-2 rounded-full ${status === 'operational' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
         </div>
@@ -87,10 +87,10 @@ export const PublicStatus: React.FC = () => {
 
                 <div className="bg-[var(--bg-surface)] rounded-[32px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
                     <div className="p-8">
-                        <ServiceBar name={t('status.service_api')} />
-                        <ServiceBar name={t('status.service_dashboard')} />
-                        <ServiceBar name={t('status.service_webhooks')} />
-                        <ServiceBar name={t('status.service_ai')} />
+                        <ServiceBar name={t('status.service_api')} statusLabel={t('status.operational_label')} degradedLabel={t('status.degraded')} />
+                        <ServiceBar name={t('status.service_dashboard')} statusLabel={t('status.operational_label')} degradedLabel={t('status.degraded')} />
+                        <ServiceBar name={t('status.service_webhooks')} statusLabel={t('status.operational_label')} degradedLabel={t('status.degraded')} />
+                        <ServiceBar name={t('status.service_ai')} statusLabel={t('status.operational_label')} degradedLabel={t('status.degraded')} />
                     </div>
                 </div>
 

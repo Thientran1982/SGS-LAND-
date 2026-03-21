@@ -137,7 +137,7 @@ export const AiValuation: React.FC = () => {
             const adjPerM2 = Math.round(marketBase * Kd * Kp * Ka);
             const total = adjPerM2 * areaNum;
             const margin = 0.25;
-            const legalLabel = legal === 'PINK_BOOK' ? 'Sổ Hồng' : legal === 'CONTRACT' ? 'Hợp đồng mua bán' : 'Vi Bằng';
+            const legalLabel = legal === 'PINK_BOOK' ? t('valuation.legal_pink_book_full') : legal === 'CONTRACT' ? t('valuation.legal_contract_full') : t('valuation.legal_waiting_full');
 
             aiResult = {
                 basePrice: marketBase,
@@ -205,7 +205,7 @@ export const AiValuation: React.FC = () => {
             coefficients: aiResult.coefficients,
             formula: aiResult.formula,
             confidence,
-            marketTrend: aiResult.marketTrend || 'Đang cập nhật',
+            marketTrend: aiResult.marketTrend || t('valuation.updating'),
             chartData,
             incomeApproach: aiResult.incomeApproach,
             reconciliation: aiResult.reconciliation,
@@ -342,12 +342,12 @@ export const AiValuation: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tình Trạng Pháp Lý</label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">{t('valuation.legal_label')}</label>
                                     <div className="grid grid-cols-3 gap-3">
                                         {[
-                                            { id: 'PINK_BOOK', label: 'Sổ Hồng' },
-                                            { id: 'CONTRACT', label: 'HĐMB' },
-                                            { id: 'WAITING', label: 'Vi Bằng' }
+                                            { id: 'PINK_BOOK', label: t('valuation.legal_pink_book') },
+                                            { id: 'CONTRACT', label: t('valuation.legal_contract') },
+                                            { id: 'WAITING', label: t('valuation.legal_waiting') }
                                         ].map(opt => (
                                             <button
                                                 key={opt.id}

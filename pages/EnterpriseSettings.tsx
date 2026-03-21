@@ -98,7 +98,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
 
     const handleUpdateToken = async () => {
         if (!tokenForm.trim()) {
-            notify('Vui lòng nhập Access Token', 'error');
+            notify(t('enterprise.access_token_required'), 'error');
             return;
         }
         setUpdatingToken(true);
@@ -798,7 +798,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                     {sso.enabled && sso.provider === 'OIDC' && (
                         <button onClick={handleVerify} disabled={verifying || !sso.issuerUrl || !sso.clientId} className="w-full py-2.5 border-2 border-indigo-200 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2">
                             {verifying && <div className="w-3 h-3 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></div>}
-                            {verifying ? 'Đang kiểm tra...' : 'Xác minh cấu hình OIDC'}
+                            {verifying ? t('enterprise.verifying_oidc') : t('enterprise.verify_oidc')}
                         </button>
                     )}
                 </div>

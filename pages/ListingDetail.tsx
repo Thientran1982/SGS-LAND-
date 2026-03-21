@@ -1117,7 +1117,7 @@ export const ListingDetail: React.FC = () => {
                                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
                                     >
                                         {!currentUser && <Lock className="w-3 h-3" />}
-                                        {isValuating ? 'Đang thẩm định...' : (!currentUser ? 'Đăng nhập để thẩm định' : 'Bắt đầu thẩm định')}
+                                        {isValuating ? t('listing.valuating') : (!currentUser ? t('listing.login_to_valuate') : t('listing.start_valuate'))}
                                     </button>
                                 </div>
                                 <div className="p-6 flex-1">

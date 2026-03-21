@@ -3,7 +3,7 @@ import React, { useState, memo, useMemo } from 'react';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ROUTES } from '../config/routes';
-// import { TenantSwitcher } from './TenantSwitcher';
+
 
 interface CommandCenterProps {
     title: string;

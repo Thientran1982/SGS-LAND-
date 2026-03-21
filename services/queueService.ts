@@ -48,9 +48,6 @@ class QueueService {
         };
         
         this.queue.push(task);
-        console.log(`[Queue] Task ${id} (${type}) enqueued. Queue length: ${this.queue.length}`);
-        
-        // Start processing if not already running
         this.processQueue();
         
         return id;
@@ -105,8 +102,6 @@ class QueueService {
      * Execute a single task with retry logic.
      */
     private async executeTask(task: QueueTask) {
-        console.log(`[Queue] Processing task ${task.id} (${task.type})...`);
-        
         const handler = this.handlers.get(task.type);
         if (!handler) {
             task.status = 'FAILED';
@@ -127,7 +122,6 @@ class QueueService {
             task.status = 'COMPLETED';
             task.result = result;
             task.completedAt = Date.now();
-            console.log(`[Queue] Task ${task.id} completed successfully.`);
         } catch (error: any) {
             task.status = 'FAILED';
             task.error = error.message || 'Unknown error';

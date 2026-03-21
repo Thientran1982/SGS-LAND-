@@ -162,10 +162,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
         if (isConnected) {
             const handleTraffic = (trafficData: any) => {
                 // Assuming the server broadcasts 'traffic_update'
-                // For this demo, we'll still use the mock service but driven by interval
-                // In a real app, this would be:
-                // setStats({ rps: trafficData.rps, latency: trafficData.latency });
-                // setData(prev => [...prev.slice(-19), { time: trafficData.time, rps: trafficData.rps, latency: trafficData.latency }]);
+
             };
             socket.on('traffic_update', handleTraffic);
             return () => { socket.off('traffic_update', handleTraffic); };

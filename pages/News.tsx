@@ -68,7 +68,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
             }
         } else {
             const success = await copyToClipboard(url);
-            setShareFeedback(success ? 'Đã sao chép đường dẫn!' : 'Không thể sao chép.');
+            setShareFeedback(success ? t('news.copy_link_success') : t('news.copy_link_error'));
             setTimeout(() => setShareFeedback(null), 2500);
         }
     };
@@ -579,7 +579,7 @@ export const News: React.FC = () => {
                                 setSelectedArticleId(null);
                             } catch (error) {
                                 console.error('Failed to delete article', error);
-                                showError('Có lỗi xảy ra khi xóa bài viết.');
+                                showError(t('news.delete_error'));
                             }
                         }}
                     />
