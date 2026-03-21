@@ -276,6 +276,14 @@ export interface Lead {
     // Flexible attributes but prefer strongly typed preferences for matching
     attributes?: Record<string, string | number | boolean | string[]>;
     preferences?: LeadPreferences;
+
+    // Denormalized from latest linked contract (via LATERAL JOIN)
+    contractId?: string;
+    contractPaymentSchedule?: PaymentMilestone[];
+    contractStatus?: string;
+    contractType?: string;
+    contractValue?: number;
+    contractNumber?: string;
 }
 
 export enum PropertyType {
