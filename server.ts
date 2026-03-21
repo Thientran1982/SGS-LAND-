@@ -93,6 +93,19 @@ async function startServer() {
   }
   const JWT_SECRET = process.env.JWT_SECRET || (await import('crypto')).randomBytes(64).toString('hex');
 
+  // Production startup warnings for missing optional-but-recommended config
+  if (isProduction) {
+    if (!process.env.ALLOWED_ORIGINS) {
+      logger.warn('ALLOWED_ORIGINS not set — CORS will block all cross-origin requests in production. Set it to your deployment domain (e.g. https://yourdomain.replit.app).');
+    }
+    if (!process.env.REDIS_URL) {
+      logger.warn('REDIS_URL not set — rate limiting uses in-memory store. Not safe for multi-instance deployments. Set REDIS_URL for production scale-out.');
+    }
+    if (!process.env.GEMINI_API_KEY && !process.env.API_KEY) {
+      logger.warn('GEMINI_API_KEY not set — all AI features (chat, valuation, lead scoring) will be unavailable.');
+    }
+  }
+
   app.use((req, res, next) => {
     let tenantId = DEFAULT_TENANT_ID;
     const token = req.cookies?.token;
@@ -1221,6 +1234,11 @@ async function startServer() {
 
   const shutdown = async (signal: string) => {
     logger.info(`Received ${signal}. Shutting down gracefully...`);
+    // Close Socket.io first — notifies clients of disconnect before HTTP closes
+    try {
+      await new Promise<void>(resolve => io.close(() => resolve()));
+      logger.info('Socket.io closed.');
+    } catch (e) { /* ignore */ }
     server.close(async () => {
       logger.info('HTTP server closed.');
       try {

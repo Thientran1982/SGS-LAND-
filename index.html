@@ -366,32 +366,8 @@
       .markdown-body a { color: var(--primary-600); text-decoration: underline; text-underline-offset: 2px; }
     </style>
 
-    <!-- CRITICAL: Hydration Script (Prevents FOUC) -->
-    <script>
-      (function() {
-        try {
-          const localTheme = localStorage.getItem('sgs_theme');
-          const sysTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          const theme = (localTheme === 'dark' || localTheme === 'light') ? localTheme : sysTheme;
-          
-          if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#050505');
-          } else {
-            document.documentElement.classList.remove('dark');
-            document.documentElement.classList.add('light');
-          }
-        } catch (e) {}
-
-        // Set canonical URL and og:url dynamically based on the current hostname
-        try {
-          var canonical = document.getElementById('canonical-url');
-          if (canonical) canonical.setAttribute('href', window.location.origin);
-          var ogUrl = document.getElementById('og-url');
-          if (ogUrl) ogUrl.setAttribute('content', window.location.href);
-        } catch (e) {}
-      })();
-    </script>
+    <!-- CRITICAL: Hydration Script (Prevents FOUC) — served as external file for strict CSP -->
+    <script src="/theme-init.js"></script>
     
 </head>
   <body>
