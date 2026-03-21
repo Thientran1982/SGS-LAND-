@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import { Server } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
@@ -1202,8 +1201,9 @@ async function startServer() {
   // Serve public assets (widget.js, QR codes, etc.) in all environments
   app.use(express.static("public"));
 
-  // Vite middleware for development
+  // Vite middleware for development (dynamically imported so vite is not required in production)
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true, hmr: { server } },
       appType: "spa",
