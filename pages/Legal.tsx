@@ -253,12 +253,12 @@ export const CookieSettings: React.FC = () => {
                 onClick={handleSave} 
                 className={`px-8 py-3 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 ${saved ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-slate-900 hover:bg-indigo-600'}`}
             >
-                {saved ? "Đã Lưu Thay Đổi" : t('legal.save_pref')}
+                {saved ? t('legal.saved_changes') : t('legal.save_pref')}
             </button>
 
             <div className="mt-12 pt-8 border-t border-[var(--glass-border)]">
-                <h3 className="mb-4">Về Cookies & Dữ Liệu</h3>
-                <p>Cookies là các tệp dữ liệu nhỏ được lưu trữ trên thiết bị của bạn. SGS Land sử dụng chúng để cá nhân hóa trải nghiệm, phân tích lưu lượng truy cập và đảm bảo an toàn cho phiên đăng nhập của bạn. Chúng tôi tuân thủ nghiêm ngặt các quy định về bảo mật dữ liệu.</p>
+                <h3 className="mb-4">{t('legal.cookie_about_title')}</h3>
+                <p>{t('legal.cookie_about_desc')}</p>
             </div>
         </LegalLayout>
     );

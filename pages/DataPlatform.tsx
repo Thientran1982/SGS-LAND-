@@ -97,8 +97,9 @@ export const DataPlatform: React.FC = () => {
             ]);
             setConnectors(c || []);
             setJobs(j || []);
-        } catch (e) { console.error(e); } 
-        finally { setLoading(false); }
+        } catch {
+            // silent — UI stays with empty state
+        } finally { setLoading(false); }
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);

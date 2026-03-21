@@ -615,15 +615,15 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
 
     const handleTestConnection = async () => {
         setTesting(true);
-        try { await db.testSmtpConnection(); notify('SMTP connection successful!', 'success'); }
-        catch (e: any) { notify(e.message || 'SMTP connection failed', 'error'); }
+        try { await db.testSmtpConnection(); notify(t('enterprise.smtp_success'), 'success'); }
+        catch (e: any) { notify(e.message || t('enterprise.smtp_fail'), 'error'); }
         finally { setTesting(false); }
     };
 
     const handleSendTestEmail = async () => {
         setSendingTest(true);
-        try { await db.sendTestEmail(); notify('Test email sent!', 'success'); }
-        catch (e: any) { notify(e.message || 'Failed to send test email', 'error'); }
+        try { await db.sendTestEmail(); notify(t('enterprise.email_sent'), 'success'); }
+        catch (e: any) { notify(e.message || t('enterprise.email_fail'), 'error'); }
         finally { setSendingTest(false); }
     };
 
@@ -711,10 +711,10 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
         try {
             const result = await db.verifySsoConfig();
             setVerifyResult(result);
-            if (result.success) notify('OIDC configuration verified!', 'success');
+            if (result.success) notify(t('enterprise.oidc_success'), 'success');
         } catch (e: any) {
             setVerifyResult({ success: false, error: e.message });
-            notify(e.message || 'SSO verification failed', 'error');
+            notify(e.message || t('enterprise.sso_fail'), 'error');
         } finally { setVerifying(false); }
     };
 

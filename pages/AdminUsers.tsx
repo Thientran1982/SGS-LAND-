@@ -344,7 +344,7 @@ export const AdminUsers: React.FC = () => {
     const confirmStatusChange = async () => {
         if (!userToStatusChange) return;
         if (userToStatusChange.id === currentUser?.id) {
-            notify(t('admin.users.self_lockout') || "You cannot change your own status", 'error');
+            notify(t('admin.users.self_status_error'), 'error');
             setUserToStatusChange(null);
             return;
         }
@@ -367,7 +367,7 @@ export const AdminUsers: React.FC = () => {
     const confirmDelete = async () => {
         if (!userToDelete) return;
         if (userToDelete.id === currentUser?.id) {
-            notify(t('admin.users.self_lockout') || "You cannot delete yourself", 'error');
+            notify(t('admin.users.self_delete_error'), 'error');
             setUserToDelete(null);
             return;
         }
@@ -406,10 +406,10 @@ export const AdminUsers: React.FC = () => {
     ], [t]);
 
     const statusOptions = useMemo(() => [
-        { value: 'ALL', label: t('admin.users.all_statuses') || 'Tất cả TT' },
-        { value: CommonStatus.ACTIVE, label: t('admin.users.status_active') || 'Hoạt động' },
-        { value: CommonStatus.PENDING, label: t('admin.users.status_pending') || 'Chờ duyệt' },
-        { value: CommonStatus.INACTIVE, label: t('admin.users.status_inactive') || 'Đã khóa' },
+        { value: 'ALL', label: t('admin.users.all_statuses') },
+        { value: CommonStatus.ACTIVE, label: t('admin.users.status_active') },
+        { value: CommonStatus.PENDING, label: t('admin.users.status_pending') },
+        { value: CommonStatus.INACTIVE, label: t('admin.users.status_inactive') },
     ], [t]);
 
     const userRoleOptions = useMemo(() => Object.values(UserRole).map(r => ({ value: r, label: t(`role.${r}`) })), [t]);

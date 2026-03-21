@@ -668,7 +668,7 @@ export const Inventory: React.FC = () => {
         const newFavs = new Set(favorites);
         if (isFav) newFavs.delete(id); else newFavs.add(id);
         setFavorites(newFavs);
-        try { await db.toggleFavorite(id); } catch (e) { console.error(e); setFavorites(favorites); }
+        try { await db.toggleFavorite(id); } catch { setFavorites(favorites); }
     };
 
     const handleDeleteClick = (id: string) => {

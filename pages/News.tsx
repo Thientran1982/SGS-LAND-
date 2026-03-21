@@ -617,7 +617,7 @@ export const News: React.FC = () => {
             <div className="max-w-6xl mx-auto px-6 py-12 animate-enter">
                 <div className="text-center mb-16 relative">
                     <span className="inline-block py-1 px-3 rounded-full bg-slate-900 text-white text-xs2 font-bold uppercase tracking-widest mb-4">
-                        Cập nhật 2026
+                        {t('news.year_badge')}
                     </span>
                     <h1 className="text-3xl md:text-6xl font-black text-[var(--text-primary)] mb-6 tracking-tight">
                         Tương Lai Bất Động Sản

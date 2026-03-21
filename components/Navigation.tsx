@@ -3,7 +3,6 @@ import React, { useState, memo, useMemo } from 'react';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ROUTES } from '../config/routes';
-// import { TenantSwitcher } from './TenantSwitcher';
 
 interface CommandCenterProps {
     title: string;
@@ -108,19 +107,11 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         {ICONS.SEARCH}
                         <span className="font-medium">{t('common.search')}</span>
                     </div>
-                    {/* <div className="hidden lg:flex items-center gap-1">
-                        <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs2 font-bold text-[var(--text-secondary)] bg-slate-200 dark:bg-white/10 rounded border border-slate-300 dark:border-white/20">⌘</kbd>
-                        <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs2 font-bold text-[var(--text-secondary)] bg-slate-200 dark:bg-white/10 rounded border border-slate-300 dark:border-white/20">K</kbd>
-                    </div> */}
                 </button>
             </div>
 
             {/* RIGHT: Actions & Profile */}
             <div className="flex items-center gap-2 sm:gap-3 relative z-10 shrink-0">
-                {/* <div className="hidden lg:block mr-2">
-                    <TenantSwitcher />
-                </div> */}
-
                 {/* Mobile Search Icon */}
                 <button
                     onClick={onSearch}

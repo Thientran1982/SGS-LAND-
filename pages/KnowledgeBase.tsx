@@ -55,8 +55,9 @@ export const KnowledgeBase: React.FC = () => {
             ]);
             setDocs(data || []);
             setCurrentUser(user);
-        } catch (e) { console.error(e); }
-        finally { setLoading(false); }
+        } catch {
+            // silent — UI stays with empty state
+        } finally { setLoading(false); }
     }, []);
 
     // Initial load + re-fetch when debounced search changes

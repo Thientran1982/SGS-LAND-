@@ -143,8 +143,9 @@ export const RoutingRules: React.FC = () => {
             setRules(r || []);
             setUsers(u.data || []);
             setTeams(tm || []);
-        } catch (e) { console.error(e); } 
-        finally { setLoading(false); }
+        } catch {
+            // silent — UI stays with empty state
+        } finally { setLoading(false); }
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);

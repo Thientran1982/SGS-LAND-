@@ -198,8 +198,7 @@ export const ProductSearch: React.FC = () => {
                         setFavorites(new Set(stored));
                     } catch {}
                 }
-            } catch (e) {
-                console.error(e);
+            } catch {
                 setFetchError(true);
             } finally {
                 setLoading(false);

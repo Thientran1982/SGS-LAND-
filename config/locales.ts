@@ -1521,7 +1521,23 @@ export const DICTIONARY = {
         "editor.tone_persuasive": "Thuyết phục",
         "editor.processing": "Đang xử lý...",
         "editor.chars": "ký tự",
-        "editor.words": "từ"
+        "editor.words": "từ",
+
+        "status.updated_at": "Cập nhật lúc:",
+        "legal.saved_changes": "Đã Lưu Thay Đổi",
+        "news.year_badge": "Cập nhật 2026",
+        "admin.users.self_status_error": "Không thể thay đổi trạng thái của chính mình",
+        "admin.users.self_delete_error": "Không thể tự xóa tài khoản của mình",
+
+        "enterprise.smtp_fail": "Kết nối SMTP thất bại",
+        "enterprise.smtp_success": "Kết nối SMTP thành công!",
+        "enterprise.email_fail": "Gửi email test thất bại",
+        "enterprise.email_sent": "Đã gửi email test thành công!",
+        "enterprise.sso_fail": "Xác thực SSO thất bại",
+        "enterprise.oidc_success": "Cấu hình OIDC đã được xác minh!",
+
+        "legal.cookie_about_title": "Về Cookies & Dữ Liệu",
+        "legal.cookie_about_desc": "Cookies là các tệp dữ liệu nhỏ được lưu trữ trên thiết bị của bạn. SGS Land sử dụng chúng để cá nhân hóa trải nghiệm, phân tích lưu lượng truy cập và đảm bảo an toàn cho phiên đăng nhập của bạn. Chúng tôi tuân thủ nghiêm ngặt các quy định về bảo mật dữ liệu."
     },
     en: {
         // ... (All English keys remain same as provided input)
@@ -3045,6 +3061,22 @@ export const DICTIONARY = {
         "editor.tone_persuasive": "Persuasive",
         "editor.processing": "Processing...",
         "editor.chars": "chars",
-        "editor.words": "words"
+        "editor.words": "words",
+
+        "status.updated_at": "Updated at:",
+        "legal.saved_changes": "Changes Saved",
+        "news.year_badge": "2026 Updates",
+        "admin.users.self_status_error": "Cannot change your own account status",
+        "admin.users.self_delete_error": "Cannot delete your own account",
+
+        "enterprise.smtp_fail": "SMTP connection failed",
+        "enterprise.smtp_success": "SMTP connection successful!",
+        "enterprise.email_fail": "Failed to send test email",
+        "enterprise.email_sent": "Test email sent successfully!",
+        "enterprise.sso_fail": "SSO verification failed",
+        "enterprise.oidc_success": "OIDC configuration verified!",
+
+        "legal.cookie_about_title": "About Cookies & Data",
+        "legal.cookie_about_desc": "Cookies are small data files stored on your device. SGS Land uses them to personalize your experience, analyze traffic, and secure your login session. We strictly comply with data privacy regulations."
     }
 };
