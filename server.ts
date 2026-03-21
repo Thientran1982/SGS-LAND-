@@ -295,11 +295,7 @@ async function startServer() {
 
       if (!user) {
         await uniformDelay();
-        // Anti-enumeration: return consistent structure regardless of user existence
-        return res.json({
-          message: 'If an account exists, a reset link has been sent.',
-          emailStatus: 'not_applicable',
-        });
+        return res.json({ message: 'If an account exists, a reset link has been sent.' });
       }
 
       const crypto = await import('crypto');
@@ -332,10 +328,11 @@ async function startServer() {
 
       writeAuditLog(tenantId, user.id, 'PASSWORD_RESET_REQUEST', 'auth', user.id, { email }, req.ip);
       await uniformDelay();
+      // Never expose emailStatus on public reset endpoint — it would leak account existence.
+      // Dev mode exposes devToken only (already implies user was found, acceptable in non-production).
       const isDevMode = !isProduction && emailResult.status === 'queued_no_smtp';
       res.json({
         message: 'If an account exists, a reset link has been sent.',
-        emailStatus: emailResult.status,
         ...(isDevMode && { devToken: rawToken }),
       });
     } catch (error) {
