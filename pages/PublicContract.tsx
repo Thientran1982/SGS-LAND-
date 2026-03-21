@@ -235,31 +235,32 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
             <div ref={contractRef} style={{ ...pageStyle, padding: '48px 64px', boxShadow: '0 2px 24px rgba(0,0,0,0.15)' }} className="contract-document">
 
                 {/* QUỐC HIỆU */}
-                <div style={{ ...center, marginBottom: '4px' }}>
+                <div style={{ ...center, marginBottom: '20px' }}>
                     <p style={{ ...bold, fontSize: '13pt', margin: 0 }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-                    <p style={{ ...bold, fontSize: '13pt', margin: '2px 0' }}>
-                        <span style={{ borderBottom: '1.5px solid #000', paddingBottom: '1px' }}>
+                    <p style={{ ...bold, fontSize: '13pt', margin: '2px 0 0' }}>
+                        <span style={{ borderBottom: '1.5px solid #000', paddingBottom: '2px' }}>
                             Độc lập – Tự do – Hạnh phúc
                         </span>
                     </p>
-                    <p style={{ ...center, fontSize: '13pt', margin: '4px 0 0', letterSpacing: '4px' }}>───────────────────</p>
                 </div>
 
                 {/* TÊN HỢP ĐỒNG */}
-                <div style={{ ...center, margin: '24px 0 4px' }}>
-                    <p style={{ ...bold, fontSize: '15pt', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, lineHeight: 1.4 }}>
-                        {isDeposit
-                            ? 'Hợp Đồng Đặt Cọc\nChuyển Nhượng Quyền Sử Dụng Đất'
-                            : 'Hợp Đồng Chuyển Nhượng\nQuyền Sử Dụng Đất'}
+                <div style={{ ...center, margin: '0 0 16px' }}>
+                    <p style={{ ...bold, fontSize: '15pt', textTransform: 'uppercase', letterSpacing: '1px', margin: 0, lineHeight: 1.6 }}>
+                        {isDeposit ? (
+                            <>Hợp Đồng Đặt Cọc<br />Chuyển Nhượng Quyền Sử Dụng Đất</>
+                        ) : (
+                            <>Hợp Đồng Chuyển Nhượng<br />Quyền Sử Dụng Đất</>
+                        )}
                     </p>
                     {!isDeposit && (
-                        <p style={{ fontSize: '12pt', margin: '4px 0 0', color: GRAY, fontStyle: 'italic' }}>
+                        <p style={{ fontSize: '11pt', margin: '6px 0 0', color: GRAY, fontStyle: 'italic' }}>
                             (Kèm theo Giấy chứng nhận quyền sử dụng đất)
                         </p>
                     )}
-                    <p style={{ ...bold, fontSize: '12pt', margin: '10px 0 0' }}>Số: {contractNum}</p>
+                    <p style={{ ...bold, fontSize: '12pt', margin: '8px 0 0' }}>Số: {contractNum}</p>
                     {isSigned && (
-                        <p style={{ fontSize: '11pt', margin: '2px 0', color: '#166534' }}>
+                        <p style={{ fontSize: '11pt', margin: '4px 0 0', color: '#166534' }}>
                             ✓ Đã ký kết {fmtDate(signDate)}
                         </p>
                     )}
