@@ -137,12 +137,12 @@ export class LeadRepository extends BaseRepository {
       const result = await client.query(
         `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar,
                 c.contract_id, c.payment_schedule as contract_payment_schedule,
-                c.contract_status, c.contract_type, c.contract_value, c.contract_number
+                c.contract_status, c.contract_type, c.contract_value
          FROM leads l
          LEFT JOIN users u ON l.assigned_to = u.id
          LEFT JOIN LATERAL (
            SELECT id as contract_id, payment_schedule, status as contract_status,
-                  type as contract_type, value as contract_value, contract_number
+                  type as contract_type, value as contract_value
            FROM contracts
            WHERE lead_id = l.id
              AND tenant_id = current_setting('app.current_tenant_id', true)::uuid

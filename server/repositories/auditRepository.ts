@@ -16,12 +16,11 @@ export class AuditRepository extends BaseRepository {
   }): Promise<void> {
     return this.withTenant(tenantId, async (client) => {
       await client.query(
-        `INSERT INTO audit_logs (tenant_id, actor_id, action, entity_type, entity_id, details, metadata, ip_address)
-         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6, $7)`,
+        `INSERT INTO audit_logs (tenant_id, actor_id, action, entity_type, entity_id, details, ip_address)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6)`,
         [
           data.actorId, data.action, data.entityType, data.entityId,
           data.details || null,
-          data.metadata ? JSON.stringify(data.metadata) : null,
           data.ipAddress || null,
         ]
       );
