@@ -54,10 +54,6 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const savedTenantId = localStorage.getItem('sgs_tenant_id');
         let resolvedTenant = MOCK_TENANTS.find(t => t.id === savedTenantId) || MOCK_TENANTS[0];
 
-        // If we were using subdomains:
-        // const subdomain = hostname.split('.')[0];
-        // resolvedTenant = MOCK_TENANTS.find(t => t.domain.startsWith(subdomain)) || MOCK_TENANTS[0];
-
         setTenant(resolvedTenant);
         db.setTenantContext(resolvedTenant.id); // Apply RLS context to Mock DB
         applyTenantTheme(resolvedTenant);

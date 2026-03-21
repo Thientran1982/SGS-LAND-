@@ -902,10 +902,10 @@ export const ListingDetail: React.FC = () => {
                 comparables: result.comparables
             });
             
-            notify("Thẩm định AI hoàn tất", 'success');
+            notify(t('valuation.ai_done'), 'success');
         } catch (error) {
             console.error(error);
-            notify("Lỗi thẩm định AI", 'error');
+            notify(t('valuation.ai_error'), 'error');
         } finally {
             setIsValuating(false);
         }

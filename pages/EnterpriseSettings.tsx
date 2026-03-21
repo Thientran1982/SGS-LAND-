@@ -104,7 +104,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
         setUpdatingToken(true);
         try {
             await db.updateZaloToken(tokenForm.trim());
-            notify('Cập nhật Access Token thành công', 'success');
+            notify(t('enterprise.token_updated'), 'success');
             setTokenForm('');
             setShowTokenForm(false);
             onRefresh();
@@ -128,7 +128,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                     <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <span>
                         <span className="font-bold block mb-0.5">{t('ent.zalo_secret_warning') || 'Cần cấu hình biến môi trường'}</span>
-                        {t('ent.zalo_secret_hint') || 'Thêm ZALO_OA_SECRET vào Environment Secrets để bảo mật webhook trên Production.'}
+                        {t('enterprise.zalo_secret_hint')}
                     </span>
                 </div>
             )}
@@ -168,7 +168,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                     onClick={() => setShowTokenForm(s => !s)}
                                     className="text-blue-600 text-sm font-bold hover:underline decoration-2 underline-offset-4"
                                 >
-                                    {config.zalo?.accessToken ? 'Cập nhật Access Token' : '+ Thêm Access Token để gửi tin'}
+                                    {config.zalo?.accessToken ? t('enterprise.update_token') : t('enterprise.add_token')}
                                 </button>
                                 <button
                                     onClick={() => setConfirmDisconnect(true)}
@@ -931,10 +931,10 @@ const AuditPanel = memo(() => {
     };
 
     const ENTITY_OPTIONS = [
-        { value: '', label: 'Tất cả loại' },
-        { value: 'auth', label: 'Xác thực' },
-        { value: 'USER', label: 'Người dùng' },
-        { value: 'enterprise_config', label: 'Cài đặt doanh nghiệp' },
+        { value: '', label: t('audit.entity_all') },
+        { value: 'auth', label: t('audit.entity_auth') },
+        { value: 'USER', label: t('audit.entity_user') },
+        { value: 'enterprise_config', label: t('audit.entity_enterprise') },
         { value: 'lead', label: 'Lead' },
         { value: 'listing', label: 'Tin đăng' },
     ];
