@@ -126,5 +126,36 @@ export function createContractRoutes(authenticateToken: any) {
     }
   });
 
+  router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+
+      const contract = await contractRepository.findById(user.tenantId, String(req.params.id));
+      if (!contract) return res.status(404).json({ error: 'Contract not found' });
+
+      const isAdmin = ['ADMIN', 'MANAGER'].includes(user.role);
+      const isOwner = (contract as any).createdById === user.id;
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({ error: 'You can only delete contracts you created' });
+      }
+
+      await contractRepository.deleteById(user.tenantId, String(req.params.id));
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'DELETE',
+        entityType: 'CONTRACT',
+        entityId: String(req.params.id),
+        details: `Deleted contract`,
+        ipAddress: req.ip,
+      });
+
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting contract:', error);
+      res.status(500).json({ error: 'Failed to delete contract' });
+    }
+  });
+
   return router;
 }

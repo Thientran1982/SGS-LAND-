@@ -12,4 +12,7 @@ export const contractApi = {
 
   updateContract: (id: string, data: Record<string, any>): Promise<any> =>
     api.put(`/api/contracts/${id}`, data),
+
+  deleteContract: (id: string): Promise<void> =>
+    api.delete(`/api/contracts/${id}`),
 };

@@ -966,7 +966,7 @@ class DatabaseApiClient {
 
   async deleteContract(id: string) {
     _cache.invalidate('contracts:');
-    return true;
+    return contractApi.deleteContract(id);
   }
 
   async duplicateListing(id: string) {

@@ -216,8 +216,8 @@ export class UserRepository extends BaseRepository {
   async delete(tenantId: string, id: string): Promise<boolean> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `DELETE FROM users WHERE id = $1`,
-        [id]
+        `DELETE FROM users WHERE id = $1 AND tenant_id = $2`,
+        [id, tenantId]
       );
       return (result.rowCount ?? 0) > 0;
     });

@@ -313,10 +313,23 @@ const getInitialAuthState = (): 'LOADING' | 'AUTH' | 'GUEST' => {
     return 'LOADING';
 };
 
+const ADMIN_ONLY_ROUTES = new Set([
+    ROUTES.SYSTEM,
+    ROUTES.ADMIN_USERS,
+    ROUTES.ENTERPRISE_SETTINGS,
+    ROUTES.BILLING,
+    ROUTES.DATA_PLATFORM,
+    ROUTES.SECURITY,
+    ROUTES.AI_GOVERNANCE,
+]);
+
+const ADMIN_ROLES = new Set(['ADMIN', 'MANAGER']);
+
 const AppShell: React.FC = () => {
     const { route, navigate } = useRouter();
     const { t } = useTranslation();
     const [authState, setAuthState] = useState<'LOADING' | 'AUTH' | 'GUEST'>(getInitialAuthState);
+    const [currentUser, setCurrentUser] = useState<any>(null);
 
     // Tracks which private pages have been mounted — CSS show/hide instead of unmount/remount
     const [mountedPrivateRoutes, setMountedPrivateRoutes] = useState<Set<string>>(new Set());
@@ -353,13 +366,16 @@ const AppShell: React.FC = () => {
                 const user = await db.getCurrentUser();
                 if (user) {
                     localStorage.setItem(AUTH_CACHE_KEY, '1');
+                    setCurrentUser(user);
                     setAuthState('AUTH');
                 } else {
                     localStorage.removeItem(AUTH_CACHE_KEY);
+                    setCurrentUser(null);
                     setAuthState('GUEST');
                 }
             } catch {
                 localStorage.removeItem(AUTH_CACHE_KEY);
+                setCurrentUser(null);
                 setAuthState('GUEST');
             }
         };
@@ -367,10 +383,10 @@ const AppShell: React.FC = () => {
 
         // Re-check on explicit auth events (login/logout)
         const onLogin = () => db.getCurrentUser().then(u => {
-            if (u) { localStorage.setItem(AUTH_CACHE_KEY, '1'); setAuthState('AUTH'); }
-            else { localStorage.removeItem(AUTH_CACHE_KEY); setAuthState('GUEST'); }
-        }).catch(() => { localStorage.removeItem(AUTH_CACHE_KEY); setAuthState('GUEST'); });
-        const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); db.clearUserCache(); setAuthState('GUEST'); };
+            if (u) { localStorage.setItem(AUTH_CACHE_KEY, '1'); setCurrentUser(u); setAuthState('AUTH'); }
+            else { localStorage.removeItem(AUTH_CACHE_KEY); setCurrentUser(null); setAuthState('GUEST'); }
+        }).catch(() => { localStorage.removeItem(AUTH_CACHE_KEY); setCurrentUser(null); setAuthState('GUEST'); });
+        const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); db.clearUserCache(); setCurrentUser(null); setAuthState('GUEST'); };
         window.addEventListener('auth:login', onLogin);
         window.addEventListener('auth:logout', onLogout);
         return () => {
@@ -392,8 +408,14 @@ const AppShell: React.FC = () => {
         const isPublic = PUBLIC_ROUTES.has(route.base);
         if (!isPublic && authState === 'GUEST') {
             navigate(ROUTES.LOGIN);
+            return;
         }
-    }, [route.base, authState, navigate]);
+
+        // RBAC: redirect non-admin roles away from admin-only routes
+        if (authState === 'AUTH' && ADMIN_ONLY_ROUTES.has(route.base) && currentUser && !ADMIN_ROLES.has(currentUser.role)) {
+            navigate(ROUTES.DASHBOARD);
+        }
+    }, [route.base, authState, currentUser, navigate]);
 
     // Scroll Restoration
     useEffect(() => {
@@ -407,6 +429,7 @@ const AppShell: React.FC = () => {
 
     const handleLoginSuccess = useCallback(() => {
         localStorage.setItem(AUTH_CACHE_KEY, '1');
+        db.getCurrentUser().then(u => { if (u) setCurrentUser(u); }).catch(() => {});
         setAuthState('AUTH');
         navigate(ROUTES.DEFAULT_PRIVATE);
     }, [navigate]);
@@ -414,6 +437,7 @@ const AppShell: React.FC = () => {
     const handleLogout = useCallback(() => {
         db.logout();
         localStorage.removeItem(AUTH_CACHE_KEY);
+        setCurrentUser(null);
         setAuthState('GUEST');
         navigate(ROUTES.LOGIN);
     }, [navigate]);
