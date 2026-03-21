@@ -51,7 +51,7 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
 };
 
 export const SecurityCompliance: React.FC = () => {
-    const [config, setConfig] = useState<any>(null);
+    const [config, setConfig] = useState<ComplianceConfig | null>(null);
     const [sessions, setSessions] = useState<SecuritySession[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'POLICIES' | 'ACCESS'>('POLICIES');
@@ -76,8 +76,7 @@ export const SecurityCompliance: React.FC = () => {
                 setConfig(c);
                 // Defensive: Ensure sessions is always an array
                 setSessions(s || []);
-            } catch (e) {
-                console.error(e);
+            } catch {
                 notify(t('security.alert_load_fail'), 'error');
                 setSessions([]);
             } finally {
@@ -117,7 +116,10 @@ export const SecurityCompliance: React.FC = () => {
 
     const handleAddRule = (rule: Partial<DlpRule>) => {
         if (!config) return;
-        const newRule: DlpRule = { id: Date.now().toString(), name: rule.name!, pattern: rule.pattern!, action: rule.action as any, enabled: true };
+        const buf = new Uint32Array(2);
+        crypto.getRandomValues(buf);
+        const newRuleId = buf[0].toString(16).padStart(8, '0') + buf[1].toString(16).padStart(8, '0');
+        const newRule: DlpRule = { id: newRuleId, name: rule.name!, pattern: rule.pattern!, action: rule.action as any, enabled: true };
         setConfig({ ...config, dlpRules: [...(config.dlpRules || []), newRule] });
         setIsEditorOpen(false);
     };

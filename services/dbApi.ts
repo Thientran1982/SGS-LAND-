@@ -7,7 +7,7 @@ import { userApi } from './api/userApi';
 import { analyticsApi } from './api/analyticsApi';
 import { knowledgeApi } from './api/knowledgeApi';
 import { api } from './api/apiClient';
-import { PlanTier, Plan, UserRole, ThreadStatus } from '../types';
+import { PlanTier, Plan, UserRole, ThreadStatus, ComplianceConfig } from '../types';
 import { ROUTES } from '../config/routes';
 
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
@@ -1191,15 +1191,12 @@ class DatabaseApiClient {
     return { id, ...data };
   }
 
-  async getComplianceConfig() {
+  async getComplianceConfig(): Promise<ComplianceConfig> {
     return {
-      dataRetentionDays: 365,
-      auditLogEnabled: true,
-      gdprEnabled: true,
-      autoDeleteInactive: false,
-      allowedDomains: [],
-      backups: [],
+      retention: { messagesDays: 365, auditLogsDays: 730 },
+      legalHold: false,
       dlpRules: [],
+      ipAllowlist: [],
     };
   }
 
