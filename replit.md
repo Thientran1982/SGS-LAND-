@@ -212,7 +212,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 ### Translation Keys (`config/locales.ts`)
 - **Structure**: Two-language dictionary (`vn` and `en`) with dot-notation keys (`landing.hero_title`, `routing.title`, etc.)
-- **Added keys**: `landing.hero_title`, `admin.users.no_permission`, `admin.users.confirm_role_change`, `table.*` (time, task, model, latency, cost, flags, records, ip_address, device), `inbox.*` (new_message, assign_success, empty_messages), `leads.export_success`, `leads.new_lead_received`, `reports.cost_*`, `routing.*` (full routing rules page translations), `scoring.*` (full scoring config page translations), `detail.ai_no_data`, `editor.*` (AI text editor tools)
+- **Added keys**: `landing.hero_title`, `admin.users.no_permission`, `admin.users.confirm_role_change`, `table.*` (time, task, model, latency, cost, flags, records, ip_address, device), `inbox.*` (new_message, assign_success, empty_messages), `leads.export_success`, `leads.new_lead_received`, `reports.cost_*`, `routing.*` (full routing rules page translations), `scoring.*` (full scoring config page translations), `detail.ai_no_data`, `editor.*` (AI text editor tools), `seq.step_*` (step builder i18n), `ai.error_*` (AI error toasts), `inbox.error_score_update`, `inbox.error_inbound`
 - **Pattern to check missing keys**: `node -e "const fs=require('fs'); const content=fs.readFileSync('config/locales.ts','utf8'); const keys=new Set([...content.matchAll(/\"([^\"]+)\":\s*\"/g)].map(m=>m[1])); ..."`
 
 ### SEO Configuration (`index.html`)

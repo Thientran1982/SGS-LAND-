@@ -59,8 +59,8 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
 
     const handleConfirm = async () => {
         const newErrors: { name?: string; phone?: string } = {};
-        if (!name.trim()) newErrors.name = t('common.required') || 'Vui lòng nhập họ tên';
-        if (!phone.trim()) newErrors.phone = t('common.required') || 'Vui lòng nhập số điện thoại';
+        if (!name.trim()) newErrors.name = t('common.required');
+        if (!phone.trim()) newErrors.phone = t('common.required');
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
@@ -154,7 +154,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(({ isOpen, onClose
                         {isSubmitting ? (
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         ) : ICONS.CHECK}
-                        {isSubmitting ? (t('common.processing') || 'Đang xử lý...') : t('common.confirm')}
+                        {isSubmitting ? t('common.processing') : t('common.confirm')}
                     </button>
                 </div>
             </div>

@@ -36,6 +36,12 @@ const ANALYSIS_STEPS = [
 export const AiValuation: React.FC = () => {
     const { t, formatCurrency } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+    const notify = (msg: string, type: 'success' | 'error' = 'error') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 4000);
+    };
 
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
@@ -117,6 +123,7 @@ export const AiValuation: React.FC = () => {
         } catch (_err) {
             // Emergency client-side fallback (network completely down)
             // Uses same AVM coefficient logic as server/valuationEngine.ts
+            notify(t('ai.error_valuation'), 'error');
             const addr = address.toLowerCase();
             const isQ1 = /quận 1\b|q\.?1\b/.test(addr);
             const isHCM = /hcm|hồ chí minh|sài gòn|saigon|bình thạnh|thủ đức/.test(addr) || /quận [0-9]/.test(addr);
@@ -226,6 +233,12 @@ export const AiValuation: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-900 font-sans text-white pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+            {/* Toast */}
+            {toast && (
+                <div className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'error' ? 'bg-rose-900/95 border-rose-500 text-white' : 'bg-emerald-900/95 border-emerald-500 text-white'}`}>
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            )}
             {/* Header */}
             <div className="sticky top-0 bg-slate-900/80 backdrop-blur-md z-50 border-b border-slate-800">
                 <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">

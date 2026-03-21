@@ -99,10 +99,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             newErrors.name = t('auth.error_name_required');
         }
         if (!VN_PHONE_REGEX.test(formData.phone)) {
-            newErrors.phone = t('validation.phone_invalid') || "Invalid phone number";
+            newErrors.phone = t('validation.phone_invalid');
         }
         if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            newErrors.email = t('validation.email_invalid') || "Invalid email format";
+            newErrors.email = t('validation.email_invalid');
         }
         
         if (Object.keys(newErrors).length > 0) {

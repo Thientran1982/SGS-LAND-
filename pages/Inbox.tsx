@@ -173,7 +173,7 @@ export const Inbox: React.FC = () => {
                 queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
                 queryClient.invalidateQueries({ queryKey: ['leads'] });
             } catch (e) {
-                console.error("Failed to update lead score", e);
+                notify(t('inbox.error_score_update'), 'error');
             }
         };
 
@@ -188,7 +188,7 @@ export const Inbox: React.FC = () => {
                     notify(t('inbox.new_message'), 'success');
                 }
             } catch (e) {
-                console.error("Failed to process inbound message", e);
+                notify(t('inbox.error_inbound'), 'error');
             }
         };
 
