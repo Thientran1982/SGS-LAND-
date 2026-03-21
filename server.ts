@@ -382,9 +382,9 @@ async function startServer() {
         const tenantId = (req as any).tenantId;
         try {
           await leadRepository.update(tenantId, leadData.id, {
-            score: { score: result.score || result.totalScore, grade: result.grade, reasoning: result.reasoning },
+            score: { score: result.score || (result as any).totalScore, grade: result.grade, reasoning: result.reasoning },
           }, (req as any).user?.id, (req as any).user?.role || 'ADMIN');
-          logger.info(`AI score persisted for lead ${leadData.id}: ${result.score || result.totalScore}`);
+          logger.info(`AI score persisted for lead ${leadData.id}: ${result.score || (result as any).totalScore}`);
         } catch (e) {
           logger.warn(`Could not persist AI score for lead ${leadData.id}`);
         }
@@ -683,13 +683,13 @@ async function startServer() {
 
   app.get('/api/public/listings/:id', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const listing = await listingRepository.findById(PUBLIC_TENANT, req.params.id);
+      const listing = await listingRepository.findById(PUBLIC_TENANT, String(req.params.id));
       if (!listing) return res.status(404).json({ error: 'Listing not found' }) as any;
       res.json(listing);
       // Increment view count and log visitor in background (non-blocking)
       const ip = getClientIp(req);
       Promise.all([
-        listingRepository.incrementViewCount(PUBLIC_TENANT, req.params.id),
+        listingRepository.incrementViewCount(PUBLIC_TENANT, String(req.params.id)),
         lookupIp(ip).then(geo => visitorRepository.log({
           tenantId: PUBLIC_TENANT,
           ipAddress: ip,
@@ -701,7 +701,7 @@ async function startServer() {
           lon: geo?.lon,
           isp: geo?.isp,
           page: `/listings/${req.params.id}`,
-          listingId: req.params.id,
+          listingId: String(req.params.id),
           userAgent: req.headers['user-agent'],
           referrer: req.headers['referer'],
         })),
@@ -782,7 +782,7 @@ async function startServer() {
 
   app.get('/api/public/articles/:id', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const article = await articleRepository.findById(PUBLIC_TENANT, req.params.id);
+      const article = await articleRepository.findById(PUBLIC_TENANT, String(req.params.id));
       if (!article) return res.status(404).json({ error: 'Article not found' }) as any;
       res.json(article);
     } catch (error) {

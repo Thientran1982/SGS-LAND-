@@ -419,6 +419,7 @@ export const News: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const PAGE_SIZE = 6; // Number of articles per page (excluding featured)
+    const { t } = useTranslation();
 
     const showError = (msg: string) => {
         setErrorToast(msg);

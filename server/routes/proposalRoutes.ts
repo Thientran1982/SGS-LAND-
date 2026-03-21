@@ -43,7 +43,7 @@ export function createProposalRoutes(authenticateToken: any) {
   router.get('/token/:token', async (req: Request, res: Response) => {
     try {
       // Global lookup — token is the only credential needed (no tenantId from caller).
-      const proposal = await proposalRepository.findByTokenGlobal(req.params.token);
+      const proposal = await proposalRepository.findByTokenGlobal(String(req.params.token));
       // Always return 200 even when not found — prevents token enumeration attacks
       if (!proposal) return res.status(200).json({ found: false });
       res.json({ found: true, ...proposal });
@@ -56,7 +56,7 @@ export function createProposalRoutes(authenticateToken: any) {
   router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const proposal = await proposalRepository.findById(user.tenantId, req.params.id);
+      const proposal = await proposalRepository.findById(user.tenantId, String(req.params.id));
       if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
 
       const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
@@ -146,7 +146,7 @@ export function createProposalRoutes(authenticateToken: any) {
 
       // AML clearance check before APPROVED
       if (status === 'APPROVED') {
-        const existing = await proposalRepository.findById(user.tenantId, req.params.id);
+        const existing = await proposalRepository.findById(user.tenantId, String(req.params.id));
         if (existing) {
           (req as any).proposalForAml = existing;
           const { requireAmlClearance: checkAml } = await import('../middleware/aml');
@@ -159,14 +159,14 @@ export function createProposalRoutes(authenticateToken: any) {
         }
       }
 
-      const proposal = await proposalRepository.updateStatus(user.tenantId, req.params.id, status);
+      const proposal = await proposalRepository.updateStatus(user.tenantId, String(req.params.id), status);
       if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'UPDATE_STATUS',
         entityType: 'PROPOSAL',
-        entityId: req.params.id,
+        entityId: String(req.params.id),
         details: `Changed proposal status to: ${status}`,
         ipAddress: req.ip,
       });
@@ -191,14 +191,14 @@ export function createProposalRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'amlVerified (boolean) is required' });
       }
 
-      const proposal = await proposalRepository.updateAml(user.tenantId, req.params.id, { amlVerified, amlNotes });
+      const proposal = await proposalRepository.updateAml(user.tenantId, String(req.params.id), { amlVerified, amlNotes });
       if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'AML_REVIEW',
         entityType: 'PROPOSAL',
-        entityId: req.params.id,
+        entityId: String(req.params.id),
         details: `AML review: amlVerified=${amlVerified}${amlNotes ? `, notes: ${amlNotes}` : ''}`,
         ipAddress: req.ip,
       });
@@ -213,19 +213,19 @@ export function createProposalRoutes(authenticateToken: any) {
   router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const proposal = await proposalRepository.findById(user.tenantId, req.params.id);
+      const proposal = await proposalRepository.findById(user.tenantId, String(req.params.id));
       if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
       if (proposal.status !== 'DRAFT') {
         return res.status(400).json({ error: 'Only draft proposals can be deleted' });
       }
 
-      await proposalRepository.deleteById(user.tenantId, req.params.id);
+      await proposalRepository.deleteById(user.tenantId, String(req.params.id));
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'DELETE',
         entityType: 'PROPOSAL',
-        entityId: req.params.id,
+        entityId: String(req.params.id),
         ipAddress: req.ip,
       });
 

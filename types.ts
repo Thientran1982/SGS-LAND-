@@ -373,6 +373,7 @@ export interface Listing {
     commissionUnit?: 'PERCENT' | 'FIXED';
     createdBy?: UserId;
     authorizedAgents?: UserId[]; // Agents granted permission to view sensitive info
+    createdAt?: ISOString;
 }
 
 // =============================================================================
@@ -744,6 +745,7 @@ export interface InboxThread {
     unreadCount: number;
     status: ThreadStatus;
     aiConfidenceLast?: number; // Snapshot of last AI confidence
+    lastChannel?: string;
 }
 
 // Updated models based on Google GenAI SDK rules (Feb 2026 Compatible)

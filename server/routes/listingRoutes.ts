@@ -70,14 +70,14 @@ export function createListingRoutes(authenticateToken: any) {
 
       // PARTNER: use cross-tenant project-scoped lookup
       if (PARTNER_ROLES.includes(user.role)) {
-        const listing = await listingRepository.findByIdForPartner(user.tenantId, req.params.id);
+        const listing = await listingRepository.findByIdForPartner(user.tenantId, String(req.params.id));
         if (!listing) return res.status(404).json({ error: 'Listing not found or access denied' });
         res.json(listing);
-        listingRepository.incrementViewCount((listing as any).tenantId, req.params.id).catch(() => {});
+        listingRepository.incrementViewCount((listing as any).tenantId, String(req.params.id)).catch(() => {});
         return;
       }
 
-      const listing = await listingRepository.findById(user.tenantId, req.params.id);
+      const listing = await listingRepository.findById(user.tenantId, String(req.params.id));
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
       if (RESTRICTED_ROLES.includes(user.role) && (listing as any).createdBy !== user.id) {
@@ -86,7 +86,7 @@ export function createListingRoutes(authenticateToken: any) {
 
       // Respond immediately, increment view count in background
       res.json(listing);
-      listingRepository.incrementViewCount(user.tenantId, req.params.id).catch(() => {});
+      listingRepository.incrementViewCount(user.tenantId, String(req.params.id)).catch(() => {});
     } catch (error) {
       console.error('Error fetching listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });
@@ -150,21 +150,21 @@ export function createListingRoutes(authenticateToken: any) {
       }
 
       if (RESTRICTED_ROLES.includes(user.role)) {
-        const existing = await listingRepository.findById(user.tenantId, req.params.id);
+        const existing = await listingRepository.findById(user.tenantId, String(req.params.id));
         if (!existing) return res.status(404).json({ error: 'Listing not found' });
         if ((existing as any).createdBy !== user.id) {
           return res.status(403).json({ error: 'You can only edit listings you created' });
         }
       }
 
-      const listing = await listingRepository.update(user.tenantId, req.params.id, req.body);
+      const listing = await listingRepository.update(user.tenantId, String(req.params.id), req.body);
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'UPDATE',
         entityType: 'LISTING',
-        entityId: req.params.id,
+        entityId: String(req.params.id),
         details: `Updated listing fields: ${Object.keys(req.body).join(', ')}`,
         ipAddress: req.ip,
       });
@@ -186,14 +186,14 @@ export function createListingRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
 
-      const deleted = await listingRepository.deleteById(user.tenantId, req.params.id);
+      const deleted = await listingRepository.deleteById(user.tenantId, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: 'Listing not found' });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'DELETE',
         entityType: 'LISTING',
-        entityId: req.params.id,
+        entityId: String(req.params.id),
         ipAddress: req.ip,
       });
 
@@ -207,7 +207,7 @@ export function createListingRoutes(authenticateToken: any) {
   router.post('/:id/favorite', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const isFavorite = await listingRepository.toggleFavorite(user.tenantId, user.id, req.params.id);
+      const isFavorite = await listingRepository.toggleFavorite(user.tenantId, user.id, String(req.params.id));
       res.json({ isFavorite });
     } catch (error) {
       console.error('Error toggling favorite:', error);
@@ -218,7 +218,7 @@ export function createListingRoutes(authenticateToken: any) {
   router.delete('/:id/favorite', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      await listingRepository.removeFavorite(user.tenantId, user.id, req.params.id);
+      await listingRepository.removeFavorite(user.tenantId, user.id, String(req.params.id));
       res.json({ isFavorite: false });
     } catch (error) {
       console.error('Error removing favorite:', error);

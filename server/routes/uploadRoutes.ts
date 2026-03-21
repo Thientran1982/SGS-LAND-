@@ -116,7 +116,7 @@ export function createUploadRoutes(authenticateToken: any) {
   router.delete('/:filename', authenticateToken, (req: Request, res: Response) => {
     try {
       const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
-      const filename = path.basename(req.params.filename);
+      const filename = path.basename(String(req.params.filename));
 
       if (!SAFE_FILENAME_REGEX.test(filename)) {
         return res.status(400).json({ error: 'Invalid filename' });
@@ -151,7 +151,7 @@ export function createUploadServeRoute(authenticateToken: any) {
   const router = Router();
 
   router.get('/:tenantId/:filename', (req: Request, res: Response, next: NextFunction) => {
-    const ext = path.extname(req.params.filename).toLowerCase();
+    const ext = path.extname(String(req.params.filename)).toLowerCase();
     // Images are public — browser <img> tags cannot send auth headers
     // Documents (PDF, DOCX, etc.) remain protected
     if (PUBLIC_IMAGE_EXTS.has(ext)) {
@@ -174,7 +174,7 @@ export function createUploadServeRoute(authenticateToken: any) {
 
 function serveUploadedFile(req: Request, res: Response, userTenantId: string | null) {
   try {
-    const requestedTenantId = req.params.tenantId;
+    const requestedTenantId = String(req.params.tenantId);
 
     if (!UUID_REGEX.test(requestedTenantId)) {
       return res.status(400).json({ error: 'Invalid tenant ID' });
@@ -185,7 +185,7 @@ function serveUploadedFile(req: Request, res: Response, userTenantId: string | n
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const filename = path.basename(req.params.filename);
+    const filename = path.basename(String(req.params.filename));
     if (!SAFE_FILENAME_REGEX.test(filename)) {
       return res.status(400).json({ error: 'Invalid filename' });
     }

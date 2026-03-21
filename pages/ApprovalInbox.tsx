@@ -351,7 +351,7 @@ export const ApprovalInbox: React.FC = () => {
 
     const processRejection = async (id: string, reason: string) => {
         try {
-            await db.rejectProposal(id, reason);
+            await db.rejectProposal(id);
             notify(t('approvals.reject_success'), 'success');
             setRejectId(null);
             loadData();

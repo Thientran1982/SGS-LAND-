@@ -49,20 +49,20 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                     {form.type === ConnectorType.GOOGLE_SHEETS && (
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('data.spreadsheet_id')}</label>
-                            <input className="w-full border rounded-xl px-4 py-2 text-sm font-mono" value={form.config?.spreadsheetId || ''} onChange={e => handleConfigChange('spreadsheetId', e.target.value)} />
+                            <input className="w-full border rounded-xl px-4 py-2 text-sm font-mono" value={String(form.config?.spreadsheetId || '')} onChange={e => handleConfigChange('spreadsheetId', e.target.value)} />
                             <p className="text-xs2 text-[var(--text-secondary)] mt-1">{t('data.hint_gsheet')}</p>
                         </div>
                     )}
                     {form.type === ConnectorType.WEBHOOK_EXPORT && (
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('data.target_url')}</label>
-                            <input className="w-full border rounded-xl px-4 py-2 text-sm font-mono" value={form.config?.targetUrl || ''} onChange={e => handleConfigChange('targetUrl', e.target.value)} />
+                            <input className="w-full border rounded-xl px-4 py-2 text-sm font-mono" value={String(form.config?.targetUrl || '')} onChange={e => handleConfigChange('targetUrl', e.target.value)} />
                         </div>
                     )}
                     {(form.type === ConnectorType.HUBSPOT || form.type === ConnectorType.SALESFORCE) && (
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('data.api_key')}</label>
-                            <input type="password" className="w-full border rounded-xl px-4 py-2 text-sm font-mono" value={form.config?.apiKey || ''} onChange={e => handleConfigChange('apiKey', e.target.value)} />
+                            <input type="password" className="w-full border rounded-xl px-4 py-2 text-sm font-mono" value={String(form.config?.apiKey || '')} onChange={e => handleConfigChange('apiKey', e.target.value)} />
                         </div>
                     )}
 

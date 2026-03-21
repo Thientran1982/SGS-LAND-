@@ -415,6 +415,7 @@ class DatabaseApiClient {
         } as any : undefined,
         unreadCount: r.unreadCount || 0,
         status: ThreadStatus.AI_ACTIVE,
+        lastChannel: r.lastChannel,
       }));
     } catch {
       return [];
@@ -1101,7 +1102,7 @@ class DatabaseApiClient {
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
       const projectsItem = { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS };
-      core.items.splice(3, 0, projectsItem); // insert after contracts
+      (core.items as any[]).splice(3, 0, projectsItem); // insert after contracts
       return [core, ops, sys];
     } else if (role === UserRole.SALES) {
       return [core, ops];
@@ -1109,8 +1110,8 @@ class DatabaseApiClient {
     return [core];
   }
 
-  async ping() {
-    return { ok: true };
+  async ping(): Promise<boolean> {
+    return true;
   }
 
   async getAiConfig() {
@@ -1198,6 +1199,7 @@ class DatabaseApiClient {
       autoDeleteInactive: false,
       allowedDomains: [],
       backups: [],
+      dlpRules: [],
     };
   }
 
@@ -1440,8 +1442,8 @@ class DatabaseApiClient {
     return res.json();
   }
 
-  async createBackup() {
-    return { id: `backup_${Date.now()}`, createdAt: new Date().toISOString() };
+  async createBackup(): Promise<string> {
+    return JSON.stringify({ id: `backup_${Date.now()}`, createdAt: new Date().toISOString() });
   }
 
   async restoreBackup(backupId: string) {
@@ -1449,7 +1451,7 @@ class DatabaseApiClient {
   }
 
   async exportData(params: any) {
-    return { data: [], format: params?.format || 'json', exportedAt: new Date().toISOString() };
+    return { data: [], format: params?.format || 'json', exportedAt: new Date().toISOString(), newWatermark: new Date().toISOString() };
   }
 
   async updateOnboardingProgress(step: number, _completed?: boolean) {

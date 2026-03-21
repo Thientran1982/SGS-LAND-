@@ -70,7 +70,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.get('/documents/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const doc = await documentRepository.findById(user.tenantId, req.params.id);
+      const doc = await documentRepository.findById(user.tenantId, String(req.params.id));
       if (!doc) return res.status(404).json({ error: 'Document not found' });
       res.json(doc);
     } catch (error) {
@@ -85,7 +85,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       if (!CAN_MANAGE.includes(user.role)) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
-      const doc = await documentRepository.update(user.tenantId, req.params.id, req.body);
+      const doc = await documentRepository.update(user.tenantId, String(req.params.id), req.body);
       if (!doc) return res.status(404).json({ error: 'Document not found' });
       res.json(doc);
     } catch (error) {
@@ -102,10 +102,10 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       }
 
       // Fetch document first to get file_url for physical deletion
-      const doc = await documentRepository.findById(user.tenantId, req.params.id);
+      const doc = await documentRepository.findById(user.tenantId, String(req.params.id));
       if (!doc) return res.status(404).json({ error: 'Document not found' });
 
-      const deleted = await documentRepository.deleteById(user.tenantId, req.params.id);
+      const deleted = await documentRepository.deleteById(user.tenantId, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: 'Document not found' });
 
       // Delete physical file if it exists
@@ -152,7 +152,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
   router.get('/articles/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const article = await articleRepository.findById(user.tenantId, req.params.id);
+      const article = await articleRepository.findById(user.tenantId, String(req.params.id));
       if (!article) return res.status(404).json({ error: 'Article not found' });
       res.json(article);
     } catch (error) {
@@ -186,7 +186,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       if (!CAN_MANAGE.includes(user.role)) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
-      const article = await articleRepository.update(user.tenantId, req.params.id, req.body);
+      const article = await articleRepository.update(user.tenantId, String(req.params.id), req.body);
       if (!article) return res.status(404).json({ error: 'Article not found' });
       res.json(article);
     } catch (error) {
@@ -201,7 +201,7 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       if (!CAN_MANAGE.includes(user.role)) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
-      const deleted = await articleRepository.deleteById(user.tenantId, req.params.id);
+      const deleted = await articleRepository.deleteById(user.tenantId, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: 'Article not found' });
       res.json({ message: 'Article deleted' });
     } catch (error) {

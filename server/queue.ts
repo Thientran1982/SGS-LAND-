@@ -178,7 +178,7 @@ export function setupWebhookWorker(io: Server) {
           if (scoreResult) {
             const { leadRepository } = await import('./repositories/leadRepository');
             await leadRepository.update(tenantId, leadId, {
-              score: { score: scoreResult.score || scoreResult.totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning },
+              score: { score: scoreResult.score || (scoreResult as any).totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning },
             });
             io.emit('lead_scored', { leadId, score: scoreResult });
           }
@@ -269,7 +269,7 @@ export function setupWebhookWorker(io: Server) {
               if (scoreResult) {
                 const { leadRepository } = await import('./repositories/leadRepository');
                 await leadRepository.update(tenantId, leadId, {
-                  score: { score: scoreResult.score || scoreResult.totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning },
+                  score: { score: scoreResult.score || (scoreResult as any).totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning },
                 });
                 io.emit('lead_scored', { leadId, score: scoreResult });
               }

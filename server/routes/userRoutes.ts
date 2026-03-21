@@ -134,7 +134,7 @@ export function createUserRoutes(authenticateToken: any) {
   router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.id !== req.params.id && user.role !== 'ADMIN') {
+      if (user.id !== String(req.params.id) && user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Can only update own profile or must be admin' });
       }
 
@@ -148,8 +148,8 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(400).json({ error: `Invalid role. Allowed: ${VALID_ROLES.join(', ')}` });
       }
 
-      const before = await userRepository.findByIdDirect(req.params.id, user.tenantId);
-      const updated = await userRepository.update(user.tenantId, req.params.id, req.body);
+      const before = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
+      const updated = await userRepository.update(user.tenantId, String(req.params.id), req.body);
       if (!updated) return res.status(404).json({ error: 'User not found' });
 
       const changes: string[] = [];
@@ -160,7 +160,7 @@ export function createUserRoutes(authenticateToken: any) {
           actorId: user.id,
           action: 'USER_UPDATED',
           entityType: 'USER',
-          entityId: req.params.id,
+          entityId: String(req.params.id),
           details: `Updated ${updated.email}: ${changes.join(', ')}`,
           ipAddress: req.ip,
         });
@@ -180,7 +180,7 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins can resend invites' });
       }
 
-      const target = await userRepository.findByIdDirect(req.params.id, user.tenantId);
+      const target = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
       if (!target) return res.status(404).json({ error: 'User not found' });
       if (target.status !== 'PENDING') {
         return res.status(400).json({ error: 'Only pending users can receive re-invites' });
@@ -190,7 +190,7 @@ export function createUserRoutes(authenticateToken: any) {
         actorId: user.id,
         action: 'USER_REINVITED',
         entityType: 'USER',
-        entityId: req.params.id,
+        entityId: String(req.params.id),
         details: `Re-invite sent to ${target.email}`,
         ipAddress: req.ip,
       });
@@ -210,7 +210,7 @@ export function createUserRoutes(authenticateToken: any) {
   router.post('/:id/email', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.id !== req.params.id && user.role !== 'ADMIN') {
+      if (user.id !== String(req.params.id) && user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Chỉ có thể thay đổi email của chính mình hoặc phải là admin' });
       }
 
@@ -219,7 +219,7 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Email không hợp lệ' });
       }
 
-      const existingUser = await userRepository.findByIdDirect(req.params.id, user.tenantId);
+      const existingUser = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
       if (!existingUser) return res.status(404).json({ error: 'Người dùng không tồn tại' });
 
       if (newEmail.toLowerCase() === existingUser.email?.toLowerCase()) {
@@ -235,7 +235,7 @@ export function createUserRoutes(authenticateToken: any) {
       }
 
       const duplicate = await userRepository.findByEmail(user.tenantId, newEmail);
-      if (duplicate && duplicate.id !== req.params.id) {
+      if (duplicate && duplicate.id !== String(req.params.id)) {
         return res.status(409).json({ error: 'Email này đã được sử dụng' });
       }
 
@@ -243,16 +243,16 @@ export function createUserRoutes(authenticateToken: any) {
       await withTenantContext(user.tenantId, async (client) => {
         await client.query(
           `UPDATE users SET email = $1 WHERE id = $2 AND tenant_id = $3`,
-          [newEmail.toLowerCase(), req.params.id, user.tenantId]
+          [newEmail.toLowerCase(), String(req.params.id), user.tenantId]
         );
       });
 
-      const updated = await userRepository.findByIdDirect(req.params.id, user.tenantId);
+      const updated = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'UPDATE',
         entityType: 'USER',
-        entityId: req.params.id,
+        entityId: String(req.params.id),
         details: `Email changed to: ${newEmail}`,
         ipAddress: req.ip,
       });
@@ -267,7 +267,7 @@ export function createUserRoutes(authenticateToken: any) {
   router.post('/:id/password', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.id !== req.params.id && user.role !== 'ADMIN') {
+      if (user.id !== String(req.params.id) && user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Can only change own password or must be admin' });
       }
 
@@ -277,7 +277,7 @@ export function createUserRoutes(authenticateToken: any) {
       }
 
       if (currentPassword) {
-        const existingUser = await userRepository.findByIdDirect(req.params.id, user.tenantId);
+        const existingUser = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
         if (existingUser) {
           const verified = await userRepository.authenticate(user.tenantId, existingUser.email!, currentPassword);
           if (!verified) {
@@ -286,7 +286,7 @@ export function createUserRoutes(authenticateToken: any) {
         }
       }
 
-      await userRepository.updatePassword(user.tenantId, req.params.id, newPassword);
+      await userRepository.updatePassword(user.tenantId, String(req.params.id), newPassword);
       res.json({ message: 'Đổi mật khẩu thành công' });
     } catch (error) {
       console.error('Error updating password:', error);
@@ -301,19 +301,19 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins can delete users' });
       }
 
-      if (user.id === req.params.id) {
+      if (user.id === String(req.params.id)) {
         return res.status(400).json({ error: 'Cannot delete your own account' });
       }
 
-      const deleted = await userRepository.delete(user.tenantId, req.params.id);
+      const deleted = await userRepository.delete(user.tenantId, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: 'User not found' });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'USER_DELETED',
         entityType: 'USER',
-        entityId: req.params.id,
-        details: `Deleted user ${req.params.id}`,
+        entityId: String(req.params.id),
+        details: `Deleted user ${String(req.params.id)}`,
         ipAddress: req.ip,
       });
 

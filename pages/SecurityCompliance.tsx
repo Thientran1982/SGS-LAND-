@@ -51,7 +51,7 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
 };
 
 export const SecurityCompliance: React.FC = () => {
-    const [config, setConfig] = useState<ComplianceConfig | null>(null);
+    const [config, setConfig] = useState<any>(null);
     const [sessions, setSessions] = useState<SecuritySession[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'POLICIES' | 'ACCESS'>('POLICIES');

@@ -75,7 +75,7 @@ export const Billing: React.FC = () => {
             ['Mã hóa đơn', invoice.id],
             ['Ngày phát hành', invoice.created ? new Date(invoice.created).toLocaleDateString('vi-VN') : (invoice as any).createdAt ? new Date((invoice as any).createdAt).toLocaleDateString('vi-VN') : ''],
             ['Gói cước', planLabel],
-            ['Trạng thái', invoice.status === 'PAID' || invoice.status === 'paid' ? 'Đã thanh toán' : invoice.status],
+            ['Trạng thái', invoice.status === 'paid' ? 'Đã thanh toán' : invoice.status],
             ['Số tiền', `$${(invoice as any).amount ?? invoice.amount ?? 0}`],
         ];
         const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
