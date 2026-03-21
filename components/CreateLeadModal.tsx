@@ -183,15 +183,26 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }))
     , [t]);
 
+    // Escape key + body scroll lock
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape' && !loading) onClose(); };
+        document.addEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = '';
+        };
+    }, [loading, onClose]);
+
     return createPortal(
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="create-lead-title">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={!loading ? onClose : undefined} />
             
             {/* Modal */}
             <div className="bg-[var(--bg-surface)] w-full max-w-2xl rounded-[24px] p-8 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up max-h-[90vh] overflow-y-auto no-scrollbar">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-[var(--text-primary)]">
+                    <h3 id="create-lead-title" className="text-xl font-bold text-[var(--text-primary)]">
                         {step === 'FORM' ? t('leads.create_modal_title') : t('leads.merge_modal_title')}
                     </h3>
                     <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">✕</button>

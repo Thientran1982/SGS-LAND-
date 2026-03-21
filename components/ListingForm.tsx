@@ -72,20 +72,29 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Escape key + body scroll lock
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape' && !isSubmitting) onClose(); };
+        document.addEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = '';
+        };
+    }, [isOpen, isSubmitting, onClose]);
+
     // Initialization & Data Conversion
     useEffect(() => {
         if (isOpen) {
             setErrors({});
-            // Load Projects for Dropdown from the Projects API
-            db.getProjects(1, 200).then(res => {
+            // Load Projects for Dropdown
+            db.getListings(1, 1000).then(res => {
                 const projectList = (res.data || [])
-                    .filter((p: any) => p.status !== 'SUSPENDED')
-                    .map((p: any) => ({
-                        value: p.code || p.id,
-                        label: p.name + (p.code ? ` (${p.code})` : '') + (p.location ? ` — ${p.location}` : '')
-                    }));
+                    .filter(l => l.type === PropertyType.PROJECT)
+                    .map(p => ({ value: p.code, label: p.title }));
                 setProjects(projectList);
-            }).catch(() => setProjects([]));
+            });
 
             if (initialData && initialData.id) {
                 setFormData(JSON.parse(JSON.stringify(initialData)));
@@ -399,11 +408,11 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     if (!isOpen) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="listing-form-title">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={!isSubmitting ? onClose : undefined} />
             <div className="bg-[var(--bg-surface)] w-full max-w-4xl rounded-[24px] shadow-2xl flex flex-col h-[90vh] md:h-auto md:max-h-[90vh] relative z-10 animate-scale-up overflow-hidden">
                 <div className="px-6 py-4 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)] shrink-0">
-                    <h3 className="text-xl font-bold text-[var(--text-primary)]">
+                    <h3 id="listing-form-title" className="text-xl font-bold text-[var(--text-primary)]">
                         {initialData && initialData.id ? t('inventory.edit_title') : t('inventory.create_title')}
                     </h3>
                     <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)] transition-colors">
@@ -471,7 +480,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                                 value={formData.ownerName || ''} 
                                                 onChange={e => setFormData({...formData, ownerName: e.target.value})} 
                                                 className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none bg-[var(--bg-surface)]" 
-                                                placeholder="Nguyễn Văn A"
+                                                placeholder={t('common.placeholder_fullname')}
                                             />
                                         </div>
                                         <div>

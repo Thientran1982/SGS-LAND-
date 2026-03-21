@@ -471,79 +471,8 @@ export async function initializeDatabase() {
     await client.query('CREATE INDEX IF NOT EXISTS idx_prt_token ON password_reset_tokens(token);');
     await client.query('CREATE INDEX IF NOT EXISTS idx_prt_user ON password_reset_tokens(user_id);');
 
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS visitor_logs (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-        session_id VARCHAR(64),
-        ip_address VARCHAR(45),
-        country VARCHAR(100),
-        country_code VARCHAR(10),
-        region VARCHAR(100),
-        city VARCHAR(100),
-        lat NUMERIC(9,6),
-        lon NUMERIC(9,6),
-        isp VARCHAR(255),
-        page VARCHAR(255),
-        listing_id UUID,
-        user_agent TEXT,
-        referrer TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    await client.query('CREATE INDEX IF NOT EXISTS idx_visitor_logs_tenant_created ON visitor_logs(tenant_id, created_at DESC);');
-    await client.query('CREATE INDEX IF NOT EXISTS idx_visitor_logs_listing ON visitor_logs(listing_id);');
-    await client.query('CREATE INDEX IF NOT EXISTS idx_visitor_logs_country ON visitor_logs(tenant_id, country_code);');
-
     try {
       await client.query('ALTER TABLE documents ADD COLUMN IF NOT EXISTS size_kb INTEGER;');
-    } catch (e) { /* column may already exist */ }
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS projects (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-        name VARCHAR(255) NOT NULL,
-        code VARCHAR(100),
-        description TEXT,
-        location TEXT,
-        total_units INTEGER,
-        status VARCHAR(50) DEFAULT 'ACTIVE',
-        open_date DATE,
-        handover_date DATE,
-        metadata JSONB DEFAULT '{}'::jsonb,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    await client.query('ALTER TABLE projects ENABLE ROW LEVEL SECURITY;');
-    await client.query(`
-      DROP POLICY IF EXISTS tenant_isolation_policy ON projects;
-      CREATE POLICY tenant_isolation_policy ON projects
-      FOR ALL
-      USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
-    `);
-    await client.query('CREATE INDEX IF NOT EXISTS idx_projects_tenant_status ON projects(tenant_id, status);');
-    await client.query('CREATE INDEX IF NOT EXISTS idx_projects_tenant_created ON projects(tenant_id, created_at DESC);');
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS project_access (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-        partner_tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
-        granted_by UUID REFERENCES users(id) ON DELETE SET NULL,
-        granted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        expires_at TIMESTAMP WITH TIME ZONE,
-        note TEXT,
-        status VARCHAR(50) DEFAULT 'ACTIVE',
-        UNIQUE(project_id, partner_tenant_id)
-      );
-    `);
-    await client.query('CREATE INDEX IF NOT EXISTS idx_project_access_partner ON project_access(partner_tenant_id, status);');
-    await client.query('CREATE INDEX IF NOT EXISTS idx_project_access_project ON project_access(project_id);');
-
-    try {
-      await client.query('ALTER TABLE listings ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES projects(id) ON DELETE SET NULL;');
     } catch (e) { /* column may already exist */ }
 
     console.log('Creating indexes...');

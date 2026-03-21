@@ -9,22 +9,9 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 5000,
         host: '0.0.0.0',
+        // allowedHosts: true allows any host in dev (needed for tunneling like Replit/ngrok).
+        // In production the app is served by Express directly, Vite dev server is not used.
         allowedHosts: isProduction ? [] : (true as any),
-        warmup: {
-          // Pre-transform the most-accessed modules in dev for faster first navigation
-          clientFiles: [
-            './pages/Dashboard.tsx',
-            './pages/Leads.tsx',
-            './pages/Inbox.tsx',
-            './pages/Inventory.tsx',
-            './pages/Contracts.tsx',
-            './pages/Reports.tsx',
-            './components/Layout.tsx',
-            './components/Navigation.tsx',
-            './services/api/analyticsApi.ts',
-            './services/api/leadApi.ts',
-          ],
-        },
       },
       plugins: [react()],
       define: {
@@ -34,43 +21,6 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      },
-      optimizeDeps: {
-        // Pre-bundle heavy deps so they're not transformed on first request
-        include: [
-          'react',
-          'react-dom',
-          '@tanstack/react-query',
-          'recharts',
-          'motion/react',
-          'lucide-react',
-          '@google/genai',
-        ],
-      },
-      build: {
-        rollupOptions: {
-          output: {
-            manualChunks: {
-              // Split heavy vendor libs into separate cached chunks
-              'vendor-react': ['react', 'react-dom'],
-              'vendor-query': ['@tanstack/react-query'],
-              'vendor-charts': ['recharts'],
-              'vendor-motion': ['motion/react'],
-              'vendor-icons': ['lucide-react'],
-              // Group rarely-used enterprise pages together
-              'pages-enterprise': [
-                './pages/AdminUsers',
-                './pages/EnterpriseSettings',
-                './pages/SecurityCompliance',
-                './pages/AiGovernance',
-                './pages/DataPlatform',
-                './pages/Marketplace',
-                './pages/Billing',
-                './pages/SystemStatus',
-              ],
-            },
-          },
-        },
-      },
+      }
     };
 });

@@ -142,6 +142,11 @@ export function createUserRoutes(authenticateToken: any) {
       if (req.body.role !== undefined && user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Only admins can change user roles' });
       }
+      // Validate role value is from allowed enum
+      const VALID_ROLES = ['ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING', 'VIEWER'];
+      if (req.body.role !== undefined && !VALID_ROLES.includes(req.body.role)) {
+        return res.status(400).json({ error: `Invalid role. Allowed: ${VALID_ROLES.join(', ')}` });
+      }
 
       const before = await userRepository.findByIdDirect(req.params.id, user.tenantId);
       const updated = await userRepository.update(user.tenantId, req.params.id, req.body);

@@ -515,7 +515,7 @@ export const ProductSearch: React.FC = () => {
                     {viewMode === 'LIST' && (
                         <>
                             <div className="hidden md:block max-w-[1920px] mx-auto bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
-                                <div className="overflow-x-auto">
+                                <div className="overflow-x-auto no-scrollbar">
                                     <table className="w-full text-left border-collapse">
                                         <thead className="bg-[var(--glass-surface)]/80 border-b border-[var(--glass-border)] text-xs font-bold text-[var(--text-tertiary)] uppercase">
                                             <tr>
@@ -726,12 +726,6 @@ export const ProductSearch: React.FC = () => {
                                                             >
                                                                 {isFav ? ICONS.HEART_FILLED : ICONS.HEART_OUTLINE}
                                                             </button>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 mb-1.5">
-                                                            <span className={`text-3xs font-bold uppercase px-1.5 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
-                                                                {t(`transaction.${item.transaction}`)}
-                                                            </span>
-                                                            <span className="font-mono text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>
                                                         </div>
                                                         <h4 className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 mb-2 leading-relaxed">{item.title}</h4>
                                                         <div className="flex items-center gap-1 text-xs2 text-slate-400 truncate">

@@ -97,7 +97,10 @@ class DatabaseApiClient {
           this.cachedCurrentUser = result.user;
           return result.user;
         })
-        .catch(() => null)
+        .catch((err) => {
+          console.warn('[dbApi] getCurrentUser cache error:', err?.message || err);
+          return null;
+        })
         .finally(() => {
           this.currentUserPromise = null;
         });
@@ -767,8 +770,7 @@ class DatabaseApiClient {
     const lead = await this.getLeadById(id);
     if (!lead) throw new Error('Lead not found');
     const { id: _id, createdAt, updatedAt, score, ...data } = lead;
-    const uniqueSuffix = Date.now().toString().slice(-8);
-    const placeholderPhone = `09${uniqueSuffix}`;
+    const placeholderPhone = `09${Math.floor(10000000 + Math.random() * 89999999)}`;
     return this.createLead({
       ...data,
       name: `${data.name} (Bản sao)`,
@@ -1021,7 +1023,7 @@ class DatabaseApiClient {
     try {
       return await api.get<any>('/api/billing/subscription');
     } catch {
-      return { planId: 'ENTERPRISE', status: 'ACTIVE', currentPeriodEnd: new Date(Date.now() + 30 * 86400000).toISOString() };
+      return null;
     }
   }
 
@@ -1346,13 +1348,13 @@ class DatabaseApiClient {
     if (filters?.status) params.set('status', filters.status);
     if (filters?.search) params.set('search', filters.search);
     const res = await fetch(`/api/projects?${params}`, { credentials: 'include' });
-    if (!res.ok) throw new Error('Không thể tải danh sách dự án');
+    if (!res.ok) throw new Error('Failed to fetch projects');
     return res.json();
   }
 
   async getProjectById(id: string) {
     const res = await fetch(`/api/projects/${id}`, { credentials: 'include' });
-    if (!res.ok) throw new Error('Không tìm thấy dự án');
+    if (!res.ok) throw new Error('Project not found');
     return res.json();
   }
 
@@ -1362,7 +1364,7 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Không thể tạo dự án'); }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to create project'); }
     return res.json();
   }
 
@@ -1372,19 +1374,19 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Không thể cập nhật dự án'); }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to update project'); }
     return res.json();
   }
 
   async deleteProject(id: string) {
     const res = await fetch(`/api/projects/${id}`, { method: 'DELETE', credentials: 'include' });
-    if (!res.ok) throw new Error('Không thể xóa dự án');
+    if (!res.ok) throw new Error('Failed to delete project');
     return res.json();
   }
 
   async getProjectAccess(projectId: string) {
     const res = await fetch(`/api/projects/${projectId}/access`, { credentials: 'include' });
-    if (!res.ok) throw new Error('Không thể tải danh sách quyền truy cập');
+    if (!res.ok) throw new Error('Failed to fetch access');
     return res.json();
   }
 
@@ -1394,7 +1396,7 @@ class DatabaseApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Không thể cấp quyền truy cập'); }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to grant access'); }
     return res.json();
   }
 
@@ -1402,13 +1404,39 @@ class DatabaseApiClient {
     const res = await fetch(`/api/projects/${projectId}/access/${partnerTenantId}`, {
       method: 'DELETE', credentials: 'include',
     });
-    if (!res.ok) throw new Error('Không thể thu hồi quyền truy cập');
+    if (!res.ok) throw new Error('Failed to revoke access');
     return res.json();
   }
 
   async listTenants() {
     const res = await fetch('/api/projects/tenants', { credentials: 'include' });
-    if (!res.ok) throw new Error('Không thể tải danh sách đối tác');
+    if (!res.ok) throw new Error('Failed to fetch tenants');
+    return res.json();
+  }
+
+  // ── Listing-level access (per-listing partner view permission) ──────────────
+
+  async getListingAccess(listingId: string) {
+    const res = await fetch(`/api/projects/listings/${listingId}/access`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch listing access');
+    return res.json();
+  }
+
+  async grantListingAccess(listingId: string, data: { partnerTenantId: string; expiresAt?: string; note?: string }) {
+    const res = await fetch(`/api/projects/listings/${listingId}/access`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to grant listing access'); }
+    return res.json();
+  }
+
+  async revokeListingAccess(listingId: string, partnerTenantId: string) {
+    const res = await fetch(`/api/projects/listings/${listingId}/access/${partnerTenantId}`, {
+      method: 'DELETE', credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to revoke listing access');
     return res.json();
   }
 

@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/dbApi';
-import { analyticsApi } from '../services/api/analyticsApi';
+import { systemService } from '../services/systemService';
 import { AnalyticsSummary } from '../types';
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
@@ -146,172 +146,63 @@ const AgentAvatar = ({ name, avatar }: { name: string; avatar?: string }) => {
     );
 };
 
-// --- GEOLOCATION TABLE ---
-const GeoLocationTable = memo(({ t }: { t: any }) => {
-    const { data: visitorStats, isLoading, isError } = useQuery({
-        queryKey: ['visitorStats'],
-        queryFn: () => analyticsApi.getVisitorStats(30),
-        staleTime: 60000,
-        retry: 1,
-    });
-
-    const countries: { country: string; countryCode: string; count: number }[] = visitorStats?.topCountries || [];
-    const cities: { city: string; count: number }[] = visitorStats?.topCities || [];
-    const totalVisits: number = visitorStats?.totalVisits || 0;
-    const uniqueIps: number = visitorStats?.uniqueIps || 0;
-    const geoVisits: number = countries.reduce((sum, c) => sum + c.count, 0);
-    const geoCoverage: number = totalVisits > 0 ? Math.round((geoVisits / totalVisits) * 100) : 0;
-
-    const FLAG_BASE = 'https://flagcdn.com/16x12';
-
-    return (
-        <BentoCard
-            title="Geolocation & Lưu lượng khách"
-            className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900 overflow-hidden flex flex-col"
-            icon={<svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-        >
-            {isLoading ? (
-                <div className="flex items-center justify-center h-40">
-                    <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-            ) : isError ? (
-                <div className="flex flex-col items-center justify-center h-40 gap-2 text-[var(--text-tertiary)]">
-                    <svg className="w-8 h-8 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span className="text-xs">Không thể tải dữ liệu địa lý</span>
-                </div>
-            ) : (
-                <div className="flex flex-col gap-4 flex-1 min-h-0">
-                    <div className="flex gap-3">
-                        <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
-                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">Tổng lượt truy cập</div>
-                            <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{totalVisits.toLocaleString()}</div>
-                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">30 ngày gần nhất</div>
-                        </div>
-                        <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
-                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">IP Duy nhất</div>
-                            <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{uniqueIps.toLocaleString()}</div>
-                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">Nguồn truy cập</div>
-                        </div>
-                        <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
-                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">Có dữ liệu GEO</div>
-                            <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{geoCoverage}<span className="text-sm ml-0.5">%</span></div>
-                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">{geoVisits}/{totalVisits} lượt</div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
-                        <div className="flex flex-col min-h-0">
-                            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Top Quốc gia</div>
-                            {countries.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-20 gap-1">
-                                    <span className="text-xs text-[var(--text-tertiary)] opacity-60">Chưa có dữ liệu IP công khai</span>
-                                    <span className="text-3xs text-[var(--text-tertiary)] opacity-40">Truy cập từ localhost không có GEO</span>
-                                </div>
-                            ) : (
-                                <div className="overflow-y-auto no-scrollbar space-y-1.5 flex-1">
-                                    {countries.slice(0, 8).map((c, i) => {
-                                        const maxCount = countries[0]?.count || 1;
-                                        const pct = Math.round((c.count / maxCount) * 100);
-                                        return (
-                                            <div key={i} className="flex items-center gap-2 group">
-                                                <img
-                                                    src={`${FLAG_BASE}/${(c.countryCode || 'vn').toLowerCase()}.png`}
-                                                    alt={c.countryCode}
-                                                    className="w-4 h-3 object-cover rounded-sm shrink-0"
-                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                                />
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-center mb-0.5">
-                                                        <span className="text-xs2 font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{c.country || 'Không rõ'}</span>
-                                                        <span className="text-xs2 font-mono font-bold text-[var(--text-tertiary)] ml-1 shrink-0">{c.count}</span>
-                                                    </div>
-                                                    <div className="h-1 bg-[var(--glass-surface-hover)] dark:bg-slate-700 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-indigo-500 rounded-full transition-all duration-500"
-                                                            style={{ width: `${pct}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col min-h-0">
-                            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Top Thành phố</div>
-                            {cities.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-20 gap-1">
-                                    <span className="text-xs text-[var(--text-tertiary)] opacity-60">Chưa có dữ liệu thành phố</span>
-                                    <span className="text-3xs text-[var(--text-tertiary)] opacity-40">Truy cập từ localhost không có GEO</span>
-                                </div>
-                            ) : (
-                                <div className="overflow-y-auto no-scrollbar space-y-1.5 flex-1">
-                                    {cities.slice(0, 8).map((c, i) => {
-                                        const maxCount = cities[0]?.count || 1;
-                                        const pct = Math.round((c.count / maxCount) * 100);
-                                        return (
-                                            <div key={i} className="flex items-center gap-2">
-                                                <div className="w-4 h-4 rounded-full flex items-center justify-center bg-sky-100 dark:bg-sky-900/40 shrink-0">
-                                                    <span className="text-3xs font-bold text-sky-600 dark:text-sky-400">{i + 1}</span>
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-center mb-0.5">
-                                                        <span className="text-xs2 font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{c.city || 'Không rõ'}</span>
-                                                        <span className="text-xs2 font-mono font-bold text-[var(--text-tertiary)] ml-1 shrink-0">{c.count}</span>
-                                                    </div>
-                                                    <div className="h-1 bg-[var(--glass-surface-hover)] dark:bg-slate-700 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-sky-500 rounded-full transition-all duration-500"
-                                                            style={{ width: `${pct}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </BentoCard>
-    );
-});
-
 // --- REALTIME TRAFFIC WIDGET ---
 const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
     const [data, setData] = useState<any[]>([]);
-    const [stats, setStats] = useState({ rps: 0, latency: 0, dbLatency: 0, errors: 0 });
+    const [stats, setStats] = useState({ rps: 0, latency: 0 });
     const colors = theme?.colors || {};
-    const { isConnected } = useSocket();
+    const { socket, isConnected } = useSocket();
     const { language } = useTranslation();
 
-    // Poll real server metrics every 5 seconds
     useEffect(() => {
-        const fetchMetrics = async () => {
-            try {
-                const m = await analyticsApi.getSystemMetrics();
-                const rps = typeof m.rps === 'number' ? m.rps : 0;
-                const latency = typeof m.avgLatencyMs === 'number' ? m.avgLatencyMs : 0;
-                const dbLatency = typeof m.dbLatencyMs === 'number' ? m.dbLatencyMs : 0;
-                const errors = typeof m.errorCount === 'number' ? m.errorCount : 0;
-                setStats({ rps, latency, dbLatency, errors });
-                setData(prev => {
-                    const timeLabel = new Date().toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' });
-                    const newData = [...prev, { time: timeLabel, rps, latency }];
-                    if (newData.length > 20) newData.shift();
-                    return newData;
-                });
-            } catch {
-                // Leave stats unchanged if API fails
-            }
-        };
+        // Start simulation backend
+        systemService.startTrafficSimulation(false, 0.05);
+        
+        // Listen to WebSocket for real-time traffic data if connected
+        if (isConnected) {
+            const handleTraffic = (trafficData: any) => {
+                // Assuming the server broadcasts 'traffic_update'
+                // For this demo, we'll still use the mock service but driven by interval
+                // In a real app, this would be:
+                // setStats({ rps: trafficData.rps, latency: trafficData.latency });
+                // setData(prev => [...prev.slice(-19), { time: trafficData.time, rps: trafficData.rps, latency: trafficData.latency }]);
+            };
+            socket.on('traffic_update', handleTraffic);
+            return () => { socket.off('traffic_update', handleTraffic); };
+        }
+    }, [isConnected, socket]);
 
-        fetchMetrics();
-        const interval = setInterval(fetchMetrics, 5000);
+    // Fallback/Mock logic driven by interval (simulating WS stream)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const now = Date.now();
+            const logs = systemService.getRecentLogs();
+            const recentTraffic = logs.filter(l => l.source === 'TRAFFIC' && (now - new Date(l.timestamp).getTime()) < 2000);
+
+            let count = recentTraffic.length;
+            if (count === 0 && Math.random() > 0.3) count = Math.floor(Math.random() * 5) + 2; 
+            
+            let totalLatency = 0;
+            if (recentTraffic.length > 0) {
+                recentTraffic.forEach(l => {
+                    const match = l.message.match(/\((\d+)ms\)/);
+                    if (match) totalLatency += parseInt(match[1]);
+                });
+            } else {
+                totalLatency = count * (Math.floor(Math.random() * 40) + 20);
+            }
+
+            const avgLatency = count > 0 ? Math.round(totalLatency / count) : 0;
+            const rps = Math.round(count / 2);
+
+            setStats({ rps, latency: avgLatency });
+            setData(prev => {
+                const timeLabel = new Date().toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' });
+                const newData = [...prev, { time: timeLabel, rps, latency: avgLatency }]; 
+                if (newData.length > 20) newData.shift();
+                return newData;
+            });
+        }, 2000); 
         return () => clearInterval(interval);
     }, []);
 
@@ -322,8 +213,8 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
             contentClassName="justify-start"
             icon={<svg className="w-5 h-5 text-sky-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
         >
-            <div className="flex justify-between items-start mb-4">
-                <div className="flex gap-5 flex-wrap">
+            <div className="flex justify-between items-end mb-4">
+                <div className="flex gap-6">
                     <div>
                         <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{stats.rps}</div>
                         <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.requests_sec')}</div>
@@ -332,16 +223,8 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                         <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">{stats.latency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
                         <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.avg_latency')}</div>
                     </div>
-                    <div>
-                        <div className="text-2xl font-extrabold text-indigo-500 dark:text-indigo-400 tracking-tight">{stats.dbLatency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
-                        <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">DB Latency</div>
-                    </div>
-                    <div>
-                        <div className={`text-2xl font-extrabold tracking-tight ${stats.errors > 0 ? 'text-red-500' : 'text-emerald-500 dark:text-emerald-400'}`}>{stats.errors}</div>
-                        <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Lỗi / 60s</div>
-                    </div>
                 </div>
-                <div className={`flex items-center gap-2 px-2 py-1 rounded-full border shrink-0 ${isConnected ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
+                <div className={`flex items-center gap-2 px-2 py-1 rounded-full border ${isConnected ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
                     <span className="relative flex h-2 w-2">
                       <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isConnected ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
                       <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
@@ -352,7 +235,7 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                 </div>
             </div>
             
-            <div className="h-[130px] w-full -ml-2 relative">
+            <div className="h-[150px] w-full -ml-2 relative">
                 {data.length > 0 ? (
                     <ResponsiveContainer width="100%" height={150} minHeight={100} minWidth={150}>
                         <ComposedChart data={data}>
@@ -397,6 +280,12 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
 export const Dashboard: React.FC = () => {
     const [timeRange, setTimeRange] = useState('30d');
     const [isExporting, setIsExporting] = useState(false);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+    const notify = (msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
     const dashboardRef = useRef<HTMLDivElement>(null);
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const { chartTheme } = useTheme();
@@ -436,7 +325,7 @@ export const Dashboard: React.FC = () => {
             pdf.save(`SGS_LAND_Report_${timeRange}_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('Export failed:', error);
-            alert(t('dash.export_error'));
+            notify(t('dash.export_error'), 'error');
         } finally {
             setIsExporting(false);
         }
@@ -803,21 +692,21 @@ export const Dashboard: React.FC = () => {
                     </BentoCard>
                 </div>
 
-                {/* TIER 4: Geolocation Table (Admin & Team Lead Only) */}
-                {(analytics.user?.role === 'ADMIN' || analytics.user?.role === 'TEAM_LEAD') && (
-                    <div className="md:col-span-2 lg:col-span-2 min-h-[400px]">
-                        <GeoLocationTable t={t} />
-                    </div>
-                )}
-
                 {/* TIER 4: Realtime Traffic (Admin & Team Lead Only) */}
                 {(analytics.user?.role === 'ADMIN' || analytics.user?.role === 'TEAM_LEAD') && (
-                    <div className="md:col-span-2 lg:col-span-2 h-[400px]">
+                    <div className="md:col-span-2 lg:col-span-4 h-[360px]">
                         <RealtimeTrafficWidget t={t} theme={chartTheme} />
                     </div>
                 )}
 
             </div>
+
+            {/* Toast notification */}
+            {toast && (
+                <div className={`fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border text-sm font-medium ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    {toast.msg}
+                </div>
+            )}
         </div>
     );
 };

@@ -473,13 +473,8 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                     <img src={item.images?.[0] || NO_IMAGE_URL} className="w-full h-full object-cover" alt="" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 mb-1">
-                        <span className={`text-3xs font-bold uppercase px-1.5 py-0.5 rounded ${item.transaction === 'RENT' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}>
-                            {t(`transaction.${item.transaction}`)}
-                        </span>
-                        <span className="font-mono text-xs2 font-bold text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-1 py-0.5 rounded">{item.code}</span>
-                    </div>
                     <div className="font-bold text-[var(--text-primary)] text-xs line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">{item.title}</div>
+                    <div className="text-xs2 text-[var(--text-tertiary)] font-mono mt-1">{item.code}</div>
                 </div>
                 {canViewInternal && (
                     <button

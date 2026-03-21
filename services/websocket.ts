@@ -4,6 +4,21 @@ import { useEffect, useState } from "react";
 // Module-level singleton — shared across all components
 export const socket: Socket = io({
   autoConnect: false,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 10000,
+  timeout: 20000,
+});
+
+// Log connection errors without crashing the app
+socket.on('connect_error', (err) => {
+  console.warn('[Socket.io] Connection error:', err.message);
+});
+socket.on('reconnect_failed', () => {
+  console.error('[Socket.io] Reconnection failed after max attempts');
+});
+socket.on('reconnect', (attempt) => {
+  console.info(`[Socket.io] Reconnected after ${attempt} attempt(s)`);
 });
 
 // Reference counter: track how many components are using the socket

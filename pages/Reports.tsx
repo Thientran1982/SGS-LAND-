@@ -646,7 +646,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
         {/* Add Cost Modal */}
         {isAdding && createPortal(
             <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
-                <div className="bg-[var(--bg-surface)] w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] overflow-y-auto max-h-[92dvh] sm:max-h-[90vh]">
+                <div className="bg-[var(--bg-surface)] w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] overflow-y-auto no-scrollbar max-h-[92dvh] sm:max-h-[90vh]">
                     <h3 className="text-lg font-bold text-[var(--text-primary)] mb-5">{t('reports.btn_add_cost') || 'Thêm Chi Phí Chiến Dịch'}</h3>
                     <div className="space-y-4 mb-6">
                         <div>

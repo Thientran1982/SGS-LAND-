@@ -55,8 +55,8 @@ type WinSpeed = 'slow' | 'med' | 'fast';
 
 // ánh đèn mở: warm = đèn vàng sợi đốt (2700K), cool = đèn LED trắng ấm (4000K)
 const WIN_COLOR: Record<WinHue, { fill: string; glare: string }> = {
-  warm: { fill: '#FEF9C3', glare: '#FFFFFF' },   // yellow-100 — đèn sợi đốt
-  cool: { fill: '#EFF6FF', glare: '#FFFFFF' },   // blue-50 — đèn LED
+  warm: { fill: '#FFF5C0', glare: '#FFFFFF' },   // vàng kem ấm — đèn sợi đốt
+  cool: { fill: '#E8F4FF', glare: '#FFFFFF' },   // trắng xanh nhạt — đèn LED
 };
 
 // Chậm lại so với trước: slow 8s / med 6s / fast 4s
@@ -210,9 +210,9 @@ export const Hero3D = () => {
           {Array.from({ length: 11 }).map((_, i) => (
             <React.Fragment key={i}>
               <line x1="-220" y1={-220 + i * 44} x2="220" y2={-220 + i * 44}
-                stroke="#172554" strokeWidth="0.8" opacity="0.5" />
+                stroke="#1E3A5F" strokeWidth="0.8" opacity="0.5" />
               <line x1={-220 + i * 44} y1="-220" x2={-220 + i * 44} y2="220"
-                stroke="#172554" strokeWidth="0.8" opacity="0.5" />
+                stroke="#1E3A5F" strokeWidth="0.8" opacity="0.5" />
             </React.Fragment>
           ))}
 

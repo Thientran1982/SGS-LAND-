@@ -846,6 +846,12 @@ export const Leads: React.FC = () => {
                 const ws = wb.Sheets[wb.SheetNames[0]];
                 const data = XLSX.utils.sheet_to_json(ws, { raw: false });
 
+                const MAX_IMPORT_ROWS = 1000;
+                if (data.length > MAX_IMPORT_ROWS) {
+                    notify(t('leads.import_too_many_rows', { max: MAX_IMPORT_ROWS }), 'error');
+                    return;
+                }
+
                 let successCount = 0;
                 let skipCount = 0;
                 let errorCount = 0;

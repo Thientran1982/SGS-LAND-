@@ -158,7 +158,7 @@ export const authRateLimit = rateLimit({
 export const apiRateLimit = rateLimit({
   name: 'api',
   windowMs: 60_000,
-  maxRequests: 600,
+  maxRequests: 120,
 });
 
 export const webhookRateLimit = rateLimit({

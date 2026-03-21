@@ -44,8 +44,9 @@ export function createProposalRoutes(authenticateToken: any) {
     try {
       // Global lookup — token is the only credential needed (no tenantId from caller).
       const proposal = await proposalRepository.findByTokenGlobal(req.params.token);
-      if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
-      res.json(proposal);
+      // Always return 200 even when not found — prevents token enumeration attacks
+      if (!proposal) return res.status(200).json({ found: false });
+      res.json({ found: true, ...proposal });
     } catch (error) {
       console.error('Error fetching proposal by token:', error);
       res.status(500).json({ error: 'Failed to fetch proposal' });
@@ -82,9 +83,11 @@ export function createProposalRoutes(authenticateToken: any) {
       const bpNum = Number(basePrice);
       const fpNum = Number(finalPrice);
       const discNum = Number(discountAmount || 0);
-      if (isNaN(bpNum) || bpNum < 0) return res.status(400).json({ error: 'Invalid basePrice: must be a non-negative number' });
-      if (isNaN(fpNum) || fpNum < 0) return res.status(400).json({ error: 'Invalid finalPrice: must be a non-negative number' });
+      if (isNaN(bpNum) || bpNum <= 0) return res.status(400).json({ error: 'Invalid basePrice: must be a positive number' });
+      if (isNaN(fpNum) || fpNum <= 0) return res.status(400).json({ error: 'Invalid finalPrice: must be a positive number' });
       if (isNaN(discNum) || discNum < 0) return res.status(400).json({ error: 'Invalid discountAmount: must be a non-negative number' });
+      if (discNum >= bpNum) return res.status(400).json({ error: 'discountAmount must be less than basePrice' });
+      if (fpNum > bpNum) return res.status(400).json({ error: 'finalPrice cannot exceed basePrice' });
 
       const amlCheck = (req as any).amlCheck;
 

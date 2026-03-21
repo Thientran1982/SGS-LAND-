@@ -18,10 +18,4 @@ export const analyticsApi = {
 
   deleteCampaignCost: (id: string): Promise<any> =>
     api.delete(`/api/analytics/campaign-costs/${id}`),
-
-  getVisitorStats: (days?: number): Promise<any> =>
-    api.get('/api/analytics/visitors', days ? { days } : undefined),
-
-  getSystemMetrics: (): Promise<any> =>
-    api.get('/api/system/metrics'),
 };

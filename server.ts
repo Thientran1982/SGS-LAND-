@@ -46,8 +46,6 @@ import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
 import { interactionRepository } from "./server/repositories/interactionRepository";
 import { sessionRepository } from "./server/repositories/sessionRepository";
-import { visitorRepository } from "./server/repositories/visitorRepository";
-import { lookupIp, getClientIp } from "./server/services/geoService";
 
 async function startServer() {
   const app = express();
@@ -64,26 +62,6 @@ async function startServer() {
   app.use(preventParamPollution);
   app.use(sanitizeInput);
   app.use(requestLogger);
-
-  // Real-time request metrics (rolling 60-second window)
-  interface RequestSample { ts: number; durationMs: number; status: number; }
-  const requestSamples: RequestSample[] = [];
-  const METRICS_WINDOW_MS = 60_000;
-
-  app.use((req, res, next) => {
-    const start = Date.now();
-    res.on('finish', () => {
-      const durationMs = Date.now() - start;
-      const now = Date.now();
-      requestSamples.push({ ts: now, durationMs, status: res.statusCode });
-      // Evict samples older than the window
-      const cutoff = now - METRICS_WINDOW_MS;
-      while (requestSamples.length > 0 && requestSamples[0].ts < cutoff) {
-        requestSamples.shift();
-      }
-    });
-    next();
-  });
 
   const isProduction = process.env.NODE_ENV === 'production';
   if (!process.env.JWT_SECRET) {
@@ -320,10 +298,11 @@ async function startServer() {
       const crypto = await import('crypto');
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
+      // Retrieve tenant_id from the token table itself — avoids a second cross-tenant pool.query()
       const result = await pool.query(
         `UPDATE password_reset_tokens SET used_at = NOW()
          WHERE token = $1 AND used_at IS NULL AND expires_at > NOW()
-         RETURNING user_id`,
+         RETURNING user_id, tenant_id`,
         [tokenHash]
       );
 
@@ -332,12 +311,7 @@ async function startServer() {
       }
 
       const userId = result.rows[0].user_id;
-
-      const userResult = await pool.query(`SELECT tenant_id FROM users WHERE id = $1`, [userId]);
-      if (userResult.rows.length === 0) {
-        return res.status(400).json({ error: 'User not found' });
-      }
-      const tenantId = userResult.rows[0].tenant_id;
+      const tenantId = result.rows[0].tenant_id;
 
       await userRepository.updatePassword(tenantId, userId, newPassword);
 
@@ -661,24 +635,6 @@ async function startServer() {
       if (req.query.search) filters.search = req.query.search as string;
       const result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
       res.json(result);
-      // Log visitor in background (only page 1, to avoid spamming on pagination)
-      if (page === 1) {
-        const ip = getClientIp(req);
-        lookupIp(ip).then(geo => visitorRepository.log({
-          tenantId: PUBLIC_TENANT,
-          ipAddress: ip,
-          country: geo?.country,
-          countryCode: geo?.countryCode,
-          region: geo?.region,
-          city: geo?.city,
-          lat: geo?.lat,
-          lon: geo?.lon,
-          isp: geo?.isp,
-          page: '/listings',
-          userAgent: req.headers['user-agent'],
-          referrer: req.headers['referer'],
-        })).catch(() => {});
-      }
     } catch (error) {
       console.error('Error fetching public listings:', error);
       res.status(500).json({ error: 'Failed to fetch listings' });
@@ -689,27 +645,9 @@ async function startServer() {
     try {
       const listing = await listingRepository.findById(PUBLIC_TENANT, req.params.id);
       if (!listing) return res.status(404).json({ error: 'Listing not found' }) as any;
+      // Respond immediately, increment view count in background
       res.json(listing);
-      // Increment view count and log visitor in background (non-blocking)
-      const ip = getClientIp(req);
-      Promise.all([
-        listingRepository.incrementViewCount(PUBLIC_TENANT, req.params.id),
-        lookupIp(ip).then(geo => visitorRepository.log({
-          tenantId: PUBLIC_TENANT,
-          ipAddress: ip,
-          country: geo?.country,
-          countryCode: geo?.countryCode,
-          region: geo?.region,
-          city: geo?.city,
-          lat: geo?.lat,
-          lon: geo?.lon,
-          isp: geo?.isp,
-          page: `/listings/${req.params.id}`,
-          listingId: req.params.id,
-          userAgent: req.headers['user-agent'],
-          referrer: req.headers['referer'],
-        })),
-      ]).catch(() => {});
+      listingRepository.incrementViewCount(PUBLIC_TENANT, req.params.id).catch(() => {});
     } catch (error) {
       console.error('Error fetching public listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });
@@ -727,7 +665,8 @@ async function startServer() {
         source: source || 'WEBSITE',
         stage: stage || 'NEW',
       });
-      res.status(201).json(lead);
+      // Return only non-sensitive confirmation — never expose PII to anonymous callers
+      res.status(201).json({ id: lead.id, success: true });
     } catch (error) {
       console.error('Error creating public lead:', error);
       res.status(500).json({ error: 'Không thể tạo yêu cầu, vui lòng thử lại' });
@@ -820,6 +759,7 @@ async function startServer() {
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
 
   app.get("/api/health", async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     try {
       const health = await systemService.checkHealth();
 
@@ -839,50 +779,40 @@ async function startServer() {
         components.database.status = 'down';
       }
 
+      // Migration version
+      let migrationVersion: string | null = null;
+      try {
+        const migResult = await pool.query('SELECT version FROM schema_versions ORDER BY id DESC LIMIT 1');
+        migrationVersion = migResult.rows[0]?.version ?? null;
+      } catch { /* schema_versions may not exist yet */ }
+
+      // Queue depth (BullMQ only)
+      let queueDepth: number | null = null;
+      try {
+        if (webhookQueue?.getWaitingCount) {
+          queueDepth = await webhookQueue.getWaitingCount();
+        }
+      } catch { /* ignore */ }
+
+      // Memory usage
+      const mem = process.memoryUsage();
+      const memoryUsage = {
+        rss_mb: Math.round(mem.rss / 1024 / 1024),
+        heap_used_mb: Math.round(mem.heapUsed / 1024 / 1024),
+        heap_total_mb: Math.round(mem.heapTotal / 1024 / 1024),
+      };
+
       res.json({
         ...health,
         components,
         connectedClients: io.engine?.clientsCount || 0,
+        migration_version: migrationVersion,
+        queue_depth: queueDepth,
+        memory_usage: memoryUsage,
         lastChecked: new Date().toISOString(),
       });
     } catch (error) {
       res.status(500).json({ status: "error", message: "Health check failed" });
-    }
-  });
-
-  // Real server-side traffic metrics (no auth required — public status endpoint)
-  app.get("/api/system/metrics", async (_req, res) => {
-    try {
-      const now = Date.now();
-      const window60s = requestSamples.filter(s => s.ts >= now - 60_000);
-      const window5s  = requestSamples.filter(s => s.ts >= now - 5_000);
-
-      const totalRequests60s = window60s.length;
-      const rps = Math.round((window5s.length / 5) * 10) / 10;
-      const avgLatencyMs = window60s.length > 0
-        ? Math.round(window60s.reduce((sum, s) => sum + s.durationMs, 0) / window60s.length)
-        : 0;
-      const errorCount = window60s.filter(s => s.status >= 500).length;
-
-      // Real DB latency from a quick ping
-      let dbLatencyMs = 0;
-      try {
-        const pingStart = Date.now();
-        await pool.query('SELECT 1');
-        dbLatencyMs = Date.now() - pingStart;
-      } catch { /* leave at 0 */ }
-
-      res.json({
-        rps,
-        totalRequests60s,
-        avgLatencyMs,
-        dbLatencyMs,
-        errorCount,
-        connectedClients: io.engine?.clientsCount || 0,
-        timestamp: new Date().toISOString(),
-      });
-    } catch {
-      res.status(500).json({ error: 'metrics unavailable' });
     }
   });
 
@@ -1161,6 +1091,7 @@ async function startServer() {
         const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
         io.to(room).emit("active_viewers", uniqueUsers);
       }
+      socket.removeAllListeners();
     });
   });
 
@@ -1170,7 +1101,7 @@ async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true, hmr: { server } },
+      server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);

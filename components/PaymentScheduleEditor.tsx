@@ -16,7 +16,7 @@ const STATUS_CONFIG: Record<PaymentStatus, { label_key: string; color: string; b
     [PaymentStatus.WAIVED]:   { label_key: 'payment.status_WAIVED',   color: 'text-slate-500',  bg: 'bg-slate-50 border-slate-200',   dot: 'bg-slate-400' },
 };
 
-const generateId = () => `ms_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+const generateId = () => `ms_${Date.now()}_${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
 const formatVND = (n: number) => {
     if (!n) return '0';

@@ -35,7 +35,6 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `interactionRepository.ts` — CRUD interactions, inbox thread aggregation
 - `userRepository.ts` — CRUD users, bcrypt auth, teams, invite flow
 - `analyticsRepository.ts` — SQL aggregations for dashboard KPIs, BI marts, campaign costs
-- `visitorRepository.ts` — Anonymous visitor log CRUD + stats (country, city, daily, top listings)
 - `auditRepository.ts` — Audit trail CRUD
 - `routingRuleRepository.ts` — Lead routing rules CRUD
 - `sequenceRepository.ts` — Automation sequences CRUD
@@ -82,7 +81,6 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 ### Services (`server/services/`)
 - `emailService.ts` — Nodemailer-based email sending with per-tenant SMTP config from enterprise_config. Falls back to console logging when SMTP not configured. Provides: sendEmail, sendPasswordResetEmail, sendWelcomeEmail, sendSequenceEmail, testSmtpConnection.
 - `systemService.ts` — Server-side health check service. Checks DB connectivity and AI key config. Used by `GET /api/health`.
-- `geoService.ts` — IP geolocation via ip-api.com (free, no key). 24h in-memory cache per IP. Returns country/region/city/lat/lon/isp. Skips private/local IPs. Helper `getClientIp()` handles X-Forwarded-For proxy headers.
 
 ### File Upload System
 - **Endpoint**: `POST /api/upload` (multipart/form-data, field name: `files`, max 10 files, 10MB each)
@@ -133,7 +131,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **Lead → LOST**: Auto-rejects all PENDING_APPROVAL and DRAFT proposals
 - **Lead Scoring**: Heuristic score + AI scoring (persisted to DB via background queue)
 - **Scoring Config**: Customizable weights/thresholds stored in PostgreSQL per tenant
-- **Proposal Smart Approval**: Auto-approves if discount <= 10%
+- **Proposal Smart Approval**: All new proposals start as `PENDING_APPROVAL` — explicit approval required via dedicated endpoint (AML check enforced)
 - **Revenue**: 2% commission on APPROVED proposals' finalPrice
 - **Pipeline Value**: finalPrice x probability (A=85%, B=60%, C=30%, D=10%, F=1%)
 - **Win Probability**: Weighted average from actual pipeline data
@@ -184,6 +182,8 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `FB_APP_SECRET` - Facebook app secret for webhook signature verification
 - `ZALO_OA_SECRET` - Zalo OA secret for webhook signature verification
 - `ALLOWED_ORIGINS` - Comma-separated allowed CORS origins (production)
+- `COMMISSION_RATE` - Commission rate for revenue calculation (default: `0.02` = 2%)
+- `SEED_PASSWORD` - Password used for all seeded demo users (required for `npm run seed`)
 - `LOG_LEVEL` - Logging level: DEBUG, INFO, WARN, ERROR (default: INFO)
 
 ## Dev Credentials

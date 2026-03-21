@@ -6,7 +6,7 @@ import { db } from './services/dbApi';
 import { I18nProvider, useTranslation } from './services/i18n';
 import { ThemeProvider } from './services/theme';
 import { TenantProvider } from './services/tenantContext';
-import { ROUTES, FULL_HEIGHT_PAGES } from './config/routes';
+import { ROUTES } from './config/routes';
 import { lazyLoad, registerPrefetch, prefetchRoutes } from './utils/reactUtils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -17,8 +17,8 @@ import { motion, AnimatePresence } from 'motion/react';
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: 2 * 60_000,   // 2 min — data stays fresh, no flicker on return
-            gcTime: 15 * 60_000,     // 15 min — keep data in memory much longer
+            staleTime: 30_000,
+            gcTime: 5 * 60_000,
             refetchOnWindowFocus: false,
             retry: 1,
         },
@@ -318,10 +318,7 @@ const AppShell: React.FC = () => {
     const { t } = useTranslation();
     const [authState, setAuthState] = useState<'LOADING' | 'AUTH' | 'GUEST'>(getInitialAuthState);
 
-    // Tracks which private pages have been mounted — CSS show/hide instead of unmount/remount
-    const [mountedPrivateRoutes, setMountedPrivateRoutes] = useState<Set<string>>(new Set());
-
-    // Prefetch JS chunks as soon as auth is confirmed
+    // Prefetch top pages as soon as auth is confirmed
     useEffect(() => {
         if (authState === 'AUTH') {
             prefetchRoutes([
@@ -330,21 +327,6 @@ const AppShell: React.FC = () => {
             ]);
         }
     }, [authState]);
-
-    // Add private route to mounted set on navigation (lazy — only routes the user visits)
-    // Also allow ROUTES.LANDING for authenticated users since the route guard keeps them in the AUTH block
-    useEffect(() => {
-        const isAllowed = authState === 'AUTH' && route.base && PAGE_REGISTRY[route.base] &&
-            (!PUBLIC_ROUTES.has(route.base) || route.base === ROUTES.LANDING);
-        if (isAllowed) {
-            setMountedPrivateRoutes(prev => {
-                if (prev.has(route.base)) return prev;
-                const next = new Set(prev);
-                next.add(route.base);
-                return next;
-            });
-        }
-    }, [route.base, authState]);
 
     // Auth Initialization — runs once on mount to check session
     useEffect(() => {
@@ -612,39 +594,24 @@ const AppShell: React.FC = () => {
 
     // 3. Authenticated App Layout (Private Pages)
     if (authState === 'AUTH') {
-        const hasKnownPage = !!PAGE_REGISTRY[route.base];
+        const TargetComponent = PAGE_REGISTRY[route.base];
         return (
             <Layout activePage={route.base} onNavigate={navigate} onLogout={handleLogout}>
-                {/* Page persistence layer — keeps visited pages alive to avoid re-mount/re-fetch.
-                    Each page fills the content area via absolute inset-0 and handles its own
-                    scrolling via overflow-y-auto, so both fixed-height pages (Leads, Inbox)
-                    and scrollable pages (Dashboard, Reports) work correctly. */}
-                <div className="relative w-full h-full">
-                    {[...mountedPrivateRoutes].map(routeKey => {
-                        const Comp = PAGE_REGISTRY[routeKey];
-                        if (!Comp) return null;
-                        const isActive = routeKey === route.base;
-                        return (
-                            <div
-                                key={routeKey}
-                                id={isActive ? 'main-scroll-container' : undefined}
-                                className="absolute inset-0 flex flex-col isolate overflow-y-auto overflow-x-hidden no-scrollbar"
-                                style={{
-                                    display: isActive ? 'flex' : 'none',
-                                    overscrollBehaviorY: 'contain',
-                                    WebkitOverflowScrolling: 'touch',
-                                } as React.CSSProperties}
-                            >
-                                <ErrorBoundary>
-                                    <Suspense fallback={PageSkeleton}>
-                                        <Comp />
-                                    </Suspense>
-                                </ErrorBoundary>
-                            </div>
-                        );
-                    })}
-                    {!hasKnownPage && mountedPrivateRoutes.size > 0 && <NotFound />}
-                </div>
+                <AnimatePresence mode="sync">
+                    <motion.div 
+                        key={route.base}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.08 }}
+                        className="h-full w-full flex flex-col relative overflow-hidden isolate"
+                    >
+                        <ErrorBoundary>
+                            <Suspense fallback={PageSkeleton}>
+                                {TargetComponent ? <TargetComponent /> : <NotFound />}
+                            </Suspense>
+                        </ErrorBoundary>
+                    </motion.div>
+                </AnimatePresence>
             </Layout>
         );
     }

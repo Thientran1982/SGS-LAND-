@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import { analyticsRepository } from '../repositories/analyticsRepository';
-import { visitorRepository } from '../repositories/visitorRepository';
 
 export function createAnalyticsRoutes(authenticateToken: any) {
   const router = Router();
@@ -101,18 +100,6 @@ export function createAnalyticsRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error updating campaign cost:', error);
       res.status(500).json({ error: 'Failed to update campaign cost' });
-    }
-  });
-
-  router.get('/visitors', authenticateToken, async (req: Request, res: Response) => {
-    try {
-      const user = (req as any).user;
-      const days = Math.max(1, Math.min(parseInt(req.query.days as string) || 30, 365));
-      const stats = await visitorRepository.getStats(user.tenantId, days);
-      res.json(stats);
-    } catch (error) {
-      console.error('Error fetching visitor stats:', error);
-      res.status(500).json({ error: 'Failed to fetch visitor stats' });
     }
   });
 
