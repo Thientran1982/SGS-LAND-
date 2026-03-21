@@ -186,6 +186,30 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                     )}
                                 </div>
 
+                                {/* Proposed Payment Schedule */}
+                                {proposal.metadata?.paymentSchedule && proposal.metadata.paymentSchedule.length > 0 && (
+                                    <div className="w-full mt-6 pt-6 border-t border-[var(--glass-border)]">
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Tiến độ thanh toán đề xuất</p>
+                                        <div className="space-y-3">
+                                            {proposal.metadata.paymentSchedule.map((m: any, i: number) => (
+                                                <div key={m.id || i} className="flex items-start gap-3">
+                                                    <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-black shrink-0 mt-0.5">{i + 1}</div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex justify-between items-baseline gap-2">
+                                                            <span className="text-sm font-bold text-[var(--text-primary)] truncate">{m.label}</span>
+                                                            <span className="text-sm font-extrabold text-[var(--text-primary)] shrink-0">{formatCurrency(m.amount)}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-xs text-[var(--text-tertiary)] mt-0.5">
+                                                            <span>{new Date(m.dueDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                                                            <span className="font-mono">{m.percentage}%</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex flex-col gap-4 w-full md:w-auto">
                                     <button
                                         onClick={async () => {

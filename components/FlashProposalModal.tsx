@@ -73,6 +73,21 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
     const [note, setNote] = useState<string>('');
     const [generatedLink, setGeneratedLink] = useState('');
     
+    // Payment Schedule State
+    const [proposedSchedule, setProposedSchedule] = useState<Array<{id: string; label: string; daysFromNow: number; percentage: number}>>([]);
+    const [showScheduleBuilder, setShowScheduleBuilder] = useState(false);
+
+    const applySchedulePreset = (percents: number[]) => {
+        const defaultLabels = ['Đặt cọc', 'Đợt 2', 'Đợt 3', 'Đợt 4', 'Đợt 5'];
+        const defaultDays   = [0, 30, 90, 180, 270];
+        setProposedSchedule(percents.map((pct, i) => ({
+            id: `m-${Date.now()}-${i}`,
+            label: defaultLabels[i] || `Đợt ${i + 1}`,
+            daysFromNow: defaultDays[i] ?? (i * 30),
+            percentage: pct,
+        })));
+    };
+    
     // Search State
     const [searchQuery, setSearchQuery] = useState('');
     const debouncedSearch = useDebounce(searchQuery, DEAL_CONFIG.DEBOUNCE_MS);
@@ -158,7 +173,16 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                 metadata: {
                     depositRequired: depositAmount,
                     validityDays: validityDays,
-                    note: note || `Created via Flash Proposal`
+                    note: note || `Created via Flash Proposal`,
+                    ...(proposedSchedule.length > 0 ? {
+                        paymentSchedule: proposedSchedule.map(m => ({
+                            id: m.id,
+                            label: m.label,
+                            dueDate: new Date(Date.now() + m.daysFromNow * 24 * 60 * 60 * 1000).toISOString(),
+                            percentage: m.percentage,
+                            amount: Math.round(finalCalculations.finalPrice * m.percentage / 100),
+                        }))
+                    } : {})
                 }
             });
             
@@ -357,6 +381,111 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                                 rows={2}
                                 className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-500 resize-none"
                             />
+                        </div>
+
+                        {/* Payment Schedule Builder */}
+                        <div className="border border-[var(--glass-border)] rounded-xl overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={() => setShowScheduleBuilder(v => !v)}
+                                className="w-full flex items-center justify-between px-3 py-2.5 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-hover)] transition-colors text-left"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                                    <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider">Tiến độ thanh toán đề xuất</span>
+                                    {proposedSchedule.length > 0 && (
+                                        <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">{proposedSchedule.length} đợt</span>
+                                    )}
+                                </div>
+                                <svg className={`w-4 h-4 text-[var(--text-tertiary)] transition-transform ${showScheduleBuilder ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+
+                            {showScheduleBuilder && (
+                                <div className="p-3 space-y-3 border-t border-[var(--glass-border)] bg-[var(--bg-surface)]">
+                                    {/* Preset templates */}
+                                    <div className="flex flex-wrap gap-1.5 items-center">
+                                        <span className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase">Mẫu nhanh:</span>
+                                        {[
+                                            { label: '30 – 70', preset: [30, 70] },
+                                            { label: '30 – 40 – 30', preset: [30, 40, 30] },
+                                            { label: '10 – 20 – 30 – 40', preset: [10, 20, 30, 40] },
+                                        ].map(({ label, preset }) => (
+                                            <button
+                                                key={label}
+                                                type="button"
+                                                onClick={() => applySchedulePreset(preset)}
+                                                className="text-[10px] font-bold bg-[var(--glass-surface-hover)] hover:bg-indigo-100 hover:text-indigo-700 text-[var(--text-secondary)] px-2 py-1 rounded-lg transition-colors border border-[var(--glass-border)]"
+                                            >{label}</button>
+                                        ))}
+                                    </div>
+
+                                    {/* Installment list */}
+                                    {proposedSchedule.length > 0 && (
+                                        <div className="space-y-1.5">
+                                            <div className="grid grid-cols-[1fr_52px_60px_20px] gap-1 px-1">
+                                                <span className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase">Tên đợt</span>
+                                                <span className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase text-center">%</span>
+                                                <span className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase text-center">Ngày</span>
+                                                <span />
+                                            </div>
+                                            {proposedSchedule.map((m, i) => (
+                                                <div key={m.id} className="grid grid-cols-[1fr_52px_60px_20px] gap-1 items-center bg-[var(--glass-surface)] px-2 py-1.5 rounded-lg">
+                                                    <input
+                                                        value={m.label}
+                                                        onChange={e => setProposedSchedule(s => s.map((x, j) => j === i ? {...x, label: e.target.value} : x))}
+                                                        className="text-xs bg-transparent border-b border-[var(--glass-border)] outline-none py-0.5 font-medium text-[var(--text-primary)]"
+                                                        placeholder={`Đợt ${i + 1}`}
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        min={0} max={100}
+                                                        value={m.percentage}
+                                                        onChange={e => setProposedSchedule(s => s.map((x, j) => j === i ? {...x, percentage: Number(e.target.value)} : x))}
+                                                        className="text-xs text-center bg-transparent border-b border-[var(--glass-border)] outline-none py-0.5 font-mono"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        value={m.daysFromNow}
+                                                        onChange={e => setProposedSchedule(s => s.map((x, j) => j === i ? {...x, daysFromNow: Number(e.target.value)} : x))}
+                                                        className="text-xs text-center bg-transparent border-b border-[var(--glass-border)] outline-none py-0.5 font-mono"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setProposedSchedule(s => s.filter((_, j) => j !== i))}
+                                                        className="text-rose-400 hover:text-rose-600 transition-colors flex items-center justify-center"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {/* Column subtitles */}
+                                            <div className="grid grid-cols-[1fr_52px_60px_20px] gap-1 px-1">
+                                                <span />
+                                                <span className="text-[10px] text-[var(--text-tertiary)] text-center">% giá trị</span>
+                                                <span className="text-[10px] text-[var(--text-tertiary)] text-center">Ngày tính từ hôm nay</span>
+                                                <span />
+                                            </div>
+                                            <div className={`flex justify-between text-xs font-bold px-1 pt-0.5 border-t border-[var(--glass-border)]`}>
+                                                <span className="text-[var(--text-tertiary)]">Tổng %:</span>
+                                                <span className={proposedSchedule.reduce((s, m) => s + m.percentage, 0) === 100 ? 'text-emerald-600' : 'text-rose-500'}>
+                                                    {proposedSchedule.reduce((s, m) => s + m.percentage, 0)}%
+                                                    {proposedSchedule.reduce((s, m) => s + m.percentage, 0) !== 100 && ' ≠ 100%'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setProposedSchedule(s => [...s, { id: `m-${Date.now()}`, label: `Đợt ${s.length + 1}`, daysFromNow: s.length * 30, percentage: 0 }])}
+                                        className="w-full text-xs font-bold text-indigo-600 hover:text-indigo-700 py-1.5 border border-dashed border-indigo-200 hover:border-indigo-400 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                        Thêm đợt thanh toán
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Breakdown */}

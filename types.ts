@@ -389,11 +389,20 @@ export enum ProposalStatus {
     EXPIRED = 'EXPIRED'
 }
 
+export interface ProposedPaymentMilestone {
+    id: string;
+    label: string;
+    dueDate: string;
+    percentage: number;
+    amount: number;
+}
+
 export interface ProposalMetadata {
     depositRequired?: number;
     validityDays?: number;
     note?: string;
     terms?: string;
+    paymentSchedule?: ProposedPaymentMilestone[];
 }
 
 export interface Proposal {
