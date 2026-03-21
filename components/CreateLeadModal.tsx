@@ -80,7 +80,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             try {
                 const res = await db.getTenantUsers(1, 100);
                 setUsers([
-                    { value: '', label: t('inbox.unassigned') || 'Unassigned' },
+                    { value: '', label: t('inbox.unassigned') },
                     ...res.data.map(u => ({ value: u.id, label: u.name }))
                 ]);
             } catch (e) {

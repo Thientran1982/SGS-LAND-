@@ -55,7 +55,9 @@ const getStepColor = (type: string): string => {
 // -----------------------------------------------------------------------------
 // STEP MODAL
 // -----------------------------------------------------------------------------
-const STEP_TYPE_OPTIONS = (t: any) => [
+type TFn = (key: string) => string;
+
+const STEP_TYPE_OPTIONS = (t: TFn) => [
     { value: 'EMAIL', label: t('seq.step_type_email') },
     { value: 'SMS', label: t('seq.step_type_sms') },
     { value: 'ZALO', label: t('seq.step_type_zalo') },
@@ -68,7 +70,7 @@ interface StepModalProps {
     step: Step | null;
     onClose: () => void;
     onSave: (step: Step) => void;
-    t: any;
+    t: TFn;
 }
 
 const StepModal: React.FC<StepModalProps> = ({ isOpen, step, onClose, onSave, t }) => {
@@ -219,7 +221,7 @@ const StatPill = ({ label, value, color = "bg-[var(--glass-surface-hover)] text-
     </div>
 );
 
-const StepCard = memo(({ step, index, onEdit, onDelete, t }: { step: Step, index: number, onEdit: () => void, onDelete: () => void, t: any }) => {
+const StepCard = memo(({ step, index, onEdit, onDelete, t }: { step: Step, index: number, onEdit: () => void, onDelete: () => void, t: TFn }) => {
     const getStepLabel = () => {
         if (step.type === 'WAIT') return t('seq.step_wait');
         if (step.type === 'CREATE_TASK') return t('seq.step_task');
@@ -286,7 +288,7 @@ interface SequenceDrawerProps {
     onClose: () => void;
     sequence: Sequence | null;
     onSaved: (seq: Sequence) => void;
-    t: any;
+    t: TFn;
     notify: (msg: string, type: 'success' | 'error') => void;
 }
 
@@ -306,7 +308,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
             setName(sequence.name);
             setTriggerStage(sequence.triggerStage);
             setIsActive(sequence.isActive ?? false);
-            setSteps((sequence.steps || []) as unknown as Step[]);
+            setSteps((sequence.steps as unknown as Step[]) || []);
         }
     }, [isOpen, sequence]);
 
@@ -503,7 +505,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
 // -----------------------------------------------------------------------------
 // SEQUENCE CARD
 // -----------------------------------------------------------------------------
-const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Sequence, onClick: () => void, onDelete: () => void, t: any }) => (
+const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Sequence, onClick: () => void, onDelete: () => void, t: TFn }) => (
     <div
         onClick={onClick}
         className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden"
