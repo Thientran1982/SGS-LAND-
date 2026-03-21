@@ -104,6 +104,11 @@ async function startServer() {
     if (!process.env.GEMINI_API_KEY && !process.env.API_KEY) {
       logger.warn('GEMINI_API_KEY not set — all AI features (chat, valuation, lead scoring) will be unavailable.');
     }
+    const hasEmailAuth = !!(process.env.EMAIL_MAILGUN_SIGNING_KEY || process.env.EMAIL_SENDGRID_WEBHOOK_KEY ||
+      process.env.EMAIL_POSTMARK_WEBHOOK_TOKEN || process.env.EMAIL_WEBHOOK_TOKEN);
+    if (!hasEmailAuth) {
+      logger.warn('No email webhook auth configured — /api/webhooks/email will reject all requests in production. Set EMAIL_MAILGUN_SIGNING_KEY, EMAIL_SENDGRID_WEBHOOK_KEY, EMAIL_POSTMARK_WEBHOOK_TOKEN, or EMAIL_WEBHOOK_TOKEN.');
+    }
   }
 
   app.use((req, res, next) => {
@@ -621,8 +626,8 @@ async function startServer() {
     }
   });
 
-  // Setup BullMQ Worker
-  setupWebhookWorker(io);
+  // Setup BullMQ Worker — capture instance so we can close it on shutdown
+  const webhookWorker = setupWebhookWorker(io);
 
   // Start market data service — in-memory cache with 6h TTL + background refresh
   marketDataService.start(io);
@@ -988,21 +993,93 @@ async function startServer() {
   // Compatible with: Mailgun, SendGrid Inbound Parse, Postmark Inbound,
   //                  and generic JSON webhooks from any email provider.
   //
-  // Required env var: EMAIL_WEBHOOK_TOKEN (optional — skip if not set)
-  // Set it in your email provider dashboard as a header or query param.
+  // Auth strategy (in priority order):
+  //   1. Mailgun HMAC  — EMAIL_MAILGUN_SIGNING_KEY  (header: X-Mailgun-Signature-256)
+  //   2. SendGrid HMAC — EMAIL_SENDGRID_WEBHOOK_KEY (header: X-Twilio-Email-Event-Webhook-Signature)
+  //   3. Postmark token— EMAIL_POSTMARK_WEBHOOK_TOKEN (header: X-Postmark-Signature or basic auth)
+  //   4. Generic token — EMAIL_WEBHOOK_TOKEN (header: X-Webhook-Token, X-Mail-Token, or ?token=)
+  //
+  // In production, at least one of these env vars MUST be set or the request is rejected.
+  // In development, missing config emits a warning and passes (allows local testing).
   // ──────────────────────────────────────────────────────────────────────────
 
   app.post("/api/webhooks/email", webhookRateLimit, async (req, res) => {
     try {
-      // Optional token-based auth (simple shared secret)
-      const configuredToken = process.env.EMAIL_WEBHOOK_TOKEN;
-      if (configuredToken) {
-        const incoming =
-          req.headers['x-webhook-token'] ||
-          req.headers['x-mail-token'] ||
-          req.query.token;
-        if (incoming !== configuredToken) {
-          return res.status(403).json({ error: 'Invalid webhook token' });
+      const { createHmac, timingSafeEqual } = await import('crypto');
+      const emailIsProduction = process.env.NODE_ENV === 'production';
+      const rawBody: Buffer = (req as any).rawBody || Buffer.from(JSON.stringify(req.body));
+
+      const mailgunKey = process.env.EMAIL_MAILGUN_SIGNING_KEY;
+      const sendgridKey = process.env.EMAIL_SENDGRID_WEBHOOK_KEY;
+      const postmarkToken = process.env.EMAIL_POSTMARK_WEBHOOK_TOKEN;
+      const genericToken = process.env.EMAIL_WEBHOOK_TOKEN;
+
+      const hasAnyConfig = !!(mailgunKey || sendgridKey || postmarkToken || genericToken);
+
+      if (!hasAnyConfig) {
+        if (emailIsProduction) {
+          return res.status(500).json({ error: 'Email webhook authentication not configured' });
+        }
+        logger.warn('[Email Webhook] No auth config set — accepting request (dev only). Set EMAIL_MAILGUN_SIGNING_KEY, EMAIL_SENDGRID_WEBHOOK_KEY, EMAIL_POSTMARK_WEBHOOK_TOKEN, or EMAIL_WEBHOOK_TOKEN for production.');
+        // fall through to process the event in dev
+      } else {
+        let verified = false;
+
+        // 1. Mailgun HMAC-SHA256 (header: X-Mailgun-Signature-256)
+        if (!verified && mailgunKey) {
+          const sig = req.headers['x-mailgun-signature-256'] as string | undefined;
+          if (sig) {
+            const expected = createHmac('sha256', mailgunKey).update(rawBody).digest('hex');
+            try {
+              verified = sig.length === expected.length &&
+                timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+            } catch { verified = false; }
+          }
+        }
+
+        // 2. SendGrid Signed Event Webhook (header: X-Twilio-Email-Event-Webhook-Signature)
+        if (!verified && sendgridKey) {
+          const sig = req.headers['x-twilio-email-event-webhook-signature'] as string | undefined;
+          if (sig) {
+            const ts = req.headers['x-twilio-email-event-webhook-timestamp'] as string | undefined;
+            const payload = ts ? ts + rawBody.toString() : rawBody.toString();
+            const expected = createHmac('sha256', sendgridKey).update(payload).digest('base64');
+            const incoming = Buffer.from(sig, 'base64').toString('base64');
+            try {
+              verified = incoming.length === expected.length &&
+                timingSafeEqual(Buffer.from(incoming), Buffer.from(expected));
+            } catch { verified = false; }
+          }
+        }
+
+        // 3. Postmark shared token (header: X-Postmark-Signature)
+        if (!verified && postmarkToken) {
+          const sig = (req.headers['x-postmark-signature'] || req.headers['x-postmark-server-token']) as string | undefined;
+          if (sig) {
+            try {
+              verified = sig.length === postmarkToken.length &&
+                timingSafeEqual(Buffer.from(sig), Buffer.from(postmarkToken));
+            } catch { verified = false; }
+          }
+        }
+
+        // 4. Generic shared token (header: X-Webhook-Token, X-Mail-Token, or ?token=)
+        if (!verified && genericToken) {
+          const incoming =
+            (req.headers['x-webhook-token'] as string | undefined) ||
+            (req.headers['x-mail-token'] as string | undefined) ||
+            (req.query.token as string | undefined);
+          if (incoming) {
+            try {
+              verified = incoming.length === genericToken.length &&
+                timingSafeEqual(Buffer.from(incoming), Buffer.from(genericToken));
+            } catch { verified = false; }
+          }
+        }
+
+        if (!verified) {
+          logger.warn('[Email Webhook] Signature/token verification failed');
+          return res.status(403).json({ error: 'Invalid webhook signature' });
         }
       }
 
@@ -1241,6 +1318,10 @@ async function startServer() {
     } catch (e) { /* ignore */ }
     server.close(async () => {
       logger.info('HTTP server closed.');
+      try {
+        await webhookWorker.close();
+        logger.info('BullMQ worker closed.');
+      } catch (e) { /* ignore */ }
       try {
         await webhookQueue.close();
         logger.info('BullMQ queue closed.');
