@@ -10,6 +10,7 @@ import { LeadDetail } from '../components/LeadDetail';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useSocket } from '../services/websocket';
+import { aiService } from '../services/aiService';
 import * as XLSX from 'xlsx';
 
 // -----------------------------------------------------------------------------
@@ -509,7 +510,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
 // -----------------------------------------------------------------------------
 
 export const Leads: React.FC = () => {
-    const { t, formatDate } = useTranslation();
+    const { t, formatDate, language } = useTranslation();
     const { socket } = useSocket();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
@@ -915,6 +916,7 @@ export const Leads: React.FC = () => {
             const createdLead = await db.createLead(newLead);
             notify(t('leads.new_lead_received', { source: randomSource }) || `Đã nhận 1 Lead mới từ ${randomSource}! Hệ thống đang chấm điểm và phân bổ...`, 'success');
             socket?.emit("lead_created", createdLead);
+            aiService.scoreLead(createdLead, undefined, undefined, language).catch(() => {});
             fetchLeads();
         } catch (e) {
             notify(t('common.error'), 'error');

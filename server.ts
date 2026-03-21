@@ -49,6 +49,8 @@ import { sessionRepository } from "./server/repositories/sessionRepository";
 import { visitorRepository } from "./server/repositories/visitorRepository";
 import { lookupIp, getClientIp } from "./server/services/geoService";
 
+let broadcastIo: any = null;
+
 async function startServer() {
   const app = express();
   const PORT = 5000;
@@ -413,11 +415,11 @@ async function startServer() {
 
       if (result && leadData?.id) {
         const tenantId = (req as any).tenantId;
+        const savedScore = { score: result.score || (result as any).totalScore, grade: result.grade, reasoning: result.reasoning };
         try {
-          await leadRepository.update(tenantId, leadData.id, {
-            score: { score: result.score || (result as any).totalScore, grade: result.grade, reasoning: result.reasoning },
-          }, (req as any).user?.id, (req as any).user?.role || 'ADMIN');
-          logger.info(`AI score persisted for lead ${leadData.id}: ${result.score || (result as any).totalScore}`);
+          await leadRepository.update(tenantId, leadData.id, { score: savedScore }, (req as any).user?.id, (req as any).user?.role || 'ADMIN');
+          logger.info(`AI score persisted for lead ${leadData.id}: ${savedScore.score}`);
+          broadcastIo?.emit('lead_scored', { leadId: leadData.id, score: savedScore });
         } catch (e) {
           logger.warn(`Could not persist AI score for lead ${leadData.id}`);
         }
@@ -566,6 +568,7 @@ async function startServer() {
       credentials: true
     }
   });
+  broadcastIo = io;
 
   io.use((socket, next) => {
     try {
