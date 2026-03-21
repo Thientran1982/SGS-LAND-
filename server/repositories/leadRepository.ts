@@ -135,9 +135,18 @@ export class LeadRepository extends BaseRepository {
             : `l.updated_at ${sortDir}`;
 
       const result = await client.query(
-        `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar
+        `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar,
+                c.payment_schedule as contract_payment_schedule
          FROM leads l
          LEFT JOIN users u ON l.assigned_to = u.id
+         LEFT JOIN LATERAL (
+           SELECT payment_schedule
+           FROM contracts
+           WHERE lead_id = l.id
+             AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) c ON TRUE
          ${whereClause}
          ORDER BY ${orderBy}
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,

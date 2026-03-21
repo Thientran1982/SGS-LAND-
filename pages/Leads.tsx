@@ -330,7 +330,34 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                     {formatDate(lead.createdAt)}
                 </td>
             )}
-            
+
+            {visibleColumns.has('paymentProgress') && (() => {
+                const schedule: any[] = lead.contractPaymentSchedule || [];
+                if (!schedule.length) {
+                    return <td className={`px-4 ${paddingY} text-center text-[var(--text-tertiary)] text-xs`}>—</td>;
+                }
+                const paidCount = schedule.filter((i: any) => i.status === 'PAID').length;
+                const pct = Math.round((paidCount / schedule.length) * 100);
+                const now = new Date();
+                const overdueCount = schedule.filter((i: any) => i.status !== 'PAID' && new Date(i.dueDate) < now).length;
+                const barColor = overdueCount > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-emerald-500' : 'bg-indigo-500';
+                return (
+                    <td className={`px-4 ${paddingY}`}>
+                        <div className="flex flex-col gap-1 min-w-[80px]">
+                            <div className="flex items-center gap-1.5">
+                                <div className="flex-1 h-1.5 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="text-xs font-bold text-[var(--text-secondary)] tabular-nums">{pct}%</span>
+                            </div>
+                            {overdueCount > 0 && (
+                                <span className="text-[10px] text-rose-500 font-semibold">{overdueCount} quá hạn</span>
+                            )}
+                        </div>
+                    </td>
+                );
+            })()}
+
             {/* Sticky Actions (Right) — dropdown */}
             <td className={`px-3 ${paddingY} text-right sticky right-0 z-10 transition-colors shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] ${stickyClass}`} onClick={e => e.stopPropagation()}>
                 <div data-menu-root="1" className="flex justify-end">
@@ -1044,6 +1071,7 @@ export const Leads: React.FC = () => {
                                                 { key: 'score', label: t('leads.score') },
                                                 { key: 'owner', label: t('common.owner') },
                                                 { key: 'createdAt', label: t('leads.col_created') },
+                                                { key: 'paymentProgress', label: t('leads.col_payment_progress') },
                                             ].map(col => (
                                                 <label key={col.key} className="flex items-center gap-2 cursor-pointer py-1 px-2 rounded-lg hover:bg-[var(--glass-surface)] transition-colors group">
                                                     <input
@@ -1195,6 +1223,7 @@ export const Leads: React.FC = () => {
                                             {visibleColumns.has('score') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.score')}</th>}
                                             {visibleColumns.has('owner') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('common.owner')}</th>}
                                             {visibleColumns.has('createdAt') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_created')}</th>}
+                                            {visibleColumns.has('paymentProgress') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_payment_progress')}</th>}
                                             <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right sticky right-0 bg-[var(--glass-surface)] z-30">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
