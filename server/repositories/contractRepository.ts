@@ -93,6 +93,7 @@ export class ContractRepository extends BaseRepository {
     propertyPrice?: number;
     depositAmount?: number;
     paymentTerms?: string;
+    paymentSchedule?: any[];
     taxResponsibility?: string;
     handoverDate?: string;
     handoverCondition?: string;
@@ -106,11 +107,11 @@ export class ContractRepository extends BaseRepository {
         `INSERT INTO contracts (
           tenant_id, proposal_id, lead_id, listing_id, type, status, value,
           party_a, party_b, property_details, property_price, deposit_amount,
-          payment_terms, tax_responsibility, handover_date, handover_condition,
+          payment_terms, payment_schedule, tax_responsibility, handover_date, handover_condition,
           metadata, created_by, created_by_id
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
         ) RETURNING *`,
         [
           data.proposalId || null, data.leadId || null, data.listingId || null, data.type,
@@ -118,7 +119,9 @@ export class ContractRepository extends BaseRepository {
           JSON.stringify(data.partyA || {}), JSON.stringify(data.partyB || {}),
           JSON.stringify(data.propertyDetails || {}),
           data.propertyPrice || null, data.depositAmount || null,
-          data.paymentTerms || null, data.taxResponsibility || null,
+          data.paymentTerms || null,
+          data.paymentSchedule ? JSON.stringify(data.paymentSchedule) : null,
+          data.taxResponsibility || null,
           data.handoverDate || null, data.handoverCondition || null,
           data.metadata ? JSON.stringify(data.metadata) : null,
           data.createdBy || null,
@@ -136,7 +139,7 @@ export class ContractRepository extends BaseRepository {
       let paramIndex = 2;
 
       const directFields = ['status', 'type', 'paymentTerms', 'taxResponsibility', 'handoverCondition', 'createdBy'];
-      const jsonFields = ['partyA', 'partyB', 'propertyDetails', 'metadata'];
+      const jsonFields = ['partyA', 'partyB', 'propertyDetails', 'metadata', 'paymentSchedule'];
       const numericFields = ['propertyPrice', 'depositAmount'];
 
       for (const field of directFields) {

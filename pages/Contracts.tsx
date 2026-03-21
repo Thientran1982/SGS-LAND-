@@ -214,6 +214,7 @@ const Contracts: React.FC = () => {
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_party_b')}</th>
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_property')}</th>
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_value')}</th>
+                                        <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_payment_progress')}</th>
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_status')}</th>
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_date')}</th>
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)] text-right"></th>
@@ -251,6 +252,34 @@ const Contracts: React.FC = () => {
                                                 <div className="font-medium text-sm text-[var(--text-primary)]">{formatCurrency(c.propertyPrice || 0)}</div>
                                                 {c.type === ContractType.DEPOSIT && (
                                                     <div className="text-xs text-indigo-500 mt-0.5">{t('contracts.deposit_label')}: {formatCurrency(c.depositAmount || 0)}</div>
+                                                )}
+                                            </td>
+                                            <td className="p-4 min-w-[140px]">
+                                                {c.paymentSchedule && c.paymentSchedule.length > 0 ? (() => {
+                                                    const ms: any[] = c.paymentSchedule;
+                                                    const totalAmt = c.propertyPrice || 0;
+                                                    const paidAmt = ms.filter((m: any) => m.status === 'PAID').reduce((s: number, m: any) => s + (m.paidAmount ?? m.amount ?? 0), 0);
+                                                    const overdue = ms.filter((m: any) => m.status === 'OVERDUE').length;
+                                                    const pct = totalAmt > 0 ? Math.min(100, Math.round((paidAmt / totalAmt) * 100)) : 0;
+                                                    return (
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center justify-between text-xs">
+                                                                <span className="font-semibold text-[var(--text-primary)]">{pct}%</span>
+                                                                {overdue > 0 && (
+                                                                    <span className="text-rose-500 font-bold">{overdue} {t('contracts.payment_overdue')}</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="w-full h-1.5 bg-[var(--glass-border)] rounded-full overflow-hidden">
+                                                                <div
+                                                                    className={`h-full rounded-full transition-all ${overdue > 0 ? 'bg-rose-500' : pct >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                                                                    style={{ width: `${pct}%` }}
+                                                                />
+                                                            </div>
+                                                            <div className="text-xs text-[var(--text-tertiary)]">{ms.length} {t('contracts.payment_milestones')}</div>
+                                                        </div>
+                                                    );
+                                                })() : (
+                                                    <span className="text-xs text-[var(--text-tertiary)]">—</span>
                                                 )}
                                             </td>
                                             <td className="p-4">
