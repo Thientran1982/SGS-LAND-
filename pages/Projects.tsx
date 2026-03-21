@@ -1094,7 +1094,7 @@ export function Projects() {
                             value={statusFilter}
                             onChange={v => setStatusFilter(v as string)}
                             options={[
-                                { value: '', label: `${t('project.status')} — ${t('common.filter')}` },
+                                { value: '', label: t('project.status') },
                                 ...(['ACTIVE','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) })))
                             ]}
                             className="min-w-[180px]"
