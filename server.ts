@@ -265,10 +265,18 @@ async function startServer() {
       };
       const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
       res.cookie('token', token, cookieOptions);
-      res.json({ message: 'Registered successfully', user: userRepository.toPublicUser(dbUser), token });
 
-      emailService.sendWelcomeEmail(tenantId, email, dbUser.name).catch(err => {
+      // Send welcome email and capture status for response feedback
+      const welcomeResult = await emailService.sendWelcomeEmail(tenantId, email, dbUser.name).catch(err => {
         logger.error(`Failed to send welcome email to ${email}: ${err.message}`);
+        return { success: false, status: 'failed' as const, error: err.message };
+      });
+
+      res.json({
+        message: 'Registered successfully',
+        user: userRepository.toPublicUser(dbUser),
+        token,
+        emailStatus: welcomeResult.status,
       });
     } catch (error) {
       console.error('Register error:', error);
@@ -287,7 +295,11 @@ async function startServer() {
 
       if (!user) {
         await uniformDelay();
-        return res.json({ message: 'If an account exists, a reset link has been sent.' });
+        // Anti-enumeration: return consistent structure regardless of user existence
+        return res.json({
+          message: 'If an account exists, a reset link has been sent.',
+          emailStatus: 'not_applicable',
+        });
       }
 
       const crypto = await import('crypto');
@@ -323,6 +335,7 @@ async function startServer() {
       const isDevMode = !isProduction && emailResult.status === 'queued_no_smtp';
       res.json({
         message: 'If an account exists, a reset link has been sent.',
+        emailStatus: emailResult.status,
         ...(isDevMode && { devToken: rawToken }),
       });
     } catch (error) {
