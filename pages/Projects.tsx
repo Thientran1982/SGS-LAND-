@@ -498,7 +498,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                 placeholder={t('common.search') + '...'}
                                 value={search}
                                 onChange={e => { setSearch(e.target.value); setSelected(new Set()); }}
-                                className="w-full pl-9 pr-3 py-2 border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                className="w-full pl-9 pr-3 py-2.5 min-h-[44px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             />
                         </div>
 
@@ -511,7 +511,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                 <select
                                     value={bulkStatus}
                                     onChange={e => setBulkStatus(e.target.value)}
-                                    className="border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    className="border border-[var(--glass-border)] rounded-xl px-3 py-2.5 min-h-[44px] bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 >
                                     <option value="">{t('project.bulk_status_placeholder')}</option>
                                     {['AVAILABLE','HOLD','INACTIVE','OPENING','BOOKING'].map(s => (
@@ -519,11 +519,11 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                     ))}
                                 </select>
                                 <button type="button" onClick={handleBulkStatus} disabled={!bulkStatus || bulkWorking}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 disabled:opacity-40 transition-colors">
+                                    className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 disabled:opacity-40 transition-colors">
                                     {IC.CHECK_ALL} {bulkWorking ? '...' : t('project.bulk_apply')}
                                 </button>
                                 <button type="button" onClick={() => setAccessListings(selectedListings)}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors">
+                                    className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors">
                                     {IC.LOCK} {t('project.bulk_access_btn')}
                                 </button>
                                 <button type="button" onClick={() => setSelected(new Set())}
@@ -1086,7 +1086,7 @@ export function Projects() {
                             placeholder={t('common.search') + '...'}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full pl-9 pr-3 py-2.5 min-h-[44px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
                     {!isPartner && (

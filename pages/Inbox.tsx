@@ -402,7 +402,7 @@ export const Inbox: React.FC = () => {
                         <input 
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-9 pr-10 py-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-9 pr-10 py-2.5 min-h-[44px] text-sm outline-none focus:border-indigo-500 transition-all"
                             placeholder={t('inbox.select')}
                         />
                         {search && (
