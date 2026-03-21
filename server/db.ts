@@ -13,10 +13,12 @@ export const pool = new Pool({
 /**
  * @deprecated Schema initialization is handled exclusively by the migration runner.
  * Call runPendingMigrations(pool) from server/migrations/runner.ts instead.
- * This stub is kept for backward compatibility only.
+ * This stub is kept for backward compatibility only and should not be called in production code.
  */
 export async function initializeDatabase(): Promise<void> {
-  const { runPendingMigrations } = await import('./migrations/runner.js');
+  // Use a static import to avoid brittle dynamic-import path resolution (.ts vs .js)
+  // across different runtime/transpilation modes (tsx, tsc, node with --loader, etc.)
+  const { runPendingMigrations } = await import('./migrations/runner');
   await runPendingMigrations(pool);
 }
 
