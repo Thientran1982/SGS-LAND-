@@ -49,4 +49,4 @@ build = ["npm", "run", "build"]
 [userenv]
 
 [userenv.shared]
-JWT_SECRET = "4e42c91ca42d58003656fd17320193b9064fd918bcd9d00ff5270708c66e9a1712a1ab1797db3cfd22e58d35fa4ecbacf88fa53a213e76441f34d48a57fbd9ab"
+# JWT_SECRET must be set via Replit Secrets (not here) — see replit.md for setup instructions

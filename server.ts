@@ -874,8 +874,8 @@ async function startServer() {
     }
   });
 
-  // Real server-side traffic metrics (no auth required — public status endpoint)
-  app.get("/api/system/metrics", async (_req, res) => {
+  // Real server-side traffic metrics (requires authentication)
+  app.get("/api/system/metrics", authenticateToken, async (_req, res) => {
     try {
       const now = Date.now();
       const window60s = requestSamples.filter(s => s.ts >= now - 60_000);

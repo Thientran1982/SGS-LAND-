@@ -109,10 +109,10 @@ export class AnalyticsRepository extends BaseRepository {
       const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const safeUserId = userId && UUID_RE.test(userId) ? userId : null;
       const userLeadFilter = isSalesScope && safeUserId
-        ? `AND l.assigned_to = '${safeUserId}'`
+        ? `AND l.assigned_to = '${safeUserId}'::uuid`
         : '';
       const userLeadFilterNoAlias = isSalesScope && safeUserId
-        ? `AND assigned_to = '${safeUserId}'`
+        ? `AND assigned_to = '${safeUserId}'::uuid`
         : '';
       const scopeLabel = isSalesScope ? 'Dữ liệu của bạn' : 'Toàn công ty';
 
@@ -153,7 +153,7 @@ export class AnalyticsRepository extends BaseRepository {
 
       // Proposals: for SALES, only proposals linked to their leads
       const proposalLeadJoin = isSalesScope && safeUserId
-        ? `INNER JOIN leads lp ON p.lead_id = lp.id AND lp.tenant_id = p.tenant_id AND lp.assigned_to = '${safeUserId}'`
+        ? `INNER JOIN leads lp ON p.lead_id = lp.id AND lp.tenant_id = p.tenant_id AND lp.assigned_to = '${safeUserId}'::uuid`
         : '';
       const proposalsResult = await client.query(`
         SELECT COUNT(p.id)::int as total, COUNT(p.id) FILTER (WHERE p.status = 'APPROVED')::int as approved
@@ -165,7 +165,7 @@ export class AnalyticsRepository extends BaseRepository {
       // Contracts: for SALES, only contracts linked to their leads
       const contractLeadJoin = isSalesScope && safeUserId
         ? `INNER JOIN proposals cp ON c.proposal_id = cp.id AND cp.tenant_id = c.tenant_id
-           INNER JOIN leads cl ON cp.lead_id = cl.id AND cl.tenant_id = c.tenant_id AND cl.assigned_to = '${safeUserId}'`
+           INNER JOIN leads cl ON cp.lead_id = cl.id AND cl.tenant_id = c.tenant_id AND cl.assigned_to = '${safeUserId}'::uuid`
         : '';
       const contractsResult = await client.query(`
         SELECT COUNT(c.id)::int as total, COUNT(c.id) FILTER (WHERE c.status = 'SIGNED')::int as signed
@@ -208,13 +208,13 @@ export class AnalyticsRepository extends BaseRepository {
         WHERE l.${TENANT_FILTER}
           AND l.stage NOT IN ('WON', 'LOST')
           AND p.status IN ('APPROVED', 'PENDING_APPROVAL')
-          ${isSalesScope && safeUserId ? `AND l.assigned_to = '${safeUserId}'` : ''}
+          ${isSalesScope && safeUserId ? `AND l.assigned_to = '${safeUserId}'::uuid` : ''}
         GROUP BY l.stage, l.score->>'grade'
       `);
 
       // Interactions: for SALES, only from their leads
       const interactionLeadFilter = isSalesScope && safeUserId
-        ? `AND i.lead_id IN (SELECT id FROM leads WHERE ${TENANT_FILTER} AND assigned_to = '${safeUserId}')`
+        ? `AND i.lead_id IN (SELECT id FROM leads WHERE ${TENANT_FILTER} AND assigned_to = '${safeUserId}'::uuid)`
         : '';
       const interactionStats = await client.query(`
         SELECT
@@ -251,7 +251,7 @@ export class AnalyticsRepository extends BaseRepository {
               AND p.status IN ('APPROVED', 'PENDING_APPROVAL')
               AND l.created_at >= NOW() - INTERVAL '${days * 2} days'
               AND l.created_at < NOW() - INTERVAL '${days} days'
-              ${isSalesScope && safeUserId ? `AND l.assigned_to = '${safeUserId}'` : ''}
+              ${isSalesScope && safeUserId ? `AND l.assigned_to = '${safeUserId}'::uuid` : ''}
             GROUP BY l.score->>'grade'
           `)
         : { rows: [] };
