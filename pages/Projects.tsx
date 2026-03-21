@@ -95,7 +95,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-lg border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                 {/* Header — luôn hiển thị, không scroll */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
@@ -234,7 +234,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-2xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
                     <div>
@@ -450,7 +450,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
 
     return (
         <>
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
                 <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-5xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
@@ -734,7 +734,7 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
             <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-2xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
@@ -1146,23 +1146,25 @@ export function Projects() {
                 )}
             </div>
 
-            {/* Modals */}
-            {formTarget !== null && (
+            {/* Modals — rendered via portal to document.body to escape the main isolate stacking context */}
+            {formTarget !== null && createPortal(
                 <ProjectFormModal
                     project={formTarget === 'new' ? null : formTarget}
                     onSave={handleSave}
                     onClose={() => setFormTarget(null)}
                     t={t}
-                />
+                />,
+                document.body
             )}
-            {accessTarget && (
+            {accessTarget && createPortal(
                 <AccessPanel
                     project={accessTarget}
                     onClose={() => setAccessTarget(null)}
                     t={t}
-                />
+                />,
+                document.body
             )}
-            {listingsTarget && (
+            {listingsTarget && createPortal(
                 <ProjectListingsPanel
                     project={listingsTarget}
                     canCreate={isAdmin || user?.role === 'TEAM_LEAD'}
@@ -1176,12 +1178,13 @@ export function Projects() {
                         ));
                     }}
                     t={t}
-                />
+                />,
+                document.body
             )}
 
             {/* Delete confirmation modal */}
-            {deleteTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
+            {deleteTarget && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
                     <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-sm border border-[var(--glass-border)]">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
                             <div className="flex items-center gap-2 text-rose-600">
@@ -1212,7 +1215,8 @@ export function Projects() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {toast && createPortal(
