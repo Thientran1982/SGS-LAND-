@@ -75,11 +75,12 @@ export function createContractRoutes(authenticateToken: any) {
     }
   });
 
+  // Các chuyển trạng thái hợp lệ theo enum ContractStatus thực tế
   const CONTRACT_VALID_TRANSITIONS: Record<string, string[]> = {
-    DRAFT: ['ACTIVE', 'CANCELLED'],
-    ACTIVE: ['COMPLETED', 'CANCELLED'],
-    COMPLETED: [],
-    CANCELLED: [],
+    DRAFT:             ['PENDING_SIGNATURE', 'SIGNED', 'CANCELLED'],
+    PENDING_SIGNATURE: ['SIGNED', 'CANCELLED', 'DRAFT'],
+    SIGNED:            ['CANCELLED'],
+    CANCELLED:         ['DRAFT'],
   };
 
   router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
@@ -95,19 +96,27 @@ export function createContractRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'You can only edit contracts you created' });
       }
 
-      if (req.body.status) {
+      // Validate status transitions only for ADMIN/MANAGER — CRM admins need flexibility
+      const isAdmin = ['ADMIN', 'MANAGER'].includes(user.role);
+      if (req.body.status && !isAdmin) {
         const currentStatus = ((current as any).status || 'DRAFT').toUpperCase();
         const newStatus = String(req.body.status).toUpperCase();
         const allowed = CONTRACT_VALID_TRANSITIONS[currentStatus] ?? [];
         if (currentStatus !== newStatus && !allowed.includes(newStatus)) {
           return res.status(422).json({
-            error: `Invalid status transition: ${currentStatus} → ${newStatus}`,
+            error: `Không thể chuyển trạng thái: ${currentStatus} → ${newStatus}`,
             allowed,
           });
         }
       }
 
-      const contract = await contractRepository.update(user.tenantId, String(req.params.id), req.body);
+      // Auto-set signed_at when transitioning to SIGNED
+      const updateData = { ...req.body };
+      if (req.body.status === 'SIGNED' && !(current as any).signedAt) {
+        updateData.signedAt = new Date().toISOString();
+      }
+
+      const contract = await contractRepository.update(user.tenantId, String(req.params.id), updateData);
       if (!contract) return res.status(404).json({ error: 'Contract not found' });
 
       await auditRepository.log(user.tenantId, {

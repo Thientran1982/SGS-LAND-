@@ -40,7 +40,15 @@ export class ContractRepository extends BaseRepository {
         values.push(filters.listingId);
       }
       if (filters?.search) {
-        conditions.push(`(l.name ILIKE $${paramIndex} OR c.id::text ILIKE $${paramIndex} OR c.type ILIKE $${paramIndex})`);
+        conditions.push(`(
+          l.name ILIKE $${paramIndex}
+          OR c.id::text ILIKE $${paramIndex}
+          OR c.party_a->>'name' ILIKE $${paramIndex}
+          OR c.party_b->>'name' ILIKE $${paramIndex}
+          OR c.property_details->>'address' ILIKE $${paramIndex}
+          OR c.party_b->>'phone' ILIKE $${paramIndex}
+          OR c.party_a->>'phone' ILIKE $${paramIndex}
+        )`);
         values.push(`%${filters.search}%`);
         paramIndex++;
       }
@@ -168,10 +176,10 @@ export class ContractRepository extends BaseRepository {
           tenant_id, proposal_id, lead_id, listing_id, type, status, value,
           party_a, party_b, property_details, property_price, deposit_amount,
           payment_terms, payment_schedule, tax_responsibility, handover_date, handover_condition,
-          metadata, created_by, created_by_id
+          dispute_resolution, metadata, created_by, created_by_id
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
         ) RETURNING *`,
         [
           data.proposalId || null, data.leadId || null, data.listingId || null, data.type,
@@ -183,6 +191,7 @@ export class ContractRepository extends BaseRepository {
           data.paymentSchedule ? JSON.stringify(data.paymentSchedule) : null,
           data.taxResponsibility || null,
           data.handoverDate || null, data.handoverCondition || null,
+          data.disputeResolution || null,
           data.metadata ? JSON.stringify(data.metadata) : null,
           data.createdBy || null,
           data.createdById || null,
@@ -198,7 +207,7 @@ export class ContractRepository extends BaseRepository {
       const values: any[] = [];
       let paramIndex = 2;
 
-      const directFields = ['status', 'type', 'paymentTerms', 'taxResponsibility', 'handoverCondition', 'createdBy'];
+      const directFields = ['status', 'type', 'paymentTerms', 'taxResponsibility', 'handoverCondition', 'disputeResolution', 'createdBy'];
       const numericFields = ['propertyPrice', 'depositAmount'];
 
       for (const field of directFields) {
