@@ -67,7 +67,14 @@ const pageStyle: React.CSSProperties = {
 
 const center: React.CSSProperties = { textAlign: 'center' };
 const bold: React.CSSProperties = { fontWeight: 700 };
-const underline: React.CSSProperties = { textDecoration: 'underline' };
+// Dùng borderBottom thay textDecoration cho các ô blank trong hợp đồng (render đẹp hơn, không giống link)
+const blankField: React.CSSProperties = {
+    display: 'inline-block',
+    borderBottom: '1px solid #000',
+    minWidth: '180px',
+    paddingBottom: '1px',
+    verticalAlign: 'bottom',
+};
 
 /* ── Sub-components ── */
 const ArticleTitle: React.FC<{ num: string | number; title: string }> = ({ num, title }) => (
@@ -230,7 +237,11 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 {/* QUỐC HIỆU */}
                 <div style={{ ...center, marginBottom: '4px' }}>
                     <p style={{ ...bold, fontSize: '13pt', margin: 0 }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-                    <p style={{ ...bold, ...underline, fontSize: '13pt', margin: '2px 0' }}>Độc lập – Tự do – Hạnh phúc</p>
+                    <p style={{ ...bold, fontSize: '13pt', margin: '2px 0' }}>
+                        <span style={{ borderBottom: '1.5px solid #000', paddingBottom: '1px' }}>
+                            Độc lập – Tự do – Hạnh phúc
+                        </span>
+                    </p>
                     <p style={{ ...center, fontSize: '13pt', margin: '4px 0 0', letterSpacing: '4px' }}>───────────────────</p>
                 </div>
 
@@ -266,7 +277,9 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
 
                 {/* MỞ ĐẦU */}
                 <p style={{ margin: '12px 0' }}>
-                    Hôm nay, <span style={underline}>{fmtDate(signDate)}</span>, tại <span style={underline}>{blank(null, '..................................., tỉnh/thành phố ...................')}</span>, chúng tôi gồm:
+                    Hôm nay, {fmtDate(signDate)}, tại{' '}
+                    <span style={{ ...blankField, minWidth: '220px' }}>&nbsp;</span>
+                    {' '}(tỉnh/thành phố), chúng tôi gồm:
                 </p>
 
                 {/* ── ĐIỀU 1: CÁC BÊN ── */}
@@ -509,7 +522,8 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 {/* ── KÝ TÊN ── */}
                 <div style={{ marginTop: '40px' }}>
                     <p style={{ textAlign: 'right', marginBottom: '4px', fontStyle: 'italic' }}>
-                        {blank(null, '..............')}, {fmtDate(signDate)}
+                        <span style={{ ...blankField, minWidth: '140px' }}>&nbsp;</span>
+                        , {fmtDate(signDate)}
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '16px' }}>
                         {/* Bên A */}
