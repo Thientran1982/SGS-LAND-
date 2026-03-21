@@ -239,6 +239,11 @@ export class ContractRepository extends BaseRepository {
           values.push(data[field]);
         }
       }
+      // Keep value column in sync with propertyPrice (used by LATERAL join for contractValue)
+      if (data.propertyPrice !== undefined) {
+        updates.push(`value = $${paramIndex++}`);
+        values.push(data.propertyPrice || 0);
+      }
       if (data.signedAt !== undefined) {
         updates.push(`signed_at = $${paramIndex++}`);
         values.push(data.signedAt);

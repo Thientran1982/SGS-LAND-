@@ -33,14 +33,18 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
 }) => {
     const { t } = useTranslation();
 
-    const totalScheduled = milestones.reduce((s, m) => s + (m.amount || 0), 0);
-    const totalPaid      = milestones.filter(m => m.status === PaymentStatus.PAID).reduce((s, m) => s + (m.paidAmount ?? m.amount ?? 0), 0);
-    const overdueCount   = milestones.filter(m => m.status === PaymentStatus.OVERDUE).length;
-    const progressPct    = totalPrice > 0 ? Math.min(100, Math.round((totalPaid / totalPrice) * 100)) : 0;
+    const totalScheduled    = milestones.reduce((s, m) => s + (m.amount || 0), 0);
+    const totalPaid         = milestones.filter(m => m.status === PaymentStatus.PAID).reduce((s, m) => s + (m.paidAmount ?? m.amount ?? 0), 0);
+    const overdueCount      = milestones.filter(m => m.status === PaymentStatus.OVERDUE || (m.status === PaymentStatus.PENDING && m.dueDate && new Date(m.dueDate) < new Date())).length;
+    const progressPct       = totalPrice > 0 ? Math.min(100, Math.round((totalPaid / totalPrice) * 100)) : 0;
+    const totalAllocatedPct = Math.round(milestones.reduce((s, m) => s + (m.percentage || 0), 0) * 10) / 10;
+    const remainingPct      = Math.round((100 - totalAllocatedPct) * 10) / 10;
+    const isOverAllocated   = totalAllocatedPct > 100.05;
 
     const addMilestone = useCallback(() => {
         const existing = milestones.length + 1;
-        const defaultPct = totalPrice > 0 ? Math.round((totalPrice * 0.3) / totalPrice * 100) : 30;
+        const alreadyAllocatedPct = milestones.reduce((s, m) => s + (m.percentage || 0), 0);
+        const defaultPct = Math.max(0, Math.min(100, Math.round((100 - alreadyAllocatedPct) * 10) / 10)) || 30;
         const newMs: PaymentMilestone = {
             id: generateId(),
             name: `${t('payment.milestone_default_name')} ${existing}`,
@@ -95,6 +99,21 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                         <span>{t('payment.total_paid')}: <strong className="text-emerald-600">{formatVND(totalPaid)}</strong></span>
                         <span>{t('payment.total_scheduled')}: <strong>{formatVND(totalScheduled)}</strong></span>
                     </div>
+                    {milestones.length > 0 && (
+                        <div className={`flex items-center justify-between text-xs px-3 py-2 rounded-lg border ${isOverAllocated ? 'bg-rose-50 border-rose-200 text-rose-700' : remainingPct < 0.1 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                            <span>
+                                {t('payment.percentage') || 'Tỷ lệ'}: <strong>{totalAllocatedPct}%</strong> / 100%
+                            </span>
+                            <span className="font-bold">
+                                {isOverAllocated
+                                    ? `⚠ Vượt ${(totalAllocatedPct - 100).toFixed(1)}%`
+                                    : remainingPct < 0.1
+                                    ? '✓ Đủ 100%'
+                                    : `Còn lại: ${remainingPct}%`
+                                }
+                            </span>
+                        </div>
+                    )}
                     {overdueCount > 0 && (
                         <div className="flex items-center gap-2 text-xs text-rose-600 font-bold bg-rose-50 border border-rose-100 rounded-lg px-3 py-2" role="alert">
                             <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
