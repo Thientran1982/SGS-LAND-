@@ -191,11 +191,10 @@ const Sidebar = memo(({
                 {!isMobile && (
                     <button
                         onClick={onToggleCollapse}
-                        className={`absolute -right-3 top-8 w-6 h-6 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:text-indigo-600 shadow-sm z-50 hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isCollapsed ? 'rotate-180' : ''}`}
+                        className={`absolute -right-2.5 top-8 w-5 h-5 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-full flex items-center justify-center text-[var(--text-tertiary)] hover:text-indigo-600 shadow-sm z-50 hover:scale-110 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isCollapsed ? 'rotate-180' : ''}`}
                         aria-label={t('nav.toggle_sidebar') || "Đóng mở thanh bên"}
-                        style={{ minWidth: '44px', minHeight: '44px', margin: '-9px' }}
                     >
-                        {NAV_ICONS['toggle']}
+                        <ChevronLeft size={12} strokeWidth={2.5} />
                     </button>
                 )}
             </div>
