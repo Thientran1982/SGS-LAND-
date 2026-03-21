@@ -532,9 +532,15 @@ async function startServer() {
     }
   });
 
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-    : undefined;
+  // Parse and validate ALLOWED_ORIGINS — wildcard '*' is rejected in production
+  let allowedOrigins: string[] | undefined;
+  if (process.env.ALLOWED_ORIGINS) {
+    const raw = process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean);
+    if (isProduction && raw.includes('*')) {
+      throw new Error("FATAL: ALLOWED_ORIGINS must not include '*' in production. Set it to explicit domain(s), e.g. https://yourapp.replit.app");
+    }
+    allowedOrigins = raw.length > 0 ? raw : undefined;
+  }
 
   const server = http.createServer(app);
   const io = new Server(server, {

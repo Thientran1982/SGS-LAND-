@@ -12,13 +12,14 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
 
   if (isProduction) {
-    // Production: strict CSP — no unsafe-inline for scripts
-    // style-src keeps unsafe-inline because Tailwind CSS + critical CSS in index.html require it
+    // Production: strict CSP — no unsafe-inline anywhere.
+    // All styles are in external files (critical.css, Tailwind output via Vite).
+    // All scripts are in external bundles (server.js + Vite-built client chunks).
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; " +
       "script-src 'self'; " +
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "style-src 'self' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
       "connect-src 'self' wss: https://generativelanguage.googleapis.com; " +
