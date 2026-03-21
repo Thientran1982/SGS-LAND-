@@ -407,10 +407,28 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                 <div className="px-4 md:px-6 py-4 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
                     <div>
                         <h3 id="flash-proposal-title" className="font-bold text-[var(--text-primary)] text-base md:text-lg">{t('proposal.flash_title')}</h3>
-                        <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
+                        <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)] flex-wrap">
                             <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold max-w-[120px] truncate">{lead.name}</span>
                             <span>•</span>
                             <span className="font-mono">{lead.phone}</span>
+                            {(() => {
+                                const schedule: any[] = (lead as any).contractPaymentSchedule || [];
+                                if (!schedule.length) return null;
+                                const paidCount = schedule.filter((i: any) => i.status === 'PAID').length;
+                                const pct = Math.round((paidCount / schedule.length) * 100);
+                                const now = new Date();
+                                const overdue = schedule.filter((i: any) => i.status !== 'PAID' && new Date(i.dueDate) < now).length;
+                                const bg = overdue > 0 ? 'bg-rose-50 text-rose-600' : pct === 100 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700';
+                                const barColor = overdue > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-emerald-500' : 'bg-amber-500';
+                                return (
+                                    <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full font-semibold text-[10px] ${bg}`} title={`Tiến độ thanh toán hợp đồng: ${pct}%${overdue > 0 ? ` (${overdue} quá hạn)` : ''}`}>
+                                        <span className="w-14 h-1 bg-white/60 rounded-full overflow-hidden inline-block align-middle">
+                                            <span className={`block h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+                                        </span>
+                                        {pct}%{overdue > 0 ? ` · ${overdue} quá hạn` : ''}
+                                    </span>
+                                );
+                            })()}
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors">
