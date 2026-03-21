@@ -609,9 +609,13 @@ export const Leads: React.FC = () => {
     const [visibleColumns, setVisibleColumns] = useState<Set<string>>(() => {
         try {
             const saved = localStorage.getItem('sgs_leads_columns');
-            if (saved) return new Set(JSON.parse(saved));
+            if (saved) {
+                const cols = new Set<string>(JSON.parse(saved));
+                cols.add('paymentProgress');
+                return cols;
+            }
         } catch {}
-        return new Set(['phone', 'stage', 'source', 'score', 'owner']);
+        return new Set(['phone', 'stage', 'source', 'score', 'owner', 'paymentProgress']);
     });
 
     // Persistence Effects

@@ -1160,6 +1160,14 @@ export const DICTIONARY = {
         "stage.WON": "Chốt deal",
         "stage.LOST": "Thất bại",
 
+        "contract_status.DRAFT": "Bản nháp",
+        "contract_status.PENDING_SIGNATURE": "Chờ ký",
+        "contract_status.SIGNED": "Đã ký",
+        "contract_status.CANCELLED": "Đã huỷ",
+
+        "contract_type.DEPOSIT": "Thoả thuận đặt cọc",
+        "contract_type.SALES": "Hợp đồng mua bán",
+
         "legal.PinkBook": "Sổ Hồng",
         "legal.Contract": "HĐMB",
         "legal.Waiting": "Đang chờ sổ/Vi bằng",
@@ -2738,6 +2746,14 @@ export const DICTIONARY = {
         "stage.NEGOTIATION": "Negotiation",
         "stage.WON": "Won",
         "stage.LOST": "Lost",
+
+        "contract_status.DRAFT": "Draft",
+        "contract_status.PENDING_SIGNATURE": "Pending Signature",
+        "contract_status.SIGNED": "Signed",
+        "contract_status.CANCELLED": "Cancelled",
+
+        "contract_type.DEPOSIT": "Deposit Agreement",
+        "contract_type.SALES": "Sales Contract",
 
         "legal.PinkBook": "Pink Book",
         "legal.Contract": "Sales Contract",
