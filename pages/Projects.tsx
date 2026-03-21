@@ -1080,7 +1080,7 @@ export function Projects() {
                 {/* Filters */}
                 <div className="flex gap-3 mt-4 flex-wrap">
                     <div className="relative flex-1 min-w-[200px]">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">{IC.SEARCH}</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] flex items-center">{IC.SEARCH}</span>
                         <input
                             type="text"
                             placeholder={t('common.search') + '...'}
