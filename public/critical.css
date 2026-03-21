@@ -239,6 +239,26 @@ html, body {
 @keyframes blink { 50% { opacity: 0; } }
 .animate-blink { animation: blink 1s step-end infinite; }
 
+/* --- SKELETON LOADER TEXT --- */
+.loader-status-text {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  opacity: 0.5;
+}
+
+/* --- NOSCRIPT FALLBACK --- */
+.noscript-wrapper {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-primary);
+}
+.noscript-wrapper h2 {
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
 /* --- MARKDOWN STYLES --- */
 .markdown-body {
   font-family: inherit;
