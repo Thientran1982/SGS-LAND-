@@ -816,6 +816,16 @@ async function startServer() {
   // B2B2C: project management + partner access control
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
 
+  // Lightweight health probe for deployment infrastructure (no DB call)
+  app.get("/health", (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({
+      status: "ok",
+      version: process.env.npm_package_version || "0.0.0",
+      uptime: Math.floor(process.uptime()),
+    });
+  });
+
   app.get("/api/health", async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
