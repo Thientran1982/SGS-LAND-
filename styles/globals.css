@@ -20,18 +20,16 @@ html.dark {
   color-scheme: dark;
 }
 
-/* Global scrollbar reset — prevents browser native scrollbars on html/body/#root */
-html, body, #root {
+/* Global scrollbar reset — hide all scrollbars across the entire app */
+*, *::before, *::after {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-#root::-webkit-scrollbar {
+*::-webkit-scrollbar {
   display: none;
 }
 
-/* Hide scrollbars while keeping scroll functionality */
+/* .no-scrollbar kept for semantic clarity / backwards compat */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

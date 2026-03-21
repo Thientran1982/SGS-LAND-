@@ -215,7 +215,9 @@
         to { transform: rotate(360deg) translateZ(0); }
       }
 
-      /* --- UTILITIES --- */
+      /* --- UTILITIES — hide all scrollbars globally --- */
+      *, *::before, *::after { -ms-overflow-style: none; scrollbar-width: none; }
+      *::-webkit-scrollbar { display: none; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
