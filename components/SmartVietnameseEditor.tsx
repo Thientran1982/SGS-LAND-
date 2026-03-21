@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTranslation } from '../services/i18n';
-import { motion } from 'motion/react';
-import { Wand2, CheckCheck, MessageSquare, Loader2, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Wand2, CheckCheck, MessageSquare, Loader2, Sparkles, X, CheckCircle, AlertCircle } from 'lucide-react';
+
+interface Toast { id: number; msg: string; type: 'success' | 'error'; }
 
 export const SmartVietnameseEditor: React.FC = () => {
     const { t } = useTranslation();
     const [text, setText] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [activeAction, setActiveAction] = useState<string | null>(null);
+    const [toasts, setToasts] = useState<Toast[]>([]);
+
+    const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, msg, type }]);
+        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+    }, []);
 
     const processText = async (prompt: string, actionName: string) => {
         if (!text.trim()) return;
@@ -36,9 +45,8 @@ export const SmartVietnameseEditor: React.FC = () => {
             if (data.text) {
                 setText(data.text.trim());
             }
-        } catch (error) {
-            console.error('Error processing text:', error);
-            // In a real app, we'd show a toast here
+        } catch {
+            notify(t('ai.error_processing'), 'error');
         } finally {
             setIsProcessing(false);
             setActiveAction(null);
@@ -69,6 +77,7 @@ export const SmartVietnameseEditor: React.FC = () => {
     };
 
     return (
+    <>
         <div className="w-full max-w-4xl mx-auto bg-[var(--bg-surface)] dark:bg-slate-900 rounded-2xl shadow-sm border border-[var(--glass-border)] dark:border-slate-800 overflow-hidden">
             <div className="p-4 border-b border-[var(--glass-border)] dark:border-slate-800 bg-[var(--glass-surface)]/50 dark:bg-slate-900/50 flex flex-wrap gap-2 items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -153,5 +162,22 @@ export const SmartVietnameseEditor: React.FC = () => {
                 </span>
             </div>
         </div>
+
+        {/* Toast notifications */}
+        <AnimatePresence>
+            {toasts.map(toast => (
+                <motion.div
+                    key={toast.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className={`fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-sm font-medium text-white ${toast.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                >
+                    {toast.type === 'error' ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle className="w-4 h-4 shrink-0" />}
+                    <span>{toast.msg}</span>
+                </motion.div>
+            ))}
+        </AnimatePresence>
+    </>
     );
 };

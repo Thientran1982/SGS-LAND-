@@ -624,8 +624,7 @@ export const Leads: React.FC = () => {
             setTotalPages(res.totalPages);
             setTotalItems(res.total);
             if (res.stats) setServerStats(res.stats);
-        } catch (e) {
-            console.error(e);
+        } catch {
             notify(t('common.error'), 'error');
             setLeads([]);
         } finally {
@@ -639,7 +638,7 @@ export const Leads: React.FC = () => {
         db.getListings(1, 100).then(res => setListings(res.data));
         db.getTenantUsers(1, 100).then(res => {
             setUsers([
-                { value: '', label: t('inbox.unassigned') || 'Unassigned' },
+                { value: '', label: t('inbox.unassigned') },
                 ...res.data.map(u => ({ value: u.id, label: u.name }))
             ]);
         });
@@ -710,7 +709,7 @@ export const Leads: React.FC = () => {
         if (!leadToDelete) return;
         try {
             await db.deleteLead(leadToDelete.id);
-            notify(t('leads.delete_success') || 'Deleted successfully', 'success');
+            notify(t('leads.delete_success'), 'success');
             
             // Remove from selected leads if it was selected
             setSelectedLeads(prev => {
@@ -810,10 +809,9 @@ export const Leads: React.FC = () => {
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Leads");
             XLSX.writeFile(workbook, "DanhSachKhachHang.xlsx");
-            notify(`${t('leads.export_success') || 'Xuất thành công'} (${allLeads.length} khách hàng)`, 'success');
-        } catch (error) {
-            console.error("Export failed", error);
-            notify(t('common.error') || 'Lỗi khi xuất dữ liệu', 'error');
+            notify(`${t('leads.export_success')} (${allLeads.length} khách hàng)`, 'success');
+        } catch {
+            notify(t('common.error'), 'error');
         } finally {
             setLoading(false);
         }

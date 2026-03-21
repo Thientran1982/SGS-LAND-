@@ -348,7 +348,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
         try {
             const updated = await db.updateSequence(sequence.id, {
                 name,
-                triggerStage,
+                triggerEvent: triggerStage,
                 isActive,
                 steps,
             });
