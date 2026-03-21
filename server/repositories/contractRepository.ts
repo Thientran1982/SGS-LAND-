@@ -72,7 +72,7 @@ export class ContractRepository extends BaseRepository {
       );
 
       return {
-        data: this.rowsToEntities(result.rows),
+        data: result.rows.map(row => this.flattenEntity(this.rowToEntity(row))),
         total,
         page,
         pageSize,
@@ -81,28 +81,88 @@ export class ContractRepository extends BaseRepository {
     });
   }
 
-  async create(tenantId: string, data: {
-    proposalId?: string;
-    leadId?: string;
-    listingId?: string;
-    type: string;
-    status?: string;
-    partyA?: any;
-    partyB?: any;
-    propertyDetails?: any;
-    propertyPrice?: number;
-    depositAmount?: number;
-    paymentTerms?: string;
-    paymentSchedule?: any[];
-    taxResponsibility?: string;
-    handoverDate?: string;
-    handoverCondition?: string;
-    metadata?: any;
-    createdBy?: string;
-    createdById?: string;
-  }): Promise<any> {
+  private buildPartyA(data: Record<string, any>): Record<string, any> {
+    return data.partyA || {
+      name: data.partyAName,
+      representative: data.partyARepresentative,
+      idNumber: data.partyAIdNumber,
+      idDate: data.partyAIdDate,
+      idPlace: data.partyAIdPlace,
+      address: data.partyAAddress,
+      taxCode: data.partyATaxCode,
+      phone: data.partyAPhone,
+      bankAccount: data.partyABankAccount,
+      bankName: data.partyABankName,
+    };
+  }
+
+  private buildPartyB(data: Record<string, any>): Record<string, any> {
+    return data.partyB || {
+      name: data.partyBName,
+      idNumber: data.partyBIdNumber,
+      idDate: data.partyBIdDate,
+      idPlace: data.partyBIdPlace,
+      address: data.partyBAddress,
+      phone: data.partyBPhone,
+      bankAccount: data.partyBBankAccount,
+      bankName: data.partyBBankName,
+    };
+  }
+
+  private buildPropertyDetails(data: Record<string, any>): Record<string, any> {
+    return data.propertyDetails || {
+      address: data.propertyAddress,
+      type: data.propertyType,
+      landArea: data.propertyLandArea,
+      constructionArea: data.propertyConstructionArea,
+      area: data.propertyArea,
+      certificateNumber: data.propertyCertificateNumber,
+      certificateDate: data.propertyCertificateDate,
+      certificatePlace: data.propertyCertificatePlace,
+    };
+  }
+
+  private flattenEntity(entity: Record<string, any>): Record<string, any> {
+    const partyA = entity.partyA || {};
+    const partyB = entity.partyB || {};
+    const propertyDetails = entity.propertyDetails || {};
+    return {
+      ...entity,
+      partyAName: partyA.name,
+      partyARepresentative: partyA.representative,
+      partyAIdNumber: partyA.idNumber,
+      partyAIdDate: partyA.idDate,
+      partyAIdPlace: partyA.idPlace,
+      partyAAddress: partyA.address,
+      partyATaxCode: partyA.taxCode,
+      partyAPhone: partyA.phone,
+      partyABankAccount: partyA.bankAccount,
+      partyABankName: partyA.bankName,
+      partyBName: partyB.name,
+      partyBIdNumber: partyB.idNumber,
+      partyBIdDate: partyB.idDate,
+      partyBIdPlace: partyB.idPlace,
+      partyBAddress: partyB.address,
+      partyBPhone: partyB.phone,
+      partyBBankAccount: partyB.bankAccount,
+      partyBBankName: partyB.bankName,
+      propertyAddress: propertyDetails.address,
+      propertyType: propertyDetails.type,
+      propertyLandArea: propertyDetails.landArea,
+      propertyConstructionArea: propertyDetails.constructionArea,
+      propertyArea: propertyDetails.area,
+      propertyCertificateNumber: propertyDetails.certificateNumber,
+      propertyCertificateDate: propertyDetails.certificateDate,
+      propertyCertificatePlace: propertyDetails.certificatePlace,
+    };
+  }
+
+  async create(tenantId: string, data: Record<string, any>): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const value = data.propertyPrice || 0;
+      const partyA = this.buildPartyA(data);
+      const partyB = this.buildPartyB(data);
+      const propertyDetails = this.buildPropertyDetails(data);
       const result = await client.query(
         `INSERT INTO contracts (
           tenant_id, proposal_id, lead_id, listing_id, type, status, value,
@@ -116,8 +176,8 @@ export class ContractRepository extends BaseRepository {
         [
           data.proposalId || null, data.leadId || null, data.listingId || null, data.type,
           data.status || 'DRAFT', value,
-          JSON.stringify(data.partyA || {}), JSON.stringify(data.partyB || {}),
-          JSON.stringify(data.propertyDetails || {}),
+          JSON.stringify(partyA), JSON.stringify(partyB),
+          JSON.stringify(propertyDetails),
           data.propertyPrice || null, data.depositAmount || null,
           data.paymentTerms || null,
           data.paymentSchedule ? JSON.stringify(data.paymentSchedule) : null,
@@ -128,7 +188,7 @@ export class ContractRepository extends BaseRepository {
           data.createdById || null,
         ]
       );
-      return this.rowToEntity(result.rows[0]);
+      return this.flattenEntity(this.rowToEntity(result.rows[0]));
     });
   }
 
@@ -139,7 +199,6 @@ export class ContractRepository extends BaseRepository {
       let paramIndex = 2;
 
       const directFields = ['status', 'type', 'paymentTerms', 'taxResponsibility', 'handoverCondition', 'createdBy'];
-      const jsonFields = ['partyA', 'partyB', 'propertyDetails', 'metadata', 'paymentSchedule'];
       const numericFields = ['propertyPrice', 'depositAmount'];
 
       for (const field of directFields) {
@@ -148,12 +207,32 @@ export class ContractRepository extends BaseRepository {
           values.push(data[field]);
         }
       }
-      for (const field of jsonFields) {
-        if (data[field] !== undefined) {
-          updates.push(`${this.camelToSnake(field)} = $${paramIndex++}`);
-          values.push(JSON.stringify(data[field]));
-        }
+
+      // Build JSONB blobs from flat fields or structured objects
+      const hasPartyAFlat = data.partyAName !== undefined || data.partyAPhone !== undefined || data.partyAAddress !== undefined;
+      if (data.partyA !== undefined || hasPartyAFlat) {
+        updates.push(`party_a = $${paramIndex++}`);
+        values.push(JSON.stringify(this.buildPartyA(data)));
       }
+      const hasPartyBFlat = data.partyBName !== undefined || data.partyBPhone !== undefined || data.partyBAddress !== undefined;
+      if (data.partyB !== undefined || hasPartyBFlat) {
+        updates.push(`party_b = $${paramIndex++}`);
+        values.push(JSON.stringify(this.buildPartyB(data)));
+      }
+      const hasPropFlat = data.propertyAddress !== undefined || data.propertyArea !== undefined;
+      if (data.propertyDetails !== undefined || hasPropFlat) {
+        updates.push(`property_details = $${paramIndex++}`);
+        values.push(JSON.stringify(this.buildPropertyDetails(data)));
+      }
+      if (data.paymentSchedule !== undefined) {
+        updates.push(`payment_schedule = $${paramIndex++}`);
+        values.push(JSON.stringify(data.paymentSchedule));
+      }
+      if (data.metadata !== undefined) {
+        updates.push(`metadata = $${paramIndex++}`);
+        values.push(JSON.stringify(data.metadata));
+      }
+
       for (const field of numericFields) {
         if (data[field] !== undefined) {
           updates.push(`${this.camelToSnake(field)} = $${paramIndex++}`);
@@ -175,7 +254,17 @@ export class ContractRepository extends BaseRepository {
         `UPDATE contracts SET ${updates.join(', ')} WHERE id = $1 RETURNING *`,
         [id, ...values]
       );
-      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+      return result.rows[0] ? this.flattenEntity(this.rowToEntity(result.rows[0])) : null;
+    });
+  }
+
+  async findById(tenantId: string, id: string): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT * FROM contracts WHERE id = $1 AND tenant_id = $2`,
+        [id, tenantId]
+      );
+      return result.rows[0] ? this.flattenEntity(this.rowToEntity(result.rows[0])) : null;
     });
   }
 }

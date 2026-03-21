@@ -420,7 +420,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         const paid = schedule.filter(m => m.status === 'PAID').length;
                         const total = schedule.length;
                         const paidPct = total > 0 ? Math.round((paid / total) * 100) : 0;
-                        const statusColor = lead.contractStatus === ContractStatus.ACTIVE ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : lead.contractStatus === ContractStatus.COMPLETED ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-amber-600 bg-amber-50 border-amber-200';
+                        const statusColor = lead.contractStatus === ContractStatus.SIGNED ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : lead.contractStatus === ContractStatus.CANCELLED ? 'text-rose-600 bg-rose-50 border-rose-200' : 'text-amber-600 bg-amber-50 border-amber-200';
                         return (
                             <div className="mb-8">
                                 <div className="flex items-center gap-2 mb-3">
@@ -476,7 +476,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                                         <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-none text-white text-[10px] font-bold ${m.status === 'PAID' ? 'bg-emerald-500' : 'bg-slate-200 text-slate-500'}`}>
                                                             {m.status === 'PAID' ? '✓' : idx + 1}
                                                         </span>
-                                                        <span className="flex-1 text-[var(--text-secondary)] truncate">{m.label || `Đợt ${idx + 1}`}</span>
+                                                        <span className="flex-1 text-[var(--text-secondary)] truncate">{m.name || `Đợt ${idx + 1}`}</span>
                                                         <span className="text-[var(--text-secondary)]">{m.dueDate ? new Date(m.dueDate).toLocaleDateString('vi-VN') : ''}</span>
                                                         <span className={`font-bold ${m.status === 'PAID' ? 'text-emerald-600' : 'text-[var(--text-primary)]'}`}>{m.amount ? m.amount.toLocaleString('vi-VN') + ' đ' : (m.percentage ? m.percentage + '%' : '')}</span>
                                                     </div>
