@@ -1,7 +1,11 @@
-import { Pool, PoolClient } from 'pg';
+import { Pool, PoolClient, types } from 'pg';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+// Parse numeric (OID 1700) and int8 (OID 20) columns as JS numbers instead of strings
+types.setTypeParser(1700, (val: string) => parseFloat(val));
+types.setTypeParser(20, (val: string) => parseInt(val, 10));
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

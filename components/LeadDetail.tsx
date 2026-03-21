@@ -465,7 +465,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         const total = schedule.length;
                         const totalPaidAmt = schedule.filter(m => m.status === 'PAID').reduce((s, m) => s + (m.paidAmount ?? m.amount ?? 0), 0);
                         const totalScheduledAmt = schedule.reduce((s, m) => s + (m.amount || 0), 0);
-                        const denominator = (effectiveValue as number) || totalScheduledAmt;
+                        const denominator = Number(effectiveValue) || totalScheduledAmt;
                         const paidPct = denominator > 0 ? Math.min(100, Math.round((totalPaidAmt / denominator) * 100)) : (total > 0 ? Math.round((paidCount / total) * 100) : 0);
                         const overdueInDetail = schedule.filter(m => m.status === 'OVERDUE' || (m.status === 'PENDING' && m.dueDate && new Date(m.dueDate) < new Date())).length;
                         const statusColor = effectiveStatus === ContractStatus.SIGNED ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : effectiveStatus === ContractStatus.CANCELLED ? 'text-rose-600 bg-rose-50 border-rose-200' : 'text-amber-600 bg-amber-50 border-amber-200';
@@ -662,8 +662,18 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                 onSuccess={async () => {
                     try {
                         const updated = await contractApi.getContractById(editingContract.id);
-                        if (updated?.paymentSchedule) {
-                            setLocalContractSchedule(updated.paymentSchedule);
+                        if (updated) {
+                            if (updated.paymentSchedule) {
+                                setLocalContractSchedule(updated.paymentSchedule);
+                            }
+                            setLocalContractInfo(prev => ({
+                                contractId: editingContract.id,
+                                contractStatus: updated.status ?? prev?.contractStatus,
+                                contractType: updated.type ?? prev?.contractType,
+                                contractValue: Number(updated.propertyPrice) || Number(updated.value) || prev?.contractValue,
+                                contractNumber: updated.contractNumber ?? prev?.contractNumber,
+                                contractPaymentSchedule: updated.paymentSchedule ?? prev?.contractPaymentSchedule,
+                            }));
                         }
                     } catch (e) {
                         console.error('Failed to refresh contract after save', e);

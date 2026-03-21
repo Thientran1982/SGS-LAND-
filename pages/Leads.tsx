@@ -339,7 +339,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                 const now = new Date();
                 const totalPaidAmt = schedule.filter((i: any) => i.status === 'PAID').reduce((s: number, i: any) => s + (i.paidAmount ?? i.amount ?? 0), 0);
                 const totalScheduledAmt = schedule.reduce((s: number, i: any) => s + (i.amount || 0), 0);
-                const denominator = (lead.contractValue as number) || totalScheduledAmt;
+                const denominator = Number(lead.contractValue) || totalScheduledAmt;
                 const pct = denominator > 0 ? Math.min(100, Math.round((totalPaidAmt / denominator) * 100)) : Math.round((schedule.filter((i: any) => i.status === 'PAID').length / schedule.length) * 100);
                 const overdueCount = schedule.filter((i: any) => i.status === 'OVERDUE' || (i.status === 'PENDING' && i.dueDate && new Date(i.dueDate) < now)).length;
                 const barColor = overdueCount > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-emerald-500' : 'bg-indigo-500';
