@@ -295,7 +295,11 @@ async function startServer() {
 
       if (!user) {
         await uniformDelay();
-        return res.json({ message: 'If an account exists, a reset link has been sent.' });
+        // Anti-enumeration: same structure as when user exists but SMTP fails
+        return res.json({
+          message: 'If an account exists, a reset link has been sent.',
+          emailStatus: 'not_sent',
+        });
       }
 
       const crypto = await import('crypto');
@@ -328,11 +332,15 @@ async function startServer() {
 
       writeAuditLog(tenantId, user.id, 'PASSWORD_RESET_REQUEST', 'auth', user.id, { email }, req.ip);
       await uniformDelay();
-      // Never expose emailStatus on public reset endpoint — it would leak account existence.
-      // Dev mode exposes devToken only (already implies user was found, acceptable in non-production).
+      // emailStatus uses a two-value vocabulary:
+      //   'sent'     — email was actually delivered
+      //   'not_sent' — covers SMTP misconfiguration AND email failure (deliberately ambiguous
+      //                so attackers cannot distinguish from the "user not found" branch above)
+      const publicEmailStatus = emailResult.status === 'sent' ? 'sent' : 'not_sent';
       const isDevMode = !isProduction && emailResult.status === 'queued_no_smtp';
       res.json({
         message: 'If an account exists, a reset link has been sent.',
+        emailStatus: publicEmailStatus,
         ...(isDevMode && { devToken: rawToken }),
       });
     } catch (error) {
