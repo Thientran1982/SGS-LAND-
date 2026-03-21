@@ -117,10 +117,14 @@ const Contracts: React.FC = () => {
     }, [page, search, typeFilter, statusFilter]);
 
     const handleDelete = async () => {
-        if (contractToDelete) {
-            await db.deleteContract(contractToDelete);
-            setContractToDelete(null);
+        if (!contractToDelete) return;
+        const id = contractToDelete;
+        setContractToDelete(null);
+        try {
+            await db.deleteContract(id);
             loadContracts();
+        } catch (error) {
+            console.error('Failed to delete contract:', error);
         }
     };
 
