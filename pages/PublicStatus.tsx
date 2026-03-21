@@ -68,7 +68,7 @@ export const PublicStatus: React.FC = () => {
                 <div className="bg-emerald-500 text-white p-8 rounded-[32px] shadow-2xl shadow-emerald-500/20 mb-12 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('status.operational')}</h1>
-                        <p className="text-emerald-100 font-medium">Cập nhật lúc: {formatDateTime(new Date().toISOString())}</p>
+                        <p className="text-emerald-100 font-medium">{t('status.updated_at')} {formatDateTime(new Date().toISOString())}</p>
                     </div>
                     <div className="w-16 h-16 bg-[var(--bg-surface)]/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
                         <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>

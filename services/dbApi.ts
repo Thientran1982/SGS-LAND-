@@ -7,7 +7,7 @@ import { userApi } from './api/userApi';
 import { analyticsApi } from './api/analyticsApi';
 import { knowledgeApi } from './api/knowledgeApi';
 import { api } from './api/apiClient';
-import { PlanTier, Plan, UserRole, ThreadStatus } from '../types';
+import { PlanTier, Plan, UserRole, ThreadStatus, ComplianceConfig } from '../types';
 import { ROUTES } from '../config/routes';
 
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
@@ -97,7 +97,10 @@ class DatabaseApiClient {
           this.cachedCurrentUser = result.user;
           return result.user;
         })
-        .catch(() => null)
+        .catch((err) => {
+          console.warn('[dbApi] getCurrentUser cache error:', err?.message || err);
+          return null;
+        })
         .finally(() => {
           this.currentUserPromise = null;
         });
@@ -412,6 +415,7 @@ class DatabaseApiClient {
         } as any : undefined,
         unreadCount: r.unreadCount || 0,
         status: ThreadStatus.AI_ACTIVE,
+        lastChannel: r.lastChannel,
       }));
     } catch {
       return [];
@@ -767,8 +771,7 @@ class DatabaseApiClient {
     const lead = await this.getLeadById(id);
     if (!lead) throw new Error('Lead not found');
     const { id: _id, createdAt, updatedAt, score, ...data } = lead;
-    const uniqueSuffix = Date.now().toString().slice(-8);
-    const placeholderPhone = `09${uniqueSuffix}`;
+    const placeholderPhone = `09${Math.floor(10000000 + Math.random() * 89999999)}`;
     return this.createLead({
       ...data,
       name: `${data.name} (Bản sao)`,
@@ -1021,7 +1024,7 @@ class DatabaseApiClient {
     try {
       return await api.get<any>('/api/billing/subscription');
     } catch {
-      return { planId: 'ENTERPRISE', status: 'ACTIVE', currentPeriodEnd: new Date(Date.now() + 30 * 86400000).toISOString() };
+      return null;
     }
   }
 
@@ -1099,7 +1102,7 @@ class DatabaseApiClient {
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
       const projectsItem = { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS };
-      core.items.splice(3, 0, projectsItem); // insert after contracts
+      (core.items as any[]).splice(3, 0, projectsItem); // insert after contracts
       return [core, ops, sys];
     } else if (role === UserRole.SALES) {
       return [core, ops];
@@ -1107,8 +1110,8 @@ class DatabaseApiClient {
     return [core];
   }
 
-  async ping() {
-    return { ok: true };
+  async ping(): Promise<boolean> {
+    return true;
   }
 
   async getAiConfig() {
@@ -1188,14 +1191,12 @@ class DatabaseApiClient {
     return { id, ...data };
   }
 
-  async getComplianceConfig() {
+  async getComplianceConfig(): Promise<ComplianceConfig> {
     return {
-      dataRetentionDays: 365,
-      auditLogEnabled: true,
-      gdprEnabled: true,
-      autoDeleteInactive: false,
-      allowedDomains: [],
-      backups: [],
+      retention: { messagesDays: 365, auditLogsDays: 730 },
+      legalHold: false,
+      dlpRules: [],
+      ipAllowlist: [],
     };
   }
 
@@ -1412,8 +1413,34 @@ class DatabaseApiClient {
     return res.json();
   }
 
-  async createBackup() {
-    return { id: `backup_${Date.now()}`, createdAt: new Date().toISOString() };
+  // ── Listing-level access (per-listing partner view permission) ──────────────
+
+  async getListingAccess(listingId: string) {
+    const res = await fetch(`/api/projects/listings/${listingId}/access`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to fetch listing access');
+    return res.json();
+  }
+
+  async grantListingAccess(listingId: string, data: { partnerTenantId: string; expiresAt?: string; note?: string }) {
+    const res = await fetch(`/api/projects/listings/${listingId}/access`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to grant listing access'); }
+    return res.json();
+  }
+
+  async revokeListingAccess(listingId: string, partnerTenantId: string) {
+    const res = await fetch(`/api/projects/listings/${listingId}/access/${partnerTenantId}`, {
+      method: 'DELETE', credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to revoke listing access');
+    return res.json();
+  }
+
+  async createBackup(): Promise<string> {
+    return JSON.stringify({ id: `backup_${Date.now()}`, createdAt: new Date().toISOString() });
   }
 
   async restoreBackup(backupId: string) {
@@ -1421,7 +1448,7 @@ class DatabaseApiClient {
   }
 
   async exportData(params: any) {
-    return { data: [], format: params?.format || 'json', exportedAt: new Date().toISOString() };
+    return { data: [], format: params?.format || 'json', exportedAt: new Date().toISOString(), newWatermark: new Date().toISOString() };
   }
 
   async updateOnboardingProgress(step: number, _completed?: boolean) {

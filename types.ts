@@ -135,6 +135,22 @@ export interface ProjectAccess {
     note?: string;              // Ghi chú điều kiện hợp tác
 }
 
+// B2B2C: Phân quyền xem từng sản phẩm (listing-level) cho partner tenant cụ thể
+// Logic: nếu listing có bất kỳ ACTIVE listing_access → chỉ partner được grant mới thấy
+//        nếu listing không có listing_access nào → mọi partner có project_access đều thấy (mặc định)
+export interface ListingAccess {
+    id: UUID;
+    listingId: UUID;
+    partnerTenantId: TenantId;
+    partnerTenantName?: string;
+    partnerTenantDomain?: string;
+    grantedBy?: UUID;
+    grantedAt: ISOString;
+    expiresAt?: ISOString;
+    status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
+    note?: string;
+}
+
 export type Permission = 
     | 'VIEW_DASHBOARD'
     | 'MANAGE_USERS'
@@ -357,6 +373,7 @@ export interface Listing {
     commissionUnit?: 'PERCENT' | 'FIXED';
     createdBy?: UserId;
     authorizedAgents?: UserId[]; // Agents granted permission to view sensitive info
+    createdAt?: ISOString;
 }
 
 // =============================================================================
@@ -728,6 +745,7 @@ export interface InboxThread {
     unreadCount: number;
     status: ThreadStatus;
     aiConfidenceLast?: number; // Snapshot of last AI confidence
+    lastChannel?: string;
 }
 
 // Updated models based on Google GenAI SDK rules (Feb 2026 Compatible)

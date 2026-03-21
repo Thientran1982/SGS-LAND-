@@ -192,8 +192,15 @@ export class StateGraph {
     async compileAndRun(initialState: AgentState): Promise<AgentState> {
         let currentState = { ...initialState };
         let currentNode = this.entryPoint;
+        const MAX_ITERATIONS = 20; // Safety: prevent infinite loops in misconfigured graphs
+        let iterations = 0;
 
         while (currentNode && currentNode !== 'END') {
+            if (++iterations > MAX_ITERATIONS) {
+                console.error(`[StateGraph] Max iterations (${MAX_ITERATIONS}) exceeded. Forcing END.`);
+                currentState.finalResponse = currentState.t('ai.msg_system_busy');
+                break;
+            }
             const nodeFunc = this.nodes.get(currentNode);
             if (!nodeFunc) throw new Error(`Node ${currentNode} not found`);
             
@@ -621,7 +628,7 @@ class AiEngine {
         rangeMax: number;
         confidence: number;
         marketTrend: string;
-        factors: { label: string; coefficient: number; impact: number; isPositive: boolean; description: string; type: 'AVM' | 'LOCATION' }[];
+        factors: { label: string; coefficient: number; impact: number; isPositive: boolean; description: string; type: 'AVM' | 'LOCATION' | 'MULTI_SOURCE' }[];
         coefficients: { Kd: number; Kp: number; Ka: number };
         formula: string;
         incomeApproach?: import('./valuationEngine').IncomeApproachResult;

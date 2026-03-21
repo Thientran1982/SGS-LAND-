@@ -29,7 +29,7 @@ function sanitizeObject(obj: any): any {
 
 export function validateUUIDParam(paramName = 'id') {
   return (req: Request, res: Response, next: NextFunction) => {
-    const val = req.params[paramName];
+    const val = String(req.params[paramName] ?? '');
     if (val && !isValidUUID(val)) {
       return res.status(400).json({ error: `Invalid ${paramName} format. Must be a valid UUID.` });
     }

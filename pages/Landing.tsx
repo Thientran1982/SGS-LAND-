@@ -202,7 +202,7 @@ export const Landing: React.FC = () => {
                 );
                 setAllListings(validListings.sort((a, b) => b.price - a.price));
             }
-        }).catch(e => console.error('Failed to load listings', e));
+        }).catch(() => { /* silent — listings fallback to empty */ });
         
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);

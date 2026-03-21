@@ -76,7 +76,7 @@ export function createAnalyticsRoutes(authenticateToken: any) {
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Only admins and team leads can delete campaign costs' });
       }
-      const { id } = req.params;
+      const { id: _id } = req.params; const id = String(_id);
       await analyticsRepository.deleteCampaignCost(user.tenantId, id);
       res.json({ success: true });
     } catch (error) {
@@ -91,7 +91,7 @@ export function createAnalyticsRoutes(authenticateToken: any) {
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Only admins and team leads can update campaign costs' });
       }
-      const { id } = req.params;
+      const { id: _id } = req.params; const id = String(_id);
       const { cost } = req.body;
       if (cost === undefined || isNaN(Number(cost))) {
         return res.status(400).json({ error: 'cost is required and must be a number' });

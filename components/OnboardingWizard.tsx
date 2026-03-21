@@ -165,7 +165,7 @@ export const OnboardingWizard: React.FC = () => {
     const handleDismiss = useCallback(async (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsVisible(false);
-        try { await db.dismissOnboarding(); } catch (err) { console.error(err); }
+        try { await db.dismissOnboarding(); } catch { /* silent */ }
     }, []);
 
     const handleStepComplete = useCallback(async (stepId: string) => {
@@ -173,7 +173,7 @@ export const OnboardingWizard: React.FC = () => {
         const nextSteps = [...state.completedSteps, stepId];
         const nextPercent = Math.round((nextSteps.length / STEP_CONFIG.length) * 100);
         setState(prev => prev ? { ...prev, completedSteps: nextSteps, percentage: nextPercent } : null);
-        try { await db.updateOnboardingProgress(stepId, true); } catch (e) { console.error(e); }
+        try { await db.updateOnboardingProgress(Number(stepId)); } catch { /* silent */ }
     }, [state]);
 
     const doneCount = useMemo(() => state?.completedSteps.length ?? 0, [state]);

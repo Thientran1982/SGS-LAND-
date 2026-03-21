@@ -7,6 +7,7 @@ import { db } from '../services/dbApi';
 import { Article, UserRole, User } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { copyToClipboard } from '../utils/clipboard';
+import { useTranslation } from '../services/i18n';
 
 const sanitizeHtml = (html: string): string => DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'span', 'div'],
@@ -35,6 +36,7 @@ const ICONS = {
 // -----------------------------------------------------------------------------
 
 const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article: Article; onBack: () => void; onEdit?: (a: Article) => void; onDelete?: (id: string) => Promise<void>; isAdmin?: boolean }) => {
+    const { t } = useTranslation();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -73,12 +75,12 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
 
     return (
         <div className="animate-enter pb-20">
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={isConfirmOpen}
-                title="Xóa tin tức"
-                message="Bạn có chắc chắn muốn xóa tin tức này? Hành động này không thể hoàn tác."
-                confirmLabel="Xóa"
-                cancelLabel="Hủy"
+                title={t('news.confirm_delete_title')}
+                message={t('news.confirm_delete_message')}
+                confirmLabel={t('common.delete')}
+                cancelLabel={t('common.cancel')}
                 onConfirm={handleDelete}
                 onCancel={() => setIsConfirmOpen(false)}
                 processing={isDeleting}
@@ -94,15 +96,15 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                         <span className="p-2 bg-[var(--bg-surface)] rounded-full shadow-sm group-hover:shadow-md border border-[var(--glass-border)] transition-all group-hover:-translate-x-1">
                             {ICONS.BACK}
                         </span>
-                        Quay lại tin tức
+                        {t('news.back_to_list')}
                     </button>
                     {isAdmin && (
                         <div className="flex gap-2">
                             <button onClick={() => onEdit && onEdit(article)} className="px-4 py-2 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors">
-                                Sửa
+                                {t('common.edit')}
                             </button>
                             <button onClick={() => setIsConfirmOpen(true)} className="px-4 py-2 bg-rose-50 text-rose-600 rounded-lg text-sm font-bold hover:bg-rose-100 transition-colors">
-                                Xóa
+                                {t('common.delete')}
                             </button>
                         </div>
                     )}
@@ -417,6 +419,7 @@ export const News: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const PAGE_SIZE = 6; // Number of articles per page (excluding featured)
+    const { t } = useTranslation();
 
     const showError = (msg: string) => {
         setErrorToast(msg);
@@ -614,7 +617,7 @@ export const News: React.FC = () => {
             <div className="max-w-6xl mx-auto px-6 py-12 animate-enter">
                 <div className="text-center mb-16 relative">
                     <span className="inline-block py-1 px-3 rounded-full bg-slate-900 text-white text-xs2 font-bold uppercase tracking-widest mb-4">
-                        Cập nhật 2026
+                        {t('news.year_badge')}
                     </span>
                     <h1 className="text-3xl md:text-6xl font-black text-[var(--text-primary)] mb-6 tracking-tight">
                         Tương Lai Bất Động Sản

@@ -213,7 +213,7 @@ const PromptsTab = memo(({
                             </button>
                         </div>
                         {lastEvalRun && (
-                            <div className="mt-3 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] text-xs font-mono text-[var(--text-secondary)] max-h-24 overflow-y-auto">
+                            <div className="mt-3 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] text-xs font-mono text-[var(--text-secondary)] max-h-24 overflow-y-auto no-scrollbar">
                                 <span className="text-emerald-600 font-bold">OUTPUT:</span> {lastEvalRun}
                             </div>
                         )}
@@ -262,8 +262,9 @@ export const AiGovernance: React.FC = () => {
             setConfig(c);
             setPrompts(p);
             setSafetyLogs(l);
-        } catch (e) { console.error(e); } 
-        finally { setLoading(false); }
+        } catch {
+            // silent — UI stays with empty state
+        } finally { setLoading(false); }
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);

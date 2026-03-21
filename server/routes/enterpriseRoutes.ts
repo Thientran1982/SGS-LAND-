@@ -517,7 +517,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
       const user = (req as any).user;
       if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can manage domains' });
 
-      const domainName = decodeURIComponent(req.params.domain);
+      const domainName = decodeURIComponent(String(req.params.domain));
       const config = await enterpriseConfigRepository.getConfig(user.tenantId);
       const domains = (config.domains || []).filter((d: any) => d.domain !== domainName);
 
@@ -548,7 +548,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
       const user = (req as any).user;
       if (user.role !== 'ADMIN') return res.status(403).json({ error: 'Only admins can verify domains' });
 
-      const domainName = decodeURIComponent(req.params.domain);
+      const domainName = decodeURIComponent(String(req.params.domain));
       const config = await enterpriseConfigRepository.getConfig(user.tenantId);
       const domainEntry = (config.domains || []).find((d: any) => d.domain === domainName);
 

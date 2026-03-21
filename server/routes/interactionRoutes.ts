@@ -18,7 +18,7 @@ export function createInteractionRoutes(authenticateToken: any) {
   router.put('/threads/:leadId/read', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      await interactionRepository.markThreadAsRead(user.tenantId, req.params.leadId);
+      await interactionRepository.markThreadAsRead(user.tenantId, String(req.params.leadId));
       res.json({ message: 'Thread marked as read' });
     } catch (error) {
       console.error('Error marking thread as read:', error);
@@ -32,7 +32,7 @@ export function createInteractionRoutes(authenticateToken: any) {
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Only admins and team leads can delete conversations' });
       }
-      const deleted = await interactionRepository.deleteConversation(user.tenantId, req.params.leadId);
+      const deleted = await interactionRepository.deleteConversation(user.tenantId, String(req.params.leadId));
       if (!deleted) return res.status(404).json({ error: 'Conversation not found' });
       res.json({ message: 'Conversation deleted' });
     } catch (error) {

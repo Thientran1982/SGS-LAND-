@@ -44,7 +44,7 @@ class RoutingRuleRepository extends BaseRepository {
         `SELECT * FROM routing_rules WHERE is_active = true ORDER BY priority ASC, created_at DESC`
       );
       for (const row of result.rows) {
-        const rule = this.rowToEntity(row);
+        const rule = this.rowToEntity<any>(row);
         const cond: any = rule.conditions || {};
 
         if (cond.source && cond.source.length > 0) {

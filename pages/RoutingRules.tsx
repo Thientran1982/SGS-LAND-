@@ -5,6 +5,7 @@ import { db } from '../services/dbApi';
 import { RoutingRule, RoutingStrategy, User, Team } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 const ICONS = {
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
@@ -117,6 +118,7 @@ export const RoutingRules: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRule, setEditingRule] = useState<RoutingRule | undefined>(undefined);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     
     // Sim State
@@ -141,20 +143,23 @@ export const RoutingRules: React.FC = () => {
             setRules(r || []);
             setUsers(u.data || []);
             setTeams(tm || []);
-        } catch (e) { console.error(e); } 
-        finally { setLoading(false); }
+        } catch {
+            // silent — UI stays with empty state
+        } finally { setLoading(false); }
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleDelete = async (id: string) => {
-        if (!confirm(t('routing.confirm_delete'))) return;
+    const handleDelete = async () => {
+        if (!deleteConfirmId) return;
         try {
-            await db.deleteRoutingRule(id);
-            setRules(prev => (prev || []).filter(r => r.id !== id));
+            await db.deleteRoutingRule(deleteConfirmId);
+            setRules(prev => (prev || []).filter(r => r.id !== deleteConfirmId));
             notify(t('routing.delete_success'), 'success');
         } catch (e) {
             notify(t('common.error'), 'error');
+        } finally {
+            setDeleteConfirmId(null);
         }
     };
 
@@ -215,7 +220,21 @@ export const RoutingRules: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* RULES LIST */}
                 <div className="lg:col-span-2 space-y-4">
-                    {rules.length === 0 && <div className="text-center p-10 text-[var(--text-secondary)] italic bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)]">{t('common.no_results')}</div>}
+                    {rules.length === 0 && (
+                        <div className="text-center py-16 px-8 bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
+                            <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4 text-indigo-400">
+                                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                            </div>
+                            <p className="font-bold text-[var(--text-primary)] mb-1">{t('routing.empty_title') || 'Chưa có quy tắc phân phối'}</p>
+                            <p className="text-sm text-[var(--text-tertiary)] mb-6">{t('routing.empty_desc') || 'Tạo quy tắc để tự động phân công lead cho đúng người, đúng lúc.'}</p>
+                            <button
+                                onClick={() => { setEditingRule(undefined); setIsModalOpen(true); }}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 text-sm"
+                            >
+                                {ICONS.ADD} {t('routing.btn_add')}
+                            </button>
+                        </div>
+                    )}
                     {rules.map(rule => (
                         <div key={rule.id} className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm hover:shadow-md transition-all group relative">
                             <div className="flex justify-between items-start mb-4">
@@ -228,7 +247,7 @@ export const RoutingRules: React.FC = () => {
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => { setEditingRule(rule); setIsModalOpen(true); }} className="p-2 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">{ICONS.EDIT}</button>
-                                    <button onClick={() => handleDelete(rule.id)} className="p-2 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">{ICONS.TRASH}</button>
+                                    <button onClick={() => setDeleteConfirmId(rule.id)} className="p-2 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">{ICONS.TRASH}</button>
                                 </div>
                             </div>
                             
@@ -300,12 +319,22 @@ export const RoutingRules: React.FC = () => {
 
             <RuleModal 
                 isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                onSave={handleSave} 
-                rule={editingRule} 
-                users={users} 
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSave}
+                rule={editingRule}
+                users={users}
                 teams={teams}
                 t={t}
+            />
+            <ConfirmModal
+                isOpen={!!deleteConfirmId}
+                title={t('common.delete')}
+                message={t('routing.confirm_delete')}
+                confirmLabel={t('common.delete')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteConfirmId(null)}
+                variant="danger"
             />
         </div>
     );

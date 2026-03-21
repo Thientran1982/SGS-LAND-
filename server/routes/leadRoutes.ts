@@ -48,7 +48,7 @@ export function createLeadRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const lead = await leadRepository.findByIdWithAccess(
-        user.tenantId, req.params.id, user.id, user.role
+        user.tenantId, String(req.params.id), user.id, user.role
       );
       if (!lead) return res.status(404).json({ error: 'Lead not found' });
       res.json(lead);
@@ -114,7 +114,7 @@ export function createLeadRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const lead = await leadRepository.update(
-        user.tenantId, req.params.id, req.body, user.id, user.role
+        user.tenantId, String(req.params.id), req.body, user.id, user.role
       );
       if (!lead) return res.status(404).json({ error: 'Lead not found or access denied' });
 
@@ -122,7 +122,7 @@ export function createLeadRoutes(authenticateToken: any) {
         actorId: user.id,
         action: 'UPDATE',
         entityType: 'LEAD',
-        entityId: req.params.id,
+        entityId: String(req.params.id),
         details: `Updated lead fields: ${Object.keys(req.body).join(', ')}`,
         ipAddress: req.ip,
       });
@@ -141,14 +141,14 @@ export function createLeadRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins and team leads can delete leads' });
       }
 
-      const deleted = await leadRepository.deleteById(user.tenantId, req.params.id);
+      const deleted = await leadRepository.deleteById(user.tenantId, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: 'Lead not found' });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'DELETE',
         entityType: 'LEAD',
-        entityId: req.params.id,
+        entityId: String(req.params.id),
         ipAddress: req.ip,
       });
 
@@ -164,7 +164,7 @@ export function createLeadRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const { interactionRepository } = await import('../repositories/interactionRepository');
       const interactions = await interactionRepository.findByLead(
-        user.tenantId, req.params.id, undefined, user.id, user.role
+        user.tenantId, String(req.params.id), undefined, user.id, user.role
       );
       res.json(interactions);
     } catch (error) {
@@ -183,7 +183,7 @@ export function createLeadRoutes(authenticateToken: any) {
       }
 
       const lead = await leadRepository.findByIdWithAccess(
-        user.tenantId, req.params.id, user.id, user.role
+        user.tenantId, String(req.params.id), user.id, user.role
       );
       if (!lead) return res.status(404).json({ error: 'Lead not found or access denied' });
 
@@ -238,7 +238,7 @@ export function createLeadRoutes(authenticateToken: any) {
 
       const { interactionRepository } = await import('../repositories/interactionRepository');
       const interaction = await interactionRepository.create(user.tenantId, {
-        leadId: req.params.id,
+        leadId: String(req.params.id),
         channel: resolvedChannel,
         direction: 'OUTBOUND',
         type: type || 'TEXT',

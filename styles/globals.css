@@ -4,7 +4,7 @@
 
 @layer base {
   h1 {
-    @apply text-2xl md:text-3xl lg:text-4xl font-bold;
+    @apply text-xl md:text-2xl lg:text-3xl font-bold;
   }
 }
 
@@ -20,6 +20,17 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Global scrollbar reset — prevents browser native scrollbars on html/body/#root */
+html, body, #root {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  display: none;
+}
+
 /* Hide scrollbars while keeping scroll functionality */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -27,28 +38,6 @@ html.dark {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-/* Elegant thin scrollbar - all screen sizes */
-.custom-scrollbar::-webkit-scrollbar {
-  display: block;
-  width: 5px;
-  height: 5px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.4);
-  border-radius: 20px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(156, 163, 175, 0.65);
-}
-.custom-scrollbar {
-  -ms-overflow-style: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
 }
 
 /* Glassmorphism utility */

@@ -89,10 +89,9 @@ export class ProposalRepository extends BaseRepository {
     metadata?: any;
   }): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
-      const discountPercent = data.basePrice > 0
-        ? (data.discountAmount || 0) / data.basePrice * 100
-        : 0;
-      const status = discountPercent <= 10 ? 'APPROVED' : 'PENDING_APPROVAL';
+      // Always require explicit approval — never auto-approve based on discount
+      // Auto-approval bypassed AML checks for high-value deals
+      const status = 'PENDING_APPROVAL';
       const token = uuidv4();
 
       const result = await client.query(
@@ -118,8 +117,9 @@ export class ProposalRepository extends BaseRepository {
 
   async updateStatus(tenantId: string, id: string, status: string): Promise<any | null> {
     return this.withTenant(tenantId, async (client) => {
+      // Defense-in-depth: explicit tenant_id filter in addition to RLS
       const result = await client.query(
-        `UPDATE proposals SET status = $1 WHERE id = $2 RETURNING *`,
+        `UPDATE proposals SET status = $1 WHERE id = $2 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid RETURNING *`,
         [status, id]
       );
       return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;

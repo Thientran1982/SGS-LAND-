@@ -320,10 +320,11 @@ async function startServer() {
       const crypto = await import('crypto');
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
+      // Retrieve tenant_id from the token table itself — avoids a second cross-tenant pool.query()
       const result = await pool.query(
         `UPDATE password_reset_tokens SET used_at = NOW()
          WHERE token = $1 AND used_at IS NULL AND expires_at > NOW()
-         RETURNING user_id`,
+         RETURNING user_id, tenant_id`,
         [tokenHash]
       );
 
@@ -332,12 +333,7 @@ async function startServer() {
       }
 
       const userId = result.rows[0].user_id;
-
-      const userResult = await pool.query(`SELECT tenant_id FROM users WHERE id = $1`, [userId]);
-      if (userResult.rows.length === 0) {
-        return res.status(400).json({ error: 'User not found' });
-      }
-      const tenantId = userResult.rows[0].tenant_id;
+      const tenantId = result.rows[0].tenant_id;
 
       await userRepository.updatePassword(tenantId, userId, newPassword);
 
@@ -386,9 +382,9 @@ async function startServer() {
         const tenantId = (req as any).tenantId;
         try {
           await leadRepository.update(tenantId, leadData.id, {
-            score: { score: result.score || result.totalScore, grade: result.grade, reasoning: result.reasoning },
+            score: { score: result.score || (result as any).totalScore, grade: result.grade, reasoning: result.reasoning },
           }, (req as any).user?.id, (req as any).user?.role || 'ADMIN');
-          logger.info(`AI score persisted for lead ${leadData.id}: ${result.score || result.totalScore}`);
+          logger.info(`AI score persisted for lead ${leadData.id}: ${result.score || (result as any).totalScore}`);
         } catch (e) {
           logger.warn(`Could not persist AI score for lead ${leadData.id}`);
         }
@@ -687,13 +683,13 @@ async function startServer() {
 
   app.get('/api/public/listings/:id', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const listing = await listingRepository.findById(PUBLIC_TENANT, req.params.id);
+      const listing = await listingRepository.findById(PUBLIC_TENANT, String(req.params.id));
       if (!listing) return res.status(404).json({ error: 'Listing not found' }) as any;
       res.json(listing);
       // Increment view count and log visitor in background (non-blocking)
       const ip = getClientIp(req);
       Promise.all([
-        listingRepository.incrementViewCount(PUBLIC_TENANT, req.params.id),
+        listingRepository.incrementViewCount(PUBLIC_TENANT, String(req.params.id)),
         lookupIp(ip).then(geo => visitorRepository.log({
           tenantId: PUBLIC_TENANT,
           ipAddress: ip,
@@ -705,7 +701,7 @@ async function startServer() {
           lon: geo?.lon,
           isp: geo?.isp,
           page: `/listings/${req.params.id}`,
-          listingId: req.params.id,
+          listingId: String(req.params.id),
           userAgent: req.headers['user-agent'],
           referrer: req.headers['referer'],
         })),
@@ -727,7 +723,8 @@ async function startServer() {
         source: source || 'WEBSITE',
         stage: stage || 'NEW',
       });
-      res.status(201).json(lead);
+      // Return only non-sensitive confirmation — never expose PII to anonymous callers
+      res.status(201).json({ id: lead.id, success: true });
     } catch (error) {
       console.error('Error creating public lead:', error);
       res.status(500).json({ error: 'Không thể tạo yêu cầu, vui lòng thử lại' });
@@ -785,7 +782,7 @@ async function startServer() {
 
   app.get('/api/public/articles/:id', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const article = await articleRepository.findById(PUBLIC_TENANT, req.params.id);
+      const article = await articleRepository.findById(PUBLIC_TENANT, String(req.params.id));
       if (!article) return res.status(404).json({ error: 'Article not found' }) as any;
       res.json(article);
     } catch (error) {
@@ -820,6 +817,7 @@ async function startServer() {
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
 
   app.get("/api/health", async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     try {
       const health = await systemService.checkHealth();
 
@@ -839,10 +837,36 @@ async function startServer() {
         components.database.status = 'down';
       }
 
+      // Migration version
+      let migrationVersion: string | null = null;
+      try {
+        const migResult = await pool.query('SELECT version FROM schema_versions ORDER BY id DESC LIMIT 1');
+        migrationVersion = migResult.rows[0]?.version ?? null;
+      } catch { /* schema_versions may not exist yet */ }
+
+      // Queue depth (BullMQ only)
+      let queueDepth: number | null = null;
+      try {
+        if (webhookQueue?.getWaitingCount) {
+          queueDepth = await webhookQueue.getWaitingCount();
+        }
+      } catch { /* ignore */ }
+
+      // Memory usage
+      const mem = process.memoryUsage();
+      const memoryUsage = {
+        rss_mb: Math.round(mem.rss / 1024 / 1024),
+        heap_used_mb: Math.round(mem.heapUsed / 1024 / 1024),
+        heap_total_mb: Math.round(mem.heapTotal / 1024 / 1024),
+      };
+
       res.json({
         ...health,
         components,
         connectedClients: io.engine?.clientsCount || 0,
+        migration_version: migrationVersion,
+        queue_depth: queueDepth,
+        memory_usage: memoryUsage,
         lastChecked: new Date().toISOString(),
       });
     } catch (error) {
@@ -1161,6 +1185,7 @@ async function startServer() {
         const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
         io.to(room).emit("active_viewers", uniqueUsers);
       }
+      socket.removeAllListeners();
     });
   });
 

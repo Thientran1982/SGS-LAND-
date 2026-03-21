@@ -29,7 +29,7 @@ export function createContractRoutes(authenticateToken: any) {
   router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const contract = await contractRepository.findById(user.tenantId, req.params.id);
+      const contract = await contractRepository.findById(user.tenantId, String(req.params.id));
       if (!contract) return res.status(404).json({ error: 'Contract not found' });
 
       const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
@@ -88,7 +88,7 @@ export function createContractRoutes(authenticateToken: any) {
       const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
 
       // Fetch the contract for state machine and ownership checks
-      const current = await contractRepository.findById(user.tenantId, req.params.id);
+      const current = await contractRepository.findById(user.tenantId, String(req.params.id));
       if (!current) return res.status(404).json({ error: 'Contract not found' });
 
       if (RESTRICTED.includes(user.role) && (current as any).createdById !== user.id) {
@@ -107,14 +107,14 @@ export function createContractRoutes(authenticateToken: any) {
         }
       }
 
-      const contract = await contractRepository.update(user.tenantId, req.params.id, req.body);
+      const contract = await contractRepository.update(user.tenantId, String(req.params.id), req.body);
       if (!contract) return res.status(404).json({ error: 'Contract not found' });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: 'UPDATE',
         entityType: 'CONTRACT',
-        entityId: req.params.id,
+        entityId: String(req.params.id),
         details: `Updated contract fields: ${Object.keys(req.body).join(', ')}`,
         ipAddress: req.ip,
       });
