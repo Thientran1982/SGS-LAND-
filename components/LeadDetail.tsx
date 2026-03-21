@@ -134,6 +134,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     const [isSending, setIsSending] = useState(false);
     const [isContractModalOpen, setIsContractModalOpen] = useState(false);
     const [editingContract, setEditingContract] = useState<Contract | null>(null);
+    const [editingContractInitialTab, setEditingContractInitialTab] = useState<'parties' | 'property' | 'terms' | 'schedule'>('schedule');
+    const [localContractSchedule, setLocalContractSchedule] = useState<PaymentMilestone[] | null>(null);
     const [loadingEditContract, setLoadingEditContract] = useState(false);
     const [activeViewers, setActiveViewers] = useState<any[]>([]);
     const { t, formatDateTime, language } = useTranslation();
@@ -156,6 +158,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     useEffect(() => {
         setFormData({ ...lead });
         setErrors({});
+        setLocalContractSchedule(null);
         
         const load = async () => {
             const history = await db.getInteractions(lead.id);
@@ -416,7 +419,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                     </div>
 
                     {lead.contractId && (() => {
-                        const schedule: PaymentMilestone[] = lead.contractPaymentSchedule || [];
+                        const schedule: PaymentMilestone[] = localContractSchedule ?? lead.contractPaymentSchedule ?? [];
                         const paid = schedule.filter(m => m.status === 'PAID').length;
                         const total = schedule.length;
                         const paidPct = total > 0 ? Math.round((paid / total) * 100) : 0;
@@ -445,6 +448,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                                 setLoadingEditContract(true);
                                                 try {
                                                     const full = await contractApi.getContractById(lead.contractId!);
+                                                    setEditingContractInitialTab('schedule');
                                                     setEditingContract(full);
                                                 } catch (e) {
                                                     console.error('Failed to load contract', e);
@@ -564,8 +568,17 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         {editingContract && (
             <ContractModal
                 contract={editingContract}
+                initialTab={editingContractInitialTab}
                 onClose={() => setEditingContract(null)}
-                onSuccess={() => {
+                onSuccess={async () => {
+                    try {
+                        const updated = await contractApi.getContractById(editingContract.id);
+                        if (updated?.paymentSchedule) {
+                            setLocalContractSchedule(updated.paymentSchedule);
+                        }
+                    } catch (e) {
+                        console.error('Failed to refresh contract after save', e);
+                    }
                     setEditingContract(null);
                 }}
             />

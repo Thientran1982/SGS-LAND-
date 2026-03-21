@@ -9,6 +9,7 @@ import { PaymentScheduleEditor } from './PaymentScheduleEditor';
 interface ContractModalProps {
     contract?: Contract | null;
     initialData?: Partial<Contract>;
+    initialTab?: TabId;
     onClose: () => void;
     onSuccess: () => void;
 }
@@ -70,10 +71,10 @@ const TABS: Tab[] = [
     },
 ];
 
-export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialData, onClose, onSuccess }) => {
+export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialData, initialTab, onClose, onSuccess }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<TabId>('parties');
+    const [activeTab, setActiveTab] = useState<TabId>(initialTab || 'parties');
     const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
