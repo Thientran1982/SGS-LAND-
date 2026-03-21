@@ -136,6 +136,14 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     const [editingContract, setEditingContract] = useState<Contract | null>(null);
     const [editingContractInitialTab, setEditingContractInitialTab] = useState<'parties' | 'property' | 'terms' | 'schedule'>('schedule');
     const [localContractSchedule, setLocalContractSchedule] = useState<PaymentMilestone[] | null>(null);
+    const [localContractInfo, setLocalContractInfo] = useState<{
+        contractId: string;
+        contractStatus?: string;
+        contractType?: string;
+        contractValue?: number;
+        contractNumber?: string;
+        contractPaymentSchedule?: PaymentMilestone[];
+    } | null>(null);
     const [loadingEditContract, setLoadingEditContract] = useState(false);
     const [activeViewers, setActiveViewers] = useState<any[]>([]);
     const { t, formatDateTime, language } = useTranslation();
@@ -159,6 +167,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         setFormData({ ...lead });
         setErrors({});
         setLocalContractSchedule(null);
+        setLocalContractInfo(null);
         
         const load = async () => {
             const history = await db.getInteractions(lead.id);
@@ -418,12 +427,44 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                         </DetailField>
                     </div>
 
-                    {lead.contractId && (() => {
-                        const schedule: PaymentMilestone[] = localContractSchedule ?? lead.contractPaymentSchedule ?? [];
+                    {(() => {
+                        const effectiveContractId = localContractInfo?.contractId ?? lead.contractId;
+                        const effectiveStatus = localContractInfo?.contractStatus ?? lead.contractStatus;
+                        const effectiveType = localContractInfo?.contractType ?? lead.contractType;
+                        const effectiveValue = localContractInfo?.contractValue ?? lead.contractValue;
+                        const effectiveNumber = localContractInfo?.contractNumber ?? lead.contractNumber;
+
+                        if (!effectiveContractId) {
+                            return (
+                                <div className="mb-8">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <h4 className="font-bold text-xs text-[var(--text-secondary)] uppercase tracking-widest">{t('detail.linked_contracts') || 'Hợp đồng liên kết'}</h4>
+                                        <div className="h-px bg-slate-200 flex-1"></div>
+                                    </div>
+                                    <div className="bg-[var(--bg-surface)] border-2 border-dashed border-[var(--glass-border)] rounded-2xl p-6 text-center">
+                                        <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                        </div>
+                                        <p className="text-sm font-bold text-[var(--text-secondary)] mb-1">{t('detail.no_contract_title') || 'Chưa có hợp đồng'}</p>
+                                        <p className="text-xs text-[var(--text-tertiary)] mb-4">{t('detail.no_contract_desc') || 'Tạo hợp đồng để quản lý tiến độ thanh toán'}</p>
+                                        <button
+                                            type="button"
+                                            onClick={handleCreateContract}
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs hover:bg-emerald-700 transition-colors shadow-sm active:scale-95"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                            {t('detail.create_contract') || 'Tạo hợp đồng'}
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        const schedule: PaymentMilestone[] = localContractSchedule ?? localContractInfo?.contractPaymentSchedule ?? lead.contractPaymentSchedule ?? [];
                         const paid = schedule.filter(m => m.status === 'PAID').length;
                         const total = schedule.length;
                         const paidPct = total > 0 ? Math.round((paid / total) * 100) : 0;
-                        const statusColor = lead.contractStatus === ContractStatus.SIGNED ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : lead.contractStatus === ContractStatus.CANCELLED ? 'text-rose-600 bg-rose-50 border-rose-200' : 'text-amber-600 bg-amber-50 border-amber-200';
+                        const statusColor = effectiveStatus === ContractStatus.SIGNED ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : effectiveStatus === ContractStatus.CANCELLED ? 'text-rose-600 bg-rose-50 border-rose-200' : 'text-amber-600 bg-amber-50 border-amber-200';
                         return (
                             <div className="mb-8">
                                 <div className="flex items-center gap-2 mb-3">
@@ -434,12 +475,12 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                     <div className="flex items-start justify-between gap-2 mb-3">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="font-bold text-sm text-[var(--text-primary)] truncate">{lead.contractNumber || `HĐ-${lead.contractId?.slice(-6)}`}</span>
-                                                {lead.contractStatus && <span className={`px-2 py-0.5 rounded-lg text-xs font-bold border ${statusColor}`}>{t(`contract_status.${lead.contractStatus}`) || lead.contractStatus}</span>}
+                                                <span className="font-bold text-sm text-[var(--text-primary)] truncate">{effectiveNumber || `HĐ-${effectiveContractId?.slice(-6)}`}</span>
+                                                {effectiveStatus && <span className={`px-2 py-0.5 rounded-lg text-xs font-bold border ${statusColor}`}>{t(`contract_status.${effectiveStatus}`) || effectiveStatus}</span>}
                                             </div>
                                             <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                                                {lead.contractType ? (t(`contract_type.${lead.contractType}`) || lead.contractType) : ''}
-                                                {lead.contractValue ? ` · ${lead.contractValue.toLocaleString('vi-VN')} đ` : ''}
+                                                {effectiveType ? (t(`contract_type.${effectiveType}`) || effectiveType) : ''}
+                                                {effectiveValue ? ` · ${effectiveValue.toLocaleString('vi-VN')} đ` : ''}
                                             </p>
                                         </div>
                                         <button
@@ -447,7 +488,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                                             onClick={async () => {
                                                 setLoadingEditContract(true);
                                                 try {
-                                                    const full = await contractApi.getContractById(lead.contractId!);
+                                                    const full = await contractApi.getContractById(effectiveContractId!);
                                                     setEditingContractInitialTab('schedule');
                                                     setEditingContract(full);
                                                 } catch (e) {
@@ -560,8 +601,25 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
                 onClose={() => setIsContractModalOpen(false)}
                 onSuccess={async () => {
                     setIsContractModalOpen(false);
-                    setFormData(prev => ({ ...prev, stage: LeadStage.WON }));
-                    await onUpdate({ ...formData, stage: LeadStage.WON });
+                    try {
+                        const refreshedLead = await db.getLeadById(lead.id);
+                        if (refreshedLead?.contractId) {
+                            setLocalContractInfo({
+                                contractId: refreshedLead.contractId,
+                                contractStatus: refreshedLead.contractStatus ?? undefined,
+                                contractType: refreshedLead.contractType ?? undefined,
+                                contractValue: refreshedLead.contractValue ?? undefined,
+                                contractNumber: refreshedLead.contractNumber ?? undefined,
+                                contractPaymentSchedule: refreshedLead.contractPaymentSchedule ?? undefined,
+                            });
+                        }
+                        const stageUpdate = { stage: LeadStage.WON };
+                        setFormData(prev => ({ ...prev, ...stageUpdate }));
+                        await db.updateLead(lead.id, stageUpdate as any);
+                        socket?.emit("lead_updated", { ...refreshedLead, ...stageUpdate });
+                    } catch (e) {
+                        console.error('Failed to refresh lead after contract creation', e);
+                    }
                 }}
             />
         )}
