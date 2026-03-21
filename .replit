@@ -42,7 +42,7 @@ localPort = 24678
 externalPort = 3000
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "vm"
 run = ["node", "server.js"]
 build = ["npm", "run", "build"]
 
@@ -58,5 +58,4 @@ NODE_ENV = "development"
 [userenv.production]
 NODE_ENV = "production"
 PORT = "5000"
-ALLOWED_ORIGINS = "https://*.replit.app,https://*.replit.dev"
 # JWT_SECRET must be set via Replit Secrets (not here) — see replit.md for setup instructions

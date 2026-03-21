@@ -10059,18 +10059,24 @@ function createProjectRoutes(authenticateToken) {
 // server/middleware/security.ts
 import crypto2 from "crypto";
 function securityHeaders(req, res, next) {
+  const isProduction = process.env.NODE_ENV === "production";
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
   res.setHeader("X-XSS-Protection", "1; mode=block");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-  res.setHeader(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' ws: wss: https://generativelanguage.googleapis.com; frame-ancestors 'none';"
-  );
-  if (process.env.NODE_ENV === "production") {
+  if (isProduction) {
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' wss: https://generativelanguage.googleapis.com; frame-ancestors 'none';"
+    );
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  } else {
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' ws: wss: https://generativelanguage.googleapis.com; frame-ancestors 'none';"
+    );
   }
   next();
 }
@@ -10082,6 +10088,7 @@ function corsMiddleware(req, res, next) {
     if (allowedOrigins.includes(origin)) {
       res.setHeader("Access-Control-Allow-Origin", origin);
     }
+  } else if (isProduction && !allowedOrigins) {
   } else if (!isProduction) {
     const devOrigin = origin || "http://localhost:5000";
     res.setHeader("Access-Control-Allow-Origin", devOrigin);
@@ -10097,22 +10104,24 @@ function corsMiddleware(req, res, next) {
 }
 function verifyWebhookSignature(platform) {
   return (req, res, next) => {
-    if (process.env.NODE_ENV !== "production") {
-      return next();
-    }
+    const isProduction = process.env.NODE_ENV === "production";
     const rawBody = req.rawBody;
     if (platform === "facebook") {
       const signature = req.headers["x-hub-signature-256"];
       const appSecret = process.env.FB_APP_SECRET;
       if (!appSecret) {
-        return res.status(500).json({ error: "Webhook secret not configured" });
+        if (isProduction) {
+          return res.status(500).json({ error: "Webhook secret not configured" });
+        }
+        console.warn("[Security] FB_APP_SECRET not set \u2014 skipping Facebook webhook verification (dev only)");
+        return next();
       }
       if (!signature) {
         return res.status(401).json({ error: "Missing webhook signature" });
       }
       const body = rawBody || Buffer.from(JSON.stringify(req.body));
       const expectedSignature = "sha256=" + crypto2.createHmac("sha256", appSecret).update(body).digest("hex");
-      if (!crypto2.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+      if (signature.length !== expectedSignature.length || !crypto2.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
         return res.status(403).json({ error: "Invalid webhook signature" });
       }
     }
@@ -10120,14 +10129,18 @@ function verifyWebhookSignature(platform) {
       const signature = req.headers["x-zalo-signature"];
       const oaSecret = process.env.ZALO_OA_SECRET;
       if (!oaSecret) {
-        return res.status(500).json({ error: "Webhook secret not configured" });
+        if (isProduction) {
+          return res.status(500).json({ error: "Webhook secret not configured" });
+        }
+        console.warn("[Security] ZALO_OA_SECRET not set \u2014 skipping Zalo webhook verification (dev only)");
+        return next();
       }
       if (!signature) {
         return res.status(401).json({ error: "Missing webhook signature" });
       }
       const body = rawBody || Buffer.from(JSON.stringify(req.body));
       const mac = crypto2.createHmac("sha256", oaSecret).update(body).digest("hex");
-      if (!crypto2.timingSafeEqual(Buffer.from(mac), Buffer.from(signature))) {
+      if (mac.length !== signature.length || !crypto2.timingSafeEqual(Buffer.from(mac), Buffer.from(signature))) {
         return res.status(403).json({ error: "Invalid webhook signature" });
       }
     }
@@ -10424,6 +10437,21 @@ async function startServer() {
     console.warn("WARNING: JWT_SECRET not set. Generating a random secret for this session. Set JWT_SECRET env var for production.");
   }
   const JWT_SECRET = process.env.JWT_SECRET || (await import("crypto")).randomBytes(64).toString("hex");
+  if (isProduction) {
+    if (!process.env.ALLOWED_ORIGINS) {
+      logger.warn("ALLOWED_ORIGINS not set \u2014 CORS will block all cross-origin requests in production. Set it to your deployment domain (e.g. https://yourdomain.replit.app).");
+    }
+    if (!process.env.REDIS_URL) {
+      logger.warn("REDIS_URL not set \u2014 rate limiting uses in-memory store. Not safe for multi-instance deployments. Set REDIS_URL for production scale-out.");
+    }
+    if (!process.env.GEMINI_API_KEY && !process.env.API_KEY) {
+      logger.warn("GEMINI_API_KEY not set \u2014 all AI features (chat, valuation, lead scoring) will be unavailable.");
+    }
+    const hasEmailAuth = !!(process.env.EMAIL_MAILGUN_SIGNING_KEY || process.env.EMAIL_SENDGRID_WEBHOOK_KEY || process.env.EMAIL_POSTMARK_WEBHOOK_TOKEN || process.env.EMAIL_WEBHOOK_TOKEN);
+    if (!hasEmailAuth) {
+      logger.warn("No email webhook auth configured \u2014 /api/webhooks/email will reject all requests in production. Set EMAIL_MAILGUN_SIGNING_KEY, EMAIL_SENDGRID_WEBHOOK_KEY, EMAIL_POSTMARK_WEBHOOK_TOKEN, or EMAIL_WEBHOOK_TOKEN.");
+    }
+  }
   app.use((req, res, next) => {
     let tenantId = DEFAULT_TENANT_ID;
     const token = req.cookies?.token;
@@ -10783,7 +10811,14 @@ async function startServer() {
       res.status(500).json({ error: "AI embedding failed" });
     }
   });
-  const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()) : void 0;
+  let allowedOrigins;
+  if (process.env.ALLOWED_ORIGINS) {
+    const raw = process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean);
+    if (isProduction && raw.includes("*")) {
+      throw new Error("FATAL: ALLOWED_ORIGINS must not include '*' in production. Set it to explicit domain(s), e.g. https://yourapp.replit.app");
+    }
+    allowedOrigins = raw.length > 0 ? raw : void 0;
+  }
   const server = http.createServer(app);
   const io = new Server(server, {
     cors: {
@@ -10859,7 +10894,7 @@ async function startServer() {
       return;
     }
   });
-  setupWebhookWorker(io);
+  const webhookWorker = setupWebhookWorker(io);
   marketDataService.start(io);
   if (process.env.REDIS_URL) {
     try {
@@ -11170,11 +11205,69 @@ async function startServer() {
   });
   app.post("/api/webhooks/email", webhookRateLimit, async (req, res) => {
     try {
-      const configuredToken = process.env.EMAIL_WEBHOOK_TOKEN;
-      if (configuredToken) {
-        const incoming = req.headers["x-webhook-token"] || req.headers["x-mail-token"] || req.query.token;
-        if (incoming !== configuredToken) {
-          return res.status(403).json({ error: "Invalid webhook token" });
+      const { createHmac, timingSafeEqual: timingSafeEqual2 } = await import("crypto");
+      const emailIsProduction = process.env.NODE_ENV === "production";
+      const rawBody = req.rawBody || Buffer.from(JSON.stringify(req.body));
+      const mailgunKey = process.env.EMAIL_MAILGUN_SIGNING_KEY;
+      const sendgridKey = process.env.EMAIL_SENDGRID_WEBHOOK_KEY;
+      const postmarkToken = process.env.EMAIL_POSTMARK_WEBHOOK_TOKEN;
+      const genericToken = process.env.EMAIL_WEBHOOK_TOKEN;
+      const hasAnyConfig = !!(mailgunKey || sendgridKey || postmarkToken || genericToken);
+      if (!hasAnyConfig) {
+        if (emailIsProduction) {
+          return res.status(500).json({ error: "Email webhook authentication not configured" });
+        }
+        logger.warn("[Email Webhook] No auth config set \u2014 accepting request (dev only). Set EMAIL_MAILGUN_SIGNING_KEY, EMAIL_SENDGRID_WEBHOOK_KEY, EMAIL_POSTMARK_WEBHOOK_TOKEN, or EMAIL_WEBHOOK_TOKEN for production.");
+      } else {
+        let verified = false;
+        if (!verified && mailgunKey) {
+          const sig = req.headers["x-mailgun-signature-256"];
+          if (sig) {
+            const expected = createHmac("sha256", mailgunKey).update(rawBody).digest("hex");
+            try {
+              verified = sig.length === expected.length && timingSafeEqual2(Buffer.from(sig), Buffer.from(expected));
+            } catch {
+              verified = false;
+            }
+          }
+        }
+        if (!verified && sendgridKey) {
+          const sig = req.headers["x-twilio-email-event-webhook-signature"];
+          if (sig) {
+            const ts = req.headers["x-twilio-email-event-webhook-timestamp"];
+            const payload = ts ? ts + rawBody.toString() : rawBody.toString();
+            const expected = createHmac("sha256", sendgridKey).update(payload).digest("base64");
+            const incoming = Buffer.from(sig, "base64").toString("base64");
+            try {
+              verified = incoming.length === expected.length && timingSafeEqual2(Buffer.from(incoming), Buffer.from(expected));
+            } catch {
+              verified = false;
+            }
+          }
+        }
+        if (!verified && postmarkToken) {
+          const sig = req.headers["x-postmark-signature"] || req.headers["x-postmark-server-token"];
+          if (sig) {
+            try {
+              verified = sig.length === postmarkToken.length && timingSafeEqual2(Buffer.from(sig), Buffer.from(postmarkToken));
+            } catch {
+              verified = false;
+            }
+          }
+        }
+        if (!verified && genericToken) {
+          const incoming = req.headers["x-webhook-token"] || req.headers["x-mail-token"] || req.query.token;
+          if (incoming) {
+            try {
+              verified = incoming.length === genericToken.length && timingSafeEqual2(Buffer.from(incoming), Buffer.from(genericToken));
+            } catch {
+              verified = false;
+            }
+          }
+        }
+        if (!verified) {
+          logger.warn("[Email Webhook] Signature/token verification failed");
+          return res.status(403).json({ error: "Invalid webhook signature" });
         }
       }
       const body = req.body;
@@ -11354,8 +11447,18 @@ async function startServer() {
   });
   const shutdown = async (signal) => {
     logger.info(`Received ${signal}. Shutting down gracefully...`);
+    try {
+      await new Promise((resolve) => io.close(() => resolve()));
+      logger.info("Socket.io closed.");
+    } catch (e) {
+    }
     server.close(async () => {
       logger.info("HTTP server closed.");
+      try {
+        await webhookWorker.close();
+        logger.info("BullMQ worker closed.");
+      } catch (e) {
+      }
       try {
         await webhookQueue.close();
         logger.info("BullMQ queue closed.");
