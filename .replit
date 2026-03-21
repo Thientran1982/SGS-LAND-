@@ -49,4 +49,5 @@ build = ["npm", "run", "build"]
 [userenv]
 
 [userenv.shared]
+NODE_ENV = "development"
 # JWT_SECRET must be set via Replit Secrets (not here) — see replit.md for setup instructions
