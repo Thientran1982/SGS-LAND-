@@ -1177,6 +1177,8 @@ export interface Contract {
     handoverCondition?: string; // Tình trạng bàn giao
     disputeResolution?: string; // Giải quyết tranh chấp
 
+    signedAt?: ISOString;    // Ngày ký (mapped from signed_at)
+
     createdAt: ISOString;
     updatedAt: ISOString;
     createdBy: string;
