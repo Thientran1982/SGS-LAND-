@@ -131,11 +131,6 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
     const handleExportPDF = async () => {
         if (!contract) return;
         setExporting(true);
-        // Inject CSS to hide blank field borders for a clean PDF
-        const cleanStyle = document.createElement('style');
-        cleanStyle.id = 'pdf-clean-mode';
-        cleanStyle.textContent = '.blank-field-border { border-bottom: none !important; } .contract-divider { display: none !important; }';
-        document.head.appendChild(cleanStyle);
         try {
             const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
                 import('html2canvas'),
@@ -144,31 +139,50 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
             if (!contractRef.current) return;
             await document.fonts.ready;
             window.scrollTo(0, 0);
-            await new Promise(r => setTimeout(r, 300));
+            await new Promise(r => setTimeout(r, 400));
 
-            const canvas = await html2canvas(contractRef.current, {
+            // Inject clean CSS right before capture (minimal reflow time)
+            const cleanStyle = document.createElement('style');
+            cleanStyle.id = 'pdf-clean-mode';
+            cleanStyle.textContent = '.blank-field-border { border-bottom: none !important; } .contract-divider { display: none !important; }';
+            document.head.appendChild(cleanStyle);
+
+            // Give browser a frame to apply the style before capture
+            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+            const el = contractRef.current;
+            const fullWidth = el.offsetWidth;
+            const fullHeight = el.scrollHeight;
+
+            const canvas = await html2canvas(el, {
                 scale: 2,
                 useCORS: true,
+                allowTaint: true,
                 logging: false,
                 backgroundColor: '#ffffff',
-                scrollY: 0,
-                windowWidth: contractRef.current.scrollWidth,
-                windowHeight: contractRef.current.scrollHeight,
+                scrollX: 0,
+                scrollY: -window.scrollY,
+                x: 0,
+                y: 0,
+                width: fullWidth,
+                height: fullHeight,
+                windowWidth: fullWidth,
+                windowHeight: fullHeight,
             });
 
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             const W = pdf.internal.pageSize.getWidth();
             const H = pdf.internal.pageSize.getHeight();
             const imgH = (canvas.height * W) / canvas.width;
-            let left = imgH;
-            let pos = 0;
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, pos, W, imgH);
-            left -= H;
-            while (left > 1) {
-                pos -= H;
+            let remaining = imgH;
+            let yOffset = 0;
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, yOffset, W, imgH);
+            remaining -= H;
+            while (remaining > 1) {
+                yOffset -= H;
                 pdf.addPage();
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, pos, W, imgH);
-                left -= H;
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, yOffset, W, imgH);
+                remaining -= H;
             }
             pdf.save(`HopDong_${contract.id.slice(0, 8).toUpperCase()}.pdf`);
         } catch (err) {
@@ -176,9 +190,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
             setErrorMsg('Xuất PDF thất bại. Hãy dùng In (Ctrl+P) → Save as PDF.');
             setTimeout(() => setErrorMsg(null), 5000);
         } finally {
-            // Remove clean mode style to restore blank field borders in browser view
-            const el = document.getElementById('pdf-clean-mode');
-            if (el) el.remove();
+            document.getElementById('pdf-clean-mode')?.remove();
             setExporting(false);
         }
     };
@@ -600,6 +612,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
             {/* Print CSS */}
             <style>{`
                 @media print {
+                    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     body { margin: 0; background: #fff !important; }
                     .no-print { display: none !important; }
                     .blank-field-border { border-bottom: none !important; }
@@ -613,14 +626,14 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                         max-width: 100% !important;
                         box-shadow: none !important;
                         border-radius: 0 !important;
-                        padding: 0 !important;
+                        /* Giữ nguyên padding để layout khớp với giao diện xem */
                     }
                     table { page-break-inside: avoid; }
                     tr { page-break-inside: avoid; }
-                    h3, p { orphans: 3; widows: 3; }
+                    p, div { orphans: 3; widows: 3; }
                     @page {
                         size: A4 portrait;
-                        margin: 20mm 18mm;
+                        margin: 5mm 0;
                     }
                 }
             `}</style>
