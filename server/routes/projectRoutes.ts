@@ -8,12 +8,12 @@ export function createProjectRoutes(authenticateToken: any) {
   const router = Router();
 
   // GET /api/projects — list projects
-  // Developer: sees own projects; Partner: sees accessible projects
+  // ADMIN: all tenant projects; PARTNER_ADMIN: all tenant projects (read-only); PARTNER_AGENT: accessible via project_access only
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
 
-      if (PARTNER_ROLES.includes(user.role)) {
+      if (user.role === 'PARTNER_AGENT') {
         const projects = await projectRepository.findAccessibleProjects(user.tenantId);
         return res.json({ data: projects, total: projects.length, page: 1, pageSize: projects.length });
       }
@@ -51,7 +51,7 @@ export function createProjectRoutes(authenticateToken: any) {
       const user = (req as any).user;
       const id = req.params.id as string;
 
-      if (PARTNER_ROLES.includes(user.role)) {
+      if (user.role === 'PARTNER_AGENT') {
         const hasAccess = await projectRepository.checkPartnerAccess(user.tenantId, id);
         if (!hasAccess) return res.status(403).json({ error: 'Không có quyền truy cập dự án này' });
         const projects = await projectRepository.findAccessibleProjects(user.tenantId);

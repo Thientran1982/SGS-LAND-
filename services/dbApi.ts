@@ -1097,7 +1097,15 @@ class DatabaseApiClient {
       { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
     ]};
 
-    if (role === 'PARTNER_ADMIN' || role === 'PARTNER_AGENT') {
+    const partnerAdminCore = { id: 'partner-core', labelKey: 'menu.partner_core', items: [
+      { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
+      { id: 'proj', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
+    ]};
+
+    if (role === 'PARTNER_ADMIN') {
+      return [partnerAdminCore];
+    }
+    if (role === 'PARTNER_AGENT') {
       return [partnerCore];
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {

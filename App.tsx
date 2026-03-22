@@ -53,6 +53,7 @@ const Dashboard = lazyLoad(() => import('./pages/Dashboard'), 'Dashboard');
 const Leads = lazyLoad(() => import('./pages/Leads'), 'Leads');
 const Contracts = lazyLoad(() => import('./pages/Contracts'), 'Contracts');
 const Inventory = lazyLoad(() => import('./pages/Inventory'), 'Inventory');
+const Projects = lazyLoad(() => import('./pages/Projects'), 'Projects');
 const Favorites = lazyLoad(() => import('./pages/Favorites'), 'Favorites');
 const Inbox = lazyLoad(() => import('./pages/Inbox'), 'Inbox');
 const Reports = lazyLoad(() => import('./pages/Reports'), 'Reports');
@@ -83,6 +84,7 @@ registerPrefetch(ROUTES.DASHBOARD,            () => import('./pages/Dashboard'))
 registerPrefetch(ROUTES.LEADS,               () => import('./pages/Leads'));
 registerPrefetch(ROUTES.CONTRACTS,           () => import('./pages/Contracts'));
 registerPrefetch(ROUTES.INVENTORY,           () => import('./pages/Inventory'));
+registerPrefetch(ROUTES.PROJECTS,            () => import('./pages/Projects'));
 registerPrefetch(ROUTES.INBOX,              () => import('./pages/Inbox'));
 registerPrefetch(ROUTES.FAVORITES,           () => import('./pages/Favorites'));
 registerPrefetch(ROUTES.REPORTS,            () => import('./pages/Reports'));
@@ -153,6 +155,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.LEADS]: Leads,
     [ROUTES.CONTRACTS]: Contracts,
     [ROUTES.INVENTORY]: Inventory,
+    [ROUTES.PROJECTS]: Projects,
     [ROUTES.FAVORITES]: Favorites,
     [ROUTES.INBOX]: Inbox,
     [ROUTES.REPORTS]: Reports,
