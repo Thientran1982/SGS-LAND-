@@ -126,7 +126,29 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
         load();
     }, [token, isTenantLoading]);
 
-    const handlePrint = () => window.print();
+    const handlePrint = () => {
+        if (!contractRef.current) { window.print(); return; }
+        // Open a dedicated print window with just the contract DOM (avoids iframe constraints)
+        const pw = window.open('', '_blank', 'width=900,height=700');
+        if (!pw) { window.print(); return; } // fallback if popup blocked
+        const html = contractRef.current.outerHTML;
+        pw.document.write(`<!DOCTYPE html><html lang="vi"><head>
+<meta charset="utf-8"><title>Hợp Đồng</title>
+<style>
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+body{margin:0;padding:0;background:#fff;}
+.contract-divider{display:none!important;}
+.blank-field-border{border-bottom:none!important;}
+table{border-collapse:collapse;width:100%;page-break-inside:auto;}
+tr{page-break-inside:avoid;page-break-after:auto;}
+thead{display:table-header-group;}
+p{orphans:2;widows:2;}
+@page{size:A4 portrait;margin:12mm 10mm;}
+</style></head><body>${html}<script>
+window.onload=function(){setTimeout(function(){window.print();},400);};
+</script></body></html>`);
+        pw.document.close();
+    };
 
     const handleExportPDF = async () => {
         if (!contract) return;
@@ -609,7 +631,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 </div>
             )}
 
-            {/* Print CSS */}
+            {/* Fallback print CSS (used when popup is blocked) */}
             <style>{`
                 @media print {
                     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -626,14 +648,14 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                         max-width: 100% !important;
                         box-shadow: none !important;
                         border-radius: 0 !important;
-                        /* Giữ nguyên padding để layout khớp với giao diện xem */
                     }
-                    table { page-break-inside: avoid; }
-                    tr { page-break-inside: avoid; }
-                    p, div { orphans: 3; widows: 3; }
+                    table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
+                    thead { display: table-header-group; }
+                    p { orphans: 2; widows: 2; }
                     @page {
                         size: A4 portrait;
-                        margin: 5mm 0;
+                        margin: 12mm 10mm;
                     }
                 }
             `}</style>
