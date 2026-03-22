@@ -603,9 +603,8 @@ export const Inventory: React.FC = () => {
 
     const fetchListings = useCallback(async () => {
         setLoading(true);
-        const isPartnerRole = currentUser?.role === 'PARTNER_ADMIN' || currentUser?.role === 'PARTNER_AGENT';
         try {
-            const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter, noProjectCode: isPartnerRole ? false : true };
+            const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter, noProjectCode: true };
             const [res, favs] = await Promise.all([
                 db.getListings(page, pageSize, filters),
                 db.getFavorites(1, 1000),
@@ -620,14 +619,13 @@ export const Inventory: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [currentUser, debouncedSearch, typeFilter, statusFilter, transactionFilter, page, pageSize, notify, t]);
+    }, [debouncedSearch, typeFilter, statusFilter, transactionFilter, page, pageSize, notify, t]);
 
     const fetchBoardData = useCallback(async () => {
         if (viewMode !== 'BOARD' && viewMode !== 'MAP') { setAllFilteredListings([]); return; }
-        const isPartnerRole = currentUser?.role === 'PARTNER_ADMIN' || currentUser?.role === 'PARTNER_AGENT';
         setBoardLoading(true);
         try {
-            const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter, noProjectCode: isPartnerRole ? false : true };
+            const filters = { search: debouncedSearch, type: typeFilter, status: statusFilter, transaction: transactionFilter, noProjectCode: true };
             const allRes = await db.getListings(1, 500, filters);
             setAllFilteredListings(allRes.data || []);
         } catch (e) {
@@ -635,7 +633,7 @@ export const Inventory: React.FC = () => {
         } finally {
             setBoardLoading(false);
         }
-    }, [currentUser, viewMode, debouncedSearch, typeFilter, statusFilter, transactionFilter]);
+    }, [viewMode, debouncedSearch, typeFilter, statusFilter, transactionFilter]);
 
     useEffect(() => { fetchListings(); }, [fetchListings]);
     useEffect(() => { fetchBoardData(); }, [fetchBoardData]);
