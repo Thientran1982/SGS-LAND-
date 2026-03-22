@@ -39,7 +39,7 @@ const STYLES = {
     LABEL: "block text-xs font-bold uppercase mb-1 ml-1 select-none transition-colors",
     BUTTON: "w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border transition-all duration-200 outline-none text-sm group",
     // Menu styles updated for Portal with Dark Mode
-    MENU: "fixed z-[9999] bg-[var(--bg-surface)]/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-[var(--glass-border)]/50 dark:border-white/10 animate-scale-up overflow-y-auto no-scrollbar overscroll-contain text-sm focus:outline-none min-w-[120px] max-h-[320px]",
+    MENU: "fixed z-[10002] bg-[var(--bg-surface)]/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-[var(--glass-border)]/50 dark:border-white/10 animate-scale-up overflow-y-auto no-scrollbar overscroll-contain text-sm focus:outline-none min-w-[120px] max-h-[320px]",
     OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group border-b border-slate-50 dark:border-white/5 last:border-0 outline-none focus:bg-[var(--glass-surface)] dark:focus:bg-slate-800",
     
     // State variants
@@ -139,12 +139,12 @@ export const Dropdown = memo(<T extends string | number>({
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('scroll', handleScroll);
         window.addEventListener('resize', handleScroll);
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
-            window.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('resize', handleScroll);
         };
     }, [isOpen]);
