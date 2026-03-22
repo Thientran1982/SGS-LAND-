@@ -1085,13 +1085,27 @@ class DatabaseApiClient {
     ]};
 
     const ops = { id: 'ops', labelKey: 'menu.operations', items: [
+      { id: 'approvals', labelKey: 'menu.approvals', route: ROUTES.APPROVALS, iconKey: ROUTES.APPROVALS },
+      { id: 'routing', labelKey: 'menu.routing-rules', route: ROUTES.ROUTING_RULES, iconKey: ROUTES.ROUTING_RULES },
+      { id: 'seq', labelKey: 'menu.sequences', route: ROUTES.SEQUENCES, iconKey: ROUTES.SEQUENCES },
+      { id: 'scoring', labelKey: 'menu.scoring-rules', route: ROUTES.SCORING_RULES, iconKey: ROUTES.SCORING_RULES },
+      { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
+      { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
+    ]};
+
+    const opsBasic = { id: 'ops', labelKey: 'menu.operations', items: [
       { id: 'knowledge', labelKey: 'menu.knowledge', route: ROUTES.KNOWLEDGE, iconKey: ROUTES.KNOWLEDGE },
       { id: 'rep', labelKey: 'menu.reports', route: ROUTES.REPORTS, iconKey: ROUTES.REPORTS }
     ]};
 
     const sys = { id: 'sys', labelKey: 'menu.ecosystem', items: [
       { id: 'users', labelKey: 'menu.admin-users', route: ROUTES.ADMIN_USERS, iconKey: ROUTES.ADMIN_USERS },
-      { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS }
+      { id: 'set', labelKey: 'menu.enterprise-settings', route: ROUTES.ENTERPRISE_SETTINGS, iconKey: ROUTES.ENTERPRISE_SETTINGS },
+      { id: 'billing', labelKey: 'menu.billing', route: ROUTES.BILLING, iconKey: ROUTES.BILLING },
+      { id: 'security', labelKey: 'menu.security', route: ROUTES.SECURITY, iconKey: ROUTES.SECURITY },
+      { id: 'ai-gov', labelKey: 'menu.ai-governance', route: ROUTES.AI_GOVERNANCE, iconKey: ROUTES.AI_GOVERNANCE },
+      { id: 'data', labelKey: 'menu.data-platform', route: ROUTES.DATA_PLATFORM, iconKey: ROUTES.DATA_PLATFORM },
+      { id: 'system', labelKey: 'menu.system', route: ROUTES.SYSTEM, iconKey: ROUTES.SYSTEM },
     ]};
 
     const partnerCore = { id: 'partner-core', labelKey: 'menu.partner_core', items: [
@@ -1103,8 +1117,8 @@ class DatabaseApiClient {
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
       return [core, ops, sys];
-    } else if (role === UserRole.SALES) {
-      return [core, ops];
+    } else if (role === UserRole.SALES || role === UserRole.MARKETING) {
+      return [core, opsBasic];
     }
     return [core];
   }

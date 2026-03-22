@@ -287,8 +287,8 @@ export const AdminUsers: React.FC = () => {
             const me = await db.getCurrentUser();
             setCurrentUser(me);
             
-            // If not admin, don't fetch users
-            if (me?.role !== UserRole.ADMIN) {
+            // If not admin or team_lead, don't fetch users
+            if (me?.role !== UserRole.ADMIN && me?.role !== UserRole.TEAM_LEAD) {
                 setLoading(false);
                 return;
             }
@@ -431,7 +431,7 @@ export const AdminUsers: React.FC = () => {
         </th>
     );
 
-    if (!loading && currentUser && currentUser.role !== UserRole.ADMIN) {
+    if (!loading && currentUser && currentUser.role !== UserRole.ADMIN && currentUser.role !== UserRole.TEAM_LEAD) {
         return (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-enter">
                 <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4 shadow-sm">

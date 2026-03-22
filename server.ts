@@ -372,6 +372,14 @@ async function startServer() {
 
       await userRepository.updatePassword(tenantId, userId, newPassword);
 
+      // Activate invited users who are still PENDING — they've now set their password
+      await withTenantContext(tenantId, async (client) => {
+        await client.query(
+          `UPDATE users SET status = 'ACTIVE' WHERE id = $1 AND status = 'PENDING'`,
+          [userId]
+        );
+      });
+
       writeAuditLog(tenantId, userId, 'PASSWORD_RESET_COMPLETE', 'auth', userId, undefined, req.ip);
       res.json({ message: 'Password has been reset successfully' });
     } catch (error) {

@@ -94,8 +94,8 @@ export function createUserRoutes(authenticateToken: any) {
   router.post('/invite', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể mời người dùng' });
+      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+        return res.status(403).json({ error: 'Chỉ quản trị viên hoặc trưởng nhóm mới có thể mời người dùng' });
       }
 
       const { name, email, role, phone } = req.body;
@@ -119,7 +119,21 @@ export function createUserRoutes(authenticateToken: any) {
         ipAddress: req.ip,
       });
 
-      const loginUrl = `${process.env.APP_URL || 'https://app.sgsland.vn'}/auth/set-password?email=${encodeURIComponent(email)}`;
+      // Generate a password-reset token so the invited user can set their password
+      const crypto = await import('crypto');
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      const { pool } = await import('../db');
+      await pool.query(
+        `INSERT INTO password_reset_tokens (tenant_id, user_id, token, expires_at) VALUES ($1, $2, $3, $4)`,
+        [user.tenantId, invited.id, tokenHash, expiresAt]
+      );
+
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : process.env.APP_URL || 'https://app.sgsland.vn';
+      const loginUrl = `${baseUrl}/#/reset-password/${rawToken}`;
       emailService.sendInviteEmail(user.tenantId, email, name, invited.role, loginUrl).catch((err: any) => {
         console.error('[Invite] Failed to send invite email:', err.message);
       });
@@ -176,8 +190,8 @@ export function createUserRoutes(authenticateToken: any) {
   router.post('/:id/resend-invite', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể gửi lại lời mời' });
+      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+        return res.status(403).json({ error: 'Chỉ quản trị viên hoặc trưởng nhóm mới có thể gửi lại lời mời' });
       }
 
       const target = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
@@ -195,7 +209,25 @@ export function createUserRoutes(authenticateToken: any) {
         ipAddress: req.ip,
       });
 
-      const loginUrl = `${process.env.APP_URL || 'https://app.sgsland.vn'}/auth/set-password?email=${encodeURIComponent(target.email || '')}`;
+      // Generate a fresh password-reset token (invalidate old ones first)
+      const crypto = await import('crypto');
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      const { pool } = await import('../db');
+      await pool.query(
+        `UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL`,
+        [target.id]
+      );
+      await pool.query(
+        `INSERT INTO password_reset_tokens (tenant_id, user_id, token, expires_at) VALUES ($1, $2, $3, $4)`,
+        [user.tenantId, target.id, tokenHash, expiresAt]
+      );
+
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : process.env.APP_URL || 'https://app.sgsland.vn';
+      const loginUrl = `${baseUrl}/#/reset-password/${rawToken}`;
       emailService.sendInviteEmail(user.tenantId, target.email!, target.name || target.email!, target.role, loginUrl).catch((err: any) => {
         console.error('[Invite] Failed to resend invite email:', err.message);
       });
