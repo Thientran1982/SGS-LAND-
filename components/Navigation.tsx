@@ -38,7 +38,7 @@ const UserAvatar = memo(({ user, isActive }: { user: User, isActive?: boolean })
     const hasAvatar = !!user.avatar && !imgError;
 
     return (
-        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full p-0.5 border-2 shadow-lg transition-all duration-300 relative overflow-hidden flex items-center justify-center bg-[var(--glass-surface-hover)] dark:bg-slate-800
+        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full p-0.5 border-2 shadow-lg transition-all duration-300 relative overflow-hidden flex items-center justify-center bg-[var(--glass-surface-hover)] dark:bg-slate-800
             ${isActive 
                 ? 'border-indigo-500 shadow-indigo-500/20' 
                 : 'border-white dark:border-white/10 group-hover:border-indigo-500 group-hover:shadow-indigo-500/20'}`
@@ -74,7 +74,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
     const { t } = useTranslation();
     
     return (
-        <div className="h-16 sm:h-20 px-4 sm:px-6 md:px-8 flex items-center justify-between relative z-30 transition-all duration-300 group/header rounded-none sm:rounded-t-[24px] -mx-[1px] -mt-[1px]">
+        <div className="h-12 sm:h-14 px-4 sm:px-6 md:px-8 flex items-center justify-between relative z-30 transition-all duration-300 group/header rounded-none sm:rounded-t-[24px] -mx-[1px] -mt-[1px]">
             {/* Background Blur Layer */}
             <div className="absolute inset-0 bg-[var(--bg-surface)]/80 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm z-0 rounded-none sm:rounded-t-[24px]"></div>
 
@@ -90,7 +90,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 </button>
 
                 <div className="flex flex-col justify-center animate-enter min-w-0">
-                    <p className="text-sm sm:text-xl font-extrabold text-[var(--text-primary)] tracking-tight leading-none truncate w-full" aria-live="polite">
+                    <p className="text-sm sm:text-base font-extrabold text-[var(--text-primary)] tracking-tight leading-none truncate w-full" aria-live="polite">
                         {title}
                     </p>
                 </div>

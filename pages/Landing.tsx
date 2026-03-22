@@ -67,7 +67,7 @@ const NavPill = ({ children, onClick }: { children?: React.ReactNode, onClick?: 
     <button
         type="button"
         onClick={onClick}
-        className="px-3 lg:px-5 py-1.5 lg:py-2.5 rounded-full text-xs2 lg:text-xs font-bold transition-all duration-300 border bg-[var(--bg-surface)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-300 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md cursor-pointer hover:-translate-y-0.5 select-none whitespace-nowrap min-h-[44px]"
+        className="px-2.5 lg:px-4 py-1 lg:py-1.5 rounded-full text-xs2 lg:text-xs font-bold transition-all duration-300 border bg-[var(--bg-surface)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-300 border-[var(--glass-border)] dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md cursor-pointer hover:-translate-y-0.5 select-none whitespace-nowrap min-h-[36px]"
     >
         {children}
     </button>
@@ -247,28 +247,28 @@ export const Landing: React.FC = () => {
             
             {/* NAVBAR — only shown for guests (when logged in, Layout's CommandCenter handles navigation) */}
             {!currentUser && (
-                <nav className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 z-50 w-full px-4 flex justify-center pointer-events-none">
-                    <div className={`pointer-events-auto relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex items-center justify-between p-2 rounded-full border ${scrolled ? 'bg-[var(--bg-surface)]/90 dark:bg-slate-900/90 backdrop-blur-xl border-[var(--glass-border)]/50 dark:border-white/10 shadow-2xl w-full max-w-5xl' : 'bg-transparent border-transparent w-full max-w-7xl'}`}>
+                <nav className="fixed top-3 md:top-4 left-1/2 -translate-x-1/2 z-50 w-full px-4 flex justify-center pointer-events-none">
+                    <div className={`pointer-events-auto relative transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex items-center justify-between p-1.5 rounded-full border ${scrolled ? 'bg-[var(--bg-surface)]/90 dark:bg-slate-900/90 backdrop-blur-xl border-[var(--glass-border)]/50 dark:border-white/10 shadow-2xl w-full max-w-5xl' : 'bg-transparent border-transparent w-full max-w-7xl'}`}>
                         
-                        <div className="flex items-center gap-2 md:gap-3 pl-2 cursor-pointer group z-10 flex-none md:flex-1" onClick={() => navigateTo('')}>
-                            <div className="bg-[var(--bg-surface)] dark:bg-slate-800 p-1.5 rounded-xl shadow-sm border border-[var(--glass-border)] dark:border-slate-700 group-hover:scale-105 transition-transform">
-                                <Logo className="w-5 h-5 md:w-6 md:h-6 text-indigo-600 dark:text-indigo-400" />
+                        <div className="flex items-center gap-1.5 md:gap-2 pl-1.5 cursor-pointer group z-10 flex-none md:flex-1" onClick={() => navigateTo('')}>
+                            <div className="bg-[var(--bg-surface)] dark:bg-slate-800 p-1 rounded-lg shadow-sm border border-[var(--glass-border)] dark:border-slate-700 group-hover:scale-105 transition-transform">
+                                <Logo className="w-4 h-4 md:w-5 md:h-5 text-indigo-600 dark:text-indigo-400" />
                             </div>
-                            <span className={`font-bold text-base md:text-lg tracking-tight transition-opacity text-[var(--text-primary)] dark:text-white`}>SGS<span className="text-slate-400">LAND</span></span>
+                            <span className={`font-bold text-sm md:text-base tracking-tight transition-opacity text-[var(--text-primary)] dark:text-white`}>SGS<span className="text-slate-400">LAND</span></span>
                         </div>
 
-                        <div className="hidden md:flex items-center gap-1 bg-[var(--glass-surface-hover)]/80 dark:bg-slate-800/80 p-1 rounded-full border border-[var(--glass-border)]/50 dark:border-slate-700 backdrop-blur-md shadow-sm pointer-events-auto flex-none 
+                        <div className="hidden md:flex items-center gap-0.5 bg-[var(--glass-surface-hover)]/80 dark:bg-slate-800/80 p-0.5 rounded-full border border-[var(--glass-border)]/50 dark:border-slate-700 backdrop-blur-md shadow-sm pointer-events-auto flex-none 
                             md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-20">
                             <NavPill onClick={() => navigateTo(ROUTES.SEARCH)}>{t('nav.public_market')}</NavPill>
                             <NavPill onClick={() => navigateTo(ROUTES.AI_VALUATION)}>{t('footer.link_valuation')}</NavPill>
                             <NavPill onClick={() => navigateTo(ROUTES.CRM_SOLUTION)}>{t('footer.link_crm')}</NavPill>
                         </div>
 
-                        <div className="flex items-center gap-1 md:gap-2 pr-1 z-10 flex-none ml-auto md:flex-1 md:justify-end">
-                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-3 lg:px-5 py-2 lg:py-2.5 text-xs2 lg:text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden lg:flex min-h-[44px] items-center">
+                        <div className="flex items-center gap-1 md:gap-1.5 pr-0.5 z-10 flex-none ml-auto md:flex-1 md:justify-end">
+                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-3 lg:px-4 py-1.5 lg:py-2 text-xs2 lg:text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden lg:flex min-h-[36px] items-center">
                                 {t('auth.btn_login')}
                             </button>
-                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="bg-slate-900 dark:bg-[var(--bg-surface)] text-white dark:text-[var(--text-primary)] px-4 lg:px-6 py-2.5 lg:py-2.5 rounded-full text-xs2 lg:text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/10 active:scale-95 flex items-center gap-2 whitespace-nowrap min-h-[44px]">
+                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="bg-slate-900 dark:bg-[var(--bg-surface)] text-white dark:text-[var(--text-primary)] px-3 lg:px-5 py-2 rounded-full text-xs2 lg:text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/10 active:scale-95 flex items-center gap-1.5 whitespace-nowrap min-h-[36px]">
                                 {t('landing.cta_btn_register')} <span className="hidden sm:inline">{ICONS.ARROW_RIGHT}</span>
                             </button>
                         </div>
