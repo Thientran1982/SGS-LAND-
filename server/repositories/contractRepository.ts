@@ -176,10 +176,10 @@ export class ContractRepository extends BaseRepository {
           tenant_id, proposal_id, lead_id, listing_id, type, status, value,
           party_a, party_b, property_details, property_price, deposit_amount,
           payment_terms, payment_schedule, tax_responsibility, handover_date, handover_condition,
-          dispute_resolution, metadata, created_by, created_by_id
+          dispute_resolution, signed_place, contract_date, metadata, created_by, created_by_id
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22
         ) RETURNING *`,
         [
           data.proposalId || null, data.leadId || null, data.listingId || null, data.type,
@@ -192,6 +192,8 @@ export class ContractRepository extends BaseRepository {
           data.taxResponsibility || null,
           data.handoverDate || null, data.handoverCondition || null,
           data.disputeResolution || null,
+          data.signedPlace || null,
+          data.contractDate || null,
           data.metadata ? JSON.stringify(data.metadata) : null,
           data.createdBy || null,
           data.createdById || null,
@@ -260,6 +262,14 @@ export class ContractRepository extends BaseRepository {
       if (data.handoverDate !== undefined) {
         updates.push(`handover_date = $${paramIndex++}`);
         values.push(data.handoverDate);
+      }
+      if (data.signedPlace !== undefined) {
+        updates.push(`signed_place = $${paramIndex++}`);
+        values.push(data.signedPlace || null);
+      }
+      if (data.contractDate !== undefined) {
+        updates.push(`contract_date = $${paramIndex++}`);
+        values.push(data.contractDate || null);
       }
 
       if (updates.length <= 1) return this.findById(tenantId, id);

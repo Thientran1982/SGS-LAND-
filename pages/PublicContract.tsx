@@ -46,7 +46,8 @@ const fmtShortDate = (d?: string | null): string => {
     } catch { return d; }
 };
 
-const blank = (s?: string | null, fallback = '....................') =>
+const BLANK_LINE = '\u00A0'.repeat(20);
+const blank = (s?: string | null, fallback = BLANK_LINE) =>
     s && s.trim() ? s.trim() : fallback;
 
 /* ── Styling constants ── */
@@ -85,19 +86,29 @@ const ArticleTitle: React.FC<{ num: string | number; title: string }> = ({ num, 
     </div>
 );
 
+const NBSP20 = '\u00A0'.repeat(20);
+const NBSP12 = '\u00A0'.repeat(12);
+
 const Line: React.FC<{ label: string; value?: string | null; inline?: boolean }> = ({ label, value, inline }) => {
+    const hasValue = value && value.trim();
     if (inline) {
         return (
             <span>
                 <span style={{ fontWeight: 600 }}>{label}: </span>
-                <span style={{ borderBottom: '1px dotted #666', paddingBottom: '1px' }}>{blank(value)}</span>
+                {hasValue
+                    ? <span>{value!.trim()}</span>
+                    : <span style={{ ...blankField, minWidth: '120px' }}>{NBSP12}</span>
+                }
             </span>
         );
     }
     return (
         <p style={{ margin: '2px 0', paddingLeft: '16px' }}>
             <span style={{ fontWeight: 600 }}>- {label}: </span>
-            <span>{blank(value)}</span>
+            {hasValue
+                ? <span>{value!.trim()}</span>
+                : <span style={{ ...blankField, minWidth: '220px' }}>{NBSP20}</span>
+            }
         </p>
     );
 };
@@ -199,8 +210,11 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
     const isSigned = contract.status === ContractStatus.SIGNED;
     // signDate: ngày ký thực tế (dùng cho badge "Đã ký kết" và footer)
     const signDate = contract.signedAt || contract.createdAt;
-    // contractDate: ngày ký cho phần "Hôm nay" và chữ ký — để trống nếu chưa ký
-    const contractDate = isSigned ? (contract.signedAt || contract.createdAt) : null;
+    // contractDate: ưu tiên contractDate tùy chỉnh → signedAt → createdAt (khi đã ký), hoặc null
+    const contractDate = contract.contractDate
+        || (isSigned ? (contract.signedAt || contract.createdAt) : null);
+    // signedPlace: địa điểm ký hợp đồng
+    const signedPlace = contract.signedPlace || null;
     const contractNum = `HĐ-${contract.id.slice(0, 8).toUpperCase()}`;
 
     const legalRefs = isDeposit
@@ -285,7 +299,10 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 {/* MỞ ĐẦU */}
                 <p style={{ margin: '12px 0' }}>
                     Hôm nay, {fmtDate(contractDate)}, tại{' '}
-                    <span style={{ ...blankField, minWidth: '200px' }}>&nbsp;</span>
+                    {signedPlace
+                        ? <span style={{ fontWeight: 600 }}>{signedPlace}</span>
+                        : <span style={{ ...blankField, minWidth: '200px' }}>{'\u00A0'.repeat(20)}</span>
+                    }
                     {' '}(tỉnh/thành phố), chúng tôi gồm:
                 </p>
 
@@ -529,7 +546,10 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 {/* ── KÝ TÊN ── */}
                 <div style={{ marginTop: '40px' }}>
                     <p style={{ textAlign: 'right', marginBottom: '4px', fontStyle: 'italic' }}>
-                        <span style={{ ...blankField, minWidth: '140px' }}>&nbsp;</span>
+                        {signedPlace
+                            ? <span>{signedPlace}</span>
+                            : <span style={{ ...blankField, minWidth: '140px' }}>{'\u00A0'.repeat(14)}</span>
+                        }
                         , {fmtDate(contractDate)}
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '16px' }}>

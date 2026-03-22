@@ -1178,6 +1178,8 @@ export interface Contract {
     disputeResolution?: string; // Giải quyết tranh chấp
 
     signedAt?: ISOString;    // Ngày ký (mapped from signed_at)
+    signedPlace?: string;    // Địa điểm ký hợp đồng
+    contractDate?: string;   // Ngày ký tùy chỉnh (nếu khác ngày tạo)
 
     createdAt: ISOString;
     updatedAt: ISOString;

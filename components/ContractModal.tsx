@@ -456,6 +456,21 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div>
+                                        <label className={labelClass}>Ngày ký hợp đồng <span className="text-[var(--text-tertiary)] font-normal">(in trên hợp đồng)</span></label>
+                                        <input type="date" value={formData.contractDate || ''} onChange={e => handleChange('contractDate', e.target.value)} className={inputClass} />
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>Địa điểm ký hợp đồng <span className="text-[var(--text-tertiary)] font-normal">(tại...)</span></label>
+                                        <input
+                                            value={formData.signedPlace || ''}
+                                            onChange={e => handleChange('signedPlace', e.target.value)}
+                                            className={inputClass}
+                                            placeholder="VD: TP. Hồ Chí Minh"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div>
                                         <label className={labelClass}>{t('contracts.expected_handover_date')}</label>
                                         <input type="date" value={formData.handoverDate || ''} onChange={e => handleChange('handoverDate', e.target.value)} className={inputClass} />
                                     </div>
