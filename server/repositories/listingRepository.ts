@@ -13,6 +13,7 @@ export interface ListingFilters {
   bedrooms_gte?: number;
   search?: string;
   projectCode?: string;
+  noProjectCode?: boolean;
   isVerified?: boolean;
 }
 
@@ -53,6 +54,7 @@ export class ListingRepository extends BaseRepository {
     if (filters?.area_lte !== undefined) { conditions.push(`area <= $${paramIndex++}`); values.push(filters.area_lte); }
     if (filters?.bedrooms_gte !== undefined) { conditions.push(`bedrooms >= $${paramIndex++}`); values.push(filters.bedrooms_gte); }
     if (filters?.projectCode) { conditions.push(`project_code = $${paramIndex++}`); values.push(filters.projectCode); }
+    if (filters?.noProjectCode) { conditions.push(`(project_code IS NULL OR project_code = '')`); }
     if (filters?.isVerified !== undefined) { conditions.push(`is_verified = $${paramIndex++}`); values.push(filters.isVerified); }
     if (filters?.search) {
       conditions.push(`(title ILIKE $${paramIndex} OR location ILIKE $${paramIndex} OR code ILIKE $${paramIndex})`);

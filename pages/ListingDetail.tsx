@@ -525,15 +525,6 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                             <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty') || 'Kho hàng trống'}</p>
                             <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_units_hint') || 'Dự án chưa có sản phẩm nào. Thêm căn hộ/sản phẩm đầu tiên.'}</p>
                         </div>
-                        {canManageUnits && (
-                            <button
-                                onClick={handleAddUnit}
-                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
-                            >
-                                <Plus className="w-4 h-4" />
-                                {t('inventory.add_unit') || 'Thêm sản phẩm'}
-                            </button>
-                        )}
                     </div>
                 ) : (
                     <>

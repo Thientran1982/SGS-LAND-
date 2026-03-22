@@ -31,6 +31,7 @@ export function createListingRoutes(authenticateToken: any) {
       if (req.query.areaMax && !isNaN(areaMax)) filters.area_lte = areaMax;
       if (req.query.search) filters.search = req.query.search;
       if (req.query.projectCode) filters.projectCode = req.query.projectCode;
+      if (req.query.noProjectCode === 'true') filters.noProjectCode = true;
       if (req.query.isVerified) filters.isVerified = req.query.isVerified === 'true';
 
       // PARTNER roles: only see listings from projects they have been granted access to
