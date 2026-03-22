@@ -874,10 +874,17 @@ export const Inventory: React.FC = () => {
                                                 <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
                                                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                                                 </div>
-                                                <div>
-                                                    <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty_title') || 'Chưa có sản phẩm nào'}</p>
-                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_hint') || 'Thêm sản phẩm bất động sản đầu tiên vào kho'}</p>
-                                                </div>
+                                                {(currentUser?.role === 'PARTNER_ADMIN' || currentUser?.role === 'PARTNER_AGENT') ? (
+                                                    <div>
+                                                        <p className="font-bold text-sm text-[var(--text-primary)]">Chưa có sản phẩm được phân quyền</p>
+                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">Liên hệ quản trị viên để được cấp quyền truy cập dự án</p>
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty_title') || 'Chưa có sản phẩm nào'}</p>
+                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_hint') || 'Thêm sản phẩm bất động sản đầu tiên vào kho'}</p>
+                                                    </div>
+                                                )}
                                                 {canViewInternalInfo && (
                                                     <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
                                                         {ICONS.ADD} {t('inventory.create_title')}
@@ -1016,10 +1023,17 @@ export const Inventory: React.FC = () => {
                                                     <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
                                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty_title') || 'Chưa có sản phẩm nào'}</p>
-                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_hint') || 'Thêm sản phẩm bất động sản đầu tiên vào kho'}</p>
-                                                    </div>
+                                                    {(currentUser?.role === 'PARTNER_ADMIN' || currentUser?.role === 'PARTNER_AGENT') ? (
+                                                        <div>
+                                                            <p className="font-bold text-sm text-[var(--text-primary)]">Chưa có sản phẩm được phân quyền</p>
+                                                            <p className="text-xs text-[var(--text-tertiary)] mt-1">Liên hệ quản trị viên để được cấp quyền truy cập dự án</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty_title') || 'Chưa có sản phẩm nào'}</p>
+                                                            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_hint') || 'Thêm sản phẩm bất động sản đầu tiên vào kho'}</p>
+                                                        </div>
+                                                    )}
                                                     {canViewInternalInfo && (
                                                         <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
                                                             {ICONS.ADD} {t('inventory.create_title')}

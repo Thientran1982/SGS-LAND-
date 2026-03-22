@@ -6,9 +6,14 @@ import { auditRepository } from '../repositories/auditRepository';
 export function createContractRoutes(authenticateToken: any) {
   const router = Router();
 
+  const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
+
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Không có quyền truy cập' });
+      }
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 200));
 

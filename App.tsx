@@ -415,6 +415,12 @@ const AppShell: React.FC = () => {
             navigate(ROUTES.DASHBOARD);
             setAccessDenied(true);
         }
+
+        // PARTNER roles: redirect away from Dashboard to Inventory
+        const isPartnerRole = currentUser?.role === 'PARTNER_ADMIN' || currentUser?.role === 'PARTNER_AGENT';
+        if (authState === 'AUTH' && isPartnerRole && route.base === ROUTES.DASHBOARD) {
+            navigate(ROUTES.INVENTORY);
+        }
     }, [route.base, authState, currentUser, navigate]);
 
     // Auto-dismiss access denied banner
@@ -436,9 +442,16 @@ const AppShell: React.FC = () => {
 
     const handleLoginSuccess = useCallback(() => {
         localStorage.setItem(AUTH_CACHE_KEY, '1');
-        db.getCurrentUser().then(u => { if (u) setCurrentUser(u); }).catch(() => {});
         setAuthState('AUTH');
-        navigate(ROUTES.DEFAULT_PRIVATE);
+        db.getCurrentUser().then(u => {
+            if (u) {
+                setCurrentUser(u);
+                const isPartner = u.role === 'PARTNER_ADMIN' || u.role === 'PARTNER_AGENT';
+                navigate(isPartner ? ROUTES.INVENTORY : ROUTES.DEFAULT_PRIVATE);
+            } else {
+                navigate(ROUTES.DEFAULT_PRIVATE);
+            }
+        }).catch(() => { navigate(ROUTES.DEFAULT_PRIVATE); });
     }, [navigate]);
 
     const handleLogout = useCallback(() => {

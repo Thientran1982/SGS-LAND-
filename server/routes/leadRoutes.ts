@@ -7,9 +7,14 @@ import { routingRuleRepository } from '../repositories/routingRuleRepository';
 export function createLeadRoutes(authenticateToken: any) {
   const router = Router();
 
+  const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
+
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Không có quyền truy cập' });
+      }
       const tenantId = user.tenantId;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       // Allow up to 500 for Kanban board view (client sends 500); default cap is 200

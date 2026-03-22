@@ -5,9 +5,14 @@ import { visitorRepository } from '../repositories/visitorRepository';
 export function createAnalyticsRoutes(authenticateToken: any) {
   const router = Router();
 
+  const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
+
   router.get('/summary', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Không có quyền truy cập' });
+      }
       const timeRange = (req.query.timeRange as string) || 'all';
       // Pass userId + role so analytics queries can apply RBAC filtering
       const summary = await analyticsRepository.getSummary(
@@ -107,6 +112,9 @@ export function createAnalyticsRoutes(authenticateToken: any) {
   router.get('/visitors', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Không có quyền truy cập' });
+      }
       const days = Math.max(1, Math.min(parseInt(req.query.days as string) || 30, 365));
       const stats = await visitorRepository.getStats(user.tenantId, days);
       res.json(stats);
