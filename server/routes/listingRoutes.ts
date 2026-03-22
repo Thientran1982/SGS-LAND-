@@ -43,16 +43,10 @@ export function createListingRoutes(authenticateToken: any) {
       if (req.query.noProjectCode === 'true') filters.noProjectCode = true;
       if (req.query.isVerified) filters.isVerified = req.query.isVerified === 'true';
 
-      // PARTNER_ADMIN: full read access to all listings (sensitive fields redacted)
-      if (user.role === 'PARTNER_ADMIN') {
+      // PARTNER roles: read-only access to non-project listings (sensitive fields redacted)
+      if (user.role === 'PARTNER_ADMIN' || user.role === 'PARTNER_AGENT') {
         const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
         return res.json({ ...result, data: result.data.map(redactSensitiveFields) });
-      }
-
-      // PARTNER_AGENT: only see listings from projects they have been granted access to
-      if (user.role === 'PARTNER_AGENT') {
-        const result = await listingRepository.findListingsForPartner(user.tenantId, { page, pageSize }, filters);
-        return res.json(result);
       }
 
       const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
@@ -84,21 +78,12 @@ export function createListingRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
 
-      // PARTNER_ADMIN: full read access to all listings (sensitive fields redacted)
-      if (user.role === 'PARTNER_ADMIN') {
+      // PARTNER roles: read-only access (sensitive fields redacted)
+      if (user.role === 'PARTNER_ADMIN' || user.role === 'PARTNER_AGENT') {
         const listing = await listingRepository.findById(user.tenantId, String(req.params.id));
         if (!listing) return res.status(404).json({ error: 'Listing not found' });
         res.json(redactSensitiveFields(listing));
         listingRepository.incrementViewCount(user.tenantId, String(req.params.id)).catch(() => {});
-        return;
-      }
-
-      // PARTNER_AGENT: use project-scoped lookup
-      if (user.role === 'PARTNER_AGENT') {
-        const listing = await listingRepository.findByIdForPartner(user.tenantId, String(req.params.id));
-        if (!listing) return res.status(404).json({ error: 'Listing not found or access denied' });
-        res.json(listing);
-        listingRepository.incrementViewCount((listing as any).tenantId, String(req.params.id)).catch(() => {});
         return;
       }
 
