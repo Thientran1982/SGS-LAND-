@@ -1093,7 +1093,6 @@ class DatabaseApiClient {
     ]};
 
     const partnerCore = { id: 'partner-core', labelKey: 'menu.partner_core', items: [
-      { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS },
       { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
     ]};
 
@@ -1101,8 +1100,6 @@ class DatabaseApiClient {
       return [partnerCore];
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
-      const projectsItem = { id: 'projects', labelKey: 'menu.projects', route: ROUTES.PROJECTS, iconKey: ROUTES.PROJECTS };
-      (core.items as any[]).splice(3, 0, projectsItem); // insert after contracts
       return [core, ops, sys];
     } else if (role === UserRole.SALES) {
       return [core, ops];

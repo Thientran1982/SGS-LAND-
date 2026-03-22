@@ -74,7 +74,6 @@ const DataPlatform = lazyLoad(() => import('./pages/DataPlatform'), 'DataPlatfor
 const SecurityCompliance = lazyLoad(() => import('./pages/SecurityCompliance'), 'SecurityCompliance');
 const AiGovernance = lazyLoad(() => import('./pages/AiGovernance'), 'AiGovernance');
 const Profile = lazyLoad(() => import('./pages/Profile'), 'Profile');
-const Projects = lazyLoad(() => import('./pages/Projects'), 'Projects');
 
 // ---------------------------------------------------------------------------
 // PREFETCH REGISTRATION — maps each route to its raw import so nav hover
@@ -171,8 +170,6 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.SECURITY]: SecurityCompliance,
     [ROUTES.AI_GOVERNANCE]: AiGovernance,
     [ROUTES.PROFILE]: Profile,
-    [ROUTES.PROJECTS]: Projects,
-    
     // Misc
     [ROUTES.MOBILE_APP]: MobileApp
 };
