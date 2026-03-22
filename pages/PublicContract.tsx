@@ -137,14 +137,14 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
 <style>
 *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;-ms-overflow-style:none!important;scrollbar-width:none!important;}
 *::-webkit-scrollbar{display:none!important;width:0!important;height:0!important;}
-html,body{margin:0;padding:0;background:#fff;overflow:visible!important;height:auto!important;}
+html,body{margin:0;padding:12mm 10mm;background:#fff;overflow:visible!important;height:auto!important;}
 .contract-divider{display:none!important;}
 .blank-field-border{border-bottom:none!important;}
 table{border-collapse:collapse;width:100%;page-break-inside:auto;}
 tr{page-break-inside:avoid;page-break-after:auto;}
 thead{display:table-header-group;}
 p{orphans:2;widows:2;}
-@page{size:A4 portrait;margin:12mm 10mm;}
+@page{size:A4 portrait;margin:0;}
 </style></head><body>${html}<script>
 window.onload=function(){setTimeout(function(){window.print();},400);};
 </script></body></html>`);
@@ -453,13 +453,13 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                         </p>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11pt', marginBottom: '10px' }}>
                             <thead>
-                                <tr style={{ background: '#1e3a8a', color: '#fff' }}>
-                                    <th style={{ border: '1px solid #1e3a8a', padding: '7px 10px', textAlign: 'center', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>STT</th>
-                                    <th style={{ border: '1px solid #1e3a8a', padding: '7px 10px', textAlign: 'left', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>Nội dung đợt thanh toán</th>
-                                    <th style={{ border: '1px solid #1e3a8a', padding: '7px 10px', textAlign: 'center', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>Tỷ lệ (%)</th>
-                                    <th style={{ border: '1px solid #1e3a8a', padding: '7px 10px', textAlign: 'right', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>Số tiền (VNĐ)</th>
-                                    <th style={{ border: '1px solid #1e3a8a', padding: '7px 10px', textAlign: 'center', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>Thời hạn</th>
-                                    <th style={{ border: '1px solid #1e3a8a', padding: '7px 10px', textAlign: 'center', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>Tình trạng</th>
+                                <tr style={{ background: '#f3f4f6', color: '#111827' }}>
+                                    <th style={{ border: '1px solid #333', padding: '7px 10px', textAlign: 'center', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>STT</th>
+                                    <th style={{ border: '1px solid #333', padding: '7px 10px', textAlign: 'left', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>Nội dung đợt thanh toán</th>
+                                    <th style={{ border: '1px solid #333', padding: '7px 10px', textAlign: 'center', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>Tỷ lệ (%)</th>
+                                    <th style={{ border: '1px solid #333', padding: '7px 10px', textAlign: 'right', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>Số tiền (VNĐ)</th>
+                                    <th style={{ border: '1px solid #333', padding: '7px 10px', textAlign: 'center', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>Thời hạn</th>
+                                    <th style={{ border: '1px solid #333', padding: '7px 10px', textAlign: 'center', fontFamily: FONT, fontSize: '11pt', fontWeight: 700 }}>Tình trạng</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -656,7 +656,10 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                     p { orphans: 2; widows: 2; }
                     @page {
                         size: A4 portrait;
-                        margin: 12mm 10mm;
+                        margin: 0;
+                    }
+                    body {
+                        padding: 12mm 10mm !important;
                     }
                 }
             `}</style>
