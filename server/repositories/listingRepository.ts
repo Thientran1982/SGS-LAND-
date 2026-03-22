@@ -232,7 +232,10 @@ export class ListingRepository extends BaseRepository {
       let paramIndex = 1;
 
       const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
-      if (RESTRICTED.includes(userRole || '') && userId) {
+      // Allow restricted roles to see ALL available listings (needed for proposal creation).
+      // For other statuses, restrict to listings they created.
+      const isAvailableOnlyQuery = filters?.status === 'AVAILABLE';
+      if (RESTRICTED.includes(userRole || '') && userId && !isAvailableOnlyQuery) {
         conditions.push(`created_by = $${paramIndex++}`);
         values.push(userId);
       }

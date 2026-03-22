@@ -669,7 +669,7 @@ export const Leads: React.FC = () => {
     useEffect(() => {
         fetchLeads();
         db.getCurrentUser().then(setCurrentUser);
-        db.getListings(1, 100).then(res => setListings(res.data));
+        db.getListings(1, 200, { status: 'AVAILABLE' }).then(res => setListings(res.data));
         db.getTenantUsers(1, 100).then(res => {
             setUsers([
                 { value: '', label: t('inbox.unassigned') },
