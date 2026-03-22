@@ -212,7 +212,7 @@ export const DataPlatform: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="space-y-6 animate-enter">
+            <div className="p-4 sm:p-6 space-y-6 animate-enter">
                 <div className="h-20 bg-[var(--glass-surface)] rounded-[20px] animate-pulse" />
                 <div className="grid grid-cols-3 gap-4">
                     {[1,2,3].map(i => <div key={i} className="h-24 bg-[var(--glass-surface)] rounded-[20px] animate-pulse" />)}
@@ -226,7 +226,7 @@ export const DataPlatform: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6 pb-20 animate-enter relative">
+        <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
             {/* Toast */}
             {toast && (
                 <div className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/95 border-emerald-700 text-white' : 'bg-rose-900/95 border-rose-700 text-white'}`}>
@@ -236,10 +236,10 @@ export const DataPlatform: React.FC = () => {
             )}
 
             {/* Page Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t('data.page_title') || 'Dữ Liệu Nguồn'}</h1>
-                    <p className="text-sm text-[var(--text-secondary)] mt-1">{t('data.page_subtitle') || 'Kết nối và đồng bộ dữ liệu từ các nguồn bên ngoài vào hệ thống SGS Land'}</p>
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t('data.title')}</h1>
+                    <p className="text-sm text-[var(--text-secondary)] mt-1">{t('data.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
@@ -253,19 +253,19 @@ export const DataPlatform: React.FC = () => {
             {/* Stats Row */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm">
-                    <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('data.stat_total') || 'Tổng kết nối'}</p>
+                    <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('data.stat_connections')}</p>
                     <p className="text-3xl font-bold text-[var(--text-primary)] mt-2">{connectors.length}</p>
-                    <p className="text-xs text-[var(--text-secondary)] mt-1">{activeCount} {t('data.stat_active') || 'đang hoạt động'}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-1">{activeCount} {t('data.stat_active_count')}</p>
                 </div>
                 <div className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm">
-                    <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('data.stat_syncs') || 'Lần đồng bộ'}</p>
+                    <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('data.stat_syncs')}</p>
                     <p className="text-3xl font-bold text-[var(--text-primary)] mt-2">{jobs.length}</p>
                     <p className="text-xs text-[var(--text-secondary)] mt-1">
-                        {jobs.filter(j => j.status === SyncStatus.COMPLETED).length} {t('data.stat_success') || 'thành công'}
+                        {jobs.filter(j => j.status === SyncStatus.COMPLETED).length} {t('data.stat_success_count')}
                     </p>
                 </div>
                 <div className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm col-span-2 sm:col-span-1">
-                    <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('data.stat_last_sync') || 'Đồng bộ gần nhất'}</p>
+                    <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('data.stat_last_sync')}</p>
                     <div className="mt-2">
                         {lastJob ? (
                             <>
@@ -275,7 +275,7 @@ export const DataPlatform: React.FC = () => {
                                 </p>
                             </>
                         ) : (
-                            <p className="text-sm text-[var(--text-secondary)] mt-1">{t('data.never') || 'Chưa có'}</p>
+                            <p className="text-sm text-[var(--text-secondary)] mt-1">{t('data.never')}</p>
                         )}
                     </div>
                 </div>
