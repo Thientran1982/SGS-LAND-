@@ -189,6 +189,7 @@ class DatabaseApiClient {
     if (filters?.priceMin) params.priceMin = filters.priceMin;
     if (filters?.priceMax) params.priceMax = filters.priceMax;
     if (filters?.projectCode) params.projectCode = filters.projectCode;
+    if (filters?.noProjectCode) params.noProjectCode = true;
 
     const cacheKey = `listings:${page}:${pageSize}:${JSON.stringify(params)}`;
     const cached = _cache.get(cacheKey);
