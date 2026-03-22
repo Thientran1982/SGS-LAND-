@@ -429,10 +429,47 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         {/* TAB: TERMS */}
                         {activeTab === 'terms' && (
                             <div className="space-y-6">
+
+                                {/* ── PHẦN 1: THÔNG TIN KÝ KẾT ── */}
+                                <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50/60 p-4 space-y-4">
+                                    <h3 className="font-bold text-indigo-700 flex items-center gap-2 text-sm">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                        Thông tin ký kết (in trên hợp đồng)
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelClass}>
+                                                Ngày ký hợp đồng
+                                                <span className="text-[var(--text-tertiary)] font-normal ml-1">— "Hôm nay, ngày... tháng... năm..."</span>
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={formData.contractDate || ''}
+                                                onChange={e => handleChange('contractDate', e.target.value)}
+                                                className={inputClass}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>
+                                                Địa điểm ký
+                                                <span className="text-[var(--text-tertiary)] font-normal ml-1">— "tại [địa điểm]"</span>
+                                            </label>
+                                            <input
+                                                value={formData.signedPlace || ''}
+                                                onChange={e => handleChange('signedPlace', e.target.value)}
+                                                className={inputClass}
+                                                placeholder="VD: TP. Hồ Chí Minh"
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-indigo-500 italic">Nếu để trống, hợp đồng sẽ hiển thị dòng kẻ chờ điền tay.</p>
+                                </div>
+
+                                {/* ── PHẦN 2: TÀI CHÍNH ── */}
                                 <h3 className="font-bold text-rose-600 border-b border-rose-100 pb-2">{t('contracts.finance_terms_title')}</h3>
                                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-700 flex items-start gap-2">
                                     <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <span>Nhập số tiền bằng <strong>đồng VNĐ</strong>, không dùng dấu chấm hay phẩy. Ví dụ: <strong>2000000000</strong> = 2 Tỷ đồng &nbsp;|&nbsp; <strong>500000000</strong> = 500 Triệu đồng. Hệ thống sẽ tự hiển thị số tiền đã định dạng bên dưới ô nhập.</span>
+                                    <span>Nhập số tiền bằng <strong>đồng VNĐ</strong>, không dùng dấu chấm hay phẩy. Ví dụ: <strong>2000000000</strong> = 2 Tỷ đồng &nbsp;|&nbsp; <strong>500000000</strong> = 500 Triệu đồng.</span>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <CurrencyInput
@@ -453,21 +490,6 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                             labelClass={labelClass}
                                         />
                                     )}
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className={labelClass}>Ngày ký hợp đồng <span className="text-[var(--text-tertiary)] font-normal">(in trên hợp đồng)</span></label>
-                                        <input type="date" value={formData.contractDate || ''} onChange={e => handleChange('contractDate', e.target.value)} className={inputClass} />
-                                    </div>
-                                    <div>
-                                        <label className={labelClass}>Địa điểm ký hợp đồng <span className="text-[var(--text-tertiary)] font-normal">(tại...)</span></label>
-                                        <input
-                                            value={formData.signedPlace || ''}
-                                            onChange={e => handleChange('signedPlace', e.target.value)}
-                                            className={inputClass}
-                                            placeholder="VD: TP. Hồ Chí Minh"
-                                        />
-                                    </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div>

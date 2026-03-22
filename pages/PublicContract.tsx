@@ -97,7 +97,7 @@ const Line: React.FC<{ label: string; value?: string | null; inline?: boolean }>
                 <span style={{ fontWeight: 600 }}>{label}: </span>
                 {hasValue
                     ? <span>{value!.trim()}</span>
-                    : <span style={{ ...blankField, minWidth: '120px' }}>{NBSP12}</span>
+                    : <span className="blank-field-border" style={{ ...blankField, minWidth: '120px' }}>{NBSP12}</span>
                 }
             </span>
         );
@@ -107,7 +107,7 @@ const Line: React.FC<{ label: string; value?: string | null; inline?: boolean }>
             <span style={{ fontWeight: 600 }}>- {label}: </span>
             {hasValue
                 ? <span>{value!.trim()}</span>
-                : <span style={{ ...blankField, minWidth: '220px' }}>{NBSP20}</span>
+                : <span className="blank-field-border" style={{ ...blankField, minWidth: '220px' }}>{NBSP20}</span>
             }
         </p>
     );
@@ -147,6 +147,11 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
     const handleExportPDF = async () => {
         if (!contract) return;
         setExporting(true);
+        // Inject CSS to hide blank field borders for a clean PDF
+        const cleanStyle = document.createElement('style');
+        cleanStyle.id = 'pdf-clean-mode';
+        cleanStyle.textContent = '.blank-field-border { border-bottom: none !important; }';
+        document.head.appendChild(cleanStyle);
         try {
             const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
                 import('html2canvas'),
@@ -155,7 +160,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
             if (!contractRef.current) return;
             await document.fonts.ready;
             window.scrollTo(0, 0);
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise(r => setTimeout(r, 300));
 
             const canvas = await html2canvas(contractRef.current, {
                 scale: 2,
@@ -187,6 +192,9 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
             setErrorMsg('Xuất PDF thất bại. Hãy dùng In (Ctrl+P) → Save as PDF.');
             setTimeout(() => setErrorMsg(null), 5000);
         } finally {
+            // Remove clean mode style to restore blank field borders in browser view
+            const el = document.getElementById('pdf-clean-mode');
+            if (el) el.remove();
             setExporting(false);
         }
     };
@@ -301,7 +309,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                     Hôm nay, {fmtDate(contractDate)}, tại{' '}
                     {signedPlace
                         ? <span style={{ fontWeight: 600 }}>{signedPlace}</span>
-                        : <span style={{ ...blankField, minWidth: '200px' }}>{'\u00A0'.repeat(20)}</span>
+                        : <span className="blank-field-border" style={{ ...blankField, minWidth: '200px' }}>{'\u00A0'.repeat(20)}</span>
                     }
                     {' '}(tỉnh/thành phố), chúng tôi gồm:
                 </p>
@@ -548,7 +556,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                     <p style={{ textAlign: 'right', marginBottom: '4px', fontStyle: 'italic' }}>
                         {signedPlace
                             ? <span>{signedPlace}</span>
-                            : <span style={{ ...blankField, minWidth: '140px' }}>{'\u00A0'.repeat(14)}</span>
+                            : <span className="blank-field-border" style={{ ...blankField, minWidth: '140px' }}>{'\u00A0'.repeat(14)}</span>
                         }
                         , {fmtDate(contractDate)}
                     </p>
@@ -613,6 +621,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 @media print {
                     body { margin: 0; background: #fff !important; }
                     .no-print { display: none !important; }
+                    .blank-field-border { border-bottom: none !important; }
                     .public-contract-page {
                         padding: 0 !important;
                         background: #fff !important;
