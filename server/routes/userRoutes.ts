@@ -11,7 +11,7 @@ export function createUserRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
-        return res.status(403).json({ error: 'Insufficient permissions' });
+        return res.status(403).json({ error: 'Bạn không có quyền thực hiện thao tác này' });
       }
 
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
@@ -28,7 +28,7 @@ export function createUserRoutes(authenticateToken: any) {
       res.json(result);
     } catch (error) {
       console.error('Error fetching users:', error);
-      res.status(500).json({ error: 'Failed to fetch users' });
+      res.status(500).json({ error: 'Không thể tải danh sách người dùng' });
     }
   });
 
@@ -50,7 +50,7 @@ export function createUserRoutes(authenticateToken: any) {
       res.json(teams);
     } catch (error) {
       console.error('Error fetching teams:', error);
-      res.status(500).json({ error: 'Failed to fetch teams' });
+      res.status(500).json({ error: 'Không thể tải danh sách nhóm' });
     }
   });
 
@@ -58,17 +58,17 @@ export function createUserRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Only admins can create users' });
+        return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể tạo người dùng' });
       }
 
       const { name, email, password, role, phone, avatar } = req.body;
       if (!name || !email) {
-        return res.status(400).json({ error: 'Name and email are required' });
+        return res.status(400).json({ error: 'Tên và email là bắt buộc' });
       }
 
       const existing = await userRepository.findByEmail(user.tenantId, email);
       if (existing) {
-        return res.status(409).json({ error: 'User with this email already exists' });
+        return res.status(409).json({ error: 'Người dùng với email này đã tồn tại' });
       }
 
       const newUser = await userRepository.create(user.tenantId, {
@@ -87,7 +87,7 @@ export function createUserRoutes(authenticateToken: any) {
       res.status(201).json(userRepository.toPublicUser(newUser));
     } catch (error) {
       console.error('Error creating user:', error);
-      res.status(500).json({ error: 'Failed to create user' });
+      res.status(500).json({ error: 'Không thể tạo người dùng' });
     }
   });
 
@@ -95,17 +95,17 @@ export function createUserRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Only admins can invite users' });
+        return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể mời người dùng' });
       }
 
       const { name, email, role, phone } = req.body;
       if (!name || !email) {
-        return res.status(400).json({ error: 'Name and email are required' });
+        return res.status(400).json({ error: 'Tên và email là bắt buộc' });
       }
 
       const existing = await userRepository.findByEmail(user.tenantId, email);
       if (existing) {
-        return res.status(409).json({ error: 'User with this email already exists' });
+        return res.status(409).json({ error: 'Người dùng với email này đã tồn tại' });
       }
 
       const invited = await userRepository.invite(user.tenantId, { name, email, role, phone });
@@ -127,7 +127,7 @@ export function createUserRoutes(authenticateToken: any) {
       res.status(201).json(userRepository.toPublicUser(invited));
     } catch (error) {
       console.error('Error inviting user:', error);
-      res.status(500).json({ error: 'Failed to invite user' });
+      res.status(500).json({ error: 'Không thể gửi lời mời người dùng' });
     }
   });
 
@@ -135,22 +135,22 @@ export function createUserRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (user.id !== String(req.params.id) && user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Can only update own profile or must be admin' });
+        return res.status(403).json({ error: 'Bạn chỉ có thể cập nhật hồ sơ của chính mình hoặc phải là quản trị viên' });
       }
 
       // BUG FIX: Prevent privilege escalation — only ADMIN can change roles
       if (req.body.role !== undefined && user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Only admins can change user roles' });
+        return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể thay đổi vai trò người dùng' });
       }
       // Validate role value is from allowed enum
-      const VALID_ROLES = ['ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING', 'VIEWER'];
+      const VALID_ROLES = ['ADMIN', 'TEAM_LEAD', 'SALES', 'MARKETING', 'VIEWER', 'PARTNER_ADMIN', 'PARTNER_AGENT'];
       if (req.body.role !== undefined && !VALID_ROLES.includes(req.body.role)) {
-        return res.status(400).json({ error: `Invalid role. Allowed: ${VALID_ROLES.join(', ')}` });
+        return res.status(400).json({ error: `Vai trò không hợp lệ. Các vai trò cho phép: ${VALID_ROLES.join(', ')}` });
       }
 
       const before = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
       const updated = await userRepository.update(user.tenantId, String(req.params.id), req.body);
-      if (!updated) return res.status(404).json({ error: 'User not found' });
+      if (!updated) return res.status(404).json({ error: 'Không tìm thấy người dùng' });
 
       const changes: string[] = [];
       if (req.body.role && before?.role !== req.body.role) changes.push(`role: ${before?.role} → ${req.body.role}`);
@@ -169,7 +169,7 @@ export function createUserRoutes(authenticateToken: any) {
       res.json(userRepository.toPublicUser(updated));
     } catch (error) {
       console.error('Error updating user:', error);
-      res.status(500).json({ error: 'Failed to update user' });
+      res.status(500).json({ error: 'Không thể cập nhật người dùng' });
     }
   });
 
@@ -177,13 +177,13 @@ export function createUserRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Only admins can resend invites' });
+        return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể gửi lại lời mời' });
       }
 
       const target = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
-      if (!target) return res.status(404).json({ error: 'User not found' });
+      if (!target) return res.status(404).json({ error: 'Không tìm thấy người dùng' });
       if (target.status !== 'PENDING') {
-        return res.status(400).json({ error: 'Only pending users can receive re-invites' });
+        return res.status(400).json({ error: 'Chỉ người dùng đang chờ kích hoạt mới có thể nhận lời mời lại' });
       }
 
       await auditRepository.log(user.tenantId, {
@@ -203,7 +203,7 @@ export function createUserRoutes(authenticateToken: any) {
       res.json({ success: true, message: `Invite resent to ${target.email}` });
     } catch (error) {
       console.error('Error resending invite:', error);
-      res.status(500).json({ error: 'Failed to resend invite' });
+      res.status(500).json({ error: 'Không thể gửi lại lời mời' });
     }
   });
 
@@ -260,7 +260,7 @@ export function createUserRoutes(authenticateToken: any) {
       res.json(userRepository.toPublicUser(updated!));
     } catch (error) {
       console.error('Error changing email:', error);
-      res.status(500).json({ error: 'Failed to change email' });
+      res.status(500).json({ error: 'Không thể thay đổi email' });
     }
   });
 
@@ -268,7 +268,7 @@ export function createUserRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (user.id !== String(req.params.id) && user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Can only change own password or must be admin' });
+        return res.status(403).json({ error: 'Bạn chỉ có thể đổi mật khẩu của chính mình hoặc phải là quản trị viên' });
       }
 
       const { currentPassword, newPassword } = req.body;
@@ -290,7 +290,7 @@ export function createUserRoutes(authenticateToken: any) {
       res.json({ message: 'Đổi mật khẩu thành công' });
     } catch (error) {
       console.error('Error updating password:', error);
-      res.status(500).json({ error: 'Failed to update password' });
+      res.status(500).json({ error: 'Không thể cập nhật mật khẩu' });
     }
   });
 
@@ -298,15 +298,15 @@ export function createUserRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       if (user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Only admins can delete users' });
+        return res.status(403).json({ error: 'Chỉ quản trị viên mới có thể xóa người dùng' });
       }
 
       if (user.id === String(req.params.id)) {
-        return res.status(400).json({ error: 'Cannot delete your own account' });
+        return res.status(400).json({ error: 'Không thể xóa tài khoản của chính mình' });
       }
 
       const deleted = await userRepository.delete(user.tenantId, String(req.params.id));
-      if (!deleted) return res.status(404).json({ error: 'User not found' });
+      if (!deleted) return res.status(404).json({ error: 'Không tìm thấy người dùng' });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
@@ -317,10 +317,10 @@ export function createUserRoutes(authenticateToken: any) {
         ipAddress: req.ip,
       });
 
-      res.json({ message: 'User deleted' });
+      res.json({ message: 'Đã xóa người dùng' });
     } catch (error) {
       console.error('Error deleting user:', error);
-      res.status(500).json({ error: 'Failed to delete user' });
+      res.status(500).json({ error: 'Không thể xóa người dùng' });
     }
   });
 
