@@ -287,7 +287,6 @@ export interface Lead {
 }
 
 export enum PropertyType {
-    PROJECT = 'Project',       // Dự án
     APARTMENT = 'Apartment',   // Căn hộ
     TOWNHOUSE = 'Townhouse',   // Nhà phố
     VILLA = 'Villa',           // Biệt thự
