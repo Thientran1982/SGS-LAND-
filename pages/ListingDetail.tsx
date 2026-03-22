@@ -666,6 +666,7 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                     onSubmit={handleFormSubmit}
                     initialData={editingUnit || { projectCode } as any}
                     t={t}
+                    isProjectUnit={true}
                 />
             )}
 

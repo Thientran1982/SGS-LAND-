@@ -13,6 +13,7 @@ interface ListingFormProps {
     onSubmit: (data: Partial<Listing>) => Promise<void>;
     initialData?: Listing;
     t: any;
+    isProjectUnit?: boolean;
 }
 
 const ICONS = {
@@ -29,7 +30,7 @@ const getUnits = (t: any) => ({
     ONE: { value: 1, label: 'VND' }
 });
 
-export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, onSubmit, initialData, t }) => {
+export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, onSubmit, initialData, t, isProjectUnit = false }) => {
     const { formatCurrency } = useTranslation();
     // Default State
     const defaultState: Partial<Listing> = {
@@ -278,7 +279,9 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     ], [t]);
 
     const landTypeOptions = useMemo(() => ['ONT', 'ODT', 'CLN', 'LUK', 'SKK', 'TMD'].map(type => ({ value: type, label: type })), []);
-    const typeOptions = useMemo(() => Object.values(PropertyType).map(tKey => ({ value: tKey, label: t(`property.${tKey.toUpperCase()}`) })), [t]);
+    const typeOptions = useMemo(() => Object.values(PropertyType)
+        .filter(tKey => !isProjectUnit || tKey !== PropertyType.PROJECT)
+        .map(tKey => ({ value: tKey, label: t(`property.${tKey.toUpperCase()}`) })), [t, isProjectUnit]);
     const statusOptions = useMemo(() => Object.values(ListingStatus).map(s => ({ value: s, label: t(`status.${s}`) })), [t]);
     const transactionOptions = useMemo(() => Object.values(TransactionType).map(tr => ({ value: tr, label: t(`transaction.${tr}`) })), [t]);
     const priceUnitOptions = useMemo(() => Object.values(UNITS).map(u => ({ value: u.value, label: u.label })), [UNITS]);
@@ -436,7 +439,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             <input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-mono bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] focus:border-indigo-500 outline-none" />
                                         </div>
                                     )}
-                                    {!isProject && (
+                                    {!isProject && !isProjectUnit && (
                                         <div>
                                             <Dropdown
                                                 label={t('inventory.label_project')}
@@ -473,7 +476,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     {errors.contactPhone && <p className="text-xs2 text-rose-500 mt-1">{errors.contactPhone}</p>}
                                 </div>
 
-                                {/* CONSIGNMENT INFO (OWNER & COMMISSION) */}
+                                {/* CONSIGNMENT INFO (OWNER & COMMISSION) — hidden for project units */}
+                                {!isProjectUnit && (
                                 <div className="p-4 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] space-y-4">
                                     <h5 className="text-xs2 font-black text-[var(--text-secondary)] uppercase tracking-widest">{t('inventory.section_consignment')}</h5>
                                     <div className="grid grid-cols-2 gap-4">
@@ -518,6 +522,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         </div>
                                     </div>
                                 </div>
+                                )}
 
                                 <div>
                                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_location')} <span className="text-rose-500">*</span></label>
