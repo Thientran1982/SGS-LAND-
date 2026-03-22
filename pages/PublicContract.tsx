@@ -194,21 +194,49 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             const pageW = pdf.internal.pageSize.getWidth();   // 210mm
             const pageH = pdf.internal.pageSize.getHeight();  // 297mm
-            const margin = 8;                                  // 8mm mỗi phía
-            const imgW = pageW - 2 * margin;                  // 194mm
-            const imgH = (canvas.height * imgW) / canvas.width; // chiều cao tổng của ảnh (mm)
-            const contentH = pageH - 2 * margin;              // 281mm/trang khả dụng
+            const margin = 10;                                 // 10mm mỗi phía
+            const imgW = pageW - 2 * margin;                  // 190mm
+            const imgH = (canvas.height * imgW) / canvas.width; // tổng chiều cao ảnh (mm)
+            const contentH = pageH - 2 * margin;              // 277mm/trang
 
-            const totalPages = Math.ceil(imgH / contentH);
+            // Smart page break: tìm dòng pixel gần vị trí ngắt trang mà toàn màu trắng
+            const findSafeBreak = (targetPx: number): number => {
+                const ctx2d = canvas.getContext('2d');
+                if (!ctx2d) return targetPx;
+                const W = canvas.width;
+                const rangePx = Math.round(20 * canvas.height / imgH); // ±20mm tính theo pixel
+                const lo = Math.max(0, targetPx - rangePx);
+                const hi = Math.min(canvas.height - 1, targetPx + rangePx);
+                let bestY = targetPx, bestScore = -1;
+                for (let y = lo; y <= hi; y++) {
+                    const row = ctx2d.getImageData(0, y, W, 1).data;
+                    let white = 0;
+                    for (let x = 0; x < W * 4; x += 4) {
+                        if (row[x] > 240 && row[x + 1] > 240 && row[x + 2] > 240) white++;
+                    }
+                    const score = white / W;
+                    if (score > bestScore) { bestScore = score; bestY = y; }
+                }
+                return bestScore > 0.85 ? bestY : targetPx; // chỉ dùng nếu đủ trắng
+            };
 
-            for (let i = 0; i < totalPages; i++) {
+            // Xây danh sách điểm ngắt trang
+            const contentPx = Math.round(contentH * canvas.height / imgH);
+            const breaks: number[] = [0];
+            let pos = contentPx;
+            while (pos < canvas.height) {
+                const safe = findSafeBreak(pos);
+                breaks.push(safe);
+                pos = safe + contentPx;
+            }
+            breaks.push(canvas.height);
+
+            for (let i = 0; i < breaks.length - 1; i++) {
                 if (i > 0) pdf.addPage();
-
-                // Cắt đúng phần canvas cho từng trang
-                const startMm = i * contentH;
-                const sliceMm = Math.min(contentH, imgH - startMm);
-                const startPx = Math.round((startMm / imgH) * canvas.height);
-                const slicePx = Math.round((sliceMm / imgH) * canvas.height);
+                const startPx = breaks[i];
+                const endPx = breaks[i + 1];
+                const slicePx = endPx - startPx;
+                const sliceMm = (slicePx / canvas.height) * imgH;
 
                 const sliceCanvas = document.createElement('canvas');
                 sliceCanvas.width = canvas.width;
@@ -217,7 +245,6 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                     canvas, 0, startPx, canvas.width, slicePx,
                     0, 0, canvas.width, slicePx
                 );
-
                 pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', margin, margin, imgW, sliceMm);
             }
 
@@ -301,7 +328,7 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                 <div style={{ ...center, marginBottom: '20px' }}>
                     <p style={{ ...bold, fontSize: '13pt', margin: 0 }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
                     <p style={{ ...bold, fontSize: '13pt', margin: '2px 0 0' }}>
-                        <span style={{ borderBottom: '1.5px solid #000', paddingBottom: '2px' }}>
+                        <span style={{ display: 'inline-block', borderBottom: '1.5px solid #000', paddingBottom: '2px' }}>
                             Độc lập – Tự do – Hạnh phúc
                         </span>
                     </p>
