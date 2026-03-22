@@ -47,7 +47,7 @@ build = ["npm", "run", "build"]
 [userenv.shared]
 COMMISSION_RATE = "0.02"
 MARKET_CACHE_TTL_HOURS = "6"
-JWT_SECRET = "a98097345cb9e55e6af1d2e3e52e4d493d32fefb81a2c351807ad6c5d23d7d488236160c58835c70c7e8758d6d24f1c09dc2270b70807801e2d2966e51dfa411"
+JWT_SECRET = "beea2141cb1e0e1b3b63af541e0206be1aee6b9e645b44da4a34b2f395e6ccfa84ecfbf2b84988df5076f6a3176a4b913c707cd98533e7e0d00d529ad08bf1bb"
 
 [userenv.development]
 NODE_ENV = "development"

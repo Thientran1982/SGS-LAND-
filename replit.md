@@ -117,6 +117,8 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - Webhook signature verification for Facebook (HMAC-SHA256) and Zalo
 - **Auth guard fixed (App.tsx)**: `getInitialAuthState()` now always returns `'LOADING'` — server session check MUST complete before any private page renders. Prevents flash of private content on expired sessions.
 - **Register role fixed (server.ts)**: `/api/auth/register` counts existing users in tenant; first user → `ADMIN`, subsequent users → `AGENT`. Previously all registrations hardcoded to `ADMIN`. `source` changed from `INVITE` to `REGISTER`.
+- **ADMIN_ROLES fixed (App.tsx)**: `ADMIN_ROLES` set now correctly contains `['ADMIN', 'TEAM_LEAD']` — previously had `'MANAGER'` (nonexistent role) instead of `'TEAM_LEAD'`, blocking TEAM_LEAD users from admin-only routes.
+- **JWT_SECRET persisted**: `JWT_SECRET` stored as a shared environment variable — server restarts no longer invalidate all user sessions.
 - Parameter pollution prevention
 - API keys (GEMINI_API_KEY) server-side only
 - JWT with httpOnly cookies, 24h expiry

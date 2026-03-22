@@ -321,7 +321,7 @@ const ADMIN_ONLY_ROUTES = new Set([
     ROUTES.AI_GOVERNANCE,
 ]);
 
-const ADMIN_ROLES = new Set(['ADMIN', 'MANAGER']);
+const ADMIN_ROLES = new Set(['ADMIN', 'TEAM_LEAD']);
 
 const AppShell: React.FC = () => {
     const { route, navigate } = useRouter();
