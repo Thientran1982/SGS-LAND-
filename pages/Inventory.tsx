@@ -844,13 +844,13 @@ export const Inventory: React.FC = () => {
                                             <ListingCard
                                                 item={{...item, isFavorite: favorites.has(item.id)}} t={t} formatCurrency={formatCurrency}
                                                 onToggleFavorite={handleToggleFavorite}
-                                                onEdit={(l) => { setEditingListing(l); setIsCreateModalOpen(true); }}
-                                                onDelete={handleDeleteClick}
-                                                onDuplicate={async (id) => {
+                                                onEdit={canViewInternalInfo ? (l) => { setEditingListing(l); setIsCreateModalOpen(true); } : undefined}
+                                                onDelete={canViewInternalInfo ? handleDeleteClick : undefined}
+                                                onDuplicate={canViewInternalInfo ? async (id) => {
                                                     try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
-                                                }}
+                                                } : undefined}
                                                 onClick={() => handleNavigate(item.id)}
-                                                showActions={true}
+                                                showActions={canViewInternalInfo}
                                             />
                                         </div>
                                     ))
