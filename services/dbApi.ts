@@ -240,6 +240,7 @@ class DatabaseApiClient {
       if (filters?.search) params.search = filters.search;
       if (filters?.priceMin) params.priceMin = filters.priceMin;
       if (filters?.priceMax) params.priceMax = filters.priceMax;
+      if (filters?.projectCode) params.projectCode = filters.projectCode;
       const result = await api.get<any>('/api/public/listings', { params });
       return {
         data: result.data || [],

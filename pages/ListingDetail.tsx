@@ -268,8 +268,16 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
     const fetchUnits = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await db.getListings(1, 500, { projectCode });
-            setUnits(res.data || []);
+            const user = await db.getCurrentUser();
+            let data: any[] = [];
+            if (user) {
+                const res = await db.getListings(1, 500, { projectCode });
+                data = res.data || [];
+            } else {
+                const res = await db.getPublicListings(1, 500, { projectCode });
+                data = res.data || [];
+            }
+            setUnits(data);
         } catch (e) {
             console.error(e);
         } finally {
