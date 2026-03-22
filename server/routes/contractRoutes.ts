@@ -22,7 +22,7 @@ export function createContractRoutes(authenticateToken: any) {
       res.json(result);
     } catch (error) {
       console.error('Error fetching contracts:', error);
-      res.status(500).json({ error: 'Failed to fetch contracts' });
+      res.status(500).json({ error: 'Không thể tải danh sách hợp đồng' });
     }
   });
 
@@ -30,17 +30,17 @@ export function createContractRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const contract = await contractRepository.findById(user.tenantId, String(req.params.id));
-      if (!contract) return res.status(404).json({ error: 'Contract not found' });
+      if (!contract) return res.status(404).json({ error: 'Không tìm thấy hợp đồng' });
 
       const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
       if (RESTRICTED.includes(user.role) && (contract as any).createdById !== user.id) {
-        return res.status(403).json({ error: 'Access denied' });
+        return res.status(403).json({ error: 'Bạn không có quyền truy cập hợp đồng này' });
       }
 
       res.json(contract);
     } catch (error) {
       console.error('Error fetching contract:', error);
-      res.status(500).json({ error: 'Failed to fetch contract' });
+      res.status(500).json({ error: 'Không thể tải thông tin hợp đồng' });
     }
   });
 
@@ -50,7 +50,7 @@ export function createContractRoutes(authenticateToken: any) {
       const { type } = req.body;
 
       if (!type) {
-        return res.status(400).json({ error: 'Missing required fields: type' });
+        return res.status(400).json({ error: 'Thiếu thông tin bắt buộc: loại hợp đồng' });
       }
 
       const contract = await contractRepository.create(user.tenantId, {
@@ -71,7 +71,7 @@ export function createContractRoutes(authenticateToken: any) {
       res.status(201).json(contract);
     } catch (error) {
       console.error('Error creating contract:', error);
-      res.status(500).json({ error: 'Failed to create contract' });
+      res.status(500).json({ error: 'Không thể tạo hợp đồng. Vui lòng thử lại.' });
     }
   });
 
@@ -90,10 +90,10 @@ export function createContractRoutes(authenticateToken: any) {
 
       // Fetch the contract for state machine and ownership checks
       const current = await contractRepository.findById(user.tenantId, String(req.params.id));
-      if (!current) return res.status(404).json({ error: 'Contract not found' });
+      if (!current) return res.status(404).json({ error: 'Không tìm thấy hợp đồng' });
 
       if (RESTRICTED.includes(user.role) && (current as any).createdById !== user.id) {
-        return res.status(403).json({ error: 'You can only edit contracts you created' });
+        return res.status(403).json({ error: 'Bạn chỉ có thể chỉnh sửa hợp đồng do mình tạo' });
       }
 
       // Validate status transitions only for ADMIN/MANAGER — CRM admins need flexibility
@@ -117,7 +117,7 @@ export function createContractRoutes(authenticateToken: any) {
       }
 
       const contract = await contractRepository.update(user.tenantId, String(req.params.id), updateData);
-      if (!contract) return res.status(404).json({ error: 'Contract not found' });
+      if (!contract) return res.status(404).json({ error: 'Không tìm thấy hợp đồng' });
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
@@ -131,7 +131,7 @@ export function createContractRoutes(authenticateToken: any) {
       res.json(contract);
     } catch (error) {
       console.error('Error updating contract:', error);
-      res.status(500).json({ error: 'Failed to update contract' });
+      res.status(500).json({ error: 'Không thể cập nhật hợp đồng. Vui lòng thử lại.' });
     }
   });
 
@@ -140,12 +140,12 @@ export function createContractRoutes(authenticateToken: any) {
       const user = (req as any).user;
 
       const contract = await contractRepository.findById(user.tenantId, String(req.params.id));
-      if (!contract) return res.status(404).json({ error: 'Contract not found' });
+      if (!contract) return res.status(404).json({ error: 'Không tìm thấy hợp đồng' });
 
       const isAdmin = ['ADMIN', 'MANAGER'].includes(user.role);
       const isOwner = (contract as any).createdById === user.id;
       if (!isAdmin && !isOwner) {
-        return res.status(403).json({ error: 'You can only delete contracts you created' });
+        return res.status(403).json({ error: 'Bạn chỉ có thể xóa hợp đồng do mình tạo' });
       }
 
       await contractRepository.deleteById(user.tenantId, String(req.params.id));
@@ -162,7 +162,7 @@ export function createContractRoutes(authenticateToken: any) {
       res.status(204).send();
     } catch (error) {
       console.error('Error deleting contract:', error);
-      res.status(500).json({ error: 'Failed to delete contract' });
+      res.status(500).json({ error: 'Không thể xóa hợp đồng. Vui lòng thử lại.' });
     }
   });
 
