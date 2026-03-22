@@ -28,7 +28,6 @@ export const ROUTES = {
     LEADS: 'leads',
     CONTRACTS: 'contracts',
     INVENTORY: 'inventory',
-    PROJECTS: 'projects',
     LISTING: 'listing', 
     FAVORITES: 'favorites',
     APPROVALS: 'approvals',
