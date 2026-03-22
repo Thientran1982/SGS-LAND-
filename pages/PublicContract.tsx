@@ -152,28 +152,26 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
     };
 
     const handleExportPDF = async () => {
-        if (!contract) return;
+        if (!contract || !contractRef.current) return;
         setExporting(true);
+
+        // Directly hide elements via inline style (more reliable than CSS class injection)
+        const el = contractRef.current;
+        const toHide = Array.from(el.querySelectorAll<HTMLElement>('.contract-divider'));
+        const noBorder = Array.from(el.querySelectorAll<HTMLElement>('.blank-field-border'));
+        toHide.forEach(d => { d.style.display = 'none'; });
+        noBorder.forEach(d => { d.style.borderBottom = 'none'; });
+
         try {
             const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
                 import('html2canvas'),
                 import('jspdf'),
             ]);
-            if (!contractRef.current) return;
             await document.fonts.ready;
             window.scrollTo(0, 0);
-            await new Promise(r => setTimeout(r, 400));
-
-            // Inject clean CSS right before capture (minimal reflow time)
-            const cleanStyle = document.createElement('style');
-            cleanStyle.id = 'pdf-clean-mode';
-            cleanStyle.textContent = '.blank-field-border { border-bottom: none !important; } .contract-divider { display: none !important; }';
-            document.head.appendChild(cleanStyle);
-
-            // Give browser a frame to apply the style before capture
+            await new Promise(r => setTimeout(r, 350));
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-            const el = contractRef.current;
             const fullWidth = el.offsetWidth;
             const fullHeight = el.scrollHeight;
 
@@ -194,26 +192,44 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
             });
 
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const W = pdf.internal.pageSize.getWidth();
-            const H = pdf.internal.pageSize.getHeight();
-            const imgH = (canvas.height * W) / canvas.width;
-            let remaining = imgH;
-            let yOffset = 0;
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, yOffset, W, imgH);
-            remaining -= H;
-            while (remaining > 1) {
-                yOffset -= H;
-                pdf.addPage();
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, yOffset, W, imgH);
-                remaining -= H;
+            const pageW = pdf.internal.pageSize.getWidth();   // 210mm
+            const pageH = pdf.internal.pageSize.getHeight();  // 297mm
+            const margin = 8;                                  // 8mm mỗi phía
+            const imgW = pageW - 2 * margin;                  // 194mm
+            const imgH = (canvas.height * imgW) / canvas.width; // chiều cao tổng của ảnh (mm)
+            const contentH = pageH - 2 * margin;              // 281mm/trang khả dụng
+
+            const totalPages = Math.ceil(imgH / contentH);
+
+            for (let i = 0; i < totalPages; i++) {
+                if (i > 0) pdf.addPage();
+
+                // Cắt đúng phần canvas cho từng trang
+                const startMm = i * contentH;
+                const sliceMm = Math.min(contentH, imgH - startMm);
+                const startPx = Math.round((startMm / imgH) * canvas.height);
+                const slicePx = Math.round((sliceMm / imgH) * canvas.height);
+
+                const sliceCanvas = document.createElement('canvas');
+                sliceCanvas.width = canvas.width;
+                sliceCanvas.height = slicePx;
+                sliceCanvas.getContext('2d')!.drawImage(
+                    canvas, 0, startPx, canvas.width, slicePx,
+                    0, 0, canvas.width, slicePx
+                );
+
+                pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', margin, margin, imgW, sliceMm);
             }
+
             pdf.save(`HopDong_${contract.id.slice(0, 8).toUpperCase()}.pdf`);
         } catch (err) {
             console.error('PDF export error:', err);
             setErrorMsg('Xuất PDF thất bại. Hãy dùng In (Ctrl+P) → Save as PDF.');
             setTimeout(() => setErrorMsg(null), 5000);
         } finally {
-            document.getElementById('pdf-clean-mode')?.remove();
+            // Khôi phục inline styles
+            toHide.forEach(d => { d.style.display = ''; });
+            noBorder.forEach(d => { d.style.borderBottom = ''; });
             setExporting(false);
         }
     };
