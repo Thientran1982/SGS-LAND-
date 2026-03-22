@@ -135,8 +135,9 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
         pw.document.write(`<!DOCTYPE html><html lang="vi"><head>
 <meta charset="utf-8"><title>Hợp Đồng</title>
 <style>
-*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-body{margin:0;padding:0;background:#fff;}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;-ms-overflow-style:none!important;scrollbar-width:none!important;}
+*::-webkit-scrollbar{display:none!important;width:0!important;height:0!important;}
+html,body{margin:0;padding:0;background:#fff;overflow:visible!important;height:auto!important;}
 .contract-divider{display:none!important;}
 .blank-field-border{border-bottom:none!important;}
 table{border-collapse:collapse;width:100%;page-break-inside:auto;}
