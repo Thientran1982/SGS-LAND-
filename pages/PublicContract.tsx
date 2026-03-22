@@ -46,8 +46,7 @@ const fmtShortDate = (d?: string | null): string => {
     } catch { return d; }
 };
 
-const BLANK_LINE = '\u00A0'.repeat(20);
-const blank = (s?: string | null, fallback = BLANK_LINE) =>
+const blank = (s?: string | null, fallback = '...') =>
     s && s.trim() ? s.trim() : fallback;
 
 /* ── Styling constants ── */
@@ -68,14 +67,6 @@ const pageStyle: React.CSSProperties = {
 
 const center: React.CSSProperties = { textAlign: 'center' };
 const bold: React.CSSProperties = { fontWeight: 700 };
-// Dùng borderBottom thay textDecoration cho các ô blank trong hợp đồng (render đẹp hơn, không giống link)
-const blankField: React.CSSProperties = {
-    display: 'inline-block',
-    borderBottom: '1px solid #000',
-    minWidth: '180px',
-    paddingBottom: '1px',
-    verticalAlign: 'bottom',
-};
 
 /* ── Sub-components ── */
 const ArticleTitle: React.FC<{ num: string | number; title: string }> = ({ num, title }) => (
@@ -86,8 +77,7 @@ const ArticleTitle: React.FC<{ num: string | number; title: string }> = ({ num, 
     </div>
 );
 
-const NBSP20 = '\u00A0'.repeat(20);
-const NBSP12 = '\u00A0'.repeat(12);
+const EMPTY_PLACEHOLDER = <span style={{ color: '#999', fontStyle: 'italic', letterSpacing: '0.05em' }}>...</span>;
 
 const Line: React.FC<{ label: string; value?: string | null; inline?: boolean }> = ({ label, value, inline }) => {
     const hasValue = value && value.trim();
@@ -95,26 +85,20 @@ const Line: React.FC<{ label: string; value?: string | null; inline?: boolean }>
         return (
             <span>
                 <span style={{ fontWeight: 600 }}>{label}: </span>
-                {hasValue
-                    ? <span>{value!.trim()}</span>
-                    : <span className="blank-field-border" style={{ ...blankField, minWidth: '120px' }}>{NBSP12}</span>
-                }
+                {hasValue ? <span>{value!.trim()}</span> : EMPTY_PLACEHOLDER}
             </span>
         );
     }
     return (
         <p style={{ margin: '2px 0', paddingLeft: '16px' }}>
             <span style={{ fontWeight: 600 }}>- {label}: </span>
-            {hasValue
-                ? <span>{value!.trim()}</span>
-                : <span className="blank-field-border" style={{ ...blankField, minWidth: '220px' }}>{NBSP20}</span>
-            }
+            {hasValue ? <span>{value!.trim()}</span> : EMPTY_PLACEHOLDER}
         </p>
     );
 };
 
-const Divider: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
-    <div style={{ borderBottom: '1px solid #000', margin: '6px 0', ...style }} />
+const Divider: React.FC<{ style?: React.CSSProperties; className?: string }> = ({ style, className }) => (
+    <div className={className} style={{ borderBottom: '1px solid #000', margin: '6px 0', ...style }} />
 );
 
 export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
@@ -150,7 +134,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
         // Inject CSS to hide blank field borders for a clean PDF
         const cleanStyle = document.createElement('style');
         cleanStyle.id = 'pdf-clean-mode';
-        cleanStyle.textContent = '.blank-field-border { border-bottom: none !important; }';
+        cleanStyle.textContent = '.blank-field-border { border-bottom: none !important; } .contract-divider { display: none !important; }';
         document.head.appendChild(cleanStyle);
         try {
             const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
@@ -294,7 +278,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                     )}
                 </div>
 
-                <Divider style={{ margin: '16px 0' }} />
+                <Divider className="contract-divider" style={{ margin: '16px 0' }} />
 
                 {/* CĂN CỨ */}
                 <div style={{ marginBottom: '12px' }}>
@@ -309,7 +293,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                     Hôm nay, {fmtDate(contractDate)}, tại{' '}
                     {signedPlace
                         ? <span style={{ fontWeight: 600 }}>{signedPlace}</span>
-                        : <span className="blank-field-border" style={{ ...blankField, minWidth: '200px' }}>{'\u00A0'.repeat(20)}</span>
+                        : EMPTY_PLACEHOLDER
                     }
                     {' '}(tỉnh/thành phố), chúng tôi gồm:
                 </p>
@@ -554,10 +538,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                 {/* ── KÝ TÊN ── */}
                 <div style={{ marginTop: '40px' }}>
                     <p style={{ textAlign: 'right', marginBottom: '4px', fontStyle: 'italic' }}>
-                        {signedPlace
-                            ? <span>{signedPlace}</span>
-                            : <span className="blank-field-border" style={{ ...blankField, minWidth: '140px' }}>{'\u00A0'.repeat(14)}</span>
-                        }
+                        {signedPlace ? <span>{signedPlace}</span> : EMPTY_PLACEHOLDER}
                         , {fmtDate(contractDate)}
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '16px' }}>
@@ -569,7 +550,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                             <p style={{ fontStyle: 'italic', fontSize: '11pt', color: GRAY, margin: '0 0 64px' }}>
                                 (Ký, ghi rõ họ tên{contract.partyATaxCode ? ', đóng dấu' : ''})
                             </p>
-                            <Divider />
+                            <Divider className="contract-divider" />
                             <p style={{ ...bold, margin: '6px 0 2px', fontSize: '12pt' }}>
                                 {blank(contract.partyARepresentative || contract.partyAName)}
                             </p>
@@ -586,7 +567,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                             <p style={{ fontStyle: 'italic', fontSize: '11pt', color: GRAY, margin: '0 0 64px' }}>
                                 (Ký và ghi rõ họ tên)
                             </p>
-                            <Divider />
+                            <Divider className="contract-divider" />
                             <p style={{ ...bold, margin: '6px 0 2px', fontSize: '12pt' }}>
                                 {blank(contract.partyBName)}
                             </p>
@@ -622,6 +603,7 @@ export const PublicContract: React.FC<PublicContractProps> = ({ token }) => {
                     body { margin: 0; background: #fff !important; }
                     .no-print { display: none !important; }
                     .blank-field-border { border-bottom: none !important; }
+                    .contract-divider { display: none !important; }
                     .public-contract-page {
                         padding: 0 !important;
                         background: #fff !important;
