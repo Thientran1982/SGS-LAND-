@@ -6,6 +6,64 @@ import { db } from '../services/dbApi';
 import { Dropdown } from './Dropdown';
 import { PaymentScheduleEditor } from './PaymentScheduleEditor';
 
+const formatVNDFull = (n: number): string => {
+    if (!n || n === 0) return '';
+    const formatted = n.toLocaleString('vi-VN') + ' đ';
+    if (n >= 1_000_000_000) {
+        const ty = (n / 1_000_000_000);
+        const tyStr = ty % 1 === 0 ? ty.toFixed(0) : ty.toFixed(2);
+        return `${formatted} = ${tyStr} Tỷ đồng`;
+    }
+    if (n >= 1_000_000) {
+        const tr = (n / 1_000_000);
+        const trStr = tr % 1 === 0 ? tr.toFixed(0) : tr.toFixed(1);
+        return `${formatted} = ${trStr} Triệu đồng`;
+    }
+    return formatted;
+};
+
+interface CurrencyInputProps {
+    label: string;
+    value: number | undefined;
+    onChange: (val: number) => void;
+    required?: boolean;
+    inputClass: string;
+    labelClass: string;
+}
+
+const CurrencyInput: React.FC<CurrencyInputProps> = ({ label, value, onChange, required, inputClass, labelClass }) => {
+    const preview = value && value > 0 ? formatVNDFull(value) : null;
+    return (
+        <div>
+            <label className={labelClass}>
+                {label}
+                <span className="ml-1 text-indigo-400 font-normal normal-case tracking-normal">(VNĐ)</span>
+            </label>
+            <div className="relative">
+                <input
+                    type="number"
+                    required={required}
+                    value={value || ''}
+                    onChange={e => onChange(Number(e.target.value))}
+                    className={`${inputClass} pr-10`}
+                    placeholder="VD: 2000000000"
+                    min={0}
+                    step={1000000}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--text-tertiary)] pointer-events-none">đ</span>
+            </div>
+            {preview ? (
+                <p className="mt-1.5 text-xs font-semibold text-indigo-600 flex items-center gap-1">
+                    <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {preview}
+                </p>
+            ) : (
+                <p className="mt-1 text-xs text-[var(--text-tertiary)]">Nhập số nguyên, không dùng dấu chấm hay phẩy</p>
+            )}
+        </div>
+    );
+};
+
 interface ContractModalProps {
     contract?: Contract | null;
     initialData?: Partial<Contract>;
@@ -372,16 +430,28 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         {activeTab === 'terms' && (
                             <div className="space-y-6">
                                 <h3 className="font-bold text-rose-600 border-b border-rose-100 pb-2">{t('contracts.finance_terms_title')}</h3>
+                                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-700 flex items-start gap-2">
+                                    <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span>Nhập số tiền bằng <strong>đồng VNĐ</strong>, không dùng dấu chấm hay phẩy. Ví dụ: <strong>2000000000</strong> = 2 Tỷ đồng &nbsp;|&nbsp; <strong>500000000</strong> = 500 Triệu đồng. Hệ thống sẽ tự hiển thị số tiền đã định dạng bên dưới ô nhập.</span>
+                                </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className={labelClass}>{t('contracts.transfer_price')}</label>
-                                        <input type="number" required value={formData.propertyPrice || ''} onChange={e => handleChange('propertyPrice', Number(e.target.value))} className={inputClass} />
-                                    </div>
+                                    <CurrencyInput
+                                        label={t('contracts.transfer_price')}
+                                        value={formData.propertyPrice}
+                                        onChange={val => handleChange('propertyPrice', val)}
+                                        required
+                                        inputClass={inputClass}
+                                        labelClass={labelClass}
+                                    />
                                     {formData.type === ContractType.DEPOSIT && (
-                                        <div>
-                                            <label className={labelClass}>{t('contracts.deposit_amount')}</label>
-                                            <input type="number" required value={formData.depositAmount || ''} onChange={e => handleChange('depositAmount', Number(e.target.value))} className={inputClass} />
-                                        </div>
+                                        <CurrencyInput
+                                            label={t('contracts.deposit_amount')}
+                                            value={formData.depositAmount}
+                                            onChange={val => handleChange('depositAmount', val)}
+                                            required
+                                            inputClass={inputClass}
+                                            labelClass={labelClass}
+                                        />
                                     )}
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

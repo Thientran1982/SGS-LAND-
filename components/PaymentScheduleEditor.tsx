@@ -181,15 +181,20 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{t('payment.amount')} (VNĐ)</label>
-                                        <input
-                                            type="number"
-                                            value={ms.amount || ''}
-                                            onChange={e => updateField(ms.id, 'amount', Number(e.target.value))}
-                                            disabled={readOnly}
-                                            className={inputCls}
-                                            min={0}
-                                            aria-label={t('payment.amount')}
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                value={ms.amount || ''}
+                                                onChange={e => updateField(ms.id, 'amount', Number(e.target.value))}
+                                                disabled={readOnly}
+                                                className={`${inputCls} pr-5`}
+                                                min={0}
+                                                step={1000000}
+                                                placeholder="VD: 500000000"
+                                                aria-label={t('payment.amount')}
+                                            />
+                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-tertiary)] pointer-events-none">đ</span>
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1">{t('payment.percentage')} (%)</label>
@@ -237,15 +242,25 @@ export const PaymentScheduleEditor: React.FC<PaymentScheduleEditorProps> = ({
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">{t('payment.paid_amount')} (VNĐ)</label>
-                                            <input
-                                                type="number"
-                                                value={ms.paidAmount ?? ms.amount ?? ''}
-                                                onChange={e => updateField(ms.id, 'paidAmount', Number(e.target.value))}
-                                                disabled={readOnly}
-                                                className={inputCls}
-                                                min={0}
-                                                aria-label={t('payment.paid_amount')}
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    value={ms.paidAmount ?? ms.amount ?? ''}
+                                                    onChange={e => updateField(ms.id, 'paidAmount', Number(e.target.value))}
+                                                    disabled={readOnly}
+                                                    className={`${inputCls} pr-5`}
+                                                    min={0}
+                                                    step={1000000}
+                                                    placeholder="VD: 500000000"
+                                                    aria-label={t('payment.paid_amount')}
+                                                />
+                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-500 pointer-events-none">đ</span>
+                                            </div>
+                                            {(ms.paidAmount ?? ms.amount) ? (
+                                                <p className="mt-1 text-[10px] font-semibold text-emerald-600">
+                                                    ≈ {formatVND(ms.paidAmount ?? ms.amount ?? 0)}
+                                                </p>
+                                            ) : null}
                                         </div>
                                     </div>
                                 )}
