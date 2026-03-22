@@ -218,7 +218,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const validate = () => {
         const newErrors: Record<string, string> = {};
         if (!formData.title?.trim()) newErrors.title = t('validation.title_required');
-        if (!formData.location?.trim()) newErrors.location = t('validation.location_required');
+        if (!isProjectUnit && !formData.location?.trim()) newErrors.location = t('validation.location_required');
         
         // Price Validation based on calculated value
         const calculatedPrice = parseFloat(priceShort) * priceUnit;
@@ -226,15 +226,17 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         
         if (!formData.area || formData.area <= 0) newErrors.area = t('validation.area_invalid');
         
-        // Contact Phone Validation
-        if (!formData.contactPhone?.trim()) {
-            newErrors.contactPhone = t('validation.required');
-        } else if (!VN_PHONE_REGEX.test(formData.contactPhone)) {
-            newErrors.contactPhone = t('validation.phone_invalid');
+        // Contact Phone Validation — skip for project units (inherited from parent)
+        if (!isProjectUnit) {
+            if (!formData.contactPhone?.trim()) {
+                newErrors.contactPhone = t('validation.required');
+            } else if (!VN_PHONE_REGEX.test(formData.contactPhone)) {
+                newErrors.contactPhone = t('validation.phone_invalid');
+            }
         }
 
         // Owner Phone Validation (optional field — only validate if filled)
-        if (formData.ownerPhone?.trim() && !VN_PHONE_REGEX.test(formData.ownerPhone)) {
+        if (!isProjectUnit && formData.ownerPhone?.trim() && !VN_PHONE_REGEX.test(formData.ownerPhone)) {
             newErrors.ownerPhone = t('validation.owner_phone_invalid');
         }
         
@@ -462,8 +464,9 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     {errors.title && <p className="text-xs2 text-rose-500 mt-1">{errors.title}</p>}
                                 </div>
                                 
-                                {/* CONTACT PHONE - NEW FIELD */}
-                                 <div>
+                                {/* CONTACT PHONE — hidden for project units */}
+                                {!isProjectUnit && (
+                                <div>
                                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">
                                         {t('leads.phone') || 'Contact Phone'} <span className="text-rose-500">*</span>
                                     </label>
@@ -475,6 +478,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     />
                                     {errors.contactPhone && <p className="text-xs2 text-rose-500 mt-1">{errors.contactPhone}</p>}
                                 </div>
+                                )}
 
                                 {/* CONSIGNMENT INFO (OWNER & COMMISSION) — hidden for project units */}
                                 {!isProjectUnit && (
@@ -524,6 +528,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 </div>
                                 )}
 
+                                {/* LOCATION + COORDINATES — hidden for project units (inherited from parent) */}
+                                {!isProjectUnit && (
                                 <div>
                                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_location')} <span className="text-rose-500">*</span></label>
                                     <input 
@@ -534,6 +540,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     />
                                     {errors.location && <p className="text-xs2 text-rose-500 mt-1">{errors.location}</p>}
                                 </div>
+                                )}
+                                {!isProjectUnit && (
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_lat') || 'Vĩ độ (Lat)'}</label>
@@ -565,6 +573,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     </div>
                                     <p className="col-span-2 text-xs2 text-[var(--text-secondary)] -mt-1">{t('inventory.coordinates_hint') || 'Tuỳ chọn — nhập toạ độ Google Maps để pin hiển thị chính xác trên bản đồ'}</p>
                                 </div>
+                                )}
                                 <div className="grid grid-cols-2 gap-4">
                                     {/* Smart Price Input */}
                                     <div className="col-span-2 sm:col-span-1">
@@ -610,7 +619,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                     </div>
                                 </div>
 
-                                {/* DESCRIPTION */}
+                                {/* DESCRIPTION — hidden for project units */}
+                                {!isProjectUnit && (
                                 <div>
                                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_desc')}</label>
                                     <textarea
@@ -621,6 +631,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         placeholder={t('inventory.placeholder_notes')}
                                     />
                                 </div>
+                                )}
                             </div>
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
                                 <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wide">{t('inventory.section_details')}</h4>
@@ -632,6 +643,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm space-y-4">
                                 <div className="flex justify-between items-center mb-2">
                                     <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wide">{t('inventory.section_class')}</h4>
+                                    {/* VERIFIED — hidden for project units */}
+                                    {!isProjectUnit && (
                                     <label className="flex items-center gap-2 cursor-pointer select-none bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">
                                         <input 
                                             type="checkbox" 
@@ -643,6 +656,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             {ICONS.VERIFIED} {t('inventory.verified')}
                                         </span>
                                     </label>
+                                    )}
                                 </div>
                                 <div className="mb-4">
                                     <Dropdown
@@ -672,6 +686,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 </div>
                             </div>
                             
+                            {/* IMAGES SECTION — hidden for project units */}
+                            {!isProjectUnit && (
                             <div className="bg-[var(--bg-surface)] p-5 rounded-2xl border border-[var(--glass-border)] shadow-sm flex-1">
                                 <div className="flex justify-between items-center mb-4">
                                     <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wide">{t('inventory.label_images')}</h4>
@@ -724,6 +740,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 </div>
                                 <input type="file" multiple accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
                             </div>
+                            )}
                         </div>
                     </div>
                 </div>

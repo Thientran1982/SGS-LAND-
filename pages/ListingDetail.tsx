@@ -238,7 +238,7 @@ const STATUS_CONFIG: Record<string, { color: string, bg: string, border: string 
     INACTIVE: { color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
 };
 
-const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber }: { projectCode: string, t: any, formatCurrency: any, formatCompactNumber: any }) => {
+const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t, formatCurrency, formatCompactNumber }: { projectCode: string, parentLocation?: string, parentContactPhone?: string, t: any, formatCurrency: any, formatCompactNumber: any }) => {
     const [units, setUnits] = useState<Listing[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAuth, setIsAuth] = useState(false);
@@ -664,7 +664,7 @@ const ProjectUnits = memo(({ projectCode, t, formatCurrency, formatCompactNumber
                     isOpen={isFormOpen} 
                     onClose={() => setIsFormOpen(false)} 
                     onSubmit={handleFormSubmit}
-                    initialData={editingUnit || { projectCode } as any}
+                    initialData={editingUnit || { projectCode, location: parentLocation || '', contactPhone: parentContactPhone || '' } as any}
                     t={t}
                     isProjectUnit={true}
                 />
@@ -1085,7 +1085,7 @@ export const ListingDetail: React.FC = () => {
 
                     {/* Project Units - New Section */}
                     {listing.type === PropertyType.PROJECT && (
-                        <ProjectUnits projectCode={listing.code} t={t} formatCurrency={formatCurrency} formatCompactNumber={formatCompactNumber} />
+                        <ProjectUnits projectCode={listing.code} parentLocation={listing.location} parentContactPhone={listing.contactPhone} t={t} formatCurrency={formatCurrency} formatCompactNumber={formatCompactNumber} />
                     )}
 
                     {/* Financial Tools & AI Valuation */}
