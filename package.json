@@ -19,7 +19,7 @@
   "dependencies": {
     "@google/genai": "^1.46.0",
     "@socket.io/redis-adapter": "^8.3.0",
-    "@tanstack/react-query": "^5.91.3",
+    "@tanstack/react-query": "^5.94.5",
     "@types/bcrypt": "^6.0.0",
     "@types/leaflet": "^1.9.21",
     "@types/multer": "^2.1.0",
@@ -31,6 +31,7 @@
     "cookie-parser": "^1.4.7",
     "dompurify": "^3.3.3",
     "dotenv": "^17.3.1",
+    "esbuild": "^0.27.4",
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "html2canvas": "^1.4.1",
@@ -57,7 +58,7 @@
     "socket.io-client": "^4.8.3",
     "tailwindcss": "^3.4.19",
     "tsx": "^4.21.0",
-    "ws": "^8.19.0",
+    "ws": "^8.20.0",
     "xlsx": "^0.18.5",
     "y-websocket": "^1.5.4",
     "yjs": "^13.6.30"
