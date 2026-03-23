@@ -66,11 +66,11 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase block mb-1">{t('routing.cond_source')}</label>
-                                <input className="w-full border rounded-lg px-2 py-1.5 text-sm" placeholder="e.g. Facebook" value={form.conditions?.source?.[0] || ''} onChange={e => setForm({...form, conditions: {...form.conditions, source: e.target.value ? [e.target.value] : []}})} />
+                                <input className="w-full border rounded-lg px-2 py-1.5 text-sm" placeholder={t('routing.placeholder_source')} value={form.conditions?.source?.[0] || ''} onChange={e => setForm({...form, conditions: {...form.conditions, source: e.target.value ? [e.target.value] : []}})} />
                             </div>
                             <div>
                                 <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase block mb-1">{t('routing.cond_region')}</label>
-                                <input className="w-full border rounded-lg px-2 py-1.5 text-sm" placeholder="e.g. HCM" value={form.conditions?.region?.[0] || ''} onChange={e => setForm({...form, conditions: {...form.conditions, region: e.target.value ? [e.target.value] : []}})} />
+                                <input className="w-full border rounded-lg px-2 py-1.5 text-sm" placeholder={t('routing.placeholder_region')} value={form.conditions?.region?.[0] || ''} onChange={e => setForm({...form, conditions: {...form.conditions, region: e.target.value ? [e.target.value] : []}})} />
                             </div>
                             <div>
                                 <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase block mb-1">{t('routing.cond_budget')}</label>

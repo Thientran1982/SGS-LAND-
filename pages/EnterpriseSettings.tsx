@@ -373,7 +373,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
 });
 
 const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig, onRefresh: () => void, notify: (m: string, t: 'success'|'error') => void }) => {
-    const { t } = useTranslation();
+    const { t, formatDate } = useTranslation();
     const emptyForm = { name: '', pageId: '', pageUrl: '', accessToken: '' };
     const [form, setForm] = useState(emptyForm);
     const [showToken, setShowToken] = useState(false);
@@ -457,7 +457,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
             {/* Connect form */}
             <div className="bg-[var(--bg-surface)] rounded-3xl border border-[var(--glass-border)] shadow-sm p-6 md:p-8 max-w-2xl mb-8">
                 <p className="text-sm text-[var(--text-tertiary)] mb-5 leading-relaxed">
-                    Nhập thông tin Facebook Page để kết nối. Page ID và Access Token lấy từ{' '}
+                    {t('ent.facebook_guide')}{' '}
                     <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" className="text-blue-500 underline">Facebook for Developers</a>.
                 </p>
                 <div className="space-y-4">
@@ -541,10 +541,10 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                                     <a href={page.pageUrl} target="_blank" rel="noreferrer" className="text-xs2 text-blue-400 hover:underline truncate block">{page.pageUrl}</a>
                                 )}
                                 {page.connectedAt && (
-                                    <div className="text-xs2 text-[var(--text-secondary)]">{t('ent.facebook_connected_at')}: {new Date(page.connectedAt).toLocaleDateString('vi-VN')}</div>
+                                    <div className="text-xs2 text-[var(--text-secondary)]">{t('ent.facebook_connected_at')}: {formatDate(page.connectedAt)}</div>
                                 )}
                                 {page.accessToken && (
-                                    <span className="inline-block mt-0.5 text-2xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Token ✓</span>
+                                    <span className="inline-block mt-0.5 text-2xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">{t('ent.token_configured')}</span>
                                 )}
                             </div>
                         </div>
@@ -768,7 +768,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                             <span className="text-xs text-[var(--text-tertiary)] font-bold uppercase shrink-0">{t('ent.redirect_uri')}</span>
                             <div className="flex items-center gap-2 min-w-0">
                                 <code className="text-xs3 font-mono text-[var(--text-secondary)] bg-[var(--bg-surface)] px-2 py-1 rounded border border-[var(--glass-border)] break-all">{redirectUri}</code>
-                                <button onClick={() => { navigator.clipboard?.writeText(redirectUri); notify(t('common.copied'), 'success'); }} className="shrink-0 text-xs2 font-bold text-indigo-600 hover:underline px-1">Copy</button>
+                                <button onClick={() => { navigator.clipboard?.writeText(redirectUri); notify(t('common.copied'), 'success'); }} className="shrink-0 text-xs2 font-bold text-indigo-600 hover:underline px-1">{t('common.copy')}</button>
                             </div>
                         </div>
                         <p className="text-xs3 text-[var(--text-secondary)] mt-2">{t('ent.sso_redirect_hint')}</p>
@@ -977,7 +977,7 @@ const AuditPanel = memo(() => {
                                 <th className="p-4 whitespace-nowrap">{t('ent.audit_actor')}</th>
                                 <th className="p-4 whitespace-nowrap">{t('ent.audit_action')}</th>
                                 <th className="p-4 whitespace-nowrap">{t('ent.audit_details')}</th>
-                                <th className="p-4 whitespace-nowrap">IP</th>
+                                <th className="p-4 whitespace-nowrap">{t('table.ip_address')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glass-border)]">
