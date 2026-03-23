@@ -42,14 +42,14 @@ const LogViewer = memo(({ logs, isPaused, togglePause, onClear, t }: { logs: Log
             <div className="flex justify-between items-center p-3 border-b border-white/5 bg-[var(--bg-surface)]/5">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-xs font-mono text-[var(--text-secondary)] font-bold">LIVE LOGS</span>
+                    <span className="text-xs font-mono text-[var(--text-secondary)] font-bold">{t('system.live_logs')}</span>
                     <span className="text-xs2 bg-[var(--bg-surface)]/10 px-1.5 rounded text-[var(--text-secondary)] font-mono">{logs.length}</span>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={togglePause} className="p-1.5 hover:bg-[var(--bg-surface)]/10 rounded text-[var(--text-secondary)] hover:text-white transition-colors" title={isPaused ? "Resume" : "Pause"}>
+                    <button onClick={togglePause} className="p-1.5 hover:bg-[var(--bg-surface)]/10 rounded text-[var(--text-secondary)] hover:text-white transition-colors" title={isPaused ? t('system.btn_resume') : t('system.btn_pause')}>
                         {isPaused ? ICONS.PLAY : ICONS.PAUSE}
                     </button>
-                    <button onClick={onClear} className="p-1.5 hover:bg-[var(--bg-surface)]/10 rounded text-[var(--text-secondary)] hover:text-rose-400 transition-colors" title="Clear">
+                    <button onClick={onClear} className="p-1.5 hover:bg-[var(--bg-surface)]/10 rounded text-[var(--text-secondary)] hover:text-rose-400 transition-colors" title={t('common.delete')}>
                         {ICONS.TRASH}
                     </button>
                 </div>
@@ -92,7 +92,6 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
     const statusColor = health.status === 'HEALTHY' ? 'text-emerald-500' : health.status === 'DEGRADED' ? 'text-amber-500' : 'text-rose-500';
     const borderColor = health.status === 'HEALTHY' ? 'border-emerald-500' : health.status === 'DEGRADED' ? 'border-amber-500' : 'border-rose-500';
     const primaryColor = theme?.colors?.primary || '#4F46E5';
-    const DR_COMING_SOON = 'Tính năng đang phát triển';
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
@@ -116,7 +115,7 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
                 <div>
                     <h3 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4">{t('system.dr_title')}</h3>
                     <div className="flex gap-4">
-                        <div className="flex-1 relative group" title={DR_COMING_SOON}>
+                        <div className="flex-1 relative group" title={t('system.coming_soon')}>
                             <button
                                 disabled
                                 className="w-full bg-[var(--bg-surface)]/40 text-[var(--text-primary)]/50 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed opacity-50"
@@ -124,10 +123,10 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
                                 {ICONS.DOWNLOAD} {t('system.btn_backup')}
                             </button>
                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-800 text-white text-xs rounded-lg px-3 py-1.5 whitespace-nowrap shadow-xl z-10 border border-white/10">
-                                {DR_COMING_SOON}
+                                {t('system.coming_soon')}
                             </span>
                         </div>
-                        <div className="flex-1 relative group" title={DR_COMING_SOON}>
+                        <div className="flex-1 relative group" title={t('system.coming_soon')}>
                             <button
                                 disabled
                                 className="w-full bg-[var(--bg-surface)]/10 text-white/50 border border-white/10 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed opacity-50"
@@ -135,13 +134,13 @@ const HealthHero = memo(({ health, theme, onBackup, onRestore, isRestoring, t }:
                                 {ICONS.UPLOAD} {t('system.btn_restore')}
                             </button>
                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-800 text-white text-xs rounded-lg px-3 py-1.5 whitespace-nowrap shadow-xl z-10 border border-white/10">
-                                {DR_COMING_SOON}
+                                {t('system.coming_soon')}
                             </span>
                         </div>
                     </div>
                 </div>
                 <div className="mt-6 text-xs2 text-[var(--text-tertiary)] font-mono">
-                    BACKUP: FULL SNAPSHOT • JSON FORMAT
+                    {t('system.backup_format')}
                 </div>
             </div>
         </div>
@@ -284,12 +283,12 @@ export const SystemStatus: React.FC = () => {
         { id: 1, title: t('system.runbook.sop1_title'), code: 'SOP-001', variant: 'warning', action: () => {
             setConfirmFailover(true);
         }},
-        { id: 2, title: t('system.runbook.sop2_title'), code: 'SOP-002', variant: 'neutral', action: () => notify('AI Engine Restarted', 'success') },
-        { id: 3, title: t('system.runbook.sop3_title'), code: 'SOP-003', variant: 'danger', action: () => notify('Emergency Shutdown Sequence Initiated', 'error') },
+        { id: 2, title: t('system.runbook.sop2_title'), code: 'SOP-002', variant: 'neutral', action: () => notify(t('system.runbook.sop2_success'), 'success') },
+        { id: 3, title: t('system.runbook.sop3_title'), code: 'SOP-003', variant: 'danger', action: () => notify(t('system.runbook.sop3_success'), 'success') },
     ];
 
     return (
-        <div className="space-y-6 pb-20 animate-enter relative">
+        <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
             {toast && (
                 <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${
                     toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'
@@ -370,8 +369,8 @@ export const SystemStatus: React.FC = () => {
 
             <ConfirmModal
                 isOpen={confirmRestore}
-                title={t('system.alert.restore_confirm')}
-                message={t('system.alert.restore_confirm')}
+                title={t('system.alert.restore_title')}
+                message={t('system.alert.restore_message')}
                 confirmLabel={t('common.confirm')}
                 cancelLabel={t('common.cancel')}
                 onConfirm={() => { setConfirmRestore(false); fileInputRef.current?.click(); }}
@@ -380,8 +379,8 @@ export const SystemStatus: React.FC = () => {
             />
             <ConfirmModal
                 isOpen={confirmClearLogs}
-                title={t('system.clear_logs_confirm')}
-                message={t('system.clear_logs_confirm')}
+                title={t('system.clear_logs_title')}
+                message={t('system.clear_logs_message')}
                 confirmLabel={t('common.confirm')}
                 cancelLabel={t('common.cancel')}
                 onConfirm={executeClearLogs}
@@ -390,8 +389,8 @@ export const SystemStatus: React.FC = () => {
             />
             <ConfirmModal
                 isOpen={confirmFailover}
-                title={t('system.alert.failover_confirm')}
-                message={t('system.alert.failover_confirm')}
+                title={t('system.alert.failover_title')}
+                message={t('system.alert.failover_message')}
                 confirmLabel={t('common.confirm')}
                 cancelLabel={t('common.cancel')}
                 onConfirm={() => { setConfirmFailover(false); notify(t('system.alert.failover_triggered'), 'success'); }}
