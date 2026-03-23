@@ -264,6 +264,12 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 3. **Simulator output 3 hardcoded English strings** — `"Simulated output for: ..."`, `"Error executing simulation."`, and `"OUTPUT:"` label → 4 new locale keys: `ai.sim_result` (with `{input}` + `{version}` interpolation), `ai.sim_error`, `ai.sim_output_label`, added to VI + EN locales
 4. **Safety Log table missing empty state** — added `<tr colSpan=6>` with `t('ai.no_safety_logs')` when `safetyLogs` is empty
 
+### DataPlatform.tsx Audit & Fix (March 2026)
+3 bugs resolved in `pages/DataPlatform.tsx`:
+1. **Toast not in portal** — `fixed` toast inside root `animate-enter` div; moved to `createPortal(document.body)` with Fragment `<>` wrapper; added `role="status" aria-live="polite"` attributes
+2. **`SyncStatus.PENDING` does not exist** — `StatusBadge` styles map had `[SyncStatus.PENDING]` key, but enum only has `QUEUED/RUNNING/COMPLETED/FAILED`; this caused QUEUED jobs to never match → always rendered gray instead of amber; fixed to `[SyncStatus.QUEUED]`
+3. **4 dead `|| 'hardcoded fallback'` patterns** — `data.modal_subtitle`, `data.name_placeholder`, `data.empty_connectors_hint`, `data.empty_jobs_hint` keys all exist in locale; the `||` branches never fire; removed to keep code clean
+
 ### SecurityCompliance.tsx Audit & Fix (March 2026)
 3 bugs resolved in `pages/SecurityCompliance.tsx`:
 1. **Toast not in portal** — `fixed` toast inside root `animate-enter` div; moved to `createPortal(document.body)` with Fragment `<>` wrapper

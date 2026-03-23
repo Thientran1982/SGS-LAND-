@@ -46,7 +46,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                 <div className="flex justify-between items-center p-6 border-b border-[var(--glass-border)]">
                     <div>
                         <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('data.modal_title')}</h3>
-                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">{t('data.modal_subtitle') || 'Kết nối nguồn dữ liệu bên ngoài vào hệ thống'}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">{t('data.modal_subtitle')}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)] transition-colors">{ICONS.CLOSE}</button>
                 </div>
@@ -66,7 +66,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.name')}</label>
                         <input
                             className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
-                            placeholder={t('data.name_placeholder') || 'Ví dụ: Google Sheets Khách hàng Q1'}
+                            placeholder={t('data.name_placeholder')}
                             value={form.name}
                             onChange={e => setForm({ ...form, name: e.target.value })}
                         />
@@ -130,7 +130,7 @@ const StatusBadge = ({ status, t }: { status: SyncStatus; t: any }) => {
         [SyncStatus.COMPLETED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         [SyncStatus.FAILED]: 'bg-rose-50 text-rose-700 border-rose-200',
         [SyncStatus.RUNNING]: 'bg-blue-50 text-blue-700 border-blue-200',
-        [SyncStatus.PENDING]: 'bg-amber-50 text-amber-700 border-amber-200',
+        [SyncStatus.QUEUED]: 'bg-amber-50 text-amber-700 border-amber-200',
     };
     return (
         <span className={`text-xs font-bold px-2 py-0.5 rounded-full border uppercase tracking-wide ${styles[status] || 'bg-gray-50 text-gray-600'}`}>
@@ -226,14 +226,8 @@ export const DataPlatform: React.FC = () => {
     }
 
     return (
+        <>
         <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
-            {/* Toast */}
-            {toast && (
-                <div className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/95 border-emerald-700 text-white' : 'bg-rose-900/95 border-rose-700 text-white'}`}>
-                    <span className="text-sm">{toast.type === 'success' ? '✓' : '✕'}</span>
-                    <span className="font-semibold text-sm">{toast.msg}</span>
-                </div>
-            )}
 
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -297,7 +291,7 @@ export const DataPlatform: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-[var(--text-primary)] text-sm">{t('data.empty_connectors')}</p>
-                                <p className="text-xs text-[var(--text-secondary)] mt-1">{t('data.empty_connectors_hint') || 'Thêm kết nối đầu tiên để bắt đầu đồng bộ dữ liệu'}</p>
+                                <p className="text-xs text-[var(--text-secondary)] mt-1">{t('data.empty_connectors_hint')}</p>
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(true)}
@@ -363,7 +357,7 @@ export const DataPlatform: React.FC = () => {
                         <div className="p-8 text-center text-[var(--text-secondary)]">
                             <p className="text-2xl mb-2">📋</p>
                             <p className="text-sm font-medium">{t('data.empty_jobs')}</p>
-                            <p className="text-xs mt-1 text-[var(--text-tertiary)]">{t('data.empty_jobs_hint') || 'Lịch sử đồng bộ sẽ xuất hiện tại đây'}</p>
+                            <p className="text-xs mt-1 text-[var(--text-tertiary)]">{t('data.empty_jobs_hint')}</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-[var(--glass-border)]">
@@ -412,5 +406,20 @@ export const DataPlatform: React.FC = () => {
                 variant="danger"
             />
         </div>
+        {createPortal(
+            toast ? (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${toast.type === 'success' ? 'bg-emerald-900/95 border-emerald-700 text-white' : 'bg-rose-900/95 border-rose-700 text-white'}`}
+                >
+                    <span className="text-sm">{toast.type === 'success' ? '✓' : '✕'}</span>
+                    <span className="font-semibold text-sm">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };
