@@ -1,5 +1,10 @@
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __glob = (map) => (path5) => {
+  var fn = map[path5];
+  if (fn) return fn();
+  throw new Error("Module not found in bundle: " + path5);
+};
 var __esm = (fn, res) => function __init() {
   return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
 };
@@ -8,234 +13,837 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// server/db.ts
-var db_exports = {};
-__export(db_exports, {
-  initializeDatabase: () => initializeDatabase,
-  pool: () => pool,
-  withTenantContext: () => withTenantContext,
-  withTransaction: () => withTransaction
+// server/migrations/001_baseline_schema.ts
+var baseline_schema_exports = {};
+__export(baseline_schema_exports, {
+  default: () => baseline_schema_default
 });
-import { Pool } from "pg";
-import dotenv from "dotenv";
-async function initializeDatabase() {
-  const client = await pool.connect();
-  try {
-    console.log("Initializing database schema with Multi-Tenancy (RLS)...");
-    await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
-    await client.query(`
+var migration, baseline_schema_default;
+var init_baseline_schema = __esm({
+  "server/migrations/001_baseline_schema.ts"() {
+    migration = {
+      description: "Baseline multi-tenant schema with RLS and indexes",
+      async up(client) {
+        await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
+        await client.query(`
       CREATE TABLE IF NOT EXISTS tenants (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        name VARCHAR(255) NOT NULL,
-        domain VARCHAR(255) UNIQUE NOT NULL,
-        config JSONB DEFAULT '{}'::jsonb,
+        id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        name       VARCHAR(255) NOT NULL,
+        domain     VARCHAR(255) UNIQUE NOT NULL,
+        config     JSONB DEFAULT '{}'::jsonb,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    await client.query(`
+        await client.query(`
       INSERT INTO tenants (id, name, domain)
       VALUES ('00000000-0000-0000-0000-000000000001', 'SGS Land Demo', 'localhost')
       ON CONFLICT (domain) DO NOTHING;
     `);
-    const createTenantTable = async (tableName, schema) => {
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS ${tableName} (
-          ${schema}
-        );
-      `);
-      await client.query(`
-        DO $$ 
-        BEGIN 
-          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='${tableName}' AND column_name='tenant_id') THEN 
-            ALTER TABLE ${tableName} ADD COLUMN tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001';
-          END IF; 
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id    UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        email        VARCHAR(255) NOT NULL,
+        password     VARCHAR(255),
+        name         VARCHAR(255),
+        role         VARCHAR(50) DEFAULT 'SALES',
+        status       VARCHAR(50) DEFAULT 'ACTIVE',
+        avatar       TEXT,
+        phone        VARCHAR(50),
+        permissions  JSONB DEFAULT '[]'::jsonb,
+        created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (tenant_id, email)
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS leads (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id   UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        name        VARCHAR(255) NOT NULL,
+        phone       VARCHAR(50),
+        email       VARCHAR(255),
+        source      VARCHAR(100),
+        stage       VARCHAR(50) DEFAULT 'NEW',
+        score       JSONB DEFAULT '{}'::jsonb,
+        assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
+        notes       TEXT,
+        tags        JSONB DEFAULT '[]'::jsonb,
+        metadata    JSONB DEFAULT '{}'::jsonb,
+        created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS listings (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id   UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        title       VARCHAR(500),
+        type        VARCHAR(100),
+        status      VARCHAR(50) DEFAULT 'AVAILABLE',
+        price       NUMERIC,
+        address     TEXT,
+        attributes  JSONB DEFAULT '{}'::jsonb,
+        images      JSONB DEFAULT '[]'::jsonb,
+        created_by  UUID REFERENCES users(id) ON DELETE SET NULL,
+        created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS proposals (
+        id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id       UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        lead_id         UUID REFERENCES leads(id) ON DELETE CASCADE,
+        listing_id      UUID REFERENCES listings(id) ON DELETE SET NULL,
+        base_price      NUMERIC,
+        discount_amount NUMERIC DEFAULT 0,
+        final_price     NUMERIC,
+        currency        VARCHAR(10) DEFAULT 'VND',
+        status          VARCHAR(50) DEFAULT 'DRAFT',
+        token           VARCHAR(255) UNIQUE,
+        valid_until     TIMESTAMP WITH TIME ZONE,
+        metadata        JSONB DEFAULT '{}'::jsonb,
+        created_by      UUID REFERENCES users(id) ON DELETE SET NULL,
+        created_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS contracts (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id   UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        lead_id     UUID REFERENCES leads(id) ON DELETE SET NULL,
+        listing_id  UUID REFERENCES listings(id) ON DELETE SET NULL,
+        proposal_id UUID REFERENCES proposals(id) ON DELETE SET NULL,
+        type        VARCHAR(100),
+        status      VARCHAR(50) DEFAULT 'DRAFT',
+        value       NUMERIC,
+        signed_at   TIMESTAMP WITH TIME ZONE,
+        created_by  VARCHAR(255),
+        metadata    JSONB DEFAULT '{}'::jsonb,
+        created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS interactions (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id   UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        lead_id     UUID REFERENCES leads(id) ON DELETE CASCADE,
+        type        VARCHAR(50),
+        channel     VARCHAR(50),
+        direction   VARCHAR(20) DEFAULT 'OUTBOUND',
+        content     TEXT,
+        metadata    JSONB DEFAULT '{}'::jsonb,
+        timestamp   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        const indexes = [
+          "CREATE INDEX IF NOT EXISTS idx_leads_tenant_stage ON leads(tenant_id, stage)",
+          "CREATE INDEX IF NOT EXISTS idx_leads_tenant_assigned ON leads(tenant_id, assigned_to)",
+          "CREATE INDEX IF NOT EXISTS idx_leads_tenant_phone ON leads(tenant_id, phone)",
+          "CREATE INDEX IF NOT EXISTS idx_leads_updated ON leads(updated_at DESC)",
+          "CREATE INDEX IF NOT EXISTS idx_listings_tenant_status ON listings(tenant_id, status)",
+          "CREATE INDEX IF NOT EXISTS idx_interactions_lead ON interactions(lead_id, timestamp DESC)",
+          "CREATE INDEX IF NOT EXISTS idx_interactions_tenant ON interactions(tenant_id, timestamp DESC)",
+          "CREATE INDEX IF NOT EXISTS idx_proposals_tenant_status ON proposals(tenant_id, status)",
+          "CREATE INDEX IF NOT EXISTS idx_proposals_lead ON proposals(lead_id)",
+          "CREATE INDEX IF NOT EXISTS idx_contracts_tenant_status ON contracts(tenant_id, status)",
+          "CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role)"
+        ];
+        for (const idx of indexes) {
+          await client.query(idx);
+        }
+        const tables = ["users", "leads", "listings", "proposals", "contracts", "interactions"];
+        for (const t of tables) {
+          await client.query(`ALTER TABLE ${t} ENABLE ROW LEVEL SECURITY;`);
+          await client.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = '${t}' AND policyname = '${t}_tenant_isolation'
+          ) THEN
+            CREATE POLICY ${t}_tenant_isolation ON ${t}
+              USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+          END IF;
         END $$;
       `);
-      await client.query(`ALTER TABLE ${tableName} ENABLE ROW LEVEL SECURITY;`);
-      await client.query(`
-        DROP POLICY IF EXISTS tenant_isolation_policy ON ${tableName};
-        CREATE POLICY tenant_isolation_policy ON ${tableName}
-        FOR ALL
-        USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
-      `);
+        }
+      },
+      async down(client) {
+        const tables = ["interactions", "contracts", "proposals", "listings", "leads", "users", "tenants"];
+        for (const t of tables) {
+          await client.query(`DROP TABLE IF EXISTS ${t} CASCADE;`);
+        }
+      }
     };
-    await createTenantTable("users", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      name VARCHAR(255) NOT NULL,
-      email VARCHAR(255) NOT NULL,
-      password_hash VARCHAR(255),
-      role VARCHAR(50) DEFAULT 'VIEWER',
-      permissions JSONB,
-      avatar TEXT,
-      status VARCHAR(50) DEFAULT 'ACTIVE',
-      source VARCHAR(50),
-      phone VARCHAR(50),
-      bio TEXT,
-      metadata JSONB,
-      last_login_at TIMESTAMP WITH TIME ZONE,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    baseline_schema_default = migration;
+  }
+});
+
+// server/migrations/002_audit_logs_and_tasks.ts
+var audit_logs_and_tasks_exports = {};
+__export(audit_logs_and_tasks_exports, {
+  default: () => audit_logs_and_tasks_default
+});
+var migration2, audit_logs_and_tasks_default;
+var init_audit_logs_and_tasks = __esm({
+  "server/migrations/002_audit_logs_and_tasks.ts"() {
+    migration2 = {
+      description: "Add audit_logs, tasks, articles, campaign_costs, sequences, and support tables",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id   UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        actor_id    UUID REFERENCES users(id) ON DELETE SET NULL,
+        action      VARCHAR(50) NOT NULL,
+        entity_type VARCHAR(100),
+        entity_id   UUID,
+        details     TEXT,
+        ip_address  VARCHAR(100),
+        timestamp   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-    await client.query(`
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id   UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        lead_id     UUID REFERENCES leads(id) ON DELETE CASCADE,
+        assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
+        title       VARCHAR(500),
+        description TEXT,
+        status      VARCHAR(50) DEFAULT 'PENDING',
+        due_date    TIMESTAMP WITH TIME ZONE,
+        priority    VARCHAR(20) DEFAULT 'MEDIUM',
+        created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS articles (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id    UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        title        VARCHAR(500) NOT NULL,
+        slug         VARCHAR(500),
+        content      TEXT,
+        excerpt      TEXT,
+        category     VARCHAR(100),
+        status       VARCHAR(50) DEFAULT 'DRAFT',
+        author_id    UUID REFERENCES users(id) ON DELETE SET NULL,
+        published_at TIMESTAMP WITH TIME ZONE,
+        metadata     JSONB DEFAULT '{}'::jsonb,
+        created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS sequences (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id   UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        name        VARCHAR(255) NOT NULL,
+        description TEXT,
+        status      VARCHAR(50) DEFAULT 'ACTIVE',
+        trigger     JSONB DEFAULT '{}'::jsonb,
+        steps       JSONB DEFAULT '[]'::jsonb,
+        created_by  UUID REFERENCES users(id) ON DELETE SET NULL,
+        created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS campaign_costs (
+        id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id     UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        campaign_name VARCHAR(255),
+        source        VARCHAR(100),
+        cost          NUMERIC DEFAULT 0,
+        period        VARCHAR(7),  -- YYYY-MM
+        created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+        token      VARCHAR(255) UNIQUE NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        used       BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        const indexes = [
+          "CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON audit_logs(tenant_id, timestamp DESC)",
+          "CREATE INDEX IF NOT EXISTS idx_tasks_tenant_assigned ON tasks(tenant_id, assigned_to)",
+          "CREATE INDEX IF NOT EXISTS idx_articles_tenant_status ON articles(tenant_id, status)",
+          "CREATE INDEX IF NOT EXISTS idx_prt_token ON password_reset_tokens(token)",
+          "CREATE INDEX IF NOT EXISTS idx_prt_user ON password_reset_tokens(user_id)"
+        ];
+        for (const idx of indexes) {
+          await client.query(idx);
+        }
+        const tables = ["audit_logs", "tasks", "articles", "sequences", "campaign_costs"];
+        for (const t of tables) {
+          await client.query(`ALTER TABLE ${t} ENABLE ROW LEVEL SECURITY;`);
+          await client.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = '${t}' AND policyname = '${t}_tenant_isolation'
+          ) THEN
+            CREATE POLICY ${t}_tenant_isolation ON ${t}
+              USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+          END IF;
+        END $$;
+      `);
+        }
+      }
+    };
+    audit_logs_and_tasks_default = migration2;
+  }
+});
+
+// server/migrations/003_ai_and_billing.ts
+var ai_and_billing_exports = {};
+__export(ai_and_billing_exports, {
+  default: () => ai_and_billing_default
+});
+var migration3, ai_and_billing_default;
+var init_ai_and_billing = __esm({
+  "server/migrations/003_ai_and_billing.ts"() {
+    migration3 = {
+      description: "Add AI governance logs, subscriptions, usage_tracking, and scoring_configs",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS ai_governance_logs (
+        id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id     UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        task_type     VARCHAR(100),
+        model         VARCHAR(100),
+        prompt_tokens INT DEFAULT 0,
+        output_tokens INT DEFAULT 0,
+        latency_ms    INT DEFAULT 0,
+        cost_usd      NUMERIC(10, 6) DEFAULT 0,
+        safety_flags  JSONB DEFAULT '[]'::jsonb,
+        input_hash    VARCHAR(64),
+        timestamp     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id      UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        plan_id        VARCHAR(100) NOT NULL DEFAULT 'INDIVIDUAL',
+        status         VARCHAR(50) DEFAULT 'ACTIVE',
+        seats_used     INT DEFAULT 1,
+        trial_ends_at  TIMESTAMP WITH TIME ZONE,
+        renews_at      TIMESTAMP WITH TIME ZONE,
+        cancelled_at   TIMESTAMP WITH TIME ZONE,
+        metadata       JSONB DEFAULT '{}'::jsonb,
+        created_at     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (tenant_id)
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS usage_tracking (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id   UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        metric_type VARCHAR(100) NOT NULL,
+        count       INT DEFAULT 0,
+        period      VARCHAR(7) NOT NULL,  -- YYYY-MM
+        created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (tenant_id, metric_type, period)
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS scoring_configs (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id   UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        weights     JSONB DEFAULT '{}'::jsonb,
+        thresholds  JSONB DEFAULT '{}'::jsonb,
+        updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (tenant_id)
+      );
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS prompt_templates (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id      UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        name           VARCHAR(255) NOT NULL,
+        task_type      VARCHAR(100),
+        content        TEXT NOT NULL,
+        active_version INT DEFAULT 1,
+        metadata       JSONB DEFAULT '{}'::jsonb,
+        created_at     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        const indexes = [
+          "CREATE INDEX IF NOT EXISTS idx_ai_logs_tenant_ts ON ai_governance_logs(tenant_id, timestamp DESC)",
+          "CREATE INDEX IF NOT EXISTS idx_usage_tenant_period ON usage_tracking(tenant_id, period)"
+        ];
+        for (const idx of indexes) {
+          await client.query(idx);
+        }
+        const tables = ["ai_governance_logs", "subscriptions", "usage_tracking", "scoring_configs", "prompt_templates"];
+        for (const t of tables) {
+          await client.query(`ALTER TABLE ${t} ENABLE ROW LEVEL SECURITY;`);
+          await client.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = '${t}' AND policyname = '${t}_tenant_isolation'
+          ) THEN
+            CREATE POLICY ${t}_tenant_isolation ON ${t}
+              USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+          END IF;
+        END $$;
+      `);
+        }
+      }
+    };
+    ai_and_billing_default = migration3;
+  }
+});
+
+// server/migrations/004_rbac_creator_columns.ts
+var rbac_creator_columns_exports = {};
+__export(rbac_creator_columns_exports, {
+  default: () => rbac_creator_columns_default
+});
+var migration4, rbac_creator_columns_default;
+var init_rbac_creator_columns = __esm({
+  "server/migrations/004_rbac_creator_columns.ts"() {
+    migration4 = {
+      description: "Add created_by_id (UUID) to proposals and contracts for creator-based RBAC; rename proposals.created_by UUID \u2192 created_by_id and add created_by text column",
+      async up(client) {
+        await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'proposals' AND column_name = 'created_by'
+            AND data_type = 'uuid'
+        ) THEN
+          ALTER TABLE proposals RENAME COLUMN created_by TO created_by_id;
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      ALTER TABLE proposals
+        ADD COLUMN IF NOT EXISTS created_by VARCHAR(255);
+    `);
+        await client.query(`
+      ALTER TABLE contracts
+        ADD COLUMN IF NOT EXISTS created_by_id UUID REFERENCES users(id) ON DELETE SET NULL;
+    `);
+        await client.query(`
+      ALTER TABLE leads
+        ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL;
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_proposals_created_by_id ON proposals(tenant_id, created_by_id);
+      CREATE INDEX IF NOT EXISTS idx_contracts_created_by_id  ON contracts(tenant_id, created_by_id);
+      CREATE INDEX IF NOT EXISTS idx_listings_created_by      ON listings(tenant_id, created_by);
+      CREATE INDEX IF NOT EXISTS idx_leads_created_by         ON leads(tenant_id, created_by);
+    `);
+      },
+      async down(client) {
+        await client.query(`ALTER TABLE proposals RENAME COLUMN created_by_id TO created_by`);
+        await client.query(`ALTER TABLE proposals DROP COLUMN IF EXISTS created_by`);
+        await client.query(`ALTER TABLE contracts DROP COLUMN IF EXISTS created_by_id`);
+        await client.query(`ALTER TABLE leads DROP COLUMN IF EXISTS created_by`);
+      }
+    };
+    rbac_creator_columns_default = migration4;
+  }
+});
+
+// server/migrations/005_projects_and_b2b2c.ts
+var projects_and_b2b2c_exports = {};
+__export(projects_and_b2b2c_exports, {
+  default: () => projects_and_b2b2c_default
+});
+var migration5, projects_and_b2b2c_default;
+var init_projects_and_b2b2c = __esm({
+  "server/migrations/005_projects_and_b2b2c.ts"() {
+    migration5 = {
+      description: "Add projects table, project_access table (B2B2C: developer-to-broker scoped access), and listings.project_id FK",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id      UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        name           VARCHAR(255) NOT NULL,
+        code           VARCHAR(100),
+        description    TEXT,
+        location       VARCHAR(500),
+        total_units    INTEGER,
+        status         VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+        open_date      DATE,
+        handover_date  DATE,
+        metadata       JSONB NOT NULL DEFAULT '{}',
+        created_at     TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+        await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_tenant_code ON projects(tenant_id, code) WHERE code IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_projects_tenant_status ON projects(tenant_id, status);
+    `);
+        await client.query(`ALTER TABLE projects ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies WHERE tablename = 'projects' AND policyname = 'tenant_isolation'
+        ) THEN
+          CREATE POLICY tenant_isolation ON projects
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS project_access (
+        id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id        UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        partner_tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        granted_by        UUID REFERENCES users(id) ON DELETE SET NULL,
+        granted_at        TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        expires_at        TIMESTAMP WITH TIME ZONE,
+        status            VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+        note              TEXT,
+        UNIQUE(project_id, partner_tenant_id)
+      );
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_project_access_project     ON project_access(project_id);
+      CREATE INDEX IF NOT EXISTS idx_project_access_partner     ON project_access(partner_tenant_id, status);
+    `);
+        await client.query(`
+      ALTER TABLE listings
+        ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES projects(id) ON DELETE SET NULL;
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listings_project_id ON listings(project_id);
+    `);
+      },
+      async down(client) {
+        await client.query(`ALTER TABLE listings DROP COLUMN IF EXISTS project_id`);
+        await client.query(`DROP TABLE IF EXISTS project_access`);
+        await client.query(`DROP TABLE IF EXISTS projects`);
+      }
+    };
+    projects_and_b2b2c_default = migration5;
+  }
+});
+
+// server/migrations/006_fix_schema_mismatches.ts
+var fix_schema_mismatches_exports = {};
+__export(fix_schema_mismatches_exports, {
+  default: () => fix_schema_mismatches_default
+});
+var migration6, fix_schema_mismatches_default;
+var init_fix_schema_mismatches = __esm({
+  "server/migrations/006_fix_schema_mismatches.ts"() {
+    migration6 = {
+      description: "Fix schema mismatches: add missing users columns and relax audit_logs id types",
+      async up(client) {
+        await client.query(`
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS password_hash  VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS source         VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS bio            TEXT,
+        ADD COLUMN IF NOT EXISTS metadata       JSONB,
+        ADD COLUMN IF NOT EXISTS last_login_at  TIMESTAMP WITH TIME ZONE;
+    `);
+        await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'users' AND column_name = 'password'
+        ) THEN
+          UPDATE users SET password_hash = password WHERE password_hash IS NULL AND password IS NOT NULL;
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      DO $$
+      DECLARE
+        con_name TEXT;
+      BEGIN
+        SELECT tc.constraint_name INTO con_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+        WHERE tc.table_name = 'audit_logs'
+          AND kcu.column_name = 'actor_id'
+          AND tc.constraint_type = 'FOREIGN KEY'
+        LIMIT 1;
+
+        IF con_name IS NOT NULL THEN
+          EXECUTE 'ALTER TABLE audit_logs DROP CONSTRAINT ' || quote_ident(con_name);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      DO $$
+      DECLARE
+        con_name TEXT;
+      BEGIN
+        SELECT tc.constraint_name INTO con_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+        WHERE tc.table_name = 'audit_logs'
+          AND kcu.column_name = 'entity_id'
+          AND tc.constraint_type = 'FOREIGN KEY'
+        LIMIT 1;
+
+        IF con_name IS NOT NULL THEN
+          EXECUTE 'ALTER TABLE audit_logs DROP CONSTRAINT ' || quote_ident(con_name);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      ALTER TABLE audit_logs
+        ALTER COLUMN actor_id  TYPE VARCHAR(255) USING actor_id::text,
+        ALTER COLUMN entity_id TYPE VARCHAR(255) USING entity_id::text;
+    `);
+      }
+    };
+    fix_schema_mismatches_default = migration6;
+  }
+});
+
+// server/migrations/007_performance_indexes.ts
+var performance_indexes_exports = {};
+__export(performance_indexes_exports, {
+  default: () => performance_indexes_default
+});
+var migration7, performance_indexes_default;
+var init_performance_indexes = __esm({
+  "server/migrations/007_performance_indexes.ts"() {
+    migration7 = {
+      description: "Add compound indexes for common tenant-scoped queries to improve performance",
+      async up(client) {
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_leads_tenant_stage ON leads(tenant_id, stage)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_leads_tenant_assigned ON leads(tenant_id, assigned_to)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_interactions_tenant_ts ON interactions(tenant_id, timestamp DESC)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_contracts_tenant_status ON contracts(tenant_id, status)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_proposals_tenant_status ON proposals(tenant_id, status)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_listings_tenant_status ON listings(tenant_id, status)`);
+      },
+      async down(client) {
+        await client.query(`
+      DROP INDEX IF EXISTS idx_leads_tenant_stage;
+      DROP INDEX IF EXISTS idx_leads_tenant_assigned;
+      DROP INDEX IF EXISTS idx_interactions_tenant_ts;
+      DROP INDEX IF EXISTS idx_contracts_tenant_status;
+      DROP INDEX IF EXISTS idx_proposals_tenant_status;
+      DROP INDEX IF EXISTS idx_listings_tenant_status;
+    `);
+      }
+    };
+    performance_indexes_default = migration7;
+  }
+});
+
+// server/migrations/008_listing_access.ts
+var listing_access_exports = {};
+__export(listing_access_exports, {
+  default: () => listing_access_default
+});
+var migration8, listing_access_default;
+var init_listing_access = __esm({
+  "server/migrations/008_listing_access.ts"() {
+    migration8 = {
+      description: "Add listing_access table for per-listing partner view permissions (B2B2C granular access control)",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS listing_access (
+        id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        listing_id        UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+        partner_tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        granted_by        UUID REFERENCES users(id) ON DELETE SET NULL,
+        granted_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        expires_at        TIMESTAMP WITH TIME ZONE,
+        status            VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+        note              TEXT,
+        UNIQUE(listing_id, partner_tenant_id)
+      );
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listing_access_listing ON listing_access(listing_id);
+      CREATE INDEX IF NOT EXISTS idx_listing_access_partner ON listing_access(partner_tenant_id, status);
+    `);
+      },
+      async down(client) {
+        await client.query(`DROP TABLE IF EXISTS listing_access;`);
+      }
+    };
+    listing_access_default = migration8;
+  }
+});
+
+// server/migrations/009_extended_schema.ts
+var extended_schema_exports = {};
+__export(extended_schema_exports, {
+  default: () => extended_schema_default
+});
+var migration9, extended_schema_default;
+var init_extended_schema = __esm({
+  "server/migrations/009_extended_schema.ts"() {
+    migration9 = {
+      description: "Extended multi-tenant schema: all tables, columns, constraints and indexes",
+      async up(client) {
+        await client.query(`
       DO $$ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='password_hash') THEN
           ALTER TABLE users ADD COLUMN password_hash VARCHAR(255);
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='source') THEN
+          ALTER TABLE users ADD COLUMN source VARCHAR(50);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='bio') THEN
+          ALTER TABLE users ADD COLUMN bio TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='metadata') THEN
+          ALTER TABLE users ADD COLUMN metadata JSONB;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='last_login_at') THEN
+          ALTER TABLE users ADD COLUMN last_login_at TIMESTAMP WITH TIME ZONE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='updated_at') THEN
+          ALTER TABLE users ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+        END IF;
       END $$;
     `);
-    await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key;`);
-    await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_tenant_id_email_key;`);
-    await client.query(`ALTER TABLE users ADD CONSTRAINT users_tenant_id_email_key UNIQUE(tenant_id, email);`);
-    await createTenantTable("teams", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      name VARCHAR(255) NOT NULL,
-      lead_id UUID REFERENCES users(id) ON DELETE SET NULL,
-      metadata JSONB,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key;`);
+        await client.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_tenant_id_email_key;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'users_tenant_id_email_key'
+        ) THEN
+          ALTER TABLE users ADD CONSTRAINT users_tenant_id_email_key UNIQUE(tenant_id, email);
+        END IF;
+      END $$;
     `);
-    await createTenantTable("team_members", `
-      team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
-      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      PRIMARY KEY (team_id, user_id)
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='address') THEN
+          ALTER TABLE leads ADD COLUMN address TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='sla_breached') THEN
+          ALTER TABLE leads ADD COLUMN sla_breached BOOLEAN DEFAULT false;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='social_ids') THEN
+          ALTER TABLE leads ADD COLUMN social_ids JSONB;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='opt_out_channels') THEN
+          ALTER TABLE leads ADD COLUMN opt_out_channels JSONB DEFAULT '[]'::jsonb;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='attributes') THEN
+          ALTER TABLE leads ADD COLUMN attributes JSONB;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='leads' AND column_name='preferences') THEN
+          ALTER TABLE leads ADD COLUMN preferences JSONB;
+        END IF;
+      END $$;
     `);
-    await createTenantTable("leads", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      name VARCHAR(255) NOT NULL,
-      phone VARCHAR(50) NOT NULL,
-      email VARCHAR(255),
-      address TEXT,
-      source VARCHAR(100),
-      stage VARCHAR(50) DEFAULT 'NEW',
-      assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
-      tags JSONB DEFAULT '[]'::jsonb,
-      notes TEXT,
-      score JSONB,
-      sla_breached BOOLEAN DEFAULT false,
-      social_ids JSONB,
-      opt_out_channels JSONB DEFAULT '[]'::jsonb,
-      attributes JSONB,
-      preferences JSONB,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='code') THEN
+          ALTER TABLE listings ADD COLUMN code VARCHAR(100);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='location') THEN
+          ALTER TABLE listings ADD COLUMN location TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='currency') THEN
+          ALTER TABLE listings ADD COLUMN currency VARCHAR(10) DEFAULT 'VND';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='area') THEN
+          ALTER TABLE listings ADD COLUMN area NUMERIC;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='bedrooms') THEN
+          ALTER TABLE listings ADD COLUMN bedrooms INTEGER;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='bathrooms') THEN
+          ALTER TABLE listings ADD COLUMN bathrooms INTEGER;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='transaction') THEN
+          ALTER TABLE listings ADD COLUMN transaction VARCHAR(50) DEFAULT 'SALE';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='hold_expires_at') THEN
+          ALTER TABLE listings ADD COLUMN hold_expires_at TIMESTAMP WITH TIME ZONE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='project_code') THEN
+          ALTER TABLE listings ADD COLUMN project_code VARCHAR(100);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='contact_phone') THEN
+          ALTER TABLE listings ADD COLUMN contact_phone VARCHAR(50);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='coordinates') THEN
+          ALTER TABLE listings ADD COLUMN coordinates JSONB;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='is_verified') THEN
+          ALTER TABLE listings ADD COLUMN is_verified BOOLEAN DEFAULT false;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='view_count') THEN
+          ALTER TABLE listings ADD COLUMN view_count INTEGER DEFAULT 0;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='booking_count') THEN
+          ALTER TABLE listings ADD COLUMN booking_count INTEGER DEFAULT 0;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='total_units') THEN
+          ALTER TABLE listings ADD COLUMN total_units INTEGER;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='available_units') THEN
+          ALTER TABLE listings ADD COLUMN available_units INTEGER;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='owner_name') THEN
+          ALTER TABLE listings ADD COLUMN owner_name VARCHAR(255);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='owner_phone') THEN
+          ALTER TABLE listings ADD COLUMN owner_phone VARCHAR(50);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='commission') THEN
+          ALTER TABLE listings ADD COLUMN commission NUMERIC;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='commission_unit') THEN
+          ALTER TABLE listings ADD COLUMN commission_unit VARCHAR(20);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='authorized_agents') THEN
+          ALTER TABLE listings ADD COLUMN authorized_agents JSONB DEFAULT '[]'::jsonb;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='project_id') THEN
+          ALTER TABLE listings ADD COLUMN project_id UUID;
+        END IF;
+      END $$;
     `);
-    await createTenantTable("listings", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      code VARCHAR(100) NOT NULL,
-      title VARCHAR(255) NOT NULL,
-      location TEXT NOT NULL,
-      price NUMERIC NOT NULL,
-      currency VARCHAR(10) DEFAULT 'VND',
-      area NUMERIC NOT NULL,
-      bedrooms INTEGER,
-      bathrooms INTEGER,
-      type VARCHAR(50) NOT NULL,
-      status VARCHAR(50) DEFAULT 'AVAILABLE',
-      transaction VARCHAR(50) DEFAULT 'SALE',
-      attributes JSONB DEFAULT '{}'::jsonb,
-      hold_expires_at TIMESTAMP WITH TIME ZONE,
-      images JSONB DEFAULT '[]'::jsonb,
-      project_code VARCHAR(100),
-      contact_phone VARCHAR(50),
-      coordinates JSONB,
-      is_verified BOOLEAN DEFAULT false,
-      view_count INTEGER DEFAULT 0,
-      booking_count INTEGER DEFAULT 0,
-      total_units INTEGER,
-      available_units INTEGER,
-      owner_name VARCHAR(255),
-      owner_phone VARCHAR(50),
-      commission NUMERIC,
-      commission_unit VARCHAR(20),
-      created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-      authorized_agents JSONB DEFAULT '[]'::jsonb,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query("CREATE INDEX IF NOT EXISTS idx_listings_tenant_type ON listings(tenant_id, type);");
+        await client.query("CREATE INDEX IF NOT EXISTS idx_listings_price ON listings(price);");
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='proposals' AND column_name='created_by_id') THEN
+          ALTER TABLE proposals ADD COLUMN created_by_id UUID REFERENCES users(id) ON DELETE SET NULL;
+        END IF;
+      END $$;
     `);
-    await createTenantTable("proposals", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
-      listing_id UUID REFERENCES listings(id) ON DELETE CASCADE,
-      base_price NUMERIC NOT NULL,
-      discount_amount NUMERIC DEFAULT 0,
-      final_price NUMERIC NOT NULL,
-      currency VARCHAR(10) DEFAULT 'VND',
-      status VARCHAR(50) DEFAULT 'DRAFT',
-      token VARCHAR(255) UNIQUE,
-      valid_until TIMESTAMP WITH TIME ZONE,
-      created_by VARCHAR(255),
-      created_by_id UUID REFERENCES users(id) ON DELETE SET NULL,
-      metadata JSONB,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    `);
-    await createTenantTable("interactions", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
-      channel VARCHAR(50) NOT NULL,
-      direction VARCHAR(50) NOT NULL,
-      type VARCHAR(50) NOT NULL DEFAULT 'TEXT',
-      content TEXT NOT NULL,
-      metadata JSONB,
-      status VARCHAR(50) DEFAULT 'PENDING',
-      sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
-      timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    `);
-    await client.query(`
+        await client.query(`
       DO $$ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='interactions' AND column_name='sender_id') THEN
           ALTER TABLE interactions ADD COLUMN sender_id UUID REFERENCES users(id) ON DELETE SET NULL;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='interactions' AND column_name='status') THEN
+          ALTER TABLE interactions ADD COLUMN status VARCHAR(50) DEFAULT 'PENDING';
+        END IF;
       END $$;
     `);
-    await createTenantTable("tasks", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      title VARCHAR(255) NOT NULL,
-      description TEXT,
-      status VARCHAR(50) DEFAULT 'TODO',
-      priority VARCHAR(50) DEFAULT 'MEDIUM',
-      related_entity_id UUID,
-      related_entity_type VARCHAR(50),
-      assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
-      due_date TIMESTAMP WITH TIME ZONE,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    `);
-    await createTenantTable("contracts", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      proposal_id UUID REFERENCES proposals(id) ON DELETE SET NULL,
-      lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
-      listing_id UUID REFERENCES listings(id) ON DELETE CASCADE,
-      type VARCHAR(50) NOT NULL,
-      status VARCHAR(50) DEFAULT 'DRAFT',
-      party_a JSONB DEFAULT '{}'::jsonb,
-      party_b JSONB DEFAULT '{}'::jsonb,
-      property_details JSONB DEFAULT '{}'::jsonb,
-      property_price NUMERIC,
-      deposit_amount NUMERIC,
-      payment_terms TEXT,
-      tax_responsibility TEXT,
-      handover_date TIMESTAMP WITH TIME ZONE,
-      handover_condition TEXT,
-      signed_at TIMESTAMP WITH TIME ZONE,
-      metadata JSONB,
-      created_by VARCHAR(255),
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    `);
-    await client.query(`
+        await client.query("CREATE INDEX IF NOT EXISTS idx_interactions_lead_dir ON interactions(lead_id, direction, timestamp DESC);");
+        await client.query(`
       DO $$ BEGIN
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='lead_id') THEN
-          ALTER TABLE contracts ADD COLUMN lead_id UUID REFERENCES leads(id) ON DELETE CASCADE;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='listing_id') THEN
-          ALTER TABLE contracts ADD COLUMN listing_id UUID REFERENCES listings(id) ON DELETE CASCADE;
-        END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='party_a') THEN
           ALTER TABLE contracts ADD COLUMN party_a JSONB DEFAULT '{}'::jsonb;
         END IF;
@@ -254,9 +862,6 @@ async function initializeDatabase() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='updated_at') THEN
           ALTER TABLE contracts ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
         END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='created_by') THEN
-          ALTER TABLE contracts ADD COLUMN created_by VARCHAR(255);
-        END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='contracts' AND column_name='payment_terms') THEN
           ALTER TABLE contracts ADD COLUMN payment_terms TEXT;
         END IF;
@@ -271,164 +876,402 @@ async function initializeDatabase() {
         END IF;
       END $$;
     `);
-    await createTenantTable("audit_logs", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      actor_id VARCHAR(255) NOT NULL,
-      action VARCHAR(255) NOT NULL,
-      entity_type VARCHAR(100) NOT NULL,
-      entity_id VARCHAR(255) NOT NULL,
-      details TEXT,
-      metadata JSONB,
-      ip_address VARCHAR(45)
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS teams (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        name VARCHAR(255) NOT NULL,
+        lead_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        metadata JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-    await createTenantTable("enterprise_config", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      config_key VARCHAR(255) NOT NULL,
-      config_value JSONB NOT NULL,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`ALTER TABLE teams ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'teams' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON teams FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
     `);
-    await client.query(`
-      ALTER TABLE enterprise_config DROP CONSTRAINT IF EXISTS enterprise_config_tenant_key;
-      ALTER TABLE enterprise_config ADD CONSTRAINT enterprise_config_tenant_key UNIQUE(tenant_id, config_key);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS team_members (
+        team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        PRIMARY KEY (team_id, user_id)
+      );
     `);
-    await createTenantTable("favorites", `
-      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-      listing_id UUID REFERENCES listings(id) ON DELETE CASCADE,
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (user_id, listing_id)
+        await client.query(`ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'team_members' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON team_members FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
     `);
-    await createTenantTable("sequences", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      name VARCHAR(255) NOT NULL,
-      trigger_event VARCHAR(100) NOT NULL,
-      steps JSONB DEFAULT '[]'::jsonb,
-      is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        status VARCHAR(50) DEFAULT 'TODO',
+        priority VARCHAR(50) DEFAULT 'MEDIUM',
+        related_entity_id UUID,
+        related_entity_type VARCHAR(50),
+        assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
+        due_date TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-    await createTenantTable("routing_rules", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      name VARCHAR(255) NOT NULL,
-      conditions JSONB DEFAULT '[]'::jsonb,
-      action JSONB NOT NULL,
-      priority INTEGER DEFAULT 0,
-      is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'tasks' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON tasks FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
     `);
-    await createTenantTable("scoring_configs", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      weights JSONB DEFAULT '{}'::jsonb,
-      thresholds JSONB DEFAULT '{}'::jsonb,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query("CREATE INDEX IF NOT EXISTS idx_tasks_tenant_assigned ON tasks(tenant_id, assigned_to);");
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        actor_id VARCHAR(255) NOT NULL,
+        action VARCHAR(255) NOT NULL,
+        entity_type VARCHAR(100) NOT NULL,
+        entity_id VARCHAR(255) NOT NULL,
+        details TEXT,
+        metadata JSONB,
+        ip_address VARCHAR(45)
+      );
     `);
-    await createTenantTable("documents", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      title VARCHAR(500) NOT NULL,
-      type VARCHAR(100) DEFAULT 'document',
-      content TEXT,
-      status VARCHAR(50) DEFAULT 'ACTIVE',
-      file_url TEXT,
-      size_kb INTEGER,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'audit_logs' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON audit_logs FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
     `);
-    await createTenantTable("articles", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      title VARCHAR(500) NOT NULL,
-      slug VARCHAR(500),
-      content TEXT,
-      excerpt TEXT,
-      category VARCHAR(100),
-      tags JSONB DEFAULT '[]'::jsonb,
-      author VARCHAR(255),
-      cover_image TEXT,
-      status VARCHAR(50) DEFAULT 'DRAFT',
-      view_count INTEGER DEFAULT 0,
-      published_at TIMESTAMP WITH TIME ZONE,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query("CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON audit_logs(tenant_id, timestamp DESC);");
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS enterprise_config (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        config_key VARCHAR(255) NOT NULL,
+        config_value JSONB NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-    await createTenantTable("user_sessions", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-      ip_address VARCHAR(45),
-      user_agent TEXT,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      expires_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours')
+        await client.query(`ALTER TABLE enterprise_config ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'enterprise_config' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON enterprise_config FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
     `);
-    await createTenantTable("templates", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      name VARCHAR(255) NOT NULL,
-      category VARCHAR(100) DEFAULT 'general',
-      content TEXT,
-      variables JSONB DEFAULT '{}'::jsonb,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'enterprise_config_tenant_key') THEN
+          ALTER TABLE enterprise_config ADD CONSTRAINT enterprise_config_tenant_key UNIQUE(tenant_id, config_key);
+        END IF;
+      END $$;
     `);
-    await createTenantTable("campaign_costs", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      campaign_name VARCHAR(255) NOT NULL,
-      source VARCHAR(100) NOT NULL,
-      cost NUMERIC NOT NULL DEFAULT 0,
-      period VARCHAR(50) NOT NULL,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS favorites (
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        listing_id UUID REFERENCES listings(id) ON DELETE CASCADE,
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, listing_id)
+      );
     `);
-    await createTenantTable("subscriptions", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      plan_id VARCHAR(50) NOT NULL DEFAULT 'ENTERPRISE',
-      status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-      current_period_start TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      current_period_end TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days'),
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'favorites' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON favorites FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
     `);
-    await createTenantTable("usage_tracking", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      metric_type VARCHAR(100) NOT NULL,
-      count INTEGER NOT NULL DEFAULT 0,
-      period VARCHAR(50) NOT NULL,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS sequences (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        name VARCHAR(255) NOT NULL,
+        trigger_event VARCHAR(100) NOT NULL,
+        steps JSONB DEFAULT '[]'::jsonb,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-    await createTenantTable("ai_safety_logs", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-      prompt TEXT,
-      response TEXT,
-      model VARCHAR(255),
-      task_type VARCHAR(100),
-      latency_ms INTEGER DEFAULT 0,
-      cost_usd NUMERIC DEFAULT 0,
-      flagged BOOLEAN DEFAULT false,
-      safety_flags JSONB DEFAULT '[]'::jsonb,
-      reason TEXT,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`ALTER TABLE sequences ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'sequences' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON sequences FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
     `);
-    await createTenantTable("prompt_templates", `
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
-      name VARCHAR(255) NOT NULL,
-      description TEXT,
-      category VARCHAR(100),
-      active_version INTEGER DEFAULT 1,
-      versions JSONB DEFAULT '[]'::jsonb,
-      variables JSONB DEFAULT '[]'::jsonb,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS routing_rules (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        name VARCHAR(255) NOT NULL,
+        conditions JSONB DEFAULT '[]'::jsonb,
+        action JSONB NOT NULL,
+        priority INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-    await client.query(`
+        await client.query(`ALTER TABLE routing_rules ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'routing_rules' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON routing_rules FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS scoring_configs (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        weights JSONB DEFAULT '{}'::jsonb,
+        thresholds JSONB DEFAULT '{}'::jsonb,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`ALTER TABLE scoring_configs ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'scoring_configs' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON scoring_configs FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS documents (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        title VARCHAR(500) NOT NULL,
+        type VARCHAR(100) DEFAULT 'document',
+        content TEXT,
+        status VARCHAR(50) DEFAULT 'ACTIVE',
+        file_url TEXT,
+        size_kb INTEGER,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`ALTER TABLE documents ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'documents' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON documents FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='documents' AND column_name='size_kb') THEN
+          ALTER TABLE documents ADD COLUMN size_kb INTEGER;
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS articles (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        title VARCHAR(500) NOT NULL,
+        slug VARCHAR(500),
+        content TEXT,
+        excerpt TEXT,
+        category VARCHAR(100),
+        tags JSONB DEFAULT '[]'::jsonb,
+        author VARCHAR(255),
+        cover_image TEXT,
+        status VARCHAR(50) DEFAULT 'DRAFT',
+        view_count INTEGER DEFAULT 0,
+        published_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`ALTER TABLE articles ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'articles' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON articles FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS user_sessions (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        ip_address VARCHAR(45),
+        user_agent TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours')
+      );
+    `);
+        await client.query(`ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_sessions' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON user_sessions FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query("CREATE INDEX IF NOT EXISTS idx_user_sessions_user_expires ON user_sessions(user_id, expires_at);");
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS templates (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        name VARCHAR(255) NOT NULL,
+        category VARCHAR(100) DEFAULT 'general',
+        content TEXT,
+        variables JSONB DEFAULT '{}'::jsonb,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`ALTER TABLE templates ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'templates' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON templates FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS campaign_costs (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        campaign_name VARCHAR(255) NOT NULL,
+        source VARCHAR(100) NOT NULL,
+        cost NUMERIC NOT NULL DEFAULT 0,
+        period VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`ALTER TABLE campaign_costs ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'campaign_costs' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON campaign_costs FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        plan_id VARCHAR(50) NOT NULL DEFAULT 'ENTERPRISE',
+        status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+        current_period_start TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        current_period_end TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days'),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'subscriptions' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON subscriptions FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS usage_tracking (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        metric_type VARCHAR(100) NOT NULL,
+        count INTEGER NOT NULL DEFAULT 0,
+        period VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`ALTER TABLE usage_tracking ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'usage_tracking' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON usage_tracking FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS ai_safety_logs (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        prompt TEXT,
+        response TEXT,
+        model VARCHAR(255),
+        task_type VARCHAR(100),
+        latency_ms INTEGER DEFAULT 0,
+        cost_usd NUMERIC DEFAULT 0,
+        flagged BOOLEAN DEFAULT false,
+        safety_flags JSONB DEFAULT '[]'::jsonb,
+        reason TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`ALTER TABLE ai_safety_logs ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'ai_safety_logs' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON ai_safety_logs FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS prompt_templates (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        category VARCHAR(100),
+        active_version INTEGER DEFAULT 1,
+        versions JSONB DEFAULT '[]'::jsonb,
+        variables JSONB DEFAULT '[]'::jsonb,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+        await client.query(`ALTER TABLE prompt_templates ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'prompt_templates' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON prompt_templates FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
       CREATE TABLE IF NOT EXISTS password_reset_tokens (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
@@ -439,9 +1282,9 @@ async function initializeDatabase() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    await client.query("CREATE INDEX IF NOT EXISTS idx_prt_token ON password_reset_tokens(token);");
-    await client.query("CREATE INDEX IF NOT EXISTS idx_prt_user ON password_reset_tokens(user_id);");
-    await client.query(`
+        await client.query("CREATE INDEX IF NOT EXISTS idx_prt_token ON password_reset_tokens(token);");
+        await client.query("CREATE INDEX IF NOT EXISTS idx_prt_user ON password_reset_tokens(user_id);");
+        await client.query(`
       CREATE TABLE IF NOT EXISTS visitor_logs (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
@@ -461,14 +1304,10 @@ async function initializeDatabase() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    await client.query("CREATE INDEX IF NOT EXISTS idx_visitor_logs_tenant_created ON visitor_logs(tenant_id, created_at DESC);");
-    await client.query("CREATE INDEX IF NOT EXISTS idx_visitor_logs_listing ON visitor_logs(listing_id);");
-    await client.query("CREATE INDEX IF NOT EXISTS idx_visitor_logs_country ON visitor_logs(tenant_id, country_code);");
-    try {
-      await client.query("ALTER TABLE documents ADD COLUMN IF NOT EXISTS size_kb INTEGER;");
-    } catch (e) {
-    }
-    await client.query(`
+        await client.query("CREATE INDEX IF NOT EXISTS idx_visitor_logs_tenant_created ON visitor_logs(tenant_id, created_at DESC);");
+        await client.query("CREATE INDEX IF NOT EXISTS idx_visitor_logs_listing ON visitor_logs(listing_id);");
+        await client.query("CREATE INDEX IF NOT EXISTS idx_visitor_logs_country ON visitor_logs(tenant_id, country_code);");
+        await client.query(`
       CREATE TABLE IF NOT EXISTS projects (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
@@ -485,16 +1324,18 @@ async function initializeDatabase() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    await client.query("ALTER TABLE projects ENABLE ROW LEVEL SECURITY;");
-    await client.query(`
-      DROP POLICY IF EXISTS tenant_isolation_policy ON projects;
-      CREATE POLICY tenant_isolation_policy ON projects
-      FOR ALL
-      USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        await client.query(`ALTER TABLE projects ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'projects' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON projects FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
     `);
-    await client.query("CREATE INDEX IF NOT EXISTS idx_projects_tenant_status ON projects(tenant_id, status);");
-    await client.query("CREATE INDEX IF NOT EXISTS idx_projects_tenant_created ON projects(tenant_id, created_at DESC);");
-    await client.query(`
+        await client.query("CREATE INDEX IF NOT EXISTS idx_projects_tenant_status ON projects(tenant_id, status);");
+        await client.query("CREATE INDEX IF NOT EXISTS idx_projects_tenant_created ON projects(tenant_id, created_at DESC);");
+        await client.query(`
       CREATE TABLE IF NOT EXISTS project_access (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
@@ -507,43 +1348,369 @@ async function initializeDatabase() {
         UNIQUE(project_id, partner_tenant_id)
       );
     `);
-    await client.query("CREATE INDEX IF NOT EXISTS idx_project_access_partner ON project_access(partner_tenant_id, status);");
-    await client.query("CREATE INDEX IF NOT EXISTS idx_project_access_project ON project_access(project_id);");
-    try {
-      await client.query("ALTER TABLE listings ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES projects(id) ON DELETE SET NULL;");
-    } catch (e) {
+        await client.query("CREATE INDEX IF NOT EXISTS idx_project_access_partner ON project_access(partner_tenant_id, status);");
+        await client.query("CREATE INDEX IF NOT EXISTS idx_project_access_project ON project_access(project_id);");
+        await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='listings' AND column_name='project_id') THEN
+          BEGIN
+            ALTER TABLE listings ADD CONSTRAINT fk_listings_project_id
+              FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL;
+          EXCEPTION WHEN duplicate_object THEN NULL;
+          END;
+        END IF;
+      END $$;
+    `);
+        await client.query("CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(tenant_id, created_at DESC);");
+      },
+      async down(client) {
+        const tables = [
+          "project_access",
+          "projects",
+          "visitor_logs",
+          "password_reset_tokens",
+          "prompt_templates",
+          "ai_safety_logs",
+          "usage_tracking",
+          "subscriptions",
+          "campaign_costs",
+          "templates",
+          "user_sessions",
+          "articles",
+          "documents",
+          "scoring_configs",
+          "routing_rules",
+          "sequences",
+          "favorites",
+          "enterprise_config",
+          "audit_logs",
+          "tasks",
+          "team_members",
+          "teams"
+        ];
+        for (const t of tables) {
+          await client.query(`DROP TABLE IF EXISTS ${t} CASCADE;`);
+        }
+      }
+    };
+    extended_schema_default = migration9;
+  }
+});
+
+// server/migrations/010_payment_schedule_column.ts
+var payment_schedule_column_exports = {};
+__export(payment_schedule_column_exports, {
+  default: () => payment_schedule_column_default
+});
+var migration10, payment_schedule_column_default;
+var init_payment_schedule_column = __esm({
+  "server/migrations/010_payment_schedule_column.ts"() {
+    migration10 = {
+      description: "Add payment_schedule JSONB column to contracts table",
+      async up(client) {
+        await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'contracts' AND column_name = 'payment_schedule'
+        ) THEN
+          ALTER TABLE contracts ADD COLUMN payment_schedule JSONB;
+        END IF;
+      END
+      $$;
+    `);
+      },
+      async down(client) {
+        await client.query(`
+      ALTER TABLE contracts DROP COLUMN IF EXISTS payment_schedule;
+    `);
+      }
+    };
+    payment_schedule_column_default = migration10;
+  }
+});
+
+// server/migrations/011_dispute_resolution_column.ts
+var dispute_resolution_column_exports = {};
+__export(dispute_resolution_column_exports, {
+  default: () => dispute_resolution_column_default
+});
+var migration11, dispute_resolution_column_default;
+var init_dispute_resolution_column = __esm({
+  "server/migrations/011_dispute_resolution_column.ts"() {
+    migration11 = {
+      description: "Add dispute_resolution column to contracts table",
+      async up(client) {
+        await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'contracts' AND column_name = 'dispute_resolution'
+        ) THEN
+          ALTER TABLE contracts ADD COLUMN dispute_resolution TEXT;
+        END IF;
+      END
+      $$;
+    `);
+      },
+      async down(client) {
+        await client.query(`
+      ALTER TABLE contracts DROP COLUMN IF EXISTS dispute_resolution;
+    `);
+      }
+    };
+    dispute_resolution_column_default = migration11;
+  }
+});
+
+// server/migrations/012_signed_place.ts
+var signed_place_exports = {};
+__export(signed_place_exports, {
+  down: () => down,
+  up: () => up
+});
+async function up(pool3) {
+  await pool3.query(`
+    ALTER TABLE contracts
+      ADD COLUMN IF NOT EXISTS signed_place TEXT,
+      ADD COLUMN IF NOT EXISTS contract_date DATE;
+  `);
+}
+async function down(pool3) {
+  await pool3.query(`
+    ALTER TABLE contracts
+      DROP COLUMN IF EXISTS signed_place,
+      DROP COLUMN IF EXISTS contract_date;
+  `);
+}
+var init_signed_place = __esm({
+  "server/migrations/012_signed_place.ts"() {
+  }
+});
+
+// server/migrations/013_subscription_columns.ts
+var subscription_columns_exports = {};
+__export(subscription_columns_exports, {
+  default: () => subscription_columns_default
+});
+var migration12, subscription_columns_default;
+var init_subscription_columns = __esm({
+  "server/migrations/013_subscription_columns.ts"() {
+    migration12 = {
+      description: "Add missing current_period_start and current_period_end columns to subscriptions table",
+      async up(client) {
+        await client.query(`
+      ALTER TABLE subscriptions
+        ADD COLUMN IF NOT EXISTS current_period_start TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS current_period_end   TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days');
+    `);
+        await client.query(`
+      UPDATE subscriptions
+      SET
+        current_period_start = created_at,
+        current_period_end   = created_at + INTERVAL '30 days'
+      WHERE current_period_start IS NULL;
+    `);
+      },
+      async down(client) {
+        await client.query(`
+      ALTER TABLE subscriptions
+        DROP COLUMN IF EXISTS current_period_start,
+        DROP COLUMN IF EXISTS current_period_end;
+    `);
+      }
+    };
+    subscription_columns_default = migration12;
+  }
+});
+
+// server/migrations/014_listing_assigned_to.ts
+var listing_assigned_to_exports = {};
+__export(listing_assigned_to_exports, {
+  default: () => listing_assigned_to_default
+});
+var migration13, listing_assigned_to_default;
+var init_listing_assigned_to = __esm({
+  "server/migrations/014_listing_assigned_to.ts"() {
+    migration13 = {
+      description: "Add assigned_to column to listings for internal role-based assignment",
+      async up(client) {
+        await client.query(`
+      ALTER TABLE listings
+        ADD COLUMN IF NOT EXISTS assigned_to UUID REFERENCES users(id) ON DELETE SET NULL;
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listings_tenant_assigned
+        ON listings(tenant_id, assigned_to);
+    `);
+      },
+      async down(client) {
+        await client.query(`DROP INDEX IF EXISTS idx_listings_tenant_assigned;`);
+        await client.query(`ALTER TABLE listings DROP COLUMN IF EXISTS assigned_to;`);
+      }
+    };
+    listing_assigned_to_default = migration13;
+  }
+});
+
+// import("./**/*") in server/migrations/runner.ts
+var globImport;
+var init_ = __esm({
+  'import("./**/*") in server/migrations/runner.ts'() {
+    globImport = __glob({
+      "./001_baseline_schema.ts": () => Promise.resolve().then(() => (init_baseline_schema(), baseline_schema_exports)),
+      "./002_audit_logs_and_tasks.ts": () => Promise.resolve().then(() => (init_audit_logs_and_tasks(), audit_logs_and_tasks_exports)),
+      "./003_ai_and_billing.ts": () => Promise.resolve().then(() => (init_ai_and_billing(), ai_and_billing_exports)),
+      "./004_rbac_creator_columns.ts": () => Promise.resolve().then(() => (init_rbac_creator_columns(), rbac_creator_columns_exports)),
+      "./005_projects_and_b2b2c.ts": () => Promise.resolve().then(() => (init_projects_and_b2b2c(), projects_and_b2b2c_exports)),
+      "./006_fix_schema_mismatches.ts": () => Promise.resolve().then(() => (init_fix_schema_mismatches(), fix_schema_mismatches_exports)),
+      "./007_performance_indexes.ts": () => Promise.resolve().then(() => (init_performance_indexes(), performance_indexes_exports)),
+      "./008_listing_access.ts": () => Promise.resolve().then(() => (init_listing_access(), listing_access_exports)),
+      "./009_extended_schema.ts": () => Promise.resolve().then(() => (init_extended_schema(), extended_schema_exports)),
+      "./010_payment_schedule_column.ts": () => Promise.resolve().then(() => (init_payment_schedule_column(), payment_schedule_column_exports)),
+      "./011_dispute_resolution_column.ts": () => Promise.resolve().then(() => (init_dispute_resolution_column(), dispute_resolution_column_exports)),
+      "./012_signed_place.ts": () => Promise.resolve().then(() => (init_signed_place(), signed_place_exports)),
+      "./013_subscription_columns.ts": () => Promise.resolve().then(() => (init_subscription_columns(), subscription_columns_exports)),
+      "./014_listing_assigned_to.ts": () => Promise.resolve().then(() => (init_listing_assigned_to(), listing_assigned_to_exports)),
+      "./runner.ts": () => Promise.resolve().then(() => (init_runner(), runner_exports))
+    });
+  }
+});
+
+// server/migrations/runner.ts
+var runner_exports = {};
+__export(runner_exports, {
+  rollbackLastMigration: () => rollbackLastMigration,
+  runPendingMigrations: () => runPendingMigrations
+});
+import { Pool } from "pg";
+import path from "path";
+import { fileURLToPath } from "url";
+import { readdirSync } from "fs";
+import dotenv from "dotenv";
+async function ensureSchemaVersionsTable(client) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS schema_versions (
+      id          SERIAL PRIMARY KEY,
+      version     VARCHAR(255) UNIQUE NOT NULL,
+      description TEXT,
+      applied_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+}
+async function getAppliedVersions(client) {
+  const result = await client.query("SELECT version FROM schema_versions ORDER BY id");
+  return new Set(result.rows.map((r) => r.version));
+}
+function getMigrationFiles() {
+  return readdirSync(__dirname).filter((f) => /^\d{3}_.*\.ts$/.test(f) && f !== "runner.ts").sort();
+}
+async function runPendingMigrations(pool3, isDryRun = false) {
+  const client = await pool3.connect();
+  try {
+    await client.query("BEGIN");
+    await ensureSchemaVersionsTable(client);
+    const applied = await getAppliedVersions(client);
+    const files = getMigrationFiles();
+    const pending = files.filter((f) => !applied.has(f));
+    if (pending.length === 0) {
+      console.log("[migrations] All up to date.");
+      await client.query("COMMIT");
+      return;
     }
-    console.log("Creating indexes...");
-    const indexes = [
-      "CREATE INDEX IF NOT EXISTS idx_leads_tenant_stage ON leads(tenant_id, stage)",
-      "CREATE INDEX IF NOT EXISTS idx_leads_tenant_assigned ON leads(tenant_id, assigned_to)",
-      "CREATE INDEX IF NOT EXISTS idx_leads_tenant_phone ON leads(tenant_id, phone)",
-      "CREATE INDEX IF NOT EXISTS idx_leads_updated ON leads(updated_at DESC)",
-      "CREATE INDEX IF NOT EXISTS idx_listings_tenant_status ON listings(tenant_id, status)",
-      "CREATE INDEX IF NOT EXISTS idx_listings_tenant_type ON listings(tenant_id, type)",
-      "CREATE INDEX IF NOT EXISTS idx_listings_price ON listings(price)",
-      "CREATE INDEX IF NOT EXISTS idx_interactions_lead ON interactions(lead_id, timestamp DESC)",
-      "CREATE INDEX IF NOT EXISTS idx_interactions_tenant ON interactions(tenant_id, timestamp DESC)",
-      "CREATE INDEX IF NOT EXISTS idx_proposals_tenant_status ON proposals(tenant_id, status)",
-      "CREATE INDEX IF NOT EXISTS idx_proposals_lead ON proposals(lead_id)",
-      "CREATE INDEX IF NOT EXISTS idx_contracts_tenant_status ON contracts(tenant_id, status)",
-      "CREATE INDEX IF NOT EXISTS idx_tasks_tenant_assigned ON tasks(tenant_id, assigned_to)",
-      "CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON audit_logs(tenant_id, timestamp DESC)",
-      "CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role)",
-      "CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(tenant_id, created_at DESC)",
-      "CREATE INDEX IF NOT EXISTS idx_user_sessions_user_expires ON user_sessions(user_id, expires_at)",
-      "CREATE INDEX IF NOT EXISTS idx_interactions_lead_dir ON interactions(lead_id, direction, timestamp DESC)"
-    ];
-    for (const idx of indexes) {
-      await client.query(idx);
+    console.log(`[migrations] ${pending.length} pending migration(s):`);
+    for (const file of pending) {
+      console.log(`  \u2192 ${file}`);
     }
-    console.log("Database schema initialized successfully.");
-  } catch (error) {
-    console.error("Error initializing database schema:", error);
-    throw error;
+    if (isDryRun) {
+      console.log("[migrations] Dry run \u2014 no changes applied.");
+      await client.query("ROLLBACK");
+      return;
+    }
+    for (const file of pending) {
+      const mod = await globImport(`./${file}`);
+      const migration14 = mod.default || mod;
+      console.log(`[migrations] Applying ${file}: ${migration14.description || ""}`);
+      await migration14.up(client);
+      await client.query(
+        "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
+        [file, migration14.description || null]
+      );
+      console.log(`[migrations] \u2713 ${file}`);
+    }
+    await client.query("COMMIT");
+    console.log("[migrations] All migrations applied successfully.");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("[migrations] FAILED \u2014 rolled back:", err);
+    throw err;
   } finally {
     client.release();
   }
+}
+async function rollbackLastMigration(pool3) {
+  const client = await pool3.connect();
+  try {
+    await client.query("BEGIN");
+    await ensureSchemaVersionsTable(client);
+    const result = await client.query(
+      "SELECT version FROM schema_versions ORDER BY id DESC LIMIT 1"
+    );
+    if (result.rows.length === 0) {
+      console.log("[migrations] Nothing to rollback.");
+      await client.query("COMMIT");
+      return;
+    }
+    const lastVersion = result.rows[0].version;
+    const mod = await globImport(`./${lastVersion}`);
+    const migration14 = mod.default || mod;
+    if (!migration14.down) {
+      throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
+    }
+    console.log(`[migrations] Rolling back ${lastVersion}...`);
+    await migration14.down(client);
+    await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
+    await client.query("COMMIT");
+    console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("[migrations] Rollback FAILED:", err);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+var __dirname;
+var init_runner = __esm({
+  "server/migrations/runner.ts"() {
+    init_();
+    dotenv.config();
+    __dirname = path.dirname(fileURLToPath(import.meta.url));
+    if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+      const isDryRun = process.argv.includes("--dry-run");
+      const isRollback = process.argv.includes("--rollback");
+      const pool3 = new Pool({ connectionString: process.env.DATABASE_URL });
+      const action = isRollback ? rollbackLastMigration(pool3) : runPendingMigrations(pool3, isDryRun);
+      action.then(() => process.exit(0)).catch(() => process.exit(1));
+    }
+  }
+});
+
+// server/db.ts
+var db_exports = {};
+__export(db_exports, {
+  initializeDatabase: () => initializeDatabase,
+  pool: () => pool,
+  withTenantContext: () => withTenantContext,
+  withTransaction: () => withTransaction
+});
+import { Pool as Pool2, types } from "pg";
+import dotenv2 from "dotenv";
+async function initializeDatabase() {
+  const { runPendingMigrations: runPendingMigrations2 } = await Promise.resolve().then(() => (init_runner(), runner_exports));
+  await runPendingMigrations2(pool);
 }
 async function withTenantContext(tenantId, queryFn) {
   const sanitized = tenantId.replace(/[^a-f0-9\-]/gi, "");
@@ -581,8 +1748,10 @@ async function withTransaction(queryFn) {
 var pool;
 var init_db = __esm({
   "server/db.ts"() {
-    dotenv.config();
-    pool = new Pool({
+    dotenv2.config();
+    types.setTypeParser(1700, (val) => parseFloat(val));
+    types.setTypeParser(20, (val) => parseInt(val, 10));
+    pool = new Pool2({
       connectionString: process.env.DATABASE_URL,
       max: 20,
       idleTimeoutMillis: 3e4,
@@ -648,11 +1817,11 @@ var init_logger = __esm({
           console.error(formatLog("ERROR", message, Object.keys(meta).length > 0 ? meta : void 0));
         }
       },
-      request(method, path4, statusCode, durationMs, userId) {
+      request(method, path5, statusCode, durationMs, userId) {
         if (shouldLog("INFO")) {
-          const meta = { method, path: path4, status: statusCode, duration: `${durationMs}ms` };
+          const meta = { method, path: path5, status: statusCode, duration: `${durationMs}ms` };
           if (userId) meta.userId = userId;
-          console.log(formatLog("INFO", `${method} ${path4} ${statusCode} ${durationMs}ms`, meta));
+          console.log(formatLog("INFO", `${method} ${path5} ${statusCode} ${durationMs}ms`, meta));
         }
       },
       audit(action, userId, details) {
@@ -825,9 +1994,20 @@ var init_leadRepository = __esm({
           const sortDir = (filters?.order || "desc").toUpperCase() === "ASC" ? "ASC" : "DESC";
           const orderBy = sortField === "score" ? `(l.score->>'score')::numeric ${sortDir} NULLS LAST` : sortField === "name" ? `l.name ${sortDir}` : sortField === "created_at" ? `l.created_at ${sortDir}` : `l.updated_at ${sortDir}`;
           const result = await client.query(
-            `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar
+            `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar,
+                c.contract_id, c.payment_schedule as contract_payment_schedule,
+                c.contract_status, c.contract_type, c.contract_value
          FROM leads l
          LEFT JOIN users u ON l.assigned_to = u.id
+         LEFT JOIN LATERAL (
+           SELECT id as contract_id, payment_schedule, status as contract_status,
+                  type as contract_type, value as contract_value
+           FROM contracts
+           WHERE lead_id = l.id
+             AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) c ON TRUE
          ${whereClause}
          ORDER BY ${orderBy}
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
@@ -846,9 +2026,20 @@ var init_leadRepository = __esm({
       async findByIdWithAccess(tenantId, id, userId, userRole) {
         return this.withTenant(tenantId, async (client) => {
           const result = await client.query(
-            `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar
+            `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar,
+                c.contract_id, c.payment_schedule as contract_payment_schedule,
+                c.contract_status, c.contract_type, c.contract_value
          FROM leads l
          LEFT JOIN users u ON l.assigned_to = u.id
+         LEFT JOIN LATERAL (
+           SELECT id as contract_id, payment_schedule, status as contract_status,
+                  type as contract_type, value as contract_value
+           FROM contracts
+           WHERE lead_id = l.id
+             AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) c ON TRUE
          WHERE l.id = $1 AND l.tenant_id = current_setting('app.current_tenant_id', true)::uuid`,
             [id]
           );
@@ -1339,6 +2530,9 @@ var init_listingRepository = __esm({
           conditions.push(`project_code = $${paramIndex++}`);
           values.push(filters.projectCode);
         }
+        if (filters?.noProjectCode) {
+          conditions.push(`(project_code IS NULL OR project_code = '')`);
+        }
         if (filters?.isVerified !== void 0) {
           conditions.push(`is_verified = $${paramIndex++}`);
           values.push(filters.isVerified);
@@ -1485,15 +2679,54 @@ var init_listingRepository = __esm({
           commissionUnit: void 0
         };
       }
+      /** Override findById to include assigned_to user info via JOIN. */
+      async findById(tenantId, id) {
+        return this.withTenant(tenantId, async (client) => {
+          const result = await client.query(
+            `SELECT l.*,
+                u.name  AS assigned_to_name,
+                u.email AS assigned_to_email,
+                u.avatar AS assigned_to_avatar,
+                u.role   AS assigned_to_role
+         FROM listings l
+         LEFT JOIN users u ON u.id = l.assigned_to
+         WHERE l.id = $1 AND l.tenant_id = $2`,
+            [id, tenantId]
+          );
+          if (!result.rows[0]) return null;
+          return this.rowToEntity(result.rows[0]);
+        });
+      }
+      /** Assign a listing to an internal user (or unassign with null). ADMIN/TEAM_LEAD only. */
+      async assign(tenantId, listingId, userId) {
+        return this.withTenant(tenantId, async (client) => {
+          const result = await client.query(
+            `UPDATE listings SET assigned_to = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+         RETURNING *`,
+            [userId, listingId]
+          );
+          if (!result.rows[0]) return null;
+          return this.rowToEntity(result.rows[0]);
+        });
+      }
       async findListings(tenantId, pagination, filters, userId, userRole) {
         return this.withTenant(tenantId, async (client) => {
           const conditions = [];
           const values = [];
           let paramIndex = 1;
           const RESTRICTED = ["SALES", "MARKETING", "VIEWER"];
-          if (RESTRICTED.includes(userRole || "") && userId) {
-            conditions.push(`created_by = $${paramIndex++}`);
+          const PARTNER_RESTRICTED = ["PARTNER_ADMIN", "PARTNER_AGENT"];
+          const isAvailableOnlyQuery = filters?.status === "AVAILABLE";
+          const isProjectQuery = !!filters?.projectCode;
+          if (PARTNER_RESTRICTED.includes(userRole || "") && userId && isProjectQuery) {
+            conditions.push(`l.assigned_to = $${paramIndex}`);
             values.push(userId);
+            paramIndex++;
+          } else if (RESTRICTED.includes(userRole || "") && userId && !isAvailableOnlyQuery && !isProjectQuery) {
+            conditions.push(`(l.created_by = $${paramIndex} OR l.assigned_to = $${paramIndex})`);
+            values.push(userId);
+            paramIndex++;
           }
           const { conditions: filterConds, values: filterValues, nextIndex } = this.buildFilterConditions(filters, paramIndex);
           conditions.push(...filterConds);
@@ -1501,26 +2734,36 @@ var init_listingRepository = __esm({
           paramIndex = nextIndex;
           const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
           const countResult = await client.query(
-            `SELECT COUNT(*)::int as total FROM listings ${whereClause}`,
+            `SELECT COUNT(*)::int as total FROM listings l ${whereClause}`,
             values
           );
           const total = countResult.rows[0].total;
           const statsResult = await client.query(
             `SELECT
-          COUNT(*) FILTER (WHERE status = 'AVAILABLE')::int AS available_count,
-          COUNT(*) FILTER (WHERE status = 'HOLD')::int       AS hold_count,
-          COUNT(*) FILTER (WHERE status = 'SOLD')::int       AS sold_count,
-          COUNT(*) FILTER (WHERE status = 'RENTED')::int     AS rented_count,
-          COUNT(*) FILTER (WHERE status = 'BOOKING')::int    AS booking_count,
-          COUNT(*) FILTER (WHERE status = 'OPENING')::int    AS opening_count,
-          COUNT(*) FILTER (WHERE status = 'INACTIVE')::int   AS inactive_count,
-          COUNT(*)::int                                       AS total_count
-         FROM listings ${whereClause}`,
+          COUNT(*) FILTER (WHERE l.status = 'AVAILABLE')::int AS available_count,
+          COUNT(*) FILTER (WHERE l.status = 'HOLD')::int       AS hold_count,
+          COUNT(*) FILTER (WHERE l.status = 'SOLD')::int       AS sold_count,
+          COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
+          COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
+          COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
+          COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count,
+          COUNT(*)::int                                         AS total_count
+         FROM listings l ${whereClause}`,
             values
           );
           const sr = statsResult.rows[0];
           const result = await client.query(
-            `SELECT * FROM listings ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+            `SELECT sub.*,
+                u.name   AS assigned_to_name,
+                u.email  AS assigned_to_email,
+                u.avatar AS assigned_to_avatar,
+                u.role   AS assigned_to_role
+         FROM (
+           SELECT * FROM listings l ${whereClause}
+           ORDER BY l.created_at DESC
+           LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+         ) AS sub
+         LEFT JOIN users u ON u.id = sub.assigned_to`,
             [...values, pagination.pageSize, (pagination.page - 1) * pagination.pageSize]
           );
           return {
@@ -3364,6 +4607,7 @@ var init_aml = __esm({
 
 // server.ts
 init_db();
+init_runner();
 import express from "express";
 import { Server } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
@@ -3910,8 +5154,8 @@ var UserRepository = class extends BaseRepository {
   async delete(tenantId, id) {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `DELETE FROM users WHERE id = $1`,
-        [id]
+        `DELETE FROM users WHERE id = $1 AND tenant_id = $2`,
+        [id, tenantId]
       );
       return (result.rowCount ?? 0) > 0;
     });
@@ -4200,15 +5444,14 @@ var AuditRepository = class extends BaseRepository {
   async log(tenantId, data) {
     return this.withTenant(tenantId, async (client) => {
       await client.query(
-        `INSERT INTO audit_logs (tenant_id, actor_id, action, entity_type, entity_id, details, metadata, ip_address)
-         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6, $7)`,
+        `INSERT INTO audit_logs (tenant_id, actor_id, action, entity_type, entity_id, details, ip_address)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6)`,
         [
           data.actorId,
           data.action,
           data.entityType,
           data.entityId,
           data.details || null,
-          data.metadata ? JSON.stringify(data.metadata) : null,
           data.ipAddress || null
         ]
       );
@@ -4381,9 +5624,13 @@ var routingRuleRepository = new RoutingRuleRepository();
 // server/routes/leadRoutes.ts
 function createLeadRoutes(authenticateToken) {
   const router = Router();
+  const PARTNER_ROLES2 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
+      if (PARTNER_ROLES2.includes(user.role)) {
+        return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      }
       const tenantId = user.tenantId;
       const page = Math.max(1, parseInt(req.query.page) || 1);
       const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize) || 20, 500));
@@ -4635,6 +5882,14 @@ init_listingRepository();
 import { Router as Router2 } from "express";
 var PARTNER_ROLES = ["PARTNER_ADMIN", "PARTNER_AGENT"];
 var RESTRICTED_ROLES = ["SALES", "MARKETING", "VIEWER"];
+var WRITABLE_RESTRICTED_ROLES = ["SALES", "MARKETING"];
+var SENSITIVE_FIELDS = ["ownerName", "ownerPhone", "commission", "commissionUnit", "consignorName", "consignorPhone"];
+function redactSensitiveFields(item) {
+  if (!item) return item;
+  const copy = { ...item };
+  for (const f of SENSITIVE_FIELDS) delete copy[f];
+  return copy;
+}
 function createListingRoutes(authenticateToken) {
   const router = Router2();
   router.get("/", authenticateToken, async (req, res) => {
@@ -4657,10 +5912,11 @@ function createListingRoutes(authenticateToken) {
       if (req.query.areaMax && !isNaN(areaMax)) filters.area_lte = areaMax;
       if (req.query.search) filters.search = req.query.search;
       if (req.query.projectCode) filters.projectCode = req.query.projectCode;
+      if (req.query.noProjectCode === "true") filters.noProjectCode = true;
       if (req.query.isVerified) filters.isVerified = req.query.isVerified === "true";
-      if (PARTNER_ROLES.includes(user.role)) {
-        const result2 = await listingRepository.findListingsForPartner(user.tenantId, { page, pageSize }, filters);
-        return res.json(result2);
+      if (user.role === "PARTNER_ADMIN" || user.role === "PARTNER_AGENT") {
+        const result2 = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
+        return res.json({ ...result2, data: result2.data.map(redactSensitiveFields) });
       }
       const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
       res.json(result);
@@ -4685,18 +5941,22 @@ function createListingRoutes(authenticateToken) {
   router.get("/:id", authenticateToken, validateUUIDParam(), async (req, res) => {
     try {
       const user = req.user;
-      if (PARTNER_ROLES.includes(user.role)) {
-        const listing2 = await listingRepository.findByIdForPartner(user.tenantId, String(req.params.id));
-        if (!listing2) return res.status(404).json({ error: "Listing not found or access denied" });
-        res.json(listing2);
-        listingRepository.incrementViewCount(listing2.tenantId, String(req.params.id)).catch(() => {
+      if (user.role === "PARTNER_ADMIN" || user.role === "PARTNER_AGENT") {
+        const listing2 = await listingRepository.findById(user.tenantId, String(req.params.id));
+        if (!listing2) return res.status(404).json({ error: "Listing not found" });
+        res.json(redactSensitiveFields(listing2));
+        listingRepository.incrementViewCount(user.tenantId, String(req.params.id)).catch(() => {
         });
         return;
       }
       const listing = await listingRepository.findById(user.tenantId, String(req.params.id));
       if (!listing) return res.status(404).json({ error: "Listing not found" });
-      if (RESTRICTED_ROLES.includes(user.role) && listing.createdBy !== user.id) {
-        return res.status(403).json({ error: "Access denied" });
+      if (RESTRICTED_ROLES.includes(user.role)) {
+        const isProjectListing = !!listing.projectCode;
+        const isOwnerOrAssignee = listing.createdBy === user.id || listing.assignedTo === user.id;
+        if (!isProjectListing && !isOwnerOrAssignee) {
+          return res.status(403).json({ error: "Access denied" });
+        }
       }
       res.json(listing);
       listingRepository.incrementViewCount(user.tenantId, String(req.params.id)).catch(() => {
@@ -4748,14 +6008,18 @@ function createListingRoutes(authenticateToken) {
       if (Array.isArray(images) && images.length > 10) {
         return res.status(400).json({ error: "Maximum 10 images allowed per listing" });
       }
-      if (RESTRICTED_ROLES.includes(user.role)) {
+      if (WRITABLE_RESTRICTED_ROLES.includes(user.role)) {
         const existing = await listingRepository.findById(user.tenantId, String(req.params.id));
         if (!existing) return res.status(404).json({ error: "Listing not found" });
-        if (existing.createdBy !== user.id) {
-          return res.status(403).json({ error: "You can only edit listings you created" });
+        const isOwnerOrAssignee = existing.createdBy === user.id || existing.assignedTo === user.id;
+        if (!isOwnerOrAssignee) {
+          return res.status(403).json({ error: "You can only edit listings you created or are assigned to" });
         }
+      } else if (!["ADMIN", "TEAM_LEAD"].includes(user.role)) {
+        return res.status(403).json({ error: "Insufficient permissions to edit listings" });
       }
-      const listing = await listingRepository.update(user.tenantId, String(req.params.id), req.body);
+      const { assignedTo: _stripped, ...safeBody } = req.body;
+      const listing = await listingRepository.update(user.tenantId, String(req.params.id), safeBody);
       if (!listing) return res.status(404).json({ error: "Listing not found" });
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
@@ -4771,11 +6035,66 @@ function createListingRoutes(authenticateToken) {
       res.status(500).json({ error: "Failed to update listing" });
     }
   });
-  router.delete("/:id", authenticateToken, validateUUIDParam(), async (req, res) => {
+  router.patch("/:id/assign", authenticateToken, validateUUIDParam(), async (req, res) => {
     try {
       const user = req.user;
       if (user.role !== "ADMIN" && user.role !== "TEAM_LEAD") {
-        return res.status(403).json({ error: "Insufficient permissions" });
+        return res.status(403).json({ error: "Only ADMIN or TEAM_LEAD can assign listings" });
+      }
+      const { userId } = req.body;
+      const UUID_REGEX3 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!req.body || !("userId" in req.body)) {
+        return res.status(400).json({ error: "userId field is required (use null to unassign)" });
+      }
+      if (userId !== null && userId !== void 0) {
+        if (typeof userId !== "string" || !UUID_REGEX3.test(userId)) {
+          return res.status(400).json({ error: "userId must be a valid UUID or null" });
+        }
+        const { pool: pool3 } = await Promise.resolve().then(() => (init_db(), db_exports));
+        const assigneeResult = await pool3.query(
+          `SELECT id, role FROM users WHERE id = $1 AND tenant_id = $2`,
+          [userId, user.tenantId]
+        );
+        if (assigneeResult.rows.length === 0) {
+          return res.status(404).json({ error: "User not found in tenant" });
+        }
+        const assigneeRole = assigneeResult.rows[0].role;
+        const NON_ASSIGNABLE_ROLES = ["VIEWER"];
+        if (NON_ASSIGNABLE_ROLES.includes(assigneeRole)) {
+          return res.status(400).json({ error: "Cannot assign listing to a viewer user" });
+        }
+      }
+      const listing = await listingRepository.assign(user.tenantId, String(req.params.id), userId ?? null);
+      if (!listing) return res.status(404).json({ error: "Listing not found" });
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: "UPDATE",
+        entityType: "LISTING",
+        entityId: String(req.params.id),
+        details: userId ? `Assigned listing to user ${userId}` : "Unassigned listing",
+        ipAddress: req.ip
+      });
+      res.json(listing);
+    } catch (error) {
+      console.error("Error assigning listing:", error);
+      res.status(500).json({ error: "Failed to assign listing" });
+    }
+  });
+  router.delete("/:id", authenticateToken, validateUUIDParam(), async (req, res) => {
+    try {
+      const user = req.user;
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: "Partners cannot delete listings" });
+      }
+      if (WRITABLE_RESTRICTED_ROLES.includes(user.role)) {
+        const existing = await listingRepository.findById(user.tenantId, String(req.params.id));
+        if (!existing) return res.status(404).json({ error: "Listing not found" });
+        const isOwnerOrAssignee = existing.createdBy === user.id || existing.assignedTo === user.id;
+        if (!isOwnerOrAssignee) {
+          return res.status(403).json({ error: "You can only delete listings you created or are assigned to" });
+        }
+      } else if (!["ADMIN", "TEAM_LEAD"].includes(user.role)) {
+        return res.status(403).json({ error: "Insufficient permissions to delete listings" });
       }
       const deleted = await listingRepository.deleteById(user.tenantId, String(req.params.id));
       if (!deleted) return res.status(404).json({ error: "Listing not found" });
@@ -5141,7 +6460,7 @@ function createProposalRoutes(authenticateToken) {
   router.put("/:id/status", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const { status } = req.body;
+      const { status, reason } = req.body;
       if (!["APPROVED", "REJECTED", "SENT", "EXPIRED"].includes(status)) {
         return res.status(400).json({ error: "Invalid status" });
       }
@@ -5167,7 +6486,7 @@ function createProposalRoutes(authenticateToken) {
         action: "UPDATE_STATUS",
         entityType: "PROPOSAL",
         entityId: String(req.params.id),
-        details: `Changed proposal status to: ${status}`,
+        details: status === "REJECTED" && reason ? `Changed proposal status to: ${status}. Reason: ${reason}` : `Changed proposal status to: ${status}`,
         ipAddress: req.ip
       });
       res.json(proposal);
@@ -5263,7 +6582,15 @@ var ContractRepository = class extends BaseRepository {
         values.push(filters.listingId);
       }
       if (filters?.search) {
-        conditions.push(`(l.name ILIKE $${paramIndex} OR c.id::text ILIKE $${paramIndex} OR c.type ILIKE $${paramIndex})`);
+        conditions.push(`(
+          l.name ILIKE $${paramIndex}
+          OR c.id::text ILIKE $${paramIndex}
+          OR c.party_a->>'name' ILIKE $${paramIndex}
+          OR c.party_b->>'name' ILIKE $${paramIndex}
+          OR c.property_details->>'address' ILIKE $${paramIndex}
+          OR c.party_b->>'phone' ILIKE $${paramIndex}
+          OR c.party_a->>'phone' ILIKE $${paramIndex}
+        )`);
         values.push(`%${filters.search}%`);
         paramIndex++;
       }
@@ -5290,7 +6617,7 @@ var ContractRepository = class extends BaseRepository {
         [...values, pageSize, offset]
       );
       return {
-        data: this.rowsToEntities(result.rows),
+        data: result.rows.map((row) => this.flattenEntity(this.rowToEntity(row))),
         total,
         page,
         pageSize,
@@ -5298,18 +6625,93 @@ var ContractRepository = class extends BaseRepository {
       };
     });
   }
+  buildPartyA(data) {
+    return data.partyA || {
+      name: data.partyAName,
+      representative: data.partyARepresentative,
+      idNumber: data.partyAIdNumber,
+      idDate: data.partyAIdDate,
+      idPlace: data.partyAIdPlace,
+      address: data.partyAAddress,
+      taxCode: data.partyATaxCode,
+      phone: data.partyAPhone,
+      bankAccount: data.partyABankAccount,
+      bankName: data.partyABankName
+    };
+  }
+  buildPartyB(data) {
+    return data.partyB || {
+      name: data.partyBName,
+      idNumber: data.partyBIdNumber,
+      idDate: data.partyBIdDate,
+      idPlace: data.partyBIdPlace,
+      address: data.partyBAddress,
+      phone: data.partyBPhone,
+      bankAccount: data.partyBBankAccount,
+      bankName: data.partyBBankName
+    };
+  }
+  buildPropertyDetails(data) {
+    return data.propertyDetails || {
+      address: data.propertyAddress,
+      type: data.propertyType,
+      landArea: data.propertyLandArea,
+      constructionArea: data.propertyConstructionArea,
+      area: data.propertyArea,
+      certificateNumber: data.propertyCertificateNumber,
+      certificateDate: data.propertyCertificateDate,
+      certificatePlace: data.propertyCertificatePlace
+    };
+  }
+  flattenEntity(entity) {
+    const partyA = entity.partyA || {};
+    const partyB = entity.partyB || {};
+    const propertyDetails = entity.propertyDetails || {};
+    return {
+      ...entity,
+      partyAName: partyA.name,
+      partyARepresentative: partyA.representative,
+      partyAIdNumber: partyA.idNumber,
+      partyAIdDate: partyA.idDate,
+      partyAIdPlace: partyA.idPlace,
+      partyAAddress: partyA.address,
+      partyATaxCode: partyA.taxCode,
+      partyAPhone: partyA.phone,
+      partyABankAccount: partyA.bankAccount,
+      partyABankName: partyA.bankName,
+      partyBName: partyB.name,
+      partyBIdNumber: partyB.idNumber,
+      partyBIdDate: partyB.idDate,
+      partyBIdPlace: partyB.idPlace,
+      partyBAddress: partyB.address,
+      partyBPhone: partyB.phone,
+      partyBBankAccount: partyB.bankAccount,
+      partyBBankName: partyB.bankName,
+      propertyAddress: propertyDetails.address,
+      propertyType: propertyDetails.type,
+      propertyLandArea: propertyDetails.landArea,
+      propertyConstructionArea: propertyDetails.constructionArea,
+      propertyArea: propertyDetails.area,
+      propertyCertificateNumber: propertyDetails.certificateNumber,
+      propertyCertificateDate: propertyDetails.certificateDate,
+      propertyCertificatePlace: propertyDetails.certificatePlace
+    };
+  }
   async create(tenantId, data) {
     return this.withTenant(tenantId, async (client) => {
       const value = data.propertyPrice || 0;
+      const partyA = this.buildPartyA(data);
+      const partyB = this.buildPartyB(data);
+      const propertyDetails = this.buildPropertyDetails(data);
       const result = await client.query(
         `INSERT INTO contracts (
           tenant_id, proposal_id, lead_id, listing_id, type, status, value,
           party_a, party_b, property_details, property_price, deposit_amount,
-          payment_terms, tax_responsibility, handover_date, handover_condition,
-          metadata, created_by, created_by_id
+          payment_terms, payment_schedule, tax_responsibility, handover_date, handover_condition,
+          dispute_resolution, signed_place, contract_date, metadata, created_by, created_by_id
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22
         ) RETURNING *`,
         [
           data.proposalId || null,
@@ -5318,21 +6720,25 @@ var ContractRepository = class extends BaseRepository {
           data.type,
           data.status || "DRAFT",
           value,
-          JSON.stringify(data.partyA || {}),
-          JSON.stringify(data.partyB || {}),
-          JSON.stringify(data.propertyDetails || {}),
+          JSON.stringify(partyA),
+          JSON.stringify(partyB),
+          JSON.stringify(propertyDetails),
           data.propertyPrice || null,
           data.depositAmount || null,
           data.paymentTerms || null,
+          data.paymentSchedule ? JSON.stringify(data.paymentSchedule) : null,
           data.taxResponsibility || null,
           data.handoverDate || null,
           data.handoverCondition || null,
+          data.disputeResolution || null,
+          data.signedPlace || null,
+          data.contractDate || null,
           data.metadata ? JSON.stringify(data.metadata) : null,
           data.createdBy || null,
           data.createdById || null
         ]
       );
-      return this.rowToEntity(result.rows[0]);
+      return this.flattenEntity(this.rowToEntity(result.rows[0]));
     });
   }
   async update(tenantId, id, data) {
@@ -5340,8 +6746,7 @@ var ContractRepository = class extends BaseRepository {
       const updates = ["updated_at = CURRENT_TIMESTAMP"];
       const values = [];
       let paramIndex = 2;
-      const directFields = ["status", "type", "paymentTerms", "taxResponsibility", "handoverCondition", "createdBy"];
-      const jsonFields = ["partyA", "partyB", "propertyDetails", "metadata"];
+      const directFields = ["status", "type", "paymentTerms", "taxResponsibility", "handoverCondition", "disputeResolution", "createdBy"];
       const numericFields = ["propertyPrice", "depositAmount"];
       for (const field of directFields) {
         if (data[field] !== void 0) {
@@ -5349,17 +6754,38 @@ var ContractRepository = class extends BaseRepository {
           values.push(data[field]);
         }
       }
-      for (const field of jsonFields) {
-        if (data[field] !== void 0) {
-          updates.push(`${this.camelToSnake(field)} = $${paramIndex++}`);
-          values.push(JSON.stringify(data[field]));
-        }
+      const hasPartyAFlat = data.partyAName !== void 0 || data.partyAPhone !== void 0 || data.partyAAddress !== void 0;
+      if (data.partyA !== void 0 || hasPartyAFlat) {
+        updates.push(`party_a = $${paramIndex++}`);
+        values.push(JSON.stringify(this.buildPartyA(data)));
+      }
+      const hasPartyBFlat = data.partyBName !== void 0 || data.partyBPhone !== void 0 || data.partyBAddress !== void 0;
+      if (data.partyB !== void 0 || hasPartyBFlat) {
+        updates.push(`party_b = $${paramIndex++}`);
+        values.push(JSON.stringify(this.buildPartyB(data)));
+      }
+      const hasPropFlat = data.propertyAddress !== void 0 || data.propertyArea !== void 0;
+      if (data.propertyDetails !== void 0 || hasPropFlat) {
+        updates.push(`property_details = $${paramIndex++}`);
+        values.push(JSON.stringify(this.buildPropertyDetails(data)));
+      }
+      if (data.paymentSchedule !== void 0) {
+        updates.push(`payment_schedule = $${paramIndex++}`);
+        values.push(JSON.stringify(data.paymentSchedule));
+      }
+      if (data.metadata !== void 0) {
+        updates.push(`metadata = $${paramIndex++}`);
+        values.push(JSON.stringify(data.metadata));
       }
       for (const field of numericFields) {
         if (data[field] !== void 0) {
           updates.push(`${this.camelToSnake(field)} = $${paramIndex++}`);
           values.push(data[field]);
         }
+      }
+      if (data.propertyPrice !== void 0) {
+        updates.push(`value = $${paramIndex++}`);
+        values.push(data.propertyPrice || 0);
       }
       if (data.signedAt !== void 0) {
         updates.push(`signed_at = $${paramIndex++}`);
@@ -5369,12 +6795,29 @@ var ContractRepository = class extends BaseRepository {
         updates.push(`handover_date = $${paramIndex++}`);
         values.push(data.handoverDate);
       }
+      if (data.signedPlace !== void 0) {
+        updates.push(`signed_place = $${paramIndex++}`);
+        values.push(data.signedPlace || null);
+      }
+      if (data.contractDate !== void 0) {
+        updates.push(`contract_date = $${paramIndex++}`);
+        values.push(data.contractDate || null);
+      }
       if (updates.length <= 1) return this.findById(tenantId, id);
       const result = await client.query(
         `UPDATE contracts SET ${updates.join(", ")} WHERE id = $1 RETURNING *`,
         [id, ...values]
       );
-      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+      return result.rows[0] ? this.flattenEntity(this.rowToEntity(result.rows[0])) : null;
+    });
+  }
+  async findById(tenantId, id) {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT * FROM contracts WHERE id = $1 AND tenant_id = $2`,
+        [id, tenantId]
+      );
+      return result.rows[0] ? this.flattenEntity(this.rowToEntity(result.rows[0])) : null;
     });
   }
 };
@@ -5383,9 +6826,13 @@ var contractRepository = new ContractRepository();
 // server/routes/contractRoutes.ts
 function createContractRoutes(authenticateToken) {
   const router = Router4();
+  const PARTNER_ROLES2 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
+      if (PARTNER_ROLES2.includes(user.role)) {
+        return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      }
       const page = Math.max(1, parseInt(req.query.page) || 1);
       const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize) || 20, 200));
       const filters = {};
@@ -5397,22 +6844,22 @@ function createContractRoutes(authenticateToken) {
       res.json(result);
     } catch (error) {
       console.error("Error fetching contracts:", error);
-      res.status(500).json({ error: "Failed to fetch contracts" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 t\u1EA3i danh s\xE1ch h\u1EE3p \u0111\u1ED3ng" });
     }
   });
   router.get("/:id", authenticateToken, validateUUIDParam(), async (req, res) => {
     try {
       const user = req.user;
       const contract = await contractRepository.findById(user.tenantId, String(req.params.id));
-      if (!contract) return res.status(404).json({ error: "Contract not found" });
+      if (!contract) return res.status(404).json({ error: "Kh\xF4ng t\xECm th\u1EA5y h\u1EE3p \u0111\u1ED3ng" });
       const RESTRICTED = ["SALES", "MARKETING", "VIEWER"];
       if (RESTRICTED.includes(user.role) && contract.createdById !== user.id) {
-        return res.status(403).json({ error: "Access denied" });
+        return res.status(403).json({ error: "B\u1EA1n kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp h\u1EE3p \u0111\u1ED3ng n\xE0y" });
       }
       res.json(contract);
     } catch (error) {
       console.error("Error fetching contract:", error);
-      res.status(500).json({ error: "Failed to fetch contract" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 t\u1EA3i th\xF4ng tin h\u1EE3p \u0111\u1ED3ng" });
     }
   });
   router.post("/", authenticateToken, async (req, res) => {
@@ -5420,7 +6867,7 @@ function createContractRoutes(authenticateToken) {
       const user = req.user;
       const { type } = req.body;
       if (!type) {
-        return res.status(400).json({ error: "Missing required fields: type" });
+        return res.status(400).json({ error: "Thi\u1EBFu th\xF4ng tin b\u1EAFt bu\u1ED9c: lo\u1EA1i h\u1EE3p \u0111\u1ED3ng" });
       }
       const contract = await contractRepository.create(user.tenantId, {
         ...req.body,
@@ -5438,37 +6885,42 @@ function createContractRoutes(authenticateToken) {
       res.status(201).json(contract);
     } catch (error) {
       console.error("Error creating contract:", error);
-      res.status(500).json({ error: "Failed to create contract" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 t\u1EA1o h\u1EE3p \u0111\u1ED3ng. Vui l\xF2ng th\u1EED l\u1EA1i." });
     }
   });
   const CONTRACT_VALID_TRANSITIONS = {
-    DRAFT: ["ACTIVE", "CANCELLED"],
-    ACTIVE: ["COMPLETED", "CANCELLED"],
-    COMPLETED: [],
-    CANCELLED: []
+    DRAFT: ["PENDING_SIGNATURE", "SIGNED", "CANCELLED"],
+    PENDING_SIGNATURE: ["SIGNED", "CANCELLED", "DRAFT"],
+    SIGNED: ["CANCELLED"],
+    CANCELLED: ["DRAFT"]
   };
   router.put("/:id", authenticateToken, validateUUIDParam(), async (req, res) => {
     try {
       const user = req.user;
       const RESTRICTED = ["SALES", "MARKETING", "VIEWER"];
       const current = await contractRepository.findById(user.tenantId, String(req.params.id));
-      if (!current) return res.status(404).json({ error: "Contract not found" });
+      if (!current) return res.status(404).json({ error: "Kh\xF4ng t\xECm th\u1EA5y h\u1EE3p \u0111\u1ED3ng" });
       if (RESTRICTED.includes(user.role) && current.createdById !== user.id) {
-        return res.status(403).json({ error: "You can only edit contracts you created" });
+        return res.status(403).json({ error: "B\u1EA1n ch\u1EC9 c\xF3 th\u1EC3 ch\u1EC9nh s\u1EEDa h\u1EE3p \u0111\u1ED3ng do m\xECnh t\u1EA1o" });
       }
-      if (req.body.status) {
+      const isAdmin = ["ADMIN", "MANAGER"].includes(user.role);
+      if (req.body.status && !isAdmin) {
         const currentStatus = (current.status || "DRAFT").toUpperCase();
         const newStatus = String(req.body.status).toUpperCase();
         const allowed = CONTRACT_VALID_TRANSITIONS[currentStatus] ?? [];
         if (currentStatus !== newStatus && !allowed.includes(newStatus)) {
           return res.status(422).json({
-            error: `Invalid status transition: ${currentStatus} \u2192 ${newStatus}`,
+            error: `Kh\xF4ng th\u1EC3 chuy\u1EC3n tr\u1EA1ng th\xE1i: ${currentStatus} \u2192 ${newStatus}`,
             allowed
           });
         }
       }
-      const contract = await contractRepository.update(user.tenantId, String(req.params.id), req.body);
-      if (!contract) return res.status(404).json({ error: "Contract not found" });
+      const updateData = { ...req.body };
+      if (req.body.status === "SIGNED" && !current.signedAt) {
+        updateData.signedAt = (/* @__PURE__ */ new Date()).toISOString();
+      }
+      const contract = await contractRepository.update(user.tenantId, String(req.params.id), updateData);
+      if (!contract) return res.status(404).json({ error: "Kh\xF4ng t\xECm th\u1EA5y h\u1EE3p \u0111\u1ED3ng" });
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: "UPDATE",
@@ -5480,7 +6932,32 @@ function createContractRoutes(authenticateToken) {
       res.json(contract);
     } catch (error) {
       console.error("Error updating contract:", error);
-      res.status(500).json({ error: "Failed to update contract" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 c\u1EADp nh\u1EADt h\u1EE3p \u0111\u1ED3ng. Vui l\xF2ng th\u1EED l\u1EA1i." });
+    }
+  });
+  router.delete("/:id", authenticateToken, validateUUIDParam(), async (req, res) => {
+    try {
+      const user = req.user;
+      const contract = await contractRepository.findById(user.tenantId, String(req.params.id));
+      if (!contract) return res.status(404).json({ error: "Kh\xF4ng t\xECm th\u1EA5y h\u1EE3p \u0111\u1ED3ng" });
+      const isAdmin = ["ADMIN", "MANAGER"].includes(user.role);
+      const isOwner = contract.createdById === user.id;
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({ error: "B\u1EA1n ch\u1EC9 c\xF3 th\u1EC3 x\xF3a h\u1EE3p \u0111\u1ED3ng do m\xECnh t\u1EA1o" });
+      }
+      await contractRepository.deleteById(user.tenantId, String(req.params.id));
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: "DELETE",
+        entityType: "CONTRACT",
+        entityId: String(req.params.id),
+        details: `Deleted contract`,
+        ipAddress: req.ip
+      });
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting contract:", error);
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 x\xF3a h\u1EE3p \u0111\u1ED3ng. Vui l\xF2ng th\u1EED l\u1EA1i." });
     }
   });
   return router;
@@ -5583,7 +7060,7 @@ async function sendEmail(tenantId, options) {
     console.log(`[EmailService] SMTP not configured for tenant ${tenantId}. Email queued but not sent.`);
     console.log(`  To: ${options.to}`);
     console.log(`  Subject: ${options.subject}`);
-    return { success: true, messageId: `console-${Date.now()}` };
+    return { success: true, status: "queued_no_smtp", messageId: `console-${Date.now()}` };
   }
   try {
     const transporter = createTransporter(smtp);
@@ -5596,23 +7073,23 @@ async function sendEmail(tenantId, options) {
       html: options.html
     });
     console.log(`[EmailService] Email sent successfully: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    return { success: true, status: "sent", messageId: info.messageId };
   } catch (error) {
     console.error(`[EmailService] Failed to send email:`, error.message);
-    return { success: false, error: error.message };
+    return { success: false, status: "failed", error: error.message };
   }
 }
 async function testSmtpConnection(tenantId) {
   const smtp = await getSmtpConfig(tenantId);
   if (!smtp.enabled || !smtp.host || !smtp.user) {
-    return { success: false, error: "SMTP is not configured or disabled" };
+    return { success: false, status: "failed", error: "SMTP is not configured or disabled" };
   }
   try {
     const transporter = createTransporter(smtp);
     await transporter.verify();
-    return { success: true };
+    return { success: true, status: "sent" };
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, status: "failed", error: error.message };
   }
 }
 async function sendPasswordResetEmail(tenantId, to, resetUrl, userName) {
@@ -5746,7 +7223,7 @@ function createUserRoutes(authenticateToken) {
     try {
       const user = req.user;
       if (user.role !== "ADMIN" && user.role !== "TEAM_LEAD") {
-        return res.status(403).json({ error: "Insufficient permissions" });
+        return res.status(403).json({ error: "B\u1EA1n kh\xF4ng c\xF3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\xE1c n\xE0y" });
       }
       const page = Math.max(1, parseInt(req.query.page) || 1);
       const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize) || 50, 200));
@@ -5761,7 +7238,7 @@ function createUserRoutes(authenticateToken) {
       res.json(result);
     } catch (error) {
       console.error("Error fetching users:", error);
-      res.status(500).json({ error: "Failed to fetch users" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 t\u1EA3i danh s\xE1ch ng\u01B0\u1EDDi d\xF9ng" });
     }
   });
   router.get("/me", authenticateToken, async (req, res) => {
@@ -5781,22 +7258,22 @@ function createUserRoutes(authenticateToken) {
       res.json(teams);
     } catch (error) {
       console.error("Error fetching teams:", error);
-      res.status(500).json({ error: "Failed to fetch teams" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 t\u1EA3i danh s\xE1ch nh\xF3m" });
     }
   });
   router.post("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
       if (user.role !== "ADMIN") {
-        return res.status(403).json({ error: "Only admins can create users" });
+        return res.status(403).json({ error: "Ch\u1EC9 qu\u1EA3n tr\u1ECB vi\xEAn m\u1EDBi c\xF3 th\u1EC3 t\u1EA1o ng\u01B0\u1EDDi d\xF9ng" });
       }
       const { name, email, password, role, phone, avatar } = req.body;
       if (!name || !email) {
-        return res.status(400).json({ error: "Name and email are required" });
+        return res.status(400).json({ error: "T\xEAn v\xE0 email l\xE0 b\u1EAFt bu\u1ED9c" });
       }
       const existing = await userRepository.findByEmail(user.tenantId, email);
       if (existing) {
-        return res.status(409).json({ error: "User with this email already exists" });
+        return res.status(409).json({ error: "Ng\u01B0\u1EDDi d\xF9ng v\u1EDBi email n\xE0y \u0111\xE3 t\u1ED3n t\u1EA1i" });
       }
       const newUser = await userRepository.create(user.tenantId, {
         name,
@@ -5817,22 +7294,22 @@ function createUserRoutes(authenticateToken) {
       res.status(201).json(userRepository.toPublicUser(newUser));
     } catch (error) {
       console.error("Error creating user:", error);
-      res.status(500).json({ error: "Failed to create user" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 t\u1EA1o ng\u01B0\u1EDDi d\xF9ng" });
     }
   });
   router.post("/invite", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (user.role !== "ADMIN") {
-        return res.status(403).json({ error: "Only admins can invite users" });
+      if (user.role !== "ADMIN" && user.role !== "TEAM_LEAD") {
+        return res.status(403).json({ error: "Ch\u1EC9 qu\u1EA3n tr\u1ECB vi\xEAn ho\u1EB7c tr\u01B0\u1EDFng nh\xF3m m\u1EDBi c\xF3 th\u1EC3 m\u1EDDi ng\u01B0\u1EDDi d\xF9ng" });
       }
       const { name, email, role, phone } = req.body;
       if (!name || !email) {
-        return res.status(400).json({ error: "Name and email are required" });
+        return res.status(400).json({ error: "T\xEAn v\xE0 email l\xE0 b\u1EAFt bu\u1ED9c" });
       }
       const existing = await userRepository.findByEmail(user.tenantId, email);
       if (existing) {
-        return res.status(409).json({ error: "User with this email already exists" });
+        return res.status(409).json({ error: "Ng\u01B0\u1EDDi d\xF9ng v\u1EDBi email n\xE0y \u0111\xE3 t\u1ED3n t\u1EA1i" });
       }
       const invited = await userRepository.invite(user.tenantId, { name, email, role, phone });
       await auditRepository.log(user.tenantId, {
@@ -5843,32 +7320,42 @@ function createUserRoutes(authenticateToken) {
         details: `Invited user ${email} with role ${invited.role}`,
         ipAddress: req.ip
       });
-      const loginUrl = `${process.env.APP_URL || "https://app.sgsland.vn"}/auth/set-password?email=${encodeURIComponent(email)}`;
+      const crypto3 = await import("crypto");
+      const rawToken = crypto3.randomBytes(32).toString("hex");
+      const tokenHash = crypto3.createHash("sha256").update(rawToken).digest("hex");
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3);
+      const { pool: pool3 } = await Promise.resolve().then(() => (init_db(), db_exports));
+      await pool3.query(
+        `INSERT INTO password_reset_tokens (tenant_id, user_id, token, expires_at) VALUES ($1, $2, $3, $4)`,
+        [user.tenantId, invited.id, tokenHash, expiresAt]
+      );
+      const baseUrl2 = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : process.env.APP_URL || "https://app.sgsland.vn";
+      const loginUrl = `${baseUrl2}/#/reset-password/${rawToken}`;
       emailService.sendInviteEmail(user.tenantId, email, name, invited.role, loginUrl).catch((err) => {
         console.error("[Invite] Failed to send invite email:", err.message);
       });
       res.status(201).json(userRepository.toPublicUser(invited));
     } catch (error) {
       console.error("Error inviting user:", error);
-      res.status(500).json({ error: "Failed to invite user" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 g\u1EEDi l\u1EDDi m\u1EDDi ng\u01B0\u1EDDi d\xF9ng" });
     }
   });
   router.put("/:id", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
       if (user.id !== String(req.params.id) && user.role !== "ADMIN") {
-        return res.status(403).json({ error: "Can only update own profile or must be admin" });
+        return res.status(403).json({ error: "B\u1EA1n ch\u1EC9 c\xF3 th\u1EC3 c\u1EADp nh\u1EADt h\u1ED3 s\u01A1 c\u1EE7a ch\xEDnh m\xECnh ho\u1EB7c ph\u1EA3i l\xE0 qu\u1EA3n tr\u1ECB vi\xEAn" });
       }
       if (req.body.role !== void 0 && user.role !== "ADMIN") {
-        return res.status(403).json({ error: "Only admins can change user roles" });
+        return res.status(403).json({ error: "Ch\u1EC9 qu\u1EA3n tr\u1ECB vi\xEAn m\u1EDBi c\xF3 th\u1EC3 thay \u0111\u1ED5i vai tr\xF2 ng\u01B0\u1EDDi d\xF9ng" });
       }
-      const VALID_ROLES = ["ADMIN", "TEAM_LEAD", "SALES", "MARKETING", "VIEWER"];
+      const VALID_ROLES = ["ADMIN", "TEAM_LEAD", "SALES", "MARKETING", "VIEWER", "PARTNER_ADMIN", "PARTNER_AGENT"];
       if (req.body.role !== void 0 && !VALID_ROLES.includes(req.body.role)) {
-        return res.status(400).json({ error: `Invalid role. Allowed: ${VALID_ROLES.join(", ")}` });
+        return res.status(400).json({ error: `Vai tr\xF2 kh\xF4ng h\u1EE3p l\u1EC7. C\xE1c vai tr\xF2 cho ph\xE9p: ${VALID_ROLES.join(", ")}` });
       }
       const before = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
       const updated = await userRepository.update(user.tenantId, String(req.params.id), req.body);
-      if (!updated) return res.status(404).json({ error: "User not found" });
+      if (!updated) return res.status(404).json({ error: "Kh\xF4ng t\xECm th\u1EA5y ng\u01B0\u1EDDi d\xF9ng" });
       const changes = [];
       if (req.body.role && before?.role !== req.body.role) changes.push(`role: ${before?.role} \u2192 ${req.body.role}`);
       if (req.body.status && before?.status !== req.body.status) changes.push(`status: ${before?.status} \u2192 ${req.body.status}`);
@@ -5885,19 +7372,19 @@ function createUserRoutes(authenticateToken) {
       res.json(userRepository.toPublicUser(updated));
     } catch (error) {
       console.error("Error updating user:", error);
-      res.status(500).json({ error: "Failed to update user" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 c\u1EADp nh\u1EADt ng\u01B0\u1EDDi d\xF9ng" });
     }
   });
   router.post("/:id/resend-invite", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (user.role !== "ADMIN") {
-        return res.status(403).json({ error: "Only admins can resend invites" });
+      if (user.role !== "ADMIN" && user.role !== "TEAM_LEAD") {
+        return res.status(403).json({ error: "Ch\u1EC9 qu\u1EA3n tr\u1ECB vi\xEAn ho\u1EB7c tr\u01B0\u1EDFng nh\xF3m m\u1EDBi c\xF3 th\u1EC3 g\u1EEDi l\u1EA1i l\u1EDDi m\u1EDDi" });
       }
       const target = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
-      if (!target) return res.status(404).json({ error: "User not found" });
+      if (!target) return res.status(404).json({ error: "Kh\xF4ng t\xECm th\u1EA5y ng\u01B0\u1EDDi d\xF9ng" });
       if (target.status !== "PENDING") {
-        return res.status(400).json({ error: "Only pending users can receive re-invites" });
+        return res.status(400).json({ error: "Ch\u1EC9 ng\u01B0\u1EDDi d\xF9ng \u0111ang ch\u1EDD k\xEDch ho\u1EA1t m\u1EDBi c\xF3 th\u1EC3 nh\u1EADn l\u1EDDi m\u1EDDi l\u1EA1i" });
       }
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
@@ -5907,14 +7394,28 @@ function createUserRoutes(authenticateToken) {
         details: `Re-invite sent to ${target.email}`,
         ipAddress: req.ip
       });
-      const loginUrl = `${process.env.APP_URL || "https://app.sgsland.vn"}/auth/set-password?email=${encodeURIComponent(target.email || "")}`;
+      const crypto3 = await import("crypto");
+      const rawToken = crypto3.randomBytes(32).toString("hex");
+      const tokenHash = crypto3.createHash("sha256").update(rawToken).digest("hex");
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3);
+      const { pool: pool3 } = await Promise.resolve().then(() => (init_db(), db_exports));
+      await pool3.query(
+        `UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL`,
+        [target.id]
+      );
+      await pool3.query(
+        `INSERT INTO password_reset_tokens (tenant_id, user_id, token, expires_at) VALUES ($1, $2, $3, $4)`,
+        [user.tenantId, target.id, tokenHash, expiresAt]
+      );
+      const baseUrl2 = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : process.env.APP_URL || "https://app.sgsland.vn";
+      const loginUrl = `${baseUrl2}/#/reset-password/${rawToken}`;
       emailService.sendInviteEmail(user.tenantId, target.email, target.name || target.email, target.role, loginUrl).catch((err) => {
         console.error("[Invite] Failed to resend invite email:", err.message);
       });
       res.json({ success: true, message: `Invite resent to ${target.email}` });
     } catch (error) {
       console.error("Error resending invite:", error);
-      res.status(500).json({ error: "Failed to resend invite" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 g\u1EEDi l\u1EA1i l\u1EDDi m\u1EDDi" });
     }
   });
   router.post("/:id/email", authenticateToken, async (req, res) => {
@@ -5962,14 +7463,14 @@ function createUserRoutes(authenticateToken) {
       res.json(userRepository.toPublicUser(updated));
     } catch (error) {
       console.error("Error changing email:", error);
-      res.status(500).json({ error: "Failed to change email" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 thay \u0111\u1ED5i email" });
     }
   });
   router.post("/:id/password", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
       if (user.id !== String(req.params.id) && user.role !== "ADMIN") {
-        return res.status(403).json({ error: "Can only change own password or must be admin" });
+        return res.status(403).json({ error: "B\u1EA1n ch\u1EC9 c\xF3 th\u1EC3 \u0111\u1ED5i m\u1EADt kh\u1EA9u c\u1EE7a ch\xEDnh m\xECnh ho\u1EB7c ph\u1EA3i l\xE0 qu\u1EA3n tr\u1ECB vi\xEAn" });
       }
       const { currentPassword, newPassword } = req.body;
       if (!newPassword || newPassword.length < 6) {
@@ -5988,20 +7489,20 @@ function createUserRoutes(authenticateToken) {
       res.json({ message: "\u0110\u1ED5i m\u1EADt kh\u1EA9u th\xE0nh c\xF4ng" });
     } catch (error) {
       console.error("Error updating password:", error);
-      res.status(500).json({ error: "Failed to update password" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 c\u1EADp nh\u1EADt m\u1EADt kh\u1EA9u" });
     }
   });
   router.delete("/:id", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
       if (user.role !== "ADMIN") {
-        return res.status(403).json({ error: "Only admins can delete users" });
+        return res.status(403).json({ error: "Ch\u1EC9 qu\u1EA3n tr\u1ECB vi\xEAn m\u1EDBi c\xF3 th\u1EC3 x\xF3a ng\u01B0\u1EDDi d\xF9ng" });
       }
       if (user.id === String(req.params.id)) {
-        return res.status(400).json({ error: "Cannot delete your own account" });
+        return res.status(400).json({ error: "Kh\xF4ng th\u1EC3 x\xF3a t\xE0i kho\u1EA3n c\u1EE7a ch\xEDnh m\xECnh" });
       }
       const deleted = await userRepository.delete(user.tenantId, String(req.params.id));
-      if (!deleted) return res.status(404).json({ error: "User not found" });
+      if (!deleted) return res.status(404).json({ error: "Kh\xF4ng t\xECm th\u1EA5y ng\u01B0\u1EDDi d\xF9ng" });
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: "USER_DELETED",
@@ -6010,10 +7511,10 @@ function createUserRoutes(authenticateToken) {
         details: `Deleted user ${String(req.params.id)}`,
         ipAddress: req.ip
       });
-      res.json({ message: "User deleted" });
+      res.json({ message: "\u0110\xE3 x\xF3a ng\u01B0\u1EDDi d\xF9ng" });
     } catch (error) {
       console.error("Error deleting user:", error);
-      res.status(500).json({ error: "Failed to delete user" });
+      res.status(500).json({ error: "Kh\xF4ng th\u1EC3 x\xF3a ng\u01B0\u1EDDi d\xF9ng" });
     }
   });
   return router;
@@ -6662,9 +8163,13 @@ var visitorRepository = new VisitorRepository();
 // server/routes/analyticsRoutes.ts
 function createAnalyticsRoutes(authenticateToken) {
   const router = Router7();
+  const PARTNER_ROLES2 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
   router.get("/summary", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
+      if (PARTNER_ROLES2.includes(user.role)) {
+        return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      }
       const timeRange = req.query.timeRange || "all";
       const summary = await analyticsRepository.getSummary(
         user.tenantId,
@@ -6757,6 +8262,9 @@ function createAnalyticsRoutes(authenticateToken) {
   router.get("/visitors", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
+      if (PARTNER_ROLES2.includes(user.role)) {
+        return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      }
       const days = Math.max(1, Math.min(parseInt(req.query.days) || 30, 365));
       const stats = await visitorRepository.getStats(user.tenantId, days);
       res.json(stats);
@@ -6919,7 +8427,7 @@ function createRoutingRuleRoutes(authenticateToken) {
 
 // server/routes/knowledgeRoutes.ts
 import { Router as Router10 } from "express";
-import path2 from "path";
+import path3 from "path";
 import fs2 from "fs";
 
 // server/repositories/documentRepository.ts
@@ -6995,11 +8503,11 @@ var DocumentRepository = class extends BaseRepository {
 var documentRepository = new DocumentRepository();
 
 // server/services/textExtractor.ts
-import path from "path";
+import path2 from "path";
 import fs from "fs";
 async function extractTextFromFile(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  const absolutePath = path.resolve(filePath);
+  const ext = path2.extname(filePath).toLowerCase();
+  const absolutePath = path2.resolve(filePath);
   if (!fs.existsSync(absolutePath)) {
     return "";
   }
@@ -7045,7 +8553,7 @@ async function extractDocx(filePath) {
 }
 
 // server/routes/knowledgeRoutes.ts
-var UPLOAD_BASE = path2.join(process.cwd(), "uploads");
+var UPLOAD_BASE = path3.join(process.cwd(), "uploads");
 var CAN_MANAGE = ["ADMIN", "TEAM_LEAD"];
 function createKnowledgeRoutes(authenticateToken) {
   const router = Router10();
@@ -7076,10 +8584,10 @@ function createKnowledgeRoutes(authenticateToken) {
         try {
           const tenantId = user.tenantId;
           const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl;
-          const filePath = path2.join(process.cwd(), relativePath);
-          const resolved = path2.resolve(filePath);
-          const tenantDir = path2.resolve(path2.join(process.cwd(), "uploads", tenantId));
-          if (resolved.startsWith(tenantDir + path2.sep) || resolved.startsWith(tenantDir + "/")) {
+          const filePath = path3.join(process.cwd(), relativePath);
+          const resolved = path3.resolve(filePath);
+          const tenantDir = path3.resolve(path3.join(process.cwd(), "uploads", tenantId));
+          if (resolved.startsWith(tenantDir + path3.sep) || resolved.startsWith(tenantDir + "/")) {
             extractedContent = await extractTextFromFile(resolved);
           }
         } catch (err) {
@@ -7138,10 +8646,10 @@ function createKnowledgeRoutes(authenticateToken) {
       if (doc.fileUrl) {
         try {
           const relativePath = doc.fileUrl.startsWith("/") ? doc.fileUrl.slice(1) : doc.fileUrl;
-          const filePath = path2.join(process.cwd(), relativePath);
-          const resolved = path2.resolve(filePath);
-          const tenantDir = path2.resolve(path2.join(UPLOAD_BASE, user.tenantId));
-          if (resolved.startsWith(tenantDir + path2.sep) || resolved.startsWith(tenantDir + "/")) {
+          const filePath = path3.join(process.cwd(), relativePath);
+          const resolved = path3.resolve(filePath);
+          const tenantDir = path3.resolve(path3.join(UPLOAD_BASE, user.tenantId));
+          if (resolved.startsWith(tenantDir + path3.sep) || resolved.startsWith(tenantDir + "/")) {
             if (fs2.existsSync(resolved)) {
               fs2.unlinkSync(resolved);
             }
@@ -8583,10 +10091,10 @@ function createBillingRoutes(authenticateToken) {
 init_constants();
 import { Router as Router16 } from "express";
 import multer from "multer";
-import path3 from "path";
+import path4 from "path";
 import fs3 from "fs";
 import crypto from "crypto";
-var UPLOAD_BASE2 = path3.join(process.cwd(), "uploads");
+var UPLOAD_BASE2 = path4.join(process.cwd(), "uploads");
 var MAX_FILE_SIZE = 10 * 1024 * 1024;
 var MAX_FILES = 10;
 var ALLOWED_MIMES = {
@@ -8620,13 +10128,13 @@ var EXT_TO_CONTENT_TYPE = {
 var storage = multer.diskStorage({
   destination: (req, _file, cb) => {
     const tenantId = req.tenantId || DEFAULT_TENANT_ID;
-    const dir = path3.join(UPLOAD_BASE2, tenantId);
+    const dir = path4.join(UPLOAD_BASE2, tenantId);
     fs3.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
   filename: (_req, file, cb) => {
     const uniqueId = crypto.randomBytes(16).toString("hex");
-    const ext = MIME_TO_EXT[file.mimetype] || path3.extname(file.originalname).toLowerCase();
+    const ext = MIME_TO_EXT[file.mimetype] || path4.extname(file.originalname).toLowerCase();
     cb(null, `${Date.now()}-${uniqueId}${ext}`);
   }
 });
@@ -8682,13 +10190,13 @@ function createUploadRoutes(authenticateToken) {
   router.delete("/:filename", authenticateToken, (req, res) => {
     try {
       const tenantId = req.tenantId || DEFAULT_TENANT_ID;
-      const filename = path3.basename(String(req.params.filename));
+      const filename = path4.basename(String(req.params.filename));
       if (!SAFE_FILENAME_REGEX.test(filename)) {
         return res.status(400).json({ error: "Invalid filename" });
       }
-      const filePath = path3.join(UPLOAD_BASE2, tenantId, filename);
-      const resolved = path3.resolve(filePath);
-      const expectedDir = path3.resolve(path3.join(UPLOAD_BASE2, tenantId));
+      const filePath = path4.join(UPLOAD_BASE2, tenantId, filename);
+      const resolved = path4.resolve(filePath);
+      const expectedDir = path4.resolve(path4.join(UPLOAD_BASE2, tenantId));
       if (!resolved.startsWith(expectedDir)) {
         return res.status(403).json({ error: "Access denied" });
       }
@@ -8708,7 +10216,7 @@ var PUBLIC_IMAGE_EXTS = /* @__PURE__ */ new Set([".jpg", ".jpeg", ".png", ".webp
 function createUploadServeRoute(authenticateToken) {
   const router = Router16();
   router.get("/:tenantId/:filename", (req, res, next) => {
-    const ext = path3.extname(String(req.params.filename)).toLowerCase();
+    const ext = path4.extname(String(req.params.filename)).toLowerCase();
     if (PUBLIC_IMAGE_EXTS.has(ext)) {
       return next("route");
     }
@@ -8730,20 +10238,20 @@ function serveUploadedFile(req, res, userTenantId) {
     if (userTenantId !== null && requestedTenantId !== userTenantId) {
       return res.status(403).json({ error: "Access denied" });
     }
-    const filename = path3.basename(String(req.params.filename));
+    const filename = path4.basename(String(req.params.filename));
     if (!SAFE_FILENAME_REGEX.test(filename)) {
       return res.status(400).json({ error: "Invalid filename" });
     }
-    const filePath = path3.join(UPLOAD_BASE2, requestedTenantId, filename);
-    const resolved = path3.resolve(filePath);
-    const expectedDir = path3.resolve(path3.join(UPLOAD_BASE2, requestedTenantId));
+    const filePath = path4.join(UPLOAD_BASE2, requestedTenantId, filename);
+    const resolved = path4.resolve(filePath);
+    const expectedDir = path4.resolve(path4.join(UPLOAD_BASE2, requestedTenantId));
     if (!resolved.startsWith(expectedDir)) {
       return res.status(403).json({ error: "Access denied" });
     }
     if (!fs3.existsSync(resolved)) {
       return res.status(404).json({ error: "File not found" });
     }
-    const ext = path3.extname(filename).toLowerCase();
+    const ext = path4.extname(filename).toLowerCase();
     const contentType = EXT_TO_CONTENT_TYPE[ext] || "application/octet-stream";
     res.setHeader("Content-Type", contentType);
     const isPublicImage = PUBLIC_IMAGE_EXTS.has(ext);
@@ -9050,15 +10558,15 @@ function createScimRoutes() {
       if (!existing) return scimError(res, 404, "User not found");
       const updates = {};
       for (const op of Operations) {
-        const { op: opType, path: path4, value } = op;
+        const { op: opType, path: path5, value } = op;
         const operation = (opType || "").toLowerCase();
-        if ((operation === "replace" || operation === "add") && path4 === "active") {
+        if ((operation === "replace" || operation === "add") && path5 === "active") {
           updates.status = value === false || value === "false" ? "INACTIVE" : "ACTIVE";
-        } else if ((operation === "replace" || operation === "add") && path4 === "name.formatted") {
+        } else if ((operation === "replace" || operation === "add") && path5 === "name.formatted") {
           updates.name = value;
-        } else if ((operation === "replace" || operation === "add") && path4 === "title") {
+        } else if ((operation === "replace" || operation === "add") && path5 === "title") {
           updates.role = scimTitleToRole(value);
-        } else if (!path4 && value && typeof value === "object") {
+        } else if (!path5 && value && typeof value === "object") {
           if (value.active !== void 0) updates.status = value.active === false ? "INACTIVE" : "ACTIVE";
           if (value["name.formatted"]) updates.name = value["name.formatted"];
           if (value.title) updates.role = scimTitleToRole(value.title);
@@ -9842,14 +11350,13 @@ var ProjectRepository = class extends BaseRepository {
 var projectRepository = new ProjectRepository();
 
 // server/routes/projectRoutes.ts
-var PARTNER_ROLES2 = ["PARTNER_ADMIN", "PARTNER_AGENT"];
 var ADMIN_ROLES = ["ADMIN"];
 function createProjectRoutes(authenticateToken) {
   const router = Router19();
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      if (PARTNER_ROLES2.includes(user.role)) {
+      if (user.role === "PARTNER_AGENT") {
         const projects = await projectRepository.findAccessibleProjects(user.tenantId);
         return res.json({ data: projects, total: projects.length, page: 1, pageSize: projects.length });
       }
@@ -9880,7 +11387,7 @@ function createProjectRoutes(authenticateToken) {
     try {
       const user = req.user;
       const id = req.params.id;
-      if (PARTNER_ROLES2.includes(user.role)) {
+      if (user.role === "PARTNER_AGENT") {
         const hasAccess = await projectRepository.checkPartnerAccess(user.tenantId, id);
         if (!hasAccess) return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp d\u1EF1 \xE1n n\xE0y" });
         const projects = await projectRepository.findAccessibleProjects(user.tenantId);
@@ -10398,9 +11905,10 @@ function getClientIp(req) {
 }
 
 // server.ts
+var broadcastIo = null;
 async function startServer() {
   const app = express();
-  const PORT = 5e3;
+  const PORT = parseInt(process.env.PORT || "5000", 10);
   app.use(securityHeaders);
   app.use(corsMiddleware);
   app.use("/api/webhooks", express.json({
@@ -10582,9 +12090,15 @@ async function startServer() {
       };
       const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: "24h" });
       res.cookie("token", token, cookieOptions);
-      res.json({ message: "Registered successfully", user: userRepository.toPublicUser(dbUser), token });
-      emailService.sendWelcomeEmail(tenantId, email, dbUser.name).catch((err) => {
+      const welcomeResult = await emailService.sendWelcomeEmail(tenantId, email, dbUser.name).catch((err) => {
         logger.error(`Failed to send welcome email to ${email}: ${err.message}`);
+        return { success: false, status: "failed", error: err.message };
+      });
+      res.json({
+        message: "Registered successfully",
+        user: userRepository.toPublicUser(dbUser),
+        token,
+        emailStatus: welcomeResult.status
       });
     } catch (error) {
       console.error("Register error:", error);
@@ -10618,12 +12132,14 @@ async function startServer() {
       const baseUrl2 = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `${req.protocol}://${req.get("host")}`;
       const resetUrl = `${baseUrl2}/#/reset-password/${rawToken}`;
       const emailResult = await emailService.sendPasswordResetEmail(tenantId, email, resetUrl, user.name);
-      if (!emailResult.success) {
+      if (emailResult.status === "failed") {
         logger.error(`Failed to send password reset email to ${email}: ${emailResult.error}`);
+      } else if (emailResult.status === "queued_no_smtp") {
+        logger.warn(`Password reset email for ${email} not sent \u2014 SMTP not configured.`);
       }
       writeAuditLog(tenantId, user.id, "PASSWORD_RESET_REQUEST", "auth", user.id, { email }, req.ip);
       await uniformDelay();
-      const isDevMode = !isProduction && emailResult.messageId?.startsWith("console-");
+      const isDevMode = !isProduction && emailResult.status === "queued_no_smtp";
       res.json({
         message: "If an account exists, a reset link has been sent.",
         ...isDevMode && { devToken: rawToken }
@@ -10652,6 +12168,12 @@ async function startServer() {
       const userId = result.rows[0].user_id;
       const tenantId = result.rows[0].tenant_id;
       await userRepository.updatePassword(tenantId, userId, newPassword);
+      await withTenantContext(tenantId, async (client) => {
+        await client.query(
+          `UPDATE users SET status = 'ACTIVE' WHERE id = $1 AND status = 'PENDING'`,
+          [userId]
+        );
+      });
       writeAuditLog(tenantId, userId, "PASSWORD_RESET_COMPLETE", "auth", userId, void 0, req.ip);
       res.json({ message: "Password has been reset successfully" });
     } catch (error) {
@@ -10690,11 +12212,11 @@ async function startServer() {
       const result = await aiService2.scoreLead(leadData, messageContent, weights, lang);
       if (result && leadData?.id) {
         const tenantId = req.tenantId;
+        const savedScore = { score: result.score || result.totalScore, grade: result.grade, reasoning: result.reasoning };
         try {
-          await leadRepository.update(tenantId, leadData.id, {
-            score: { score: result.score || result.totalScore, grade: result.grade, reasoning: result.reasoning }
-          }, req.user?.id, req.user?.role || "ADMIN");
-          logger.info(`AI score persisted for lead ${leadData.id}: ${result.score || result.totalScore}`);
+          await leadRepository.update(tenantId, leadData.id, { score: savedScore }, req.user?.id, req.user?.role || "ADMIN");
+          logger.info(`AI score persisted for lead ${leadData.id}: ${savedScore.score}`);
+          broadcastIo?.emit("lead_scored", { leadId: leadData.id, score: savedScore });
         } catch (e) {
           logger.warn(`Could not persist AI score for lead ${leadData.id}`);
         }
@@ -10827,6 +12349,7 @@ async function startServer() {
       credentials: true
     }
   });
+  broadcastIo = io;
   io.use((socket, next) => {
     try {
       const cookieHeader = socket.handshake.headers.cookie;
@@ -10913,16 +12436,19 @@ async function startServer() {
     console.log("No REDIS_URL provided, using in-memory adapter for Socket.io");
   }
   if (process.env.DATABASE_URL) {
-    await initializeDatabase();
+    await runPendingMigrations(pool);
   } else {
-    console.warn("DATABASE_URL not set. Skipping database initialization.");
+    console.warn("DATABASE_URL not set. Skipping database migrations.");
   }
   const PUBLIC_TENANT = DEFAULT_TENANT_ID;
   app.get("/api/public/listings", apiRateLimit, async (req, res) => {
     try {
       const page = parseInt(req.query.page) || 1;
       const pageSize = Math.min(parseInt(req.query.pageSize) || 20, 200);
+      const hasProjectCode = !!req.query.projectCode;
       const filters = { status_in: ["AVAILABLE", "OPENING", "BOOKING"] };
+      if (!hasProjectCode) filters.noProjectCode = true;
+      if (hasProjectCode) filters.projectCode = req.query.projectCode;
       if (req.query.type) filters.type = req.query.type;
       if (req.query.types) filters.type_in = req.query.types.split(",");
       if (req.query.transaction) filters.transaction = req.query.transaction;

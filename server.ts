@@ -53,7 +53,7 @@ let broadcastIo: any = null;
 
 async function startServer() {
   const app = express();
-  const PORT = 5000;
+  const PORT = parseInt(process.env.PORT || '5000', 10);
 
   app.use(securityHeaders);
   app.use(corsMiddleware);
