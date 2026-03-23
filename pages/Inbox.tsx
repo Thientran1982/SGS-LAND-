@@ -500,13 +500,16 @@ export const Inbox: React.FC = () => {
                                                     EMAIL: 'bg-indigo-50 text-indigo-600',
                                                     SMS: 'bg-emerald-50 text-emerald-600',
                                                 };
-                                                const labels: Record<string, string> = {
-                                                    ZALO: 'Z', FACEBOOK: 'f', EMAIL: '@', SMS: 'SMS',
+                                                const badgeLabels: Record<string, string> = {
+                                                    ZALO: t('inbox.channel_badge_zalo'),
+                                                    FACEBOOK: t('inbox.channel_badge_facebook'),
+                                                    EMAIL: t('inbox.channel_badge_email'),
+                                                    SMS: t('inbox.channel_badge_sms'),
                                                 };
                                                 return (
                                                     <span className={`text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 ${styles[ch] || 'bg-slate-100 text-slate-500'}`}
                                                           title={channelLabel(ch)}>
-                                                        {labels[ch] || channelLabel(ch).charAt(0).toUpperCase()}
+                                                        {badgeLabels[ch] ?? channelLabel(ch).charAt(0).toUpperCase()}
                                                     </span>
                                                 );
                                             })()}

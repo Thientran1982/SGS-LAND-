@@ -1661,6 +1661,10 @@ export const DICTIONARY = {
         "inbox.channel_facebook": "Facebook",
         "inbox.channel_email": "Email",
         "inbox.channel_sms": "SMS",
+        "inbox.channel_badge_zalo": "Z",
+        "inbox.channel_badge_facebook": "f",
+        "inbox.channel_badge_email": "@",
+        "inbox.channel_badge_sms": "SMS",
 
         "leads.export_success": "Xuất dữ liệu thành công",
         "leads.new_lead_received": "Có khách hàng tiềm năng mới từ {source}!",
@@ -3434,6 +3438,10 @@ export const DICTIONARY = {
         "inbox.channel_facebook": "Facebook",
         "inbox.channel_email": "Email",
         "inbox.channel_sms": "SMS",
+        "inbox.channel_badge_zalo": "Z",
+        "inbox.channel_badge_facebook": "f",
+        "inbox.channel_badge_email": "@",
+        "inbox.channel_badge_sms": "SMS",
 
         "leads.export_success": "Data exported successfully",
         "leads.new_lead_received": "New potential customer from {source}!",
