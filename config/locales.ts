@@ -854,6 +854,11 @@ export const DICTIONARY = {
         "approvals.selected_count": "Đã chọn",
         "approvals.approve_selection": "Phê duyệt các mục chọn",
         "approvals.lead_rank": "Hạng",
+        "approvals.filter_all": "Tất cả mức rủi ro",
+        "approvals.filter_high": "Rủi ro cao",
+        "approvals.filter_medium": "Rủi ro trung bình",
+        "approvals.filter_low": "An toàn",
+        "approvals.tooltip_self": "Không thể tự phê duyệt",
 
         "system.title": "Trạng Thái Hệ Thống",
         "system.subtitle": "Giám sát sức khỏe hạ tầng thời gian thực.",
@@ -2470,6 +2475,11 @@ export const DICTIONARY = {
         "approvals.selected_count": "Selected",
         "approvals.approve_selection": "Approve Selected",
         "approvals.lead_rank": "Rank",
+        "approvals.filter_all": "All Risk Levels",
+        "approvals.filter_high": "High Risk",
+        "approvals.filter_medium": "Medium Risk",
+        "approvals.filter_low": "Safe",
+        "approvals.tooltip_self": "Cannot self-approve",
 
         "system.title": "System Status",
         "system.subtitle": "Real-time infrastructure monitoring.",

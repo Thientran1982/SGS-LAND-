@@ -134,7 +134,7 @@ export function createProposalRoutes(authenticateToken: any) {
   router.put('/:id/status', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const { status } = req.body;
+      const { status, reason } = req.body;
 
       if (!['APPROVED', 'REJECTED', 'SENT', 'EXPIRED'].includes(status)) {
         return res.status(400).json({ error: 'Invalid status' });
@@ -167,7 +167,7 @@ export function createProposalRoutes(authenticateToken: any) {
         action: 'UPDATE_STATUS',
         entityType: 'PROPOSAL',
         entityId: String(req.params.id),
-        details: `Changed proposal status to: ${status}`,
+        details: status === 'REJECTED' && reason ? `Changed proposal status to: ${status}. Reason: ${reason}` : `Changed proposal status to: ${status}`,
         ipAddress: req.ip,
       });
 

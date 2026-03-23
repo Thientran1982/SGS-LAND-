@@ -16,8 +16,8 @@ export const proposalApi = {
   createProposal: (data: Record<string, any>): Promise<any> =>
     api.post('/api/proposals', data),
 
-  updateStatus: (id: string, status: string): Promise<any> =>
-    api.put(`/api/proposals/${id}/status`, { status }),
+  updateStatus: (id: string, status: string, reason?: string): Promise<any> =>
+    api.put(`/api/proposals/${id}/status`, { status, ...(reason ? { reason } : {}) }),
 
   deleteProposal: (id: string): Promise<any> =>
     api.delete(`/api/proposals/${id}`),

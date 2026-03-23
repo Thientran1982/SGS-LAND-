@@ -963,8 +963,8 @@ class DatabaseApiClient {
     return proposalApi.updateStatus(id, 'APPROVED');
   }
 
-  async rejectProposal(id: string) {
-    return proposalApi.updateStatus(id, 'REJECTED');
+  async rejectProposal(id: string, reason?: string) {
+    return proposalApi.updateStatus(id, 'REJECTED', reason);
   }
 
   async deleteContract(id: string) {

@@ -91,31 +91,33 @@ interface RejectModalProps {
 const RejectModal = memo(({ isOpen, onClose, onConfirm, t }: RejectModalProps) => {
     const [reason, setReason] = useState('');
 
-    if (!isOpen) return null;
-
+    // Keep portal always mounted to avoid removeChild errors during HMR/unmount cycles.
+    // Only render visible content when isOpen === true.
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-enter">
-            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)]">
-                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">{t('approvals.reject_modal_title')}</h3>
-                <textarea 
-                    value={reason}
-                    onChange={e => setReason(e.target.value)}
-                    className="w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500/20 outline-none h-24 resize-none mb-4 bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-colors"
-                    placeholder={t('approvals.reject_reason_placeholder')}
-                    autoFocus
-                />
-                <div className="flex gap-3">
-                    <button onClick={onClose} className="flex-1 py-2.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">{t('common.cancel')}</button>
-                    <button 
-                        onClick={() => { if(reason.trim()) { onConfirm(reason); setReason(''); } }} 
-                        disabled={!reason.trim()} 
-                        className="flex-1 py-2.5 bg-rose-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-rose-700 transition-all disabled:opacity-50"
-                    >
-                        {t('approvals.btn_reject')}
-                    </button>
+        isOpen ? (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-enter">
+                <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)]">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">{t('approvals.reject_modal_title')}</h3>
+                    <textarea 
+                        value={reason}
+                        onChange={e => setReason(e.target.value)}
+                        className="w-full border border-[var(--glass-border)] rounded-xl p-3 text-sm focus:ring-2 focus:ring-rose-500/20 outline-none h-24 resize-none mb-4 bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)] transition-colors"
+                        placeholder={t('approvals.reject_reason_placeholder')}
+                        autoFocus
+                    />
+                    <div className="flex gap-3">
+                        <button onClick={onClose} className="flex-1 py-2.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">{t('common.cancel')}</button>
+                        <button 
+                            onClick={() => { if(reason.trim()) { onConfirm(reason); setReason(''); } }} 
+                            disabled={!reason.trim()} 
+                            className="flex-1 py-2.5 bg-rose-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-rose-700 transition-all disabled:opacity-50"
+                        >
+                            {t('approvals.btn_reject')}
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>,
+        ) : null,
         document.body
     );
 });
@@ -146,7 +148,11 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
         };
     }, [proposal, lead]);
 
-    const isSelf = currentUser?.name === proposal.createdBy; 
+    const isSelf = currentUser
+        ? (currentUser.id && (proposal as any).createdById
+            ? currentUser.id === (proposal as any).createdById
+            : currentUser.name === proposal.createdBy)
+        : false;
     const styles = RISK_STYLES[riskAssessment.level];
 
     return (
@@ -233,9 +239,10 @@ const ProposalCard = memo(({ proposal, listing, lead, currentUser, isSelected, o
                 <button 
                     onClick={(e) => { e.stopPropagation(); onApprove(proposal.id); }}
                     disabled={isSelf}
+                    title={isSelf ? t('approvals.tooltip_self') : undefined}
                     className="flex-1 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {t('approvals.btn_approve')}
+                    {isSelf ? t('approvals.tooltip_self') : t('approvals.btn_approve')}
                 </button>
             </div>
         </div>
@@ -257,6 +264,7 @@ export const ApprovalInbox: React.FC = () => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [rejectId, setRejectId] = useState<string | null>(null);
     const [sortMode, setSortMode] = useState<'RISK' | 'DATE'>('RISK');
+    const [filterMode, setFilterMode] = useState<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL');
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
 
     const { t, formatDateTime, formatCurrency } = useTranslation();
@@ -304,21 +312,27 @@ export const ApprovalInbox: React.FC = () => {
 
     useEffect(() => { loadData(); }, [loadData]);
 
-    // Sorting & Derived Data
+    // Sorting & Filtering
     const sortedProposals = useMemo(() => {
-        return [...pending].sort((a, b) => {
+        let filtered = [...pending];
+        if (filterMode !== 'ALL') {
+            filtered = filtered.filter(p => {
+                const pct = p.basePrice > 0 ? (p.discountAmount / p.basePrice) * 100 : 0;
+                return analyzeRisk(pct, leads[p.leadId]?.score).level === filterMode;
+            });
+        }
+        return filtered.sort((a, b) => {
             if (sortMode === 'RISK') {
-                // Calculate risk score dynamically for sorting
                 const getScore = (p: Proposal) => {
                    const lead = leads[p.leadId];
-                   const pct = (p.discountAmount / p.basePrice) * 100;
+                   const pct = p.basePrice > 0 ? (p.discountAmount / p.basePrice) * 100 : 0;
                    return analyzeRisk(pct, lead?.score).score;
                 };
-                return getScore(b) - getScore(a); // High risk first
+                return getScore(b) - getScore(a);
             }
-            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(); // Oldest first
+            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         });
-    }, [pending, leads, sortMode]);
+    }, [pending, leads, sortMode, filterMode]);
 
     // Metrics
     const metrics = useMemo(() => {
@@ -336,8 +350,8 @@ export const ApprovalInbox: React.FC = () => {
     };
 
     const handleSelectAll = () => {
-        if (selectedIds.size === pending.length) setSelectedIds(new Set());
-        else setSelectedIds(new Set(pending.map(p => p.id)));
+        if (selectedIds.size === sortedProposals.length) setSelectedIds(new Set());
+        else setSelectedIds(new Set(sortedProposals.map(p => p.id)));
     };
 
     const processApproval = async (ids: string[]) => {
@@ -351,7 +365,7 @@ export const ApprovalInbox: React.FC = () => {
 
     const processRejection = async (id: string, reason: string) => {
         try {
-            await db.rejectProposal(id);
+            await db.rejectProposal(id, reason);
             notify(t('approvals.reject_success'), 'success');
             setRejectId(null);
             loadData();
@@ -361,7 +375,7 @@ export const ApprovalInbox: React.FC = () => {
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
-        <div className="space-y-6 pb-24 relative animate-enter">
+        <div className="p-4 sm:p-6 space-y-6 pb-24 relative animate-enter">
             {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             {/* METRICS BAR */}
@@ -388,9 +402,21 @@ export const ApprovalInbox: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-3">
                     <button onClick={handleSelectAll} className="text-xs font-bold text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors">
-                        {selectedIds.size === pending.length ? t('approvals.deselect_all') : t('approvals.select_all')}
+                        {selectedIds.size === sortedProposals.length && sortedProposals.length > 0 ? t('approvals.deselect_all') : t('approvals.select_all')}
                     </button>
                     <div className="h-4 w-px bg-slate-200"></div>
+                    <Dropdown 
+                        value={filterMode}
+                        onChange={(v) => setFilterMode(v as any)}
+                        options={[
+                            { value: 'ALL', label: t('approvals.filter_all') },
+                            { value: 'HIGH', label: t('approvals.filter_high') },
+                            { value: 'MEDIUM', label: t('approvals.filter_medium') },
+                            { value: 'LOW', label: t('approvals.filter_low') }
+                        ]}
+                        className="text-xs min-w-[150px]"
+                        icon={ICONS.FILTER}
+                    />
                     <Dropdown 
                         value={sortMode}
                         onChange={(v) => setSortMode(v as any)}
