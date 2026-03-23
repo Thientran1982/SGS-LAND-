@@ -265,14 +265,20 @@ export class ListingRepository extends BaseRepository {
       let paramIndex = 1;
 
       const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
-      // Allow restricted roles to see ALL available listings (needed for proposal creation).
-      // For project-scoped queries (projectCode filter), allow seeing all listings so
-      // ProjectUnits shows full inventory regardless of who created/is-assigned.
-      // For other queries, restrict to listings they created or are assigned to.
+      // Visibility rules for restricted roles:
+      // - AVAILABLE-only queries (e.g. proposal picker): see all available listings.
+      // - Project-scoped queries: see ONLY units explicitly assigned to them.
+      // - All other queries: see listings they created or are assigned to.
       const isAvailableOnlyQuery = filters?.status === 'AVAILABLE';
       const isProjectQuery = !!filters?.projectCode;
-      if (RESTRICTED.includes(userRole || '') && userId && !isAvailableOnlyQuery && !isProjectQuery) {
-        conditions.push(`(l.created_by = $${paramIndex} OR l.assigned_to = $${paramIndex})`);
+      if (RESTRICTED.includes(userRole || '') && userId && !isAvailableOnlyQuery) {
+        if (isProjectQuery) {
+          // Project unit list: only show units the user is responsible for.
+          conditions.push(`l.assigned_to = $${paramIndex}`);
+        } else {
+          // General listing view: own listings + assigned listings.
+          conditions.push(`(l.created_by = $${paramIndex} OR l.assigned_to = $${paramIndex})`);
+        }
         values.push(userId);
         paramIndex++;
       }
