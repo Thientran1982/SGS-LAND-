@@ -98,13 +98,13 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
 
     const handleUpdateToken = async () => {
         if (!tokenForm.trim()) {
-            notify('Vui lòng nhập Access Token', 'error');
+            notify(t('ent.zalo_token_required'), 'error');
             return;
         }
         setUpdatingToken(true);
         try {
             await db.updateZaloToken(tokenForm.trim());
-            notify('Cập nhật Access Token thành công', 'success');
+            notify(t('ent.zalo_token_updated'), 'success');
             setTokenForm('');
             setShowTokenForm(false);
             onRefresh();
@@ -168,7 +168,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                     onClick={() => setShowTokenForm(s => !s)}
                                     className="text-blue-600 text-sm font-bold hover:underline decoration-2 underline-offset-4"
                                 >
-                                    {config.zalo?.accessToken ? 'Cập nhật Access Token' : '+ Thêm Access Token để gửi tin'}
+                                    {config.zalo?.accessToken ? t('ent.zalo_update_token') : t('ent.zalo_add_token')}
                                 </button>
                                 <button
                                     onClick={() => setConfirmDisconnect(true)}
@@ -179,7 +179,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             </div>
                             {showTokenForm && (
                                 <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
-                                    <p className="text-xs text-blue-700 font-bold mb-2">OA Access Token mới</p>
+                                    <p className="text-xs text-blue-700 font-bold mb-2">{t('ent.zalo_token_new_label')}</p>
                                     <div className="flex gap-2">
                                         <input
                                             type="password"
@@ -194,7 +194,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                             className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 disabled:opacity-70 flex items-center gap-2 shrink-0"
                                         >
                                             {updatingToken && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
-                                            Lưu
+                                            {t('common.save')}
                                         </button>
                                     </div>
                                 </div>
@@ -216,13 +216,13 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             <div className="flex items-center gap-2">
                                 <div className={`w-2 h-2 rounded-full shrink-0 ${zaloStatus?.webhookSecretConfigured ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
                                 <span className="text-xs2 text-[var(--text-tertiary)] font-bold">
-                                    ZALO_OA_SECRET: {zaloStatus?.webhookSecretConfigured ? <span className="text-emerald-600">Đã cấu hình</span> : <span className="text-amber-600">Chưa cấu hình</span>}
+                                    ZALO_OA_SECRET: {zaloStatus?.webhookSecretConfigured ? <span className="text-emerald-600">{t('ent.zalo_env_configured')}</span> : <span className="text-amber-600">{t('ent.zalo_env_not_configured')}</span>}
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className={`w-2 h-2 rounded-full shrink-0 ${config.zalo?.accessToken ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
                                 <span className="text-xs2 text-[var(--text-tertiary)] font-bold">
-                                    OA Access Token: {config.zalo?.accessToken ? <span className="text-emerald-600">Đã cấu hình — gửi tin ✓</span> : <span className="text-amber-600">Chưa có — không thể gửi tin</span>}
+                                    OA Access Token: {config.zalo?.accessToken ? <span className="text-emerald-600">{t('ent.zalo_token_configured')}</span> : <span className="text-amber-600">{t('ent.zalo_token_missing')}</span>}
                                 </span>
                             </div>
                             <div className="text-xs2 text-[var(--text-tertiary)] leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">
@@ -448,7 +448,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                 <div className="mb-5 flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4">
                     <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <div className="min-w-0">
-                        <p className="text-xs font-bold text-green-800">Webhook URL đang hoạt động</p>
+                        <p className="text-xs font-bold text-green-800">{t('ent.facebook_webhook_active')}</p>
                         <p className="text-xs font-mono text-green-700 truncate mt-0.5">{fbStatus.webhookUrl}</p>
                     </div>
                 </div>
@@ -649,13 +649,13 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
                         <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_pass')}</label><input type="password" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} placeholder={CONSTANTS.MASK} /></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Tên hiển thị (From Name)</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromName || ''} onChange={e => setForm({...form, fromName: e.target.value})} placeholder="SGS LAND" /></div>
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Địa chỉ gửi (From Address)</label><input type="email" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromAddress || ''} onChange={e => setForm({...form, fromAddress: e.target.value.trim()})} placeholder="noreply@company.com" /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_from_name')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromName || ''} onChange={e => setForm({...form, fromName: e.target.value})} placeholder="SGS LAND" /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_from_address')}</label><input type="email" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromAddress || ''} onChange={e => setForm({...form, fromAddress: e.target.value.trim()})} placeholder="noreply@company.com" /></div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
                         <input type="checkbox" id="smtp-secure" checked={!!form.secure} onChange={e => setForm({...form, secure: e.target.checked})} className="w-4 h-4 accent-indigo-600 cursor-pointer" />
                         <label htmlFor="smtp-secure" className="text-sm text-[var(--text-secondary)] cursor-pointer select-none">
-                            <span className="font-semibold">SSL/TLS</span> — Bật nếu dùng port 465. Tắt nếu dùng STARTTLS (port 587).
+                            <span className="font-semibold">SSL/TLS</span> — {t('ent.email_ssl_hint')}
                         </label>
                     </div>
                 </div>
@@ -665,11 +665,11 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
                         <div className="flex gap-3">
                             <button onClick={handleTestConnection} disabled={testing || !form.host} className="flex-1 py-2.5 border-2 border-indigo-200 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2">
                                 {testing && <div className="w-3 h-3 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></div>}
-                                {testing ? 'Testing...' : 'Test Connection'}
+                                {testing ? t('ent.email_testing') : t('ent.email_test_conn')}
                             </button>
                             <button onClick={handleSendTestEmail} disabled={sendingTest || !form.host} className="flex-1 py-2.5 border-2 border-emerald-200 text-emerald-600 font-bold rounded-xl hover:bg-emerald-50 transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2">
                                 {sendingTest && <div className="w-3 h-3 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin"></div>}
-                                {sendingTest ? 'Sending...' : 'Send Test Email'}
+                                {sendingTest ? t('ent.email_sending') : t('ent.email_send_test')}
                             </button>
                         </div>
                     )}
@@ -768,17 +768,17 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                             <span className="text-xs text-[var(--text-tertiary)] font-bold uppercase shrink-0">{t('ent.redirect_uri')}</span>
                             <div className="flex items-center gap-2 min-w-0">
                                 <code className="text-xs3 font-mono text-[var(--text-secondary)] bg-[var(--bg-surface)] px-2 py-1 rounded border border-[var(--glass-border)] break-all">{redirectUri}</code>
-                                <button onClick={() => { navigator.clipboard?.writeText(redirectUri); notify('Copied!', 'success'); }} className="shrink-0 text-xs2 font-bold text-indigo-600 hover:underline px-1">Copy</button>
+                                <button onClick={() => { navigator.clipboard?.writeText(redirectUri); notify(t('common.copied'), 'success'); }} className="shrink-0 text-xs2 font-bold text-indigo-600 hover:underline px-1">Copy</button>
                             </div>
                         </div>
-                        <p className="text-xs3 text-[var(--text-secondary)] mt-2">Thêm URL này vào danh sách Redirect URIs trong cấu hình IdP của bạn.</p>
+                        <p className="text-xs3 text-[var(--text-secondary)] mt-2">{t('ent.sso_redirect_hint')}</p>
                     </div>
 
                     {verifyResult && (
                         <div className={`p-4 rounded-xl border text-sm ${verifyResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`}>
                             {verifyResult.success ? (
                                 <div>
-                                    <p className="font-bold mb-2">✓ OIDC cấu hình hợp lệ</p>
+                                    <p className="font-bold mb-2">{t('ent.sso_verify_valid')}</p>
                                     {verifyResult.metadata && (
                                         <div className="space-y-1 text-xs3 font-mono">
                                             <p><span className="text-emerald-600 font-bold">Issuer:</span> {verifyResult.metadata.issuer}</p>
@@ -798,7 +798,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                     {sso.enabled && sso.provider === 'OIDC' && (
                         <button onClick={handleVerify} disabled={verifying || !sso.issuerUrl || !sso.clientId} className="w-full py-2.5 border-2 border-indigo-200 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2">
                             {verifying && <div className="w-3 h-3 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></div>}
-                            {verifying ? 'Đang kiểm tra...' : 'Xác minh cấu hình OIDC'}
+                            {verifying ? t('ent.sso_verifying') : t('ent.sso_verify_btn')}
                         </button>
                     )}
                 </div>
@@ -931,12 +931,12 @@ const AuditPanel = memo(() => {
     };
 
     const ENTITY_OPTIONS = [
-        { value: '', label: 'Tất cả loại' },
-        { value: 'auth', label: 'Xác thực' },
-        { value: 'USER', label: 'Người dùng' },
-        { value: 'enterprise_config', label: 'Cài đặt doanh nghiệp' },
-        { value: 'lead', label: 'Lead' },
-        { value: 'listing', label: 'Tin đăng' },
+        { value: '', label: t('ent.audit_entity_all') },
+        { value: 'auth', label: t('ent.audit_entity_auth') },
+        { value: 'USER', label: t('ent.audit_entity_user') },
+        { value: 'enterprise_config', label: t('ent.audit_entity_config') },
+        { value: 'lead', label: t('ent.audit_entity_lead') },
+        { value: 'listing', label: t('ent.audit_entity_listing') },
     ];
 
     return (
@@ -954,7 +954,7 @@ const AuditPanel = memo(() => {
                 <input
                     value={filterAction}
                     onChange={e => handleFilterChange(e.target.value.toUpperCase(), filterEntity)}
-                    placeholder="Lọc theo action (VD: LOGIN)"
+                    placeholder={t('ent.audit_action_placeholder')}
                     className="border rounded-xl px-3 py-2.5 text-xs font-mono text-[var(--text-secondary)] bg-[var(--bg-surface)] outline-none focus:ring-2 focus:ring-indigo-500/20 w-52"
                 />
                 {(filterAction || filterEntity) && (
@@ -962,10 +962,10 @@ const AuditPanel = memo(() => {
                         onClick={() => handleFilterChange('', '')}
                         className="text-xs font-bold text-rose-500 hover:underline"
                     >
-                        Xoá bộ lọc
+                        {t('ent.audit_clear_filter')}
                     </button>
                 )}
-                <span className="text-xs text-[var(--text-secondary)] ml-auto pr-1">{total} bản ghi</span>
+                <span className="text-xs text-[var(--text-secondary)] ml-auto pr-1">{t('ent.audit_records', { count: total })}</span>
             </div>
 
             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden">
@@ -1010,14 +1010,14 @@ const AuditPanel = memo(() => {
                 {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]">
-                        <span className="text-xs text-[var(--text-secondary)]">Trang {page} / {totalPages}</span>
+                        <span className="text-xs text-[var(--text-secondary)]">{t('ent.audit_page', { page, total: totalPages })}</span>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
                                 className="px-3 py-1.5 text-xs font-bold rounded-lg border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] disabled:opacity-40 transition-colors"
                             >
-                                ← Trước
+                                {t('ent.audit_prev')}
                             </button>
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                 const start = Math.max(1, Math.min(page - 2, totalPages - 4));
@@ -1037,7 +1037,7 @@ const AuditPanel = memo(() => {
                                 disabled={page === totalPages}
                                 className="px-3 py-1.5 text-xs font-bold rounded-lg border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] disabled:opacity-40 transition-colors"
                             >
-                                Sau →
+                                {t('ent.audit_next')}
                             </button>
                         </div>
                     </div>
@@ -1117,15 +1117,8 @@ export const EnterpriseSettings: React.FC = () => {
     };
 
     return (
+        <>
         <div className="space-y-6 pb-20 relative animate-enter">
-            {toast && (
-                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${
-                    toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'
-                }`}>
-                    <span className="font-bold text-sm">{toast.msg}</span>
-                </div>
-            )}
-
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm gap-4 w-full overflow-hidden">
                 <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-[var(--text-tertiary)]">{t('ent.tenant_label')}:</span>
@@ -1180,5 +1173,21 @@ export const EnterpriseSettings: React.FC = () => {
                 {activeTab === 'AUDIT' && <AuditPanel />}
             </div>
         </div>
+        {createPortal(
+            toast ? (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${
+                        toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'
+                    }`}
+                >
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };

@@ -257,6 +257,16 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 - Print: `Noto Serif`
 - Dark mode: `class` strategy on `<html>`, persisted in `localStorage` key `sgs_theme`
 
+### EnterpriseSettings.tsx Audit & Fix (March 2026)
+6 nhóm bug đã vá trong `pages/EnterpriseSettings.tsx`:
+1. **Toast không trong portal** — `fixed` toast bên trong `animate-enter` container, đã chuyển sang `createPortal(document.body)`, thêm Fragment `<>` bọc ngoài
+2. **ZaloPanel — 8 chuỗi hardcoded** — token_required, token_updated, update_token button, add_token button, token_new_label, save button, env_configured/not_configured, token_configured/missing — tất cả đã thay bằng locale keys `ent.zalo_*`
+3. **FacebookPanel — 1 chuỗi hardcoded** — "Webhook URL đang hoạt động" → `t('ent.facebook_webhook_active')`
+4. **EmailPanel — 7 chuỗi hardcoded** — From Name label, From Address label, SSL hint, Test Connection/Testing, Send Test Email/Sending → `ent.email_*`
+5. **SSOPanel** — `notify('Copied!')` hardcoded English → `notify(t('common.copied'))`, redirect hint, verify result text, verify button → `ent.sso_*`
+6. **AuditPanel — toàn bộ filter/pagination hardcoded** — ENTITY_OPTIONS labels, action placeholder, clear filter button, records count, page X/Y text, prev/next buttons → `ent.audit_*`
+- 35 locale keys mới (VI + EN): `ent.zalo_token_*`, `ent.facebook_webhook_active`, `ent.email_from_*`, `ent.email_ssl_hint`, `ent.email_test_conn/testing/send_test/sending`, `ent.sso_redirect_hint/verify_valid/verify_btn/verifying`, `ent.audit_entity_*/action_placeholder/clear_filter/records/page/prev/next`
+
 ### Favorites.tsx Audit & Fix (March 2026)
 4 bugs resolved in `pages/Favorites.tsx`:
 1. **Toast not in portal** — same `animate-enter` / `transform` trap as Inbox; moved toast to `createPortal(document.body)`, added `createPortal` import
