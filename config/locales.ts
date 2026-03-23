@@ -1226,6 +1226,7 @@ export const DICTIONARY = {
         "billing.f_enterprise_4": "Hỗ trợ ưu tiên 24/7",
         "billing.f_enterprise_5": "100.000 email/tháng",
         "billing.f_enterprise_6": "10.000 AI request/tháng",
+        "billing.empty_invoices": "Chưa có hóa đơn nào. Hóa đơn sẽ xuất hiện sau khi bạn thanh toán.",
 
         "inbox.unassigned": "Chưa phân công",
         "inbox.assign_to": "Phân bổ cho",
@@ -3197,6 +3198,7 @@ export const DICTIONARY = {
         "billing.f_enterprise_4": "Priority 24/7 support",
         "billing.f_enterprise_5": "100,000 emails/month",
         "billing.f_enterprise_6": "10,000 AI requests/month",
+        "billing.empty_invoices": "No invoices yet. Invoices will appear here after your first payment.",
 
         "inbox.unassigned": "Unassigned",
         "inbox.assign_to": "Assign to",

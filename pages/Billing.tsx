@@ -206,9 +206,13 @@ export const Billing: React.FC = () => {
             </div>
 
             {/* Invoice History */}
-            {invoices.length > 0 && (
-                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
-                    <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('billing.invoice_history')}</h3>
+            <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+                <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('billing.invoice_history')}</h3>
+                {invoices.length === 0 ? (
+                    <div className="py-10 text-center text-[var(--text-secondary)] italic text-sm">
+                        {t('billing.empty_invoices')}
+                    </div>
+                ) : (
                     <div className="overflow-x-auto no-scrollbar">
                         <table className="w-full text-sm">
                             <thead>
@@ -258,8 +262,8 @@ export const Billing: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
             <ConfirmModal
                 isOpen={!!upgradeConfirmPlan}
