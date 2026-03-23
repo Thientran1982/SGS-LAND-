@@ -219,7 +219,7 @@ export const DICTIONARY = {
         "menu.data-platform": "Dữ Liệu Nguồn",
         "menu.security": "Bảo Mật & Tuân Thủ",
         "menu.ai-governance": "Quản Trị AI",
-        "menu.seo-manager": "SEO Manager",
+        "menu.seo-manager": "Quản Lý SEO",
         "menu.system": "Hạ Tầng Hệ Thống",
         "menu.marketplace-apps": "Kho Ứng Dụng",
         "menu.mobile-app": "Ứng Dụng Di Động",
