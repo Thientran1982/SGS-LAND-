@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/dbApi';
 import { UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
-import { ROUTE_SEO, SEO_BASE_URL, SEOConfig, getSEOOverrides, saveSEOOverride, clearSEOOverride, updatePageSEO } from '../utils/seo';
+import { ROUTE_SEO, SEOConfig, getSEOOverrides, saveSEOOverride, clearSEOOverride, updatePageSEO } from '../utils/seo';
 import { copyToClipboard } from '../utils/clipboard';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -14,7 +13,6 @@ const ICONS = {
     WARN:     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
     ERROR:    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     COPY:     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>,
-    EDIT:     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
     RESET:    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
     EXT:      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>,
     SAVE:     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
@@ -448,7 +446,34 @@ const HealthChecklist: React.FC = () => {
     );
 };
 
-// ── Tab: Structured Data ───────────────────────────────────────────────────────
+// ── JSON Syntax Highlighter ────────────────────────────────────────────────────
+const highlightJson = (json: string): string => {
+    return json.replace(
+        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|[{}\[\]:,])/g,
+        (match) => {
+            let cls = 'color:#a8b1c2'; // default
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'color:#79b8ff'; // key
+                } else {
+                    cls = 'color:#9ecbff'; // string value
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'color:#85e89d'; // boolean
+            } else if (/null/.test(match)) {
+                cls = 'color:#f97583'; // null
+            } else if (/[{}\[\]]/.test(match)) {
+                cls = 'color:#e1e4e8'; // brackets
+            } else if (/[:,]/.test(match)) {
+                cls = 'color:#6a737d'; // punctuation
+            } else {
+                cls = 'color:#f8c555'; // number
+            }
+            return `<span style="${cls}">${match.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`;
+        }
+    );
+};
+
 const StructuredData: React.FC = () => {
     const [schemas, setSchemas] = useState<{ type: string; json: string }[]>([]);
     const [copied, setCopied] = useState<number | null>(null);
@@ -505,9 +530,10 @@ const StructuredData: React.FC = () => {
                             {copied === idx ? 'Đã copy' : 'Copy'}
                         </button>
                     </div>
-                    <pre className="p-4 text-2xs font-mono text-[var(--text-secondary)] overflow-x-auto no-scrollbar leading-relaxed bg-slate-50/50 dark:bg-slate-900/30">
-                        {s.json}
-                    </pre>
+                    <pre
+                        className="p-4 text-2xs font-mono overflow-x-auto no-scrollbar leading-relaxed bg-slate-900 dark:bg-slate-950 rounded-b-2xl"
+                        dangerouslySetInnerHTML={{ __html: highlightJson(s.json) }}
+                    />
                 </div>
             ))}
         </div>
@@ -528,12 +554,6 @@ export const SeoManager: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const [activeTab, setActiveTab] = useState<TabId>('SERP');
-    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-
-    const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
-        setToast({ msg, type });
-        setTimeout(() => setToast(null), 3000);
-    }, []);
 
     useEffect(() => {
         db.getCurrentUser().then(u => {
@@ -564,7 +584,6 @@ export const SeoManager: React.FC = () => {
     );
 
     return (
-        <>
         <div className="space-y-5 pb-20 animate-enter p-4 sm:p-6">
 
             {/* ── Header ──────────────────────────────────────────────────── */}
@@ -622,24 +641,5 @@ export const SeoManager: React.FC = () => {
             </div>
 
         </div>
-
-        {/* Toast */}
-        {createPortal(
-            toast ? (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 border text-sm font-bold ${
-                        toast.type === 'success'
-                            ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500'
-                            : 'bg-rose-900/90 text-rose-100 border-rose-500'
-                    }`}
-                >
-                    {toast.msg}
-                </div>
-            ) : null,
-            document.body
-        )}
-        </>
     );
 };

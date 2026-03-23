@@ -318,7 +318,7 @@ const getInitialAuthState = (): 'LOADING' | 'AUTH' | 'GUEST' => {
     return 'LOADING';
 };
 
-const ADMIN_ONLY_ROUTES = new Set([
+const ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.SYSTEM,
     ROUTES.ADMIN_USERS,
     ROUTES.ENTERPRISE_SETTINGS,
