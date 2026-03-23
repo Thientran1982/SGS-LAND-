@@ -143,9 +143,9 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                 <div className="min-w-0">
                                     <h3 className="text-xl font-bold text-[var(--text-primary)] break-words">{config.zalo.oaName}</h3>
                                     <div className="flex flex-wrap items-center gap-2 mt-1">
-                                        <div className="inline-flex items-center px-2 py-1 bg-[var(--glass-surface-hover)] rounded text-xs text-[var(--text-tertiary)] font-mono border border-[var(--glass-border)]">OA ID: {config.zalo.oaId}</div>
+                                        <div className="inline-flex items-center px-2 py-1 bg-[var(--glass-surface-hover)] rounded text-xs text-[var(--text-tertiary)] font-mono border border-[var(--glass-border)]">{t('ent.zalo_oa_id')}: {config.zalo.oaId}</div>
                                         {(config.zalo as any).appId && (
-                                            <div className="inline-flex items-center px-2 py-1 bg-[var(--glass-surface-hover)] rounded text-xs text-[var(--text-tertiary)] font-mono border border-[var(--glass-border)]">App ID: {(config.zalo as any).appId}</div>
+                                            <div className="inline-flex items-center px-2 py-1 bg-[var(--glass-surface-hover)] rounded text-xs text-[var(--text-tertiary)] font-mono border border-[var(--glass-border)]">{t('ent.zalo_app_id')}: {(config.zalo as any).appId}</div>
                                         )}
                                     </div>
                                 </div>
@@ -222,7 +222,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             <div className="flex items-center gap-2">
                                 <div className={`w-2 h-2 rounded-full shrink-0 ${config.zalo?.accessToken ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
                                 <span className="text-xs2 text-[var(--text-tertiary)] font-bold">
-                                    OA Access Token: {config.zalo?.accessToken ? <span className="text-emerald-600">{t('ent.zalo_token_configured')}</span> : <span className="text-amber-600">{t('ent.zalo_token_missing')}</span>}
+                                    {t('ent.zalo_oa_access_token')}: {config.zalo?.accessToken ? <span className="text-emerald-600">{t('ent.zalo_token_configured')}</span> : <span className="text-amber-600">{t('ent.zalo_token_missing')}</span>}
                                 </span>
                             </div>
                             <div className="text-xs2 text-[var(--text-tertiary)] leading-relaxed bg-blue-50/50 p-3 rounded-xl border border-blue-100">
@@ -270,7 +270,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
-                                    App ID <span className="text-rose-500">*</span>
+                                    {t('ent.zalo_app_id')} <span className="text-rose-500">*</span>
                                 </label>
                                 <input
                                     className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
@@ -281,7 +281,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
-                                    OA ID <span className="text-rose-500">*</span>
+                                    {t('ent.zalo_oa_id')} <span className="text-rose-500">*</span>
                                 </label>
                                 <input
                                     className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
@@ -304,7 +304,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                         </div>
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
-                                App Secret <span className="text-[var(--text-secondary)] font-normal normal-case">{t('ent.zalo_secret_optional')}</span>
+                                {t('ent.zalo_app_secret')} <span className="text-[var(--text-secondary)] font-normal normal-case">{t('ent.zalo_secret_optional')}</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -325,7 +325,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                         </div>
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
-                                OA Access Token <span className="text-[var(--text-secondary)] font-normal normal-case">{t('ent.zalo_token_optional')}</span>
+                                {t('ent.zalo_oa_access_token')} <span className="text-[var(--text-secondary)] font-normal normal-case">{t('ent.zalo_token_optional')}</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -433,10 +433,10 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                         <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">{t('ent.facebook_secret_hint')}</p>
                         <div className="mt-2 flex gap-2 text-xs3 text-amber-700">
                             <span className={`px-2 py-0.5 rounded-full font-mono ${fbStatus?.appSecretConfigured ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                                FB_APP_SECRET {fbStatus?.appSecretConfigured ? '✓' : '✗'}
+                                {t('ent.facebook_env_app_secret')} {fbStatus?.appSecretConfigured ? '✓' : '✗'}
                             </span>
                             <span className={`px-2 py-0.5 rounded-full font-mono ${fbStatus?.verifyTokenConfigured ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                                FB_VERIFY_TOKEN {fbStatus?.verifyTokenConfigured ? '✓' : '✗'}
+                                {t('ent.facebook_env_verify_token')} {fbStatus?.verifyTokenConfigured ? '✓' : '✗'}
                             </span>
                         </div>
                     </div>
@@ -536,7 +536,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                             <div className="w-10 h-10 bg-[#1877F2]/10 text-[#1877F2] rounded-full flex items-center justify-center font-bold text-lg shrink-0">f</div>
                             <div className="min-w-0">
                                 <div className="font-bold text-[var(--text-primary)] text-sm truncate">{page.name}</div>
-                                <div className="text-xs2 text-[var(--text-secondary)] font-mono truncate">ID: {page.id}</div>
+                                <div className="text-xs2 text-[var(--text-secondary)] font-mono truncate">{t('ent.facebook_page_id_label')} {page.id}</div>
                                 {page.pageUrl && (
                                     <a href={page.pageUrl} target="_blank" rel="noreferrer" className="text-xs2 text-blue-400 hover:underline truncate block">{page.pageUrl}</a>
                                 )}
@@ -571,7 +571,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                             <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zm12-5h-4m0 0l2-2m-2 2l2 2" /></svg>
                         </div>
                         <h3 className="text-base font-bold text-[var(--text-primary)] text-center mb-2">{t('ent.facebook_disconnect_confirm')}</h3>
-                        <p className="text-xs text-[var(--text-tertiary)] text-center mb-5 font-mono bg-[var(--glass-surface)] rounded-lg px-3 py-2">ID: {confirmPageId}</p>
+                        <p className="text-xs text-[var(--text-tertiary)] text-center mb-5 font-mono bg-[var(--glass-surface)] rounded-lg px-3 py-2">{t('ent.facebook_page_id_label')} {confirmPageId}</p>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setConfirmPageId(null)}
@@ -638,24 +638,24 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
             <div className={`bg-[var(--bg-surface)] p-6 rounded-3xl border border-[var(--glass-border)] shadow-sm space-y-5 transition-opacity ${!form.enabled ? 'opacity-50' : 'opacity-100'}`}>
                 <div className={!form.enabled ? 'pointer-events-none' : ''}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_host')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.host} onChange={e => setForm({...form, host: e.target.value.trim()})} placeholder="smtp.example.com" /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_host')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.host} onChange={e => setForm({...form, host: e.target.value.trim()})} placeholder={t('ent.email_smtp_placeholder')} /></div>
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_port')}</label>
                             <input type="number" min={1} max={65535} className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={isNaN(form.port) || form.port === 0 ? '' : form.port} onChange={e => { const v = parseInt(e.target.value); setForm({...form, port: isNaN(v) ? 0 : v}); }} onBlur={e => { if (!form.port) setForm({...form, port: 587}); }} placeholder="587" />
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_user')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.user} onChange={e => setForm({...form, user: e.target.value.trim()})} placeholder="user@example.com" /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_user')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.user} onChange={e => setForm({...form, user: e.target.value.trim()})} placeholder={t('ent.email_user_placeholder')} /></div>
                         <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_pass')}</label><input type="password" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} placeholder={CONSTANTS.MASK} /></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_from_name')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromName || ''} onChange={e => setForm({...form, fromName: e.target.value})} placeholder="SGS LAND" /></div>
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_from_address')}</label><input type="email" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromAddress || ''} onChange={e => setForm({...form, fromAddress: e.target.value.trim()})} placeholder="noreply@company.com" /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_from_name')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromName || ''} onChange={e => setForm({...form, fromName: e.target.value})} placeholder={t('ent.email_from_name_placeholder')} /></div>
+                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_from_address')}</label><input type="email" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromAddress || ''} onChange={e => setForm({...form, fromAddress: e.target.value.trim()})} placeholder={t('ent.email_from_addr_placeholder')} /></div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
                         <input type="checkbox" id="smtp-secure" checked={!!form.secure} onChange={e => setForm({...form, secure: e.target.checked})} className="w-4 h-4 accent-indigo-600 cursor-pointer" />
                         <label htmlFor="smtp-secure" className="text-sm text-[var(--text-secondary)] cursor-pointer select-none">
-                            <span className="font-semibold">SSL/TLS</span> — {t('ent.email_ssl_hint')}
+                            <span className="font-semibold">{t('ent.email_ssl_label')}</span> — {t('ent.email_ssl_hint')}
                         </label>
                     </div>
                 </div>
@@ -749,7 +749,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_client_id')}</label>
-                            <input className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.clientId || ''} onChange={e => setSso({...sso, clientId: e.target.value.trim()})} placeholder="your-client-id" />
+                            <input className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.clientId || ''} onChange={e => setSso({...sso, clientId: e.target.value.trim()})} placeholder={t('ent.sso_client_id_placeholder')} />
                         </div>
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_client_secret')}</label>
@@ -761,7 +761,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_login_url')} <span className="text-[var(--text-secondary)] normal-case font-normal">{t('ent.sso_login_url_optional')}</span></label>
-                        <input type="url" placeholder="https://idp.example.com/sso/login" className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.loginUrl || ''} onChange={e => setSso({...sso, loginUrl: e.target.value.trim()})} />
+                        <input type="url" placeholder={t('ent.sso_login_url_placeholder')} className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.loginUrl || ''} onChange={e => setSso({...sso, loginUrl: e.target.value.trim()})} />
                     </div>
                     <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
