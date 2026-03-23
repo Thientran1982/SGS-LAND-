@@ -122,6 +122,12 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
     path: '/leads',
     noIndex: true,
   },
+  // ROUTES.LISTING = 'listing'
+  listing: {
+    title: 'Chi Tiết Bất Động Sản | SGS LAND',
+    description: 'Xem thông tin chi tiết bất động sản bao gồm vị trí, diện tích, giá và hình ảnh. Liên hệ môi giới và đặt lịch xem nhà ngay trên SGS LAND.',
+    path: '/listing',
+  },
   // ROUTES.BILLING = 'billing'
   billing: {
     title: 'Gói Dịch Vụ & Thanh Toán | SGS LAND',
@@ -247,6 +253,16 @@ export interface ArticleForSEO {
   category?: string;
 }
 
+function injectJsonLd(jsonLd: Record<string, unknown>): void {
+  // Remove any existing dynamic JSON-LD to prevent stale duplicates
+  document.querySelectorAll('script[data-dynamic="true"]').forEach(el => el.remove());
+  const script = document.createElement('script');
+  script.type = 'application/ld+json';
+  script.setAttribute('data-dynamic', 'true');
+  script.textContent = JSON.stringify(jsonLd);
+  document.head.appendChild(script);
+}
+
 export function injectListingSEO(listing: ListingForSEO): void {
   const priceStr = formatVNDShort(listing.price, listing.currency);
   const title = `${listing.title} | ${listing.location} – SGS LAND`.slice(0, 70);
@@ -255,6 +271,28 @@ export function injectListingSEO(listing: ListingForSEO): void {
   const image = listing.images?.[0] ?? DEFAULT_IMAGE;
   const canonicalPath = `/listing/${listing.id}`;
   applyDynamicSEO(title, description, image, canonicalPath);
+
+  injectJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    name: listing.title,
+    description,
+    url: `${BASE_URL}${canonicalPath}`,
+    image: image,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: listing.location,
+      addressCountry: 'VN',
+    },
+    price: listing.price,
+    priceCurrency: listing.currency,
+    floorSize: {
+      '@type': 'QuantitativeValue',
+      value: listing.area,
+      unitCode: 'MTK',
+    },
+    ...(listing.bedrooms != null ? { numberOfRooms: listing.bedrooms } : {}),
+  });
 }
 
 export function injectArticleSEO(article: ArticleForSEO): void {
@@ -263,8 +301,34 @@ export function injectArticleSEO(article: ArticleForSEO): void {
   const image = article.image ?? DEFAULT_IMAGE;
   const canonicalPath = `/news/${article.id}`;
   applyDynamicSEO(title, description, image, canonicalPath);
+
+  injectJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: article.title,
+    description,
+    image: image,
+    datePublished: article.date ?? new Date().toISOString(),
+    dateModified: article.date ?? new Date().toISOString(),
+    author: {
+      '@type': 'Person',
+      name: article.author ?? 'SGS LAND',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'SGS LAND',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${BASE_URL}/logo.png`,
+      },
+    },
+    url: `${BASE_URL}${canonicalPath}`,
+    ...(article.category ? { articleSection: article.category } : {}),
+  });
 }
 
 export function clearDynamicSEO(routeBase: string): void {
+  // Remove all dynamic JSON-LD scripts injected per-content
+  document.querySelectorAll('script[data-dynamic="true"]').forEach(el => el.remove());
   updatePageSEO(routeBase);
 }
