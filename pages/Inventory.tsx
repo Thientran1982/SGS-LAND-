@@ -731,7 +731,7 @@ export const Inventory: React.FC = () => {
         <div className="h-full flex flex-col relative">
 
             {/* Header & Controls */}
-            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 sm:p-6 transition-all flex-none">
+            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 sm:px-5 sm:py-3 transition-all flex-none">
                 <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
@@ -778,7 +778,7 @@ export const Inventory: React.FC = () => {
                         {(typeFilter !== 'ALL' || statusFilter !== 'ALL' || transactionFilter !== 'ALL') && (
                             <button
                                 onClick={() => { setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }}
-                                className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
+                                className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
                                 title={t('inventory.reset_filters')}
                             >
                                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse shrink-0" />
@@ -787,10 +787,10 @@ export const Inventory: React.FC = () => {
                             </button>
                         )}
 
-                        <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block"></div>
+                        <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
 
                         {canViewInternalInfo && (
-                            <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
+                            <button onClick={() => { setEditingListing(undefined); setIsCreateModalOpen(true); }} className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
                                 {ICONS.ADD} {t('inventory.create_title')}
                             </button>
                         )}
@@ -799,38 +799,38 @@ export const Inventory: React.FC = () => {
             </div>
 
             {/* Metrics Section */}
-            <div ref={metricsRef} className="px-3 md:px-6 py-2 md:py-4 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-2 md:gap-4 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-0.5 truncate">{t('inventory.total_listings')}</div>
-                    <div className="text-base md:text-2xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
+            <div ref={metricsRef} className="px-3 md:px-5 py-2 md:py-2.5 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-2 md:gap-3 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-0.5 truncate">{t('inventory.total_listings')}</div>
+                    <div className="text-base md:text-xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-emerald-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-emerald-500 uppercase tracking-wider mb-0.5 truncate">{t('status.AVAILABLE')}</div>
-                    <div className="text-base md:text-2xl font-black text-emerald-600">{stats.availableCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-emerald-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-emerald-500 uppercase tracking-wider mb-0.5 truncate">{t('status.AVAILABLE')}</div>
+                    <div className="text-base md:text-xl font-black text-emerald-600">{stats.availableCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-amber-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-amber-500 uppercase tracking-wider mb-0.5 truncate">{t('status.HOLD')}</div>
-                    <div className="text-base md:text-2xl font-black text-amber-600">{stats.holdCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-amber-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-amber-500 uppercase tracking-wider mb-0.5 truncate">{t('status.HOLD')}</div>
+                    <div className="text-base md:text-xl font-black text-amber-600">{stats.holdCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-orange-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-orange-500 uppercase tracking-wider mb-0.5 truncate">{t('status.BOOKING')}</div>
-                    <div className="text-base md:text-2xl font-black text-orange-600">{stats.bookingCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-orange-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-orange-500 uppercase tracking-wider mb-0.5 truncate">{t('status.BOOKING')}</div>
+                    <div className="text-base md:text-xl font-black text-orange-600">{stats.bookingCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-indigo-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-indigo-500 uppercase tracking-wider mb-0.5 truncate">{t('status.OPENING')}</div>
-                    <div className="text-base md:text-2xl font-black text-indigo-600">{stats.openingCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-indigo-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-indigo-500 uppercase tracking-wider mb-0.5 truncate">{t('status.OPENING')}</div>
+                    <div className="text-base md:text-xl font-black text-indigo-600">{stats.openingCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-teal-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-teal-500 uppercase tracking-wider mb-0.5 truncate">{t('status.RENTED')}</div>
-                    <div className="text-base md:text-2xl font-black text-teal-600">{stats.rentedCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-teal-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-teal-500 uppercase tracking-wider mb-0.5 truncate">{t('status.RENTED')}</div>
+                    <div className="text-base md:text-xl font-black text-teal-600">{stats.rentedCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5 truncate">{t('status.SOLD')}</div>
-                    <div className="text-base md:text-2xl font-black text-[var(--text-secondary)]">{stats.soldCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5 truncate">{t('status.SOLD')}</div>
+                    <div className="text-base md:text-xl font-black text-[var(--text-secondary)]">{stats.soldCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-rose-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-rose-500 uppercase tracking-wider mb-0.5 truncate">{t('status.INACTIVE')}</div>
-                    <div className="text-base md:text-2xl font-black text-rose-600">{stats.inactiveCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-3 py-2 rounded-xl border border-rose-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs font-bold text-rose-500 uppercase tracking-wider mb-0.5 truncate">{t('status.INACTIVE')}</div>
+                    <div className="text-base md:text-xl font-black text-rose-600">{stats.inactiveCount}</div>
                 </div>
             </div>
 
@@ -839,7 +839,7 @@ export const Inventory: React.FC = () => {
 
                 {/* GRID & LIST — inside overflow-auto so content can scroll */}
                 {(viewMode === 'GRID' || viewMode === 'LIST') && (
-                    <div className="flex-1 overflow-auto p-3 sm:p-6 no-scrollbar">
+                    <div className="flex-1 overflow-auto p-3 sm:p-4 no-scrollbar">
                         
                         {/* GRID VIEW (DEFAULT) */}
                         {viewMode === 'GRID' && (
