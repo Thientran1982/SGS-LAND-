@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
 import { db } from './services/dbApi';
@@ -330,33 +330,31 @@ const AppShell: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [accessDenied, setAccessDenied] = useState(false);
 
-    // Tracks which private pages have been mounted — CSS show/hide instead of unmount/remount
-    const [mountedPrivateRoutes, setMountedPrivateRoutes] = useState<Set<string>>(new Set());
+    // Tracks which private pages have been mounted — CSS show/hide instead of unmount/remount.
+    // Uses a ref updated synchronously during render to avoid the extra useEffect render cycle
+    // that previously caused a visible blank flash before the new page div appeared.
+    const mountedPrivateRoutesRef = useRef<Set<string>>(new Set());
 
-    // Prefetch JS chunks as soon as auth is confirmed
+    // Prefetch JS chunks as soon as auth is confirmed — covers all frequently-visited pages
     useEffect(() => {
         if (authState === 'AUTH') {
             prefetchRoutes([
                 ROUTES.DASHBOARD, ROUTES.LEADS, ROUTES.INBOX,
                 ROUTES.INVENTORY, ROUTES.CONTRACTS, ROUTES.REPORTS,
+                ROUTES.APPROVALS, ROUTES.FAVORITES, ROUTES.PROFILE,
+                ROUTES.ROUTING_RULES, ROUTES.SEQUENCES, ROUTES.KNOWLEDGE,
             ]);
         }
     }, [authState]);
 
-    // Add private route to mounted set on navigation (lazy — only routes the user visits)
-    // Also allow ROUTES.LANDING for authenticated users since the route guard keeps them in the AUTH block
-    useEffect(() => {
-        const isAllowed = authState === 'AUTH' && route.base && PAGE_REGISTRY[route.base] &&
-            (!PUBLIC_ROUTES.has(route.base) || route.base === ROUTES.LANDING);
-        if (isAllowed) {
-            setMountedPrivateRoutes(prev => {
-                if (prev.has(route.base)) return prev;
-                const next = new Set(prev);
-                next.add(route.base);
-                return next;
-            });
-        }
-    }, [route.base, authState]);
+    // Synchronously register private route into the ref during render (no useEffect needed).
+    // This eliminates the extra render cycle that useEffect caused, removing the 1-frame
+    // flash before the new page div appeared in the DOM.
+    if (authState === 'AUTH' && route.base && PAGE_REGISTRY[route.base] &&
+        (!PUBLIC_ROUTES.has(route.base) || route.base === ROUTES.LANDING)) {
+        mountedPrivateRoutesRef.current.add(route.base);
+    }
+    const mountedPrivateRoutes = mountedPrivateRoutesRef.current;
 
     // Auth Initialization — runs once on mount to check session
     useEffect(() => {

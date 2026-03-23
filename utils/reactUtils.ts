@@ -10,7 +10,7 @@ export const lazyLoad = <T extends React.ComponentType<any>>(
     importFunc: () => Promise<{ [key: string]: T }>, 
     componentName: string,
     retries = 2,
-    interval = 1000
+    interval = 300
 ) => {
     return React.lazy(() => {
         return new Promise<{ default: T }>((resolve, reject) => {
