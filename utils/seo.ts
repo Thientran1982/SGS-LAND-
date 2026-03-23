@@ -51,6 +51,7 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
     title: 'Tin Tức Bất Động Sản Mới Nhất | Thị Trường BĐS Hôm Nay - SGS LAND',
     description: 'Cập nhật tin tức bất động sản mới nhất, phân tích thị trường, xu hướng giá và các chính sách pháp luật liên quan đến bất động sản Việt Nam.',
     path: '/news',
+    noIndex: false,
   },
   // ROUTES.CONTACT = 'contact'
   contact: {
@@ -127,6 +128,7 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
     title: 'Chi Tiết Bất Động Sản | SGS LAND',
     description: 'Xem thông tin chi tiết bất động sản bao gồm vị trí, diện tích, giá và hình ảnh. Liên hệ môi giới và đặt lịch xem nhà ngay trên SGS LAND.',
     path: '/listing',
+    noIndex: false,
   },
   // ROUTES.BILLING = 'billing'
   billing: {
@@ -247,10 +249,15 @@ export interface ArticleForSEO {
   id: string;
   title: string;
   excerpt: string;
+  body?: string;
   image?: string;
   author?: string;
   date?: string;
   category?: string;
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function injectJsonLd(jsonLd: Record<string, unknown>): void {
@@ -265,9 +272,11 @@ function injectJsonLd(jsonLd: Record<string, unknown>): void {
 
 export function injectListingSEO(listing: ListingForSEO): void {
   const priceStr = formatVNDShort(listing.price, listing.currency);
-  const title = `${listing.title} | ${listing.location} – SGS LAND`.slice(0, 70);
+  const typeStr = listing.type ?? 'Bất Động Sản';
+  // Required format: "[Tên BĐS] | [Loại hình] | [Giá] - SGS LAND"
+  const title = `${listing.title} | ${typeStr} | ${priceStr} - SGS LAND`.slice(0, 70);
   const bedroomStr = listing.bedrooms ? `, ${listing.bedrooms} PN` : '';
-  const description = `${listing.type ?? 'Bất động sản'} tại ${listing.location}. Diện tích ${listing.area}m²${bedroomStr}, giá ${priceStr}. Xem chi tiết và đặt lịch xem nhà trên SGS LAND.`.slice(0, 160);
+  const description = `${typeStr} tại ${listing.location}. Diện tích ${listing.area}m²${bedroomStr}, giá ${priceStr}. Xem chi tiết và đặt lịch xem nhà trên SGS LAND.`.slice(0, 160);
   const image = listing.images?.[0] ?? DEFAULT_IMAGE;
   const canonicalPath = `/listing/${listing.id}`;
   applyDynamicSEO(title, description, image, canonicalPath);
@@ -296,8 +305,11 @@ export function injectListingSEO(listing: ListingForSEO): void {
 }
 
 export function injectArticleSEO(article: ArticleForSEO): void {
-  const title = `${article.title} | SGS LAND`.slice(0, 70);
-  const description = (article.excerpt ?? '').slice(0, 160);
+  // Required format: "[Tiêu đề bài viết] - Tin Tức BĐS | SGS LAND"
+  const title = `${article.title} - Tin Tức BĐS | SGS LAND`.slice(0, 70);
+  // Prefer first 155 chars of stripped body content; fall back to excerpt
+  const rawText = article.body ? stripHtml(article.body) : (article.excerpt ?? '');
+  const description = rawText.slice(0, 155);
   const image = article.image ?? DEFAULT_IMAGE;
   const canonicalPath = `/news/${article.id}`;
   applyDynamicSEO(title, description, image, canonicalPath);

@@ -47,6 +47,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
             id: article.id,
             title: article.title,
             excerpt: article.excerpt,
+            body: article.content,
             image: article.image,
             author: article.author,
             date: article.date,
