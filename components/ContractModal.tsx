@@ -32,6 +32,7 @@ interface CurrencyInputProps {
 }
 
 const CurrencyInput: React.FC<CurrencyInputProps> = ({ label, value, onChange, required, inputClass, labelClass }) => {
+    const { t } = useTranslation();
     const preview = value && value > 0 ? formatVNDFull(value) : null;
     return (
         <div>
@@ -58,7 +59,7 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({ label, value, onChange, r
                     {preview}
                 </p>
             ) : (
-                <p className="mt-1 text-xs text-[var(--text-tertiary)]">Nhập số nguyên, không dùng dấu chấm hay phẩy</p>
+                <p className="mt-1 text-xs text-[var(--text-tertiary)]">{t('contracts.currency_input_hint')}</p>
             )}
         </div>
     );
@@ -263,7 +264,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                             }`}
                         >
                             {tab.icon}
-                            <span>{t(tab.labelKey) || tab.labelKey.split('.')[1]}</span>
+                            <span>{t(tab.labelKey)}</span>
                             {tab.id === 'schedule' && scheduleCount > 0 && (
                                 <span className="bg-emerald-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                                     {scheduleCount}
@@ -434,13 +435,13 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50/60 p-4 space-y-4">
                                     <h3 className="font-bold text-indigo-700 flex items-center gap-2 text-sm">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                        Thông tin ký kết (in trên hợp đồng)
+                                        {t('contracts.signing_info_title')}
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className={labelClass}>
-                                                Ngày ký hợp đồng
-                                                <span className="text-[var(--text-tertiary)] font-normal ml-1">— "Hôm nay, ngày... tháng... năm..."</span>
+                                                {t('contracts.contract_date')}
+                                                <span className="text-[var(--text-tertiary)] font-normal ml-1">— "{t('contracts.contract_date_hint')}"</span>
                                             </label>
                                             <input
                                                 type="date"
@@ -451,25 +452,25 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                         </div>
                                         <div>
                                             <label className={labelClass}>
-                                                Địa điểm ký
-                                                <span className="text-[var(--text-tertiary)] font-normal ml-1">— "tại [địa điểm]"</span>
+                                                {t('contracts.signed_place')}
+                                                <span className="text-[var(--text-tertiary)] font-normal ml-1">— "{t('contracts.signed_place_hint')}"</span>
                                             </label>
                                             <input
                                                 value={formData.signedPlace || ''}
                                                 onChange={e => handleChange('signedPlace', e.target.value)}
                                                 className={inputClass}
-                                                placeholder="VD: TP. Hồ Chí Minh"
+                                                placeholder={t('contracts.signed_place_placeholder')}
                                             />
                                         </div>
                                     </div>
-                                    <p className="text-xs text-indigo-500 italic">Nếu để trống, hợp đồng sẽ hiển thị dòng kẻ chờ điền tay.</p>
+                                    <p className="text-xs text-indigo-500 italic">{t('contracts.blank_line_hint')}</p>
                                 </div>
 
                                 {/* ── PHẦN 2: TÀI CHÍNH ── */}
                                 <h3 className="font-bold text-rose-600 border-b border-rose-100 pb-2">{t('contracts.finance_terms_title')}</h3>
                                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-700 flex items-start gap-2">
                                     <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <span>Nhập số tiền bằng <strong>đồng VNĐ</strong>, không dùng dấu chấm hay phẩy. Ví dụ: <strong>2000000000</strong> = 2 Tỷ đồng &nbsp;|&nbsp; <strong>500000000</strong> = 500 Triệu đồng.</span>
+                                    <span>{t('contracts.vnd_input_hint')}</span>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <CurrencyInput
@@ -542,9 +543,9 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                     <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">
                                         <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         <span>
-                                            {t('payment.tip_set_price') || 'Nhập giá bất động sản ở tab Điều khoản để tự động tính % cho mỗi đợt.'}
+                                            {t('payment.tip_set_price')}
                                             <button type="button" onClick={() => handleTabChange('terms')} className="ml-1 font-bold text-amber-800 underline underline-offset-2">
-                                                {t('contracts.tab_terms') || 'Điều khoản'}
+                                                {t('contracts.tab_terms')}
                                             </button>
                                         </span>
                                     </div>

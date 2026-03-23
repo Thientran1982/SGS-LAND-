@@ -294,6 +294,34 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 
 ---
 
+### Contracts.tsx + ContractModal.tsx Audit & Fix (March 2026)
+Full audit of contract page, buttons, filters, i18n, logic, and data flow:
+
+**Contracts.tsx — 8 bug groups fixed:**
+1. **RowMenu hardcoded strings (5)**: `aria-label="Tùy chọn"` → `t('common.actions')`; menu items → `t('common.edit')`, `t('contracts.view_export_pdf')`, `t('common.share_link')`, `t('contracts.delete_label')` (all had zero i18n)
+2. **RowMenu missing `useTranslation`**: Component was not calling the hook — added
+3. **`handleDelete` no feedback**: Delete succeeded silently; added `notify(t('contracts.delete_success'), 'success')` + error toast; key existed but was never used
+4. **Toast portal**: No toast state or portal at all — added `toast` state, `notify` callback, `createPortal` + Fragment wrapper
+5. **Pagination hardcoded (3)**: `'Trang X / Y'` → `t('contracts.pagination', { page, total })`; `'← Trước'` → `t('common.prev')`; `'Sau →'` → `t('common.next')`
+6. **Empty state single variant**: No "no results" branch when filter/search active — added `isFiltered` check with `t('common.no_results')` + reset button vs `t('contracts.empty')` for blank slate
+7. **Share modal copy button `aria-label`**: `t('common.copied')` (state-dependent text) → `t('common.copy_link')` (static accessible label)
+8. **Dead `|| fallback`**: None found in main file (already clean)
+
+**ContractModal.tsx — 5 bug groups fixed:**
+1. **Dead tab label fallback**: `t(tab.labelKey) || tab.labelKey.split('.')[1]` → `t(tab.labelKey)`
+2. **Signing info section — 7 hardcoded strings**: heading, contract date label+hint, signed place label+hint+placeholder, blank line note → all using new locale keys
+3. **VNĐ input helper text hardcoded**: Block with `<strong>` inline VI text → `t('contracts.vnd_input_hint')`
+4. **Payment schedule dead fallbacks (2)**: `t('payment.tip_set_price') || '...'` + `t('contracts.tab_terms') || '...'` → removed `||` branches
+5. **CurrencyInput missing `useTranslation`**: Hardcoded hint "Nhập số nguyên..." → added hook + `t('contracts.currency_input_hint')`
+
+**Locale keys added (config/locales.ts — VI + EN):**
+- `contracts.delete_label`, `contracts.pagination`, `contracts.reset_filters`
+- `contracts.signing_info_title`, `contracts.contract_date`, `contracts.contract_date_hint`
+- `contracts.signed_place`, `contracts.signed_place_hint`, `contracts.signed_place_placeholder`
+- `contracts.blank_line_hint`, `contracts.vnd_input_hint`, `contracts.currency_input_hint`
+
+---
+
 ### Inventory.tsx Audit & Fix (March 2026)
 All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast portal fixed:
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '../services/i18n';
 import { db } from '../services/dbApi';
@@ -82,6 +82,7 @@ interface RowMenuProps {
 }
 
 const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare, onDelete }) => {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [pos, setPos] = useState({ top: 0, left: 0 });
     const btnRef = useRef<HTMLButtonElement>(null);
@@ -131,7 +132,7 @@ const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare,
             <button
                 ref={btnRef}
                 onClick={toggle}
-                aria-label="Tùy chọn"
+                aria-label={t('common.actions')}
                 className="p-2 min-h-[36px] min-w-[36px] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-surface-hover)] transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -145,17 +146,17 @@ const RowMenu: React.FC<RowMenuProps> = ({ contract, onEdit, onViewPDF, onShare,
                     style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999, width: 192 }}
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl p-1.5 animate-enter"
                 >
-                    {item('Chỉnh sửa', (
+                    {item(t('common.edit'), (
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     ), onEdit)}
-                    {item('Xem / Xuất PDF', (
+                    {item(t('contracts.view_export_pdf'), (
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     ), onViewPDF)}
-                    {item('Chia sẻ link', (
+                    {item(t('common.share_link'), (
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                     ), onShare)}
                     <div className="my-1 border-t border-[var(--glass-border)]" />
-                    {item('Xóa hợp đồng', (
+                    {item(t('contracts.delete_label'), (
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     ), onDelete, true)}
                 </div>,
@@ -182,6 +183,12 @@ const Contracts: React.FC = () => {
     const [contractToDelete, setContractToDelete] = useState<string | null>(null);
     const [shareLink, setShareLink] = useState<string | null>(null);
     const [linkCopied, setLinkCopied] = useState(false);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+    const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    }, []);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(scrollRef);
@@ -208,10 +215,14 @@ const Contracts: React.FC = () => {
         try {
             await db.deleteContract(id);
             loadContracts();
+            notify(t('contracts.delete_success'), 'success');
         } catch (error) {
             console.error('Failed to delete contract:', error);
+            notify(t('common.error'), 'error');
         }
     };
+
+    const isFiltered = useMemo(() => search !== '' || typeFilter !== 'ALL' || statusFilter !== 'ALL', [search, typeFilter, statusFilter]);
 
     const handleEdit = (contract: Contract) => {
         setEditingContract(contract);
@@ -219,6 +230,7 @@ const Contracts: React.FC = () => {
     };
 
     return (
+        <>
         <div className="p-6 h-full flex flex-col animate-enter">
             <div className="flex justify-end mb-6">
                 <button
@@ -285,9 +297,21 @@ const Contracts: React.FC = () => {
                     {loading ? (
                         <div className="p-8 text-center text-[var(--text-secondary)]">{t('common.loading')}</div>
                     ) : contracts.length === 0 ? (
-                        <div className="p-12 text-center text-[var(--text-secondary)]">
-                            <svg className="w-12 h-12 mx-auto mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            {t('contracts.empty')}
+                        <div className="p-12 text-center text-[var(--text-secondary)] flex flex-col items-center gap-3">
+                            {isFiltered ? (
+                                <svg className="w-12 h-12 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            ) : (
+                                <svg className="w-12 h-12 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            )}
+                            <p className="text-sm font-medium">{isFiltered ? t('common.no_results') : t('contracts.empty')}</p>
+                            {isFiltered && (
+                                <button
+                                    onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); }}
+                                    className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors"
+                                >
+                                    {t('contracts.reset_filters')}
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="min-w-[800px] w-full">
@@ -399,21 +423,21 @@ const Contracts: React.FC = () => {
                 {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="p-4 border-t border-[var(--glass-border)] flex items-center justify-between">
-                        <span className="text-sm text-[var(--text-secondary)]">Trang {page} / {totalPages}</span>
+                        <span className="text-sm text-[var(--text-secondary)]">{t('contracts.pagination', { page: String(page), total: String(totalPages) })}</span>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page <= 1}
                                 className="px-3 py-1.5 rounded-lg border border-[var(--glass-border)] text-sm disabled:opacity-40 hover:bg-[var(--glass-surface-hover)] transition-colors"
                             >
-                                ← Trước
+                                ← {t('common.prev')}
                             </button>
                             <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page >= totalPages}
                                 className="px-3 py-1.5 rounded-lg border border-[var(--glass-border)] text-sm disabled:opacity-40 hover:bg-[var(--glass-surface-hover)] transition-colors"
                             >
-                                Sau →
+                                {t('common.next')} →
                             </button>
                         </div>
                     </div>
@@ -458,7 +482,7 @@ const Contracts: React.FC = () => {
                                 onClick={(e) => e.currentTarget.select()}
                             />
                             <button
-                                aria-label={t('common.copied')}
+                                aria-label={t('common.copy_link')}
                                 onClick={() => {
                                     navigator.clipboard.writeText(shareLink).then(() => {
                                         setLinkCopied(true);
@@ -487,6 +511,15 @@ const Contracts: React.FC = () => {
                 document.body
             )}
         </div>
+        {createPortal(
+            toast ? (
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };
 
