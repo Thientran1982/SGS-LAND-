@@ -31,23 +31,38 @@ interface HealthResult {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-const PUBLIC_ROUTES = [
-    { key: '', label: 'Trang chủ' },
-    { key: 'home', label: 'Landing' },
-    { key: 'marketplace', label: 'Tìm kiếm BĐS' },
-    { key: 'ai-valuation', label: 'Định giá AI' },
-    { key: 'news', label: 'Tin tức BĐS' },
-    { key: 'about-us', label: 'Về chúng tôi' },
-    { key: 'crm-platform', label: 'CRM Platform' },
-    { key: 'contact', label: 'Liên hệ' },
-    { key: 'careers', label: 'Tuyển dụng' },
-    { key: 'help-center', label: 'Trợ giúp' },
-    { key: 'developers', label: 'API Docs' },
-    { key: 'login', label: 'Đăng nhập' },
-    { key: 'register', label: 'Đăng ký' },
-    { key: 'billing', label: 'Thanh toán' },
-    { key: 'seo-manager', label: 'SEO Manager' },
-];
+
+// Human-readable labels for each ROUTE_SEO key.
+// Falls back to the key itself if not listed here.
+const ROUTE_LABELS: Record<string, string> = {
+    '':               'Root (Trang chủ mặc định)',
+    home:             'Trang chủ (Landing)',
+    marketplace:      'Tìm kiếm BĐS',
+    'ai-valuation':   'Định giá AI',
+    'crm-platform':   'CRM Platform',
+    'about-us':       'Về chúng tôi',
+    news:             'Tin tức BĐS',
+    contact:          'Liên hệ',
+    careers:          'Tuyển dụng',
+    'help-center':    'Trung tâm hỗ trợ',
+    developers:       'API Docs',
+    status:           'Trạng thái hệ thống',
+    'privacy-policy': 'Chính sách bảo mật',
+    'terms-of-service': 'Điều khoản sử dụng',
+    'cookie-settings': 'Cài đặt Cookie',
+    login:            'Đăng nhập',
+    register:         'Đăng ký',
+    inventory:        'Kho hàng (nội bộ)',
+    leads:            'CRM Leads (nội bộ)',
+    billing:          'Thanh toán',
+    'seo-manager':    'SEO Manager (admin)',
+};
+
+// Derived from ROUTE_SEO so it's always in sync — no hardcoding.
+const ALL_ROUTES: { key: string; label: string }[] = Object.keys(ROUTE_SEO).map(key => ({
+    key,
+    label: ROUTE_LABELS[key] ?? key,
+}));
 
 function getEffectiveCfg(routeKey: string, overrides: Record<string, { title: string; description: string }>): SEOConfig & { title: string; description: string } {
     const base = ROUTE_SEO[routeKey] ?? ROUTE_SEO[''];
@@ -89,7 +104,7 @@ const SerpPreview: React.FC = () => {
                         onChange={e => setSelectedKey(e.target.value)}
                         className="w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-sm bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                     >
-                        {PUBLIC_ROUTES.map(r => (
+                        {ALL_ROUTES.map(r => (
                             <option key={r.key} value={r.key}>{r.label}</option>
                         ))}
                     </select>
@@ -184,8 +199,8 @@ const MetaEditor: React.FC = () => {
     const [edits, setEdits] = useState<Record<string, { title: string; description: string }>>({});
     const [saved, setSaved] = useState<string | null>(null);
 
-    const getTitle = (key: string) => edits[key]?.title ?? overrides[key]?.title ?? (ROUTE_SEO[key]?.title || ROUTE_SEO['']?.title);
-    const getDesc  = (key: string) => edits[key]?.description ?? overrides[key]?.description ?? (ROUTE_SEO[key]?.description || ROUTE_SEO['']?.description);
+    const getTitle = (key: string) => edits[key]?.title ?? overrides[key]?.title ?? ROUTE_SEO[key]?.title ?? ROUTE_SEO[''].title;
+    const getDesc  = (key: string) => edits[key]?.description ?? overrides[key]?.description ?? ROUTE_SEO[key]?.description ?? ROUTE_SEO[''].description;
 
     const handleChange = (key: string, field: 'title' | 'description', val: string) => {
         setEdits(prev => ({ ...prev, [key]: { ...(prev[key] ?? { title: getTitle(key), description: getDesc(key) }), [field]: val } }));
@@ -197,7 +212,8 @@ const MetaEditor: React.FC = () => {
         saveSEOOverride(key, t, d);
         setOverrides(getSEOOverrides());
         setEdits(prev => { const next = { ...prev }; delete next[key]; return next; });
-        updatePageSEO(key);
+        // Restore admin page SEO to preserve noindex — do NOT apply the edited route's SEO to the DOM
+        updatePageSEO('seo-manager');
         setSaved(key);
         setTimeout(() => setSaved(null), 2000);
     };
@@ -206,7 +222,8 @@ const MetaEditor: React.FC = () => {
         clearSEOOverride(key);
         setOverrides(getSEOOverrides());
         setEdits(prev => { const next = { ...prev }; delete next[key]; return next; });
-        updatePageSEO(key);
+        // Restore admin page SEO to preserve noindex
+        updatePageSEO('seo-manager');
     };
 
     const isDirty = (key: string) => !!edits[key];
@@ -214,14 +231,14 @@ const MetaEditor: React.FC = () => {
 
     return (
         <div className="space-y-4">
-            <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho từng trang. Thay đổi được lưu trong trình duyệt và áp dụng ngay lập tức.</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho từng trang. Thay đổi được lưu trong trình duyệt và có hiệu lực lần sau khi người dùng truy cập trang đó.</p>
 
-            {PUBLIC_ROUTES.filter(r => ROUTE_SEO[r.key]).map(({ key, label }) => {
+            {ALL_ROUTES.map(({ key, label }) => {
                 const dirty = isDirty(key);
                 const overridden = isOverridden(key);
                 const title = getTitle(key);
                 const desc = getDesc(key);
-                const cfg = ROUTE_SEO[key] ?? ROUTE_SEO[''];
+                const cfg = ROUTE_SEO[key];
 
                 return (
                     <div key={key} className={`bg-[var(--bg-surface)] border rounded-2xl p-4 shadow-sm transition-all ${dirty ? 'border-indigo-300 shadow-indigo-100/50 dark:shadow-indigo-900/20' : 'border-[var(--glass-border)]'}`}>
