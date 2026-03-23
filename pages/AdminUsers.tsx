@@ -547,7 +547,12 @@ export const AdminUsers: React.FC = () => {
                                     <tr key={user.id} className="hover:bg-[var(--glass-surface)] transition-colors group">
                                         <td className="p-3 sm:p-4">
                                             <div className="flex items-center gap-2 sm:gap-3">
-                                                <img src={user.avatar} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover bg-slate-200 border border-[var(--glass-border)] shrink-0" alt="" />
+                                                <img
+                                                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=40&background=6366f1&color=fff`}
+                                                    onError={e => { (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=40&background=6366f1&color=fff`; }}
+                                                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-[var(--glass-border)] shrink-0"
+                                                    alt={user.name}
+                                                />
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5 flex-wrap">
                                                         <span className="truncate max-w-[140px] sm:max-w-[200px] text-xs sm:text-sm">{user.name}</span>
