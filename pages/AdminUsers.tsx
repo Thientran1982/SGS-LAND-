@@ -410,6 +410,8 @@ export const AdminUsers: React.FC = () => {
         { value: CommonStatus.ACTIVE, label: t('admin.users.status_active') },
         { value: CommonStatus.PENDING, label: t('admin.users.status_pending') },
         { value: CommonStatus.INACTIVE, label: t('admin.users.status_inactive') },
+        { value: CommonStatus.DEACTIVATED, label: t('admin.users.status_deactivated') },
+        { value: CommonStatus.ARCHIVED, label: t('admin.users.status_archived') },
     ], [t]);
 
     const userRoleOptions = useMemo(() => Object.values(UserRole).map(r => ({ value: r, label: t(`role.${r}`) })), [t]);
@@ -539,9 +541,7 @@ export const AdminUsers: React.FC = () => {
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {users.map(user => {
-                                // Logic: Pending if status is PENDING
                                 const isPending = user.status === CommonStatus.PENDING;
-                                const displayStatus = user.status;
                                 
                                 return (
                                     <tr key={user.id} className="hover:bg-[var(--glass-surface)] transition-colors group">
@@ -552,6 +552,7 @@ export const AdminUsers: React.FC = () => {
                                                     onError={e => { (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=40&background=6366f1&color=fff`; }}
                                                     className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-[var(--glass-border)] shrink-0"
                                                     alt={user.name}
+                                                    aria-label={user.name}
                                                 />
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5 flex-wrap">
@@ -582,19 +583,21 @@ export const AdminUsers: React.FC = () => {
                                                 onClick={() => user.id !== currentUser?.id && setUserToStatusChange(user)}
                                                 disabled={user.id === currentUser?.id}
                                                 className={`px-2 sm:px-3 py-1 rounded-full text-2xs sm:text-xs2 font-bold uppercase border whitespace-nowrap text-center transition-all active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5
-                                                    ${displayStatus === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' : 
-                                                      displayStatus === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' : 
+                                                    ${user.status === CommonStatus.ACTIVE ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' : 
+                                                      user.status === CommonStatus.PENDING ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' :
+                                                      user.status === CommonStatus.DEACTIVATED ? 'bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100' :
+                                                      user.status === CommonStatus.ARCHIVED ? 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200' :
                                                       'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] hover:bg-slate-200'}
                                                     ${user.id !== currentUser?.id ? 'cursor-pointer hover:shadow-sm' : 'cursor-default opacity-70'}
                                                 `}
-                                                title={t(`admin.users.status_${displayStatus.toLowerCase()}`) || displayStatus}
+                                                title={t(`admin.users.status_${user.status.toLowerCase()}`)}
                                             >
-                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${displayStatus === 'ACTIVE' ? 'bg-emerald-500' : displayStatus === 'PENDING' ? 'bg-amber-500' : 'bg-slate-400'}`}></span>
+                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${user.status === CommonStatus.ACTIVE ? 'bg-emerald-500' : user.status === CommonStatus.PENDING ? 'bg-amber-500' : user.status === CommonStatus.DEACTIVATED ? 'bg-orange-400' : user.status === CommonStatus.ARCHIVED ? 'bg-slate-400' : 'bg-slate-400'}`}></span>
                                                 {/* Mobile: short label | Desktop: full label */}
                                                 <span className="sm:hidden">
-                                                    {displayStatus === 'ACTIVE' ? t('admin.users.mobile_active') : displayStatus === 'PENDING' ? t('admin.users.mobile_pending') : t('admin.users.mobile_inactive')}
+                                                    {user.status === CommonStatus.ACTIVE ? t('admin.users.mobile_active') : user.status === CommonStatus.PENDING ? t('admin.users.mobile_pending') : t('admin.users.mobile_inactive')}
                                                 </span>
-                                                <span className="hidden sm:inline">{t(`admin.users.status_${displayStatus.toLowerCase()}`) || displayStatus}</span>
+                                                <span className="hidden sm:inline">{t(`admin.users.status_${user.status.toLowerCase()}`)}</span>
                                             </button>
                                         </td>
                                         <td className="hidden md:table-cell p-4 text-[var(--text-tertiary)] font-mono text-xs">

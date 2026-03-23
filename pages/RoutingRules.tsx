@@ -155,7 +155,7 @@ export const RoutingRules: React.FC = () => {
             setUsers(u.data || []);
             setTeams(tm || []);
         } catch {
-            // silent — UI stays with empty state
+            notify(t('common.error_loading'), 'error');
         } finally { setLoading(false); }
     }, []);
 
