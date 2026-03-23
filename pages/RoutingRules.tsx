@@ -17,9 +17,11 @@ const ICONS = {
 
 const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
     const [form, setForm] = useState<Partial<RoutingRule>>({});
+    const [validationError, setValidationError] = useState('');
 
     useEffect(() => {
         if (isOpen) {
+            setValidationError('');
             setForm(rule || {
                 name: '',
                 priority: 1,
@@ -33,7 +35,11 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
     if (!isOpen) return null;
 
     const handleSave = () => {
-        if (!form.name || !form.action?.targetId) return;
+        if (!form.name?.trim() || !form.action?.targetId) {
+            setValidationError(t('routing.validate_required'));
+            return;
+        }
+        setValidationError('');
         onSave(form);
     };
 
@@ -101,7 +107,12 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                     </div>
                 </div>
 
-                <div className="pt-6 mt-6 border-t border-[var(--glass-border)] flex gap-3">
+                {validationError && (
+                    <div className="mt-4 px-4 py-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl font-medium">
+                        {validationError}
+                    </div>
+                )}
+                <div className="pt-6 mt-4 border-t border-[var(--glass-border)] flex gap-3">
                     <button onClick={onClose} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl hover:bg-slate-200 transition-colors">{t('common.cancel')}</button>
                     <button onClick={handleSave} className="flex-1 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg">{t('common.save')}</button>
                 </div>
@@ -187,7 +198,7 @@ export const RoutingRules: React.FC = () => {
             return true;
         });
 
-        let assigned = 'Unassigned';
+        let assigned = t('routing.sim_unassigned');
         if (matched) {
             if (matched.action.type === 'ASSIGN_USER') {
                 const u = (users || []).find(x => x.id === matched.action.targetId);
@@ -203,8 +214,22 @@ export const RoutingRules: React.FC = () => {
 
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
+    // Map raw condition keys to translation keys
+    const condLabel = (key: string) => {
+        const map: Record<string, string> = {
+            source: t('routing.cond_source'),
+            region: t('routing.cond_region'),
+            budgetMin: t('routing.cond_budgetMin'),
+            budgetMax: t('routing.cond_budgetMax'),
+            tags: t('routing.cond_tags'),
+            projects: t('routing.cond_projects'),
+            temperature: t('routing.cond_temperature'),
+        };
+        return map[key] ?? key;
+    };
+
     return (
-        <div className="space-y-6 pb-20 animate-enter relative">
+        <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
             {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
@@ -225,8 +250,8 @@ export const RoutingRules: React.FC = () => {
                             <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4 text-indigo-400">
                                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
                             </div>
-                            <p className="font-bold text-[var(--text-primary)] mb-1">{t('routing.empty_title') || 'Chưa có quy tắc phân phối'}</p>
-                            <p className="text-sm text-[var(--text-tertiary)] mb-6">{t('routing.empty_desc') || 'Tạo quy tắc để tự động phân công lead cho đúng người, đúng lúc.'}</p>
+                            <p className="font-bold text-[var(--text-primary)] mb-1">{t('routing.empty_title')}</p>
+                            <p className="text-sm text-[var(--text-tertiary)] mb-6">{t('routing.empty_desc')}</p>
                             <button
                                 onClick={() => { setEditingRule(undefined); setIsModalOpen(true); }}
                                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 text-sm"
@@ -256,12 +281,12 @@ export const RoutingRules: React.FC = () => {
                                     <div className="font-bold text-[var(--text-tertiary)] uppercase text-xs2 mb-1">{t('routing.conditions')}</div>
                                     <div className="space-y-1 font-mono text-[var(--text-secondary)]">
                                         {Object.entries(rule.conditions || {}).map(([k, v]) => (
-                                            <div key={k} className="flex justify-between">
-                                                <span>{k}:</span>
-                                                <span className="font-bold">{Array.isArray(v) ? v.join(', ') : v}</span>
+                                            <div key={k} className="flex justify-between gap-2">
+                                                <span className="text-[var(--text-tertiary)]">{condLabel(k)}:</span>
+                                                <span className="font-bold text-right">{Array.isArray(v) ? v.join(', ') : String(v)}</span>
                                             </div>
                                         ))}
-                                        {Object.keys(rule.conditions || {}).length === 0 && <span className="text-[var(--text-secondary)] italic text-xs2">None</span>}
+                                        {Object.keys(rule.conditions || {}).length === 0 && <span className="text-[var(--text-secondary)] italic text-xs2">{t('routing.no_conditions')}</span>}
                                     </div>
                                 </div>
                                 <div className="bg-indigo-50 p-3 rounded-xl">
