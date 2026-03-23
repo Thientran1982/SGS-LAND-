@@ -230,12 +230,12 @@ export const Billing: React.FC = () => {
                                     const anyInv = inv as any;
                                     const planLabel = PLANS[anyInv.planId as PlanTier]
                                         ? t(`billing.plan_${PLANS[anyInv.planId as PlanTier].name.toLowerCase()}`)
-                                        : (anyInv.planId || '—');
+                                        : (anyInv.planId || t('common.no_value'));
                                     const dateStr = inv.created
                                         ? new Date(inv.created).toLocaleDateString()
                                         : anyInv.createdAt
                                         ? new Date(anyInv.createdAt).toLocaleDateString()
-                                        : '—';
+                                        : t('common.no_value');
                                     const isPaid = inv.status === 'paid' || (anyInv.status as string) === 'PAID';
                                     return (
                                         <tr key={inv.id} className="border-b border-slate-50 hover:bg-[var(--glass-surface)] transition-colors">
