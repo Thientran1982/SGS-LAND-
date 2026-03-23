@@ -72,7 +72,10 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
                 
                 {/* 1. GLASS BENTO CARD - LIVE ANALYTICS */}
                 <div className="bg-[var(--bg-surface)]/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden relative group">
-                    <div className="absolute top-0 right-0 p-20 bg-indigo-500/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                    {/* Primary orb — top-right */}
+                    <div className="absolute -top-10 -right-10 w-48 h-48 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none"></div>
+                    {/* Secondary accent orb — bottom-left */}
+                    <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-violet-500/15 rounded-full blur-2xl pointer-events-none"></div>
                     
                     <div className="p-6 border-b border-white/5 flex justify-between items-center">
                         <div>

@@ -127,7 +127,12 @@ export const Hero3D = () => {
 
   return (
     <div className="relative w-full max-w-2xl mx-auto">
-      <div className="absolute inset-0 bg-indigo-500/20 dark:bg-indigo-500/30 blur-[100px] rounded-full pointer-events-none" />
+      {/* Primary orb — behind building roof, centered */}
+      <div className="absolute top-[2%] left-1/2 -translate-x-1/2 w-[52%] h-[48%] bg-indigo-500/22 dark:bg-indigo-400/28 blur-[72px] rounded-full pointer-events-none" />
+      {/* Accent orb — behind price data tag (right side, violet) */}
+      <div className="absolute top-[22%] right-[4%] w-[24%] h-[32%] bg-violet-500/14 dark:bg-violet-400/18 blur-[56px] rounded-full pointer-events-none" />
+      {/* Accent orb — behind match data tag (left side, emerald) */}
+      <div className="absolute top-[32%] left-[4%] w-[20%] h-[28%] bg-emerald-500/10 dark:bg-emerald-400/14 blur-[48px] rounded-full pointer-events-none" />
 
       <motion.svg viewBox="0 0 800 650" className="w-full h-auto drop-shadow-2xl relative z-10"
         role="img" aria-label={language === 'vn' ? 'Minh họa tòa nhà 3D với dữ liệu định giá AI' : '3D building illustration with AI valuation data'}
@@ -359,20 +364,29 @@ export const Hero3D = () => {
         </g>
 
         {/* Top edge highlights */}
-        <polyline points="240,120 400,40 560,120" fill="none" stroke="#6366F1" strokeWidth="1.5" opacity="0.5" filter="url(#glow)" />
-        <polyline points="240,120 400,200 560,120" fill="none" stroke="#475569" strokeWidth="1" opacity="0.4" />
+        <polyline points="240,120 400,40 560,120" fill="none" stroke="#6366F1" strokeWidth="2" opacity="0.55" filter="url(#glow)" />
+        <polyline points="240,120 400,40 560,120" fill="none" stroke="#818CF8" strokeWidth="0.75" opacity="0.35" />
+        <polyline points="240,120 400,200 560,120" fill="none" stroke="#475569" strokeWidth="1" opacity="0.35" />
 
         {/* ── AI SCANNING LASER ── */}
         <motion.g
-          animate={{ y: [0, 320, 0], opacity: [0.2, 1, 0.2] }}
+          animate={{ y: [0, 320, 0], opacity: [0.15, 1, 0.15] }}
           transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
         >
-          <polygon points="240,120 400,200 400,210 240,130" fill="url(#emeraldGlow)" opacity="0.25" />
-          <polygon points="400,200 560,120 560,130 400,210" fill="url(#emeraldGlow)" opacity="0.25" />
-          <polyline points="240,120 400,200 560,120" fill="none" stroke="#10B981" strokeWidth="2.5" filter="url(#glow)" opacity="0.9" />
-          <circle cx="400" cy="200" r="4" fill="#fff" filter="url(#glow)" />
+          <polygon points="240,120 400,200 400,210 240,130" fill="url(#emeraldGlow)" opacity="0.22" />
+          <polygon points="400,200 560,120 560,130 400,210" fill="url(#emeraldGlow)" opacity="0.22" />
+          <polyline points="240,120 400,200 560,120" fill="none" stroke="#10B981" strokeWidth="2" filter="url(#glow)" opacity="0.85" />
+          {/* Center ridge dot */}
+          <circle cx="400" cy="200" r="5.5" fill="#10B981" opacity="0.2" filter="url(#glow)" />
+          <circle cx="400" cy="200" r="3.5" fill="#fff" filter="url(#glow)" opacity="0.95" />
+          {/* Left corner dot — halo + core */}
+          <circle cx="240" cy="120" r="6" fill="#10B981" opacity="0.18" filter="url(#glow)" />
           <circle cx="240" cy="120" r="3" fill="#10B981" filter="url(#glow)" />
+          <circle cx="240" cy="120" r="1.2" fill="#fff" opacity="0.85" />
+          {/* Right corner dot — halo + core */}
+          <circle cx="560" cy="120" r="6" fill="#10B981" opacity="0.18" filter="url(#glow)" />
           <circle cx="560" cy="120" r="3" fill="#10B981" filter="url(#glow)" />
+          <circle cx="560" cy="120" r="1.2" fill="#fff" opacity="0.85" />
         </motion.g>
 
         {/* ── LOCATION PIN ── */}
@@ -387,29 +401,41 @@ export const Hero3D = () => {
 
         {/* ── DATA TAG 1: Price ── */}
         <motion.g animate={{ y: [0,-8,0] }} transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}>
-          <line x1="560" y1="240" x2="628" y2="192" stroke="#8B5CF6" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.7" />
+          <line x1="560" y1="240" x2="628" y2="192" stroke="#8B5CF6" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.65" />
+          {/* Connector dot — halo + core + white center */}
+          <circle cx="628" cy="192" r="8" fill="#8B5CF6" opacity="0.18" filter="url(#glow)" />
           <circle cx="628" cy="192" r="4.5" fill="#8B5CF6" filter="url(#glow)" />
-          <rect x="640" y="170" width="110" height="44" rx="8" fill="#1E293B" stroke="#8B5CF6" strokeWidth="1.5" />
-          <text x="695" y="188" fill="#A78BFA" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1">{labelPrice}</text>
-          <text x="695" y="206" fill="#fff" fontSize="14" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textPrice}</text>
+          <circle cx="628" cy="192" r="1.8" fill="#fff" opacity="0.9" />
+          <rect x="640" y="170" width="114" height="46" rx="9" fill="#1E293B" stroke="#8B5CF6" strokeWidth="1.5" opacity="0.97" />
+          <rect x="640" y="170" width="114" height="46" rx="9" fill="url(#aiHighlight)" opacity="0.06" />
+          <text x="697" y="188" fill="#A78BFA" fontSize="8.5" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1.2">{labelPrice}</text>
+          <text x="697" y="207" fill="#fff" fontSize="14" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textPrice}</text>
         </motion.g>
 
         {/* ── DATA TAG 2: Match ── */}
         <motion.g animate={{ y: [0,-12,0] }} transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut', delay: 1 }}>
-          <line x1="240" y1="280" x2="162" y2="232" stroke="#10B981" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.7" />
+          <line x1="240" y1="280" x2="162" y2="232" stroke="#10B981" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.65" />
+          {/* Connector dot — halo + core + white center */}
+          <circle cx="162" cy="232" r="8" fill="#10B981" opacity="0.18" filter="url(#glow)" />
           <circle cx="162" cy="232" r="4.5" fill="#10B981" filter="url(#glow)" />
-          <rect x="30" y="210" width="127" height="44" rx="8" fill="#1E293B" stroke="#10B981" strokeWidth="1.5" />
-          <text x="93" y="228" fill="#34D399" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1">{labelMatch}</text>
-          <text x="93" y="246" fill="#fff" fontSize="14" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textMatch}</text>
+          <circle cx="162" cy="232" r="1.8" fill="#fff" opacity="0.9" />
+          <rect x="28" y="210" width="130" height="46" rx="9" fill="#1E293B" stroke="#10B981" strokeWidth="1.5" opacity="0.97" />
+          <rect x="28" y="210" width="130" height="46" rx="9" fill="#10B981" opacity="0.05" />
+          <text x="93" y="228" fill="#34D399" fontSize="8.5" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1.2">{labelMatch}</text>
+          <text x="93" y="247" fill="#fff" fontSize="14" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textMatch}</text>
         </motion.g>
 
         {/* ── DATA TAG 3: Trend ── */}
         <motion.g animate={{ y: [0,-10,0] }} transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}>
-          <line x1="400" y1="445" x2="400" y2="497" stroke="#3B82F6" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.7" />
+          <line x1="400" y1="445" x2="400" y2="497" stroke="#3B82F6" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.65" />
+          {/* Connector dot — halo + core + white center */}
+          <circle cx="400" cy="497" r="8" fill="#3B82F6" opacity="0.18" filter="url(#glow)" />
           <circle cx="400" cy="497" r="4.5" fill="#3B82F6" filter="url(#glow)" />
-          <rect x="326" y="505" width="148" height="44" rx="8" fill="#1E293B" stroke="#3B82F6" strokeWidth="1.5" />
-          <text x="400" y="523" fill="#93C5FD" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1">{labelTrend}</text>
-          <text x="400" y="541" fill="#fff" fontSize="13" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textTrend}</text>
+          <circle cx="400" cy="497" r="1.8" fill="#fff" opacity="0.9" />
+          <rect x="324" y="505" width="152" height="46" rx="9" fill="#1E293B" stroke="#3B82F6" strokeWidth="1.5" opacity="0.97" />
+          <rect x="324" y="505" width="152" height="46" rx="9" fill="#3B82F6" opacity="0.05" />
+          <text x="400" y="523" fill="#93C5FD" fontSize="8.5" fontWeight="bold" textAnchor="middle" fontFamily="system-ui,sans-serif" letterSpacing="1.2">{labelTrend}</text>
+          <text x="400" y="542" fill="#fff" fontSize="13" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{textTrend}</text>
         </motion.g>
 
       </motion.svg>
