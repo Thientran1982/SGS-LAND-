@@ -1,21 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+  xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+
+  <!-- ══ TRANG CHỦ ══ -->
   <url>
-    <loc>https://ais-dev-xlfuvizm4xq7tmrdqyx7c7-243274461503.asia-southeast1.run.app/</loc>
-    <lastmod>2026-03-05</lastmod>
+    <loc>https://sgsland.vn/</loc>
+    <lastmod>2026-03-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sgsland.vn/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/" />
+    <image:image>
+      <image:loc>https://sgsland.vn/og-image.jpg</image:loc>
+      <image:title>SGS LAND - Hệ Điều Hành Bất Động Sản Thế Hệ Mới</image:title>
+      <image:caption>Nền tảng quản lý bất động sản toàn diện với AI tích hợp cho thị trường Việt Nam</image:caption>
+    </image:image>
   </url>
+
+  <!-- ══ TÌM KIẾM BĐS ══ -->
   <url>
-    <loc>https://ais-dev-xlfuvizm4xq7tmrdqyx7c7-243274461503.asia-southeast1.run.app/#/search</loc>
-    <lastmod>2026-03-05</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <loc>https://sgsland.vn/search</loc>
+    <lastmod>2026-03-23</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.95</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/search" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sgsland.vn/search?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/search" />
   </url>
+
+  <!-- ══ ĐỊNH GIÁ AI ══ -->
   <url>
-    <loc>https://ais-dev-xlfuvizm4xq7tmrdqyx7c7-243274461503.asia-southeast1.run.app/#/ai-valuation</loc>
-    <lastmod>2026-03-05</lastmod>
+    <loc>https://sgsland.vn/ai-valuation</loc>
+    <lastmod>2026-03-23</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.90</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/ai-valuation" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sgsland.vn/ai-valuation?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/ai-valuation" />
   </url>
+
+  <!-- ══ TIN TỨC BĐS ══ -->
+  <url>
+    <loc>https://sgsland.vn/news</loc>
+    <lastmod>2026-03-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/news" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sgsland.vn/news?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/news" />
+  </url>
+
+  <!-- ══ ĐĂNG NHẬP / ĐĂNG KÝ ══ -->
+  <url>
+    <loc>https://sgsland.vn/login</loc>
+    <lastmod>2026-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.60</priority>
+  </url>
+
+  <!-- ══ TRUNG TÂM TRỢ GIÚP ══ -->
+  <url>
+    <loc>https://sgsland.vn/help</loc>
+    <lastmod>2026-03-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+
+  <!-- ══ LIÊN HỆ ══ -->
+  <url>
+    <loc>https://sgsland.vn/contact</loc>
+    <lastmod>2026-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>
+
+  <!-- ══ BẢNG GIÁ ══ -->
+  <url>
+    <loc>https://sgsland.vn/billing</loc>
+    <lastmod>2026-03-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
 </urlset>

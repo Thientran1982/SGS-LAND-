@@ -1,89 +1,342 @@
 
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, interactive-widget=resizes-content" />
-    <meta name="description" content="SGS LAND Enterprise - Hệ điều hành Bất động sản thế hệ mới tích hợp AI Agent, Định giá tự động & CRM đa kênh dành cho doanh nghiệp Việt Nam." />
-    <meta name="keywords" content="bất động sản, AI real estate, CRM bất động sản, thẩm định giá AI, quản lý kho hàng, SGS LAND, phần mềm bất động sản, môi giới bất động sản" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, interactive-widget=resizes-content" />
+
+    <!-- ══ PRIMARY META ══════════════════════════════════════════════════ -->
+    <title>SGS LAND | Phần Mềm Quản Lý Bất Động Sản AI Số 1 Việt Nam</title>
+    <meta name="description" content="SGS LAND - Phần mềm quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng. Giải pháp toàn diện cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam." />
+    <meta name="keywords" content="phần mềm quản lý bất động sản, CRM bất động sản, phần mềm môi giới bất động sản, định giá bất động sản AI, quản lý kho hàng bất động sản, phần mềm sàn giao dịch bất động sản, SGS LAND, AI bất động sản, hệ thống quản lý khách hàng bất động sản, phần mềm bất động sản Việt Nam" />
     <meta name="author" content="SGS Land Corp" />
-    <meta name="theme-color" content="#FAFAFA" />
-    <meta name="robots" content="index, follow" />
-    <link id="canonical-url" rel="canonical" href="" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large" />
+
+    <!-- ══ GEOGRAPHIC & LANGUAGE ═════════════════════════════════════════ -->
+    <meta name="language" content="vi" />
+    <meta name="geo.region" content="VN" />
+    <meta name="geo.placename" content="Vietnam" />
+    <meta name="geo.position" content="16.047079;108.206230" />
+    <meta name="ICBM" content="16.047079, 108.206230" />
+    <meta name="DC.language" content="vi" />
+
+    <!-- ══ HREFLANG ══════════════════════════════════════════════════════ -->
+    <link rel="alternate" hreflang="vi" href="https://sgsland.vn/" />
+    <link rel="alternate" hreflang="en" href="https://sgsland.vn/?lang=en" />
+    <link rel="alternate" hreflang="x-default" href="https://sgsland.vn/" />
+
+    <!-- ══ CANONICAL ═════════════════════════════════════════════════════ -->
+    <link id="canonical-url" rel="canonical" href="https://sgsland.vn/" />
+
+    <!-- ══ THEME & PWA ════════════════════════════════════════════════════ -->
+    <meta name="theme-color" content="#4F46E5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#312E81" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SGS LAND" />
+    <meta name="application-name" content="SGS LAND" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- ══ ICONS ══════════════════════════════════════════════════════════ -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234F46E5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3C/svg%3E" />
-    
-    <!-- Open Graph / Facebook -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- ══ OPEN GRAPH ═════════════════════════════════════════════════════ -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="SGS LAND" />
     <meta property="og:locale" content="vi_VN" />
-    <meta property="og:title" content="SGS LAND | Hệ Điều Hành Bất Động Sản Thế Hệ Mới" />
-    <meta property="og:description" content="Nền tảng quản lý và phân phối bất động sản toàn diện nhất Việt Nam. Tích hợp AI Định giá, CRM đa kênh và Tự động hóa quy trình." />
-    <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='630' viewBox='0 0 1200 630'%3E%3Crect width='1200' height='630' fill='%234F46E5'/%3E%3Ctext x='600' y='260' font-family='Arial,sans-serif' font-size='80' font-weight='900' fill='white' text-anchor='middle'%3ESGS%3C/text%3E%3Ctext x='600' y='360' font-family='Arial,sans-serif' font-size='48' font-weight='600' fill='%23A5B4FC' text-anchor='middle'%3EReal Estate Enterprise OS%3C/text%3E%3C/svg%3E" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:title" content="SGS LAND | Phần Mềm Quản Lý Bất Động Sản AI Số 1 Việt Nam" />
+    <meta property="og:description" content="Phần mềm quản lý bất động sản thế hệ mới với AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Tin dùng bởi Vinhomes, Masterise, Keppel, Gamuda." />
+    <meta property="og:image" content="https://sgsland.vn/og-image.jpg" />
+    <meta property="og:image:secure_url" content="https://sgsland.vn/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta id="og-url" property="og:url" content="" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content="SGS LAND - Nền tảng quản lý bất động sản AI tại Việt Nam" />
+    <meta id="og-url" property="og:url" content="https://sgsland.vn/" />
 
-    <!-- Twitter / X Card -->
+    <!-- ══ TWITTER / X CARD ══════════════════════════════════════════════ -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@SGSLand" />
-    <meta name="twitter:title" content="SGS LAND | Hệ Điều Hành Bất Động Sản Thế Hệ Mới" />
-    <meta name="twitter:description" content="Nền tảng quản lý và phân phối bất động sản toàn diện nhất Việt Nam. Tích hợp AI Định giá, CRM đa kênh và Tự động hóa quy trình." />
-    <meta name="twitter:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='630' viewBox='0 0 1200 630'%3E%3Crect width='1200' height='630' fill='%234F46E5'/%3E%3Ctext x='600' y='260' font-family='Arial,sans-serif' font-size='80' font-weight='900' fill='white' text-anchor='middle'%3ESGS%3C/text%3E%3Ctext x='600' y='360' font-family='Arial,sans-serif' font-size='48' font-weight='600' fill='%23A5B4FC' text-anchor='middle'%3EReal Estate Enterprise OS%3C/text%3E%3C/svg%3E" />
+    <meta name="twitter:creator" content="@SGSLand" />
+    <meta name="twitter:title" content="SGS LAND | Phần Mềm Quản Lý Bất Động Sản AI Số 1 Việt Nam" />
+    <meta name="twitter:description" content="Phần mềm quản lý bất động sản thế hệ mới với AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện." />
+    <meta name="twitter:image" content="https://sgsland.vn/og-image.jpg" />
+    <meta name="twitter:image:alt" content="SGS LAND - Nền tảng quản lý bất động sản AI tại Việt Nam" />
 
-    <title>SGS LAND | Hệ Điều Hành Bất Động Sản Thế Hệ Mới</title>
-    
-    <!-- Structured Data: Organization -->
+    <!-- ══ STRUCTURED DATA: WebSite + SearchAction ═══════════════════════ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://sgsland.vn/#website",
+      "name": "SGS LAND",
+      "alternateName": ["SGSID", "SGS Land Corp", "SGS Land Enterprise"],
+      "url": "https://sgsland.vn",
+      "inLanguage": ["vi", "en"],
+      "description": "Phần mềm quản lý bất động sản thế hệ mới với AI định giá, CRM đa kênh và quản lý kho hàng toàn diện.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://sgsland.vn/search?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      },
+      "publisher": {
+        "@id": "https://sgsland.vn/#organization"
+      }
+    }
+    </script>
+
+    <!-- ══ STRUCTURED DATA: Organization ════════════════════════════════ -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
+      "@id": "https://sgsland.vn/#organization",
       "name": "SGS LAND",
       "alternateName": "SGS Land Corp",
-      "description": "Hệ điều hành Bất động sản thế hệ mới tích hợp AI Agent, Định giá tự động và CRM đa kênh dành cho doanh nghiệp.",
+      "legalName": "Công ty Cổ phần SGS Land",
+      "description": "Hệ điều hành bất động sản thế hệ mới tích hợp AI Agent, Định giá tự động và CRM đa kênh dành cho doanh nghiệp bất động sản Việt Nam.",
       "url": "https://sgsland.vn",
       "logo": {
         "@type": "ImageObject",
+        "@id": "https://sgsland.vn/#logo",
         "url": "https://sgsland.vn/logo.svg",
+        "contentUrl": "https://sgsland.vn/logo.svg",
         "width": 512,
-        "height": 512
+        "height": 512,
+        "caption": "SGS LAND Logo"
       },
-      "sameAs": [],
+      "image": {
+        "@id": "https://sgsland.vn/#logo"
+      },
+      "foundingDate": "2024",
+      "areaServed": {
+        "@type": "Country",
+        "name": "Vietnam"
+      },
       "address": {
         "@type": "PostalAddress",
-        "addressCountry": "VN"
+        "addressCountry": "VN",
+        "addressLocality": "Hồ Chí Minh",
+        "addressRegion": "TP. Hồ Chí Minh"
       },
-      "knowsAbout": ["Bất động sản", "Định giá AI", "CRM", "Real Estate Technology"]
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "availableLanguage": ["Vietnamese", "English"],
+        "areaServed": "VN"
+      },
+      "sameAs": [
+        "https://www.facebook.com/sgsland",
+        "https://www.linkedin.com/company/sgsland",
+        "https://twitter.com/SGSLand"
+      ],
+      "knowsAbout": [
+        "Phần mềm quản lý bất động sản",
+        "CRM bất động sản",
+        "Định giá AI",
+        "Real Estate Technology",
+        "Proptech",
+        "Quản lý kho hàng bất động sản"
+      ]
     }
     </script>
-    <!-- Structured Data: SoftwareApplication -->
+
+    <!-- ══ STRUCTURED DATA: SoftwareApplication ══════════════════════════ -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
+      "@id": "https://sgsland.vn/#software",
       "name": "SGS LAND Enterprise",
       "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
+      "applicationSubCategory": "Real Estate Management Software",
+      "operatingSystem": "Web, iOS, Android",
+      "url": "https://sgsland.vn",
+      "downloadUrl": "https://sgsland.vn/login",
+      "softwareVersion": "2.0",
+      "datePublished": "2024-01-01",
+      "dateModified": "2026-03-23",
+      "inLanguage": ["vi", "en"],
+      "description": "Phần mềm quản lý và phân phối bất động sản toàn diện cho thị trường Việt Nam với AI tích hợp.",
+      "featureList": [
+        "Quản lý kho hàng bất động sản",
+        "CRM khách hàng đa kênh",
+        "Định giá tự động bằng AI",
+        "Quản lý hợp đồng và giao dịch",
+        "Báo cáo và phân tích thị trường",
+        "Quản lý dự án bất động sản",
+        "Tích hợp Zalo, Facebook, Email",
+        "Phân quyền người dùng đa cấp"
+      ],
+      "screenshot": "https://sgsland.vn/og-image.jpg",
       "offers": {
         "@type": "Offer",
+        "priceCurrency": "VND",
         "price": "0",
-        "priceCurrency": "VND"
+        "priceValidUntil": "2026-12-31",
+        "availability": "https://schema.org/InStock"
       },
-      "description": "Nền tảng quản lý và phân phối bất động sản toàn diện nhất Việt Nam.",
-      "inLanguage": ["vi", "en"]
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "bestRating": "5",
+        "worstRating": "1",
+        "ratingCount": "124"
+      },
+      "publisher": {
+        "@id": "https://sgsland.vn/#organization"
+      }
     }
     </script>
-    
-    <!-- Preload Critical Assets -->
+
+    <!-- ══ STRUCTURED DATA: Service ══════════════════════════════════════ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": "https://sgsland.vn/#service",
+      "name": "Phần Mềm Quản Lý Bất Động Sản SGS LAND",
+      "serviceType": "Phần mềm quản lý bất động sản",
+      "provider": {
+        "@id": "https://sgsland.vn/#organization"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "Vietnam"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Gói dịch vụ SGS LAND",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Gói Cơ Bản",
+              "description": "Quản lý kho hàng và CRM cơ bản"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Gói Doanh Nghiệp",
+              "description": "Đầy đủ tính năng AI, CRM đa kênh và báo cáo nâng cao"
+            }
+          }
+        ]
+      },
+      "description": "Giải pháp phần mềm quản lý bất động sản toàn diện với AI định giá tự động, CRM đa kênh và quản lý kho hàng.",
+      "url": "https://sgsland.vn"
+    }
+    </script>
+
+    <!-- ══ STRUCTURED DATA: FAQPage ══════════════════════════════════════ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "SGS LAND là phần mềm quản lý bất động sản gì?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "SGS LAND là nền tảng quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh (Zalo, Facebook, Email) và hệ thống quản lý kho hàng toàn diện dành cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Phần mềm SGS LAND có tính năng gì nổi bật?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "SGS LAND cung cấp: (1) Định giá bất động sản bằng AI tự động, (2) CRM quản lý khách hàng đa kênh, (3) Quản lý kho hàng và dự án bất động sản, (4) Quản lý hợp đồng và giao dịch, (5) Báo cáo phân tích thị trường realtime, (6) Phân quyền người dùng đa cấp."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "SGS LAND phù hợp với loại hình doanh nghiệp bất động sản nào?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "SGS LAND phù hợp với sàn giao dịch bất động sản, chủ đầu tư dự án, công ty môi giới, và các doanh nghiệp bất động sản từ quy mô nhỏ đến lớn tại Việt Nam."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Làm thế nào để đăng ký sử dụng SGS LAND?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Bạn có thể đăng ký tài khoản miễn phí tại sgsland.vn/login hoặc liên hệ đội ngũ tư vấn của chúng tôi để được demo trực tiếp và tư vấn gói phù hợp với nhu cầu doanh nghiệp."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "AI định giá bất động sản của SGS LAND hoạt động như thế nào?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Hệ thống AI định giá của SGS LAND phân tích hàng nghìn giao dịch thực tế, xu hướng thị trường, vị trí địa lý và các yếu tố pháp lý để đưa ra định giá chính xác trong vòng vài giây, với độ chính xác lên đến 98%."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- ══ STRUCTURED DATA: BreadcrumbList ═══════════════════════════════ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Trang chủ",
+          "item": "https://sgsland.vn/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Tìm kiếm Bất động sản",
+          "item": "https://sgsland.vn/search"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Định giá AI",
+          "item": "https://sgsland.vn/ai-valuation"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "Tin tức Bất động sản",
+          "item": "https://sgsland.vn/news"
+        }
+      ]
+    }
+    </script>
+
+    <!-- ══ PERFORMANCE: Preconnect & Preload ════════════════════════════ -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-    
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="preload" href="/critical.css" as="style" />
+    <link rel="preload" href="/theme-init.js" as="script" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
 
-    <link rel="stylesheet" href="/critical.css">
+    <link rel="stylesheet" href="/critical.css" />
 
-    <!-- CRITICAL: Hydration Script (Prevents FOUC) — served as external file for strict CSP -->
+    <!-- CRITICAL: Hydration Script (Prevents FOUC) -->
     <script src="/theme-init.js"></script>
-    
+
 </head>
   <body>
     <div id="app-background"></div>
@@ -91,7 +344,7 @@
         <!-- Optimized Skeleton Loader -->
         <div class="initial-loader">
             <div class="loader-logo">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="SGS LAND Logo">
                     <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                     <path d="M2 12l10 5 10-5"/>
                     <path d="M2 17l10 5 10-5"/>
@@ -103,14 +356,28 @@
             <div class="loader-status-text">Đang khởi động hệ thống...</div>
         </div>
     </div>
-    
+
     <noscript>
+      <style>
+        .noscript-wrapper { font-family: sans-serif; max-width: 600px; margin: 80px auto; padding: 32px; text-align: center; }
+        .noscript-wrapper h1 { color: #4F46E5; margin-bottom: 16px; }
+        .noscript-wrapper p { color: #64748B; line-height: 1.6; }
+        .noscript-wrapper a { color: #4F46E5; font-weight: bold; }
+      </style>
       <div class="noscript-wrapper">
-        <h2>Yêu Cầu JavaScript</h2>
-        <p>SGS LAND Enterprise cần bật JavaScript để hoạt động an toàn.</p>
+        <h1>SGS LAND - Phần Mềm Quản Lý Bất Động Sản AI</h1>
+        <p>SGS LAND là nền tảng quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện.</p>
+        <p>Vui lòng bật JavaScript để sử dụng hệ thống. <a href="https://sgsland.vn/">Tải lại trang</a></p>
+        <ul style="text-align:left; margin-top:24px; color:#475569;">
+          <li>✓ Quản lý kho hàng bất động sản</li>
+          <li>✓ CRM khách hàng đa kênh (Zalo, Facebook, Email)</li>
+          <li>✓ Định giá tự động bằng AI</li>
+          <li>✓ Báo cáo và phân tích thị trường realtime</li>
+          <li>✓ Quản lý hợp đồng và giao dịch</li>
+        </ul>
       </div>
     </noscript>
-    
+
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

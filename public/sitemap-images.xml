@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://sgsland.vn/</loc>
+    <image:image>
+      <image:loc>https://sgsland.vn/og-image.jpg</image:loc>
+      <image:title>SGS LAND - Hệ Điều Hành Bất Động Sản với AI</image:title>
+      <image:caption>Nền tảng CRM và định giá AI cho thị trường bất động sản Việt Nam</image:caption>
+      <image:geo_location>Vietnam</image:geo_location>
+      <image:license>https://sgsland.vn/</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://sgsland.vn/ai-valuation</loc>
+    <image:image>
+      <image:loc>https://sgsland.vn/og-valuation.jpg</image:loc>
+      <image:title>Định Giá Bất Động Sản Bằng AI - SGS LAND</image:title>
+      <image:caption>Công nghệ định giá bất động sản tự động sử dụng trí tuệ nhân tạo</image:caption>
+      <image:geo_location>Vietnam</image:geo_location>
+    </image:image>
+  </url>
+</urlset>

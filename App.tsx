@@ -9,6 +9,7 @@ import { TenantProvider } from './services/tenantContext';
 import { ROUTES, FULL_HEIGHT_PAGES } from './config/routes';
 import type { User } from './types';
 import { lazyLoad, registerPrefetch, prefetchRoutes } from './utils/reactUtils';
+import { updatePageSEO } from './utils/seo';
 import { motion, AnimatePresence } from 'motion/react';
 
 // -----------------------------------------------------------------------------
@@ -289,6 +290,10 @@ const useRouter = () => {
         window.addEventListener('hashchange', handler);
         return () => window.removeEventListener('hashchange', handler);
     }, [getHashData]);
+
+    useEffect(() => {
+        updatePageSEO(route.base);
+    }, [route.base]);
 
     const navigate = useCallback((path: string) => {
         const target = path.startsWith('/') ? path : `/${path}`;

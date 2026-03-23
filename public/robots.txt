@@ -1,3 +1,31 @@
 User-agent: *
 Allow: /
-Sitemap: https://ais-dev-xlfuvizm4xq7tmrdqyx7c7-243274461503.asia-southeast1.run.app/sitemap.xml
+Allow: /#/landing
+Allow: /#/search
+Allow: /#/ai-valuation
+Allow: /#/news
+Allow: /#/login
+Allow: /#/register
+
+Disallow: /#/inventory
+Disallow: /#/leads
+Disallow: /#/contracts
+Disallow: /#/reports
+Disallow: /#/inbox
+Disallow: /#/projects
+Disallow: /#/admin
+Disallow: /#/billing
+Disallow: /#/profile
+Disallow: /#/settings
+Disallow: /api/
+
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 2
+
+Sitemap: https://sgsland.vn/sitemap.xml
+Sitemap: https://sgsland.vn/sitemap-images.xml

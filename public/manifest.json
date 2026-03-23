@@ -1,0 +1,70 @@
+{
+  "name": "SGS LAND - Phần Mềm Quản Lý Bất Động Sản",
+  "short_name": "SGS LAND",
+  "description": "Phần mềm quản lý bất động sản thế hệ mới tích hợp AI định giá tự động và CRM đa kênh.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#4F46E5",
+  "orientation": "portrait-primary",
+  "lang": "vi",
+  "dir": "ltr",
+  "scope": "/",
+  "categories": ["business", "productivity", "finance"],
+  "iarc_rating_id": "",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "label": "SGS LAND Dashboard"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tìm kiếm Bất động sản",
+      "short_name": "Tìm kiếm",
+      "description": "Tìm kiếm và lọc bất động sản",
+      "url": "/search",
+      "icons": [{ "src": "/favicon-32x32.png", "sizes": "32x32" }]
+    },
+    {
+      "name": "Định giá AI",
+      "short_name": "Định giá",
+      "description": "Định giá bất động sản bằng AI",
+      "url": "/ai-valuation",
+      "icons": [{ "src": "/favicon-32x32.png", "sizes": "32x32" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
