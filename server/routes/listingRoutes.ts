@@ -171,14 +171,16 @@ export function createListingRoutes(authenticateToken: any) {
         const existing = await listingRepository.findById(user.tenantId, String(req.params.id));
         if (!existing) return res.status(404).json({ error: 'Listing not found' });
         const isOwnerOrAssignee =
-          (existing as any).createdBy === user.id ||
-          (existing as any).assignedTo === user.id;
+          existing.createdBy === user.id ||
+          existing.assignedTo === user.id;
         if (!isOwnerOrAssignee) {
           return res.status(403).json({ error: 'You can only edit listings you created or are assigned to' });
         }
       }
 
-      const listing = await listingRepository.update(user.tenantId, String(req.params.id), req.body);
+      // Strip assignedTo — assignment is exclusively managed via PATCH /:id/assign (ADMIN/TEAM_LEAD only)
+      const { assignedTo: _stripped, ...safeBody } = req.body;
+      const listing = await listingRepository.update(user.tenantId, String(req.params.id), safeBody);
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
       await auditRepository.log(user.tenantId, {

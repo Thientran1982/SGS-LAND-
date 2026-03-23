@@ -383,7 +383,7 @@ export class ListingRepository extends BaseRepository {
         'code', 'title', 'location', 'price', 'currency', 'area', 'bedrooms', 'bathrooms',
         'type', 'status', 'transaction', 'projectCode', 'contactPhone', 'isVerified',
         'ownerName', 'ownerPhone', 'commission', 'commissionUnit', 'totalUnits', 'availableUnits',
-        'viewCount', 'bookingCount', 'assignedTo',
+        'viewCount', 'bookingCount',
       ];
       const jsonFields = ['attributes', 'images', 'coordinates', 'authorizedAgents'];
 
