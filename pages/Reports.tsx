@@ -813,7 +813,7 @@ export const Reports: React.FC = () => {
             }
         });
         return () => { mounted = false; };
-    }, [timeRange]);
+    }, [timeRange, notify, t]);
 
     useEffect(() => {
         const cleanup = loadData();
