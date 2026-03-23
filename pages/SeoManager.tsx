@@ -53,7 +53,7 @@ const ROUTE_LABELS: Record<string, string> = {
     inventory:        'Kho hàng (nội bộ)',
     leads:            'CRM Leads (nội bộ)',
     billing:          'Thanh toán',
-    'seo-manager':    'SEO Manager (admin)',
+    'seo-manager':    'Quản Lý SEO (admin)',
 };
 
 // Derived from ROUTE_SEO so it's always in sync — no hardcoding.
@@ -607,10 +607,10 @@ export const SeoManager: React.FC = () => {
     }, []);
 
     const TABS: { id: TabId; label: string }[] = [
-        { id: 'SERP',   label: 'SERP Preview' },
-        { id: 'META',   label: 'Meta Editor' },
-        { id: 'HEALTH', label: 'Sức khoẻ SEO' },
-        { id: 'SCHEMA', label: 'Structured Data' },
+        { id: 'SERP',   label: 'Xem Trước SERP' },
+        { id: 'META',   label: 'Chỉnh Sửa Meta' },
+        { id: 'HEALTH', label: 'Sức Khoẻ SEO' },
+        { id: 'SCHEMA', label: 'Dữ Liệu Cấu Trúc' },
     ];
 
     if (loading) return (
@@ -638,7 +638,7 @@ export const SeoManager: React.FC = () => {
                             <div className="w-9 h-9 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
                                 {ICONS.GLOBE}
                             </div>
-                            <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">SEO Manager</h2>
+                            <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">Quản Lý SEO</h2>
                         </div>
                         <p className="text-sm text-[var(--text-tertiary)] ml-12">Kiểm tra và quản lý toàn bộ tín hiệu SEO của nền tảng SGS LAND.</p>
                     </div>
