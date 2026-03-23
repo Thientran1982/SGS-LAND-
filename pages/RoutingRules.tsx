@@ -127,6 +127,7 @@ export const RoutingRules: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRule, setEditingRule] = useState<RoutingRule | undefined>(undefined);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -145,6 +146,7 @@ export const RoutingRules: React.FC = () => {
 
     const fetchData = useCallback(async () => {
         setLoading(true);
+        setLoadError(false);
         try {
             const [r, u, tm] = await Promise.all([
                 db.getRoutingRules(),
@@ -155,7 +157,7 @@ export const RoutingRules: React.FC = () => {
             setUsers(u.data || []);
             setTeams(tm || []);
         } catch {
-            notify(t('common.error_loading'), 'error');
+            setLoadError(true);
         } finally { setLoading(false); }
     }, []);
 
@@ -213,6 +215,18 @@ export const RoutingRules: React.FC = () => {
     };
 
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
+
+    if (loadError) return (
+        <div className="flex flex-col items-center justify-center h-full p-10 text-center animate-enter">
+            <div className="w-14 h-14 bg-rose-50 text-rose-400 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+            </div>
+            <p className="font-bold text-[var(--text-primary)] mb-1">{t('common.error_loading')}</p>
+            <button onClick={fetchData} className="mt-4 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors text-sm">
+                {t('common.retry')}
+            </button>
+        </div>
+    );
 
     // Map raw condition keys to translation keys
     const condLabel = (key: string) => {
