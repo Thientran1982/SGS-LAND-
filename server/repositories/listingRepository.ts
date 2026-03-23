@@ -265,20 +265,23 @@ export class ListingRepository extends BaseRepository {
       let paramIndex = 1;
 
       const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
-      // Visibility rules for restricted roles:
+      const PARTNER_RESTRICTED = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
+      // Visibility rules:
       // - AVAILABLE-only queries (e.g. proposal picker): see all available listings.
-      // - Project-scoped queries: see ONLY units explicitly assigned to them.
-      // - All other queries: see listings they created or are assigned to.
+      // - Project-scoped queries:
+      //     SALES/MARKETING/VIEWER → see ALL units in the project.
+      //     PARTNER_ADMIN/PARTNER_AGENT → see ONLY units assigned to them.
+      // - All other (non-project) queries for RESTRICTED roles: own + assigned listings.
       const isAvailableOnlyQuery = filters?.status === 'AVAILABLE';
       const isProjectQuery = !!filters?.projectCode;
-      if (RESTRICTED.includes(userRole || '') && userId && !isAvailableOnlyQuery) {
-        if (isProjectQuery) {
-          // Project unit list: only show units the user is responsible for.
-          conditions.push(`l.assigned_to = $${paramIndex}`);
-        } else {
-          // General listing view: own listings + assigned listings.
-          conditions.push(`(l.created_by = $${paramIndex} OR l.assigned_to = $${paramIndex})`);
-        }
+      if (PARTNER_RESTRICTED.includes(userRole || '') && userId && isProjectQuery) {
+        // Partner roles in project context: only their assigned units.
+        conditions.push(`l.assigned_to = $${paramIndex}`);
+        values.push(userId);
+        paramIndex++;
+      } else if (RESTRICTED.includes(userRole || '') && userId && !isAvailableOnlyQuery && !isProjectQuery) {
+        // Non-partner restricted roles outside project context: own + assigned.
+        conditions.push(`(l.created_by = $${paramIndex} OR l.assigned_to = $${paramIndex})`);
         values.push(userId);
         paramIndex++;
       }
