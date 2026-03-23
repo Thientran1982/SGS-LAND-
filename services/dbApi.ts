@@ -566,15 +566,7 @@ class DatabaseApiClient {
   }
 
   async getScoringConfig() {
-    try {
-      return await api.get<any>('/api/scoring/config');
-    } catch {
-      return {
-        version: 1,
-        weights: { engagement: 30, completeness: 25, budgetFit: 25, velocity: 20 },
-        thresholds: { A: 80, B: 60, C: 40, D: 20 },
-      };
-    }
+    return api.get<any>('/api/scoring/config');
   }
 
   async updateScoringConfig(data: any) {
@@ -582,13 +574,9 @@ class DatabaseApiClient {
   }
 
   async getRoutingRules() {
-    try {
-      const result = await fetch('/api/routing-rules', { credentials: 'include' });
-      if (!result.ok) throw new Error('Failed to fetch routing rules');
-      return await result.json();
-    } catch {
-      return [];
-    }
+    const result = await fetch('/api/routing-rules', { credentials: 'include' });
+    if (!result.ok) throw new Error('Failed to fetch routing rules');
+    return result.json();
   }
 
   async createRoutingRule(data: any) {

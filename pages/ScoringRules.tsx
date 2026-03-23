@@ -142,7 +142,7 @@ export const ScoringRules: React.FC = () => {
 
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
-    if (loadError || !config) return (
+    if (loadError) return (
         <div className="flex flex-col items-center justify-center h-full p-10 text-center animate-enter">
             <div className="w-14 h-14 bg-rose-50 text-rose-400 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
@@ -151,6 +151,16 @@ export const ScoringRules: React.FC = () => {
             <button onClick={loadData} className="mt-4 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors text-sm">
                 {t('common.retry')}
             </button>
+        </div>
+    );
+
+    if (!config) return (
+        <div className="flex flex-col items-center justify-center h-full p-10 text-center animate-enter">
+            <div className="w-14 h-14 bg-indigo-50 text-indigo-400 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            </div>
+            <p className="font-bold text-[var(--text-primary)] mb-1">{t('scoring.empty_title')}</p>
+            <p className="text-sm text-[var(--text-secondary)] max-w-xs">{t('scoring.empty_desc')}</p>
         </div>
     );
 
