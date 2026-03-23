@@ -304,7 +304,7 @@ export const ApprovalInbox: React.FC = () => {
                 setLeads(leadMap);
             }
         } catch (e) {
-            console.error("Failed to load approvals", e);
+            notify(t('common.error_loading'), 'error');
         } finally {
             setLoading(false);
         }

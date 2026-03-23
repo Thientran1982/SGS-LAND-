@@ -253,7 +253,7 @@ const StepCard = memo(({ step, index, onEdit, onDelete, t }: { step: Step, index
                             <span className="text-xs font-bold text-[var(--text-tertiary)] tabular-nums">#{index + 1}</span>
                             <h4 className="font-bold text-sm text-[var(--text-primary)]">{getStepLabel()}</h4>
                             <span className="text-xs font-mono text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] px-2 py-0.5 rounded">
-                                +{step.delayHours}h
+                                +{step.delayHours}{t('seq.hours_abbr')}
                             </span>
                         </div>
                         <p className="text-xs text-[var(--text-tertiary)] truncate">{getStepDetail()}</p>

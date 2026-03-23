@@ -158,7 +158,7 @@ export const Favorites: React.FC = () => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-auto px-6 no-scrollbar">
+            <div className="flex-1 overflow-auto p-4 sm:p-6 no-scrollbar">
                 {loading && allFavorites.length === 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {[1,2,3,4].map(i => (
