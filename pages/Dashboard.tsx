@@ -1,5 +1,6 @@
 
-import React, { useEffect, useState, memo, useMemo, useRef } from 'react';
+import React, { useEffect, useState, memo, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { 
@@ -166,7 +167,7 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
 
     return (
         <BentoCard
-            title="Geolocation & Lưu lượng khách"
+            title={t('dash.geo_title')}
             className="h-full border border-[var(--glass-border)] dark:border-white/10 bg-[var(--bg-surface)] dark:bg-slate-900 overflow-hidden flex flex-col"
             icon={<svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
         >
@@ -177,35 +178,35 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
             ) : isError ? (
                 <div className="flex flex-col items-center justify-center h-40 gap-2 text-[var(--text-tertiary)]">
                     <svg className="w-8 h-8 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span className="text-xs">Không thể tải dữ liệu địa lý</span>
+                    <span className="text-xs">{t('dash.geo_error')}</span>
                 </div>
             ) : (
                 <div className="flex flex-col gap-4 flex-1 min-h-0">
                     <div className="flex gap-3">
                         <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
-                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">Tổng lượt truy cập</div>
+                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.geo_total_visits')}</div>
                             <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{totalVisits.toLocaleString()}</div>
-                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">30 ngày gần nhất</div>
+                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">{t('dash.geo_last_30d')}</div>
                         </div>
                         <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
-                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">IP Duy nhất</div>
+                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.geo_unique_ips')}</div>
                             <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{uniqueIps.toLocaleString()}</div>
-                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">Nguồn truy cập</div>
+                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">{t('dash.geo_ip_source')}</div>
                         </div>
                         <div className="flex-1 bg-[var(--glass-surface)] dark:bg-slate-800/50 rounded-xl p-3 border border-[var(--glass-border)] dark:border-slate-700/50">
-                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">Có dữ liệu GEO</div>
+                            <div className="text-xs2 font-bold uppercase text-[var(--text-tertiary)] tracking-wider mb-1">{t('dash.geo_coverage')}</div>
                             <div className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white">{geoCoverage}<span className="text-sm ml-0.5">%</span></div>
-                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">{geoVisits}/{totalVisits} lượt</div>
+                            <div className="text-3xs text-[var(--text-tertiary)] mt-0.5">{geoVisits}/{totalVisits} {t('dash.geo_visits_unit')}</div>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
                         <div className="flex flex-col min-h-0">
-                            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Top Quốc gia</div>
+                            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">{t('dash.geo_top_countries')}</div>
                             {countries.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-20 gap-1">
-                                    <span className="text-xs text-[var(--text-tertiary)] opacity-60">Chưa có dữ liệu IP công khai</span>
-                                    <span className="text-3xs text-[var(--text-tertiary)] opacity-40">Truy cập từ localhost không có GEO</span>
+                                    <span className="text-xs text-[var(--text-tertiary)] opacity-60">{t('dash.geo_no_ip')}</span>
+                                    <span className="text-3xs text-[var(--text-tertiary)] opacity-40">{t('dash.geo_localhost_hint')}</span>
                                 </div>
                             ) : (
                                 <div className="overflow-y-auto no-scrollbar space-y-1.5 flex-1">
@@ -222,7 +223,7 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                                                 />
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-center mb-0.5">
-                                                        <span className="text-xs2 font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{c.country || 'Không rõ'}</span>
+                                                        <span className="text-xs2 font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{c.country || t('dash.geo_unknown')}</span>
                                                         <span className="text-xs2 font-mono font-bold text-[var(--text-tertiary)] ml-1 shrink-0">{c.count}</span>
                                                     </div>
                                                     <div className="h-1 bg-[var(--glass-surface-hover)] dark:bg-slate-700 rounded-full overflow-hidden">
@@ -240,11 +241,11 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                         </div>
 
                         <div className="flex flex-col min-h-0">
-                            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Top Thành phố</div>
+                            <div className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">{t('dash.geo_top_cities')}</div>
                             {cities.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-20 gap-1">
-                                    <span className="text-xs text-[var(--text-tertiary)] opacity-60">Chưa có dữ liệu thành phố</span>
-                                    <span className="text-3xs text-[var(--text-tertiary)] opacity-40">Truy cập từ localhost không có GEO</span>
+                                    <span className="text-xs text-[var(--text-tertiary)] opacity-60">{t('dash.geo_no_cities')}</span>
+                                    <span className="text-3xs text-[var(--text-tertiary)] opacity-40">{t('dash.geo_localhost_hint')}</span>
                                 </div>
                             ) : (
                                 <div className="overflow-y-auto no-scrollbar space-y-1.5 flex-1">
@@ -258,7 +259,7 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-center mb-0.5">
-                                                        <span className="text-xs2 font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{c.city || 'Không rõ'}</span>
+                                                        <span className="text-xs2 font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{c.city || t('dash.geo_unknown')}</span>
                                                         <span className="text-xs2 font-mono font-bold text-[var(--text-tertiary)] ml-1 shrink-0">{c.count}</span>
                                                     </div>
                                                     <div className="h-1 bg-[var(--glass-surface-hover)] dark:bg-slate-700 rounded-full overflow-hidden">
@@ -334,11 +335,11 @@ const RealtimeTrafficWidget = memo(({ t, theme }: any) => {
                     </div>
                     <div>
                         <div className="text-2xl font-extrabold text-indigo-500 dark:text-indigo-400 tracking-tight">{stats.dbLatency}<span className="text-sm text-[var(--text-tertiary)] ml-1">ms</span></div>
-                        <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">DB Latency</div>
+                        <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.traffic_db_latency')}</div>
                     </div>
                     <div>
                         <div className={`text-2xl font-extrabold tracking-tight ${stats.errors > 0 ? 'text-red-500' : 'text-emerald-500 dark:text-emerald-400'}`}>{stats.errors}</div>
-                        <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Lỗi / 60s</div>
+                        <div className="text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('dash.traffic_errors')}</div>
                     </div>
                 </div>
                 <div className={`flex items-center gap-2 px-2 py-1 rounded-full border shrink-0 ${isConnected ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800'}`}>
@@ -399,10 +400,10 @@ export const Dashboard: React.FC = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
-    const notify = (msg: string, type: 'success' | 'error' = 'success') => {
+    const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
-    };
+    }, []);
     const dashboardRef = useRef<HTMLDivElement>(null);
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const { chartTheme } = useTheme();
@@ -491,9 +492,10 @@ export const Dashboard: React.FC = () => {
     const currentUser = (analytics as any)?.user;
     const userName = currentUser?.name ? currentUser.name.split(' ').slice(-1)[0] : '';
     const scopeLabel: string = (analytics as any)?.scopeLabel || t('dash.scope_company');
-    const isSalesScope = scopeLabel === t('dash.scope_personal') || scopeLabel === 'Dữ liệu của bạn' || scopeLabel === 'Your data';
+    const isSalesScope = scopeLabel === t('dash.scope_personal');
 
     return (
+    <>
         <div className="space-y-6 p-4 md:p-6 pb-24 animate-enter max-w-[1600px] mx-auto">
 
             {/* Header */}
@@ -565,7 +567,7 @@ export const Dashboard: React.FC = () => {
                                     {formatCompactNumber(analytics.revenue || 0)}
                                 </div>
                                 <div className="text-xs2 text-indigo-200 font-bold uppercase tracking-wider mt-1">
-                                    {t('dash.commission_2_percent') || "Hoa hồng 2%"}
+                                    {t('dash.commission_2_percent')}
                                 </div>
                             </div>
                             <div className="bg-[var(--bg-surface)]/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-xs flex items-center gap-2">
@@ -581,18 +583,18 @@ export const Dashboard: React.FC = () => {
 
                 {/* 2. Pipeline Value (Giá Trị Pipeline) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.pipeline_value') || "Pipeline Value"} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
+                    <BentoCard title={t('dash.pipeline_value')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight mt-2 break-words">
                                     {formatCompactNumber(analytics.pipelineValue || 0)}
                                 </div>
                                 <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
-                                    {t('dash.win_probability') || "Xác suất chốt"}: <span className="text-indigo-600 dark:text-indigo-400">{analytics.winProbability || 0}%</span>
+                                    {t('dash.win_probability')}: <span className="text-indigo-600 dark:text-indigo-400">{analytics.winProbability || 0}%</span>
                                 </div>
                             </div>
                             <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
-                                <TrendIndicator value={analytics.pipelineValueDelta || 0} label={t('dash.vs_last_period') || "vs last period"} />
+                                <TrendIndicator value={analytics.pipelineValueDelta || 0} label={t('dash.vs_last_period')} />
                             </div>
                         </div>
                     </BentoCard>
@@ -600,7 +602,7 @@ export const Dashboard: React.FC = () => {
 
                 {/* 3. AI Deflection Rate (Tỷ Lệ Tự Động Hóa AI) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.ai_deflection_rate') || "AI Deflection Rate"} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
+                    <BentoCard title={t('dash.ai_deflection_rate')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="flex items-center gap-2 mt-2">
@@ -616,10 +618,10 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                     <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white">{analytics.aiDeflectionRate || 0}%</div>
                                 </div>
-                                <div className="text-xs2 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai') || "Xử lý bởi AI"}</div>
+                                <div className="text-xs2 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1">{t('dash.resolved_by_ai')}</div>
                             </div>
                             <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
-                                <TrendIndicator value={analytics.aiDeflectionRateDelta || 0} label={t('dash.vs_last_period') || "vs last period"} />
+                                <TrendIndicator value={analytics.aiDeflectionRateDelta || 0} label={t('dash.vs_last_period')} />
                             </div>
                         </div>
                     </BentoCard>
@@ -627,14 +629,14 @@ export const Dashboard: React.FC = () => {
 
                 {/* 4. Sales Velocity (Tốc Độ Bán Hàng) */}
                 <div className="md:col-span-1 lg:col-span-1 overflow-hidden rounded-[32px]">
-                    <BentoCard title={t('dash.sales_velocity') || "Sales Velocity"} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
+                    <BentoCard title={t('dash.sales_velocity')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
                                 <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white mt-2">{analytics.salesVelocity || 0}</div>
-                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">{t('dash.days_to_close') || "Ngày để chốt deal"}</div>
+                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">{t('dash.days_to_close')}</div>
                             </div>
                             <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
-                                <TrendIndicator value={analytics.salesVelocityDelta || 0} label={t('dash.vs_last_period') || "vs last period"} />
+                                <TrendIndicator value={analytics.salesVelocityDelta || 0} label={t('dash.vs_last_period')} />
                             </div>
                         </div>
                     </BentoCard>
@@ -825,13 +827,16 @@ export const Dashboard: React.FC = () => {
 
             </div>
 
-            {/* Toast notification */}
-            {toast && (
-                <div className={`fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border text-sm font-medium ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+        </div>
+        {createPortal(
+            toast ? (
+                <div className={`fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border text-sm font-medium ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     {toast.msg}
                 </div>
-            )}
-        </div>
+            ) : null,
+            document.body
+        )}
+    </>
     );
 };
 

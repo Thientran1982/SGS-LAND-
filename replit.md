@@ -283,6 +283,16 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 
 - New locale keys (37): `billing.renews`, `billing.invoice_history`, `billing.inv_id/plan/date/amount/status`, `billing.status_paid/unpaid`, `billing.confirm_upgrade_title`, `billing.csv_title/id/date/plan/status/amount`, `billing.f_individual_{0-4}`, `billing.f_team_{0-5}`, `billing.f_enterprise_{0-6}` (VI + EN)
 
+### Dashboard.tsx Audit & Fix (March 2026)
+7 bug groups resolved in `pages/Dashboard.tsx`:
+1. **Missing imports** — `useCallback` and `createPortal` were not imported; added to React and react-dom imports
+2. **Toast not in portal** — `fixed` toast inside root `animate-enter` div; moved to `createPortal(document.body)` with Fragment `<>` wrapper; removed `animate-enter` from toast class (CSS transform trap)
+3. **`notify` not memoized** — plain function re-created each render; wrapped in `useCallback([], [])`
+4. **GeoLocationTable — 16 hardcoded Vietnamese strings** — title, error state, 3 stat labels (total visits, last 30d, unique IPs, IP source, GEO coverage, visits unit), Top Countries/Cities headings, empty state messages (no IP, no cities, localhost hint), `|| 'Không rõ'` for unknown country/city → replaced with `dash.geo_*` locale keys
+5. **RealtimeTrafficWidget — 2 hardcoded strings** — "DB Latency" and "Lỗi / 60s" → `t('dash.traffic_db_latency')` / `t('dash.traffic_errors')`
+6. **Dead `|| "fallback"` patterns** — 8 dead fallback patterns removed: `dash.commission_2_percent`, `dash.pipeline_value`, `dash.win_probability`, `dash.vs_last_period` (×3), `dash.ai_deflection_rate`, `dash.resolved_by_ai`, `dash.sales_velocity`, `dash.days_to_close` — `t()` never returns falsy so `||` branches never fire
+7. **`isSalesScope` fragile comparison** — compared `scopeLabel` against 3 hardcoded strings (`t(...)`, `'Dữ liệu của bạn'`, `'Your data'`); simplified to single `scopeLabel === t('dash.scope_personal')`
+
 ### DataPlatform.tsx Audit & Fix (March 2026)
 3 bugs resolved in `pages/DataPlatform.tsx`:
 1. **Toast not in portal** — `fixed` toast inside root `animate-enter` div; moved to `createPortal(document.body)` with Fragment `<>` wrapper; added `role="status" aria-live="polite"` attributes
