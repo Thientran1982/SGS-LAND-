@@ -499,32 +499,36 @@ export const Dashboard: React.FC = () => {
         <div className="space-y-6 p-4 sm:p-6 pb-24 animate-enter max-w-[1600px] mx-auto">
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-                <div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
+                {/* Left: title + subtitle + badges */}
+                <div className="min-w-0">
                     <h1 className="text-2xl font-extrabold text-[var(--text-primary)] dark:text-white tracking-tight">
                         {userName ? `${t('dash.greeting_morning')} ${userName}! 👋` : t('dash.greeting_morning')}
                     </h1>
-                    <div className="flex items-center gap-2 mt-1">
-                        <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 font-medium">
-                            {t('dash.overview_subtitle')}
-                        </p>
-                        {/* Scope badge: indicates whether stats are personal or company-wide */}
-                        <span className={`text-xs2 font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                    <p className="text-sm text-[var(--text-tertiary)] dark:text-slate-400 font-medium mt-0.5">
+                        {t('dash.overview_subtitle')}
+                    </p>
+                    {/* Badges row — separate line so they never crowd the subtitle */}
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        {/* Scope badge */}
+                        <span className={`text-xs2 font-bold px-2 py-1 rounded-full border flex items-center gap-1 shrink-0 ${
                             isSalesScope
                                 ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-700'
                                 : 'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                         }`}>
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                             {scopeLabel}
                         </span>
-                        <span className="text-xs2 text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium border border-[var(--glass-border)] dark:border-slate-700">
+                        {/* Last updated badge */}
+                        <span className="text-xs2 text-[var(--text-tertiary)] bg-[var(--glass-surface-hover)] dark:bg-slate-800 dark:text-slate-400 px-2 py-1 rounded-full flex items-center gap-1 font-medium border border-[var(--glass-border)] dark:border-slate-700 shrink-0">
                             {ICONS.REFRESH} {lastUpdated.toLocaleTimeString()}
                         </span>
                     </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                    <div className="w-36 z-20">
+                {/* Right: filter + export — full width on mobile, auto on desktop */}
+                <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+                    <div className="flex-1 md:flex-none md:w-36 z-20">
                         <Dropdown 
                             value={timeRange}
                             onChange={(val) => setTimeRange(val as string)}
@@ -539,7 +543,7 @@ export const Dashboard: React.FC = () => {
                     <button 
                         onClick={handleExport}
                         disabled={isExporting}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                         {isExporting ? (
                             <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
