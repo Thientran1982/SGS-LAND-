@@ -710,9 +710,9 @@ export const News: React.FC = () => {
                         <button 
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+                            className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         </button>
                         
                         <div className="flex items-center gap-1 flex-wrap justify-center">
@@ -720,7 +720,7 @@ export const News: React.FC = () => {
                                 <button
                                     key={page}
                                     onClick={() => setCurrentPage(page)}
-                                    className={`w-10 h-10 rounded-xl text-sm font-bold transition-colors ${
+                                    className={`w-10 h-10 sm:w-8 sm:h-8 rounded-xl text-sm font-bold transition-colors ${
                                         currentPage === page 
                                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
                                         : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]'
@@ -734,9 +734,9 @@ export const News: React.FC = () => {
                         <button 
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+                            className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-xl border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         </button>
                     </div>
                 )}

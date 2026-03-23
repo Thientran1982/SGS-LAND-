@@ -46,7 +46,7 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
             </div>
 
             {/* Desktop: full bar */}
-            <div className="hidden sm:flex flex-row justify-between items-center px-5 py-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
                 <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
                     <span>{t('pagination.showing')}</span>
                     <span className="font-bold text-[var(--text-primary)]">{total > 0 ? start : 0}-{end}</span>
@@ -55,7 +55,7 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
                     <span>{t('pagination.results')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <div className="min-w-[64px] mr-1">
+                    <div className="min-w-[60px] mr-1">
                         <Dropdown
                             value={pageSize}
                             onChange={(v) => onPageSizeChange(Number(v))}
@@ -67,17 +67,17 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
                     <button
                         onClick={() => onPageChange(page - 1)}
                         disabled={page === 1}
-                        className="px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                     >
                         {t('pagination.prev')}
                     </button>
-                    <div className="flex items-center gap-1 px-1.5">
+                    <div className="flex items-center gap-1 px-1">
                         <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages || 1}</span>
                     </div>
                     <button
                         onClick={() => onPageChange(page + 1)}
                         disabled={page === totalPages || total === 0}
-                        className="px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                     >
                         {t('pagination.next')}
                     </button>
@@ -512,14 +512,14 @@ export const AdminUsers: React.FC = () => {
                 </div>
 
                 {/* Row 2: Thanh tìm kiếm + bộ lọc vai trò */}
-                <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]/50">
+                <div className="flex items-center gap-3 px-4 sm:px-5 py-2 border-t border-[var(--glass-border)] bg-[var(--glass-surface)]/50">
                     {/* Ô tìm kiếm — kéo dài toàn bộ chiều ngang còn lại */}
                     <div className="relative flex-1 group">
                         <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
                             {ICONS.SEARCH}
                         </div>
                         <input
-                            className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
+                            className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none placeholder:text-[var(--text-muted)] shadow-sm"
                             placeholder={t('admin.users.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
@@ -660,7 +660,7 @@ export const AdminUsers: React.FC = () => {
             </div>
             
             {/* FOOTER - Pagination */}
-            <div className="shrink-0 pb-4 px-4 sm:px-6 pt-3">
+            <div className="shrink-0 py-2 px-4 sm:px-5">
                 <PaginationControl 
                     page={page} 
                     total={totalUsers} 

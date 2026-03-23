@@ -160,7 +160,7 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
             </div>
 
             {/* Desktop: full bar */}
-            <div className="hidden sm:flex flex-row justify-between items-center px-5 py-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
                 <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
                     <span>{t('pagination.showing')}</span>
                     <span className="font-bold text-[var(--text-primary)]">{totalItems > 0 ? start : 0}-{end}</span>
@@ -169,7 +169,7 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
                     <span>{t('pagination.results')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <div className="min-w-[64px] mr-1">
+                    <div className="min-w-[60px] mr-1">
                         <Dropdown
                             value={pageSize}
                             onChange={(v) => onPageSizeChange(Number(v))}
@@ -181,17 +181,17 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
                     <button
                         onClick={() => onPageChange(page - 1)}
                         disabled={page === 1}
-                        className="px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                     >
                         {t('pagination.prev')}
                     </button>
-                    <div className="flex items-center gap-1 px-1.5">
+                    <div className="flex items-center gap-1 px-1">
                         <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages || 1}</span>
                     </div>
                     <button
                         onClick={() => onPageChange(page + 1)}
                         disabled={page === totalPages || totalPages === 0}
-                        className="px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
                     >
                         {t('pagination.next')}
                     </button>
