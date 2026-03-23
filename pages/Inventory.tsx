@@ -731,8 +731,8 @@ export const Inventory: React.FC = () => {
         <div className="h-full flex flex-col relative">
 
             {/* Header & Controls */}
-            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm p-4 sm:p-6 transition-all flex-none">
-                <div className="flex flex-col md:flex-row justify-between gap-4">
+            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 sm:p-6 transition-all flex-none">
+                <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
@@ -741,7 +741,7 @@ export const Inventory: React.FC = () => {
                             <input 
                                 value={search} 
                                 onChange={e => setSearch(e.target.value)} 
-                                className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
+                                className="w-full pl-10 pr-10 py-2 min-h-[40px] sm:py-2.5 sm:min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
                                 placeholder={t('inventory.search_hint')} 
                             />
                             {search && (
@@ -761,7 +761,7 @@ export const Inventory: React.FC = () => {
                         )}
                     </div>
 
-                    <div ref={filtersRef} className="flex gap-2 overflow-x-auto pb-2 px-1 -mx-1 no-scrollbar mask-linear-fade items-center scroll-smooth cursor-grab active:cursor-grabbing">
+                    <div ref={filtersRef} className="flex gap-2 overflow-x-auto pb-1 px-1 -mx-1 no-scrollbar mask-linear-fade items-center scroll-smooth cursor-grab active:cursor-grabbing">
                         <div className="min-w-[140px] shrink-0"><Dropdown value={transactionFilter} onChange={(v) => setTransactionFilter(v as string)} options={transactionOptions} className="text-xs" /></div>
                         <div className="min-w-[140px] shrink-0"><Dropdown value={typeFilter} onChange={(v) => setTypeFilter(v as string)} options={typeOptions} className="text-xs" /></div>
                         <div className="min-w-[140px] shrink-0"><Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} className="text-xs" /></div>
@@ -799,38 +799,38 @@ export const Inventory: React.FC = () => {
             </div>
 
             {/* Metrics Section */}
-            <div ref={metricsRef} className="px-4 md:px-6 py-4 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-3 md:gap-4 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
-                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1 truncate">{t('inventory.total_listings')}</div>
-                    <div className="text-lg md:text-2xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
+            <div ref={metricsRef} className="px-3 md:px-6 py-2 md:py-4 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-2 md:gap-4 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-0.5 truncate">{t('inventory.total_listings')}</div>
+                    <div className="text-base md:text-2xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-emerald-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-emerald-500 uppercase tracking-wider mb-1 truncate">{t('status.AVAILABLE')}</div>
-                    <div className="text-lg md:text-2xl font-black text-emerald-600">{stats.availableCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-emerald-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs md:text-xs2 font-bold text-emerald-500 uppercase tracking-wider mb-0.5 truncate">{t('status.AVAILABLE')}</div>
+                    <div className="text-base md:text-2xl font-black text-emerald-600">{stats.availableCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-amber-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-amber-500 uppercase tracking-wider mb-1 truncate">{t('status.HOLD')}</div>
-                    <div className="text-lg md:text-2xl font-black text-amber-600">{stats.holdCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-amber-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs md:text-xs2 font-bold text-amber-500 uppercase tracking-wider mb-0.5 truncate">{t('status.HOLD')}</div>
+                    <div className="text-base md:text-2xl font-black text-amber-600">{stats.holdCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-orange-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-orange-500 uppercase tracking-wider mb-1 truncate">{t('status.BOOKING')}</div>
-                    <div className="text-lg md:text-2xl font-black text-orange-600">{stats.bookingCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-orange-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs md:text-xs2 font-bold text-orange-500 uppercase tracking-wider mb-0.5 truncate">{t('status.BOOKING')}</div>
+                    <div className="text-base md:text-2xl font-black text-orange-600">{stats.bookingCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-indigo-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-indigo-500 uppercase tracking-wider mb-1 truncate">{t('status.OPENING')}</div>
-                    <div className="text-lg md:text-2xl font-black text-indigo-600">{stats.openingCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-indigo-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs md:text-xs2 font-bold text-indigo-500 uppercase tracking-wider mb-0.5 truncate">{t('status.OPENING')}</div>
+                    <div className="text-base md:text-2xl font-black text-indigo-600">{stats.openingCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-teal-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-teal-500 uppercase tracking-wider mb-1 truncate">{t('status.RENTED')}</div>
-                    <div className="text-lg md:text-2xl font-black text-teal-600">{stats.rentedCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-teal-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs md:text-xs2 font-bold text-teal-500 uppercase tracking-wider mb-0.5 truncate">{t('status.RENTED')}</div>
+                    <div className="text-base md:text-2xl font-black text-teal-600">{stats.rentedCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 truncate">{t('status.SOLD')}</div>
-                    <div className="text-lg md:text-2xl font-black text-[var(--text-secondary)]">{stats.soldCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5 truncate">{t('status.SOLD')}</div>
+                    <div className="text-base md:text-2xl font-black text-[var(--text-secondary)]">{stats.soldCount}</div>
                 </div>
-                <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-rose-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-rose-500 uppercase tracking-wider mb-1 truncate">{t('status.INACTIVE')}</div>
-                    <div className="text-lg md:text-2xl font-black text-rose-600">{stats.inactiveCount}</div>
+                <div className="bg-[var(--bg-surface)] px-2.5 md:px-4 py-2 md:py-3 rounded-xl border border-rose-100 shadow-sm min-w-[90px] md:flex-1 shrink-0">
+                    <div className="text-2xs md:text-xs2 font-bold text-rose-500 uppercase tracking-wider mb-0.5 truncate">{t('status.INACTIVE')}</div>
+                    <div className="text-base md:text-2xl font-black text-rose-600">{stats.inactiveCount}</div>
                 </div>
             </div>
 
@@ -839,7 +839,7 @@ export const Inventory: React.FC = () => {
 
                 {/* GRID & LIST — inside overflow-auto so content can scroll */}
                 {(viewMode === 'GRID' || viewMode === 'LIST') && (
-                    <div className="flex-1 overflow-auto p-4 sm:p-6 no-scrollbar">
+                    <div className="flex-1 overflow-auto p-3 sm:p-6 no-scrollbar">
                         
                         {/* GRID VIEW (DEFAULT) */}
                         {viewMode === 'GRID' && (
