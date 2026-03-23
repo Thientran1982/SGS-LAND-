@@ -141,7 +141,7 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
     return (
         <>
             {/* Mobile: slim icon-only bar */}
-            <div className="flex sm:hidden items-center justify-center gap-3 px-3 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
+            <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
                 <button
                     onClick={() => onPageChange(page - 1)}
                     disabled={page === 1}
