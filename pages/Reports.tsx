@@ -806,9 +806,11 @@ export const Reports: React.FC = () => {
             setData(safeData);
             setCurrentUser(user);
             setLoading(false);
-        }).catch(err => {
-            console.error("Failed to load reports", err);
-            if(mounted) setLoading(false);
+        }).catch(() => {
+            if (mounted) {
+                notify(t('common.error_loading'), 'error');
+                setLoading(false);
+            }
         });
         return () => { mounted = false; };
     }, [timeRange]);

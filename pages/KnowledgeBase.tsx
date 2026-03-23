@@ -115,7 +115,7 @@ export const KnowledgeBase: React.FC = () => {
             notify(
                 files.length === 1
                     ? t('knowledge.upload_success')
-                    : `${successCount}/${files.length} file tải lên thành công`,
+                    : t('knowledge.upload_success_many', { success: successCount, total: files.length }),
                 'success'
             );
         }
@@ -163,7 +163,7 @@ export const KnowledgeBase: React.FC = () => {
 
     return (
         <>
-        <div className="space-y-6 pt-6 pb-20 animate-enter relative max-w-6xl mx-auto px-4 md:px-6">
+        <div className="space-y-6 p-4 sm:p-6 pb-20 animate-enter relative max-w-6xl mx-auto">
 
             {/* Page Header */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
