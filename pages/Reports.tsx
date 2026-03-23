@@ -254,8 +254,8 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                 </div>
 
                 <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
-                    <h3 className="font-bold text-[var(--text-primary)] mb-0.5 text-sm sm:text-base">{t('reports.chart_conversion_trend') || 'Xu hướng chuyển đổi'}</h3>
-                    <p className="text-xs2 sm:text-xs3 text-[var(--text-secondary)] mb-2 sm:mb-3">{t('reports.chart_conversion_desc') || 'Tỷ lệ chốt deal theo tháng'}</p>
+                    <h3 className="font-bold text-[var(--text-primary)] mb-0.5 text-sm sm:text-base">{t('reports.chart_conversion_trend')}</h3>
+                    <p className="text-xs2 sm:text-xs3 text-[var(--text-secondary)] mb-2 sm:mb-3">{t('reports.chart_conversion_desc')}</p>
                     <div style={{ width: '100%', height: 260 }}>
                         {hasTrend ? (
                             <ResponsiveContainer width="100%" height="100%">
@@ -290,16 +290,16 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                                     <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs shadow-xl border border-white/10">
                                                         <div className="font-bold mb-1">{label}</div>
                                                         <div className="flex gap-3">
-                                                            <span className="text-[var(--text-secondary)]">{t('reports.metric_conversion') || 'Tỷ lệ'}:</span>
+                                                            <span className="text-[var(--text-secondary)]">{t('reports.metric_conversion')}:</span>
                                                             <span className="font-mono text-emerald-400">{payload[0].value}%</span>
                                                         </div>
                                                         <div className="flex gap-3">
-                                                            <span className="text-[var(--text-secondary)]">Won:</span>
+                                                            <span className="text-[var(--text-secondary)]">{t('reports.won')}:</span>
                                                             <span className="font-mono text-emerald-400">{payload[0].payload.won}/{payload[0].payload.total}</span>
                                                         </div>
                                                         {payload[0].payload.lost > 0 && (
                                                             <div className="flex gap-3">
-                                                                <span className="text-[var(--text-secondary)]">Lost:</span>
+                                                                <span className="text-[var(--text-secondary)]">{t('reports.lost')}:</span>
                                                                 <span className="font-mono text-rose-400">{payload[0].payload.lost}</span>
                                                             </div>
                                                         )}
@@ -351,11 +351,11 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                     <div>
                         <h3 className="font-bold text-[var(--text-primary)] mb-1">{t('reports.chart_funnel')}</h3>
                         <p className="text-xs text-[var(--text-tertiary)]">{t('reports.funnel_desc')}</p>
-                        <p className="text-xs2 text-[var(--text-secondary)] mt-0.5">{t('reports.funnel_rate_note') || '% tính trên tổng leads mới (NEW)'}</p>
+                        <p className="text-xs2 text-[var(--text-secondary)] mt-0.5">{t('reports.funnel_rate_note')}</p>
                     </div>
                     {overallRate !== null && (
                         <div className="flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-[14px] px-4 py-2 text-center">
-                            <div className="text-xs2 font-bold text-emerald-600 uppercase tracking-wider">{t('reports.funnel_overall_rate') || 'Tỷ lệ NEW → WON'}</div>
+                            <div className="text-xs2 font-bold text-emerald-600 uppercase tracking-wider">{t('reports.funnel_overall_rate')}</div>
                             <div className="text-2xl font-extrabold text-emerald-700">{overallRate}%</div>
                         </div>
                     )}
@@ -517,7 +517,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
         if (!editingCost) return;
         const parsed = Number(newCostValue);
         if (!newCostValue || isNaN(parsed) || parsed < 0) {
-            notify(t('reports.cost_amount_invalid') || 'Chi phí không hợp lệ', 'error');
+            notify(t('reports.cost_amount_invalid'), 'error');
             return;
         }
         setIsSavingUpdate(true);
@@ -525,7 +525,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             await db.updateCampaignCost(editingCost.id, parsed);
             setShowUpdateModal(false);
             setEditingCost(null);
-            notify(t('reports.cost_updated') || 'Đã cập nhật chi phí', 'success');
+            notify(t('reports.cost_updated'), 'success');
             onCostUpdated();
         } catch (error: any) {
             notify(error?.message || t('common.error'), 'error');
@@ -538,7 +538,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
         if (!addForm.source || !addForm.cost || !addForm.period) return;
         const parsedCost = Number(addForm.cost);
         if (isNaN(parsedCost) || parsedCost < 0) {
-            notify(t('reports.cost_amount_invalid') || 'Chi phí không hợp lệ (phải là số không âm)', 'error');
+            notify(t('reports.cost_amount_invalid'), 'error');
             return;
         }
         setIsSaving(true);
@@ -551,7 +551,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
             });
             setIsAdding(false);
             setAddForm({ campaignName: '', source: '', cost: '', period: new Date().toISOString().slice(0, 7) });
-            notify(t('reports.cost_added') || 'Đã thêm chi phí', 'success');
+            notify(t('reports.cost_added'), 'success');
             onCostUpdated();
         } catch (error: any) {
             notify(error?.message || t('common.error'), 'error');
@@ -566,7 +566,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
         try {
             await db.deleteCampaignCost(deletingId);
             setDeletingId(null);
-            notify(t('reports.cost_deleted') || 'Đã xóa chi phí', 'success');
+            notify(t('reports.cost_deleted'), 'success');
             onCostUpdated();
         } catch (error: any) {
             notify(error?.message || t('common.error'), 'error');
@@ -586,7 +586,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                         className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow hover:bg-indigo-700 transition-all"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                        {t('reports.btn_add_cost') || 'Thêm Chi Phí'}
+                        {t('reports.btn_add_cost')}
                     </button>
                 )}
             </div>
@@ -602,7 +602,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                         <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] font-bold text-xs uppercase tracking-wider">
                             <tr>
                                 <th className="p-5">{t('reports.cost_source')}</th>
-                                <th className="p-5">{t('reports.cost_campaign_name') || 'Tên Chiến Dịch'}</th>
+                                <th className="p-5">{t('reports.cost_campaign_name')}</th>
                                 <th className="p-5">{t('reports.cost_month')}</th>
                                 <th className="p-5 text-right">{t('reports.cost_amount')}</th>
                                 {canUpdateCosts && <th className="p-5 text-right"></th>}
@@ -630,7 +630,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                                     onClick={() => setDeletingId(cost.id)}
                                                     className="text-xs font-bold text-rose-500 hover:text-rose-700 transition-colors px-2 py-1 rounded-lg hover:bg-rose-50"
                                                 >
-                                                    {t('common.delete') || 'Xóa'}
+                                                    {t('common.delete')}
                                                 </button>
                                             </div>
                                         </td>
@@ -644,10 +644,10 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
         </div>
 
         {/* Add Cost Modal */}
-        {isAdding && createPortal(
-            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
+        {createPortal(
+            isAdding ? <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
                 <div className="bg-[var(--bg-surface)] w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] overflow-y-auto no-scrollbar max-h-[92dvh] sm:max-h-[90vh]">
-                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-5">{t('reports.btn_add_cost') || 'Thêm Chi Phí Chiến Dịch'}</h3>
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-5">{t('reports.btn_add_cost')}</h3>
                     <div className="space-y-4 mb-6">
                         <div>
                             <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_source')} *</label>
@@ -660,7 +660,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_campaign_name') || 'Tên Chiến Dịch'}</label>
+                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_campaign_name')}</label>
                             <input 
                                 type="text"
                                 value={addForm.campaignName}
@@ -702,19 +702,19 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                         </button>
                     </div>
                 </div>
-            </div>,
+            </div> : null,
             document.body
         )}
 
         {/* Delete Confirm Modal */}
-        {deletingId && createPortal(
-            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
+        {createPortal(
+            deletingId ? <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
                 <div className="bg-[var(--bg-surface)] w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)]">
                     <div className="flex items-center justify-center w-12 h-12 rounded-full bg-rose-50 mb-4 mx-auto">
                         <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </div>
-                    <h3 className="text-base font-bold text-[var(--text-primary)] text-center mb-2">{t('reports.confirm_delete_cost') || 'Xác nhận xóa chi phí'}</h3>
-                    <p className="text-xs text-[var(--text-tertiary)] text-center mb-6">{t('reports.confirm_delete_cost_desc') || 'Hành động này không thể hoàn tác.'}</p>
+                    <h3 className="text-base font-bold text-[var(--text-primary)] text-center mb-2">{t('reports.confirm_delete_cost')}</h3>
+                    <p className="text-xs text-[var(--text-tertiary)] text-center mb-6">{t('reports.confirm_delete_cost_desc')}</p>
                     <div className="flex gap-3 w-full">
                         <button onClick={() => setDeletingId(null)} className="flex-1 py-3 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-slate-200 transition-colors">
                             {t('common.cancel')}
@@ -724,17 +724,17 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                             disabled={isDeleting}
                             className="flex-1 py-3 bg-rose-500 text-white font-bold rounded-xl text-sm shadow hover:bg-rose-600 transition-all disabled:opacity-50"
                         >
-                            {isDeleting ? '...' : (t('common.delete') || 'Xóa')}
+                            {isDeleting ? '...' : t('common.delete')}
                         </button>
                     </div>
                 </div>
-            </div>,
+            </div> : null,
             document.body
         )}
 
         {/* Update Cost Modal */}
-        {showUpdateModal && editingCost && createPortal(
-            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
+        {createPortal(
+            (showUpdateModal && editingCost) ? <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-enter">
                 <div className="bg-[var(--bg-surface)] w-full sm:max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] scale-100 animate-scale-up">
                     <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">{t('reports.btn_update')}</h3>
                     <p className="text-xs text-[var(--text-secondary)] mb-5">{editingCost.source} · {editingCost.period}</p>
@@ -757,7 +757,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                         </button>
                     </div>
                 </div>
-            </div>,
+            </div> : null,
             document.body
         )}
     </div>
@@ -838,7 +838,7 @@ export const Reports: React.FC = () => {
     if (!data) return null;
 
     return (
-        <div className="space-y-4 pb-20 relative animate-enter">
+        <div className="p-4 sm:p-6 space-y-4 pb-20 relative animate-enter">
             {/* Header: single bar — Tabs (left) + Time Filter (right) on desktop; stacked on mobile */}
             <div className="bg-[var(--bg-surface)] px-4 sm:px-5 py-3 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 {/* Desktop: one row */}
@@ -863,7 +863,7 @@ export const Reports: React.FC = () => {
                     <div className="w-px h-6 bg-slate-200 shrink-0" />
                     {/* Time filter */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest">Kỳ:</span>
+                        <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest">{t('reports.period_label')}</span>
                         <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-xl gap-0.5">
                             {TIME_RANGE_OPTIONS.map(opt => (
                                 <button
@@ -875,7 +875,7 @@ export const Reports: React.FC = () => {
                                         : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                                     }`}
                                 >
-                                    {opt.label}
+                                    {t(`reports.range_${opt.value}`)}
                                 </button>
                             ))}
                         </div>
@@ -900,7 +900,7 @@ export const Reports: React.FC = () => {
                                     : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                                 }`}
                             >
-                                {opt.label}
+                                {t(`reports.range_${opt.value}`)}
                             </button>
                         ))}
                     </div>
@@ -915,14 +915,14 @@ export const Reports: React.FC = () => {
                 {activeTab === 'COSTS' && <CostsTab data={data} t={t} formatCurrency={formatCurrency} currentUser={currentUser} onCostUpdated={loadData} notify={notify} />}
             </div>
 
-            {toast && createPortal(
-                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold transition-all animate-enter ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+            {createPortal(
+                toast ? <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold transition-all animate-enter ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
                     {toast.type === 'success'
                         ? <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                         : <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                     }
                     {toast.msg}
-                </div>,
+                </div> : null,
                 document.body
             )}
         </div>
