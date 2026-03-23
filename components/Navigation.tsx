@@ -82,11 +82,13 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
             <div className="flex items-center gap-3 sm:gap-4 relative z-10 flex-1 min-w-0 mr-2">
                 <button
                     onClick={onMenuClick}
-                    className="md:hidden py-1.5 px-3 -ml-2 min-h-[44px] min-w-[44px] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] dark:hover:bg-[var(--bg-surface)]/10 rounded-xl transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 shrink-0"
+                    className="md:hidden group flex items-center justify-center -ml-2 min-h-[44px] min-w-[44px] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded-xl"
                     aria-label={t('common.menu')}
                     aria-expanded={false}
                 >
-                    {ICONS.MENU}
+                    <span className="h-9 w-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
+                        {ICONS.MENU}
+                    </span>
                 </button>
 
                 {/* Global Search Trigger (Desktop) — moved to left area */}
@@ -109,10 +111,12 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                 {/* Mobile Search Icon */}
                 <button
                     onClick={onSearch}
-                    className="md:hidden py-1.5 px-3 min-h-[44px] min-w-[44px] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] rounded-xl active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    className="md:hidden group flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded-xl"
                     aria-label={t('common.search')}
                 >
-                    {ICONS.SEARCH_MOBILE}
+                    <span className="h-9 w-9 flex items-center justify-center rounded-xl text-[var(--text-tertiary)] group-hover:bg-[var(--glass-surface-hover)] group-hover:text-[var(--text-primary)] group-active:scale-95 transition-all">
+                        {ICONS.SEARCH_MOBILE}
+                    </span>
                 </button>
 
                 <button
