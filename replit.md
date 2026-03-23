@@ -264,6 +264,36 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 3. **Simulator output 3 hardcoded English strings** — `"Simulated output for: ..."`, `"Error executing simulation."`, and `"OUTPUT:"` label → 4 new locale keys: `ai.sim_result` (with `{input}` + `{version}` interpolation), `ai.sim_error`, `ai.sim_output_label`, added to VI + EN locales
 4. **Safety Log table missing empty state** — added `<tr colSpan=6>` with `t('ai.no_safety_logs')` when `safetyLogs` is empty
 
+### Leads.tsx Audit & Fix (March 2026)
+All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast portal fixed:
+
+**i18n — hardcoded strings replaced:**
+1. `overdueCount` badge — `t('leads.overdue_count', { count })`
+2. Column settings tooltip — `t('leads.col_settings_title')`
+3. Column panel heading "Cột hiển thị" — `t('leads.col_visible_title')`
+4. Density section heading "Mật độ hàng" — `t('leads.density_title')`
+5. Density buttons "Gọn/Vừa/Rộng" — `t('leads.density_compact/normal/relaxed')`
+
+**Dead `|| fallback` patterns removed (t() never returns falsy):**
+- `clear_search`, `reset_filters` (×4 occurrences), `import_excel` (×2), `export_excel` (×2)
+- `scope_mine`, `total_leads`, `new_leads`/`new_leads_tooltip` (×2), `win_rate`/`win_rate_tooltip` (×2)
+- `avg_score`, `kanban_empty`, `empty_filter_hint`, `empty_title`, `empty_hint` (×2 each — LIST + mobile BOARD)
+- KanbanCard dead fallbacks (4 patterns), simulate inbound (3), export success count, import result messages
+- `bulk_delete_confirm` dynamic fallback
+- Default customer name in import → `t('leads.new_customer')`
+
+**Critical bug — Toast portal:**
+- Toast `<div className="fixed ...">` was rendered inside `<div className="h-full flex flex-col relative">` — any parent `transform` (including `animate-enter`) traps `position: fixed` positioning
+- Fixed: return wrapped in `<>` Fragment; toast moved to `createPortal(toast ? <div> : null, document.body)` after the main div, before closing Fragment
+
+**Locale keys added (config/locales.ts):**
+- `leads.overdue_count`, `leads.col_settings_title`, `leads.col_visible_title`
+- `leads.density_title`, `leads.density_compact`, `leads.density_normal`, `leads.density_relaxed`
+- `leads.import_result`, `leads.import_result_errors`, `leads.export_success_count`
+- `leads.new_lead_received` (updated with `{source}` placeholder)
+
+---
+
 ### Billing.tsx Audit & Fix (March 2026)
 8 bugs resolved across backend + frontend + i18n:
 

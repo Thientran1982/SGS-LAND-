@@ -353,7 +353,7 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                                 <span className="text-xs font-bold text-[var(--text-secondary)] tabular-nums">{pct}%</span>
                             </div>
                             {overdueCount > 0 && (
-                                <span className="text-[10px] text-rose-500 font-semibold">{overdueCount} quá hạn</span>
+                                <span className="text-[10px] text-rose-500 font-semibold">{t('leads.overdue_count', { count: overdueCount })}</span>
                             )}
                         </div>
                     </td>
@@ -454,7 +454,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
                         ref={btnRef}
                         onClick={openMenu}
                         className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all"
-                        title={t('common.actions') || 'Thao tác'}
+                        title={t('common.actions')}
                     >
                         <svg className="w-3.5 h-3.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
@@ -510,14 +510,14 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
                         className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
                     >
                         <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        {t('common.edit') || 'Chỉnh sửa'}
+                        {t('common.edit')}
                     </button>
                     <button
                         onClick={() => { setMenuOpen(false); onProposal(lead); }}
                         className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
                     >
                         <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        {t('leads.create_proposal') || 'Tạo báo giá'}
+                        {t('leads.create_proposal')}
                     </button>
                     <div className="border-t border-[var(--glass-border)] my-1" />
                     <button
@@ -525,7 +525,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
                         className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        {t('common.delete') || 'Xóa'}
+                        {t('common.delete')}
                     </button>
                 </div>,
                 document.body
@@ -843,7 +843,7 @@ export const Leads: React.FC = () => {
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Leads");
             XLSX.writeFile(workbook, "DanhSachKhachHang.xlsx");
-            notify(`${t('leads.export_success')} (${allLeads.length} khách hàng)`, 'success');
+            notify(t('leads.export_success_count', { count: allLeads.length }), 'success');
         } catch {
             notify(t('common.error'), 'error');
         } finally {
@@ -898,7 +898,7 @@ export const Leads: React.FC = () => {
                     }
 
                     const newLead: Partial<Lead> = {
-                        name: row['Tên khách hàng'] || 'Khách hàng mới',
+                        name: row['Tên khách hàng'] || t('leads.new_customer'),
                         phone,
                         email: row['Email'] || '',
                         address: row['Địa chỉ'] || '',
@@ -921,7 +921,7 @@ export const Leads: React.FC = () => {
                 }
 
                 if (successCount > 0) fetchLeads();
-                const msg = `Nhập thành công: ${successCount} | Trùng/bỏ qua: ${skipCount}${errorCount > 0 ? ` | Lỗi: ${errorCount}` : ''}`;
+                const msg = t('leads.import_result', { success: successCount, skip: skipCount }) + (errorCount > 0 ? t('leads.import_result_errors', { error: errorCount }) : '');
                 notify(msg, successCount > 0 ? 'success' : 'error');
             } finally {
                 setLoading(false);
@@ -938,16 +938,16 @@ export const Leads: React.FC = () => {
             const randomBudget = Math.floor(Math.random() * 5000) * 1000000 + 1000000000; // 1B - 6B
             
             const newLead = {
-                name: `${t('leads.customer_from') || 'Khách hàng từ'} ${randomSource} ${Math.floor(Math.random() * 1000)}`,
+                name: `${t('leads.customer_from')} ${randomSource} ${Math.floor(Math.random() * 1000)}`,
                 phone: `090${Math.floor(1000000 + Math.random() * 9000000)}`,
                 email: `khachhang${Math.floor(Math.random() * 1000)}@gmail.com`,
                 source: randomSource,
                 stage: LeadStage.NEW,
-                notes: `${t('leads.interested_budget') || 'Quan tâm dự án, ngân sách khoảng'} ${randomBudget.toLocaleString('vi-VN')} VND`
+                notes: `${t('leads.interested_budget')} ${randomBudget.toLocaleString('vi-VN')} VND`
             };
             
             const createdLead = await db.createLead(newLead);
-            notify(t('leads.new_lead_received', { source: randomSource }) || `Đã nhận 1 Lead mới từ ${randomSource}! Hệ thống đang chấm điểm và phân bổ...`, 'success');
+            notify(t('leads.new_lead_received', { source: randomSource }), 'success');
             socket?.emit("lead_created", createdLead);
             aiService.scoreLead(createdLead, undefined, undefined, language).catch(() => {});
             fetchLeads();
@@ -974,8 +974,8 @@ export const Leads: React.FC = () => {
     const isScopedView = currentUser && RESTRICTED_ROLES.includes(currentUser.role);
 
     return (
+        <>
         <div className="h-full flex flex-col relative">
-            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg || (toast.type === 'success' ? t('common.success') : t('common.error'))}</span></div>}
 
             {/* Header & Controls */}
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-4 md:px-6 py-3 transition-all flex-none">
@@ -996,7 +996,7 @@ export const Leads: React.FC = () => {
                                     <button 
                                         onClick={() => setSearch('')}
                                         className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
-                                        title={t('common.clear_search') || 'Xóa tìm kiếm'}
+                                        title={t('common.clear_search')}
                                     >
                                         {ICONS.X}
                                     </button>
@@ -1036,10 +1036,10 @@ export const Leads: React.FC = () => {
                             <button
                                 onClick={() => { setStageFilter('ALL'); setSourceFilter('ALL'); }}
                                 className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
-                                title={t('leads.reset_filters') || 'Xóa bộ lọc'}
+                                title={t('leads.reset_filters')}
                             >
                                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse shrink-0" />
-                                {t('leads.reset_filters') || 'Xóa bộ lọc'}
+                                {t('leads.reset_filters')}
                                 <span className="ml-0.5 opacity-70">×</span>
                             </button>
                         )}
@@ -1051,7 +1051,7 @@ export const Leads: React.FC = () => {
                                     ref={colSettingsBtnRef}
                                     onClick={() => setShowColumnSettings(v => !v)}
                                     className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-bold transition-all ${showColumnSettings ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
-                                    title="Cài đặt cột & mật độ"
+                                    title={t('leads.col_settings_title')}
                                 >
                                     <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                                 </button>
@@ -1066,7 +1066,7 @@ export const Leads: React.FC = () => {
                                         }}
                                         className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-2xl p-4 w-64"
                                     >
-                                        <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider mb-3">Cột hiển thị</p>
+                                        <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider mb-3">{t('leads.col_visible_title')}</p>
                                         <div className="space-y-1.5 mb-4">
                                             {[
                                                 { key: 'phone', label: t('leads.col_phone') },
@@ -1098,7 +1098,7 @@ export const Leads: React.FC = () => {
                                             ))}
                                         </div>
                                         <div className="border-t border-[var(--glass-border)] pt-3">
-                                            <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider mb-2">Mật độ hàng</p>
+                                            <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider mb-2">{t('leads.density_title')}</p>
                                             <div className="flex gap-2">
                                                 {(['compact', 'normal', 'relaxed'] as RowDensity[]).map(d => (
                                                     <button
@@ -1106,7 +1106,7 @@ export const Leads: React.FC = () => {
                                                         onClick={() => setDensity(d)}
                                                         className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${density === d ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}
                                                     >
-                                                        {d === 'compact' ? 'Gọn' : d === 'normal' ? 'Vừa' : 'Rộng'}
+                                                        {d === 'compact' ? t('leads.density_compact') : d === 'normal' ? t('leads.density_normal') : t('leads.density_relaxed')}
                                                     </button>
                                                 ))}
                                             </div>
@@ -1138,18 +1138,18 @@ export const Leads: React.FC = () => {
                         <button 
                             onClick={() => fileInputRef.current?.click()} 
                             className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
-                            title={t('leads.import_excel') || "Nhập Excel"}
+                            title={t('leads.import_excel')}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                            {t('leads.import_excel') || 'Nhập Excel'}
+                            {t('leads.import_excel')}
                         </button>
                         <button 
                             onClick={handleExportExcel} 
                             className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
-                            title={t('leads.export_excel') || "Xuất Excel"}
+                            title={t('leads.export_excel')}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            {t('leads.export_excel') || 'Xuất Excel'}
+                            {t('leads.export_excel')}
                         </button>
 
                         <button onClick={() => setIsCreateModalOpen(true)} className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
@@ -1166,7 +1166,7 @@ export const Leads: React.FC = () => {
                     <div className="flex items-center pr-3 md:pr-4 shrink-0">
                         <span className="text-xs2 font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1 whitespace-nowrap">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                            {t('leads.scope_mine') || 'Dữ liệu của bạn'}
+                            {t('leads.scope_mine')}
                         </span>
                     </div>
                 )}
@@ -1174,28 +1174,28 @@ export const Leads: React.FC = () => {
                     <div className="p-1 bg-blue-50 text-blue-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                     </div>
-                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.total_leads') || 'Tổng Lead'}</span>
+                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.total_leads')}</span>
                     <span className="text-sm font-black text-[var(--text-primary)]">{metrics.total}</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0">
                     <div className="p-1 bg-indigo-50 text-indigo-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     </div>
-                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.new_leads_tooltip') || 'Khách hàng tạo mới trong 30 ngày gần nhất'}>{t('leads.new_leads') || 'Lead Mới'}</span>
-                    <span className="text-sm font-black text-indigo-600" title={t('leads.new_leads_tooltip') || 'Khách hàng tạo mới trong 30 ngày gần nhất'}>{metrics.newCount}</span>
+                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.new_leads_tooltip')}>{t('leads.new_leads')}</span>
+                    <span className="text-sm font-black text-indigo-600" title={t('leads.new_leads_tooltip')}>{metrics.newCount}</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0">
                     <div className="p-1 bg-emerald-50 text-emerald-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
-                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.win_rate_tooltip') || 'Tỉ lệ chốt = Chốt / (Chốt + Thất bại)'}>{t('leads.win_rate') || 'Tỉ lệ chốt'}</span>
-                    <span className="text-sm font-black text-emerald-600" title={`${metrics.wonCount} chốt / ${metrics.wonCount + metrics.lostCount} quyết định`}>{metrics.winRate}%</span>
+                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.win_rate_tooltip')}>{t('leads.win_rate')}</span>
+                    <span className="text-sm font-black text-emerald-600" title={`${metrics.wonCount} / ${metrics.wonCount + metrics.lostCount}`}>{metrics.winRate}%</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 md:px-4 shrink-0">
                     <div className="p-1 bg-amber-50 text-amber-500 rounded-md shrink-0">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                     </div>
-                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.avg_score') || 'Điểm TB'}</span>
+                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.avg_score')}</span>
                     <span className="text-sm font-black text-amber-600">{metrics.avgScore}</span>
                     <div className="hidden md:flex w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                         <div className="h-full bg-amber-400 rounded-full" style={{ width: `${metrics.avgScore}%` }} />
@@ -1289,10 +1289,10 @@ export const Leads: React.FC = () => {
                                                                 </div>
                                                                 <div>
                                                                     <p className="font-bold text-[var(--text-primary)] text-sm">{t('common.no_results')}</p>
-                                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint') || 'Thử xóa bộ lọc hoặc tìm kiếm khác'}</p>
+                                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint')}</p>
                                                                 </div>
                                                                 <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
-                                                                    {t('leads.reset_filters') || 'Xóa bộ lọc'}
+                                                                    {t('leads.reset_filters')}
                                                                 </button>
                                                             </>
                                                         ) : (
@@ -1301,8 +1301,8 @@ export const Leads: React.FC = () => {
                                                                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                                                                 </div>
                                                                 <div>
-                                                                    <p className="font-bold text-[var(--text-primary)] text-sm">{t('leads.empty_title') || 'Chưa có khách hàng nào'}</p>
-                                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_hint') || 'Thêm khách hàng đầu tiên hoặc nhập từ Excel'}</p>
+                                                                    <p className="font-bold text-[var(--text-primary)] text-sm">{t('leads.empty_title')}</p>
+                                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_hint')}</p>
                                                                 </div>
                                                                 <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
                                                                     {ICONS.ADD} {t('common.add_new')}
@@ -1339,7 +1339,7 @@ export const Leads: React.FC = () => {
                                                     <div className={`w-9 h-9 rounded-xl ${style.bg} flex items-center justify-center`}>
                                                         <svg className={`w-5 h-5 ${style.color} opacity-50`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
                                                     </div>
-                                                    <p className="text-xs text-[var(--text-tertiary)]">{t('leads.kanban_empty') || 'Chưa có khách hàng'}</p>
+                                                    <p className="text-xs text-[var(--text-tertiary)]">{t('leads.kanban_empty')}</p>
                                                 </div>
                                             )}
                                         </div>
@@ -1429,10 +1429,10 @@ export const Leads: React.FC = () => {
                                             </div>
                                             <div>
                                                 <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
-                                                <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint') || 'Thử xóa bộ lọc hoặc tìm kiếm khác'}</p>
+                                                <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint')}</p>
                                             </div>
                                             <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
-                                                {t('leads.reset_filters') || 'Xóa bộ lọc'}
+                                                {t('leads.reset_filters')}
                                             </button>
                                         </>
                                     ) : (
@@ -1441,8 +1441,8 @@ export const Leads: React.FC = () => {
                                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                                             </div>
                                             <div>
-                                                <p className="font-bold text-sm text-[var(--text-primary)]">{t('leads.empty_title') || 'Chưa có khách hàng nào'}</p>
-                                                <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_hint') || 'Thêm khách hàng đầu tiên hoặc nhập từ Excel'}</p>
+                                                <p className="font-bold text-sm text-[var(--text-primary)]">{t('leads.empty_title')}</p>
+                                                <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_hint')}</p>
                                             </div>
                                             <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
                                                 {ICONS.ADD} {t('common.add_new')}
@@ -1503,7 +1503,7 @@ export const Leads: React.FC = () => {
             <ConfirmModal
                 isOpen={bulkDeletePending}
                 title={t('common.delete')}
-                message={t('leads.bulk_delete_confirm', { count: selectedLeads.size }) || `Xóa ${selectedLeads.size} khách hàng đã chọn? Thao tác này không thể hoàn tác.`}
+                message={t('leads.bulk_delete_confirm', { count: selectedLeads.size })}
                 confirmLabel={t('common.delete')}
                 cancelLabel={t('common.cancel')}
                 onConfirm={confirmBulkDelete}
@@ -1511,6 +1511,15 @@ export const Leads: React.FC = () => {
                 variant="danger"
             />
         </div>
+        {createPortal(
+            toast ? (
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    <span className="font-bold text-sm">{toast.msg || (toast.type === 'success' ? t('common.success') : t('common.error'))}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };
 
