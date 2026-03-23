@@ -116,9 +116,9 @@ export const Favorites: React.FC = () => {
 
     return (
         <>
-        <div className="h-full flex flex-col pb-20 animate-enter relative">
+        <div className="p-4 sm:p-6 h-full flex flex-col pb-20 animate-enter relative">
 
-            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-6 py-3 mb-6">
+            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-6">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-sm font-bold text-indigo-600">
                         {filtered.length}{filterType !== 'ALL' ? ` / ${allFavorites.length}` : ''} {t('favorites.title')}
@@ -158,7 +158,7 @@ export const Favorites: React.FC = () => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-auto p-4 sm:p-6 no-scrollbar">
+            <div className="flex-1 overflow-auto no-scrollbar">
                 {loading && allFavorites.length === 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {[1,2,3,4].map(i => (

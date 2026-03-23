@@ -71,6 +71,16 @@ export const Inbox: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { t, formatTime, formatCurrency, formatDate, formatDateTime, language } = useTranslation();
 
+    const channelLabel = useCallback((ch: string): string => {
+        const map: Record<string, string> = {
+            ZALO: t('inbox.channel_zalo'),
+            FACEBOOK: t('inbox.channel_facebook'),
+            EMAIL: t('inbox.channel_email'),
+            SMS: t('inbox.channel_sms'),
+        };
+        return map[ch] ?? ch;
+    }, [t]);
+
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), CONFIG.TOAST_DURATION);
@@ -443,7 +453,7 @@ export const Inbox: React.FC = () => {
                                 onClick={() => setChannelFilter(ch)}
                                 className={`text-xs2 font-bold px-2.5 py-1 rounded-lg border transition-all ${channelFilter === ch ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
                             >
-                                {ch === 'ALL' ? t('inbox.filter_all') : ch}
+                                {ch === 'ALL' ? t('inbox.filter_all') : channelLabel(ch)}
                             </button>
                         ))}
                     </div>
@@ -494,8 +504,9 @@ export const Inbox: React.FC = () => {
                                                     ZALO: 'Z', FACEBOOK: 'f', EMAIL: '@', SMS: 'SMS',
                                                 };
                                                 return (
-                                                    <span className={`text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 ${styles[ch] || 'bg-slate-100 text-slate-500'}`}>
-                                                        {labels[ch] || ch}
+                                                    <span className={`text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 ${styles[ch] || 'bg-slate-100 text-slate-500'}`}
+                                                          title={channelLabel(ch)}>
+                                                        {labels[ch] || channelLabel(ch).charAt(0).toUpperCase()}
                                                     </span>
                                                 );
                                             })()}
@@ -703,7 +714,7 @@ export const Inbox: React.FC = () => {
                                         onClick={() => setChannel(ch)}
                                         className={`px-2 md:px-3 py-1 min-h-[36px] rounded-md text-xs2 font-bold uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${channel === ch ? 'bg-[var(--bg-surface)] text-indigo-700 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
                                     >
-                                        {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS} {ch}
+                                        {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS} {channelLabel(ch)}
                                     </button>
                                 ))}
                             </div>

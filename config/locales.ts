@@ -1657,6 +1657,10 @@ export const DICTIONARY = {
         "inbox.send": "Gửi",
         "inbox.play_audio": "Phát tin nhắn thoại",
         "inbox.download_file": "Tải xuống",
+        "inbox.channel_zalo": "Zalo",
+        "inbox.channel_facebook": "Facebook",
+        "inbox.channel_email": "Email",
+        "inbox.channel_sms": "SMS",
 
         "leads.export_success": "Xuất dữ liệu thành công",
         "leads.new_lead_received": "Có khách hàng tiềm năng mới từ {source}!",
@@ -3426,6 +3430,10 @@ export const DICTIONARY = {
         "inbox.send": "Send",
         "inbox.play_audio": "Play voice message",
         "inbox.download_file": "Download file",
+        "inbox.channel_zalo": "Zalo",
+        "inbox.channel_facebook": "Facebook",
+        "inbox.channel_email": "Email",
+        "inbox.channel_sms": "SMS",
 
         "leads.export_success": "Data exported successfully",
         "leads.new_lead_received": "New potential customer from {source}!",
