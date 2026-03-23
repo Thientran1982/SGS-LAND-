@@ -95,35 +95,56 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
     const end = Math.min(page * pageSize, totalItems);
 
     return (
-        <div className="flex flex-col sm:flex-row justify-between items-center px-3 sm:px-5 py-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
-            <div className="hidden sm:flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
-                <span>{t('pagination.showing')}</span>
-                <span className="font-bold text-[var(--text-primary)]">{start}-{end}</span>
-                <span>{t('pagination.of')}</span>
-                <span className="font-bold text-[var(--text-primary)]">{totalItems}</span>
-                <span className="hidden sm:inline">{t('pagination.results')}</span>
+        <>
+            {/* Mobile: slim icon-only bar */}
+            <div className="flex sm:hidden items-center justify-center gap-3 px-3 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
+                <button
+                    onClick={() => onPageChange(page - 1)}
+                    disabled={page === 1}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <span className="text-xs font-bold text-[var(--text-primary)] min-w-[56px] text-center">{page} / {totalPages}</span>
+                <button
+                    onClick={() => onPageChange(page + 1)}
+                    disabled={page === totalPages || totalPages === 0}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
             </div>
 
-            <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-end">
-                <button 
-                    onClick={() => onPageChange(page - 1)} 
-                    disabled={page === 1}
-                    className="flex-1 sm:flex-none px-3 py-2.5 sm:py-1.5 min-h-[40px] sm:min-h-0 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
-                >
-                    {t('pagination.prev')}
-                </button>
-                <div className="flex items-center gap-1 px-1.5">
-                    <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages}</span>
+            {/* Desktop: full bar */}
+            <div className="hidden sm:flex flex-row justify-between items-center px-5 py-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+                <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
+                    <span>{t('pagination.showing')}</span>
+                    <span className="font-bold text-[var(--text-primary)]">{start}-{end}</span>
+                    <span>{t('pagination.of')}</span>
+                    <span className="font-bold text-[var(--text-primary)]">{totalItems}</span>
+                    <span>{t('pagination.results')}</span>
                 </div>
-                <button 
-                    onClick={() => onPageChange(page + 1)} 
-                    disabled={page === totalPages || totalPages === 0}
-                    className="flex-1 sm:flex-none px-3 py-2.5 sm:py-1.5 min-h-[40px] sm:min-h-0 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
-                >
-                    {t('pagination.next')}
-                </button>
+                <div className="flex items-center gap-1.5">
+                    <button
+                        onClick={() => onPageChange(page - 1)}
+                        disabled={page === 1}
+                        className="px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    >
+                        {t('pagination.prev')}
+                    </button>
+                    <div className="flex items-center gap-1 px-1.5">
+                        <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages}</span>
+                    </div>
+                    <button
+                        onClick={() => onPageChange(page + 1)}
+                        disabled={page === totalPages || totalPages === 0}
+                        className="px-3 py-1.5 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
+                    >
+                        {t('pagination.next')}
+                    </button>
+                </div>
             </div>
-        </div>
+        </>
     );
 });
 
