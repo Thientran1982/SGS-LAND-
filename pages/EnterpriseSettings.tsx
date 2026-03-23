@@ -20,7 +20,7 @@ const CONSTANTS = {
 // -----------------------------------------------------------------------------
 
 const SectionHeader: React.FC<{ title: string; subtitle: string; action?: React.ReactNode }> = memo(({ title, subtitle, action }) => (
-    <div className="flex justify-between items-start gap-4 mb-6 px-4 sm:px-6">
+    <div className="flex justify-between items-start gap-4 mb-6">
         <div className="min-w-0 flex-1">
             <h3 className="text-lg font-bold text-[var(--text-primary)] break-words">{title}</h3>
             <p className="text-sm text-[var(--text-tertiary)] mt-1">{subtitle}</p>
@@ -944,7 +944,7 @@ const AuditPanel = memo(() => {
             <SectionHeader title={t('ent.audit_title')} subtitle={t('ent.audit_subtitle')} />
 
             {/* Filters */}
-            <div className="flex flex-wrap gap-3 mb-4 items-center px-4 sm:px-6">
+            <div className="flex flex-wrap gap-3 mb-4 items-center">
                 <Dropdown
                     value={filterEntity}
                     onChange={(val) => handleFilterChange(filterAction, val as string)}
@@ -1118,7 +1118,7 @@ export const EnterpriseSettings: React.FC = () => {
 
     return (
         <>
-        <div className="space-y-6 pb-20 relative animate-enter">
+        <div className="space-y-6 pb-20 relative animate-enter p-4 sm:p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm gap-4 w-full overflow-hidden">
                 <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-[var(--text-tertiary)]">{t('ent.tenant_label')}:</span>
