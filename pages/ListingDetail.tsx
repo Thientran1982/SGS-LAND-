@@ -245,7 +245,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
     const [canManageUnits, setCanManageUnits] = useState(false); // ADMIN or TEAM_LEAD
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string>('');
-    const [tenantUsers, setTenantUsers] = useState<any[]>([]); // For assignee dropdown
+    const [tenantUsers, setTenantUsers] = useState<User[]>([]); // For assignee dropdown
     const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null); // Currently saving assignment
     
     // Form State
@@ -260,12 +260,12 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         setTimeout(() => setToast(null), 3000);
     }, []);
 
-    /** Returns true if the current user can edit this specific unit */
+    /** Returns true if the current user can edit or delete this specific unit */
     const canEditUnit = useCallback((unit: Listing): boolean => {
         if (canManageUnits) return true; // ADMIN / TEAM_LEAD always
         if (!currentUserId) return false;
         if (userRole !== 'SALES' && userRole !== 'MARKETING') return false;
-        return (unit as any).assignedTo === currentUserId || (unit as any).createdBy === currentUserId;
+        return unit.assignedTo === currentUserId || unit.createdBy === currentUserId;
     }, [canManageUnits, currentUserId, userRole]);
 
     useEffect(() => {
@@ -373,13 +373,14 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
             // Optimistic update: update the local units list
             setUnits(prev => prev.map(u => {
                 if (u.id !== unitId) return u;
-                const assignedUser = userId ? tenantUsers.find(tu => tu.id === userId) : null;
+                const assignedUser: User | undefined = userId ? tenantUsers.find(tu => tu.id === userId) : undefined;
                 return {
                     ...u,
-                    assignedTo: userId as any,
-                    assignedToName: assignedUser?.name || undefined,
-                    assignedToAvatar: assignedUser?.avatar || undefined,
-                } as Listing;
+                    assignedTo: userId as typeof u.assignedTo,
+                    assignedToName: assignedUser?.name,
+                    assignedToAvatar: assignedUser?.avatar,
+                    assignedToRole: assignedUser?.role,
+                };
             }));
             notify(t('inventory.assign_success'), 'success');
         } catch (e: any) {
@@ -638,25 +639,43 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                 <td className="px-4 py-3 text-xs3 text-[var(--text-tertiary)] text-right font-medium italic">{formatUnitPrice(unit.price, unit.area, t)}</td>
                                                 <td className="px-4 py-3 text-sm font-bold text-[var(--text-primary)] text-right">{formatCurrency(unit.price)}</td>
                                                 {/* Assignee column */}
-                                                <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                                                <td className="px-4 py-3 min-w-[140px]" onClick={e => e.stopPropagation()}>
                                                     {canManageUnits ? (
-                                                        <select
-                                                            value={(unit as any).assignedTo || ''}
-                                                            disabled={assigningUnitId === unit.id}
-                                                            onChange={e => handleAssign(unit.id, e.target.value || null)}
-                                                            className="text-xs border border-[var(--glass-border)] rounded-lg px-2 py-1 bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-indigo-400 min-w-[120px] max-w-[160px] disabled:opacity-50"
-                                                        >
-                                                            <option value="">{t('inventory.unassigned')}</option>
-                                                            {tenantUsers.map(u => (
-                                                                <option key={u.id} value={u.id}>{u.name}</option>
-                                                            ))}
-                                                        </select>
-                                                    ) : (
-                                                        <span className="text-xs text-[var(--text-secondary)]">
-                                                            {(unit as any).assignedToName || (
-                                                                <span className="text-[var(--text-tertiary)] italic">{t('inventory.unassigned')}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            {unit.assignedToName && (
+                                                                <img
+                                                                    src={unit.assignedToAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(unit.assignedToName)}&size=24&background=6366f1&color=fff`}
+                                                                    alt={unit.assignedToName}
+                                                                    className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                                                                />
                                                             )}
-                                                        </span>
+                                                            <select
+                                                                value={unit.assignedTo || ''}
+                                                                disabled={assigningUnitId === unit.id}
+                                                                onChange={e => handleAssign(unit.id, e.target.value || null)}
+                                                                className="text-xs border border-[var(--glass-border)] rounded-lg px-2 py-1 bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-indigo-400 min-w-[110px] max-w-[150px] disabled:opacity-50"
+                                                            >
+                                                                <option value="">{t('inventory.unassigned')}</option>
+                                                                {tenantUsers.map(u => (
+                                                                    <option key={u.id} value={u.id}>{u.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-1.5">
+                                                            {unit.assignedToName ? (
+                                                                <>
+                                                                    <img
+                                                                        src={unit.assignedToAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(unit.assignedToName)}&size=24&background=6366f1&color=fff`}
+                                                                        alt={unit.assignedToName}
+                                                                        className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                                                                    />
+                                                                    <span className="text-xs text-[var(--text-secondary)]">{unit.assignedToName}</span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-xs text-[var(--text-tertiary)] italic">{t('inventory.unassigned')}</span>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 text-center sticky z-10 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] transition-colors shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: showActionsCol ? '90px' : '0' }}>
@@ -677,7 +696,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                                         <Edit2 className="w-4 h-4" />
                                                                     </button>
                                                                 )}
-                                                                {canManageUnits && (
+                                                                {canEditUnit(unit) && (
                                                                     <button 
                                                                         onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, unit); }}
                                                                         className="p-1.5 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
@@ -726,44 +745,60 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                             </div>
                                         </div>
                                         {/* Assignee display (mobile) */}
-                                        <div className="mt-2 flex items-center gap-1 text-xs2 text-[var(--text-tertiary)]" onClick={e => e.stopPropagation()}>
-                                            <span className="font-medium">{t('inventory.label_assignee')}:</span>
+                                        <div className="mt-2 flex items-center gap-1.5 text-xs2 text-[var(--text-tertiary)]" onClick={e => e.stopPropagation()}>
+                                            <span className="font-medium flex-shrink-0">{t('inventory.label_assignee')}:</span>
                                             {canManageUnits ? (
-                                                <select
-                                                    value={(unit as any).assignedTo || ''}
-                                                    disabled={assigningUnitId === unit.id}
-                                                    onChange={e => handleAssign(unit.id, e.target.value || null)}
-                                                    className="text-xs border border-[var(--glass-border)] rounded px-1 py-0.5 bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:opacity-50"
-                                                >
-                                                    <option value="">{t('inventory.unassigned')}</option>
-                                                    {tenantUsers.map(u => (
-                                                        <option key={u.id} value={u.id}>{u.name}</option>
-                                                    ))}
-                                                </select>
+                                                <div className="flex items-center gap-1.5">
+                                                    {unit.assignedToName && (
+                                                        <img
+                                                            src={unit.assignedToAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(unit.assignedToName)}&size=20&background=6366f1&color=fff`}
+                                                            alt={unit.assignedToName}
+                                                            className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                                                        />
+                                                    )}
+                                                    <select
+                                                        value={unit.assignedTo || ''}
+                                                        disabled={assigningUnitId === unit.id}
+                                                        onChange={e => handleAssign(unit.id, e.target.value || null)}
+                                                        className="text-xs border border-[var(--glass-border)] rounded px-1 py-0.5 bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:opacity-50"
+                                                    >
+                                                        <option value="">{t('inventory.unassigned')}</option>
+                                                        {tenantUsers.map(u => (
+                                                            <option key={u.id} value={u.id}>{u.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             ) : (
-                                                <span className={(unit as any).assignedToName ? '' : 'italic'}>
-                                                    {(unit as any).assignedToName || t('inventory.unassigned')}
-                                                </span>
+                                                <div className="flex items-center gap-1">
+                                                    {unit.assignedToName ? (
+                                                        <>
+                                                            <img
+                                                                src={unit.assignedToAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(unit.assignedToName)}&size=20&background=6366f1&color=fff`}
+                                                                alt={unit.assignedToName}
+                                                                className="w-4 h-4 rounded-full object-cover flex-shrink-0"
+                                                            />
+                                                            <span>{unit.assignedToName}</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="italic">{t('inventory.unassigned')}</span>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
-                                        {(canEditUnit(unit) || canManageUnits) && (
+                                        {canEditUnit(unit) && (
                                             <div className="flex justify-end gap-3 mt-3 pt-3 border-t border-slate-50">
-                                                {canEditUnit(unit) && (
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); handleEditUnit(e, unit); }}
-                                                        className="flex items-center gap-1 text-xs font-bold text-indigo-600"
-                                                    >
-                                                        <Edit2 className="w-3 h-3" /> {t('common.edit')}
-                                                    </button>
-                                                )}
-                                                {canManageUnits && (
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, unit); }}
-                                                        className="flex items-center gap-1 text-xs font-bold text-rose-600"
-                                                    >
-                                                        <Trash2 className="w-3 h-3" /> {t('common.delete')}
-                                                    </button>
-                                                )}
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleEditUnit(e, unit); }}
+                                                    className="flex items-center gap-1 text-xs font-bold text-indigo-600"
+                                                >
+                                                    <Edit2 className="w-3 h-3" /> {t('common.edit')}
+                                                </button>
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, unit); }}
+                                                    className="flex items-center gap-1 text-xs font-bold text-rose-600"
+                                                >
+                                                    <Trash2 className="w-3 h-3" /> {t('common.delete')}
+                                                </button>
                                             </div>
                                         )}
                                     </div>

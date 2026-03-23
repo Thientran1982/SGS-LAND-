@@ -208,9 +208,27 @@ export function createListingRoutes(authenticateToken: any) {
       }
 
       const { userId } = req.body;
-      // userId may be null (to unassign), or a UUID string
-      if (userId !== null && typeof userId !== 'string') {
-        return res.status(400).json({ error: 'userId must be a UUID string or null' });
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+      // userId may be null (to unassign), or a valid UUID string
+      if (userId !== null && userId !== undefined) {
+        if (typeof userId !== 'string' || !UUID_REGEX.test(userId)) {
+          return res.status(400).json({ error: 'userId must be a valid UUID or null' });
+        }
+        // Verify the assignee belongs to the same tenant and is an internal staff member
+        const { pool } = await import('../db');
+        const assigneeResult = await pool.query(
+          `SELECT id, role FROM users WHERE id = $1 AND tenant_id = $2`,
+          [userId, user.tenantId]
+        );
+        if (assigneeResult.rows.length === 0) {
+          return res.status(404).json({ error: 'User not found in tenant' });
+        }
+        const assigneeRole: string = assigneeResult.rows[0].role;
+        const PARTNER_ONLY_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
+        if (PARTNER_ONLY_ROLES.includes(assigneeRole)) {
+          return res.status(400).json({ error: 'Cannot assign listing to a partner user' });
+        }
       }
 
       const listing = await listingRepository.assign(user.tenantId, String(req.params.id), userId ?? null);
@@ -237,8 +255,22 @@ export function createListingRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
 
-      // Only developer ADMIN / TEAM_LEAD can delete listings
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      // PARTNER roles: read-only
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Partners cannot delete listings' });
+      }
+
+      // SALES/MARKETING can delete only listings they created or are assigned to
+      if (RESTRICTED_ROLES.includes(user.role)) {
+        const existing = await listingRepository.findById(user.tenantId, String(req.params.id));
+        if (!existing) return res.status(404).json({ error: 'Listing not found' });
+        const isOwnerOrAssignee =
+          (existing as any).createdBy === user.id ||
+          (existing as any).assignedTo === user.id;
+        if (!isOwnerOrAssignee) {
+          return res.status(403).json({ error: 'You can only delete listings you created or are assigned to' });
+        }
+      } else if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
 
