@@ -257,6 +257,13 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 - Print: `Noto Serif`
 - Dark mode: `class` strategy on `<html>`, persisted in `localStorage` key `sgs_theme`
 
+### AiGovernance.tsx Audit & Fix (March 2026)
+4 bugs resolved in `pages/AiGovernance.tsx`:
+1. **Toast not in portal** — `fixed` toast inside root `animate-enter` div; moved to `createPortal(document.body)` with Fragment `<>` wrapper
+2. **Root container missing `p-4 sm:p-6`** — added to `div.space-y-6 pb-20 relative animate-enter`
+3. **Simulator output 3 hardcoded English strings** — `"Simulated output for: ..."`, `"Error executing simulation."`, and `"OUTPUT:"` label → 4 new locale keys: `ai.sim_result` (with `{input}` + `{version}` interpolation), `ai.sim_error`, `ai.sim_output_label`, added to VI + EN locales
+4. **Safety Log table missing empty state** — added `<tr colSpan=6>` with `t('ai.no_safety_logs')` when `safetyLogs` is empty
+
 ### SecurityCompliance.tsx Audit & Fix (March 2026)
 3 bugs resolved in `pages/SecurityCompliance.tsx`:
 1. **Toast not in portal** — `fixed` toast inside root `animate-enter` div; moved to `createPortal(document.body)` with Fragment `<>` wrapper

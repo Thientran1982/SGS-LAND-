@@ -1393,6 +1393,10 @@ export const DICTIONARY = {
         "ai.prompt_draft": "Đã lưu nháp prompt.",
         "ai.prompt_created": "Đã tạo prompt mới.",
         "ai.loading": "Đang tải cấu hình AI...",
+        "ai.sim_result": "Kết quả mô phỏng cho: '{input}' dùng template v{version}.",
+        "ai.sim_error": "Lỗi khi chạy mô phỏng.",
+        "ai.sim_output_label": "KẾT QUẢ:",
+        "ai.no_safety_logs": "Chưa có sự kiện an toàn nào.",
 
         "help.title": "Chúng tôi có thể giúp gì?",
         "help.subtitle": "Tìm kiếm câu trả lời nhanh chóng hoặc liên hệ hỗ trợ.",
@@ -3059,6 +3063,10 @@ export const DICTIONARY = {
         "ai.prompt_draft": "Prompt saved as draft.",
         "ai.prompt_created": "New prompt created.",
         "ai.loading": "Loading AI config...",
+        "ai.sim_result": "Simulated output for: '{input}' using template v{version}.",
+        "ai.sim_error": "Error executing simulation.",
+        "ai.sim_output_label": "OUTPUT:",
+        "ai.no_safety_logs": "No safety events recorded yet.",
 
         "help.title": "How can we help?",
         "help.subtitle": "Find answers quickly or contact support.",

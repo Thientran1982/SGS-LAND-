@@ -214,7 +214,7 @@ const PromptsTab = memo(({
                         </div>
                         {lastEvalRun && (
                             <div className="mt-3 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] text-xs font-mono text-[var(--text-secondary)] max-h-24 overflow-y-auto no-scrollbar">
-                                <span className="text-emerald-600 font-bold">OUTPUT:</span> {lastEvalRun}
+                                <span className="text-emerald-600 font-bold">{t('ai.sim_output_label')}</span> {lastEvalRun}
                             </div>
                         )}
                     </div>
@@ -295,9 +295,9 @@ export const AiGovernance: React.FC = () => {
         try {
             // Mock LLM call via service
             await new Promise(r => setTimeout(r, 800));
-            setLastEvalRun(`Simulated output for: "${testInput}" using template v${selectedPrompt?.activeVersion}.`);
+            setLastEvalRun(t('ai.sim_result', { input: testInput, version: String(selectedPrompt?.activeVersion ?? '') }));
         } catch (e) {
-            setLastEvalRun("Error executing simulation.");
+            setLastEvalRun(t('ai.sim_error'));
         } finally {
             setIsEvalRunning(false);
         }
@@ -325,8 +325,8 @@ export const AiGovernance: React.FC = () => {
     if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('ai.loading')}</div>;
 
     return (
-        <div className="space-y-6 pb-20 relative animate-enter">
-            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
+        <>
+        <div className="space-y-6 pb-20 relative animate-enter p-4 sm:p-6">
 
             <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>
@@ -400,6 +400,9 @@ export const AiGovernance: React.FC = () => {
                                         </td>
                                     </tr>
                                 ))}
+                                {(!safetyLogs || safetyLogs.length === 0) && (
+                                    <tr><td colSpan={6} className="p-8 text-center text-[var(--text-secondary)] italic">{t('ai.no_safety_logs')}</td></tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -436,5 +439,19 @@ export const AiGovernance: React.FC = () => {
                 document.body
             )}
         </div>
+        {createPortal(
+            toast ? (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}
+                >
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };
