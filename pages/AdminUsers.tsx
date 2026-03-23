@@ -548,8 +548,8 @@ export const AdminUsers: React.FC = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="flex-1 overflow-auto bg-[var(--glass-surface)]/50 no-scrollbar pt-3">
-                <div className="w-full overflow-x-auto no-scrollbar bg-[var(--bg-surface)] border-b border-[var(--glass-border)]">
+            <div className="flex-1 overflow-auto bg-[var(--glass-surface)]/50 no-scrollbar pt-3 px-3 sm:px-0">
+                <div className="w-full overflow-x-auto no-scrollbar bg-[var(--bg-surface)] rounded-xl sm:rounded-none border border-[var(--glass-border)] sm:border-0 sm:border-b">
                     <table className="w-full min-w-[320px] text-left text-sm">
                         <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)] text-xs font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
                             <tr>
@@ -560,7 +560,7 @@ export const AdminUsers: React.FC = () => {
                                 <th className="p-4 text-right">{t('common.actions')}</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50">
+                        <tbody className="divide-y divide-[var(--glass-border)]">
                             {users.map(user => {
                                 const isPending = user.status === CommonStatus.PENDING;
                                 
