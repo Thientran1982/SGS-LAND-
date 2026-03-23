@@ -202,6 +202,7 @@ const MetaEditor: React.FC = () => {
     const [overrides, setOverrides] = useState<Record<string, { title: string; description: string }>>(getSEOOverrides);
     const [edits, setEdits] = useState<Record<string, { title: string; description: string }>>({});
     const [saved, setSaved] = useState<string | null>(null);
+    const [previewing, setPreviewing] = useState<string | null>(null);
 
     const getTitle = (key: string) => edits[key]?.title ?? overrides[key]?.title ?? ROUTE_SEO[key]?.title ?? ROUTE_SEO[''].title;
     const getDesc  = (key: string) => edits[key]?.description ?? overrides[key]?.description ?? ROUTE_SEO[key]?.description ?? ROUTE_SEO[''].description;
@@ -216,7 +217,7 @@ const MetaEditor: React.FC = () => {
         saveSEOOverride(key, t, d);
         setOverrides(getSEOOverrides());
         setEdits(prev => { const next = { ...prev }; delete next[key]; return next; });
-        // Restore admin page SEO to preserve noindex — do NOT apply the edited route's SEO to the DOM
+        // Restore admin page SEO to preserve noindex — edited route's SEO applies on next navigation to that route
         updatePageSEO('seo-manager');
         setSaved(key);
         setTimeout(() => setSaved(null), 2000);
@@ -229,6 +230,17 @@ const MetaEditor: React.FC = () => {
         // Restore admin page SEO to preserve noindex
         updatePageSEO('seo-manager');
     };
+
+    const handlePreview = useCallback((key: string) => {
+        setPreviewing(key);
+        // Apply the edited route's SEO to the DOM for 3s so the admin can verify the title/description in the browser tab
+        updatePageSEO(key);
+        setTimeout(() => {
+            // Restore admin page SEO after preview window
+            updatePageSEO('seo-manager');
+            setPreviewing(null);
+        }, 3000);
+    }, []);
 
     const isDirty = (key: string) => !!edits[key];
     const isOverridden = (key: string) => !!overrides[key];
@@ -290,6 +302,15 @@ const MetaEditor: React.FC = () => {
                                 >
                                     {saved === key ? ICONS.CHECK : ICONS.SAVE}
                                     {saved === key ? 'Đã lưu' : 'Lưu'}
+                                </button>
+                            )}
+                            {overridden && !dirty && (
+                                <button
+                                    onClick={() => handlePreview(key)}
+                                    disabled={previewing !== null}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 text-2xs font-bold rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-colors border border-violet-200 dark:border-violet-800 disabled:opacity-50"
+                                >
+                                    {previewing === key ? <>{ICONS.CHECK} Đang xem (3s)…</> : 'Xem trước meta'}
                                 </button>
                             )}
                             {overridden && (
