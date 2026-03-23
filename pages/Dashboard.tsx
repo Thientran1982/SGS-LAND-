@@ -103,7 +103,7 @@ const ScatterTooltip = memo(({ active, payload, t }: any) => {
                 </div>
                 <div className="flex items-center justify-between gap-4 mb-1">
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_price')}:</span>
-                    <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">{data.price} Tỷ</span>
+                    <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">{data.price} {t('dash.scatter_price_unit')}</span>
                 </div>
                 <div className="flex items-center justify-between gap-4 mb-1">
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_interest')}:</span>
@@ -496,7 +496,7 @@ export const Dashboard: React.FC = () => {
 
     return (
     <>
-        <div className="space-y-6 p-4 md:p-6 pb-24 animate-enter max-w-[1600px] mx-auto">
+        <div className="space-y-6 p-4 sm:p-6 pb-24 animate-enter max-w-[1600px] mx-auto">
 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
@@ -726,7 +726,7 @@ export const Dashboard: React.FC = () => {
                                             <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />
                                                 <XAxis type="number" dataKey="area" name={t('dash.scatter_area')} unit="m²" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
-                                                <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit=" Tỷ" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
+                                                <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit={` ${t('dash.scatter_price_unit')}`} stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
                                                 <ZAxis type="number" dataKey="interest" range={[100, 1000]} name={t('dash.scatter_interest')} />
                                                 <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ScatterTooltip t={t} />} />
                                                 <Scatter name={t('dash.scatter_interest')} data={analytics.marketPulse} opacity={0.7}>

@@ -468,7 +468,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 {!isProjectUnit && (
                                 <div>
                                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">
-                                        {t('leads.phone') || 'Contact Phone'} <span className="text-rose-500">*</span>
+                                        {t('leads.phone')} <span className="text-rose-500">*</span>
                                     </label>
                                     <input 
                                         value={formData.contactPhone || ''} 
@@ -544,7 +544,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                 {!isProjectUnit && (
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_lat') || 'Vĩ độ (Lat)'}</label>
+                                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_lat')}</label>
                                         <input
                                             type="number"
                                             step="0.000001"
@@ -558,7 +558,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_lng') || 'Kinh độ (Lng)'}</label>
+                                        <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_lng')}</label>
                                         <input
                                             type="number"
                                             step="0.000001"
@@ -571,7 +571,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             placeholder="106.700900"
                                         />
                                     </div>
-                                    <p className="col-span-2 text-xs2 text-[var(--text-secondary)] -mt-1">{t('inventory.coordinates_hint') || 'Tuỳ chọn — nhập toạ độ Google Maps để pin hiển thị chính xác trên bản đồ'}</p>
+                                    <p className="col-span-2 text-xs2 text-[var(--text-secondary)] -mt-1">{t('inventory.coordinates_hint')}</p>
                                 </div>
                                 )}
                                 <div className="grid grid-cols-2 gap-4">
@@ -714,7 +714,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             onDragEnd={() => setDragIdx(null)}
                                         >
                                             <img src={img} className="w-full h-full object-cover" alt="" loading="lazy" />
-                                            {idx === 0 && <span className="absolute top-1 left-1 bg-indigo-600 text-white text-3xs font-bold px-1.5 py-0.5 rounded">{t('inventory.cover') || 'Cover'}</span>}
+                                            {idx === 0 && <span className="absolute top-1 left-1 bg-indigo-600 text-white text-3xs font-bold px-1.5 py-0.5 rounded">{t('inventory.cover')}</span>}
                                             <button type="button" onClick={() => removeImage(idx)} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 shadow-sm">
                                                 {ICONS.DELETE}
                                             </button>

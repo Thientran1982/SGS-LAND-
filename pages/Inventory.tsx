@@ -710,7 +710,7 @@ export const Inventory: React.FC = () => {
         <div className="h-full flex flex-col relative">
 
             {/* Header & Controls */}
-            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm p-4 md:p-6 transition-all flex-none">
+            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm p-4 sm:p-6 transition-all flex-none">
                 <div className="flex flex-col md:flex-row justify-between gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64 group">
@@ -818,7 +818,7 @@ export const Inventory: React.FC = () => {
 
                 {/* GRID & LIST — inside overflow-auto so content can scroll */}
                 {(viewMode === 'GRID' || viewMode === 'LIST') && (
-                    <div className="flex-1 overflow-auto p-4 md:p-6 no-scrollbar">
+                    <div className="flex-1 overflow-auto p-4 sm:p-6 no-scrollbar">
                         
                         {/* GRID VIEW (DEFAULT) */}
                         {viewMode === 'GRID' && (
@@ -1051,7 +1051,7 @@ export const Inventory: React.FC = () => {
 
                 {/* MAP VIEW — absolute positioning for guaranteed pixel height independent of scroll/flex chain */}
                 {viewMode === 'MAP' && (
-                    <div className="absolute inset-0 p-4 md:p-6" style={{ zIndex: 1 }}>
+                    <div className="absolute inset-0 p-4 sm:p-6" style={{ zIndex: 1 }}>
                         <div className="w-full h-full rounded-2xl overflow-hidden border border-[var(--glass-border)] shadow-sm relative">
                             <MapView
                                 listings={allFilteredListings.length > 0 ? allFilteredListings : listings}
@@ -1076,7 +1076,7 @@ export const Inventory: React.FC = () => {
 
                 {/* KANBAN BOARD VIEW — direct flex-1 child for proper height */}
                 {viewMode === 'BOARD' && (
-                    <div ref={boardRef} className="flex flex-1 min-h-0 overflow-x-auto gap-4 p-4 md:p-6 no-scrollbar snap-x snap-mandatory overscroll-x-contain cursor-grab active:cursor-grabbing scroll-px-4">
+                    <div ref={boardRef} className="flex flex-1 min-h-0 overflow-x-auto gap-4 p-4 sm:p-6 no-scrollbar snap-x snap-mandatory overscroll-x-contain cursor-grab active:cursor-grabbing scroll-px-4">
                         {Object.values(ListingStatus).map(status => {
                             const style = STATUS_CONFIG[status];
                             const items = groupedListings[status] || [];
