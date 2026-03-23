@@ -458,7 +458,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
             <div className="bg-[var(--bg-surface)] rounded-3xl border border-[var(--glass-border)] shadow-sm p-6 md:p-8 max-w-2xl mb-8">
                 <p className="text-sm text-[var(--text-tertiary)] mb-5 leading-relaxed">
                     {t('ent.facebook_guide')}{' '}
-                    <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" className="text-blue-500 underline">Facebook for Developers</a>.
+                    <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" className="text-blue-500 underline">{t('ent.facebook_dev_link')}</a>.
                 </p>
                 <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -491,7 +491,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                         </label>
                         <input
                             className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                            placeholder="https://facebook.com/your-page"
+                            placeholder={t('ent.facebook_page_url_placeholder')}
                             value={form.pageUrl}
                             onChange={e => setForm({ ...form, pageUrl: e.target.value })}
                         />
@@ -505,7 +505,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                             <input
                                 type={showToken ? 'text' : 'password'}
                                 className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 pr-10"
-                                placeholder="EAAxxxxx..."
+                                placeholder={t('ent.facebook_token_placeholder')}
                                 value={form.accessToken}
                                 onChange={e => setForm({ ...form, accessToken: e.target.value })}
                             />

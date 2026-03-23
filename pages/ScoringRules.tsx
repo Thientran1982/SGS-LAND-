@@ -86,7 +86,7 @@ export const ScoringRules: React.FC = () => {
             // Safety check for weights
             setWeights(data.weights || { engagement: 0, completeness: 0, budgetFit: 0, velocity: 0 });
         } catch (e) {
-            console.error("Failed to load scoring config", e);
+            console.error(e);
             notify(t('common.error'), 'error');
         } finally {
             setLoading(false);

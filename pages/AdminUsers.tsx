@@ -587,14 +587,14 @@ export const AdminUsers: React.FC = () => {
                                                       'bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] border-[var(--glass-border)] hover:bg-slate-200'}
                                                     ${user.id !== currentUser?.id ? 'cursor-pointer hover:shadow-sm' : 'cursor-default opacity-70'}
                                                 `}
-                                                title={t(`admin.users.status_${displayStatus.toLowerCase()}`)}
+                                                title={t(`admin.users.status_${displayStatus.toLowerCase()}`) || displayStatus}
                                             >
                                                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${displayStatus === 'ACTIVE' ? 'bg-emerald-500' : displayStatus === 'PENDING' ? 'bg-amber-500' : 'bg-slate-400'}`}></span>
                                                 {/* Mobile: short label | Desktop: full label */}
                                                 <span className="sm:hidden">
                                                     {displayStatus === 'ACTIVE' ? t('admin.users.mobile_active') : displayStatus === 'PENDING' ? t('admin.users.mobile_pending') : t('admin.users.mobile_inactive')}
                                                 </span>
-                                                <span className="hidden sm:inline">{t(`admin.users.status_${displayStatus.toLowerCase()}`)}</span>
+                                                <span className="hidden sm:inline">{t(`admin.users.status_${displayStatus.toLowerCase()}`) || displayStatus}</span>
                                             </button>
                                         </td>
                                         <td className="hidden md:table-cell p-4 text-[var(--text-tertiary)] font-mono text-xs">
