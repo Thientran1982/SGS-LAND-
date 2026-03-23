@@ -477,11 +477,11 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                                         </span>
                                     </td>
                                     <td className="p-5 text-right font-mono text-[var(--text-secondary)]">
-                                        {row.spend > 0 ? formatCurrency(row.spend) : <span className="text-[var(--text-secondary)]">—</span>}
+                                        {row.spend > 0 ? formatCurrency(row.spend) : <span className="text-[var(--text-secondary)]">{t('common.no_value')}</span>}
                                     </td>
                                     <td className="p-5 text-right font-bold text-[var(--text-secondary)]">{row.leads}</td>
                                     <td className="p-5 text-right font-mono text-[var(--text-secondary)]">
-                                        {row.cac > 0 ? formatCurrency(row.cac) : <span className="text-[var(--text-secondary)]">—</span>}
+                                        {row.cac > 0 ? formatCurrency(row.cac) : <span className="text-[var(--text-secondary)]">{t('common.no_value')}</span>}
                                     </td>
                                     <td className="p-5 text-right font-mono font-bold text-indigo-600">{formatCurrency(row.revenue)}</td>
                                     <td className="p-5 text-right">{roiDisplay(row)}</td>

@@ -77,7 +77,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.spreadsheet_id')}</label>
                             <input
                                 className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
-                                placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+                                placeholder={t('data.spreadsheet_placeholder')}
                                 value={String(form.config?.spreadsheetId || '')}
                                 onChange={e => handleConfigChange('spreadsheetId', e.target.value)}
                             />
@@ -91,7 +91,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.target_url')}</label>
                             <input
                                 className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
-                                placeholder="https://hooks.zapier.com/..."
+                                placeholder={t('data.webhook_placeholder')}
                                 value={String(form.config?.targetUrl || '')}
                                 onChange={e => handleConfigChange('targetUrl', e.target.value)}
                             />
@@ -103,7 +103,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                             <input
                                 type="password"
                                 className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-4 py-2.5 text-sm font-mono text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
-                                placeholder="••••••••••••••••"
+                                placeholder={t('data.api_key_placeholder')}
                                 value={String(form.config?.apiKey || '')}
                                 onChange={e => handleConfigChange('apiKey', e.target.value)}
                             />
