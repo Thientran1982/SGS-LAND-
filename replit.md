@@ -257,6 +257,14 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 - Print: `Noto Serif`
 - Dark mode: `class` strategy on `<html>`, persisted in `localStorage` key `sgs_theme`
 
+### Inbox.tsx Audit & Fix (March 2026)
+4 bugs resolved in `pages/Inbox.tsx`:
+1. **Search placeholder wrong key** — `t('inbox.select')` ("Chọn hội thoại xem chi tiết") → `t('common.search')` ("Tìm kiếm")
+2. **Toast not in portal** — Toast with `position:fixed` was inside `overflow-hidden animate-enter` container; `animate-enter` uses CSS `transform` during 0.18s animation which trapped fixed positioning; moved toast to `createPortal(document.body)`
+3. **Missing page padding** — Root div had no outer spacing; wrapped in `p-4 sm:p-6` height-carrying container, inner panel uses `h-full`
+4. **No channel/status filters** — Multi-channel inbox had no filter UI; added `All`/`Unread` status pills + `All`/`ZALO`/`FACEBOOK`/`EMAIL`/`SMS` channel pills; `filteredThreads` useMemo updated to respect both `channelFilter` and `statusFilter` states
+- New locale keys added: `inbox.filter_all` (VI: "Tất cả" / EN: "All") and `inbox.filter_unread` (VI: "Chưa đọc" / EN: "Unread")
+
 ### Comprehensive Fix Applied (March 2026)
 - 277 hardcoded `text-slate-400/300/200` + `bg-white` → CSS variables in 34 theme-aware pages/components
 - 382 arbitrary `text-[8px/9px/10px/11px]` → named Tailwind tokens (`text-3xs/2xs/xs2/xs3`)

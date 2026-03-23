@@ -41,6 +41,8 @@ export const Inbox: React.FC = () => {
     const [channel, setChannel] = useState<Channel>(Channel.ZALO);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [channelFilter, setChannelFilter] = useState<'ALL' | string>('ALL');
+    const [statusFilter, setStatusFilter] = useState<'ALL' | 'UNREAD'>('ALL');
     const [threadToDelete, setThreadToDelete] = useState<LeadId | null>(null);
 
     // Debounce search
@@ -369,16 +371,22 @@ export const Inbox: React.FC = () => {
         }
     };
 
-    const filteredThreads = useMemo(() => 
-        (threads || []).filter(t => smartMatch((t.lead.name || '') + (t.lead.phone || ''), debouncedSearch)), 
-    [threads, debouncedSearch]);
+    const filteredThreads = useMemo(() =>
+        (threads || []).filter(th => {
+            if (!smartMatch((th.lead.name || '') + (th.lead.phone || ''), debouncedSearch)) return false;
+            if (channelFilter !== 'ALL' && th.lastChannel !== channelFilter) return false;
+            if (statusFilter === 'UNREAD' && th.unreadCount === 0) return false;
+            return true;
+        }),
+    [threads, debouncedSearch, channelFilter, statusFilter]);
 
     const selectedThread = threads.find(t => t.lead.id === selectedLeadId);
     const isAiActiveForSelected = selectedLeadId ? autoResponseMap[selectedLeadId] : false;
 
     return (
-        <div className="flex h-[calc(100vh-100px)] md:h-[calc(100vh-140px)] bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden animate-enter relative">
-            {toast && <div role="status" aria-live="polite" aria-atomic="true" className={`fixed bottom-6 right-6 z-[100] px-4 md:px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border max-w-[90vw] md:max-w-md ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm break-words">{toast.msg}</span></div>}
+        <>
+        <div className="p-4 sm:p-6 h-[calc(100vh-100px)] md:h-[calc(100vh-140px)]">
+        <div className="flex h-full bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden animate-enter relative">
 
             {/* Sidebar List */}
             <div className={`w-full md:w-80 border-r border-[var(--glass-border)] flex flex-col ${selectedLeadId ? 'hidden md:flex' : 'flex'}`}>
@@ -403,7 +411,7 @@ export const Inbox: React.FC = () => {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-9 pr-10 py-2.5 min-h-[44px] text-sm outline-none focus:border-indigo-500 transition-all"
-                            placeholder={t('inbox.select')}
+                            placeholder={t('common.search')}
                         />
                         {search && (
                             <div className="absolute right-2 inset-y-0 flex items-center">
@@ -416,6 +424,28 @@ export const Inbox: React.FC = () => {
                                 </button>
                             </div>
                         )}
+                    </div>
+                    {/* Status + Channel Filters */}
+                    <div className="flex gap-1.5 flex-wrap">
+                        {(['ALL', 'UNREAD'] as const).map(s => (
+                            <button
+                                key={s}
+                                onClick={() => setStatusFilter(s)}
+                                className={`text-xs2 font-bold px-2.5 py-1 rounded-lg border transition-all ${statusFilter === s ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                            >
+                                {s === 'ALL' ? t('inbox.filter_all') : t('inbox.filter_unread')}
+                            </button>
+                        ))}
+                        <div className="w-px bg-[var(--glass-border)] self-stretch mx-0.5" />
+                        {(['ALL', Channel.ZALO, Channel.FACEBOOK, Channel.EMAIL, Channel.SMS] as const).map(ch => (
+                            <button
+                                key={ch}
+                                onClick={() => setChannelFilter(ch)}
+                                className={`text-xs2 font-bold px-2.5 py-1 rounded-lg border transition-all ${channelFilter === ch ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                            >
+                                {ch === 'ALL' ? t('inbox.filter_all') : ch}
+                            </button>
+                        ))}
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -855,5 +885,15 @@ export const Inbox: React.FC = () => {
             document.body
             )}
         </div>
+        </div>
+        {createPortal(
+            toast ? (
+                <div role="status" aria-live="polite" aria-atomic="true" className={`fixed bottom-6 right-6 z-[100] px-4 md:px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border max-w-[90vw] md:max-w-md ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    <span className="font-bold text-sm break-words">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };
