@@ -294,6 +294,30 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 
 ---
 
+### ProductSearch.tsx + Marketplace.tsx Audit & Fix (March 2026)
+Full audit of "Sàn Giao Dịch" public listing page and internal App Store:
+
+**ProductSearch.tsx — 8 issues fixed:**
+1. **Dead `||` on `favorites.removed/added`** (line 250) — keys exist → removed fallbacks
+2. **Dead `||` on `common.clear_search`** (line 359) — key exists → removed fallback
+3. **`common.error_loading` missing** (line 423) — added key to both locales; removed `||` fallback
+4. **`common.retry` missing** (line 428) — added key to both locales; removed `||` fallback
+5. **Dead `||` on `common.loading`** (line 452) — key exists → removed fallback
+6. **Dead `||` on `inventory.label_unit_price`** (line 524) — key exists → removed fallback
+7. **Hardcoded "PN"** (mobile list view line 649) — `listing.bedrooms_short` key added (VI: "PN", EN: "BR"); used in template
+8. **All market.* keys** confirmed existing in locales (18 keys per locale at lines 1340-1362 VI, 3090-3112 EN)
+
+**Marketplace.tsx — 5 dead `||` fallbacks removed:**
+- `common.clear_search` (clear button title)
+- `market.no_installed` and `market.no_search_results` (empty state subtexts)
+- `market.reset_search` (reset button)
+- `market.modal_install_title`, `market.modal_uninstall_title`, `market.btn_install`, `market.btn_uninstall` (confirm modal props)
+
+**Locale keys added (config/locales.ts — VI + EN):**
+- `common.error_loading`, `common.retry`, `listing.bedrooms_short`
+
+---
+
 ### Contracts.tsx + ContractModal.tsx Audit & Fix (March 2026)
 Full audit of contract page, buttons, filters, i18n, logic, and data flow:
 

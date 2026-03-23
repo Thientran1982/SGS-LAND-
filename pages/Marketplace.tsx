@@ -146,7 +146,7 @@ export const Marketplace: React.FC = () => {
                                 <button 
                                     onClick={() => setSearch('')}
                                     className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
-                                    title={t('common.clear_search') || 'Xóa tìm kiếm'}
+                                    title={t('common.clear_search')}
                                 >
                                     {ICONS.X}
                                 </button>
@@ -237,12 +237,12 @@ export const Marketplace: React.FC = () => {
                                     <div>
                                         <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
                                         <p className="text-xs text-[var(--text-tertiary)] mt-1">
-                                            {activeTab === 'INSTALLED' ? (t('market.no_installed') || 'Bạn chưa kết nối ứng dụng nào') : (t('market.no_search_results') || 'Thử thay đổi từ khóa hoặc danh mục')}
+                                            {activeTab === 'INSTALLED' ? t('market.no_installed') : t('market.no_search_results')}
                                         </p>
                                     </div>
                                     {(search || category !== 'ALL') && (
                                         <button onClick={() => { setSearch(''); setCategory('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
-                                            {t('market.reset_search') || 'Xóa tìm kiếm'}
+                                            {t('market.reset_search')}
                                         </button>
                                     )}
                                 </>
@@ -264,9 +264,9 @@ export const Marketplace: React.FC = () => {
 
             <ConfirmModal
                 isOpen={!!confirmAction}
-                title={confirmAction?.type === 'install' ? (t('market.modal_install_title') || 'Kết nối ứng dụng') : (t('market.modal_uninstall_title') || 'Gỡ kết nối')}
+                title={confirmAction?.type === 'install' ? t('market.modal_install_title') : t('market.modal_uninstall_title')}
                 message={confirmAction?.type === 'install' ? t('market.modal_install_msg') : t('market.modal_uninstall_msg')}
-                confirmLabel={confirmAction?.type === 'install' ? (t('market.btn_install') || 'Kết nối') : (t('market.btn_uninstall') || 'Gỡ')}
+                confirmLabel={confirmAction?.type === 'install' ? t('market.btn_install') : t('market.btn_uninstall')}
                 cancelLabel={t('common.cancel')}
                 onConfirm={doConfirmedAction}
                 onCancel={() => setConfirmAction(null)}

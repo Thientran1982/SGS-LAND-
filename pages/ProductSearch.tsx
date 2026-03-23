@@ -247,7 +247,7 @@ export const ProductSearch: React.FC = () => {
         if (isFav) newSet.delete(id); else newSet.add(id);
         setFavorites(newSet);
 
-        setToast({ msg: isFav ? t('favorites.removed') || "Đã xóa khỏi yêu thích" : t('favorites.added') || "Đã thêm vào yêu thích", type: 'success' });
+        setToast({ msg: isFav ? t('favorites.removed') : t('favorites.added'), type: 'success' });
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         toastTimerRef.current = setTimeout(() => setToast(null), 2000);
 
@@ -356,7 +356,7 @@ export const ProductSearch: React.FC = () => {
                                 />
                                 {query && (
                                     <div className="absolute right-2 inset-y-0 flex items-center">
-                                        <button onClick={() => setQuery('')} className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search') || 'Xóa tìm kiếm'}>
+                                        <button onClick={() => setQuery('')} className="text-slate-400 hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center" title={t('common.clear_search')}>
                                             {ICONS.X}
                                         </button>
                                     </div>
@@ -420,12 +420,12 @@ export const ProductSearch: React.FC = () => {
             {fetchError && (
                 <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
                     <svg className="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
-                    <p className="text-slate-500 font-medium text-center">{t('common.error_loading') || 'Không thể tải dữ liệu. Vui lòng thử lại.'}</p>
+                    <p className="text-slate-500 font-medium text-center">{t('common.error_loading')}</p>
                     <button
                         onClick={() => window.location.reload()}
                         className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors text-sm"
                     >
-                        {t('common.retry') || 'Thử lại'}
+                        {t('common.retry')}
                     </button>
                 </div>
             )}
@@ -449,7 +449,7 @@ export const ProductSearch: React.FC = () => {
                             {loading && (
                                 <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-10">
                                     <div className="w-10 h-10 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
-                                    <p className="text-xs font-bold text-slate-600">{t('common.loading') || 'Đang tải...'}</p>
+                                    <p className="text-xs font-bold text-slate-600">{t('common.loading')}</p>
                                 </div>
                             )}
                             {!loading && filteredListings.length === 0 && (
@@ -521,7 +521,7 @@ export const ProductSearch: React.FC = () => {
                                                 <th className="px-4 py-4 w-12"></th>
                                                 <th className="px-4 py-4">{t('inventory.label_title')}</th>
                                                 <th className="px-4 py-4 text-right">{t('inventory.label_price')}</th>
-                                                <th className="px-4 py-4 text-right">{t('inventory.label_unit_price') || 'Đơn giá'}</th>
+                                                <th className="px-4 py-4 text-right">{t('inventory.label_unit_price')}</th>
                                                 <th className="px-4 py-4 text-right">{t('inventory.label_area')}</th>
                                                 <th className="px-4 py-4 hidden lg:table-cell">{t('inventory.label_location')}</th>
                                                 <th className="px-4 py-4 hidden xl:table-cell">{t('inventory.label_type')}</th>
@@ -646,7 +646,7 @@ export const ProductSearch: React.FC = () => {
                                                                 {formatSmartPrice(item.price, t)}
                                                             </div>
                                                             <div className="text-xs2 text-slate-400 mt-0.5 font-medium">
-                                                                {item.area > 0 ? `${item.area} m²` : ''}{item.bedrooms ? ` • ${item.bedrooms} PN` : ''}{item.area > 0 && item.type !== PropertyType.PROJECT ? ` • ${formatUnitPrice(item.price, item.area, t)}` : ''}
+                                                                {item.area > 0 ? `${item.area} m²` : ''}{item.bedrooms ? ` • ${item.bedrooms} ${t('listing.bedrooms_short')}` : ''}{item.area > 0 && item.type !== PropertyType.PROJECT ? ` • ${formatUnitPrice(item.price, item.area, t)}` : ''}
                                                             </div>
                                                         </div>
                                                         <span className="text-2xs font-bold uppercase bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-2 py-1 rounded-lg border border-[var(--glass-border)]">
