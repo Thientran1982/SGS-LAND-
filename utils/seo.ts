@@ -260,6 +260,14 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function toIso8601(dateStr?: string): string {
+  if (!dateStr) return new Date().toISOString();
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) return parsed.toISOString();
+  // Vietnamese locale format (e.g. "15 tháng 3, 2024") — fallback to current time
+  return new Date().toISOString();
+}
+
 function injectJsonLd(jsonLd: Record<string, unknown>): void {
   // Remove any existing dynamic JSON-LD to prevent stale duplicates
   document.querySelectorAll('script[data-dynamic="true"]').forEach(el => el.remove());
@@ -274,7 +282,8 @@ export function injectListingSEO(listing: ListingForSEO): void {
   const priceStr = formatVNDShort(listing.price, listing.currency);
   const typeStr = listing.type ?? 'Bất Động Sản';
   // Required format: "[Tên BĐS] | [Loại hình] | [Giá] - SGS LAND"
-  const title = `${listing.title} | ${typeStr} | ${priceStr} - SGS LAND`.slice(0, 70);
+  // No truncation — full title must include all required components
+  const title = `${listing.title} | ${typeStr} | ${priceStr} - SGS LAND`;
   const bedroomStr = listing.bedrooms ? `, ${listing.bedrooms} PN` : '';
   const description = `${typeStr} tại ${listing.location}. Diện tích ${listing.area}m²${bedroomStr}, giá ${priceStr}. Xem chi tiết và đặt lịch xem nhà trên SGS LAND.`.slice(0, 160);
   const image = listing.images?.[0] ?? DEFAULT_IMAGE;
@@ -306,7 +315,8 @@ export function injectListingSEO(listing: ListingForSEO): void {
 
 export function injectArticleSEO(article: ArticleForSEO): void {
   // Required format: "[Tiêu đề bài viết] - Tin Tức BĐS | SGS LAND"
-  const title = `${article.title} - Tin Tức BĐS | SGS LAND`.slice(0, 70);
+  // No truncation — required suffix must always be present
+  const title = `${article.title} - Tin Tức BĐS | SGS LAND`;
   // Prefer first 155 chars of stripped body content; fall back to excerpt
   const rawText = article.body ? stripHtml(article.body) : (article.excerpt ?? '');
   const description = rawText.slice(0, 155);
@@ -320,8 +330,8 @@ export function injectArticleSEO(article: ArticleForSEO): void {
     headline: article.title,
     description,
     image: image,
-    datePublished: article.date ?? new Date().toISOString(),
-    dateModified: article.date ?? new Date().toISOString(),
+    datePublished: toIso8601(article.date),
+    dateModified: toIso8601(article.date),
     author: {
       '@type': 'Person',
       name: article.author ?? 'SGS LAND',
