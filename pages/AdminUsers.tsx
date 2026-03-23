@@ -209,7 +209,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                             <div>
                                 <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-0.5">{t('admin.users.role_permissions')}</h4>
                                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                                    {t(`role_desc.${role}`) !== `role_desc.${role}` ? t(`role_desc.${role}`) : 'Full system access including billing and user management.'}
+                                    {t(`role_desc.${role}`)}
                                 </p>
                             </div>
                         </div>
@@ -298,7 +298,7 @@ export const AdminUsers: React.FC = () => {
             setTotalUsers(usersData?.total || 0);
             setStats(usersData?.stats || { activeCount: 0, pendingCount: 0 });
         } catch (e) {
-            console.error(e);
+            notify(t('common.error_loading'), 'error');
             setUsers([]);
         } finally {
             setLoading(false);
@@ -437,9 +437,9 @@ export const AdminUsers: React.FC = () => {
                 <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
                     {ICONS.INFO}
                 </div>
-                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('common.access_denied') || "Access Denied"}</h2>
+                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('common.access_denied')}</h2>
                 <p className="text-[var(--text-tertiary)] max-w-md">
-                    {t('admin.users.no_permission') || "You do not have permission to view this page. Only administrators can manage users."}
+                    {t('admin.users.no_permission')}
                 </p>
             </div>
         );
@@ -587,7 +587,7 @@ export const AdminUsers: React.FC = () => {
                                                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${displayStatus === 'ACTIVE' ? 'bg-emerald-500' : displayStatus === 'PENDING' ? 'bg-amber-500' : 'bg-slate-400'}`}></span>
                                                 {/* Mobile: short label | Desktop: full label */}
                                                 <span className="sm:hidden">
-                                                    {displayStatus === 'ACTIVE' ? 'HĐ' : displayStatus === 'PENDING' ? 'Chờ' : 'Khóa'}
+                                                    {displayStatus === 'ACTIVE' ? t('admin.users.mobile_active') : displayStatus === 'PENDING' ? t('admin.users.mobile_pending') : t('admin.users.mobile_inactive')}
                                                 </span>
                                                 <span className="hidden sm:inline">{t(`admin.users.status_${displayStatus.toLowerCase()}`) || displayStatus}</span>
                                             </button>
@@ -677,7 +677,7 @@ export const AdminUsers: React.FC = () => {
             />
 
             {/* Role Change Confirmation Modal */}
-            {userToRoleChange && (
+            {userToRoleChange && createPortal(
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setUserToRoleChange(null)} />
                     <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
@@ -688,7 +688,7 @@ export const AdminUsers: React.FC = () => {
                             </button>
                         </div>
                         <p className="text-sm text-[var(--text-secondary)] mb-4">
-                            {t('admin.users.confirm_role_change', { name: userToRoleChange.user.name, role: t(`role.${userToRoleChange.newRole}`) }) || `Change role for ${userToRoleChange.user.name} to ${t(`role.${userToRoleChange.newRole}`)}?`}
+                            {t('admin.users.confirm_role_change', { name: userToRoleChange.user.name, role: t(`role.${userToRoleChange.newRole}`) })}
                         </p>
                         
                         <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 flex gap-2 mb-6">
@@ -696,7 +696,7 @@ export const AdminUsers: React.FC = () => {
                             <div>
                                 <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-1">{t('admin.users.role_permissions')}</h4>
                                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                                    {t(`role_desc.${userToRoleChange.newRole}`) !== `role_desc.${userToRoleChange.newRole}` ? t(`role_desc.${userToRoleChange.newRole}`) : "Full system access including billing and user management."}
+                                    {t(`role_desc.${userToRoleChange.newRole}`)}
                                 </p>
                             </div>
                         </div>
@@ -716,7 +716,8 @@ export const AdminUsers: React.FC = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
         {createPortal(

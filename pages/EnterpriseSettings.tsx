@@ -184,7 +184,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                         <input
                                             type="password"
                                             className="flex-1 border rounded-xl px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-400/20 focus:border-blue-400"
-                                            placeholder="Dán token từ Zalo Developers Console..."
+                                            placeholder={t('ent.zalo_token_placeholder')}
                                             value={tokenForm}
                                             onChange={e => setTokenForm(e.target.value)}
                                         />
@@ -274,7 +274,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                 </label>
                                 <input
                                     className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                                    placeholder="VD: 123456789"
+                                    placeholder={t('ent.zalo_app_id_placeholder')}
                                     value={form.appId}
                                     onChange={e => setForm({ ...form, appId: e.target.value })}
                                 />
@@ -285,7 +285,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                 </label>
                                 <input
                                     className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                                    placeholder="VD: 987654321"
+                                    placeholder={t('ent.zalo_oa_id_placeholder')}
                                     value={form.oaId}
                                     onChange={e => setForm({ ...form, oaId: e.target.value })}
                                 />
@@ -297,14 +297,14 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                             </label>
                             <input
                                 className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                                placeholder="VD: SGS Land Official"
+                                placeholder={t('ent.zalo_oa_name_placeholder')}
                                 value={form.oaName}
                                 onChange={e => setForm({ ...form, oaName: e.target.value })}
                             />
                         </div>
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
-                                App Secret <span className="text-[var(--text-secondary)] font-normal normal-case">(tuỳ chọn — để bảo mật webhook)</span>
+                                App Secret <span className="text-[var(--text-secondary)] font-normal normal-case">{t('ent.zalo_secret_optional')}</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -325,7 +325,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                         </div>
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
-                                OA Access Token <span className="text-[var(--text-secondary)] font-normal normal-case">(để gửi tin nhắn phản hồi cho khách)</span>
+                                OA Access Token <span className="text-[var(--text-secondary)] font-normal normal-case">{t('ent.zalo_token_optional')}</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -344,7 +344,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                 </button>
                             </div>
                             <p className="mt-1 text-xs2 text-[var(--text-tertiary)]">
-                                Lấy token tại <a href="https://developers.zalo.me" target="_blank" rel="noreferrer" className="text-blue-500 underline">Zalo Developers Console</a> → Official Account → OA Access Token.
+                                {t('ent.zalo_token_guide_prefix')} <a href="https://developers.zalo.me" target="_blank" rel="noreferrer" className="text-blue-500 underline">Zalo Developers Console</a> {t('ent.zalo_token_guide_suffix')}
                             </p>
                         </div>
                     </div>
@@ -352,9 +352,9 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                     <div className="flex items-start gap-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-2xl p-4 mb-6 text-xs3 text-[var(--text-tertiary)]">
                         <svg className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <div>
-                            <span className="font-bold text-[var(--text-secondary)] block mb-0.5">Webhook URL sẽ được tạo tự động:</span>
+                            <span className="font-bold text-[var(--text-secondary)] block mb-0.5">{t('ent.zalo_webhook_auto')}</span>
                             <code className="font-mono text-xs2 break-all text-blue-600">{webhookUrl}</code>
-                            <span className="block mt-1">Sau khi kết nối, copy URL này vào cấu hình Webhook trên Zalo Developers Console.</span>
+                            <span className="block mt-1">{t('ent.zalo_webhook_guide')}</span>
                         </div>
                     </div>
 
@@ -468,7 +468,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                             </label>
                             <input
                                 className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                                placeholder="VD: SGS Land Fanpage"
+                                placeholder={t('ent.facebook_page_name_placeholder')}
                                 value={form.name}
                                 onChange={e => setForm({ ...form, name: e.target.value })}
                             />
@@ -479,7 +479,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                             </label>
                             <input
                                 className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                                placeholder="VD: 123456789012345"
+                                placeholder={t('ent.facebook_page_id_placeholder')}
                                 value={form.pageId}
                                 onChange={e => setForm({ ...form, pageId: e.target.value })}
                             />
@@ -499,7 +499,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
                             {t('ent.facebook_access_token')}
-                            <span className="ml-1 text-[var(--text-secondary)] font-normal normal-case">(để gửi tin Messenger)</span>
+                            <span className="ml-1 text-[var(--text-secondary)] font-normal normal-case">{t('ent.facebook_token_optional')}</span>
                         </label>
                         <div className="relative">
                             <input
@@ -760,7 +760,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Login URL <span className="text-[var(--text-secondary)] normal-case font-normal">(tùy chọn — cho SAML hoặc IdP tùy chỉnh)</span></label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Login URL <span className="text-[var(--text-secondary)] normal-case font-normal">{t('ent.sso_login_url_optional')}</span></label>
                         <input type="url" placeholder="https://idp.example.com/sso/login" className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.loginUrl || ''} onChange={e => setSso({...sso, loginUrl: e.target.value.trim()})} />
                     </div>
                     <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
@@ -1093,9 +1093,9 @@ export const EnterpriseSettings: React.FC = () => {
                 <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
                     <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m2-6V7m0 0a5 5 0 110 10A5 5 0 0112 7z" /></svg>
                 </div>
-                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('common.access_denied') || "Access Denied"}</h2>
+                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('common.access_denied')}</h2>
                 <p className="text-[var(--text-tertiary)] max-w-md">
-                    {t('ent.no_permission') || "You do not have permission to view this page. Only administrators can manage enterprise settings."}
+                    {t('ent.no_permission')}
                 </p>
             </div>
         );
