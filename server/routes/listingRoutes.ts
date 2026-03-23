@@ -5,6 +5,8 @@ import { auditRepository } from '../repositories/auditRepository';
 
 const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
 const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
+/** SALES and MARKETING may edit/delete their own or assigned listings; VIEWER is read-only */
+const WRITABLE_RESTRICTED_ROLES = ['SALES', 'MARKETING'];
 
 const SENSITIVE_FIELDS = ['ownerName', 'ownerPhone', 'commission', 'commissionUnit', 'consignorName', 'consignorPhone'];
 
@@ -167,7 +169,7 @@ export function createListingRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Maximum 10 images allowed per listing' });
       }
 
-      if (RESTRICTED_ROLES.includes(user.role)) {
+      if (WRITABLE_RESTRICTED_ROLES.includes(user.role)) {
         const existing = await listingRepository.findById(user.tenantId, String(req.params.id));
         if (!existing) return res.status(404).json({ error: 'Listing not found' });
         const isOwnerOrAssignee =
@@ -176,6 +178,9 @@ export function createListingRoutes(authenticateToken: any) {
         if (!isOwnerOrAssignee) {
           return res.status(403).json({ error: 'You can only edit listings you created or are assigned to' });
         }
+      } else if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        // VIEWER and unknown internal roles: read-only
+        return res.status(403).json({ error: 'Insufficient permissions to edit listings' });
       }
 
       // Strip assignedTo — assignment is exclusively managed via PATCH /:id/assign (ADMIN/TEAM_LEAD only)
@@ -227,9 +232,9 @@ export function createListingRoutes(authenticateToken: any) {
           return res.status(404).json({ error: 'User not found in tenant' });
         }
         const assigneeRole: string = assigneeResult.rows[0].role;
-        const PARTNER_ONLY_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
-        if (PARTNER_ONLY_ROLES.includes(assigneeRole)) {
-          return res.status(400).json({ error: 'Cannot assign listing to a partner user' });
+        const NON_ASSIGNABLE_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT', 'VIEWER'];
+        if (NON_ASSIGNABLE_ROLES.includes(assigneeRole)) {
+          return res.status(400).json({ error: 'Cannot assign listing to a partner or viewer user' });
         }
       }
 
@@ -262,18 +267,19 @@ export function createListingRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Partners cannot delete listings' });
       }
 
-      // SALES/MARKETING can delete only listings they created or are assigned to
-      if (RESTRICTED_ROLES.includes(user.role)) {
+      // SALES/MARKETING can delete only listings they created or are assigned to; VIEWER is read-only
+      if (WRITABLE_RESTRICTED_ROLES.includes(user.role)) {
         const existing = await listingRepository.findById(user.tenantId, String(req.params.id));
         if (!existing) return res.status(404).json({ error: 'Listing not found' });
         const isOwnerOrAssignee =
-          (existing as any).createdBy === user.id ||
-          (existing as any).assignedTo === user.id;
+          existing.createdBy === user.id ||
+          existing.assignedTo === user.id;
         if (!isOwnerOrAssignee) {
           return res.status(403).json({ error: 'You can only delete listings you created or are assigned to' });
         }
-      } else if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
-        return res.status(403).json({ error: 'Insufficient permissions' });
+      } else if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        // VIEWER and unknown internal roles: read-only
+        return res.status(403).json({ error: 'Insufficient permissions to delete listings' });
       }
 
       const deleted = await listingRepository.deleteById(user.tenantId, String(req.params.id));

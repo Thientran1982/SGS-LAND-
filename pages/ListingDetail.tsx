@@ -281,7 +281,8 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                 if (isManager) {
                     try {
                         const users = await db.getUsers();
-                        setTenantUsers(Array.isArray(users) ? users : []);
+                        const NON_ASSIGNABLE = ['PARTNER_ADMIN', 'PARTNER_AGENT', 'VIEWER'];
+                        setTenantUsers(Array.isArray(users) ? users.filter((u: User) => !NON_ASSIGNABLE.includes(u.role)) : []);
                     } catch (e) {
                         console.error('Failed to load users for assignment', e);
                     }
