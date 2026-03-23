@@ -90,7 +90,7 @@ const CharCount: React.FC<{ value: string; min: number; max: number }> = ({ valu
 // ── Tab: SERP Preview ──────────────────────────────────────────────────────────
 const SerpPreview: React.FC = () => {
     const [selectedKey, setSelectedKey] = useState('');
-    const [overrides] = useState(getSEOOverrides);
+    const overrides = getSEOOverrides();
     const cfg = getEffectiveCfg(selectedKey, overrides);
     const titleLen = cfg.title.length;
     const descLen = cfg.description.length;
