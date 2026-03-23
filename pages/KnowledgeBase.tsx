@@ -200,7 +200,7 @@ export const KnowledgeBase: React.FC = () => {
                                 className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-rose-600/20 disabled:opacity-60 flex items-center justify-center gap-2"
                             >
                                 {isDeleting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                                {isDeleting ? '...' : t('common.delete')}
+                                {isDeleting ? t('common.processing') : t('common.delete')}
                             </button>
                         </div>
                     </div>

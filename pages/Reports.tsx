@@ -436,7 +436,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
                 { label: t('reports.table_leads'), value: totalLeads.toLocaleString(), color: 'indigo' },
                 { 
                     label: t('reports.metric_roi'), 
-                    value: overallRoi !== null ? `${overallRoi > 0 ? '+' : ''}${overallRoi.toFixed(1)}%` : 'N/A',
+                    value: overallRoi !== null ? `${overallRoi > 0 ? '+' : ''}${overallRoi.toFixed(1)}%` : t('reports.roi_na'),
                     color: overallRoi === null ? 'slate' : overallRoi >= 0 ? 'emerald' : 'rose'
                 },
             ].map(({ label, value, color }) => (
@@ -613,7 +613,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                 <tr key={cost.id} className="hover:bg-[var(--glass-surface)] transition-colors group">
                                     <td className="p-5 font-bold text-[var(--text-secondary)]">{cost.source}</td>
                                     <td className="p-5 text-[var(--text-tertiary)] text-xs">
-                                        <span className="bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-2 py-1 rounded border border-[var(--glass-border)]">{cost.campaignName || '—'}</span>
+                                        <span className="bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-2 py-1 rounded border border-[var(--glass-border)]">{cost.campaignName || t('common.no_value')}</span>
                                     </td>
                                     <td className="p-5 font-mono text-xs text-[var(--text-tertiary)]">{cost.period}</td>
                                     <td className="p-5 text-right font-mono font-bold text-[var(--text-primary)]">{formatCurrency(cost.cost)}</td>
@@ -698,7 +698,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                             disabled={isSaving || !addForm.source || !addForm.cost}
                             className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isSaving ? '...' : t('common.save')}
+                            {isSaving ? t('common.processing') : t('common.save')}
                         </button>
                     </div>
                 </div>
@@ -724,7 +724,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                             disabled={isDeleting}
                             className="flex-1 py-3 bg-rose-500 text-white font-bold rounded-xl text-sm shadow hover:bg-rose-600 transition-all disabled:opacity-50"
                         >
-                            {isDeleting ? '...' : t('common.delete')}
+                            {isDeleting ? t('common.processing') : t('common.delete')}
                         </button>
                     </div>
                 </div>
@@ -753,7 +753,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                         </button>
                         <button onClick={handleUpdate} disabled={isSavingUpdate} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
                             {isSavingUpdate && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                            {isSavingUpdate ? '...' : t('common.save')}
+                            {isSavingUpdate ? t('common.processing') : t('common.save')}
                         </button>
                     </div>
                 </div>
