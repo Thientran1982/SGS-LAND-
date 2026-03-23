@@ -351,11 +351,11 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose, onN
                     <div className="flex items-center gap-3 text-xs2 text-[var(--text-muted)]">
                         <span className="hidden sm:flex items-center gap-1">
                             <kbd className="bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] px-1 py-0.5 rounded text-xs2 font-mono">↑↓</kbd>
-                            <span>di chuyển</span>
+                            <span>{t('search.navigate')}</span>
                         </span>
                         <span className="hidden sm:flex items-center gap-1">
                             <kbd className="bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] px-1 py-0.5 rounded text-xs2 font-mono">↵</kbd>
-                            <span>chọn</span>
+                            <span>{t('search.select')}</span>
                         </span>
                     </div>
                     {query && totalResults > 0 && (

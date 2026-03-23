@@ -815,6 +815,8 @@ export const DICTIONARY = {
         "search.listings": "Bất động sản",
         "search.users": "Người dùng",
         "search.no_results": "Không tìm thấy kết quả",
+        "search.navigate": "di chuyển",
+        "search.select": "chọn",
 
         "pagination.showing": "Hiển thị",
         "pagination.to": "đến",
@@ -2565,6 +2567,8 @@ export const DICTIONARY = {
         "search.listings": "Listings",
         "search.users": "Users",
         "search.no_results": "No results found",
+        "search.navigate": "navigate",
+        "search.select": "select",
 
         "pagination.showing": "Showing",
         "pagination.to": "to",
