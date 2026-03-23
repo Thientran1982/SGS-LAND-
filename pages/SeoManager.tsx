@@ -62,6 +62,12 @@ const ALL_ROUTES: { key: string; label: string }[] = Object.keys(ROUTE_SEO).map(
     label: ROUTE_LABELS[key] ?? key,
 }));
 
+// Public-facing routes only (exclude noIndex routes and auth pages like login/register/root).
+const PUBLIC_ROUTES: { key: string; label: string }[] = ALL_ROUTES.filter(({ key }) => {
+    const cfg = ROUTE_SEO[key];
+    return !cfg.noIndex && key !== '' && key !== 'login' && key !== 'register';
+});
+
 function getEffectiveCfg(routeKey: string, overrides: Record<string, { title: string; description: string }>): SEOConfig & { title: string; description: string } {
     const base = ROUTE_SEO[routeKey] ?? ROUTE_SEO[''];
     const ov = overrides[routeKey];
@@ -229,9 +235,9 @@ const MetaEditor: React.FC = () => {
 
     return (
         <div className="space-y-4">
-            <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho từng trang. Thay đổi được lưu trong trình duyệt và có hiệu lực lần sau khi người dùng truy cập trang đó.</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho các trang công khai. Thay đổi được lưu trong trình duyệt và có hiệu lực lần sau khi người dùng truy cập trang đó.</p>
 
-            {ALL_ROUTES.map(({ key, label }) => {
+            {PUBLIC_ROUTES.map(({ key, label }) => {
                 const dirty = isDirty(key);
                 const overridden = isOverridden(key);
                 const title = getTitle(key);
@@ -335,10 +341,16 @@ const HealthChecklist: React.FC = () => {
         checks.push(check('hreflang', 'Hreflang Alternate Links', hreflangOk, false,
             `${hreflangs.length} link(s) tìm thấy (cần ≥ 2)`));
 
-        // 4. Robots meta
+        // 4. Robots meta — pass on public pages that include 'index'; admin/noindex pages pass by expectation
         const robotsMeta = document.querySelector<HTMLMetaElement>('meta[name="robots"]')?.content ?? '';
-        const robotsOk = robotsMeta.includes('index');
-        checks.push(check('robots', 'Robots Meta (index)', robotsOk, false, robotsMeta || 'Không tìm thấy'));
+        const isCurrentPageNoIndex = robotsMeta.includes('noindex');
+        const currentRouteKey = window.location.hash.replace('#/', '').split('/')[0] || '';
+        const routeExpectsNoIndex = !!ROUTE_SEO[currentRouteKey]?.noIndex;
+        const robotsOk = routeExpectsNoIndex ? isCurrentPageNoIndex : robotsMeta.includes('index');
+        const robotsDetail = routeExpectsNoIndex
+            ? (isCurrentPageNoIndex ? 'noindex (đúng với trang admin)' : '⚠ Admin page missing noindex!')
+            : (robotsMeta || 'Không tìm thấy');
+        checks.push(check('robots', 'Robots Meta', robotsOk, false, robotsDetail));
 
         // 5. Structured data count
         const jsonLdCount = document.querySelectorAll('script[type="application/ld+json"]').length;
@@ -383,11 +395,16 @@ const HealthChecklist: React.FC = () => {
         const tc = document.querySelector('meta[name="theme-color"]');
         checks.push(check('theme-color', 'Theme Color Meta', !!tc, false, tc ? (tc as HTMLMetaElement).content : 'Thiếu theme-color'));
 
-        // 12. noindex not set on index.html base
-        const robotsContent = document.querySelector<HTMLMetaElement>('meta[name="robots"]')?.content ?? '';
-        const noIndexOnPublic = robotsContent.includes('noindex');
-        checks.push(check('noindex-pub', 'Trang công khai không bị noindex', !noIndexOnPublic, false,
-            noIndexOnPublic ? '⚠ Trang hiện tại bị noindex!' : 'OK'));
+        // 12. noindex check — only a problem when a public-facing route is inadvertently noindexed
+        const robotsContent12 = document.querySelector<HTMLMetaElement>('meta[name="robots"]')?.content ?? '';
+        const isNoIndexed = robotsContent12.includes('noindex');
+        if (routeExpectsNoIndex) {
+            checks.push(check('noindex-pub', 'Admin route là noindex (đúng)', isNoIndexed, false,
+                isNoIndexed ? 'noindex, nofollow — đúng cấu hình' : '⚠ Admin route nên là noindex nhưng hiện không phải'));
+        } else {
+            checks.push(check('noindex-pub', 'Trang công khai không bị noindex', !isNoIndexed, false,
+                isNoIndexed ? '⚠ Trang hiện tại bị noindex!' : 'OK'));
+        }
 
         setResults(checks);
         setLoading(false);
