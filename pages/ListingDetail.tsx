@@ -15,7 +15,7 @@ import MapView from '../components/MapView';
 import { copyToClipboard } from '../utils/clipboard';
 import { ListingForm } from '../components/ListingForm';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { Lock, Plus, Edit2, Trash2, Download, Upload, Sparkles } from 'lucide-react';
+import { Lock, Plus, Edit2, Trash2, Download, Upload, Sparkles, MoreVertical } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // Icons with pointer-events-none to prevent click hijacking
@@ -391,8 +391,8 @@ const AssigneeDropdown = memo(({
                                 <img src={avatarUrl(u.name, u.avatar)} alt={u.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
                                 <div className="flex-1 min-w-0 text-left">
                                     <div className={`truncate font-medium leading-tight ${isSelected ? 'text-indigo-700' : ''}`}>{u.name}</div>
-                                    <div className="text-[10px] text-[var(--text-tertiary)] capitalize leading-tight mt-0.5">
-                                        {u.role?.toLowerCase().replace('_', ' ')}
+                                    <div className="text-[10px] text-[var(--text-tertiary)] leading-tight mt-0.5">
+                                        {u.role ? t(`role.${u.role}`) : ''}
                                     </div>
                                 </div>
                                 {isSelected && (
@@ -410,6 +410,101 @@ const AssigneeDropdown = memo(({
     );
 });
 AssigneeDropdown.displayName = 'AssigneeDropdown';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UnitActionsMenu — 3-dot kebab menu replacing standalone Edit + Delete buttons
+// ─────────────────────────────────────────────────────────────────────────────
+const UnitActionsMenu = memo(({
+    unit, onEdit, onDelete, t,
+}: {
+    unit: Listing;
+    onEdit: (e: React.MouseEvent, u: Listing) => void;
+    onDelete: (e: React.MouseEvent, u: Listing) => void;
+    t: (key: string) => string;
+}) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number }>({ left: 0 });
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    const openMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const rect = triggerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const MENU_H = 90;
+        const MENU_W = 160;
+        const GAP = 4;
+        const spaceBelow = window.innerHeight - rect.bottom - GAP;
+        const left = Math.min(rect.right - MENU_W, window.innerWidth - MENU_W - 8);
+        if (spaceBelow < MENU_H && rect.top > MENU_H) {
+            setCoords({ bottom: window.innerHeight - rect.top + GAP, left });
+        } else {
+            setCoords({ top: rect.bottom + GAP, left });
+        }
+        setIsOpen(v => !v);
+    };
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleOut = (e: MouseEvent) => {
+            if (!triggerRef.current?.contains(e.target as Node) && !menuRef.current?.contains(e.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        const handleScroll = () => setIsOpen(false);
+        document.addEventListener('mousedown', handleOut);
+        window.addEventListener('scroll', handleScroll, true);
+        return () => {
+            document.removeEventListener('mousedown', handleOut);
+            window.removeEventListener('scroll', handleScroll, true);
+        };
+    }, [isOpen]);
+
+    return (
+        <div className="relative inline-flex">
+            <button
+                ref={triggerRef}
+                type="button"
+                onClick={openMenu}
+                className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] transition-colors"
+                title={t('common.actions') || 'Actions'}
+            >
+                <MoreVertical className="w-4 h-4" />
+            </button>
+            {isOpen && createPortal(
+                <div
+                    ref={menuRef}
+                    className="fixed z-[10003] bg-[var(--bg-surface)]/95 backdrop-blur-xl rounded-xl shadow-2xl border border-[var(--glass-border)]/50 overflow-hidden animate-scale-up py-1"
+                    style={{
+                        ...(coords.bottom !== undefined ? { bottom: coords.bottom } : { top: coords.top }),
+                        left: coords.left,
+                        width: '160px',
+                        transformOrigin: coords.bottom !== undefined ? 'bottom right' : 'top right',
+                    }}
+                >
+                    <button
+                        type="button"
+                        onClick={e => { e.stopPropagation(); onEdit(e, unit); setIsOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] hover:text-indigo-600 transition-colors"
+                    >
+                        <Edit2 className="w-3.5 h-3.5 flex-shrink-0" />
+                        {t('common.edit')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={e => { e.stopPropagation(); onDelete(e, unit); setIsOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                    >
+                        <Trash2 className="w-3.5 h-3.5 flex-shrink-0" />
+                        {t('common.delete')}
+                    </button>
+                </div>,
+                document.body
+            )}
+        </div>
+    );
+});
+UnitActionsMenu.displayName = 'UnitActionsMenu';
 
 const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t, formatCurrency, formatCompactNumber }: { projectCode: string, parentLocation?: string, parentContactPhone?: string, t: any, formatCurrency: any, formatCompactNumber: any }) => {
     const [units, setUnits] = useState<Listing[]>([]);
@@ -782,14 +877,13 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                         <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">{t('inventory.label_unit_price')}</th>
                                         <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">{t('inventory.label_price')}</th>
                                         <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('inventory.label_assignee')}</th>
-                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-center bg-[var(--glass-surface)] sticky z-20 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: (canManageUnits || userRole === 'SALES' || userRole === 'MARKETING') ? '90px' : '0' }}>{t('inventory.label_status')}</th>
-                                        {(canManageUnits || userRole === 'SALES' || userRole === 'MARKETING') && <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)] sticky right-0 z-20" style={{ width: '90px', minWidth: '90px' }}>{t('common.actions')}</th>}
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-center bg-[var(--glass-surface)] sticky z-20 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: (canManageUnits || userRole === 'SALES' || userRole === 'MARKETING') ? '48px' : '0' }}>{t('inventory.label_status')}</th>
+                                        {(canManageUnits || userRole === 'SALES' || userRole === 'MARKETING') && <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)] sticky right-0 z-20" style={{ width: '48px', minWidth: '48px' }}></th>}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
                                     {units.map(unit => {
                                         const statusStyle = STATUS_CONFIG[unit.status] || STATUS_CONFIG.AVAILABLE;
-                                        const showActions = canManageUnits || canEditUnit(unit);
                                         const showActionsCol = canManageUnits || userRole === 'SALES' || userRole === 'MARKETING';
                                         return (
                                             <tr 
@@ -841,34 +935,20 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3 text-center sticky z-10 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] transition-colors shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: showActionsCol ? '90px' : '0' }}>
+                                                <td className="px-4 py-3 text-center sticky z-10 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] transition-colors shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: showActionsCol ? '48px' : '0' }}>
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider whitespace-nowrap ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
                                                         {t(`status.${unit.status}`)}
                                                     </span>
                                                 </td>
                                                 {showActionsCol && (
-                                                    <td className="px-4 py-3 text-right sticky right-0 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] z-10 transition-colors" style={{ width: '90px', minWidth: '90px' }}>
-                                                        {showActions && (
-                                                            <div className="flex items-center justify-end gap-2 transition-opacity">
-                                                                {canEditUnit(unit) && (
-                                                                    <button 
-                                                                        onClick={(e) => { e.stopPropagation(); handleEditUnit(e, unit); }}
-                                                                        className="p-1.5 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                                        title={t('common.edit')}
-                                                                    >
-                                                                        <Edit2 className="w-4 h-4" />
-                                                                    </button>
-                                                                )}
-                                                                {canEditUnit(unit) && (
-                                                                    <button 
-                                                                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, unit); }}
-                                                                        className="p-1.5 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                                                        title={t('common.delete')}
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4" />
-                                                                    </button>
-                                                                )}
-                                                            </div>
+                                                    <td className="px-2 py-3 text-center sticky right-0 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] z-10 transition-colors" style={{ width: '48px', minWidth: '48px' }}>
+                                                        {canEditUnit(unit) && (
+                                                            <UnitActionsMenu
+                                                                unit={unit}
+                                                                onEdit={handleEditUnit}
+                                                                onDelete={handleDeleteClick}
+                                                                t={t}
+                                                            />
                                                         )}
                                                     </td>
                                                 )}
@@ -894,9 +974,19 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                 <span className="font-mono text-xs2 font-bold text-indigo-600 mb-1">{unit.code}</span>
                                                 <h4 className="text-sm font-bold text-[var(--text-primary)]">{unit.title || t(`property.${unit.type.toUpperCase()}`)}</h4>
                                             </div>
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
-                                                {t(`status.${unit.status}`)}
-                                            </span>
+                                            <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
+                                                    {t(`status.${unit.status}`)}
+                                                </span>
+                                                {canEditUnit(unit) && (
+                                                    <UnitActionsMenu
+                                                        unit={unit}
+                                                        onEdit={handleEditUnit}
+                                                        onDelete={handleDeleteClick}
+                                                        t={t}
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="flex justify-between items-end">
                                             <div className="text-xs3 text-[var(--text-tertiary)] space-y-1">
@@ -937,22 +1027,6 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                 </div>
                                             )}
                                         </div>
-                                        {canEditUnit(unit) && (
-                                            <div className="flex justify-end gap-3 mt-3 pt-3 border-t border-slate-50">
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); handleEditUnit(e, unit); }}
-                                                    className="flex items-center gap-1 text-xs font-bold text-indigo-600"
-                                                >
-                                                    <Edit2 className="w-3 h-3" /> {t('common.edit')}
-                                                </button>
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, unit); }}
-                                                    className="flex items-center gap-1 text-xs font-bold text-rose-600"
-                                                >
-                                                    <Trash2 className="w-3 h-3" /> {t('common.delete')}
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
                                 );
                             })}
