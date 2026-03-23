@@ -440,20 +440,20 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
 
     return (
         <div
-            className="bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--glass-border)] shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 mb-3 group relative"
+            className="bg-[var(--bg-surface)] px-3 pt-3 pb-3 rounded-xl border border-[var(--glass-border)] shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 mb-3 group relative"
             onClick={() => onClick(lead)}
             role="button"
         >
             {/* Header row: name + score + 3-dot */}
-            <div className="flex justify-between items-start mb-2 gap-1">
-                <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-600 transition-colors truncate flex-1">{lead.name}</h4>
-                <div className="flex items-center gap-1 shrink-0">
+            <div className="flex justify-between items-start mb-2.5 gap-1">
+                <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-600 transition-colors truncate flex-1 leading-snug">{lead.name}</h4>
+                <div className="flex items-center gap-1.5 shrink-0">
                     <div className="text-xs2 font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded">{lead.score?.score || 0}</div>
-                    {/* 3-dot action button */}
+                    {/* 3-dot action button — always visible on mobile (no hover), hidden until hover on desktop */}
                     <button
                         ref={btnRef}
                         onClick={openMenu}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all"
+                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] active:bg-[var(--glass-surface-hover)] transition-all"
                         title={t('common.actions')}
                     >
                         <svg className="w-3.5 h-3.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
@@ -464,7 +464,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
             </div>
 
             {/* Phone + Source */}
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2.5">
                 <span className="text-xs text-[var(--text-tertiary)] font-mono truncate flex-1 mr-2">{lead.phone}</span>
                 <span className="inline-flex items-center gap-1 text-xs2 font-bold px-1.5 py-0.5 rounded bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] shrink-0">
                     {getSourceIcon(lead.source)}
@@ -474,7 +474,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
 
             {/* Tags */}
             {lead.tags && lead.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
+                <div className="flex flex-wrap gap-1 mb-2.5">
                     {lead.tags.slice(0, 4).map((tag: string) => (
                         <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 whitespace-nowrap">
                             {tag}
@@ -489,7 +489,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
             )}
 
             {/* Footer: date + assignee */}
-            <div className="flex justify-between items-center text-xs2 text-[var(--text-secondary)] mt-2 pt-2 border-t border-slate-50">
+            <div className="flex justify-between items-center text-xs2 text-[var(--text-secondary)] mt-2.5 pt-2.5 border-t border-[var(--glass-border)]">
                 <span>{formatDate(lead.createdAt)}</span>
                 <span className="font-medium text-[var(--text-tertiary)] flex items-center gap-1">
                     {ICONS.USER}
