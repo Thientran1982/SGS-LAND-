@@ -474,7 +474,7 @@ const UnitActionsMenu = memo(({
             {isOpen && createPortal(
                 <div
                     ref={menuRef}
-                    className="fixed z-[10003] bg-[var(--bg-surface)]/95 backdrop-blur-xl rounded-xl shadow-2xl border border-[var(--glass-border)]/50 overflow-hidden animate-scale-up py-1"
+                    className="fixed z-[10003] bg-[var(--bg-surface)]/95 backdrop-blur-xl rounded-xl shadow-2xl border border-[var(--glass-border)]/50 overflow-hidden animate-scale-up"
                     style={{
                         ...(coords.bottom !== undefined ? { bottom: coords.bottom } : { top: coords.top }),
                         left: coords.left,
