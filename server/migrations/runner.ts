@@ -20,20 +20,20 @@ import { Pool, PoolClient } from 'pg';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
-import * as m001 from './001_baseline_schema';
-import * as m002 from './002_audit_logs_and_tasks';
-import * as m003 from './003_ai_and_billing';
-import * as m004 from './004_rbac_creator_columns';
-import * as m005 from './005_projects_and_b2b2c';
-import * as m006 from './006_fix_schema_mismatches';
-import * as m007 from './007_performance_indexes';
-import * as m008 from './008_listing_access';
-import * as m009 from './009_extended_schema';
-import * as m010 from './010_payment_schedule_column';
-import * as m011 from './011_dispute_resolution_column';
-import * as m012 from './012_signed_place';
-import * as m013 from './013_subscription_columns';
-import * as m014 from './014_listing_assigned_to';
+import m001 from './001_baseline_schema';
+import m002 from './002_audit_logs_and_tasks';
+import m003 from './003_ai_and_billing';
+import m004 from './004_rbac_creator_columns';
+import m005 from './005_projects_and_b2b2c';
+import m006 from './006_fix_schema_mismatches';
+import m007 from './007_performance_indexes';
+import m008 from './008_listing_access';
+import m009 from './009_extended_schema';
+import m010 from './010_payment_schedule_column';
+import m011 from './011_dispute_resolution_column';
+import m012 from './012_signed_place';
+import m013 from './013_subscription_columns';
+import m014 from './014_listing_assigned_to';
 
 dotenv.config();
 
@@ -49,20 +49,20 @@ export interface Migration {
  * Order is determined by the sorted filename keys.
  */
 const MIGRATION_REGISTRY: Record<string, Migration> = {
-  '001_baseline_schema.ts': m001 as unknown as Migration,
-  '002_audit_logs_and_tasks.ts': m002 as unknown as Migration,
-  '003_ai_and_billing.ts': m003 as unknown as Migration,
-  '004_rbac_creator_columns.ts': m004 as unknown as Migration,
-  '005_projects_and_b2b2c.ts': m005 as unknown as Migration,
-  '006_fix_schema_mismatches.ts': m006 as unknown as Migration,
-  '007_performance_indexes.ts': m007 as unknown as Migration,
-  '008_listing_access.ts': m008 as unknown as Migration,
-  '009_extended_schema.ts': m009 as unknown as Migration,
-  '010_payment_schedule_column.ts': m010 as unknown as Migration,
-  '011_dispute_resolution_column.ts': m011 as unknown as Migration,
-  '012_signed_place.ts': m012 as unknown as Migration,
-  '013_subscription_columns.ts': m013 as unknown as Migration,
-  '014_listing_assigned_to.ts': m014 as unknown as Migration,
+  '001_baseline_schema.ts': m001,
+  '002_audit_logs_and_tasks.ts': m002,
+  '003_ai_and_billing.ts': m003,
+  '004_rbac_creator_columns.ts': m004,
+  '005_projects_and_b2b2c.ts': m005,
+  '006_fix_schema_mismatches.ts': m006,
+  '007_performance_indexes.ts': m007,
+  '008_listing_access.ts': m008,
+  '009_extended_schema.ts': m009,
+  '010_payment_schedule_column.ts': m010,
+  '011_dispute_resolution_column.ts': m011,
+  '012_signed_place.ts': m012,
+  '013_subscription_columns.ts': m013,
+  '014_listing_assigned_to.ts': m014,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

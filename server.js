@@ -9,10 +9,6 @@ var __export = (target, all) => {
 };
 
 // server/migrations/001_baseline_schema.ts
-var baseline_schema_exports = {};
-__export(baseline_schema_exports, {
-  default: () => baseline_schema_default
-});
 var migration, baseline_schema_default;
 var init_baseline_schema = __esm({
   "server/migrations/001_baseline_schema.ts"() {
@@ -178,10 +174,6 @@ var init_baseline_schema = __esm({
 });
 
 // server/migrations/002_audit_logs_and_tasks.ts
-var audit_logs_and_tasks_exports = {};
-__export(audit_logs_and_tasks_exports, {
-  default: () => audit_logs_and_tasks_default
-});
 var migration2, audit_logs_and_tasks_default;
 var init_audit_logs_and_tasks = __esm({
   "server/migrations/002_audit_logs_and_tasks.ts"() {
@@ -300,10 +292,6 @@ var init_audit_logs_and_tasks = __esm({
 });
 
 // server/migrations/003_ai_and_billing.ts
-var ai_and_billing_exports = {};
-__export(ai_and_billing_exports, {
-  default: () => ai_and_billing_default
-});
 var migration3, ai_and_billing_default;
 var init_ai_and_billing = __esm({
   "server/migrations/003_ai_and_billing.ts"() {
@@ -404,10 +392,6 @@ var init_ai_and_billing = __esm({
 });
 
 // server/migrations/004_rbac_creator_columns.ts
-var rbac_creator_columns_exports = {};
-__export(rbac_creator_columns_exports, {
-  default: () => rbac_creator_columns_default
-});
 var migration4, rbac_creator_columns_default;
 var init_rbac_creator_columns = __esm({
   "server/migrations/004_rbac_creator_columns.ts"() {
@@ -456,10 +440,6 @@ var init_rbac_creator_columns = __esm({
 });
 
 // server/migrations/005_projects_and_b2b2c.ts
-var projects_and_b2b2c_exports = {};
-__export(projects_and_b2b2c_exports, {
-  default: () => projects_and_b2b2c_default
-});
 var migration5, projects_and_b2b2c_default;
 var init_projects_and_b2b2c = __esm({
   "server/migrations/005_projects_and_b2b2c.ts"() {
@@ -534,10 +514,6 @@ var init_projects_and_b2b2c = __esm({
 });
 
 // server/migrations/006_fix_schema_mismatches.ts
-var fix_schema_mismatches_exports = {};
-__export(fix_schema_mismatches_exports, {
-  default: () => fix_schema_mismatches_default
-});
 var migration6, fix_schema_mismatches_default;
 var init_fix_schema_mismatches = __esm({
   "server/migrations/006_fix_schema_mismatches.ts"() {
@@ -612,10 +588,6 @@ var init_fix_schema_mismatches = __esm({
 });
 
 // server/migrations/007_performance_indexes.ts
-var performance_indexes_exports = {};
-__export(performance_indexes_exports, {
-  default: () => performance_indexes_default
-});
 var migration7, performance_indexes_default;
 var init_performance_indexes = __esm({
   "server/migrations/007_performance_indexes.ts"() {
@@ -645,10 +617,6 @@ var init_performance_indexes = __esm({
 });
 
 // server/migrations/008_listing_access.ts
-var listing_access_exports = {};
-__export(listing_access_exports, {
-  default: () => listing_access_default
-});
 var migration8, listing_access_default;
 var init_listing_access = __esm({
   "server/migrations/008_listing_access.ts"() {
@@ -682,10 +650,6 @@ var init_listing_access = __esm({
 });
 
 // server/migrations/009_extended_schema.ts
-var extended_schema_exports = {};
-__export(extended_schema_exports, {
-  default: () => extended_schema_default
-});
 var migration9, extended_schema_default;
 var init_extended_schema = __esm({
   "server/migrations/009_extended_schema.ts"() {
@@ -1393,10 +1357,6 @@ var init_extended_schema = __esm({
 });
 
 // server/migrations/010_payment_schedule_column.ts
-var payment_schedule_column_exports = {};
-__export(payment_schedule_column_exports, {
-  default: () => payment_schedule_column_default
-});
 var migration10, payment_schedule_column_default;
 var init_payment_schedule_column = __esm({
   "server/migrations/010_payment_schedule_column.ts"() {
@@ -1427,10 +1387,6 @@ var init_payment_schedule_column = __esm({
 });
 
 // server/migrations/011_dispute_resolution_column.ts
-var dispute_resolution_column_exports = {};
-__export(dispute_resolution_column_exports, {
-  default: () => dispute_resolution_column_default
-});
 var migration11, dispute_resolution_column_default;
 var init_dispute_resolution_column = __esm({
   "server/migrations/011_dispute_resolution_column.ts"() {
@@ -1461,39 +1417,35 @@ var init_dispute_resolution_column = __esm({
 });
 
 // server/migrations/012_signed_place.ts
-var signed_place_exports = {};
-__export(signed_place_exports, {
-  down: () => down,
-  up: () => up
-});
-async function up(pool3) {
-  await pool3.query(`
-    ALTER TABLE contracts
-      ADD COLUMN IF NOT EXISTS signed_place TEXT,
-      ADD COLUMN IF NOT EXISTS contract_date DATE;
-  `);
-}
-async function down(pool3) {
-  await pool3.query(`
-    ALTER TABLE contracts
-      DROP COLUMN IF EXISTS signed_place,
-      DROP COLUMN IF EXISTS contract_date;
-  `);
-}
+var migration12, signed_place_default;
 var init_signed_place = __esm({
   "server/migrations/012_signed_place.ts"() {
+    migration12 = {
+      description: "Add signed_place and contract_date columns to contracts",
+      async up(client) {
+        await client.query(`
+      ALTER TABLE contracts
+        ADD COLUMN IF NOT EXISTS signed_place TEXT,
+        ADD COLUMN IF NOT EXISTS contract_date DATE;
+    `);
+      },
+      async down(client) {
+        await client.query(`
+      ALTER TABLE contracts
+        DROP COLUMN IF EXISTS signed_place,
+        DROP COLUMN IF EXISTS contract_date;
+    `);
+      }
+    };
+    signed_place_default = migration12;
   }
 });
 
 // server/migrations/013_subscription_columns.ts
-var subscription_columns_exports = {};
-__export(subscription_columns_exports, {
-  default: () => subscription_columns_default
-});
-var migration12, subscription_columns_default;
+var migration13, subscription_columns_default;
 var init_subscription_columns = __esm({
   "server/migrations/013_subscription_columns.ts"() {
-    migration12 = {
+    migration13 = {
       description: "Add missing current_period_start and current_period_end columns to subscriptions table",
       async up(client) {
         await client.query(`
@@ -1517,19 +1469,15 @@ var init_subscription_columns = __esm({
     `);
       }
     };
-    subscription_columns_default = migration12;
+    subscription_columns_default = migration13;
   }
 });
 
 // server/migrations/014_listing_assigned_to.ts
-var listing_assigned_to_exports = {};
-__export(listing_assigned_to_exports, {
-  default: () => listing_assigned_to_default
-});
-var migration13, listing_assigned_to_default;
+var migration14, listing_assigned_to_default;
 var init_listing_assigned_to = __esm({
   "server/migrations/014_listing_assigned_to.ts"() {
-    migration13 = {
+    migration14 = {
       description: "Add assigned_to column to listings for internal role-based assignment",
       async up(client) {
         await client.query(`
@@ -1546,7 +1494,7 @@ var init_listing_assigned_to = __esm({
         await client.query(`ALTER TABLE listings DROP COLUMN IF EXISTS assigned_to;`);
       }
     };
-    listing_assigned_to_default = migration13;
+    listing_assigned_to_default = migration14;
   }
 });
 
@@ -1599,15 +1547,15 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file of pending) {
-      const migration14 = MIGRATION_REGISTRY[file];
-      if (!migration14 || typeof migration14.up !== "function") {
+      const migration15 = MIGRATION_REGISTRY[file];
+      if (!migration15 || typeof migration15.up !== "function") {
         throw new Error(`[migrations] Invalid migration module for ${file} \u2014 missing up() function`);
       }
-      console.log(`[migrations] Applying ${file}: ${migration14.description || ""}`);
-      await migration14.up(client);
+      console.log(`[migrations] Applying ${file}: ${migration15.description || ""}`);
+      await migration15.up(client);
       await client.query(
         "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
-        [file, migration14.description || null]
+        [file, migration15.description || null]
       );
       console.log(`[migrations] \u2713 ${file}`);
     }
@@ -1635,15 +1583,15 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const migration14 = MIGRATION_REGISTRY[lastVersion];
-    if (!migration14) {
+    const migration15 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration15) {
       throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
     }
-    if (!migration14.down) {
+    if (!migration15.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
     console.log(`[migrations] Rolling back ${lastVersion}...`);
-    await migration14.down(client);
+    await migration15.down(client);
     await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
     await client.query("COMMIT");
     console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
@@ -1674,20 +1622,20 @@ var init_runner = __esm({
     init_listing_assigned_to();
     dotenv.config();
     MIGRATION_REGISTRY = {
-      "001_baseline_schema.ts": baseline_schema_exports,
-      "002_audit_logs_and_tasks.ts": audit_logs_and_tasks_exports,
-      "003_ai_and_billing.ts": ai_and_billing_exports,
-      "004_rbac_creator_columns.ts": rbac_creator_columns_exports,
-      "005_projects_and_b2b2c.ts": projects_and_b2b2c_exports,
-      "006_fix_schema_mismatches.ts": fix_schema_mismatches_exports,
-      "007_performance_indexes.ts": performance_indexes_exports,
-      "008_listing_access.ts": listing_access_exports,
-      "009_extended_schema.ts": extended_schema_exports,
-      "010_payment_schedule_column.ts": payment_schedule_column_exports,
-      "011_dispute_resolution_column.ts": dispute_resolution_column_exports,
-      "012_signed_place.ts": signed_place_exports,
-      "013_subscription_columns.ts": subscription_columns_exports,
-      "014_listing_assigned_to.ts": listing_assigned_to_exports
+      "001_baseline_schema.ts": baseline_schema_default,
+      "002_audit_logs_and_tasks.ts": audit_logs_and_tasks_default,
+      "003_ai_and_billing.ts": ai_and_billing_default,
+      "004_rbac_creator_columns.ts": rbac_creator_columns_default,
+      "005_projects_and_b2b2c.ts": projects_and_b2b2c_default,
+      "006_fix_schema_mismatches.ts": fix_schema_mismatches_default,
+      "007_performance_indexes.ts": performance_indexes_default,
+      "008_listing_access.ts": listing_access_default,
+      "009_extended_schema.ts": extended_schema_default,
+      "010_payment_schedule_column.ts": payment_schedule_column_default,
+      "011_dispute_resolution_column.ts": dispute_resolution_column_default,
+      "012_signed_place.ts": signed_place_default,
+      "013_subscription_columns.ts": subscription_columns_default,
+      "014_listing_assigned_to.ts": listing_assigned_to_default
     };
     if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       const isDryRun = process.argv.includes("--dry-run");
