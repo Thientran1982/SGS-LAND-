@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { Listing, PropertyType } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -35,10 +36,10 @@ export const Favorites: React.FC = () => {
 
     const [toast, setToast] = useState<Toast | null>(null);
 
-    const notify = (msg: string, type: Toast['type'] = 'success') => {
+    const notify = useCallback((msg: string, type: Toast['type'] = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
-    };
+    }, []);
 
     const fetchFavorites = useCallback(async () => {
         setLoading(true);
@@ -50,7 +51,7 @@ export const Favorites: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t, notify]);
 
     useEffect(() => { fetchFavorites(); }, [fetchFavorites]);
 
@@ -114,17 +115,8 @@ export const Favorites: React.FC = () => {
     }, [allFavorites]);
 
     return (
+        <>
         <div className="h-full flex flex-col pb-20 animate-enter relative">
-            {toast && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    aria-atomic="true"
-                    className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border transition-all ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}
-                >
-                    <span className="font-bold text-sm">{toast.msg}</span>
-                </div>
-            )}
 
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-6 py-3 mb-6">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -249,14 +241,28 @@ export const Favorites: React.FC = () => {
 
             <ConfirmModal
                 isOpen={!!itemToDelete}
-                title={t('common.delete')}
-                message={t('common.confirm_delete')}
-                confirmLabel={t('common.delete')}
+                title={t('favorites.remove')}
+                message={t('favorites.remove_confirm')}
+                confirmLabel={t('favorites.remove')}
                 cancelLabel={t('common.cancel')}
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setItemToDelete(null)}
                 variant="danger"
             />
         </div>
+        {createPortal(
+            toast ? (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border transition-all ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}
+                >
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };

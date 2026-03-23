@@ -257,6 +257,14 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 - Print: `Noto Serif`
 - Dark mode: `class` strategy on `<html>`, persisted in `localStorage` key `sgs_theme`
 
+### Favorites.tsx Audit & Fix (March 2026)
+4 bugs resolved in `pages/Favorites.tsx`:
+1. **Toast not in portal** — same `animate-enter` / `transform` trap as Inbox; moved toast to `createPortal(document.body)`, added `createPortal` import
+2. **ConfirmModal wrong semantics** — title `common.delete` ("Xóa") and message `common.confirm_delete` ("Không thể hoàn tác. Bạn chắc chắn muốn xóa?") for a "remove from favorites" action; changed to `favorites.remove` + new `favorites.remove_confirm` key (clarifies the listing is NOT deleted, only removed from list)
+3. **`notify` not memoized** — plain function re-created each render was captured by `fetchFavorites` stale closure; wrapped in `useCallback([])`
+4. **`fetchFavorites` stale closure** — empty deps `[]` while using `t` via `notify`; changed to `[t, notify]`
+- New locale key: `favorites.remove_confirm` (VI + EN)
+
 ### Inbox.tsx Audit & Fix (March 2026)
 4 bugs resolved in `pages/Inbox.tsx`:
 1. **Search placeholder wrong key** — `t('inbox.select')` ("Chọn hội thoại xem chi tiết") → `t('common.search')` ("Tìm kiếm")
