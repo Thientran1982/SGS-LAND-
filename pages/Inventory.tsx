@@ -283,7 +283,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
 
             <td className="px-4 py-3 text-center">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider whitespace-nowrap ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
-                    {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') || 'Sẵn sàng' : t(`status.${item.status}`)}
+                    {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
                 </span>
             </td>
 
@@ -294,7 +294,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                         ref={btnRef}
                         onClick={openMenu}
                         className="opacity-0 group-hover:opacity-100 focus:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-all"
-                        title={t('common.actions') || 'Thao tác'}
+                        title={t('common.actions')}
                     >
                         <svg className="w-4 h-4 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
@@ -310,18 +310,18 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     >
                         <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                             <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            {t('common.edit') || 'Chỉnh sửa'}
+                            {t('common.edit')}
                         </button>
                         {onDuplicate && (
                             <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                                 <svg className="w-3.5 h-3.5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
-                                {t('common.duplicate') || 'Nhân bản'}
+                                {t('common.duplicate')}
                             </button>
                         )}
                         <div className="border-t border-[var(--glass-border)] my-1" />
                         <button onClick={() => { setMenuOpen(false); onDelete(item.id); }} className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            {t('common.delete') || 'Xóa'}
+                            {t('common.delete')}
                         </button>
                     </div>,
                     document.body
@@ -378,7 +378,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                         {t(`transaction.${item.transaction}`)}
                     </span>
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
-                        {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') || 'Sẵn sàng' : t(`status.${item.status}`)}
+                        {item.status === 'AVAILABLE' && item.transaction === 'RENT' ? t('status.READY') : t(`status.${item.status}`)}
                     </span>
                 </div>
                 <h4 className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-xs truncate mb-0.5">{item.title}</h4>
@@ -419,18 +419,18 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]">
                     <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                         <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        {t('common.edit') || 'Chỉnh sửa'}
+                        {t('common.edit')}
                     </button>
                     {onDuplicate && (
                         <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                             <svg className="w-3.5 h-3.5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
-                            {t('common.duplicate') || 'Nhân bản'}
+                            {t('common.duplicate')}
                         </button>
                     )}
                     <div className="border-t border-[var(--glass-border)] my-1" />
                     <button onClick={() => { setMenuOpen(false); onDelete(item.id); }} className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        {t('common.delete') || 'Xóa'}
+                        {t('common.delete')}
                     </button>
                 </div>,
                 document.body
@@ -517,18 +517,18 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]">
                     <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                         <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        {t('common.edit') || 'Chỉnh sửa'}
+                        {t('common.edit')}
                     </button>
                     {onDuplicate && (
                         <button onClick={() => { setMenuOpen(false); onDuplicate(item.id); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                             <svg className="w-3.5 h-3.5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
-                            {t('common.duplicate') || 'Nhân bản'}
+                            {t('common.duplicate')}
                         </button>
                     )}
                     <div className="border-t border-[var(--glass-border)] my-1" />
                     <button onClick={() => { setMenuOpen(false); onDelete(item.id); }} className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        {t('common.delete') || 'Xóa'}
+                        {t('common.delete')}
                     </button>
                 </div>,
                 document.body
@@ -680,7 +680,7 @@ export const Inventory: React.FC = () => {
         try {
             await db.deleteListing(itemToDelete);
             fetchListings();
-            notify(t('inventory.action_delete'), 'success');
+            notify(t('inventory.delete_success'), 'success');
         } catch (e) { 
             notify(t('common.error'), 'error'); 
         } finally {
@@ -703,11 +703,11 @@ export const Inventory: React.FC = () => {
 
     const typeOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_types') }, ...Object.values(PropertyType).map(tKey => ({ value: tKey, label: t(`property.${tKey.toUpperCase()}`) }))], [t]);
     const statusOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_statuses') }, ...Object.values(ListingStatus).map(s => ({ value: s, label: t(`status.${s}`) }))], [t]);
-    const transactionOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_transactions') || 'Tất cả giao dịch' }, ...Object.values(TransactionType).map(tr => ({ value: tr, label: t(`transaction.${tr}`) }))], [t]);
+    const transactionOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_transactions') }, ...Object.values(TransactionType).map(tr => ({ value: tr, label: t(`transaction.${tr}`) }))], [t]);
 
     return (
+        <>
         <div className="h-full flex flex-col relative">
-            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             {/* Header & Controls */}
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm p-4 md:p-6 transition-all flex-none">
@@ -728,7 +728,7 @@ export const Inventory: React.FC = () => {
                                     <button 
                                         onClick={() => setSearch('')}
                                         className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
-                                        title={t('common.clear_search') || 'Xóa tìm kiếm'}
+                                        title={t('common.clear_search')}
                                     >
                                         {ICONS.X}
                                     </button>
@@ -750,7 +750,7 @@ export const Inventory: React.FC = () => {
                             <button onClick={() => setViewMode('GRID')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_grid')}>{ICONS.VIEW_GRID}</button>
                             <button onClick={() => setViewMode('LIST')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_list')}>{ICONS.VIEW_LIST}</button>
                             <button onClick={() => setViewMode('BOARD')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_board')}>{ICONS.VIEW_BOARD}</button>
-                            <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map') || 'Bản đồ'}>{ICONS.VIEW_MAP}</button>
+                            <button onClick={() => setViewMode('MAP')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'MAP' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`} title={t('inventory.view_map')}>{ICONS.VIEW_MAP}</button>
                         </div>
 
                         {/* Active filter chip */}
@@ -758,10 +758,10 @@ export const Inventory: React.FC = () => {
                             <button
                                 onClick={() => { setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }}
                                 className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
-                                title={t('inventory.reset_filters') || 'Xóa bộ lọc'}
+                                title={t('inventory.reset_filters')}
                             >
                                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse shrink-0" />
-                                {t('inventory.reset_filters') || 'Xóa bộ lọc'}
+                                {t('inventory.reset_filters')}
                                 <span className="ml-0.5 opacity-70">×</span>
                             </button>
                         )}
@@ -780,35 +780,35 @@ export const Inventory: React.FC = () => {
             {/* Metrics Section */}
             <div ref={metricsRef} className="px-4 md:px-6 py-4 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/50 flex overflow-x-auto no-scrollbar gap-3 md:gap-4 flex-none scroll-smooth cursor-grab active:cursor-grabbing">
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1 truncate">{t('inventory.total_listings') || 'Tổng kho'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1 truncate">{t('inventory.total_listings')}</div>
                     <div className="text-lg md:text-2xl font-black text-[var(--text-primary)]">{stats.totalCount || totalItems}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-emerald-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-emerald-500 uppercase tracking-wider mb-1 truncate">{t('status.AVAILABLE') || 'Đang bán'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-emerald-500 uppercase tracking-wider mb-1 truncate">{t('status.AVAILABLE')}</div>
                     <div className="text-lg md:text-2xl font-black text-emerald-600">{stats.availableCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-amber-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-amber-500 uppercase tracking-wider mb-1 truncate">{t('status.HOLD') || 'Giữ chỗ'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-amber-500 uppercase tracking-wider mb-1 truncate">{t('status.HOLD')}</div>
                     <div className="text-lg md:text-2xl font-black text-amber-600">{stats.holdCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-orange-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-orange-500 uppercase tracking-wider mb-1 truncate">{t('status.BOOKING') || 'Đặt cọc'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-orange-500 uppercase tracking-wider mb-1 truncate">{t('status.BOOKING')}</div>
                     <div className="text-lg md:text-2xl font-black text-orange-600">{stats.bookingCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-indigo-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-indigo-500 uppercase tracking-wider mb-1 truncate">{t('status.OPENING') || 'Mở bán'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-indigo-500 uppercase tracking-wider mb-1 truncate">{t('status.OPENING')}</div>
                     <div className="text-lg md:text-2xl font-black text-indigo-600">{stats.openingCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-teal-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-teal-500 uppercase tracking-wider mb-1 truncate">{t('status.RENTED') || 'Đã thuê'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-teal-500 uppercase tracking-wider mb-1 truncate">{t('status.RENTED')}</div>
                     <div className="text-lg md:text-2xl font-black text-teal-600">{stats.rentedCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-[var(--glass-border)] shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 truncate">{t('status.SOLD') || 'Đã bán'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 truncate">{t('status.SOLD')}</div>
                     <div className="text-lg md:text-2xl font-black text-[var(--text-secondary)]">{stats.soldCount}</div>
                 </div>
                 <div className="bg-[var(--bg-surface)] px-3 md:px-4 py-3 rounded-xl border border-rose-100 shadow-sm min-w-[110px] md:flex-1 shrink-0">
-                    <div className="text-2xs md:text-xs2 font-bold text-rose-500 uppercase tracking-wider mb-1 truncate">{t('status.INACTIVE') || 'Ngưng GD'}</div>
+                    <div className="text-2xs md:text-xs2 font-bold text-rose-500 uppercase tracking-wider mb-1 truncate">{t('status.INACTIVE')}</div>
                     <div className="text-lg md:text-2xl font-black text-rose-600">{stats.inactiveCount}</div>
                 </div>
             </div>
@@ -847,7 +847,7 @@ export const Inventory: React.FC = () => {
                                                 onEdit={canViewInternalInfo ? (l) => { setEditingListing(l); setIsCreateModalOpen(true); } : undefined}
                                                 onDelete={canViewInternalInfo ? handleDeleteClick : undefined}
                                                 onDuplicate={canViewInternalInfo ? async (id) => {
-                                                    try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                    try { await db.duplicateListing(id); fetchListings(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                 } : undefined}
                                                 onClick={() => handleNavigate(item.id)}
                                                 showActions={canViewInternalInfo}
@@ -863,10 +863,10 @@ export const Inventory: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
-                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_filter_hint') || 'Thử xóa bộ lọc hoặc tìm kiếm khác'}</p>
+                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_filter_hint')}</p>
                                                 </div>
                                                 <button onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
-                                                    {t('inventory.reset_filters') || 'Xóa bộ lọc'}
+                                                    {t('inventory.reset_filters')}
                                                 </button>
                                             </>
                                         ) : (
@@ -876,13 +876,13 @@ export const Inventory: React.FC = () => {
                                                 </div>
                                                 {(currentUser?.role === 'PARTNER_ADMIN' || currentUser?.role === 'PARTNER_AGENT') ? (
                                                     <div>
-                                                        <p className="font-bold text-sm text-[var(--text-primary)]">Chưa có sản phẩm được phân quyền</p>
-                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">Liên hệ quản trị viên để được cấp quyền truy cập dự án</p>
+                                                        <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.partner_no_access')}</p>
+                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.partner_no_access_hint')}</p>
                                                     </div>
                                                 ) : (
                                                     <div>
-                                                        <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty_title') || 'Chưa có sản phẩm nào'}</p>
-                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_hint') || 'Thêm sản phẩm bất động sản đầu tiên vào kho'}</p>
+                                                        <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty_title')}</p>
+                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_hint')}</p>
                                                     </div>
                                                 )}
                                                 {canViewInternalInfo && (
@@ -916,7 +916,7 @@ export const Inventory: React.FC = () => {
                                                 )}
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('inventory.label_type')}</th>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_price')}</th>
-                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_unit_price') || 'Đơn giá'}</th>
+                                                <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_unit_price')}</th>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_area')}</th>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-center">{t('inventory.label_status')}</th>
                                                 {canViewInternalInfo && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right sticky right-0 z-30 bg-[var(--glass-surface)] shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] border-l border-[var(--glass-border)]">{t('common.actions')}</th>}
@@ -955,7 +955,7 @@ export const Inventory: React.FC = () => {
                                                         onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                         onDelete={handleDeleteClick}
                                                         onDuplicate={async (id: string) => {
-                                                            try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                            try { await db.duplicateListing(id); fetchListings(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                         }}
                                                         onClick={() => handleNavigate(item.id)}
                                                         t={t} formatCurrency={formatCurrency}
@@ -993,7 +993,7 @@ export const Inventory: React.FC = () => {
                                                     onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                     onDelete={handleDeleteClick}
                                                     onDuplicate={async (id: string) => {
-                                                        try { await db.duplicateListing(id); fetchListings(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                        try { await db.duplicateListing(id); fetchListings(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                     }}
                                                     onClick={() => handleNavigate(item.id)}
                                                     t={t}
@@ -1012,10 +1012,10 @@ export const Inventory: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
-                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_filter_hint') || 'Thử xóa bộ lọc hoặc tìm kiếm khác'}</p>
+                                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_filter_hint')}</p>
                                                     </div>
                                                     <button onClick={() => { setSearch(''); setTypeFilter('ALL'); setStatusFilter('ALL'); setTransactionFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
-                                                        {t('inventory.reset_filters') || 'Xóa bộ lọc'}
+                                                        {t('inventory.reset_filters')}
                                                     </button>
                                                 </>
                                             ) : (
@@ -1025,13 +1025,13 @@ export const Inventory: React.FC = () => {
                                                     </div>
                                                     {(currentUser?.role === 'PARTNER_ADMIN' || currentUser?.role === 'PARTNER_AGENT') ? (
                                                         <div>
-                                                            <p className="font-bold text-sm text-[var(--text-primary)]">Chưa có sản phẩm được phân quyền</p>
-                                                            <p className="text-xs text-[var(--text-tertiary)] mt-1">Liên hệ quản trị viên để được cấp quyền truy cập dự án</p>
+                                                            <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.partner_no_access')}</p>
+                                                            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.partner_no_access_hint')}</p>
                                                         </div>
                                                     ) : (
                                                         <div>
-                                                            <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty_title') || 'Chưa có sản phẩm nào'}</p>
-                                                            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_hint') || 'Thêm sản phẩm bất động sản đầu tiên vào kho'}</p>
+                                                            <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty_title')}</p>
+                                                            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_hint')}</p>
                                                         </div>
                                                     )}
                                                     {canViewInternalInfo && (
@@ -1066,7 +1066,7 @@ export const Inventory: React.FC = () => {
                                 <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center rounded-2xl z-10">
                                     <div className="flex flex-col items-center gap-3">
                                         <div className="w-10 h-10 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
-                                        <p className="text-xs font-bold text-slate-600">{t('common.loading') || 'Đang tải...'}</p>
+                                        <p className="text-xs font-bold text-slate-600">{t('common.loading')}</p>
                                     </div>
                                 </div>
                             )}
@@ -1111,7 +1111,7 @@ export const Inventory: React.FC = () => {
                                                 onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                 onDelete={handleDeleteClick}
                                                 onDuplicate={async (id: string) => {
-                                                    try { await db.duplicateListing(id); fetchBoardData(); notify(t('leads.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                    try { await db.duplicateListing(id); fetchBoardData(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                 }}
                                                 canViewInternal={canViewInternalInfo}
                                                 t={t} formatCurrency={formatCurrency}
@@ -1122,7 +1122,7 @@ export const Inventory: React.FC = () => {
                                                 <div className={`w-9 h-9 rounded-xl ${style.bg} flex items-center justify-center`}>
                                                     <svg className={`w-5 h-5 ${style.color} opacity-50`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                                                 </div>
-                                                <p className="text-xs text-[var(--text-tertiary)]">{t('inventory.kanban_empty') || 'Chưa có sản phẩm'}</p>
+                                                <p className="text-xs text-[var(--text-tertiary)]">{t('inventory.kanban_empty')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -1165,5 +1165,14 @@ export const Inventory: React.FC = () => {
                 variant="danger"
             />
         </div>
+        {createPortal(
+            toast ? (
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };

@@ -294,6 +294,32 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 
 ---
 
+### Inventory.tsx Audit & Fix (March 2026)
+All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast portal fixed:
+
+**Dead `|| fallback` patterns removed (t() never returns falsy):**
+- Action menus (InventoryRow, CompactInventoryRow, InventoryKanbanCard): `common.edit`, `common.duplicate`, `common.delete` fallbacks
+- `status.READY` (×2), `transactionOptions` all_transactions fallback
+- Toolbar: `clear_search`, `view_map`, `reset_filters` (×3)
+- Metrics bar: `inventory.total_listings` + all 7 status labels (AVAILABLE/HOLD/BOOKING/OPENING/RENTED/SOLD/INACTIVE)
+- `inventory.label_unit_price`, `common.loading`, `inventory.kanban_empty`
+- Empty states: `empty_filter_hint` (×2), `empty_title` (×2), `empty_hint` (×2) — GRID + LIST views
+
+**i18n — hardcoded strings replaced:**
+1. PARTNER role empty state (GRID + LIST view): `t('inventory.partner_no_access')` + `t('inventory.partner_no_access_hint')`
+2. Delete success: `t('inventory.action_delete')` → `t('inventory.delete_success')`
+3. Duplicate success: `t('leads.duplicate_success')` → `t('inventory.duplicate_success')` (all 4 occurrences)
+
+**Critical bug — Toast portal:**
+- Same CSS transform trap as Leads.tsx/Billing.tsx — toast `fixed` div inside main container
+- Fixed: return wrapped in `<>` Fragment; toast moved to `createPortal(toast ? <div> : null, document.body)` after main div
+
+**Locale keys added (config/locales.ts):**
+- `inventory.duplicate_success`, `inventory.delete_success`
+- `inventory.partner_no_access`, `inventory.partner_no_access_hint`
+
+---
+
 ### Billing.tsx Audit & Fix (March 2026)
 8 bugs resolved across backend + frontend + i18n:
 

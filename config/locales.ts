@@ -775,6 +775,10 @@ export const DICTIONARY = {
         "inventory.delete_unit": "Xóa sản phẩm",
         "inventory.import_excel": "Nhập Excel",
         "inventory.export_excel": "Xuất Excel",
+        "inventory.duplicate_success": "Đã nhân bản sản phẩm",
+        "inventory.delete_success": "Đã xóa sản phẩm",
+        "inventory.partner_no_access": "Chưa có sản phẩm được phân quyền",
+        "inventory.partner_no_access_hint": "Liên hệ quản trị viên để được cấp quyền truy cập dự án",
         "inventory.import_success": "Nhập dữ liệu thành công!",
         "inventory.import_error": "Có lỗi xảy ra khi nhập dữ liệu.",
 
@@ -2506,6 +2510,10 @@ export const DICTIONARY = {
         "inventory.delete_unit": "Delete Unit",
         "inventory.import_excel": "Import Excel",
         "inventory.export_excel": "Export Excel",
+        "inventory.duplicate_success": "Product duplicated",
+        "inventory.delete_success": "Product removed",
+        "inventory.partner_no_access": "No assigned products",
+        "inventory.partner_no_access_hint": "Contact your administrator to request project access",
         "inventory.import_success": "Import successful!",
         "inventory.import_error": "Error importing data.",
 
