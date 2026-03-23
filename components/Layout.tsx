@@ -263,15 +263,15 @@ const Sidebar = memo(({
                         </div>
                     );
                 })}
-                <div className="h-16 w-full shrink-0"></div>
+                <div className="h-10 w-full shrink-0"></div>
             </nav>
 
             {/* 3. Footer Controls */}
-            <div className="p-3 border-t border-[var(--glass-border)] space-y-2 shrink-0 bg-[var(--bg-surface)] z-20 rounded-b-[24px]">
-                <div className={`grid ${isCollapsed ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
+            <div className="px-2 py-1.5 border-t border-[var(--glass-border)] space-y-1 shrink-0 bg-[var(--bg-surface)] z-20 rounded-b-[24px]">
+                <div className={`grid ${isCollapsed ? 'grid-cols-1' : 'grid-cols-2'} gap-1`}>
                     <button
                         onClick={onToggleTheme}
-                        className="flex items-center justify-center min-h-[44px] p-2.5 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 group relative"
+                        className="flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 group relative"
                         title={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
                         aria-label={t(themeMode === 'dark' ? 'nav.mode_light' : 'nav.mode_dark')}
                     >
@@ -283,7 +283,7 @@ const Sidebar = memo(({
 
                     <button
                         onClick={onToggleLang}
-                        className="flex items-center justify-center min-h-[44px] p-2.5 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 group"
+                        className="flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors border border-transparent hover:border-[var(--glass-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 group"
                         title={t('nav.lang_switch')}
                         aria-label={t('nav.lang_switch')}
                     >
@@ -295,7 +295,7 @@ const Sidebar = memo(({
 
                 <button
                     onClick={onLogoutClick}
-                    className={`w-full flex items-center justify-center min-h-[44px] p-2.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors border border-transparent hover:border-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer ${!isCollapsed ? 'gap-2' : ''}`}
+                    className={`w-full flex items-center justify-center min-h-[32px] p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors border border-transparent hover:border-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer ${!isCollapsed ? 'gap-2' : ''}`}
                     title={t('menu.logout')}
                     aria-label={t('menu.logout')}
                 >
