@@ -217,10 +217,16 @@ const MetaEditor: React.FC = () => {
         saveSEOOverride(key, t, d);
         setOverrides(getSEOOverrides());
         setEdits(prev => { const next = { ...prev }; delete next[key]; return next; });
-        // Restore admin page SEO to preserve noindex — edited route's SEO applies on next navigation to that route
-        updatePageSEO('seo-manager');
+        // Apply the saved route's SEO immediately so the admin can verify it in the browser tab,
+        // then restore admin page noindex after 3 seconds.
+        setPreviewing(key);
+        updatePageSEO(key);
         setSaved(key);
-        setTimeout(() => setSaved(null), 2000);
+        setTimeout(() => {
+            updatePageSEO('seo-manager');
+            setPreviewing(null);
+            setSaved(null);
+        }, 3000);
     };
 
     const handleReset = (key: string) => {
