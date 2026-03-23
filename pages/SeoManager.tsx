@@ -235,7 +235,7 @@ const MetaEditor: React.FC = () => {
 
     return (
         <div className="space-y-4">
-            <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho các trang công khai. Thay đổi được lưu trong trình duyệt và có hiệu lực lần sau khi người dùng truy cập trang đó.</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho các trang công khai. Thay đổi được lưu trong trình duyệt và <strong className="font-semibold text-[var(--text-secondary)]">có hiệu lực khi người dùng điều hướng đến trang đó</strong> — không áp dụng ngay vào trang hiện tại.</p>
 
             {PUBLIC_ROUTES.map(({ key, label }) => {
                 const dirty = isDirty(key);

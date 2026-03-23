@@ -101,6 +101,7 @@ registerPrefetch(ROUTES.MARKETPLACE,         () => import('./pages/Marketplace')
 registerPrefetch(ROUTES.DATA_PLATFORM,       () => import('./pages/DataPlatform'));
 registerPrefetch(ROUTES.SECURITY,           () => import('./pages/SecurityCompliance'));
 registerPrefetch(ROUTES.AI_GOVERNANCE,       () => import('./pages/AiGovernance'));
+registerPrefetch(ROUTES.SEO_MANAGER,         () => import('./pages/SeoManager'));
 registerPrefetch(ROUTES.PROFILE,            () => import('./pages/Profile'));
 registerPrefetch(ROUTES.SEARCH,             () => import('./pages/ProductSearch'));
 registerPrefetch(ROUTES.LANDING,            () => import('./pages/Landing'));
