@@ -217,6 +217,11 @@ export function createListingRoutes(authenticateToken: any) {
       const { userId } = req.body;
       const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+      // Require explicit userId key (null = unassign, UUID string = assign)
+      if (!('userId' in req.body)) {
+        return res.status(400).json({ error: 'userId field is required (use null to unassign)' });
+      }
+
       // userId may be null (to unassign), or a valid UUID string
       if (userId !== null && userId !== undefined) {
         if (typeof userId !== 'string' || !UUID_REGEX.test(userId)) {
