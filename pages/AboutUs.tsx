@@ -146,7 +146,13 @@ export const AboutUs: React.FC = () => {
             <section className="py-24 bg-slate-900 text-center px-6">
                 <h2 className="text-3xl font-bold text-white mb-6">{t('about.cta_title')}</h2>
                 <button
-                    onClick={handleLogin}
+                    onClick={() => {
+                        if (currentUser) {
+                            window.location.hash = `#/${ROUTES.DASHBOARD}`;
+                        } else {
+                            window.location.hash = `#/${ROUTES.CONTACT}`;
+                        }
+                    }}
                     className="px-8 py-4 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-full font-bold shadow-lg hover:scale-105 transition-transform"
                 >
                     {currentUser ? t('about.cta_dashboard') : t('about.cta_contact')}

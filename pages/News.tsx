@@ -142,7 +142,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                                 {shareFeedback}
                             </span>
                         )}
-                        <button onClick={handleShare} className="p-2 rounded-full hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] hover:text-indigo-600 transition-colors" title="Chia sẻ">
+                        <button onClick={handleShare} className="p-2 rounded-full hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] hover:text-indigo-600 transition-colors" title={t('common.copy_link')}>
                             {ICONS.SHARE}
                         </button>
                     </div>

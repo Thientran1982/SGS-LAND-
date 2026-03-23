@@ -64,7 +64,10 @@ export const CrmLanding: React.FC = () => {
                     <button onClick={handleLogin} className="px-8 py-4 bg-indigo-600 text-white font-bold rounded-2xl text-lg shadow-xl shadow-indigo-500/30 hover:bg-indigo-700 transition-transform hover:-translate-y-1 flex items-center justify-center gap-2">
                         {ICONS.ROCKET} {currentUser ? t('menu.dashboard') : t('crm.free_trial')}
                     </button>
-                    <button className="px-8 py-4 bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)] font-bold rounded-2xl text-lg hover:bg-[var(--glass-surface)] transition-colors">
+                    <button
+                        onClick={() => window.location.hash = `#/${ROUTES.CONTACT}`}
+                        className="px-8 py-4 bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)] font-bold rounded-2xl text-lg hover:bg-[var(--glass-surface)] transition-colors"
+                    >
                         {t('crm.view_demo')}
                     </button>
                 </div>

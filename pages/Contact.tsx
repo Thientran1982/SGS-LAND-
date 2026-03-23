@@ -129,7 +129,7 @@ export const Contact: React.FC = () => {
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-[var(--text-primary)]">{t('contact.hq_title')}</h4>
-                                        <p className="text-[var(--text-tertiary)] text-sm mt-1">122 - 124 B2, KĐT Sala, Thủ Đức,<br/>TP. Hồ Chí Minh</p>
+                                        <p className="text-[var(--text-tertiary)] text-sm mt-1" style={{whiteSpace: 'pre-line'}}>{t('contact.hq_addr')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4">
