@@ -432,7 +432,7 @@ export const Profile: React.FC = () => {
                         {/* SSO Badge */}
                         {user.source === 'SSO' && (
                             <span className="px-3 py-1 bg-blue-50 border border-blue-100 text-blue-600 rounded-lg text-xs font-bold uppercase tracking-wide">
-                                Google Workspace
+                                {t('profile.sso_badge')}
                             </span>
                         )}
                     </div>

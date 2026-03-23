@@ -1227,6 +1227,7 @@ export const DICTIONARY = {
         "billing.f_enterprise_5": "100.000 email/tháng",
         "billing.f_enterprise_6": "10.000 AI request/tháng",
         "billing.empty_invoices": "Chưa có hóa đơn nào. Hóa đơn sẽ xuất hiện sau khi bạn thanh toán.",
+        "billing.download_csv": "Tải CSV",
 
         "inbox.unassigned": "Chưa phân công",
         "inbox.assign_to": "Phân bổ cho",
@@ -1419,6 +1420,7 @@ export const DICTIONARY = {
         "profile.sso_managed_title": "Tài khoản Google Workspace",
         "profile.sso_managed_desc": "Tài khoản của bạn được quản lý bởi tổ chức thông qua Google. Việc thay đổi mật khẩu và bảo mật phải được thực hiện trên trang cài đặt tài khoản Google của bạn.",
         "profile.sso_manage_btn": "Quản lý tài khoản Google",
+        "profile.sso_badge": "Google Workspace",
 
         "market.title": "Kho Ứng Dụng",
         "market.subtitle": "Mở rộng tính năng với các tiện ích tích hợp.",
@@ -3199,6 +3201,7 @@ export const DICTIONARY = {
         "billing.f_enterprise_5": "100,000 emails/month",
         "billing.f_enterprise_6": "10,000 AI requests/month",
         "billing.empty_invoices": "No invoices yet. Invoices will appear here after your first payment.",
+        "billing.download_csv": "Download CSV",
 
         "inbox.unassigned": "Unassigned",
         "inbox.assign_to": "Assign to",
@@ -3391,6 +3394,7 @@ export const DICTIONARY = {
         "profile.sso_managed_title": "Google Workspace Account",
         "profile.sso_managed_desc": "Your account is managed by your organization through Google. Password and security changes must be made in your Google account settings.",
         "profile.sso_manage_btn": "Manage Google Account",
+        "profile.sso_badge": "Google Workspace",
 
         "market.title": "App Store",
         "market.subtitle": "Extend features with integrated apps.",

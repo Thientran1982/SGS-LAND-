@@ -253,7 +253,7 @@ export const Billing: React.FC = () => {
                                                     onClick={() => handleDownloadInvoice(inv)}
                                                     className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
                                                 >
-                                                    {ICONS.DOWNLOAD} CSV
+                                                    {ICONS.DOWNLOAD} {t('billing.download_csv')}
                                                 </button>
                                             </td>
                                         </tr>
