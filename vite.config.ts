@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 5000,
         host: '0.0.0.0',
-        allowedHosts: isProduction ? [] : (true as any),
+        allowedHosts: 'all',
         warmup: {
           // Pre-transform the most-accessed modules in dev for faster first navigation
           clientFiles: [

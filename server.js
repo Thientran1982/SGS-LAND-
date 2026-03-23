@@ -1,10 +1,5 @@
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __glob = (map) => (path5) => {
-  var fn = map[path5];
-  if (fn) return fn();
-  throw new Error("Module not found in bundle: " + path5);
-};
 var __esm = (fn, res) => function __init() {
   return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
 };
@@ -1555,30 +1550,6 @@ var init_listing_assigned_to = __esm({
   }
 });
 
-// import("./**/*") in server/migrations/runner.ts
-var globImport;
-var init_ = __esm({
-  'import("./**/*") in server/migrations/runner.ts'() {
-    globImport = __glob({
-      "./001_baseline_schema.ts": () => Promise.resolve().then(() => (init_baseline_schema(), baseline_schema_exports)),
-      "./002_audit_logs_and_tasks.ts": () => Promise.resolve().then(() => (init_audit_logs_and_tasks(), audit_logs_and_tasks_exports)),
-      "./003_ai_and_billing.ts": () => Promise.resolve().then(() => (init_ai_and_billing(), ai_and_billing_exports)),
-      "./004_rbac_creator_columns.ts": () => Promise.resolve().then(() => (init_rbac_creator_columns(), rbac_creator_columns_exports)),
-      "./005_projects_and_b2b2c.ts": () => Promise.resolve().then(() => (init_projects_and_b2b2c(), projects_and_b2b2c_exports)),
-      "./006_fix_schema_mismatches.ts": () => Promise.resolve().then(() => (init_fix_schema_mismatches(), fix_schema_mismatches_exports)),
-      "./007_performance_indexes.ts": () => Promise.resolve().then(() => (init_performance_indexes(), performance_indexes_exports)),
-      "./008_listing_access.ts": () => Promise.resolve().then(() => (init_listing_access(), listing_access_exports)),
-      "./009_extended_schema.ts": () => Promise.resolve().then(() => (init_extended_schema(), extended_schema_exports)),
-      "./010_payment_schedule_column.ts": () => Promise.resolve().then(() => (init_payment_schedule_column(), payment_schedule_column_exports)),
-      "./011_dispute_resolution_column.ts": () => Promise.resolve().then(() => (init_dispute_resolution_column(), dispute_resolution_column_exports)),
-      "./012_signed_place.ts": () => Promise.resolve().then(() => (init_signed_place(), signed_place_exports)),
-      "./013_subscription_columns.ts": () => Promise.resolve().then(() => (init_subscription_columns(), subscription_columns_exports)),
-      "./014_listing_assigned_to.ts": () => Promise.resolve().then(() => (init_listing_assigned_to(), listing_assigned_to_exports)),
-      "./runner.ts": () => Promise.resolve().then(() => (init_runner(), runner_exports))
-    });
-  }
-});
-
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -1586,9 +1557,7 @@ __export(runner_exports, {
   runPendingMigrations: () => runPendingMigrations
 });
 import { Pool } from "pg";
-import path from "path";
 import { fileURLToPath } from "url";
-import { readdirSync } from "fs";
 import dotenv from "dotenv";
 async function ensureSchemaVersionsTable(client) {
   await client.query(`
@@ -1605,7 +1574,7 @@ async function getAppliedVersions(client) {
   return new Set(result.rows.map((r) => r.version));
 }
 function getMigrationFiles() {
-  return readdirSync(__dirname).filter((f) => /^\d{3}_.*\.ts$/.test(f) && f !== "runner.ts").sort();
+  return Object.keys(MIGRATION_REGISTRY).sort();
 }
 async function runPendingMigrations(pool3, isDryRun = false) {
   const client = await pool3.connect();
@@ -1630,8 +1599,10 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file of pending) {
-      const mod = await globImport(`./${file}`);
-      const migration14 = mod.default || mod;
+      const migration14 = MIGRATION_REGISTRY[file];
+      if (!migration14 || typeof migration14.up !== "function") {
+        throw new Error(`[migrations] Invalid migration module for ${file} \u2014 missing up() function`);
+      }
       console.log(`[migrations] Applying ${file}: ${migration14.description || ""}`);
       await migration14.up(client);
       await client.query(
@@ -1664,8 +1635,10 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const mod = await globImport(`./${lastVersion}`);
-    const migration14 = mod.default || mod;
+    const migration14 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration14) {
+      throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
+    }
     if (!migration14.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
@@ -1682,12 +1655,40 @@ async function rollbackLastMigration(pool3) {
     client.release();
   }
 }
-var __dirname;
+var MIGRATION_REGISTRY;
 var init_runner = __esm({
   "server/migrations/runner.ts"() {
-    init_();
+    init_baseline_schema();
+    init_audit_logs_and_tasks();
+    init_ai_and_billing();
+    init_rbac_creator_columns();
+    init_projects_and_b2b2c();
+    init_fix_schema_mismatches();
+    init_performance_indexes();
+    init_listing_access();
+    init_extended_schema();
+    init_payment_schedule_column();
+    init_dispute_resolution_column();
+    init_signed_place();
+    init_subscription_columns();
+    init_listing_assigned_to();
     dotenv.config();
-    __dirname = path.dirname(fileURLToPath(import.meta.url));
+    MIGRATION_REGISTRY = {
+      "001_baseline_schema.ts": baseline_schema_exports,
+      "002_audit_logs_and_tasks.ts": audit_logs_and_tasks_exports,
+      "003_ai_and_billing.ts": ai_and_billing_exports,
+      "004_rbac_creator_columns.ts": rbac_creator_columns_exports,
+      "005_projects_and_b2b2c.ts": projects_and_b2b2c_exports,
+      "006_fix_schema_mismatches.ts": fix_schema_mismatches_exports,
+      "007_performance_indexes.ts": performance_indexes_exports,
+      "008_listing_access.ts": listing_access_exports,
+      "009_extended_schema.ts": extended_schema_exports,
+      "010_payment_schedule_column.ts": payment_schedule_column_exports,
+      "011_dispute_resolution_column.ts": dispute_resolution_column_exports,
+      "012_signed_place.ts": signed_place_exports,
+      "013_subscription_columns.ts": subscription_columns_exports,
+      "014_listing_assigned_to.ts": listing_assigned_to_exports
+    };
     if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       const isDryRun = process.argv.includes("--dry-run");
       const isRollback = process.argv.includes("--rollback");
@@ -1817,11 +1818,11 @@ var init_logger = __esm({
           console.error(formatLog("ERROR", message, Object.keys(meta).length > 0 ? meta : void 0));
         }
       },
-      request(method, path5, statusCode, durationMs, userId) {
+      request(method, path4, statusCode, durationMs, userId) {
         if (shouldLog("INFO")) {
-          const meta = { method, path: path5, status: statusCode, duration: `${durationMs}ms` };
+          const meta = { method, path: path4, status: statusCode, duration: `${durationMs}ms` };
           if (userId) meta.userId = userId;
-          console.log(formatLog("INFO", `${method} ${path5} ${statusCode} ${durationMs}ms`, meta));
+          console.log(formatLog("INFO", `${method} ${path4} ${statusCode} ${durationMs}ms`, meta));
         }
       },
       audit(action, userId, details) {
@@ -8427,7 +8428,7 @@ function createRoutingRuleRoutes(authenticateToken) {
 
 // server/routes/knowledgeRoutes.ts
 import { Router as Router10 } from "express";
-import path3 from "path";
+import path2 from "path";
 import fs2 from "fs";
 
 // server/repositories/documentRepository.ts
@@ -8503,11 +8504,11 @@ var DocumentRepository = class extends BaseRepository {
 var documentRepository = new DocumentRepository();
 
 // server/services/textExtractor.ts
-import path2 from "path";
+import path from "path";
 import fs from "fs";
 async function extractTextFromFile(filePath) {
-  const ext = path2.extname(filePath).toLowerCase();
-  const absolutePath = path2.resolve(filePath);
+  const ext = path.extname(filePath).toLowerCase();
+  const absolutePath = path.resolve(filePath);
   if (!fs.existsSync(absolutePath)) {
     return "";
   }
@@ -8553,7 +8554,7 @@ async function extractDocx(filePath) {
 }
 
 // server/routes/knowledgeRoutes.ts
-var UPLOAD_BASE = path3.join(process.cwd(), "uploads");
+var UPLOAD_BASE = path2.join(process.cwd(), "uploads");
 var CAN_MANAGE = ["ADMIN", "TEAM_LEAD"];
 function createKnowledgeRoutes(authenticateToken) {
   const router = Router10();
@@ -8584,10 +8585,10 @@ function createKnowledgeRoutes(authenticateToken) {
         try {
           const tenantId = user.tenantId;
           const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl;
-          const filePath = path3.join(process.cwd(), relativePath);
-          const resolved = path3.resolve(filePath);
-          const tenantDir = path3.resolve(path3.join(process.cwd(), "uploads", tenantId));
-          if (resolved.startsWith(tenantDir + path3.sep) || resolved.startsWith(tenantDir + "/")) {
+          const filePath = path2.join(process.cwd(), relativePath);
+          const resolved = path2.resolve(filePath);
+          const tenantDir = path2.resolve(path2.join(process.cwd(), "uploads", tenantId));
+          if (resolved.startsWith(tenantDir + path2.sep) || resolved.startsWith(tenantDir + "/")) {
             extractedContent = await extractTextFromFile(resolved);
           }
         } catch (err) {
@@ -8646,10 +8647,10 @@ function createKnowledgeRoutes(authenticateToken) {
       if (doc.fileUrl) {
         try {
           const relativePath = doc.fileUrl.startsWith("/") ? doc.fileUrl.slice(1) : doc.fileUrl;
-          const filePath = path3.join(process.cwd(), relativePath);
-          const resolved = path3.resolve(filePath);
-          const tenantDir = path3.resolve(path3.join(UPLOAD_BASE, user.tenantId));
-          if (resolved.startsWith(tenantDir + path3.sep) || resolved.startsWith(tenantDir + "/")) {
+          const filePath = path2.join(process.cwd(), relativePath);
+          const resolved = path2.resolve(filePath);
+          const tenantDir = path2.resolve(path2.join(UPLOAD_BASE, user.tenantId));
+          if (resolved.startsWith(tenantDir + path2.sep) || resolved.startsWith(tenantDir + "/")) {
             if (fs2.existsSync(resolved)) {
               fs2.unlinkSync(resolved);
             }
@@ -10091,10 +10092,10 @@ function createBillingRoutes(authenticateToken) {
 init_constants();
 import { Router as Router16 } from "express";
 import multer from "multer";
-import path4 from "path";
+import path3 from "path";
 import fs3 from "fs";
 import crypto from "crypto";
-var UPLOAD_BASE2 = path4.join(process.cwd(), "uploads");
+var UPLOAD_BASE2 = path3.join(process.cwd(), "uploads");
 var MAX_FILE_SIZE = 10 * 1024 * 1024;
 var MAX_FILES = 10;
 var ALLOWED_MIMES = {
@@ -10128,13 +10129,13 @@ var EXT_TO_CONTENT_TYPE = {
 var storage = multer.diskStorage({
   destination: (req, _file, cb) => {
     const tenantId = req.tenantId || DEFAULT_TENANT_ID;
-    const dir = path4.join(UPLOAD_BASE2, tenantId);
+    const dir = path3.join(UPLOAD_BASE2, tenantId);
     fs3.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
   filename: (_req, file, cb) => {
     const uniqueId = crypto.randomBytes(16).toString("hex");
-    const ext = MIME_TO_EXT[file.mimetype] || path4.extname(file.originalname).toLowerCase();
+    const ext = MIME_TO_EXT[file.mimetype] || path3.extname(file.originalname).toLowerCase();
     cb(null, `${Date.now()}-${uniqueId}${ext}`);
   }
 });
@@ -10190,13 +10191,13 @@ function createUploadRoutes(authenticateToken) {
   router.delete("/:filename", authenticateToken, (req, res) => {
     try {
       const tenantId = req.tenantId || DEFAULT_TENANT_ID;
-      const filename = path4.basename(String(req.params.filename));
+      const filename = path3.basename(String(req.params.filename));
       if (!SAFE_FILENAME_REGEX.test(filename)) {
         return res.status(400).json({ error: "Invalid filename" });
       }
-      const filePath = path4.join(UPLOAD_BASE2, tenantId, filename);
-      const resolved = path4.resolve(filePath);
-      const expectedDir = path4.resolve(path4.join(UPLOAD_BASE2, tenantId));
+      const filePath = path3.join(UPLOAD_BASE2, tenantId, filename);
+      const resolved = path3.resolve(filePath);
+      const expectedDir = path3.resolve(path3.join(UPLOAD_BASE2, tenantId));
       if (!resolved.startsWith(expectedDir)) {
         return res.status(403).json({ error: "Access denied" });
       }
@@ -10216,7 +10217,7 @@ var PUBLIC_IMAGE_EXTS = /* @__PURE__ */ new Set([".jpg", ".jpeg", ".png", ".webp
 function createUploadServeRoute(authenticateToken) {
   const router = Router16();
   router.get("/:tenantId/:filename", (req, res, next) => {
-    const ext = path4.extname(String(req.params.filename)).toLowerCase();
+    const ext = path3.extname(String(req.params.filename)).toLowerCase();
     if (PUBLIC_IMAGE_EXTS.has(ext)) {
       return next("route");
     }
@@ -10238,20 +10239,20 @@ function serveUploadedFile(req, res, userTenantId) {
     if (userTenantId !== null && requestedTenantId !== userTenantId) {
       return res.status(403).json({ error: "Access denied" });
     }
-    const filename = path4.basename(String(req.params.filename));
+    const filename = path3.basename(String(req.params.filename));
     if (!SAFE_FILENAME_REGEX.test(filename)) {
       return res.status(400).json({ error: "Invalid filename" });
     }
-    const filePath = path4.join(UPLOAD_BASE2, requestedTenantId, filename);
-    const resolved = path4.resolve(filePath);
-    const expectedDir = path4.resolve(path4.join(UPLOAD_BASE2, requestedTenantId));
+    const filePath = path3.join(UPLOAD_BASE2, requestedTenantId, filename);
+    const resolved = path3.resolve(filePath);
+    const expectedDir = path3.resolve(path3.join(UPLOAD_BASE2, requestedTenantId));
     if (!resolved.startsWith(expectedDir)) {
       return res.status(403).json({ error: "Access denied" });
     }
     if (!fs3.existsSync(resolved)) {
       return res.status(404).json({ error: "File not found" });
     }
-    const ext = path4.extname(filename).toLowerCase();
+    const ext = path3.extname(filename).toLowerCase();
     const contentType = EXT_TO_CONTENT_TYPE[ext] || "application/octet-stream";
     res.setHeader("Content-Type", contentType);
     const isPublicImage = PUBLIC_IMAGE_EXTS.has(ext);
@@ -10558,15 +10559,15 @@ function createScimRoutes() {
       if (!existing) return scimError(res, 404, "User not found");
       const updates = {};
       for (const op of Operations) {
-        const { op: opType, path: path5, value } = op;
+        const { op: opType, path: path4, value } = op;
         const operation = (opType || "").toLowerCase();
-        if ((operation === "replace" || operation === "add") && path5 === "active") {
+        if ((operation === "replace" || operation === "add") && path4 === "active") {
           updates.status = value === false || value === "false" ? "INACTIVE" : "ACTIVE";
-        } else if ((operation === "replace" || operation === "add") && path5 === "name.formatted") {
+        } else if ((operation === "replace" || operation === "add") && path4 === "name.formatted") {
           updates.name = value;
-        } else if ((operation === "replace" || operation === "add") && path5 === "title") {
+        } else if ((operation === "replace" || operation === "add") && path4 === "title") {
           updates.role = scimTitleToRole(value);
-        } else if (!path5 && value && typeof value === "object") {
+        } else if (!path4 && value && typeof value === "object") {
           if (value.active !== void 0) updates.status = value.active === false ? "INACTIVE" : "ACTIVE";
           if (value["name.formatted"]) updates.name = value["name.formatted"];
           if (value.title) updates.role = scimTitleToRole(value.title);

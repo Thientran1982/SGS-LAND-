@@ -10,23 +10,60 @@
  *   npx tsx server/migrations/runner.ts --dry-run # preview without executing
  *
  * In server startup: call runPendingMigrations() before the app starts listening.
+ *
+ * BUNDLING NOTE: Migration files are imported statically so that esbuild can
+ * bundle them into server.js. Dynamic filesystem discovery (readdirSync) is NOT
+ * used because __dirname resolves to the bundle output directory in production.
  */
 
 import { Pool, PoolClient } from 'pg';
-import path from 'path';
 import { fileURLToPath } from 'url';
-import { readdirSync } from 'fs';
 import dotenv from 'dotenv';
 
-dotenv.config();
+import * as m001 from './001_baseline_schema';
+import * as m002 from './002_audit_logs_and_tasks';
+import * as m003 from './003_ai_and_billing';
+import * as m004 from './004_rbac_creator_columns';
+import * as m005 from './005_projects_and_b2b2c';
+import * as m006 from './006_fix_schema_mismatches';
+import * as m007 from './007_performance_indexes';
+import * as m008 from './008_listing_access';
+import * as m009 from './009_extended_schema';
+import * as m010 from './010_payment_schedule_column';
+import * as m011 from './011_dispute_resolution_column';
+import * as m012 from './012_signed_place';
+import * as m013 from './013_subscription_columns';
+import * as m014 from './014_listing_assigned_to';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config();
 
 export interface Migration {
   up: (client: PoolClient) => Promise<void>;
   down?: (client: PoolClient) => Promise<void>;
   description: string;
 }
+
+/**
+ * Static registry of all migrations keyed by filename.
+ * Add new migrations here in addition to creating the .ts file.
+ * Order is determined by the sorted filename keys.
+ */
+const MIGRATION_REGISTRY: Record<string, Migration> = {
+  '001_baseline_schema.ts': m001 as unknown as Migration,
+  '002_audit_logs_and_tasks.ts': m002 as unknown as Migration,
+  '003_ai_and_billing.ts': m003 as unknown as Migration,
+  '004_rbac_creator_columns.ts': m004 as unknown as Migration,
+  '005_projects_and_b2b2c.ts': m005 as unknown as Migration,
+  '006_fix_schema_mismatches.ts': m006 as unknown as Migration,
+  '007_performance_indexes.ts': m007 as unknown as Migration,
+  '008_listing_access.ts': m008 as unknown as Migration,
+  '009_extended_schema.ts': m009 as unknown as Migration,
+  '010_payment_schedule_column.ts': m010 as unknown as Migration,
+  '011_dispute_resolution_column.ts': m011 as unknown as Migration,
+  '012_signed_place.ts': m012 as unknown as Migration,
+  '013_subscription_columns.ts': m013 as unknown as Migration,
+  '014_listing_assigned_to.ts': m014 as unknown as Migration,
+};
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
   await client.query(`
@@ -45,9 +82,7 @@ async function getAppliedVersions(client: PoolClient): Promise<Set<string>> {
 }
 
 function getMigrationFiles(): string[] {
-  return readdirSync(__dirname)
-    .filter(f => /^\d{3}_.*\.ts$/.test(f) && f !== 'runner.ts')
-    .sort();
+  return Object.keys(MIGRATION_REGISTRY).sort();
 }
 
 export async function runPendingMigrations(pool: Pool, isDryRun = false): Promise<void> {
@@ -78,8 +113,10 @@ export async function runPendingMigrations(pool: Pool, isDryRun = false): Promis
     }
 
     for (const file of pending) {
-      const mod = await import(`./${file}`);
-      const migration: Migration = mod.default || mod;
+      const migration = MIGRATION_REGISTRY[file];
+      if (!migration || typeof migration.up !== 'function') {
+        throw new Error(`[migrations] Invalid migration module for ${file} — missing up() function`);
+      }
 
       console.log(`[migrations] Applying ${file}: ${migration.description || ''}`);
       await migration.up(client);
@@ -117,9 +154,11 @@ export async function rollbackLastMigration(pool: Pool): Promise<void> {
     }
 
     const lastVersion: string = result.rows[0].version;
-    const mod = await import(`./${lastVersion}`);
-    const migration: Migration = mod.default || mod;
+    const migration = MIGRATION_REGISTRY[lastVersion];
 
+    if (!migration) {
+      throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
+    }
     if (!migration.down) {
       throw new Error(`Migration ${lastVersion} has no down() — cannot rollback`);
     }

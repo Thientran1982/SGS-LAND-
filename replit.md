@@ -491,10 +491,14 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 | `JWT_SECRET` | 64-char hex key for signing JWT cookies — rotate immediately if exposed |
 | `GEMINI_API_KEY` | Google AI Studio API key — enables AI valuation, chat, lead scoring |
 
-### Optional env vars (set in production env if needed)
+### Required production env vars (set via Replit deployment environment)
+| Variable | Example | Purpose |
+|----------|---------|---------|
+| `ALLOWED_ORIGINS` | `https://sgs-land.username.replit.app` | **Required in production.** Comma-separated list of allowed CORS origins. Set to your `.replit.app` deployment domain. Without this, cross-origin requests (e.g., from external webhooks, partner integrations) will be blocked. Same-origin browser requests still work either way, but this must be set for a complete production config. |
+
+### Optional env vars
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `ALLOWED_ORIGINS` | same-origin only | Comma-separated domains allowed for CORS (only needed for external API consumers) |
 | `REDIS_URL` | in-memory fallback | Redis connection for job queues — required for multi-instance scale-out |
 | `PORT` | `5000` | Server listen port (Replit maps 5000→80 automatically) |
 | `LOG_LEVEL` | `INFO` | Log verbosity: DEBUG / INFO / WARN / ERROR |
