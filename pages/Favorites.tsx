@@ -139,7 +139,7 @@ export const Favorites: React.FC = () => {
                                             onClick={() => setFilterType(type)}
                                             className={`px-3 py-2 min-h-[36px] rounded-lg text-xs font-bold border transition-all ${filterType === type ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
                                         >
-                                            {t(`property.${type}`) || type}
+                                            {t(`property.${type}`)}
                                         </button>
                                     ))}
                                 </div>
@@ -194,7 +194,7 @@ export const Favorites: React.FC = () => {
                                 </div>
                                 <p className="text-[var(--text-secondary)] italic mb-2 font-medium">
                                     {filterType !== 'ALL'
-                                        ? `${t('favorites.filter_empty_type')} "${t(`property.${filterType}`) || filterType}"`
+                                        ? `${t('favorites.filter_empty_type')} "${t(`property.${filterType}`)}"`
                                         : t('favorites.empty')
                                     }
                                 </p>
