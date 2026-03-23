@@ -1380,6 +1380,10 @@ export const DICTIONARY = {
         "profile.tab_security": "Bảo mật",
         "profile.placeholder_phone": "0912345678",
         "profile.placeholder_bio": "Giới thiệu ngắn về kinh nghiệm của bạn...",
+        "profile.sso_email_managed": "Được quản lý bởi tổ chức",
+        "profile.sso_managed_title": "Tài khoản Google Workspace",
+        "profile.sso_managed_desc": "Tài khoản của bạn được quản lý bởi tổ chức thông qua Google. Việc thay đổi mật khẩu và bảo mật phải được thực hiện trên trang cài đặt tài khoản Google của bạn.",
+        "profile.sso_manage_btn": "Quản lý tài khoản Google",
 
         "market.title": "Kho Ứng Dụng",
         "market.subtitle": "Mở rộng tính năng với các tiện ích tích hợp.",
@@ -3185,6 +3189,10 @@ export const DICTIONARY = {
         "profile.tab_security": "Security",
         "profile.placeholder_phone": "0912345678",
         "profile.placeholder_bio": "Short bio about your experience...",
+        "profile.sso_email_managed": "Managed by Organization",
+        "profile.sso_managed_title": "Google Workspace Account",
+        "profile.sso_managed_desc": "Your account is managed by your organization through Google. Password and security changes must be made in your Google account settings.",
+        "profile.sso_manage_btn": "Manage Google Account",
 
         "market.title": "App Store",
         "market.subtitle": "Extend features with integrated apps.",

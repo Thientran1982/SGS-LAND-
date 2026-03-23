@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState, useRef, useCallback, memo, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -377,11 +378,12 @@ export const Profile: React.FC = () => {
         return JSON.stringify(current) !== JSON.stringify(original);
     }, [formData, user]);
 
-    if (loading) return <div className="p-8"><Skeleton className="h-64 w-full" /></div>;
+    if (loading) return <div className="p-4 sm:p-6"><Skeleton className="h-64 w-full" /></div>;
     if (!user) return null;
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-enter">
+        <>
+        <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20 animate-enter">
             {/* Header Card */}
             <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
                 <div className="absolute top-0 right-0 p-40 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60 pointer-events-none"></div>
@@ -459,15 +461,7 @@ export const Profile: React.FC = () => {
                 {/* Form Content */}
                 <div className="lg:col-span-9">
                     <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm min-h-[500px] relative">
-                        {/* Toast Notification */}
-                        {message && (
-                            <div className={`absolute top-6 right-6 left-6 md:left-auto px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-3 animate-enter z-20 shadow-lg ${message.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
-                                {message.type === 'success' ? ICONS.SUCCESS : ICONS.ERROR}
-                                {message.text}
-                            </div>
-                        )}
-
-                        <div className="flex justify-between items-center mb-8 border-b border-[var(--glass-border)] pb-6">
+                            <div className="flex justify-between items-center mb-8 border-b border-[var(--glass-border)] pb-6">
                             <h2 className="text-xl font-bold text-[var(--text-primary)]">
                                 {activeTab === 'GENERAL' ? t('profile.tab_general') : t('profile.tab_security')}
                             </h2>
@@ -498,7 +492,7 @@ export const Profile: React.FC = () => {
                                     <div className="flex justify-between items-center">
                                         <label className="text-xs3 font-bold uppercase tracking-wider ml-1 text-[var(--text-tertiary)]">{t('profile.email')}</label>
                                         {user.source === 'SSO' ? (
-                                            <span className="text-xs text-[var(--text-secondary)] italic">Managed by Organization</span>
+                                            <span className="text-xs text-[var(--text-secondary)] italic">{t('profile.sso_email_managed')}</span>
                                         ) : !emailChangeOpen ? (
                                             <button
                                                 type="button"
@@ -605,10 +599,9 @@ export const Profile: React.FC = () => {
                                     <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
                                     </div>
-                                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Google Workspace Managed</h3>
+                                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{t('profile.sso_managed_title')}</h3>
                                     <p className="text-sm text-[var(--text-tertiary)] max-w-md mx-auto leading-relaxed">
-                                        Tài khoản của bạn được quản lý bởi tổ chức thông qua Google. 
-                                        Việc thay đổi mật khẩu và bảo mật phải được thực hiện trên trang cài đặt tài khoản Google của bạn.
+                                        {t('profile.sso_managed_desc')}
                                     </p>
                                     <a 
                                         href="https://myaccount.google.com/" 
@@ -616,7 +609,7 @@ export const Profile: React.FC = () => {
                                         rel="noreferrer"
                                         className="mt-6 inline-block px-6 py-2 bg-[var(--bg-surface)] border border-slate-300 text-[var(--text-secondary)] font-bold rounded-xl text-sm hover:bg-[var(--glass-surface)] transition-colors"
                                     >
-                                        Quản lý tài khoản Google
+                                        {t('profile.sso_manage_btn')}
                                     </a>
                                 </div>
                             ) : (
@@ -671,5 +664,15 @@ export const Profile: React.FC = () => {
                 </div>
             </div>
         </div>
+        {createPortal(
+            message ? (
+                <div className={`fixed top-6 right-6 max-w-sm px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-3 animate-enter z-[9999] shadow-lg ${message.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                    {message.type === 'success' ? ICONS.SUCCESS : ICONS.ERROR}
+                    {message.text}
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };
