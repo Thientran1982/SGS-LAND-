@@ -555,7 +555,7 @@ export const Inbox: React.FC = () => {
                                 <div className="font-bold text-[var(--text-primary)] text-sm md:text-base flex items-center gap-2 min-w-0">
                                     <span className="truncate">{selectedThread.lead.name}</span>
                                     <span className="text-2xs px-1.5 py-0.5 rounded uppercase font-bold border text-emerald-600 bg-emerald-50 border-emerald-100 shrink-0">
-                                        {selectedThread.lead.score?.score || 0} pts
+                                        {selectedThread.lead.score?.score || 0} {t('scoring.pts')}
                                     </span>
                                 </div>
                                 <div className="text-xs2 md:text-xs text-[var(--text-tertiary)] flex items-center gap-1.5 truncate">
