@@ -156,7 +156,7 @@ const SerpPreview: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-[var(--glass-surface-hover)] rounded-xl p-4 border border-[var(--glass-border)]">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Title</span>
+                        <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Tiêu đề</span>
                         <CharCount value={cfg.title} min={30} max={60} />
                     </div>
                     <div className="h-2 bg-[var(--glass-border)] rounded-full overflow-hidden">
@@ -171,7 +171,7 @@ const SerpPreview: React.FC = () => {
                 </div>
                 <div className="bg-[var(--glass-surface-hover)] rounded-xl p-4 border border-[var(--glass-border)]">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Description</span>
+                        <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Mô tả</span>
                         <CharCount value={cfg.description} min={120} max={160} />
                     </div>
                     <div className="h-2 bg-[var(--glass-border)] rounded-full overflow-hidden">
@@ -268,7 +268,7 @@ const MetaEditor: React.FC = () => {
                             <div className="flex items-center gap-2">
                                 <span className="font-bold text-sm text-[var(--text-primary)]">{label}</span>
                                 {cfg.noIndex && <span className="text-2xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full border border-[var(--glass-border)]">noindex</span>}
-                                {overridden && !dirty && <span className="text-2xs font-bold bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-100">override</span>}
+                                {overridden && !dirty && <span className="text-2xs font-bold bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-100">đã chỉnh</span>}
                             </div>
                             <span className="text-2xs font-mono text-[var(--text-muted)]">/{key}</span>
                         </div>
@@ -276,7 +276,7 @@ const MetaEditor: React.FC = () => {
                         <div className="space-y-2.5">
                             <div>
                                 <div className="flex justify-between mb-1">
-                                    <label className="text-2xs font-bold text-[var(--text-tertiary)] uppercase">Title</label>
+                                    <label className="text-2xs font-bold text-[var(--text-tertiary)] uppercase">Tiêu đề</label>
                                     <CharCount value={title} min={30} max={60} />
                                 </div>
                                 <input
@@ -288,7 +288,7 @@ const MetaEditor: React.FC = () => {
                             </div>
                             <div>
                                 <div className="flex justify-between mb-1">
-                                    <label className="text-2xs font-bold text-[var(--text-tertiary)] uppercase">Description</label>
+                                    <label className="text-2xs font-bold text-[var(--text-tertiary)] uppercase">Mô tả</label>
                                     <CharCount value={desc} min={120} max={160} />
                                 </div>
                                 <textarea
@@ -324,7 +324,7 @@ const MetaEditor: React.FC = () => {
                                     onClick={() => handleReset(key)}
                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] text-2xs font-bold rounded-lg hover:bg-[var(--glass-border)] transition-colors border border-[var(--glass-border)]"
                                 >
-                                    {ICONS.RESET} Reset
+                                    {ICONS.RESET} Đặt lại
                                 </button>
                             )}
                         </div>
@@ -353,19 +353,19 @@ const HealthChecklist: React.FC = () => {
         // 1. Canonical present
         const canonical = document.getElementById('canonical-url') as HTMLLinkElement | null;
         const hasCanonical = !!canonical?.href && canonical.href !== window.location.origin + '/';
-        checks.push(check('canonical', 'Canonical URL', hasCanonical, false,
+        checks.push(check('canonical', 'Thẻ Canonical', hasCanonical, false,
             hasCanonical ? canonical!.href : 'Thẻ canonical không có href'));
 
         // 2. OG image is hosted HTTPS URL
         const ogImg = document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.content ?? '';
         const ogImgOk = ogImg.startsWith('https://') && !ogImg.startsWith('data:');
-        checks.push(check('og-image', 'OG Image (HTTPS URL)', ogImgOk, false,
+        checks.push(check('og-image', 'Ảnh OG (HTTPS URL)', ogImgOk, false,
             ogImgOk ? ogImg.slice(0, 60) + '...' : `Giá trị: ${ogImg.slice(0, 40)}...`));
 
         // 3. Hreflang declared
         const hreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
         const hreflangOk = hreflangs.length >= 2;
-        checks.push(check('hreflang', 'Hreflang Alternate Links', hreflangOk, false,
+        checks.push(check('hreflang', 'Liên Kết Hreflang', hreflangOk, false,
             `${hreflangs.length} link(s) tìm thấy (cần ≥ 2)`));
 
         // 4. Robots meta — pass on public pages that include 'index'; admin/noindex pages pass by expectation
@@ -375,43 +375,43 @@ const HealthChecklist: React.FC = () => {
         const routeExpectsNoIndex = !!ROUTE_SEO[currentRouteKey]?.noIndex;
         const robotsOk = routeExpectsNoIndex ? isCurrentPageNoIndex : robotsMeta.includes('index');
         const robotsDetail = routeExpectsNoIndex
-            ? (isCurrentPageNoIndex ? 'noindex (đúng với trang admin)' : '⚠ Admin page missing noindex!')
+            ? (isCurrentPageNoIndex ? 'noindex (đúng với trang admin)' : '⚠ Trang admin thiếu noindex!')
             : (robotsMeta || 'Không tìm thấy');
-        checks.push(check('robots', 'Robots Meta', robotsOk, false, robotsDetail));
+        checks.push(check('robots', 'Thẻ Meta Robots', robotsOk, false, robotsDetail));
 
         // 5. Structured data count
         const jsonLdCount = document.querySelectorAll('script[type="application/ld+json"]').length;
         const jsonLdOk = jsonLdCount >= 5;
-        checks.push(check('jsonld', 'Structured Data Schemas', jsonLdOk, jsonLdCount >= 3,
+        checks.push(check('jsonld', 'Dữ Liệu Có Cấu Trúc (JSON-LD)', jsonLdOk, jsonLdCount >= 3,
             `${jsonLdCount} schema(s) (khuyến nghị ≥ 5)`));
 
         // 6. Page title length
         const titleLen = document.title.length;
         const titleOk = titleLen >= 30 && titleLen <= 60;
-        checks.push(check('title-len', 'Title Length (30–60 ký tự)', titleOk, titleLen <= 70,
+        checks.push(check('title-len', 'Độ Dài Tiêu Đề (30–60 ký tự)', titleOk, titleLen <= 70,
             `${titleLen} ký tự: "${document.title.slice(0, 50)}..."`));
 
         // 7. Meta description length
         const descContent = document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content ?? '';
         const descLen = descContent.length;
         const descOk = descLen >= 120 && descLen <= 160;
-        checks.push(check('desc-len', 'Description Length (120–160 ký tự)', descOk, descLen >= 80,
+        checks.push(check('desc-len', 'Độ Dài Mô Tả (120–160 ký tự)', descOk, descLen >= 80,
             `${descLen} ký tự`));
 
         // 8. Manifest reachable
         try {
             const r = await fetch('/manifest.json', { method: 'HEAD' });
-            checks.push(check('manifest', 'manifest.json Reachable', r.ok, false, r.ok ? `HTTP ${r.status}` : `HTTP ${r.status}`));
+            checks.push(check('manifest', 'manifest.json Truy Cập Được', r.ok, false, r.ok ? `HTTP ${r.status}` : `HTTP ${r.status} — Không tìm thấy`));
         } catch {
-            checks.push({ id: 'manifest', label: 'manifest.json Reachable', status: 'fail', detail: 'Fetch failed' });
+            checks.push({ id: 'manifest', label: 'manifest.json Truy Cập Được', status: 'fail', detail: 'Không thể truy cập' });
         }
 
         // 9. Sitemap reachable
         try {
             const r = await fetch('/sitemap.xml', { method: 'HEAD' });
-            checks.push(check('sitemap', 'sitemap.xml Reachable', r.ok, false, r.ok ? `HTTP ${r.status}` : `HTTP ${r.status}`));
+            checks.push(check('sitemap', 'sitemap.xml Truy Cập Được', r.ok, false, r.ok ? `HTTP ${r.status}` : `HTTP ${r.status} — Không tìm thấy`));
         } catch {
-            checks.push({ id: 'sitemap', label: 'sitemap.xml Reachable', status: 'fail', detail: 'Fetch failed' });
+            checks.push({ id: 'sitemap', label: 'sitemap.xml Truy Cập Được', status: 'fail', detail: 'Không thể truy cập' });
         }
 
         // 10. apple-touch-icon
@@ -420,17 +420,17 @@ const HealthChecklist: React.FC = () => {
 
         // 11. theme-color
         const tc = document.querySelector('meta[name="theme-color"]');
-        checks.push(check('theme-color', 'Theme Color Meta', !!tc, false, tc ? (tc as HTMLMetaElement).content : 'Thiếu theme-color'));
+        checks.push(check('theme-color', 'Thẻ Meta Theme Color', !!tc, false, tc ? (tc as HTMLMetaElement).content : 'Thiếu thẻ theme-color'));
 
         // 12. noindex check — only a problem when a public-facing route is inadvertently noindexed
         const robotsContent12 = document.querySelector<HTMLMetaElement>('meta[name="robots"]')?.content ?? '';
         const isNoIndexed = robotsContent12.includes('noindex');
         if (routeExpectsNoIndex) {
-            checks.push(check('noindex-pub', 'Admin route là noindex (đúng)', isNoIndexed, false,
-                isNoIndexed ? 'noindex, nofollow — đúng cấu hình' : '⚠ Admin route nên là noindex nhưng hiện không phải'));
+            checks.push(check('noindex-pub', 'Trang Admin Được Đặt Noindex', isNoIndexed, false,
+                isNoIndexed ? 'noindex, nofollow — đúng cấu hình' : '⚠ Trang admin nên noindex nhưng chưa được đặt'));
         } else {
-            checks.push(check('noindex-pub', 'Trang công khai không bị noindex', !isNoIndexed, false,
-                isNoIndexed ? '⚠ Trang hiện tại bị noindex!' : 'OK'));
+            checks.push(check('noindex-pub', 'Trang Công Khai Không Bị Noindex', !isNoIndexed, false,
+                isNoIndexed ? '⚠ Trang hiện tại đang bị noindex!' : 'Đúng — không bị noindex'));
         }
 
         setResults(checks);
@@ -466,8 +466,8 @@ const HealthChecklist: React.FC = () => {
                 <div className="flex items-center gap-3">
                     <div className={`text-4xl font-black ${scoreColor}`}>{score}</div>
                     <div>
-                        <div className="text-sm font-bold text-[var(--text-primary)]">SEO Score</div>
-                        <div className="text-xs text-[var(--text-tertiary)]">{passCount}/{results.length} kiểm tra pass</div>
+                        <div className="text-sm font-bold text-[var(--text-primary)]">Điểm SEO</div>
+                        <div className="text-xs text-[var(--text-tertiary)]">{passCount}/{results.length} kiểm tra đạt</div>
                     </div>
                 </div>
                 <button onClick={run} className="flex items-center gap-2 px-4 py-2 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-border)] transition-colors">
