@@ -1755,7 +1755,7 @@ var init_db = __esm({
       connectionString: process.env.DATABASE_URL,
       max: 20,
       idleTimeoutMillis: 3e4,
-      connectionTimeoutMillis: 5e3
+      connectionTimeoutMillis: 15e3
     });
   }
 });
@@ -12436,7 +12436,28 @@ async function startServer() {
     console.log("No REDIS_URL provided, using in-memory adapter for Socket.io");
   }
   if (process.env.DATABASE_URL) {
-    await runPendingMigrations(pool);
+    const MAX_MIGRATION_ATTEMPTS = 3;
+    let migrationOk = false;
+    for (let attempt = 1; attempt <= MAX_MIGRATION_ATTEMPTS; attempt++) {
+      try {
+        await runPendingMigrations(pool);
+        migrationOk = true;
+        break;
+      } catch (err) {
+        const isTransient = err?.message?.includes("timeout") || err?.message?.includes("ECONNREFUSED") || err?.message?.includes("terminated unexpectedly");
+        if (attempt < MAX_MIGRATION_ATTEMPTS && isTransient) {
+          logger.warn(`[migrations] Connection attempt ${attempt}/${MAX_MIGRATION_ATTEMPTS} failed \u2014 retrying in 5s\u2026 (${err.message})`);
+          await new Promise((r) => setTimeout(r, 5e3));
+        } else if (isTransient) {
+          logger.warn(`[migrations] DB unreachable after ${MAX_MIGRATION_ATTEMPTS} attempts \u2014 server starting without migrations. Will retry on first API request. (${err.message})`);
+        } else {
+          throw err;
+        }
+      }
+    }
+    if (!migrationOk) {
+      logger.warn("[migrations] Skipped due to DB connectivity issue. Schema may be out of date until restart.");
+    }
   } else {
     console.warn("DATABASE_URL not set. Skipping database migrations.");
   }

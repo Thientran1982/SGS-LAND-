@@ -685,9 +685,30 @@ async function startServer() {
     console.log("No REDIS_URL provided, using in-memory adapter for Socket.io");
   }
 
-  // Initialize DB schema via migration runner
+  // Initialize DB schema via migration runner (with retry for cold-start DB wakeup)
   if (process.env.DATABASE_URL) {
-    await runPendingMigrations(pool);
+    const MAX_MIGRATION_ATTEMPTS = 3;
+    let migrationOk = false;
+    for (let attempt = 1; attempt <= MAX_MIGRATION_ATTEMPTS; attempt++) {
+      try {
+        await runPendingMigrations(pool);
+        migrationOk = true;
+        break;
+      } catch (err: any) {
+        const isTransient = err?.message?.includes('timeout') || err?.message?.includes('ECONNREFUSED') || err?.message?.includes('terminated unexpectedly');
+        if (attempt < MAX_MIGRATION_ATTEMPTS && isTransient) {
+          logger.warn(`[migrations] Connection attempt ${attempt}/${MAX_MIGRATION_ATTEMPTS} failed — retrying in 5s… (${err.message})`);
+          await new Promise(r => setTimeout(r, 5000));
+        } else if (isTransient) {
+          logger.warn(`[migrations] DB unreachable after ${MAX_MIGRATION_ATTEMPTS} attempts — server starting without migrations. Will retry on first API request. (${err.message})`);
+        } else {
+          throw err;
+        }
+      }
+    }
+    if (!migrationOk) {
+      logger.warn('[migrations] Skipped due to DB connectivity issue. Schema may be out of date until restart.');
+    }
   } else {
     console.warn("DATABASE_URL not set. Skipping database migrations.");
   }

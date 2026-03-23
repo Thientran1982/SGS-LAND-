@@ -477,7 +477,42 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 ## Scripts
 
 - `npm run dev` - Start development server (tsx server.ts)
-- `npm run build` - Build production bundle
-- `npm run start` - Start production server
+- `npm run build` - Build production bundle (vite build + esbuild server.ts → server.js)
+- `npm run start` - Start production server (node server.js)
 - `npm run seed` - Seed database with sample data (idempotent)
 - `npm run lint` - TypeScript type check
+
+## Production Deployment
+
+### Required Replit Secrets (all set as Secrets, not shared env)
+| Secret | Purpose |
+|--------|---------|
+| `DATABASE_URL` | PostgreSQL connection string (set automatically by Replit DB) |
+| `JWT_SECRET` | 64-char hex key for signing JWT cookies — rotate immediately if exposed |
+| `GEMINI_API_KEY` | Google AI Studio API key — enables AI valuation, chat, lead scoring |
+
+### Optional env vars (set in production env if needed)
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `ALLOWED_ORIGINS` | same-origin only | Comma-separated domains allowed for CORS (only needed for external API consumers) |
+| `REDIS_URL` | in-memory fallback | Redis connection for job queues — required for multi-instance scale-out |
+| `PORT` | `5000` | Server listen port (Replit maps 5000→80 automatically) |
+| `LOG_LEVEL` | `INFO` | Log verbosity: DEBUG / INFO / WARN / ERROR |
+
+### Deployment config (`.replit`)
+- Target: `vm` (always-on VM, not serverless)
+- Build command: `npm run build`
+- Run command: `node server.js`
+- Port mapping: `5000 → 80`
+
+### Build artifacts
+- `dist/` — Vite frontend bundle (SPA, served as static files by Express)
+- `server.js` — esbuild-bundled server (537 KB, all deps external)
+
+### Migration behaviour
+- Migrations run automatically on startup via `server/migrations/runner.ts`
+- Transient DB timeouts are retried 3× then skipped with a WARN log (server still starts)
+- If migrations were skipped, restart the server once the DB is reachable again
+
+### Session note
+- JWT_SECRET rotation invalidates all existing sessions — users must log in again
