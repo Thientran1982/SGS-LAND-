@@ -238,6 +238,179 @@ const STATUS_CONFIG: Record<string, { color: string, bg: string, border: string 
     INACTIVE: { color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
 };
 
+// ─── AssigneeDropdown ─────────────────────────────────────────────────────────
+// Custom dropdown replacing native <select> for unit assignment.
+// Shows avatar + name in trigger; portal panel with full user list.
+// ─────────────────────────────────────────────────────────────────────────────
+const AssigneeDropdown = memo(({
+    value, name, avatar, users, onChange, disabled, t,
+}: {
+    value: string | null | undefined;
+    name?: string;
+    avatar?: string;
+    users: User[];
+    onChange: (userId: string | null) => void;
+    disabled: boolean;
+    t: (key: string) => string;
+}) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number; width: number }>({ left: 0, width: 0 });
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    const avatarUrl = (n: string, a?: string) =>
+        a || `https://ui-avatars.com/api/?name=${encodeURIComponent(n)}&size=28&background=6366f1&color=fff`;
+
+    const openMenu = () => {
+        if (disabled) return;
+        const rect = triggerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const GAP = 4;
+        const MENU_H = 300;
+        const MENU_W = 210;
+        const spaceBelow = window.innerHeight - rect.bottom - GAP;
+        const safeLeft = Math.min(rect.left, window.innerWidth - MENU_W - 8);
+        if (spaceBelow < MENU_H && rect.top > MENU_H) {
+            setCoords({ bottom: window.innerHeight - rect.top + GAP, left: safeLeft, width: Math.max(rect.width, MENU_W) });
+        } else {
+            setCoords({ top: rect.bottom + GAP, left: safeLeft, width: Math.max(rect.width, MENU_W) });
+        }
+        setIsOpen(true);
+    };
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleOut = (e: MouseEvent) => {
+            if (!triggerRef.current?.contains(e.target as Node) && !menuRef.current?.contains(e.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        const handleScroll = () => setIsOpen(false);
+        document.addEventListener('mousedown', handleOut);
+        window.addEventListener('scroll', handleScroll, true);
+        return () => {
+            document.removeEventListener('mousedown', handleOut);
+            window.removeEventListener('scroll', handleScroll, true);
+        };
+    }, [isOpen]);
+
+    const select = (userId: string | null) => {
+        onChange(userId);
+        setIsOpen(false);
+    };
+
+    return (
+        <div className="relative inline-flex">
+            {/* Trigger button */}
+            <button
+                ref={triggerRef}
+                type="button"
+                onClick={() => isOpen ? setIsOpen(false) : openMenu()}
+                disabled={disabled}
+                className={[
+                    'flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs transition-all select-none',
+                    disabled
+                        ? 'opacity-60 cursor-not-allowed border-[var(--glass-border)] bg-[var(--glass-surface)]'
+                        : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-indigo-300 hover:shadow-sm cursor-pointer',
+                    isOpen && !disabled ? 'border-indigo-400 ring-1 ring-indigo-300/50' : '',
+                ].join(' ')}
+            >
+                {/* Avatar / spinner / placeholder */}
+                {disabled ? (
+                    <svg className="w-3.5 h-3.5 text-[var(--text-secondary)] animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                ) : name ? (
+                    <img src={avatarUrl(name, avatar)} alt={name} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                ) : (
+                    <svg className="w-3.5 h-3.5 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                )}
+                <span className={`max-w-[96px] truncate ${name ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] italic'}`}>
+                    {name || t('inventory.unassigned')}
+                </span>
+                <svg className={`w-3 h-3 text-[var(--text-tertiary)] transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            {/* Portal dropdown */}
+            {isOpen && createPortal(
+                <div
+                    ref={menuRef}
+                    className="fixed z-[10002] bg-[var(--bg-surface)]/95 backdrop-blur-xl rounded-xl shadow-2xl border border-[var(--glass-border)]/50 overflow-y-auto no-scrollbar max-h-[300px] animate-scale-up"
+                    style={{
+                        ...(coords.bottom !== undefined ? { bottom: coords.bottom } : { top: coords.top }),
+                        left: coords.left,
+                        width: coords.width,
+                        minWidth: '190px',
+                        transformOrigin: coords.bottom !== undefined ? 'bottom left' : 'top left',
+                    }}
+                >
+                    {/* Unassign option */}
+                    <button
+                        type="button"
+                        onClick={() => select(null)}
+                        className={[
+                            'w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors border-b border-[var(--glass-border)]/40',
+                            !value
+                                ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                                : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] hover:text-[var(--text-primary)]',
+                        ].join(' ')}
+                    >
+                        <span className="w-6 h-6 rounded-full bg-[var(--glass-surface-hover)] flex items-center justify-center flex-shrink-0">
+                            <svg className="w-3.5 h-3.5 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </span>
+                        <span className="flex-1 text-left italic">{t('inventory.unassigned')}</span>
+                        {!value && (
+                            <svg className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                        )}
+                    </button>
+
+                    {/* User list */}
+                    {users.map(u => {
+                        const isSelected = u.id === value;
+                        return (
+                            <button
+                                key={u.id}
+                                type="button"
+                                onClick={() => select(u.id)}
+                                className={[
+                                    'w-full flex items-center gap-2.5 px-3 py-2 text-xs transition-colors border-b border-[var(--glass-border)]/20 last:border-0',
+                                    isSelected
+                                        ? 'bg-indigo-50 text-indigo-700'
+                                        : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] hover:text-[var(--text-primary)]',
+                                ].join(' ')}
+                            >
+                                <img src={avatarUrl(u.name, u.avatar)} alt={u.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                                <div className="flex-1 min-w-0 text-left">
+                                    <div className={`truncate font-medium leading-tight ${isSelected ? 'text-indigo-700' : ''}`}>{u.name}</div>
+                                    <div className="text-[10px] text-[var(--text-tertiary)] capitalize leading-tight mt-0.5">
+                                        {u.role?.toLowerCase().replace('_', ' ')}
+                                    </div>
+                                </div>
+                                {isSelected && (
+                                    <svg className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>,
+                document.body
+            )}
+        </div>
+    );
+});
+AssigneeDropdown.displayName = 'AssigneeDropdown';
+
 const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t, formatCurrency, formatCompactNumber }: { projectCode: string, parentLocation?: string, parentContactPhone?: string, t: any, formatCurrency: any, formatCompactNumber: any }) => {
     const [units, setUnits] = useState<Listing[]>([]);
     const [loading, setLoading] = useState(true);
@@ -640,34 +813,23 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                 <td className="px-4 py-3 text-xs3 text-[var(--text-tertiary)] text-right font-medium italic">{formatUnitPrice(unit.price, unit.area, t)}</td>
                                                 <td className="px-4 py-3 text-sm font-bold text-[var(--text-primary)] text-right">{formatCurrency(unit.price)}</td>
                                                 {/* Assignee column */}
-                                                <td className="px-4 py-3 min-w-[140px]" onClick={e => e.stopPropagation()}>
+                                                <td className="px-4 py-3 min-w-[160px]" onClick={e => e.stopPropagation()}>
                                                     {canManageUnits ? (
-                                                        <div className="flex items-center gap-2">
-                                                            {unit.assignedToName && (
-                                                                <img
-                                                                    src={unit.assignedToAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(unit.assignedToName)}&size=24&background=6366f1&color=fff`}
-                                                                    alt={unit.assignedToName}
-                                                                    className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                                                                />
-                                                            )}
-                                                            <select
-                                                                value={unit.assignedTo || ''}
-                                                                disabled={assigningUnitId === unit.id}
-                                                                onChange={e => handleAssign(unit.id, e.target.value || null)}
-                                                                className="text-xs border border-[var(--glass-border)] rounded-lg px-2 py-1 bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-indigo-400 min-w-[110px] max-w-[150px] disabled:opacity-50"
-                                                            >
-                                                                <option value="">{t('inventory.unassigned')}</option>
-                                                                {tenantUsers.map(u => (
-                                                                    <option key={u.id} value={u.id}>{u.name}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
+                                                        <AssigneeDropdown
+                                                            value={unit.assignedTo}
+                                                            name={unit.assignedToName}
+                                                            avatar={unit.assignedToAvatar}
+                                                            users={tenantUsers}
+                                                            onChange={userId => handleAssign(unit.id, userId)}
+                                                            disabled={assigningUnitId === unit.id}
+                                                            t={t}
+                                                        />
                                                     ) : (
                                                         <div className="flex items-center gap-1.5">
                                                             {unit.assignedToName ? (
                                                                 <>
                                                                     <img
-                                                                        src={unit.assignedToAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(unit.assignedToName)}&size=24&background=6366f1&color=fff`}
+                                                                        src={unit.assignedToAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(unit.assignedToName)}&size=20&background=6366f1&color=fff`}
                                                                         alt={unit.assignedToName}
                                                                         className="w-5 h-5 rounded-full object-cover flex-shrink-0"
                                                                     />
@@ -749,26 +911,15 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                         <div className="mt-2 flex items-center gap-1.5 text-xs2 text-[var(--text-tertiary)]" onClick={e => e.stopPropagation()}>
                                             <span className="font-medium flex-shrink-0">{t('inventory.label_assignee')}:</span>
                                             {canManageUnits ? (
-                                                <div className="flex items-center gap-1.5">
-                                                    {unit.assignedToName && (
-                                                        <img
-                                                            src={unit.assignedToAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(unit.assignedToName)}&size=20&background=6366f1&color=fff`}
-                                                            alt={unit.assignedToName}
-                                                            className="w-5 h-5 rounded-full object-cover flex-shrink-0"
-                                                        />
-                                                    )}
-                                                    <select
-                                                        value={unit.assignedTo || ''}
-                                                        disabled={assigningUnitId === unit.id}
-                                                        onChange={e => handleAssign(unit.id, e.target.value || null)}
-                                                        className="text-xs border border-[var(--glass-border)] rounded px-1 py-0.5 bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:opacity-50"
-                                                    >
-                                                        <option value="">{t('inventory.unassigned')}</option>
-                                                        {tenantUsers.map(u => (
-                                                            <option key={u.id} value={u.id}>{u.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
+                                                <AssigneeDropdown
+                                                    value={unit.assignedTo}
+                                                    name={unit.assignedToName}
+                                                    avatar={unit.assignedToAvatar}
+                                                    users={tenantUsers}
+                                                    onChange={userId => handleAssign(unit.id, userId)}
+                                                    disabled={assigningUnitId === unit.id}
+                                                    t={t}
+                                                />
                                             ) : (
                                                 <div className="flex items-center gap-1">
                                                     {unit.assignedToName ? (
