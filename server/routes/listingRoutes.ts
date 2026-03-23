@@ -90,8 +90,16 @@ export function createListingRoutes(authenticateToken: any) {
       const listing = await listingRepository.findById(user.tenantId, String(req.params.id));
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
-      if (RESTRICTED_ROLES.includes(user.role) && (listing as any).createdBy !== user.id) {
-        return res.status(403).json({ error: 'Access denied' });
+      // RESTRICTED_ROLES can view any project-scoped listing (project inventory).
+      // For non-project listings, they may only view listings they created or are assigned to.
+      if (RESTRICTED_ROLES.includes(user.role)) {
+        const isProjectListing = !!(listing as any).projectCode;
+        const isOwnerOrAssignee =
+          (listing as any).createdBy === user.id ||
+          (listing as any).assignedTo === user.id;
+        if (!isProjectListing && !isOwnerOrAssignee) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
       }
 
       // Respond immediately, increment view count in background
@@ -162,8 +170,11 @@ export function createListingRoutes(authenticateToken: any) {
       if (RESTRICTED_ROLES.includes(user.role)) {
         const existing = await listingRepository.findById(user.tenantId, String(req.params.id));
         if (!existing) return res.status(404).json({ error: 'Listing not found' });
-        if ((existing as any).createdBy !== user.id) {
-          return res.status(403).json({ error: 'You can only edit listings you created' });
+        const isOwnerOrAssignee =
+          (existing as any).createdBy === user.id ||
+          (existing as any).assignedTo === user.id;
+        if (!isOwnerOrAssignee) {
+          return res.status(403).json({ error: 'You can only edit listings you created or are assigned to' });
         }
       }
 
@@ -183,6 +194,41 @@ export function createListingRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error updating listing:', error);
       res.status(500).json({ error: 'Failed to update listing' });
+    }
+  });
+
+  // ── PATCH /api/listings/:id/assign ──────────────────────────────────────────
+  // ADMIN and TEAM_LEAD only: assign a listing to an internal user (or unassign with userId = null)
+  router.patch('/:id/assign', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+
+      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+        return res.status(403).json({ error: 'Only ADMIN or TEAM_LEAD can assign listings' });
+      }
+
+      const { userId } = req.body;
+      // userId may be null (to unassign), or a UUID string
+      if (userId !== null && typeof userId !== 'string') {
+        return res.status(400).json({ error: 'userId must be a UUID string or null' });
+      }
+
+      const listing = await listingRepository.assign(user.tenantId, String(req.params.id), userId ?? null);
+      if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'UPDATE',
+        entityType: 'LISTING',
+        entityId: String(req.params.id),
+        details: userId ? `Assigned listing to user ${userId}` : 'Unassigned listing',
+        ipAddress: req.ip,
+      });
+
+      res.json(listing);
+    } catch (error) {
+      console.error('Error assigning listing:', error);
+      res.status(500).json({ error: 'Failed to assign listing' });
     }
   });
 

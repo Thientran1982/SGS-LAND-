@@ -269,6 +269,11 @@ class DatabaseApiClient {
     return listingApi.deleteListing(id);
   }
 
+  async assignListing(id: string, userId: string | null) {
+    _cache.invalidate('listings:');
+    return listingApi.assignListing(id, userId);
+  }
+
   async toggleFavorite(listingId: string) {
     return listingApi.toggleFavorite(listingId);
   }

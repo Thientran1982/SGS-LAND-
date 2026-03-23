@@ -24,4 +24,7 @@ export const listingApi = {
 
   getFavorites: (): Promise<any[]> =>
     api.get('/api/listings/favorites'),
+
+  assignListing: (id: string, userId: string | null): Promise<any> =>
+    api.patch(`/api/listings/${id}/assign`, { userId }),
 };

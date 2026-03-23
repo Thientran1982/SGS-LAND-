@@ -29,7 +29,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 ### Repository Pattern (`server/repositories/`)
 - `baseRepository.ts` — `withTenantContext()` for RLS, pagination, error handling
 - `leadRepository.ts` — CRUD leads with search, duplicate check, stage transitions
-- `listingRepository.ts` — CRUD listings, favorites
+- `listingRepository.ts` — CRUD listings, favorites; overrides `findById` with user JOIN for assignedTo data; `assign()` for role-based assignment
 - `proposalRepository.ts` — CRUD proposals, smart approval logic
 - `contractRepository.ts` — CRUD contracts
 - `interactionRepository.ts` — CRUD interactions, inbox thread aggregation
@@ -124,7 +124,8 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - JWT with httpOnly cookies, 24h expiry
 - Socket.io/Yjs WebSocket auth via JWT cookie
 - PostgreSQL RLS enforces tenant isolation
-- RBAC in repositories (Sales see own, Admin/Team Lead see all)
+- RBAC in repositories (Sales/Marketing see own or assigned; Admin/Team Lead see all)
+- **Per-listing assignment (`assigned_to` field)**: ADMIN/TEAM_LEAD can assign project units to specific internal users via `PATCH /api/listings/:id/assign`. Assignee dropdown shown in ProjectUnits table. SALES/MARKETING can edit/view units they created or are assigned to.
 - `withTenantContext` uses UUID-validated string interpolation
 - Audit logging for login, CRUD operations, password changes
 - Session tracking with revocation support

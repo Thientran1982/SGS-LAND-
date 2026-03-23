@@ -381,6 +381,11 @@ export interface Listing {
     commission?: number; // Percentage or fixed amount
     commissionUnit?: 'PERCENT' | 'FIXED';
     createdBy?: UserId;
+    assignedTo?: UserId;       // Internal user responsible for this unit
+    assignedToName?: string;   // Denormalized from users JOIN
+    assignedToEmail?: string;
+    assignedToAvatar?: string;
+    assignedToRole?: string;
     authorizedAgents?: UserId[]; // Agents granted permission to view sensitive info
     createdAt?: ISOString;
 }

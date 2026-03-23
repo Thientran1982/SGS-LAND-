@@ -242,7 +242,11 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
     const [units, setUnits] = useState<Listing[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAuth, setIsAuth] = useState(false);
-    const [canManageUnits, setCanManageUnits] = useState(false);
+    const [canManageUnits, setCanManageUnits] = useState(false); // ADMIN or TEAM_LEAD
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<string>('');
+    const [tenantUsers, setTenantUsers] = useState<any[]>([]); // For assignee dropdown
+    const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null); // Currently saving assignment
     
     // Form State
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -256,11 +260,33 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         setTimeout(() => setToast(null), 3000);
     }, []);
 
+    /** Returns true if the current user can edit this specific unit */
+    const canEditUnit = useCallback((unit: Listing): boolean => {
+        if (canManageUnits) return true; // ADMIN / TEAM_LEAD always
+        if (!currentUserId) return false;
+        if (userRole !== 'SALES' && userRole !== 'MARKETING') return false;
+        return (unit as any).assignedTo === currentUserId || (unit as any).createdBy === currentUserId;
+    }, [canManageUnits, currentUserId, userRole]);
+
     useEffect(() => {
         const checkAuth = async () => {
             const user = await db.getCurrentUser();
             setIsAuth(!!user);
-            setCanManageUnits(!!user && (user.role === 'ADMIN' || user.role === 'TEAM_LEAD'));
+            const isManager = !!user && (user.role === 'ADMIN' || user.role === 'TEAM_LEAD');
+            setCanManageUnits(isManager);
+            if (user) {
+                setCurrentUserId(user.id);
+                setUserRole(user.role || '');
+                // Fetch tenant users for the assignee dropdown (only managers need this)
+                if (isManager) {
+                    try {
+                        const users = await db.getUsers();
+                        setTenantUsers(Array.isArray(users) ? users : []);
+                    } catch (e) {
+                        console.error('Failed to load users for assignment', e);
+                    }
+                }
+            }
         };
         checkAuth();
     }, []);
@@ -338,6 +364,31 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
             notify(e.message || t('common.error'), 'error');
         }
     };
+
+    /** ADMIN/TEAM_LEAD only: assign (or unassign with null) a unit to an internal user */
+    const handleAssign = useCallback(async (unitId: string, userId: string | null) => {
+        setAssigningUnitId(unitId);
+        try {
+            await db.assignListing(unitId, userId);
+            // Optimistic update: update the local units list
+            setUnits(prev => prev.map(u => {
+                if (u.id !== unitId) return u;
+                const assignedUser = userId ? tenantUsers.find(tu => tu.id === userId) : null;
+                return {
+                    ...u,
+                    assignedTo: userId as any,
+                    assignedToName: assignedUser?.name || undefined,
+                    assignedToAvatar: assignedUser?.avatar || undefined,
+                } as Listing;
+            }));
+            notify(t('inventory.assign_success'), 'success');
+        } catch (e: any) {
+            console.error(e);
+            notify(e.message || t('inventory.assign_error'), 'error');
+        } finally {
+            setAssigningUnitId(null);
+        }
+    }, [tenantUsers, t, notify]);
 
     const handleExportExcel = () => {
         const dataToExport = units.map(unit => ({
@@ -555,13 +606,16 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                         <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">{t('inventory.label_area')}</th>
                                         <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">{t('inventory.label_unit_price')}</th>
                                         <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)]">{t('inventory.label_price')}</th>
+                                        <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('inventory.label_assignee')}</th>
                                         <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-center bg-[var(--glass-surface)] sticky z-20 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>{t('inventory.label_status')}</th>
-                                        {canManageUnits && <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)] sticky right-0 z-20" style={{ width: '90px', minWidth: '90px' }}>{t('common.actions')}</th>}
+                                        {(canManageUnits || userRole === 'SALES' || userRole === 'MARKETING') && <th className="px-4 py-4 text-xs2 font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right bg-[var(--glass-surface)] sticky right-0 z-20" style={{ width: '90px', minWidth: '90px' }}>{t('common.actions')}</th>}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
                                     {units.map(unit => {
                                         const statusStyle = STATUS_CONFIG[unit.status] || STATUS_CONFIG.AVAILABLE;
+                                        const showActions = canManageUnits || canEditUnit(unit);
+                                        const showActionsCol = canManageUnits || userRole === 'SALES' || userRole === 'MARKETING';
                                         return (
                                             <tr 
                                                 key={unit.id} 
@@ -583,29 +637,57 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                 <td className="px-4 py-3 text-xs text-[var(--text-secondary)] text-right font-mono">{unit.area} <span className="text-xs2 text-[var(--text-secondary)]">m²</span></td>
                                                 <td className="px-4 py-3 text-xs3 text-[var(--text-tertiary)] text-right font-medium italic">{formatUnitPrice(unit.price, unit.area, t)}</td>
                                                 <td className="px-4 py-3 text-sm font-bold text-[var(--text-primary)] text-right">{formatCurrency(unit.price)}</td>
-                                                <td className="px-4 py-3 text-center sticky z-10 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] transition-colors shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: canManageUnits ? '90px' : '0' }}>
+                                                {/* Assignee column */}
+                                                <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                                                    {canManageUnits ? (
+                                                        <select
+                                                            value={(unit as any).assignedTo || ''}
+                                                            disabled={assigningUnitId === unit.id}
+                                                            onChange={e => handleAssign(unit.id, e.target.value || null)}
+                                                            className="text-xs border border-[var(--glass-border)] rounded-lg px-2 py-1 bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-indigo-400 min-w-[120px] max-w-[160px] disabled:opacity-50"
+                                                        >
+                                                            <option value="">{t('inventory.unassigned')}</option>
+                                                            {tenantUsers.map(u => (
+                                                                <option key={u.id} value={u.id}>{u.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <span className="text-xs text-[var(--text-secondary)]">
+                                                            {(unit as any).assignedToName || (
+                                                                <span className="text-[var(--text-tertiary)] italic">{t('inventory.unassigned')}</span>
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 text-center sticky z-10 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] transition-colors shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" style={{ right: showActionsCol ? '90px' : '0' }}>
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold border uppercase tracking-wider whitespace-nowrap ${statusStyle.bg} ${statusStyle.color} ${statusStyle.border}`}>
                                                         {t(`status.${unit.status}`)}
                                                     </span>
                                                 </td>
-                                                {canManageUnits && (
+                                                {showActionsCol && (
                                                     <td className="px-4 py-3 text-right sticky right-0 bg-[var(--bg-surface)] group-hover:bg-[var(--glass-surface)] z-10 transition-colors" style={{ width: '90px', minWidth: '90px' }}>
-                                                        <div className="flex items-center justify-end gap-2 transition-opacity">
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); handleEditUnit(e, unit); }}
-                                                                className="p-1.5 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                                title={t('common.edit')}
-                                                            >
-                                                                <Edit2 className="w-4 h-4" />
-                                                            </button>
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, unit); }}
-                                                                className="p-1.5 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                                                title={t('common.delete')}
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
+                                                        {showActions && (
+                                                            <div className="flex items-center justify-end gap-2 transition-opacity">
+                                                                {canEditUnit(unit) && (
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); handleEditUnit(e, unit); }}
+                                                                        className="p-1.5 text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                                        title={t('common.edit')}
+                                                                    >
+                                                                        <Edit2 className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                                {canManageUnits && (
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, unit); }}
+                                                                        className="p-1.5 text-[var(--text-secondary)] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                                                        title={t('common.delete')}
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </td>
                                                 )}
                                             </tr>
@@ -643,20 +725,45 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                                                 <div className="text-base font-black text-[var(--text-primary)]">{formatCurrency(unit.price)}</div>
                                             </div>
                                         </div>
-                                        {canManageUnits && (
+                                        {/* Assignee display (mobile) */}
+                                        <div className="mt-2 flex items-center gap-1 text-xs2 text-[var(--text-tertiary)]" onClick={e => e.stopPropagation()}>
+                                            <span className="font-medium">{t('inventory.label_assignee')}:</span>
+                                            {canManageUnits ? (
+                                                <select
+                                                    value={(unit as any).assignedTo || ''}
+                                                    disabled={assigningUnitId === unit.id}
+                                                    onChange={e => handleAssign(unit.id, e.target.value || null)}
+                                                    className="text-xs border border-[var(--glass-border)] rounded px-1 py-0.5 bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:opacity-50"
+                                                >
+                                                    <option value="">{t('inventory.unassigned')}</option>
+                                                    {tenantUsers.map(u => (
+                                                        <option key={u.id} value={u.id}>{u.name}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <span className={(unit as any).assignedToName ? '' : 'italic'}>
+                                                    {(unit as any).assignedToName || t('inventory.unassigned')}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {(canEditUnit(unit) || canManageUnits) && (
                                             <div className="flex justify-end gap-3 mt-3 pt-3 border-t border-slate-50">
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); handleEditUnit(e, unit); }}
-                                                    className="flex items-center gap-1 text-xs font-bold text-indigo-600"
-                                                >
-                                                    <Edit2 className="w-3 h-3" /> {t('common.edit')}
-                                                </button>
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, unit); }}
-                                                    className="flex items-center gap-1 text-xs font-bold text-rose-600"
-                                                >
-                                                    <Trash2 className="w-3 h-3" /> {t('common.delete')}
-                                                </button>
+                                                {canEditUnit(unit) && (
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleEditUnit(e, unit); }}
+                                                        className="flex items-center gap-1 text-xs font-bold text-indigo-600"
+                                                    >
+                                                        <Edit2 className="w-3 h-3" /> {t('common.edit')}
+                                                    </button>
+                                                )}
+                                                {canManageUnits && (
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(e, unit); }}
+                                                        className="flex items-center gap-1 text-xs font-bold text-rose-600"
+                                                    >
+                                                        <Trash2 className="w-3 h-3" /> {t('common.delete')}
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>

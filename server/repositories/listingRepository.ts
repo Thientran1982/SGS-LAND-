@@ -219,6 +219,39 @@ export class ListingRepository extends BaseRepository {
     };
   }
 
+  /** Override findById to include assigned_to user info via JOIN. */
+  async findById(tenantId: string, id: string): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT l.*,
+                u.name  AS assigned_to_name,
+                u.email AS assigned_to_email,
+                u.avatar AS assigned_to_avatar,
+                u.role   AS assigned_to_role
+         FROM listings l
+         LEFT JOIN users u ON u.id = l.assigned_to
+         WHERE l.id = $1 AND l.tenant_id = $2`,
+        [id, tenantId]
+      );
+      if (!result.rows[0]) return null;
+      return this.rowToEntity(result.rows[0]);
+    });
+  }
+
+  /** Assign a listing to an internal user (or unassign with null). ADMIN/TEAM_LEAD only. */
+  async assign(tenantId: string, listingId: string, userId: string | null): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `UPDATE listings SET assigned_to = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+         RETURNING *`,
+        [userId, listingId]
+      );
+      if (!result.rows[0]) return null;
+      return this.rowToEntity(result.rows[0]);
+    });
+  }
+
   async findListings(
     tenantId: string,
     pagination: PaginationParams,
@@ -233,11 +266,15 @@ export class ListingRepository extends BaseRepository {
 
       const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
       // Allow restricted roles to see ALL available listings (needed for proposal creation).
-      // For other statuses, restrict to listings they created.
+      // For project-scoped queries (projectCode filter), allow seeing all listings so
+      // ProjectUnits shows full inventory regardless of who created/is-assigned.
+      // For other queries, restrict to listings they created or are assigned to.
       const isAvailableOnlyQuery = filters?.status === 'AVAILABLE';
-      if (RESTRICTED.includes(userRole || '') && userId && !isAvailableOnlyQuery) {
-        conditions.push(`created_by = $${paramIndex++}`);
+      const isProjectQuery = !!filters?.projectCode;
+      if (RESTRICTED.includes(userRole || '') && userId && !isAvailableOnlyQuery && !isProjectQuery) {
+        conditions.push(`(l.created_by = $${paramIndex} OR l.assigned_to = $${paramIndex})`);
         values.push(userId);
+        paramIndex++;
       }
 
       const { conditions: filterConds, values: filterValues, nextIndex } =
@@ -249,28 +286,38 @@ export class ListingRepository extends BaseRepository {
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
       const countResult = await client.query(
-        `SELECT COUNT(*)::int as total FROM listings ${whereClause}`,
+        `SELECT COUNT(*)::int as total FROM listings l ${whereClause}`,
         values
       );
       const total = countResult.rows[0].total;
 
       const statsResult = await client.query(
         `SELECT
-          COUNT(*) FILTER (WHERE status = 'AVAILABLE')::int AS available_count,
-          COUNT(*) FILTER (WHERE status = 'HOLD')::int       AS hold_count,
-          COUNT(*) FILTER (WHERE status = 'SOLD')::int       AS sold_count,
-          COUNT(*) FILTER (WHERE status = 'RENTED')::int     AS rented_count,
-          COUNT(*) FILTER (WHERE status = 'BOOKING')::int    AS booking_count,
-          COUNT(*) FILTER (WHERE status = 'OPENING')::int    AS opening_count,
-          COUNT(*) FILTER (WHERE status = 'INACTIVE')::int   AS inactive_count,
-          COUNT(*)::int                                       AS total_count
-         FROM listings ${whereClause}`,
+          COUNT(*) FILTER (WHERE l.status = 'AVAILABLE')::int AS available_count,
+          COUNT(*) FILTER (WHERE l.status = 'HOLD')::int       AS hold_count,
+          COUNT(*) FILTER (WHERE l.status = 'SOLD')::int       AS sold_count,
+          COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
+          COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
+          COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
+          COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count,
+          COUNT(*)::int                                         AS total_count
+         FROM listings l ${whereClause}`,
         values
       );
       const sr = statsResult.rows[0];
 
       const result = await client.query(
-        `SELECT * FROM listings ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+        `SELECT sub.*,
+                u.name   AS assigned_to_name,
+                u.email  AS assigned_to_email,
+                u.avatar AS assigned_to_avatar,
+                u.role   AS assigned_to_role
+         FROM (
+           SELECT * FROM listings l ${whereClause}
+           ORDER BY l.created_at DESC
+           LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+         ) AS sub
+         LEFT JOIN users u ON u.id = sub.assigned_to`,
         [...values, pagination.pageSize, (pagination.page - 1) * pagination.pageSize]
       );
 
@@ -336,7 +383,7 @@ export class ListingRepository extends BaseRepository {
         'code', 'title', 'location', 'price', 'currency', 'area', 'bedrooms', 'bathrooms',
         'type', 'status', 'transaction', 'projectCode', 'contactPhone', 'isVerified',
         'ownerName', 'ownerPhone', 'commission', 'commissionUnit', 'totalUnits', 'availableUnits',
-        'viewCount', 'bookingCount',
+        'viewCount', 'bookingCount', 'assignedTo',
       ];
       const jsonFields = ['attributes', 'images', 'coordinates', 'authorizedAgents'];
 
