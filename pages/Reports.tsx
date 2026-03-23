@@ -418,7 +418,7 @@ const RoiTab = memo(({ data, t, formatCurrency }: { data: BiData, t: any, format
 
     const roiDisplay = (row: AttributionData) => {
         // Fix: when spend = 0, ROI is meaningless — show N/A instead of 0%
-        if (row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]">N/A</span>;
+        if (row.spend === 0) return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]">{t('reports.roi_na')}</span>;
         return (
             <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${row.roi >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
                 {row.roi > 0 ? '+' : ''}{row.roi.toFixed(1)}%
@@ -655,7 +655,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                 type="text"
                                 value={addForm.source}
                                 onChange={(e) => setAddForm(f => ({ ...f, source: e.target.value }))}
-                                placeholder="Facebook, Google, Zalo..."
+                                placeholder={t('reports.cost_source_placeholder')}
                                 className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
@@ -665,7 +665,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                                 type="text"
                                 value={addForm.campaignName}
                                 onChange={(e) => setAddForm(f => ({ ...f, campaignName: e.target.value }))}
-                                placeholder="VD: Campaign Q1 2026"
+                                placeholder={t('reports.cost_campaign_placeholder')}
                                 className="w-full px-4 py-3 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-[var(--bg-surface)] transition-all"
                             />
                         </div>
@@ -679,7 +679,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_amount')} (VNĐ) *</label>
+                            <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">{t('reports.cost_amount')} {t('reports.cost_currency')} *</label>
                             <input 
                                 type="number"
                                 value={addForm.cost}
@@ -739,7 +739,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
                     <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">{t('reports.btn_update')}</h3>
                     <p className="text-xs text-[var(--text-secondary)] mb-5">{editingCost.source} · {editingCost.period}</p>
                     <div className="mb-6">
-                        <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">{t('reports.cost_amount')} (VNĐ)</label>
+                        <label className="block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2">{t('reports.cost_amount')} {t('reports.cost_currency')}</label>
                         <input 
                             type="number" 
                             value={newCostValue}
