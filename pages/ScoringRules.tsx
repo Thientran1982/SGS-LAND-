@@ -142,7 +142,7 @@ export const ScoringRules: React.FC = () => {
     if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
-        <div className="space-y-6 pb-20 relative animate-enter">
+        <div className="p-4 sm:p-6 space-y-6 pb-20 relative animate-enter">
             {/* TOAST NOTIFICATION */}
             {toast && (
                 <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${
@@ -203,7 +203,7 @@ export const ScoringRules: React.FC = () => {
 
                     <div className="border-t border-white/10 pt-4 flex justify-between text-xs font-mono opacity-60">
                         <span>{t('scoring.total_max')}: {totalMaxScore}</span>
-                        <span>{t('scoring.total_weights')}: {Object.keys(weights || {}).length}</span>
+                        <span>{t('scoring.num_criteria')}: {Object.keys(weights || {}).length}</span>
                     </div>
                 </div>
             </div>

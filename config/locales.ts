@@ -1562,6 +1562,11 @@ export const DICTIONARY = {
         "scoring.total_weights": "Tổng trọng số",
         "scoring.note_title": "Lưu Ý",
         "scoring.note_desc": "Tổng trọng số nên bằng 100% để đảm bảo tính nhất quán trong chấm điểm.",
+        "scoring.engagement": "Mức Độ Tương Tác",
+        "scoring.completeness": "Mức Độ Hoàn Chỉnh Hồ Sơ",
+        "scoring.budget_fit": "Phù Hợp Ngân Sách",
+        "scoring.velocity": "Tốc Độ Phản Hồi",
+        "scoring.num_criteria": "Số Tiêu Chí",
 
         "detail.ai_no_data": "Chưa đủ dữ liệu để AI phân tích. Hãy thêm tương tác với khách hàng.",
 
@@ -3158,6 +3163,11 @@ export const DICTIONARY = {
         "scoring.total_weights": "Total weights",
         "scoring.note_title": "Note",
         "scoring.note_desc": "Total weights should equal 100% to ensure consistent scoring.",
+        "scoring.engagement": "Engagement Level",
+        "scoring.completeness": "Profile Completeness",
+        "scoring.budget_fit": "Budget Fit",
+        "scoring.velocity": "Response Velocity",
+        "scoring.num_criteria": "Criteria Count",
 
         "detail.ai_no_data": "Not enough data for AI analysis. Add more interactions with this lead.",
 

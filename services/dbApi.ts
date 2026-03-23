@@ -565,7 +565,8 @@ class DatabaseApiClient {
       return await api.get<any>('/api/scoring/config');
     } catch {
       return {
-        weights: { engagement: 30, budget: 25, timeline: 20, fit: 15, source: 10 },
+        version: 1,
+        weights: { engagement: 30, completeness: 25, budgetFit: 25, velocity: 20 },
         thresholds: { A: 80, B: 60, C: 40, D: 20 },
       };
     }
