@@ -1351,7 +1351,7 @@ export const Leads: React.FC = () => {
 
                     {/* Mobile Cards (Only for LIST view on Mobile) */}
                     {viewMode === 'LIST' && (
-                        <div className="md:hidden space-y-3 pb-6">
+                        <div className="md:hidden space-y-3 pb-6 px-2">
                             {leads?.map(lead => (
                                 <div 
                                     key={lead.id} 
