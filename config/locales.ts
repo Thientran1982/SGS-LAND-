@@ -1520,6 +1520,7 @@ export const DICTIONARY = {
         "security.alert_load_fail": "Không thể tải cấu hình bảo mật.",
         "security.alert_save_success": "Đã lưu chính sách bảo mật.",
         "security.alert_session_revoked": "Đã thu hồi phiên đăng nhập.",
+        "security.no_dlp_rules": "Chưa có quy tắc DLP nào. Nhấn + để thêm quy tắc đầu tiên.",
         "sec.no_sessions": "Không có phiên đăng nhập nào khác.",
 
         "ai.title": "Quản Trị AI",
@@ -1554,6 +1555,7 @@ export const DICTIONARY = {
         "ai.sim_error": "Lỗi khi chạy mô phỏng.",
         "ai.sim_output_label": "KẾT QUẢ:",
         "ai.no_safety_logs": "Chưa có sự kiện an toàn nào.",
+        "ai.no_prompts": "Chưa có prompt nào. Nhấn + để tạo prompt đầu tiên.",
 
         "help.title": "Chúng tôi có thể giúp gì?",
         "help.subtitle": "Tìm kiếm câu trả lời nhanh chóng hoặc liên hệ hỗ trợ.",
@@ -3494,6 +3496,7 @@ export const DICTIONARY = {
         "security.alert_load_fail": "Failed to load security config.",
         "security.alert_save_success": "Security policy saved.",
         "security.alert_session_revoked": "Session revoked.",
+        "security.no_dlp_rules": "No DLP rules yet. Click + to add your first rule.",
         "sec.no_sessions": "No other active sessions.",
 
         "ai.title": "AI Governance",
@@ -3528,6 +3531,7 @@ export const DICTIONARY = {
         "ai.sim_error": "Error executing simulation.",
         "ai.sim_output_label": "OUTPUT:",
         "ai.no_safety_logs": "No safety events recorded yet.",
+        "ai.no_prompts": "No prompts yet. Click + to create your first prompt.",
 
         "help.title": "How can we help?",
         "help.subtitle": "Find answers quickly or contact support.",

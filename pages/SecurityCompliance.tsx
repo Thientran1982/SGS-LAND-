@@ -186,7 +186,11 @@ export const SecurityCompliance: React.FC = () => {
                             <button onClick={() => setIsEditorOpen(true)} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)]">{ICONS.ADD}</button>
                         </div>
                         <div className="space-y-3">
-                            {(config.dlpRules || []).map(rule => (
+                            {(config.dlpRules || []).length === 0 ? (
+                                <div className="py-8 text-center text-[var(--text-secondary)] italic text-sm">
+                                    {t('security.no_dlp_rules')}
+                                </div>
+                            ) : (config.dlpRules || []).map(rule => (
                                 <div key={rule.id} className="p-4 border rounded-xl flex justify-between items-center group hover:border-indigo-200 transition-colors">
                                     <div>
                                         <div className="font-bold text-sm text-[var(--text-secondary)]">{rule.name}</div>

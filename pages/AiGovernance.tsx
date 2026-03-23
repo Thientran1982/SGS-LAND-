@@ -146,7 +146,11 @@ const PromptsTab = memo(({
                 </button>
             </div>
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-2">
-                {prompts?.map((p) => (
+                {(!prompts || prompts.length === 0) ? (
+                    <div className="flex-1 flex items-center justify-center py-12 text-center text-[var(--text-secondary)] italic text-sm px-4">
+                        {t('ai.no_prompts')}
+                    </div>
+                ) : prompts.map((p) => (
                     <div 
                         key={p.id} 
                         onClick={() => onSelect(p)}
