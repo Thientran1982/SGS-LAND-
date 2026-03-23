@@ -69,7 +69,7 @@ export const Billing: React.FC = () => {
     const handleDownloadInvoice = (invoice: Invoice) => {
         notify(t('billing.downloading'), 'success');
         const anyInv = invoice as any;
-        const planLabel = PLANS[anyInv.planId as PlanTier]?.name || anyInv.planId || 'N/A';
+        const planLabel = PLANS[anyInv.planId as PlanTier]?.name || anyInv.planId || t('common.no_value');
         const isPaid = invoice.status === 'paid' || (anyInv.status as string) === 'PAID';
         const dateStr = invoice.created
             ? new Date(invoice.created).toLocaleDateString()

@@ -399,7 +399,7 @@ export const Profile: React.FC = () => {
                             <img 
                                 src={formData.avatar} 
                                 className="w-full h-full object-cover rounded-full" 
-                                alt="Avatar"
+                                alt={t('profile.avatar_alt')}
                                 onError={() => setAvatarError(true)}
                             />
                         ) : (
@@ -530,7 +530,7 @@ export const Profile: React.FC = () => {
                                                     type="password"
                                                     value={emailData.confirmPass}
                                                     onChange={e => { setEmailData(d => ({ ...d, confirmPass: e.target.value })); setEmailErrors(er => ({ ...er, confirmPass: '' })); }}
-                                                    placeholder="••••••••"
+                                                    placeholder={t('common.password_placeholder')}
                                                     onKeyDown={e => e.key === 'Enter' && handleSubmitEmailChange()}
                                                     className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
                                                         ${emailErrors.confirmPass ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 text-[var(--text-primary)]'}`}
@@ -620,7 +620,7 @@ export const Profile: React.FC = () => {
                                         type="password"
                                         value={passData.current} 
                                         onChange={(e) => setPassData({...passData, current: e.target.value})}
-                                        placeholder="••••••••" 
+                                        placeholder={t('common.password_placeholder')}
                                         error={errors.current}
                                     />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -630,7 +630,7 @@ export const Profile: React.FC = () => {
                                             type="password"
                                             value={passData.new} 
                                             onChange={(e) => setPassData({...passData, new: e.target.value})}
-                                            placeholder="••••••••"
+                                            placeholder={t('common.password_placeholder')}
                                             error={errors.new}
                                         />
                                         <InputField 
@@ -639,7 +639,7 @@ export const Profile: React.FC = () => {
                                             type="password"
                                             value={passData.confirm} 
                                             onChange={(e) => setPassData({...passData, confirm: e.target.value})}
-                                            placeholder="••••••••"  
+                                            placeholder={t('common.password_placeholder')}
                                             error={errors.confirm}
                                         />
                                     </div>

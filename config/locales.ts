@@ -38,6 +38,7 @@ export const DICTIONARY = {
         "common.error_loading": "Không thể tải dữ liệu. Vui lòng thử lại.",
         "common.retry": "Thử lại",
         "common.no_value": "—",
+        "common.password_placeholder": "••••••••",
         "listing.bedrooms_short": "PN",
         "news.confirm_delete_title": "Xóa tin tức",
         "news.confirm_delete_message": "Bạn có chắc chắn muốn xóa tin tức này? Hành động này không thể hoàn tác.",
@@ -1421,6 +1422,7 @@ export const DICTIONARY = {
         "profile.sso_managed_desc": "Tài khoản của bạn được quản lý bởi tổ chức thông qua Google. Việc thay đổi mật khẩu và bảo mật phải được thực hiện trên trang cài đặt tài khoản Google của bạn.",
         "profile.sso_manage_btn": "Quản lý tài khoản Google",
         "profile.sso_badge": "Google Workspace",
+        "profile.avatar_alt": "Ảnh đại diện",
 
         "market.title": "Kho Ứng Dụng",
         "market.subtitle": "Mở rộng tính năng với các tiện ích tích hợp.",
@@ -2014,6 +2016,7 @@ export const DICTIONARY = {
         "common.error_loading": "Unable to load data. Please try again.",
         "common.retry": "Retry",
         "common.no_value": "—",
+        "common.password_placeholder": "••••••••",
         "listing.bedrooms_short": "BR",
         "news.confirm_delete_title": "Delete article",
         "news.confirm_delete_message": "Are you sure you want to delete this article? This cannot be undone.",
@@ -3397,6 +3400,7 @@ export const DICTIONARY = {
         "profile.sso_managed_desc": "Your account is managed by your organization through Google. Password and security changes must be made in your Google account settings.",
         "profile.sso_manage_btn": "Manage Google Account",
         "profile.sso_badge": "Google Workspace",
+        "profile.avatar_alt": "Profile avatar",
 
         "market.title": "App Store",
         "market.subtitle": "Extend features with integrated apps.",
