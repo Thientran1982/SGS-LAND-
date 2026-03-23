@@ -84,8 +84,8 @@ export const ScoringRules: React.FC = () => {
         setLoadError(false);
         try {
             const data = await db.getScoringConfig();
-            setConfig(data);
-            setWeights(data.weights || { engagement: 0, completeness: 0, budgetFit: 0, velocity: 0 });
+            setConfig(data ?? null);
+            setWeights(data?.weights || { engagement: 0, completeness: 0, budgetFit: 0, velocity: 0 });
         } catch (e) {
             setLoadError(true);
         } finally {
