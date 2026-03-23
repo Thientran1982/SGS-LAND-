@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { db, PLANS } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { PlanTier, Subscription, Invoice, UsageMetrics, Plan } from '../types';
@@ -23,6 +24,11 @@ export const Billing: React.FC = () => {
 
     const { t, formatDate, formatCurrency } = useTranslation();
 
+    const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    }, []);
+
     useEffect(() => {
         const load = async () => {
             setLoading(true);
@@ -34,7 +40,6 @@ export const Billing: React.FC = () => {
                 ]);
                 setSubscription(sub);
                 setUsage(use);
-                // Ensure invoices array is never undefined
                 setInvoices(inv || []);
             } catch (e) {
                 console.error(e);
@@ -44,11 +49,6 @@ export const Billing: React.FC = () => {
         };
         load();
     }, []);
-
-    const notify = (msg: string, type: 'success' | 'error' = 'success') => {
-        setToast({ msg, type });
-        setTimeout(() => setToast(null), 3000);
-    };
 
     const handleUpgrade = async () => {
         if (!upgradeConfirmPlan) return;
@@ -68,15 +68,22 @@ export const Billing: React.FC = () => {
 
     const handleDownloadInvoice = (invoice: Invoice) => {
         notify(t('billing.downloading'), 'success');
-        const planLabel = PLANS[(invoice as any).planId as PlanTier]?.name || (invoice as any).planId || 'N/A';
+        const anyInv = invoice as any;
+        const planLabel = PLANS[anyInv.planId as PlanTier]?.name || anyInv.planId || 'N/A';
+        const isPaid = invoice.status === 'paid' || (anyInv.status as string) === 'PAID';
+        const dateStr = invoice.created
+            ? new Date(invoice.created).toLocaleDateString()
+            : anyInv.createdAt
+            ? new Date(anyInv.createdAt).toLocaleDateString()
+            : '';
         const rows = [
-            ['Hóa đơn SGS Land'],
+            [t('billing.csv_title')],
             [''],
-            ['Mã hóa đơn', invoice.id],
-            ['Ngày phát hành', invoice.created ? new Date(invoice.created).toLocaleDateString('vi-VN') : (invoice as any).createdAt ? new Date((invoice as any).createdAt).toLocaleDateString('vi-VN') : ''],
-            ['Gói cước', planLabel],
-            ['Trạng thái', invoice.status === 'paid' ? 'Đã thanh toán' : invoice.status],
-            ['Số tiền', `$${(invoice as any).amount ?? invoice.amount ?? 0}`],
+            [t('billing.csv_id'), invoice.id],
+            [t('billing.csv_date'), dateStr],
+            [t('billing.csv_plan'), planLabel],
+            [t('billing.csv_status'), isPaid ? t('billing.status_paid') : t('billing.status_unpaid')],
+            [t('billing.csv_amount'), `$${anyInv.amount ?? 0}`],
         ];
         const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -93,9 +100,10 @@ export const Billing: React.FC = () => {
     const currentPlan = PLANS[subscription?.planId as PlanTier] || PLANS.INDIVIDUAL;
 
     return (
-        <div className="space-y-6 pb-20 animate-enter relative">
-            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
+        <>
+        <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
 
+            {/* Page Header */}
             <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('billing.title')}</h2>
@@ -122,39 +130,39 @@ export const Billing: React.FC = () => {
                             {t(`billing.plan_${currentPlan.name.toLowerCase()}`)}
                         </span>
                     </h3>
-                    
+
                     <div className="space-y-6 flex-1">
                         <div>
                             <div className="flex justify-between text-xs mb-1.5">
                                 <span className="font-bold text-[var(--text-tertiary)]">{t('billing.seats')}</span>
-                                <span className="font-bold text-[var(--text-primary)]">{usage?.seatsUsed} / {currentPlan.limits.seats}</span>
+                                <span className="font-bold text-[var(--text-primary)]">{usage?.seatsUsed ?? 0} / {currentPlan.limits.seats}</span>
                             </div>
                             <div className="h-2 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-500" style={{ width: `${Math.min(100, (usage!.seatsUsed / currentPlan.limits.seats) * 100)}%` }}></div>
+                                <div className="h-full bg-indigo-500" style={{ width: `${Math.min(100, ((usage?.seatsUsed ?? 0) / currentPlan.limits.seats) * 100)}%` }}></div>
                             </div>
                         </div>
                         <div>
                             <div className="flex justify-between text-xs mb-1.5">
                                 <span className="font-bold text-[var(--text-tertiary)]">{t('billing.emails')}</span>
-                                <span className="font-bold text-[var(--text-primary)]">{usage?.emailsSent} / {currentPlan.limits.emailsPerMonth}</span>
+                                <span className="font-bold text-[var(--text-primary)]">{usage?.emailsSent ?? 0} / {currentPlan.limits.emailsPerMonth}</span>
                             </div>
                             <div className="h-2 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                <div className="h-full bg-purple-500" style={{ width: `${Math.min(100, (usage!.emailsSent / currentPlan.limits.emailsPerMonth) * 100)}%` }}></div>
+                                <div className="h-full bg-purple-500" style={{ width: `${Math.min(100, ((usage?.emailsSent ?? 0) / currentPlan.limits.emailsPerMonth) * 100)}%` }}></div>
                             </div>
                         </div>
                         <div>
                             <div className="flex justify-between text-xs mb-1.5">
                                 <span className="font-bold text-[var(--text-tertiary)]">{t('billing.ai_requests')}</span>
-                                <span className="font-bold text-[var(--text-primary)]">{usage?.aiRequests} / {currentPlan.limits.aiRequestsPerMonth}</span>
+                                <span className="font-bold text-[var(--text-primary)]">{usage?.aiRequests ?? 0} / {currentPlan.limits.aiRequestsPerMonth}</span>
                             </div>
                             <div className="h-2 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                <div className="h-full bg-amber-500" style={{ width: `${Math.min(100, (usage!.aiRequests / currentPlan.limits.aiRequestsPerMonth) * 100)}%` }}></div>
+                                <div className="h-full bg-amber-500" style={{ width: `${Math.min(100, ((usage?.aiRequests ?? 0) / currentPlan.limits.aiRequestsPerMonth) * 100)}%` }}></div>
                             </div>
                         </div>
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-[var(--glass-border)] text-xs text-[var(--text-secondary)] text-center">
-                        {t('billing.exp')}: <span className="font-mono text-[var(--text-secondary)]">{formatDate(subscription?.currentPeriodEnd || '')}</span>
+                        {t('billing.renews')}: <span className="font-mono text-[var(--text-secondary)]">{formatDate(subscription?.currentPeriodEnd || '')}</span>
                     </div>
                 </div>
 
@@ -175,12 +183,12 @@ export const Billing: React.FC = () => {
                                     <span className="text-sm font-medium text-[var(--text-secondary)]">{t('billing.per_month')}</span>
                                 </div>
                                 <div className="text-xs text-[var(--text-secondary)] mb-6">{t('billing.billed_annually')}</div>
-                                
+
                                 <ul className="space-y-3 mb-8 flex-1">
                                     {plan.features.map((f, i) => (
                                         <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
                                             <span className="text-indigo-500 mt-0.5">{ICONS.CHECK}</span>
-                                            {f}
+                                            {t(f)}
                                         </li>
                                     ))}
                                 </ul>
@@ -189,7 +197,7 @@ export const Billing: React.FC = () => {
                                     onClick={() => !isCurrent && setUpgradeConfirmPlan(plan.id)}
                                     className={`w-full py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${isCurrent ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-slate-900 text-white hover:bg-indigo-600 cursor-pointer'}`}
                                 >
-                                    {processingPlan === plan.id ? '...' : isCurrent ? t('billing.current_plan') : t('billing.upgrade_btn')}
+                                    {processingPlan === plan.id ? '…' : isCurrent ? t('billing.current_plan') : t('billing.upgrade_btn')}
                                 </button>
                             </div>
                         );
@@ -200,27 +208,29 @@ export const Billing: React.FC = () => {
             {/* Invoice History */}
             {invoices.length > 0 && (
                 <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
-                    <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('billing.date')} — Lịch sử hóa đơn</h3>
+                    <h3 className="font-bold text-[var(--text-primary)] mb-4">{t('billing.invoice_history')}</h3>
                     <div className="overflow-x-auto no-scrollbar">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">
-                                    <th className="pb-3 pr-4">Mã HĐ</th>
-                                    <th className="pb-3 pr-4">Gói cước</th>
-                                    <th className="pb-3 pr-4">Ngày</th>
-                                    <th className="pb-3 pr-4">Số tiền</th>
-                                    <th className="pb-3 pr-4">Trạng thái</th>
+                                    <th className="pb-3 pr-4">{t('billing.inv_id')}</th>
+                                    <th className="pb-3 pr-4">{t('billing.inv_plan')}</th>
+                                    <th className="pb-3 pr-4">{t('billing.inv_date')}</th>
+                                    <th className="pb-3 pr-4">{t('billing.inv_amount')}</th>
+                                    <th className="pb-3 pr-4">{t('billing.inv_status')}</th>
                                     <th className="pb-3"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {invoices.map((inv) => {
                                     const anyInv = inv as any;
-                                    const planLabel = PLANS[anyInv.planId as PlanTier]?.name || anyInv.planId || '—';
+                                    const planLabel = PLANS[anyInv.planId as PlanTier]
+                                        ? t(`billing.plan_${PLANS[anyInv.planId as PlanTier].name.toLowerCase()}`)
+                                        : (anyInv.planId || '—');
                                     const dateStr = inv.created
-                                        ? new Date(inv.created).toLocaleDateString('vi-VN')
+                                        ? new Date(inv.created).toLocaleDateString()
                                         : anyInv.createdAt
-                                        ? new Date(anyInv.createdAt).toLocaleDateString('vi-VN')
+                                        ? new Date(anyInv.createdAt).toLocaleDateString()
                                         : '—';
                                     const isPaid = inv.status === 'paid' || (anyInv.status as string) === 'PAID';
                                     return (
@@ -231,7 +241,7 @@ export const Billing: React.FC = () => {
                                             <td className="py-3 pr-4 font-bold text-[var(--text-primary)]">${anyInv.amount ?? 0}</td>
                                             <td className="py-3 pr-4">
                                                 <span className={`text-xs3 font-bold px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
-                                                    {isPaid ? 'Đã thanh toán' : inv.status}
+                                                    {isPaid ? t('billing.status_paid') : t('billing.status_unpaid')}
                                                 </span>
                                             </td>
                                             <td className="py-3">
@@ -250,17 +260,33 @@ export const Billing: React.FC = () => {
                     </div>
                 </div>
             )}
-        <ConfirmModal
-            isOpen={!!upgradeConfirmPlan}
-            title={t('billing.confirm_upgrade', { plan: upgradeConfirmPlan || '' })}
-            message={t('billing.confirm_upgrade', { plan: upgradeConfirmPlan || '' })}
-            confirmLabel={t('common.confirm')}
-            cancelLabel={t('common.cancel')}
-            onConfirm={handleUpgrade}
-            onCancel={() => setUpgradeConfirmPlan(null)}
-            variant="info"
-        />
+
+            <ConfirmModal
+                isOpen={!!upgradeConfirmPlan}
+                title={t('billing.confirm_upgrade_title')}
+                message={t('billing.confirm_upgrade', { plan: upgradeConfirmPlan ? t(`billing.plan_${(PLANS[upgradeConfirmPlan]?.name || upgradeConfirmPlan).toLowerCase()}`) : '' })}
+                confirmLabel={t('common.confirm')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={handleUpgrade}
+                onCancel={() => setUpgradeConfirmPlan(null)}
+                variant="info"
+            />
         </div>
+        {createPortal(
+            toast ? (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}
+                >
+                    <span className="text-sm">{toast.type === 'success' ? '✓' : '✕'}</span>
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };
 

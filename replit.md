@@ -264,6 +264,25 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 3. **Simulator output 3 hardcoded English strings** — `"Simulated output for: ..."`, `"Error executing simulation."`, and `"OUTPUT:"` label → 4 new locale keys: `ai.sim_result` (with `{input}` + `{version}` interpolation), `ai.sim_error`, `ai.sim_output_label`, added to VI + EN locales
 4. **Safety Log table missing empty state** — added `<tr colSpan=6>` with `t('ai.no_safety_logs')` when `safetyLogs` is empty
 
+### Billing.tsx Audit & Fix (March 2026)
+8 bugs resolved across backend + frontend + i18n:
+
+**Backend (Critical):**
+1. **`current_period_start/end` columns missing from `subscriptions` table** — Migration 003 created `subscriptions` without these columns; Migration 009 used `CREATE TABLE IF NOT EXISTS` (no-op since table existed); result: `INSERT ... (current_period_start, current_period_end)` in `subscriptionRepository.createSubscription()` threw "column does not exist" → 500 on `/api/billing/subscription` and `/api/billing/invoices`; fixed by adding **migration 013** with `ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS ...`; also backfills `created_at` into the column for existing rows
+
+**Frontend:**
+2. **Root container missing `p-4 sm:p-6`** — Line 96 had no outer padding; added `p-4 sm:p-6` to root `div`
+3. **Toast not in portal** — `fixed` toast inside `animate-enter` root; same CSS transform trap; moved to `createPortal(document.body)`, added Fragment `<>` wrapper + `role="status" aria-live="polite"`
+4. **`notify` not memoized** — plain function re-created each render; wrapped in `useCallback([])`
+5. **Invoice section heading partially hardcoded** — `{t('billing.date')} — Lịch sử hóa đơn` used wrong key and hardcoded string; replaced with new `billing.invoice_history` key
+6. **Invoice table headers all hardcoded Vietnamese** — "Mã HĐ", "Gói cước", "Ngày", "Số tiền", "Trạng thái" → new locale keys `billing.inv_id/inv_plan/inv_date/inv_amount/inv_status`
+7. **Invoice status badge hardcoded** — `{isPaid ? 'Đã thanh toán' : inv.status}` showed raw enum when unpaid; replaced with `t('billing.status_paid')` / `t('billing.status_unpaid')`
+8. **CSV download content hardcoded Vietnamese** — all 6 CSV row labels hardcoded; replaced with new `billing.csv_title/csv_id/csv_date/csv_plan/csv_status/csv_amount` locale keys; `toLocaleDateString()` instead of hardcoded `'vi-VN'` locale
+9. **ConfirmModal title = message** — both props used `billing.confirm_upgrade`; separated: title → new `billing.confirm_upgrade_title` (short), message → `billing.confirm_upgrade` with plan name interpolated from locale key
+10. **Plan features hardcoded Vietnamese in PLANS** — `PLANS.*.features` arrays had hardcoded VI strings → render was not translated when user switched to EN; changed to locale keys `billing.f_{tier}_{index}` in `dbApi.ts`; render updated to `{t(f)}`; 37 new feature locale keys added (VI + EN)
+
+- New locale keys (37): `billing.renews`, `billing.invoice_history`, `billing.inv_id/plan/date/amount/status`, `billing.status_paid/unpaid`, `billing.confirm_upgrade_title`, `billing.csv_title/id/date/plan/status/amount`, `billing.f_individual_{0-4}`, `billing.f_team_{0-5}`, `billing.f_enterprise_{0-6}` (VI + EN)
+
 ### DataPlatform.tsx Audit & Fix (March 2026)
 3 bugs resolved in `pages/DataPlatform.tsx`:
 1. **Toast not in portal** — `fixed` toast inside root `animate-enter` div; moved to `createPortal(document.body)` with Fragment `<>` wrapper; added `role="status" aria-live="polite"` attributes
