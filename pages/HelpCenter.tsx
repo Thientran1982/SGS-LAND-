@@ -41,8 +41,8 @@ export const HelpCenter: React.FC = () => {
         { id: 1, q: t('help.faq_1'), cat: 'gen' },
         { id: 2, q: t('help.faq_2'), cat: 'acc' },
         { id: 3, q: t('help.faq_3'), cat: 'api' },
-        { id: 4, q: "Chính sách SLA cho Doanh nghiệp", cat: 'sec' },
-        { id: 5, q: "Tuân thủ Nghị định 13 về Dữ liệu", cat: 'sec' },
+        { id: 4, q: t('help.faq_4'), cat: 'sec' },
+        { id: 5, q: t('help.faq_5'), cat: 'sec' },
     ];
 
     const filteredFaqs = faqs.filter(faq => 
@@ -59,7 +59,7 @@ export const HelpCenter: React.FC = () => {
                     </button>
                     <div className="flex items-center gap-2">
                         <Logo className="w-6 h-6 text-indigo-600" />
-                        <span className="font-bold text-lg">TRUNG TÂM HỖ TRỢ</span>
+                        <span className="font-bold text-lg">{t('help.header')}</span>
                     </div>
                     <button onClick={handleLogin} className="px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-sm">
                         {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
@@ -113,7 +113,7 @@ export const HelpCenter: React.FC = () => {
                 </div>
 
                 <div className="bg-[var(--bg-surface)] rounded-[32px] border border-[var(--glass-border)] p-8 md:p-12 shadow-sm">
-                    <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-8">Bài viết phổ biến</h2>
+                    <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-8">{t('help.popular_articles')}</h2>
                     {filteredFaqs.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                             {filteredFaqs.map(faq => (
@@ -125,13 +125,13 @@ export const HelpCenter: React.FC = () => {
                         </div>
                     ) : (
                         <div className="text-center py-12">
-                            <p className="text-[var(--text-tertiary)]">Không tìm thấy kết quả nào cho "{searchQuery}"</p>
+                            <p className="text-[var(--text-tertiary)]">{t('help.no_results')} "{searchQuery}"</p>
                         </div>
                     )}
                 </div>
 
                 <div className="mt-16 text-center">
-                    <p className="text-[var(--text-tertiary)] mb-4">Không tìm thấy nội dung bạn cần?</p>
+                    <p className="text-[var(--text-tertiary)] mb-4">{t('help.need_more_help')}</p>
                     <button 
                         onClick={handleContact}
                         className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95"

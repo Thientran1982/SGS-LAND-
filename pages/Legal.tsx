@@ -131,7 +131,7 @@ const LegalLayout: React.FC<{ title: string; children: React.ReactNode; lastUpda
                     </button>
                     <div className="flex items-center gap-2">
                         <Logo className="w-6 h-6 text-indigo-600" />
-                        <span className="font-bold text-lg">SGS PHÁP LÝ</span>
+                        <span className="font-bold text-lg">{t('legal.header')}</span>
                     </div>
                     <button onClick={handleLogin} className="px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-sm">
                         {currentUser ? t('menu.dashboard') : t('auth.btn_login')}

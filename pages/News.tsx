@@ -68,7 +68,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
             }
         } else {
             const success = await copyToClipboard(url);
-            setShareFeedback(success ? 'Đã sao chép đường dẫn!' : 'Không thể sao chép.');
+            setShareFeedback(success ? t('news.share_copied') : t('news.share_failed'));
             setTimeout(() => setShareFeedback(null), 2500);
         }
     };
@@ -133,7 +133,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                         </div>
                         <div>
                             <div className="text-sm font-bold text-[var(--text-primary)]">{article.author}</div>
-                            <div className="text-xs text-[var(--text-tertiary)]">Ban Biên Tập SGS</div>
+                            <div className="text-xs text-[var(--text-tertiary)]">{t('news.editorial_team')}</div>
                         </div>
                     </div>
                     <div className="flex gap-2 items-center">
@@ -169,7 +169,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                 {/* Media Gallery */}
                 {(article.images?.length || article.videos?.length) ? (
                     <div className="mt-12 pt-8 border-t border-[var(--glass-border)]">
-                        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Thư viện Media</h3>
+                        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">{t('news.media_gallery')}</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {article.images?.map((url, index) => (
                                 <div key={`img-${index}`} className="aspect-video rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow cursor-pointer isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]">

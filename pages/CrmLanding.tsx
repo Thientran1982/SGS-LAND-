@@ -10,8 +10,8 @@ import { User } from '../types';
 const ICONS = {
     BACK: <ArrowLeft className="w-5 h-5" />,
     CHECK: <Check className="w-5 h-5 text-indigo-600" strokeWidth={3} />,
+    CHECK_LIGHT: <Check className="w-5 h-5 text-emerald-400" strokeWidth={3} />,
     ROCKET: <Rocket className="w-6 h-6 text-white" />,
-    // Professional Icons to replace Emojis
     AI_BRAIN: <BrainCircuit className="w-6 h-6 text-indigo-600" />,
     AUTOMATION: <Zap className="w-6 h-6 text-emerald-600" />,
     REPORT: <BarChart3 className="w-6 h-6 text-rose-600" />
@@ -51,21 +51,21 @@ export const CrmLanding: React.FC = () => {
             {/* Hero */}
             <section className="pt-24 pb-32 px-6 text-center max-w-5xl mx-auto animate-enter">
                 <span className="inline-block py-1.5 px-4 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-8">
-                    Dành cho Doanh Nghiệp BĐS
+                    {t('crm.hero_badge')}
                 </span>
                 <h1 className="text-5xl md:text-7xl font-black text-[var(--text-primary)] mb-8 leading-tight tracking-tight">
-                    Tăng Tốc Doanh Số <br/>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Với CRM Tự Động Hóa</span>
+                    {t('crm.hero_title')} <br/>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">{t('crm.hero_title_highlight')}</span>
                 </h1>
                 <p className="text-xl text-[var(--text-tertiary)] mb-12 max-w-3xl mx-auto leading-relaxed">
-                    Hệ thống quản lý khách hàng toàn diện, tích hợp tổng đài, email marketing và AI Chatbot. Giúp đội ngũ sale của bạn chốt đơn nhanh hơn 30%.
+                    {t('crm.hero_desc')}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button onClick={handleLogin} className="px-8 py-4 bg-indigo-600 text-white font-bold rounded-2xl text-lg shadow-xl shadow-indigo-500/30 hover:bg-indigo-700 transition-transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                        {ICONS.ROCKET} {currentUser ? t('menu.dashboard') : 'Dùng Thử Miễn Phí'}
+                        {ICONS.ROCKET} {currentUser ? t('menu.dashboard') : t('crm.free_trial')}
                     </button>
                     <button className="px-8 py-4 bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)] font-bold rounded-2xl text-lg hover:bg-[var(--glass-surface)] transition-colors">
-                        Xem Demo
+                        {t('crm.view_demo')}
                     </button>
                 </div>
             </section>
@@ -93,57 +93,61 @@ export const CrmLanding: React.FC = () => {
                             <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center border border-indigo-100 shadow-sm">
                                 {ICONS.AI_BRAIN}
                             </div>
-                            <h3 className="text-xl font-bold text-[var(--text-primary)]">Phân Hạng Khách Hàng AI</h3>
+                            <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('crm.feat1_title')}</h3>
                             <p className="text-[var(--text-tertiary)] leading-relaxed text-sm">
-                                Tự động chấm điểm tiềm năng khách hàng dựa trên 50+ điểm dữ liệu hành vi. Giúp đội ngũ Sales tập trung vào 20% khách hàng có khả năng chốt đơn cao nhất.
+                                {t('crm.feat1_desc')}
                             </p>
                         </div>
                         <div className="space-y-4">
                             <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center border border-emerald-100 shadow-sm">
                                 {ICONS.AUTOMATION}
                             </div>
-                            <h3 className="text-xl font-bold text-[var(--text-primary)]">Chuỗi Tự Động Hóa</h3>
+                            <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('crm.feat2_title')}</h3>
                             <p className="text-[var(--text-tertiary)] leading-relaxed text-sm">
-                                Thiết lập quy trình chăm sóc đa kênh (Omnichannel) tự động. Từ SMS, Zalo đến Email marketing, đảm bảo không bỏ lỡ bất kỳ điểm chạm nào.
+                                {t('crm.feat2_desc')}
                             </p>
                         </div>
                         <div className="space-y-4">
                             <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center border border-rose-100 shadow-sm">
                                 {ICONS.REPORT}
                             </div>
-                            <h3 className="text-xl font-bold text-[var(--text-primary)]">Báo Cáo Thời Gian Thực</h3>
+                            <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('crm.feat3_title')}</h3>
                             <p className="text-[var(--text-tertiary)] leading-relaxed text-sm">
-                                Hệ thống Business Intelligence (BI) cập nhật theo thời gian thực. Theo dõi sát sao hiệu suất Sales và tỷ lệ chuyển đổi phễu trên một dashboard duy nhất.
+                                {t('crm.feat3_desc')}
                             </p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Pricing Simple */}
+            {/* Pricing */}
             <section className="py-24 px-6 max-w-4xl mx-auto text-center">
-                <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-12">Bảng Giá Đơn Giản</h2>
+                <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-12">{t('crm.pricing_title')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                     <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm hover:shadow-xl transition-all">
-                        <h3 className="text-lg font-bold text-[var(--text-tertiary)] uppercase tracking-wide mb-2">Cơ Bản</h3>
-                        <div className="text-4xl font-black text-[var(--text-primary)] mb-6">499k <span className="text-lg font-medium text-slate-400">/ tháng</span></div>
+                        <h3 className="text-lg font-bold text-[var(--text-tertiary)] uppercase tracking-wide mb-2">{t('crm.plan_basic')}</h3>
+                        <div className="text-4xl font-black text-[var(--text-primary)] mb-6">{t('crm.plan_basic_price')} <span className="text-lg font-medium text-slate-400">{t('crm.plan_basic_period')}</span></div>
                         <ul className="space-y-3 mb-8">
-                            <li className="flex gap-3 text-[var(--text-secondary)]"><span className="text-emerald-500">{ICONS.CHECK}</span> 5 Tài khoản nhân viên</li>
-                            <li className="flex gap-3 text-[var(--text-secondary)]"><span className="text-emerald-500">{ICONS.CHECK}</span> 2,000 Khách hàng</li>
-                            <li className="flex gap-3 text-[var(--text-secondary)]"><span className="text-emerald-500">{ICONS.CHECK}</span> Email Marketing cơ bản</li>
+                            <li className="flex gap-3 text-[var(--text-secondary)]"><span className="text-emerald-500">{ICONS.CHECK}</span> {t('crm.plan_basic_f1')}</li>
+                            <li className="flex gap-3 text-[var(--text-secondary)]"><span className="text-emerald-500">{ICONS.CHECK}</span> {t('crm.plan_basic_f2')}</li>
+                            <li className="flex gap-3 text-[var(--text-secondary)]"><span className="text-emerald-500">{ICONS.CHECK}</span> {t('crm.plan_basic_f3')}</li>
                         </ul>
-                        <button onClick={handleLogin} className="w-full py-3 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-primary)] font-bold rounded-xl transition-colors">{currentUser ? t('menu.dashboard') : 'Đăng Ký Ngay'}</button>
+                        <button onClick={handleLogin} className="w-full py-3 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-primary)] font-bold rounded-xl transition-colors">
+                            {currentUser ? t('menu.dashboard') : t('crm.plan_basic_cta')}
+                        </button>
                     </div>
                     <div className="bg-slate-900 text-white p-8 rounded-[32px] shadow-2xl relative overflow-hidden transform hover:-translate-y-2 transition-all">
-                        <div className="absolute top-0 right-0 bg-indigo-600 text-white text-xs2 font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Phổ Biến</div>
-                        <h3 className="text-lg font-bold text-indigo-300 uppercase tracking-wide mb-2">Doanh Nghiệp</h3>
-                        <div className="text-4xl font-black text-white mb-6">1,999k <span className="text-lg font-medium text-[var(--text-tertiary)]">/ tháng</span></div>
+                        <div className="absolute top-0 right-0 bg-indigo-600 text-white text-xs2 font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">{t('crm.plan_pro_badge')}</div>
+                        <h3 className="text-lg font-bold text-indigo-300 uppercase tracking-wide mb-2">{t('crm.plan_pro')}</h3>
+                        <div className="text-4xl font-black text-white mb-6">{t('crm.plan_pro_price')} <span className="text-lg font-medium text-[var(--text-tertiary)]">{t('crm.plan_pro_period')}</span></div>
                         <ul className="space-y-3 mb-8">
-                            <li className="flex gap-3 text-slate-300"><span className="text-emerald-400">{ICONS.CHECK}</span> 20 Tài khoản nhân viên</li>
-                            <li className="flex gap-3 text-slate-300"><span className="text-emerald-400">{ICONS.CHECK}</span> Không giới hạn khách hàng</li>
-                            <li className="flex gap-3 text-slate-300"><span className="text-emerald-400">{ICONS.CHECK}</span> AI Lead Scoring & Automation</li>
+                            <li className="flex gap-3 text-slate-300"><span className="text-emerald-400">{ICONS.CHECK_LIGHT}</span> {t('crm.plan_pro_f1')}</li>
+                            <li className="flex gap-3 text-slate-300"><span className="text-emerald-400">{ICONS.CHECK_LIGHT}</span> {t('crm.plan_pro_f2')}</li>
+                            <li className="flex gap-3 text-slate-300"><span className="text-emerald-400">{ICONS.CHECK_LIGHT}</span> {t('crm.plan_pro_f3')}</li>
                         </ul>
-                        <button onClick={handleLogin} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-lg">{currentUser ? t('menu.dashboard') : 'Dùng Thử Miễn Phí'}</button>
+                        <button onClick={handleLogin} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-lg">
+                            {currentUser ? t('menu.dashboard') : t('crm.plan_pro_cta')}
+                        </button>
                     </div>
                 </div>
             </section>
