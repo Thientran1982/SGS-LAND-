@@ -19,7 +19,7 @@ import {
     LayoutDashboard, Users, FileText, Package, Inbox, Star, CheckSquare,
     GitMerge, Target, Share2, BookOpen, BarChart2, Store, Shield,
     Database, Activity, Settings, CreditCard, Lock, Smartphone,
-    User as UserIcon, Moon, Sun, LogOut, ChevronLeft, ChevronDown, Languages, Home
+    User as UserIcon, Moon, Sun, LogOut, ChevronLeft, ChevronDown, Languages, Home, Globe
 } from 'lucide-react';
 
 // Icons mapping - SYNCHRONIZED with mockDb.ts iconKeys
@@ -50,7 +50,8 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     [ROUTES.ENTERPRISE_SETTINGS]: <Settings size={20} strokeWidth={2} />,
     [ROUTES.BILLING]: <CreditCard size={20} strokeWidth={2} />,
     [ROUTES.SECURITY]: <Lock size={20} strokeWidth={2} />,
-    
+    [ROUTES.SEO_MANAGER]: <Globe size={20} strokeWidth={2} />,
+
     // Other
     'mobile_app': <Smartphone size={20} strokeWidth={2} />,
     'profile': <UserIcon size={20} strokeWidth={2} />,

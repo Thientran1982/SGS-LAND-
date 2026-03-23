@@ -10,6 +10,7 @@ import { ListingCard } from '../components/ListingCard';
 import { BookingModal } from '../components/BookingModal';
 import { Lightbox } from '../components/Lightbox';
 import { ROUTES } from '../config/routes';
+import { injectListingSEO, clearDynamicSEO } from '../utils/seo';
 import { aiService } from '../services/aiService';
 import MapView from '../components/MapView';
 import { copyToClipboard } from '../utils/clipboard';
@@ -1154,8 +1155,20 @@ export const ListingDetail: React.FC = () => {
 
     useEffect(() => {
         if (listing) {
-            document.title = `${listing.title} | SGS LAND`;
+            injectListingSEO({
+                id: listing.id,
+                title: listing.title,
+                location: listing.location,
+                price: listing.price,
+                currency: listing.currency,
+                area: listing.area,
+                type: listing.type,
+                transaction: listing.transaction,
+                bedrooms: listing.bedrooms,
+                images: listing.images,
+            });
         }
+        return () => { clearDynamicSEO('listing'); };
     }, [listing]);
 
     useEffect(() => {

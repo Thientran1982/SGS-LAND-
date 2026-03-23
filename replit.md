@@ -446,6 +446,34 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 - Button hover direction standardized: `hover:bg-indigo-500` → `hover:bg-indigo-700`
 - `--rose-500` added to `.dark` mode override
 
+### SEO Architecture (March 2026)
+
+**utils/seo.ts** — Central SEO module:
+- `ROUTE_SEO` (exported) — Static per-route SEO config (title, description, path, noIndex)
+- `SEOConfig` (exported interface) — Shape of a route SEO entry
+- `SEO_BASE_URL` (exported) — `https://sgsland.vn`
+- `updatePageSEO(routeBase)` — Applies title/OG/canonical/robots for a given route, checks localStorage overrides first
+- `getSEOOverrides()` / `saveSEOOverride()` / `clearSEOOverride()` — localStorage-based per-route meta overrides
+- `injectListingSEO(listing)` — Dynamic SEO injection when viewing a listing detail (title from listing.title + location, description from type/area/price, canonical `/listing/:id`, OG image from listing.images[0])
+- `injectArticleSEO(article)` — Dynamic SEO injection when viewing an article (title + excerpt truncated to 160 chars, canonical `/news/:id`, OG image from article.image)
+- `clearDynamicSEO(routeBase)` — Restores route-level SEO (called on component unmount)
+
+**pages/SeoManager.tsx** — Admin-only SEO dashboard (ADMIN + TEAM_LEAD, noIndex):
+- Tab 1 **SERP Preview**: Dropdown route selector → Google SERP mockup card + character count bars (title 30–60, desc 120–160)
+- Tab 2 **Meta Editor**: Per-route title/description editor with localStorage override save/reset, dirty state, inline char counters
+- Tab 3 **Sức khoẻ SEO**: 12 automated DOM/network health checks with pass/warn/fail badges and aggregate score
+- Tab 4 **Structured Data**: Extracts all `<script type="application/ld+json">` from document head, shows formatted JSON with copy buttons
+- External tool links: Google Search Console, PageSpeed Insights, Rich Results Test, Schema Markup Validator
+- Registered at route `seo-manager`, added to `ADMIN_ONLY_ROUTES`, listed in Ecosystem nav group (Globe icon)
+
+**Wire-up**:
+- `pages/ListingDetail.tsx` — Calls `injectListingSEO(listing)` on listing load, `clearDynamicSEO('listing')` on unmount
+- `pages/News.tsx` (ArticleDetail) — Calls `injectArticleSEO(article)` on mount, `clearDynamicSEO('news')` on unmount
+- `config/routes.ts` — `SEO_MANAGER: 'seo-manager'` added
+- `services/dbApi.ts` — `seo-manager` entry in `sys` menu group for Admin/Team Lead
+- `components/Layout.tsx` — Globe icon mapped to `ROUTES.SEO_MANAGER`
+- `config/locales.ts` — `menu.seo-manager` key added (VI + EN)
+
 ## Scripts
 
 - `npm run dev` - Start development server (tsx server.ts)

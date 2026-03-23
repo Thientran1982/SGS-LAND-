@@ -1098,6 +1098,7 @@ class DatabaseApiClient {
       { id: 'billing', labelKey: 'menu.billing', route: ROUTES.BILLING, iconKey: ROUTES.BILLING },
       { id: 'security', labelKey: 'menu.security', route: ROUTES.SECURITY, iconKey: ROUTES.SECURITY },
       { id: 'ai-gov', labelKey: 'menu.ai-governance', route: ROUTES.AI_GOVERNANCE, iconKey: ROUTES.AI_GOVERNANCE },
+      { id: 'seo', labelKey: 'menu.seo-manager', route: ROUTES.SEO_MANAGER, iconKey: ROUTES.SEO_MANAGER },
       { id: 'data', labelKey: 'menu.data-platform', route: ROUTES.DATA_PLATFORM, iconKey: ROUTES.DATA_PLATFORM },
       { id: 'system', labelKey: 'menu.system', route: ROUTES.SYSTEM, iconKey: ROUTES.SYSTEM },
     ]};

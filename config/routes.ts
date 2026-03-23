@@ -45,6 +45,7 @@ export const ROUTES = {
     DATA_PLATFORM: 'data-platform',
     SECURITY: 'security',
     AI_GOVERNANCE: 'ai-governance',
+    SEO_MANAGER: 'seo-manager',
     PROFILE: 'profile',
     MOBILE_APP: 'mobile-app',
     RESET_PASSWORD: 'reset-password',

@@ -74,6 +74,7 @@ const Marketplace = lazyLoad(() => import('./pages/Marketplace'), 'Marketplace')
 const DataPlatform = lazyLoad(() => import('./pages/DataPlatform'), 'DataPlatform');
 const SecurityCompliance = lazyLoad(() => import('./pages/SecurityCompliance'), 'SecurityCompliance');
 const AiGovernance = lazyLoad(() => import('./pages/AiGovernance'), 'AiGovernance');
+const SeoManager = lazyLoad(() => import('./pages/SeoManager'), 'SeoManager');
 const Profile = lazyLoad(() => import('./pages/Profile'), 'Profile');
 
 // ---------------------------------------------------------------------------
@@ -170,6 +171,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.DATA_PLATFORM]: DataPlatform,
     [ROUTES.SECURITY]: SecurityCompliance,
     [ROUTES.AI_GOVERNANCE]: AiGovernance,
+    [ROUTES.SEO_MANAGER]: SeoManager,
     [ROUTES.PROFILE]: Profile,
     // Misc
     [ROUTES.MOBILE_APP]: MobileApp
@@ -324,6 +326,7 @@ const ADMIN_ONLY_ROUTES = new Set([
     ROUTES.DATA_PLATFORM,
     ROUTES.SECURITY,
     ROUTES.AI_GOVERNANCE,
+    ROUTES.SEO_MANAGER,
 ]);
 
 const ADMIN_ROLES = new Set(['ADMIN', 'TEAM_LEAD']);

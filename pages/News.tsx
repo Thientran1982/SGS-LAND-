@@ -8,6 +8,7 @@ import { Article, UserRole, User } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { copyToClipboard } from '../utils/clipboard';
 import { useTranslation } from '../services/i18n';
+import { injectArticleSEO, clearDynamicSEO } from '../utils/seo';
 
 const sanitizeHtml = (html: string): string => DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'span', 'div'],
@@ -42,7 +43,17 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
 
     useEffect(() => {
         window.scrollTo(0, 0);
-    }, []);
+        injectArticleSEO({
+            id: article.id,
+            title: article.title,
+            excerpt: article.excerpt,
+            image: article.image,
+            author: article.author,
+            date: article.date,
+            category: article.category,
+        });
+        return () => { clearDynamicSEO('news'); };
+    }, [article]);
 
     const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
