@@ -237,9 +237,9 @@ export function createListingRoutes(authenticateToken: any) {
           return res.status(404).json({ error: 'User not found in tenant' });
         }
         const assigneeRole: string = assigneeResult.rows[0].role;
-        const NON_ASSIGNABLE_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT', 'VIEWER'];
+        const NON_ASSIGNABLE_ROLES = ['VIEWER'];
         if (NON_ASSIGNABLE_ROLES.includes(assigneeRole)) {
-          return res.status(400).json({ error: 'Cannot assign listing to a partner or viewer user' });
+          return res.status(400).json({ error: 'Cannot assign listing to a viewer user' });
         }
       }
 
