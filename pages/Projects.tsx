@@ -918,7 +918,7 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                         type="button"
                         onClick={openMenu}
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors"
-                        title={t('common.actions') || 'Thao tác'}
+                        title={t('common.actions')}
                     >
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>

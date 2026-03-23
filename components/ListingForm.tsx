@@ -145,14 +145,14 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         setUploadError('');
 
         if (images.length + imageFiles.length > 10) {
-            setUploadError(t('inventory.max_images') || 'Tối đa 10 ảnh');
+            setUploadError(t('inventory.max_images'));
             return;
         }
 
         const MAX_SIZE = 10 * 1024 * 1024;
         const oversized = imageFiles.find(f => f.size > MAX_SIZE);
         if (oversized) {
-            setUploadError(t('profile.error_file_size') || 'File quá lớn (tối đa 10MB)');
+            setUploadError(t('profile.error_file_size'));
             return;
         }
 

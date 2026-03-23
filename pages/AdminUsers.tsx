@@ -446,8 +446,8 @@ export const AdminUsers: React.FC = () => {
     }
 
     return (
+        <>
         <div className="h-full flex flex-col relative animate-enter">
-            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
 
             {/* HEADER */}
             <div className="flex flex-col bg-[var(--bg-surface)] border-b border-[var(--glass-border)] shrink-0">
@@ -458,20 +458,20 @@ export const AdminUsers: React.FC = () => {
                     <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                         {/* Tổng */}
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
-                            <span className="text-2xs sm:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wide">{t('admin.users.total') || 'Tổng'}</span>
+                            <span className="text-2xs sm:text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wide">{t('admin.users.total')}</span>
                             <span className="text-xs sm:text-sm font-black text-[var(--text-primary)]">{totalUsers}</span>
                         </div>
                         {/* Hoạt động */}
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                            <span className="hidden sm:inline text-xs2 font-bold text-emerald-600 uppercase tracking-wide">{t('admin.users.active_users') || 'Hoạt động'}</span>
+                            <span className="hidden sm:inline text-xs2 font-bold text-emerald-600 uppercase tracking-wide">{t('admin.users.active_users')}</span>
                             <span className="sm:hidden text-2xs font-bold text-emerald-600 uppercase">HĐ</span>
                             <span className="text-xs sm:text-sm font-black text-emerald-700">{stats.activeCount}</span>
                         </div>
                         {/* Chờ duyệt */}
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                            <span className="hidden sm:inline text-xs2 font-bold text-amber-600 uppercase tracking-wide">{t('admin.users.pending_invites') || 'Chờ duyệt'}</span>
+                            <span className="hidden sm:inline text-xs2 font-bold text-amber-600 uppercase tracking-wide">{t('admin.users.pending_invites')}</span>
                             <span className="sm:hidden text-2xs font-bold text-amber-600 uppercase">Chờ</span>
                             <span className="text-xs sm:text-sm font-black text-amber-700">{stats.pendingCount}</span>
                         </div>
@@ -506,7 +506,7 @@ export const AdminUsers: React.FC = () => {
                                 <button
                                     onClick={() => setSearch('')}
                                     className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
-                                    title={t('common.clear_search') || 'Xóa tìm kiếm'}
+                                    title={t('common.clear_search')}
                                 >
                                     {ICONS.X}
                                 </button>
@@ -719,5 +719,14 @@ export const AdminUsers: React.FC = () => {
                 </div>
             )}
         </div>
+        {createPortal(
+            toast ? (
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };

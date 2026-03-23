@@ -342,7 +342,7 @@ export const Landing: React.FC = () => {
                                     <button 
                                         onClick={() => setSearchQuery('')}
                                         className="text-slate-400 hover:text-[var(--text-secondary)] dark:hover:text-slate-300 transition-colors p-1 rounded-full hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-700 mr-2 flex items-center justify-center"
-                                        title={t('common.clear_search') || 'Xóa tìm kiếm'}
+                                        title={t('common.clear_search')}
                                     >
                                         {ICONS.X}
                                     </button>

@@ -725,11 +725,11 @@ export const Dashboard: React.FC = () => {
                                         <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
                                             <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.colors.grid} opacity={0.5} />
-                                                <XAxis type="number" dataKey="area" name="Diện tích" unit="m²" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
-                                                <YAxis type="number" dataKey="price" name="Mức giá" unit=" Tỷ" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
-                                                <ZAxis type="number" dataKey="interest" range={[100, 1000]} name="Mức độ quan tâm" />
+                                                <XAxis type="number" dataKey="area" name={t('dash.scatter_area')} unit="m²" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
+                                                <YAxis type="number" dataKey="price" name={t('dash.scatter_price')} unit=" Tỷ" stroke={chartTheme.colors.text} fontSize={12} tickLine={false} axisLine={false} />
+                                                <ZAxis type="number" dataKey="interest" range={[100, 1000]} name={t('dash.scatter_interest')} />
                                                 <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<ScatterTooltip t={t} />} />
-                                                <Scatter name="Market Interest" data={analytics.marketPulse} opacity={0.7}>
+                                                <Scatter name={t('dash.scatter_interest')} data={analytics.marketPulse} opacity={0.7}>
                                                     {analytics.marketPulse.map((entry: any, index: number) => {
                                                         // Generate a color based on location
                                                         const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];

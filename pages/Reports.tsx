@@ -768,13 +768,7 @@ const CostsTab = memo(({ data, t, formatCurrency, currentUser, onCostUpdated, no
 // 4. MAIN COMPONENT
 // -----------------------------------------------------------------------------
 
-const TIME_RANGE_OPTIONS = [
-    { value: '7',   label: '7 ngày' },
-    { value: '30',  label: '30 ngày' },
-    { value: '90',  label: '90 ngày' },
-    { value: '365', label: '12 tháng' },
-    { value: 'all', label: 'Tất cả' },
-];
+const TIME_RANGE_VALUES = ['7', '30', '90', '365', 'all'];
 
 export const Reports: React.FC = () => {
     const [data, setData] = useState<BiData | null>(null);
@@ -865,17 +859,17 @@ export const Reports: React.FC = () => {
                     <div className="flex items-center gap-1.5 shrink-0">
                         <span className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-widest">{t('reports.period_label')}</span>
                         <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-xl gap-0.5">
-                            {TIME_RANGE_OPTIONS.map(opt => (
+                            {TIME_RANGE_VALUES.map(val => (
                                 <button
-                                    key={opt.value}
-                                    onClick={() => setTimeRange(opt.value)}
+                                    key={val}
+                                    onClick={() => setTimeRange(val)}
                                     className={`px-2.5 py-1.5 text-xs3 font-bold rounded-[9px] transition-all whitespace-nowrap ${
-                                        timeRange === opt.value
+                                        timeRange === val
                                         ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)] ring-1 ring-black/5'
                                         : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                                     }`}
                                 >
-                                    {t(`reports.range_${opt.value}`)}
+                                    {t(`reports.range_${val}`)}
                                 </button>
                             ))}
                         </div>
@@ -890,17 +884,17 @@ export const Reports: React.FC = () => {
                         className="w-full"
                     />
                     <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-xl gap-0.5 overflow-x-auto no-scrollbar">
-                        {TIME_RANGE_OPTIONS.map(opt => (
+                        {TIME_RANGE_VALUES.map(val => (
                             <button
-                                key={opt.value}
-                                onClick={() => setTimeRange(opt.value)}
+                                key={val}
+                                onClick={() => setTimeRange(val)}
                                 className={`px-3 py-1.5 text-xs font-bold rounded-[10px] transition-all whitespace-nowrap flex-1 ${
-                                    timeRange === opt.value
+                                    timeRange === val
                                     ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)] ring-1 ring-black/5'
                                     : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                                 }`}
                             >
-                                {t(`reports.range_${opt.value}`)}
+                                {t(`reports.range_${val}`)}
                             </button>
                         ))}
                     </div>

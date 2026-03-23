@@ -59,7 +59,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
 
     const handleConnect = async () => {
         if (!form.appId.trim() || !form.oaId.trim() || !form.oaName.trim()) {
-            notify(t('ent.zalo_form_required') || 'Vui lòng nhập đầy đủ App ID, OA ID và Tên OA', 'error');
+            notify(t('ent.zalo_form_required'), 'error');
             return;
         }
         setConnecting(true);
@@ -127,8 +127,8 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                 <div className="mb-5 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-800 text-xs">
                     <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <span>
-                        <span className="font-bold block mb-0.5">{t('ent.zalo_secret_warning') || 'Cần cấu hình biến môi trường'}</span>
-                        {t('ent.zalo_secret_hint') || 'Thêm ZALO_OA_SECRET vào Environment Secrets để bảo mật webhook trên Production.'}
+                        <span className="font-bold block mb-0.5">{t('ent.zalo_secret_warning')}</span>
+                        {t('ent.zalo_secret_hint')}
                     </span>
                 </div>
             )}
@@ -245,7 +245,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                                         onClick={() => setConfirmDisconnect(false)}
                                         className="flex-1 py-2.5 border-2 border-[var(--glass-border)] rounded-xl text-[var(--text-secondary)] font-bold hover:bg-[var(--glass-surface)] transition-colors text-sm"
                                     >
-                                        {t('common.cancel') || 'Huỷ'}
+                                        {t('common.cancel')}
                                     </button>
                                     <button
                                         onClick={handleDisconnect}
@@ -293,7 +293,7 @@ const ZaloPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfi
                         </div>
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">
-                                {t('ent.zalo_oa_name') || 'Tên Official Account'} <span className="text-rose-500">*</span>
+                                {t('ent.zalo_oa_name')} <span className="text-rose-500">*</span>
                             </label>
                             <input
                                 className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
@@ -388,7 +388,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
 
     const handleConnect = async () => {
         if (!form.name.trim() || !form.pageId.trim()) {
-            notify(t('ent.facebook_form_required') || 'Vui lòng nhập Tên Page và Page ID', 'error');
+            notify(t('ent.facebook_form_required'), 'error');
             return;
         }
         setConnecting(true);
@@ -578,7 +578,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                                 disabled={disconnecting}
                                 className="flex-1 py-2.5 border border-[var(--glass-border)] rounded-xl text-[var(--text-secondary)] font-medium hover:bg-[var(--glass-surface)] text-sm"
                             >
-                                {t('common.cancel') || 'Huỷ'}
+                                {t('common.cancel')}
                             </button>
                             <button
                                 onClick={handleDisconnect}
@@ -586,7 +586,7 @@ const FacebookPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseC
                                 className="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors text-sm disabled:opacity-70 flex items-center justify-center gap-2"
                             >
                                 {disconnecting && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
-                                {t('ent.disconnect_confirm') || 'Ngắt kết nối'}
+                                {t('ent.disconnect_confirm')}
                             </button>
                         </div>
                     </div>
@@ -693,7 +693,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
 
     const handleSave = async () => {
         if (sso.enabled && (!sso.issuerUrl || !sso.clientId)) {
-            notify(t('ent.sso_save_error') || 'Issuer URL và Client ID là bắt buộc khi SSO được bật', 'error');
+            notify(t('ent.sso_save_error'), 'error');
             return;
         }
         setSaving(true);
@@ -988,7 +988,7 @@ const AuditPanel = memo(() => {
                                 <tr><td colSpan={5} className="p-10 text-center text-rose-500">{error}</td></tr>
                             )}
                             {!loading && !error && logs.length === 0 && (
-                                <tr><td colSpan={5} className="p-10 text-center text-[var(--text-secondary)] italic">{t('common.no_data') || 'Chưa có nhật ký nào'}</td></tr>
+                                <tr><td colSpan={5} className="p-10 text-center text-[var(--text-secondary)] italic">{t('common.no_data')}</td></tr>
                             )}
                             {!loading && logs.map(log => (
                                 <tr key={log.id} className="hover:bg-[var(--glass-surface)] transition-colors">

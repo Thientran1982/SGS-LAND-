@@ -69,12 +69,12 @@ export const KnowledgeBase: React.FC = () => {
         const validTypes = ['.pdf', '.docx', '.doc', '.txt'];
         const isValidType = validTypes.some(type => file.name.toLowerCase().endsWith(type));
         if (!isValidType) {
-            notify(t('knowledge.error_type') || 'Chỉ hỗ trợ định dạng PDF, DOCX, TXT', 'error');
+            notify(t('knowledge.error_type'), 'error');
             return false;
         }
         const maxSize = 10 * 1024 * 1024;
         if (file.size > maxSize) {
-            notify(`${file.name}: ${t('knowledge.error_size') || 'Kích thước file vượt quá 10MB'}`, 'error');
+            notify(`${file.name}: ${t('knowledge.error_size')}`, 'error');
             return false;
         }
         try {
@@ -94,7 +94,7 @@ export const KnowledgeBase: React.FC = () => {
             return true;
         } catch (err: any) {
             console.error('[KnowledgeBase] Upload failed:', err);
-            notify(`${file.name}: ${err?.message || t('common.error') || 'Đã xảy ra lỗi'}`, 'error');
+            notify(`${file.name}: ${err?.message || t('common.error')}`, 'error');
             return false;
         }
     };
@@ -114,7 +114,7 @@ export const KnowledgeBase: React.FC = () => {
         if (successCount > 0) {
             notify(
                 files.length === 1
-                    ? (t('knowledge.upload_success') || 'Tải lên thành công')
+                    ? t('knowledge.upload_success')
                     : `${successCount}/${files.length} file tải lên thành công`,
                 'success'
             );
@@ -150,24 +150,20 @@ export const KnowledgeBase: React.FC = () => {
         try {
             await db.deleteDocument(id);
             setDocs(prev => (prev || []).filter(d => d.id !== id));
-            notify(t('knowledge.delete_success') || 'Xóa thành công', 'success');
+            notify(t('knowledge.delete_success'), 'success');
             setConfirmDeleteId(null);
         } catch (error: any) {
-            notify(error?.message || t('common.error') || 'Đã xảy ra lỗi', 'error');
+            notify(error?.message || t('common.error'), 'error');
         } finally {
             setIsDeleting(false);
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading') || 'Đang tải...'}</div>;
+    if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
+        <>
         <div className="space-y-6 pt-6 pb-20 animate-enter relative max-w-6xl mx-auto px-4 md:px-6">
-            {toast && (
-            <div className={`fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 sm:max-w-sm z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
-                <span className="font-bold text-sm flex-1">{toast.msg}</span>
-            </div>
-            )}
 
             {/* Page Header */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -185,10 +181,10 @@ export const KnowledgeBase: React.FC = () => {
                             {ICONS.TRASH}
                         </div>
                         <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
-                            {t('knowledge.confirm_delete') || 'Bạn có chắc chắn muốn xóa tài liệu này?'}
+                            {t('knowledge.confirm_delete')}
                         </h3>
                         <p className="text-[var(--text-tertiary)] text-sm mb-6">
-                            {t('knowledge.delete_warning') || 'Hành động này không thể hoàn tác. Tài liệu và file vật lý sẽ bị xóa hoàn toàn khỏi hệ thống.'}
+                            {t('knowledge.delete_warning')}
                         </p>
                         <div className="flex gap-3">
                             <button
@@ -196,7 +192,7 @@ export const KnowledgeBase: React.FC = () => {
                                 disabled={isDeleting}
                                 className="flex-1 px-4 py-3 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-secondary)] font-bold rounded-xl transition-colors disabled:opacity-50"
                             >
-                                {t('common.cancel') || 'Hủy'}
+                                {t('common.cancel')}
                             </button>
                             <button
                                 onClick={() => handleDelete(confirmDeleteId)}
@@ -204,7 +200,7 @@ export const KnowledgeBase: React.FC = () => {
                                 className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-rose-600/20 disabled:opacity-60 flex items-center justify-center gap-2"
                             >
                                 {isDeleting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                                {isDeleting ? '...' : (t('common.delete') || 'Xóa')}
+                                {isDeleting ? '...' : t('common.delete')}
                             </button>
                         </div>
                     </div>
@@ -220,7 +216,7 @@ export const KnowledgeBase: React.FC = () => {
                         </div>
                         <input 
                             className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
-                            placeholder={t('knowledge.search_placeholder') || 'Tìm kiếm tài liệu...'}
+                            placeholder={t('knowledge.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
@@ -229,7 +225,7 @@ export const KnowledgeBase: React.FC = () => {
                                 <button 
                                     onClick={() => setSearch('')}
                                     className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
-                                    title={t('knowledge.clear_search') || 'Xóa tìm kiếm'}
+                                    title={t('knowledge.clear_search')}
                                 >
                                     {ICONS.X}
                                 </button>
@@ -254,10 +250,10 @@ export const KnowledgeBase: React.FC = () => {
                 <div className="flex flex-col items-center justify-center pointer-events-none">
                     {ICONS.CLOUD}
                     <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-2">
-                        {isDragging ? (t('knowledge.drop_here') || 'Thả file vào đây') : (t('knowledge.drag_drop') || 'Kéo thả tài liệu vào đây')}
+                        {isDragging ? t('knowledge.drop_here') : t('knowledge.drag_drop')}
                     </h3>
                     <p className="text-xs sm:text-sm text-[var(--text-tertiary)] mb-5 sm:mb-6 max-w-md">
-                        {t('knowledge.upload_desc') || 'Hỗ trợ PDF, DOCX, TXT. Tối đa 10MB mỗi file. Có thể chọn nhiều file cùng lúc.'}
+                        {t('knowledge.upload_desc')}
                     </p>
                 </div>
                 <label className={`relative z-10 inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95 cursor-pointer ${isUploading ? 'opacity-70 pointer-events-none' : ''}`}>
@@ -285,7 +281,7 @@ export const KnowledgeBase: React.FC = () => {
             {/* Documents Grid */}
             <div>
                 <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-                    {t('knowledge.uploaded_docs') || 'Tài liệu đã tải lên'}
+                    {t('knowledge.uploaded_docs')}
                     <span className="px-2.5 py-0.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] rounded-full text-xs font-bold">{docs.length}</span>
                 </h3>
 
@@ -310,12 +306,12 @@ export const KnowledgeBase: React.FC = () => {
                                 {doc.status === 'PROCESSING' ? (
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-2 h-2 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                                        <span className="text-xs3 font-bold text-amber-600 uppercase tracking-wider">{t('knowledge.status_processing') || 'Đang xử lý'}</span>
+                                        <span className="text-xs3 font-bold text-amber-600 uppercase tracking-wider">{t('knowledge.status_processing')}</span>
                                     </div>
                                 ) : doc.status === 'INACTIVE' ? (
                                     <div className="flex items-center gap-1.5">
                                         <span className="inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
-                                        <span className="text-xs3 font-bold text-[var(--text-secondary)] uppercase tracking-wider">{t('knowledge.status_inactive') || 'Không hoạt động'}</span>
+                                        <span className="text-xs3 font-bold text-[var(--text-secondary)] uppercase tracking-wider">{t('knowledge.status_inactive')}</span>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-1.5">
@@ -323,14 +319,14 @@ export const KnowledgeBase: React.FC = () => {
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                         </span>
-                                        <span className="text-xs3 font-bold text-emerald-600 uppercase tracking-wider">{t('knowledge.status_indexed') || 'Đã học xong'}</span>
+                                        <span className="text-xs3 font-bold text-emerald-600 uppercase tracking-wider">{t('knowledge.status_indexed')}</span>
                                     </div>
                                 )}
                                 {canManage && (
                                     <button
                                         onClick={() => setConfirmDeleteId(doc.id)}
                                         className="p-1.5 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                                        title={t('knowledge.delete_doc') || 'Xóa tài liệu'}
+                                        title={t('knowledge.delete_doc')}
                                     >
                                         {ICONS.TRASH}
                                     </button>
@@ -355,6 +351,15 @@ export const KnowledgeBase: React.FC = () => {
                 )}
             </div>
         </div>
+        {createPortal(
+            toast ? (
+                <div className={`fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 sm:max-w-sm z-[100] px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    <span className="font-bold text-sm flex-1">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };
 

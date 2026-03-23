@@ -232,7 +232,7 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                         `}
                                     >
                                         {isAccepting ? (
-                                            <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('common.loading') || 'Đang xử lý...'}</>
+                                            <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('common.loading')}</>
                                         ) : accepted ? (
                                             <>{ICONS.CHECK} {t('pub.thank_you')}</>
                                         ) : (

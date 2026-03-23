@@ -1156,8 +1156,8 @@ export const Inventory: React.FC = () => {
 
             <ConfirmModal 
                 isOpen={!!itemToDelete}
-                title={t('common.delete')}
-                message={t('common.confirm_delete')}
+                title={t('inventory.confirm_delete_title')}
+                message={t('inventory.confirm_delete_message')}
                 confirmLabel={t('common.delete')}
                 cancelLabel={t('common.cancel')}
                 onConfirm={confirmDelete}

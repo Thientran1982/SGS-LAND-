@@ -62,14 +62,14 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
             <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-[24px] p-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('common.share_link') || 'Chia sẻ liên kết'}</h3>
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('common.share_link')}</h3>
                     <button onClick={onClose} className="p-2 bg-[var(--glass-surface)] hover:bg-[var(--glass-surface-hover)] rounded-full text-[var(--text-secondary)] transition-colors">
                         {ICONS.CLOSE}
                     </button>
                 </div>
                 
                 <p className="text-sm text-[var(--text-tertiary)] mb-4 leading-relaxed">
-                    {t('common.share_desc') || 'Sao chép đường dẫn bên dưới để gửi cho khách hàng hoặc đồng nghiệp.'}
+                    {t('common.share_desc')}
                 </p>
 
                 <div className="bg-[var(--glass-surface)] p-3 rounded-xl border border-[var(--glass-border)] flex items-center gap-2 mb-4 group focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
@@ -86,7 +86,7 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
                     className={`w-full py-3 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 ${copied ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
                 >
                     {copied ? ICONS.CHECK : ICONS.COPY}
-                    {copied ? t('common.copied') : t('common.copy_link') || 'Sao chép đường dẫn'}
+                    {copied ? t('common.copied') : t('common.copy_link')}
                 </button>
             </div>
         </div>,
@@ -311,10 +311,10 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         try {
             await db.deleteListing(unitToDelete.id);
             fetchUnits();
-            notify(t('common.success') || 'Thành công', 'success');
+            notify(t('common.success'), 'success');
         } catch (e: any) {
             console.error(e);
-            notify(e.message || t('common.error') || 'Có lỗi xảy ra', 'error');
+            notify(e.message || t('common.error'), 'error');
         } finally {
             setDeleteConfirmOpen(false);
             setUnitToDelete(null);
@@ -332,10 +332,10 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
             }
             fetchUnits();
             setIsFormOpen(false);
-            notify(t('common.success') || 'Thành công', 'success');
+            notify(t('common.success'), 'success');
         } catch (e: any) {
             console.error(e);
-            notify(e.message || t('common.error') || 'Có lỗi xảy ra', 'error');
+            notify(e.message || t('common.error'), 'error');
         }
     };
 
@@ -469,10 +469,10 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                 
                 fetchUnits();
                 if (fileInputRef.current) fileInputRef.current.value = '';
-                notify(t('inventory.import_success') || 'Nhập dữ liệu thành công!', 'success');
+                notify(t('inventory.import_success'), 'success');
             } catch (error) {
                 console.error("Error importing excel:", error);
-                notify(t('inventory.import_error') || 'Có lỗi xảy ra khi nhập dữ liệu.', 'error');
+                notify(t('inventory.import_error'), 'error');
             }
         };
         reader.readAsArrayBuffer(file);
@@ -483,10 +483,10 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
     if (!isAuth) return null;
 
     return (
+        <>
         <div className="mt-8 relative">
-            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('inventory.project_units') || 'Danh sách sản phẩm thuộc dự án'}</h3>
+                <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('inventory.project_units')}</h3>
                 {canManageUnits && (
                     <div className="flex flex-wrap items-center gap-2">
                         <input 
@@ -499,25 +499,25 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                         <button 
                             onClick={() => fileInputRef.current?.click()}
                             className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm"
-                            title={t('inventory.import_excel') || 'Nhập Excel'}
+                            title={t('inventory.import_excel')}
                         >
                             <Upload className="w-4 h-4" />
-                            <span className="hidden sm:inline">{t('inventory.import_excel') || 'Nhập Excel'}</span>
+                            <span className="hidden sm:inline">{t('inventory.import_excel')}</span>
                         </button>
                         <button 
                             onClick={handleExportExcel}
                             className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm"
-                            title={t('inventory.export_excel') || 'Xuất Excel'}
+                            title={t('inventory.export_excel')}
                         >
                             <Download className="w-4 h-4" />
-                            <span className="hidden sm:inline">{t('inventory.export_excel') || 'Xuất Excel'}</span>
+                            <span className="hidden sm:inline">{t('inventory.export_excel')}</span>
                         </button>
                         <button 
                             onClick={handleAddUnit}
                             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
                         >
                             <Plus className="w-4 h-4" />
-                            <span className="hidden sm:inline">{t('inventory.add_unit') || 'Thêm sản phẩm'}</span>
+                            <span className="hidden sm:inline">{t('inventory.add_unit')}</span>
                         </button>
                     </div>
                 )}
@@ -530,8 +530,8 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                         </div>
                         <div>
-                            <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty') || 'Kho hàng trống'}</p>
-                            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_units_hint') || 'Dự án chưa có sản phẩm nào. Thêm căn hộ/sản phẩm đầu tiên.'}</p>
+                            <p className="font-bold text-sm text-[var(--text-primary)]">{t('inventory.empty')}</p>
+                            <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('inventory.empty_units_hint')}</p>
                         </div>
                     </div>
                 ) : (
@@ -689,6 +689,15 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                 variant="danger"
             />
         </div>
+        {createPortal(
+            toast ? (
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 });
 
@@ -830,10 +839,10 @@ export const ListingDetail: React.FC = () => {
                 });
             }
 
-            notify(t('common.success') || 'Đặt lịch thành công! Chúng tôi sẽ liên hệ lại sớm nhất.', 'success');
+            notify(t('common.success'), 'success');
         } catch (error) {
             console.error(error);
-            notify(t('common.error') || 'Có lỗi xảy ra, vui lòng thử lại sau.', 'error');
+            notify(t('common.error'), 'error');
         }
         setBookingOpen(false);
     };
@@ -959,11 +968,11 @@ export const ListingDetail: React.FC = () => {
     // Format contact phone for display (add spaces for readability)
     const displayPhone = listing.contactPhone
         ? listing.contactPhone.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3')
-        : (t('common.contact_on_site') || 'Liên hệ trực tiếp');
+        : t('common.contact_on_site');
 
     return (
+        <>
         <article className="h-[100dvh] overflow-y-auto no-scrollbar bg-[var(--bg-surface)] pb-28 lg:pb-20 animate-enter relative">
-            {toast && <div className={`fixed top-6 right-4 md:right-6 z-[100] px-4 md:px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border max-w-[calc(100vw-2rem)] ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}><span className="font-bold text-sm break-words">{toast.msg}</span></div>}
 
             {/* Header */}
             <div className="sticky top-0 z-40 bg-[var(--bg-surface)]/80 backdrop-blur-md border-b border-[var(--glass-border)] px-4 py-3 md:px-6 md:py-4 flex justify-between items-center gap-2">
@@ -979,7 +988,7 @@ export const ListingDetail: React.FC = () => {
                         type="button"
                         onClick={handleToggleFavorite}
                         className={`p-2 rounded-full transition-colors ${listing?.isFavorite ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50'}`}
-                        title={listing?.isFavorite ? (t('favorites.remove') || 'Bỏ yêu thích') : (t('favorites.add') || 'Yêu thích')}
+                        title={listing?.isFavorite ? t('favorites.remove') : t('favorites.add')}
                     >
                         <svg className="w-5 h-5 pointer-events-none" fill={listing?.isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -989,7 +998,7 @@ export const ListingDetail: React.FC = () => {
                         type="button"
                         onClick={handleShare} 
                         className="p-2 text-[var(--text-secondary)] hover:text-indigo-600 rounded-full hover:bg-[var(--glass-surface)] transition-colors" 
-                        title={t('common.share_link') || 'Chia sẻ'}
+                        title={t('common.share_link')}
                     >
                         {ICONS.SHARE}
                     </button>
@@ -1044,7 +1053,7 @@ export const ListingDetail: React.FC = () => {
                         onClick={() => { setLightboxIndex(0); setLightboxOpen(true); }}
                         className="absolute bottom-4 right-4 z-20 bg-[var(--bg-surface)]/90 backdrop-blur-md hover:bg-[var(--bg-surface)] text-[var(--text-primary)] px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition-all hover:scale-105 active:scale-95 border border-white/20"
                     >
-                        {t('common.view_all') || 'Xem tất cả'} ({images.length})
+                        {t('common.view_all')} ({images.length})
                     </button>
                 </div>
             </div>
@@ -1063,7 +1072,7 @@ export const ListingDetail: React.FC = () => {
                             <span className="mx-2 text-[var(--text-secondary)] hidden sm:inline">|</span>
                             <span className="flex items-center gap-1">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                {listing.viewCount || 0} {t('common.views') || 'lượt xem'}
+                                {listing.viewCount || 0} {t('common.views')}
                             </span>
                         </div>
                     </div>
@@ -1353,5 +1362,14 @@ export const ListingDetail: React.FC = () => {
                 t={t} 
             />
         </article>
+        {createPortal(
+            toast ? (
+                <div className={`fixed top-6 right-4 md:right-6 z-[100] px-4 md:px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border max-w-[calc(100vw-2rem)] ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    <span className="font-bold text-sm break-words">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };
