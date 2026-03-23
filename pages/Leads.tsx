@@ -1388,18 +1388,18 @@ export const Leads: React.FC = () => {
                                         </span>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 mb-4 py-3 border-t border-b border-slate-50">
+                                    <div className="grid grid-cols-2 gap-3 mb-3 py-2.5 border-t border-b border-[var(--glass-border)]">
                                         <div>
-                                            <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase mb-0.5">{t('leads.col_phone')}</div>
-                                            <div className="text-xs font-bold text-[var(--text-secondary)] font-mono">{lead.phone}</div>
+                                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-0.5">{t('leads.col_phone')}</div>
+                                            <div className="text-xs font-bold text-[var(--text-primary)] font-mono">{lead.phone}</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-2xs font-bold text-[var(--text-secondary)] uppercase mb-0.5">{t('leads.score')}</div>
+                                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-0.5">{t('leads.score')}</div>
                                             <div className="flex items-center justify-end gap-1.5">
-                                                <div className="w-12 h-1 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
-                                                    <div className={`h-full ${lead.score?.score >= 70 ? 'bg-emerald-500' : lead.score?.score >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${lead.score?.score || 0}%` }} />
+                                                <div className="w-12 h-1.5 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
+                                                    <div className={`h-full rounded-full ${lead.score?.score >= 70 ? 'bg-emerald-500' : lead.score?.score >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${lead.score?.score || 0}%` }} />
                                                 </div>
-                                                <span className="text-xs font-bold text-[var(--text-secondary)]">{lead.score?.score || 0}</span>
+                                                <span className="text-xs font-bold text-[var(--text-primary)]">{lead.score?.score || 0}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1407,13 +1407,13 @@ export const Leads: React.FC = () => {
                                     <div className="flex gap-2">
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); setProposalLead(lead); }} 
-                                            className="flex-1 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl text-xs3 font-bold flex items-center justify-center gap-1.5 active:bg-indigo-100 transition-colors"
+                                            className="flex-1 min-h-[40px] py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 active:bg-indigo-100 transition-colors"
                                         >
                                             {ICONS.PROPOSAL} {t('leads.create_proposal')}
                                         </button>
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); handleDeleteClick(lead); }} 
-                                            className="w-10 h-10 flex items-center justify-center text-rose-400 bg-rose-50 rounded-xl active:bg-rose-100 transition-colors"
+                                            className="w-10 h-10 flex items-center justify-center text-rose-400 bg-rose-50 rounded-xl active:bg-rose-100 transition-colors shrink-0"
                                         >
                                             {ICONS.TRASH}
                                         </button>
