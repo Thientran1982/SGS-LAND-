@@ -729,7 +729,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
             <div className={`bg-[var(--bg-surface)] p-6 md:p-8 rounded-[24px] border border-[var(--glass-border)] shadow-sm space-y-6 transition-opacity ${!sso.enabled ? 'opacity-50' : 'opacity-100'}`}>
                 <div className={`space-y-6 ${!sso.enabled ? 'pointer-events-none' : ''}`}>
                     <div>
-                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Provider</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_provider')}</label>
                         <div className="flex gap-3">
                             {(['OIDC', 'SAML'] as const).map(p => (
                                 <button key={p} onClick={() => setSso({...sso, provider: p})}

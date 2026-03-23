@@ -465,14 +465,14 @@ export const AdminUsers: React.FC = () => {
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                             <span className="hidden sm:inline text-xs2 font-bold text-emerald-600 uppercase tracking-wide">{t('admin.users.active_users')}</span>
-                            <span className="sm:hidden text-2xs font-bold text-emerald-600 uppercase">HĐ</span>
+                            <span className="sm:hidden text-2xs font-bold text-emerald-600 uppercase">{t('admin.users.mobile_active')}</span>
                             <span className="text-xs sm:text-sm font-black text-emerald-700">{stats.activeCount}</span>
                         </div>
                         {/* Chờ duyệt */}
                         <div className="flex items-center gap-1 sm:gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2 sm:px-3 py-1.5 shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
                             <span className="hidden sm:inline text-xs2 font-bold text-amber-600 uppercase tracking-wide">{t('admin.users.pending_invites')}</span>
-                            <span className="sm:hidden text-2xs font-bold text-amber-600 uppercase">Chờ</span>
+                            <span className="sm:hidden text-2xs font-bold text-amber-600 uppercase">{t('admin.users.mobile_pending')}</span>
                             <span className="text-xs sm:text-sm font-black text-amber-700">{stats.pendingCount}</span>
                         </div>
                     </div>
@@ -484,7 +484,7 @@ export const AdminUsers: React.FC = () => {
                     >
                         {ICONS.ADD}
                         <span className="hidden sm:inline">{t('admin.users.invite')}</span>
-                        <span className="sm:hidden">Mời</span>
+                        <span className="sm:hidden">{t('admin.users.invite_short')}</span>
                     </button>
                 </div>
 
