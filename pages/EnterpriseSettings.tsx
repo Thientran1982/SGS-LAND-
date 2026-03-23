@@ -740,10 +740,10 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_issuer')} {sso.provider === 'OIDC' ? '(Discovery URL)' : ''}</label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_issuer')} {sso.provider === 'OIDC' ? t('ent.sso_discovery_suffix') : ''}</label>
                         <input placeholder={sso.provider === 'SAML' ? 'https://idp.example.com/saml' : 'https://dev-123.okta.com'} className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.issuerUrl || ''} onChange={e => setSso({...sso, issuerUrl: e.target.value.trim()})} />
                         {sso.provider === 'OIDC' && sso.issuerUrl && (
-                            <p className="text-xs3 text-[var(--text-secondary)] mt-1 font-mono">Discovery: {sso.issuerUrl.replace(/\/$/, '')}/.well-known/openid-configuration</p>
+                            <p className="text-xs3 text-[var(--text-secondary)] mt-1 font-mono">{t('ent.sso_discovery_prefix')} {sso.issuerUrl.replace(/\/$/, '')}/.well-known/openid-configuration</p>
                         )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -760,7 +760,7 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">Login URL <span className="text-[var(--text-secondary)] normal-case font-normal">{t('ent.sso_login_url_optional')}</span></label>
+                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_login_url')} <span className="text-[var(--text-secondary)] normal-case font-normal">{t('ent.sso_login_url_optional')}</span></label>
                         <input type="url" placeholder="https://idp.example.com/sso/login" className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.loginUrl || ''} onChange={e => setSso({...sso, loginUrl: e.target.value.trim()})} />
                     </div>
                     <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
@@ -781,9 +781,9 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                                     <p className="font-bold mb-2">{t('ent.sso_verify_valid')}</p>
                                     {verifyResult.metadata && (
                                         <div className="space-y-1 text-xs3 font-mono">
-                                            <p><span className="text-emerald-600 font-bold">Issuer:</span> {verifyResult.metadata.issuer}</p>
-                                            <p><span className="text-emerald-600 font-bold">Auth Endpoint:</span> {verifyResult.metadata.authorizationEndpoint}</p>
-                                            <p><span className="text-emerald-600 font-bold">Token Endpoint:</span> {verifyResult.metadata.tokenEndpoint}</p>
+                                            <p><span className="text-emerald-600 font-bold">{t('ent.sso_meta_issuer')}</span> {verifyResult.metadata.issuer}</p>
+                                            <p><span className="text-emerald-600 font-bold">{t('ent.sso_meta_auth_endpoint')}</span> {verifyResult.metadata.authorizationEndpoint}</p>
+                                            <p><span className="text-emerald-600 font-bold">{t('ent.sso_meta_token_endpoint')}</span> {verifyResult.metadata.tokenEndpoint}</p>
                                         </div>
                                     )}
                                 </div>

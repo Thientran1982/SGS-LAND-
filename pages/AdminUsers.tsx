@@ -595,7 +595,7 @@ export const AdminUsers: React.FC = () => {
                                                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${user.status === CommonStatus.ACTIVE ? 'bg-emerald-500' : user.status === CommonStatus.PENDING ? 'bg-amber-500' : user.status === CommonStatus.DEACTIVATED ? 'bg-orange-400' : user.status === CommonStatus.ARCHIVED ? 'bg-slate-400' : 'bg-slate-400'}`}></span>
                                                 {/* Mobile: short label | Desktop: full label */}
                                                 <span className="sm:hidden">
-                                                    {user.status === CommonStatus.ACTIVE ? t('admin.users.mobile_active') : user.status === CommonStatus.PENDING ? t('admin.users.mobile_pending') : t('admin.users.mobile_inactive')}
+                                                    {user.status === CommonStatus.ACTIVE ? t('admin.users.mobile_active') : user.status === CommonStatus.PENDING ? t('admin.users.mobile_pending') : user.status === CommonStatus.DEACTIVATED ? t('admin.users.mobile_deactivated') : user.status === CommonStatus.ARCHIVED ? t('admin.users.mobile_archived') : t('admin.users.mobile_inactive')}
                                                 </span>
                                                 <span className="hidden sm:inline">{t(`admin.users.status_${user.status.toLowerCase()}`)}</span>
                                             </button>
