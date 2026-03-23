@@ -78,8 +78,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
             {/* Background Blur Layer */}
             <div className="absolute inset-0 bg-[var(--bg-surface)]/80 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm z-0 rounded-none sm:rounded-t-[24px]"></div>
 
-            {/* LEFT: Context Breadcrumbs & Mobile Menu */}
-            <div className="flex items-center gap-3 sm:gap-4 relative z-10 min-w-0 flex-1 sm:flex-none mr-2">
+            {/* LEFT: Mobile Menu + Global Search */}
+            <div className="flex items-center gap-3 sm:gap-4 relative z-10 flex-1 min-w-0 mr-2">
                 <button
                     onClick={onMenuClick}
                     className="md:hidden p-3 -ml-2 min-h-[44px] min-w-[44px] text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] dark:hover:bg-[var(--bg-surface)]/10 rounded-xl transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 shrink-0"
@@ -89,25 +89,19 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                     {ICONS.MENU}
                 </button>
 
-                <div className="flex flex-col justify-center animate-enter min-w-0">
-                    <p className="text-sm sm:text-base font-extrabold text-[var(--text-primary)] tracking-tight leading-none truncate w-full" aria-live="polite">
-                        {title}
-                    </p>
+                {/* Global Search Trigger (Desktop) — moved to left area */}
+                <div className="hidden md:flex flex-1 max-w-lg relative z-10">
+                    <button 
+                        onClick={onSearch}
+                        aria-label={t('common.search')}
+                        className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 border border-[var(--glass-border)] dark:border-white/10 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--bg-surface)] dark:hover:bg-[var(--bg-surface)]/10 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/10 active:scale-[0.98]"
+                    >
+                        <div className="flex items-center gap-3">
+                            {ICONS.SEARCH}
+                            <span className="font-medium">{t('common.search')}</span>
+                        </div>
+                    </button>
                 </div>
-            </div>
-
-            {/* MIDDLE: Global Search Trigger (Desktop) */}
-            <div className="hidden md:flex flex-1 max-w-lg mx-4 lg:mx-12 relative z-10">
-                <button 
-                    onClick={onSearch}
-                    aria-label={t('common.search')}
-                    className="w-full group relative flex items-center justify-between bg-[var(--glass-surface-hover)]/50 dark:bg-white/5 border border-[var(--glass-border)] dark:border-white/10 rounded-2xl px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--bg-surface)] dark:hover:bg-[var(--bg-surface)]/10 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/10 active:scale-[0.98]"
-                >
-                    <div className="flex items-center gap-3">
-                        {ICONS.SEARCH}
-                        <span className="font-medium">{t('common.search')}</span>
-                    </div>
-                </button>
             </div>
 
             {/* RIGHT: Actions & Profile */}
