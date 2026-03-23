@@ -257,6 +257,12 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 - Print: `Noto Serif`
 - Dark mode: `class` strategy on `<html>`, persisted in `localStorage` key `sgs_theme`
 
+### SecurityCompliance.tsx Audit & Fix (March 2026)
+3 bugs resolved in `pages/SecurityCompliance.tsx`:
+1. **Toast not in portal** — `fixed` toast inside root `animate-enter` div; moved to `createPortal(document.body)` with Fragment `<>` wrapper
+2. **Root container missing `p-4 sm:p-6`** — added to `div.space-y-6 pb-20 animate-enter relative`
+3. **DLP action badge wrong key for LOG_ONLY** — `'LOG_ONLY'.toLowerCase().replace('_','')` produced `'logonly'` → key `security.action_logonly` (missing) → displayed raw key in UI; replaced with static lookup map `{ REDACT: 'security.action_redact', BLOCK: 'security.action_block', LOG_ONLY: 'security.action_log' }`
+
 ### EnterpriseSettings.tsx Audit & Fix (March 2026)
 6 nhóm bug đã vá trong `pages/EnterpriseSettings.tsx`:
 1. **Toast không trong portal** — `fixed` toast bên trong `animate-enter` container, đã chuyển sang `createPortal(document.body)`, thêm Fragment `<>` bọc ngoài

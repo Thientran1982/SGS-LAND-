@@ -127,8 +127,8 @@ export const SecurityCompliance: React.FC = () => {
     if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
-        <div className="space-y-6 pb-20 animate-enter relative">
-            {toast && <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}><span className="font-bold text-sm">{toast.msg}</span></div>}
+        <>
+        <div className="space-y-6 pb-20 animate-enter relative p-4 sm:p-6">
 
             <div className="flex justify-between items-center bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                 <div>
@@ -194,7 +194,7 @@ export const SecurityCompliance: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className={`text-xs2 font-bold px-2 py-0.5 rounded border ${rule.action === 'BLOCK' ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-[var(--glass-surface-hover)] border-[var(--glass-border)] text-[var(--text-tertiary)]'}`}>
-                                            {t(`security.action_${rule.action.toLowerCase().replace('_', '')}`) || rule.action}
+                                            {t({ REDACT: 'security.action_redact', BLOCK: 'security.action_block', LOG_ONLY: 'security.action_log' }[rule.action] ?? `security.action_${rule.action.toLowerCase()}`)}
                                         </span>
                                         <input type="checkbox" checked={rule.enabled} onChange={() => toggleRule(rule.id)} className="toggle accent-indigo-500 w-4 h-4 cursor-pointer" />
                                         <button onClick={() => handleDeleteRule(rule.id)} className="text-[var(--text-secondary)] hover:text-rose-500 transition-colors">{ICONS.TRASH}</button>
@@ -244,5 +244,19 @@ export const SecurityCompliance: React.FC = () => {
 
             <RuleEditor isOpen={isEditorOpen} onClose={() => setIsEditorOpen(false)} onSave={handleAddRule} t={t} />
         </div>
+        {createPortal(
+            toast ? (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 border ${toast.type === 'success' ? 'bg-emerald-900/90 text-emerald-100 border-emerald-500' : 'bg-rose-900/90 text-rose-100 border-rose-500'}`}
+                >
+                    <span className="font-bold text-sm">{toast.msg}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
     );
 };
