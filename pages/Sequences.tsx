@@ -306,7 +306,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
     useEffect(() => {
         if (isOpen && sequence) {
             setName(sequence.name);
-            setTriggerStage(sequence.triggerStage);
+            setTriggerStage(sequence.triggerEvent);
             setIsActive(sequence.isActive ?? false);
             setSteps((sequence.steps as unknown as Step[]) || []);
         }
@@ -383,7 +383,7 @@ const SequenceDrawer: React.FC<SequenceDrawerProps> = ({ isOpen, onClose, sequen
                             >
                                 {isActive ? t('seq.status_active') : t('seq.status_draft')}
                             </button>
-                            <span className="text-xs text-[var(--text-tertiary)]">{steps.length} {t('seq.steps_count', { count: '' }).replace('{count} ', '')}</span>
+                            <span className="text-xs text-[var(--text-tertiary)]">{steps.length} {t('seq.steps_unit')}</span>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors text-[var(--text-secondary)]">
@@ -539,8 +539,8 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
         </div>
 
         <div className="flex justify-between items-center text-xs text-[var(--text-tertiary)]">
-            <span>{t('seq.steps_count', { count: sequence.steps.length })}</span>
-            <span className="font-mono text-xs2 px-2 py-0.5 bg-[var(--glass-surface-hover)] rounded">{t(`stage.${sequence.triggerStage}`)}</span>
+            <span>{sequence.steps.length} {t('seq.steps_unit')}</span>
+            <span className="font-mono text-xs2 px-2 py-0.5 bg-[var(--glass-surface-hover)] rounded">{t(`stage.${sequence.triggerEvent}`)}</span>
         </div>
 
         <button
@@ -599,7 +599,7 @@ export const Sequences: React.FC = () => {
         try {
             const newSeq = await db.createSequence({
                 name: `${t('seq.default_name')} ${formatDate(new Date().toISOString())}`,
-                triggerStage: LeadStage.NEW,
+                triggerEvent: LeadStage.NEW,
                 steps: []
             });
             setSequences(prev => [newSeq, ...prev]);
@@ -617,7 +617,7 @@ export const Sequences: React.FC = () => {
     if (loading) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     return (
-        <div className="space-y-6 pb-20 animate-enter relative">
+        <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
             {toast && (
                 <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
                     <span className="font-bold text-sm">{toast.msg}</span>
@@ -634,17 +634,33 @@ export const Sequences: React.FC = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sequences.map(seq => (
-                    <SequenceCard
-                        key={seq.id}
-                        sequence={seq}
-                        onClick={() => setSelectedSeq(seq)}
-                        onDelete={() => setItemToDelete(seq.id)}
-                        t={t}
-                    />
-                ))}
-            </div>
+            {sequences.length === 0 ? (
+                <div className="text-center py-20 px-8 bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4 text-indigo-400">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                    </div>
+                    <p className="font-bold text-[var(--text-primary)] mb-2">{t('seq.empty_title')}</p>
+                    <p className="text-sm text-[var(--text-tertiary)] mb-6 max-w-sm mx-auto">{t('seq.empty_desc')}</p>
+                    <button
+                        onClick={handleCreate}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 text-sm"
+                    >
+                        {ICONS.ADD} {t('seq.btn_new')}
+                    </button>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {sequences.map(seq => (
+                        <SequenceCard
+                            key={seq.id}
+                            sequence={seq}
+                            onClick={() => setSelectedSeq(seq)}
+                            onDelete={() => setItemToDelete(seq.id)}
+                            t={t}
+                        />
+                    ))}
+                </div>
+            )}
 
             <SequenceDrawer
                 isOpen={!!selectedSeq}

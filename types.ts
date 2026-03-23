@@ -1033,7 +1033,7 @@ export interface SequenceStats {
 export interface Sequence {
     id: UUID;
     name: string;
-    triggerStage: LeadStage;
+    triggerEvent: LeadStage;
     steps: SequenceStep[];
     isActive?: boolean;
     stats?: SequenceStats; // Added metrics
