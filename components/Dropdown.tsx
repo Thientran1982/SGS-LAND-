@@ -38,10 +38,10 @@ const ICONS = {
 const STYLES = {
     LABEL: "block text-xs font-bold uppercase mb-1 ml-1 select-none transition-colors",
     BUTTON: "w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border transition-all duration-200 outline-none text-sm group",
-    // Outer container: overflow-hidden so border-radius clips content correctly at bottom edge
-    MENU: "fixed z-[10002] bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 animate-scale-up overflow-hidden text-sm focus:outline-none min-w-[120px]",
-    // Inner wrapper handles scrolling separately, so clipping is not broken by overflow-y-auto
-    MENU_INNER: "overflow-y-auto no-scrollbar overscroll-contain max-h-[320px] divide-y divide-[var(--glass-border)] dark:divide-white/5",
+    // Outer: overflow-hidden + max-h clips content at border-radius correctly; inner handles scrolling
+    MENU: "fixed z-[10002] bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 animate-scale-up overflow-hidden text-sm focus:outline-none min-w-[120px] max-h-[320px]",
+    // Inner: overflow-y-auto with NO max-h — height = content height, scrolls inside outer's bounds
+    MENU_INNER: "overflow-y-auto no-scrollbar overscroll-contain divide-y divide-[var(--glass-border)] dark:divide-white/5",
     OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group outline-none focus:bg-[var(--glass-surface)] dark:focus:bg-slate-800",
     
     // State variants
