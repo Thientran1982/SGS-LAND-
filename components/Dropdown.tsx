@@ -40,7 +40,7 @@ const STYLES = {
     BUTTON: "w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border transition-all duration-200 outline-none text-sm group",
     // Menu styles updated for Portal with Dark Mode
     MENU: "fixed z-[10002] bg-[var(--bg-surface)]/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-[var(--glass-border)]/50 dark:border-white/10 animate-scale-up overflow-y-auto no-scrollbar overscroll-contain text-sm focus:outline-none min-w-[120px] max-h-[320px]",
-    OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group border-b border-slate-50 dark:border-white/5 last:border-0 outline-none focus:bg-[var(--glass-surface)] dark:focus:bg-slate-800",
+    OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group border-b border-[var(--glass-border)] last:border-0 outline-none focus:bg-[var(--glass-surface)] dark:focus:bg-slate-800",
     
     // State variants
     DISABLED: "bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 cursor-not-allowed border-[var(--glass-border)] dark:border-slate-700",
