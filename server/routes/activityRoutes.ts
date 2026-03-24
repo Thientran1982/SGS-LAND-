@@ -33,7 +33,7 @@ export function createActivityRoutes(authenticateToken: any) {
   router.get('/summary', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Admin only' });
       }
 
@@ -49,7 +49,7 @@ export function createActivityRoutes(authenticateToken: any) {
   router.get('/user/:userId', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN' && user.role !== 'TEAM_LEAD') {
+      if (user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Admin only' });
       }
 

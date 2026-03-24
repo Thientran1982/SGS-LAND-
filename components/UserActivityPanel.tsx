@@ -9,6 +9,8 @@ interface ActivityUser {
   userRole: string;
   userAvatar?: string;
   totalViews: number;
+  views30d: number;
+  viewsInRange: number;
   firstVisit: string | null;
   lastVisit: string | null;
   topPage: string | null;
@@ -31,7 +33,7 @@ interface RecentVisit {
   ipAddress: string | null;
 }
 
-type DateRange = 'today' | '7d' | '30d' | 'all';
+type DateRange = 'today' | '7d' | '30d' | 'all' | 'custom';
 
 function formatDateTime(iso: string | null): string {
   if (!iso) return '—';
@@ -45,7 +47,7 @@ function formatDateShort(iso: string | null): string {
   return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function getFromDate(range: DateRange): string | undefined {
+function getPresetFromDate(range: Exclude<DateRange, 'custom'>): string | undefined {
   if (range === 'all') return undefined;
   const now = new Date();
   if (range === 'today') {
@@ -129,6 +131,21 @@ function UserDetailDrawer({ user, fromDate, onClose }: UserDetailDrawerProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-[var(--glass-surface)] rounded-xl p-3 text-center border border-[var(--glass-border)]">
+              <div className="text-xl font-bold text-[var(--primary-600)]">{user.totalViews}</div>
+              <div className="text-xs text-[var(--text-tertiary)]">Tổng lượt</div>
+            </div>
+            <div className="bg-[var(--glass-surface)] rounded-xl p-3 text-center border border-[var(--glass-border)]">
+              <div className="text-xl font-bold text-[var(--primary-600)]">{user.views30d}</div>
+              <div className="text-xs text-[var(--text-tertiary)]">30 ngày qua</div>
+            </div>
+            <div className="bg-[var(--glass-surface)] rounded-xl p-3 text-center border border-[var(--glass-border)]">
+              <div className="text-xl font-bold text-[var(--text-secondary)]">{user.totalSessions}</div>
+              <div className="text-xs text-[var(--text-tertiary)]">Phiên đăng nhập</div>
+            </div>
+          </div>
+
           {isLoading ? (
             <div className="space-y-3 animate-pulse">
               {[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-[var(--glass-surface)] rounded-xl" />)}
@@ -201,47 +218,85 @@ function UserDetailDrawer({ user, fromDate, onClose }: UserDetailDrawerProps) {
 
 export function UserActivityPanel() {
   const [range, setRange] = useState<DateRange>('30d');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
   const [selectedUser, setSelectedUser] = useState<ActivityUser | null>(null);
 
-  const fromDate = getFromDate(range);
+  const fromDate: string | undefined = range === 'custom'
+    ? (customFrom ? new Date(customFrom).toISOString() : undefined)
+    : getPresetFromDate(range as Exclude<DateRange, 'custom'>);
 
   const { data: users = [], isLoading } = useQuery<ActivityUser[]>({
     queryKey: ['activity-summary', fromDate],
     queryFn: () => db.getActivitySummary(fromDate),
     staleTime: 60_000,
+    enabled: range !== 'custom' || !!customFrom,
   });
+
+  const isCustomRangeActive = range === 'custom' && !!customFrom;
+  const showRangeCount = range !== 'all' && (range !== 'custom' || isCustomRangeActive);
 
   const rangeOptions: { key: DateRange; label: string }[] = [
     { key: 'today', label: 'Hôm nay' },
     { key: '7d', label: '7 ngày' },
     { key: '30d', label: '30 ngày' },
     { key: 'all', label: 'Tất cả' },
+    { key: 'custom', label: 'Tùy chọn' },
   ];
 
   return (
     <div className="animate-enter max-w-5xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h3 className="text-lg font-bold text-[var(--text-primary)]">Nhật Ký Truy Cập Người Dùng</h3>
-          <p className="text-sm text-[var(--text-tertiary)] mt-1">
-            Theo dõi lịch sử truy cập, trang đã xem và số lần đăng nhập của từng thành viên.
-          </p>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">Nhật Ký Truy Cập Người Dùng</h3>
+            <p className="text-sm text-[var(--text-tertiary)] mt-1">
+              Theo dõi lịch sử truy cập, trang đã xem và số lần đăng nhập của từng thành viên.
+            </p>
+          </div>
+          <div className="flex items-center gap-1 bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
+            {rangeOptions.map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => setRange(opt.key)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  range === opt.key
+                    ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)]'
+                    : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-1 bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
-          {rangeOptions.map(opt => (
-            <button
-              key={opt.key}
-              onClick={() => setRange(opt.key)}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                range === opt.key
-                  ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)]'
-                  : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+
+        {range === 'custom' && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-[var(--text-tertiary)] whitespace-nowrap">Từ ngày</label>
+              <input
+                type="date"
+                value={customFrom}
+                onChange={e => setCustomFrom(e.target.value)}
+                className="px-3 py-1.5 text-sm bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-600)] transition-all"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-[var(--text-tertiary)] whitespace-nowrap">Đến ngày</label>
+              <input
+                type="date"
+                value={customTo}
+                min={customFrom}
+                onChange={e => setCustomTo(e.target.value)}
+                className="px-3 py-1.5 text-sm bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-600)] transition-all"
+              />
+            </div>
+            {!customFrom && (
+              <span className="text-xs text-[var(--text-tertiary)]">Chọn ngày bắt đầu để lọc dữ liệu</span>
+            )}
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -270,13 +325,24 @@ export function UserActivityPanel() {
                     Vai trò
                   </th>
                   <th className="text-center px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide">
-                    Lượt xem
+                    Tổng lượt
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide hidden md:table-cell">
+                  <th className="text-center px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide hidden md:table-cell">
+                    30 ngày
+                  </th>
+                  {showRangeCount && (
+                    <th className="text-center px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide hidden md:table-cell">
+                      Trong kỳ
+                    </th>
+                  )}
+                  <th className="text-left px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide hidden xl:table-cell">
                     Trang hay xem nhất
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide hidden lg:table-cell">
-                    Truy cập cuối
+                    Lần đầu
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide hidden lg:table-cell">
+                    Lần cuối
                   </th>
                   <th className="text-center px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide hidden sm:table-cell">
                     Phiên
@@ -308,17 +374,30 @@ export function UserActivityPanel() {
                       <RoleChip role={u.userRole} />
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <div className="font-bold text-[var(--primary-600)] text-base">
-                        {u.totalViews}
-                      </div>
+                      <div className="font-bold text-[var(--primary-600)] text-base">{u.totalViews}</div>
                       <div className="text-xs text-[var(--text-tertiary)]">lượt</div>
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
+                    <td className="px-4 py-3 text-center hidden md:table-cell">
+                      <div className="font-semibold text-[var(--text-secondary)]">{u.views30d}</div>
+                      <div className="text-xs text-[var(--text-tertiary)]">lượt</div>
+                    </td>
+                    {showRangeCount && (
+                      <td className="px-4 py-3 text-center hidden md:table-cell">
+                        <div className="font-semibold text-[var(--text-secondary)]">{u.viewsInRange}</div>
+                        <div className="text-xs text-[var(--text-tertiary)]">lượt</div>
+                      </td>
+                    )}
+                    <td className="px-4 py-3 hidden xl:table-cell">
                       {u.topPage ? (
                         <span className="text-sm text-[var(--text-secondary)] font-medium">{u.topPage}</span>
                       ) : (
                         <span className="text-[var(--text-tertiary)]">—</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className="text-xs text-[var(--text-secondary)] tabular-nums">
+                        {formatDateShort(u.firstVisit)}
+                      </span>
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
                       <span className="text-xs text-[var(--text-secondary)] tabular-nums">

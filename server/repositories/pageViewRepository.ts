@@ -52,8 +52,8 @@ class PageViewRepository extends BaseRepository {
 
   async getUsersActivitySummary(tenantId: string, fromDate?: string): Promise<any[]> {
     return this.withTenant(tenantId, async (client) => {
-      const dateFilter = fromDate ? `AND visited_at >= $1` : '';
-      const topPageDateFilter = fromDate ? `AND pvt.visited_at >= $1` : '';
+      const rangeFilter = fromDate ? `COUNT(*) FILTER (WHERE visited_at >= $1)::int AS views_in_range,` : `0::int AS views_in_range,`;
+      const topPageRangeFilter = fromDate ? `AND pvt.visited_at >= $1` : '';
       const values: any[] = fromDate ? [fromDate] : [];
 
       const result = await client.query(
@@ -61,11 +61,12 @@ class PageViewRepository extends BaseRepository {
            SELECT
              user_id,
              COUNT(*)::int AS total_views,
+             COUNT(*) FILTER (WHERE visited_at >= NOW() - INTERVAL '30 days')::int AS views_30d,
+             ${rangeFilter}
              MIN(visited_at) AS first_visit,
              MAX(visited_at) AS last_visit
            FROM user_page_views
            WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
-             ${dateFilter}
            GROUP BY user_id
          ),
          s_agg AS (
@@ -81,6 +82,8 @@ class PageViewRepository extends BaseRepository {
            u.role AS user_role,
            u.avatar AS user_avatar,
            COALESCE(pv.total_views, 0) AS total_views,
+           COALESCE(pv.views_30d, 0) AS views_30d,
+           COALESCE(pv.views_in_range, 0) AS views_in_range,
            pv.first_visit,
            pv.last_visit,
            (
@@ -88,7 +91,7 @@ class PageViewRepository extends BaseRepository {
              FROM user_page_views pvt
              WHERE pvt.user_id = u.id
                AND pvt.tenant_id = current_setting('app.current_tenant_id', true)::uuid
-               ${topPageDateFilter}
+               ${topPageRangeFilter}
              GROUP BY pvt.page_label
              ORDER BY COUNT(*) DESC
              LIMIT 1
