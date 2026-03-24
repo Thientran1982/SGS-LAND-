@@ -88,7 +88,8 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
     try {
       const user = (req as any).user;
       const raw = await enterpriseConfigRepository.getThemeConfig(user.tenantId);
-      res.json(mergeThemeDefaults(raw));
+      const merged = mergeThemeDefaults(raw);
+      res.json({ ...merged, _tenantId: user.tenantId });
     } catch (error) {
       console.error('Error fetching theme config:', error);
       res.status(500).json({ error: 'Failed to fetch theme config' });

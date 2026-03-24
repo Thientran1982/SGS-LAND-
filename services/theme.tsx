@@ -19,6 +19,10 @@ export interface CustomThemeConfig {
 
 export const CUSTOM_THEME_STORAGE_KEY = 'sgs_custom_theme';
 
+function tenantThemeKey(tenantId?: string): string {
+  return tenantId ? `sgs_custom_theme:${tenantId}` : CUSTOM_THEME_STORAGE_KEY;
+}
+
 export const FONT_FAMILIES: { value: string; label: string; url?: string }[] = [
   { value: 'Inter', label: 'Inter (Mặc định)' },
   { value: 'Be Vietnam Pro', label: 'Be Vietnam Pro', url: 'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap' },
@@ -153,10 +157,12 @@ export function clearCustomTheme() {
   try { localStorage.removeItem(CUSTOM_THEME_STORAGE_KEY); } catch (_) {}
 }
 
+function getGlobalCachedTheme(): CustomThemeConfig | null {
+  try { const r = localStorage.getItem(CUSTOM_THEME_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
+}
+
 async function fetchTenantTheme(): Promise<CustomThemeConfig | null> {
-  const cached = (() => {
-    try { const r = localStorage.getItem(CUSTOM_THEME_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
-  })();
+  const cached = getGlobalCachedTheme();
   if (cached) applyCustomTheme(cached);
 
   const res = await fetch('/api/enterprise/theme', { credentials: 'include' });
@@ -164,7 +170,14 @@ async function fetchTenantTheme(): Promise<CustomThemeConfig | null> {
   const data = await res.json();
   if (data && data.primaryColor) {
     applyCustomTheme(data);
-    try { localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+    try {
+      const tenantId = (data as any)._tenantId;
+      const key = tenantThemeKey(tenantId);
+      localStorage.setItem(key, JSON.stringify(data));
+      if (key !== CUSTOM_THEME_STORAGE_KEY) {
+        localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(data));
+      }
+    } catch (_) {}
     return data as CustomThemeConfig;
   }
   return cached;

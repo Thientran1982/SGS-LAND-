@@ -126,6 +126,17 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
+  const getThemeStorageKey = () => {
+    try {
+      const raw = localStorage.getItem('sgs_custom_theme');
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d && d._tenantId) return `sgs_custom_theme:${d._tenantId}`;
+      }
+    } catch (_) {}
+    return 'sgs_custom_theme';
+  };
+
   const updateConfig = useCallback((patch: Partial<CustomThemeConfig>) => {
     setConfig(prev => {
       const next = { ...prev, ...patch };
@@ -138,8 +149,14 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await db.saveThemeConfig(config);
-      try { localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(config)); } catch (_) {}
+      const saved = await db.saveThemeConfig(config);
+      try {
+        const key = getThemeStorageKey();
+        localStorage.setItem(key, JSON.stringify(saved ?? config));
+        if (key !== CUSTOM_THEME_STORAGE_KEY) {
+          localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(saved ?? config));
+        }
+      } catch (_) {}
       applyCustomTheme(config);
       setOriginal({ ...config });
       setIsDirty(false);
