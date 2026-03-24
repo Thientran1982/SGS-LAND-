@@ -174,6 +174,7 @@ export function TaskKanban() {
   const filteredTasks = tasks.filter(t => {
     if (filters.priorityFilter.length > 0 && !filters.priorityFilter.includes(t.priority)) return false;
     if (filters.departmentId && t.department_id !== filters.departmentId) return false;
+    if (filters.projectId && t.project_id !== filters.projectId) return false;
     if (filters.assigneeId && !(t.assignees?.some(a => a.id === filters.assigneeId))) return false;
     if (filters.search.trim()) {
       const q = filters.search.toLowerCase();
@@ -243,6 +244,7 @@ export function TaskKanban() {
           showStatus={false}
           showPriority
           showDepartment
+          showProject
           showAssignee
           compact
         />
@@ -264,7 +266,13 @@ export function TaskKanban() {
         </DndContext>
       </div>
 
-      <TaskDetailModal taskId={selectedTaskId} onClose={() => setSelectedTaskId(null)} onUpdated={handleTaskUpdated} onDeleted={handleTaskDeleted} />
+      <TaskDetailModal
+        taskId={selectedTaskId}
+        onClose={() => setSelectedTaskId(null)}
+        onUpdated={handleTaskUpdated}
+        onDeleted={handleTaskDeleted}
+        onOpenFullPage={id => { setSelectedTaskId(null); window.location.hash = `#/tasks/${id}`; }}
+      />
       {showCreate && <CreateTaskModal onClose={() => setShowCreate(false)} onCreated={handleTaskCreated} />}
 
       <div className="fixed bottom-6 right-6 z-[300] flex flex-col gap-2 pointer-events-none">
