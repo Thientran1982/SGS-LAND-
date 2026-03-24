@@ -11,6 +11,7 @@ import type { User } from './types';
 import { lazyLoad, registerPrefetch, prefetchRoutes } from './utils/reactUtils';
 import { updatePageSEO } from './utils/seo';
 import { motion, AnimatePresence } from 'motion/react';
+import { usePageTracker } from './services/pageTracker';
 
 // -----------------------------------------------------------------------------
 // 1. LAZY LOADED PAGES
@@ -340,6 +341,7 @@ const AppShell: React.FC = () => {
     const [accessDenied, setAccessDenied] = useState(false);
 
     useThemeConfig();
+    usePageTracker(authState === 'AUTH');
 
     // Tracks which private pages have been mounted — CSS show/hide instead of unmount/remount.
     // Uses a ref updated synchronously during render to avoid the extra useEffect render cycle

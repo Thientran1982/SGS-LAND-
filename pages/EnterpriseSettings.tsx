@@ -7,6 +7,7 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { copyToClipboard } from '../utils/clipboard';
 import { ThemeCustomizer } from '../components/ThemeCustomizer';
+import { UserActivityPanel } from '../components/UserActivityPanel';
 
 // -----------------------------------------------------------------------------
 // CONSTANTS
@@ -1106,6 +1107,7 @@ export const EnterpriseSettings: React.FC = () => {
 
     const TABS = [
         { id: 'THEME', label: 'Giao Diện' },
+        { id: 'ACTIVITY', label: 'Nhật Ký Truy Cập' },
         { id: 'ZALO', label: t('ent.tab_zalo') },
         { id: 'FACEBOOK', label: t('ent.tab_social') },
         { id: 'EMAIL', label: t('ent.tab_email') },
@@ -1168,6 +1170,7 @@ export const EnterpriseSettings: React.FC = () => {
 
             <div className="min-h-[400px]">
                 {activeTab === 'THEME' && <ThemeCustomizer notify={notify} />}
+                {activeTab === 'ACTIVITY' && <UserActivityPanel />}
                 {activeTab === 'ZALO' && <ZaloPanel config={config} onRefresh={loadConfig} notify={notify} />}
                 {activeTab === 'FACEBOOK' && <FacebookPanel config={config} onRefresh={loadConfig} notify={notify} />}
                 {activeTab === 'EMAIL' && <EmailPanel config={config} onRefresh={loadConfig} notify={notify} />}

@@ -37,6 +37,7 @@ import m014 from './014_listing_assigned_to';
 import m015 from './015_theme_config';
 import m016 from './016_migrate_theme_to_enterprise_config';
 import m017 from './017_enterprise_config_theme_column';
+import m018 from './018_user_page_views';
 
 dotenv.config();
 
@@ -69,6 +70,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '015_theme_config.ts': m015,
   '016_migrate_theme_to_enterprise_config.ts': m016,
   '017_enterprise_config_theme_column.ts': m017,
+  '018_user_page_views.ts': m018,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
