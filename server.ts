@@ -37,6 +37,7 @@ import { createUploadRoutes, createUploadServeRoute } from "./server/routes/uplo
 import { createScimRoutes } from "./server/routes/scimRoutes";
 import { createValuationRoutes } from "./server/routes/valuationRoutes";
 import { createProjectRoutes } from "./server/routes/projectRoutes";
+import { createTenantRoutes } from "./server/routes/tenantRoutes";
 import { marketDataService } from "./server/services/marketDataService";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
@@ -891,6 +892,7 @@ async function startServer() {
   app.use('/api/valuation', apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit));
   // B2B2C: project management + partner access control
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
+  app.use('/api/tenant', apiRateLimit, createTenantRoutes(authenticateToken));
 
   // Lightweight health probe for deployment infrastructure (no DB call)
   app.get("/health", (_req, res) => {

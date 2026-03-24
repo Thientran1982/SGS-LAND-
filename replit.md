@@ -525,3 +525,8 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 
 ### Session note
 - JWT_SECRET rotation invalidates all existing sessions — users must log in again
+- `config/mockTenants.ts` deleted — tenant identity now served by real DB via `GET /api/tenant` (auth required); `tenantContext.tsx` fetches on mount with `credentials: 'include'`
+- `server/seed.ts` guarded: exits with error if `NODE_ENV === 'production'`
+- `TenantSwitcher.tsx` dev-only: returns null unless `import.meta.env.DEV` is true
+- Migration 019: sets default `primaryColor: '#4F46E5'` + `features` on the initial tenant row
+- `tsconfig.json` types now includes `vite/client` for `import.meta.env.*` support

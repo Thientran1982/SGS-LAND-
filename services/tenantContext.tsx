@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Tenant, TenantId } from '../types';
-import { db } from './dbApi';
-import { MOCK_TENANTS } from '../config/mockTenants';
 
 interface TenantContextState {
     tenant: Tenant | null;
@@ -11,37 +9,42 @@ interface TenantContextState {
 
 const TenantContext = createContext<TenantContextState | undefined>(undefined);
 
+const DEFAULT_PRIMARY_COLOR = '#4F46E5';
+
+const applyTenantTheme = (primaryColor: string) => {
+    const root = document.documentElement;
+    root.style.setProperty('--primary-600', primaryColor);
+    root.style.setProperty('--aurora-1', `${primaryColor}20`);
+};
+
 export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const hostname = window.location.hostname;
-        
-        const savedTenantId = localStorage.getItem('sgs_tenant_id');
-        let resolvedTenant = MOCK_TENANTS.find(t => t.id === savedTenantId) || MOCK_TENANTS[0];
+        applyTenantTheme(DEFAULT_PRIMARY_COLOR);
 
-        setTenant(resolvedTenant);
-        db.setTenantContext(resolvedTenant.id);
-        applyTenantTheme(resolvedTenant);
-        setIsLoading(false);
+        fetch('/api/tenant', { credentials: 'include' })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
+            .then((data: Tenant) => {
+                setTenant(data);
+                const color = data?.config?.primaryColor || DEFAULT_PRIMARY_COLOR;
+                applyTenantTheme(color);
+            })
+            .catch(() => {
+                setTenant(null);
+                applyTenantTheme(DEFAULT_PRIMARY_COLOR);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     }, []);
 
-    const switchTenant = (tenantId: string) => {
-        const newTenant = MOCK_TENANTS.find(t => t.id === tenantId);
-        if (newTenant) {
-            localStorage.setItem('sgs_tenant_id', newTenant.id);
-            setTenant(newTenant);
-            db.setTenantContext(newTenant.id);
-            applyTenantTheme(newTenant);
-            window.location.reload(); 
-        }
-    };
-
-    const applyTenantTheme = (t: Tenant) => {
-        const root = document.documentElement;
-        root.style.setProperty('--primary-600', t.config.primaryColor);
-        root.style.setProperty('--aurora-1', `${t.config.primaryColor}20`);
+    const switchTenant = (_tenantId: string) => {
+        window.location.reload();
     };
 
     return (

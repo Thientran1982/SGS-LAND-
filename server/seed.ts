@@ -1,6 +1,11 @@
 import bcrypt from 'bcrypt';
 import { pool, withTenantContext } from './db';
 
+if (process.env.NODE_ENV === 'production') {
+  console.error('ERROR: Seed script cannot run in production. Aborting.');
+  process.exit(1);
+}
+
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 const SALT_ROUNDS = 12;
 
