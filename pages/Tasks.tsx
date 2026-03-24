@@ -8,8 +8,6 @@ import { WfTask, WfTaskStatus, TaskPriority } from '../types';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 
-interface Props { onNavigate?: (route: string) => void; }
-
 const STATUS_LABELS: Record<WfTaskStatus, string> = {
   todo: 'Chờ xử lý', in_progress: 'Đang làm', review: 'Chờ duyệt',
   done: 'Hoàn thành', cancelled: 'Đã hủy',
@@ -29,7 +27,7 @@ const PRIORITY_DOT: Record<TaskPriority, string> = {
 const STATUSES: WfTaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'cancelled'];
 const PRIORITIES: TaskPriority[] = ['urgent', 'high', 'medium', 'low'];
 
-export function Tasks({ onNavigate: _onNavigate }: Props) {
+export function Tasks() {
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);

@@ -3,10 +3,6 @@ import { PieChart, Download, Loader2, AlertTriangle, BarChart3, Building2, Check
 import { api } from '../services/api';
 import { TaskDashboardStats } from '../types';
 
-interface Props {
-  onNavigate?: (route: string) => void;
-}
-
 interface ProjectReport {
   id: string;
   name: string;
@@ -26,7 +22,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   construction: 'Kỹ thuật', admin: 'Hành chính', other: 'Khác',
 };
 
-export function TaskReports({ onNavigate: _onNavigate }: Props) {
+export function TaskReports() {
   const [stats, setStats] = useState<TaskDashboardStats | null>(null);
   const [projects, setProjects] = useState<ProjectReport[]>([]);
   const [loading, setLoading] = useState(true);

@@ -11,8 +11,6 @@ import { WfTask, WfTaskStatus } from '../types';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 
-interface Props { onNavigate?: (route: string) => void; }
-
 const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: string; dot: string }[] = [
   { id: 'todo',        label: 'Chờ xử lý',      color: 'bg-slate-50 dark:bg-slate-800/30',    headerColor: 'bg-slate-100 dark:bg-slate-800/60',    dot: 'bg-slate-400' },
   { id: 'in_progress', label: 'Đang thực hiện',  color: 'bg-indigo-50/60 dark:bg-indigo-900/10', headerColor: 'bg-indigo-100/80 dark:bg-indigo-900/30', dot: 'bg-indigo-500' },
@@ -133,7 +131,7 @@ function KanbanColumn({
 }
 
 // ─── Main Kanban Page ─────────────────────────────────────────────────────────
-export function TaskKanban({ onNavigate: _onNavigate }: Props) {
+export function TaskKanban() {
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
