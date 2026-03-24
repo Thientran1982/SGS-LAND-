@@ -119,4 +119,8 @@ export const taskApi = {
   getUserWorkload(userId: string): Promise<WorkloadStats> {
     return api.get<WorkloadStats>(`/api/users/${userId}/workload`);
   },
+
+  searchUsers(search: string, pageSize = 6): Promise<{ data: { id: string; name: string; email?: string }[] }> {
+    return api.get<{ data: { id: string; name: string; email?: string }[] }>('/api/users', { search, pageSize });
+  },
 };

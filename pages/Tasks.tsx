@@ -95,10 +95,7 @@ function TaskList() {
     const t = setTimeout(async () => {
       if (!bulkAssignSearch.trim()) { setBulkAssignResults([]); return; }
       try {
-        const r = await fetch(`/api/users?search=${encodeURIComponent(bulkAssignSearch)}&pageSize=6`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-        });
-        const data = await r.json();
+        const data = await taskApi.searchUsers(bulkAssignSearch, 6);
         setBulkAssignResults(data.data || []);
       } catch { setBulkAssignResults([]); }
     }, 300);
