@@ -721,7 +721,7 @@ const AppShell: React.FC = () => {
                             <div
                                 key={routeKey}
                                 id={isActive ? 'main-scroll-container' : undefined}
-                                className="absolute inset-0 flex flex-col isolate overflow-y-auto overflow-x-hidden no-scrollbar"
+                                className={`absolute inset-0 flex flex-col isolate no-scrollbar ${routeKey === ROUTES.TASK_KANBAN ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}`}
                                 style={{
                                     display: isActive ? 'flex' : 'none',
                                     overscrollBehaviorY: 'contain',
