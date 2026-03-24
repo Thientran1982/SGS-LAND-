@@ -1,6 +1,6 @@
 import { api } from './api';
 import {
-  WfTask, WfTaskStatus, TaskComment, TaskActivityLog, TaskAssignee,
+  WfTask, WfTaskStatus, TaskComment, TaskActivityLog, TaskAssignee, Department, WorkloadStats,
 } from '../types';
 
 export interface TaskListParams {
@@ -110,5 +110,13 @@ export const taskApi = {
 
   bulkDelete(ids: string[]): Promise<{ deleted: number }> {
     return api.post<{ deleted: number }>('/api/tasks/bulk/delete', { ids });
+  },
+
+  getDepartments(): Promise<{ data: Department[] }> {
+    return api.get<{ data: Department[] }>('/api/departments');
+  },
+
+  getUserWorkload(userId: string): Promise<WorkloadStats> {
+    return api.get<WorkloadStats>(`/api/users/${userId}/workload`);
   },
 };
