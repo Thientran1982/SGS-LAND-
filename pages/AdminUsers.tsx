@@ -150,7 +150,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up flex flex-col max-h-[88dvh] sm:max-h-[92dvh]">
+            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up flex flex-col overflow-hidden" style={{ maxHeight: 'min(88dvh, calc(100vh - 24px))' }}>
 
                 {/* Header — cố định, không cuộn */}
                 <div className="flex justify-between items-center px-6 pt-6 pb-4 shrink-0">
@@ -164,7 +164,7 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                 </div>
 
                 {/* Body — cuộn được */}
-                <div className="flex-1 overflow-y-auto no-scrollbar px-6">
+                <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-6">
                     {errors.submit && (
                         <div className="mb-4 px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-600 font-medium">
                             {errors.submit}
