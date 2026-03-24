@@ -232,7 +232,7 @@ export const DICTIONARY = {
         "menu.partner_core": "Dự Án & Sản Phẩm",
         "menu.task_management": "Quản Lý Công Việc",
         "menu.task-dashboard": "Tổng Quan Công Việc",
-        "menu.task-kanban": "Kanban Board",
+        "menu.task-kanban": "Bảng Kanban",
         "menu.tasks": "Danh Sách Công Việc",
         "menu.employees": "Nhân Viên & Phân Công",
         "menu.task-reports": "Báo Cáo Công Việc",

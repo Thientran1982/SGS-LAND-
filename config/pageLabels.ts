@@ -1,6 +1,11 @@
 import { ROUTES } from './routes';
 
 export const PAGE_LABELS: Record<string, string> = {
+  [ROUTES.TASK_DASHBOARD]: 'Tổng Quan Công Việc',
+  [ROUTES.TASK_KANBAN]: 'Bảng Kanban',
+  [ROUTES.TASKS]: 'Danh Sách Công Việc',
+  [ROUTES.EMPLOYEES]: 'Nhân Viên & Phân Công',
+  [ROUTES.TASK_REPORTS]: 'Báo Cáo Công Việc',
   [ROUTES.DASHBOARD]: 'Bảng Điều Khiển',
   [ROUTES.LEADS]: 'Khách Hàng Tiềm Năng',
   [ROUTES.CONTRACTS]: 'Hợp Đồng',
