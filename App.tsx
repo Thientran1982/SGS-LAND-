@@ -66,6 +66,13 @@ const Sequences = lazyLoad(() => import('./pages/Sequences'), 'Sequences');
 const ScoringRules = lazyLoad(() => import('./pages/ScoringRules'), 'ScoringRules');
 const KnowledgeBase = lazyLoad(() => import('./pages/KnowledgeBase'), 'KnowledgeBase');
 
+// Task Management Pages
+const TaskDashboard = lazyLoad(() => import('./pages/TaskDashboard'), 'TaskDashboard');
+const TaskKanban = lazyLoad(() => import('./pages/TaskKanban'), 'TaskKanban');
+const Tasks = lazyLoad(() => import('./pages/Tasks'), 'Tasks');
+const Employees = lazyLoad(() => import('./pages/Employees'), 'Employees');
+const TaskReports = lazyLoad(() => import('./pages/TaskReports'), 'TaskReports');
+
 // Private Pages - Enterprise
 const SystemStatus = lazyLoad(() => import('./pages/SystemStatus'), 'SystemStatus');
 const AdminUsers = lazyLoad(() => import('./pages/AdminUsers'), 'AdminUsers');
@@ -104,6 +111,11 @@ registerPrefetch(ROUTES.SECURITY,           () => import('./pages/SecurityCompli
 registerPrefetch(ROUTES.AI_GOVERNANCE,       () => import('./pages/AiGovernance'));
 registerPrefetch(ROUTES.SEO_MANAGER,         () => import('./pages/SeoManager'));
 registerPrefetch(ROUTES.PROFILE,            () => import('./pages/Profile'));
+registerPrefetch(ROUTES.TASK_DASHBOARD,     () => import('./pages/TaskDashboard'));
+registerPrefetch(ROUTES.TASK_KANBAN,        () => import('./pages/TaskKanban'));
+registerPrefetch(ROUTES.TASKS,              () => import('./pages/Tasks'));
+registerPrefetch(ROUTES.EMPLOYEES,          () => import('./pages/Employees'));
+registerPrefetch(ROUTES.TASK_REPORTS,       () => import('./pages/TaskReports'));
 registerPrefetch(ROUTES.SEARCH,             () => import('./pages/ProductSearch'));
 registerPrefetch(ROUTES.LANDING,            () => import('./pages/Landing'));
 
@@ -175,6 +187,12 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.AI_GOVERNANCE]: AiGovernance,
     [ROUTES.SEO_MANAGER]: SeoManager,
     [ROUTES.PROFILE]: Profile,
+    // Task Management
+    [ROUTES.TASK_DASHBOARD]: TaskDashboard,
+    [ROUTES.TASK_KANBAN]: TaskKanban,
+    [ROUTES.TASKS]: Tasks,
+    [ROUTES.EMPLOYEES]: Employees,
+    [ROUTES.TASK_REPORTS]: TaskReports,
     // Misc
     [ROUTES.MOBILE_APP]: MobileApp
 };

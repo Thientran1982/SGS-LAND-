@@ -1125,6 +1125,19 @@ class DatabaseApiClient {
       { id: 'system', labelKey: 'menu.system', route: ROUTES.SYSTEM, iconKey: ROUTES.SYSTEM },
     ]};
 
+    const taskMgmt = { id: 'task', labelKey: 'menu.task_management', items: [
+      { id: 'task-dashboard', labelKey: 'menu.task-dashboard', route: ROUTES.TASK_DASHBOARD, iconKey: ROUTES.TASK_DASHBOARD },
+      { id: 'task-kanban', labelKey: 'menu.task-kanban', route: ROUTES.TASK_KANBAN, iconKey: ROUTES.TASK_KANBAN },
+      { id: 'tasks', labelKey: 'menu.tasks', route: ROUTES.TASKS, iconKey: ROUTES.TASKS },
+      { id: 'employees', labelKey: 'menu.employees', route: ROUTES.EMPLOYEES, iconKey: ROUTES.EMPLOYEES },
+      { id: 'task-reports', labelKey: 'menu.task-reports', route: ROUTES.TASK_REPORTS, iconKey: ROUTES.TASK_REPORTS },
+    ]};
+
+    const taskMgmtBasic = { id: 'task', labelKey: 'menu.task_management', items: [
+      { id: 'task-kanban', labelKey: 'menu.task-kanban', route: ROUTES.TASK_KANBAN, iconKey: ROUTES.TASK_KANBAN },
+      { id: 'tasks', labelKey: 'menu.tasks', route: ROUTES.TASKS, iconKey: ROUTES.TASKS },
+    ]};
+
     const partnerCore = { id: 'partner-core', labelKey: 'menu.partner_core', items: [
       { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
     ]};
@@ -1133,11 +1146,11 @@ class DatabaseApiClient {
       return [partnerCore];
     }
     if (role === UserRole.ADMIN || role === UserRole.TEAM_LEAD) {
-      return [core, ops, sys];
+      return [core, ops, taskMgmt, sys];
     } else if (role === UserRole.SALES || role === UserRole.MARKETING) {
-      return [core, opsBasic];
+      return [core, opsBasic, taskMgmtBasic];
     }
-    return [core];
+    return [core, taskMgmtBasic];
   }
 
   async ping(): Promise<boolean> {

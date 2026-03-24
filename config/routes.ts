@@ -49,6 +49,13 @@ export const ROUTES = {
     PROFILE: 'profile',
     MOBILE_APP: 'mobile-app',
     RESET_PASSWORD: 'reset-password',
+
+    // Task Management Module
+    TASK_DASHBOARD: 'task-dashboard',
+    TASK_KANBAN: 'task-kanban',
+    TASKS: 'tasks',
+    EMPLOYEES: 'employees',
+    TASK_REPORTS: 'task-reports',
 } as const;
 
 export const FULL_HEIGHT_PAGES = new Set([

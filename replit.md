@@ -65,6 +65,9 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `billingRoutes.ts` — `/api/billing/*` (subscription, upgrade, usage, invoices)
 - `sessionRoutes.ts` — `/api/sessions/*` (list, revoke)
 - `aiGovernanceRoutes.ts` — `/api/ai/governance/*` (safety-logs, prompt-templates, config)
+- `taskRoutes.ts` — `/api/tasks/*` (CRUD, status transitions, assign/unassign, comments, activity)
+- `departmentRoutes.ts` — `/api/departments/*` (list, user workload stats)
+- `taskReportRoutes.ts` — `/api/dashboard/task-stats`, `/api/reports/task-summary`, `/api/reports/task-export/csv`, `/api/reports/task-by-project`
 
 ### Frontend API Client (`services/api/`)
 - `apiClient.ts` — Base HTTP client with JWT cookie auth, error handling
@@ -95,7 +98,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **Client validation**: 10MB file size limit, MIME type filtering on all upload forms
 - **Used by**: ListingForm (property images, max 10, drag-to-reorder), KnowledgeBase (document upload with text extraction), Profile (avatar upload)
 
-### Database Tables (26 total)
+### Database Tables (32 total)
 **Core CRM**: users, leads, listings, proposals, contracts, interactions, tasks, favorites
 **Organization**: tenants, teams, team_members
 **Automation**: sequences, routing_rules, templates
@@ -105,6 +108,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 **Billing**: subscriptions, usage_tracking
 **AI Governance**: ai_safety_logs, prompt_templates
 **Security**: user_sessions, password_reset_tokens
+**Task Management (migration 020)**: departments, wf_tasks, task_assignments, task_comments, task_activity_logs, task_reminders
 
 ## Security
 
