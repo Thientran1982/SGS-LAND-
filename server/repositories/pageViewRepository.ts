@@ -22,6 +22,20 @@ class PageViewRepository extends BaseRepository {
       );
       if ((recent.rowCount ?? 0) > 0) return;
 
+      let resolvedSessionId = data.sessionId || null;
+      if (!resolvedSessionId) {
+        const sessionRow = await client.query(
+          `SELECT id FROM user_sessions
+           WHERE user_id = $1
+             AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+             AND expires_at > NOW()
+           ORDER BY created_at DESC
+           LIMIT 1`,
+          [data.userId]
+        );
+        resolvedSessionId = sessionRow.rows[0]?.id ?? null;
+      }
+
       await client.query(
         `INSERT INTO user_page_views (tenant_id, user_id, path, page_label, session_id, ip_address)
          VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5)`,
@@ -29,7 +43,7 @@ class PageViewRepository extends BaseRepository {
           data.userId,
           data.path,
           data.pageLabel,
-          data.sessionId || null,
+          resolvedSessionId,
           data.ipAddress || null,
         ]
       );
@@ -38,39 +52,53 @@ class PageViewRepository extends BaseRepository {
 
   async getUsersActivitySummary(tenantId: string, fromDate?: string): Promise<any[]> {
     return this.withTenant(tenantId, async (client) => {
-      const dateFilter = fromDate ? `AND pv.visited_at >= $1` : '';
+      const dateFilter = fromDate ? `AND visited_at >= $1` : '';
+      const topPageDateFilter = fromDate ? `AND pvt.visited_at >= $1` : '';
       const values: any[] = fromDate ? [fromDate] : [];
 
       const result = await client.query(
-        `SELECT
+        `WITH pv_agg AS (
+           SELECT
+             user_id,
+             COUNT(*)::int AS total_views,
+             MIN(visited_at) AS first_visit,
+             MAX(visited_at) AS last_visit
+           FROM user_page_views
+           WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+             ${dateFilter}
+           GROUP BY user_id
+         ),
+         s_agg AS (
+           SELECT user_id, COUNT(*)::int AS total_sessions
+           FROM user_sessions
+           WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           GROUP BY user_id
+         )
+         SELECT
            u.id AS user_id,
            u.name AS user_name,
            u.email AS user_email,
            u.role AS user_role,
            u.avatar AS user_avatar,
-           COUNT(pv.id)::int AS total_views,
-           COUNT(pv.id) FILTER (WHERE pv.visited_at >= NOW() - INTERVAL '30 days')::int AS views_30d,
-           MIN(pv.visited_at) AS first_visit,
-           MAX(pv.visited_at) AS last_visit,
+           COALESCE(pv.total_views, 0) AS total_views,
+           pv.first_visit,
+           pv.last_visit,
            (
-             SELECT pv2.page_label
-             FROM user_page_views pv2
-             WHERE pv2.user_id = u.id
-               AND pv2.tenant_id = current_setting('app.current_tenant_id', true)::uuid
-             GROUP BY pv2.page_label
+             SELECT pvt.page_label
+             FROM user_page_views pvt
+             WHERE pvt.user_id = u.id
+               AND pvt.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+               ${topPageDateFilter}
+             GROUP BY pvt.page_label
              ORDER BY COUNT(*) DESC
              LIMIT 1
            ) AS top_page,
-           COUNT(DISTINCT s.id) FILTER (WHERE s.expires_at > NOW())::int AS active_sessions
+           COALESCE(s.total_sessions, 0) AS total_sessions
          FROM users u
-         LEFT JOIN user_page_views pv
-           ON pv.user_id = u.id ${dateFilter}
-         LEFT JOIN user_sessions s
-           ON s.user_id = u.id
-             AND s.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+         LEFT JOIN pv_agg pv ON pv.user_id = u.id
+         LEFT JOIN s_agg s ON s.user_id = u.id
          WHERE u.tenant_id = current_setting('app.current_tenant_id', true)::uuid
-         GROUP BY u.id, u.name, u.email, u.role, u.avatar
-         ORDER BY MAX(pv.visited_at) DESC NULLS LAST`,
+         ORDER BY pv.last_visit DESC NULLS LAST`,
         values
       );
 
@@ -83,7 +111,7 @@ class PageViewRepository extends BaseRepository {
     recentVisits: any[];
   }> {
     return this.withTenant(tenantId, async (client) => {
-      const dateFilter = fromDate ? `AND pv.visited_at >= $2` : '';
+      const dateFilter = fromDate ? `AND visited_at >= $2` : '';
       const values: any[] = fromDate ? [userId, fromDate] : [userId];
 
       const pageStatsResult = await client.query(
@@ -93,8 +121,9 @@ class PageViewRepository extends BaseRepository {
            COUNT(*)::int AS visit_count,
            MIN(visited_at) AS first_visit,
            MAX(visited_at) AS last_visit
-         FROM user_page_views pv
+         FROM user_page_views
          WHERE user_id = $1 ${dateFilter}
+           AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
          GROUP BY path, page_label
          ORDER BY visit_count DESC`,
         values
@@ -107,8 +136,9 @@ class PageViewRepository extends BaseRepository {
            page_label,
            visited_at,
            ip_address
-         FROM user_page_views pv
+         FROM user_page_views
          WHERE user_id = $1 ${dateFilter}
+           AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
          ORDER BY visited_at DESC
          LIMIT 200`,
         values

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { db } from '../services/dbApi';
 
 interface ActivityUser {
@@ -8,11 +9,10 @@ interface ActivityUser {
   userRole: string;
   userAvatar?: string;
   totalViews: number;
-  views30d: number;
   firstVisit: string | null;
   lastVisit: string | null;
   topPage: string | null;
-  activeSessions: number;
+  totalSessions: number;
 }
 
 interface PageStat {
@@ -98,15 +98,11 @@ interface UserDetailDrawerProps {
 }
 
 function UserDetailDrawer({ user, fromDate, onClose }: UserDetailDrawerProps) {
-  const [detail, setDetail] = useState<{ pageStats: PageStat[]; recentVisits: RecentVisit[] } | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(true);
-    db.getUserActivityDetail(user.userId, fromDate)
-      .then(setDetail)
-      .finally(() => setLoading(false));
-  }, [user.userId, fromDate]);
+  const { data: detail, isLoading } = useQuery<{ pageStats: PageStat[]; recentVisits: RecentVisit[] }>({
+    queryKey: ['user-activity-detail', user.userId, fromDate],
+    queryFn: () => db.getUserActivityDetail(user.userId, fromDate),
+    staleTime: 60_000,
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
@@ -133,7 +129,7 @@ function UserDetailDrawer({ user, fromDate, onClose }: UserDetailDrawerProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
-          {loading ? (
+          {isLoading ? (
             <div className="space-y-3 animate-pulse">
               {[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-[var(--glass-surface)] rounded-xl" />)}
             </div>
@@ -205,27 +201,15 @@ function UserDetailDrawer({ user, fromDate, onClose }: UserDetailDrawerProps) {
 
 export function UserActivityPanel() {
   const [range, setRange] = useState<DateRange>('30d');
-  const [users, setUsers] = useState<ActivityUser[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<ActivityUser | null>(null);
 
   const fromDate = getFromDate(range);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await db.getActivitySummary(fromDate);
-      setUsers(Array.isArray(data) ? data : []);
-    } catch {
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [fromDate]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const { data: users = [], isLoading } = useQuery<ActivityUser[]>({
+    queryKey: ['activity-summary', fromDate],
+    queryFn: () => db.getActivitySummary(fromDate),
+    staleTime: 60_000,
+  });
 
   const rangeOptions: { key: DateRange; label: string }[] = [
     { key: 'today', label: 'Hôm nay' },
@@ -260,7 +244,7 @@ export function UserActivityPanel() {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="space-y-3 animate-pulse">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="h-16 bg-[var(--glass-surface)] rounded-2xl" />
@@ -325,7 +309,7 @@ export function UserActivityPanel() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="font-bold text-[var(--primary-600)] text-base">
-                        {range === 'all' ? u.totalViews : u.views30d}
+                        {u.totalViews}
                       </div>
                       <div className="text-xs text-[var(--text-tertiary)]">lượt</div>
                     </td>
@@ -342,11 +326,8 @@ export function UserActivityPanel() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center hidden sm:table-cell">
-                      <span className={`inline-flex items-center gap-1 text-xs font-bold ${u.activeSessions > 0 ? 'text-emerald-600' : 'text-[var(--text-tertiary)]'}`}>
-                        {u.activeSessions > 0 && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        )}
-                        {u.activeSessions}
+                      <span className="text-xs font-bold text-[var(--text-secondary)] tabular-nums">
+                        {u.totalSessions}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
