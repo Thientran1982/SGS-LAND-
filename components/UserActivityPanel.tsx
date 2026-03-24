@@ -50,12 +50,12 @@ function formatDateShort(iso: string | null): string {
 function getPresetFromDate(range: Exclude<DateRange, 'custom'>): string | undefined {
   if (range === 'all') return undefined;
   const now = new Date();
-  if (range === 'today') {
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return start.toISOString();
-  }
+  // Floor to start of day so the key stays stable for the entire day
+  // (avoids constant queryKey churn from millisecond-precision timestamps)
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (range === 'today') return today.toISOString();
   const days = range === '7d' ? 7 : 30;
-  const past = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  const past = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days);
   return past.toISOString();
 }
 
@@ -235,6 +235,7 @@ export function UserActivityPanel() {
     queryKey: ['activity-summary', fromDate, toDate],
     queryFn: () => db.getActivitySummary(fromDate, toDate),
     staleTime: 60_000,
+    retry: false,
     enabled: range !== 'custom' || !!customFrom,
   });
 

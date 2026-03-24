@@ -667,7 +667,7 @@ export const Leads: React.FC = () => {
     const fetchLeads = useCallback(async () => {
         setLoading(true);
         try {
-            const filters: Record<string, any> = { sort: 'score', order: 'desc' };
+            const filters: Record<string, any> = { sort: 'updated_at', order: 'desc' };
             if (debouncedSearch) filters.search = debouncedSearch;
             if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
             if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
@@ -818,7 +818,7 @@ export const Leads: React.FC = () => {
     const handleExportExcel = async () => {
         try {
             setLoading(true);
-            const filters: Record<string, any> = { sort: 'score', order: 'desc' };
+            const filters: Record<string, any> = { sort: 'updated_at', order: 'desc' };
             if (debouncedSearch) filters.search = debouncedSearch;
             if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
             if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
@@ -1158,19 +1158,19 @@ export const Leads: React.FC = () => {
                         />
                         <button 
                             onClick={() => fileInputRef.current?.click()} 
-                            className="hidden md:flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
+                            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
                             title={t('leads.import_excel')}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                            {t('leads.import_excel')}
+                            <span className="hidden sm:inline">{t('leads.import_excel')}</span>
                         </button>
                         <button 
                             onClick={handleExportExcel} 
-                            className="hidden md:flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
+                            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
                             title={t('leads.export_excel')}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            {t('leads.export_excel')}
+                            <span className="hidden sm:inline">{t('leads.export_excel')}</span>
                         </button>
 
                         <button onClick={() => setIsCreateModalOpen(true)} className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
@@ -1491,7 +1491,7 @@ export const Leads: React.FC = () => {
             </div>
 
             {/* Modals */}
-            {isCreateModalOpen && <CreateLeadModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => { setIsCreateModalOpen(false); fetchLeads(); notify(t('common.success'), 'success'); }} />}
+            {isCreateModalOpen && <CreateLeadModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => { setIsCreateModalOpen(false); setPage(1); fetchLeads(); notify(t('common.success'), 'success'); }} />}
             
             {proposalLead && (
                 <FlashProposalModal 
