@@ -37,8 +37,8 @@ export function createActivityRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Admin only' });
       }
 
-      const fromDate = typeof req.query.fromDate === 'string' ? req.query.fromDate : undefined;
-      const toDate = typeof req.query.toDate === 'string' ? req.query.toDate : undefined;
+      const fromDate = typeof req.query.fromDate === 'string' && !isNaN(Date.parse(req.query.fromDate)) ? req.query.fromDate : undefined;
+      const toDate = typeof req.query.toDate === 'string' && !isNaN(Date.parse(req.query.toDate)) ? req.query.toDate : undefined;
       const data = await pageViewRepository.getUsersActivitySummary(user.tenantId, fromDate, toDate);
       res.json(data);
     } catch (error) {
@@ -54,8 +54,8 @@ export function createActivityRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Admin only' });
       }
 
-      const fromDate = typeof req.query.fromDate === 'string' ? req.query.fromDate : undefined;
-      const toDate = typeof req.query.toDate === 'string' ? req.query.toDate : undefined;
+      const fromDate = typeof req.query.fromDate === 'string' && !isNaN(Date.parse(req.query.fromDate)) ? req.query.fromDate : undefined;
+      const toDate = typeof req.query.toDate === 'string' && !isNaN(Date.parse(req.query.toDate)) ? req.query.toDate : undefined;
       const data = await pageViewRepository.getUserActivity(user.tenantId, req.params.userId as string, fromDate, toDate);
       res.json(data);
     } catch (error) {
