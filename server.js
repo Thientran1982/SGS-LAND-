@@ -1498,6 +1498,178 @@ var init_listing_assigned_to = __esm({
   }
 });
 
+// server/migrations/015_theme_config.ts
+var migration15, theme_config_default;
+var init_theme_config = __esm({
+  "server/migrations/015_theme_config.ts"() {
+    migration15 = {
+      description: "Add theme_config JSONB to enterprise_config via tenant_themes table for per-tenant UI customization",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS tenant_themes (
+        tenant_id    UUID PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
+        theme_config JSONB NOT NULL DEFAULT '{}',
+        updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+        await client.query(`
+      ALTER TABLE tenant_themes ENABLE ROW LEVEL SECURITY;
+    `);
+        await client.query(`
+      DROP POLICY IF EXISTS tenant_themes_isolation ON tenant_themes;
+      CREATE POLICY tenant_themes_isolation ON tenant_themes
+        USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+    `);
+      },
+      async down(client) {
+        await client.query(`DROP TABLE IF EXISTS tenant_themes CASCADE;`);
+      }
+    };
+    theme_config_default = migration15;
+  }
+});
+
+// server/migrations/016_migrate_theme_to_enterprise_config.ts
+var migration16, migrate_theme_to_enterprise_config_default;
+var init_migrate_theme_to_enterprise_config = __esm({
+  "server/migrations/016_migrate_theme_to_enterprise_config.ts"() {
+    migration16 = {
+      description: "Migrate theme_config from tenant_themes into enterprise_config as config_key=theme row; drop tenant_themes",
+      async up(client) {
+        await client.query(`
+      INSERT INTO enterprise_config (tenant_id, config_key, config_value, updated_at)
+      SELECT tenant_id, 'theme', theme_config, updated_at
+      FROM tenant_themes
+      WHERE theme_config IS NOT NULL AND theme_config <> '{}'::jsonb
+      ON CONFLICT (tenant_id, config_key) DO UPDATE
+        SET config_value = EXCLUDED.config_value,
+            updated_at   = EXCLUDED.updated_at;
+    `);
+        await client.query(`DROP TABLE IF EXISTS tenant_themes CASCADE;`);
+      },
+      async down(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS tenant_themes (
+        tenant_id    UUID PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
+        theme_config JSONB NOT NULL DEFAULT '{}',
+        updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+        await client.query(`
+      INSERT INTO tenant_themes (tenant_id, theme_config, updated_at)
+      SELECT tenant_id, config_value, updated_at
+      FROM enterprise_config
+      WHERE config_key = 'theme'
+      ON CONFLICT (tenant_id) DO NOTHING;
+    `);
+        await client.query(`
+      DELETE FROM enterprise_config WHERE config_key = 'theme';
+    `);
+      }
+    };
+    migrate_theme_to_enterprise_config_default = migration16;
+  }
+});
+
+// server/migrations/017_enterprise_config_theme_column.ts
+var migration17, enterprise_config_theme_column_default;
+var init_enterprise_config_theme_column = __esm({
+  "server/migrations/017_enterprise_config_theme_column.ts"() {
+    migration17 = {
+      description: "Add theme_config JSONB column to enterprise_config; migrate any existing theme KV row to column",
+      async up(client) {
+        await client.query(`
+      ALTER TABLE enterprise_config
+        ADD COLUMN IF NOT EXISTS theme_config JSONB NOT NULL DEFAULT '{}'::jsonb;
+    `);
+      },
+      async down(client) {
+        await client.query(`
+      ALTER TABLE enterprise_config DROP COLUMN IF EXISTS theme_config;
+    `);
+      }
+    };
+    enterprise_config_theme_column_default = migration17;
+  }
+});
+
+// server/migrations/018_user_page_views.ts
+var migration18, user_page_views_default;
+var init_user_page_views = __esm({
+  "server/migrations/018_user_page_views.ts"() {
+    migration18 = {
+      description: "Create user_page_views table for tracking which pages each user visits",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS user_page_views (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE DEFAULT '00000000-0000-0000-0000-000000000001',
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+        path VARCHAR(255) NOT NULL,
+        page_label VARCHAR(255) NOT NULL DEFAULT '',
+        visited_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        session_id UUID REFERENCES user_sessions(id) ON DELETE SET NULL,
+        ip_address VARCHAR(45)
+      );
+    `);
+        await client.query(`ALTER TABLE user_page_views ENABLE ROW LEVEL SECURITY;`);
+        await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_page_views' AND policyname = 'tenant_isolation_policy') THEN
+          CREATE POLICY tenant_isolation_policy ON user_page_views FOR ALL
+            USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+        END IF;
+      END $$;
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_page_views_tenant_user_visited
+        ON user_page_views(tenant_id, user_id, visited_at DESC);
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_page_views_tenant_visited
+        ON user_page_views(tenant_id, visited_at DESC);
+    `);
+      },
+      async down(client) {
+        await client.query(`DROP TABLE IF EXISTS user_page_views CASCADE;`);
+      }
+    };
+    user_page_views_default = migration18;
+  }
+});
+
+// server/migrations/019_tenant_config_defaults.ts
+var migration19, tenant_config_defaults_default;
+var init_tenant_config_defaults = __esm({
+  "server/migrations/019_tenant_config_defaults.ts"() {
+    migration19 = {
+      description: "Set default config (primaryColor, features) on initial tenant",
+      async up(client) {
+        await client.query(`
+      UPDATE tenants
+      SET config = jsonb_build_object(
+        'primaryColor', '#4F46E5',
+        'features', jsonb_build_object(
+          'enableZalo', true,
+          'maxUsers', 100
+        )
+      )
+      WHERE id = '00000000-0000-0000-0000-000000000001'
+        AND (config IS NULL OR config = '{}'::jsonb);
+    `);
+      },
+      async down(client) {
+        await client.query(`
+      UPDATE tenants
+      SET config = '{}'::jsonb
+      WHERE id = '00000000-0000-0000-0000-000000000001';
+    `);
+      }
+    };
+    tenant_config_defaults_default = migration19;
+  }
+});
+
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -1547,15 +1719,15 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file of pending) {
-      const migration15 = MIGRATION_REGISTRY[file];
-      if (!migration15 || typeof migration15.up !== "function") {
+      const migration20 = MIGRATION_REGISTRY[file];
+      if (!migration20 || typeof migration20.up !== "function") {
         throw new Error(`[migrations] Invalid migration module for ${file} \u2014 missing up() function`);
       }
-      console.log(`[migrations] Applying ${file}: ${migration15.description || ""}`);
-      await migration15.up(client);
+      console.log(`[migrations] Applying ${file}: ${migration20.description || ""}`);
+      await migration20.up(client);
       await client.query(
         "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
-        [file, migration15.description || null]
+        [file, migration20.description || null]
       );
       console.log(`[migrations] \u2713 ${file}`);
     }
@@ -1583,15 +1755,15 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const migration15 = MIGRATION_REGISTRY[lastVersion];
-    if (!migration15) {
+    const migration20 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration20) {
       throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
     }
-    if (!migration15.down) {
+    if (!migration20.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
     console.log(`[migrations] Rolling back ${lastVersion}...`);
-    await migration15.down(client);
+    await migration20.down(client);
     await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
     await client.query("COMMIT");
     console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
@@ -1620,6 +1792,11 @@ var init_runner = __esm({
     init_signed_place();
     init_subscription_columns();
     init_listing_assigned_to();
+    init_theme_config();
+    init_migrate_theme_to_enterprise_config();
+    init_enterprise_config_theme_column();
+    init_user_page_views();
+    init_tenant_config_defaults();
     dotenv.config();
     MIGRATION_REGISTRY = {
       "001_baseline_schema.ts": baseline_schema_default,
@@ -1635,7 +1812,12 @@ var init_runner = __esm({
       "011_dispute_resolution_column.ts": dispute_resolution_column_default,
       "012_signed_place.ts": signed_place_default,
       "013_subscription_columns.ts": subscription_columns_default,
-      "014_listing_assigned_to.ts": listing_assigned_to_default
+      "014_listing_assigned_to.ts": listing_assigned_to_default,
+      "015_theme_config.ts": theme_config_default,
+      "016_migrate_theme_to_enterprise_config.ts": migrate_theme_to_enterprise_config_default,
+      "017_enterprise_config_theme_column.ts": enterprise_config_theme_column_default,
+      "018_user_page_views.ts": user_page_views_default,
+      "019_tenant_config_defaults.ts": tenant_config_defaults_default
     };
     if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       const isDryRun = process.argv.includes("--dry-run");
@@ -2205,6 +2387,27 @@ var init_enterpriseConfigRepository = __esm({
          ON CONFLICT (tenant_id, config_key) DO UPDATE SET config_value = $2, updated_at = NOW()`,
             [key, JSON.stringify(value)]
           );
+        });
+      }
+      async getThemeConfig(tenantId) {
+        return this.withTenant(tenantId, async (client) => {
+          const result = await client.query(
+            `SELECT theme_config FROM enterprise_config
+         WHERE config_key = '__theme__'
+         LIMIT 1`
+          );
+          return result.rows[0]?.theme_config ?? null;
+        });
+      }
+      async saveThemeConfig(tenantId, config) {
+        return this.withTenant(tenantId, async (client) => {
+          await client.query(
+            `INSERT INTO enterprise_config (tenant_id, config_key, config_value, theme_config, updated_at)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, '__theme__', 'null'::jsonb, $1, NOW())
+         ON CONFLICT (tenant_id, config_key) DO UPDATE SET theme_config = $1, updated_at = NOW()`,
+            [JSON.stringify(config ?? {})]
+          );
+          return config;
         });
       }
       async upsertConfig(tenantId, data) {
@@ -8701,7 +8904,7 @@ init_enterpriseConfigRepository();
 import { Router as Router11 } from "express";
 import { randomBytes } from "crypto";
 import { promises as dns } from "dns";
-function createEnterpriseRoutes(authenticateToken) {
+function createEnterpriseRoutes(authenticateToken, io) {
   const router = Router11();
   router.get("/config", authenticateToken, async (req, res) => {
     try {
@@ -8743,6 +8946,65 @@ function createEnterpriseRoutes(authenticateToken) {
     } catch (error) {
       console.error("Error updating enterprise config:", error);
       res.status(500).json({ error: "Failed to update enterprise config" });
+    }
+  });
+  const THEME_DEFAULTS = {
+    primaryColor: "#4F46E5",
+    fontFamily: "Inter",
+    fontScale: "default",
+    bgApp: "",
+    bgSidebar: "",
+    bgSurface: ""
+  };
+  function mergeThemeDefaults(raw) {
+    return {
+      primaryColor: typeof raw?.primaryColor === "string" && /^#[a-fA-F0-9]{6}$/.test(raw.primaryColor) ? raw.primaryColor : THEME_DEFAULTS.primaryColor,
+      fontFamily: ["Inter", "Be Vietnam Pro", "Plus Jakarta Sans", "Roboto", "Open Sans"].includes(raw?.fontFamily) ? raw.fontFamily : THEME_DEFAULTS.fontFamily,
+      fontScale: ["compact", "default", "large"].includes(raw?.fontScale) ? raw.fontScale : THEME_DEFAULTS.fontScale,
+      bgApp: typeof raw?.bgApp === "string" && (/^#[a-fA-F0-9]{6}$/.test(raw.bgApp) || raw.bgApp === "") ? raw.bgApp : "",
+      bgSidebar: typeof raw?.bgSidebar === "string" && (/^#[a-fA-F0-9]{6}$/.test(raw.bgSidebar) || raw.bgSidebar === "") ? raw.bgSidebar : "",
+      bgSurface: typeof raw?.bgSurface === "string" && (/^#[a-fA-F0-9]{6}$/.test(raw.bgSurface) || raw.bgSurface === "") ? raw.bgSurface : ""
+    };
+  }
+  router.get("/theme", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      const raw = await enterpriseConfigRepository.getThemeConfig(user.tenantId);
+      const merged = mergeThemeDefaults(raw);
+      res.json({ ...merged, _tenantId: user.tenantId });
+    } catch (error) {
+      console.error("Error fetching theme config:", error);
+      res.status(500).json({ error: "Failed to fetch theme config" });
+    }
+  });
+  router.put("/theme", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (user.role !== "ADMIN") {
+        return res.status(403).json({ error: "Only admins can update theme config" });
+      }
+      const validated = mergeThemeDefaults(req.body);
+      const config = await enterpriseConfigRepository.saveThemeConfig(user.tenantId, validated);
+      const result = mergeThemeDefaults(config);
+      io?.to(`tenant:${user.tenantId}`).emit("theme_updated", result);
+      res.json(result);
+    } catch (error) {
+      console.error("Error saving theme config:", error);
+      res.status(500).json({ error: "Failed to save theme config" });
+    }
+  });
+  router.delete("/theme", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (user.role !== "ADMIN") {
+        return res.status(403).json({ error: "Only admins can reset theme config" });
+      }
+      await enterpriseConfigRepository.saveThemeConfig(user.tenantId, {});
+      io?.to(`tenant:${user.tenantId}`).emit("theme_updated", THEME_DEFAULTS);
+      res.json(THEME_DEFAULTS);
+    } catch (error) {
+      console.error("Error resetting theme config:", error);
+      res.status(500).json({ error: "Failed to reset theme config" });
     }
   });
   router.get("/audit-logs", authenticateToken, async (req, res) => {
@@ -9839,8 +10101,226 @@ function createTemplateRoutes(authenticateToken) {
   return router;
 }
 
-// server/routes/billingRoutes.ts
+// server/routes/activityRoutes.ts
 import { Router as Router15 } from "express";
+
+// server/repositories/pageViewRepository.ts
+init_baseRepository();
+var PageViewRepository = class extends BaseRepository {
+  constructor() {
+    super("user_page_views");
+  }
+  async recordView(tenantId, data) {
+    return this.withTenant(tenantId, async (client) => {
+      const recent = await client.query(
+        `SELECT id FROM user_page_views
+         WHERE user_id = $1 AND path = $2
+           AND visited_at > (NOW() - INTERVAL '5 seconds')
+         LIMIT 1`,
+        [data.userId, data.path]
+      );
+      if ((recent.rowCount ?? 0) > 0) return;
+      let resolvedSessionId = data.sessionId || null;
+      if (!resolvedSessionId) {
+        const sessionRow = await client.query(
+          `SELECT id FROM user_sessions
+           WHERE user_id = $1
+             AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+             AND expires_at > NOW()
+           ORDER BY created_at DESC
+           LIMIT 1`,
+          [data.userId]
+        );
+        resolvedSessionId = sessionRow.rows[0]?.id ?? null;
+      }
+      await client.query(
+        `INSERT INTO user_page_views (tenant_id, user_id, path, page_label, session_id, ip_address)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5)`,
+        [
+          data.userId,
+          data.path,
+          data.pageLabel,
+          resolvedSessionId,
+          data.ipAddress || null
+        ]
+      );
+    });
+  }
+  async getUsersActivitySummary(tenantId, fromDate, toDate) {
+    return this.withTenant(tenantId, async (client) => {
+      const conditions = [];
+      const values = [];
+      if (fromDate) {
+        conditions.push(`visited_at >= $${values.length + 1}`);
+        values.push(fromDate);
+      }
+      if (toDate) {
+        conditions.push(`visited_at <= $${values.length + 1}`);
+        values.push(toDate);
+      }
+      const rangeWhere = conditions.length ? conditions.join(" AND ") : null;
+      const rangeFilter = rangeWhere ? `COUNT(*) FILTER (WHERE ${rangeWhere})::int AS views_in_range,` : `0::int AS views_in_range,`;
+      const topPageRangeFilter = rangeWhere ? `AND ${rangeWhere}` : "";
+      const result = await client.query(
+        `WITH pv_agg AS (
+           SELECT
+             user_id,
+             COUNT(*)::int AS total_views,
+             COUNT(*) FILTER (WHERE visited_at >= NOW() - INTERVAL '30 days')::int AS views_30d,
+             ${rangeFilter}
+             MIN(visited_at) AS first_visit,
+             MAX(visited_at) AS last_visit
+           FROM user_page_views
+           WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           GROUP BY user_id
+         ),
+         s_agg AS (
+           SELECT user_id, COUNT(*)::int AS total_sessions
+           FROM user_sessions
+           WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           GROUP BY user_id
+         )
+         SELECT
+           u.id AS user_id,
+           u.name AS user_name,
+           u.email AS user_email,
+           u.role AS user_role,
+           u.avatar AS user_avatar,
+           COALESCE(pv.total_views, 0) AS total_views,
+           COALESCE(pv.views_30d, 0) AS views_30d,
+           COALESCE(pv.views_in_range, 0) AS views_in_range,
+           pv.first_visit,
+           pv.last_visit,
+           (
+             SELECT pvt.page_label
+             FROM user_page_views pvt
+             WHERE pvt.user_id = u.id
+               AND pvt.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+               ${topPageRangeFilter}
+             GROUP BY pvt.page_label
+             ORDER BY COUNT(*) DESC
+             LIMIT 1
+           ) AS top_page,
+           COALESCE(s.total_sessions, 0) AS total_sessions
+         FROM users u
+         LEFT JOIN pv_agg pv ON pv.user_id = u.id
+         LEFT JOIN s_agg s ON s.user_id = u.id
+         WHERE u.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+         ORDER BY pv.last_visit DESC NULLS LAST`,
+        values
+      );
+      return this.rowsToEntities(result.rows);
+    });
+  }
+  async getUserActivity(tenantId, userId, fromDate, toDate) {
+    return this.withTenant(tenantId, async (client) => {
+      const values = [userId];
+      const conditions = [];
+      if (fromDate) {
+        conditions.push(`AND visited_at >= $${values.length + 1}`);
+        values.push(fromDate);
+      }
+      if (toDate) {
+        conditions.push(`AND visited_at <= $${values.length + 1}`);
+        values.push(toDate);
+      }
+      const dateFilter = conditions.join(" ");
+      const pageStatsResult = await client.query(
+        `SELECT
+           path,
+           page_label,
+           COUNT(*)::int AS visit_count,
+           MIN(visited_at) AS first_visit,
+           MAX(visited_at) AS last_visit
+         FROM user_page_views
+         WHERE user_id = $1 ${dateFilter}
+           AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+         GROUP BY path, page_label
+         ORDER BY visit_count DESC`,
+        values
+      );
+      const recentResult = await client.query(
+        `SELECT
+           id,
+           path,
+           page_label,
+           visited_at,
+           ip_address
+         FROM user_page_views
+         WHERE user_id = $1 ${dateFilter}
+           AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+         ORDER BY visited_at DESC
+         LIMIT 200`,
+        values
+      );
+      return {
+        pageStats: this.rowsToEntities(pageStatsResult.rows),
+        recentVisits: this.rowsToEntities(recentResult.rows)
+      };
+    });
+  }
+};
+var pageViewRepository = new PageViewRepository();
+
+// server/routes/activityRoutes.ts
+function createActivityRoutes(authenticateToken) {
+  const router = Router15();
+  router.post("/pageview", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      const { path: path4, pageLabel } = req.body;
+      if (!path4 || typeof path4 !== "string") {
+        return res.status(400).json({ error: "path is required" });
+      }
+      const cleanPath = path4.slice(0, 255);
+      const cleanLabel = (typeof pageLabel === "string" ? pageLabel : "").slice(0, 255);
+      await pageViewRepository.recordView(user.tenantId, {
+        userId: user.id,
+        path: cleanPath,
+        pageLabel: cleanLabel,
+        ipAddress: req.ip || req.socket?.remoteAddress
+      });
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error recording page view:", error);
+      res.status(500).json({ error: "Failed to record page view" });
+    }
+  });
+  router.get("/summary", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (user.role !== "ADMIN") {
+        return res.status(403).json({ error: "Admin only" });
+      }
+      const fromDate = typeof req.query.fromDate === "string" && !isNaN(Date.parse(req.query.fromDate)) ? req.query.fromDate : void 0;
+      const toDate = typeof req.query.toDate === "string" && !isNaN(Date.parse(req.query.toDate)) ? req.query.toDate : void 0;
+      const data = await pageViewRepository.getUsersActivitySummary(user.tenantId, fromDate, toDate);
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching activity summary:", error);
+      res.status(500).json({ error: "Failed to fetch activity summary" });
+    }
+  });
+  router.get("/user/:userId", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (user.role !== "ADMIN") {
+        return res.status(403).json({ error: "Admin only" });
+      }
+      const fromDate = typeof req.query.fromDate === "string" && !isNaN(Date.parse(req.query.fromDate)) ? req.query.fromDate : void 0;
+      const toDate = typeof req.query.toDate === "string" && !isNaN(Date.parse(req.query.toDate)) ? req.query.toDate : void 0;
+      const data = await pageViewRepository.getUserActivity(user.tenantId, req.params.userId, fromDate, toDate);
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching user activity:", error);
+      res.status(500).json({ error: "Failed to fetch user activity" });
+    }
+  });
+  return router;
+}
+
+// server/routes/billingRoutes.ts
+import { Router as Router16 } from "express";
 
 // server/repositories/subscriptionRepository.ts
 init_baseRepository();
@@ -9975,7 +10455,7 @@ var subscriptionRepository = new SubscriptionRepository();
 
 // server/routes/billingRoutes.ts
 function createBillingRoutes(authenticateToken) {
-  const router = Router15();
+  const router = Router16();
   router.get("/subscription", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -10038,7 +10518,7 @@ function createBillingRoutes(authenticateToken) {
 
 // server/routes/uploadRoutes.ts
 init_constants();
-import { Router as Router16 } from "express";
+import { Router as Router17 } from "express";
 import multer from "multer";
 import path3 from "path";
 import fs3 from "fs";
@@ -10115,7 +10595,7 @@ function handleMulterError(err, _req, res, next) {
   next(err);
 }
 function createUploadRoutes(authenticateToken) {
-  const router = Router16();
+  const router = Router17();
   router.post("/", authenticateToken, upload.array("files", MAX_FILES), handleMulterError, (req, res) => {
     try {
       const files = req.files;
@@ -10163,7 +10643,7 @@ function createUploadRoutes(authenticateToken) {
 }
 var PUBLIC_IMAGE_EXTS = /* @__PURE__ */ new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 function createUploadServeRoute(authenticateToken) {
-  const router = Router16();
+  const router = Router17();
   router.get("/:tenantId/:filename", (req, res, next) => {
     const ext = path3.extname(String(req.params.filename)).toLowerCase();
     if (PUBLIC_IMAGE_EXTS.has(ext)) {
@@ -10213,7 +10693,7 @@ function serveUploadedFile(req, res, userTenantId) {
 }
 
 // server/routes/scimRoutes.ts
-import { Router as Router17 } from "express";
+import { Router as Router18 } from "express";
 
 // server/middleware/scimAuth.ts
 init_enterpriseConfigRepository();
@@ -10337,7 +10817,7 @@ function baseUrl(req) {
   return `${req.protocol}://${req.get("host")}/scim/v2`;
 }
 function createScimRoutes() {
-  const router = Router17();
+  const router = Router18();
   router.use(scimAuthMiddleware);
   router.get("/ServiceProviderConfig", (_req, res) => {
     res.json({
@@ -10579,7 +11059,7 @@ function createScimRoutes() {
 
 // server/routes/valuationRoutes.ts
 init_valuationEngine();
-import { Router as Router18 } from "express";
+import { Router as Router19 } from "express";
 
 // server/services/marketDataService.ts
 init_logger();
@@ -10758,7 +11238,7 @@ var marketDataService = MarketDataService.getInstance();
 init_listingRepository();
 init_logger();
 function createValuationRoutes(authenticateToken, aiRateLimit2) {
-  const router = Router18();
+  const router = Router19();
   router.post("/advanced", authenticateToken, aiRateLimit2, async (req, res) => {
     try {
       const user = req.user;
@@ -11009,7 +11489,7 @@ function createValuationRoutes(authenticateToken, aiRateLimit2) {
 }
 
 // server/routes/projectRoutes.ts
-import { Router as Router19 } from "express";
+import { Router as Router20 } from "express";
 
 // server/repositories/projectRepository.ts
 init_baseRepository();
@@ -11301,7 +11781,7 @@ var projectRepository = new ProjectRepository();
 // server/routes/projectRoutes.ts
 var ADMIN_ROLES = ["ADMIN"];
 function createProjectRoutes(authenticateToken) {
-  const router = Router19();
+  const router = Router20();
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
@@ -11507,6 +11987,45 @@ function createProjectRoutes(authenticateToken) {
     } catch (error) {
       console.error("Error revoking listing access:", error);
       res.status(500).json({ error: "Failed to revoke listing access" });
+    }
+  });
+  return router;
+}
+
+// server/routes/tenantRoutes.ts
+init_db();
+import { Router as Router21 } from "express";
+var DEFAULT_CONFIG = {
+  primaryColor: "#4F46E5",
+  features: { enableZalo: true, maxUsers: 100 }
+};
+function createTenantRoutes(authenticateToken) {
+  const router = Router21();
+  router.get("/", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      const tenantId = user?.tenantId;
+      if (!tenantId) {
+        return res.status(400).json({ error: "No tenant context" });
+      }
+      const result = await pool.query(
+        `SELECT id, name, domain, config FROM tenants WHERE id = $1`,
+        [tenantId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Tenant not found" });
+      }
+      const row = result.rows[0];
+      const config = row.config && Object.keys(row.config).length > 0 ? row.config : DEFAULT_CONFIG;
+      res.json({
+        id: row.id,
+        name: row.name,
+        domain: row.domain,
+        config
+      });
+    } catch (error) {
+      console.error("Error fetching tenant:", error);
+      res.status(500).json({ error: "Failed to fetch tenant" });
     }
   });
   return router;
@@ -12562,13 +13081,15 @@ async function startServer() {
   app.use("/api/billing", apiRateLimit, createBillingRoutes(authenticateToken));
   app.use("/api/sessions", apiRateLimit, createSessionRoutes(authenticateToken));
   app.use("/api/templates", apiRateLimit, createTemplateRoutes(authenticateToken));
+  app.use("/api/activity", apiRateLimit, createActivityRoutes(authenticateToken));
   app.use("/api/ai/governance", apiRateLimit, createAiGovernanceRoutes(authenticateToken));
-  app.use("/api/enterprise", apiRateLimit, createEnterpriseRoutes(authenticateToken));
+  app.use("/api/enterprise", apiRateLimit, createEnterpriseRoutes(authenticateToken, io));
   app.use("/api/upload", apiRateLimit, createUploadRoutes(authenticateToken));
   app.use("/uploads", createUploadServeRoute(authenticateToken));
   app.use("/scim/v2", express.json({ type: ["application/json", "application/scim+json"] }), createScimRoutes());
   app.use("/api/valuation", apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit));
   app.use("/api/projects", apiRateLimit, createProjectRoutes(authenticateToken));
+  app.use("/api/tenant", apiRateLimit, createTenantRoutes(authenticateToken));
   app.get("/health", (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
     res.json({
@@ -12851,6 +13372,9 @@ async function startServer() {
   io.on("connection", (socket) => {
     const isAuthenticated = !!socket.data.authUser;
     console.log(`User connected: ${socket.id} (auth: ${isAuthenticated})`);
+    if (socket.data.authUser?.tenantId) {
+      socket.join(`tenant:${socket.data.authUser.tenantId}`);
+    }
     socket.on("join_room", (room) => {
       if (!socket.data.authUser) return;
       socket.join(room);
@@ -12930,7 +13454,7 @@ async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
-      server: { middlewareMode: true, hmr: { server } },
+      server: { middlewareMode: true, hmr: { server }, allowedHosts: true },
       appType: "spa"
     });
     app.use(vite.middlewares);

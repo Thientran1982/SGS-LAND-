@@ -4,6 +4,7 @@ import { Tenant, TenantId } from '../types';
 interface TenantContextState {
     tenant: Tenant | null;
     isLoading: boolean;
+    error: string | null;
     switchTenant: (tenantId: string) => void;
 }
 
@@ -20,6 +21,7 @@ const applyTenantTheme = (primaryColor: string) => {
 export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         applyTenantTheme(DEFAULT_PRIMARY_COLOR);
@@ -31,11 +33,14 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             })
             .then((data: Tenant) => {
                 setTenant(data);
+                setError(null);
                 const color = data?.config?.primaryColor || DEFAULT_PRIMARY_COLOR;
                 applyTenantTheme(color);
             })
-            .catch(() => {
+            .catch((err: unknown) => {
+                const msg = err instanceof Error ? err.message : 'Failed to load tenant';
                 setTenant(null);
+                setError(msg);
                 applyTenantTheme(DEFAULT_PRIMARY_COLOR);
             })
             .finally(() => {
@@ -48,7 +53,7 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     return (
-        <TenantContext.Provider value={{ tenant, isLoading, switchTenant }}>
+        <TenantContext.Provider value={{ tenant, isLoading, error, switchTenant }}>
             {children}
         </TenantContext.Provider>
     );
