@@ -29,9 +29,7 @@ const PRIORITY_DOT: Record<TaskPriority, string> = {
 const STATUSES: WfTaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'cancelled'];
 const PRIORITIES: TaskPriority[] = ['urgent', 'high', 'medium', 'low'];
 
-const _navFallback = (r: string) => { window.location.hash = `#/${r}`; };
-export function Tasks({ onNavigate: _onNav }: Props) {
-  const onNavigate = _onNav ?? _navFallback;
+export function Tasks({ onNavigate: _onNavigate }: Props) {
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);

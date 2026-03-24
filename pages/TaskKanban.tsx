@@ -133,9 +133,7 @@ function KanbanColumn({
 }
 
 // ─── Main Kanban Page ─────────────────────────────────────────────────────────
-const _kanbanNavFallback = (r: string) => { window.location.hash = `#/${r}`; };
-export function TaskKanban({ onNavigate: _onNav }: Props) {
-  const onNavigate = _onNav ?? _kanbanNavFallback;
+export function TaskKanban({ onNavigate: _onNavigate }: Props) {
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -7,8 +7,6 @@ interface Props {
   onNavigate?: (route: string) => void;
 }
 
-const _rptNavFallback = (r: string) => { window.location.hash = `#/${r}`; };
-
 interface ProjectReport {
   id: string;
   name: string;
@@ -28,8 +26,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   construction: 'Kỹ thuật', admin: 'Hành chính', other: 'Khác',
 };
 
-export function TaskReports({ onNavigate: _onNav }: Props) {
-  const onNavigate = _onNav ?? _rptNavFallback;
+export function TaskReports({ onNavigate: _onNavigate }: Props) {
   const [stats, setStats] = useState<TaskDashboardStats | null>(null);
   const [projects, setProjects] = useState<ProjectReport[]>([]);
   const [loading, setLoading] = useState(true);

@@ -6,8 +6,6 @@ interface Props {
   onNavigate?: (route: string) => void;
 }
 
-const _empNavFallback = (r: string) => { window.location.hash = `#/${r}`; };
-
 interface EmployeeSummary {
   user_id: string;
   name: string;
@@ -38,8 +36,7 @@ function WorkloadBar({ score }: { score: number }) {
   );
 }
 
-export function Employees({ onNavigate: _onNav }: Props) {
-  const onNavigate = _onNav ?? _empNavFallback;
+export function Employees({ onNavigate: _onNavigate }: Props) {
   const [employees, setEmployees] = useState<EmployeeSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
