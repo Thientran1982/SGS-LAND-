@@ -148,12 +148,12 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
         ${errors[field] ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-400' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 focus:border-indigo-500'}`;
 
     return createPortal(
-        <div className="fixed inset-0 z-[100]">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-6">
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
 
-            {/* Card: fixed bottom-0 on mobile, centered on sm+ */}
-            <div className="fixed bottom-0 left-0 right-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-sm bg-[var(--bg-surface)] rounded-t-[28px] sm:rounded-[24px] shadow-2xl border border-[var(--glass-border)] z-10 animate-scale-up flex flex-col overflow-hidden" style={{ maxHeight: '88svh' }}>
+            {/* Card */}
+            <div className="relative z-10 w-full sm:max-w-sm bg-[var(--bg-surface)] rounded-t-[28px] sm:rounded-[24px] shadow-2xl border border-[var(--glass-border)] animate-scale-up flex flex-col overflow-hidden" style={{ maxHeight: 'calc(100vh - 48px)' }}>
 
                 {/* Header — cố định, không cuộn */}
                 <div className="flex justify-between items-center px-6 pt-6 pb-4 shrink-0">
