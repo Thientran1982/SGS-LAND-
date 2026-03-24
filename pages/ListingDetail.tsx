@@ -807,10 +807,10 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
     return (
         <>
         <div className="mt-8 relative">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('inventory.project_units')}</h3>
+            <div className="flex items-center justify-between gap-3 mb-4">
+                <h3 className="text-lg font-bold text-[var(--text-primary)] truncate">{t('inventory.project_units')}</h3>
                 {canManageUnits && (
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <input 
                             type="file" 
                             accept=".xlsx, .xls" 
@@ -820,25 +820,25 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                         />
                         <button 
                             onClick={() => fileInputRef.current?.click()}
-                            className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm"
+                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm whitespace-nowrap"
                             title={t('inventory.import_excel')}
                         >
-                            <Upload className="w-4 h-4" />
+                            <Upload className="w-4 h-4 shrink-0" />
                             <span className="hidden sm:inline">{t('inventory.import_excel')}</span>
                         </button>
                         <button 
                             onClick={handleExportExcel}
-                            className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm"
+                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] text-sm font-bold rounded-xl hover:bg-[var(--glass-surface)] transition-colors shadow-sm whitespace-nowrap"
                             title={t('inventory.export_excel')}
                         >
-                            <Download className="w-4 h-4" />
+                            <Download className="w-4 h-4 shrink-0" />
                             <span className="hidden sm:inline">{t('inventory.export_excel')}</span>
                         </button>
                         <button 
                             onClick={handleAddUnit}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                            className="flex items-center gap-1.5 px-3 py-2 h-[36px] bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap"
                         >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-4 h-4 shrink-0" />
                             <span className="hidden sm:inline">{t('inventory.add_unit')}</span>
                         </button>
                     </div>
