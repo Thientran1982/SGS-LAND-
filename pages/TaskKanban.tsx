@@ -73,9 +73,9 @@ function TaskCard({ task, overlay = false, onClick }: { task: WfTask; overlay?: 
         )}
       </div>
 
-      {task.comment_count != null && task.comment_count > 0 && (
-        <div className="mt-1.5 text-[10px] text-[var(--text-tertiary)]">💬 {task.comment_count}</div>
-      )}
+      <div className="mt-1.5 text-[10px] text-[var(--text-tertiary)]">
+        💬 {task.comment_count ?? 0}
+      </div>
     </div>
   );
 }

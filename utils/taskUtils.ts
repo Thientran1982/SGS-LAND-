@@ -107,6 +107,29 @@ export function formatDeadlineShort(
   return `Còn ${days ?? 0}n`;
 }
 
+export type UrgencyLevel = 'overdue' | 'critical' | 'warning' | 'normal';
+
+export function isValidTransition(from: WfTaskStatus, to: WfTaskStatus): boolean {
+  return VALID_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+export function calcUrgency(
+  deadline: string | null | undefined,
+  status: WfTaskStatus,
+  daysUntil: number | null,
+): UrgencyLevel {
+  if (!deadline || status === 'done' || status === 'cancelled') return 'normal';
+  if (daysUntil !== null && daysUntil < 0) return 'overdue';
+  if (daysUntil !== null && daysUntil <= 2) return 'critical';
+  if (daysUntil !== null && daysUntil <= 7) return 'warning';
+  return 'normal';
+}
+
+export function formatRelativeDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  return timeAgo(dateStr);
+}
+
 export function exportTasksToCSV(tasks: import('../types').WfTask[]): void {
   const headers = ['Tiêu đề', 'Trạng thái', 'Ưu tiên', 'Deadline', 'Dự án', 'Phòng ban', 'Người thực hiện', 'Tạo lúc'];
   const rows = tasks.map(t => [

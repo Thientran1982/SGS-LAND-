@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   Loader2, Plus, ListTodo, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown,
   CheckSquare, Square, CheckCircle, AlertCircle, ChevronDown, Download,
-  AlertTriangle
+  AlertTriangle, User2
 } from 'lucide-react';
 import { taskApi, TaskListParams } from '../services/taskApi';
 import { WfTask, WfTaskStatus, TaskPriority } from '../types';
@@ -81,10 +81,36 @@ function TaskList() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkAssignSearch, setBulkAssignSearch] = useState('');
+  const [bulkAssignResults, setBulkAssignResults] = useState<{ id: string; name: string }[]>([]);
+  const [bulkAssignPickerOpen, setBulkAssignPickerOpen] = useState(false);
+  const bulkAssignRef = useRef<HTMLDivElement>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
   const [showCreate, setShowCreate] = useState(false);
   const fetchRef = useRef(0);
+
+  useEffect(() => {
+    const t = setTimeout(async () => {
+      if (!bulkAssignSearch.trim()) { setBulkAssignResults([]); return; }
+      try {
+        const r = await fetch(`/api/users?search=${encodeURIComponent(bulkAssignSearch)}&pageSize=6`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        });
+        const data = await r.json();
+        setBulkAssignResults(data.data || []);
+      } catch { setBulkAssignResults([]); }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [bulkAssignSearch]);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (bulkAssignRef.current && !bulkAssignRef.current.contains(e.target as Node)) setBulkAssignPickerOpen(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
 
   const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
     const id = ++toastId.current;
@@ -200,6 +226,25 @@ function TaskList() {
     }
   };
 
+  const runBulkAssign = async (userId: string, userName: string) => {
+    if (selectedIds.size === 0) return;
+    setBulkLoading(true);
+    setBulkAssignPickerOpen(false);
+    setBulkAssignSearch('');
+    setBulkAssignResults([]);
+    try {
+      const ids = Array.from(selectedIds);
+      await Promise.all(ids.map(id => taskApi.assign(id, [userId])));
+      showToast(`Đã giao ${ids.length} công việc cho ${userName}`);
+      setSelectedIds(new Set());
+      setBulkAction('');
+    } catch (err) {
+      showToast((err as { message?: string })?.message || 'Giao việc thất bại', 'error');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   const quickChangeStatus = async (task: WfTask, newStatus: WfTaskStatus) => {
     try {
       const updated = await taskApi.changeStatus(task.id, newStatus);
@@ -267,23 +312,49 @@ function TaskList() {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 px-4 md:px-6 py-2 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-800 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-2 px-4 md:px-6 py-2 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-800 flex-shrink-0">
           <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">{selectedIds.size} đã chọn</span>
-          <div className="flex gap-2 ml-auto">
-            <select value={bulkAction} onChange={e => setBulkAction(e.target.value)}
+          <div className="flex flex-wrap gap-2 ml-auto items-center">
+            {/* Bulk assign picker */}
+            <div className="relative" ref={bulkAssignRef}>
+              <button
+                onClick={() => { setBulkAction('assign'); setBulkAssignPickerOpen(v => !v); }}
+                className={`h-[28px] px-2.5 text-xs border rounded-lg flex items-center gap-1.5 transition-colors font-medium ${bulkAction === 'assign' ? 'border-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700' : 'border-indigo-200 dark:border-indigo-700 text-indigo-600 hover:bg-indigo-100'}`}>
+                <User2 size={11} /> Giao cho...
+              </button>
+              {bulkAssignPickerOpen && (
+                <div className="absolute top-full mt-1 left-0 z-30 w-56 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1">
+                  <div className="px-2 py-1">
+                    <input autoFocus value={bulkAssignSearch} onChange={e => setBulkAssignSearch(e.target.value)}
+                      placeholder="Tìm nhân viên..."
+                      className="w-full h-[28px] px-2 text-xs bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg focus:outline-none" />
+                  </div>
+                  {bulkAssignResults.length > 0 ? bulkAssignResults.map(u => (
+                    <button key={u.id} onClick={() => runBulkAssign(u.id, u.name)}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--glass-surface-hover)] text-[var(--text-primary)]">
+                      {u.name}
+                    </button>
+                  )) : bulkAssignSearch && (
+                    <div className="px-3 py-2 text-xs text-[var(--text-tertiary)]">Không tìm thấy</div>
+                  )}
+                </div>
+              )}
+            </div>
+            {/* Status / export / delete */}
+            <select value={bulkAction === 'assign' ? '' : bulkAction} onChange={e => { setBulkAction(e.target.value); setBulkAssignPickerOpen(false); }}
               className="h-[28px] px-2 text-xs bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 rounded-lg text-[var(--text-secondary)] focus:outline-none">
-              <option value="">Chọn thao tác...</option>
+              <option value="">Đổi trạng thái...</option>
               {ALL_STATUSES.map(s => (
                 <option key={s} value={s}>→ {STATUS_LABELS[s]}</option>
               ))}
               <option value="export">📥 Xuất CSV</option>
               <option value="delete">🗑 Xóa</option>
             </select>
-            <button onClick={runBulkAction} disabled={!bulkAction || bulkLoading}
+            <button onClick={runBulkAction} disabled={!bulkAction || bulkAction === 'assign' || bulkLoading}
               className="h-[28px] px-3 text-xs bg-indigo-600 text-white rounded-lg font-medium flex items-center gap-1 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
               {bulkLoading ? <Loader2 size={11} className="animate-spin" /> : null} Áp dụng
             </button>
-            <button onClick={() => { setSelectedIds(new Set()); setBulkAction(''); }}
+            <button onClick={() => { setSelectedIds(new Set()); setBulkAction(''); setBulkAssignPickerOpen(false); }}
               className="h-[28px] px-2 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">✕</button>
           </div>
         </div>
