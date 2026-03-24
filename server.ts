@@ -72,6 +72,15 @@ async function startServer() {
   app.use(sanitizeInput);
   app.use(requestLogger);
 
+  // Disable HTTP caching for all API routes — prevents browser 304/ETag issues
+  // where fresh data after mutations is served as "not modified" from browser cache
+  app.use('/api', (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  });
+
   // Real-time request metrics (rolling 60-second window)
   interface RequestSample { ts: number; durationMs: number; status: number; }
   const requestSamples: RequestSample[] = [];

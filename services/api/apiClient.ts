@@ -37,6 +37,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     method,
     credentials: 'include',
     signal: controller.signal,
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       ...headers,
