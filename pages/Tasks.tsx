@@ -28,7 +28,7 @@ const PRIORITY_DOT: Record<TaskPriority, string> = {
 
 const STATUSES: WfTaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'cancelled'];
 const PRIORITIES: TaskPriority[] = ['urgent', 'high', 'medium', 'low'];
-type SortKey = 'title' | 'priority' | 'deadline' | 'created_at' | 'status';
+type SortKey = 'priority' | 'deadline' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
 
 function getTaskIdFromHash(): string | null {
@@ -49,7 +49,7 @@ export function Tasks() {
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const LIMIT = 25;
+  const LIMIT = 20;
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(getTaskIdFromHash);
   const [showCreate, setShowCreate] = useState(false);
@@ -242,14 +242,12 @@ export function Tasks() {
             <thead className="sticky top-0 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] z-10">
               <tr className="text-left text-[var(--text-tertiary)]">
                 <th className="px-4 md:px-6 py-3 font-medium text-xs">
-                  <button onClick={() => handleSort('title')} className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors">
-                    Tiêu đề <SortIcon col="title" />
+                  <button onClick={() => handleSort('created_at')} className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors">
+                    Tiêu đề <SortIcon col="created_at" />
                   </button>
                 </th>
-                <th className="px-3 py-3 font-medium text-xs hidden sm:table-cell">
-                  <button onClick={() => handleSort('status')} className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors">
-                    Trạng thái <SortIcon col="status" />
-                  </button>
+                <th className="px-3 py-3 font-medium text-xs hidden sm:table-cell text-[var(--text-tertiary)]">
+                  Trạng thái
                 </th>
                 <th className="px-3 py-3 font-medium text-xs hidden md:table-cell">
                   <button onClick={() => handleSort('priority')} className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors">

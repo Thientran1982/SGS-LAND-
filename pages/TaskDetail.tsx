@@ -103,18 +103,14 @@ export function TaskDetail() {
   const [statusConfirm, setStatusConfirm] = useState<{ status: WfTaskStatus } | null>(null);
   const [actualHours, setActualHours] = useState('');
   const [completionNote, setCompletionNote] = useState('');
-  const [cancelReason, setCancelReason] = useState('');
+  const [cancelNote, setCancelNote] = useState('');
+  const [cancelNoteError, setCancelNoteError] = useState('');
 
   const [newComment, setNewComment] = useState('');
   const [sendingComment, setSendingComment] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
-
-  const [activityPage, setActivityPage] = useState(1);
-  const [activityHasMore, setActivityHasMore] = useState(false);
-  const [loadingMoreActivity, setLoadingMoreActivity] = useState(false);
-  const ACTIVITY_PER_PAGE = 20;
 
   const [assigneeSearch, setAssigneeSearch] = useState('');
   const [userResults, setUserResults] = useState<SimpleUser[]>([]);
@@ -135,12 +131,11 @@ export function TaskDetail() {
       const [taskRes, commentsRes, activityRes] = await Promise.all([
         api.get<WfTask>(`/api/tasks/${id}`),
         api.get<{ data: TaskComment[] }>(`/api/tasks/${id}/comments`),
-        api.get<{ data: TaskActivityLog[]; pagination?: { total: number } }>(`/api/tasks/${id}/activity?limit=${ACTIVITY_PER_PAGE}&page=1`),
+        api.get<{ data: TaskActivityLog[] }>(`/api/tasks/${id}/activity?limit=50`),
       ]);
       setTask(taskRes);
       setComments(commentsRes.data || []);
       setActivity(activityRes.data || []);
-      setActivityHasMore((activityRes.pagination?.total || 0) > ACTIVITY_PER_PAGE);
     } catch {
       setError('Không thể tải chi tiết công việc');
     } finally {
@@ -240,11 +235,12 @@ export function TaskDetail() {
       const body: Record<string, unknown> = { status: newStatus, ...extraData };
       const updated = await api.patch<WfTask>(`/api/tasks/${task.id}/status`, body);
       setTask(updated);
-      const newAct = await api.get<{ data: TaskActivityLog[] }>(`/api/tasks/${task.id}/activity?limit=${ACTIVITY_PER_PAGE}&page=1`);
+      const newAct = await api.get<{ data: TaskActivityLog[] }>(`/api/tasks/${task.id}/activity?limit=50`);
       setActivity(newAct.data || []);
       setActualHours('');
       setCompletionNote('');
-      setCancelReason('');
+      setCancelNote('');
+      setCancelNoteError('');
     } catch (e: any) {
       alert(e?.message || 'Không thể đổi trạng thái');
     } finally {
@@ -254,13 +250,17 @@ export function TaskDetail() {
 
   const confirmStatusChange = () => {
     if (!statusConfirm) return;
+    if (statusConfirm.status === 'cancelled' && !cancelNote.trim()) {
+      setCancelNoteError('Lý do hủy là bắt buộc');
+      return;
+    }
     const extraData: Record<string, unknown> = {};
     if (statusConfirm.status === 'done') {
       if (actualHours) extraData.actual_hours = parseFloat(actualHours);
       if (completionNote) extraData.completion_note = completionNote;
     }
-    if (statusConfirm.status === 'cancelled' && cancelReason) {
-      extraData.cancel_reason = cancelReason;
+    if (statusConfirm.status === 'cancelled') {
+      extraData.completion_note = cancelNote.trim();
     }
     changeStatus(statusConfirm.status, extraData);
   };
@@ -303,23 +303,6 @@ export function TaskDetail() {
     }
   };
 
-  const loadMoreActivity = async () => {
-    if (!task) return;
-    setLoadingMoreActivity(true);
-    const nextPage = activityPage + 1;
-    try {
-      const r = await api.get<{ data: TaskActivityLog[]; pagination?: { total: number } }>(
-        `/api/tasks/${task.id}/activity?limit=${ACTIVITY_PER_PAGE}&page=${nextPage}`
-      );
-      setActivity(prev => [...prev, ...(r.data || [])]);
-      setActivityPage(nextPage);
-      setActivityHasMore(activity.length + (r.data?.length || 0) < (r.pagination?.total || 0));
-    } catch {
-    } finally {
-      setLoadingMoreActivity(false);
-    }
-  };
-
   const searchUsers = useCallback(async (q: string) => {
     if (!q.trim()) { setUserResults([]); return; }
     setSearchingUsers(true);
@@ -346,14 +329,16 @@ export function TaskDetail() {
     } catch {}
   };
 
-  const addAssignee = async (user: SimpleUser, isPrimary = false) => {
+  const addAssignee = async (user: SimpleUser) => {
     if (!task) return;
     const alreadyAssigned = task.assignees?.some(a => a.id === user.id);
     if (alreadyAssigned) return;
     setAddingAssignee(true);
     try {
-      const updated = await api.post<WfTask>(`/api/tasks/${task.id}/assign`, { user_id: user.id, is_primary: isPrimary });
-      setTask(updated);
+      const res = await api.post<{ assignees: TaskAssignee[] }>(`/api/tasks/${task.id}/assign`, {
+        user_ids: [user.id],
+      });
+      setTask(prev => prev ? { ...prev, assignees: res.assignees || [] } : prev);
       setAssigneeSearch('');
       setUserResults([]);
       setUserPickerOpen(false);
@@ -368,10 +353,10 @@ export function TaskDetail() {
     if (!task || !confirm('Hủy giao việc cho nhân viên này?')) return;
     setRemovingAssigneeId(userId);
     try {
-      const updated = await api.delete<WfTask>(`/api/tasks/${task.id}/assign/${userId}`);
-      setTask(updated);
-    } catch {
-      alert('Không thể hủy giao việc');
+      await api.delete(`/api/tasks/${task.id}/assign/${userId}`);
+      setTask(prev => prev ? { ...prev, assignees: prev.assignees?.filter(a => a.id !== userId) || [] } : prev);
+    } catch (e: any) {
+      alert(e?.message || 'Không thể hủy giao việc');
     } finally {
       setRemovingAssigneeId(null);
     }
@@ -822,13 +807,6 @@ export function TaskDetail() {
             ))}
           </div>
 
-          {activityHasMore && (
-            <button onClick={loadMoreActivity} disabled={loadingMoreActivity}
-              className="w-full mt-3 py-2 text-xs text-indigo-500 hover:text-indigo-600 font-medium text-center flex items-center justify-center gap-1.5 border border-[var(--glass-border)] rounded-xl hover:bg-[var(--glass-surface-hover)] transition-colors disabled:opacity-50">
-              {loadingMoreActivity ? <Loader2 size={12} className="animate-spin" /> : <ChevronDown size={12} />}
-              Xem thêm
-            </button>
-          )}
         </div>
       </div>
 
@@ -865,10 +843,13 @@ export function TaskDetail() {
 
             {statusConfirm.status === 'cancelled' && (
               <div>
-                <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">Lý do hủy (tùy chọn)</label>
-                <textarea rows={2} value={cancelReason} onChange={e => setCancelReason(e.target.value)}
-                  placeholder="Nhập lý do hủy công việc..."
-                  className="w-full px-3 py-2 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none" />
+                <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">
+                  Lý do hủy <span className="text-rose-500">*</span>
+                </label>
+                <textarea rows={2} value={cancelNote} onChange={e => { setCancelNote(e.target.value); setCancelNoteError(''); }}
+                  placeholder="Nhập lý do hủy công việc (bắt buộc)..."
+                  className={`w-full px-3 py-2 text-sm bg-[var(--glass-surface-hover)] border rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-rose-500/30 resize-none ${cancelNoteError ? 'border-rose-400' : 'border-[var(--glass-border)]'}`} />
+                {cancelNoteError && <p className="text-xs text-rose-500 mt-1">{cancelNoteError}</p>}
               </div>
             )}
 
