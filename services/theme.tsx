@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 // -----------------------------------------------------------------------------
 //  CONSTANTS & TYPES
@@ -150,23 +151,30 @@ export function clearCustomTheme() {
   try { localStorage.removeItem(CUSTOM_THEME_STORAGE_KEY); } catch (_) {}
 }
 
+async function fetchTenantTheme(): Promise<CustomThemeConfig | null> {
+  const cached = (() => {
+    try { const r = localStorage.getItem(CUSTOM_THEME_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
+  })();
+  if (cached) applyCustomTheme(cached);
+
+  const res = await fetch('/api/enterprise/theme', { credentials: 'include' });
+  if (!res.ok) return cached;
+  const data = await res.json();
+  if (data && data.primaryColor) {
+    applyCustomTheme(data);
+    try { localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+    return data as CustomThemeConfig;
+  }
+  return cached;
+}
+
 export function useThemeConfig() {
-  const hasFetched = React.useRef(false);
-  React.useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-    const cached = (() => { try { const r = localStorage.getItem(CUSTOM_THEME_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; } })();
-    if (cached) applyCustomTheme(cached);
-    fetch('/api/enterprise/theme', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data && data.primaryColor) {
-          applyCustomTheme(data);
-          try { localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
-        }
-      })
-      .catch(() => {});
-  }, []);
+  useQuery<CustomThemeConfig | null>({
+    queryKey: ['tenant-theme'],
+    queryFn: fetchTenantTheme,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
 }
 
 const CONSTANTS = {

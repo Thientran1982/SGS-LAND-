@@ -1,14 +1,14 @@
 import type { Migration } from './runner';
 
 const migration: Migration = {
-  description: 'Create tenant_themes table with theme_config JSONB for per-tenant UI customization',
+  description: 'Add theme_config JSONB to enterprise_config via tenant_themes table for per-tenant UI customization',
 
   async up(client) {
     await client.query(`
       CREATE TABLE IF NOT EXISTS tenant_themes (
-        tenant_id   UUID PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
+        tenant_id    UUID PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
         theme_config JSONB NOT NULL DEFAULT '{}',
-        updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `);
 
