@@ -1,5 +1,6 @@
 import React from 'react';
-import { useTenant, MOCK_TENANTS } from '../services/tenantContext';
+import { useTenant } from '../services/tenantContext';
+import { MOCK_TENANTS } from '../config/mockTenants';
 
 export const TenantSwitcher: React.FC = () => {
     const { tenant, switchTenant } = useTenant();

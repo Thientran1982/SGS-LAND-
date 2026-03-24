@@ -1,0 +1,14 @@
+NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+
+STACK:
+NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChildFromContainer (https://021b0327-2786-44b3-b66e-74aefab075a0-00-3gvuobtge3sly.riker.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=c2953a24:8509:23)
+    at commitDeletionEffectsOnFiber (https://021b0327-2786-44b3-b66e-74aefab075a0-00-3gvuobtge3sly.riker.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=c2953a24:17558:21)
+    at recursivelyTraverseDeletionEffects (https://021b0327-2786-44b3-b66e-74aefab075a0-00-3gvuobtge3sly.riker.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=c2953a24:17535:13)
+    at commitDeletionEffectsOnFiber (https://021b0327-2786-44b3-b66e-74aefab075a0-00-3gvuobtge3sly.riker.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=c2953a24:17627:15)
+    at recursivelyTraverseDeletionEffects (https://021b0327-2786-44b3-b66e-74aefab075a0-00-3gvuobtge3sly.riker.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=c2953a24:17535:13)
+    at commitDeletionEffectsOnFiber (https://021b0327-2786-44b3-b66e-74aefab075a0-00-3gvuobtge3sly.riker.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=c2953a24:17627:15)
+    at recursivelyTraverseDeletionEffects (https://021b0327-2786-44b3-b66e-74aefab075a0-00-3gvuobtge3sly.riker.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=c2953a24:17535:13)
+    at commitDeletionEffectsOnFiber (https://021b0327-2786-44b3-b66e-74aefab075a0-00-3gvuobtge3sly.riker.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=c2953a24:17660:15)
+    at recursivelyTraverseDeletionEffects (https://021b0327-2786-44b3-b66e-74aefab075a0-00-3gvuobtge3sly.riker.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=c2953a24:17535:13)
+    at commitDeletionEffectsOnFiber (https://021b0327-2786-44b3-b66e-74aefab075a0-00-3gvuobtge3sly.riker.replit.dev/node_modules/.vite/deps/chunk-H343HIDT.js?v=c2953a24:17627:15)

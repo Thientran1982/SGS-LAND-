@@ -294,8 +294,10 @@ const mountApp = () => {
     // 2. AI features are server-side only — no API key check needed on frontend
 
     try {
-        const root = ReactDOM.createRoot(rootElement);
-        root.render(
+        if (!window.__sgsCrmRoot) {
+            window.__sgsCrmRoot = ReactDOM.createRoot(rootElement);
+        }
+        window.__sgsCrmRoot.render(
           <React.StrictMode>
             <ErrorBoundary>
               <App />
@@ -307,6 +309,11 @@ const mountApp = () => {
         renderFatalError(String(e));
     }
 };
+
+// Extend window to hold the React root across HMR re-evaluations
+declare global {
+    interface Window { __sgsCrmRoot?: ReturnType<typeof ReactDOM.createRoot>; }
+}
 
 // Start
 mountApp();
