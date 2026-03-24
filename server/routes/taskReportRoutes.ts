@@ -1,5 +1,17 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { withTenantContext } from '../db';
+
+// ─── Zod Schemas ──────────────────────────────────────────────────────────────
+const dateRangeQuerySchema = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'from phải là ngày YYYY-MM-DD').optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'to phải là ngày YYYY-MM-DD').optional(),
+  department_id: z.string().uuid().optional(),
+  user_id: z.string().uuid().optional(),
+}).refine(data => {
+  if (data.from && data.to) return new Date(data.from) <= new Date(data.to);
+  return true;
+}, { message: 'from phải nhỏ hơn hoặc bằng to' });
 
 export function createTaskReportRoutes(authenticateToken: any) {
   const router = Router();

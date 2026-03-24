@@ -5,8 +5,10 @@ import { TaskDashboardStats } from '../types';
 import { ROUTES } from '../config/routes';
 
 interface Props {
-  onNavigate: (route: string) => void;
+  onNavigate?: (route: string) => void;
 }
+
+const navigateTo = (route: string) => { window.location.hash = `#/${route}`; };
 
 const PRIORITY_LABELS: Record<string, string> = {
   urgent: 'Khẩn cấp',
@@ -39,7 +41,8 @@ function StatCard({ label, value, sub, color, icon }: { label: string; value: nu
   );
 }
 
-export function TaskDashboard({ onNavigate }: Props) {
+export function TaskDashboard({ onNavigate: onNavigateProp }: Props) {
+  const onNavigate = onNavigateProp ?? navigateTo;
   const [stats, setStats] = useState<TaskDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

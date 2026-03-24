@@ -356,5 +356,70 @@ export function createUserRoutes(authenticateToken: any) {
     }
   });
 
+  // GET /api/users/:id/workload — workload stats for a specific user
+  router.get('/:id/workload', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const tenantId = user.tenantId;
+      const targetId = req.params.id;
+
+      // Users can view their own workload; admins/team leads can view anyone's
+      if (user.id !== targetId && !['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        return res.status(403).json({ error: true, code: 'FORBIDDEN', message: 'Không có quyền xem thông tin này' });
+      }
+
+      const { withTenantContext } = await import('../db');
+      const workload = await withTenantContext(tenantId, async (client) => {
+        const activeRes = await client.query(`
+          SELECT COUNT(*) FROM wf_tasks t
+          JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
+          WHERE t.status = 'in_progress'
+        `, [targetId]);
+
+        const overdueRes = await client.query(`
+          SELECT COUNT(*) FROM wf_tasks t
+          JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
+          WHERE t.status NOT IN ('done','cancelled') AND t.deadline < CURRENT_DATE
+        `, [targetId]);
+
+        const weekRes = await client.query(`
+          SELECT COUNT(*) FROM wf_tasks t
+          JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
+          WHERE t.status = 'done' AND t.updated_at >= NOW() - INTERVAL '7 days'
+        `, [targetId]);
+
+        const monthRes = await client.query(`
+          SELECT COUNT(*) FROM wf_tasks t
+          JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
+          WHERE t.status = 'done' AND t.updated_at >= NOW() - INTERVAL '30 days'
+        `, [targetId]);
+
+        const urgentRes = await client.query(`
+          SELECT COUNT(*) FROM wf_tasks t
+          JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
+          WHERE t.priority = 'urgent' AND t.status NOT IN ('done','cancelled')
+        `, [targetId]);
+
+        const active = parseInt(activeRes.rows[0].count);
+        const overdue = parseInt(overdueRes.rows[0].count);
+        const urgent = parseInt(urgentRes.rows[0].count);
+        const workload_score = active * 1 + overdue * 2 + urgent * 1.5;
+
+        return {
+          active_tasks: active,
+          overdue_tasks: overdue,
+          completed_this_week: parseInt(weekRes.rows[0].count),
+          completed_this_month: parseInt(monthRes.rows[0].count),
+          workload_score,
+        };
+      });
+
+      res.json(workload);
+    } catch (error) {
+      console.error('Error fetching user workload:', error);
+      res.status(500).json({ error: true, code: 'FETCH_FAILED', message: 'Failed to fetch workload' });
+    }
+  });
+
   return router;
 }

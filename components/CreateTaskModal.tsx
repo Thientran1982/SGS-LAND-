@@ -142,7 +142,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto no-scrollbar p-5 space-y-4">
+        <form id="create-task-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto no-scrollbar p-5 space-y-4">
           {/* Title */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-[var(--text-secondary)]">Tiêu đề <span className="text-rose-500">*</span></label>
@@ -274,7 +274,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
           <button type="button" onClick={onClose} className="h-[38px] px-4 text-sm font-medium border border-[var(--glass-border)] rounded-xl text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors">
             Hủy
           </button>
-          <button onClick={handleSubmit as any} disabled={saving}
+          <button type="submit" form="create-task-form" disabled={saving}
             className="h-[38px] px-5 text-sm font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 flex items-center gap-2 transition-colors disabled:opacity-50 shadow-sm">
             {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Tạo công việc
           </button>

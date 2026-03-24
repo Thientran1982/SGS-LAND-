@@ -1,5 +1,11 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { withTenantContext } from '../db';
+
+// ─── Zod Schemas ──────────────────────────────────────────────────────────────
+const workloadParamsSchema = z.object({
+  userId: z.string().uuid('userId phải là UUID hợp lệ'),
+});
 
 export function createDepartmentRoutes(authenticateToken: any) {
   const router = Router();
@@ -21,7 +27,7 @@ export function createDepartmentRoutes(authenticateToken: any) {
         return r.rows;
       });
 
-      res.json(departments);
+      res.json({ data: departments });
     } catch (error) {
       console.error('Error fetching departments:', error);
       res.status(500).json({ error: true, code: 'FETCH_FAILED', message: 'Failed to fetch departments' });
@@ -33,7 +39,12 @@ export function createDepartmentRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const tenantId = user.tenantId;
-      const { userId } = req.params;
+
+      const parsedParams = workloadParamsSchema.safeParse(req.params);
+      if (!parsedParams.success) {
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: parsedParams.error.errors[0]?.message || 'Tham số không hợp lệ' });
+      }
+      const { userId } = parsedParams.data;
 
       const workload = await withTenantContext(tenantId, async (client) => {
         const activeRes = await client.query(`

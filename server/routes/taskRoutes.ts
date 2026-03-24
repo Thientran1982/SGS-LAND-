@@ -1,5 +1,54 @@
 import { Router, Request, Response } from 'express';
-import { pool, withTenantContext } from '../db';
+import { z } from 'zod';
+import { withTenantContext } from '../db';
+
+// ─── Zod Schemas ──────────────────────────────────────────────────────────────
+const TaskStatuses = ['todo', 'in_progress', 'review', 'done', 'cancelled'] as const;
+const TaskPriorities = ['low', 'medium', 'high', 'urgent'] as const;
+const TaskCategories = ['sales', 'legal', 'marketing', 'site_visit', 'customer_care', 'finance', 'construction', 'admin', 'other'] as const;
+
+const createTaskSchema = z.object({
+  title: z.string().min(5, 'Tiêu đề phải từ 5 ký tự').max(500, 'Tiêu đề tối đa 500 ký tự'),
+  description: z.string().max(5000).optional(),
+  project_id: z.string().uuid().optional().nullable(),
+  department_id: z.string().uuid().optional().nullable(),
+  category: z.enum(TaskCategories).optional().nullable(),
+  priority: z.enum(TaskPriorities).default('medium'),
+  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  estimated_hours: z.number().positive().optional().nullable(),
+  assignee_ids: z.array(z.string().uuid()).optional(),
+});
+
+const updateTaskSchema = z.object({
+  title: z.string().min(5).max(500).optional(),
+  description: z.string().max(5000).optional().nullable(),
+  project_id: z.string().uuid().optional().nullable(),
+  department_id: z.string().uuid().optional().nullable(),
+  category: z.enum(TaskCategories).optional().nullable(),
+  priority: z.enum(TaskPriorities).optional(),
+  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  estimated_hours: z.number().positive().optional().nullable(),
+});
+
+const changeStatusSchema = z.object({
+  status: z.enum(TaskStatuses),
+  actual_hours: z.number().positive().optional(),
+  completion_note: z.string().max(1000).optional(),
+});
+
+const assignSchema = z.object({
+  user_ids: z.array(z.string().uuid()).min(1),
+  primary_user_id: z.string().uuid().optional(),
+  due_note: z.string().max(500).optional(),
+});
+
+const unassignBodySchema = z.object({
+  user_id: z.string().uuid(),
+});
+
+const commentSchema = z.object({
+  content: z.string().min(1, 'Bình luận không được rỗng').max(5000),
+});
 
 // ─── Status Transition Map ────────────────────────────────────────────────────
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -160,20 +209,20 @@ export function createTaskRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const tenantId = user.tenantId;
-      const { title, description, project_id, department_id, category, priority, deadline, estimated_hours, assignee_ids } = req.body;
 
-      if (!title || title.trim().length < 5 || title.trim().length > 500) {
-        return res.status(400).json({ error: true, code: 'VALIDATION', message: 'Tiêu đề phải từ 5 đến 500 ký tự' });
+      const parsed = createTaskSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const msg = parsed.error.errors[0]?.message || 'Dữ liệu không hợp lệ';
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
       }
+      const { title, description, project_id, department_id, category, priority, deadline, estimated_hours, assignee_ids } = parsed.data;
+
       if (deadline) {
         const dl = new Date(deadline);
         const today = new Date(); today.setHours(0, 0, 0, 0);
         if (dl < today) {
           return res.status(400).json({ error: true, code: 'VALIDATION', message: 'Deadline không được là ngày trong quá khứ' });
         }
-      }
-      if (estimated_hours !== undefined && estimated_hours !== null && (isNaN(estimated_hours) || estimated_hours <= 0)) {
-        return res.status(400).json({ error: true, code: 'VALIDATION', message: 'Giờ ước tính phải là số dương' });
       }
 
       const task = await withTenantContext(tenantId, async (client) => {
@@ -182,7 +231,7 @@ export function createTaskRoutes(authenticateToken: any) {
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
           RETURNING *
         `, [tenantId, title.trim(), description || null, project_id || null, department_id || null,
-            category || null, priority || 'medium', deadline || null, estimated_hours || null, user.id]);
+            category || null, priority, deadline || null, estimated_hours || null, user.id]);
 
         const newTask = r.rows[0];
 
@@ -258,7 +307,13 @@ export function createTaskRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const tenantId = user.tenantId;
-      const { title, description, project_id, department_id, category, priority, deadline, estimated_hours } = req.body;
+
+      const parsed = updateTaskSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const msg = parsed.error.errors[0]?.message || 'Dữ liệu không hợp lệ';
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
+      }
+      const { title, description, project_id, department_id, category, priority, deadline, estimated_hours } = parsed.data;
 
       const task = await withTenantContext(tenantId, async (client) => {
         const current = await client.query('SELECT * FROM wf_tasks WHERE id = $1', [req.params.id]);
@@ -326,9 +381,13 @@ export function createTaskRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const tenantId = user.tenantId;
-      const { status, actual_hours, completion_note } = req.body;
 
-      if (!status) return res.status(400).json({ error: true, code: 'VALIDATION', message: 'status is required' });
+      const parsed = changeStatusSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const msg = parsed.error.errors[0]?.message || 'Dữ liệu không hợp lệ';
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
+      }
+      const { status, actual_hours, completion_note } = parsed.data;
 
       const task = await withTenantContext(tenantId, async (client) => {
         const current = await client.query('SELECT * FROM wf_tasks WHERE id = $1', [req.params.id]);
@@ -390,11 +449,13 @@ export function createTaskRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const tenantId = user.tenantId;
-      const { user_ids, due_note, primary_user_id } = req.body;
 
-      if (!Array.isArray(user_ids) || user_ids.length === 0) {
-        return res.status(400).json({ error: true, code: 'VALIDATION', message: 'user_ids phải là mảng không rỗng' });
+      const parsed = assignSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const msg = parsed.error.errors[0]?.message || 'Dữ liệu không hợp lệ';
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
       }
+      const { user_ids, due_note, primary_user_id } = parsed.data;
 
       const result = await withTenantContext(tenantId, async (client) => {
         const taskRes = await client.query('SELECT * FROM wf_tasks WHERE id = $1', [req.params.id]);
@@ -491,6 +552,54 @@ export function createTaskRoutes(authenticateToken: any) {
     }
   });
 
+  // DELETE /api/tasks/:id/assign — unassign user by body { user_id }
+  router.delete('/:id/assign', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const tenantId = user.tenantId;
+
+      const parsed = unassignBodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        const msg = parsed.error.errors[0]?.message || 'user_id là bắt buộc';
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
+      }
+      const { user_id: userId } = parsed.data;
+
+      await withTenantContext(tenantId, async (client) => {
+        const assignRes = await client.query(
+          'SELECT * FROM task_assignments WHERE task_id = $1 AND user_id = $2',
+          [req.params.id, userId]
+        );
+        if (!assignRes.rows[0]) throw Object.assign(new Error('NOT_FOUND'), { code: 'NOT_FOUND' });
+
+        if (assignRes.rows[0].is_primary) {
+          const countRes = await client.query('SELECT COUNT(*) FROM task_assignments WHERE task_id = $1', [req.params.id]);
+          if (parseInt(countRes.rows[0].count) > 1) {
+            throw Object.assign(new Error('PRIMARY_UNASSIGN'), { code: 'PRIMARY_UNASSIGN',
+              message: 'Không thể hủy giao việc người chịu trách nhiệm chính khi vẫn còn người khác.' });
+          }
+        }
+
+        await client.query('DELETE FROM task_assignments WHERE task_id = $1 AND user_id = $2', [req.params.id, userId]);
+        await client.query(`
+          INSERT INTO task_activity_logs (tenant_id, task_id, user_id, action, detail)
+          VALUES ($1, $2, $3, 'unassigned', 'Hủy giao việc')
+        `, [tenantId, req.params.id, user.id]);
+      });
+
+      res.json({ message: 'Đã hủy giao việc' });
+    } catch (error: any) {
+      if (error.code === 'PRIMARY_UNASSIGN') {
+        return res.status(400).json({ error: true, code: 'PRIMARY_UNASSIGN', message: error.message });
+      }
+      if (error.code === 'NOT_FOUND') {
+        return res.status(404).json({ error: true, code: 'NOT_FOUND', message: 'Assignment not found' });
+      }
+      console.error('Error unassigning task:', error);
+      res.status(500).json({ error: true, code: 'UNASSIGN_FAILED', message: 'Failed to unassign task' });
+    }
+  });
+
   // GET /api/tasks/:id/comments
   router.get('/:id/comments', authenticateToken, async (req: Request, res: Response) => {
     try {
@@ -508,7 +617,7 @@ export function createTaskRoutes(authenticateToken: any) {
         return r.rows;
       });
 
-      res.json(comments);
+      res.json({ data: comments });
     } catch (error) {
       console.error('Error fetching comments:', error);
       res.status(500).json({ error: true, code: 'FETCH_FAILED', message: 'Failed to fetch comments' });
@@ -520,11 +629,13 @@ export function createTaskRoutes(authenticateToken: any) {
     try {
       const user = (req as any).user;
       const tenantId = user.tenantId;
-      const { content } = req.body;
 
-      if (!content || !content.trim()) {
-        return res.status(400).json({ error: true, code: 'VALIDATION', message: 'Nội dung bình luận không được rỗng' });
+      const parsed = commentSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const msg = parsed.error.errors[0]?.message || 'Dữ liệu không hợp lệ';
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
       }
+      const { content } = parsed.data;
 
       const comment = await withTenantContext(tenantId, async (client) => {
         const r = await client.query(`
@@ -573,7 +684,7 @@ export function createTaskRoutes(authenticateToken: any) {
         return r.rows;
       });
 
-      res.json(logs);
+      res.json({ data: logs });
     } catch (error) {
       console.error('Error fetching activity:', error);
       res.status(500).json({ error: true, code: 'FETCH_FAILED', message: 'Failed to fetch activity' });
