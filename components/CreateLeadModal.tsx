@@ -134,7 +134,21 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             const createdLead = await db.createLead(payload);
             socket?.emit("lead_created", createdLead);
             onSuccess();
-        } catch (error) {
+        } catch (error: any) {
+            if (error?.status === 409 && error?.data?.error === 'DUPLICATE_LEAD') {
+                const existingId = error.data.existingLeadId;
+                try {
+                    const existingLead = existingId ? await db.getLeadById(existingId) : null;
+                    if (existingLead) {
+                        setDuplicateLead(existingLead);
+                        setStep('MERGE');
+                        setLoading(false);
+                        return;
+                    }
+                } catch {
+                    // fall through to generic error
+                }
+            }
             console.error(error);
             setLoading(false);
         }
