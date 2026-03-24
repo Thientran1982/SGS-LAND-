@@ -183,17 +183,18 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             const newTags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
             const mergedTags = Array.from(new Set([...(duplicateLead.tags || []), ...newTags]));
 
-            const updatedLead = {
-                ...duplicateLead,
-                name: formData.name, 
-                email: formData.email || duplicateLead.email,
-                address: formData.address || duplicateLead.address,
+            const mergePayload: Record<string, any> = {
+                name: formData.name,
                 tags: mergedTags,
-                notes: formData.notes ? `${duplicateLead.notes || ''}\n[Update ${formatDate(new Date().toISOString())}]: ${formData.notes}` : duplicateLead.notes
             };
+            if (formData.email) mergePayload.email = formData.email;
+            if (formData.address) mergePayload.address = formData.address;
+            if (formData.notes) {
+                mergePayload.notes = `${duplicateLead.notes || ''}\n[Merge ${formatDate(new Date().toISOString())}]: ${formData.notes}`.trim();
+            }
 
-            await db.updateLead(duplicateLead.id, updatedLead);
-            socket?.emit("lead_updated", updatedLead);
+            const updatedLead = await db.mergeLead(duplicateLead.id, mergePayload);
+            socket?.emit("lead_updated", updatedLead ?? { ...duplicateLead, ...mergePayload });
             onSuccess();
         } catch (e) {
             setLoading(false);

@@ -198,6 +198,12 @@ class DatabaseApiClient {
     return result;
   }
 
+  async mergeLead(id: string, data: any) {
+    const result = await leadApi.mergeLead(id, data);
+    _cache.invalidate('leads:');
+    return result;
+  }
+
   async deleteLead(id: string) {
     const result = await leadApi.deleteLead(id);
     _cache.invalidate('leads:');

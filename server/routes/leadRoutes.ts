@@ -96,8 +96,14 @@ export function createLeadRoutes(authenticateToken: any) {
         });
       }
 
+      const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
+      const isRestricted = RESTRICTED_ROLES.includes(user.role);
+
       let finalAssignedTo = assignedTo || null;
-      if (!assignedTo) {
+      // Restricted roles (SALES/MARKETING/VIEWER) always own their leads so they can see them.
+      // Skip routing rules for these roles — routing rules could assign to another user, making
+      // the lead invisible to the creator under their RBAC filter.
+      if (!assignedTo && !isRestricted) {
         try {
           const autoAssignId = await routingRuleRepository.matchLead(user.tenantId, {
             source, address, tags, preferences,
@@ -127,6 +133,43 @@ export function createLeadRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error creating lead:', error);
       res.status(500).json({ error: 'Failed to create lead' });
+    }
+  });
+
+  // Merge endpoint: additive-only update (append notes/tags). No ownership restriction —
+  // the caller detected a duplicate and is contributing their data to the existing lead.
+  router.patch('/:id/merge', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { notes, tags, name, email, address } = req.body;
+
+      // Only allow appending — never changing ownership, stage, or phone
+      const mergeData: Record<string, any> = {};
+      if (name !== undefined) mergeData.name = name;
+      if (email !== undefined) mergeData.email = email;
+      if (address !== undefined) mergeData.address = address;
+      if (notes !== undefined) mergeData.notes = notes;
+      if (tags !== undefined) mergeData.tags = tags;
+
+      // Bypass RBAC ownership check by passing ADMIN as effective role for this operation
+      const lead = await leadRepository.update(
+        user.tenantId, String(req.params.id), mergeData, user.id, 'ADMIN'
+      );
+      if (!lead) return res.status(404).json({ error: 'Lead not found' });
+
+      await auditRepository.log(user.tenantId, {
+        actorId: user.id,
+        action: 'MERGE',
+        entityType: 'LEAD',
+        entityId: String(req.params.id),
+        details: `Merged lead data into: ${lead.name}`,
+        ipAddress: req.ip,
+      });
+
+      res.json(lead);
+    } catch (error) {
+      console.error('Error merging lead:', error);
+      res.status(500).json({ error: 'Failed to merge lead' });
     }
   });
 
