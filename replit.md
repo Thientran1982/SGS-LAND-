@@ -527,6 +527,31 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 - Transient DB timeouts are retried 3× then skipped with a WARN log (server still starts)
 - If migrations were skipped, restart the server once the DB is reachable again
 
+### Task Management Module (Tasks #11–13, March 2026)
+
+Complete task management system added:
+
+**Backend (Task #11)**:
+- `server/routes/taskRoutes.ts` — Full CRUD + status workflow + comments (PATCH/DELETE) + activity log pagination
+- `server/routes/taskReportRoutes.ts` — `/api/dashboard/task-stats`, `/api/reports/task-summary`, `/api/reports/task-by-project`, `/api/reports/task-export/csv`
+- PostgreSQL tables: `wf_tasks`, `task_assignments`, `task_comments`, `task_activity_log`
+
+**Shared Utilities**:
+- `utils/taskUtils.ts` — STATUS/PRIORITY/CATEGORY labels+colors, VALID_TRANSITIONS, `isValidTransition()`, `calcUrgency()`, `formatDeadlineRelative()`, `formatDeadlineShort()`, `exportTasksToCSV()`
+- `components/task/Badges.tsx` — StatusBadge, PriorityBadge, DeadlineTag, AvatarStack (inline-style sizing), TaskSkeleton, TaskDetailSkeleton
+- `components/task/TaskFilterBar.tsx` — Shared 9-dimension filter bar (search + status + priority + dept + project + assignee + deadline range)
+- `services/taskApi.ts` — Full typed API layer incl. `getDepartments()`, `getUserWorkload()`, `searchUsers()`
+
+**Core Pages (Task #12)**:
+- `pages/Tasks.tsx` — Smart router (#/tasks/:id → detail, #/tasks → list); bulk actions; URL hash filter persistence (includes assigneeName via `uname=` param); filter params preserved on detail open/close; `isValidTransition()` guard on inline status change; priority success toast; department column at xl breakpoint
+- `pages/TaskKanban.tsx` — @dnd-kit/core + @dnd-kit/sortable; drag-drop with isValidTransition guard, optimistic update + rollback; success/error toasts; SortableContext per column; formatDeadlineRelative for cards
+- `components/TaskDetailContent.tsx` — Two-step assignee flow with due_note input; all actions have success/error toasts including comment send; confirm dialog for primary assignee removal
+
+**Analytics Pages (Task #13)**:
+- `pages/TaskDashboard.tsx` — Skeleton loading, refresh button, navigate upcoming deadlines → #/tasks/:id
+- `pages/Employees.tsx` — Column sort (name/total/in_progress/done/overdue/completion_rate), skeleton rows, refresh button
+- `pages/TaskReports.tsx` — User performance summary table (from /api/reports/task-summary), skeleton sections, refresh button, CATEGORY_LABELS from taskUtils
+
 ### Session note
 - JWT_SECRET rotation invalidates all existing sessions — users must log in again
 - `config/mockTenants.ts` deleted — tenant identity now served by real DB via `GET /api/tenant` (auth required); `tenantContext.tsx` fetches on mount with `credentials: 'include'`
