@@ -13,7 +13,7 @@ import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 import { TaskFilterBar, TaskFilters, EMPTY_FILTERS } from '../components/task/TaskFilterBar';
 import { PriorityBadge, AvatarStack } from '../components/task/Badges';
-import { CATEGORY_LABELS_SHORT, formatDeadlineRelative, isValidTransition } from '../utils/taskUtils';
+import { CATEGORY_LABELS_SHORT, STATUS_LABELS, formatDeadlineRelative, isValidTransition } from '../utils/taskUtils';
 
 type Toast = { id: number; msg: string; type: 'success' | 'error' };
 
@@ -159,6 +159,7 @@ export function TaskKanban() {
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
     try {
       await api.patch(`/api/tasks/${taskId}/status`, { status: newStatus });
+      showToast(`Đã chuyển sang "${STATUS_LABELS[newStatus]}"`);
     } catch (err) {
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: task.status } : t));
       showToast((err as { message?: string })?.message || 'Không thể đổi trạng thái. Đã hoàn tác.', 'error');

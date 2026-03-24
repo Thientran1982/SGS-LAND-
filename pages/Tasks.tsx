@@ -414,6 +414,7 @@ function TaskList() {
                     Deadline <SortIcon col="deadline" />
                   </button>
                 </th>
+                <th className="px-3 py-3 font-medium text-xs hidden xl:table-cell">Phòng ban</th>
                 <th className="px-3 py-3 font-medium text-xs hidden xl:table-cell">Người thực hiện</th>
                 <th className="px-3 py-3 w-8 hidden sm:table-cell" />
               </tr>
@@ -468,6 +469,11 @@ function TaskList() {
                       isOverdue={task.is_overdue}
                       daysUntilDeadline={task.days_until_deadline}
                     />
+                  </td>
+                  <td className="px-3 py-3 hidden xl:table-cell cursor-pointer" onClick={() => openTask(task.id)}>
+                    {task.department_name
+                      ? <span className="text-xs text-[var(--text-secondary)]">{task.department_name}</span>
+                      : <span className="text-xs text-[var(--text-tertiary)]">—</span>}
                   </td>
                   <td className="px-3 py-3 hidden xl:table-cell cursor-pointer" onClick={() => openTask(task.id)}>
                     <AvatarStack assignees={task.assignees || []} />
