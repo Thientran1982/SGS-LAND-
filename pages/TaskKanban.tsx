@@ -118,6 +118,28 @@ export function TaskKanban() {
   const [filters, setFilters] = useState<TaskFilters>(EMPTY_FILTERS);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+      let target = e.target as HTMLElement | null;
+      while (target && target !== el) {
+        const style = getComputedStyle(target);
+        const oy = style.overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && target.scrollHeight > target.clientHeight) return;
+        target = target.parentElement;
+      }
+      if (e.deltaY !== 0) {
+        el.scrollLeft += e.deltaY;
+        e.preventDefault();
+      }
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
 
   const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
     const id = ++toastId.current;
@@ -258,9 +280,9 @@ export function TaskKanban() {
         />
       </div>
 
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 md:p-5">
+      <div ref={boardRef} className="flex-1 overflow-x-auto overflow-y-hidden p-4 md:p-5 min-w-0">
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="flex gap-3 h-full" style={{ minWidth: `${COLUMNS.length * 280}px` }}>
+          <div className="flex gap-3 h-full" style={{ minWidth: `${COLUMNS.length * 280}px`, width: 'max-content' }}>
             {COLUMNS.map(col => (
               <KanbanColumn key={col.id} col={col} tasks={tasksByStatus[col.id] || []} onCardClick={id => setSelectedTaskId(id)} />
             ))}
