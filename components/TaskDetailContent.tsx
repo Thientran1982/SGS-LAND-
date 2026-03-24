@@ -11,6 +11,7 @@ import {
   TaskComment, TaskActivityLog, TaskAssignee, Department, WorkloadStats
 } from '../types';
 import { api } from '../services/api';
+import { SelectDropdown } from './task/SelectDropdown';
 import { TaskDetailSkeleton } from './task/Badges';
 import {
   STATUS_LABELS, STATUS_COLORS, PRIORITY_LABELS, PRIORITY_COLORS,
@@ -512,11 +513,17 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               <div>
                 <label className="text-xs text-[var(--text-tertiary)] flex items-center gap-1 mb-1"><Flag size={10} /> Ưu tiên</label>
                 {editingMeta ? (
-                  <select value={(editMeta.priority as string) || 'medium'} onChange={e => setEditMeta(p => ({ ...p, priority: e.target.value as TaskPriority }))}
-                    className="w-full h-[32px] text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none">
-                    <option value="low">Thấp</option><option value="medium">Trung bình</option>
-                    <option value="high">Cao</option><option value="urgent">Khẩn cấp</option>
-                  </select>
+                  <SelectDropdown
+                    value={(editMeta.priority as string) || 'medium'}
+                    onChange={val => setEditMeta(p => ({ ...p, priority: val as TaskPriority }))}
+                    height={32}
+                    options={[
+                      { value: 'low', label: 'Thấp', dot: 'bg-teal-500' },
+                      { value: 'medium', label: 'Trung bình', dot: 'bg-amber-500' },
+                      { value: 'high', label: 'Cao', dot: 'bg-orange-500' },
+                      { value: 'urgent', label: 'Khẩn cấp', dot: 'bg-rose-500' },
+                    ]}
+                  />
                 ) : (
                   <span className={`inline-flex text-xs px-2 py-0.5 rounded-md border font-medium ${PRIORITY_COLORS[task.priority]}`}>{PRIORITY_LABELS[task.priority]}</span>
                 )}
@@ -542,11 +549,16 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               <div>
                 <label className="text-xs text-[var(--text-tertiary)] flex items-center gap-1 mb-1"><Tag size={10} /> Danh mục</label>
                 {editingMeta ? (
-                  <select value={(editMeta.category as string) || ''} onChange={e => setEditMeta(p => ({ ...p, category: e.target.value as TaskCategory || undefined }))}
-                    className="w-full h-[32px] text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none">
-                    <option value="">Chưa chọn</option>
-                    {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                  </select>
+                  <SelectDropdown
+                    value={(editMeta.category as string) || ''}
+                    onChange={val => setEditMeta(p => ({ ...p, category: (val as TaskCategory) || undefined }))}
+                    placeholder="Chưa chọn"
+                    height={32}
+                    options={[
+                      { value: '', label: 'Chưa chọn' },
+                      ...Object.entries(CATEGORY_LABELS).map(([k, v]) => ({ value: k, label: v })),
+                    ]}
+                  />
                 ) : (
                   <span className="text-sm text-[var(--text-secondary)]">{task.category ? CATEGORY_LABELS[task.category] : '—'}</span>
                 )}
@@ -563,11 +575,16 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               <div>
                 <label className="text-xs text-[var(--text-tertiary)] flex items-center gap-1 mb-1"><User2 size={10} /> Phòng ban</label>
                 {editingMeta ? (
-                  <select value={(editMeta.department_id as string) || ''} onChange={e => setEditMeta(p => ({ ...p, department_id: e.target.value || undefined }))}
-                    className="w-full h-[32px] text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none">
-                    <option value="">Chưa chọn</option>
-                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
+                  <SelectDropdown
+                    value={(editMeta.department_id as string) || ''}
+                    onChange={val => setEditMeta(p => ({ ...p, department_id: val || undefined }))}
+                    placeholder="Chưa chọn"
+                    height={32}
+                    options={[
+                      { value: '', label: 'Chưa chọn' },
+                      ...departments.map(d => ({ value: d.id, label: d.name })),
+                    ]}
+                  />
                 ) : (
                   <span className="text-sm text-[var(--text-secondary)]">{task.department_name || '—'}</span>
                 )}

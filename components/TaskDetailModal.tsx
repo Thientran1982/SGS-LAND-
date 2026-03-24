@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { WfTask, TaskComment, TaskActivityLog, WfTaskStatus, TaskPriority, TaskCategory, Department } from '../types';
+import { SelectDropdown } from './task/SelectDropdown';
 
 const STATUS_LABELS: Record<WfTaskStatus, string> = {
   todo: 'Chờ xử lý', in_progress: 'Đang làm', review: 'Chờ duyệt',
@@ -282,13 +283,17 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><Flag size={11} /> Ưu tiên</label>
                     {editing ? (
-                      <select value={editData.priority || 'medium'} onChange={e => setEditData(p => ({ ...p, priority: e.target.value as TaskPriority }))}
-                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
-                        <option value="low">Thấp</option>
-                        <option value="medium">Trung bình</option>
-                        <option value="high">Cao</option>
-                        <option value="urgent">Khẩn cấp</option>
-                      </select>
+                      <SelectDropdown
+                        value={editData.priority || 'medium'}
+                        onChange={val => setEditData(p => ({ ...p, priority: val as TaskPriority }))}
+                        height={34}
+                        options={[
+                          { value: 'low', label: 'Thấp', dot: 'bg-teal-500' },
+                          { value: 'medium', label: 'Trung bình', dot: 'bg-amber-500' },
+                          { value: 'high', label: 'Cao', dot: 'bg-orange-500' },
+                          { value: 'urgent', label: 'Khẩn cấp', dot: 'bg-rose-500' },
+                        ]}
+                      />
                     ) : (
                       <span className={`inline-flex text-xs px-2 py-0.5 rounded-md border font-medium ${PRIORITY_COLORS[task.priority]}`}>{PRIORITY_LABELS[task.priority]}</span>
                     )}
@@ -311,11 +316,16 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><Tag size={11} /> Danh mục</label>
                     {editing ? (
-                      <select value={editData.category || ''} onChange={e => setEditData(p => ({ ...p, category: e.target.value as TaskCategory || undefined }))}
-                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
-                        <option value="">Chưa chọn</option>
-                        {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                      </select>
+                      <SelectDropdown
+                        value={editData.category || ''}
+                        onChange={val => setEditData(p => ({ ...p, category: (val as TaskCategory) || undefined }))}
+                        placeholder="Chưa chọn"
+                        height={34}
+                        options={[
+                          { value: '', label: 'Chưa chọn' },
+                          ...Object.entries(CATEGORY_LABELS).map(([k, v]) => ({ value: k, label: v })),
+                        ]}
+                      />
                     ) : (
                       <span className="text-sm text-[var(--text-secondary)]">{task.category ? CATEGORY_LABELS[task.category] : '—'}</span>
                     )}
@@ -336,11 +346,16 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenF
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-[var(--text-tertiary)] flex items-center gap-1"><User2 size={11} /> Phòng ban</label>
                     {editing ? (
-                      <select value={editData.department_id || ''} onChange={e => setEditData(p => ({ ...p, department_id: e.target.value || undefined }))}
-                        className="w-full h-[34px] text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
-                        <option value="">Chưa chọn</option>
-                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                      </select>
+                      <SelectDropdown
+                        value={editData.department_id || ''}
+                        onChange={val => setEditData(p => ({ ...p, department_id: val || undefined }))}
+                        placeholder="Chưa chọn"
+                        height={34}
+                        options={[
+                          { value: '', label: 'Chưa chọn' },
+                          ...departments.map(d => ({ value: d.id, label: d.name })),
+                        ]}
+                      />
                     ) : (
                       <span className="text-sm text-[var(--text-secondary)]">{task.department_name || '—'}</span>
                     )}
