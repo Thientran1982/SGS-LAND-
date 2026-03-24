@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Loader2, AlertTriangle, Plus, Search, X,
-  Filter, ListTodo, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown,
-  ExternalLink
+  Filter, ListTodo, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
 import { api } from '../services/api';
 import { WfTask, WfTaskStatus, TaskPriority } from '../types';
-import { TaskDetailModal } from '../components/TaskDetailModal';
+import { TaskDetailContent } from '../components/TaskDetailContent';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 import { ROUTES } from '../config/routes';
 
@@ -30,14 +29,15 @@ const STATUSES: WfTaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'canc
 const PRIORITIES: TaskPriority[] = ['urgent', 'high', 'medium', 'low'];
 type SortKey = 'priority' | 'deadline' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
+const LIMIT = 20;
 
 function getTaskIdFromHash(): string | null {
   const hash = window.location.hash.slice(1);
   const parts = hash.split('/').filter(Boolean);
-  return parts[0] === 'tasks' && parts.length > 1 ? parts[1] : null;
+  return parts[0] === ROUTES.TASKS && parts.length > 1 ? parts[1] : null;
 }
 
-export function Tasks() {
+function TaskList() {
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -49,9 +49,7 @@ export function Tasks() {
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const LIMIT = 20;
 
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(getTaskIdFromHash);
   const [showCreate, setShowCreate] = useState(false);
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -95,40 +93,19 @@ export function Tasks() {
     loadTasks(search, statusFilter, priorityFilter, page, sortKey, sortDir);
   }, [page]);
 
-  useEffect(() => {
-    const handler = () => {
-      const id = getTaskIdFromHash();
-      setSelectedTaskId(id);
-    };
-    window.addEventListener('hashchange', handler);
-    return () => window.removeEventListener('hashchange', handler);
-  }, []);
-
   const openTask = useCallback((id: string) => {
-    setSelectedTaskId(id);
-    window.location.hash = `#/tasks/${id}`;
+    window.location.hash = `#/${ROUTES.TASKS}/${id}`;
   }, []);
 
-  const closeTask = useCallback(() => {
-    setSelectedTaskId(null);
-    window.location.hash = `#/${ROUTES.TASKS}`;
-  }, []);
-
-  const openFullPage = useCallback((id: string) => {
-    window.location.hash = `#/${ROUTES.TASK_DETAIL}/${id}`;
-  }, []);
-
-  const toggleStatus = (s: WfTaskStatus) => setStatusFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
-  const togglePriority = (p: TaskPriority) => setPriorityFilter(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
+  const toggleStatus = (s: WfTaskStatus) =>
+    setStatusFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
+  const togglePriority = (p: TaskPriority) =>
+    setPriorityFilter(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
   const clearFilters = () => { setStatusFilter([]); setPriorityFilter([]); setSearch(''); setPage(1); };
 
   const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDir('asc');
-    }
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
     setPage(1);
   };
 
@@ -139,16 +116,6 @@ export function Tasks() {
 
   const hasFilters = statusFilter.length > 0 || priorityFilter.length > 0 || search.length > 0;
   const totalPages = Math.ceil(total / LIMIT);
-
-  const handleTaskUpdated = useCallback((updated: WfTask) => {
-    setTasks(prev => prev.map(t => t.id === updated.id ? { ...t, ...updated } : t));
-  }, []);
-
-  const handleTaskDeleted = useCallback((id: string) => {
-    setTasks(prev => prev.filter(t => t.id !== id));
-    closeTask();
-    setTotal(prev => Math.max(0, prev - 1));
-  }, [closeTask]);
 
   const handleTaskCreated = useCallback((task: WfTask) => {
     setTasks(prev => [task, ...prev]);
@@ -189,7 +156,6 @@ export function Tasks() {
             </button>
           )}
         </div>
-
         <div className="flex flex-wrap gap-1.5 items-center">
           <Filter className="w-3.5 h-3.5 text-[var(--text-tertiary)] flex-shrink-0" />
           {STATUSES.map(s => (
@@ -223,7 +189,8 @@ export function Tasks() {
           <div className="flex flex-col items-center justify-center h-32 gap-2">
             <AlertTriangle className="w-7 h-7 text-amber-400" />
             <p className="text-sm text-[var(--text-secondary)]">{error}</p>
-            <button onClick={() => loadTasks(search, statusFilter, priorityFilter, page, sortKey, sortDir)} className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
+            <button onClick={() => loadTasks(search, statusFilter, priorityFilter, page, sortKey, sortDir)}
+              className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
           </div>
         ) : tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3">
@@ -260,7 +227,7 @@ export function Tasks() {
                   </button>
                 </th>
                 <th className="px-3 py-3 font-medium text-xs hidden xl:table-cell">Người thực hiện</th>
-                <th className="px-3 py-3 w-10 hidden sm:table-cell" />
+                <th className="px-3 py-3 w-8 hidden sm:table-cell" />
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--glass-border)]">
@@ -273,25 +240,18 @@ export function Tasks() {
                     {task.project_name && <div className="text-xs text-[var(--text-tertiary)] mt-0.5">{task.project_name}</div>}
                     <div className="flex items-center gap-1.5 mt-1 sm:hidden flex-wrap">
                       <span className={`text-xs px-1.5 py-0.5 rounded-md ${STATUS_COLORS[task.status]}`}>{STATUS_LABELS[task.status]}</span>
-                      <div className="flex items-center gap-1">
-                        <div className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`} />
-                        <span className="text-xs text-[var(--text-tertiary)]">{PRIORITY_LABELS[task.priority]}</span>
-                      </div>
                       {task.is_overdue && <span className="text-xs text-rose-500 font-semibold">⚠ Quá hạn</span>}
                     </div>
                   </td>
-
                   <td className="px-3 py-3 hidden sm:table-cell">
                     <span className={`text-xs px-2 py-0.5 rounded-lg font-medium ${STATUS_COLORS[task.status]}`}>{STATUS_LABELS[task.status]}</span>
                   </td>
-
                   <td className="px-3 py-3 hidden md:table-cell">
                     <div className="flex items-center gap-1.5">
                       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]}`} />
                       <span className="text-xs text-[var(--text-secondary)]">{PRIORITY_LABELS[task.priority]}</span>
                     </div>
                   </td>
-
                   <td className="px-3 py-3 hidden lg:table-cell">
                     {task.deadline ? (
                       <span className={`text-xs ${task.is_overdue ? 'text-rose-500 font-semibold' : 'text-[var(--text-secondary)]'}`}>
@@ -299,7 +259,6 @@ export function Tasks() {
                       </span>
                     ) : <span className="text-[var(--text-tertiary)] text-xs">—</span>}
                   </td>
-
                   <td className="px-3 py-3 hidden xl:table-cell">
                     <div className="flex items-center gap-1">
                       {task.assignees?.slice(0, 3).map(a => (
@@ -316,17 +275,8 @@ export function Tasks() {
                       )}
                     </div>
                   </td>
-
                   <td className="px-3 py-3 hidden sm:table-cell">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={e => { e.stopPropagation(); openFullPage(task.id); }}
-                        title="Mở trang chi tiết"
-                        className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-md text-[var(--text-tertiary)] hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
-                        <ExternalLink size={12} />
-                      </button>
-                      <ChevronRight size={14} className="text-[var(--text-tertiary)] group-hover:text-indigo-500 transition-colors" />
-                    </div>
+                    <ChevronRight size={14} className="text-[var(--text-tertiary)] group-hover:text-indigo-500 transition-colors" />
                   </td>
                 </tr>
               ))}
@@ -357,16 +307,6 @@ export function Tasks() {
         </div>
       )}
 
-      {/* Task Detail Modal */}
-      <TaskDetailModal
-        taskId={selectedTaskId}
-        onClose={closeTask}
-        onUpdated={handleTaskUpdated}
-        onDeleted={handleTaskDeleted}
-        onOpenFullPage={openFullPage}
-      />
-
-      {/* Create Task Modal */}
       {showCreate && (
         <CreateTaskModal
           onClose={() => setShowCreate(false)}
@@ -375,4 +315,28 @@ export function Tasks() {
       )}
     </div>
   );
+}
+
+export function Tasks() {
+  const [hash, setHash] = useState(window.location.hash);
+
+  useEffect(() => {
+    const handler = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', handler);
+    return () => window.removeEventListener('hashchange', handler);
+  }, []);
+
+  const parts = hash.slice(1).split('/').filter(Boolean);
+  const detailId = parts[0] === ROUTES.TASKS && parts.length > 1 ? parts[1] : null;
+
+  if (detailId) {
+    return (
+      <TaskDetailContent
+        taskId={detailId}
+        onBack={() => { window.location.hash = `#/${ROUTES.TASKS}`; }}
+      />
+    );
+  }
+
+  return <TaskList />;
 }
