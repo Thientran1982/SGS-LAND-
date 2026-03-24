@@ -165,7 +165,8 @@ function TaskList() {
   }, [filters, sortKey, sortDir, page, loadTasks]);
 
   const openTask = useCallback((id: string) => {
-    window.location.hash = `#/${ROUTES.TASKS}/${id}`;
+    const qs = window.location.hash.split('?')[1] || '';
+    window.location.hash = `#/${ROUTES.TASKS}/${id}${qs ? '?' + qs : ''}`;
   }, []);
 
   const handleFiltersChange = useCallback((f: TaskFilters) => {
@@ -232,7 +233,12 @@ function TaskList() {
     setBulkAssignResults([]);
     try {
       const ids = Array.from(selectedIds);
-      await Promise.all(ids.map(id => taskApi.assign(id, [userId])));
+      const results = await Promise.all(ids.map(id => taskApi.assign(id, [userId])));
+      setTasks(prev => prev.map(t => {
+        const idx = ids.indexOf(t.id);
+        if (idx === -1) return t;
+        return { ...t, assignees: results[idx].assignees || t.assignees };
+      }));
       showToast(`Đã giao ${ids.length} công việc cho ${userName}`);
       setSelectedIds(new Set());
       setBulkAction('');
@@ -261,6 +267,7 @@ function TaskList() {
     try {
       const updated = await taskApi.update(task.id, { priority: newPriority });
       setTasks(prev => prev.map(t => t.id === task.id ? { ...t, priority: updated.priority } : t));
+      showToast(`Đã đổi ưu tiên sang "${PRIORITY_LABELS[newPriority]}"`);
     } catch {
       showToast('Không thể đổi ưu tiên', 'error');
     }
@@ -522,7 +529,10 @@ export function Tasks() {
     return (
       <TaskDetailContent
         taskId={taskId}
-        onBack={() => { window.location.hash = `#/${ROUTES.TASKS}`; }}
+        onBack={() => {
+          const qs = window.location.hash.split('?')[1] || '';
+          window.location.hash = `#/${ROUTES.TASKS}${qs ? '?' + qs : ''}`;
+        }}
       />
     );
   }

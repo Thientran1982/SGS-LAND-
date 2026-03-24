@@ -287,6 +287,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       const comment = await taskApi.createComment(task.id, newComment.trim());
       setComments(prev => [...prev, comment]);
       setNewComment('');
+      showToast('Đã gửi bình luận');
     } catch {
       showToast('Không thể gửi bình luận', 'error');
     } finally {
