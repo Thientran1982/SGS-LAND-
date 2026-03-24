@@ -99,6 +99,8 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
   const [userResults, setUserResults] = useState<SimpleUser[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [userPickerOpen, setUserPickerOpen] = useState(false);
+  const [pendingAssignee, setPendingAssignee] = useState<SimpleUser | null>(null);
+  const [dueNote, setDueNote] = useState('');
   const [workloads, setWorkloads] = useState<Record<string, WorkloadStats>>({});
   const [addingAssignee, setAddingAssignee] = useState(false);
   const [removingAssigneeId, setRemovingAssigneeId] = useState<string | null>(null);
@@ -344,17 +346,23 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     } catch {}
   };
 
-  const addAssignee = async (user: SimpleUser) => {
-    if (!task) return;
-    if (task.assignees?.some(a => a.id === user.id)) return;
+  const selectPendingAssignee = (user: SimpleUser) => {
+    if (!task || task.assignees?.some(a => a.id === user.id)) return;
+    setPendingAssignee(user);
+    setUserPickerOpen(false);
+    setAssigneeSearch('');
+    setUserResults([]);
+  };
+
+  const addAssignee = async () => {
+    if (!task || !pendingAssignee) return;
     setAddingAssignee(true);
     try {
-      const res = await taskApi.assign(task.id, [user.id]);
+      const res = await taskApi.assign(task.id, [pendingAssignee.id], undefined, dueNote.trim() || undefined);
       setTask(prev => prev ? { ...prev, assignees: res.assignees || [] } : prev);
-      setAssigneeSearch('');
-      setUserResults([]);
-      setUserPickerOpen(false);
-      showToast(`Đã giao việc cho ${user.name}`);
+      setPendingAssignee(null);
+      setDueNote('');
+      showToast(`Đã giao việc cho ${pendingAssignee.name}`);
     } catch (err) {
       showToast((err as { message?: string })?.message || 'Không thể giao việc', 'error');
     } finally {
@@ -671,7 +679,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               </div>
             )}
 
-            {/* Add assignee picker */}
+            {/* Add assignee: search picker */}
             <div className="relative" ref={userPickerRef}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-tertiary)]" />
@@ -687,8 +695,8 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                   ) : userResults.map(u => {
                     const alreadyAssigned = task.assignees?.some(a => a.id === u.id);
                     return (
-                      <button key={u.id} type="button" disabled={alreadyAssigned || addingAssignee}
-                        onClick={() => addAssignee(u)}
+                      <button key={u.id} type="button" disabled={alreadyAssigned}
+                        onClick={() => selectPendingAssignee(u)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors ${alreadyAssigned ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--glass-surface-hover)]'}`}>
                         <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 flex-shrink-0">
                           {u.name?.charAt(0).toUpperCase()}
@@ -697,19 +705,35 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                           <p className="font-medium text-[var(--text-primary)] truncate">{u.name}</p>
                           {u.email && <p className="text-[11px] text-[var(--text-tertiary)] truncate">{u.email}</p>}
                         </div>
-                        {alreadyAssigned ? (
-                          <span className="text-xs text-emerald-500 font-semibold flex-shrink-0">✓ Đã giao</span>
-                        ) : (
-                          <span className="text-xs text-indigo-500 font-medium flex-shrink-0 flex items-center gap-0.5">
-                            {addingAssignee ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />} Thêm
-                          </span>
-                        )}
+                        {alreadyAssigned && <span className="text-xs text-emerald-500 font-semibold flex-shrink-0">✓ Đã giao</span>}
                       </button>
                     );
                   })}
                 </div>
               )}
             </div>
+
+            {/* Pending assignee: due_note + confirm */}
+            {pendingAssignee && (
+              <div className="mt-2 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600 flex-shrink-0">
+                    {pendingAssignee.name?.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-[var(--text-primary)] flex-1">{pendingAssignee.name}</span>
+                  <button onClick={() => { setPendingAssignee(null); setDueNote(''); }} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+                    <X size={14} />
+                  </button>
+                </div>
+                <input value={dueNote} onChange={e => setDueNote(e.target.value)}
+                  placeholder="Ghi chú cho người thực hiện (tùy chọn)..."
+                  className="w-full h-[32px] px-3 text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-indigo-400" />
+                <button onClick={addAssignee} disabled={addingAssignee}
+                  className="w-full h-[32px] bg-indigo-600 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                  {addingAssignee ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Xác nhận giao việc
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Comments */}

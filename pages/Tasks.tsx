@@ -10,7 +10,7 @@ import { TaskDetailContent } from '../components/TaskDetailContent';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 import { TaskFilterBar, TaskFilters, EMPTY_FILTERS } from '../components/task/TaskFilterBar';
 import { StatusBadge, PriorityBadge, DeadlineTag, AvatarStack, TaskSkeleton } from '../components/task/Badges';
-import { STATUS_LABELS, PRIORITY_LABELS, ALL_STATUSES, exportTasksToCSV } from '../utils/taskUtils';
+import { STATUS_LABELS, PRIORITY_LABELS, ALL_STATUSES, isValidTransition, exportTasksToCSV } from '../utils/taskUtils';
 import { ROUTES } from '../config/routes';
 
 type SortKey = 'priority' | 'deadline' | 'created_at' | 'updated_at';
@@ -247,6 +247,10 @@ function TaskList() {
   };
 
   const quickChangeStatus = async (task: WfTask, newStatus: WfTaskStatus) => {
+    if (!isValidTransition(task.status, newStatus)) {
+      showToast(`Không thể chuyển từ "${STATUS_LABELS[task.status]}" sang "${STATUS_LABELS[newStatus]}"`, 'error');
+      return;
+    }
     try {
       const updated = await taskApi.changeStatus(task.id, newStatus);
       setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: updated.status } : t));
