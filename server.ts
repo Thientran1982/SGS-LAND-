@@ -1255,6 +1255,10 @@ async function startServer() {
     const isAuthenticated = !!socket.data.authUser;
     console.log(`User connected: ${socket.id} (auth: ${isAuthenticated})`);
 
+    if (socket.data.authUser?.tenantId) {
+      socket.join(`tenant:${socket.data.authUser.tenantId}`);
+    }
+
     socket.on("join_room", (room) => {
       if (!socket.data.authUser) return;
       socket.join(room);
