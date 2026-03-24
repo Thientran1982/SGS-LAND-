@@ -61,6 +61,14 @@ const CACHE_TTL = 30_000;
 
 class SimpleCache {
   private store = new Map<string, { data: any; ts: number }>();
+  // Per-prefix generation counters — only the affected prefix's generation is bumped on invalidate.
+  // Background fetchFresh() captures the generation before the HTTP request and checks it
+  // on completion; if the generation has changed the stale write is discarded.
+  private generations = new Map<string, number>();
+
+  private generationFor(prefix: string): number {
+    return this.generations.get(prefix) ?? 0;
+  }
 
   get(key: string): any | null {
     const entry = this.store.get(key);
@@ -69,11 +77,23 @@ class SimpleCache {
     return entry.data;
   }
 
-  set(key: string, data: any) {
+  // Call before starting an async fetch.  Returns an opaque token to pass to set().
+  snapshot(prefix: string): number {
+    return this.generationFor(prefix);
+  }
+
+  set(key: string, data: any, prefix?: string, snapshot?: number) {
+    if (prefix !== undefined && snapshot !== undefined) {
+      if (this.generationFor(prefix) !== snapshot) {
+        // Cache was invalidated after this fetch started — discard the stale write.
+        return;
+      }
+    }
     this.store.set(key, { data, ts: Date.now() });
   }
 
   invalidate(prefix: string) {
+    this.generations.set(prefix, this.generationFor(prefix) + 1);
     for (const key of this.store.keys()) {
       if (key.startsWith(prefix)) this.store.delete(key);
     }
@@ -128,6 +148,7 @@ class DatabaseApiClient {
     const cached = _cache.get(cacheKey);
 
     const fetchFresh = async () => {
+      const snap = _cache.snapshot('leads:');
       try {
         const result = await leadApi.getLeads(page, pageSize, params);
         const out = {
@@ -138,7 +159,7 @@ class DatabaseApiClient {
           totalPages: result.totalPages,
           stats: (result as any).stats,
         };
-        _cache.set(cacheKey, out);
+        _cache.set(cacheKey, out, 'leads:', snap);
         return out;
       } catch (error) {
         console.error('getLeads error:', error);
@@ -195,6 +216,7 @@ class DatabaseApiClient {
     const cached = _cache.get(cacheKey);
 
     const fetchFresh = async () => {
+      const snap = _cache.snapshot('listings:');
       try {
         const result = await listingApi.getListings(page, pageSize, params);
         const out = {
@@ -205,7 +227,7 @@ class DatabaseApiClient {
           totalPages: (result as any).totalPages,
           stats: (result as any).stats,
         };
-        _cache.set(cacheKey, out);
+        _cache.set(cacheKey, out, 'listings:', snap);
         return out;
       } catch (error) {
         console.error('getListings error:', error);
@@ -354,6 +376,7 @@ class DatabaseApiClient {
     const cached = _cache.get(cacheKey);
 
     const fetchFresh = async () => {
+      const snap = _cache.snapshot('contracts:');
       try {
         const result = await contractApi.getContracts(page, pageSize, cleanFilters);
         const out = {
@@ -363,7 +386,7 @@ class DatabaseApiClient {
           pageSize: result.pageSize,
           totalPages: result.totalPages,
         };
-        _cache.set(cacheKey, out);
+        _cache.set(cacheKey, out, 'contracts:', snap);
         return out;
       } catch (error) {
         console.error('getContracts error:', error);

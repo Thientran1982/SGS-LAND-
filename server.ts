@@ -1350,11 +1350,11 @@ async function startServer() {
     }));
 
     socket.on("lead_updated", requireAuth((data) => {
-      socket.broadcast.emit("lead_updated", data);
+      io.emit("lead_updated", data);
     }));
 
     socket.on("lead_created", requireAuth((data) => {
-      socket.broadcast.emit("lead_created", data);
+      io.emit("lead_created", data);
     }));
 
     socket.on("disconnect", async () => {
