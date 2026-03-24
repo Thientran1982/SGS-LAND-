@@ -502,7 +502,7 @@ class DatabaseApiClient {
       const params: any = {};
       if (fromDate) params.fromDate = fromDate;
       if (toDate) params.toDate = toDate;
-      return await api.get<any[]>('/api/activity/summary', { params });
+      return await api.get<any[]>('/api/activity/summary', params);
     } catch {
       return [];
     }
@@ -513,7 +513,7 @@ class DatabaseApiClient {
       const params: any = {};
       if (fromDate) params.fromDate = fromDate;
       if (toDate) params.toDate = toDate;
-      return await api.get<any>(`/api/activity/user/${userId}`, { params });
+      return await api.get<any>(`/api/activity/user/${userId}`, params);
     } catch {
       return { pageStats: [], recentVisits: [] };
     }
