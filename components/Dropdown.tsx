@@ -38,9 +38,9 @@ const ICONS = {
 const STYLES = {
     LABEL: "block text-xs font-bold uppercase mb-1 ml-1 select-none transition-colors",
     BUTTON: "w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border transition-all duration-200 outline-none text-sm group",
-    // Outer: overflow-hidden + max-h clips content at border-radius correctly; inner handles scrolling
-    MENU: "fixed z-[10002] bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 animate-scale-up overflow-hidden text-sm focus:outline-none min-w-[120px] max-h-[320px]",
-    // Inner: overflow-y-auto with NO max-h — height = content height, scrolls inside outer's bounds
+    // Outer: overflow-hidden clips at border-radius; NO max-h (inner controls height precisely)
+    MENU: "fixed z-[10002] bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 animate-scale-up overflow-hidden text-sm focus:outline-none min-w-[120px]",
+    // Inner: height = min(fit-content, 320px) — shrinks to exact content size, caps at 320px for scroll
     MENU_INNER: "overflow-y-auto no-scrollbar overscroll-contain divide-y divide-[var(--glass-border)] dark:divide-white/5",
     OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group outline-none focus:bg-[var(--glass-surface)] dark:focus:bg-slate-800",
     
@@ -230,7 +230,7 @@ export const Dropdown = memo(<T extends string | number>({
                         transformOrigin: coords.bottom !== undefined ? 'bottom center' : 'top center'
                     }}
                 >
-                    <div className={STYLES.MENU_INNER}>
+                    <div className={STYLES.MENU_INNER} style={{ height: 'min(fit-content, 320px)' }}>
                         {options?.length === 0 ? (
                             <div className="px-4 py-3 text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] text-center italic select-none">{t('common.no_options')}</div>
                         ) : (
