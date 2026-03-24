@@ -150,8 +150,10 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] p-6 pb-8 sm:pb-6 shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up max-h-[92dvh] overflow-y-auto no-scrollbar">
-                <div className="flex justify-between items-center mb-5">
+            <div className="bg-[var(--bg-surface)] w-full max-w-sm rounded-t-[28px] sm:rounded-[24px] shadow-2xl border border-[var(--glass-border)] relative z-10 animate-scale-up flex flex-col max-h-[88dvh] sm:max-h-[92dvh]">
+
+                {/* Header — cố định, không cuộn */}
+                <div className="flex justify-between items-center px-6 pt-6 pb-4 shrink-0">
                     <div>
                         <h3 className="text-lg font-bold text-[var(--text-primary)]">{t('admin.users.invite_title')}</h3>
                         <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{t('admin.users.invite_hint')}</p>
@@ -161,94 +163,99 @@ const InviteUserModal: React.FC<InviteModalProps> = ({ isOpen, onClose, onConfir
                     </button>
                 </div>
 
-                {errors.submit && (
-                    <div className="mb-4 px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-600 font-medium">
-                        {errors.submit}
-                    </div>
-                )}
+                {/* Body — cuộn được */}
+                <div className="flex-1 overflow-y-auto no-scrollbar px-6">
+                    {errors.submit && (
+                        <div className="mb-4 px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-600 font-medium">
+                            {errors.submit}
+                        </div>
+                    )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Họ tên */}
-                    <div>
-                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">
-                            {t('admin.users.name_label')} <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            className={inputCls('name')}
-                            placeholder={t('common.placeholder_fullname')}
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                            autoFocus
-                        />
-                        {errors.name && <p className="text-xs text-rose-500 font-medium mt-1">{errors.name}</p>}
-                    </div>
+                    <form id="invite-user-form" onSubmit={handleSubmit} className="space-y-4">
+                        {/* Họ tên */}
+                        <div>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">
+                                {t('admin.users.name_label')} <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                className={inputCls('name')}
+                                placeholder={t('common.placeholder_fullname')}
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                                autoFocus
+                            />
+                            {errors.name && <p className="text-xs text-rose-500 font-medium mt-1">{errors.name}</p>}
+                        </div>
 
-                    {/* Email */}
-                    <div>
-                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">
-                            {t('admin.users.email_label')} <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                            type="email"
-                            className={inputCls('email')}
-                            placeholder={t('admin.users.placeholder_email')}
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                        />
-                        {errors.email && <p className="text-xs text-rose-500 font-medium mt-1">{errors.email}</p>}
-                    </div>
+                        {/* Email */}
+                        <div>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">
+                                {t('admin.users.email_label')} <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                                type="email"
+                                className={inputCls('email')}
+                                placeholder={t('admin.users.placeholder_email')}
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                            />
+                            {errors.email && <p className="text-xs text-rose-500 font-medium mt-1">{errors.email}</p>}
+                        </div>
 
-                    {/* Số điện thoại (optional) */}
-                    <div>
-                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5 flex items-center gap-1">
-                            {t('admin.users.phone_label')}
-                            <span className="text-3xs font-normal text-[var(--text-muted)] normal-case">{t('admin.users.phone_optional')}</span>
-                        </label>
-                        <input
-                            type="tel"
-                            className={inputCls('phone')}
-                            placeholder={t('common.placeholder_phone')}
-                            value={phone}
-                            onChange={e => setPhone(e.target.value)}
-                        />
-                        {errors.phone && <p className="text-xs text-rose-500 font-medium mt-1">{errors.phone}</p>}
-                    </div>
+                        {/* Số điện thoại (optional) */}
+                        <div>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5 flex items-center gap-1">
+                                {t('admin.users.phone_label')}
+                                <span className="text-3xs font-normal text-[var(--text-muted)] normal-case">{t('admin.users.phone_optional')}</span>
+                            </label>
+                            <input
+                                type="tel"
+                                className={inputCls('phone')}
+                                placeholder={t('common.placeholder_phone')}
+                                value={phone}
+                                onChange={e => setPhone(e.target.value)}
+                            />
+                            {errors.phone && <p className="text-xs text-rose-500 font-medium mt-1">{errors.phone}</p>}
+                        </div>
 
-                    {/* Vai trò */}
-                    <div>
-                        <Dropdown
-                            label={t('admin.users.role_label')}
-                            value={role}
-                            onChange={(v) => setRole(v as UserRole)}
-                            options={roleOptions}
-                            className="w-full"
-                            placement="top"
-                        />
-                        <div className="mt-2 bg-indigo-50/60 border border-indigo-100 rounded-xl p-3 flex gap-2">
-                            <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
-                            <div>
-                                <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-0.5">{t('admin.users.role_permissions')}</h4>
-                                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                                    {t(`role_desc.${role}`)}
-                                </p>
+                        {/* Vai trò */}
+                        <div className="pb-2">
+                            <Dropdown
+                                label={t('admin.users.role_label')}
+                                value={role}
+                                onChange={(v) => setRole(v as UserRole)}
+                                options={roleOptions}
+                                className="w-full"
+                                placement="top"
+                            />
+                            <div className="mt-2 bg-indigo-50/60 border border-indigo-100 rounded-xl p-3 flex gap-2">
+                                <div className="shrink-0 mt-0.5">{ICONS.INFO}</div>
+                                <div>
+                                    <h4 className="text-xs2 font-bold text-indigo-700 uppercase tracking-wide mb-0.5">{t('admin.users.role_permissions')}</h4>
+                                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                                        {t(`role_desc.${role}`)}
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
+                </div>
 
-                    <div className="pt-1">
-                        <button
-                            type="submit"
-                            disabled={loading || !name.trim() || !email.trim()}
-                            className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center justify-center gap-2 active:scale-95"
-                        >
-                            {loading
-                                ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                : ICONS.SEND}
-                            {loading ? t('admin.users.sending') : t('admin.users.btn_send')}
-                        </button>
-                    </div>
-                </form>
+                {/* Footer — cố định, luôn hiển thị */}
+                <div className="px-6 pt-3 pb-6 sm:pb-4 shrink-0 border-t border-[var(--glass-border)]">
+                    <button
+                        type="submit"
+                        form="invite-user-form"
+                        disabled={loading || !name.trim() || !email.trim()}
+                        className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-sm shadow-lg hover:bg-slate-800 transition-all disabled:opacity-60 flex items-center justify-center gap-2 active:scale-95"
+                    >
+                        {loading
+                            ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            : ICONS.SEND}
+                        {loading ? t('admin.users.sending') : t('admin.users.btn_send')}
+                    </button>
+                </div>
             </div>
         </div>,
         document.body
