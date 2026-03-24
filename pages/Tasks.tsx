@@ -400,7 +400,7 @@ function TaskList() {
                 </th>
                 <th className="px-2 py-3 font-medium text-xs">
                   <button onClick={() => handleSort('created_at')} className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors">
-                    Tiêu đề <SortIcon col="created_at" />
+                    Ngày tạo <SortIcon col="created_at" />
                   </button>
                 </th>
                 <th className="px-3 py-3 font-medium text-xs hidden sm:table-cell">Trạng thái</th>

@@ -4,6 +4,7 @@ import {
   DndContext, DragOverlay, useDraggable, useDroppable,
   PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent,
 } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, AlertTriangle, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
@@ -12,7 +13,7 @@ import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 import { TaskFilterBar, TaskFilters, EMPTY_FILTERS } from '../components/task/TaskFilterBar';
 import { PriorityBadge, AvatarStack } from '../components/task/Badges';
-import { CATEGORY_LABELS_SHORT, formatDeadlineShort, isValidTransition } from '../utils/taskUtils';
+import { CATEGORY_LABELS_SHORT, formatDeadlineRelative, isValidTransition } from '../utils/taskUtils';
 
 type Toast = { id: number; msg: string; type: 'success' | 'error' };
 
@@ -39,7 +40,7 @@ function TaskCard({ task, overlay = false, onClick }: { task: WfTask; overlay?: 
     ? 'border-amber-300 dark:border-amber-800'
     : 'border-[var(--glass-border)]';
 
-  const rel = formatDeadlineShort(task.deadline?.toString(), task.is_overdue, task.days_until_deadline);
+  const rel = formatDeadlineRelative(task.deadline?.toString(), task.is_overdue, task.days_until_deadline);
 
   return (
     <div
@@ -96,13 +97,15 @@ function KanbanColumn({ col, tasks, onCardClick }: { col: typeof COLUMNS[0]; tas
         </span>
       </div>
       <div ref={setNodeRef} className={`flex-1 overflow-y-auto p-2.5 space-y-2 no-scrollbar min-h-[120px] transition-colors ${isOver ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
-        {tasks.length === 0 ? (
-          <p className={`text-center text-xs py-8 transition-colors ${isOver ? 'text-indigo-400' : 'text-[var(--text-tertiary)]'}`}>
-            {isOver ? 'Thả vào đây' : 'Không có công việc'}
-          </p>
-        ) : tasks.map(t => (
-          <TaskCard key={t.id} task={t} onClick={() => onCardClick(t.id)} />
-        ))}
+        <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+          {tasks.length === 0 ? (
+            <p className={`text-center text-xs py-8 transition-colors ${isOver ? 'text-indigo-400' : 'text-[var(--text-tertiary)]'}`}>
+              {isOver ? 'Thả vào đây' : 'Không có công việc'}
+            </p>
+          ) : tasks.map(t => (
+            <TaskCard key={t.id} task={t} onClick={() => onCardClick(t.id)} />
+          ))}
+        </SortableContext>
       </div>
     </div>
   );
