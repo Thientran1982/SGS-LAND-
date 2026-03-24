@@ -70,6 +70,7 @@ const KnowledgeBase = lazyLoad(() => import('./pages/KnowledgeBase'), 'Knowledge
 const TaskDashboard = lazyLoad(() => import('./pages/TaskDashboard'), 'TaskDashboard');
 const TaskKanban = lazyLoad(() => import('./pages/TaskKanban'), 'TaskKanban');
 const Tasks = lazyLoad(() => import('./pages/Tasks'), 'Tasks');
+const TaskDetail = lazyLoad(() => import('./pages/TaskDetail'), 'TaskDetail');
 const Employees = lazyLoad(() => import('./pages/Employees'), 'Employees');
 const TaskReports = lazyLoad(() => import('./pages/TaskReports'), 'TaskReports');
 
@@ -114,6 +115,7 @@ registerPrefetch(ROUTES.PROFILE,            () => import('./pages/Profile'));
 registerPrefetch(ROUTES.TASK_DASHBOARD,     () => import('./pages/TaskDashboard'));
 registerPrefetch(ROUTES.TASK_KANBAN,        () => import('./pages/TaskKanban'));
 registerPrefetch(ROUTES.TASKS,              () => import('./pages/Tasks'));
+registerPrefetch(ROUTES.TASK_DETAIL,        () => import('./pages/TaskDetail'));
 registerPrefetch(ROUTES.EMPLOYEES,          () => import('./pages/Employees'));
 registerPrefetch(ROUTES.TASK_REPORTS,       () => import('./pages/TaskReports'));
 registerPrefetch(ROUTES.SEARCH,             () => import('./pages/ProductSearch'));
@@ -191,6 +193,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.TASK_DASHBOARD]: TaskDashboard,
     [ROUTES.TASK_KANBAN]: TaskKanban,
     [ROUTES.TASKS]: Tasks,
+    [ROUTES.TASK_DETAIL]: TaskDetail,
     [ROUTES.EMPLOYEES]: Employees,
     [ROUTES.TASK_REPORTS]: TaskReports,
     // Misc

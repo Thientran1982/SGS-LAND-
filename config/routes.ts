@@ -54,6 +54,7 @@ export const ROUTES = {
     TASK_DASHBOARD: 'task-dashboard',
     TASK_KANBAN: 'task-kanban',
     TASKS: 'tasks',
+    TASK_DETAIL: 'task',
     EMPLOYEES: 'employees',
     TASK_REPORTS: 'task-reports',
 } as const;
@@ -66,6 +67,9 @@ export const FULL_HEIGHT_PAGES = new Set([
     ROUTES.CONTRACTS,
     ROUTES.FAVORITES,
     ROUTES.SYSTEM,
+    ROUTES.TASKS,
+    ROUTES.TASK_KANBAN,
+    ROUTES.TASK_DETAIL,
 ]);
 
 export type RouteKey = typeof ROUTES[keyof typeof ROUTES];

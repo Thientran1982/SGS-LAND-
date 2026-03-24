@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Loader2, AlertTriangle, Plus, Search, X,
-  Filter, ListTodo, ChevronRight
+  Filter, ListTodo, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown,
+  ExternalLink
 } from 'lucide-react';
 import { api } from '../services/api';
 import { WfTask, WfTaskStatus, TaskPriority } from '../types';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
+import { ROUTES } from '../config/routes';
 
 const STATUS_LABELS: Record<WfTaskStatus, string> = {
   todo: 'Chờ xử lý', in_progress: 'Đang làm', review: 'Chờ duyệt',
@@ -26,6 +28,14 @@ const PRIORITY_DOT: Record<TaskPriority, string> = {
 
 const STATUSES: WfTaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'cancelled'];
 const PRIORITIES: TaskPriority[] = ['urgent', 'high', 'medium', 'low'];
+type SortKey = 'title' | 'priority' | 'deadline' | 'created_at' | 'status';
+type SortDir = 'asc' | 'desc';
+
+function getTaskIdFromHash(): string | null {
+  const hash = window.location.hash.slice(1);
+  const parts = hash.split('/').filter(Boolean);
+  return parts[0] === 'tasks' && parts.length > 1 ? parts[1] : null;
+}
 
 export function Tasks() {
   const [tasks, setTasks] = useState<WfTask[]>([]);
@@ -37,19 +47,26 @@ export function Tasks() {
   const [statusFilter, setStatusFilter] = useState<WfTaskStatus[]>([]);
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority[]>([]);
   const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState<SortKey>('created_at');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
   const LIMIT = 25;
 
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(getTaskIdFromHash);
   const [showCreate, setShowCreate] = useState(false);
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const loadTasks = useCallback(async (s: string, st: WfTaskStatus[], pr: TaskPriority[], pg: number) => {
+  const loadTasks = useCallback(async (
+    s: string, st: WfTaskStatus[], pr: TaskPriority[], pg: number,
+    sk: SortKey, sd: SortDir
+  ) => {
     setLoading(true);
     setError(null);
     const params = new URLSearchParams();
     params.set('limit', String(LIMIT));
     params.set('page', String(pg));
+    params.set('sort_by', sk);
+    params.set('sort_dir', sd);
     if (s) params.set('search', s);
     if (st.length) params.set('status', st.join(','));
     if (pr.length) params.set('priority', pr.join(','));
@@ -69,18 +86,56 @@ export function Tasks() {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     searchTimeout.current = setTimeout(() => {
       setPage(1);
-      loadTasks(search, statusFilter, priorityFilter, 1);
+      loadTasks(search, statusFilter, priorityFilter, 1, sortKey, sortDir);
     }, 300);
     return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
-  }, [search, statusFilter, priorityFilter, loadTasks]);
+  }, [search, statusFilter, priorityFilter, loadTasks, sortKey, sortDir]);
 
   useEffect(() => {
-    loadTasks(search, statusFilter, priorityFilter, page);
+    loadTasks(search, statusFilter, priorityFilter, page, sortKey, sortDir);
   }, [page]);
+
+  useEffect(() => {
+    const handler = () => {
+      const id = getTaskIdFromHash();
+      setSelectedTaskId(id);
+    };
+    window.addEventListener('hashchange', handler);
+    return () => window.removeEventListener('hashchange', handler);
+  }, []);
+
+  const openTask = useCallback((id: string) => {
+    setSelectedTaskId(id);
+    window.location.hash = `#/tasks/${id}`;
+  }, []);
+
+  const closeTask = useCallback(() => {
+    setSelectedTaskId(null);
+    window.location.hash = `#/${ROUTES.TASKS}`;
+  }, []);
+
+  const openFullPage = useCallback((id: string) => {
+    window.location.hash = `#/${ROUTES.TASK_DETAIL}/${id}`;
+  }, []);
 
   const toggleStatus = (s: WfTaskStatus) => setStatusFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
   const togglePriority = (p: TaskPriority) => setPriorityFilter(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
   const clearFilters = () => { setStatusFilter([]); setPriorityFilter([]); setSearch(''); setPage(1); };
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+    setPage(1);
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown size={12} className="opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp size={12} className="text-indigo-500" /> : <ArrowDown size={12} className="text-indigo-500" />;
+  };
 
   const hasFilters = statusFilter.length > 0 || priorityFilter.length > 0 || search.length > 0;
   const totalPages = Math.ceil(total / LIMIT);
@@ -91,9 +146,9 @@ export function Tasks() {
 
   const handleTaskDeleted = useCallback((id: string) => {
     setTasks(prev => prev.filter(t => t.id !== id));
-    setSelectedTaskId(null);
+    closeTask();
     setTotal(prev => Math.max(0, prev - 1));
-  }, []);
+  }, [closeTask]);
 
   const handleTaskCreated = useCallback((task: WfTask) => {
     setTasks(prev => [task, ...prev]);
@@ -119,7 +174,6 @@ export function Tasks() {
 
       {/* Filters */}
       <div className="px-4 md:px-6 py-3 border-b border-[var(--glass-border)] flex-shrink-0 space-y-2.5">
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
           <input
@@ -136,7 +190,6 @@ export function Tasks() {
           )}
         </div>
 
-        {/* Filter pills */}
         <div className="flex flex-wrap gap-1.5 items-center">
           <Filter className="w-3.5 h-3.5 text-[var(--text-tertiary)] flex-shrink-0" />
           {STATUSES.map(s => (
@@ -170,7 +223,7 @@ export function Tasks() {
           <div className="flex flex-col items-center justify-center h-32 gap-2">
             <AlertTriangle className="w-7 h-7 text-amber-400" />
             <p className="text-sm text-[var(--text-secondary)]">{error}</p>
-            <button onClick={() => loadTasks(search, statusFilter, priorityFilter, page)} className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
+            <button onClick={() => loadTasks(search, statusFilter, priorityFilter, page, sortKey, sortDir)} className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
           </div>
         ) : tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3">
@@ -188,23 +241,38 @@ export function Tasks() {
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] z-10">
               <tr className="text-left text-[var(--text-tertiary)]">
-                <th className="px-4 md:px-6 py-3 font-medium text-xs">Tiêu đề</th>
-                <th className="px-3 py-3 font-medium text-xs hidden sm:table-cell">Trạng thái</th>
-                <th className="px-3 py-3 font-medium text-xs hidden md:table-cell">Ưu tiên</th>
-                <th className="px-3 py-3 font-medium text-xs hidden lg:table-cell">Deadline</th>
+                <th className="px-4 md:px-6 py-3 font-medium text-xs">
+                  <button onClick={() => handleSort('title')} className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors">
+                    Tiêu đề <SortIcon col="title" />
+                  </button>
+                </th>
+                <th className="px-3 py-3 font-medium text-xs hidden sm:table-cell">
+                  <button onClick={() => handleSort('status')} className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors">
+                    Trạng thái <SortIcon col="status" />
+                  </button>
+                </th>
+                <th className="px-3 py-3 font-medium text-xs hidden md:table-cell">
+                  <button onClick={() => handleSort('priority')} className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors">
+                    Ưu tiên <SortIcon col="priority" />
+                  </button>
+                </th>
+                <th className="px-3 py-3 font-medium text-xs hidden lg:table-cell">
+                  <button onClick={() => handleSort('deadline')} className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors">
+                    Deadline <SortIcon col="deadline" />
+                  </button>
+                </th>
                 <th className="px-3 py-3 font-medium text-xs hidden xl:table-cell">Người thực hiện</th>
-                <th className="px-3 py-3 w-8 hidden sm:table-cell" />
+                <th className="px-3 py-3 w-10 hidden sm:table-cell" />
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--glass-border)]">
               {tasks.map(task => (
                 <tr key={task.id}
-                  onClick={() => setSelectedTaskId(task.id)}
+                  onClick={() => openTask(task.id)}
                   className="hover:bg-[var(--glass-surface-hover)] transition-colors cursor-pointer group">
                   <td className="px-4 md:px-6 py-3">
                     <div className="font-medium text-[var(--text-primary)] line-clamp-1 group-hover:text-indigo-600 transition-colors">{task.title}</div>
                     {task.project_name && <div className="text-xs text-[var(--text-tertiary)] mt-0.5">{task.project_name}</div>}
-                    {/* Mobile: inline meta */}
                     <div className="flex items-center gap-1.5 mt-1 sm:hidden flex-wrap">
                       <span className={`text-xs px-1.5 py-0.5 rounded-md ${STATUS_COLORS[task.status]}`}>{STATUS_LABELS[task.status]}</span>
                       <div className="flex items-center gap-1">
@@ -251,8 +319,16 @@ export function Tasks() {
                     </div>
                   </td>
 
-                  <td className="px-3 py-3 hidden sm:table-cell text-[var(--text-tertiary)] group-hover:text-indigo-500 transition-colors">
-                    <ChevronRight size={14} />
+                  <td className="px-3 py-3 hidden sm:table-cell">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={e => { e.stopPropagation(); openFullPage(task.id); }}
+                        title="Mở trang chi tiết"
+                        className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-md text-[var(--text-tertiary)] hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
+                        <ExternalLink size={12} />
+                      </button>
+                      <ChevronRight size={14} className="text-[var(--text-tertiary)] group-hover:text-indigo-500 transition-colors" />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -286,9 +362,10 @@ export function Tasks() {
       {/* Task Detail Modal */}
       <TaskDetailModal
         taskId={selectedTaskId}
-        onClose={() => setSelectedTaskId(null)}
+        onClose={closeTask}
         onUpdated={handleTaskUpdated}
         onDeleted={handleTaskDeleted}
+        onOpenFullPage={openFullPage}
       />
 
       {/* Create Task Modal */}

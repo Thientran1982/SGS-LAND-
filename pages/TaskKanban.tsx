@@ -12,10 +12,11 @@ import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 
 const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: string; dot: string }[] = [
-  { id: 'todo',        label: 'Chờ xử lý',      color: 'bg-slate-50 dark:bg-slate-800/30',    headerColor: 'bg-slate-100 dark:bg-slate-800/60',    dot: 'bg-slate-400' },
-  { id: 'in_progress', label: 'Đang thực hiện',  color: 'bg-indigo-50/60 dark:bg-indigo-900/10', headerColor: 'bg-indigo-100/80 dark:bg-indigo-900/30', dot: 'bg-indigo-500' },
-  { id: 'review',      label: 'Chờ duyệt',       color: 'bg-amber-50/60 dark:bg-amber-900/10',  headerColor: 'bg-amber-100/80 dark:bg-amber-900/30',  dot: 'bg-amber-500' },
+  { id: 'todo',        label: 'Chờ xử lý',      color: 'bg-slate-50 dark:bg-slate-800/30',       headerColor: 'bg-slate-100 dark:bg-slate-800/60',       dot: 'bg-slate-400' },
+  { id: 'in_progress', label: 'Đang thực hiện',  color: 'bg-indigo-50/60 dark:bg-indigo-900/10',  headerColor: 'bg-indigo-100/80 dark:bg-indigo-900/30',  dot: 'bg-indigo-500' },
+  { id: 'review',      label: 'Chờ duyệt',       color: 'bg-amber-50/60 dark:bg-amber-900/10',    headerColor: 'bg-amber-100/80 dark:bg-amber-900/30',    dot: 'bg-amber-500' },
   { id: 'done',        label: 'Hoàn thành',       color: 'bg-emerald-50/60 dark:bg-emerald-900/10', headerColor: 'bg-emerald-100/80 dark:bg-emerald-900/30', dot: 'bg-emerald-500' },
+  { id: 'cancelled',   label: 'Đã hủy',           color: 'bg-rose-50/40 dark:bg-rose-900/10',      headerColor: 'bg-rose-100/80 dark:bg-rose-900/30',      dot: 'bg-rose-400' },
 ];
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -192,9 +193,7 @@ export function TaskKanban() {
     setTasks(prev => [task, ...prev]);
   }, []);
 
-  const kanbanCols = COLUMNS.filter(c => c.id !== 'done' || tasks.some(t => t.status === 'done'));
-  const allCols = COLUMNS;
-  const tasksByStatus = allCols.reduce((acc, col) => {
+  const tasksByStatus = COLUMNS.reduce((acc, col) => {
     acc[col.id] = tasks.filter(t => t.status === col.id);
     return acc;
   }, {} as Record<WfTaskStatus, WfTask[]>);

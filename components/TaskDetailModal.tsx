@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   X, Loader2, AlertTriangle, Edit3, Save, Trash2,
   MessageSquare, Clock, User2, Calendar, Flag, Tag,
-  ChevronDown, Send, CheckCircle2, RotateCcw, Ban
+  ChevronDown, Send, CheckCircle2, RotateCcw, Ban, ExternalLink
 } from 'lucide-react';
 import { api } from '../services/api';
 import { WfTask, TaskComment, TaskActivityLog, WfTaskStatus, TaskPriority, TaskCategory, Department } from '../types';
@@ -44,6 +44,7 @@ interface Props {
   onClose: () => void;
   onUpdated: (task: WfTask) => void;
   onDeleted?: (id: string) => void;
+  onOpenFullPage?: (id: string) => void;
 }
 
 function Avatar({ name, size = 7 }: { name: string; size?: number }) {
@@ -67,7 +68,7 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('vi-VN');
 }
 
-export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted }: Props) {
+export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted, onOpenFullPage }: Props) {
   const [task, setTask] = useState<WfTask | null>(null);
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [activity, setActivity] = useState<TaskActivityLog[]>([]);
@@ -227,6 +228,13 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted }: Props
                 {task.is_overdue && <span className="text-xs text-rose-500 font-semibold flex-shrink-0">⚠ Quá hạn</span>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
+                {onOpenFullPage && task && (
+                  <button onClick={() => { onClose(); onOpenFullPage(task.id); }}
+                    title="Mở trang chi tiết đầy đủ"
+                    className="h-[32px] w-[32px] flex items-center justify-center rounded-lg text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-indigo-500 transition-colors">
+                    <ExternalLink size={14} />
+                  </button>
+                )}
                 {!editing && (
                   <>
                     <button onClick={startEdit} className="h-[32px] px-3 text-xs font-medium border border-[var(--glass-border)] rounded-lg text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] flex items-center gap-1.5 transition-colors">
