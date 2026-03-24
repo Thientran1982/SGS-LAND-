@@ -26,6 +26,7 @@ function serializeFilters(f: TaskFilters, sort: SortKey, dir: SortDir, page: num
   if (f.departmentId) qs.set('dept', f.departmentId);
   if (f.projectId) qs.set('proj', f.projectId);
   if (f.assigneeId) qs.set('uid', f.assigneeId);
+  if (f.assigneeId && f.assigneeName) qs.set('uname', f.assigneeName);
   if (f.deadlineFrom) qs.set('dfrom', f.deadlineFrom);
   if (f.deadlineTo) qs.set('dto', f.deadlineTo);
   if (sort !== 'created_at') qs.set('sort', sort);
@@ -48,7 +49,7 @@ function deserializeFilters(): { filters: TaskFilters; sort: SortKey; dir: SortD
         departmentId: qs.get('dept') || '',
         projectId: qs.get('proj') || '',
         assigneeId: qs.get('uid') || '',
-        assigneeName: '',
+        assigneeName: qs.get('uname') || '',
         deadlineFrom: qs.get('dfrom') || '',
         deadlineTo: qs.get('dto') || '',
       },

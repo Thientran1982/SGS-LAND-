@@ -23,9 +23,12 @@ function relativeDeadline(deadline: string | null | undefined, isOverdue: boolea
   return formatDeadlineRelative(deadline, isOverdue, days) || '';
 }
 
+const AVATAR_PX: Record<number, number> = { 6: 24, 7: 28, 8: 32, 9: 36, 10: 40 };
 function Avatar({ name, size = 8 }: { name: string; size?: number }) {
+  const px = AVATAR_PX[size] ?? 32;
   return (
-    <div className={`w-${size} h-${size} rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-white dark:border-slate-700 flex-shrink-0`}>
+    <div style={{ width: px, height: px }}
+      className="rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-white dark:border-slate-700 flex-shrink-0">
       {name?.charAt(0).toUpperCase()}
     </div>
   );

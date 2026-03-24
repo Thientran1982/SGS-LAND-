@@ -67,6 +67,8 @@ export function DeadlineTag({
   );
 }
 
+const AVATAR_SIZE_PX: Record<number, number> = { 4: 16, 5: 20, 6: 24, 7: 28, 8: 32 };
+
 export function AvatarStack({
   assignees,
   max = 3,
@@ -79,6 +81,7 @@ export function AvatarStack({
   if (!assignees || assignees.length === 0) {
     return <span className="text-xs text-[var(--text-tertiary)]">Chưa giao</span>;
   }
+  const px = AVATAR_SIZE_PX[size] ?? 24;
   const visible = assignees.slice(0, max);
   const rest = assignees.length - max;
   return (
@@ -87,7 +90,8 @@ export function AvatarStack({
         <div
           key={a.id}
           title={a.name}
-          className={`w-${size} h-${size} rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600 border border-white dark:border-slate-700 flex-shrink-0`}
+          style={{ width: px, height: px }}
+          className="rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600 border border-white dark:border-slate-700 flex-shrink-0"
         >
           {a.name?.charAt(0).toUpperCase()}
         </div>
