@@ -3,13 +3,14 @@ import {
   Loader2, AlertTriangle, ArrowLeft, Edit3, Save, X,
   Flag, Calendar, Tag, Clock, User2, MessageSquare, Activity,
   Send, CheckCircle2, Ban, RotateCcw, Plus, Search, Trash2,
-  Star, XCircle, CheckCircle, AlertCircle
+  Star, XCircle, CheckCircle, AlertCircle, ChevronDown
 } from 'lucide-react';
-import { api } from '../services/api';
+import { taskApi } from '../services/taskApi';
 import {
   WfTask, WfTaskStatus, TaskPriority, TaskCategory,
   TaskComment, TaskActivityLog, TaskAssignee, Department, WorkloadStats
 } from '../types';
+import { api } from '../services/api';
 
 const STATUS_LABELS: Record<WfTaskStatus, string> = {
   todo: 'Chờ xử lý', in_progress: 'Đang làm', review: 'Chờ duyệt',
@@ -42,6 +43,19 @@ const VALID_TRANSITIONS: Record<WfTaskStatus, WfTaskStatus[]> = {
   cancelled: ['todo'],
 };
 
+const ACTIVITY_PAGE_SIZE = 20;
+
+function relativeDeadline(deadline: string | null | undefined, isOverdue: boolean, days: number | null): string {
+  if (!deadline) return '';
+  if (isOverdue) {
+    const d = Math.abs(days ?? 0);
+    return `Quá hạn ${d} ngày`;
+  }
+  if (days === 0) return 'Hôm nay';
+  if (days === 1) return 'Còn 1 ngày';
+  return `Còn ${days ?? ''} ngày`;
+}
+
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -54,9 +68,9 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('vi-VN');
 }
 
-function Avatar({ name }: { name: string }) {
+function Avatar({ name, size = 8 }: { name: string; size?: number }) {
   return (
-    <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-white dark:border-slate-700 flex-shrink-0">
+    <div className={`w-${size} h-${size} rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-white dark:border-slate-700 flex-shrink-0`}>
       {name?.charAt(0).toUpperCase()}
     </div>
   );
@@ -80,6 +94,9 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
   const [task, setTask] = useState<WfTask | null>(null);
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [activity, setActivity] = useState<TaskActivityLog[]>([]);
+  const [activityTotal, setActivityTotal] = useState(0);
+  const [activityPage, setActivityPage] = useState(1);
+  const [loadingMoreActivity, setLoadingMoreActivity] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -111,6 +128,9 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
   const [cancelNote, setCancelNote] = useState('');
   const [cancelNoteError, setCancelNoteError] = useState('');
 
+  const [deletingTask, setDeletingTask] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const [newComment, setNewComment] = useState('');
   const [sendingComment, setSendingComment] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -124,6 +144,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
   const [workloads, setWorkloads] = useState<Record<string, WorkloadStats>>({});
   const [addingAssignee, setAddingAssignee] = useState(false);
   const [removingAssigneeId, setRemovingAssigneeId] = useState<string | null>(null);
+  const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null);
 
   const commentRef = useRef<HTMLTextAreaElement>(null);
   const userPickerRef = useRef<HTMLDivElement>(null);
@@ -133,13 +154,15 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     setError(null);
     try {
       const [taskRes, commentsRes, activityRes] = await Promise.all([
-        api.get<WfTask>(`/api/tasks/${id}`),
-        api.get<{ data: TaskComment[] }>(`/api/tasks/${id}/comments`),
-        api.get<{ data: TaskActivityLog[] }>(`/api/tasks/${id}/activity?limit=50`),
+        taskApi.get(id),
+        taskApi.getComments(id),
+        taskApi.getActivity(id, ACTIVITY_PAGE_SIZE, 1),
       ]);
       setTask(taskRes);
       setComments(commentsRes.data || []);
       setActivity(activityRes.data || []);
+      setActivityTotal(activityRes.pagination?.total ?? 0);
+      setActivityPage(1);
     } catch {
       setError('Không thể tải chi tiết công việc');
     } finally {
@@ -165,6 +188,22 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  const loadMoreActivity = async () => {
+    if (!task) return;
+    const nextPage = activityPage + 1;
+    setLoadingMoreActivity(true);
+    try {
+      const res = await taskApi.getActivity(task.id, ACTIVITY_PAGE_SIZE, nextPage);
+      setActivity(prev => [...prev, ...(res.data || [])]);
+      setActivityPage(nextPage);
+      setActivityTotal(res.pagination?.total ?? 0);
+    } catch {
+      showToast('Không thể tải thêm lịch sử', 'error');
+    } finally {
+      setLoadingMoreActivity(false);
+    }
+  };
+
   const saveTitle = async () => {
     if (!task || !editTitle.trim() || editTitle.trim() === task.title) {
       setEditingTitle(false);
@@ -176,7 +215,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     }
     setSavingTitle(true);
     try {
-      const updated = await api.patch<WfTask>(`/api/tasks/${task.id}`, { title: editTitle.trim() });
+      const updated = await taskApi.update(task.id, { title: editTitle.trim() });
       setTask(updated);
       setEditingTitle(false);
       showToast('Đã lưu tiêu đề');
@@ -191,7 +230,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     if (!task) { setEditingDesc(false); return; }
     setSavingDesc(true);
     try {
-      const updated = await api.patch<WfTask>(`/api/tasks/${task.id}`, { description: editDesc.trim() || null });
+      const updated = await taskApi.update(task.id, { description: editDesc.trim() || undefined });
       setTask(updated);
       setEditingDesc(false);
       showToast('Đã lưu mô tả');
@@ -206,7 +245,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     if (!task) return;
     setSavingMeta(true);
     try {
-      const updated = await api.patch<WfTask>(`/api/tasks/${task.id}`, editMeta);
+      const updated = await taskApi.update(task.id, editMeta);
       setTask(updated);
       setEditingMeta(false);
       showToast('Đã lưu thông tin');
@@ -229,16 +268,17 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     }
   };
 
-  const changeStatus = async (newStatus: WfTaskStatus, extraData?: Record<string, unknown>) => {
+  const changeStatus = async (newStatus: WfTaskStatus, extraData?: { actual_hours?: number; completion_note?: string }) => {
     if (!task) return;
     setChangingStatus(true);
     setStatusConfirm(null);
     try {
-      const body: Record<string, unknown> = { status: newStatus, ...extraData };
-      const updated = await api.patch<WfTask>(`/api/tasks/${task.id}/status`, body);
+      const updated = await taskApi.changeStatus(task.id, newStatus, extraData);
       setTask(updated);
-      const newAct = await api.get<{ data: TaskActivityLog[] }>(`/api/tasks/${task.id}/activity?limit=50`);
-      setActivity(newAct.data || []);
+      const actRes = await taskApi.getActivity(task.id, ACTIVITY_PAGE_SIZE, 1);
+      setActivity(actRes.data || []);
+      setActivityTotal(actRes.pagination?.total ?? 0);
+      setActivityPage(1);
       showToast(`Đã chuyển sang "${STATUS_LABELS[newStatus]}"`);
     } catch (err) {
       showToast((err as { message?: string })?.message || 'Không thể đổi trạng thái', 'error');
@@ -253,22 +293,37 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
       setCancelNoteError('Lý do hủy là bắt buộc');
       return;
     }
-    const extraData: Record<string, unknown> = {};
+    const extra: { actual_hours?: number; completion_note?: string } = {};
     if (statusConfirm.status === 'done') {
-      if (actualHours) extraData.actual_hours = parseFloat(actualHours);
-      if (completionNote) extraData.completion_note = completionNote;
+      if (actualHours) extra.actual_hours = parseFloat(actualHours);
+      if (completionNote) extra.completion_note = completionNote;
     }
     if (statusConfirm.status === 'cancelled') {
-      extraData.completion_note = cancelNote.trim();
+      extra.completion_note = cancelNote.trim();
     }
-    changeStatus(statusConfirm.status, extraData);
+    changeStatus(statusConfirm.status, extra);
+  };
+
+  const deleteTask = async () => {
+    if (!task) return;
+    setDeletingTask(true);
+    try {
+      await taskApi.delete(task.id);
+      showToast('Đã xóa công việc');
+      setTimeout(() => onBack(), 1000);
+    } catch (err) {
+      showToast((err as { message?: string })?.message || 'Không thể xóa công việc', 'error');
+    } finally {
+      setDeletingTask(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   const sendComment = async () => {
     if (!task || !newComment.trim()) return;
     setSendingComment(true);
     try {
-      const comment = await api.post<TaskComment>(`/api/tasks/${task.id}/comments`, { content: newComment.trim() });
+      const comment = await taskApi.createComment(task.id, newComment.trim());
       setComments(prev => [...prev, comment]);
       setNewComment('');
     } catch {
@@ -281,7 +336,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
   const saveComment = async (commentId: string) => {
     if (!task || !editCommentText.trim()) return;
     try {
-      const updated = await api.patch<TaskComment>(`/api/tasks/${task.id}/comments/${commentId}`, { content: editCommentText.trim() });
+      const updated = await taskApi.updateComment(task.id, commentId, editCommentText.trim());
       setComments(prev => prev.map(c => c.id === commentId ? { ...c, content: updated.content } : c));
       setEditingCommentId(null);
       showToast('Đã cập nhật bình luận');
@@ -292,11 +347,9 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
 
   const deleteComment = async (commentId: string) => {
     if (!task) return;
-    const confirmed = window.confirm('Xóa bình luận này?');
-    if (!confirmed) return;
     setDeletingCommentId(commentId);
     try {
-      await api.delete(`/api/tasks/${task.id}/comments/${commentId}`);
+      await taskApi.deleteComment(task.id, commentId);
       setComments(prev => prev.filter(c => c.id !== commentId));
       showToast('Đã xóa bình luận');
     } catch {
@@ -337,9 +390,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
     if (task.assignees?.some(a => a.id === user.id)) return;
     setAddingAssignee(true);
     try {
-      const res = await api.post<{ assignees: TaskAssignee[] }>(`/api/tasks/${task.id}/assign`, {
-        user_ids: [user.id],
-      });
+      const res = await taskApi.assign(task.id, [user.id]);
       setTask(prev => prev ? { ...prev, assignees: res.assignees || [] } : prev);
       setAssigneeSearch('');
       setUserResults([]);
@@ -354,17 +405,29 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
 
   const removeAssignee = async (userId: string, userName: string) => {
     if (!task) return;
-    const confirmed = window.confirm(`Hủy giao việc cho ${userName}?`);
-    if (!confirmed) return;
     setRemovingAssigneeId(userId);
     try {
-      await api.delete(`/api/tasks/${task.id}/assign/${userId}`);
+      await taskApi.unassign(task.id, userId);
       setTask(prev => prev ? { ...prev, assignees: prev.assignees?.filter(a => a.id !== userId) || [] } : prev);
       showToast(`Đã hủy giao việc cho ${userName}`);
     } catch (err) {
       showToast((err as { message?: string })?.message || 'Không thể hủy giao việc', 'error');
     } finally {
       setRemovingAssigneeId(null);
+    }
+  };
+
+  const setPrimaryAssignee = async (userId: string, userName: string) => {
+    if (!task) return;
+    setSettingPrimaryId(userId);
+    try {
+      const res = await taskApi.assign(task.id, [userId], userId);
+      setTask(prev => prev ? { ...prev, assignees: res.assignees || [] } : prev);
+      showToast(`${userName} được đặt làm người chính`);
+    } catch (err) {
+      showToast((err as { message?: string })?.message || 'Không thể đặt người chính', 'error');
+    } finally {
+      setSettingPrimaryId(null);
     }
   };
 
@@ -392,20 +455,25 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
   }
 
   const transitions = VALID_TRANSITIONS[task.status];
+  const activityHasMore = activity.length < activityTotal;
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Top Bar */}
       <div className="flex items-center gap-3 px-4 md:px-6 py-3.5 border-b border-[var(--glass-border)] flex-shrink-0">
         <button onClick={onBack}
-          className="flex items-center gap-1.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors">
+          className="flex items-center gap-1.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0">
           <ArrowLeft size={15} /> Công việc
         </button>
         <span className="text-[var(--text-tertiary)]">/</span>
-        <span className="text-sm text-[var(--text-primary)] font-medium truncate max-w-[240px]">{task.title}</span>
-        <div className="ml-auto flex items-center gap-2">
+        <span className="text-sm text-[var(--text-primary)] font-medium truncate max-w-[180px] md:max-w-[320px]">{task.title}</span>
+        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
           <span className={`text-xs px-2 py-0.5 rounded-lg font-medium ${STATUS_COLORS[task.status]}`}>{STATUS_LABELS[task.status]}</span>
-          {task.is_overdue && <span className="text-xs text-rose-500 font-semibold">⚠ Quá hạn</span>}
+          {task.is_overdue && <span className="text-xs text-rose-500 font-semibold hidden sm:inline">⚠ Quá hạn</span>}
+          <button onClick={() => setShowDeleteConfirm(true)} disabled={deletingTask}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-[var(--text-tertiary)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">
+            {deletingTask ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+          </button>
         </div>
       </div>
 
@@ -444,7 +512,16 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide">Thông tin</h3>
               {!editingMeta ? (
-                <button onClick={() => { setEditMeta({ priority: task.priority, deadline: task.deadline?.toString().split('T')[0], estimated_hours: task.estimated_hours, category: task.category, department_id: task.department_id }); setEditingMeta(true); }}
+                <button onClick={() => {
+                  setEditMeta({
+                    priority: task.priority,
+                    deadline: task.deadline?.toString().split('T')[0],
+                    estimated_hours: task.estimated_hours,
+                    category: task.category,
+                    department_id: task.department_id,
+                  });
+                  setEditingMeta(true);
+                }}
                   className="text-xs text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-1">
                   <Edit3 size={11} /> Sửa
                 </button>
@@ -461,12 +538,10 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               <div>
                 <label className="text-xs text-[var(--text-tertiary)] flex items-center gap-1 mb-1"><Flag size={10} /> Ưu tiên</label>
                 {editingMeta ? (
-                  <select value={editMeta.priority || 'medium'} onChange={e => setEditMeta(p => ({ ...p, priority: e.target.value as TaskPriority }))}
+                  <select value={(editMeta.priority as string) || 'medium'} onChange={e => setEditMeta(p => ({ ...p, priority: e.target.value as TaskPriority }))}
                     className="w-full h-[32px] text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none">
-                    <option value="low">Thấp</option>
-                    <option value="medium">Trung bình</option>
-                    <option value="high">Cao</option>
-                    <option value="urgent">Khẩn cấp</option>
+                    <option value="low">Thấp</option><option value="medium">Trung bình</option>
+                    <option value="high">Cao</option><option value="urgent">Khẩn cấp</option>
                   </select>
                 ) : (
                   <span className={`inline-flex text-xs px-2 py-0.5 rounded-md border font-medium ${PRIORITY_COLORS[task.priority]}`}>{PRIORITY_LABELS[task.priority]}</span>
@@ -475,21 +550,25 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               <div>
                 <label className="text-xs text-[var(--text-tertiary)] flex items-center gap-1 mb-1"><Calendar size={10} /> Deadline</label>
                 {editingMeta ? (
-                  <input type="date" value={editMeta.deadline?.toString().split('T')[0] || ''} onChange={e => setEditMeta(p => ({ ...p, deadline: e.target.value }))}
+                  <input type="date" value={(editMeta.deadline as string) || ''} onChange={e => setEditMeta(p => ({ ...p, deadline: e.target.value }))}
                     className="w-full h-[32px] text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none" />
                 ) : (
-                  <span className={`text-sm ${task.is_overdue ? 'text-rose-500 font-semibold' : 'text-[var(--text-secondary)]'}`}>
-                    {task.deadline ? task.deadline.toString().split('T')[0] : '—'}
-                    {task.days_until_deadline !== null && task.days_until_deadline >= 0 && !task.is_overdue && (
-                      <span className="text-xs text-[var(--text-tertiary)] ml-1">({task.days_until_deadline}n)</span>
+                  <div>
+                    <span className={`text-sm ${task.is_overdue ? 'text-rose-500 font-semibold' : 'text-[var(--text-secondary)]'}`}>
+                      {task.deadline ? task.deadline.toString().split('T')[0] : '—'}
+                    </span>
+                    {task.deadline && (
+                      <div className={`text-xs mt-0.5 ${task.is_overdue ? 'text-rose-400' : 'text-[var(--text-tertiary)]'}`}>
+                        {relativeDeadline(task.deadline?.toString(), task.is_overdue, task.days_until_deadline)}
+                      </div>
                     )}
-                  </span>
+                  </div>
                 )}
               </div>
               <div>
                 <label className="text-xs text-[var(--text-tertiary)] flex items-center gap-1 mb-1"><Tag size={10} /> Danh mục</label>
                 {editingMeta ? (
-                  <select value={editMeta.category || ''} onChange={e => setEditMeta(p => ({ ...p, category: e.target.value as TaskCategory || undefined }))}
+                  <select value={(editMeta.category as string) || ''} onChange={e => setEditMeta(p => ({ ...p, category: e.target.value as TaskCategory || undefined }))}
                     className="w-full h-[32px] text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none">
                     <option value="">Chưa chọn</option>
                     {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -501,7 +580,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               <div>
                 <label className="text-xs text-[var(--text-tertiary)] flex items-center gap-1 mb-1"><Clock size={10} /> Giờ ước tính</label>
                 {editingMeta ? (
-                  <input type="number" min="0.5" step="0.5" value={editMeta.estimated_hours || ''} onChange={e => setEditMeta(p => ({ ...p, estimated_hours: parseFloat(e.target.value) || undefined }))}
+                  <input type="number" min="0.5" step="0.5" value={(editMeta.estimated_hours as number) || ''} onChange={e => setEditMeta(p => ({ ...p, estimated_hours: parseFloat(e.target.value) || undefined }))}
                     className="w-full h-[32px] text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none" />
                 ) : (
                   <span className="text-sm text-[var(--text-secondary)]">{task.estimated_hours ? `${task.estimated_hours}h` : '—'}</span>
@@ -510,7 +589,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               <div>
                 <label className="text-xs text-[var(--text-tertiary)] flex items-center gap-1 mb-1"><User2 size={10} /> Phòng ban</label>
                 {editingMeta ? (
-                  <select value={editMeta.department_id || ''} onChange={e => setEditMeta(p => ({ ...p, department_id: e.target.value || undefined }))}
+                  <select value={(editMeta.department_id as string) || ''} onChange={e => setEditMeta(p => ({ ...p, department_id: e.target.value || undefined }))}
                     className="w-full h-[32px] text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2 text-[var(--text-primary)] focus:outline-none">
                     <option value="">Chưa chọn</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -524,9 +603,9 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                 <span className="text-sm text-[var(--text-secondary)]">{task.project_name || '—'}</span>
               </div>
             </div>
-            {task.actual_hours && (
+            {(task.actual_hours || task.completion_note) && (
               <div className="mt-3 pt-3 border-t border-[var(--glass-border)] flex gap-4 text-xs text-[var(--text-tertiary)]">
-                <span>Thực tế: <strong className="text-[var(--text-secondary)]">{task.actual_hours}h</strong></span>
+                {task.actual_hours && <span>Thực tế: <strong className="text-[var(--text-secondary)]">{task.actual_hours}h</strong></span>}
                 {task.completion_note && <span>Ghi chú: <em className="text-[var(--text-secondary)]">{task.completion_note}</em></span>}
               </div>
             )}
@@ -545,12 +624,8 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
             </div>
             {editingDesc ? (
               <div className="space-y-2">
-                <textarea
-                  rows={5}
-                  value={editDesc}
-                  onChange={e => setEditDesc(e.target.value)}
-                  onBlur={saveDesc}
-                  autoFocus
+                <textarea rows={5} value={editDesc} onChange={e => setEditDesc(e.target.value)}
+                  onBlur={saveDesc} autoFocus
                   placeholder="Nhập mô tả công việc... (tự động lưu khi rời ô)"
                   className="w-full text-sm bg-[var(--glass-surface-hover)] border border-indigo-400 rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none"
                 />
@@ -562,10 +637,10 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-[var(--text-secondary)] whitespace-pre-line leading-relaxed cursor-pointer"
+              <div className="text-sm text-[var(--text-secondary)] whitespace-pre-line leading-relaxed cursor-pointer"
                 onClick={() => { setEditDesc(task.description || ''); setEditingDesc(true); }}>
                 {task.description || <span className="text-[var(--text-tertiary)] italic">Chưa có mô tả. Nhấn để thêm.</span>}
-              </p>
+              </div>
             )}
           </div>
 
@@ -598,8 +673,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
             {task.assignees?.length > 0 && (
               <div className="space-y-2 mb-3">
                 {task.assignees.map(a => (
-                  <div key={a.id}
-                    onMouseEnter={() => fetchWorkload(a.id)}
+                  <div key={a.id} onMouseEnter={() => fetchWorkload(a.id)}
                     className="flex items-center gap-3 bg-[var(--glass-surface-hover)] rounded-xl px-3 py-2 border border-[var(--glass-border)] group">
                     <Avatar name={a.name} />
                     <div className="flex-1 min-w-0">
@@ -614,28 +688,32 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                       {workloads[a.id] && <WorkloadBadge score={workloads[a.id].workload_score} />}
                       {a.due_note && <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{a.due_note}</p>}
                     </div>
-                    <button
-                      onClick={() => removeAssignee(a.id, a.name)}
-                      disabled={removingAssigneeId === a.id}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded-md text-[var(--text-tertiary)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex-shrink-0">
-                      {removingAssigneeId === a.id ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={14} />}
-                    </button>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {!a.is_primary && (
+                        <button onClick={() => setPrimaryAssignee(a.id, a.name)} disabled={settingPrimaryId === a.id}
+                          title="Đặt làm người chính"
+                          className="w-6 h-6 flex items-center justify-center rounded-md text-[var(--text-tertiary)] hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                          {settingPrimaryId === a.id ? <Loader2 size={11} className="animate-spin" /> : <Star size={11} />}
+                        </button>
+                      )}
+                      <button onClick={() => removeAssignee(a.id, a.name)} disabled={removingAssigneeId === a.id}
+                        className="w-6 h-6 flex items-center justify-center rounded-md text-[var(--text-tertiary)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20">
+                        {removingAssigneeId === a.id ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={14} />}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Add assignee */}
+            {/* Add assignee picker */}
             <div className="relative" ref={userPickerRef}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-tertiary)]" />
-                <input
-                  value={assigneeSearch}
-                  onChange={e => { setAssigneeSearch(e.target.value); setUserPickerOpen(true); }}
+                <input value={assigneeSearch} onChange={e => { setAssigneeSearch(e.target.value); setUserPickerOpen(true); }}
                   onFocus={() => setUserPickerOpen(true)}
                   placeholder="Tìm và thêm nhân viên..."
-                  className="w-full h-[36px] pl-9 pr-3 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                />
+                  className="w-full h-[36px] pl-9 pr-3 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30" />
               </div>
               {userPickerOpen && (userResults.length > 0 || searchingUsers) && (
                 <div className="absolute top-full mt-1 left-0 right-0 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl z-20 overflow-hidden">
@@ -644,8 +722,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                   ) : userResults.map(u => {
                     const alreadyAssigned = task.assignees?.some(a => a.id === u.id);
                     return (
-                      <button key={u.id} type="button"
-                        disabled={alreadyAssigned || addingAssignee}
+                      <button key={u.id} type="button" disabled={alreadyAssigned || addingAssignee}
                         onClick={() => addAssignee(u)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors ${alreadyAssigned ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--glass-surface-hover)]'}`}>
                         <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[11px] font-bold text-indigo-600 flex-shrink-0">
@@ -701,13 +778,8 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                     </div>
                     {editingCommentId === c.id ? (
                       <div className="space-y-2">
-                        <textarea
-                          autoFocus
-                          rows={2}
-                          value={editCommentText}
-                          onChange={e => setEditCommentText(e.target.value)}
-                          className="w-full text-sm bg-[var(--glass-surface-hover)] border border-indigo-400 rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none resize-none"
-                        />
+                        <textarea autoFocus rows={2} value={editCommentText} onChange={e => setEditCommentText(e.target.value)}
+                          className="w-full text-sm bg-[var(--glass-surface-hover)] border border-indigo-400 rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none resize-none" />
                         <div className="flex gap-2 justify-end">
                           <button onClick={() => setEditingCommentId(null)} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">Hủy</button>
                           <button onClick={() => saveComment(c.id)} className="text-xs text-indigo-500 hover:text-indigo-600 font-semibold">Lưu</button>
@@ -725,15 +797,10 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
                 <MessageSquare size={14} className="text-indigo-500" />
               </div>
               <div className="flex-1 space-y-2">
-                <textarea
-                  ref={commentRef}
-                  rows={2}
-                  value={newComment}
-                  onChange={e => setNewComment(e.target.value)}
+                <textarea ref={commentRef} rows={2} value={newComment} onChange={e => setNewComment(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) sendComment(); }}
                   placeholder="Thêm bình luận... (Ctrl+Enter để gửi)"
-                  className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none"
-                />
+                  className="w-full text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 resize-none" />
                 <div className="flex justify-end">
                   <button onClick={sendComment} disabled={sendingComment || !newComment.trim()}
                     className="h-8 px-4 bg-indigo-600 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
@@ -756,6 +823,7 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
         <div className="w-72 xl:w-80 border-l border-[var(--glass-border)] overflow-y-auto no-scrollbar p-4 flex-shrink-0">
           <h3 className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide mb-4 flex items-center gap-2">
             <Activity size={12} /> Lịch sử hoạt động
+            {activityTotal > 0 && <span className="font-normal">({activityTotal})</span>}
           </h3>
           {activity.length === 0 && (
             <p className="text-xs text-[var(--text-tertiary)] text-center py-6">Chưa có hoạt động</p>
@@ -779,6 +847,13 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
               </div>
             ))}
           </div>
+          {activityHasMore && (
+            <button onClick={loadMoreActivity} disabled={loadingMoreActivity}
+              className="w-full mt-3 py-2 text-xs text-indigo-500 hover:text-indigo-600 font-medium text-center flex items-center justify-center gap-1.5 border border-[var(--glass-border)] rounded-xl hover:bg-[var(--glass-surface-hover)] transition-colors disabled:opacity-50">
+              {loadingMoreActivity ? <Loader2 size={12} className="animate-spin" /> : <ChevronDown size={12} />}
+              Xem thêm
+            </button>
+          )}
         </div>
       </div>
 
@@ -825,10 +900,33 @@ export function TaskDetailContent({ taskId, onBack }: Props) {
             <div className="flex gap-2 justify-end">
               <button onClick={() => setStatusConfirm(null)} className="h-9 px-4 text-sm border border-[var(--glass-border)] rounded-xl text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">Hủy bỏ</button>
               <button onClick={confirmStatusChange}
-                className={`h-9 px-4 text-sm font-semibold rounded-xl text-white flex items-center gap-1.5 transition-colors ${
-                  statusConfirm.status === 'done' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
-                }`}>
+                className={`h-9 px-4 text-sm font-semibold rounded-xl text-white flex items-center gap-1.5 transition-colors ${statusConfirm.status === 'done' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
                 {statusConfirm.status === 'done' ? <><CheckCircle2 size={14} /> Xác nhận hoàn thành</> : <><Ban size={14} /> Xác nhận hủy</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Popup */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="relative z-10 w-full max-w-sm bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center flex-shrink-0">
+                <Trash2 size={18} className="text-rose-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-[var(--text-primary)]">Xóa công việc?</h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">Hành động này không thể hoàn tác.</p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowDeleteConfirm(false)} className="h-9 px-4 text-sm border border-[var(--glass-border)] rounded-xl text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)]">Hủy</button>
+              <button onClick={deleteTask} disabled={deletingTask}
+                className="h-9 px-4 text-sm font-semibold rounded-xl text-white bg-rose-600 hover:bg-rose-700 flex items-center gap-1.5 disabled:opacity-50">
+                {deletingTask ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} Xóa
               </button>
             </div>
           </div>

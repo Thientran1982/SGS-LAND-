@@ -7,12 +7,23 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, Loader2, AlertTriangle, RefreshCw, Search, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
-import { WfTask, WfTaskStatus, TaskPriority } from '../types';
+import { WfTask, WfTaskStatus, TaskPriority, TaskCategory } from '../types';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 
 const PRIORITY_LABELS_FULL: Record<TaskPriority, string> = { urgent: 'Khẩn cấp', high: 'Cao', medium: 'Trung bình', low: 'Thấp' };
 const ALL_PRIORITIES: TaskPriority[] = ['urgent', 'high', 'medium', 'low'];
+const CATEGORY_LABELS: Partial<Record<TaskCategory, string>> = {
+  sales: 'KD', legal: 'Pháp lý', marketing: 'MKT', site_visit: 'TĐ',
+  customer_care: 'CSKH', finance: 'TC', construction: 'XD', admin: 'HC', other: 'Khác',
+};
+
+function relDeadline(deadline: string | null | undefined, isOverdue: boolean, days: number | null): string | null {
+  if (!deadline) return null;
+  if (isOverdue) return `Quá hạn ${Math.abs(days ?? 0)}n`;
+  if (days === 0) return 'Hôm nay';
+  return `Còn ${days ?? 0}n`;
+}
 type Toast = { id: number; msg: string; type: 'success' | 'error' };
 
 const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: string; dot: string }[] = [
@@ -57,11 +68,18 @@ function TaskCard({
       onClick={onClick}
       className={`bg-[var(--bg-surface)] rounded-xl border ${urgencyBorder} p-3 shadow-sm hover:shadow-md transition-shadow group select-none ${overlay ? 'shadow-xl rotate-1 scale-105' : ''}`}
     >
-      {/* Priority + category */}
-      <div className="flex items-center justify-between mb-2">
-        <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-semibold ${PRIORITY_COLORS[task.priority]}`}>
-          {PRIORITY_LABELS[task.priority]}
-        </span>
+      {/* Priority + category row */}
+      <div className="flex items-center justify-between mb-2 gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-semibold ${PRIORITY_COLORS[task.priority]}`}>
+            {PRIORITY_LABELS[task.priority]}
+          </span>
+          {task.category && CATEGORY_LABELS[task.category] && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md border border-[var(--glass-border)] text-[var(--text-tertiary)] font-medium">
+              {CATEGORY_LABELS[task.category]}
+            </span>
+          )}
+        </div>
         {task.is_overdue && <span className="text-[10px] text-rose-500 font-semibold">⚠ Quá hạn</span>}
         {!task.is_overdue && task.urgency_level === 'critical' && <span className="text-[10px] text-amber-500 font-semibold">Sắp hết hạn</span>}
       </div>
@@ -85,11 +103,14 @@ function TaskCard({
             <span className="text-[10px] text-[var(--text-tertiary)]">Chưa giao</span>
           )}
         </div>
-        {task.deadline && (
-          <span className={`text-[10px] ${task.is_overdue ? 'text-rose-500 font-semibold' : 'text-[var(--text-tertiary)]'}`}>
-            {task.deadline.toString().split('T')[0]}
-          </span>
-        )}
+        {task.deadline && (() => {
+          const rel = relDeadline(task.deadline?.toString(), task.is_overdue, task.days_until_deadline);
+          return (
+            <span className={`text-[10px] font-medium ${task.is_overdue ? 'text-rose-500' : task.urgency_level === 'critical' ? 'text-amber-500' : 'text-[var(--text-tertiary)]'}`}>
+              {rel}
+            </span>
+          );
+        })()}
       </div>
 
       {task.comment_count != null && task.comment_count > 0 && (

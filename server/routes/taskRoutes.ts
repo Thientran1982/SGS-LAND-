@@ -665,26 +665,108 @@ export function createTaskRoutes(authenticateToken: any) {
     }
   });
 
+  // PATCH /api/tasks/:id/comments/:commentId — edit a comment (owner only)
+  router.patch('/:id/comments/:commentId', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const tenantId = user.tenantId;
+      const parsed = commentSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const msg = parsed.error.issues[0]?.message || 'Dữ liệu không hợp lệ';
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
+      }
+      const { content } = parsed.data;
+
+      const comment = await withTenantContext(tenantId, async (client) => {
+        const existing = await client.query(
+          `SELECT id, user_id FROM task_comments WHERE id = $1 AND task_id = $2`,
+          [req.params.commentId, req.params.id]
+        );
+        if (existing.rows.length === 0) {
+          return null;
+        }
+        if (existing.rows[0].user_id !== user.id) {
+          return 'forbidden';
+        }
+        const r = await client.query(
+          `UPDATE task_comments SET content = $1, updated_at = NOW()
+           WHERE id = $2 AND task_id = $3
+           RETURNING *`,
+          [content.trim(), req.params.commentId, req.params.id]
+        );
+        const full = await client.query(
+          `SELECT tc.*, u.name AS user_name FROM task_comments tc JOIN users u ON u.id = tc.user_id WHERE tc.id = $1`,
+          [r.rows[0].id]
+        );
+        return full.rows[0];
+      });
+
+      if (!comment) return res.status(404).json({ error: true, code: 'NOT_FOUND', message: 'Comment not found' });
+      if (comment === 'forbidden') return res.status(403).json({ error: true, code: 'FORBIDDEN', message: 'Not your comment' });
+      res.json(comment);
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      res.status(500).json({ error: true, code: 'UPDATE_FAILED', message: 'Failed to update comment' });
+    }
+  });
+
+  // DELETE /api/tasks/:id/comments/:commentId — delete a comment (owner only)
+  router.delete('/:id/comments/:commentId', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const tenantId = user.tenantId;
+
+      await withTenantContext(tenantId, async (client) => {
+        const existing = await client.query(
+          `SELECT id, user_id FROM task_comments WHERE id = $1 AND task_id = $2`,
+          [req.params.commentId, req.params.id]
+        );
+        if (existing.rows.length === 0) return;
+        if (existing.rows[0].user_id !== user.id) {
+          throw new Error('FORBIDDEN');
+        }
+        await client.query(
+          `DELETE FROM task_comments WHERE id = $1`,
+          [req.params.commentId]
+        );
+      });
+
+      res.json({ message: 'Deleted' });
+    } catch (error: any) {
+      if (error?.message === 'FORBIDDEN') {
+        return res.status(403).json({ error: true, code: 'FORBIDDEN', message: 'Not your comment' });
+      }
+      console.error('Error deleting comment:', error);
+      res.status(500).json({ error: true, code: 'DELETE_FAILED', message: 'Failed to delete comment' });
+    }
+  });
+
   // GET /api/tasks/:id/activity — activity timeline
   router.get('/:id/activity', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const tenantId = user.tenantId;
-      const limit = Math.min(50, parseInt(req.query.limit as string) || 20);
+      const limit  = Math.min(50, parseInt(req.query.limit as string) || 20);
+      const page   = Math.max(1, parseInt(req.query.page as string) || 1);
+      const offset = (page - 1) * limit;
 
       const logs = await withTenantContext(tenantId, async (client) => {
+        const count = await client.query(
+          `SELECT COUNT(*) FROM task_activity_logs WHERE task_id = $1`,
+          [req.params.id]
+        );
         const r = await client.query(`
           SELECT al.*, u.name AS user_name, u.avatar AS user_avatar
           FROM task_activity_logs al
           LEFT JOIN users u ON u.id = al.user_id
           WHERE al.task_id = $1
           ORDER BY al.created_at DESC
-          LIMIT $2
-        `, [req.params.id, limit]);
-        return r.rows;
+          LIMIT $2 OFFSET $3
+        `, [req.params.id, limit, offset]);
+        return { rows: r.rows, total: parseInt(count.rows[0].count) };
       });
 
-      res.json({ data: logs });
+      res.json({ data: logs.rows, pagination: { total: logs.total, page, limit } });
     } catch (error) {
       console.error('Error fetching activity:', error);
       res.status(500).json({ error: true, code: 'FETCH_FAILED', message: 'Failed to fetch activity' });
