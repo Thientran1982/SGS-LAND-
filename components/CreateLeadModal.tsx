@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
@@ -64,6 +64,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
     const [loading, setLoading] = useState(false);
     const [duplicateLead, setDuplicateLead] = useState<Lead | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [phoneWarning, setPhoneWarning] = useState<Lead | null>(null);
+    const [phoneChecking, setPhoneChecking] = useState(false);
+    const phoneCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const { t, formatDate } = useTranslation();
     const { socket } = useSocket();
 
@@ -90,6 +93,29 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         fetchUsers();
     }, [t]);
 
+    // Debounced phone duplicate check — fires 600ms after the user stops typing a valid VN phone
+    useEffect(() => {
+        if (phoneCheckRef.current) clearTimeout(phoneCheckRef.current);
+        // Only check if phone passes basic format validation
+        if (!VN_PHONE_REGEX.test(formData.phone)) {
+            setPhoneWarning(null);
+            setPhoneChecking(false);
+            return;
+        }
+        setPhoneChecking(true);
+        phoneCheckRef.current = setTimeout(async () => {
+            try {
+                const existing = await db.checkDuplicateLead(formData.phone);
+                setPhoneWarning(existing);
+            } catch {
+                setPhoneWarning(null);
+            } finally {
+                setPhoneChecking(false);
+            }
+        }, 600);
+        return () => { if (phoneCheckRef.current) clearTimeout(phoneCheckRef.current); };
+    }, [formData.phone]);
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -113,8 +139,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         setLoading(true);
         
         try {
-            // Check for duplicate in DB
-            const existing = await db.checkDuplicateLead(formData.phone);
+            // Use pre-detected phone warning if available, otherwise check API
+            const existing = phoneWarning ?? await db.checkDuplicateLead(formData.phone);
             
             if (existing) {
                 setDuplicateLead(existing);
@@ -136,17 +162,12 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             onSuccess();
         } catch (error: any) {
             if (error?.status === 409 && error?.data?.error === 'DUPLICATE_LEAD') {
-                const existingId = error.data.existingLeadId;
-                try {
-                    const existingLead = existingId ? await db.getLeadById(existingId) : null;
-                    if (existingLead) {
-                        setDuplicateLead(existingLead);
-                        setStep('MERGE');
-                        setLoading(false);
-                        return;
-                    }
-                } catch {
-                    // fall through to generic error
+                const existingLead = error.data.existingLead ?? null;
+                if (existingLead) {
+                    setDuplicateLead(existingLead);
+                    setStep('MERGE');
+                    setLoading(false);
+                    return;
                 }
             }
             console.error(error);
@@ -230,14 +251,31 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                 autoFocus
                                 error={errors.name}
                             />
-                            <FormInput 
-                                label={t('leads.phone')} 
-                                value={formData.phone} 
-                                onChange={(v: string) => updateField('phone', v)} 
-                                placeholder={t('profile.placeholder_phone')}
-                                required
-                                error={errors.phone}
-                            />
+                            <div>
+                                <FormInput 
+                                    label={t('leads.phone')} 
+                                    value={formData.phone} 
+                                    onChange={(v: string) => updateField('phone', v)} 
+                                    placeholder={t('profile.placeholder_phone')}
+                                    required
+                                    error={errors.phone}
+                                />
+                                {phoneChecking && (
+                                    <p className="text-xs text-[var(--text-tertiary)] mt-1 ml-1 flex items-center gap-1">
+                                        <span className="inline-block w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                                        Đang kiểm tra...
+                                    </p>
+                                )}
+                                {!phoneChecking && phoneWarning && (
+                                    <div className="mt-1.5 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                        <span className="text-amber-500 text-sm mt-0.5">⚠</span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-semibold text-amber-700">Số điện thoại đã tồn tại</p>
+                                            <p className="text-xs text-amber-600 truncate">{phoneWarning.name} — {phoneWarning.phone}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Row 2: Contact & Location */}

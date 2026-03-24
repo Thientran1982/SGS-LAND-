@@ -78,6 +78,21 @@ export function createLeadRoutes(authenticateToken: any) {
           error: 'DUPLICATE_LEAD',
           message: `A lead with this phone number already exists`,
           existingLeadId: duplicate.id,
+          existingLead: {
+            id: duplicate.id,
+            name: duplicate.name,
+            phone: duplicate.phone,
+            email: duplicate.email ?? null,
+            stage: duplicate.stage,
+            source: duplicate.source ?? null,
+            assignedTo: duplicate.assignedTo ?? null,
+            tags: duplicate.tags ?? [],
+            notes: duplicate.notes ?? null,
+            address: duplicate.address ?? null,
+            preferences: duplicate.preferences ?? null,
+            createdAt: duplicate.createdAt,
+            updatedAt: duplicate.updatedAt,
+          },
         });
       }
 

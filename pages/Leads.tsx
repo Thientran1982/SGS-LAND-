@@ -664,7 +664,7 @@ export const Leads: React.FC = () => {
         setTimeout(() => setToast(null), 3000);
     }, []);
 
-    const fetchLeads = useCallback(async () => {
+    const fetchLeads = useCallback(async (forcePage?: number) => {
         setLoading(true);
         try {
             const filters: Record<string, any> = { sort: 'updated_at', order: 'desc' };
@@ -673,7 +673,7 @@ export const Leads: React.FC = () => {
             if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
             // Board view: fetch all leads (up to 500) so all kanban columns are populated
             const effectivePageSize = viewMode === 'BOARD' ? 500 : pageSize;
-            const effectivePage    = viewMode === 'BOARD' ? 1   : page;
+            const effectivePage    = viewMode === 'BOARD' ? 1   : (forcePage ?? page);
             const res = await db.getLeads(effectivePage, effectivePageSize, filters);
             setLeads(res.data || []);
             setTotalPages(res.totalPages);
@@ -1491,7 +1491,7 @@ export const Leads: React.FC = () => {
             </div>
 
             {/* Modals */}
-            {isCreateModalOpen && <CreateLeadModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => { setIsCreateModalOpen(false); setPage(1); fetchLeads(); notify(t('common.success'), 'success'); }} />}
+            {isCreateModalOpen && <CreateLeadModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => { setIsCreateModalOpen(false); setPage(1); fetchLeads(1); notify(t('common.success'), 'success'); }} />}
             
             {proposalLead && (
                 <FlashProposalModal 
