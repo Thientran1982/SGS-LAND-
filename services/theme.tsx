@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { socket } from './websocket';
+import { socket, useSocket } from './websocket';
 
 // -----------------------------------------------------------------------------
 //  CONSTANTS & TYPES
@@ -172,6 +172,8 @@ async function fetchTenantTheme(): Promise<CustomThemeConfig | null> {
 
 export function useThemeConfig() {
   const queryClient = useQueryClient();
+
+  useSocket();
 
   useQuery<CustomThemeConfig | null>({
     queryKey: ['tenant-theme'],

@@ -257,11 +257,11 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 - Mono: `JetBrains Mono` (400/500)
 - Print: `Noto Serif`
 - Dark mode: `class` strategy on `<html>`, persisted in `localStorage` key `sgs_theme`
-- Custom theme: `services/theme.tsx` exports `CustomThemeConfig`, `applyCustomTheme()`, `clearCustomTheme()`, `useThemeConfig()` (React Query startup hook + Socket.io live listener); theme stored in `enterprise_config` as `config_key='theme'` (migration 016 migrated from interim `tenant_themes` table in 015); cached in `localStorage` key `sgs_custom_theme` for FOUC prevention; `public/theme-init.js` applies cached theme before React mounts; background colors scoped to `.light` via injected `<style id="sgs-custom-theme-bg">`
+- Custom theme: `services/theme.tsx` exports `CustomThemeConfig`, `applyCustomTheme()`, `clearCustomTheme()`, `useThemeConfig()` (React Query startup hook + Socket.io live listener via `useSocket()`); theme stored in `enterprise_config.theme_config JSONB` column (migration 017 added column; sentinel row `config_key='__theme__'` used for upsert); cached in `localStorage` key `sgs_custom_theme` for FOUC prevention; `public/theme-init.js` applies cached theme before React mounts; background colors scoped to `.light` via injected `<style id="sgs-custom-theme-bg">`
 - Theme customizer UI: `components/ThemeCustomizer.tsx` — primary color (8 presets + hex + color picker), bg-app/bg-sidebar/bg-surface (light mode only), font family (5 options), font scale (3 options), live mini-preview; admin-only save/reset; all users receive live theme updates via `theme_updated` socket event (tenant room) + `useThemeConfig()` listener
-- DB: theme config stored as `enterprise_config` row `(tenant_id, config_key='theme', config_value JSONB)` — consistent with existing key-value store pattern; RLS via enterprise_config policy
+- DB: `enterprise_config` table has `theme_config JSONB NOT NULL DEFAULT '{}'` column (migration 017); tenant-scoped sentinel row (`config_key='__theme__'`) stores and retrieves the theme config; RLS via enterprise_config policy
 - Backend: `GET /api/enterprise/theme` (all authenticated users, merges defaults with hex validation); `PUT/DELETE` (admin only, validates payload, emits `theme_updated` to `tenant:${tenantId}` socket room)
-- Socket: authenticated sockets auto-join `tenant:${tenantId}` room on connection; theme broadcast propagates immediately to all active tenant users without reload
+- Socket: authenticated sockets auto-join `tenant:${tenantId}` room on connection; `useThemeConfig()` calls `useSocket()` to ensure socket connectivity; theme broadcast propagates immediately to all active tenant users without reload
 
 ### AiGovernance.tsx Audit & Fix (March 2026)
 4 bugs resolved in `pages/AiGovernance.tsx`:
