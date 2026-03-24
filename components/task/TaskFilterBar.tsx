@@ -3,6 +3,7 @@ import { Search, X, Filter, SlidersHorizontal } from 'lucide-react';
 import { WfTaskStatus, TaskPriority, Department } from '../../types';
 import { STATUS_LABELS, PRIORITY_LABELS, ALL_STATUSES, ALL_PRIORITIES } from '../../utils/taskUtils';
 import { api } from '../../services/api';
+import { SelectDropdown } from './SelectDropdown';
 
 interface SimpleUser { id: string; name: string; }
 interface SimpleProject { id: string; name: string; }
@@ -163,18 +164,32 @@ export function TaskFilterBar({
       {showAdvanced && (
         <div className="flex flex-wrap gap-2 items-center p-3 bg-[var(--glass-surface-hover)] rounded-xl border border-[var(--glass-border)]">
           {showDepartment && departments.length > 0 && (
-            <select value={filters.departmentId} onChange={e => set({ departmentId: e.target.value })}
-              className="h-[32px] px-2 text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg text-[var(--text-secondary)] focus:outline-none min-w-[130px]">
-              <option value="">Tất cả phòng ban</option>
-              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
+            <div className="min-w-[140px]">
+              <SelectDropdown
+                value={filters.departmentId}
+                onChange={val => set({ departmentId: val })}
+                placeholder="Tất cả phòng ban"
+                height={32}
+                options={[
+                  { value: '', label: 'Tất cả phòng ban' },
+                  ...departments.map(d => ({ value: d.id, label: d.name })),
+                ]}
+              />
+            </div>
           )}
           {showProject && projects.length > 0 && (
-            <select value={filters.projectId} onChange={e => set({ projectId: e.target.value })}
-              className="h-[32px] px-2 text-xs bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg text-[var(--text-secondary)] focus:outline-none min-w-[130px]">
-              <option value="">Tất cả dự án</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            <div className="min-w-[140px]">
+              <SelectDropdown
+                value={filters.projectId}
+                onChange={val => set({ projectId: val })}
+                placeholder="Tất cả dự án"
+                height={32}
+                options={[
+                  { value: '', label: 'Tất cả dự án' },
+                  ...projects.map(p => ({ value: p.id, label: p.name })),
+                ]}
+              />
+            </div>
           )}
           {showAssignee && (
             <div className="relative" ref={assigneePickerRef}>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   DndContext, DragOverlay, useDraggable, useDroppable,
-  PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent,
+  MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent,
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, AlertTriangle, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
@@ -125,7 +125,10 @@ export function TaskKanban() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
   }, []);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
+  );
 
   const loadTasks = useCallback(() => {
     setLoading(true);

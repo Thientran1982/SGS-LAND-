@@ -1,14 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2, Plus, Search, UserPlus, XCircle } from 'lucide-react';
+import { X, Loader2, Plus, Search, XCircle } from 'lucide-react';
 import { api } from '../services/api';
 import { WfTask, TaskPriority, TaskCategory, Department } from '../types';
+import { SelectDropdown } from './task/SelectDropdown';
 
 const CATEGORY_LABELS: Record<TaskCategory, string> = {
   sales: 'Kinh doanh', legal: 'Pháp lý', marketing: 'Marketing',
   site_visit: 'Đi thực địa', customer_care: 'CSKH', finance: 'Tài chính',
   construction: 'Xây dựng', admin: 'Hành chính', other: 'Khác',
 };
+
+const PRIORITY_OPTIONS = [
+  { value: 'low', label: 'Thấp', dot: 'bg-slate-400' },
+  { value: 'medium', label: 'Trung bình', dot: 'bg-blue-400' },
+  { value: 'high', label: 'Cao', dot: 'bg-amber-400' },
+  { value: 'urgent', label: 'Khẩn cấp', dot: 'bg-rose-500' },
+];
+
+const CATEGORY_OPTIONS = [
+  { value: '', label: 'Chưa chọn' },
+  ...Object.entries(CATEGORY_LABELS).map(([k, v]) => ({ value: k, label: v })),
+];
 
 interface SimpleUser { id: string; name: string; email?: string; role?: string; }
 
@@ -171,12 +184,12 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[var(--text-secondary)]">Ưu tiên <span className="text-rose-500">*</span></label>
-              <select value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value as TaskPriority }))} className={inputCls('priority')}>
-                <option value="low">Thấp</option>
-                <option value="medium">Trung bình</option>
-                <option value="high">Cao</option>
-                <option value="urgent">Khẩn cấp</option>
-              </select>
+              <SelectDropdown
+                value={form.priority}
+                onChange={val => setForm(p => ({ ...p, priority: val as TaskPriority }))}
+                options={PRIORITY_OPTIONS}
+                error={!!errors.priority}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[var(--text-secondary)]">Deadline</label>
@@ -189,10 +202,12 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[var(--text-secondary)]">Danh mục</label>
-              <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value as TaskCategory | '' }))} className={inputCls('category')}>
-                <option value="">Chưa chọn</option>
-                {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
+              <SelectDropdown
+                value={form.category}
+                onChange={val => setForm(p => ({ ...p, category: val as TaskCategory | '' }))}
+                options={CATEGORY_OPTIONS}
+                placeholder="Chưa chọn"
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[var(--text-secondary)]">Giờ ước tính</label>
@@ -205,10 +220,15 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
           {departments.length > 0 && (
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[var(--text-secondary)]">Phòng ban</label>
-              <select value={form.department_id} onChange={e => setForm(p => ({ ...p, department_id: e.target.value }))} className={inputCls('department_id')}>
-                <option value="">Chưa chọn</option>
-                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
+              <SelectDropdown
+                value={form.department_id}
+                onChange={val => setForm(p => ({ ...p, department_id: val }))}
+                placeholder="Chưa chọn"
+                options={[
+                  { value: '', label: 'Chưa chọn' },
+                  ...departments.map(d => ({ value: d.id, label: d.name })),
+                ]}
+              />
             </div>
           )}
 
