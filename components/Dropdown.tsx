@@ -38,9 +38,11 @@ const ICONS = {
 const STYLES = {
     LABEL: "block text-xs font-bold uppercase mb-1 ml-1 select-none transition-colors",
     BUTTON: "w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border transition-all duration-200 outline-none text-sm group",
-    // Menu styles updated for Portal with Dark Mode
-    MENU: "fixed z-[10002] bg-[var(--bg-surface)]/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-[var(--glass-border)]/50 dark:border-white/10 animate-scale-up overflow-y-auto no-scrollbar overscroll-contain text-sm focus:outline-none min-w-[120px] max-h-[320px]",
-    OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group border-b border-[var(--glass-border)] last:border-0 outline-none focus:bg-[var(--glass-surface)] dark:focus:bg-slate-800",
+    // Outer container: overflow-hidden so border-radius clips content correctly at bottom edge
+    MENU: "fixed z-[10002] bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 animate-scale-up overflow-hidden text-sm focus:outline-none min-w-[120px]",
+    // Inner wrapper handles scrolling separately, so clipping is not broken by overflow-y-auto
+    MENU_INNER: "overflow-y-auto no-scrollbar overscroll-contain max-h-[320px] divide-y divide-[var(--glass-border)] dark:divide-white/5",
+    OPTION: "w-full min-h-[44px] text-left px-4 py-2.5 transition-colors flex items-center gap-2 group outline-none focus:bg-[var(--glass-surface)] dark:focus:bg-slate-800",
     
     // State variants
     DISABLED: "bg-[var(--glass-surface-hover)] dark:bg-slate-800 text-[var(--text-secondary)] dark:text-slate-400 cursor-not-allowed border-[var(--glass-border)] dark:border-slate-700",
@@ -228,31 +230,33 @@ export const Dropdown = memo(<T extends string | number>({
                         transformOrigin: coords.bottom !== undefined ? 'bottom center' : 'top center'
                     }}
                 >
-                    {options?.length === 0 ? (
-                        <div className="px-4 py-3 text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] text-center italic select-none">{t('common.no_options')}</div>
-                    ) : (
-                        options?.map((opt) => {
-                            const isSelected = opt.value === value;
-                            return (
-                                <button
-                                    key={String(opt.value)}
-                                    role="option"
-                                    aria-selected={isSelected}
-                                    type="button"
-                                    onClick={() => handleSelect(opt.value as T)}
-                                    className={`${STYLES.OPTION} ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
-                                >
-                                    {opt.icon && (
-                                        <span className={`transition-transform duration-200 ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}>
-                                            {opt.icon}
-                                        </span>
-                                    )}
-                                    <span className="truncate flex-1">{opt.label}</span>
-                                    {isSelected && ICONS.CHECK}
-                                </button>
-                            );
-                        })
-                    )}
+                    <div className={STYLES.MENU_INNER}>
+                        {options?.length === 0 ? (
+                            <div className="px-4 py-3 text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] text-center italic select-none">{t('common.no_options')}</div>
+                        ) : (
+                            options?.map((opt) => {
+                                const isSelected = opt.value === value;
+                                return (
+                                    <button
+                                        key={String(opt.value)}
+                                        role="option"
+                                        aria-selected={isSelected}
+                                        type="button"
+                                        onClick={() => handleSelect(opt.value as T)}
+                                        className={`${STYLES.OPTION} ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold' : 'text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 hover:text-[var(--text-primary)] dark:hover:text-white'}`}
+                                    >
+                                        {opt.icon && (
+                                            <span className={`transition-transform duration-200 ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}>
+                                                {opt.icon}
+                                            </span>
+                                        )}
+                                        <span className="truncate flex-1">{opt.label}</span>
+                                        {isSelected && ICONS.CHECK}
+                                    </button>
+                                );
+                            })
+                        )}
+                    </div>
                 </div>,
                 document.body
             )}
