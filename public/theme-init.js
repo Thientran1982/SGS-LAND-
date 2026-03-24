@@ -61,6 +61,16 @@
         var sz = sizeMap[ct.fontScale];
         if (sz) document.documentElement.style.setProperty('--custom-font-size', sz);
       }
+      var bgRules = [];
+      if (ct && ct.bgApp && /^#[a-fA-F0-9]{6}$/.test(ct.bgApp)) bgRules.push('--bg-app: ' + ct.bgApp + ';');
+      if (ct && ct.bgSidebar && /^#[a-fA-F0-9]{6}$/.test(ct.bgSidebar)) bgRules.push('--bg-sidebar: ' + ct.bgSidebar + ';');
+      if (ct && ct.bgSurface && /^#[a-fA-F0-9]{6}$/.test(ct.bgSurface)) bgRules.push('--bg-surface: ' + ct.bgSurface + ';');
+      if (bgRules.length > 0) {
+        var styleEl = document.createElement('style');
+        styleEl.id = 'sgs-custom-theme-bg';
+        styleEl.textContent = ':root.light { ' + bgRules.join(' ') + ' }';
+        document.head.appendChild(styleEl);
+      }
     }
   } catch (e) {}
 })();

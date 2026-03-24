@@ -10,6 +10,9 @@ export interface CustomThemeConfig {
   primaryColor: string;
   fontFamily: string;
   fontScale: 'compact' | 'default' | 'large';
+  bgApp: string;
+  bgSidebar: string;
+  bgSurface: string;
 }
 
 export const CUSTOM_THEME_STORAGE_KEY = 'sgs_custom_theme';
@@ -32,6 +35,9 @@ export const DEFAULT_CUSTOM_THEME: CustomThemeConfig = {
   primaryColor: '#4F46E5',
   fontFamily: 'Inter',
   fontScale: 'default',
+  bgApp: '',
+  bgSidebar: '',
+  bgSurface: '',
 };
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
@@ -74,6 +80,27 @@ function loadGoogleFont(fontFamily: string) {
   document.head.appendChild(link);
 }
 
+const STYLE_TAG_ID = 'sgs-custom-theme-bg';
+
+function applyBgColors(bgApp: string, bgSidebar: string, bgSurface: string) {
+  let styleEl = document.getElementById(STYLE_TAG_ID) as HTMLStyleElement | null;
+  const hasBg = bgApp || bgSidebar || bgSurface;
+  if (!hasBg) {
+    if (styleEl) styleEl.remove();
+    return;
+  }
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = STYLE_TAG_ID;
+    document.head.appendChild(styleEl);
+  }
+  const rules: string[] = [];
+  if (bgApp) rules.push(`--bg-app: ${bgApp};`);
+  if (bgSidebar) rules.push(`--bg-sidebar: ${bgSidebar};`);
+  if (bgSurface) rules.push(`--bg-surface: ${bgSurface};`);
+  styleEl.textContent = `:root.light { ${rules.join(' ')} }`;
+}
+
 export function applyCustomTheme(config: Partial<CustomThemeConfig>) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
@@ -104,6 +131,10 @@ export function applyCustomTheme(config: Partial<CustomThemeConfig>) {
       root.style.removeProperty('--custom-font-size');
     }
   }
+
+  if (config.bgApp !== undefined || config.bgSidebar !== undefined || config.bgSurface !== undefined) {
+    applyBgColors(config.bgApp ?? '', config.bgSidebar ?? '', config.bgSurface ?? '');
+  }
 }
 
 export function clearCustomTheme() {
@@ -114,7 +145,28 @@ export function clearCustomTheme() {
   root.style.removeProperty('--primary-subtle');
   root.style.removeProperty('--custom-font');
   root.style.removeProperty('--custom-font-size');
+  const styleEl = document.getElementById(STYLE_TAG_ID);
+  if (styleEl) styleEl.remove();
   try { localStorage.removeItem(CUSTOM_THEME_STORAGE_KEY); } catch (_) {}
+}
+
+export function useThemeConfig() {
+  const hasFetched = React.useRef(false);
+  React.useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    const cached = (() => { try { const r = localStorage.getItem(CUSTOM_THEME_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; } })();
+    if (cached) applyCustomTheme(cached);
+    fetch('/api/enterprise/theme', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.primaryColor) {
+          applyCustomTheme(data);
+          try { localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+        }
+      })
+      .catch(() => {});
+  }, []);
 }
 
 const CONSTANTS = {

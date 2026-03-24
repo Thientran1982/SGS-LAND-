@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/dbApi';
 import {
   CustomThemeConfig,
@@ -37,6 +37,69 @@ function ColorSwatch({ color, selected, onClick }: { color: string; selected: bo
   );
 }
 
+function ColorField({
+  label,
+  hint,
+  value,
+  placeholder,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  value: string;
+  placeholder: string;
+  onChange: (v: string) => void;
+}) {
+  const [text, setText] = useState(value);
+  useEffect(() => { setText(value); }, [value]);
+
+  const commit = (v: string) => {
+    if (/^#[a-fA-F0-9]{6}$/.test(v)) onChange(v);
+    else if (v === '') onChange('');
+    else setText(value);
+  };
+
+  return (
+    <div>
+      <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{label}</label>
+      <p className="text-xs2 text-[var(--text-muted)] mb-2 leading-relaxed">{hint}</p>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={value || '#ffffff'}
+          onChange={e => onChange(e.target.value)}
+          className="w-9 h-9 rounded-xl border border-[var(--glass-border)] cursor-pointer p-0.5 bg-transparent shrink-0"
+        />
+        <input
+          type="text"
+          value={text}
+          maxLength={7}
+          placeholder={placeholder}
+          onChange={e => { setText(e.target.value); if (/^#[a-fA-F0-9]{6}$/.test(e.target.value)) onChange(e.target.value); }}
+          onBlur={e => commit(e.target.value)}
+          className="flex-1 border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-mono bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--primary-600)]/20 focus:border-[var(--primary-600)]"
+        />
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="text-xs2 text-rose-500 font-bold hover:underline shrink-0"
+            title="Xóa màu tùy chỉnh"
+          >
+            Xóa
+          </button>
+        )}
+        {value && (
+          <div
+            className="w-9 h-9 rounded-xl border border-[var(--glass-border)] shrink-0"
+            style={{ backgroundColor: value }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
   const [config, setConfig] = useState<CustomThemeConfig>({ ...DEFAULT_CUSTOM_THEME });
   const [original, setOriginal] = useState<CustomThemeConfig>({ ...DEFAULT_CUSTOM_THEME });
@@ -44,7 +107,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const previewApplied = useRef(false);
 
   useEffect(() => {
     setLoading(true);
@@ -54,6 +116,9 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
           primaryColor: data.primaryColor ?? DEFAULT_CUSTOM_THEME.primaryColor,
           fontFamily: data.fontFamily ?? DEFAULT_CUSTOM_THEME.fontFamily,
           fontScale: data.fontScale ?? DEFAULT_CUSTOM_THEME.fontScale,
+          bgApp: data.bgApp ?? '',
+          bgSidebar: data.bgSidebar ?? '',
+          bgSurface: data.bgSurface ?? '',
         };
         setConfig(cfg);
         setOriginal(cfg);
@@ -118,6 +183,8 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
 
   const previewFont = config.fontFamily === 'Inter' ? 'Inter, sans-serif' : `'${config.fontFamily}', sans-serif`;
   const previewSize = FONT_SCALE_OPTIONS.find(s => s.value === config.fontScale)?.size ?? '15px';
+  const previewBgApp = config.bgApp || 'var(--bg-app)';
+  const previewBgSurface = config.bgSurface || 'var(--bg-surface)';
 
   return (
     <div className="animate-enter max-w-4xl space-y-6">
@@ -125,7 +192,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
       <div className="flex justify-between items-start gap-4 mb-6">
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-bold text-[var(--text-primary)]">Tùy Chỉnh Giao Diện</h3>
-          <p className="text-sm text-[var(--text-tertiary)] mt-1">Điều chỉnh màu sắc chủ đạo, kiểu chữ và kích thước phông để phù hợp với thương hiệu của bạn.</p>
+          <p className="text-sm text-[var(--text-tertiary)] mt-1">Điều chỉnh màu sắc chủ đạo, nền, kiểu chữ và kích thước phông để phù hợp với thương hiệu của bạn.</p>
         </div>
       </div>
 
@@ -136,9 +203,8 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
           {/* Primary color */}
           <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
             <h4 className="text-sm font-bold text-[var(--text-primary)] mb-1">Màu chủ đạo</h4>
-            <p className="text-xs text-[var(--text-tertiary)] mb-4">Màu này áp dụng cho các nút, liên kết và điểm nhấn trong toàn bộ ứng dụng.</p>
+            <p className="text-xs text-[var(--text-tertiary)] mb-4">Màu này áp dụng cho các nút, liên kết và điểm nhấn trong toàn bộ ứng dụng (cả light và dark mode).</p>
 
-            {/* Preset swatches */}
             <div className="flex flex-wrap gap-2 mb-4">
               {PRESET_COLORS.map(p => (
                 <ColorSwatch
@@ -150,17 +216,14 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
               ))}
             </div>
 
-            {/* Custom picker */}
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <input
-                  type="color"
-                  value={config.primaryColor}
-                  onChange={e => updateConfig({ primaryColor: e.target.value })}
-                  className="w-10 h-10 rounded-xl border border-[var(--glass-border)] cursor-pointer p-0.5 bg-transparent"
-                  title="Chọn màu tùy chỉnh"
-                />
-              </div>
+              <input
+                type="color"
+                value={config.primaryColor}
+                onChange={e => updateConfig({ primaryColor: e.target.value })}
+                className="w-10 h-10 rounded-xl border border-[var(--glass-border)] cursor-pointer p-0.5 bg-transparent"
+                title="Chọn màu tùy chỉnh"
+              />
               <div className="flex-1">
                 <input
                   type="text"
@@ -182,6 +245,36 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
               <div
                 className="w-10 h-10 rounded-xl border border-[var(--glass-border)] shrink-0"
                 style={{ backgroundColor: /^#[a-fA-F0-9]{6}$/.test(config.primaryColor) ? config.primaryColor : DEFAULT_CUSTOM_THEME.primaryColor }}
+              />
+            </div>
+          </div>
+
+          {/* Background colors (light mode only) */}
+          <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
+            <h4 className="text-sm font-bold text-[var(--text-primary)] mb-1">Màu nền (Light mode)</h4>
+            <p className="text-xs text-[var(--text-tertiary)] mb-5">Tùy chỉnh màu nền cho chế độ sáng. Để trống để dùng màu mặc định. Dark mode không bị ảnh hưởng.</p>
+
+            <div className="space-y-5">
+              <ColorField
+                label="Nền ứng dụng"
+                hint="Màu nền chính của toàn bộ ứng dụng (mặc định: #EEF2F7)"
+                value={config.bgApp}
+                placeholder="#EEF2F7"
+                onChange={v => updateConfig({ bgApp: v })}
+              />
+              <ColorField
+                label="Nền thanh điều hướng"
+                hint="Màu nền của thanh sidebar bên trái (mặc định: #F4F6FA)"
+                value={config.bgSidebar}
+                placeholder="#F4F6FA"
+                onChange={v => updateConfig({ bgSidebar: v })}
+              />
+              <ColorField
+                label="Nền thẻ & bề mặt"
+                hint="Màu nền của các thẻ (card), bảng và panel (mặc định: #FFFFFF)"
+                value={config.bgSurface}
+                placeholder="#FFFFFF"
+                onChange={v => updateConfig({ bgSurface: v })}
               />
             </div>
           </div>
@@ -242,12 +335,10 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
             <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--glass-border)] p-5 shadow-sm">
               <h4 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wide mb-4">Xem trước</h4>
 
-              {/* Mini sidebar */}
               <div
-                className="rounded-xl overflow-hidden border border-[var(--glass-border)] text-[var(--text-primary)]"
+                className="rounded-xl overflow-hidden border border-[var(--glass-border)]"
                 style={{ fontFamily: previewFont, fontSize: previewSize }}
               >
-                {/* Topbar */}
                 <div
                   className="flex items-center gap-2 px-3 py-2"
                   style={{ background: config.primaryColor, color: '#fff' }}
@@ -257,9 +348,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
                   <div className="w-3 h-3 rounded-full bg-white/30" />
                 </div>
 
-                {/* Body preview */}
-                <div className="p-3 space-y-2" style={{ background: 'var(--bg-app)' }}>
-                  {/* Nav item active */}
+                <div className="p-3 space-y-2" style={{ background: previewBgApp }}>
                   <div
                     className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
                     style={{ background: config.primaryColor + '22', borderLeft: `2px solid ${config.primaryColor}` }}
@@ -267,28 +356,16 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
                     <div className="w-2.5 h-2.5 rounded" style={{ background: config.primaryColor }} />
                     <span className="text-xs font-bold" style={{ color: config.primaryColor, fontFamily: previewFont }}>Khách hàng</span>
                   </div>
-                  {/* Nav item inactive */}
-                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: 'transparent' }}>
+                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg">
                     <div className="w-2.5 h-2.5 rounded bg-[var(--text-muted)]" />
                     <span className="text-xs text-[var(--text-tertiary)]" style={{ fontFamily: previewFont }}>Bất động sản</span>
                   </div>
-                  {/* Card */}
-                  <div className="rounded-lg p-2.5 mt-1" style={{ background: 'var(--bg-surface)', border: '1px solid var(--glass-border)' }}>
+                  <div className="rounded-lg p-2.5 mt-1" style={{ background: previewBgSurface, border: '1px solid var(--glass-border)' }}>
                     <div className="text-xs font-bold text-[var(--text-primary)] mb-1" style={{ fontFamily: previewFont }}>Nguyễn Văn A</div>
                     <div className="text-xs2 text-[var(--text-tertiary)] mb-2" style={{ fontFamily: previewFont }}>0901 234 567 • Hồ Chí Minh</div>
                     <div className="flex gap-1.5">
-                      <div
-                        className="px-2 py-0.5 rounded text-xs2 font-bold text-white"
-                        style={{ background: config.primaryColor, fontFamily: previewFont }}
-                      >
-                        Xem
-                      </div>
-                      <div
-                        className="px-2 py-0.5 rounded text-xs2 font-bold"
-                        style={{ background: config.primaryColor + '22', color: config.primaryColor, fontFamily: previewFont }}
-                      >
-                        Gọi
-                      </div>
+                      <div className="px-2 py-0.5 rounded text-xs2 font-bold text-white" style={{ background: config.primaryColor }}>Xem</div>
+                      <div className="px-2 py-0.5 rounded text-xs2 font-bold" style={{ background: config.primaryColor + '22', color: config.primaryColor }}>Gọi</div>
                     </div>
                   </div>
                 </div>
@@ -299,7 +376,6 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
               </div>
             </div>
 
-            {/* Color info */}
             <div className="bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs2 text-[var(--text-tertiary)] font-bold">Màu chính</span>
@@ -308,6 +384,15 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
                   <span className="text-xs2 font-mono text-[var(--text-secondary)]">{config.primaryColor.toUpperCase()}</span>
                 </div>
               </div>
+              {config.bgApp && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs2 text-[var(--text-tertiary)] font-bold">Nền ứng dụng</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded border border-[var(--glass-border)]" style={{ backgroundColor: config.bgApp }} />
+                    <span className="text-xs2 font-mono text-[var(--text-secondary)]">{config.bgApp.toUpperCase()}</span>
+                  </div>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-xs2 text-[var(--text-tertiary)] font-bold">Phông chữ</span>
                 <span className="text-xs2 font-bold text-[var(--text-secondary)]">{config.fontFamily}</span>
@@ -358,7 +443,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ notify }) => {
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Bạn có thay đổi chưa lưu. Nhấn "Lưu giao diện" để áp dụng cho tất cả người dùng.
+          Bạn có thay đổi chưa lưu. Nhấn "Lưu giao diện" để áp dụng cho tất cả người dùng trong tenant.
         </p>
       )}
     </div>

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
 import { db } from './services/dbApi';
 import { I18nProvider, useTranslation } from './services/i18n';
-import { ThemeProvider } from './services/theme';
+import { ThemeProvider, useThemeConfig } from './services/theme';
 import { TenantProvider } from './services/tenantContext';
 import { ROUTES, FULL_HEIGHT_PAGES } from './config/routes';
 import type { User } from './types';
@@ -338,6 +338,8 @@ const AppShell: React.FC = () => {
     const [authState, setAuthState] = useState<'LOADING' | 'AUTH' | 'GUEST'>(getInitialAuthState);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [accessDenied, setAccessDenied] = useState(false);
+
+    useThemeConfig();
 
     // Tracks which private pages have been mounted — CSS show/hide instead of unmount/remount.
     // Uses a ref updated synchronously during render to avoid the extra useEffect render cycle

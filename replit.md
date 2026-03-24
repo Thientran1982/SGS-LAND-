@@ -257,8 +257,10 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 - Mono: `JetBrains Mono` (400/500)
 - Print: `Noto Serif`
 - Dark mode: `class` strategy on `<html>`, persisted in `localStorage` key `sgs_theme`
-- Custom theme: `services/theme.tsx` exports `applyCustomTheme()` and `clearCustomTheme()`; stored in DB via `/api/enterprise/theme` and cached in `localStorage` key `sgs_custom_theme` for FOUC prevention; `public/theme-init.js` applies cached theme before React mounts; CSS uses `var(--custom-font)` and `var(--custom-font-size)` on `html, body` in `public/critical.css`
-- Theme customizer UI: `components/ThemeCustomizer.tsx` — primary color picker (8 presets + custom hex + `<input type=color>`), font family selector (Inter, Be Vietnam Pro, Plus Jakarta Sans, Roboto, Open Sans), font scale (compact 13px / default 15px / large 17px); integrated as "Giao Diện" tab in `pages/EnterpriseSettings.tsx`
+- Custom theme: `services/theme.tsx` exports `CustomThemeConfig`, `applyCustomTheme()`, `clearCustomTheme()`, `useThemeConfig()` (startup hook); stored in `tenant_themes` table via `/api/enterprise/theme`; cached in `localStorage` key `sgs_custom_theme` for FOUC prevention; `public/theme-init.js` applies cached theme before React mounts; CSS uses `var(--custom-font)`, `var(--custom-font-size)` on `html, body`; background colors scoped to `.light` via injected `<style id="sgs-custom-theme-bg">`
+- Theme customizer UI: `components/ThemeCustomizer.tsx` — primary color (8 presets + hex + color picker), bg-app/bg-sidebar/bg-surface (light mode only), font family (5 options), font scale (3 options), live mini-preview; admin-only save/reset, all users see theme via `useThemeConfig()` in `App.tsx`
+- DB: `tenant_themes` table (migration 015) — `(tenant_id PK, theme_config JSONB, updated_at)` with RLS isolation
+- Backend: `GET /api/enterprise/theme` (all authenticated users), `PUT/DELETE` (admin only) with payload validation and defaults merging
 
 ### AiGovernance.tsx Audit & Fix (March 2026)
 4 bugs resolved in `pages/AiGovernance.tsx`:

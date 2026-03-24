@@ -64,14 +64,31 @@ export function createEnterpriseRoutes(authenticateToken: any) {
   // Theme config
   // -----------------------------------------------------------------------
 
+  const THEME_DEFAULTS = {
+    primaryColor: '#4F46E5',
+    fontFamily: 'Inter',
+    fontScale: 'default',
+    bgApp: '',
+    bgSidebar: '',
+    bgSurface: '',
+  };
+
+  function mergeThemeDefaults(raw: any): typeof THEME_DEFAULTS {
+    return {
+      primaryColor: (typeof raw?.primaryColor === 'string' && /^#[a-fA-F0-9]{6}$/.test(raw.primaryColor)) ? raw.primaryColor : THEME_DEFAULTS.primaryColor,
+      fontFamily: (['Inter','Be Vietnam Pro','Plus Jakarta Sans','Roboto','Open Sans'].includes(raw?.fontFamily)) ? raw.fontFamily : THEME_DEFAULTS.fontFamily,
+      fontScale: (['compact','default','large'].includes(raw?.fontScale)) ? raw.fontScale : THEME_DEFAULTS.fontScale,
+      bgApp: (typeof raw?.bgApp === 'string' && (/^#[a-fA-F0-9]{6}$/.test(raw.bgApp) || raw.bgApp === '')) ? raw.bgApp : '',
+      bgSidebar: (typeof raw?.bgSidebar === 'string' && (/^#[a-fA-F0-9]{6}$/.test(raw.bgSidebar) || raw.bgSidebar === '')) ? raw.bgSidebar : '',
+      bgSurface: (typeof raw?.bgSurface === 'string' && (/^#[a-fA-F0-9]{6}$/.test(raw.bgSurface) || raw.bgSurface === '')) ? raw.bgSurface : '',
+    };
+  }
+
   router.get('/theme', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      if (user.role !== 'ADMIN') {
-        return res.status(403).json({ error: 'Only admins can view theme config' });
-      }
-      const config = await enterpriseConfigRepository.getThemeConfig(user.tenantId);
-      res.json(config ?? {});
+      const raw = await enterpriseConfigRepository.getThemeConfig(user.tenantId);
+      res.json(mergeThemeDefaults(raw));
     } catch (error) {
       console.error('Error fetching theme config:', error);
       res.status(500).json({ error: 'Failed to fetch theme config' });
@@ -84,8 +101,9 @@ export function createEnterpriseRoutes(authenticateToken: any) {
       if (user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Only admins can update theme config' });
       }
-      const config = await enterpriseConfigRepository.saveThemeConfig(user.tenantId, req.body);
-      res.json(config);
+      const validated = mergeThemeDefaults(req.body);
+      const config = await enterpriseConfigRepository.saveThemeConfig(user.tenantId, validated);
+      res.json(mergeThemeDefaults(config));
     } catch (error) {
       console.error('Error saving theme config:', error);
       res.status(500).json({ error: 'Failed to save theme config' });
@@ -98,8 +116,8 @@ export function createEnterpriseRoutes(authenticateToken: any) {
       if (user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Only admins can reset theme config' });
       }
-      await enterpriseConfigRepository.saveThemeConfig(user.tenantId, null);
-      res.json({});
+      await enterpriseConfigRepository.saveThemeConfig(user.tenantId, {});
+      res.json(THEME_DEFAULTS);
     } catch (error) {
       console.error('Error resetting theme config:', error);
       res.status(500).json({ error: 'Failed to reset theme config' });
