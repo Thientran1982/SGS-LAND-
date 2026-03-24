@@ -6,6 +6,7 @@ import { EnterpriseConfig, AuditLog, User, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { copyToClipboard } from '../utils/clipboard';
+import { ThemeCustomizer } from '../components/ThemeCustomizer';
 
 // -----------------------------------------------------------------------------
 // CONSTANTS
@@ -1104,6 +1105,7 @@ export const EnterpriseSettings: React.FC = () => {
     if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('common.loading')}</div>;
 
     const TABS = [
+        { id: 'THEME', label: 'Giao Diện' },
         { id: 'ZALO', label: t('ent.tab_zalo') },
         { id: 'FACEBOOK', label: t('ent.tab_social') },
         { id: 'EMAIL', label: t('ent.tab_email') },
@@ -1165,6 +1167,7 @@ export const EnterpriseSettings: React.FC = () => {
             </div>
 
             <div className="min-h-[400px]">
+                {activeTab === 'THEME' && <ThemeCustomizer notify={notify} />}
                 {activeTab === 'ZALO' && <ZaloPanel config={config} onRefresh={loadConfig} notify={notify} />}
                 {activeTab === 'FACEBOOK' && <FacebookPanel config={config} onRefresh={loadConfig} notify={notify} />}
                 {activeTab === 'EMAIL' && <EmailPanel config={config} onRefresh={loadConfig} notify={notify} />}

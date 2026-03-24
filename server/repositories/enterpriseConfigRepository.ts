@@ -81,6 +81,20 @@ export class EnterpriseConfigRepository extends BaseRepository {
     });
   }
 
+  async getThemeConfig(tenantId: string): Promise<any> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT config_value FROM enterprise_config WHERE config_key = 'theme' LIMIT 1`
+      );
+      return result.rows[0]?.config_value ?? null;
+    });
+  }
+
+  async saveThemeConfig(tenantId: string, config: any): Promise<any> {
+    await this.upsertConfigKey(tenantId, 'theme', config);
+    return config;
+  }
+
   async upsertConfig(tenantId: string, data: Record<string, any>): Promise<any> {
     const configKeys = [
       'language', 'onboarding', 'domains', 'sso', 'scim',

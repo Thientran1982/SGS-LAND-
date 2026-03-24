@@ -61,6 +61,52 @@ export function createEnterpriseRoutes(authenticateToken: any) {
   });
 
   // -----------------------------------------------------------------------
+  // Theme config
+  // -----------------------------------------------------------------------
+
+  router.get('/theme', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can view theme config' });
+      }
+      const config = await enterpriseConfigRepository.getThemeConfig(user.tenantId);
+      res.json(config ?? {});
+    } catch (error) {
+      console.error('Error fetching theme config:', error);
+      res.status(500).json({ error: 'Failed to fetch theme config' });
+    }
+  });
+
+  router.put('/theme', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can update theme config' });
+      }
+      const config = await enterpriseConfigRepository.saveThemeConfig(user.tenantId, req.body);
+      res.json(config);
+    } catch (error) {
+      console.error('Error saving theme config:', error);
+      res.status(500).json({ error: 'Failed to save theme config' });
+    }
+  });
+
+  router.delete('/theme', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (user.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Only admins can reset theme config' });
+      }
+      await enterpriseConfigRepository.saveThemeConfig(user.tenantId, null);
+      res.json({});
+    } catch (error) {
+      console.error('Error resetting theme config:', error);
+      res.status(500).json({ error: 'Failed to reset theme config' });
+    }
+  });
+
+  // -----------------------------------------------------------------------
   // Audit logs
   // -----------------------------------------------------------------------
 

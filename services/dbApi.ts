@@ -1447,6 +1447,28 @@ class DatabaseApiClient {
     return res.json();
   }
 
+  async getThemeConfig(): Promise<any> {
+    const res = await fetch('/api/enterprise/theme', { credentials: 'include' });
+    if (!res.ok) return {};
+    return res.json();
+  }
+
+  async saveThemeConfig(config: any): Promise<any> {
+    const res = await fetch('/api/enterprise/theme', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Không thể lưu cấu hình giao diện'); }
+    return res.json();
+  }
+
+  async resetThemeConfig(): Promise<void> {
+    const res = await fetch('/api/enterprise/theme', { method: 'DELETE', credentials: 'include' });
+    if (!res.ok) throw new Error('Không thể đặt lại giao diện');
+  }
+
   async createBackup(): Promise<string> {
     return JSON.stringify({ id: `backup_${Date.now()}`, createdAt: new Date().toISOString() });
   }

@@ -87,8 +87,8 @@ html, body {
   width: 100%;
   margin: 0; padding: 0;
   overflow: hidden;
-  font-family: 'Inter', sans-serif;
-  font-size: 15px;
+  font-family: var(--custom-font, 'Inter', sans-serif);
+  font-size: var(--custom-font-size, 15px);
   background-color: var(--bg-app);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;

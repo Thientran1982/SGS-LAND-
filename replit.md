@@ -257,6 +257,8 @@ Named semantic tokens for all CSS variables (use via `text-text-secondary`, `bg-
 - Mono: `JetBrains Mono` (400/500)
 - Print: `Noto Serif`
 - Dark mode: `class` strategy on `<html>`, persisted in `localStorage` key `sgs_theme`
+- Custom theme: `services/theme.tsx` exports `applyCustomTheme()` and `clearCustomTheme()`; stored in DB via `/api/enterprise/theme` and cached in `localStorage` key `sgs_custom_theme` for FOUC prevention; `public/theme-init.js` applies cached theme before React mounts; CSS uses `var(--custom-font)` and `var(--custom-font-size)` on `html, body` in `public/critical.css`
+- Theme customizer UI: `components/ThemeCustomizer.tsx` — primary color picker (8 presets + custom hex + `<input type=color>`), font family selector (Inter, Be Vietnam Pro, Plus Jakarta Sans, Roboto, Open Sans), font scale (compact 13px / default 15px / large 17px); integrated as "Giao Diện" tab in `pages/EnterpriseSettings.tsx`
 
 ### AiGovernance.tsx Audit & Fix (March 2026)
 4 bugs resolved in `pages/AiGovernance.tsx`:
