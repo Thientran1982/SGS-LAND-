@@ -38,7 +38,8 @@ export function createActivityRoutes(authenticateToken: any) {
       }
 
       const fromDate = typeof req.query.fromDate === 'string' ? req.query.fromDate : undefined;
-      const data = await pageViewRepository.getUsersActivitySummary(user.tenantId, fromDate);
+      const toDate = typeof req.query.toDate === 'string' ? req.query.toDate : undefined;
+      const data = await pageViewRepository.getUsersActivitySummary(user.tenantId, fromDate, toDate);
       res.json(data);
     } catch (error) {
       console.error('Error fetching activity summary:', error);
@@ -54,7 +55,8 @@ export function createActivityRoutes(authenticateToken: any) {
       }
 
       const fromDate = typeof req.query.fromDate === 'string' ? req.query.fromDate : undefined;
-      const data = await pageViewRepository.getUserActivity(user.tenantId, req.params.userId as string, fromDate);
+      const toDate = typeof req.query.toDate === 'string' ? req.query.toDate : undefined;
+      const data = await pageViewRepository.getUserActivity(user.tenantId, req.params.userId as string, fromDate, toDate);
       res.json(data);
     } catch (error) {
       console.error('Error fetching user activity:', error);

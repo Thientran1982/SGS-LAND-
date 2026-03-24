@@ -497,20 +497,22 @@ class DatabaseApiClient {
     }
   }
 
-  async getActivitySummary(fromDate?: string): Promise<any[]> {
+  async getActivitySummary(fromDate?: string, toDate?: string): Promise<any[]> {
     try {
       const params: any = {};
       if (fromDate) params.fromDate = fromDate;
+      if (toDate) params.toDate = toDate;
       return await api.get<any[]>('/api/activity/summary', { params });
     } catch {
       return [];
     }
   }
 
-  async getUserActivityDetail(userId: string, fromDate?: string): Promise<{ pageStats: any[]; recentVisits: any[] }> {
+  async getUserActivityDetail(userId: string, fromDate?: string, toDate?: string): Promise<{ pageStats: any[]; recentVisits: any[] }> {
     try {
       const params: any = {};
       if (fromDate) params.fromDate = fromDate;
+      if (toDate) params.toDate = toDate;
       return await api.get<any>(`/api/activity/user/${userId}`, { params });
     } catch {
       return { pageStats: [], recentVisits: [] };

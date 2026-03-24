@@ -26,6 +26,7 @@ const PAGE_LABELS: Record<string, string> = {
   [ROUTES.SEO_MANAGER]: 'Quản Lý SEO',
   [ROUTES.PROFILE]: 'Hồ Sơ Cá Nhân',
   [ROUTES.MOBILE_APP]: 'Ứng Dụng Di Động',
+  [ROUTES.LISTING]: 'Chi Tiết Bất Động Sản',
 };
 
 function getPathFromHash(): string {

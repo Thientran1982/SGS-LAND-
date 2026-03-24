@@ -96,13 +96,14 @@ function UserAvatar({ name, avatar }: { name: string; avatar?: string }) {
 interface UserDetailDrawerProps {
   user: ActivityUser;
   fromDate?: string;
+  toDate?: string;
   onClose: () => void;
 }
 
-function UserDetailDrawer({ user, fromDate, onClose }: UserDetailDrawerProps) {
+function UserDetailDrawer({ user, fromDate, toDate, onClose }: UserDetailDrawerProps) {
   const { data: detail, isLoading } = useQuery<{ pageStats: PageStat[]; recentVisits: RecentVisit[] }>({
-    queryKey: ['user-activity-detail', user.userId, fromDate],
-    queryFn: () => db.getUserActivityDetail(user.userId, fromDate),
+    queryKey: ['user-activity-detail', user.userId, fromDate, toDate],
+    queryFn: () => db.getUserActivityDetail(user.userId, fromDate, toDate),
     staleTime: 60_000,
   });
 
@@ -226,9 +227,13 @@ export function UserActivityPanel() {
     ? (customFrom ? new Date(customFrom).toISOString() : undefined)
     : getPresetFromDate(range as Exclude<DateRange, 'custom'>);
 
+  const toDate: string | undefined = range === 'custom' && customTo
+    ? new Date(new Date(customTo).getTime() + 24 * 60 * 60 * 1000 - 1).toISOString()
+    : undefined;
+
   const { data: users = [], isLoading } = useQuery<ActivityUser[]>({
-    queryKey: ['activity-summary', fromDate],
-    queryFn: () => db.getActivitySummary(fromDate),
+    queryKey: ['activity-summary', fromDate, toDate],
+    queryFn: () => db.getActivitySummary(fromDate, toDate),
     staleTime: 60_000,
     enabled: range !== 'custom' || !!customFrom,
   });
@@ -434,6 +439,7 @@ export function UserActivityPanel() {
         <UserDetailDrawer
           user={selectedUser}
           fromDate={fromDate}
+          toDate={toDate}
           onClose={() => setSelectedUser(null)}
         />
       )}

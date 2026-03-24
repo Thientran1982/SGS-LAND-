@@ -50,11 +50,17 @@ class PageViewRepository extends BaseRepository {
     });
   }
 
-  async getUsersActivitySummary(tenantId: string, fromDate?: string): Promise<any[]> {
+  async getUsersActivitySummary(tenantId: string, fromDate?: string, toDate?: string): Promise<any[]> {
     return this.withTenant(tenantId, async (client) => {
-      const rangeFilter = fromDate ? `COUNT(*) FILTER (WHERE visited_at >= $1)::int AS views_in_range,` : `0::int AS views_in_range,`;
-      const topPageRangeFilter = fromDate ? `AND pvt.visited_at >= $1` : '';
-      const values: any[] = fromDate ? [fromDate] : [];
+      const conditions: string[] = [];
+      const values: any[] = [];
+      if (fromDate) { conditions.push(`visited_at >= $${values.length + 1}`); values.push(fromDate); }
+      if (toDate) { conditions.push(`visited_at <= $${values.length + 1}`); values.push(toDate); }
+      const rangeWhere = conditions.length ? conditions.join(' AND ') : null;
+      const rangeFilter = rangeWhere
+        ? `COUNT(*) FILTER (WHERE ${rangeWhere})::int AS views_in_range,`
+        : `0::int AS views_in_range,`;
+      const topPageRangeFilter = rangeWhere ? `AND ${rangeWhere}` : '';
 
       const result = await client.query(
         `WITH pv_agg AS (
@@ -109,13 +115,16 @@ class PageViewRepository extends BaseRepository {
     });
   }
 
-  async getUserActivity(tenantId: string, userId: string, fromDate?: string): Promise<{
+  async getUserActivity(tenantId: string, userId: string, fromDate?: string, toDate?: string): Promise<{
     pageStats: any[];
     recentVisits: any[];
   }> {
     return this.withTenant(tenantId, async (client) => {
-      const dateFilter = fromDate ? `AND visited_at >= $2` : '';
-      const values: any[] = fromDate ? [userId, fromDate] : [userId];
+      const values: any[] = [userId];
+      const conditions: string[] = [];
+      if (fromDate) { conditions.push(`AND visited_at >= $${values.length + 1}`); values.push(fromDate); }
+      if (toDate) { conditions.push(`AND visited_at <= $${values.length + 1}`); values.push(toDate); }
+      const dateFilter = conditions.join(' ');
 
       const pageStatsResult = await client.query(
         `SELECT
