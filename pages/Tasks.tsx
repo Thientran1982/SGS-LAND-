@@ -4,17 +4,17 @@ import {
   Filter, ListTodo, ChevronRight
 } from 'lucide-react';
 import { api } from '../services/api';
-import { WfTask, TaskStatus, TaskPriority } from '../types';
+import { WfTask, WfTaskStatus, TaskPriority } from '../types';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 
-interface Props { onNavigate: (route: string) => void; }
+interface Props { onNavigate?: (route: string) => void; }
 
-const STATUS_LABELS: Record<TaskStatus, string> = {
+const STATUS_LABELS: Record<WfTaskStatus, string> = {
   todo: 'Chờ xử lý', in_progress: 'Đang làm', review: 'Chờ duyệt',
   done: 'Hoàn thành', cancelled: 'Đã hủy',
 };
-const STATUS_COLORS: Record<TaskStatus, string> = {
+const STATUS_COLORS: Record<WfTaskStatus, string> = {
   todo: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
   in_progress: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
   review: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
@@ -26,17 +26,19 @@ const PRIORITY_DOT: Record<TaskPriority, string> = {
   urgent: 'bg-rose-500', high: 'bg-orange-500', medium: 'bg-amber-500', low: 'bg-teal-500',
 };
 
-const STATUSES: TaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'cancelled'];
+const STATUSES: WfTaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'cancelled'];
 const PRIORITIES: TaskPriority[] = ['urgent', 'high', 'medium', 'low'];
 
-export function Tasks({ onNavigate }: Props) {
+const _navFallback = (r: string) => { window.location.hash = `#/${r}`; };
+export function Tasks({ onNavigate: _onNav }: Props) {
+  const onNavigate = _onNav ?? _navFallback;
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<TaskStatus[]>([]);
+  const [statusFilter, setStatusFilter] = useState<WfTaskStatus[]>([]);
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority[]>([]);
   const [page, setPage] = useState(1);
   const LIMIT = 25;
@@ -46,7 +48,7 @@ export function Tasks({ onNavigate }: Props) {
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const loadTasks = useCallback(async (s: string, st: TaskStatus[], pr: TaskPriority[], pg: number) => {
+  const loadTasks = useCallback(async (s: string, st: WfTaskStatus[], pr: TaskPriority[], pg: number) => {
     setLoading(true);
     setError(null);
     const params = new URLSearchParams();
@@ -80,7 +82,7 @@ export function Tasks({ onNavigate }: Props) {
     loadTasks(search, statusFilter, priorityFilter, page);
   }, [page]);
 
-  const toggleStatus = (s: TaskStatus) => setStatusFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
+  const toggleStatus = (s: WfTaskStatus) => setStatusFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
   const togglePriority = (p: TaskPriority) => setPriorityFilter(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
   const clearFilters = () => { setStatusFilter([]); setPriorityFilter([]); setSearch(''); setPage(1); };
 

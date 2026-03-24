@@ -42,7 +42,7 @@ export function createDepartmentRoutes(authenticateToken: any) {
 
       const parsedParams = workloadParamsSchema.safeParse(req.params);
       if (!parsedParams.success) {
-        return res.status(400).json({ error: true, code: 'VALIDATION', message: parsedParams.error.errors[0]?.message || 'Tham số không hợp lệ' });
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: parsedParams.error.issues[0]?.message || 'Tham số không hợp lệ' });
       }
       const { userId } = parsedParams.data;
 

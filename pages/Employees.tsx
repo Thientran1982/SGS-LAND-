@@ -3,8 +3,10 @@ import { Loader2, AlertTriangle, UserCheck, Users, BarChart3, TrendingUp, AlertC
 import { api } from '../services/api';
 
 interface Props {
-  onNavigate: (route: string) => void;
+  onNavigate?: (route: string) => void;
 }
+
+const _empNavFallback = (r: string) => { window.location.hash = `#/${r}`; };
 
 interface EmployeeSummary {
   user_id: string;
@@ -36,7 +38,8 @@ function WorkloadBar({ score }: { score: number }) {
   );
 }
 
-export function Employees({ onNavigate }: Props) {
+export function Employees({ onNavigate: _onNav }: Props) {
+  const onNavigate = _onNav ?? _empNavFallback;
   const [employees, setEmployees] = useState<EmployeeSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

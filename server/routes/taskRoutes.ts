@@ -212,7 +212,7 @@ export function createTaskRoutes(authenticateToken: any) {
 
       const parsed = createTaskSchema.safeParse(req.body);
       if (!parsed.success) {
-        const msg = parsed.error.errors[0]?.message || 'Dữ liệu không hợp lệ';
+        const msg = parsed.error.issues[0]?.message || 'Dữ liệu không hợp lệ';
         return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
       }
       const { title, description, project_id, department_id, category, priority, deadline, estimated_hours, assignee_ids } = parsed.data;
@@ -310,7 +310,7 @@ export function createTaskRoutes(authenticateToken: any) {
 
       const parsed = updateTaskSchema.safeParse(req.body);
       if (!parsed.success) {
-        const msg = parsed.error.errors[0]?.message || 'Dữ liệu không hợp lệ';
+        const msg = parsed.error.issues[0]?.message || 'Dữ liệu không hợp lệ';
         return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
       }
       const { title, description, project_id, department_id, category, priority, deadline, estimated_hours } = parsed.data;
@@ -384,7 +384,7 @@ export function createTaskRoutes(authenticateToken: any) {
 
       const parsed = changeStatusSchema.safeParse(req.body);
       if (!parsed.success) {
-        const msg = parsed.error.errors[0]?.message || 'Dữ liệu không hợp lệ';
+        const msg = parsed.error.issues[0]?.message || 'Dữ liệu không hợp lệ';
         return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
       }
       const { status, actual_hours, completion_note } = parsed.data;
@@ -452,7 +452,7 @@ export function createTaskRoutes(authenticateToken: any) {
 
       const parsed = assignSchema.safeParse(req.body);
       if (!parsed.success) {
-        const msg = parsed.error.errors[0]?.message || 'Dữ liệu không hợp lệ';
+        const msg = parsed.error.issues[0]?.message || 'Dữ liệu không hợp lệ';
         return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
       }
       const { user_ids, due_note, primary_user_id } = parsed.data;
@@ -560,7 +560,7 @@ export function createTaskRoutes(authenticateToken: any) {
 
       const parsed = unassignBodySchema.safeParse(req.body);
       if (!parsed.success) {
-        const msg = parsed.error.errors[0]?.message || 'user_id là bắt buộc';
+        const msg = parsed.error.issues[0]?.message || 'user_id là bắt buộc';
         return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
       }
       const { user_id: userId } = parsed.data;
@@ -632,7 +632,7 @@ export function createTaskRoutes(authenticateToken: any) {
 
       const parsed = commentSchema.safeParse(req.body);
       if (!parsed.success) {
-        const msg = parsed.error.errors[0]?.message || 'Dữ liệu không hợp lệ';
+        const msg = parsed.error.issues[0]?.message || 'Dữ liệu không hợp lệ';
         return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
       }
       const { content } = parsed.data;

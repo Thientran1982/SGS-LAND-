@@ -1209,7 +1209,7 @@ export interface SocialUserProfile {
 // 20. TASK MANAGEMENT MODULE
 // =============================================================================
 
-export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done' | 'cancelled';
+export type WfTaskStatus = 'todo' | 'in_progress' | 'review' | 'done' | 'cancelled';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskCategory =
     | 'sales' | 'legal' | 'marketing' | 'site_visit'
@@ -1244,7 +1244,7 @@ export interface WfTask {
     department_id?: string;
     department_name?: string;
     category?: TaskCategory;
-    status: TaskStatus;
+    status: WfTaskStatus;
     priority: TaskPriority;
     deadline?: string;
     estimated_hours?: number;
@@ -1327,7 +1327,7 @@ export interface TaskDashboardStats {
 }
 
 export interface TaskListParams {
-    status?: TaskStatus | TaskStatus[];
+    status?: WfTaskStatus | WfTaskStatus[];
     priority?: TaskPriority | TaskPriority[];
     project_id?: string;
     department_id?: string;

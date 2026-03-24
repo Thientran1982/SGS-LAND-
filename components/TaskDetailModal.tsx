@@ -6,13 +6,13 @@ import {
   ChevronDown, Send, CheckCircle2, RotateCcw, Ban
 } from 'lucide-react';
 import { api } from '../services/api';
-import { WfTask, TaskComment, TaskActivityLog, TaskStatus, TaskPriority, TaskCategory, Department } from '../types';
+import { WfTask, TaskComment, TaskActivityLog, WfTaskStatus, TaskPriority, TaskCategory, Department } from '../types';
 
-const STATUS_LABELS: Record<TaskStatus, string> = {
+const STATUS_LABELS: Record<WfTaskStatus, string> = {
   todo: 'Chờ xử lý', in_progress: 'Đang làm', review: 'Chờ duyệt',
   done: 'Hoàn thành', cancelled: 'Đã hủy',
 };
-const STATUS_COLORS: Record<TaskStatus, string> = {
+const STATUS_COLORS: Record<WfTaskStatus, string> = {
   todo: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
   in_progress: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300',
   review: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300',
@@ -31,7 +31,7 @@ const CATEGORY_LABELS: Record<TaskCategory, string> = {
   site_visit: 'Đi thực địa', customer_care: 'CSKH', finance: 'Tài chính',
   construction: 'Xây dựng', admin: 'Hành chính', other: 'Khác',
 };
-const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+const VALID_TRANSITIONS: Record<WfTaskStatus, WfTaskStatus[]> = {
   todo: ['in_progress', 'cancelled'],
   in_progress: ['review', 'todo', 'cancelled'],
   review: ['done', 'in_progress'],
@@ -154,7 +154,7 @@ export function TaskDetailModal({ taskId, onClose, onUpdated, onDeleted }: Props
     }
   };
 
-  const changeStatus = async (newStatus: TaskStatus) => {
+  const changeStatus = async (newStatus: WfTaskStatus) => {
     if (!task) return;
     setStatusMenuOpen(false);
     setChangingStatus(true);

@@ -7,13 +7,13 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { api } from '../services/api';
-import { WfTask, TaskStatus } from '../types';
+import { WfTask, WfTaskStatus } from '../types';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 
-interface Props { onNavigate: (route: string) => void; }
+interface Props { onNavigate?: (route: string) => void; }
 
-const COLUMNS: { id: TaskStatus; label: string; color: string; headerColor: string; dot: string }[] = [
+const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: string; dot: string }[] = [
   { id: 'todo',        label: 'Chờ xử lý',      color: 'bg-slate-50 dark:bg-slate-800/30',    headerColor: 'bg-slate-100 dark:bg-slate-800/60',    dot: 'bg-slate-400' },
   { id: 'in_progress', label: 'Đang thực hiện',  color: 'bg-indigo-50/60 dark:bg-indigo-900/10', headerColor: 'bg-indigo-100/80 dark:bg-indigo-900/30', dot: 'bg-indigo-500' },
   { id: 'review',      label: 'Chờ duyệt',       color: 'bg-amber-50/60 dark:bg-amber-900/10',  headerColor: 'bg-amber-100/80 dark:bg-amber-900/30',  dot: 'bg-amber-500' },
@@ -133,7 +133,9 @@ function KanbanColumn({
 }
 
 // ─── Main Kanban Page ─────────────────────────────────────────────────────────
-export function TaskKanban({ onNavigate }: Props) {
+const _kanbanNavFallback = (r: string) => { window.location.hash = `#/${r}`; };
+export function TaskKanban({ onNavigate: _onNav }: Props) {
+  const onNavigate = _onNav ?? _kanbanNavFallback;
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,7 +168,7 @@ export function TaskKanban({ onNavigate }: Props) {
     if (!over) return;
 
     const taskId = active.id as string;
-    const newStatus = over.id as TaskStatus;
+    const newStatus = over.id as WfTaskStatus;
     const task = tasks.find(t => t.id === taskId);
     if (!task || task.status === newStatus) return;
 
@@ -199,7 +201,7 @@ export function TaskKanban({ onNavigate }: Props) {
   const tasksByStatus = allCols.reduce((acc, col) => {
     acc[col.id] = tasks.filter(t => t.status === col.id);
     return acc;
-  }, {} as Record<TaskStatus, WfTask[]>);
+  }, {} as Record<WfTaskStatus, WfTask[]>);
 
   if (loading) return (
     <div className="flex items-center justify-center h-full">
