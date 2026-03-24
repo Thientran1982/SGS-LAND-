@@ -5,7 +5,7 @@ import {
   MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent,
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Plus, AlertTriangle, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, AlertTriangle, RefreshCw, CheckCircle, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../services/api';
 import { WfTask, WfTaskStatus } from '../types';
 import { TaskDetailModal } from '../components/TaskDetailModal';
@@ -47,6 +47,7 @@ function TaskCard({ task, overlay = false, onClick }: { task: WfTask; overlay?: 
       style={style}
       {...(overlay ? {} : { ...listeners, ...attributes })}
       onClick={onClick}
+      data-task-card="true"
       className={`bg-[var(--bg-surface)] rounded-xl border ${urgencyBorder} p-3 shadow-sm hover:shadow-md transition-shadow select-none ${overlay ? 'shadow-xl rotate-1 scale-105' : ''}`}
     >
       <div className="flex items-center justify-between mb-2 gap-1.5 flex-wrap">
@@ -119,6 +120,9 @@ export function TaskKanban() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
   const boardRef = useRef<HTMLDivElement>(null);
+  const dragScrolling = useRef(false);
+  const dragStartX = useRef(0);
+  const dragScrollLeft = useRef(0);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -127,8 +131,7 @@ export function TaskKanban() {
       if (e.deltaX !== 0) return;
       let target = e.target as HTMLElement | null;
       while (target && target !== el) {
-        const style = getComputedStyle(target);
-        const oy = style.overflowY;
+        const oy = getComputedStyle(target).overflowY;
         if ((oy === 'auto' || oy === 'scroll') && target.scrollHeight > target.clientHeight) return;
         target = target.parentElement;
       }
@@ -139,6 +142,34 @@ export function TaskKanban() {
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  const scrollBoard = useCallback((delta: number) => {
+    if (boardRef.current) {
+      boardRef.current.scrollBy({ left: delta, behavior: 'smooth' });
+    }
+  }, []);
+
+  const onBoardMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-task-card]')) return;
+    dragScrolling.current = true;
+    dragStartX.current = e.clientX;
+    dragScrollLeft.current = boardRef.current?.scrollLeft ?? 0;
+    e.currentTarget.style.cursor = 'grabbing';
+    e.currentTarget.style.userSelect = 'none';
+  }, []);
+
+  const onBoardMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!dragScrolling.current || !boardRef.current) return;
+    const dx = e.clientX - dragStartX.current;
+    boardRef.current.scrollLeft = dragScrollLeft.current - dx;
+  }, []);
+
+  const onBoardMouseUp = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    dragScrolling.current = false;
+    e.currentTarget.style.cursor = '';
+    e.currentTarget.style.userSelect = '';
   }, []);
 
   const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
@@ -259,6 +290,15 @@ export function TaskKanban() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 border border-[var(--glass-border)] rounded-xl overflow-hidden">
+              <button onClick={() => scrollBoard(-292)} title="Cuộn trái" className="h-[32px] w-[32px] flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] transition-colors">
+                <ChevronLeft size={16} />
+              </button>
+              <div className="w-px h-4 bg-[var(--glass-border)]" />
+              <button onClick={() => scrollBoard(292)} title="Cuộn phải" className="h-[32px] w-[32px] flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] transition-colors">
+                <ChevronRight size={16} />
+              </button>
+            </div>
             <button onClick={loadTasks} className="h-[32px] w-[32px] flex items-center justify-center border border-[var(--glass-border)] rounded-xl text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] hover:text-[var(--text-primary)] transition-colors">
               <RefreshCw size={14} />
             </button>
@@ -280,7 +320,14 @@ export function TaskKanban() {
         />
       </div>
 
-      <div ref={boardRef} className="flex-1 overflow-x-auto overflow-y-hidden p-4 md:p-5 min-w-0">
+      <div
+        ref={boardRef}
+        onMouseDown={onBoardMouseDown}
+        onMouseMove={onBoardMouseMove}
+        onMouseUp={onBoardMouseUp}
+        onMouseLeave={onBoardMouseUp}
+        className="flex-1 overflow-x-auto overflow-y-hidden p-4 md:p-5 min-w-0 cursor-grab"
+      >
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex gap-3 h-full" style={{ minWidth: `${COLUMNS.length * 280}px`, width: 'max-content' }}>
             {COLUMNS.map(col => (
