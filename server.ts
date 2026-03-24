@@ -880,7 +880,7 @@ async function startServer() {
   app.use('/api/sessions', apiRateLimit, createSessionRoutes(authenticateToken));
   app.use('/api/templates', apiRateLimit, createTemplateRoutes(authenticateToken));
   app.use('/api/ai/governance', apiRateLimit, createAiGovernanceRoutes(authenticateToken));
-  app.use('/api/enterprise', apiRateLimit, createEnterpriseRoutes(authenticateToken));
+  app.use('/api/enterprise', apiRateLimit, createEnterpriseRoutes(authenticateToken, io));
   app.use('/api/upload', apiRateLimit, createUploadRoutes(authenticateToken));
   app.use('/uploads', createUploadServeRoute(authenticateToken));
   // SCIM 2.0 provisioning — uses its own Bearer token auth (no JWT required)

@@ -5,7 +5,7 @@ import { emailService } from '../services/emailService';
 import { randomBytes } from 'crypto';
 import { promises as dns } from 'dns';
 
-export function createEnterpriseRoutes(authenticateToken: any) {
+export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
   const router = Router();
 
   // -----------------------------------------------------------------------
@@ -103,7 +103,9 @@ export function createEnterpriseRoutes(authenticateToken: any) {
       }
       const validated = mergeThemeDefaults(req.body);
       const config = await enterpriseConfigRepository.saveThemeConfig(user.tenantId, validated);
-      res.json(mergeThemeDefaults(config));
+      const result = mergeThemeDefaults(config);
+      io?.to(`tenant:${user.tenantId}`).emit('theme_updated', result);
+      res.json(result);
     } catch (error) {
       console.error('Error saving theme config:', error);
       res.status(500).json({ error: 'Failed to save theme config' });
@@ -117,6 +119,7 @@ export function createEnterpriseRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins can reset theme config' });
       }
       await enterpriseConfigRepository.saveThemeConfig(user.tenantId, {});
+      io?.to(`tenant:${user.tenantId}`).emit('theme_updated', THEME_DEFAULTS);
       res.json(THEME_DEFAULTS);
     } catch (error) {
       console.error('Error resetting theme config:', error);

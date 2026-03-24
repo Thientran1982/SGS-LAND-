@@ -35,6 +35,7 @@ import m012 from './012_signed_place';
 import m013 from './013_subscription_columns';
 import m014 from './014_listing_assigned_to';
 import m015 from './015_theme_config';
+import m016 from './016_migrate_theme_to_enterprise_config';
 
 dotenv.config();
 
@@ -65,6 +66,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '013_subscription_columns.ts': m013,
   '014_listing_assigned_to.ts': m014,
   '015_theme_config.ts': m015,
+  '016_migrate_theme_to_enterprise_config.ts': m016,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

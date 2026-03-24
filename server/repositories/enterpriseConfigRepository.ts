@@ -84,18 +84,20 @@ export class EnterpriseConfigRepository extends BaseRepository {
   async getThemeConfig(tenantId: string): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `SELECT theme_config FROM tenant_themes WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid LIMIT 1`
+        `SELECT config_value FROM enterprise_config
+         WHERE config_key = 'theme'
+         LIMIT 1`
       );
-      return result.rows[0]?.theme_config ?? null;
+      return result.rows[0]?.config_value ?? null;
     });
   }
 
   async saveThemeConfig(tenantId: string, config: any): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       await client.query(
-        `INSERT INTO tenant_themes (tenant_id, theme_config, updated_at)
-         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, NOW())
-         ON CONFLICT (tenant_id) DO UPDATE SET theme_config = $1, updated_at = NOW()`,
+        `INSERT INTO enterprise_config (tenant_id, config_key, config_value, updated_at)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, 'theme', $1, NOW())
+         ON CONFLICT (tenant_id, config_key) DO UPDATE SET config_value = $1, updated_at = NOW()`,
         [JSON.stringify(config ?? {})]
       );
       return config;

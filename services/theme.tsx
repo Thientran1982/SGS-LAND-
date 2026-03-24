@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { socket } from './websocket';
 
 // -----------------------------------------------------------------------------
 //  CONSTANTS & TYPES
@@ -95,10 +96,11 @@ function applyBgColors(bgApp: string, bgSidebar: string, bgSurface: string) {
     styleEl.id = STYLE_TAG_ID;
     document.head.appendChild(styleEl);
   }
+  const HEX_RE = /^#[a-fA-F0-9]{6}$/;
   const rules: string[] = [];
-  if (bgApp) rules.push(`--bg-app: ${bgApp};`);
-  if (bgSidebar) rules.push(`--bg-sidebar: ${bgSidebar};`);
-  if (bgSurface) rules.push(`--bg-surface: ${bgSurface};`);
+  if (bgApp && HEX_RE.test(bgApp)) rules.push(`--bg-app: ${bgApp};`);
+  if (bgSidebar && HEX_RE.test(bgSidebar)) rules.push(`--bg-sidebar: ${bgSidebar};`);
+  if (bgSurface && HEX_RE.test(bgSurface)) rules.push(`--bg-surface: ${bgSurface};`);
   styleEl.textContent = `:root.light { ${rules.join(' ')} }`;
 }
 
@@ -106,7 +108,7 @@ export function applyCustomTheme(config: Partial<CustomThemeConfig>) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
 
-  if (config.primaryColor) {
+  if (config.primaryColor && /^#[a-fA-F0-9]{6}$/.test(config.primaryColor)) {
     const primary = config.primaryColor;
     const hover = darkenHex(primary, 28);
     const subtle = lightenHex(primary, 170);
@@ -169,12 +171,24 @@ async function fetchTenantTheme(): Promise<CustomThemeConfig | null> {
 }
 
 export function useThemeConfig() {
+  const queryClient = useQueryClient();
+
   useQuery<CustomThemeConfig | null>({
     queryKey: ['tenant-theme'],
     queryFn: fetchTenantTheme,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+
+  useEffect(() => {
+    function handleThemeUpdated(data: CustomThemeConfig) {
+      applyCustomTheme(data);
+      try { localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+      queryClient.setQueryData(['tenant-theme'], data);
+    }
+    socket.on('theme_updated', handleThemeUpdated);
+    return () => { socket.off('theme_updated', handleThemeUpdated); };
+  }, [queryClient]);
 }
 
 const CONSTANTS = {
