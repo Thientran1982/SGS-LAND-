@@ -1,84 +1,64 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
-  Loader2, AlertTriangle, Plus, Search, X,
-  Filter, ListTodo, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown,
-  CheckSquare, Square, Trash2, CheckCircle, AlertCircle,
-  ChevronDown
+  Loader2, Plus, ListTodo, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown,
+  CheckSquare, Square, CheckCircle, AlertCircle, ChevronDown, Download,
+  AlertTriangle
 } from 'lucide-react';
 import { taskApi, TaskListParams } from '../services/taskApi';
-import { WfTask, WfTaskStatus, TaskPriority, Department } from '../types';
+import { WfTask, WfTaskStatus, TaskPriority } from '../types';
 import { TaskDetailContent } from '../components/TaskDetailContent';
 import { CreateTaskModal } from '../components/CreateTaskModal';
+import { TaskFilterBar, TaskFilters, EMPTY_FILTERS } from '../components/task/TaskFilterBar';
+import { StatusBadge, PriorityBadge, DeadlineTag, AvatarStack, TaskSkeleton } from '../components/task/Badges';
+import { STATUS_LABELS, PRIORITY_LABELS, ALL_STATUSES, exportTasksToCSV } from '../utils/taskUtils';
 import { ROUTES } from '../config/routes';
-import { api } from '../services/api';
 
-const STATUS_LABELS: Record<WfTaskStatus, string> = {
-  todo: 'Chờ xử lý', in_progress: 'Đang làm', review: 'Chờ duyệt',
-  done: 'Hoàn thành', cancelled: 'Đã hủy',
-};
-const STATUS_COLORS: Record<WfTaskStatus, string> = {
-  todo: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-  in_progress: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
-  review: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  done: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  cancelled: 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400',
-};
-const PRIORITY_LABELS: Record<TaskPriority, string> = { urgent: 'Khẩn cấp', high: 'Cao', medium: 'Trung bình', low: 'Thấp' };
-const PRIORITY_DOT: Record<TaskPriority, string> = {
-  urgent: 'bg-rose-500', high: 'bg-orange-500', medium: 'bg-amber-500', low: 'bg-teal-500',
-};
-const STATUSES: WfTaskStatus[] = ['todo', 'in_progress', 'review', 'done', 'cancelled'];
-const PRIORITIES: TaskPriority[] = ['urgent', 'high', 'medium', 'low'];
 type SortKey = 'priority' | 'deadline' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
 const LIMIT = 20;
-
 type Toast = { id: number; msg: string; type: 'success' | 'error' };
 
-function readHashFilters(): Partial<FilterState> {
-  try {
-    const hash = window.location.hash;
-    const parts = hash.slice(1).split('/').filter(Boolean);
-    if (parts[0] !== ROUTES.TASKS) return {};
-    const qIdx = hash.indexOf('?');
-    if (qIdx < 0) return {};
-    const qs = new URLSearchParams(hash.slice(qIdx + 1));
-    return {
-      search: qs.get('q') || '',
-      statusFilter: qs.get('status')?.split(',').filter(Boolean) as WfTaskStatus[] || [],
-      priorityFilter: qs.get('priority')?.split(',').filter(Boolean) as TaskPriority[] || [],
-      departmentId: qs.get('dept') || '',
-      sortKey: (qs.get('sort') as SortKey) || 'created_at',
-      sortDir: (qs.get('dir') as SortDir) || 'desc',
-      page: parseInt(qs.get('page') || '1') || 1,
-    };
-  } catch {
-    return {};
-  }
-}
-
-function writeHashFilters(f: FilterState) {
+function serializeFilters(f: TaskFilters, sort: SortKey, dir: SortDir, page: number): string {
   const qs = new URLSearchParams();
   if (f.search) qs.set('q', f.search);
   if (f.statusFilter.length) qs.set('status', f.statusFilter.join(','));
   if (f.priorityFilter.length) qs.set('priority', f.priorityFilter.join(','));
   if (f.departmentId) qs.set('dept', f.departmentId);
-  if (f.sortKey !== 'created_at') qs.set('sort', f.sortKey);
-  if (f.sortDir !== 'desc') qs.set('dir', f.sortDir);
-  if (f.page > 1) qs.set('page', String(f.page));
-  const qString = qs.toString();
-  const newHash = `#/${ROUTES.TASKS}${qString ? '?' + qString : ''}`;
-  window.history.replaceState(null, '', newHash);
+  if (f.projectId) qs.set('proj', f.projectId);
+  if (f.assigneeId) qs.set('uid', f.assigneeId);
+  if (f.deadlineFrom) qs.set('dfrom', f.deadlineFrom);
+  if (f.deadlineTo) qs.set('dto', f.deadlineTo);
+  if (sort !== 'created_at') qs.set('sort', sort);
+  if (dir !== 'desc') qs.set('dir', dir);
+  if (page > 1) qs.set('page', String(page));
+  return qs.toString();
 }
 
-interface FilterState {
-  search: string;
-  statusFilter: WfTaskStatus[];
-  priorityFilter: TaskPriority[];
-  departmentId: string;
-  sortKey: SortKey;
-  sortDir: SortDir;
-  page: number;
+function deserializeFilters(): { filters: TaskFilters; sort: SortKey; dir: SortDir; page: number } {
+  try {
+    const hash = window.location.hash;
+    const qIdx = hash.indexOf('?');
+    if (qIdx < 0) return { filters: EMPTY_FILTERS, sort: 'created_at', dir: 'desc', page: 1 };
+    const qs = new URLSearchParams(hash.slice(qIdx + 1));
+    return {
+      filters: {
+        search: qs.get('q') || '',
+        statusFilter: qs.get('status')?.split(',').filter(Boolean) as WfTaskStatus[] || [],
+        priorityFilter: qs.get('priority')?.split(',').filter(Boolean) as TaskPriority[] || [],
+        departmentId: qs.get('dept') || '',
+        projectId: qs.get('proj') || '',
+        assigneeId: qs.get('uid') || '',
+        assigneeName: '',
+        deadlineFrom: qs.get('dfrom') || '',
+        deadlineTo: qs.get('dto') || '',
+      },
+      sort: (qs.get('sort') as SortKey) || 'created_at',
+      dir: (qs.get('dir') as SortDir) || 'desc',
+      page: parseInt(qs.get('page') || '1') || 1,
+    };
+  } catch {
+    return { filters: EMPTY_FILTERS, sort: 'created_at', dir: 'desc', page: 1 };
+  }
 }
 
 function getTaskIdFromHash(): string | null {
@@ -87,32 +67,16 @@ function getTaskIdFromHash(): string | null {
 }
 
 function TaskList() {
-  const initialFilters = useMemo(() => {
-    const saved = readHashFilters();
-    return {
-      search: saved.search || '',
-      statusFilter: saved.statusFilter || [],
-      priorityFilter: saved.priorityFilter || [],
-      departmentId: saved.departmentId || '',
-      sortKey: saved.sortKey || ('created_at' as SortKey),
-      sortDir: saved.sortDir || ('desc' as SortDir),
-      page: saved.page || 1,
-    };
-  }, []);
+  const init = useMemo(() => deserializeFilters(), []);
+  const [filters, setFilters] = useState<TaskFilters>(init.filters);
+  const [sortKey, setSortKey] = useState<SortKey>(init.sort);
+  const [sortDir, setSortDir] = useState<SortDir>(init.dir);
+  const [page, setPage] = useState(init.page);
 
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [departments, setDepartments] = useState<Department[]>([]);
-
-  const [search, setSearch] = useState(initialFilters.search);
-  const [statusFilter, setStatusFilter] = useState<WfTaskStatus[]>(initialFilters.statusFilter);
-  const [priorityFilter, setPriorityFilter] = useState<TaskPriority[]>(initialFilters.priorityFilter);
-  const [departmentId, setDepartmentId] = useState(initialFilters.departmentId);
-  const [page, setPage] = useState(initialFilters.page);
-  const [sortKey, setSortKey] = useState<SortKey>(initialFilters.sortKey);
-  const [sortDir, setSortDir] = useState<SortDir>(initialFilters.sortDir);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState('');
@@ -120,6 +84,7 @@ function TaskList() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
   const [showCreate, setShowCreate] = useState(false);
+  const fetchRef = useRef(0);
 
   const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
     const id = ++toastId.current;
@@ -128,59 +93,60 @@ function TaskList() {
   }, []);
 
   useEffect(() => {
-    api.get<{ data: Department[] }>('/api/departments').then(r => setDepartments(r.data || [])).catch(() => {});
-  }, []);
+    const qs = serializeFilters(filters, sortKey, sortDir, page);
+    const newHash = `#/${ROUTES.TASKS}${qs ? '?' + qs : ''}`;
+    window.history.replaceState(null, '', newHash);
+  }, [filters, sortKey, sortDir, page]);
 
-  const filters: FilterState = useMemo(() => ({ search, statusFilter, priorityFilter, departmentId, sortKey, sortDir, page }), [search, statusFilter, priorityFilter, departmentId, sortKey, sortDir, page]);
-
-  useEffect(() => {
-    writeHashFilters(filters);
-  }, [filters]);
-
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
-
-  const loadTasks = useCallback(async (f: FilterState) => {
+  const loadTasks = useCallback(async (f: TaskFilters, sk: SortKey, sd: SortDir, pg: number) => {
+    const token = ++fetchRef.current;
     setLoading(true);
     setError(null);
-    const params: TaskListParams = {
-      page: f.page, limit: LIMIT,
-      sort_by: f.sortKey, sort_dir: f.sortDir,
-    };
+    const params: TaskListParams = { page: pg, limit: LIMIT, sort_by: sk, sort_dir: sd };
     if (f.search) params.search = f.search;
     if (f.statusFilter.length) params.status = f.statusFilter.join(',');
     if (f.priorityFilter.length) params.priority = f.priorityFilter.join(',');
     if (f.departmentId) params.department_id = f.departmentId;
+    if (f.projectId) params.project_id = f.projectId;
+    if (f.assigneeId) params.assignee_id = f.assigneeId;
+    if (f.deadlineFrom) params.deadline_from = f.deadlineFrom;
+    if (f.deadlineTo) params.deadline_to = f.deadlineTo;
     try {
       const r = await taskApi.list(params);
+      if (fetchRef.current !== token) return;
       setTasks(r.data || []);
       setTotal(r.pagination?.total || 0);
     } catch {
+      if (fetchRef.current !== token) return;
       setError('Không thể tải công việc');
     } finally {
-      setLoading(false);
+      if (fetchRef.current === token) setLoading(false);
     }
   }, []);
 
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const prevFilters = useRef<{ f: TaskFilters; sk: SortKey; sd: SortDir; pg: number } | null>(null);
+
   useEffect(() => {
+    const sig = JSON.stringify({ filters, sortKey, sortDir, page });
+    const prevSig = prevFilters.current ? JSON.stringify(prevFilters.current) : null;
+    if (sig === prevSig) return;
+    prevFilters.current = { f: filters, sk: sortKey, sd: sortDir, pg: page };
+
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     searchTimeout.current = setTimeout(() => {
-      loadTasks(filters);
-    }, 300);
+      loadTasks(filters, sortKey, sortDir, page);
+    }, 250);
     return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
-  }, [filters]);
+  }, [filters, sortKey, sortDir, page, loadTasks]);
 
   const openTask = useCallback((id: string) => {
     window.location.hash = `#/${ROUTES.TASKS}/${id}`;
   }, []);
 
-  const toggleStatus = (s: WfTaskStatus) =>
-    setStatusFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
-  const togglePriority = (p: TaskPriority) =>
-    setPriorityFilter(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
-  const clearFilters = () => {
-    setStatusFilter([]); setPriorityFilter([]); setSearch('');
-    setDepartmentId(''); setPage(1);
-  };
+  const handleFiltersChange = useCallback((f: TaskFilters) => {
+    setFilters(f); setPage(1); setSelectedIds(new Set());
+  }, []);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -202,11 +168,7 @@ function TaskList() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === tasks.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(tasks.map(t => t.id)));
-    }
+    setSelectedIds(tasks.length > 0 && selectedIds.size === tasks.length ? new Set() : new Set(tasks.map(t => t.id)));
   };
 
   const runBulkAction = async () => {
@@ -220,11 +182,14 @@ function TaskList() {
         setTasks(prev => prev.filter(t => !selectedIds.has(t.id)));
         setTotal(prev => Math.max(0, prev - ids.length));
         showToast(`Đã xóa ${ids.length} công việc`);
+      } else if (bulkAction === 'export') {
+        exportTasksToCSV(tasks.filter(t => selectedIds.has(t.id)));
+        showToast(`Đã xuất ${ids.length} công việc`);
       } else {
         const status = bulkAction as WfTaskStatus;
         await taskApi.bulkUpdateStatus(ids, status);
         setTasks(prev => prev.map(t => selectedIds.has(t.id) ? { ...t, status } : t));
-        showToast(`Đã cập nhật trạng thái cho ${ids.length} công việc`);
+        showToast(`Đã cập nhật ${ids.length} công việc`);
       }
       setSelectedIds(new Set());
       setBulkAction('');
@@ -245,7 +210,18 @@ function TaskList() {
     }
   };
 
-  const hasFilters = statusFilter.length > 0 || priorityFilter.length > 0 || search.length > 0 || departmentId;
+  const quickChangePriority = async (task: WfTask, newPriority: TaskPriority) => {
+    try {
+      const updated = await taskApi.update(task.id, { priority: newPriority });
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, priority: updated.priority } : t));
+    } catch {
+      showToast('Không thể đổi ưu tiên', 'error');
+    }
+  };
+
+  const hasFilters = !!(filters.search || filters.statusFilter.length || filters.priorityFilter.length ||
+    filters.departmentId || filters.projectId || filters.assigneeId ||
+    filters.deadlineFrom || filters.deadlineTo);
   const totalPages = Math.ceil(total / LIMIT);
   const allSelected = tasks.length > 0 && selectedIds.size === tasks.length;
 
@@ -263,55 +239,30 @@ function TaskList() {
           <h1 className="text-base font-bold text-[var(--text-primary)] truncate">Danh sách Công việc</h1>
           <span className="text-xs text-[var(--text-tertiary)] flex-shrink-0 bg-[var(--glass-surface-hover)] px-2 py-0.5 rounded-full">{total}</span>
         </div>
-        <button onClick={() => setShowCreate(true)}
-          className="h-[34px] px-3.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0">
-          <Plus size={15} /> Thêm
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => exportTasksToCSV(tasks)} title="Xuất CSV"
+            className="h-[34px] w-[34px] flex items-center justify-center border border-[var(--glass-border)] rounded-xl text-[var(--text-tertiary)] hover:text-indigo-600 hover:border-indigo-300 transition-colors">
+            <Download size={15} />
+          </button>
+          <button onClick={() => setShowCreate(true)}
+            className="h-[34px] px-3.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0">
+            <Plus size={15} /> Thêm
+          </button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="px-4 md:px-6 py-3 border-b border-[var(--glass-border)] flex-shrink-0 space-y-2.5">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
-            <input type="text" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Tìm kiếm tiêu đề, mô tả..."
-              className="w-full h-[36px] pl-9 pr-4 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400" />
-            {search && (
-              <button onClick={() => { setSearch(''); setPage(1); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
-                <X size={14} />
-              </button>
-            )}
-          </div>
-          {departments.length > 0 && (
-            <select value={departmentId} onChange={e => { setDepartmentId(e.target.value); setPage(1); }}
-              className="h-[36px] px-3 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 min-w-[140px]">
-              <option value="">Tất cả phòng ban</option>
-              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-1.5 items-center">
-          <Filter className="w-3.5 h-3.5 text-[var(--text-tertiary)] flex-shrink-0" />
-          {STATUSES.map(s => (
-            <button key={s} onClick={() => { toggleStatus(s); setPage(1); }}
-              className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors flex-shrink-0 ${statusFilter.includes(s) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600'}`}>
-              {STATUS_LABELS[s]}
-            </button>
-          ))}
-          <div className="w-px h-4 bg-[var(--glass-border)] mx-0.5" />
-          {PRIORITIES.map(p => (
-            <button key={p} onClick={() => { togglePriority(p); setPage(1); }}
-              className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors flex-shrink-0 ${priorityFilter.includes(p) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600'}`}>
-              {PRIORITY_LABELS[p]}
-            </button>
-          ))}
-          {hasFilters && (
-            <button onClick={clearFilters} className="text-xs px-2 py-1 text-rose-500 hover:text-rose-600 flex items-center gap-1 ml-1 font-medium flex-shrink-0">
-              <X size={12} /> Xóa lọc
-            </button>
-          )}
-        </div>
+      {/* Filter bar */}
+      <div className="px-4 md:px-6 py-3 border-b border-[var(--glass-border)] flex-shrink-0">
+        <TaskFilterBar
+          filters={filters}
+          onChange={handleFiltersChange}
+          showStatus
+          showPriority
+          showDepartment
+          showProject
+          showAssignee
+          showDeadlineRange
+        />
       </div>
 
       {/* Bulk action bar */}
@@ -322,11 +273,10 @@ function TaskList() {
             <select value={bulkAction} onChange={e => setBulkAction(e.target.value)}
               className="h-[28px] px-2 text-xs bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 rounded-lg text-[var(--text-secondary)] focus:outline-none">
               <option value="">Chọn thao tác...</option>
-              <option value="todo">→ Chờ xử lý</option>
-              <option value="in_progress">→ Đang làm</option>
-              <option value="review">→ Chờ duyệt</option>
-              <option value="done">→ Hoàn thành</option>
-              <option value="cancelled">→ Đã hủy</option>
+              {ALL_STATUSES.map(s => (
+                <option key={s} value={s}>→ {STATUS_LABELS[s]}</option>
+              ))}
+              <option value="export">📥 Xuất CSV</option>
               <option value="delete">🗑 Xóa</option>
             </select>
             <button onClick={runBulkAction} disabled={!bulkAction || bulkLoading}
@@ -334,9 +284,7 @@ function TaskList() {
               {bulkLoading ? <Loader2 size={11} className="animate-spin" /> : null} Áp dụng
             </button>
             <button onClick={() => { setSelectedIds(new Set()); setBulkAction(''); }}
-              className="h-[28px] px-2 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
-              <X size={13} />
-            </button>
+              className="h-[28px] px-2 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">✕</button>
           </div>
         </div>
       )}
@@ -344,21 +292,17 @@ function TaskList() {
       {/* Table */}
       <div className="flex-1 overflow-auto no-scrollbar">
         {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
-          </div>
+          <TaskSkeleton rows={8} />
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-32 gap-2">
             <AlertTriangle className="w-7 h-7 text-amber-400" />
             <p className="text-sm text-[var(--text-secondary)]">{error}</p>
-            <button onClick={() => loadTasks(filters)} className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
+            <button onClick={() => loadTasks(filters, sortKey, sortDir, page)} className="text-xs text-indigo-500 hover:text-indigo-600 font-medium">Thử lại</button>
           </div>
         ) : tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3">
             <ListTodo className="w-10 h-10 text-[var(--text-tertiary)]" />
-            <p className="text-sm text-[var(--text-secondary)]">
-              {hasFilters ? 'Không tìm thấy công việc phù hợp' : 'Chưa có công việc nào'}
-            </p>
+            <p className="text-sm text-[var(--text-secondary)]">{hasFilters ? 'Không tìm thấy công việc phù hợp' : 'Chưa có công việc nào'}</p>
             {!hasFilters && (
               <button onClick={() => setShowCreate(true)} className="text-sm text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-1">
                 <Plus size={14} /> Tạo công việc đầu tiên
@@ -408,13 +352,12 @@ function TaskList() {
                   </td>
                   <td className="px-3 py-3 hidden sm:table-cell" onClick={e => e.stopPropagation()}>
                     <div className="relative group/status inline-block">
-                      <button
-                        className={`text-xs px-2 py-0.5 rounded-lg font-medium cursor-pointer flex items-center gap-1 ${STATUS_COLORS[task.status]}`}>
-                        {STATUS_LABELS[task.status]}
-                        <ChevronDown size={10} className="opacity-60" />
+                      <button className="flex items-center gap-1">
+                        <StatusBadge status={task.status} />
+                        <ChevronDown size={10} className="opacity-50" />
                       </button>
                       <div className="absolute top-full left-0 mt-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl z-20 py-1 hidden group-hover/status:block min-w-[130px]">
-                        {STATUSES.filter(s => s !== task.status).map(s => (
+                        {ALL_STATUSES.filter(s => s !== task.status).map(s => (
                           <button key={s} onClick={() => quickChangeStatus(task, s)}
                             className="w-full text-left px-3 py-1.5 text-xs hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]">
                             {STATUS_LABELS[s]}
@@ -423,30 +366,31 @@ function TaskList() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-3 hidden md:table-cell cursor-pointer" onClick={() => openTask(task.id)}>
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]}`} />
-                      <span className="text-xs text-[var(--text-secondary)]">{PRIORITY_LABELS[task.priority]}</span>
+                  <td className="px-3 py-3 hidden md:table-cell" onClick={e => e.stopPropagation()}>
+                    <div className="relative group/priority inline-block">
+                      <button className="flex items-center gap-1">
+                        <PriorityBadge priority={task.priority} variant="dot" />
+                        <ChevronDown size={10} className="opacity-50" />
+                      </button>
+                      <div className="absolute top-full left-0 mt-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl z-20 py-1 hidden group-hover/priority:block min-w-[110px]">
+                        {(['urgent', 'high', 'medium', 'low'] as TaskPriority[]).filter(p => p !== task.priority).map(p => (
+                          <button key={p} onClick={() => quickChangePriority(task, p)}
+                            className="w-full text-left px-3 py-1.5 text-xs hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]">
+                            {PRIORITY_LABELS[p]}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </td>
                   <td className="px-3 py-3 hidden lg:table-cell cursor-pointer" onClick={() => openTask(task.id)}>
-                    {task.deadline ? (
-                      <span className={`text-xs ${task.is_overdue ? 'text-rose-500 font-semibold' : 'text-[var(--text-secondary)]'}`}>
-                        {task.is_overdue ? '⚠ ' : ''}{task.deadline.toString().split('T')[0]}
-                      </span>
-                    ) : <span className="text-[var(--text-tertiary)] text-xs">—</span>}
+                    <DeadlineTag
+                      deadline={task.deadline?.toString()}
+                      isOverdue={task.is_overdue}
+                      daysUntilDeadline={task.days_until_deadline}
+                    />
                   </td>
                   <td className="px-3 py-3 hidden xl:table-cell cursor-pointer" onClick={() => openTask(task.id)}>
-                    <div className="flex items-center gap-1">
-                      {task.assignees?.slice(0, 3).map(a => (
-                        <div key={a.id} title={a.name}
-                          className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600 border border-white dark:border-slate-700 flex-shrink-0">
-                          {a.name?.charAt(0).toUpperCase()}
-                        </div>
-                      ))}
-                      {(task.assignees?.length || 0) > 3 && <span className="text-xs text-[var(--text-tertiary)]">+{task.assignees.length - 3}</span>}
-                      {(task.assignees?.length || 0) === 0 && <span className="text-xs text-[var(--text-tertiary)]">Chưa giao</span>}
-                    </div>
+                    <AvatarStack assignees={task.assignees || []} />
                   </td>
                   <td className="px-3 py-3 hidden sm:table-cell cursor-pointer" onClick={() => openTask(task.id)}>
                     <ChevronRight size={14} className="text-[var(--text-tertiary)] group-hover:text-indigo-500 transition-colors" />
@@ -499,10 +443,7 @@ export function Tasks() {
     return () => window.removeEventListener('hashchange', handler);
   }, []);
 
-  const taskId = useMemo(() => {
-    const parts = hash.slice(1).split('?')[0].split('/').filter(Boolean);
-    return parts[0] === ROUTES.TASKS && parts.length > 1 ? parts[1] : null;
-  }, [hash]);
+  const taskId = useMemo(() => getTaskIdFromHash(), [hash]);
 
   if (taskId) {
     return (

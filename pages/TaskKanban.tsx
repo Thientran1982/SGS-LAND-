@@ -5,25 +5,15 @@ import {
   PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent,
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Plus, Loader2, AlertTriangle, RefreshCw, Search, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, AlertTriangle, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
-import { WfTask, WfTaskStatus, TaskPriority, TaskCategory } from '../types';
+import { WfTask, WfTaskStatus } from '../types';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
+import { TaskFilterBar, TaskFilters, EMPTY_FILTERS } from '../components/task/TaskFilterBar';
+import { PriorityBadge, AvatarStack } from '../components/task/Badges';
+import { CATEGORY_LABELS_SHORT, formatDeadlineShort } from '../utils/taskUtils';
 
-const PRIORITY_LABELS_FULL: Record<TaskPriority, string> = { urgent: 'Khẩn cấp', high: 'Cao', medium: 'Trung bình', low: 'Thấp' };
-const ALL_PRIORITIES: TaskPriority[] = ['urgent', 'high', 'medium', 'low'];
-const CATEGORY_LABELS: Partial<Record<TaskCategory, string>> = {
-  sales: 'KD', legal: 'Pháp lý', marketing: 'MKT', site_visit: 'TĐ',
-  customer_care: 'CSKH', finance: 'TC', construction: 'XD', admin: 'HC', other: 'Khác',
-};
-
-function relDeadline(deadline: string | null | undefined, isOverdue: boolean, days: number | null): string | null {
-  if (!deadline) return null;
-  if (isOverdue) return `Quá hạn ${Math.abs(days ?? 0)}n`;
-  if (days === 0) return 'Hôm nay';
-  return `Còn ${days ?? 0}n`;
-}
 type Toast = { id: number; msg: string; type: 'success' | 'error' };
 
 const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: string; dot: string }[] = [
@@ -34,18 +24,7 @@ const COLUMNS: { id: WfTaskStatus; label: string; color: string; headerColor: st
   { id: 'cancelled',   label: 'Đã hủy',           color: 'bg-rose-50/40 dark:bg-rose-900/10',      headerColor: 'bg-rose-100/80 dark:bg-rose-900/30',      dot: 'bg-rose-400' },
 ];
 
-const PRIORITY_COLORS: Record<string, string> = {
-  urgent: 'text-rose-600 bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800',
-  high:   'text-orange-600 bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800',
-  medium: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800',
-  low:    'text-teal-600 bg-teal-50 dark:bg-teal-900/30 border-teal-200 dark:border-teal-800',
-};
-const PRIORITY_LABELS: Record<string, string> = { urgent: 'Khẩn', high: 'Cao', medium: 'TB', low: 'Thấp' };
-
-// ─── Draggable Task Card ──────────────────────────────────────────────────────
-function TaskCard({
-  task, overlay = false, onClick,
-}: { task: WfTask; overlay?: boolean; onClick?: () => void }) {
+function TaskCard({ task, overlay = false, onClick }: { task: WfTask; overlay?: boolean; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
 
   const style = overlay ? undefined : {
@@ -60,23 +39,22 @@ function TaskCard({
     ? 'border-amber-300 dark:border-amber-800'
     : 'border-[var(--glass-border)]';
 
+  const rel = formatDeadlineShort(task.deadline?.toString(), task.is_overdue, task.days_until_deadline);
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...(overlay ? {} : { ...listeners, ...attributes })}
       onClick={onClick}
-      className={`bg-[var(--bg-surface)] rounded-xl border ${urgencyBorder} p-3 shadow-sm hover:shadow-md transition-shadow group select-none ${overlay ? 'shadow-xl rotate-1 scale-105' : ''}`}
+      className={`bg-[var(--bg-surface)] rounded-xl border ${urgencyBorder} p-3 shadow-sm hover:shadow-md transition-shadow select-none ${overlay ? 'shadow-xl rotate-1 scale-105' : ''}`}
     >
-      {/* Priority + category row */}
       <div className="flex items-center justify-between mb-2 gap-1.5 flex-wrap">
         <div className="flex items-center gap-1.5">
-          <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-semibold ${PRIORITY_COLORS[task.priority]}`}>
-            {PRIORITY_LABELS[task.priority]}
-          </span>
-          {task.category && CATEGORY_LABELS[task.category] && (
+          <PriorityBadge priority={task.priority} variant="badge" />
+          {task.category && CATEGORY_LABELS_SHORT[task.category] && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-md border border-[var(--glass-border)] text-[var(--text-tertiary)] font-medium">
-              {CATEGORY_LABELS[task.category]}
+              {CATEGORY_LABELS_SHORT[task.category]}
             </span>
           )}
         </div>
@@ -84,33 +62,15 @@ function TaskCard({
         {!task.is_overdue && task.urgency_level === 'critical' && <span className="text-[10px] text-amber-500 font-semibold">Sắp hết hạn</span>}
       </div>
 
-      {/* Title */}
       <p className="text-sm font-semibold text-[var(--text-primary)] line-clamp-2 leading-snug mb-2.5">{task.title}</p>
 
-      {/* Footer */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          {task.assignees?.slice(0, 3).map(a => (
-            <div key={a.id} title={a.name}
-              className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[9px] font-bold text-indigo-600 border border-white dark:border-slate-700 flex-shrink-0">
-              {a.name?.charAt(0).toUpperCase()}
-            </div>
-          ))}
-          {(task.assignees?.length || 0) > 3 && (
-            <span className="text-[10px] text-[var(--text-tertiary)]">+{task.assignees.length - 3}</span>
-          )}
-          {(task.assignees?.length || 0) === 0 && (
-            <span className="text-[10px] text-[var(--text-tertiary)]">Chưa giao</span>
-          )}
-        </div>
-        {task.deadline && (() => {
-          const rel = relDeadline(task.deadline?.toString(), task.is_overdue, task.days_until_deadline);
-          return (
-            <span className={`text-[10px] font-medium ${task.is_overdue ? 'text-rose-500' : task.urgency_level === 'critical' ? 'text-amber-500' : 'text-[var(--text-tertiary)]'}`}>
-              {rel}
-            </span>
-          );
-        })()}
+        <AvatarStack assignees={task.assignees || []} max={3} size={5} />
+        {rel && (
+          <span className={`text-[10px] font-medium ${task.is_overdue ? 'text-rose-500' : task.urgency_level === 'critical' ? 'text-amber-500' : 'text-[var(--text-tertiary)]'}`}>
+            {rel}
+          </span>
+        )}
       </div>
 
       {task.comment_count != null && task.comment_count > 0 && (
@@ -120,16 +80,12 @@ function TaskCard({
   );
 }
 
-// ─── Droppable Column ─────────────────────────────────────────────────────────
-function KanbanColumn({
-  col, tasks, onCardClick,
-}: { col: typeof COLUMNS[0]; tasks: WfTask[]; onCardClick: (id: string) => void }) {
+function KanbanColumn({ col, tasks, onCardClick }: { col: typeof COLUMNS[0]; tasks: WfTask[]; onCardClick: (id: string) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
 
   return (
     <div className={`flex flex-col rounded-2xl border transition-colors ${col.color} ${isOver ? 'border-indigo-400 dark:border-indigo-500 shadow-md' : 'border-[var(--glass-border)]'}`}
       style={{ width: '272px', minWidth: '272px' }}>
-      {/* Header */}
       <div className={`px-3 py-2.5 flex items-center justify-between ${col.headerColor} rounded-t-2xl`}>
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${col.dot}`} />
@@ -139,24 +95,19 @@ function KanbanColumn({
           {tasks.length}
         </span>
       </div>
-
-      {/* Drop zone */}
       <div ref={setNodeRef} className={`flex-1 overflow-y-auto p-2.5 space-y-2 no-scrollbar min-h-[120px] transition-colors ${isOver ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
         {tasks.length === 0 ? (
           <p className={`text-center text-xs py-8 transition-colors ${isOver ? 'text-indigo-400' : 'text-[var(--text-tertiary)]'}`}>
             {isOver ? 'Thả vào đây' : 'Không có công việc'}
           </p>
-        ) : (
-          tasks.map(t => (
-            <TaskCard key={t.id} task={t} onClick={() => onCardClick(t.id)} />
-          ))
-        )}
+        ) : tasks.map(t => (
+          <TaskCard key={t.id} task={t} onClick={() => onCardClick(t.id)} />
+        ))}
       </div>
     </div>
   );
 }
 
-// ─── Main Kanban Page ─────────────────────────────────────────────────────────
 export function TaskKanban() {
   const [tasks, setTasks] = useState<WfTask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -164,9 +115,7 @@ export function TaskKanban() {
   const [activeTask, setActiveTask] = useState<WfTask | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-
-  const [search, setSearch] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState<TaskPriority[]>([]);
+  const [filters, setFilters] = useState<TaskFilters>(EMPTY_FILTERS);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
 
@@ -176,9 +125,7 @@ export function TaskKanban() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
   }, []);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   const loadTasks = useCallback(() => {
     setLoading(true);
@@ -191,26 +138,21 @@ export function TaskKanban() {
   useEffect(() => { loadTasks(); }, [loadTasks]);
 
   const handleDragStart = (event: DragStartEvent) => {
-    const task = tasks.find(t => t.id === event.active.id);
-    setActiveTask(task || null);
+    setActiveTask(tasks.find(t => t.id === event.active.id) || null);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     setActiveTask(null);
     const { active, over } = event;
     if (!over) return;
-
     const taskId = active.id as string;
     const newStatus = over.id as WfTaskStatus;
     const task = tasks.find(t => t.id === taskId);
     if (!task || task.status === newStatus) return;
-
-    // Optimistic update
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
     try {
       await api.patch(`/api/tasks/${taskId}/status`, { status: newStatus });
     } catch (err) {
-      // Revert on failure
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: task.status } : t));
       showToast((err as { message?: string })?.message || 'Không thể đổi trạng thái. Đã hoàn tác.', 'error');
     }
@@ -230,9 +172,11 @@ export function TaskKanban() {
   }, []);
 
   const filteredTasks = tasks.filter(t => {
-    if (priorityFilter.length > 0 && !priorityFilter.includes(t.priority)) return false;
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (filters.priorityFilter.length > 0 && !filters.priorityFilter.includes(t.priority)) return false;
+    if (filters.departmentId && t.department_id !== filters.departmentId) return false;
+    if (filters.assigneeId && !(t.assignees?.some(a => a.id === filters.assigneeId))) return false;
+    if (filters.search.trim()) {
+      const q = filters.search.toLowerCase();
       if (!t.title.toLowerCase().includes(q) && !(t.assignees?.some(a => a.name.toLowerCase().includes(q)))) return false;
     }
     return true;
@@ -244,8 +188,21 @@ export function TaskKanban() {
   }, {} as Record<WfTaskStatus, WfTask[]>);
 
   if (loading) return (
-    <div className="flex items-center justify-center h-full">
-      <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+    <div className="h-full flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex gap-3">
+          {COLUMNS.map((col, i) => (
+            <div key={col.id} className={`w-[272px] rounded-2xl border border-[var(--glass-border)] overflow-hidden animate-pulse`} style={{ animationDelay: `${i * 100}ms` }}>
+              <div className={`h-10 ${col.headerColor}`} />
+              <div className="p-2.5 space-y-2">
+                {Array.from({ length: i % 2 === 0 ? 3 : 2 }).map((_, j) => (
+                  <div key={j} className="h-20 bg-[var(--glass-surface-hover)] rounded-xl" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 
@@ -259,7 +216,6 @@ export function TaskKanban() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden animate-enter">
-      {/* Header */}
       <div className="px-4 md:px-6 py-3 border-b border-[var(--glass-border)] flex-shrink-0 space-y-2.5">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -281,51 +237,24 @@ export function TaskKanban() {
             </button>
           </div>
         </div>
-        {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[160px] max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-tertiary)]" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Tìm tiêu đề, người thực hiện..."
-              className="w-full h-[32px] pl-8 pr-7 text-xs bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-            />
-            {search && (
-              <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
-                <X size={12} />
-              </button>
-            )}
-          </div>
-          {ALL_PRIORITIES.map(p => (
-            <button key={p} onClick={() => setPriorityFilter(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])}
-              className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors flex-shrink-0 ${priorityFilter.includes(p) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600'}`}>
-              {PRIORITY_LABELS_FULL[p]}
-            </button>
-          ))}
-          {(search || priorityFilter.length > 0) && (
-            <button onClick={() => { setSearch(''); setPriorityFilter([]); }}
-              className="text-xs px-2 py-1 text-rose-500 hover:text-rose-600 flex items-center gap-1 font-medium flex-shrink-0">
-              <X size={11} /> Xóa lọc
-            </button>
-          )}
-        </div>
+        <TaskFilterBar
+          filters={filters}
+          onChange={setFilters}
+          showStatus={false}
+          showPriority
+          showDepartment
+          showAssignee
+          compact
+        />
       </div>
 
-      {/* Kanban columns */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 md:p-5">
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex gap-3 h-full" style={{ minWidth: `${COLUMNS.length * 280}px` }}>
             {COLUMNS.map(col => (
-              <KanbanColumn
-                key={col.id}
-                col={col}
-                tasks={tasksByStatus[col.id] || []}
-                onCardClick={id => setSelectedTaskId(id)}
-              />
+              <KanbanColumn key={col.id} col={col} tasks={tasksByStatus[col.id] || []} onCardClick={id => setSelectedTaskId(id)} />
             ))}
           </div>
-
           {createPortal(
             <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
               {activeTask ? <TaskCard task={activeTask} overlay /> : null}
@@ -335,23 +264,9 @@ export function TaskKanban() {
         </DndContext>
       </div>
 
-      {/* Task Detail Modal */}
-      <TaskDetailModal
-        taskId={selectedTaskId}
-        onClose={() => setSelectedTaskId(null)}
-        onUpdated={handleTaskUpdated}
-        onDeleted={handleTaskDeleted}
-      />
+      <TaskDetailModal taskId={selectedTaskId} onClose={() => setSelectedTaskId(null)} onUpdated={handleTaskUpdated} onDeleted={handleTaskDeleted} />
+      {showCreate && <CreateTaskModal onClose={() => setShowCreate(false)} onCreated={handleTaskCreated} />}
 
-      {/* Create Task Modal */}
-      {showCreate && (
-        <CreateTaskModal
-          onClose={() => setShowCreate(false)}
-          onCreated={handleTaskCreated}
-        />
-      )}
-
-      {/* Toast Notifications */}
       <div className="fixed bottom-6 right-6 z-[300] flex flex-col gap-2 pointer-events-none">
         {toasts.map(toast => (
           <div key={toast.id}
