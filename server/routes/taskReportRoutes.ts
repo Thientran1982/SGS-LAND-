@@ -296,7 +296,7 @@ export function createTaskReportRoutes(authenticateToken: any) {
       const rows = await withTenantContext(tenantId, async (client) => {
         const r = await client.query(`
           SELECT
-            p.id, p.name, p.status AS project_status, p.property_type,
+            p.id, p.name, p.status AS project_status, p.location,
             COUNT(t.id) AS total,
             COUNT(t.id) FILTER (WHERE t.status = 'done') AS done,
             COUNT(t.id) FILTER (WHERE t.status = 'in_progress') AS in_progress,
@@ -307,7 +307,7 @@ export function createTaskReportRoutes(authenticateToken: any) {
               ELSE 0 END, 1) AS completion_rate
           FROM projects p
           LEFT JOIN wf_tasks t ON t.project_id = p.id
-          GROUP BY p.id, p.name, p.status, p.property_type
+          GROUP BY p.id, p.name, p.status, p.location
           ORDER BY total DESC
         `);
         return r.rows;

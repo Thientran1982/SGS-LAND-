@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { userRepository } from '../repositories/userRepository';
 import { auditRepository } from '../repositories/auditRepository';
 import { emailService } from '../services/emailService';
+import { withTenantContext } from '../db';
 
 export function createUserRoutes(authenticateToken: any) {
   const router = Router();
@@ -368,7 +369,6 @@ export function createUserRoutes(authenticateToken: any) {
         return res.status(403).json({ error: true, code: 'FORBIDDEN', message: 'Không có quyền xem thông tin này' });
       }
 
-      const { withTenantContext } = await import('../db');
       const workload = await withTenantContext(tenantId, async (client) => {
         const activeRes = await client.query(`
           SELECT COUNT(*) FROM wf_tasks t
