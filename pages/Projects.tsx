@@ -450,91 +450,110 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
 
     return (
         <>
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" role="dialog" aria-modal="true">
-                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-5xl border border-[var(--glass-border)] flex flex-col max-h-[90vh]">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] shrink-0">
-                        <div>
-                            <div className="flex items-center gap-2 text-emerald-600">
-                                {IC.LIST}
-                                <h2 className="text-base font-bold">{t('project.listings_title')}</h2>
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4" role="dialog" aria-modal="true">
+                <div className="bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-5xl border border-[var(--glass-border)] flex flex-col max-h-[92vh]">
+
+                    {/* ── Header: project info + stats + actions ── */}
+                    <div className="shrink-0 border-b border-[var(--glass-border)]">
+                        {/* Top row */}
+                        <div className="flex items-center justify-between gap-3 px-5 py-3.5">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0 text-emerald-600">
+                                    {IC.LIST}
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h2 className="text-base font-bold text-[var(--text-primary)]">{project.name}</h2>
+                                        {project.code && (
+                                            <span className="text-xs2 font-mono bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded shrink-0">
+                                                {project.code}
+                                            </span>
+                                        )}
+                                        <span className={`text-xs2 font-bold px-2 py-0.5 rounded-full border shrink-0 ${STATUS_COLOR[project.status] || 'bg-slate-100 text-slate-600'}`}>
+                                            {t('project.status_' + project.status)}
+                                        </span>
+                                    </div>
+                                    {project.location && (
+                                        <p className="text-xs text-[var(--text-tertiary)] truncate mt-0.5">{project.location}</p>
+                                    )}
+                                </div>
                             </div>
-                            <p className="text-xs text-[var(--text-secondary)] mt-0.5">{project.name}{project.code ? ` · ${project.code}` : ''}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {canCreate && (
-                                <button type="button" onClick={() => setShowCreate(true)}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors">
-                                    {IC.PLUS} {t('project.add_listing')}
-                                </button>
-                            )}
-                            <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
-                        </div>
-                    </div>
-
-                    {/* Stats bar */}
-                    {stats && (
-                        <div className="flex flex-wrap gap-3 px-6 py-3 bg-[var(--bg-app)] border-b border-[var(--glass-border)] shrink-0">
-                            {[
-                                { key: 'totalCount',     label: t('project.stat_total'),     cls: 'bg-slate-100 text-slate-700' },
-                                { key: 'availableCount', label: t('project.stat_available'),  cls: 'bg-emerald-100 text-emerald-700' },
-                                { key: 'bookingCount',   label: t('project.stat_booking'),    cls: 'bg-sky-100 text-sky-700' },
-                                { key: 'holdCount',      label: t('project.stat_hold'),       cls: 'bg-amber-100 text-amber-700' },
-                                { key: 'soldCount',      label: t('project.stat_sold'),       cls: 'bg-slate-100 text-slate-500' },
-                            ].map(({ key, label, cls }) => stats[key] != null && (
-                                <span key={key} className={`text-xs font-semibold px-3 py-1 rounded-full ${cls}`}>
-                                    {label}: {stats[key]}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Search + Bulk action bar */}
-                    <div className="px-6 py-3 border-b border-[var(--glass-border)] shrink-0 flex flex-wrap items-center gap-3">
-                        <div className="relative flex-1 min-w-[200px] max-w-xs">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">{IC.SEARCH}</span>
-                            <input
-                                type="text"
-                                placeholder={t('common.search') + '...'}
-                                value={search}
-                                onChange={e => { setSearch(e.target.value); setSelected(new Set()); }}
-                                className="w-full pl-9 pr-3 py-2.5 min-h-[44px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                            />
+                            <div className="flex items-center gap-2 shrink-0">
+                                {canCreate && (
+                                    <button type="button" onClick={() => setShowCreate(true)}
+                                        className="flex items-center gap-1.5 px-3 py-2 h-[36px] rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors">
+                                        {IC.PLUS} <span className="hidden sm:inline">{t('project.add_listing')}</span>
+                                    </button>
+                                )}
+                                <button type="button" onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]" aria-label={t('common.close')}>{IC.X}</button>
+                            </div>
                         </div>
 
-                        {/* Bulk actions — visible when rows selected */}
-                        {selected.size > 0 && isAdmin && (
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-semibold text-[var(--text-secondary)] bg-[var(--bg-app)] border border-[var(--glass-border)] px-3 py-2 rounded-xl">
-                                    {selected.size} {t('project.bulk_selected_suffix')}
-                                </span>
-                                <select
-                                    value={bulkStatus}
-                                    onChange={e => setBulkStatus(e.target.value)}
-                                    className="border border-[var(--glass-border)] rounded-xl px-3 py-2.5 min-h-[44px] bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                >
-                                    <option value="">{t('project.bulk_status_placeholder')}</option>
-                                    {['AVAILABLE','HOLD','INACTIVE','OPENING','BOOKING'].map(s => (
-                                        <option key={s} value={s}>{s}</option>
-                                    ))}
-                                </select>
-                                <button type="button" onClick={handleBulkStatus} disabled={!bulkStatus || bulkWorking}
-                                    className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 disabled:opacity-40 transition-colors">
-                                    {IC.CHECK_ALL} {bulkWorking ? '...' : t('project.bulk_apply')}
-                                </button>
-                                <button type="button" onClick={() => setAccessListings(selectedListings)}
-                                    className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors">
-                                    {IC.LOCK} {t('project.bulk_access_btn')}
-                                </button>
-                                <button type="button" onClick={() => setSelected(new Set())}
-                                    className="text-xs text-[var(--text-secondary)] hover:text-rose-600 px-2 py-2">
-                                    {t('project.bulk_deselect')}
-                                </button>
+                        {/* Stats pills row */}
+                        {stats && (
+                            <div className="flex items-center gap-2 px-5 pb-3 overflow-x-auto no-scrollbar">
+                                {([
+                                    { key: 'totalCount',     label: t('project.stat_total'),    cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
+                                    { key: 'availableCount', label: t('project.stat_available'), cls: 'bg-emerald-100 text-emerald-700' },
+                                    { key: 'bookingCount',   label: t('project.stat_booking'),   cls: 'bg-sky-100 text-sky-700' },
+                                    { key: 'holdCount',      label: t('project.stat_hold'),      cls: 'bg-amber-100 text-amber-700' },
+                                    { key: 'soldCount',      label: t('project.stat_sold'),      cls: 'bg-slate-100 text-slate-500' },
+                                ] as const).filter(({ key }) => stats[key] != null).map(({ key, label, cls }) => (
+                                    <span key={key} className={`shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${cls}`}>
+                                        <span className="font-extrabold">{stats[key]}</span>
+                                        {label}
+                                    </span>
+                                ))}
                             </div>
                         )}
+
+                        {/* Search + bulk toolbar */}
+                        <div className="px-5 pb-3 flex flex-wrap items-center gap-2">
+                            <div className="relative flex-1 min-w-[180px] max-w-sm">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">{IC.SEARCH}</span>
+                                <input
+                                    type="text"
+                                    placeholder={t('common.search') + '...'}
+                                    value={search}
+                                    onChange={e => { setSearch(e.target.value); setSelected(new Set()); }}
+                                    className="w-full pl-9 pr-3 py-2 h-[36px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                />
+                            </div>
+
+                            {/* Bulk actions — visible when rows selected */}
+                            {selected.size > 0 && isAdmin && (
+                                <>
+                                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl whitespace-nowrap">
+                                        {selected.size} {t('project.bulk_selected_suffix')}
+                                    </span>
+                                    <select
+                                        value={bulkStatus}
+                                        onChange={e => setBulkStatus(e.target.value)}
+                                        className="border border-[var(--glass-border)] rounded-xl px-3 py-1.5 h-[36px] bg-[var(--bg-app)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    >
+                                        <option value="">{t('project.bulk_status_placeholder')}</option>
+                                        {['AVAILABLE','HOLD','INACTIVE','OPENING','BOOKING'].map(s => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
+                                    </select>
+                                    <button type="button" onClick={handleBulkStatus} disabled={!bulkStatus || bulkWorking}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 h-[36px] rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 disabled:opacity-40 transition-colors">
+                                        {IC.CHECK_ALL} {bulkWorking ? '...' : t('project.bulk_apply')}
+                                    </button>
+                                    <button type="button" onClick={() => setAccessListings(selectedListings)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 h-[36px] rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors">
+                                        {IC.LOCK} <span className="hidden sm:inline">{t('project.bulk_access_btn')}</span>
+                                    </button>
+                                    <button type="button" onClick={() => setSelected(new Set())}
+                                        className="text-xs text-[var(--text-tertiary)] hover:text-rose-600 px-1 py-1.5">
+                                        {t('project.bulk_deselect')}
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Table */}
+                    {/* ── Table ── */}
                     <div className="flex-1 overflow-y-auto no-scrollbar">
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
@@ -552,10 +571,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                             </div>
                         ) : (
                             <table className="w-full text-sm">
-                                <thead className="sticky top-0 bg-[var(--bg-surface)] border-b border-[var(--glass-border)]">
+                                <thead className="sticky top-0 bg-[var(--bg-surface)] border-b border-[var(--glass-border)] z-10">
                                     <tr>
                                         {isAdmin && (
-                                            <th className="px-4 py-3 w-10">
+                                            <th className="px-4 py-2.5 w-10">
                                                 <input
                                                     type="checkbox"
                                                     checked={allSelected}
@@ -573,10 +592,10 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                             t('project.listing_col_area'),
                                             t('project.listing_col_price'),
                                         ].map(h => (
-                                            <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide whitespace-nowrap">{h}</th>
+                                            <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{h}</th>
                                         ))}
                                         {isAdmin && (
-                                            <th className="px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide whitespace-nowrap">{t('project.listing_access_col_header')}</th>
+                                            <th className="px-4 py-2.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide whitespace-nowrap">{t('project.listing_access_col_header')}</th>
                                         )}
                                     </tr>
                                 </thead>
@@ -585,7 +604,7 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                         <tr key={l.id}
                                             className={`hover:bg-[var(--glass-surface-hover)] transition-colors ${selected.has(l.id) ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''}`}>
                                             {isAdmin && (
-                                                <td className="px-4 py-3">
+                                                <td className="px-4 py-2.5">
                                                     <input
                                                         type="checkbox"
                                                         checked={selected.has(l.id)}
@@ -594,22 +613,32 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                                                     />
                                                 </td>
                                             )}
-                                            <td className="px-4 py-3 font-mono text-xs text-[var(--text-secondary)] whitespace-nowrap">{l.code}</td>
-                                            <td className="px-4 py-3 font-semibold text-[var(--text-primary)] max-w-[200px] truncate">{l.title}</td>
-                                            <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap">{l.type}</td>
-                                            <td className="px-4 py-3">
-                                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_LISTING_COLOR[l.status] || 'bg-slate-100 text-slate-600'}`}>
-                                                    {l.status}
+                                            <td className="px-4 py-2.5">
+                                                <span className="font-mono text-xs bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded whitespace-nowrap">
+                                                    {l.code}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap">{l.area ? `${l.area} m²` : '—'}</td>
-                                            <td className="px-4 py-3 font-semibold text-emerald-700 whitespace-nowrap">{fmtPrice(l.price)}</td>
+                                            <td className="px-4 py-2.5 font-semibold text-[var(--text-primary)] text-sm max-w-[200px] truncate">{l.title}</td>
+                                            <td className="px-4 py-2.5">
+                                                <span className="text-xs font-semibold bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)] px-2 py-0.5 rounded whitespace-nowrap">
+                                                    {l.type}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-2.5">
+                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_LISTING_COLOR[l.status] || 'bg-slate-100 text-slate-600'}`}>
+                                                    {t(`status.${l.status}`) || l.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                                                {l.area ? <span>{l.area} <span className="text-[var(--text-tertiary)]">m²</span></span> : <span className="text-[var(--text-muted)]">—</span>}
+                                            </td>
+                                            <td className="px-4 py-2.5 font-bold text-emerald-700 whitespace-nowrap">{fmtPrice(l.price)}</td>
                                             {isAdmin && (
-                                                <td className="px-4 py-3">
+                                                <td className="px-4 py-2.5">
                                                     <button
                                                         type="button"
                                                         onClick={() => setAccessListings([l])}
-                                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-violet-600 hover:bg-violet-50 border border-violet-200 transition-colors"
+                                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-violet-600 hover:bg-violet-50 border border-violet-200 transition-colors whitespace-nowrap"
                                                     >
                                                         {IC.LOCK} {t('project.listing_access_single_btn')}
                                                     </button>
@@ -622,10 +651,22 @@ function ProjectListingsPanel({ project, canCreate, isAdmin, onClose, onListingC
                         )}
                     </div>
 
-                    {/* Footer */}
-                    <div className="px-6 py-3 border-t border-[var(--glass-border)] flex items-center justify-between shrink-0 text-xs text-[var(--text-secondary)]">
-                        <span>{filtered.length} {t('project.listing_count')}{selected.size > 0 ? ` · ${selected.size} ${t('project.bulk_selected_suffix')}` : ''}</span>
-                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-[var(--glass-border)] text-sm font-semibold hover:bg-[var(--glass-surface-hover)]">{t('common.close')}</button>
+                    {/* ── Footer ── */}
+                    <div className="px-5 py-3 border-t border-[var(--glass-border)] flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-3 text-xs text-[var(--text-tertiary)]">
+                            <span>
+                                <span className="font-bold text-[var(--text-secondary)]">{filtered.length}</span> {t('project.listing_count')}
+                            </span>
+                            {selected.size > 0 && (
+                                <span className="text-emerald-600 font-semibold">
+                                    · {selected.size} {t('project.bulk_selected_suffix')}
+                                </span>
+                            )}
+                            {search && filtered.length !== listings.length && (
+                                <span className="text-indigo-500">· {t('common.search')}: "{search}"</span>
+                            )}
+                        </div>
+                        <button type="button" onClick={onClose} className="px-4 py-1.5 rounded-xl border border-[var(--glass-border)] text-sm font-semibold hover:bg-[var(--glass-surface-hover)] transition-colors">{t('common.close')}</button>
                     </div>
                 </div>
             </div>
@@ -896,50 +937,114 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
     }, [menuOpen]);
 
     return (
-        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-[var(--text-primary)] truncate">{project.name}</h3>
-                        {project.code && <span className="text-xs font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-lg">{project.code}</span>}
+        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all flex flex-col">
+            {/* Card body */}
+            <div className="p-5 flex-1">
+                {/* Top row: name + status + admin menu */}
+                <div className="flex items-start gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-bold text-[var(--text-primary)] truncate">{project.name}</h3>
+                            {project.code && (
+                                <span className="shrink-0 text-xs2 font-mono bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] px-1.5 py-0.5 rounded">
+                                    {project.code}
+                                </span>
+                            )}
+                        </div>
+                        {isPartner && project.developer_name && (
+                            <p className="text-xs text-indigo-600 font-semibold mt-0.5 truncate">{t('project.developer')}: {project.developer_name}</p>
+                        )}
+                        {project.location && (
+                            <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate flex items-center gap-1">
+                                <svg className="w-3 h-3 shrink-0 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                {project.location}
+                            </p>
+                        )}
                     </div>
-                    {isPartner && project.developer_name && (
-                        <p className="text-xs text-indigo-600 font-semibold mt-0.5">{t('project.developer')}: {project.developer_name}</p>
+                    <div className="flex items-center gap-1 shrink-0">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${STATUS_COLOR[project.status] || 'bg-slate-100 text-slate-600'}`}>
+                            {t('project.status_' + project.status)}
+                        </span>
+                        {/* Admin 3-dot menu — only edit/access/delete */}
+                        {isAdmin && (
+                            <button
+                                ref={btnRef}
+                                type="button"
+                                onClick={openMenu}
+                                className="w-6 h-6 rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] transition-colors"
+                                title={t('common.actions')}
+                            >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {project.description && (
+                    <p className="text-xs text-[var(--text-secondary)] mb-3 line-clamp-2 leading-relaxed">{project.description}</p>
+                )}
+
+                {/* Metadata grid */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3">
+                    {project.total_units != null && (
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />
+                            <span className="text-xs text-[var(--text-tertiary)] truncate">
+                                <span className="font-semibold text-[var(--text-secondary)]">{project.total_units}</span> {t('project.total_units')}
+                            </span>
+                        </div>
                     )}
-                    {project.location && <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">{project.location}</p>}
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${STATUS_COLOR[project.status] || 'bg-slate-100 text-slate-600'}`}>
-                        {t('project.status_' + project.status)}
-                    </span>
-                    {/* 3-dot menu */}
-                    <button
-                        ref={btnRef}
-                        type="button"
-                        onClick={openMenu}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors"
-                        title={t('common.actions')}
-                    >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
-                        </svg>
-                    </button>
+                    {project.listing_count != null && (
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                            <span className="text-xs text-[var(--text-tertiary)] truncate">
+                                <span className="font-semibold text-[var(--text-secondary)]">{project.listing_count}</span> {t('project.listing_count')}
+                            </span>
+                        </div>
+                    )}
+                    {!isPartner && project.partner_count != null && (
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />
+                            <span className="text-xs text-[var(--text-tertiary)] truncate">
+                                <span className="font-semibold text-[var(--text-secondary)]">{project.partner_count}</span> {t('project.partner_count')}
+                            </span>
+                        </div>
+                    )}
+                    {project.open_date && (
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                            <span className="text-xs text-[var(--text-tertiary)] truncate">{t('project.open_date')}: <span className="font-semibold text-[var(--text-secondary)]">{fmtDate(project.open_date)}</span></span>
+                        </div>
+                    )}
+                    {project.handover_date && (
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
+                            <span className="text-xs text-[var(--text-tertiary)] truncate">{t('project.handover_date')}: <span className="font-semibold text-[var(--text-secondary)]">{fmtDate(project.handover_date)}</span></span>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {project.description && (
-                <p className="text-xs text-[var(--text-secondary)] mb-3 line-clamp-2">{project.description}</p>
-            )}
-
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--text-tertiary)]">
-                {project.total_units != null && <span>{project.total_units} {t('project.total_units')}</span>}
-                {project.listing_count != null && <span>{project.listing_count} {t('project.listing_count')}</span>}
-                {!isPartner && project.partner_count != null && <span>{project.partner_count} {t('project.partner_count')}</span>}
-                {project.open_date && <span>{t('project.open_date')}: {fmtDate(project.open_date)}</span>}
-                {project.handover_date && <span>{t('project.handover_date')}: {fmtDate(project.handover_date)}</span>}
+            {/* Card footer — primary CTA */}
+            <div className="px-5 pb-4 pt-0">
+                <button
+                    type="button"
+                    onClick={onListings}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-[var(--glass-surface)] hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-[var(--glass-border)] hover:border-emerald-300 text-[var(--text-secondary)] hover:text-emerald-700 text-sm font-semibold rounded-xl transition-all"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                    {t('project.view_listings')}
+                    {project.listing_count > 0 && (
+                        <span className="ml-auto px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                            {project.listing_count}
+                        </span>
+                    )}
+                </button>
             </div>
 
-            {/* Portal dropdown menu */}
+            {/* Admin dropdown menu */}
             {menuOpen && createPortal(
                 <div
                     ref={menuRef}
@@ -947,31 +1052,22 @@ function ProjectCard({ project, isAdmin, isPartner, onEdit, onDelete, onAccess, 
                     style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[180px]"
                 >
-                    <button onClick={() => { setMenuOpen(false); onListings(); }}
+                    <button onClick={() => { setMenuOpen(false); onEdit(); }}
                         className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                        {t('project.view_listings')}
+                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        {t('common.edit')}
                     </button>
-                    {isAdmin && (
-                        <>
-                            <button onClick={() => { setMenuOpen(false); onEdit(); }}
-                                className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                                <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                {t('common.edit')}
-                            </button>
-                            <button onClick={() => { setMenuOpen(false); onAccess(); }}
-                                className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
-                                <svg className="w-3.5 h-3.5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                {t('project.tab_access')}
-                            </button>
-                            <div className="border-t border-[var(--glass-border)] my-1" />
-                            <button onClick={() => { setMenuOpen(false); onDelete(); }}
-                                className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                {t('common.delete')}
-                            </button>
-                        </>
-                    )}
+                    <button onClick={() => { setMenuOpen(false); onAccess(); }}
+                        className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
+                        <svg className="w-3.5 h-3.5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        {t('project.tab_access')}
+                    </button>
+                    <div className="border-t border-[var(--glass-border)] my-1" />
+                    <button onClick={() => { setMenuOpen(false); onDelete(); }}
+                        className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        {t('common.delete')}
+                    </button>
                 </div>,
                 document.body
             )}
@@ -1058,47 +1154,64 @@ export function Projects() {
 
     return (
         <div className="h-full flex flex-col bg-[var(--bg-app)] overflow-hidden">
-            {/* Header */}
-            <div className="shrink-0 px-6 py-4 border-b border-[var(--glass-border)] bg-[var(--bg-surface)]">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <div>
-                        <h1 className="text-xl font-extrabold text-[var(--text-primary)]">
+            {/* Header — title + search + filters + create all in one bar */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[var(--glass-border)] bg-[var(--bg-surface)]">
+                <div className="flex items-center gap-3 flex-wrap">
+                    {/* Title block */}
+                    <div className="flex-none">
+                        <h1 className="text-lg font-extrabold text-[var(--text-primary)] leading-tight">
                             {isPartner ? t('project.partner_view_title') : t('project.title')}
                         </h1>
-                        <p className="text-sm text-[var(--text-secondary)] mt-0.5">
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                             {isPartner ? t('project.partner_view_subtitle') : t('project.subtitle')}
                         </p>
                     </div>
-                    {isAdmin && (
-                        <button type="button" onClick={() => setFormTarget('new')}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 shadow-sm transition-colors">
-                            {IC.PLUS} {t('project.new')}
-                        </button>
-                    )}
-                </div>
 
-                {/* Filters */}
-                <div className="flex gap-3 mt-4 flex-wrap">
-                    <div className="relative flex-1 min-w-[200px]">
+                    {/* Divider */}
+                    <div className="hidden sm:block h-8 w-px bg-[var(--glass-border)]" />
+
+                    {/* Search */}
+                    <div className="relative flex-1 min-w-[160px] max-w-xs">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] flex items-center">{IC.SEARCH}</span>
                         <input
                             type="text"
                             placeholder={t('common.search') + '...'}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2.5 min-h-[44px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full pl-9 pr-3 py-2 h-[38px] border border-[var(--glass-border)] rounded-xl bg-[var(--bg-app)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
+
+                    {/* Status filter */}
                     {!isPartner && (
-                        <Dropdown
-                            value={statusFilter}
-                            onChange={v => setStatusFilter(v as string)}
-                            options={[
-                                { value: '', label: t('project.status') },
-                                ...(['ACTIVE','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) })))
-                            ]}
-                            className="min-w-[180px]"
-                        />
+                        <div className="shrink-0">
+                            <Dropdown
+                                value={statusFilter}
+                                onChange={v => setStatusFilter(v as string)}
+                                options={[
+                                    { value: '', label: t('project.status') },
+                                    ...(['ACTIVE','COMPLETED','ON_HOLD','SUSPENDED'].map(s => ({ value: s, label: t('project.status_' + s) })))
+                                ]}
+                                className="text-sm h-[38px]"
+                            />
+                        </div>
+                    )}
+
+                    {/* Count badge */}
+                    {!loading && projects.length > 0 && (
+                        <span className="hidden sm:inline-flex shrink-0 items-center px-2.5 py-1 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] text-xs font-semibold rounded-full">
+                            {projects.length}
+                        </span>
+                    )}
+
+                    <div className="flex-1" />
+
+                    {/* Create button */}
+                    {isAdmin && (
+                        <button type="button" onClick={() => setFormTarget('new')}
+                            className="shrink-0 flex items-center gap-1.5 px-4 py-2 h-[38px] rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 shadow-sm transition-colors">
+                            {IC.PLUS} <span className="hidden xs:inline">{t('project.new')}</span>
+                        </button>
                     )}
                 </div>
             </div>
