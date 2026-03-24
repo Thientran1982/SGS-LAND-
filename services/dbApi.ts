@@ -183,8 +183,9 @@ class DatabaseApiClient {
   }
 
   async createLead(data: any) {
+    const result = await leadApi.createLead(data);
     _cache.invalidate('leads:');
-    return leadApi.createLead(data);
+    return result;
   }
 
   async createPublicLead(data: { name: string; phone: string; notes?: string; source?: string; stage?: string }) {
@@ -192,13 +193,15 @@ class DatabaseApiClient {
   }
 
   async updateLead(id: string, data: any) {
+    const result = await leadApi.updateLead(id, data);
     _cache.invalidate('leads:');
-    return leadApi.updateLead(id, data);
+    return result;
   }
 
   async deleteLead(id: string) {
+    const result = await leadApi.deleteLead(id);
     _cache.invalidate('leads:');
-    return leadApi.deleteLead(id);
+    return result;
   }
 
   async getListings(page = 1, pageSize = 20, filters?: any) {
@@ -277,23 +280,27 @@ class DatabaseApiClient {
   }
 
   async createListing(data: any) {
+    const result = await listingApi.createListing(data);
     _cache.invalidate('listings:');
-    return listingApi.createListing(data);
+    return result;
   }
 
   async updateListing(id: string, data: any) {
+    const result = await listingApi.updateListing(id, data);
     _cache.invalidate('listings:');
-    return listingApi.updateListing(id, data);
+    return result;
   }
 
   async deleteListing(id: string) {
+    const result = await listingApi.deleteListing(id);
     _cache.invalidate('listings:');
-    return listingApi.deleteListing(id);
+    return result;
   }
 
   async assignListing(id: string, userId: string | null) {
+    const result = await listingApi.assignListing(id, userId);
     _cache.invalidate('listings:');
-    return listingApi.assignListing(id, userId);
+    return result;
   }
 
   async toggleFavorite(listingId: string) {
@@ -410,13 +417,15 @@ class DatabaseApiClient {
   }
 
   async createContract(data: any) {
+    const result = await contractApi.createContract(data);
     _cache.invalidate('contracts:');
-    return contractApi.createContract(data);
+    return result;
   }
 
   async updateContract(id: string, data: any) {
+    const result = await contractApi.updateContract(id, data);
     _cache.invalidate('contracts:');
-    return contractApi.updateContract(id, data);
+    return result;
   }
 
   async getInboxThreads() {

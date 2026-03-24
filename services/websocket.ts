@@ -21,6 +21,17 @@ socket.on('reconnect', (attempt) => {
   console.info(`[Socket.io] Reconnected after ${attempt} attempt(s)`);
 });
 
+// Reconnect the socket after login so the handshake includes the fresh auth cookie.
+// Without this the socket would remain unauthenticated (no cookie at initial connect time).
+if (typeof window !== 'undefined') {
+  window.addEventListener('auth:login', () => {
+    if (socket.connected) {
+      socket.disconnect();
+      socket.connect();
+    }
+  });
+}
+
 // Reference counter: track how many components are using the socket
 // Only connect on first mount (0→1), only disconnect on last unmount (1→0)
 let _mountCount = 0;
