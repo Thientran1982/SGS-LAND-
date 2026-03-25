@@ -1566,6 +1566,7 @@ export const DICTIONARY = {
         "ai.sim_output_label": "KẾT QUẢ:",
         "ai.no_safety_logs": "Chưa có sự kiện an toàn nào.",
         "ai.no_prompts": "Chưa có prompt nào. Nhấn + để tạo prompt đầu tiên.",
+        "ai.msg_system_busy": "Hệ thống AI đang bận, vui lòng thử lại sau.",
 
         "help.title": "Chúng tôi có thể giúp gì?",
         "help.subtitle": "Tìm kiếm câu trả lời nhanh chóng hoặc liên hệ hỗ trợ.",
@@ -3552,6 +3553,7 @@ export const DICTIONARY = {
         "ai.sim_output_label": "OUTPUT:",
         "ai.no_safety_logs": "No safety events recorded yet.",
         "ai.no_prompts": "No prompts yet. Click + to create your first prompt.",
+        "ai.msg_system_busy": "The AI system is currently busy. Please try again.",
 
         "help.title": "How can we help?",
         "help.subtitle": "Find answers quickly or contact support.",

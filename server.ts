@@ -49,12 +49,19 @@ import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadR
 import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
+import { DICTIONARY } from "./config/locales";
 import { interactionRepository } from "./server/repositories/interactionRepository";
 import { sessionRepository } from "./server/repositories/sessionRepository";
 import { visitorRepository } from "./server/repositories/visitorRepository";
 import { lookupIp, getClientIp } from "./server/services/geoService";
 
 let broadcastIo: any = null;
+
+/** Server-side translation helper — looks up actual strings from the shared DICTIONARY */
+const serverT = (lang: string = 'vn') => (key: string): string => {
+  const dict = (DICTIONARY as any)[lang] || (DICTIONARY as any)['vn'] || {};
+  return dict[key] ?? key;
+};
 
 async function startServer() {
   const app = express();
@@ -420,7 +427,7 @@ async function startServer() {
       const { lead, userMessage, history, lang } = req.body;
       const tenantId = (req as any).tenantId;
       const { aiService } = await import('./server/ai');
-      const t = (k: string) => k; // Mock translation for backend
+      const t = serverT(lang || 'vn');
       const result = await aiService.processMessage(lead, userMessage, history, t, tenantId);
       res.json(result);
     } catch (error) {
@@ -878,7 +885,7 @@ async function startServer() {
       const history = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
 
       const { aiService } = await import('./server/ai');
-      const t = (k: string) => k;
+      const t = serverT(lang || 'vn');
       const result = await aiService.processMessage(lead, msgContent, history, t, PUBLIC_TENANT);
 
       const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
