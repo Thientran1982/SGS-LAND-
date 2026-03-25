@@ -169,7 +169,13 @@ const SerpPageDropdown: React.FC<{
         if (!isOpen) return;
         const handle = (e: MouseEvent) => {
             const t = e.target as Node;
-            if (!btnRef.current?.contains(t) && !menuRef.current?.contains(t)) setIsOpen(false);
+            if (btnRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+            // Scrollbar clicks in WebKit don't report target inside menuRef — check bounding rect
+            if (menuRef.current) {
+                const r = menuRef.current.getBoundingClientRect();
+                if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) return;
+            }
+            setIsOpen(false);
         };
         const handleScroll = () => setIsOpen(false);
         document.addEventListener('mousedown', handle);
