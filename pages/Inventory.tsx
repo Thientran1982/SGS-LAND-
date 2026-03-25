@@ -634,6 +634,15 @@ export const Inventory: React.FC = () => {
         setTimeout(() => setToast(null), 3000);
     }, []);
 
+    const fetchGlobalStats = useCallback(async () => {
+        try {
+            const s = await db.getListingStats();
+            if (s) setStats(s);
+        } catch (e) {
+            console.error('fetchGlobalStats error:', e);
+        }
+    }, []);
+
     const fetchListings = useCallback(async () => {
         setLoading(true);
         try {
@@ -644,7 +653,6 @@ export const Inventory: React.FC = () => {
             ]);
             setListings(res.data || []);
             setTotalItems(res.total || 0);
-            if (res.stats) setStats(res.stats);
             setFavorites(new Set(favs.data?.map((f: any) => f.id) || []));
         } catch (e) {
             console.error(e);
@@ -668,6 +676,7 @@ export const Inventory: React.FC = () => {
         }
     }, [viewMode, debouncedSearch, typeFilter, statusFilter, transactionFilter]);
 
+    useEffect(() => { fetchGlobalStats(); }, [fetchGlobalStats]);
     useEffect(() => { fetchListings(); }, [fetchListings]);
     useEffect(() => { fetchBoardData(); }, [fetchBoardData]);
 
@@ -713,6 +722,7 @@ export const Inventory: React.FC = () => {
         try {
             await db.deleteListing(itemToDelete);
             fetchListings();
+            fetchGlobalStats();
             notify(t('inventory.delete_success'), 'success');
         } catch (e) { 
             notify(t('common.error'), 'error'); 
@@ -729,6 +739,7 @@ export const Inventory: React.FC = () => {
             setIsCreateModalOpen(false);
             setEditingListing(undefined);
             fetchListings();
+            fetchGlobalStats();
         } catch (e: any) { notify(e.message, 'error'); }
     };
 
@@ -880,7 +891,7 @@ export const Inventory: React.FC = () => {
                                                 onEdit={canViewInternalInfo ? (l) => { setEditingListing(l); setIsCreateModalOpen(true); } : undefined}
                                                 onDelete={canViewInternalInfo ? handleDeleteClick : undefined}
                                                 onDuplicate={canViewInternalInfo ? async (id) => {
-                                                    try { await db.duplicateListing(id); fetchListings(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                    try { await db.duplicateListing(id); fetchListings(); fetchGlobalStats(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                 } : undefined}
                                                 onClick={() => handleNavigate(item.id)}
                                                 showActions={canViewInternalInfo}
@@ -988,7 +999,7 @@ export const Inventory: React.FC = () => {
                                                         onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                         onDelete={handleDeleteClick}
                                                         onDuplicate={async (id: string) => {
-                                                            try { await db.duplicateListing(id); fetchListings(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                            try { await db.duplicateListing(id); fetchListings(); fetchGlobalStats(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                         }}
                                                         onClick={() => handleNavigate(item.id)}
                                                         t={t} formatCurrency={formatCurrency}
@@ -1026,7 +1037,7 @@ export const Inventory: React.FC = () => {
                                                     onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                     onDelete={handleDeleteClick}
                                                     onDuplicate={async (id: string) => {
-                                                        try { await db.duplicateListing(id); fetchListings(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                        try { await db.duplicateListing(id); fetchListings(); fetchGlobalStats(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                     }}
                                                     onClick={() => handleNavigate(item.id)}
                                                     t={t}
@@ -1144,7 +1155,7 @@ export const Inventory: React.FC = () => {
                                                 onEdit={(l: Listing) => { setEditingListing(l); setIsCreateModalOpen(true); }}
                                                 onDelete={handleDeleteClick}
                                                 onDuplicate={async (id: string) => {
-                                                    try { await db.duplicateListing(id); fetchBoardData(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
+                                                    try { await db.duplicateListing(id); fetchBoardData(); fetchGlobalStats(); notify(t('inventory.duplicate_success'), 'success'); } catch(e) { notify(t('common.error'), 'error'); }
                                                 }}
                                                 canViewInternal={canViewInternalInfo}
                                                 t={t} formatCurrency={formatCurrency}

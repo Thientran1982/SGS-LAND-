@@ -59,6 +59,23 @@ export function createListingRoutes(authenticateToken: any) {
     }
   });
 
+  // ── GET /api/listings/stats ───────────────────────────────────────────────────
+  // Returns global inventory counts (not affected by active user filters).
+  // Used by the Inventory metrics bar so it always shows tenant-wide totals.
+  router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.json({ availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0, inactiveCount: 0, totalCount: 0 });
+      }
+      const stats = await listingRepository.getGlobalStats(user.tenantId, user.id, user.role);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching listing stats:', error);
+      res.status(500).json({ error: 'Failed to fetch listing stats' });
+    }
+  });
+
   // ── GET /api/listings/favorites ──────────────────────────────────────────────
   router.get('/favorites', authenticateToken, async (req: Request, res: Response) => {
     try {

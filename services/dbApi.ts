@@ -251,6 +251,14 @@ class DatabaseApiClient {
     return fetchFresh();
   }
 
+  async getListingStats() {
+    try {
+      return await listingApi.getStats();
+    } catch {
+      return { availableCount: 0, holdCount: 0, soldCount: 0, rentedCount: 0, bookingCount: 0, openingCount: 0, inactiveCount: 0, totalCount: 0 };
+    }
+  }
+
   async getListingById(id: string) {
     try {
       return await listingApi.getListingById(id);

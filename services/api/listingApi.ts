@@ -27,4 +27,7 @@ export const listingApi = {
 
   assignListing: (id: string, userId: string | null): Promise<any> =>
     api.patch(`/api/listings/${id}/assign`, { userId }),
+
+  getStats: (): Promise<{ availableCount: number; holdCount: number; soldCount: number; rentedCount: number; bookingCount: number; openingCount: number; inactiveCount: number; totalCount: number }> =>
+    api.get('/api/listings/stats'),
 };

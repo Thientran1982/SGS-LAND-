@@ -252,6 +252,57 @@ export class ListingRepository extends BaseRepository {
     });
   }
 
+  /**
+   * Return global stats for the Inventory metrics bar.
+   * Applies only RBAC scope + noProjectCode — never user-applied filters
+   * (type / status / transaction / search), so numbers are always tenant-wide.
+   */
+  async getGlobalStats(
+    tenantId: string,
+    userId?: string,
+    userRole?: string
+  ): Promise<{ availableCount: number; holdCount: number; soldCount: number; rentedCount: number; bookingCount: number; openingCount: number; inactiveCount: number; totalCount: number }> {
+    return this.withTenant(tenantId, async (client) => {
+      const conditions: string[] = [`(project_code IS NULL OR project_code = '')`];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
+        conditions.push(`(l.created_by = $${paramIndex} OR l.assigned_to = $${paramIndex})`);
+        values.push(userId);
+        paramIndex++;
+      }
+
+      const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
+      const sr = (await client.query(
+        `SELECT
+          COUNT(*) FILTER (WHERE l.status = 'AVAILABLE')::int AS available_count,
+          COUNT(*) FILTER (WHERE l.status = 'HOLD')::int       AS hold_count,
+          COUNT(*) FILTER (WHERE l.status = 'SOLD')::int       AS sold_count,
+          COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
+          COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
+          COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
+          COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count,
+          COUNT(*)::int                                         AS total_count
+         FROM listings l ${whereClause}`,
+        values
+      )).rows[0];
+
+      return {
+        availableCount: sr.available_count,
+        holdCount:      sr.hold_count,
+        soldCount:      sr.sold_count,
+        rentedCount:    sr.rented_count,
+        bookingCount:   sr.booking_count,
+        openingCount:   sr.opening_count,
+        inactiveCount:  sr.inactive_count,
+        totalCount:     sr.total_count,
+      };
+    });
+  }
+
   async findListings(
     tenantId: string,
     pagination: PaginationParams,
