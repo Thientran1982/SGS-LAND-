@@ -177,14 +177,19 @@ const SerpPageDropdown: React.FC<{
             }
             setIsOpen(false);
         };
-        const handleScroll = () => setIsOpen(false);
+        const handleScroll = (e: Event) => {
+            // Ignore scroll events that originate inside the dropdown itself (e.g. scrollbar drag)
+            if (menuRef.current && menuRef.current.contains(e.target as Node)) return;
+            setIsOpen(false);
+        };
+        const handleResize = () => setIsOpen(false);
         document.addEventListener('mousedown', handle);
         window.addEventListener('scroll', handleScroll, true);
-        window.addEventListener('resize', handleScroll);
+        window.addEventListener('resize', handleResize);
         return () => {
             document.removeEventListener('mousedown', handle);
             window.removeEventListener('scroll', handleScroll, true);
-            window.removeEventListener('resize', handleScroll);
+            window.removeEventListener('resize', handleResize);
         };
     }, [isOpen]);
 
