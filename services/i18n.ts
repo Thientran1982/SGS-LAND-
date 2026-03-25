@@ -154,9 +154,33 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return React.createElement(I18nContext.Provider, { value }, children);
 };
 
+const noop = () => '';
+const noopStr = (key: string) => key;
+
+// Stable fallback returned during Vite HMR module-reload transitions.
+// In those brief moments a new I18nContext identity is created before the
+// provider re-mounts, so useContext returns undefined. Returning safe defaults
+// prevents a full React crash; the page auto-refreshes anyway during HMR.
+// In production there is no HMR, so this branch is never taken.
+const FALLBACK_CONTEXT: I18nContextType = {
+    language: 'vn',
+    setLanguage: noop as any,
+    t: noopStr,
+    formatDate: noopStr,
+    formatTime: noopStr,
+    formatDateTime: noopStr,
+    formatCurrency: () => '0',
+    formatCompactNumber: () => '0',
+    loading: true,
+};
+
 export const useTranslation = () => {
     const context = useContext(I18nContext);
     if (!context) {
+        // Only happens transiently during HMR — return safe defaults instead of crashing.
+        if (process.env.NODE_ENV === 'development') {
+            return FALLBACK_CONTEXT;
+        }
         throw new Error('useTranslation must be used within an I18nProvider');
     }
     return context;
