@@ -288,9 +288,10 @@ const SerpPageDropdown: React.FC<{
 };
 
 // ── Tab: SERP Preview ──────────────────────────────────────────────────────────
-const SerpPreview: React.FC = () => {
-    const [selectedKey, setSelectedKey] = useState('');
-    const overrides = getSEOOverrides();
+const SerpPreview: React.FC<{ selectedKey: string; onSelect: (k: string) => void }> = ({ selectedKey, onSelect }) => {
+    const [overrides, setOverrides] = useState<Record<string, { title: string; description: string }>>(getSEOOverrides);
+    // Refresh overrides from localStorage each time the component mounts (tab switch)
+    useEffect(() => { setOverrides(getSEOOverrides()); }, []);
     const cfg = getEffectiveCfg(selectedKey, overrides);
     const titleLen = cfg.title.length;
     const descLen = cfg.description.length;
@@ -302,7 +303,7 @@ const SerpPreview: React.FC = () => {
         <div className="space-y-6">
             <SerpPageDropdown
                 value={selectedKey}
-                onChange={setSelectedKey}
+                onChange={onSelect}
                 routes={ALL_ROUTES}
                 overrides={overrides}
             />
@@ -390,7 +391,7 @@ const SerpPreview: React.FC = () => {
 };
 
 // ── Tab: Meta Editor ───────────────────────────────────────────────────────────
-const MetaEditor: React.FC = () => {
+const MetaEditor: React.FC<{ onAfterSave?: (key: string) => void }> = ({ onAfterSave }) => {
     const [overrides, setOverrides] = useState<Record<string, { title: string; description: string }>>(getSEOOverrides);
     const [edits, setEdits] = useState<Record<string, { title: string; description: string }>>({});
     const [saved, setSaved] = useState<string | null>(null);
@@ -414,6 +415,7 @@ const MetaEditor: React.FC = () => {
         setPreviewing(key);
         updatePageSEO(key);
         setSaved(key);
+        onAfterSave?.(key);
         setTimeout(() => {
             updatePageSEO('seo-manager');
             setPreviewing(null);
@@ -790,6 +792,8 @@ export const SeoManager: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const [activeTab, setActiveTab] = useState<TabId>('SERP');
+    // Shared SERP selected key — persists across tab switches and auto-updates after Meta save
+    const [serpSelectedKey, setSerpSelectedKey] = useState('');
 
     useEffect(() => {
         db.getCurrentUser().then(u => {
@@ -870,8 +874,8 @@ export const SeoManager: React.FC = () => {
 
             {/* ── Tab Content ─────────────────────────────────────────────── */}
             <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-[20px] shadow-sm p-4 sm:p-6">
-                {activeTab === 'SERP'   && <SerpPreview />}
-                {activeTab === 'META'   && <MetaEditor />}
+                {activeTab === 'SERP'   && <SerpPreview selectedKey={serpSelectedKey} onSelect={setSerpSelectedKey} />}
+                {activeTab === 'META'   && <MetaEditor onAfterSave={setSerpSelectedKey} />}
                 {activeTab === 'HEALTH' && <HealthChecklist />}
                 {activeTab === 'SCHEMA' && <StructuredData />}
             </div>
