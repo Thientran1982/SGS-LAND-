@@ -40,6 +40,13 @@ async function publicGetMessages(leadId: string): Promise<{ messages: Interactio
 // Component
 // ---------------------------------------------------------------------------
 
+// Parse query params from hash-based URL (e.g. /#/livechat?title=...&desc=...)
+function getHashQueryParams(): URLSearchParams {
+    const hash = window.location.hash; // "#/livechat?title=...&desc=..."
+    const qIndex = hash.indexOf('?');
+    return new URLSearchParams(qIndex >= 0 ? hash.slice(qIndex + 1) : '');
+}
+
 export default function LiveChat() {
     const { t, language } = useTranslation();
     const { socket } = useSocket();
@@ -52,6 +59,17 @@ export default function LiveChat() {
     const [isThinking, setIsThinking] = useState(false);
     const [startError, setStartError] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Resolve title/desc from URL params > window globals (embed) > default translations
+    const [chatParams, setChatParams] = useState(() => getHashQueryParams());
+    useEffect(() => {
+        const handler = () => setChatParams(getHashQueryParams());
+        window.addEventListener('hashchange', handler);
+        return () => window.removeEventListener('hashchange', handler);
+    }, []);
+    const w = window as any;
+    const chatTitle = chatParams.get('title') || w.SGSLAND_CHAT_TITLE || t('livechat.title');
+    const chatDesc  = chatParams.get('desc')  || w.SGSLAND_CHAT_DESC  || t('livechat.subtitle');
 
     // Load lead from localStorage if exists
     useEffect(() => {
@@ -207,8 +225,8 @@ export default function LiveChat() {
                     <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-indigo-200">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                     </div>
-                    <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2 leading-tight py-1">{t('livechat.title')}</h1>
-                    <p className="text-[var(--text-tertiary)] mb-6 text-sm">{t('livechat.subtitle')}</p>
+                    <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2 leading-tight py-1">{chatTitle}</h1>
+                    <p className="text-[var(--text-tertiary)] mb-6 text-sm">{chatDesc}</p>
 
                     {startError && (
                         <div className="mb-4 text-rose-600 text-sm bg-rose-50 border border-rose-200 rounded-xl px-4 py-3" role="alert">
