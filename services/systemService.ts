@@ -13,7 +13,7 @@ const SYS_CONFIG = {
         ERROR_THRESHOLD_PER_MIN: 10,
     },
     HEALTH: {
-        LATENCY_THRESHOLD_MS: 1000,
+        LATENCY_THRESHOLD_MS: 500,
     },
     BACKUP: {
         PREFIX: 'sgs_backup_',
@@ -82,6 +82,8 @@ class SystemService {
         let latency = 0;
         
         try {
+            // db.ping() calls GET /api/health — measures HTTP round-trip latency to the server,
+            // which includes server-side DB connectivity. Not a direct DB ping.
             dbConnected = await db.ping();
             latency = Date.now() - startPing;
         } catch (e) {
@@ -103,12 +105,12 @@ class SystemService {
         // Status Determination Logic
         let status = HealthStatus.HEALTHY;
         
-        // 1. Critical Failure
+        // 1. Critical Failure — server/DB unreachable
         if (!dbConnected) {
             status = HealthStatus.CRITICAL;
-            this.log('ERROR', 'Database Connection Failed', { latency }, undefined, 'SYSTEM');
+            this.log('ERROR', 'Server Health Check Failed', { latency }, undefined, 'SYSTEM');
         } 
-        // 2. Degraded Performance
+        // 2. Degraded — high HTTP latency (>500ms) or too many errors per minute
         else if (latency > SYS_CONFIG.HEALTH.LATENCY_THRESHOLD_MS || this.errorCountLastMinute > SYS_CONFIG.LOGS.ERROR_THRESHOLD_PER_MIN) {
             status = HealthStatus.DEGRADED;
         }

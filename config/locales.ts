@@ -443,7 +443,7 @@ export const DICTIONARY = {
         "dash.chart_target": "Mục tiêu",
         "dash.traffic_title": "Lưu Lượng Hệ Thống",
         "dash.requests_sec": "Yêu cầu/s",
-        "dash.avg_latency": "Độ trễ",
+        "dash.avg_latency": "Độ Trễ API",
         "dash.live_status": "Trực tuyến",
         "dash.ai_highlights": "Tiêu Điểm AI",
         "dash.insight_conversion_up": "Tỷ lệ chuyển đổi tăng 5% nhờ tối ưu quy trình chăm sóc.",
@@ -500,7 +500,7 @@ export const DICTIONARY = {
         "dash.geo_unknown": "Không rõ",
         "dash.geo_top_cities": "Top Thành phố",
         "dash.geo_no_cities": "Chưa có dữ liệu thành phố",
-        "dash.traffic_db_latency": "DB Latency",
+        "dash.traffic_db_latency": "Độ Trễ DB",
         "dash.traffic_errors": "Lỗi / 60s",
 
         "leads.search_placeholder": "Tìm tên, SĐT, email...",
