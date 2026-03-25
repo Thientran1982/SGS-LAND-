@@ -224,7 +224,10 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
         e.stopPropagation();
         if (btnRef.current) {
             const r = btnRef.current.getBoundingClientRect();
-            setMenuPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+            const estimatedHeight = 200;
+            const spaceBelow = window.innerHeight - r.bottom;
+            const top = spaceBelow < estimatedHeight + 8 ? Math.max(8, r.top - estimatedHeight - 4) : r.bottom + 4;
+            setMenuPos({ top, right: window.innerWidth - r.right });
         }
         setMenuOpen(v => !v);
     };
@@ -444,7 +447,10 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        const estimatedHeight = 160;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const top = spaceBelow < estimatedHeight + 8 ? Math.max(8, rect.top - estimatedHeight - 4) : rect.bottom + 4;
+        setMenuPos({ top, right: window.innerWidth - rect.right });
         setMenuOpen(v => !v);
     };
 
