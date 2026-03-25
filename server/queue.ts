@@ -169,22 +169,24 @@ export function setupWebhookWorker(io: Server) {
         logger.info(`[Zalo] Message from ${senderId} → lead ${leadId}`);
 
         io.to(leadId).emit('receive_message', { room: leadId, message: savedInteraction, isWebhook: true });
-        io.emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Zalo' });
+        io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Zalo' });
 
-        // AI scoring (non-blocking)
-        try {
-          const { aiService } = await import('./ai');
-          const scoreResult = await aiService.scoreLead({ name: lead.name, source: 'Zalo' }, textContent);
-          if (scoreResult) {
-            const { leadRepository } = await import('./repositories/leadRepository');
-            await leadRepository.update(tenantId, leadId, {
-              score: { score: scoreResult.score || (scoreResult as any).totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning },
-            });
-            io.emit('lead_scored', { leadId, score: scoreResult });
+        // AI scoring — fire-and-forget (do not block webhook processing)
+        (async () => {
+          try {
+            const { aiService } = await import('./ai');
+            const scoreResult = await aiService.scoreLead({ name: lead.name, source: 'Zalo' }, textContent);
+            if (scoreResult) {
+              const { leadRepository } = await import('./repositories/leadRepository');
+              await leadRepository.update(tenantId, leadId, {
+                score: { score: scoreResult.score || (scoreResult as any).totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning },
+              });
+              io.to(`tenant:${tenantId}`).emit('lead_scored', { leadId, score: scoreResult });
+            }
+          } catch (err) {
+            logger.error('[Zalo] AI scoring error:', err);
           }
-        } catch (err) {
-          logger.error('[Zalo] AI scoring error:', err);
-        }
+        })();
       }
 
       // Handle: image message
@@ -203,7 +205,7 @@ export function setupWebhookWorker(io: Server) {
         });
 
         io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
-        io.emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Zalo' });
+        io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Zalo' });
       }
     }
 
@@ -260,22 +262,24 @@ export function setupWebhookWorker(io: Server) {
             logger.info(`[Facebook] Message from ${senderId} → lead ${leadId}`);
 
             io.to(leadId).emit('receive_message', { room: leadId, message: savedInteraction, isWebhook: true });
-            io.emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Facebook' });
+            io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Facebook' });
 
-            // AI scoring (non-blocking)
-            try {
-              const { aiService } = await import('./ai');
-              const scoreResult = await aiService.scoreLead({ name: lead.name, source: 'Facebook' }, messageText);
-              if (scoreResult) {
-                const { leadRepository } = await import('./repositories/leadRepository');
-                await leadRepository.update(tenantId, leadId, {
-                  score: { score: scoreResult.score || (scoreResult as any).totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning },
-                });
-                io.emit('lead_scored', { leadId, score: scoreResult });
+            // AI scoring — fire-and-forget (do not block webhook processing)
+            (async () => {
+              try {
+                const { aiService } = await import('./ai');
+                const scoreResult = await aiService.scoreLead({ name: lead.name, source: 'Facebook' }, messageText);
+                if (scoreResult) {
+                  const { leadRepository } = await import('./repositories/leadRepository');
+                  await leadRepository.update(tenantId, leadId, {
+                    score: { score: scoreResult.score || (scoreResult as any).totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning },
+                  });
+                  io.to(`tenant:${tenantId}`).emit('lead_scored', { leadId, score: scoreResult });
+                }
+              } catch (err) {
+                logger.error('[Facebook] AI scoring error:', err);
               }
-            } catch (err) {
-              logger.error('[Facebook] AI scoring error:', err);
-            }
+            })();
           }
 
           // Image/attachment message
@@ -297,7 +301,7 @@ export function setupWebhookWorker(io: Server) {
             });
 
             io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
-            io.emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Facebook' });
+            io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Facebook' });
           }
 
           // Postback (button clicks)
@@ -402,7 +406,7 @@ export function setupWebhookWorker(io: Server) {
         logger.info(`[Email] Inbound email stored as interaction ${savedInteraction.id}`);
 
         io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
-        io.emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Email' });
+        io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Email' });
       } catch (err) {
         logger.error('[Email] Failed to create interaction:', err);
       }

@@ -1325,7 +1325,7 @@ async function startServer() {
   // Socket.IO logic
   io.on("connection", (socket) => {
     const isAuthenticated = !!socket.data.authUser;
-    console.log(`User connected: ${socket.id} (auth: ${isAuthenticated})`);
+    logger.debug(`User connected: ${socket.id} (auth: ${isAuthenticated})`);
 
     if (socket.data.authUser?.tenantId) {
       socket.join(`tenant:${socket.data.authUser.tenantId}`);
@@ -1334,7 +1334,7 @@ async function startServer() {
     socket.on("join_room", (room) => {
       if (!socket.data.authUser) return;
       socket.join(room);
-      console.log(`User ${socket.id} joined room ${room}`);
+      logger.debug(`User ${socket.id} joined room ${room}`);
     });
 
     const requireAuth = (handler: (...args: any[]) => void) => {
@@ -1401,15 +1401,19 @@ async function startServer() {
     }));
 
     socket.on("lead_updated", requireAuth((data) => {
-      io.emit("lead_updated", data);
+      const tid = socket.data.authUser?.tenantId;
+      if (tid) io.to(`tenant:${tid}`).emit("lead_updated", data);
+      else io.emit("lead_updated", data);
     }));
 
     socket.on("lead_created", requireAuth((data) => {
-      io.emit("lead_created", data);
+      const tid = socket.data.authUser?.tenantId;
+      if (tid) io.to(`tenant:${tid}`).emit("lead_created", data);
+      else io.emit("lead_created", data);
     }));
 
     socket.on("disconnect", async () => {
-      console.log("User disconnected:", socket.id);
+      logger.debug(`User disconnected: ${socket.id}`);
       if (socket.data.viewingLead) {
         const room = `lead_view_${socket.data.viewingLead}`;
         const sockets = await io.in(room).fetchSockets();

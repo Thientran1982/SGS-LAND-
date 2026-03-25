@@ -107,7 +107,8 @@ export const Inbox: React.FC = () => {
         queryFn: async () => {
             const data = await db.getInboxThreads();
             return data || [];
-        }
+        },
+        staleTime: 30_000,
     });
 
     // Sync autoResponseMap when new threads arrive — only initialise entries that
@@ -133,7 +134,8 @@ export const Inbox: React.FC = () => {
             const msgs = await db.getInteractions(selectedLeadId);
             return (msgs || []).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
         },
-        enabled: !!selectedLeadId
+        enabled: !!selectedLeadId,
+        staleTime: 10_000,
     });
 
     // Scroll to bottom whenever messages load or change
@@ -148,14 +150,16 @@ export const Inbox: React.FC = () => {
         queryFn: async () => {
             const res = await db.getTenantUsers(1, 100);
             return res.data || [];
-        }
+        },
+        staleTime: 60_000,
     });
 
     const { data: currentUser } = useQuery({
         queryKey: ['currentUser'],
         queryFn: async () => {
             return await db.getCurrentUser();
-        }
+        },
+        staleTime: 60_000,
     });
 
     // --- WEBSOCKET INTEGRATION ---
@@ -163,45 +167,113 @@ export const Inbox: React.FC = () => {
         if (selectedLeadId) {
             socket.emit("join_room", selectedLeadId);
             
-            // Mark thread as read
+            // Mark thread as read — update in-place (no refetch)
             db.markThreadAsRead(selectedLeadId).then(() => {
-                queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+                queryClient.setQueryData<InboxThread[]>(['inboxThreads'], (old = []) =>
+                    old.map(th => th.lead.id === selectedLeadId ? { ...th, unreadCount: 0 } : th)
+                );
             });
         }
-        
+
+        // Helper: build a minimal lastMessage shape from a raw message payload
+        const buildLastMsg = (leadId: string, msg: any) => ({
+            id: msg.id || `thread-${leadId}-${Date.now()}`,
+            content: msg.content || '',
+            channel: msg.channel || 'INTERNAL',
+            direction: msg.direction || 'INBOUND',
+            timestamp: msg.timestamp || new Date().toISOString(),
+            type: msg.type || 'TEXT',
+            status: msg.status || 'SENT',
+            leadId,
+            metadata: msg.metadata || {},
+        });
+
+        // Helper: update a single thread in the sidebar list, keeping sort order
+        const patchThread = (
+            leadId: string,
+            patch: (th: InboxThread) => InboxThread
+        ) => {
+            queryClient.setQueryData<InboxThread[]>(['inboxThreads'], (old = []) => {
+                if (!old.some(th => th.lead.id === leadId)) {
+                    // Unknown lead — schedule a background refetch only
+                    queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
+                    return old;
+                }
+                return old
+                    .map(th => th.lead.id === leadId ? patch(th) : th)
+                    .sort((a, b) =>
+                        new Date(b.lastMessage?.timestamp || 0).getTime() -
+                        new Date(a.lastMessage?.timestamp || 0).getTime()
+                    );
+            });
+        };
+
         const handleNewMessage = (data: any) => {
-            // Invalidate queries to refetch data when a new message arrives via WebSocket
-            queryClient.invalidateQueries({ queryKey: ['interactions', data.room] });
-            queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
-            
-            // Show notification if it's an inbound message and not for the currently selected lead
-            if (data.message?.direction === 'INBOUND' && data.room !== selectedLeadId) {
+            const msg = data.message;
+            const leadId = data.room as string;
+
+            // Append to interactions cache (avoids interaction-list refetch)
+            if (msg) {
+                queryClient.setQueryData<any[]>(['interactions', leadId], (old) => {
+                    if (!old) return old;
+                    if (old.some((m: any) => m.id === msg.id)) return old;
+                    return [...old, msg];
+                });
+            }
+
+            // Update thread sidebar in-place
+            if (msg && leadId) {
+                patchThread(leadId, (th) => ({
+                    ...th,
+                    lastMessage: buildLastMsg(leadId, msg) as any,
+                    lastChannel: msg.channel || th.lastChannel,
+                    unreadCount:
+                        msg.direction === 'INBOUND' && leadId !== selectedLeadId
+                            ? th.unreadCount + 1
+                            : th.unreadCount,
+                }));
+            }
+
+            if (msg?.direction === 'INBOUND' && leadId !== selectedLeadId) {
                 notify(t('inbox.new_message'), 'success');
             }
         };
 
-        const handleLeadScored = async (data: { leadId: string, score: any }) => {
-            try {
-                await db.updateLead(data.leadId as any, { score: data.score });
-                queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
-                queryClient.invalidateQueries({ queryKey: ['leads'] });
-            } catch (e) {
-                notify(t('inbox.error_score_update'), 'error');
-            }
+        // Server already persisted the score and emits it via socket — no extra DB write needed
+        const handleLeadScored = (data: { leadId: string, score: any }) => {
+            queryClient.setQueryData<InboxThread[]>(['inboxThreads'], (old = []) =>
+                old.map(th =>
+                    th.lead.id === data.leadId
+                        ? { ...th, lead: { ...th.lead, score: data.score } }
+                        : th
+                )
+            );
+            queryClient.invalidateQueries({ queryKey: ['leads'] });
         };
 
-        const handleNewInboundMessage = async (data: { leadId: string, message: any }) => {
-            try {
-                await db.receiveWebhookMessage(data.message);
-                queryClient.invalidateQueries({ queryKey: ['inboxThreads'] });
-                queryClient.invalidateQueries({ queryKey: ['leads'] });
-                queryClient.invalidateQueries({ queryKey: ['interactions', data.leadId] });
-                
-                if (data.leadId !== selectedLeadId) {
-                    notify(t('inbox.new_message'), 'success');
-                }
-            } catch (e) {
-                notify(t('inbox.error_inbound'), 'error');
+        // Server webhook already persisted the message — no extra client DB call needed
+        const handleNewInboundMessage = (data: { leadId: string, message: any }) => {
+            const { leadId, message: msg } = data;
+
+            // Append to interactions cache (if the chat pane is open for this lead)
+            if (msg) {
+                queryClient.setQueryData<any[]>(['interactions', leadId], (old) => {
+                    if (!old) return old;
+                    if (old.some((m: any) => m.id === msg.id)) return old;
+                    return [...old, msg];
+                });
+            }
+
+            // Update thread sidebar in-place
+            patchThread(leadId, (th) => ({
+                ...th,
+                lastMessage: msg ? buildLastMsg(leadId, msg) as any : th.lastMessage,
+                lastChannel: msg?.channel || th.lastChannel,
+                unreadCount: leadId !== selectedLeadId ? th.unreadCount + 1 : th.unreadCount,
+            }));
+
+            if (leadId !== selectedLeadId) {
+                notify(t('inbox.new_message'), 'success');
             }
         };
 
