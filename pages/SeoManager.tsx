@@ -115,7 +115,14 @@ const SerpPageDropdown: React.FC<{
     overrides: Record<string, { title: string; description: string }>;
 }> = ({ value, onChange, routes, overrides }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [coords, setCoords] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
+    const [coords, setCoords] = useState<{
+        top?: number;
+        bottom?: number;
+        left: number;
+        width: number;
+        maxH: number;
+        openUp: boolean;
+    }>({ left: 0, width: 0, maxH: 400, openUp: false });
     const btnRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -126,9 +133,34 @@ const SerpPageDropdown: React.FC<{
     const openMenu = () => {
         if (btnRef.current) {
             const rect = btnRef.current.getBoundingClientRect();
+            const GAP = 6;
+            const IDEAL_H = 400;
             const menuW = Math.max(rect.width, 380);
             const safeLeft = Math.min(rect.left, window.innerWidth - menuW - 12);
-            setCoords({ top: rect.bottom + 6, left: safeLeft, width: menuW });
+
+            const spaceBelow = window.innerHeight - rect.bottom - GAP - 8;
+            const spaceAbove = rect.top - GAP - 8;
+            const openUp = spaceBelow < 220 && spaceAbove > spaceBelow;
+
+            if (openUp) {
+                setCoords({
+                    bottom: window.innerHeight - rect.top + GAP,
+                    top: undefined,
+                    left: safeLeft,
+                    width: menuW,
+                    maxH: Math.min(IDEAL_H, spaceAbove),
+                    openUp: true,
+                });
+            } else {
+                setCoords({
+                    top: rect.bottom + GAP,
+                    bottom: undefined,
+                    left: safeLeft,
+                    width: menuW,
+                    maxH: Math.min(IDEAL_H, spaceBelow),
+                    openUp: false,
+                });
+            }
         }
         setIsOpen(true);
     };
@@ -182,10 +214,18 @@ const SerpPageDropdown: React.FC<{
             {isOpen && createPortal(
                 <div
                     ref={menuRef}
-                    className="fixed z-[10002] bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] overflow-hidden animate-scale-up"
-                    style={{ top: coords.top, left: coords.left, width: coords.width, maxHeight: 400, overflowY: 'auto' }}
+                    className="fixed z-[10002] bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] animate-scale-up"
+                    style={{
+                        ...(coords.openUp ? { bottom: coords.bottom } : { top: coords.top }),
+                        left: coords.left,
+                        width: coords.width,
+                        maxHeight: coords.maxH,
+                        overflowY: 'auto',
+                        overflowX: 'hidden',
+                        transformOrigin: coords.openUp ? 'bottom center' : 'top center',
+                    }}
                 >
-                    <div className="divide-y divide-[var(--glass-border)] no-scrollbar overscroll-contain">
+                    <div className="divide-y divide-[var(--glass-border)] overscroll-contain no-scrollbar">
                         {routes.map(route => {
                             const cfg = getEffectiveCfg(route.key, overrides);
                             const status = getSerpStatus(cfg.title, cfg.description);
