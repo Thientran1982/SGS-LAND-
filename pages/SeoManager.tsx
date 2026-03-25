@@ -716,7 +716,7 @@ const StructuredData: React.FC = () => {
     const [schemas, setSchemas] = useState<{ type: string; json: string }[]>([]);
     const [copied, setCopied] = useState<number | null>(null);
 
-    useEffect(() => {
+    const readSchemas = useCallback(() => {
         const scripts = Array.from(document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]'));
         const parsed = scripts.map((s, i) => {
             try {
@@ -729,6 +729,8 @@ const StructuredData: React.FC = () => {
         });
         setSchemas(parsed);
     }, []);
+
+    useEffect(() => { readSchemas(); }, [readSchemas]);
 
     const handleCopy = async (json: string, idx: number) => {
         await copyToClipboard(json);
@@ -754,7 +756,16 @@ const StructuredData: React.FC = () => {
 
     return (
         <div className="space-y-4">
-            <p className="text-xs text-[var(--text-tertiary)]">{schemas.length} JSON-LD schema(s) được tìm thấy trong document head.</p>
+            <div className="flex items-center justify-between">
+                <p className="text-xs text-[var(--text-tertiary)]">{schemas.length} JSON-LD schema(s) được tìm thấy trong document head.</p>
+                <button
+                    onClick={readSchemas}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-border)] transition-colors"
+                    title="Đọc lại JSON-LD từ DOM sau khi lưu meta"
+                >
+                    {ICONS.RESET} Làm mới
+                </button>
+            </div>
 
             {schemas.map((s, idx) => (
                 <div key={idx} className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl overflow-hidden shadow-sm">

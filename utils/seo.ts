@@ -175,6 +175,26 @@ export function clearSEOOverride(routeBase: string): void {
 
 export const SEO_BASE_URL = BASE_URL;
 
+/**
+ * Patch the `description` field inside a static JSON-LD <script> whose
+ * @type matches `schemaType`. Updates the live DOM so the SCHEMA tab
+ * reflects the current state immediately after a meta save.
+ */
+function patchJsonLdDescription(schemaType: string, description: string): void {
+  const scripts = document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]');
+  scripts.forEach(script => {
+    try {
+      const obj = JSON.parse(script.textContent ?? '{}');
+      if (obj['@type'] === schemaType && 'description' in obj) {
+        obj.description = description;
+        script.textContent = JSON.stringify(obj, null, 2);
+      }
+    } catch {
+      // malformed JSON-LD — skip silently
+    }
+  });
+}
+
 export function updatePageSEO(routeBase: string): void {
   const baseCfg = ROUTE_SEO[routeBase] ?? ROUTE_SEO[''];
   const overrides = getSEOOverrides();
@@ -202,6 +222,19 @@ export function updatePageSEO(routeBase: string): void {
   setMeta('meta[name="twitter:title"]', 'content', cfg.title);
   setMeta('meta[name="twitter:description"]', 'content', cfg.description);
   setMeta('meta[name="twitter:image"]', 'content', image);
+
+  // ── Sync JSON-LD descriptions so the "Dữ liệu cấu trúc" tab stays current.
+  // The root/home routes map to the global site description used by WebSite,
+  // SoftwareApplication and Organization schemas.
+  if (routeBase === '' || routeBase === 'home') {
+    patchJsonLdDescription('WebSite', description);
+    patchJsonLdDescription('SoftwareApplication', description);
+    patchJsonLdDescription('Organization', description);
+  }
+  // Service schema is linked to the CRM/platform route.
+  if (routeBase === 'crm-platform') {
+    patchJsonLdDescription('Service', description);
+  }
 }
 
 // =============================================================================
