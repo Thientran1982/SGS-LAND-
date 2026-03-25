@@ -40,6 +40,8 @@ import m017 from './017_enterprise_config_theme_column';
 import m018 from './018_user_page_views';
 import m019 from './019_tenant_config_defaults';
 import m020 from './020_task_management';
+import m021 from './021_inbox_performance';
+import m022 from './022_sequences_fix_columns';
 
 dotenv.config();
 
@@ -75,6 +77,8 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '018_user_page_views.ts': m018,
   '019_tenant_config_defaults.ts': m019,
   '020_task_management.ts': m020,
+  '021_inbox_performance.ts': m021,
+  '022_sequences_fix_columns.ts': m022,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
