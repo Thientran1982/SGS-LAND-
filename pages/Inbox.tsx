@@ -58,6 +58,8 @@ export const Inbox: React.FC = () => {
     const [streamingMessage, setStreamingMessage] = useState<string>('');
     const [isAssignOpen, setIsAssignOpen] = useState(false);
     const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
+    const [widgetTitle, setWidgetTitle] = useState('SGS Land Live Chat');
+    const [widgetDesc, setWidgetDesc] = useState('Chúng tôi sẵn sàng hỗ trợ bạn 24/7');
     
     // --- SUPERVISOR STATE ---
     const [autoResponseMap, setAutoResponseMap] = useState<Record<string, boolean>>({}); // Toggle per thread
@@ -901,6 +903,28 @@ export const Inbox: React.FC = () => {
                             
                             <div className="p-4 md:p-6 overflow-y-auto no-scrollbar">
                                 <div className="space-y-6">
+                                    {/* Widget Customization */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[var(--glass-surface)] rounded-xl p-4 border border-[var(--glass-border)]">
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5">{t('inbox.widget_title_label')}</label>
+                                            <input
+                                                value={widgetTitle}
+                                                onChange={e => setWidgetTitle(e.target.value)}
+                                                placeholder={t('inbox.widget_title_placeholder')}
+                                                className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-all"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5">{t('inbox.widget_desc_label')}</label>
+                                            <input
+                                                value={widgetDesc}
+                                                onChange={e => setWidgetDesc(e.target.value)}
+                                                placeholder={t('inbox.widget_desc_placeholder')}
+                                                className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-all"
+                                            />
+                                        </div>
+                                    </div>
+
                                     {/* Link */}
                                     <div>
                                         <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_link_label')}</label>
@@ -929,13 +953,13 @@ export const Inbox: React.FC = () => {
                                         <div className="relative">
                                             <textarea
                                                 readOnly
-                                                rows={4}
-                                                value={`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/#/livechat";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`}
+                                                rows={5}
+                                                value={`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/#/livechat";\n  window.SGSLAND_CHAT_TITLE = "${widgetTitle}";\n  window.SGSLAND_CHAT_DESC = "${widgetDesc}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`}
                                                 className="w-full bg-slate-900 text-emerald-400 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono resize-none leading-relaxed no-scrollbar"
                                             />
                                             <button
                                                 onClick={() => {
-                                                    navigator.clipboard.writeText(`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/#/livechat";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`).catch(() => {});
+                                                    navigator.clipboard.writeText(`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/#/livechat";\n  window.SGSLAND_CHAT_TITLE = "${widgetTitle}";\n  window.SGSLAND_CHAT_DESC = "${widgetDesc}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`).catch(() => {});
                                                     notify(t('inbox.widget_embed_copied'), 'success');
                                                 }}
                                                 aria-label={t('inbox.widget_copy')}
