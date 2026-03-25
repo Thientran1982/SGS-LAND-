@@ -803,17 +803,49 @@ const EXTERNAL_TOOLS = [
     { label: 'Schema Markup Validator', url: 'https://validator.schema.org/', color: 'text-purple-600' },
 ];
 
+// ── Helpers ─────────────────────────────────────────────────────────────────────
+
+// Apply stored overrides to the in-memory DOM JSON-LD so StructuredData always
+// reflects the saved values — both on initial load and after each save.
+function applyOverridesToDom(overrides: Record<string, { title: string; description: string }>) {
+    if (overrides['home'] || overrides['']) {
+        updatePageSEO(overrides['home'] ? 'home' : '');
+    }
+    if (overrides['crm-platform']) {
+        updatePageSEO('crm-platform');
+    }
+    // Restore seo-manager admin meta (noindex + correct title) after patching
+    updatePageSEO('seo-manager');
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 export const SeoManager: React.FC = () => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const [activeTab, setActiveTab] = useState<TabId>('SERP');
-    // Shared SERP selected key — persists across tab switches and auto-updates after Meta save
-    const [serpSelectedKey, setSerpSelectedKey] = useState('');
     // Single source of truth for overrides — shared by SERP Preview and Meta Editor
-    // so saves in Meta tab are reflected in SERP tab immediately without a remount.
     const [overrides, setOverrides] = useState<Record<string, { title: string; description: string }>>(getSEOOverrides);
+    // schemaVersion: bumped after each meta save to force StructuredData to remount
+    // and re-read the freshly-patched DOM JSON-LD
+    const [schemaVersion, setSchemaVersion] = useState(0);
+    // Default SERP selected key to first overridden public route (persists via state)
+    const [serpSelectedKey, setSerpSelectedKey] = useState(() => {
+        const stored = getSEOOverrides();
+        const firstOverridden = PUBLIC_ROUTES.find(r => stored[r.key]);
+        return firstOverridden?.key ?? '';
+    });
+
+    // On mount: sync DOM JSON-LD with stored overrides so StructuredData shows
+    // correct values even after a full page reload.
+    useEffect(() => {
+        const stored = getSEOOverrides();
+        if (Object.keys(stored).length > 0) {
+            applyOverridesToDom(stored);
+            setSchemaVersion(1);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         db.getCurrentUser().then(u => {
@@ -895,9 +927,15 @@ export const SeoManager: React.FC = () => {
             {/* ── Tab Content ─────────────────────────────────────────────── */}
             <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-[20px] shadow-sm p-4 sm:p-6">
                 {activeTab === 'SERP'   && <SerpPreview selectedKey={serpSelectedKey} onSelect={setSerpSelectedKey} overrides={overrides} />}
-                {activeTab === 'META'   && <MetaEditor overrides={overrides} onOverridesChange={setOverrides} onAfterSave={setSerpSelectedKey} />}
+                {activeTab === 'META'   && <MetaEditor overrides={overrides} onOverridesChange={(next) => {
+                    setOverrides(next);
+                    // Patch DOM JSON-LD immediately so switching to SCHEMA tab shows updated values
+                    applyOverridesToDom(next);
+                    // Force StructuredData to remount and re-read the freshly patched DOM
+                    setSchemaVersion(v => v + 1);
+                }} onAfterSave={setSerpSelectedKey} />}
                 {activeTab === 'HEALTH' && <HealthChecklist />}
-                {activeTab === 'SCHEMA' && <StructuredData />}
+                {activeTab === 'SCHEMA' && <StructuredData key={schemaVersion} />}
             </div>
 
         </div>
