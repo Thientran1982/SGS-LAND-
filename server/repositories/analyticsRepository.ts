@@ -588,14 +588,42 @@ export class AnalyticsRepository extends BaseRepository {
         costsBySource[row.source] = parseFloat(row.total_cost) || 0;
       }
 
+      const normalizeSource = (raw: string): string => {
+        const map: Record<string, string> = {
+          // Website variants
+          'web': 'Website', 'WEB': 'Website', 'website': 'Website', 'WEBSITE': 'Website',
+          // Facebook variants
+          'facebook': 'Facebook', 'FACEBOOK': 'Facebook', 'FB': 'Facebook', 'fb': 'Facebook',
+          // Zalo variants
+          'zalo': 'Zalo', 'ZALO': 'Zalo',
+          // Google variants
+          'google': 'Google', 'GOOGLE': 'Google',
+          // TikTok variants
+          'tiktok': 'Tiktok', 'TIKTOK': 'Tiktok', 'TikTok': 'Tiktok',
+          // Referral variants (including Vietnamese)
+          'referral': 'Referral', 'REFERRAL': 'Referral',
+          'Giới thiệu': 'Referral', 'giới thiệu': 'Referral',
+          // Direct/Walk-in variants (including Vietnamese)
+          'direct': 'Direct', 'DIRECT': 'Direct',
+          'Khách vãng lai': 'Direct', 'khách vãng lai': 'Direct',
+          // Event variants
+          'event': 'Event', 'EVENT': 'Event', 'Sự kiện': 'Event', 'sự kiện': 'Event',
+          // Other / Unknown catch-all
+          'other': 'Other', 'OTHER': 'Other',
+          'unknown': 'Other', 'UNKNOWN': 'Other', 'Khác': 'Other',
+        };
+        return map[raw] || raw;
+      };
+
       const attribution = attributionResult.rows.map((row: any) => {
+        const normalizedSource = normalizeSource(row.source);
         const revenue = parseFloat(row.revenue) || 0;
-        const spend = costsBySource[row.source] || 0;
+        const spend = costsBySource[normalizedSource] || costsBySource[row.source] || 0;
         const roi = spend > 0 ? ((revenue - spend) / spend) * 100 : 0;
         const leads = row.lead_count || 0;
         const cac = leads > 0 ? spend / leads : 0;
         return {
-          channel: row.source,
+          channel: normalizedSource,
           leads,
           revenue,
           spend,
