@@ -8,6 +8,7 @@ import { InboxThread, Interaction, LeadId, User, Channel, Direction, ThreadStatu
 import { useTranslation } from '../services/i18n';
 import { MessageBubble } from '../components/ChatUI';
 import { smartMatch } from '../utils/textUtils';
+import { resolveContent } from '../utils/i18nUtils';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useSocket } from '../services/websocket';
 import { motion, AnimatePresence } from 'motion/react';
@@ -520,7 +521,7 @@ export const Inbox: React.FC = () => {
                                                     if (lm.type === 'IMAGE') return t('inbox.msg_image');
                                                     if (lm.type === 'FILE') return t('inbox.msg_file');
                                                     if (lm.type === 'AUDIO') return t('inbox.msg_audio');
-                                                    return lm.content || t('inbox.empty');
+                                                    return resolveContent(lm.content, t) || t('inbox.empty');
                                                 })()}
                                             </span>
                                         </div>
