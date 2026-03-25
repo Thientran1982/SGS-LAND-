@@ -1567,6 +1567,7 @@ export const DICTIONARY = {
         "ai.no_safety_logs": "Chưa có sự kiện an toàn nào.",
         "ai.no_prompts": "Chưa có prompt nào. Nhấn + để tạo prompt đầu tiên.",
         "ai.msg_system_busy": "Hệ thống AI đang bận, vui lòng thử lại sau.",
+        "ai.escalate_to_human": "Câu hỏi này cần được hỗ trợ trực tiếp từ chuyên viên tư vấn. Vui lòng chờ trong giây lát, đội ngũ của chúng tôi sẽ liên hệ với bạn sớm nhất.",
 
         "help.title": "Chúng tôi có thể giúp gì?",
         "help.subtitle": "Tìm kiếm câu trả lời nhanh chóng hoặc liên hệ hỗ trợ.",
@@ -1719,6 +1720,7 @@ export const DICTIONARY = {
         "inbox.new_message": "Tin nhắn mới",
         "inbox.assign_success": "Đã phân bổ thành công",
         "inbox.empty_messages": "Chưa có tin nhắn nào",
+        "inbox.escalated_to_human": "AI đã chuyển cuộc trò chuyện sang nhân viên hỗ trợ",
         "inbox.file_size_error": "File không được vượt quá 5MB",
         "inbox.msg_image": "Hình ảnh",
         "inbox.msg_file": "Tệp đính kèm",
@@ -3554,6 +3556,7 @@ export const DICTIONARY = {
         "ai.no_safety_logs": "No safety events recorded yet.",
         "ai.no_prompts": "No prompts yet. Click + to create your first prompt.",
         "ai.msg_system_busy": "The AI system is currently busy. Please try again.",
+        "ai.escalate_to_human": "This question requires direct support from a consultant. Please wait a moment, our team will contact you shortly.",
 
         "help.title": "How can we help?",
         "help.subtitle": "Find answers quickly or contact support.",
@@ -3706,6 +3709,7 @@ export const DICTIONARY = {
         "inbox.new_message": "New Message",
         "inbox.assign_success": "Assigned successfully",
         "inbox.empty_messages": "No messages yet",
+        "inbox.escalated_to_human": "AI has transferred the conversation to a human agent",
         "inbox.file_size_error": "File size must be less than 5MB",
         "inbox.msg_image": "Image",
         "inbox.msg_file": "File Attachment",

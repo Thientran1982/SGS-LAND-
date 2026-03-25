@@ -13,8 +13,7 @@ const GENAI_CONFIG = {
         // gemini-2.0-flash: supports Google Search grounding + JSON schema output
         ROUTER: 'gemini-2.0-flash',
         WRITER: 'gemini-2.0-flash'
-    },
-    THINKING_BUDGET: 2048
+    }
 };
 
 // GLOBAL SYSTEM PERSONA
@@ -153,6 +152,7 @@ export type AgentState = {
     history: Interaction[];
     trace: AgentTraceStep[];
     systemContext: string;
+    leadAnalysis?: string;
     artifact?: AgentArtifact;
     finalResponse: string;
     suggestedAction: 'NONE' | 'CREATE_PROPOSAL' | 'SEND_DOCS' | 'BOOK_VIEWING';
@@ -160,6 +160,8 @@ export type AgentState = {
     t: (k: string) => string;
     error?: Error;
     tenantId: string;
+    lang?: string;
+    escalated?: boolean;
 };
 
 type NodeFunction = (state: AgentState) => Promise<Partial<AgentState>>;
@@ -417,22 +419,37 @@ class AiEngine {
             });
 
             this.updateTrace(state.trace, "Lead analysis completed.");
-            return { systemContext: state.systemContext + `\n[LEAD ANALYSIS]: ${analysisRes.text}` };
+            return { leadAnalysis: analysisRes.text || '' };
         });
 
         // Node 3: Writer
         graph.addNode('WRITER', async (state) => {
             state.trace.push({ id: `step_3`, node: 'WRITER', status: 'RUNNING', timestamp: Date.now() });
-            
+
+            const conversationHistory = state.history.slice(-10)
+                .map(h => `${h.direction === 'INBOUND' ? 'CUSTOMER' : 'AGENT'}: ${h.content}`)
+                .join('\n');
+
+            const leadAnalysisSection = state.leadAnalysis
+                ? `\n[LEAD ANALYSIS]:\n${state.leadAnalysis}`
+                : '';
+
+            const langInstruction = (state.lang === 'en')
+                ? 'Answer in English.'
+                : 'Answer in Vietnamese (use natural Vietnamese, avoid robotic translations).';
+
             const writerPrompt = `
                 ${getAgentPersona()}
                 CONTEXT:
-                ${state.systemContext}
+                ${state.systemContext}${leadAnalysisSection}
+
+                CONVERSATION HISTORY (last 10 messages):
+                ${conversationHistory || '(No previous messages)'}
                 
                 USER INPUT: "${state.userMessage}"
                 
                 INSTRUCTIONS:
-                - Answer in Vietnamese.
+                - ${langInstruction}
                 - Be concise (under 4 sentences).
                 - Use the provided data (Inventory, Legal info).
                 - If discussing price, use "Tỷ" or "Triệu".
@@ -446,6 +463,16 @@ class AiEngine {
 
             this.updateTrace(state.trace, "Response generated.");
             return { finalResponse: writerRes.text || "Dạ, anh/chị cần em hỗ trợ thêm thông tin gì không ạ?" };
+        });
+
+        // Node 4: Escalation
+        graph.addNode('ESCALATION_NODE', async (state) => {
+            state.trace.push({ id: `step_esc`, node: 'ESCALATION_NODE', status: 'RUNNING', timestamp: Date.now() });
+            this.updateTrace(state.trace, "Escalated to human agent.");
+            return {
+                finalResponse: state.t('ai.escalate_to_human'),
+                escalated: true
+            };
         });
 
         // Define Edges
@@ -462,7 +489,7 @@ class AiEngine {
                 'DRAFT_CONTRACT': 'CONTRACT_AGENT',
                 'ANALYZE_LEAD': 'LEAD_ANALYST',
                 'DIRECT_ANSWER': 'WRITER',
-                'ESCALATE_TO_HUMAN': 'WRITER',
+                'ESCALATE_TO_HUMAN': 'ESCALATION_NODE',
                 'default': 'WRITER'
             }
         );
@@ -475,6 +502,7 @@ class AiEngine {
         graph.addEdge('CONTRACT_AGENT', 'WRITER');
         graph.addEdge('LEAD_ANALYST', 'WRITER');
         graph.addEdge('WRITER', 'END');
+        graph.addEdge('ESCALATION_NODE', 'END');
 
         return graph;
     }
@@ -484,7 +512,8 @@ class AiEngine {
         userMessage: string, 
         history: Interaction[],
         t: (k: string) => string,
-        tenantId?: string
+        tenantId?: string,
+        lang?: string
     ): Promise<AgentTraceResponse> {
         // Graceful fallback when Gemini API key is not configured
         if (!process.env.GEMINI_API_KEY && !process.env.API_KEY) {
@@ -508,7 +537,8 @@ class AiEngine {
             finalResponse: "",
             suggestedAction: 'NONE',
             t,
-            tenantId: tenantId || 'default'
+            tenantId: tenantId || 'default',
+            lang: lang || 'vn'
         };
 
         const finalState = await this.workflow.compileAndRun(initialState);
@@ -520,7 +550,8 @@ class AiEngine {
             artifact: finalState.artifact,
             confidence: finalState.plan?.confidence || 0.95,
             sentiment: 'NEUTRAL',
-            suggestedAction: finalState.suggestedAction
+            suggestedAction: finalState.suggestedAction,
+            escalated: finalState.escalated
         };
     }
 

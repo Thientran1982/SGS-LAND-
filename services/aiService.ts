@@ -20,10 +20,14 @@ class AiApiClient {
     }
 
     async processMessage(lead: Lead, userMessage: string, history: Interaction[], lang: string, onStream?: (chunk: string) => void): Promise<AgentTraceResponse> {
-        // Since the backend doesn't support streaming for processMessage yet, we'll just return the final response
         const result = await this.fetchApi('/api/ai/process-message', { lead, userMessage, history, lang });
         if (onStream && result.content) {
-            onStream(result.content);
+            const words = String(result.content).split(' ');
+            for (let i = 0; i < words.length; i++) {
+                const chunk = (i === 0 ? '' : ' ') + words[i];
+                onStream(chunk);
+                await new Promise(resolve => setTimeout(resolve, 30));
+            }
         }
         return result;
     }

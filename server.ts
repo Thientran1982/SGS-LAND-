@@ -428,7 +428,10 @@ async function startServer() {
       const tenantId = (req as any).tenantId;
       const { aiService } = await import('./server/ai');
       const t = serverT(lang || 'vn');
-      const result = await aiService.processMessage(lead, userMessage, history, t, tenantId);
+      const result = await aiService.processMessage(lead, userMessage, history, t, tenantId, lang || 'vn');
+      if (result.escalated && lead?.id) {
+        broadcastIo?.to(`tenant:${tenantId}`).emit('escalate_to_human', { leadId: lead.id });
+      }
       res.json(result);
     } catch (error) {
       console.error('AI process message error:', error);
@@ -900,7 +903,7 @@ async function startServer() {
 
       const { aiService } = await import('./server/ai');
       const t = serverT(lang || 'vn');
-      const result = await aiService.processMessage(lead, msgContent, historyWithLatest, t, PUBLIC_TENANT);
+      const result = await aiService.processMessage(lead, msgContent, historyWithLatest, t, PUBLIC_TENANT, lang || 'vn');
 
       const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
         leadId,

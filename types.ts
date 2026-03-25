@@ -861,6 +861,7 @@ export interface AgentTraceResponse {
     suggestedAction?: 'CREATE_PROPOSAL' | 'SEND_DOCS' | 'BOOK_VIEWING' | 'COPY_CONTENT' | 'NONE';
     confidence: number;
     sentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'ANGRY';
+    escalated?: boolean;
 }
 
 export interface GraphState {

@@ -277,14 +277,22 @@ export const Inbox: React.FC = () => {
             }
         };
 
+        const handleEscalateToHuman = (data: { leadId: string }) => {
+            const { leadId } = data;
+            setAutoResponseMap(prev => ({ ...prev, [leadId]: false }));
+            notify(t('inbox.escalated_to_human') || 'Đã chuyển sang hỗ trợ thủ công', 'error');
+        };
+
         socket.on("receive_message", handleNewMessage);
         socket.on("lead_scored", handleLeadScored);
         socket.on("new_inbound_message", handleNewInboundMessage);
+        socket.on("escalate_to_human", handleEscalateToHuman);
 
         return () => {
             socket.off("receive_message", handleNewMessage);
             socket.off("lead_scored", handleLeadScored);
             socket.off("new_inbound_message", handleNewInboundMessage);
+            socket.off("escalate_to_human", handleEscalateToHuman);
         };
     }, [selectedLeadId, socket, queryClient, notify, t]);
 
