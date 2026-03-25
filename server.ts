@@ -819,6 +819,50 @@ async function startServer() {
     }
   });
 
+  // Redirect /livechat (no hash) → /#/livechat so QR codes & embed links work with hash-router
+  app.get('/livechat', (_req: express.Request, res: express.Response) => {
+    res.redirect('/#/livechat');
+  });
+
+  // Public LiveChat: get messages for a lead session (no auth — rate limited)
+  app.get('/api/public/livechat/messages/:leadId', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { leadId } = req.params;
+      if (!leadId) return res.status(400).json({ error: 'leadId bắt buộc' }) as any;
+      const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
+      if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' }) as any;
+      const messages = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
+      res.json({ messages: messages || [], lead: { id: lead.id, name: lead.name } });
+    } catch (error) {
+      console.error('Public livechat get messages error:', error);
+      res.status(500).json({ error: 'Không thể tải lịch sử chat' });
+    }
+  });
+
+  // Public LiveChat: send a message (inbound from visitor or outbound welcome/system) — no auth, rate limited
+  app.post('/api/public/livechat/message', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { leadId, content, direction, metadata } = req.body;
+      if (!leadId || !String(content || '').trim()) {
+        return res.status(400).json({ error: 'leadId và content bắt buộc' }) as any;
+      }
+      const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
+      if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' }) as any;
+      const msg = await interactionRepository.create(PUBLIC_TENANT, {
+        leadId,
+        channel: 'WEB',
+        direction: direction === 'OUTBOUND' ? 'OUTBOUND' : 'INBOUND',
+        type: 'TEXT',
+        content: String(content).trim().slice(0, 2000),
+        metadata: metadata || {}
+      });
+      res.status(201).json({ message: msg });
+    } catch (error) {
+      console.error('Public livechat send message error:', error);
+      res.status(500).json({ error: 'Không thể gửi tin nhắn' });
+    }
+  });
+
   // Public AI endpoint: LiveChat widget AI reply (no auth required — uses rate limiting only)
   app.post('/api/public/ai/livechat', publicLeadRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
     try {

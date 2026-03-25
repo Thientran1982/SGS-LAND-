@@ -1,15 +1,50 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '../services/i18n';
 import { useSocket } from '../services/websocket';
-import { db } from '../services/dbApi';
-import { Lead, Interaction, Channel, Direction } from '../types';
+import { Interaction, Channel, Direction } from '../types';
 import { MessageBubble } from '../components/ChatUI';
 import { motion } from 'motion/react';
+
+// ---------------------------------------------------------------------------
+// Public API helpers — no JWT required, all routes are rate-limited
+// ---------------------------------------------------------------------------
+
+async function publicCreateLead(name: string, phone: string) {
+    const res = await fetch('/api/public/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, source: 'WEB', stage: 'NEW' })
+    });
+    if (!res.ok) throw new Error('create_lead_failed');
+    return res.json() as Promise<{ id: string; success: boolean }>;
+}
+
+async function publicSendMessage(leadId: string, content: string, direction: 'INBOUND' | 'OUTBOUND' = 'INBOUND', metadata?: object) {
+    const res = await fetch('/api/public/livechat/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId, content, direction, metadata: metadata || {} })
+    });
+    if (!res.ok) throw new Error('send_failed');
+    const data = await res.json();
+    return data.message as Interaction;
+}
+
+async function publicGetMessages(leadId: string): Promise<{ messages: Interaction[]; lead: { id: string; name: string } } | null> {
+    const res = await fetch(`/api/public/livechat/messages/${leadId}`);
+    if (!res.ok) return null;
+    return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export default function LiveChat() {
     const { t, language } = useTranslation();
     const { socket } = useSocket();
-    const [lead, setLead] = useState<Lead | null>(null);
+    const [leadId, setLeadId] = useState<string | null>(null);
+    const [leadName, setLeadName] = useState('');
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [messages, setMessages] = useState<Interaction[]>([]);
@@ -20,28 +55,28 @@ export default function LiveChat() {
 
     // Load lead from localStorage if exists
     useEffect(() => {
-        const savedLeadId = localStorage.getItem('livechat_lead_id');
-        if (savedLeadId) {
-            db.getLeadById(savedLeadId).then(l => {
-                if (l) {
-                    setLead(l);
-                    db.getInteractions(l.id).then(msgs => setMessages(msgs || []));
-                } else {
-                    localStorage.removeItem('livechat_lead_id');
-                }
-            }).catch(() => {
+        const savedId = localStorage.getItem('livechat_lead_id');
+        if (!savedId) return;
+        publicGetMessages(savedId).then(data => {
+            if (data) {
+                setLeadId(data.lead.id);
+                setLeadName(data.lead.name);
+                setMessages(data.messages || []);
+            } else {
                 localStorage.removeItem('livechat_lead_id');
-            });
-        }
+            }
+        }).catch(() => {
+            localStorage.removeItem('livechat_lead_id');
+        });
     }, []);
 
     useEffect(() => {
-        if (!lead) return;
-        socket.emit("join_room", lead.id);
+        if (!leadId) return;
+        socket.emit('join_room', leadId);
 
         const handleNewMessage = (data: any) => {
             const msg: Interaction = data?.message ?? data;
-            if (!msg || msg.leadId !== lead.id) return;
+            if (!msg || msg.leadId !== leadId) return;
             setMessages(prev => {
                 if (prev.find(m => m.id === msg.id)) return prev;
                 return [...prev, msg];
@@ -49,12 +84,12 @@ export default function LiveChat() {
             setIsThinking(false);
         };
 
-        socket.on("receive_message", handleNewMessage);
+        socket.on('receive_message', handleNewMessage);
         return () => {
-            socket.off("receive_message", handleNewMessage);
-            socket.emit("leave_room", lead.id);
+            socket.off('receive_message', handleNewMessage);
+            socket.emit('leave_room', leadId);
         };
-    }, [lead, socket]);
+    }, [leadId, socket]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -66,21 +101,20 @@ export default function LiveChat() {
         setStartError('');
 
         try {
-            const newLead = await db.createLead({
-                name,
-                phone,
-                source: 'WEB',
-                tags: ['Live Chat']
-            });
-            setLead(newLead);
-            localStorage.setItem('livechat_lead_id', newLead.id);
-            socket.emit("lead_created", newLead);
+            const created = await publicCreateLead(name.trim(), phone.trim());
+            const id = created.id;
 
-            // Send welcome message — interpolate {name} manually since t() returns raw string
-            const welcomeContent = t('livechat.welcome_msg').replace('{name}', name);
-            const welcomeMsg = await db.sendInteraction(newLead.id, welcomeContent, Channel.WEB, { type: 'TEXT', metadata: { isAgent: true } });
+            // Send welcome message as outbound (agent) — no auth needed
+            const welcomeContent = t('livechat.welcome_msg').replace('{name}', name.trim());
+            const welcomeMsg = await publicSendMessage(id, welcomeContent, 'OUTBOUND', { isAgent: true });
+
+            setLeadId(id);
+            setLeadName(name.trim());
             setMessages([welcomeMsg]);
-            socket.emit("send_message", { room: newLead.id, message: welcomeMsg });
+            localStorage.setItem('livechat_lead_id', id);
+
+            socket.emit('lead_created', { id, name: name.trim(), phone: phone.trim() });
+            socket.emit('send_message', { room: id, message: welcomeMsg });
         } catch (_err) {
             setStartError(t('auth.error_generic'));
         }
@@ -89,18 +123,34 @@ export default function LiveChat() {
     const autoReplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleSend = async () => {
-        if (!input.trim() || !lead) return;
+        if (!input.trim() || !leadId) return;
 
         const content = input.trim();
         setInput('');
 
-        // 1. Save customer message
-        const msg = await db.sendInteraction(lead.id, content, Channel.WEB, { type: 'TEXT' });
-        msg.direction = Direction.INBOUND;
-        setMessages(prev => [...prev, msg]);
-        socket.emit("send_message", { room: lead.id, message: msg });
+        // 1. Save customer inbound message
+        let msg: Interaction | null = null;
+        try {
+            msg = await publicSendMessage(leadId, content, 'INBOUND');
+            msg.direction = Direction.INBOUND;
+            setMessages(prev => [...prev, msg!]);
+            socket.emit('send_message', { room: leadId, message: msg });
+        } catch {
+            // If save failed, show message locally anyway
+            const tempMsg: Interaction = {
+                id: `temp-${Date.now()}`,
+                leadId,
+                channel: Channel.WEB,
+                direction: Direction.INBOUND,
+                type: 'TEXT',
+                content,
+                timestamp: new Date().toISOString(),
+                metadata: {}
+            } as any;
+            setMessages(prev => [...prev, tempMsg]);
+        }
 
-        // 2. Call real AI — with cleanup on unmount
+        // 2. Call AI reply
         setIsThinking(true);
         if (autoReplyTimerRef.current) clearTimeout(autoReplyTimerRef.current);
 
@@ -109,7 +159,7 @@ export default function LiveChat() {
                 const res = await fetch('/api/public/ai/livechat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ leadId: lead.id, message: content, lang: language })
+                    body: JSON.stringify({ leadId, message: content, lang: language })
                 });
 
                 if (res.ok) {
@@ -119,16 +169,14 @@ export default function LiveChat() {
                         if (prev.find(m => m.id === aiMsg.id)) return prev;
                         return [...prev, aiMsg];
                     });
-                    socket.emit("send_message", { room: lead.id, message: aiMsg });
+                    socket.emit('send_message', { room: leadId, message: aiMsg });
                 } else {
-                    // Fallback to polite canned reply on AI error
-                    const fallbackMsg = await db.sendInteraction(lead.id, t('livechat.auto_reply'), Channel.WEB, { type: 'TEXT', metadata: { isAgent: true } });
-                    setMessages(prev => [...prev, fallbackMsg]);
-                    socket.emit("send_message", { room: lead.id, message: fallbackMsg });
+                    // Fallback canned reply
+                    const fallbackMsg = await publicSendMessage(leadId, t('livechat.auto_reply'), 'OUTBOUND', { isAgent: true }).catch(() => null);
+                    if (fallbackMsg) setMessages(prev => [...prev, fallbackMsg]);
                 }
-            } catch (_) {
-                // Network error — silent fallback
-                const fallbackMsg = await db.sendInteraction(lead.id, t('livechat.auto_reply'), Channel.WEB, { type: 'TEXT', metadata: { isAgent: true } }).catch(() => null);
+            } catch {
+                const fallbackMsg = await publicSendMessage(leadId, t('livechat.auto_reply'), 'OUTBOUND', { isAgent: true }).catch(() => null);
                 if (fallbackMsg) setMessages(prev => [...prev, fallbackMsg]);
             } finally {
                 setIsThinking(false);
@@ -142,7 +190,16 @@ export default function LiveChat() {
         };
     }, []);
 
-    if (!lead) {
+    const handleEndChat = () => {
+        localStorage.removeItem('livechat_lead_id');
+        setLeadId(null);
+        setLeadName('');
+        setMessages([]);
+        setName('');
+        setPhone('');
+    };
+
+    if (!leadId) {
         return (
             <div className="min-h-full w-full bg-[var(--glass-surface)] flex flex-col p-4 md:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto no-scrollbar">
                 <div className="flex-1 min-h-[2rem]"></div>
@@ -196,7 +253,7 @@ export default function LiveChat() {
                 </div>
                 <button
                     type="button"
-                    onClick={() => { localStorage.removeItem('livechat_lead_id'); setLead(null); }}
+                    onClick={handleEndChat}
                     className="text-indigo-200 hover:text-white transition-colors text-xs font-bold bg-indigo-700/50 px-3 py-1.5 rounded-lg shrink-0 ml-2"
                 >
                     {t('livechat.end_chat')}
@@ -239,7 +296,7 @@ export default function LiveChat() {
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         onKeyDown={e => {
-                            if(e.key === 'Enter' && !e.shiftKey) {
+                            if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
                                 handleSend();
                             }
