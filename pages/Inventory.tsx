@@ -196,17 +196,18 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
 const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, formatCurrency, canViewInternal }: any) => {
     const statusStyle = STATUS_CONFIG[item.status as ListingStatus] || STATUS_CONFIG[ListingStatus.AVAILABLE];
     const [menuOpen, setMenuOpen] = useState(false);
-    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
     const menuRef = useRef<HTMLDivElement>(null);
     const btnRef  = useRef<HTMLButtonElement>(null);
 
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-        const estimatedHeight = 180;
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const top = spaceBelow < estimatedHeight + 8 ? Math.max(8, rect.top - estimatedHeight - 4) : rect.bottom + 4;
-        setMenuPos({ top, right: window.innerWidth - rect.right });
+        if (window.innerHeight - rect.bottom < 220) {
+            setMenuPos({ bottom: window.innerHeight - rect.top + 4, right: window.innerWidth - rect.right });
+        } else {
+            setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        }
         setMenuOpen(v => !v);
     };
 
@@ -329,7 +330,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                     <div
                         ref={menuRef}
                         onClick={e => e.stopPropagation()}
-                        style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+                        style={{ position: 'fixed', top: menuPos.top ?? 'auto', bottom: menuPos.bottom ?? 'auto', right: menuPos.right, zIndex: 9999 }}
                         className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]"
                     >
                         <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
@@ -359,17 +360,18 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
 const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, canViewInternal }: any) => {
     const statusStyle = STATUS_CONFIG[item.status as ListingStatus] || STATUS_CONFIG[ListingStatus.AVAILABLE];
     const [menuOpen, setMenuOpen] = useState(false);
-    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
     const menuRef = useRef<HTMLDivElement>(null);
     const btnRef  = useRef<HTMLButtonElement>(null);
 
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-        const estimatedHeight = 180;
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const top = spaceBelow < estimatedHeight + 8 ? Math.max(8, rect.top - estimatedHeight - 4) : rect.bottom + 4;
-        setMenuPos({ top, right: window.innerWidth - rect.right });
+        if (window.innerHeight - rect.bottom < 220) {
+            setMenuPos({ bottom: window.innerHeight - rect.top + 4, right: window.innerWidth - rect.right });
+        } else {
+            setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        }
         setMenuOpen(v => !v);
     };
 
@@ -442,7 +444,7 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
             </div>
 
             {menuOpen && createPortal(
-                <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+                <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top ?? 'auto', bottom: menuPos.bottom ?? 'auto', right: menuPos.right, zIndex: 9999 }}
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]">
                     <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                         <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -469,17 +471,18 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
 // --- KANBAN CARD (BOARD VIEW) ---
 const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate, canViewInternal, t, formatCurrency }: any) => {
     const [menuOpen, setMenuOpen] = useState(false);
-    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
     const menuRef = useRef<HTMLDivElement>(null);
     const btnRef  = useRef<HTMLButtonElement>(null);
 
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-        const estimatedHeight = 180;
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const top = spaceBelow < estimatedHeight + 8 ? Math.max(8, rect.top - estimatedHeight - 4) : rect.bottom + 4;
-        setMenuPos({ top, right: window.innerWidth - rect.right });
+        if (window.innerHeight - rect.bottom < 220) {
+            setMenuPos({ bottom: window.innerHeight - rect.top + 4, right: window.innerWidth - rect.right });
+        } else {
+            setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        }
         setMenuOpen(v => !v);
     };
 
@@ -543,7 +546,7 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
             </div>
 
             {menuOpen && createPortal(
-                <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+                <div ref={menuRef} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: menuPos.top ?? 'auto', bottom: menuPos.bottom ?? 'auto', right: menuPos.right, zIndex: 9999 }}
                     className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]">
                     <button onClick={() => { setMenuOpen(false); onEdit(item); }} className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2">
                         <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
