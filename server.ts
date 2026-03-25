@@ -834,7 +834,7 @@ async function startServer() {
   // Public LiveChat: get messages for a lead session (no auth — rate limited)
   app.get('/api/public/livechat/messages/:leadId', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const { leadId } = req.params;
+      const leadId = req.params.leadId as string;
       if (!leadId) return res.status(400).json({ error: 'leadId bắt buộc' }) as any;
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' }) as any;
