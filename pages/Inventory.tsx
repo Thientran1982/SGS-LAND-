@@ -203,7 +203,10 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        const estimatedHeight = 180;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const top = spaceBelow < estimatedHeight + 8 ? Math.max(8, rect.top - estimatedHeight - 4) : rect.bottom + 4;
+        setMenuPos({ top, right: window.innerWidth - rect.right });
         setMenuOpen(v => !v);
     };
 
@@ -363,7 +366,10 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        const estimatedHeight = 180;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const top = spaceBelow < estimatedHeight + 8 ? Math.max(8, rect.top - estimatedHeight - 4) : rect.bottom + 4;
+        setMenuPos({ top, right: window.innerWidth - rect.right });
         setMenuOpen(v => !v);
     };
 
@@ -470,7 +476,10 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
     const openMenu = (e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        const estimatedHeight = 180;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const top = spaceBelow < estimatedHeight + 8 ? Math.max(8, rect.top - estimatedHeight - 4) : rect.bottom + 4;
+        setMenuPos({ top, right: window.innerWidth - rect.right });
         setMenuOpen(v => !v);
     };
 
