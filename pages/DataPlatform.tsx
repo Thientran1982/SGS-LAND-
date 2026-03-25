@@ -276,16 +276,17 @@ export const DataPlatform: React.FC = () => {
             </div>
 
             {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Connectors List */}
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between px-1">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+
+                {/* Connectors Panel */}
+                <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col max-h-[520px]">
+                    <div className="px-6 py-4 border-b border-[var(--glass-border)] flex items-center justify-between shrink-0">
                         <h3 className="font-bold text-[var(--text-primary)]">{t('data.active_connectors')}</h3>
                         <span className="text-xs text-[var(--text-secondary)] bg-[var(--glass-surface)] px-2 py-0.5 rounded-full font-mono">{connectors.length}</span>
                     </div>
 
                     {connectors.length === 0 ? (
-                        <div className="p-10 text-center bg-[var(--bg-surface)] rounded-[24px] border border-dashed border-[var(--glass-border)] flex flex-col items-center gap-3">
+                        <div className="p-10 text-center flex flex-col items-center gap-3 flex-1 justify-center">
                             <div className="w-14 h-14 bg-[var(--glass-surface)] rounded-2xl flex items-center justify-center text-[var(--text-tertiary)]">
                                 {ICONS.PLUG}
                             </div>
@@ -301,11 +302,11 @@ export const DataPlatform: React.FC = () => {
                             </button>
                         </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="overflow-y-auto no-scrollbar overscroll-contain p-4 space-y-3">
                             {connectors.map(c => (
-                                <div key={c.id} className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm flex justify-between items-center group hover:border-[var(--glass-border-hover,var(--glass-border))] transition-all">
+                                <div key={c.id} className="bg-[var(--glass-surface)] p-4 rounded-[18px] border border-[var(--glass-border)] flex justify-between items-center group hover:bg-[var(--glass-surface-hover)] transition-all">
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className="w-10 h-10 rounded-xl bg-[var(--glass-surface)] flex items-center justify-center text-lg shrink-0">
+                                        <div className="w-10 h-10 rounded-xl bg-[var(--bg-surface)] flex items-center justify-center text-lg shrink-0 shadow-sm">
                                             {CONNECTOR_ICONS[c.type] || '🔌'}
                                         </div>
                                         <div className="min-w-0">
@@ -314,8 +315,8 @@ export const DataPlatform: React.FC = () => {
                                                 <h4 className="font-bold text-[var(--text-primary)] text-sm truncate">{c.name}</h4>
                                             </div>
                                             <div className="text-xs text-[var(--text-tertiary)] mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                                <span className="font-mono bg-[var(--glass-surface)] px-1.5 py-0.5 rounded text-[10px]">{t(`data.type_${c.type}`)}</span>
-                                                <span className="text-[var(--text-tertiary)]">•</span>
+                                                <span className="font-mono bg-[var(--bg-surface)] px-1.5 py-0.5 rounded text-[10px]">{t(`data.type_${c.type}`)}</span>
+                                                <span>•</span>
                                                 <span className="flex items-center gap-1">
                                                     {ICONS.CLOCK}
                                                     {c.lastSyncAt ? formatDateTime(c.lastSyncAt) : t('data.never')}
@@ -346,22 +347,22 @@ export const DataPlatform: React.FC = () => {
                     )}
                 </div>
 
-                {/* Job History */}
-                <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden h-fit">
-                    <div className="px-6 py-4 border-b border-[var(--glass-border)] flex items-center justify-between">
+                {/* Job History Panel */}
+                <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col max-h-[520px]">
+                    <div className="px-6 py-4 border-b border-[var(--glass-border)] flex items-center justify-between shrink-0">
                         <h3 className="font-bold text-[var(--text-primary)]">{t('data.sync_history')}</h3>
                         <span className="text-xs text-[var(--text-secondary)] bg-[var(--glass-surface)] px-2 py-0.5 rounded-full font-mono">{jobs.length}</span>
                     </div>
 
                     {jobs.length === 0 ? (
-                        <div className="p-8 text-center text-[var(--text-secondary)]">
+                        <div className="p-8 text-center text-[var(--text-secondary)] flex flex-col items-center justify-center flex-1">
                             <p className="text-2xl mb-2">📋</p>
                             <p className="text-sm font-medium">{t('data.empty_jobs')}</p>
                             <p className="text-xs mt-1 text-[var(--text-tertiary)]">{t('data.empty_jobs_hint')}</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-[var(--glass-border)]">
-                            {jobs.slice(0, 8).map(job => {
+                        <div className="overflow-y-auto no-scrollbar overscroll-contain divide-y divide-[var(--glass-border)]">
+                            {jobs.map(job => {
                                 const connector = connectors.find(c => c.id === job.connectorId);
                                 return (
                                     <div key={job.id} className="px-6 py-3.5 flex justify-between items-center hover:bg-[var(--glass-surface)] transition-colors">
