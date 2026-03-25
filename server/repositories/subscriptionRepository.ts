@@ -18,9 +18,12 @@ class SubscriptionRepository extends BaseRepository {
     return this.withTenant(tenantId, async (client) => {
       const now = new Date();
       const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      // Upsert: if tenant already has a subscription (e.g. race condition or RLS miss), return existing
       const result = await client.query(
         `INSERT INTO ${this.tableName} (tenant_id, plan_id, status, current_period_start, current_period_end)
          VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (tenant_id) DO UPDATE
+           SET updated_at = NOW()
          RETURNING *`,
         [tenantId, data.planId, data.status || 'ACTIVE', now.toISOString(), periodEnd.toISOString()]
       );

@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { ComplianceConfig, DlpRule, SecuritySession } from '../types';
 import { useTranslation } from '../services/i18n';
+import { Dropdown } from '../components/Dropdown';
 
 const ICONS = {
     LOCK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
@@ -13,8 +14,20 @@ const ICONS = {
     CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 
+const ACTION_ICONS = {
+    REDACT: <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
+    BLOCK:  <svg className="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>,
+    LOG_ONLY: <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
+};
+
 const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
     const [form, setForm] = useState({ name: '', pattern: '', action: 'REDACT' });
+
+    const actionOptions = useMemo(() => [
+        { value: 'REDACT',   label: t('security.action_redact'), icon: ACTION_ICONS.REDACT },
+        { value: 'BLOCK',    label: t('security.action_block'),  icon: ACTION_ICONS.BLOCK },
+        { value: 'LOG_ONLY', label: t('security.action_log'),    icon: ACTION_ICONS.LOG_ONLY },
+    ], [t]);
 
     if (!isOpen) return null;
 
@@ -36,11 +49,11 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('security.label_action')}</label>
-                        <select className="w-full border rounded-xl px-4 py-2 text-sm bg-[var(--bg-surface)] focus:ring-2 focus:ring-indigo-500/20 outline-none" value={form.action} onChange={e => setForm({...form, action: e.target.value})}>
-                            <option value="REDACT">{t('security.action_redact')}</option>
-                            <option value="BLOCK">{t('security.action_block')}</option>
-                            <option value="LOG_ONLY">{t('security.action_log')}</option>
-                        </select>
+                        <Dropdown
+                            value={form.action}
+                            onChange={(v) => setForm({ ...form, action: v as string })}
+                            options={actionOptions}
+                        />
                     </div>
                     <button onClick={() => onSave(form)} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl mt-2 hover:bg-slate-800 transition-colors">{t('security.btn_save_rule')}</button>
                 </div>
