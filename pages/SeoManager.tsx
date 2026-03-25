@@ -230,8 +230,6 @@ const SerpPageDropdown: React.FC<{
                             const cfg = getEffectiveCfg(route.key, overrides);
                             const status = getSerpStatus(cfg.title, cfg.description);
                             const isSelected = route.key === value;
-                            const titlePreview = cfg.title.slice(0, 58) + (cfg.title.length > 58 ? '…' : '');
-                            const descPreview = cfg.description.slice(0, 100) + (cfg.description.length > 100 ? '…' : '');
                             return (
                                 <button
                                     key={route.key}
@@ -240,12 +238,13 @@ const SerpPageDropdown: React.FC<{
                                     className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-[var(--glass-surface)]'}`}
                                 >
                                     {/* Status dot */}
-                                    <span className={`w-2 h-2 rounded-full shrink-0 mt-2 ring-2 ${statusDotClass(status)} ${statusRingClass(status)}`} />
+                                    <span className={`w-2 h-2 rounded-full shrink-0 mt-[7px] ring-2 ${statusDotClass(status)} ${statusRingClass(status)}`} />
 
                                     {/* Mini SERP snippet */}
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className={`text-xs font-bold truncate ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-[var(--text-primary)]'}`}>
+                                        {/* Row 1: page name + route badge + checkmark — NO flex-wrap so label truncates correctly */}
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <span className={`text-xs font-bold flex-1 min-w-0 truncate ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-[var(--text-primary)]'}`}>
                                                 {route.label}
                                             </span>
                                             <span className="text-[10px] font-mono text-[var(--text-muted)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded shrink-0">
@@ -257,11 +256,13 @@ const SerpPageDropdown: React.FC<{
                                                 </svg>
                                             )}
                                         </div>
+                                        {/* Row 2: SERP title — CSS truncate đủ, không cần JS slice */}
                                         <div className="text-xs text-[#1a0dab] dark:text-blue-400 truncate mt-0.5 leading-tight">
-                                            {titlePreview}
+                                            {cfg.title}
                                         </div>
+                                        {/* Row 3: SERP description */}
                                         <div className="text-[11px] text-[#4d5156] dark:text-slate-400 truncate leading-snug">
-                                            {descPreview}
+                                            {cfg.description}
                                         </div>
                                     </div>
                                 </button>
