@@ -288,10 +288,11 @@ const SerpPageDropdown: React.FC<{
 };
 
 // ── Tab: SERP Preview ──────────────────────────────────────────────────────────
-const SerpPreview: React.FC<{ selectedKey: string; onSelect: (k: string) => void }> = ({ selectedKey, onSelect }) => {
-    const [overrides, setOverrides] = useState<Record<string, { title: string; description: string }>>(getSEOOverrides);
-    // Refresh overrides from localStorage each time the component mounts (tab switch)
-    useEffect(() => { setOverrides(getSEOOverrides()); }, []);
+const SerpPreview: React.FC<{
+    selectedKey: string;
+    onSelect: (k: string) => void;
+    overrides: Record<string, { title: string; description: string }>;
+}> = ({ selectedKey, onSelect, overrides }) => {
     const cfg = getEffectiveCfg(selectedKey, overrides);
     const titleLen = cfg.title.length;
     const descLen = cfg.description.length;
@@ -391,8 +392,11 @@ const SerpPreview: React.FC<{ selectedKey: string; onSelect: (k: string) => void
 };
 
 // ── Tab: Meta Editor ───────────────────────────────────────────────────────────
-const MetaEditor: React.FC<{ onAfterSave?: (key: string) => void }> = ({ onAfterSave }) => {
-    const [overrides, setOverrides] = useState<Record<string, { title: string; description: string }>>(getSEOOverrides);
+const MetaEditor: React.FC<{
+    overrides: Record<string, { title: string; description: string }>;
+    onOverridesChange: (next: Record<string, { title: string; description: string }>) => void;
+    onAfterSave?: (key: string) => void;
+}> = ({ overrides, onOverridesChange, onAfterSave }) => {
     const [edits, setEdits] = useState<Record<string, { title: string; description: string }>>({});
     const [saved, setSaved] = useState<string | null>(null);
     const [previewing, setPreviewing] = useState<string | null>(null);
@@ -408,7 +412,9 @@ const MetaEditor: React.FC<{ onAfterSave?: (key: string) => void }> = ({ onAfter
         const t = getTitle(key);
         const d = getDesc(key);
         saveSEOOverride(key, t, d);
-        setOverrides(getSEOOverrides());
+        // Propagate new overrides to parent so SERP Preview updates immediately —
+        // no tab switch required.
+        onOverridesChange(getSEOOverrides());
         setEdits(prev => { const next = { ...prev }; delete next[key]; return next; });
         // Apply the saved route's SEO immediately so the admin can verify it in the browser tab,
         // then restore admin page noindex after 3 seconds.
@@ -425,7 +431,7 @@ const MetaEditor: React.FC<{ onAfterSave?: (key: string) => void }> = ({ onAfter
 
     const handleReset = (key: string) => {
         clearSEOOverride(key);
-        setOverrides(getSEOOverrides());
+        onOverridesChange(getSEOOverrides());
         setEdits(prev => { const next = { ...prev }; delete next[key]; return next; });
         // Restore admin page SEO to preserve noindex
         updatePageSEO('seo-manager');
@@ -805,6 +811,9 @@ export const SeoManager: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabId>('SERP');
     // Shared SERP selected key — persists across tab switches and auto-updates after Meta save
     const [serpSelectedKey, setSerpSelectedKey] = useState('');
+    // Single source of truth for overrides — shared by SERP Preview and Meta Editor
+    // so saves in Meta tab are reflected in SERP tab immediately without a remount.
+    const [overrides, setOverrides] = useState<Record<string, { title: string; description: string }>>(getSEOOverrides);
 
     useEffect(() => {
         db.getCurrentUser().then(u => {
@@ -885,8 +894,8 @@ export const SeoManager: React.FC = () => {
 
             {/* ── Tab Content ─────────────────────────────────────────────── */}
             <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-[20px] shadow-sm p-4 sm:p-6">
-                {activeTab === 'SERP'   && <SerpPreview selectedKey={serpSelectedKey} onSelect={setSerpSelectedKey} />}
-                {activeTab === 'META'   && <MetaEditor onAfterSave={setSerpSelectedKey} />}
+                {activeTab === 'SERP'   && <SerpPreview selectedKey={serpSelectedKey} onSelect={setSerpSelectedKey} overrides={overrides} />}
+                {activeTab === 'META'   && <MetaEditor overrides={overrides} onOverridesChange={setOverrides} onAfterSave={setSerpSelectedKey} />}
                 {activeTab === 'HEALTH' && <HealthChecklist />}
                 {activeTab === 'SCHEMA' && <StructuredData />}
             </div>
