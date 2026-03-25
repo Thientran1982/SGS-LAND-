@@ -135,7 +135,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
 
 export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDuplicate, t }: { listing: Listing, onEdit: () => void, onDelete: () => void, onCopy?: (code: string) => void, onDuplicate: () => void, t: any }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [coords, setCoords] = useState({ top: 0, left: 0 });
+    const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number }>({ left: 0 });
     const buttonRef = useRef<HTMLButtonElement>(null);
 
     const toggleMenu = (e: React.MouseEvent) => {
@@ -144,10 +144,12 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
             setIsOpen(false);
         } else if (buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
-            setCoords({
-                top: rect.bottom + 5 + window.scrollY,
-                left: Math.min(rect.right - 150 + window.scrollX, window.innerWidth - 160)
-            });
+            const left = Math.min(rect.right - 150, window.innerWidth - 160);
+            if (window.innerHeight - rect.bottom < 220) {
+                setCoords({ bottom: window.innerHeight - rect.top + 4, left });
+            } else {
+                setCoords({ top: rect.bottom + 5, left });
+            }
             setIsOpen(true);
         }
     };
@@ -179,7 +181,7 @@ export const ListingActionMenu = memo(({ listing, onEdit, onDelete, onCopy, onDu
             {isOpen && createPortal(
                 <div 
                     className="fixed z-[9999] w-48 bg-[var(--bg-surface)] dark:bg-slate-900 rounded-xl shadow-2xl border border-[var(--glass-border)] dark:border-white/10 overflow-hidden animate-enter origin-top-right"
-                    style={{ top: coords.top, left: coords.left }}
+                    style={{ top: coords.top ?? 'auto', bottom: coords.bottom ?? 'auto', left: coords.left }}
                     onClick={(e) => e.stopPropagation()}
                 >
                     <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit(); }} className="w-full text-left px-4 py-2.5 text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800 flex items-center gap-2">{LISTING_ICONS.EDIT} {t('inventory.action_edit')}</button>
