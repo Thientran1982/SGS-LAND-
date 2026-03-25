@@ -4,6 +4,7 @@ import { db } from '../services/dbApi';
 import { aiService } from '../services/aiService';
 import { AiTenantConfig, PromptTemplate, AiSafetyLog, AiModelType } from '../types';
 import { useTranslation } from '../services/i18n';
+import { Dropdown } from '../components/Dropdown';
 
 interface ConfigTabProps {
     config: AiTenantConfig;
@@ -88,14 +89,18 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
                     </div>
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('ai.default')}</label>
-                    <select 
-                        className="w-full mt-1 border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm bg-[var(--bg-surface)] outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('ai.default')}</label>
+                    <Dropdown
                         value={config.defaultModel}
-                        onChange={(e) => onUpdateConfig('defaultModel', e.target.value)}
-                    >
-                        {config.allowedModels?.map(m => <option key={m} value={m}>{formatModelName(m)}</option>)}
-                    </select>
+                        onChange={(v) => onUpdateConfig('defaultModel', v as AiModelType)}
+                        options={(config.allowedModels || []).map(m => ({
+                            value: m,
+                            label: formatModelName(m),
+                            icon: <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" /></svg>
+                        }))}
+                        disabled={!config.allowedModels?.length}
+                        placeholder="Chọn mô hình mặc định"
+                    />
                 </div>
             </div>
         </div>
