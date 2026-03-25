@@ -448,7 +448,7 @@ async function startServer() {
         try {
           await leadRepository.update(tenantId, leadData.id, { score: savedScore }, (req as any).user?.id, (req as any).user?.role || 'ADMIN');
           logger.info(`AI score persisted for lead ${leadData.id}: ${savedScore.score}`);
-          broadcastIo?.emit('lead_scored', { leadId: leadData.id, score: savedScore });
+          broadcastIo?.to(`tenant:${tenantId}`).emit('lead_scored', { leadId: leadData.id, score: savedScore });
         } catch (e) {
           logger.warn(`Could not persist AI score for lead ${leadData.id}`);
         }
@@ -884,9 +884,23 @@ async function startServer() {
 
       const history = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
 
+      // Persist visitor's inbound message BEFORE calling AI so the full conversation
+      // (including this message) is visible in Inbox and used as context for the AI
+      const visitorMsg = await interactionRepository.create(PUBLIC_TENANT, {
+        leadId,
+        channel: 'WEB',
+        direction: 'INBOUND',
+        type: 'TEXT',
+        content: msgContent,
+        metadata: { source: 'livechat_widget' }
+      });
+
+      // Include the just-saved message so AI has complete context
+      const historyWithLatest = [...history, visitorMsg];
+
       const { aiService } = await import('./server/ai');
       const t = serverT(lang || 'vn');
-      const result = await aiService.processMessage(lead, msgContent, history, t, PUBLIC_TENANT);
+      const result = await aiService.processMessage(lead, msgContent, historyWithLatest, t, PUBLIC_TENANT);
 
       const aiReply = await interactionRepository.create(PUBLIC_TENANT, {
         leadId,
@@ -899,7 +913,7 @@ async function startServer() {
 
       res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
     } catch (error) {
-      console.error('Public AI livechat error:', error);
+      logger.error('Public AI livechat error:', error as Error);
       res.status(500).json({ error: 'AI đang bận, vui lòng thử lại sau' });
     }
   });

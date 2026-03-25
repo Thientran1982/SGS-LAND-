@@ -2,6 +2,7 @@ import { GoogleGenAI, GenerateContentResponse, Type, Schema } from "@google/gena
 import { Lead, Interaction, AgentTraceStep, AgentArtifact, AgentTraceResponse } from '../types';
 import { listingRepository, ListingFilters } from './repositories/listingRepository';
 import { applyAVM, getRegionalBasePrice, LegalStatus } from './valuationEngine';
+import { logger } from './middleware/logger';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -99,7 +100,7 @@ const TOOL_EXECUTOR = {
 
             return `Tìm thấy ${result.total} bất động sản (hiển thị ${result.data.length}):\n${formatted}`;
         } catch (error) {
-            console.error('Inventory search error:', error);
+            logger.error('Inventory search error:', error);
             return "Lỗi khi tìm kiếm kho hàng. Vui lòng thử lại.";
         }
     },
@@ -197,7 +198,7 @@ export class StateGraph {
 
         while (currentNode && currentNode !== 'END') {
             if (++iterations > MAX_ITERATIONS) {
-                console.error(`[StateGraph] Max iterations (${MAX_ITERATIONS}) exceeded. Forcing END.`);
+                logger.error(`[StateGraph] Max iterations (${MAX_ITERATIONS}) exceeded. Forcing END.`);
                 currentState.finalResponse = currentState.t('ai.msg_system_busy');
                 break;
             }
@@ -217,7 +218,7 @@ export class StateGraph {
                     currentNode = 'END';
                 }
             } catch (error: any) {
-                console.error(`Error in node ${currentNode}:`, error);
+                logger.error(`Error in node ${currentNode}:`, error);
                 currentState.trace.push({ id: `err_${Date.now()}`, node: 'ERROR', status: 'ERROR', output: error.message, timestamp: Date.now() });
                 currentState.finalResponse = currentState.t('ai.msg_system_busy');
                 currentState.error = error;
@@ -585,7 +586,7 @@ class AiEngine {
                 reasoning: result.reasoning || 'Thiếu dữ liệu để đánh giá chính xác.'
             };
         } catch (e) {
-            console.error("AI Scoring Error:", e);
+            logger.error("AI Scoring Error:", e);
             return { score: 50, grade: 'C', reasoning: 'Lỗi hệ thống AI.' };
         }
     }
@@ -626,7 +627,7 @@ class AiEngine {
 
             return response.text || (lang === 'en' ? "Unable to analyze lead at this time." : "Không thể phân tích khách hàng vào lúc này.");
         } catch (e) {
-            console.error("AI Summarization Error:", e);
+            logger.error("AI Summarization Error:", e);
             return lang === 'en' ? "Error during AI analysis." : "Lỗi trong quá trình phân tích AI.";
         }
     }
