@@ -4,6 +4,7 @@ import { useSocket } from '../services/websocket';
 import { Interaction, Channel, Direction } from '../types';
 import { MessageBubble } from '../components/ChatUI';
 import { motion } from 'motion/react';
+import { getSEOOverrides, ROUTE_SEO } from '../utils/seo';
 
 // ---------------------------------------------------------------------------
 // Public API helpers — no JWT required, all routes are rate-limited
@@ -68,8 +69,12 @@ export default function LiveChat() {
         return () => window.removeEventListener('hashchange', handler);
     }, []);
     const w = window as any;
-    const chatTitle = chatParams.get('title') || w.SGSLAND_CHAT_TITLE || t('livechat.title');
-    const chatDesc  = chatParams.get('desc')  || w.SGSLAND_CHAT_DESC  || t('livechat.subtitle');
+    // Priority: URL params → embed window globals → SEO overrides (localStorage) → default translation
+    const seoOverrides = getSEOOverrides();
+    const livechatSEO = seoOverrides['livechat'];
+    const livechatBase = ROUTE_SEO['livechat'];
+    const chatTitle = chatParams.get('title') || w.SGSLAND_CHAT_TITLE || livechatSEO?.title || livechatBase?.title || t('livechat.title');
+    const chatDesc  = chatParams.get('desc')  || w.SGSLAND_CHAT_DESC  || livechatSEO?.description || livechatBase?.description || t('livechat.subtitle');
 
     // Load lead from localStorage if exists
     useEffect(() => {

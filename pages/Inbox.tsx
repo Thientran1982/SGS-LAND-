@@ -9,6 +9,7 @@ import { useTranslation } from '../services/i18n';
 import { MessageBubble } from '../components/ChatUI';
 import { smartMatch } from '../utils/textUtils';
 import { resolveContent } from '../utils/i18nUtils';
+import { getSEOOverrides, ROUTE_SEO } from '../utils/seo';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useSocket } from '../services/websocket';
 import { motion, AnimatePresence } from 'motion/react';
@@ -58,8 +59,15 @@ export const Inbox: React.FC = () => {
     const [streamingMessage, setStreamingMessage] = useState<string>('');
     const [isAssignOpen, setIsAssignOpen] = useState(false);
     const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
-    const [widgetTitle, setWidgetTitle] = useState('SGS Land Live Chat');
-    const [widgetDesc, setWidgetDesc] = useState('Chúng tôi sẵn sàng hỗ trợ bạn 24/7');
+    // Initialize from SEO overrides → ROUTE_SEO default → hardcoded fallback
+    const [widgetTitle, setWidgetTitle] = useState(() => {
+        const ov = getSEOOverrides();
+        return ov['livechat']?.title || ROUTE_SEO['livechat']?.title || 'SGS Land Live Chat';
+    });
+    const [widgetDesc, setWidgetDesc] = useState(() => {
+        const ov = getSEOOverrides();
+        return ov['livechat']?.description || ROUTE_SEO['livechat']?.description || 'Chúng tôi sẵn sàng hỗ trợ bạn 24/7';
+    });
     
     // --- SUPERVISOR STATE ---
     const [autoResponseMap, setAutoResponseMap] = useState<Record<string, boolean>>({}); // Toggle per thread

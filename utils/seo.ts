@@ -144,6 +144,12 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
     path: '/seo-manager',
     noIndex: true,
   },
+  // ROUTES.LIVE_CHAT = 'livechat'
+  livechat: {
+    title: 'Chat Trực Tiếp | Hỗ Trợ Khách Hàng 24/7 - SGS LAND',
+    description: 'Kết nối trực tiếp với đội ngũ tư vấn SGS LAND qua Live Chat. Được hỗ trợ 24/7 về bất động sản, định giá AI và các dịch vụ.',
+    path: '/livechat',
+  },
 };
 
 function setMeta(selector: string, attr: string, value: string) {

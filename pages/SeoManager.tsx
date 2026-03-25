@@ -55,6 +55,7 @@ const ROUTE_LABELS: Record<string, string> = {
     leads:            'CRM Leads (nội bộ)',
     billing:          'Thanh toán',
     'seo-manager':    'Quản Lý SEO (admin)',
+    livechat:         'Live Chat (trang chat công khai)',
 };
 
 // Derived from ROUTE_SEO so it's always in sync — no hardcoding.
