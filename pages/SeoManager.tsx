@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
 import { UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -87,6 +88,153 @@ const CharCount: React.FC<{ value: string; min: number; max: number }> = ({ valu
     return <span className={`text-2xs font-bold tabular-nums ${cls}`}>{len}/{max}</span>;
 };
 
+// ── SERP Status Helpers ────────────────────────────────────────────────────────
+
+function getSerpStatus(title: string, desc: string): 'green' | 'amber' | 'red' {
+    const tLen = title.length;
+    const dLen = desc.length;
+    if (tLen >= 30 && tLen <= 60 && dLen >= 120 && dLen <= 160) return 'green';
+    if (tLen > 0 && dLen > 0) return 'amber';
+    return 'red';
+}
+
+function statusDotClass(status: 'green' | 'amber' | 'red') {
+    return status === 'green' ? 'bg-emerald-500' : status === 'amber' ? 'bg-amber-400' : 'bg-rose-500';
+}
+
+function statusRingClass(status: 'green' | 'amber' | 'red') {
+    return status === 'green' ? 'ring-emerald-200 dark:ring-emerald-800' : status === 'amber' ? 'ring-amber-200 dark:ring-amber-800' : 'ring-rose-200 dark:ring-rose-800';
+}
+
+// ── SerpPageDropdown ────────────────────────────────────────────────────────────
+
+const SerpPageDropdown: React.FC<{
+    value: string;
+    onChange: (key: string) => void;
+    routes: { key: string; label: string }[];
+    overrides: Record<string, { title: string; description: string }>;
+}> = ({ value, onChange, routes, overrides }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [coords, setCoords] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
+    const btnRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    const selected = routes.find(r => r.key === value) ?? routes[0];
+    const selectedCfg = getEffectiveCfg(value, overrides);
+    const selectedStatus = getSerpStatus(selectedCfg.title, selectedCfg.description);
+
+    const openMenu = () => {
+        if (btnRef.current) {
+            const rect = btnRef.current.getBoundingClientRect();
+            const menuW = Math.max(rect.width, 380);
+            const safeLeft = Math.min(rect.left, window.innerWidth - menuW - 12);
+            setCoords({ top: rect.bottom + 6, left: safeLeft, width: menuW });
+        }
+        setIsOpen(true);
+    };
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const handle = (e: MouseEvent) => {
+            const t = e.target as Node;
+            if (!btnRef.current?.contains(t) && !menuRef.current?.contains(t)) setIsOpen(false);
+        };
+        const handleScroll = () => setIsOpen(false);
+        document.addEventListener('mousedown', handle);
+        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', handleScroll);
+        return () => {
+            document.removeEventListener('mousedown', handle);
+            window.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('resize', handleScroll);
+        };
+    }, [isOpen]);
+
+    return (
+        <div className="relative">
+            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide block mb-1.5">Chọn trang</label>
+            <button
+                ref={btnRef}
+                type="button"
+                onClick={() => (isOpen ? setIsOpen(false) : openMenu())}
+                className={`w-full flex items-center gap-3 px-4 py-3 border rounded-xl bg-[var(--bg-surface)] transition-all outline-none text-left ${isOpen ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-[var(--glass-border)] hover:border-indigo-300 hover:shadow-sm'}`}
+            >
+                {/* Status dot */}
+                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ring-2 ${statusDotClass(selectedStatus)} ${statusRingClass(selectedStatus)}`} />
+
+                {/* Selected SERP tag */}
+                <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-[var(--text-primary)] truncate">{selected?.label ?? '—'}</div>
+                    <div className="text-xs font-mono text-[#4d5156] dark:text-slate-400 truncate">
+                        sgsland.vn{selectedCfg.path || '/'}
+                    </div>
+                </div>
+
+                {/* Chevron */}
+                <svg
+                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-500' : 'text-[var(--text-secondary)]'}`}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            {isOpen && createPortal(
+                <div
+                    ref={menuRef}
+                    className="fixed z-[10002] bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] overflow-hidden animate-scale-up"
+                    style={{ top: coords.top, left: coords.left, width: coords.width, maxHeight: 400, overflowY: 'auto' }}
+                >
+                    <div className="divide-y divide-[var(--glass-border)] no-scrollbar overscroll-contain">
+                        {routes.map(route => {
+                            const cfg = getEffectiveCfg(route.key, overrides);
+                            const status = getSerpStatus(cfg.title, cfg.description);
+                            const isSelected = route.key === value;
+                            const titlePreview = cfg.title.slice(0, 58) + (cfg.title.length > 58 ? '…' : '');
+                            const descPreview = cfg.description.slice(0, 100) + (cfg.description.length > 100 ? '…' : '');
+                            return (
+                                <button
+                                    key={route.key}
+                                    type="button"
+                                    onClick={() => { onChange(route.key); setIsOpen(false); }}
+                                    className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-[var(--glass-surface)]'}`}
+                                >
+                                    {/* Status dot */}
+                                    <span className={`w-2 h-2 rounded-full shrink-0 mt-2 ring-2 ${statusDotClass(status)} ${statusRingClass(status)}`} />
+
+                                    {/* Mini SERP snippet */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className={`text-xs font-bold truncate ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-[var(--text-primary)]'}`}>
+                                                {route.label}
+                                            </span>
+                                            <span className="text-[10px] font-mono text-[var(--text-muted)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded shrink-0">
+                                                /{route.key || ''}
+                                            </span>
+                                            {isSelected && (
+                                                <svg className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                        <div className="text-xs text-[#1a0dab] dark:text-blue-400 truncate mt-0.5 leading-tight">
+                                            {titlePreview}
+                                        </div>
+                                        <div className="text-[11px] text-[#4d5156] dark:text-slate-400 truncate leading-snug">
+                                            {descPreview}
+                                        </div>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>,
+                document.body
+            )}
+        </div>
+    );
+};
+
 // ── Tab: SERP Preview ──────────────────────────────────────────────────────────
 const SerpPreview: React.FC = () => {
     const [selectedKey, setSelectedKey] = useState('');
@@ -100,20 +248,12 @@ const SerpPreview: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-3">
-                <div className="flex-1">
-                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wide block mb-1.5">Chọn trang</label>
-                    <select
-                        value={selectedKey}
-                        onChange={e => setSelectedKey(e.target.value)}
-                        className="w-full border border-[var(--glass-border)] rounded-xl px-4 py-2.5 text-sm bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-                    >
-                        {ALL_ROUTES.map(r => (
-                            <option key={r.key} value={r.key}>{r.label}</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
+            <SerpPageDropdown
+                value={selectedKey}
+                onChange={setSelectedKey}
+                routes={ALL_ROUTES}
+                overrides={overrides}
+            />
 
             {/* Google SERP Mockup */}
             <div className="bg-white dark:bg-slate-900 border border-[var(--glass-border)] rounded-2xl p-6 shadow-sm font-sans">
