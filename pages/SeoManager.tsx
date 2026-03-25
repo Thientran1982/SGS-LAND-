@@ -214,7 +214,7 @@ const SerpPageDropdown: React.FC<{
             {isOpen && createPortal(
                 <div
                     ref={menuRef}
-                    className="fixed z-[10002] bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] animate-scale-up"
+                    className="fixed z-[10002] bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] animate-scale-up no-scrollbar"
                     style={{
                         ...(coords.openUp ? { bottom: coords.bottom } : { top: coords.top }),
                         left: coords.left,
@@ -225,7 +225,7 @@ const SerpPageDropdown: React.FC<{
                         transformOrigin: coords.openUp ? 'bottom center' : 'top center',
                     }}
                 >
-                    <div className="divide-y divide-[var(--glass-border)] overscroll-contain no-scrollbar">
+                    <div className="divide-y divide-[var(--glass-border)] overscroll-contain pb-2">
                         {routes.map(route => {
                             const cfg = getEffectiveCfg(route.key, overrides);
                             const status = getSerpStatus(cfg.title, cfg.description);
