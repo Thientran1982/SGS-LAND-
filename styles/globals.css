@@ -38,6 +38,27 @@ html.dark {
   scrollbar-width: none;
 }
 
+/* Thin scrollbar — overrides global hide for dropdown menus */
+.thin-scrollbar {
+  -ms-overflow-style: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-border) transparent;
+}
+.thin-scrollbar::-webkit-scrollbar {
+  display: block;
+  width: 4px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--glass-border);
+  border-radius: 4px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-muted);
+}
+
 /* Glassmorphism utility */
 .glass-card {
   background: var(--glass-surface);

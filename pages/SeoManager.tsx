@@ -214,7 +214,7 @@ const SerpPageDropdown: React.FC<{
             {isOpen && createPortal(
                 <div
                     ref={menuRef}
-                    className="fixed z-[10002] bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] animate-scale-up no-scrollbar"
+                    className="fixed z-[10002] bg-[var(--bg-surface)] rounded-2xl shadow-2xl border border-[var(--glass-border)] animate-scale-up thin-scrollbar"
                     style={{
                         ...(coords.openUp ? { bottom: coords.bottom } : { top: coords.top }),
                         left: coords.left,
