@@ -318,13 +318,19 @@ export class ListingRepository extends BaseRepository {
       const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
       const PARTNER_RESTRICTED = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
       // Visibility rules:
-      // - AVAILABLE-only queries (e.g. proposal picker): see all available listings.
       // - Project-scoped queries:
       //     SALES/MARKETING/VIEWER → see ALL units in the project.
       //     PARTNER_ADMIN/PARTNER_AGENT → see ONLY units assigned to them.
-      // - All other (non-project) queries for RESTRICTED roles: own + assigned listings.
-      const isAvailableOnlyQuery = filters?.status === 'AVAILABLE';
+      // - Proposal-picker context (status=AVAILABLE, noProjectCode NOT set):
+      //     RESTRICTED roles may see all available listings to propose to clients.
+      // - All other non-project queries for RESTRICTED roles: own + assigned listings only.
+      //     Inventory page always sends noProjectCode=true, which locks down RBAC.
       const isProjectQuery = !!filters?.projectCode;
+      // noProjectCode flag distinguishes inventory page from proposal picker:
+      //   inventory page always sets it; proposal picker never does.
+      const isInventoryContext = !!filters?.noProjectCode;
+      // AVAILABLE-only bypass is allowed only in non-inventory contexts (e.g. proposal picker).
+      const isAvailableOnlyQuery = !isInventoryContext && filters?.status === 'AVAILABLE';
       if (PARTNER_RESTRICTED.includes(userRole || '') && userId && isProjectQuery) {
         // Partner roles in project context: only their assigned units.
         conditions.push(`l.assigned_to = $${paramIndex}`);
