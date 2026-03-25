@@ -485,7 +485,19 @@ class AiEngine {
         t: (k: string) => string,
         tenantId?: string
     ): Promise<AgentTraceResponse> {
-        
+        // Graceful fallback when Gemini API key is not configured
+        if (!process.env.GEMINI_API_KEY && !process.env.API_KEY) {
+            return {
+                agent: 'SGS_AGENT',
+                content: t('ai.msg_system_busy'),
+                steps: [],
+                artifact: undefined,
+                confidence: 0,
+                sentiment: 'NEUTRAL',
+                suggestedAction: 'NONE'
+            };
+        }
+
         const initialState: AgentState = {
             lead,
             userMessage,
