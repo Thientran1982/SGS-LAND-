@@ -22,9 +22,9 @@ const ICONS = {
 const CONNECTOR_ICONS: Record<string, string> = {
     GOOGLE_SHEETS: '📊',
     HUBSPOT: '🟠',
+    ZOHO_CRM: '🟢',
     SALESFORCE: '☁️',
     WEBHOOK_EXPORT: '🔗',
-    CSV_IMPORT: '📁',
 };
 
 const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
@@ -97,7 +97,7 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                             />
                         </div>
                     )}
-                    {(form.type === ConnectorType.HUBSPOT || form.type === ConnectorType.SALESFORCE) && (
+                    {(form.type === ConnectorType.HUBSPOT || form.type === ConnectorType.SALESFORCE || form.type === ConnectorType.ZOHO_CRM) && (
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1.5">{t('data.api_key')}</label>
                             <input
@@ -113,7 +113,12 @@ const ConnectorModal = ({ isOpen, onClose, onSave, t }: any) => {
                 <div className="px-6 pb-6">
                     <button
                         onClick={() => onSave(form)}
-                        disabled={!form.name?.trim()}
+                        disabled={
+                            !form.name?.trim() ||
+                            (form.type === ConnectorType.GOOGLE_SHEETS && !String(form.config?.spreadsheetId || '').trim()) ||
+                            ((form.type === ConnectorType.HUBSPOT || form.type === ConnectorType.SALESFORCE || form.type === ConnectorType.ZOHO_CRM) && !String(form.config?.apiKey || '').trim()) ||
+                            (form.type === ConnectorType.WEBHOOK_EXPORT && !String(form.config?.targetUrl || '').trim())
+                        }
                         className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 shadow-lg transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         {t('common.save')}
