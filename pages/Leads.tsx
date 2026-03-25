@@ -1029,7 +1029,7 @@ export const Leads: React.FC = () => {
 
                     <div 
                         ref={filtersRef}
-                        className="flex gap-2 overflow-x-auto pb-2 px-1 -mx-1 no-scrollbar mask-linear-fade items-center scroll-smooth cursor-grab active:cursor-grabbing"
+                        className="flex gap-2 overflow-x-auto pb-2 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing"
                     >
                         <div className="min-w-[140px] shrink-0"><Dropdown value={stageFilter} onChange={(val) => setStageFilter(val as string)} options={stageOptions} className="text-xs" /></div>
                         <div className="min-w-[140px] shrink-0"><Dropdown value={sourceFilter} onChange={(val) => setSourceFilter(val as string)} options={sourceOptions} className="text-xs" /></div>

@@ -761,7 +761,7 @@ export const Inventory: React.FC = () => {
                         )}
                     </div>
 
-                    <div ref={filtersRef} className="flex gap-2 overflow-x-auto pb-1 px-1 -mx-1 no-scrollbar mask-linear-fade items-center scroll-smooth cursor-grab active:cursor-grabbing">
+                    <div ref={filtersRef} className="flex gap-2 overflow-x-auto pb-1 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing">
                         <div className="min-w-[140px] shrink-0"><Dropdown value={transactionFilter} onChange={(v) => setTransactionFilter(v as string)} options={transactionOptions} className="text-xs" /></div>
                         <div className="min-w-[140px] shrink-0"><Dropdown value={typeFilter} onChange={(v) => setTypeFilter(v as string)} options={typeOptions} className="text-xs" /></div>
                         <div className="min-w-[140px] shrink-0"><Dropdown value={statusFilter} onChange={(v) => setStatusFilter(v as string)} options={statusOptions} className="text-xs" /></div>
