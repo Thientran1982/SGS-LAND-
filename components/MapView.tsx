@@ -146,18 +146,14 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                         priceLabel = formatCurrency(listing.price);
                     }
 
-                    // Approximate pins use a muted palette to signal "not exact"
-                    const pillBg = approximate ? '#64748b' : '#0f172a';
-                    const outerTriBorder = approximate ? '#64748b' : '#0f172a';
-
                     const pinHtml = `
-                        <div class="sgs-price-pin" style="display:inline-flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);transform-origin:bottom center;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(0,0,0,${approximate ? '0.18' : '0.30'}));">
-                            <div style="background:${pillBg};color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:8px;border:2px solid #fff;white-space:nowrap;letter-spacing:0.3px;line-height:1.4;transition:background 0.15s,transform 0.15s;${approximate ? 'opacity:0.85;' : ''}">
+                        <div class="sgs-price-pin" style="display:inline-flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);transform-origin:bottom center;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.30));">
+                            <div style="background:#0f172a;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:8px;border:2px solid #fff;white-space:nowrap;letter-spacing:0.3px;line-height:1.4;transition:background 0.15s,transform 0.15s;">
                                 ${approximate ? '~&thinsp;' : ''}${priceLabel}
                             </div>
                             <div style="position:relative;width:20px;height:10px;margin-top:-1px;flex-shrink:0;">
                                 <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:11px solid #fff;"></div>
-                                <div style="position:absolute;top:2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid ${outerTriBorder};"></div>
+                                <div style="position:absolute;top:2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid #0f172a;"></div>
                             </div>
                         </div>
                     `;
