@@ -821,7 +821,7 @@ export const Dashboard: React.FC = () => {
                                                 <div className="flex items-center gap-1 justify-end">
                                                     <span className={`font-bold text-sm ${agent.slaScore >= 90 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'}`}>{agent.slaScore}/100</span>
                                                 </div>
-                                                <div className="text-2xs text-[var(--text-secondary)] font-medium">{t('dash.avg_abbr')}: {agent.avgResponseTime}</div>
+                                                <div className="text-2xs text-[var(--text-secondary)] font-medium">{t('dash.avg_abbr')}: {agent.avgResponseMinutes != null ? `${agent.avgResponseMinutes} ${t('dash.minutes')}` : 'N/A'}</div>
                                             </div>
                                         </div>
                                     </div>

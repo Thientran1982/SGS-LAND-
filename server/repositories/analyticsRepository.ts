@@ -28,7 +28,7 @@ export interface AnalyticsSummary {
   leadsTrend: { date: string; count: number }[];
   recentActivities: { type: string; content: string; time: string }[];
   marketPulse: { location: string; area: number; price: number; interest: number }[];
-  agentLeaderboard: { name: string; avatar: string; deals: number; closeRate: number; slaScore: number; avgResponseTime: string }[];
+  agentLeaderboard: { name: string; avatar: string | null; deals: number; closeRate: number; slaScore: number; avgResponseMinutes: number | null }[];
   // Scope context for the frontend to display correctly
   scopeLabel: string;   // e.g. "Toàn công ty" | "Dữ liệu của bạn"
 }
@@ -365,11 +365,21 @@ export class AnalyticsRepository extends BaseRepository {
         SELECT
           u.id,
           u.name,
-          COALESCE(NULLIF(TRIM(u.avatar), ''), 'https://api.dicebear.com/7.x/initials/svg?seed=' || encode(u.name::bytea, 'base64')) as avatar,
+          -- Return actual avatar URL if set; NULL otherwise.
+          -- Frontend AgentAvatar handles NULL gracefully with a coloured initials badge —
+          -- much better than a DiceBear URL keyed on base64(name) which shows wrong initials.
+          NULLIF(TRIM(COALESCE(u.avatar, '')), '') as avatar,
           COUNT(l.id) FILTER (WHERE l.stage = 'WON')::int as deals,
+          -- Close rate = WON / resolved (WON + LOST).
+          -- Dividing by total leads (including in-progress) underestimates the actual win rate
+          -- because those leads haven't reached a terminal state yet — same fix as conversionByPeriod.
           CASE
-            WHEN COUNT(l.id)::int > 0
-            THEN ROUND((COUNT(l.id) FILTER (WHERE l.stage = 'WON')::numeric / COUNT(l.id)::numeric) * 100)
+            WHEN (COUNT(l.id) FILTER (WHERE l.stage = 'WON') + COUNT(l.id) FILTER (WHERE l.stage = 'LOST')) > 0
+            THEN ROUND(
+              COUNT(l.id) FILTER (WHERE l.stage = 'WON')::numeric
+              / (COUNT(l.id) FILTER (WHERE l.stage = 'WON') + COUNT(l.id) FILTER (WHERE l.stage = 'LOST'))::numeric
+              * 100
+            )
             ELSE 0
           END::int as close_rate,
           COUNT(l.id)::int as total_leads,
@@ -514,11 +524,12 @@ export class AnalyticsRepository extends BaseRepository {
         const slaScore = Math.min(100, Math.round(row.close_rate * 0.7 + responseBonus));
         return {
           name: row.name,
-          avatar: row.avatar,
+          avatar: row.avatar ?? null,
           deals: row.deals,
           closeRate: row.close_rate,
           slaScore,
-          avgResponseTime: avgMins != null ? `${avgMins} phút` : 'N/A',
+          // Return raw minutes as a number so the frontend can localise the unit label.
+          avgResponseMinutes: avgMins,
         };
       });
 
