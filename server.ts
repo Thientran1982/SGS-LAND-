@@ -832,6 +832,10 @@ async function startServer() {
         stage: stage || 'NEW',
         assignedTo,
       });
+      // Notify Inbox in real-time so the new thread appears without a page refresh
+      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('lead_created', {
+        id: lead.id, name: lead.name, assignedTo: lead.assignedTo,
+      });
       // Return only non-sensitive confirmation — never expose PII to anonymous callers
       res.status(201).json({ id: lead.id, success: true });
     } catch (error) {
@@ -869,14 +873,20 @@ async function startServer() {
       }
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' }) as any;
+      const resolvedDirection = direction === 'OUTBOUND' ? 'OUTBOUND' : 'INBOUND';
       const msg = await interactionRepository.create(PUBLIC_TENANT, {
         leadId,
         channel: 'WEB',
-        direction: direction === 'OUTBOUND' ? 'OUTBOUND' : 'INBOUND',
+        direction: resolvedDirection,
         type: 'TEXT',
         content: String(content).trim().slice(0, 2000),
         metadata: metadata || {}
       });
+      // Push real-time updates to authenticated agents in Inbox
+      // 1. Active chat pane (anyone currently viewing this lead's conversation)
+      broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: msg });
+      // 2. Inbox sidebar (thread list + unread badge) for all agents in the tenant
+      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: msg });
       res.status(201).json({ message: msg });
     } catch (error) {
       console.error('Public livechat send message error:', error);
@@ -908,6 +918,9 @@ async function startServer() {
         content: msgContent,
         metadata: { source: 'livechat_widget' }
       });
+      // Notify Inbox of the visitor's message in real-time
+      broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: visitorMsg });
+      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: visitorMsg });
 
       // Include the just-saved message so AI has complete context
       const historyWithLatest = [...history, visitorMsg];
@@ -924,6 +937,9 @@ async function startServer() {
         content: result.content,
         metadata: { isAgent: true }
       });
+      // Notify Inbox of the AI reply so agents see the outgoing response too
+      broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
+      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: aiReply });
 
       res.json({ reply: aiReply, artifact: result.artifact, suggestedAction: result.suggestedAction });
     } catch (error) {
