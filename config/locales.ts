@@ -1470,6 +1470,9 @@ export const DICTIONARY = {
         "profile.perf_sla_excellent": "Xuất sắc",
         "profile.perf_sla_good": "Tốt",
         "profile.perf_sla_needs_work": "Cần cải thiện",
+        "profile.perf_close_formula": "Thắng / (Thắng + Thua)",
+        "profile.perf_billion": "tỷ",
+        "profile.perf_million": "tr",
 
         "market.title": "Kho Ứng Dụng",
         "market.subtitle": "Mở rộng tính năng với các tiện ích tích hợp.",
@@ -3502,6 +3505,9 @@ export const DICTIONARY = {
         "profile.perf_sla_excellent": "Excellent",
         "profile.perf_sla_good": "Good",
         "profile.perf_sla_needs_work": "Needs Improvement",
+        "profile.perf_close_formula": "WON / (WON + LOST)",
+        "profile.perf_billion": "B",
+        "profile.perf_million": "M",
 
         "market.title": "App Store",
         "market.subtitle": "Extend features with integrated apps.",

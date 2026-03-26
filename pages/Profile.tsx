@@ -782,17 +782,17 @@ export const Profile: React.FC = () => {
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_close_rate')}</p>
                                                     <p className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{perfData.closeRate}<span className="text-lg font-bold">%</span></p>
-                                                    <p className="text-xs text-[var(--text-secondary)] mt-1">WON / (WON+LOST)</p>
+                                                    <p className="text-xs text-[var(--text-secondary)] mt-1">{t('profile.perf_close_formula')}</p>
                                                 </div>
                                                 {/* Revenue */}
                                                 <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
                                                     <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_revenue')}</p>
                                                     <p className="text-2xl font-extrabold text-violet-600 dark:text-violet-400">
                                                         {perfData.revenue >= 1e9
-                                                            ? `${(perfData.revenue / 1e9).toFixed(1)} tỷ`
+                                                            ? `${(perfData.revenue / 1e9).toFixed(1)} ${t('profile.perf_billion')}`
                                                             : perfData.revenue >= 1e6
-                                                            ? `${(perfData.revenue / 1e6).toFixed(0)} tr`
-                                                            : perfData.revenue.toLocaleString('vi-VN')}
+                                                            ? `${(perfData.revenue / 1e6).toFixed(0)} ${t('profile.perf_million')}`
+                                                            : perfData.revenue.toLocaleString()}
                                                     </p>
                                                     <p className="text-xs text-[var(--text-secondary)] mt-1">VND</p>
                                                 </div>
