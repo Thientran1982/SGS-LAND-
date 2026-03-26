@@ -311,7 +311,7 @@ export function createUserRoutes(authenticateToken: any) {
       const updated = await userRepository.findByIdDirect(String(req.params.id), user.tenantId);
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
-        action: 'UPDATE',
+        action: 'USER_UPDATED',
         entityType: 'USER',
         entityId: String(req.params.id),
         details: `Email changed to: ${newEmail}`,

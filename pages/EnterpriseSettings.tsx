@@ -872,8 +872,28 @@ const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseCon
 });
 
 const ACTION_COLORS: Record<string, string> = {
+    // Auth
     LOGIN: 'bg-blue-50 text-blue-700 border-blue-100',
     LOGIN_FAILED: 'bg-rose-50 text-rose-700 border-rose-100',
+    PASSWORD_RESET_REQUEST: 'bg-amber-50 text-amber-700 border-amber-100',
+    PASSWORD_RESET_COMPLETE: 'bg-teal-50 text-teal-700 border-teal-100',
+    // Generic CRUD (used by lead, listing, contract, proposal routes)
+    CREATE: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    UPDATE: 'bg-amber-50 text-amber-700 border-amber-100',
+    DELETE: 'bg-rose-50 text-rose-700 border-rose-100',
+    MERGE: 'bg-violet-50 text-violet-700 border-violet-100',
+    UPDATE_STATUS: 'bg-sky-50 text-sky-700 border-sky-100',
+    AML_REVIEW: 'bg-purple-50 text-purple-700 border-purple-100',
+    // User management
+    USER_CREATED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    USER_INVITED: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+    USER_REINVITED: 'bg-sky-50 text-sky-700 border-sky-100',
+    USER_UPDATED: 'bg-amber-50 text-amber-700 border-amber-100',
+    USER_DELETED: 'bg-rose-50 text-rose-700 border-rose-100',
+    // Enterprise config
+    ENTERPRISE_CONFIG_UPDATED: 'bg-slate-100 text-slate-600 border-slate-200',
+    EMAIL_CONFIG_UPDATED: 'bg-cyan-50 text-cyan-700 border-cyan-100',
+    SSO_CONFIG_UPDATED: 'bg-purple-50 text-purple-700 border-purple-100',
     DOMAIN_ADDED: 'bg-indigo-50 text-indigo-700 border-indigo-100',
     DOMAIN_REMOVED: 'bg-rose-50 text-rose-700 border-rose-100',
     DOMAIN_VERIFIED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
@@ -881,16 +901,6 @@ const ACTION_COLORS: Record<string, string> = {
     ZALO_OA_DISCONNECTED: 'bg-orange-50 text-orange-700 border-orange-100',
     FACEBOOK_PAGE_CONNECTED: 'bg-violet-50 text-violet-700 border-violet-100',
     FACEBOOK_PAGE_DISCONNECTED: 'bg-pink-50 text-pink-700 border-pink-100',
-    PASSWORD_RESET_REQUEST: 'bg-amber-50 text-amber-700 border-amber-100',
-    PASSWORD_RESET_COMPLETE: 'bg-teal-50 text-teal-700 border-teal-100',
-    EMAIL_CONFIG_UPDATED: 'bg-cyan-50 text-cyan-700 border-cyan-100',
-    SSO_CONFIG_UPDATED: 'bg-purple-50 text-purple-700 border-purple-100',
-    ENTERPRISE_CONFIG_UPDATED: 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] border-[var(--glass-border)]',
-    USER_CREATED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    USER_INVITED: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    USER_REINVITED: 'bg-sky-50 text-sky-700 border-sky-100',
-    USER_UPDATED: 'bg-amber-50 text-amber-700 border-amber-100',
-    USER_DELETED: 'bg-rose-50 text-rose-700 border-rose-100',
 };
 
 const PAGE_SIZE = 20;
@@ -937,8 +947,10 @@ const AuditPanel = memo(() => {
         { value: 'auth', label: t('ent.audit_entity_auth') },
         { value: 'USER', label: t('ent.audit_entity_user') },
         { value: 'enterprise_config', label: t('ent.audit_entity_config') },
-        { value: 'lead', label: t('ent.audit_entity_lead') },
-        { value: 'listing', label: t('ent.audit_entity_listing') },
+        { value: 'LEAD', label: t('ent.audit_entity_lead') },
+        { value: 'LISTING', label: t('ent.audit_entity_listing') },
+        { value: 'CONTRACT', label: t('ent.audit_entity_contract') },
+        { value: 'PROPOSAL', label: t('ent.audit_entity_proposal') },
     ];
 
     return (

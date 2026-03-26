@@ -13,6 +13,12 @@ export type AuditAction =
   | 'INTERACTION_SEND'
   | 'SETTINGS_UPDATE';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function toUUID(v?: string): string | null {
+  if (!v) return null;
+  return UUID_RE.test(v) ? v : null;
+}
+
 export async function writeAuditLog(
   tenantId: string,
   userId: string,
@@ -23,10 +29,12 @@ export async function writeAuditLog(
   ipAddress?: string,
 ) {
   try {
+    const actorId  = toUUID(userId);
+    const entityId = toUUID(resourceId);
     await pool.query(
       `INSERT INTO audit_logs (tenant_id, actor_id, action, entity_type, entity_id, details, ip_address)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [tenantId, userId, action, resourceType, resourceId || '', details ? JSON.stringify(details) : null, ipAddress || null]
+      [tenantId, actorId, action, resourceType, entityId, details ? JSON.stringify(details) : null, ipAddress || null]
     );
     logger.audit(action, userId, { resourceType, resourceId });
   } catch (error) {
