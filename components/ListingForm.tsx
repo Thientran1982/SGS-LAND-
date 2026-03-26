@@ -66,10 +66,39 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const [uploadError, setUploadError] = useState<string>('');
     const [isDragging, setIsDragging] = useState(false);
     const [dragIdx, setDragIdx] = useState<number | null>(null);
-    
+    const [geocoding, setGeocoding] = useState(false);
+    const [geocodeMsg, setGeocodeMsg] = useState<string>('');
+
     // Split Price State for UX
     const [priceShort, setPriceShort] = useState<string>('');
     const [priceUnit, setPriceUnit] = useState<number>(UNITS.BILLION.value);
+
+    const autoGeocode = async () => {
+        const addr = formData.location?.trim();
+        if (!addr) { setGeocodeMsg(t('inventory.geocode_no_addr') || 'Vui lòng nhập địa chỉ trước'); return; }
+        setGeocoding(true);
+        setGeocodeMsg('');
+        try {
+            const q = encodeURIComponent(`${addr}, Việt Nam`);
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn`,
+                { headers: { 'Accept-Language': 'vi,en', 'User-Agent': 'SGSLand/1.0' } }
+            );
+            const data = await res.json();
+            if (data.length > 0) {
+                const lat = parseFloat(parseFloat(data[0].lat).toFixed(6));
+                const lng = parseFloat(parseFloat(data[0].lon).toFixed(6));
+                setFormData(prev => ({ ...prev, coordinates: { lat, lng } }));
+                setGeocodeMsg(`✓ ${lat}, ${lng}`);
+            } else {
+                setGeocodeMsg(t('inventory.geocode_not_found') || 'Không tìm thấy toạ độ cho địa chỉ này');
+            }
+        } catch {
+            setGeocodeMsg(t('inventory.geocode_error') || 'Lỗi kết nối geocoding');
+        } finally {
+            setGeocoding(false);
+        }
+    };
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -571,7 +600,25 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             placeholder="106.700900"
                                         />
                                     </div>
-                                    <p className="col-span-2 text-xs2 text-[var(--text-secondary)] -mt-1">{t('inventory.coordinates_hint')}</p>
+                                    <div className="col-span-2 flex flex-col gap-1 -mt-1">
+                                        <button
+                                            type="button"
+                                            onClick={autoGeocode}
+                                            disabled={geocoding || !formData.location?.trim()}
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-fit"
+                                        >
+                                            {geocoding ? (
+                                                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeDashoffset="12"/></svg>
+                                            ) : (
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            )}
+                                            {geocoding ? (t('inventory.geocoding') || 'Đang tìm toạ độ...') : (t('inventory.auto_geocode') || 'Lấy toạ độ từ địa chỉ')}
+                                        </button>
+                                        {geocodeMsg && (
+                                            <p className={`text-xs2 ${geocodeMsg.startsWith('✓') ? 'text-emerald-600 font-semibold' : 'text-amber-600'}`}>{geocodeMsg}</p>
+                                        )}
+                                        <p className="text-xs2 text-[var(--text-secondary)]">{t('inventory.coordinates_hint')}</p>
+                                    </div>
                                 </div>
                                 )}
                                 <div className="grid grid-cols-2 gap-4">
