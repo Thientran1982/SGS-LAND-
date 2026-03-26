@@ -221,6 +221,23 @@ export class LeadRepository extends BaseRepository {
     });
   }
 
+  async checkDuplicateEmail(tenantId: string, email: string, excludeId?: string): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const normalizedEmail = email.trim().toLowerCase();
+      let query = `SELECT * FROM leads WHERE LOWER(TRIM(email)) = $1`;
+      const values: any[] = [normalizedEmail];
+
+      if (excludeId) {
+        query += ` AND id != $2`;
+        values.push(excludeId);
+      }
+
+      query += ` LIMIT 1`;
+      const result = await client.query(query, values);
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
+
   async create(tenantId: string, data: {
     name: string;
     phone: string;

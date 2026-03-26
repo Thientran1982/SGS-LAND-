@@ -63,6 +63,31 @@ export function createLeadRoutes(authenticateToken: any) {
     }
   });
 
+  router.get('/check-email', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const email = (req.query.email as string)?.trim();
+      if (!email) return res.json({ duplicate: null });
+
+      const duplicate = await leadRepository.checkDuplicateEmail(user.tenantId, email);
+      if (!duplicate) return res.json({ duplicate: null });
+
+      return res.json({
+        duplicate: {
+          id: duplicate.id,
+          name: duplicate.name,
+          phone: duplicate.phone,
+          email: duplicate.email ?? null,
+          stage: duplicate.stage,
+          assignedTo: duplicate.assignedTo ?? null,
+        }
+      });
+    } catch (error) {
+      console.error('Error checking email duplicate:', error);
+      res.status(500).json({ duplicate: null });
+    }
+  });
+
   router.post('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;

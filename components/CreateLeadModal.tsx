@@ -67,6 +67,9 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
     const [phoneWarning, setPhoneWarning] = useState<Lead | null>(null);
     const [phoneChecking, setPhoneChecking] = useState(false);
     const phoneCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [emailWarning, setEmailWarning] = useState<Lead | null>(null);
+    const [emailChecking, setEmailChecking] = useState(false);
+    const emailCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const { t, formatDate } = useTranslation();
     const { socket } = useSocket();
 
@@ -115,6 +118,29 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         }, 600);
         return () => { if (phoneCheckRef.current) clearTimeout(phoneCheckRef.current); };
     }, [formData.phone]);
+
+    // Debounced email duplicate check — fires 700ms after the user stops typing a valid email
+    useEffect(() => {
+        if (emailCheckRef.current) clearTimeout(emailCheckRef.current);
+        const emailValid = formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+        if (!emailValid) {
+            setEmailWarning(null);
+            setEmailChecking(false);
+            return;
+        }
+        setEmailChecking(true);
+        emailCheckRef.current = setTimeout(async () => {
+            try {
+                const existing = await db.checkDuplicateLeadByEmail(formData.email);
+                setEmailWarning(existing);
+            } catch {
+                setEmailWarning(null);
+            } finally {
+                setEmailChecking(false);
+            }
+        }, 700);
+        return () => { if (emailCheckRef.current) clearTimeout(emailCheckRef.current); };
+    }, [formData.email]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -281,14 +307,31 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
 
                         {/* Row 2: Contact & Location */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <FormInput 
-                                label={t('leads.email')} 
-                                value={formData.email} 
-                                onChange={(v: string) => updateField('email', v)} 
-                                placeholder={t('auth.placeholder_email')}
-                                type="text"
-                                error={errors.email}
-                            />
+                            <div>
+                                <FormInput 
+                                    label={t('leads.email')} 
+                                    value={formData.email} 
+                                    onChange={(v: string) => updateField('email', v)} 
+                                    placeholder={t('auth.placeholder_email')}
+                                    type="text"
+                                    error={errors.email}
+                                />
+                                {emailChecking && (
+                                    <p className="text-xs text-[var(--text-tertiary)] mt-1 ml-1 flex items-center gap-1">
+                                        <span className="inline-block w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                                        Đang kiểm tra...
+                                    </p>
+                                )}
+                                {!emailChecking && emailWarning && (
+                                    <div className="mt-1.5 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                        <span className="text-amber-500 text-sm mt-0.5">⚠</span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-semibold text-amber-700">Email đã tồn tại</p>
+                                            <p className="text-xs text-amber-600 truncate">{emailWarning.name} — {emailWarning.phone}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                             <FormInput 
                                 label={t('leads.address')} 
                                 value={formData.address} 

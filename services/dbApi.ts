@@ -598,6 +598,17 @@ class DatabaseApiClient {
     }
   }
 
+  async checkDuplicateLeadByEmail(email: string) {
+    try {
+      const res = await fetch(`/api/leads/check-email?email=${encodeURIComponent(email)}`, { credentials: 'include' });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.duplicate || null;
+    } catch {
+      return null;
+    }
+  }
+
   async getEnterpriseConfig(): Promise<any> {
     try {
       const res = await fetch('/api/enterprise/config', { credentials: 'include' });
