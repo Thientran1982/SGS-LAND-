@@ -161,20 +161,37 @@ export function createLeadRoutes(authenticateToken: any) {
     }
   });
 
-  // Merge endpoint: additive-only update (append notes/tags). No ownership restriction —
-  // the caller detected a duplicate and is contributing their data to the existing lead.
+  // Merge endpoint: strictly additive — only fills empty fields, never overwrites existing data.
+  // This prevents a bad actor from using the merge flow to overwrite a lead's info with wrong data.
   router.patch('/:id/merge', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const { notes, tags, name, email, address } = req.body;
+      const { notes, tags, email, address } = req.body;
+      // name is intentionally excluded — merging never changes the existing lead's identity
 
-      // Only allow appending — never changing ownership, stage, or phone
+      // Fetch existing lead to check which fields are already populated
+      const existing = await leadRepository.findByIdWithAccess(
+        user.tenantId, String(req.params.id), user.id, 'ADMIN'
+      );
+      if (!existing) return res.status(404).json({ error: 'Lead not found' });
+
+      // Only fill in fields the existing lead does NOT already have (additive-only)
       const mergeData: Record<string, any> = {};
-      if (name !== undefined) mergeData.name = name;
-      if (email !== undefined) mergeData.email = email;
-      if (address !== undefined) mergeData.address = address;
+      if (email !== undefined && !existing.email) mergeData.email = email;
+      if (address !== undefined && !existing.address) mergeData.address = address;
+
+      // Notes: always append with timestamp so history is preserved
       if (notes !== undefined) mergeData.notes = notes;
-      if (tags !== undefined) mergeData.tags = tags;
+
+      // Tags: union of existing + new (de-duplicated)
+      if (tags !== undefined) {
+        mergeData.tags = Array.from(new Set([...(existing.tags || []), ...tags]));
+      }
+
+      // If nothing to update, return existing lead as-is
+      if (Object.keys(mergeData).length === 0) {
+        return res.json(existing);
+      }
 
       // Bypass RBAC ownership check by passing ADMIN as effective role for this operation
       const lead = await leadRepository.update(

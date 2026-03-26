@@ -205,16 +205,16 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
         if (!duplicateLead) return;
         setLoading(true);
         try {
-            // Enhanced Merge logic: Combine tags, update info, append notes
             const newTags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
-            const mergedTags = Array.from(new Set([...(duplicateLead.tags || []), ...newTags]));
 
+            // Additive-only: never send name (identity), only send fields the existing lead is missing
             const mergePayload: Record<string, any> = {
-                name: formData.name,
-                tags: mergedTags,
+                tags: newTags,
             };
-            if (formData.email) mergePayload.email = formData.email;
-            if (formData.address) mergePayload.address = formData.address;
+            // Only contribute email/address if existing lead doesn't have them
+            if (formData.email && !duplicateLead.email) mergePayload.email = formData.email;
+            if (formData.address && !duplicateLead.address) mergePayload.address = formData.address;
+            // Notes are always appended with timestamp
             if (formData.notes) {
                 mergePayload.notes = `${duplicateLead.notes || ''}\n[Merge ${formatDate(new Date().toISOString())}]: ${formData.notes}`.trim();
             }
@@ -226,6 +226,18 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
             setLoading(false);
         }
     };
+
+    // Compute what the merge will actually contribute — shown in the preview
+    const mergePreview = duplicateLead ? (() => {
+        const items: string[] = [];
+        if (formData.email && !duplicateLead.email) items.push(`Email: ${formData.email}`);
+        if (formData.address && !duplicateLead.address) items.push(`Địa chỉ: ${formData.address}`);
+        if (formData.notes) items.push('Ghi chú: được bổ sung');
+        const newTags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+        const addedTags = newTags.filter(tag => !(duplicateLead.tags || []).includes(tag));
+        if (addedTags.length > 0) items.push(`Tags: +${addedTags.join(', ')}`);
+        return items;
+    })() : [];
 
     // Use memoized options with translation
     const sourceOptions = useMemo(() => 
@@ -434,6 +446,22 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                             || t('inbox.unassigned')}
                                     </span>
                                 </div>
+                            </div>
+
+                            {/* What will actually be added */}
+                            <div className="mt-3 pt-2 border-t border-amber-200/40">
+                                <p className="text-xs font-bold text-amber-700/80 mb-1.5">Thông tin sẽ bổ sung vào hồ sơ:</p>
+                                {mergePreview.length > 0 ? (
+                                    <ul className="space-y-0.5">
+                                        {mergePreview.map((item, i) => (
+                                            <li key={i} className="text-xs text-emerald-700 flex items-center gap-1.5">
+                                                <span className="text-emerald-500">✓</span> {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-xs text-amber-600/70 italic">Không có thông tin mới để bổ sung — chỉ gộp hồ sơ.</p>
+                                )}
                             </div>
                         </div>
                         
