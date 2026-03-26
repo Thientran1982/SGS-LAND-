@@ -72,7 +72,8 @@ export class InteractionRepository extends BaseRepository {
       let rbacWhere = '';
       const values: any[] = [];
 
-      if (userRole === 'SALES' && userId) {
+      const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED_ROLES.includes(userRole || '') && userId) {
         rbacJoin = `INNER JOIN leads ld ON i.lead_id = ld.id`;
         rbacWhere = `AND ld.assigned_to = $1`;
         values.push(userId);

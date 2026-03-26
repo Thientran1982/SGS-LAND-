@@ -10,11 +10,11 @@ import { getSEOOverrides } from '../utils/seo';
 // Public API helpers — no JWT required, all routes are rate-limited
 // ---------------------------------------------------------------------------
 
-async function publicCreateLead(name: string, phone: string) {
+async function publicCreateLead(name: string, phone: string, agentId?: string) {
     const res = await fetch('/api/public/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, source: 'WEB', stage: 'NEW' })
+        body: JSON.stringify({ name, phone, source: 'WEB', stage: 'NEW', agentId: agentId || undefined })
     });
     if (!res.ok) throw new Error('create_lead_failed');
     return res.json() as Promise<{ id: string; success: boolean }>;
@@ -73,6 +73,8 @@ export default function LiveChat() {
     const livechatSEO = getSEOOverrides()['livechat'];
     const chatTitle = chatParams.get('title') || w.SGSLAND_CHAT_TITLE || livechatSEO?.title || t('livechat.title');
     const chatDesc  = chatParams.get('desc')  || w.SGSLAND_CHAT_DESC  || livechatSEO?.description || t('livechat.subtitle');
+    // Agent ID from URL param (set by embed code) — links this chat session to a specific agent
+    const agentId   = chatParams.get('agent') || w.SGSLAND_AGENT_ID   || undefined;
 
     // Load lead from localStorage if exists
     useEffect(() => {
@@ -122,7 +124,7 @@ export default function LiveChat() {
         setStartError('');
 
         try {
-            const created = await publicCreateLead(name.trim(), phone.trim());
+            const created = await publicCreateLead(name.trim(), phone.trim(), agentId);
             const id = created.id;
 
             // Send welcome message as outbound (agent) — no auth needed

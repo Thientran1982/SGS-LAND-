@@ -812,14 +812,25 @@ async function startServer() {
 
   app.post('/api/public/leads', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const { name, phone, notes, source, stage } = req.body;
+      const { name, phone, notes, source, stage, agentId } = req.body;
       if (!name || !phone) return res.status(400).json({ error: 'name và phone là bắt buộc' }) as any;
+
+      // Resolve assigned agent: validate agentId belongs to this tenant to prevent spoofing
+      let assignedTo: string | undefined;
+      if (agentId && typeof agentId === 'string' && /^[0-9a-f-]{36}$/i.test(agentId)) {
+        const agentCheck = await withTenantContext(PUBLIC_TENANT, async (client) => {
+          return client.query(`SELECT id FROM users WHERE id = $1 LIMIT 1`, [agentId]);
+        });
+        if (agentCheck.rows.length > 0) assignedTo = agentId;
+      }
+
       const lead = await leadRepository.create(PUBLIC_TENANT, {
         name: String(name).trim().slice(0, 100),
         phone: String(phone).trim().slice(0, 20),
         notes: notes ? String(notes).slice(0, 2000) : undefined,
         source: source || 'WEBSITE',
         stage: stage || 'NEW',
+        assignedTo,
       });
       // Return only non-sensitive confirmation — never expose PII to anonymous callers
       res.status(201).json({ id: lead.id, success: true });
