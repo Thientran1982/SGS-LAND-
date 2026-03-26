@@ -384,6 +384,45 @@ const MapView: React.FC<MapViewProps> = memo(({
 
         const clusters = buildClusters(entries, map);
 
+        // ── Pixel-based collision detection ──────────────────────────────────────
+        // Price pin labels are ≈60 px wide × 32 px tall (including tail).
+        // When two markers land inside the same pixel cell their labels fully overlap,
+        // hiding one of them. We detect collisions and spread overlapping pins
+        // vertically so every pin is accessible regardless of zoom level.
+        const PIN_CELL_W = 64; // px — horizontal cell (label width)
+        const PIN_CELL_H = 36; // px — vertical cell (label height + tail)
+        const PIN_SLOT_PX = 34; // px — vertical spacing per slot (label height + 2 px gap)
+
+        const overridePoint = new Map<string, [number, number]>(); // listing id → adjusted coord
+        try {
+            // Map pixelCell → cluster indices whose single entry falls in that cell
+            const pixelCells = new Map<string, number[]>();
+            clusters.forEach((cluster, ci) => {
+                if (cluster.length !== 1) return;
+                const { point } = cluster[0];
+                const px = map.latLngToContainerPoint(L.latLng(point[0], point[1]));
+                const key = `${Math.floor(px.x / PIN_CELL_W)},${Math.floor(px.y / PIN_CELL_H)}`;
+                if (!pixelCells.has(key)) pixelCells.set(key, []);
+                pixelCells.get(key)!.push(ci);
+            });
+
+            // For every crowded cell, vertically fan out the markers so all are visible
+            pixelCells.forEach((indices) => {
+                if (indices.length <= 1) return;
+                const total = indices.length;
+                indices.forEach((ci, idx) => {
+                    const { listing, point } = clusters[ci][0];
+                    const px = map.latLngToContainerPoint(L.latLng(point[0], point[1]));
+                    const offsetY = (idx - (total - 1) / 2) * PIN_SLOT_PX;
+                    const newLL = map.containerPointToLatLng(L.point(px.x, px.y + offsetY));
+                    overridePoint.set(String(listing.id), [newLL.lat, newLL.lng]);
+                });
+            });
+        } catch {
+            // Map may be in teardown — latLngToContainerPoint unavailable; skip offsets
+        }
+        // ── End collision detection ───────────────────────────────────────────────
+
         clusters.forEach(cluster => {
             if (cluster.length === 1) {
                 const { listing, point, approximate } = cluster[0];
@@ -391,10 +430,10 @@ const MapView: React.FC<MapViewProps> = memo(({
                 const isActive = selectedIdRef.current === listing.id;
                 const pType  = listing.type as string;
                 const icon   = priceIcon(label, approximate, listing.transaction as string, isActive, pType);
-                // Apply micro-jitter to real GPS points to prevent identical-coordinate pins
-                // from stacking (e.g. a Project master and an Apartment at the same address).
-                // Fallback/approximate points already have district-level jitter applied.
-                const displayPoint = approximate ? point : getDisplayPoint(listing, point);
+                // Use collision-adjusted display point when markers would otherwise overlap,
+                // otherwise fall back to micro-jitter for real GPS or the raw fallback point.
+                const displayPoint: [number, number] = overridePoint.get(String(listing.id))
+                    ?? (approximate ? point : getDisplayPoint(listing, point));
                 const marker = L.marker(displayPoint, { icon, zIndexOffset: approximate ? 50 : 100 });
 
                 if (isActive) activeMarker.current = { marker, entry: cluster[0] };
