@@ -421,10 +421,18 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                     <span className="font-bold">{duplicateLead?.name}</span>
                                     
                                     <span className="text-amber-700/60 font-bold">{t('leads.phone')}:</span>
-                                    <span className="font-mono">{duplicateLead?.phone}</span>
+                                    <span className="font-mono tracking-wider">
+                                        {duplicateLead?.phone
+                                            ? duplicateLead.phone.slice(0, 3) + '****' + duplicateLead.phone.slice(-3)
+                                            : '—'}
+                                    </span>
                                     
                                     <span className="text-amber-700/60 font-bold">{t('common.owner')}:</span>
-                                    <span>{duplicateLead?.assignedToName || duplicateLead?.assignedTo || t('inbox.unassigned')}</span>
+                                    <span>
+                                        {duplicateLead?.assignedToName
+                                            || users.find(u => u.value === duplicateLead?.assignedTo)?.label
+                                            || t('inbox.unassigned')}
+                                    </span>
                                 </div>
                             </div>
                         </div>

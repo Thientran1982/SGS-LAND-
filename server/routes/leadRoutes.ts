@@ -49,20 +49,6 @@ export function createLeadRoutes(authenticateToken: any) {
     }
   });
 
-  router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
-    try {
-      const user = (req as any).user;
-      const lead = await leadRepository.findByIdWithAccess(
-        user.tenantId, String(req.params.id), user.id, user.role
-      );
-      if (!lead) return res.status(404).json({ error: 'Lead not found' });
-      res.json(lead);
-    } catch (error) {
-      console.error('Error fetching lead:', error);
-      res.status(500).json({ error: 'Failed to fetch lead' });
-    }
-  });
-
   router.get('/check-email', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
@@ -85,6 +71,20 @@ export function createLeadRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error checking email duplicate:', error);
       res.status(500).json({ duplicate: null });
+    }
+  });
+
+  router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const lead = await leadRepository.findByIdWithAccess(
+        user.tenantId, String(req.params.id), user.id, user.role
+      );
+      if (!lead) return res.status(404).json({ error: 'Lead not found' });
+      res.json(lead);
+    } catch (error) {
+      console.error('Error fetching lead:', error);
+      res.status(500).json({ error: 'Failed to fetch lead' });
     }
   });
 
