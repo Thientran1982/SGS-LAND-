@@ -440,15 +440,15 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                     <div>
                                         <label className={labelClass}>{t('contracts.unit_code')}</label>
-                                        <input value={formData.propertyUnitCode || ''} onChange={e => handleChange('propertyUnitCode', e.target.value)} className={inputClass} placeholder="VD: A1-05, B2-12..." />
+                                        <input value={formData.propertyUnitCode || ''} onChange={e => handleChange('propertyUnitCode', e.target.value)} className={inputClass} placeholder={t('contracts.unit_code_placeholder')} />
                                     </div>
                                     <div>
                                         <label className={labelClass}>{t('contracts.room_number')}</label>
-                                        <input value={formData.propertyRoomNumber || ''} onChange={e => handleChange('propertyRoomNumber', e.target.value)} className={inputClass} placeholder="VD: 05, 12A..." />
+                                        <input value={formData.propertyRoomNumber || ''} onChange={e => handleChange('propertyRoomNumber', e.target.value)} className={inputClass} placeholder={t('contracts.room_number_placeholder')} />
                                     </div>
                                     <div>
                                         <label className={labelClass}>{t('contracts.floor_number')}</label>
-                                        <input value={formData.propertyFloorNumber || ''} onChange={e => handleChange('propertyFloorNumber', e.target.value)} className={inputClass} placeholder="VD: 5, 12, Tầng 3..." />
+                                        <input value={formData.propertyFloorNumber || ''} onChange={e => handleChange('propertyFloorNumber', e.target.value)} className={inputClass} placeholder={t('contracts.floor_number_placeholder')} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">

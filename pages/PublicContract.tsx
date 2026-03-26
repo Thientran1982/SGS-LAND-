@@ -444,14 +444,14 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                             <strong>- Mã căn: </strong>{contract.propertyUnitCode}
                         </p>
                     )}
-                    {contract.propertyFloorNumber && (
-                        <p style={{ margin: '3px 0' }}>
-                            <strong>- Số tầng: </strong>{contract.propertyFloorNumber}
-                        </p>
-                    )}
                     {contract.propertyRoomNumber && (
                         <p style={{ margin: '3px 0' }}>
                             <strong>- Số phòng: </strong>{contract.propertyRoomNumber}
+                        </p>
+                    )}
+                    {contract.propertyFloorNumber && (
+                        <p style={{ margin: '3px 0' }}>
+                            <strong>- Số tầng: </strong>{contract.propertyFloorNumber}
                         </p>
                     )}
                     {(contract.propertyLandArea != null || contract.propertyArea != null) && (
