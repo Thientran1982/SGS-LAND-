@@ -32,7 +32,7 @@ export const AboutUs: React.FC = () => {
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
 
     const leaders = [
-        { name: "Trần Minh Tuấn", role: "Founder & CEO", img: ASSETS.CEO, bio: t('about.ceo_bio') },
+        { name: "Trần Minh Thiện", role: "Founder & CEO", img: ASSETS.CEO, bio: t('about.ceo_bio') },
         { name: "Nguyễn Hoàng Nam", role: "CTO", img: ASSETS.CTO, bio: t('about.cto_bio') },
         { name: "Lê Thị Hoa", role: "COO", img: ASSETS.COO, bio: t('about.coo_bio') }
     ];
