@@ -182,13 +182,15 @@ export class AnalyticsRepository extends BaseRepository {
         ? `INNER JOIN leads lrev ON p.lead_id = lrev.id AND lrev.tenant_id = p.tenant_id AND lrev.stage = 'WON' AND lrev.assigned_to = '${safeUserId}'::uuid`
         : `INNER JOIN leads lrev ON p.lead_id = lrev.id AND lrev.tenant_id = p.tenant_id AND lrev.stage = 'WON'`;
 
+      // Filter revenue by won_at (deal close date) — financially correct.
+      // Fallback to lrev.updated_at for legacy WON leads that pre-date the won_at column.
       const revenueResult = await client.query(`
         SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
         FROM proposals p
         ${wonLeadJoin}
         WHERE p.${TENANT_FILTER}
           AND p.status = 'APPROVED'
-          ${useTimeFilter ? `AND p.created_at >= NOW() - INTERVAL '${days} days'` : ''}
+          ${useTimeFilter ? `AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days} days'` : ''}
       `, [commissionRate]);
 
       const prevRevenueResult = useTimeFilter
@@ -198,8 +200,8 @@ export class AnalyticsRepository extends BaseRepository {
             ${wonLeadJoin}
             WHERE p.${TENANT_FILTER}
               AND p.status = 'APPROVED'
-              AND p.created_at >= NOW() - INTERVAL '${days * 2} days'
-              AND p.created_at < NOW() - INTERVAL '${days} days'
+              AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days * 2} days'
+              AND COALESCE(lrev.won_at, lrev.updated_at) < NOW() - INTERVAL '${days} days'
           `, [commissionRate])
         : { rows: [{ revenue: '0' }] };
 
@@ -363,15 +365,17 @@ export class AnalyticsRepository extends BaseRepository {
         LIMIT 10
       `);
 
+      // Group by the month the deal was WON (won_at), not when the proposal was created.
+      // Fallback to lrev.updated_at for legacy rows that pre-date the won_at column.
       const revenueByMonthResult = await client.query(`
         SELECT
-          TO_CHAR(p.created_at, 'YYYY-MM') as month,
+          TO_CHAR(COALESCE(lrev.won_at, lrev.updated_at), 'YYYY-MM') as month,
           SUM(p.final_price * $1)::numeric as revenue
         FROM proposals p
         ${wonLeadJoin}
         WHERE p.${TENANT_FILTER}
           AND p.status = 'APPROVED'
-        GROUP BY TO_CHAR(p.created_at, 'YYYY-MM')
+        GROUP BY TO_CHAR(COALESCE(lrev.won_at, lrev.updated_at), 'YYYY-MM')
         ORDER BY month DESC
         LIMIT 12
       `, [commissionRate]);

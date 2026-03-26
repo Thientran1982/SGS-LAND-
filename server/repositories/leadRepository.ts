@@ -287,6 +287,10 @@ export class LeadRepository extends BaseRepository {
       }
 
       const updates: string[] = ['updated_at = CURRENT_TIMESTAMP'];
+      // Stamp the exact close timestamp when a deal is won — used for accurate revenue date attribution
+      if (data.stage === 'WON') {
+        updates.push('won_at = CURRENT_TIMESTAMP');
+      }
       const values: any[] = [];
       let paramIndex = 2;
 
