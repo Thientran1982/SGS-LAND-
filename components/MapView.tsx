@@ -4,25 +4,9 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Listing, PropertyType } from '../types';
 import { NO_IMAGE_URL } from '../utils/constants';
-import { buildVNGeoQueries } from '../utils/vnAddress';
+import { buildVNGeoQueries, getDistrictFallback } from '../utils/vnAddress';
 
 const HCMC_CENTER: [number, number] = [10.7769, 106.7009];
-const HCMC_SPREAD_LAT = 0.10;
-const HCMC_SPREAD_LNG = 0.12;
-
-const hashStr = (s: string): number => {
-    let h = 5381;
-    for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
-    return Math.abs(h);
-};
-
-// Hash-based fallback — random but deterministic within HCMC bounding box
-const getHashCoords = (listing: any): [number, number] => {
-    const seed = hashStr(listing.id || listing.title || 'x');
-    const lat = HCMC_CENTER[0] + ((seed % 10000) / 10000 - 0.5) * HCMC_SPREAD_LAT;
-    const lng = HCMC_CENTER[1] + (((seed >> 8) % 10000) / 10000 - 0.5) * HCMC_SPREAD_LNG;
-    return [parseFloat(lat.toFixed(6)), parseFloat(lng.toFixed(6))];
-};
 
 // Resolve coordinates with three tiers:
 //   1. listing.coordinates (real GPS from DB) — note: check != null to handle lat/lng = 0
@@ -47,6 +31,7 @@ async function geocodeLocation(
     // buildVNGeoQueries returns original + diacritics-restored variants × 4 city suffixes
     // so Nominatim gets the best possible match even for no-diacritics input.
     const queries = buildVNGeoQueries(location);
+    console.log(`[SGS Geocode] Trying ${queries.length} queries for: "${location}"`);
     for (let i = 0; i < queries.length; i++) {
         if (i > 0) await sleep(1100); // Nominatim: 1 req/s
         try {
@@ -55,13 +40,17 @@ async function geocodeLocation(
             const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn&viewbox=${HCMC_VIEWBOX}&bounded=1`;
             const res = await fetch(url, { headers: { 'Accept-Language': 'vi,en', 'User-Agent': 'SGSLand/1.0' } });
             const data = await res.json();
+            console.log(`[SGS Geocode] Q${i + 1}: "${queries[i]}" → ${data.length > 0 ? `${data[0].lat},${data[0].lon} (${data[0].display_name?.substring(0, 60)})` : 'no result'}`);
             if (data.length > 0) {
                 const coords: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
                 cache.set(location, coords);
                 return coords;
             }
-        } catch { /* network error — try next query */ }
+        } catch (e) {
+            console.warn(`[SGS Geocode] Q${i + 1} error:`, e);
+        }
     }
+    console.warn(`[SGS Geocode] All queries failed for: "${location}"`);
     cache.set(location, null);
     return null;
 }
@@ -249,10 +238,24 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                     if (listing.location) {
                         const geocoded = await geocodeLocation(listing.location, geocodeCacheRef.current);
                         if (geocoded) { point = geocoded; approximate = false; }
+                        else {
+                            // Nominatim failed — try district-centre fallback so pin lands
+                            // inside the correct district instead of a random HCMC hash
+                            // (which can fall in the Sài Gòn River).
+                            const distFallback = getDistrictFallback(listing.location);
+                            if (distFallback) {
+                                console.log(`[SGS Geocode] District fallback for "${listing.location}" → ${distFallback.district} ${distFallback.coords}`);
+                                point = distFallback.coords;
+                            }
+                        }
                         await sleep(1100); // Nominatim rate limit
                     }
 
-                    if (!point) point = getHashCoords(listing);
+                    // Last resort: HCMC centre (never a random hash that can hit the river)
+                    if (!point) {
+                        console.warn(`[SGS Geocode] No district found for "${listing.location}" — using HCMC centre`);
+                        point = HCMC_CENTER;
+                    }
                     if (!cancelled) addMarker(listing, point, approximate);
                 }
 
