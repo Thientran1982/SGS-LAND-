@@ -664,11 +664,10 @@ export class AnalyticsRepository extends BaseRepository {
         GROUP BY source
       `);
 
-      const costsBySource: Record<string, number> = {};
-      for (const row of campaignCostsResult.rows) {
-        costsBySource[row.source] = parseFloat(row.total_cost) || 0;
-      }
-
+      // normalizeSource must be defined before costsBySource so we can normalize
+      // campaign cost keys the same way as lead sources.
+      // This prevents ROI/spend lookup failures when sources use variant spellings
+      // (e.g. "FB" in campaign_costs vs "Facebook" grouped from leads).
       const normalizeSource = (raw: string): string => {
         const map: Record<string, string> = {
           // Website variants
@@ -696,10 +695,19 @@ export class AnalyticsRepository extends BaseRepository {
         return map[raw] || raw;
       };
 
+      // Build costsBySource keyed by NORMALIZED source name so lookups succeed regardless
+      // of how the user entered the source in campaign_costs (e.g. "FB" → "Facebook").
+      const costsBySource: Record<string, number> = {};
+      for (const row of campaignCostsResult.rows) {
+        const normalizedKey = normalizeSource(row.source);
+        costsBySource[normalizedKey] = (costsBySource[normalizedKey] || 0) + (parseFloat(row.total_cost) || 0);
+      }
+
       const attribution = attributionResult.rows.map((row: any) => {
         const normalizedSource = normalizeSource(row.source);
         const revenue = parseFloat(row.revenue) || 0;
-        const spend = costsBySource[normalizedSource] || costsBySource[row.source] || 0;
+        // costsBySource keys are already normalized — single lookup is sufficient.
+        const spend = costsBySource[normalizedSource] || 0;
         const roi = spend > 0 ? ((revenue - spend) / spend) * 100 : 0;
         const leads = row.lead_count || 0;
         // CAC = spend / customers acquired (WON leads), not total leads.
@@ -731,15 +739,24 @@ export class AnalyticsRepository extends BaseRepository {
         LIMIT 12
       `);
 
-      const conversionByPeriod = conversionByPeriodResult.rows.map((row: any) => ({
-        period: row.period,
-        total: row.total,
-        won: row.won,
-        lost: row.lost,
-        conversionRate: row.total > 0
-          ? Math.round((row.won / row.total) * 10000) / 100
-          : 0,
-      }));
+      const conversionByPeriod = conversionByPeriodResult.rows.map((row: any) => {
+        // resolved = leads that have reached a terminal state (WON or LOST).
+        // Using won/(won+lost) gives the ACTUAL close rate for the cohort —
+        // using won/total would understate the rate because leads still in progress
+        // (NEW, CONTACTED, QUALIFIED, etc.) haven't resolved yet.
+        const resolved = (row.won || 0) + (row.lost || 0);
+        return {
+          period: row.period,
+          total: row.total,
+          won: row.won,
+          lost: row.lost,
+          resolved,
+          inProgress: (row.total || 0) - resolved,
+          conversionRate: resolved > 0
+            ? Math.round((row.won / resolved) * 10000) / 100
+            : 0,
+        };
+      });
 
       const funnel = funnelResult.rows.map((row: any) => ({
         stage: row.stage,

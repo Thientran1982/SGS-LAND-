@@ -368,7 +368,7 @@ export const DICTIONARY = {
         "reports.tab_costs": "Chi Phí",
         "reports.chart_source_mix": "Tỷ Trọng Nguồn Khách",
         "reports.chart_conversion_trend": "Xu Hướng Chuyển Đổi",
-        "reports.chart_conversion_desc": "Tỷ lệ chốt deal theo tháng",
+        "reports.chart_conversion_desc": "Tỷ lệ chốt deal theo tháng (WON / deals đã giải quyết)",
         "reports.metric_revenue": "Doanh Thu",
         "reports.metric_roi": "ROI",
         "reports.metric_spend": "Chi Phí",
@@ -407,6 +407,7 @@ export const DICTIONARY = {
         "reports.range_all": "Tất cả",
         "reports.won": "Chốt",
         "reports.lost": "Thua",
+        "reports.in_progress": "Đang xử lý",
         "reports.last_updated": "Cập nhật lúc",
         "reports.live": "LIVE",
 
@@ -2377,7 +2378,7 @@ export const DICTIONARY = {
         "reports.tab_costs": "Costs",
         "reports.chart_source_mix": "Lead Source Mix",
         "reports.chart_conversion_trend": "Conversion Trend",
-        "reports.chart_conversion_desc": "Monthly deal close rate",
+        "reports.chart_conversion_desc": "Monthly deal close rate (WON / resolved deals)",
         "reports.metric_revenue": "Revenue",
         "reports.metric_roi": "ROI",
         "reports.metric_spend": "Spend",
@@ -2416,6 +2417,7 @@ export const DICTIONARY = {
         "reports.range_all": "All Time",
         "reports.won": "Won",
         "reports.lost": "Lost",
+        "reports.in_progress": "In Progress",
         "reports.last_updated": "Updated at",
         "reports.live": "LIVE",
 

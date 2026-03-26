@@ -35,6 +35,8 @@ interface ConversionPeriod {
     won: number;
     lost: number;
     total: number;
+    resolved: number;
+    inProgress: number;
     conversionRate: number;
 }
 
@@ -297,12 +299,19 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
                                                         </div>
                                                         <div className="flex gap-3">
                                                             <span className="text-[var(--text-secondary)]">{t('reports.won')}:</span>
-                                                            <span className="font-mono text-emerald-400">{payload[0].payload.won}/{payload[0].payload.total}</span>
+                                                            {/* won/resolved: denominator excludes in-progress leads for accurate close rate */}
+                                                            <span className="font-mono text-emerald-400">{payload[0].payload.won}/{payload[0].payload.resolved ?? payload[0].payload.total}</span>
                                                         </div>
                                                         {payload[0].payload.lost > 0 && (
                                                             <div className="flex gap-3">
                                                                 <span className="text-[var(--text-secondary)]">{t('reports.lost')}:</span>
                                                                 <span className="font-mono text-rose-400">{payload[0].payload.lost}</span>
+                                                            </div>
+                                                        )}
+                                                        {(payload[0].payload.inProgress ?? 0) > 0 && (
+                                                            <div className="flex gap-3">
+                                                                <span className="text-[var(--text-secondary)]">{t('reports.in_progress')}:</span>
+                                                                <span className="font-mono text-amber-400">{payload[0].payload.inProgress}</span>
                                                             </div>
                                                         )}
                                                     </div>
