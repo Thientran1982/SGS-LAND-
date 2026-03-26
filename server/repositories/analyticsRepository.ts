@@ -205,6 +205,9 @@ export class AnalyticsRepository extends BaseRepository {
           `, [commissionRate])
         : { rows: [{ revenue: '0' }] };
 
+      // Pipeline value: total expected value of currently open deals, weighted by AI grade probability.
+      // Apply the same period filter as other metrics so the delta compares equal windows
+      // (new pipeline created this period vs new pipeline created last period).
       const pipelineResult = await client.query(`
         SELECT
           l.stage,
@@ -217,6 +220,7 @@ export class AnalyticsRepository extends BaseRepository {
           AND l.stage NOT IN ('WON', 'LOST')
           AND p.status IN ('APPROVED', 'PENDING_APPROVAL')
           ${isSalesScope && safeUserId ? `AND l.assigned_to = '${safeUserId}'::uuid` : ''}
+          ${useTimeFilter ? `AND l.created_at >= NOW() - INTERVAL '${days} days'` : ''}
         GROUP BY l.stage, l.score->>'grade'
       `);
 
@@ -224,12 +228,15 @@ export class AnalyticsRepository extends BaseRepository {
       const interactionLeadFilter = isSalesScope && safeUserId
         ? `AND i.lead_id IN (SELECT id FROM leads WHERE ${TENANT_FILTER} AND assigned_to = '${safeUserId}'::uuid)`
         : '';
+      // Time-scoped AI deflection: filter current period so the rate reflects the selected window,
+      // not an all-time average that makes the delta comparison meaningless.
       const interactionStats = await client.query(`
         SELECT
           COUNT(*) FILTER (WHERE direction = 'OUTBOUND')::int as total_outbound,
           COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND (metadata->>'isAi')::boolean = true)::int as ai_outbound
         FROM interactions i
         WHERE i.${TENANT_FILTER} ${interactionLeadFilter}
+          ${useTimeFilter ? `AND i.timestamp >= NOW() - INTERVAL '${days} days'` : ''}
       `);
 
       // Previous-period AI deflection rate (for delta calculation)
@@ -264,24 +271,31 @@ export class AnalyticsRepository extends BaseRepository {
           `)
         : { rows: [] };
 
+      // Sales velocity: time from lead created → deal closed (won_at).
+      // won_at is guaranteed accurate from migration 024; fall back to updated_at for legacy rows.
+      // Filter and group by won_at so we measure deals CLOSED in the selected period.
       const salesVelocityResult = await client.query(`
-        SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400), 0)::numeric as avg_days
+        SELECT COALESCE(AVG(
+          EXTRACT(EPOCH FROM (COALESCE(won_at, updated_at) - created_at)) / 86400
+        ), 0)::numeric as avg_days
         FROM leads
         WHERE ${TENANT_FILTER}
           AND stage = 'WON'
           ${userLeadFilterNoAlias}
-          ${useTimeFilter ? `AND updated_at >= NOW() - INTERVAL '${days} days'` : ''}
+          ${useTimeFilter ? `AND COALESCE(won_at, updated_at) >= NOW() - INTERVAL '${days} days'` : ''}
       `);
 
       const prevSalesVelocityResult = useTimeFilter
         ? await client.query(`
-            SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400), 0)::numeric as avg_days
+            SELECT COALESCE(AVG(
+              EXTRACT(EPOCH FROM (COALESCE(won_at, updated_at) - created_at)) / 86400
+            ), 0)::numeric as avg_days
             FROM leads
             WHERE ${TENANT_FILTER}
               AND stage = 'WON'
               ${userLeadFilterNoAlias}
-              AND updated_at >= NOW() - INTERVAL '${days * 2} days'
-              AND updated_at < NOW() - INTERVAL '${days} days'
+              AND COALESCE(won_at, updated_at) >= NOW() - INTERVAL '${days * 2} days'
+              AND COALESCE(won_at, updated_at) < NOW() - INTERVAL '${days} days'
           `)
         : { rows: [{ avg_days: '0' }] };
 
@@ -311,16 +325,21 @@ export class AnalyticsRepository extends BaseRepository {
         LIMIT 10
       `);
 
-      // Market pulse: always full-scope (shared listings data)
+      // Market pulse: scatter plot of available listings (price vs area, coloured by district).
+      // interest = number of proposals submitted for listings in the same district — a true
+      // demand signal rather than a supply count.
       const marketPulseResult = await client.query(`
         SELECT
-          COALESCE(attributes->>'district', attributes->>'city', 'Khác') as location,
-          COALESCE((attributes->>'area')::numeric, 80) as area,
-          COALESCE(price, 1000000000) / 1000000000.0 as price_ty
-        FROM listings
-        WHERE ${TENANT_FILTER}
-          AND status = 'AVAILABLE'
-        ORDER BY created_at DESC
+          COALESCE(li.attributes->>'district', li.attributes->>'city', 'Khác') as location,
+          COALESCE((li.attributes->>'area')::numeric, 80) as area,
+          COALESCE(li.price, 1000000000) / 1000000000.0 as price_ty,
+          COUNT(p.id)::int as proposal_demand
+        FROM listings li
+        LEFT JOIN proposals p ON p.listing_id = li.id AND p.tenant_id = li.tenant_id
+        WHERE li.${TENANT_FILTER}
+          AND li.status = 'AVAILABLE'
+        GROUP BY li.id, li.attributes, li.price, li.created_at
+        ORDER BY li.created_at DESC
         LIMIT 20
       `);
 
@@ -456,16 +475,13 @@ export class AnalyticsRepository extends BaseRepository {
         };
       });
 
-      const locationCounts: Record<string, number> = {};
-      for (const row of marketPulseResult.rows) {
-        const loc = row.location || 'Khác';
-        locationCounts[loc] = (locationCounts[loc] || 0) + 1;
-      }
       const marketPulse = marketPulseResult.rows.map((row: any) => ({
         location: row.location || 'Khác',
         area: Math.round(parseFloat(row.area) || 80),
         price: Math.round((parseFloat(row.price_ty) || 1) * 10) / 10,
-        interest: locationCounts[row.location || 'Khác'] || 1,
+        // proposal_demand = number of proposals for this listing → true demand signal.
+        // Use 1 as minimum so every dot is visible on the scatter chart.
+        interest: Math.max(1, parseInt(row.proposal_demand) || 0),
       }));
 
       const agentLeaderboard = agentLeaderboardResult.rows.map((row: any) => {
