@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Listing, PropertyType } from '../types';
 import { NO_IMAGE_URL } from '../utils/constants';
+import { buildVNGeoQueries } from '../utils/vnAddress';
 
 const HCMC_CENTER: [number, number] = [10.7769, 106.7009];
 const HCMC_SPREAD_LAT = 0.10;
@@ -37,30 +38,20 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 // HCMC geographic bounding box: lng_min, lat_min, lng_max, lat_max
 const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
 
-// Build geocode queries from most-specific to least-specific so Nominatim
-// has the best chance of finding the right location within HCMC.
-function buildGeoQueries(location: string): string[] {
-    const loc = location.trim();
-    return [
-        `${loc}, Thành phố Hồ Chí Minh, Việt Nam`,
-        `${loc}, Ho Chi Minh City, Vietnam`,
-        `${loc}, TP. HCM, Việt Nam`,
-        `${loc}, Vietnam`,
-    ];
-}
-
 async function geocodeLocation(
     location: string,
     cache: Map<string, [number, number] | null>
 ): Promise<[number, number] | null> {
     if (cache.has(location)) return cache.get(location)!;
 
-    const queries = buildGeoQueries(location);
+    // buildVNGeoQueries returns original + diacritics-restored variants × 4 city suffixes
+    // so Nominatim gets the best possible match even for no-diacritics input.
+    const queries = buildVNGeoQueries(location);
     for (let i = 0; i < queries.length; i++) {
         if (i > 0) await sleep(1100); // Nominatim: 1 req/s
         try {
             const q = encodeURIComponent(queries[i]);
-            // bounded=1 forces results inside the viewbox (HCMC area only)
+            // bounded=1 forces results inside the HCMC viewbox only
             const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn&viewbox=${HCMC_VIEWBOX}&bounded=1`;
             const res = await fetch(url, { headers: { 'Accept-Language': 'vi,en', 'User-Agent': 'SGSLand/1.0' } });
             const data = await res.json();

@@ -8,13 +8,50 @@ import { auditRepository } from '../repositories/auditRepository';
 // Uses HCMC bounding box with bounded=1 so results are always within HCMC.
 const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
 
-async function geocodeHCMC(location: string): Promise<{ lat: number; lng: number } | null> {
-  const queries = [
-    `${location}, Thành phố Hồ Chí Minh, Việt Nam`,
-    `${location}, Ho Chi Minh City, Vietnam`,
-    `${location}, TP. HCM, Việt Nam`,
-    `${location}, Vietnam`,
+// Vietnamese district name normalisation (no-diacritics → with diacritics)
+// Mirrors utils/vnAddress.ts so the server can geocode no-dấu addresses correctly.
+const HCMC_DISTRICT_MAP: Record<string, string> = {
+  'binh thanh': 'Bình Thạnh', 'binh tan': 'Bình Tân', 'binh chanh': 'Bình Chánh',
+  'thu duc': 'Thủ Đức', 'tan binh': 'Tân Bình', 'tan phu': 'Tân Phú',
+  'go vap': 'Gò Vấp', 'phu nhuan': 'Phú Nhuận', 'hoc mon': 'Hóc Môn',
+  'cu chi': 'Củ Chi', 'nha be': 'Nhà Bè', 'can gio': 'Cần Giờ',
+  'quan 1': 'Quận 1', 'quan 2': 'Quận 2', 'quan 3': 'Quận 3',
+  'quan 4': 'Quận 4', 'quan 5': 'Quận 5', 'quan 6': 'Quận 6',
+  'quan 7': 'Quận 7', 'quan 8': 'Quận 8', 'quan 9': 'Quận 9',
+  'quan 10': 'Quận 10', 'quan 11': 'Quận 11', 'quan 12': 'Quận 12',
+};
+const ADMIN_MAP: Record<string, string> = {
+  '\\bduong\\b': 'Đường', '\\bphuong\\b': 'Phường', '\\bquan\\b': 'Quận',
+  '\\bhuyen\\b': 'Huyện', '\\bxa\\b': 'Xã', '\\bhem\\b': 'Hẻm',
+};
+
+function normalizeVNSrv(addr: string): string {
+  let r = addr;
+  for (const [plain, diacritic] of Object.entries(HCMC_DISTRICT_MAP)) {
+    const esc = plain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    r = r.replace(new RegExp(`(?<![\\w\u00C0-\u024F])${esc}(?![\\w\u00C0-\u024F])`, 'gi'), diacritic);
+  }
+  for (const [pat, diacritic] of Object.entries(ADMIN_MAP)) {
+    r = r.replace(new RegExp(pat, 'gi'), diacritic);
+  }
+  return r;
+}
+
+function buildGeoQueriesSrv(location: string): string[] {
+  const orig = location.trim();
+  const norm = normalizeVNSrv(orig);
+  const variants = norm.toLowerCase() !== orig.toLowerCase() ? [orig, norm] : [orig];
+  const suffixes = [
+    ', Thành phố Hồ Chí Minh, Việt Nam',
+    ', Ho Chi Minh City, Vietnam',
+    ', TP. HCM, Việt Nam',
+    ', Vietnam',
   ];
+  return variants.flatMap(v => suffixes.map(s => `${v}${s}`));
+}
+
+async function geocodeHCMC(location: string): Promise<{ lat: number; lng: number } | null> {
+  const queries = buildGeoQueriesSrv(location);
   for (let i = 0; i < queries.length; i++) {
     if (i > 0) await new Promise(r => setTimeout(r, 1200));
     try {

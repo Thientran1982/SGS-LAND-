@@ -6,6 +6,7 @@ import { db } from '../services/dbApi'; // Import DB to fetch projects
 import { Dropdown } from './Dropdown';
 import { VN_PHONE_REGEX } from '../types'; // Reuse regex from types/constants if available, or define locally
 import { useTranslation } from '../services/i18n';
+import { buildVNGeoQueries } from '../utils/vnAddress';
 
 interface ListingFormProps {
     isOpen: boolean;
@@ -73,17 +74,14 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const [priceShort, setPriceShort] = useState<string>('');
     const [priceUnit, setPriceUnit] = useState<number>(UNITS.BILLION.value);
 
-    // Shared geocoding helper — returns { lat, lng } or null
-    // Uses HCMC viewbox + bounded=1 to prevent Nominatim from returning
-    // wrong locations (e.g. pins landing in the Sài Gòn River).
+    // Shared geocoding helper — returns { lat, lng } or null.
+    // Uses buildVNGeoQueries which:
+    //   • Restores diacritics for HCMC district/ward names typed without dấu
+    //   • Tries original + normalised address × 4 city suffixes
+    //   • Constrains results to HCMC via viewbox + bounded=1
     const geocodeAddress = async (addr: string): Promise<{ lat: number; lng: number } | null> => {
         const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
-        const queries = [
-            `${addr}, Thành phố Hồ Chí Minh, Việt Nam`,
-            `${addr}, Ho Chi Minh City, Vietnam`,
-            `${addr}, TP. HCM, Việt Nam`,
-            `${addr}, Vietnam`,
-        ];
+        const queries = buildVNGeoQueries(addr);
         for (let i = 0; i < queries.length; i++) {
             if (i > 0) await new Promise(r => setTimeout(r, 1100));
             try {
