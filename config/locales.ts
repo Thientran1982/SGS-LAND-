@@ -407,6 +407,8 @@ export const DICTIONARY = {
         "reports.range_all": "Tất cả",
         "reports.won": "Chốt",
         "reports.lost": "Thua",
+        "reports.last_updated": "Cập nhật lúc",
+        "reports.live": "LIVE",
 
         "source.Facebook": "Facebook",
         "source.Google": "Google",
@@ -2414,6 +2416,8 @@ export const DICTIONARY = {
         "reports.range_all": "All Time",
         "reports.won": "Won",
         "reports.lost": "Lost",
+        "reports.last_updated": "Updated at",
+        "reports.live": "LIVE",
 
         "source.Facebook": "Facebook",
         "source.Google": "Google",

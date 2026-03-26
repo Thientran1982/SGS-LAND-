@@ -8,6 +8,7 @@ import {
 import { db } from '../services/dbApi';
 import { useTranslation } from '../services/i18n';
 import { useTheme } from '../services/theme';
+import { socket } from '../services/websocket';
 import { CampaignCost } from '../types';
 import { Dropdown } from '../components/Dropdown';
 
@@ -798,6 +799,10 @@ export const Reports: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [timeRange, setTimeRange] = useState<string>('30');
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+    const mountedRef = useRef(true);
+    const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     
     const { t, formatCurrency, formatCompactNumber, language } = useTranslation();
     const { chartTheme } = useTheme();
@@ -826,6 +831,7 @@ export const Reports: React.FC = () => {
             };
             setData(safeData);
             setCurrentUser(user);
+            setLastUpdated(new Date());
             setLoading(false);
         }).catch(() => {
             if (mounted) {
@@ -840,6 +846,43 @@ export const Reports: React.FC = () => {
         const cleanup = loadData();
         return cleanup;
     }, [loadData]);
+
+    // Silent background refresh — no loading spinner, no error toast
+    const silentRefresh = useCallback(() => {
+        db.generateBiMarts(timeRange).then((res) => {
+            if (!mountedRef.current) return;
+            setData({
+                funnel: res.funnel || [],
+                attribution: res.attribution || [],
+                campaignCosts: res.campaignCosts || [],
+                conversionByPeriod: res.conversionByPeriod || [],
+            });
+            setLastUpdated(new Date());
+        }).catch(() => {});
+    }, [timeRange]);
+
+    // Debounced refresh: wait 2s after last event before fetching (avoids hammering on bulk updates)
+    const scheduleRefresh = useCallback(() => {
+        if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = setTimeout(silentRefresh, 2000);
+    }, [silentRefresh]);
+
+    // Socket subscriptions + 60s polling for proposal/contract changes (not emitted via socket)
+    useEffect(() => {
+        mountedRef.current = true;
+        socket.on('lead_created', scheduleRefresh);
+        socket.on('lead_updated', scheduleRefresh);
+        socket.on('lead_scored', scheduleRefresh);
+        const pollInterval = setInterval(silentRefresh, 60_000);
+        return () => {
+            mountedRef.current = false;
+            socket.off('lead_created', scheduleRefresh);
+            socket.off('lead_updated', scheduleRefresh);
+            socket.off('lead_scored', scheduleRefresh);
+            clearInterval(pollInterval);
+            if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+        };
+    }, [scheduleRefresh, silentRefresh]);
 
     const tabs = useMemo(() => [
         { id: 'OVERVIEW', label: t('reports.tab_overview') },
@@ -897,6 +940,23 @@ export const Reports: React.FC = () => {
                             ))}
                         </div>
                     </div>
+                    {/* Divider */}
+                    <div className="w-px h-6 bg-slate-200 shrink-0" />
+                    {/* LIVE indicator */}
+                    <div className="flex flex-col items-end shrink-0 gap-0.5">
+                        <div className="flex items-center gap-1.5">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-xs3 font-extrabold text-emerald-600 uppercase tracking-widest">{t('reports.live')}</span>
+                        </div>
+                        {lastUpdated && (
+                            <span className="text-xs3 text-[var(--text-secondary)] font-mono whitespace-nowrap">
+                                {t('reports.last_updated')} {lastUpdated.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </span>
+                        )}
+                    </div>
                 </div>
                 {/* Mobile: stacked */}
                 <div className="flex md:hidden flex-col gap-2.5">
@@ -906,21 +966,36 @@ export const Reports: React.FC = () => {
                         options={tabs.map(tab => ({ value: tab.id, label: tab.label }))}
                         className="w-full"
                     />
-                    <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-xl gap-0.5 overflow-x-auto no-scrollbar">
-                        {TIME_RANGE_VALUES.map(val => (
-                            <button
-                                key={val}
-                                onClick={() => setTimeRange(val)}
-                                className={`px-3 py-1.5 text-xs font-bold rounded-[10px] transition-all whitespace-nowrap flex-1 ${
-                                    timeRange === val
-                                    ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)] ring-1 ring-black/5'
-                                    : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-                                }`}
-                            >
-                                {t(`reports.range_${val}`)}
-                            </button>
-                        ))}
+                    <div className="flex items-center gap-2">
+                        <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-xl gap-0.5 overflow-x-auto no-scrollbar flex-1">
+                            {TIME_RANGE_VALUES.map(val => (
+                                <button
+                                    key={val}
+                                    onClick={() => setTimeRange(val)}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-[10px] transition-all whitespace-nowrap flex-1 ${
+                                        timeRange === val
+                                        ? 'bg-[var(--bg-surface)] shadow text-[var(--text-primary)] ring-1 ring-black/5'
+                                        : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                                    }`}
+                                >
+                                    {t(`reports.range_${val}`)}
+                                </button>
+                            ))}
+                        </div>
+                        {/* LIVE badge mobile */}
+                        <div className="flex items-center gap-1 shrink-0">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-xs3 font-extrabold text-emerald-600 uppercase tracking-widest">{t('reports.live')}</span>
+                        </div>
                     </div>
+                    {lastUpdated && (
+                        <span className="text-xs3 text-[var(--text-secondary)] font-mono">
+                            {t('reports.last_updated')} {lastUpdated.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </span>
+                    )}
                 </div>
             </div>
 
