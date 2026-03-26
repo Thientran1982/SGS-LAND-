@@ -98,6 +98,11 @@ class SimpleCache {
       if (key.startsWith(prefix)) this.store.delete(key);
     }
   }
+
+  clearAll() {
+    this.store.clear();
+    this.generations.clear();
+  }
 }
 
 const _cache = new SimpleCache();
@@ -131,6 +136,7 @@ class DatabaseApiClient {
   clearUserCache() {
     this.cachedCurrentUser = null;
     this.currentUserPromise = null;
+    _cache.clearAll();
   }
 
   async getLeads(page = 1, pageSize = 20, filters?: any) {
@@ -903,6 +909,7 @@ class DatabaseApiClient {
     }
     const data = await res.json();
     this._isLoggedOut = false;
+    _cache.clearAll();
     this.cachedCurrentUser = data.user;
     window.dispatchEvent(new CustomEvent('auth:login'));
     return data.user;

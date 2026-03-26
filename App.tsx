@@ -360,6 +360,7 @@ const AppShell: React.FC = () => {
     const [authState, setAuthState] = useState<'LOADING' | 'AUTH' | 'GUEST'>(getInitialAuthState);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [accessDenied, setAccessDenied] = useState(false);
+    const [sessionKey, setSessionKey] = useState(0);
 
     useThemeConfig();
     usePageTracker(authState === 'AUTH');
@@ -380,6 +381,12 @@ const AppShell: React.FC = () => {
             ]);
         }
     }, [authState]);
+
+    // Clear the set of mounted routes when the session changes (logout/login).
+    // This forces all private page components to remount fresh for the new user.
+    useEffect(() => {
+        mountedPrivateRoutesRef.current.clear();
+    }, [sessionKey]);
 
     // Synchronously register private route into the ref during render (no useEffect needed).
     // This eliminates the extra render cycle that useEffect caused, removing the 1-frame
@@ -417,7 +424,7 @@ const AppShell: React.FC = () => {
             if (u) { localStorage.setItem(AUTH_CACHE_KEY, '1'); setCurrentUser(u); setAuthState('AUTH'); }
             else { localStorage.removeItem(AUTH_CACHE_KEY); setCurrentUser(null); setAuthState('GUEST'); }
         }).catch(() => { localStorage.removeItem(AUTH_CACHE_KEY); setCurrentUser(null); setAuthState('GUEST'); });
-        const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); db.clearUserCache(); setCurrentUser(null); setAuthState('GUEST'); };
+        const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); db.clearUserCache(); setCurrentUser(null); setAuthState('GUEST'); setSessionKey(k => k + 1); };
         window.addEventListener('auth:login', onLogin);
         window.addEventListener('auth:logout', onLogout);
         return () => {
@@ -712,7 +719,7 @@ const AppShell: React.FC = () => {
                     Each page fills the content area via absolute inset-0 and handles its own
                     scrolling via overflow-y-auto, so both fixed-height pages (Leads, Inbox)
                     and scrollable pages (Dashboard, Reports) work correctly. */}
-                <div className="relative w-full h-full">
+                <div key={sessionKey} className="relative w-full h-full">
                     {[...mountedPrivateRoutes].map(routeKey => {
                         const Comp = PAGE_REGISTRY[routeKey];
                         if (!Comp) return null;
