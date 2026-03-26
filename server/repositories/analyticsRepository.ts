@@ -176,10 +176,16 @@ export class AnalyticsRepository extends BaseRepository {
 
       const commissionRate = parseFloat(process.env.COMMISSION_RATE || '0.02');
 
+      // Revenue JOIN: proposals must belong to WON leads (APPROVED proposal + WON lead = recognised revenue).
+      // For SALES scope also enforce assigned_to filter. This is consistent with generateBiMarts attribution.
+      const wonLeadJoin = isSalesScope && safeUserId
+        ? `INNER JOIN leads lrev ON p.lead_id = lrev.id AND lrev.tenant_id = p.tenant_id AND lrev.stage = 'WON' AND lrev.assigned_to = '${safeUserId}'::uuid`
+        : `INNER JOIN leads lrev ON p.lead_id = lrev.id AND lrev.tenant_id = p.tenant_id AND lrev.stage = 'WON'`;
+
       const revenueResult = await client.query(`
         SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
         FROM proposals p
-        ${proposalLeadJoin}
+        ${wonLeadJoin}
         WHERE p.${TENANT_FILTER}
           AND p.status = 'APPROVED'
           ${useTimeFilter ? `AND p.created_at >= NOW() - INTERVAL '${days} days'` : ''}
@@ -189,7 +195,7 @@ export class AnalyticsRepository extends BaseRepository {
         ? await client.query(`
             SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
             FROM proposals p
-            ${proposalLeadJoin}
+            ${wonLeadJoin}
             WHERE p.${TENANT_FILTER}
               AND p.status = 'APPROVED'
               AND p.created_at >= NOW() - INTERVAL '${days * 2} days'
@@ -362,7 +368,7 @@ export class AnalyticsRepository extends BaseRepository {
           TO_CHAR(p.created_at, 'YYYY-MM') as month,
           SUM(p.final_price * $1)::numeric as revenue
         FROM proposals p
-        ${proposalLeadJoin}
+        ${wonLeadJoin}
         WHERE p.${TENANT_FILTER}
           AND p.status = 'APPROVED'
         GROUP BY TO_CHAR(p.created_at, 'YYYY-MM')
@@ -628,7 +634,10 @@ export class AnalyticsRepository extends BaseRepository {
         const spend = costsBySource[normalizedSource] || costsBySource[row.source] || 0;
         const roi = spend > 0 ? ((revenue - spend) / spend) * 100 : 0;
         const leads = row.lead_count || 0;
-        const cac = leads > 0 ? spend / leads : 0;
+        // CAC = spend / customers acquired (WON leads), not total leads.
+        // Total leads / spend would be CPL (Cost Per Lead) — a different metric.
+        const wonLeads = row.won_count || 0;
+        const cac = wonLeads > 0 ? spend / wonLeads : 0;
         return {
           channel: normalizedSource,
           leads,
