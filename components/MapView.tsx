@@ -94,10 +94,12 @@ function getFallbackPoint(listing: any): [number, number] {
 
 // ── Custom clustering ────────────────────────────────────────────────────────
 
-// Zoom threshold at which clustering is completely disabled.
-// Above this zoom listings that share the same spot are already jitter-spread,
-// so they appear as distinct individual pins without needing a cluster bubble.
-const CLUSTER_MAX_ZOOM = 15;
+// Clustering is active ONLY at zoom ≤ CLUSTER_MAX_ZOOM (very zoomed-out city view).
+// At the default working zoom of 13+, every listing is shown as its own pin.
+// Rationale: real-estate agents need to see individual listings; clustering makes
+// sense only when the viewport shows the whole city and individual pins would
+// completely overlap.
+const CLUSTER_MAX_ZOOM = 12;
 
 interface PointEntry {
     listing: Listing;
@@ -291,10 +293,9 @@ const MapView: React.FC<MapViewProps> = memo(({
             const map = L.map(mapRef.current, {
                 center: HCMC_CENTER, zoom: 13,
                 zoomControl: false, attributionControl: true,
-                // Disable CSS zoom animation — prevents the "_leaflet_pos undefined"
-                // race that fires when the map is unmounted during an in-flight
-                // CSS transition (happens on HMR and rapid navigation).
-                zoomAnimation: false,
+                // Keep smooth CSS zoom animation (zoomAnimation defaults to true).
+                // The _leaflet_pos crash on unmount is handled in the cleanup below
+                // by zeroing _animatingZoom before removal.
             });
             L.control.zoom({ position: 'bottomright' }).addTo(map);
 
@@ -324,9 +325,14 @@ const MapView: React.FC<MapViewProps> = memo(({
         return () => {
             ro?.disconnect();
             if (mapInst.current) {
-                // Stop any in-progress zoom/pan animations before removing to
-                // avoid "Cannot read properties of undefined (reading '_leaflet_pos')"
-                try { mapInst.current.stop(); } catch (_) { /* already stopped */ }
+                // Prevent "Cannot read properties of undefined (reading '_leaflet_pos')":
+                // Leaflet's _onZoomTransitionEnd guard checks this._animatingZoom and
+                // returns early when false, so zeroing it stops the crash without
+                // having to disable smooth zoom animation entirely.
+                try {
+                    (mapInst.current as any)._animatingZoom = false;
+                    mapInst.current.stop();
+                } catch (_) { /* already cleaned up */ }
                 mapInst.current.remove();
                 mapInst.current = null;
             }
@@ -463,7 +469,12 @@ const MapView: React.FC<MapViewProps> = memo(({
             }
 
             allEntries.current = [...resolved];
-            if (bounds.isValid()) mapInst.current!.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: false });
+            if (bounds.isValid()) {
+                mapInst.current!.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: false });
+                // Never auto-zoom below 13 — below that, district centroids cluster
+                // together and the user sees only one big cluster bubble instead of pins.
+                if (mapInst.current!.getZoom() < 13) mapInst.current!.setZoom(13, { animate: false });
+            }
             renderClustersRef.current();
 
             let geocodeCount = 0;
@@ -499,7 +510,10 @@ const MapView: React.FC<MapViewProps> = memo(({
 
             if (!cancel()) {
                 allEntries.current = resolved;
-                if (bounds.isValid()) mapInst.current?.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: false });
+                if (bounds.isValid()) {
+                    mapInst.current?.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: false });
+                    if (mapInst.current && mapInst.current.getZoom() < 13) mapInst.current.setZoom(13, { animate: false });
+                }
                 renderClustersRef.current();
             }
         };
