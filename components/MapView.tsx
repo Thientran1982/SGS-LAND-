@@ -95,6 +95,17 @@ function getFallbackPoint(listing: any): [number, number] {
     return HCMC_CENTER;
 }
 
+// Apply a tiny deterministic offset to real GPS coordinates so that multiple
+// listings at the exact same address (e.g. two units in the same building entered
+// with identical lat/lng) render as visually distinct pins instead of stacking.
+// Offset ≈ ±0.00005° ≈ ±5 m — invisible at city zoom, starts separating at zoom 17+.
+function getDisplayPoint(listing: any, point: [number, number]): [number, number] {
+    const h = hashId(String(listing.id ?? ''));
+    const dLat = ((h & 0xFFFF)         / 0xFFFF - 0.5) * 0.0001; // ±0.00005°
+    const dLng = (((h >>> 16) & 0xFFFF) / 0xFFFF - 0.5) * 0.0001;
+    return [point[0] + dLat, point[1] + dLng];
+}
+
 // ── Custom clustering ────────────────────────────────────────────────────────
 
 // Clustering is fully disabled — every listing is always its own individual pin.
@@ -380,7 +391,11 @@ const MapView: React.FC<MapViewProps> = memo(({
                 const isActive = selectedIdRef.current === listing.id;
                 const pType  = listing.type as string;
                 const icon   = priceIcon(label, approximate, listing.transaction as string, isActive, pType);
-                const marker = L.marker(point, { icon, zIndexOffset: approximate ? 50 : 100 });
+                // Apply micro-jitter to real GPS points to prevent identical-coordinate pins
+                // from stacking (e.g. a Project master and an Apartment at the same address).
+                // Fallback/approximate points already have district-level jitter applied.
+                const displayPoint = approximate ? point : getDisplayPoint(listing, point);
+                const marker = L.marker(displayPoint, { icon, zIndexOffset: approximate ? 50 : 100 });
 
                 if (isActive) activeMarker.current = { marker, entry: cluster[0] };
 

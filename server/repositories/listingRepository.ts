@@ -266,7 +266,7 @@ export class ListingRepository extends BaseRepository {
     userRole?: string
   ): Promise<{ availableCount: number; holdCount: number; soldCount: number; rentedCount: number; bookingCount: number; openingCount: number; inactiveCount: number; totalCount: number }> {
     return this.withTenant(tenantId, async (client) => {
-      const conditions: string[] = [`(project_code IS NULL OR project_code = '')`];
+      const conditions: string[] = [`(project_code IS NULL OR project_code = '' OR type = 'Project')`];
       const values: any[] = [];
       let paramIndex = 1;
 
