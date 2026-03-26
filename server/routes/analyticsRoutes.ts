@@ -112,6 +112,29 @@ export function createAnalyticsRoutes(authenticateToken: any) {
     }
   });
 
+  // GET /api/analytics/agent-stats/:userId
+  // Returns lead KPIs + workload for one agent.
+  // RBAC: each user can see their own stats; ADMIN and TEAM_LEAD can see anyone's.
+  router.get('/agent-stats/:userId', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const caller = (req as any).user;
+      const targetId = String(req.params.userId);
+
+      if (PARTNER_ROLES.includes(caller.role)) {
+        return res.status(403).json({ error: 'Không có quyền truy cập' });
+      }
+      if (caller.id !== targetId && !['ADMIN', 'TEAM_LEAD'].includes(caller.role)) {
+        return res.status(403).json({ error: 'Không có quyền xem số liệu của người dùng khác' });
+      }
+
+      const stats = await analyticsRepository.getAgentStats(caller.tenantId, targetId);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching agent stats:', error);
+      res.status(500).json({ error: 'Failed to fetch agent stats' });
+    }
+  });
+
   router.get('/visitors', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;

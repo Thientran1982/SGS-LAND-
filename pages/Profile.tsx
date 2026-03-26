@@ -27,7 +27,8 @@ const ICONS = {
     SECURITY: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
     SUCCESS: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
     ERROR: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    SAVE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+    SAVE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>,
+    PERFORMANCE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
 };
 
 interface TabButtonProps {
@@ -118,13 +119,35 @@ const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange
 //  3. MAIN COMPONENT
 // -----------------------------------------------------------------------------
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface AgentStatsData {
+    deals: number;
+    lost: number;
+    totalLeads: number;
+    inProgress: number;
+    closeRate: number;
+    revenue: number;
+    avgResponseMinutes: number | null;
+    slaScore: number;
+    activeTasks: number;
+    overdueTasks: number;
+    completedThisWeek: number;
+    completedThisMonth: number;
+    workloadScore: number;
+}
+
 export const Profile: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'GENERAL' | 'SECURITY'>('GENERAL');
+    const [activeTab, setActiveTab] = useState<'GENERAL' | 'SECURITY' | 'PERFORMANCE'>('GENERAL');
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+
+    // Performance tab state
+    const [perfLoading, setPerfLoading] = useState(false);
+    const [perfData, setPerfData] = useState<AgentStatsData | null>(null);
+    const [perfError, setPerfError] = useState(false);
     
     // Form Data
     const [formData, setFormData] = useState({ name: '', phone: '', bio: '', avatar: '' });
@@ -168,6 +191,30 @@ export const Profile: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [message]);
+
+    // Fetch performance data lazily when the PERFORMANCE tab is first opened
+    useEffect(() => {
+        if (activeTab !== 'PERFORMANCE' || !user) return;
+        if (perfData) return; // already loaded — don't re-fetch on every visit
+        let cancelled = false;
+        (async () => {
+            setPerfLoading(true);
+            setPerfError(false);
+            try {
+                const res = await fetch(`/api/analytics/agent-stats/${user.id}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (!cancelled) setPerfData(data);
+            } catch {
+                if (!cancelled) setPerfError(true);
+            } finally {
+                if (!cancelled) setPerfLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [activeTab, user, perfData]);
 
     const getLocalizedError = useCallback((msg: string) => {
         if (msg === 'Email already exists') return t('profile.err_email_exists');
@@ -455,6 +502,12 @@ export const Profile: React.FC = () => {
                             icon={ICONS.SECURITY} 
                             onClick={() => { setActiveTab('SECURITY'); setMessage(null); setErrors({}); }} 
                         />
+                        <TabButton
+                            active={activeTab === 'PERFORMANCE'}
+                            label={t('profile.tab_perf')}
+                            icon={ICONS.PERFORMANCE}
+                            onClick={() => { setActiveTab('PERFORMANCE'); setMessage(null); setErrors({}); }}
+                        />
                     </div>
                 </div>
 
@@ -463,7 +516,7 @@ export const Profile: React.FC = () => {
                     <div className="bg-[var(--bg-surface)] p-8 rounded-[32px] border border-[var(--glass-border)] shadow-sm min-h-[500px] relative">
                             <div className="flex justify-between items-center mb-8 border-b border-[var(--glass-border)] pb-6">
                             <h2 className="text-xl font-bold text-[var(--text-primary)]">
-                                {activeTab === 'GENERAL' ? t('profile.tab_general') : t('profile.tab_security')}
+                                {activeTab === 'GENERAL' ? t('profile.tab_general') : activeTab === 'SECURITY' ? t('profile.tab_security') : t('profile.tab_perf')}
                             </h2>
                         </div>
 
@@ -592,7 +645,7 @@ export const Profile: React.FC = () => {
                                     </button>
                                 </div>
                             </form>
-                        ) : (
+                        ) : activeTab === 'SECURITY' ? (
                             // Security Tab - Differentiate for SSO vs Standard
                             user.source === 'SSO' ? (
                                 <div className="animate-enter max-w-2xl text-center py-10 bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)]">
@@ -659,6 +712,134 @@ export const Profile: React.FC = () => {
                                     </div>
                                 </form>
                             )
+                        ) : (
+                            // ─── Performance Tab ───────────────────────────────────────────────
+                            <div className="animate-enter">
+                                {perfLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-16 gap-4">
+                                        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                                        <span className="text-sm text-[var(--text-secondary)]">{t('profile.perf_loading')}</span>
+                                    </div>
+                                ) : perfError || !perfData ? (
+                                    <div className="flex flex-col items-center justify-center py-16 gap-3">
+                                        <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center">
+                                            <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </div>
+                                        <p className="text-sm font-medium text-[var(--text-secondary)]">{t('profile.perf_no_data')}</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-8">
+
+                                        {/* ── SLA Score Hero ───────────────────────────────── */}
+                                        <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 border border-indigo-100 dark:border-indigo-800/40">
+                                            {/* Radial SLA ring */}
+                                            <div className="relative flex-shrink-0">
+                                                <svg viewBox="0 0 120 120" className="w-28 h-28">
+                                                    <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" className="text-indigo-100 dark:text-indigo-800/30" strokeWidth="10" />
+                                                    <circle
+                                                        cx="60" cy="60" r="50" fill="none"
+                                                        stroke="currentColor"
+                                                        className={perfData.slaScore >= 90 ? 'text-emerald-500' : perfData.slaScore >= 70 ? 'text-indigo-500' : 'text-amber-500'}
+                                                        strokeWidth="10"
+                                                        strokeLinecap="round"
+                                                        strokeDasharray={`${2 * Math.PI * 50}`}
+                                                        strokeDashoffset={`${2 * Math.PI * 50 * (1 - perfData.slaScore / 100)}`}
+                                                        transform="rotate(-90 60 60)"
+                                                        style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                                                    />
+                                                    <text x="60" y="58" textAnchor="middle" dominantBaseline="middle" fontSize="22" fontWeight="bold" fill="currentColor" className="text-[var(--text-primary)]">
+                                                        {perfData.slaScore}
+                                                    </text>
+                                                    <text x="60" y="76" textAnchor="middle" fontSize="10" fill="currentColor" className="text-[var(--text-secondary)]">
+                                                        /100
+                                                    </text>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">{t('profile.perf_sla')}</p>
+                                                <p className={`text-2xl font-extrabold mb-1 ${perfData.slaScore >= 90 ? 'text-emerald-600 dark:text-emerald-400' : perfData.slaScore >= 70 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                                    {perfData.slaScore >= 90 ? t('profile.perf_sla_excellent') : perfData.slaScore >= 70 ? t('profile.perf_sla_good') : t('profile.perf_sla_needs_work')}
+                                                </p>
+                                                <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-sm">
+                                                    {t('profile.perf_close_rate')}: <span className="font-bold text-[var(--text-primary)]">{perfData.closeRate}%</span>
+                                                    {perfData.avgResponseMinutes != null && (
+                                                        <> · {t('profile.perf_avg_resp')}: <span className="font-bold text-[var(--text-primary)]">{perfData.avgResponseMinutes} {t('dash.minutes')}</span></>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* ── Lead KPIs grid ───────────────────────────────── */}
+                                        <div>
+                                            <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-4">{t('profile.perf_lead_section')}</h3>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                                {/* Deals WON */}
+                                                <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_deals')}</p>
+                                                    <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{perfData.deals}</p>
+                                                </div>
+                                                {/* Close Rate */}
+                                                <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_close_rate')}</p>
+                                                    <p className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{perfData.closeRate}<span className="text-lg font-bold">%</span></p>
+                                                    <p className="text-xs text-[var(--text-secondary)] mt-1">WON / (WON+LOST)</p>
+                                                </div>
+                                                {/* Revenue */}
+                                                <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_revenue')}</p>
+                                                    <p className="text-2xl font-extrabold text-violet-600 dark:text-violet-400">
+                                                        {perfData.revenue >= 1e9
+                                                            ? `${(perfData.revenue / 1e9).toFixed(1)} tỷ`
+                                                            : perfData.revenue >= 1e6
+                                                            ? `${(perfData.revenue / 1e6).toFixed(0)} tr`
+                                                            : perfData.revenue.toLocaleString('vi-VN')}
+                                                    </p>
+                                                    <p className="text-xs text-[var(--text-secondary)] mt-1">VND</p>
+                                                </div>
+                                                {/* Total leads */}
+                                                <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_total_leads')}</p>
+                                                    <p className="text-3xl font-extrabold text-[var(--text-primary)]">{perfData.totalLeads}</p>
+                                                </div>
+                                                {/* In Progress */}
+                                                <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_in_progress')}</p>
+                                                    <p className="text-3xl font-extrabold text-amber-600 dark:text-amber-400">{perfData.inProgress}</p>
+                                                </div>
+                                                {/* Lost */}
+                                                <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_lost')}</p>
+                                                    <p className="text-3xl font-extrabold text-rose-600 dark:text-rose-400">{perfData.lost}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* ── Workload grid ─────────────────────────────────── */}
+                                        <div>
+                                            <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)] mb-4">{t('profile.perf_task_section')}</h3>
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                <div className={`rounded-2xl p-4 border ${perfData.activeTasks > 5 ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40' : 'bg-[var(--glass-surface)] border-[var(--glass-border)]'}`}>
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_active')}</p>
+                                                    <p className="text-3xl font-extrabold text-[var(--text-primary)]">{perfData.activeTasks}</p>
+                                                </div>
+                                                <div className={`rounded-2xl p-4 border ${perfData.overdueTasks > 0 ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/40' : 'bg-[var(--glass-surface)] border-[var(--glass-border)]'}`}>
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_overdue')}</p>
+                                                    <p className={`text-3xl font-extrabold ${perfData.overdueTasks > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[var(--text-primary)]'}`}>{perfData.overdueTasks}</p>
+                                                </div>
+                                                <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_week')}</p>
+                                                    <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{perfData.completedThisWeek}</p>
+                                                </div>
+                                                <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_month')}</p>
+                                                    <p className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">{perfData.completedThisMonth}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>

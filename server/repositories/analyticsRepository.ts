@@ -842,6 +842,168 @@ export class AnalyticsRepository extends BaseRepository {
       if (result.rows.length === 0) throw new Error('Campaign cost not found');
     });
   }
+
+  // ─── Single-agent performance stats ─────────────────────────────────────────
+  // Used by the Profile page "Hiệu Suất" tab. Returns KPIs scoped to one agent.
+  async getAgentStats(tenantId: string, userId: string): Promise<{
+    deals: number;
+    lost: number;
+    totalLeads: number;
+    inProgress: number;
+    closeRate: number;
+    revenue: number;
+    avgResponseMinutes: number | null;
+    slaScore: number;
+    activeTasks: number;
+    overdueTasks: number;
+    completedThisWeek: number;
+    completedThisMonth: number;
+    workloadScore: number;
+  }> {
+    const commissionRate = parseFloat(process.env.COMMISSION_RATE || '0.02');
+
+    return this.withTenant(tenantId, async (client) => {
+      // ── Lead KPIs ──────────────────────────────────────────────────────────
+      const leadRes = await client.query(`
+        SELECT
+          COUNT(l.id) FILTER (WHERE l.stage = 'WON')::int                      AS won,
+          COUNT(l.id) FILTER (WHERE l.stage = 'LOST')::int                     AS lost,
+          COUNT(l.id) FILTER (WHERE l.stage NOT IN ('WON','LOST'))::int         AS in_progress,
+          COUNT(l.id)::int                                                      AS total,
+          -- closeRate = WON / (WON + LOST): only resolved leads count
+          CASE
+            WHEN (
+              COUNT(l.id) FILTER (WHERE l.stage = 'WON') +
+              COUNT(l.id) FILTER (WHERE l.stage = 'LOST')
+            ) > 0
+            THEN ROUND(
+              COUNT(l.id) FILTER (WHERE l.stage = 'WON')::numeric
+              / (
+                  COUNT(l.id) FILTER (WHERE l.stage = 'WON') +
+                  COUNT(l.id) FILTER (WHERE l.stage = 'LOST')
+                )::numeric
+              * 100
+            )
+            ELSE 0
+          END::int AS close_rate,
+          -- Revenue: sum of the latest APPROVED proposal price × commission rate per WON lead
+          COALESCE((
+            SELECT SUM(latest_p.final_price * $2)
+            FROM leads won_l
+            JOIN LATERAL (
+              SELECT p2.final_price FROM proposals p2
+              WHERE p2.lead_id = won_l.id
+                AND p2.status = 'APPROVED'
+                AND p2.${TENANT_FILTER}
+              ORDER BY p2.updated_at DESC
+              LIMIT 1
+            ) latest_p ON true
+            WHERE won_l.assigned_to = $1
+              AND won_l.stage = 'WON'
+              AND won_l.${TENANT_FILTER}
+          ), 0)::numeric AS revenue,
+          -- Avg response: seconds from first INBOUND to first OUTBOUND per lead
+          (
+            SELECT ROUND(AVG(EXTRACT(EPOCH FROM (first_out.ts - first_in.ts)) / 60))::int
+            FROM (
+              SELECT lead_id, MIN(timestamp) as ts
+              FROM interactions
+              WHERE direction = 'INBOUND' AND ${TENANT_FILTER}
+                AND lead_id IN (
+                  SELECT id FROM leads WHERE assigned_to = $1 AND ${TENANT_FILTER}
+                )
+              GROUP BY lead_id
+            ) first_in
+            JOIN LATERAL (
+              SELECT MIN(timestamp) as ts
+              FROM interactions
+              WHERE lead_id = first_in.lead_id
+                AND direction = 'OUTBOUND'
+                AND timestamp > first_in.ts
+                AND ${TENANT_FILTER}
+            ) first_out ON first_out.ts IS NOT NULL
+          ) AS avg_response_minutes
+        FROM leads l
+        WHERE l.assigned_to = $1 AND l.${TENANT_FILTER}
+      `, [userId, commissionRate]);
+
+      const row = leadRes.rows[0] || {};
+      const won       = row.won            ?? 0;
+      const lost      = row.lost           ?? 0;
+      const inProgress = row.in_progress   ?? 0;
+      const total     = row.total          ?? 0;
+      const closeRate = row.close_rate     ?? 0;
+      const revenue   = parseFloat(row.revenue)  || 0;
+      const avgMins   = row.avg_response_minutes != null
+        ? Number(row.avg_response_minutes) : null;
+
+      // SLA score: 70% close rate component + 30% response-speed bonus
+      const responseBonus = avgMins == null ? 0
+        : avgMins <= 10 ? 30
+        : avgMins <= 30 ? 20
+        : avgMins <= 60 ? 10
+        : 0;
+      const slaScore = Math.min(100, Math.round(closeRate * 0.7 + responseBonus));
+
+      // ── Workload (wf_tasks) ────────────────────────────────────────────────
+      const activeRes = await client.query(`
+        SELECT COUNT(*)::int as cnt
+        FROM wf_tasks t
+        JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
+        WHERE t.status = 'in_progress' AND t.${TENANT_FILTER}
+      `, [userId]);
+
+      const overdueRes = await client.query(`
+        SELECT COUNT(*)::int as cnt
+        FROM wf_tasks t
+        JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
+        WHERE t.status NOT IN ('done','cancelled')
+          AND t.deadline < CURRENT_DATE
+          AND t.${TENANT_FILTER}
+      `, [userId]);
+
+      const weekRes = await client.query(`
+        SELECT COUNT(*)::int as cnt
+        FROM wf_tasks t
+        JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
+        WHERE t.status = 'done'
+          AND t.updated_at >= NOW() - INTERVAL '7 days'
+          AND t.${TENANT_FILTER}
+      `, [userId]);
+
+      const monthRes = await client.query(`
+        SELECT COUNT(*)::int as cnt
+        FROM wf_tasks t
+        JOIN task_assignments ta ON ta.task_id = t.id AND ta.user_id = $1
+        WHERE t.status = 'done'
+          AND t.updated_at >= NOW() - INTERVAL '30 days'
+          AND t.${TENANT_FILTER}
+      `, [userId]);
+
+      const activeTasks         = activeRes.rows[0]?.cnt  ?? 0;
+      const overdueTasks        = overdueRes.rows[0]?.cnt ?? 0;
+      const completedThisWeek   = weekRes.rows[0]?.cnt    ?? 0;
+      const completedThisMonth  = monthRes.rows[0]?.cnt   ?? 0;
+      // Workload pressure index: in-progress × 1, overdue × 2, high-urgency handled in UI
+      const workloadScore = activeTasks * 1 + overdueTasks * 2;
+
+      return {
+        deals: won,
+        lost,
+        totalLeads: total,
+        inProgress,
+        closeRate,
+        revenue,
+        avgResponseMinutes: avgMins,
+        slaScore,
+        activeTasks,
+        overdueTasks,
+        completedThisWeek,
+        completedThisMonth,
+        workloadScore,
+      };
+    });
+  }
 }
 
 export const analyticsRepository = new AnalyticsRepository();
