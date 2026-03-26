@@ -439,6 +439,20 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                     <div>
+                                        <label className={labelClass}>{t('contracts.unit_code')}</label>
+                                        <input value={formData.propertyUnitCode || ''} onChange={e => handleChange('propertyUnitCode', e.target.value)} className={inputClass} placeholder="VD: A1-05, B2-12..." />
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>{t('contracts.room_number')}</label>
+                                        <input value={formData.propertyRoomNumber || ''} onChange={e => handleChange('propertyRoomNumber', e.target.value)} className={inputClass} placeholder="VD: 05, 12A..." />
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>{t('contracts.floor_number')}</label>
+                                        <input value={formData.propertyFloorNumber || ''} onChange={e => handleChange('propertyFloorNumber', e.target.value)} className={inputClass} placeholder="VD: 5, 12, Tầng 3..." />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                    <div>
                                         <label className={labelClass}>{t('contracts.land_area')}</label>
                                         <input type="number" value={formData.propertyLandArea || ''} onChange={e => handleChange('propertyLandArea', Number(e.target.value))} className={inputClass} />
                                     </div>

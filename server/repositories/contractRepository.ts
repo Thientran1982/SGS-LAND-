@@ -129,6 +129,9 @@ export class ContractRepository extends BaseRepository {
       certificateNumber: data.propertyCertificateNumber,
       certificateDate: data.propertyCertificateDate,
       certificatePlace: data.propertyCertificatePlace,
+      unitCode: data.propertyUnitCode,
+      roomNumber: data.propertyRoomNumber,
+      floorNumber: data.propertyFloorNumber,
     };
   }
 
@@ -164,6 +167,9 @@ export class ContractRepository extends BaseRepository {
       propertyCertificateNumber: propertyDetails.certificateNumber,
       propertyCertificateDate: propertyDetails.certificateDate,
       propertyCertificatePlace: propertyDetails.certificatePlace,
+      propertyUnitCode: propertyDetails.unitCode,
+      propertyRoomNumber: propertyDetails.roomNumber,
+      propertyFloorNumber: propertyDetails.floorNumber,
     };
   }
 

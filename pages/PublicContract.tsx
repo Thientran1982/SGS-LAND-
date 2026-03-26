@@ -439,6 +439,17 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                             <strong>- Loại đất / loại hình bất động sản: </strong>{contract.propertyType}
                         </p>
                     )}
+                    {contract.propertyUnitCode && (
+                        <p style={{ margin: '3px 0' }}>
+                            <strong>- Mã căn: </strong>{contract.propertyUnitCode}
+                        </p>
+                    )}
+                    {(contract.propertyRoomNumber || contract.propertyFloorNumber) && (
+                        <p style={{ margin: '3px 0' }}>
+                            {contract.propertyFloorNumber && <><strong>- Tầng số: </strong>{contract.propertyFloorNumber}{contract.propertyRoomNumber ? ' ' : ''}</>}
+                            {contract.propertyRoomNumber && <><strong>{contract.propertyFloorNumber ? '/ Số phòng: ' : '- Số phòng: '}</strong>{contract.propertyRoomNumber}</>}
+                        </p>
+                    )}
                     {(contract.propertyLandArea != null || contract.propertyArea != null) && (
                         <p style={{ margin: '3px 0' }}>
                             <strong>- Diện tích: </strong>

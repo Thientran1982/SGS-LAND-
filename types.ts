@@ -1172,6 +1172,9 @@ export interface Contract {
     propertyCertificateNumber?: string; // Số Giấy chứng nhận/Sổ đỏ
     propertyCertificateDate?: string; // Ngày cấp GCN
     propertyCertificatePlace?: string; // Nơi cấp GCN
+    propertyUnitCode?: string; // Mã căn (căn hộ)
+    propertyRoomNumber?: string; // Số phòng (căn hộ)
+    propertyFloorNumber?: string; // Số tầng (căn hộ)
     propertyPrice: number;
 
     // Payment & Terms
