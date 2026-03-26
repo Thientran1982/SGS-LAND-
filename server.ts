@@ -857,7 +857,7 @@ async function startServer() {
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: 'Phiên chat không tồn tại' }) as any;
       const messages = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
-      res.json({ messages: messages || [], lead: { id: lead.id, name: lead.name } });
+      res.json({ messages: messages || [], lead: { id: lead.id, name: lead.name, assignedTo: lead.assignedTo || null } });
     } catch (error) {
       console.error('Public livechat get messages error:', error);
       res.status(500).json({ error: 'Không thể tải lịch sử chat' });
@@ -906,24 +906,11 @@ async function startServer() {
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: 'Lead not found' }) as any;
 
+      // The client already saved the visitor's inbound message via /api/public/livechat/message
+      // before calling this endpoint, so fetch history directly — it already contains that message.
+      // This avoids persisting a duplicate INBOUND record.
       const history = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
-
-      // Persist visitor's inbound message BEFORE calling AI so the full conversation
-      // (including this message) is visible in Inbox and used as context for the AI
-      const visitorMsg = await interactionRepository.create(PUBLIC_TENANT, {
-        leadId,
-        channel: 'WEB',
-        direction: 'INBOUND',
-        type: 'TEXT',
-        content: msgContent,
-        metadata: { source: 'livechat_widget' }
-      });
-      // Notify Inbox of the visitor's message in real-time
-      broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: visitorMsg });
-      broadcastIo?.to(`tenant:${PUBLIC_TENANT}`).emit('new_inbound_message', { leadId, message: visitorMsg });
-
-      // Include the just-saved message so AI has complete context
-      const historyWithLatest = [...history, visitorMsg];
+      const historyWithLatest = history; // includes the already-saved visitor message
 
       const { aiService } = await import('./server/ai');
       const t = serverT(lang || 'vn');

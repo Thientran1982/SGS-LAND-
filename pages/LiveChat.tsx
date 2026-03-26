@@ -31,7 +31,7 @@ async function publicSendMessage(leadId: string, content: string, direction: 'IN
     return data.message as Interaction;
 }
 
-async function publicGetMessages(leadId: string): Promise<{ messages: Interaction[]; lead: { id: string; name: string } } | null> {
+async function publicGetMessages(leadId: string): Promise<{ messages: Interaction[]; lead: { id: string; name: string; assignedTo?: string | null } } | null> {
     const res = await fetch(`/api/public/livechat/messages/${leadId}`);
     if (!res.ok) return null;
     return res.json();
@@ -84,8 +84,9 @@ export default function LiveChat() {
         const savedAgent = localStorage.getItem('livechat_agent_id');
         if (!savedId) return;
 
-        // Agent mismatch → force a fresh session for the new agent
-        if (agentId && savedAgent && agentId !== savedAgent) {
+        // Agent mismatch (or no stored agent for a link that requires one)
+        // → discard the old session so a fresh one is created for the correct agent
+        if (agentId && agentId !== savedAgent) {
             localStorage.removeItem('livechat_lead_id');
             localStorage.removeItem('livechat_agent_id');
             return;
@@ -93,6 +94,14 @@ export default function LiveChat() {
 
         publicGetMessages(savedId).then(data => {
             if (data) {
+                // Server-side agent validation: if the URL specifies an agent but the
+                // stored session belongs to a different agent, discard it so a fresh
+                // session is created for the correct agent.
+                if (agentId && data.lead.assignedTo && agentId !== data.lead.assignedTo) {
+                    localStorage.removeItem('livechat_lead_id');
+                    localStorage.removeItem('livechat_agent_id');
+                    return;
+                }
                 setLeadId(data.lead.id);
                 setLeadName(data.lead.name);
                 setMessages(data.messages || []);
