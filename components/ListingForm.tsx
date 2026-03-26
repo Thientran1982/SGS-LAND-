@@ -78,26 +78,39 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
         if (!addr) { setGeocodeMsg(t('inventory.geocode_no_addr') || 'Vui lòng nhập địa chỉ trước'); return; }
         setGeocoding(true);
         setGeocodeMsg('');
-        try {
-            const q = encodeURIComponent(`${addr}, Việt Nam`);
-            const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn`,
-                { headers: { 'Accept-Language': 'vi,en', 'User-Agent': 'SGSLand/1.0' } }
-            );
-            const data = await res.json();
-            if (data.length > 0) {
-                const lat = parseFloat(parseFloat(data[0].lat).toFixed(6));
-                const lng = parseFloat(parseFloat(data[0].lon).toFixed(6));
-                setFormData(prev => ({ ...prev, coordinates: { lat, lng } }));
-                setGeocodeMsg(`✓ ${lat}, ${lng}`);
-            } else {
-                setGeocodeMsg(t('inventory.geocode_not_found') || 'Không tìm thấy toạ độ cho địa chỉ này');
-            }
-        } catch {
-            setGeocodeMsg(t('inventory.geocode_error') || 'Lỗi kết nối geocoding');
-        } finally {
-            setGeocoding(false);
+
+        // HCMC bounding box — bounded=1 ensures Nominatim only returns results within this area
+        const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
+        const queries = [
+            `${addr}, Thành phố Hồ Chí Minh, Việt Nam`,
+            `${addr}, Ho Chi Minh City, Vietnam`,
+            `${addr}, TP. HCM, Việt Nam`,
+            `${addr}, Vietnam`,
+        ];
+
+        let found = false;
+        for (let i = 0; i < queries.length; i++) {
+            if (i > 0) await new Promise(r => setTimeout(r, 1100)); // Nominatim rate limit
+            try {
+                const q = encodeURIComponent(queries[i]);
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn&viewbox=${HCMC_VIEWBOX}&bounded=1`,
+                    { headers: { 'Accept-Language': 'vi,en', 'User-Agent': 'SGSLand/1.0' } }
+                );
+                const data = await res.json();
+                if (data.length > 0) {
+                    const lat = parseFloat(parseFloat(data[0].lat).toFixed(6));
+                    const lng = parseFloat(parseFloat(data[0].lon).toFixed(6));
+                    setFormData(prev => ({ ...prev, coordinates: { lat, lng } }));
+                    setGeocodeMsg(`✓ ${lat}, ${lng}`);
+                    found = true;
+                    break;
+                }
+            } catch { /* try next query */ }
         }
+
+        if (!found) setGeocodeMsg(t('inventory.geocode_not_found') || 'Không tìm thấy toạ độ — thử nhập địa chỉ đầy đủ hơn');
+        setGeocoding(false);
     };
 
     const fileInputRef = useRef<HTMLInputElement>(null);
