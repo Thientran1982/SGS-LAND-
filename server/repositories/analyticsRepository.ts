@@ -184,12 +184,27 @@ export class AnalyticsRepository extends BaseRepository {
 
       // Filter revenue by won_at (deal close date) — financially correct.
       // Fallback to lrev.updated_at for legacy WON leads that pre-date the won_at column.
+      //
+      // Dedup: keep only the LATEST approved proposal per WON lead.
+      // If a deal was renegotiated (multiple APPROVED proposals exist), only the most
+      // recently approved one counts — prevents double-counting inflating revenue.
+      const latestApprovedProposalFilter = `
+        AND p.updated_at = (
+          SELECT MAX(p2.updated_at)
+          FROM proposals p2
+          WHERE p2.lead_id = p.lead_id
+            AND p2.tenant_id = p.tenant_id
+            AND p2.status = 'APPROVED'
+        )
+      `;
+
       const revenueResult = await client.query(`
         SELECT COALESCE(SUM(p.final_price * $1), 0)::numeric as revenue
         FROM proposals p
         ${wonLeadJoin}
         WHERE p.${TENANT_FILTER}
           AND p.status = 'APPROVED'
+          ${latestApprovedProposalFilter}
           ${useTimeFilter ? `AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days} days'` : ''}
       `, [commissionRate]);
 
@@ -200,6 +215,7 @@ export class AnalyticsRepository extends BaseRepository {
             ${wonLeadJoin}
             WHERE p.${TENANT_FILTER}
               AND p.status = 'APPROVED'
+              ${latestApprovedProposalFilter}
               AND COALESCE(lrev.won_at, lrev.updated_at) >= NOW() - INTERVAL '${days * 2} days'
               AND COALESCE(lrev.won_at, lrev.updated_at) < NOW() - INTERVAL '${days} days'
           `, [commissionRate])
@@ -386,6 +402,7 @@ export class AnalyticsRepository extends BaseRepository {
 
       // Group by the month the deal was WON (won_at), not when the proposal was created.
       // Fallback to lrev.updated_at for legacy rows that pre-date the won_at column.
+      // Dedup: same latestApprovedProposalFilter as revenueResult — one price per WON deal.
       const revenueByMonthResult = await client.query(`
         SELECT
           TO_CHAR(COALESCE(lrev.won_at, lrev.updated_at), 'YYYY-MM') as month,
@@ -394,6 +411,7 @@ export class AnalyticsRepository extends BaseRepository {
         ${wonLeadJoin}
         WHERE p.${TENANT_FILTER}
           AND p.status = 'APPROVED'
+          ${latestApprovedProposalFilter}
         GROUP BY TO_CHAR(COALESCE(lrev.won_at, lrev.updated_at), 'YYYY-MM')
         ORDER BY month DESC
         LIMIT 12
@@ -591,18 +609,48 @@ export class AnalyticsRepository extends BaseRepository {
           END
       `);
 
-      // Revenue = final_price * commissionRate, consistent with getSummary and Dashboard
+      // Attribution revenue semantics (aligned with Dashboard):
+      //   lead_count  = leads CREATED in the selected period from each channel (acquisition metric).
+      //   won_count   = deals CLOSED (won_at) in the selected period from each channel.
+      //   revenue     = commission from proposals of those CLOSED deals — matches Dashboard total.
+      //
+      // LATERAL join: pick the single latest APPROVED proposal per lead so re-negotiations
+      // (multiple APPROVED proposals for the same lead) are never double-counted.
+      //
+      // WHERE union: include leads created in period OR won in period so both metrics are accurate.
+      const wonAtFilter = useTimeFilter
+        ? `AND COALESCE(l.won_at, l.updated_at) >= NOW() - INTERVAL '${days} days'`
+        : '';
+      // lead_count filter: when useTimeFilter=false (all-time), count all leads (no date restriction).
+      const leadCountFilter = useTimeFilter
+        ? `WHERE l.created_at >= NOW() - INTERVAL '${days} days'`
+        : 'WHERE TRUE';
       const attributionResult = await client.query(`
         SELECT
           COALESCE(l.source, 'UNKNOWN') as source,
-          COUNT(l.id)::int as lead_count,
-          COUNT(l.id) FILTER (WHERE l.stage = 'WON')::int as won_count,
-          COALESCE(SUM(p.final_price * $1) FILTER (WHERE l.stage = 'WON'), 0)::numeric as revenue
+          COUNT(l.id) FILTER (${leadCountFilter})::int as lead_count,
+          COUNT(l.id) FILTER (
+            WHERE l.stage = 'WON' ${wonAtFilter}
+          )::int as won_count,
+          COALESCE(SUM(p.final_price * $1) FILTER (
+            WHERE l.stage = 'WON' ${wonAtFilter}
+          ), 0)::numeric as revenue
         FROM leads l
-        LEFT JOIN proposals p ON l.id = p.lead_id AND p.tenant_id = l.tenant_id AND p.status = 'APPROVED'
+        LEFT JOIN LATERAL (
+          SELECT final_price
+          FROM proposals pinner
+          WHERE pinner.lead_id = l.id
+            AND pinner.tenant_id = l.tenant_id
+            AND pinner.status = 'APPROVED'
+          ORDER BY pinner.updated_at DESC
+          LIMIT 1
+        ) p ON true
         WHERE l.${TENANT_FILTER}
           ${userLeadFilterL}
-          ${timeFilterAnd.replace('created_at', 'l.created_at')}
+          ${useTimeFilter ? `AND (
+            l.created_at >= NOW() - INTERVAL '${days} days'
+            OR (l.stage = 'WON' AND COALESCE(l.won_at, l.updated_at) >= NOW() - INTERVAL '${days} days')
+          )` : ''}
         GROUP BY l.source
         ORDER BY revenue DESC
       `, [commissionRate]);
