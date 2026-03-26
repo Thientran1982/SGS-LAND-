@@ -11,6 +11,10 @@ const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
 const MAX_GEOCODE_REQUESTS = 20;
 const CLUSTER_RADIUS_PX = 60;
 
+// Module-level circuit breaker — set to false the moment Nominatim is unreachable.
+// Avoids 8 × 1.1 s = 8.8 s wasted sleep per listing when the network blocks the API.
+let nominatimReachable = true;
+
 // ── Transaction → design tokens ──────────────────────────────────────────────
 // Priority: PropertyType.PROJECT → blue | TransactionType.RENT → violet | default → navy
 function pinTokens(transaction?: string, propertyType?: string) {
@@ -34,6 +38,9 @@ async function geocodeLocation(
     cache: Map<string, [number, number] | null>
 ): Promise<[number, number] | null> {
     if (cache.has(location)) return cache.get(location)!;
+    // Circuit breaker: skip all Nominatim calls if network has already failed
+    if (!nominatimReachable) { cache.set(location, null); return null; }
+
     const queries = buildVNGeoQueries(location);
     for (let i = 0; i < queries.length; i++) {
         if (i > 0) await sleep(1100);
@@ -47,7 +54,12 @@ async function geocodeLocation(
                 cache.set(location, coords);
                 return coords;
             }
-        } catch (_) { /* rate-limited or network blocked */ }
+        } catch (_) {
+            // Network error (not a "no results" response) — trip the circuit breaker
+            // and stop trying other query variants for this and all future listings.
+            nominatimReachable = false;
+            break;
+        }
     }
     cache.set(location, null);
     return null;
@@ -71,7 +83,13 @@ interface PointEntry {
 
 function buildClusters(entries: PointEntry[], map: L.Map): PointEntry[][] {
     if (!entries.length) return [];
-    const screen = entries.map(e => map.latLngToContainerPoint(L.latLng(e.point[0], e.point[1])));
+    let screen: L.Point[];
+    try {
+        screen = entries.map(e => map.latLngToContainerPoint(L.latLng(e.point[0], e.point[1])));
+    } catch (_) {
+        // Map pane not ready yet — return one cluster per entry (no grouping)
+        return entries.map(e => [e]);
+    }
     const taken = new Uint8Array(entries.length);
     const clusters: PointEntry[][] = [];
     for (let i = 0; i < entries.length; i++) {
@@ -225,7 +243,10 @@ const MapView: React.FC<MapViewProps> = memo(({
 
     const [selected, setSelected]       = useState<{ listing: any; approximate: boolean } | null>(null);
     const [clusterGroup, setClusterGroup] = useState<PointEntry[] | null>(null);
-    const selectedIdRef = useRef<string | null>(null);
+    const selectedIdRef       = useRef<string | null>(null);
+    // Stable ref so event listeners always call the latest renderClusters/deselectPin
+    const renderClustersRef   = useRef<() => void>(() => {});
+    const deselectPinRef      = useRef<() => void>(() => {});
 
     // ── Map init ──────────────────────────────────────────────────────────────
     useEffect(() => {
@@ -249,9 +270,10 @@ const MapView: React.FC<MapViewProps> = memo(({
             layerGroup.current = lg;
             mapInst.current    = map;
 
-            map.on('zoomend', () => renderClusters());
+            // Use stable refs so listeners always call the current callback version
+            map.on('zoomend', () => renderClustersRef.current());
             map.on('click',   () => {
-                deselectPin();
+                deselectPinRef.current();
                 setSelected(null);
                 setClusterGroup(null);
             });
@@ -263,8 +285,13 @@ const MapView: React.FC<MapViewProps> = memo(({
 
         return () => {
             ro?.disconnect();
-            mapInst.current?.remove();
-            mapInst.current = null;
+            if (mapInst.current) {
+                // Stop any in-progress zoom/pan animations before removing to
+                // avoid "Cannot read properties of undefined (reading '_leaflet_pos')"
+                try { mapInst.current.stop(); } catch (_) { /* already stopped */ }
+                mapInst.current.remove();
+                mapInst.current = null;
+            }
             layerGroup.current = null;
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -286,6 +313,12 @@ const MapView: React.FC<MapViewProps> = memo(({
         const map = mapInst.current;
         const lg  = layerGroup.current;
         if (!map || !lg) return;
+        // Guard: bail if the map's container has already been removed from DOM
+        // (can happen when the component unmounts during a zoom/pan animation)
+        try {
+            const container = map.getContainer();
+            if (!container || !document.body.contains(container)) return;
+        } catch (_) { return; }
 
         lg.clearLayers();
         activeMarker.current = null;
@@ -347,6 +380,11 @@ const MapView: React.FC<MapViewProps> = memo(({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [language, formatCompactNumber, t, deselectPin]);
 
+    // Keep stable refs in sync so event listeners (zoomend, click) always
+    // call the most recent version of these callbacks.
+    useEffect(() => { renderClustersRef.current = renderClusters; }, [renderClusters]);
+    useEffect(() => { deselectPinRef.current    = deselectPin; },    [deselectPin]);
+
     // ── Listings → resolve coords → cluster ───────────────────────────────────
     useEffect(() => {
         cancelFlag.current = true;
@@ -389,7 +427,8 @@ const MapView: React.FC<MapViewProps> = memo(({
                     point = cached ?? getFallbackPoint(listing);
                     approximate = !cached;
                 } else if (geocodeCount < MAX_GEOCODE_REQUESTS && listing.location) {
-                    if (geocodeCount > 0 && !cancel()) await sleep(1100);
+                    // Only sleep if Nominatim is reachable — no point rate-limiting a blocked endpoint
+                    if (geocodeCount > 0 && !cancel() && nominatimReachable) await sleep(1100);
                     if (cancel()) break;
                     const r = await geocodeLocation(listing.location, geoCache.current);
                     geocodeCount++;
@@ -402,10 +441,10 @@ const MapView: React.FC<MapViewProps> = memo(({
                 resolved.push({ listing, point, approximate });
                 bounds.extend(point);
 
-                if (resolved.length % 5 === 0 || geocodeCount >= MAX_GEOCODE_REQUESTS) {
-                    allEntries.current = [...resolved];
-                    renderClusters();
-                }
+                // Progressive render: update after every listing so the map shows
+                // pins as they resolve instead of waiting for the full batch.
+                allEntries.current = [...resolved];
+                renderClusters();
             }
 
             if (!cancel()) {
