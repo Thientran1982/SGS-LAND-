@@ -94,12 +94,10 @@ function getFallbackPoint(listing: any): [number, number] {
 
 // ── Custom clustering ────────────────────────────────────────────────────────
 
-// Clustering is active ONLY at zoom ≤ CLUSTER_MAX_ZOOM (very zoomed-out city view).
-// At the default working zoom of 13+, every listing is shown as its own pin.
-// Rationale: real-estate agents need to see individual listings; clustering makes
-// sense only when the viewport shows the whole city and individual pins would
-// completely overlap.
-const CLUSTER_MAX_ZOOM = 12;
+// Clustering is fully disabled — every listing is always its own individual pin.
+// Set to -1 so the condition (zoom > CLUSTER_MAX_ZOOM) is always true and the
+// cluster branch is never reached.
+const CLUSTER_MAX_ZOOM = -1;
 
 interface PointEntry {
     listing: Listing;
