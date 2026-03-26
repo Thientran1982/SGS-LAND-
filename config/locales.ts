@@ -1043,6 +1043,10 @@ export const DICTIONARY = {
         "admin.users.mobile_deactivated": "VH",
         "admin.users.mobile_archived": "LT",
         "admin.users.invite_short": "Mời",
+        "admin.users.view_perf": "Xem hiệu suất",
+        "admin.users.perf_modal_title": "Hiệu suất: {name}",
+        "admin.users.perf_no_data": "Chưa có dữ liệu hiệu suất",
+        "admin.users.perf_error": "Không thể tải dữ liệu",
 
         "ent.title": "Cài Đặt Doanh Nghiệp",
         "ent.subtitle": "Cấu hình tích hợp, bảo mật và thương hiệu.",
@@ -3078,6 +3082,10 @@ export const DICTIONARY = {
         "admin.users.mobile_deactivated": "DIS",
         "admin.users.mobile_archived": "ARC",
         "admin.users.invite_short": "Invite",
+        "admin.users.view_perf": "View Performance",
+        "admin.users.perf_modal_title": "Performance: {name}",
+        "admin.users.perf_no_data": "No performance data yet",
+        "admin.users.perf_error": "Failed to load data",
 
         "ent.title": "Enterprise Settings",
         "ent.subtitle": "Integration, security and brand configuration.",

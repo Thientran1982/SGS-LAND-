@@ -7,6 +7,22 @@ import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 
+interface AgentStatsData {
+    deals: number;
+    lost: number;
+    totalLeads: number;
+    inProgress: number;
+    closeRate: number;
+    revenue: number;
+    avgResponseMinutes: number | null;
+    slaScore: number;
+    activeTasks: number;
+    overdueTasks: number;
+    completedThisWeek: number;
+    completedThisMonth: number;
+    workloadScore: number;
+}
+
 const ICONS = {
     SEARCH: <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
@@ -15,7 +31,8 @@ const ICONS = {
     CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     INFO: <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     SORT: <svg className="w-3 h-3 ml-1 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>,
-    X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+    X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+    CHART: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
 };
 
 // --- SUB-COMPONENT: PAGINATION ---
@@ -86,6 +103,183 @@ const PaginationControl = memo(({ page, total, pageSize, onPageChange, onPageSiz
         </>
     );
 });
+
+// --- SUB-COMPONENT: PERFORMANCE MODAL ---
+const PerformanceModal: React.FC<{ user: User; onClose: () => void; t: any }> = ({ user, onClose, t }) => {
+    const [data, setData] = useState<AgentStatsData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        setLoading(true);
+        setError(false);
+        setData(null);
+        fetch(`/api/analytics/agent-stats/${user.id}`, { credentials: 'include' })
+            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+            .then(d => { setData(d); setLoading(false); })
+            .catch(() => { setError(true); setLoading(false); });
+    }, [user.id]);
+
+    const slaColor = data
+        ? data.slaScore >= 90 ? 'text-emerald-500' : data.slaScore >= 70 ? 'text-indigo-500' : 'text-amber-500'
+        : 'text-[var(--text-secondary)]';
+    const slaLabelColor = data
+        ? data.slaScore >= 90 ? 'text-emerald-600 dark:text-emerald-400' : data.slaScore >= 70 ? 'text-indigo-600 dark:text-indigo-400' : 'text-amber-600 dark:text-amber-400'
+        : '';
+    const circumference = 2 * Math.PI * 50;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+            <div className="relative z-10 bg-[var(--bg-surface)] w-full max-w-xl rounded-[24px] shadow-2xl border border-[var(--glass-border)] animate-scale-up flex flex-col max-h-[90vh]">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--glass-border)] shrink-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <img
+                            src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=40&background=6366f1&color=fff`}
+                            onError={e => { (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=40&background=6366f1&color=fff`; }}
+                            className="w-10 h-10 rounded-full object-cover border border-[var(--glass-border)] shrink-0"
+                            alt={user.name}
+                        />
+                        <div className="min-w-0">
+                            <h3 className="text-base font-bold text-[var(--text-primary)] truncate">{t('admin.users.perf_modal_title', { name: user.name })}</h3>
+                            <p className="text-xs text-[var(--text-tertiary)] truncate">{user.email}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1.5 rounded-lg hover:bg-[var(--glass-surface-hover)] transition-colors shrink-0 ml-2">
+                        {ICONS.CLOSE}
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="overflow-y-auto px-6 py-5 space-y-5 no-scrollbar">
+                    {loading && (
+                        <div className="flex flex-col items-center justify-center py-16 gap-3">
+                            <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                            <p className="text-sm text-[var(--text-secondary)]">{t('profile.perf_loading')}</p>
+                        </div>
+                    )}
+                    {!loading && error && (
+                        <div className="flex flex-col items-center justify-center py-16 gap-2">
+                            <p className="text-sm font-bold text-rose-600">{t('admin.users.perf_error')}</p>
+                        </div>
+                    )}
+                    {!loading && !error && !data && (
+                        <div className="flex flex-col items-center justify-center py-16 gap-2">
+                            <p className="text-sm text-[var(--text-secondary)]">{t('admin.users.perf_no_data')}</p>
+                        </div>
+                    )}
+                    {!loading && !error && data && (
+                        <>
+                            {/* SLA Ring */}
+                            <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-5 flex items-center gap-6">
+                                <div className="relative shrink-0 w-24 h-24">
+                                    <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                                        <circle cx="60" cy="60" r="50" fill="none" stroke="var(--glass-border)" strokeWidth="10" />
+                                        <circle
+                                            cx="60" cy="60" r="50" fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="10"
+                                            strokeLinecap="round"
+                                            className={slaColor}
+                                            strokeDasharray={`${circumference}`}
+                                            strokeDashoffset={`${circumference * (1 - data.slaScore / 100)}`}
+                                            style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className={`text-2xl font-extrabold ${slaColor}`}>{data.slaScore}</span>
+                                    </div>
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">{t('profile.perf_sla')}</p>
+                                    <p className={`text-xl font-extrabold mb-1 ${slaLabelColor}`}>
+                                        {data.slaScore >= 90 ? t('profile.perf_sla_excellent') : data.slaScore >= 70 ? t('profile.perf_sla_good') : t('profile.perf_sla_needs_work')}
+                                    </p>
+                                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                                        {t('profile.perf_close_rate')}: <span className="font-bold text-[var(--text-primary)]">{data.closeRate}%</span>
+                                        {data.avgResponseMinutes != null && (
+                                            <> · {t('profile.perf_avg_resp')}: <span className="font-bold text-[var(--text-primary)]">{data.avgResponseMinutes} {t('dash.minutes')}</span></>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Lead KPIs */}
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-3">{t('profile.perf_lead_section')}</p>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {/* Deals */}
+                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_deals')}</p>
+                                        <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{data.deals}</p>
+                                    </div>
+                                    {/* Close Rate */}
+                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_close_rate')}</p>
+                                        <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{data.closeRate}<span className="text-sm font-bold">%</span></p>
+                                        <p className="text-2xs text-[var(--text-secondary)] mt-1">{t('profile.perf_close_formula')}</p>
+                                    </div>
+                                    {/* Revenue */}
+                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_revenue')}</p>
+                                        <p className="text-xl font-extrabold text-violet-600 dark:text-violet-400">
+                                            {data.revenue >= 1e9
+                                                ? `${(data.revenue / 1e9).toFixed(1)} ${t('profile.perf_billion')}`
+                                                : data.revenue >= 1e6
+                                                ? `${(data.revenue / 1e6).toFixed(0)} ${t('profile.perf_million')}`
+                                                : data.revenue.toLocaleString()}
+                                        </p>
+                                        <p className="text-2xs text-[var(--text-secondary)] mt-1">VND</p>
+                                    </div>
+                                    {/* Total Leads */}
+                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_total_leads')}</p>
+                                        <p className="text-2xl font-extrabold text-[var(--text-primary)]">{data.totalLeads}</p>
+                                    </div>
+                                    {/* In Progress */}
+                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_in_progress')}</p>
+                                        <p className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">{data.inProgress}</p>
+                                    </div>
+                                    {/* Lost */}
+                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_lost')}</p>
+                                        <p className="text-2xl font-extrabold text-rose-600 dark:text-rose-400">{data.lost}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Workload */}
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-3">{t('profile.perf_task_section')}</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className={`rounded-2xl p-4 border ${data.activeTasks > 5 ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40' : 'bg-[var(--glass-surface)] border-[var(--glass-border)]'}`}>
+                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_active')}</p>
+                                        <p className="text-2xl font-extrabold text-[var(--text-primary)]">{data.activeTasks}</p>
+                                    </div>
+                                    <div className={`rounded-2xl p-4 border ${data.overdueTasks > 0 ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/40' : 'bg-[var(--glass-surface)] border-[var(--glass-border)]'}`}>
+                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_overdue')}</p>
+                                        <p className={`text-2xl font-extrabold ${data.overdueTasks > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-[var(--text-primary)]'}`}>{data.overdueTasks}</p>
+                                    </div>
+                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_week')}</p>
+                                        <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{data.completedThisWeek}</p>
+                                    </div>
+                                    <div className="rounded-2xl bg-[var(--glass-surface)] border border-[var(--glass-border)] p-4">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">{t('profile.perf_tasks_month')}</p>
+                                        <p className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">{data.completedThisMonth}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
 
 // --- SUB-COMPONENT: INVITE MODAL ---
 interface InviteFormData { name: string; email: string; role: UserRole; phone: string; }
@@ -295,6 +489,7 @@ export const AdminUsers: React.FC = () => {
     const [userToRoleChange, setUserToRoleChange] = useState<{ user: User, newRole: UserRole } | null>(null);
     const [resendingId, setResendingId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
+    const [perfUser, setPerfUser] = useState<User | null>(null);
 
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
@@ -636,6 +831,16 @@ export const AdminUsers: React.FC = () => {
                                         </td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-1 sm:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {/* View Performance — only for non-pending users with lead-bearing roles */}
+                                                {!isPending && [UserRole.SALES, UserRole.TEAM_LEAD, UserRole.ADMIN].includes(user.role) && (
+                                                    <button
+                                                        onClick={() => setPerfUser(user)}
+                                                        className="p-1.5 sm:p-2 text-[var(--text-secondary)] hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                                                        title={t('admin.users.view_perf')}
+                                                    >
+                                                        {ICONS.CHART}
+                                                    </button>
+                                                )}
                                                 {/* Only show Resend Invite if Pending */}
                                                 {isPending && (
                                                     <button 
@@ -680,6 +885,15 @@ export const AdminUsers: React.FC = () => {
                     t={t}
                 />
             </div>
+
+            {/* Performance Modal */}
+            {perfUser && (
+                <PerformanceModal
+                    user={perfUser}
+                    onClose={() => setPerfUser(null)}
+                    t={t}
+                />
+            )}
 
             {/* Invite Modal */}
             <InviteUserModal 
