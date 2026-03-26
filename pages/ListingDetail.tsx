@@ -547,14 +547,12 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
                 setCurrentUserId(user.id);
                 setUserRole(user.role || '');
                 // Fetch tenant users for the assignee dropdown (only managers need this)
-                if (isManager) {
-                    try {
-                        const users = await db.getUsers();
-                        const NON_ASSIGNABLE = ['VIEWER'];
-                        setTenantUsers(Array.isArray(users) ? users.filter((u: User) => !NON_ASSIGNABLE.includes(u.role)) : []);
-                    } catch (e) {
-                        console.error('Failed to load users for assignment', e);
-                    }
+                try {
+                    const res = await db.getMembers();
+                    const NON_ASSIGNABLE = ['VIEWER'];
+                    setTenantUsers(Array.isArray(res.data) ? res.data.filter((u: any) => !NON_ASSIGNABLE.includes(u.role)) : []);
+                } catch (e) {
+                    console.error('Failed to load users for assignment', e);
                 }
             }
         };

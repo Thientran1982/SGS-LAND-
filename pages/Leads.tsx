@@ -697,10 +697,10 @@ export const Leads: React.FC = () => {
         fetchLeads();
         db.getCurrentUser().then(setCurrentUser);
         db.getListings(1, 200, { status: 'AVAILABLE' }).then(res => setListings(res.data));
-        db.getTenantUsers(1, 100).then(res => {
+        db.getMembers().then(res => {
             setUsers([
                 { value: '', label: t('inbox.unassigned') },
-                ...res.data.map(u => ({ value: u.id, label: u.name }))
+                ...res.data.map((u: any) => ({ value: u.id, label: u.name }))
             ]);
         });
     }, [fetchLeads, t]);

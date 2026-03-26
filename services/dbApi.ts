@@ -881,6 +881,15 @@ class DatabaseApiClient {
     }
   }
 
+  async getMembers(search?: string) {
+    try {
+      const result = await userApi.getMembers(100, search);
+      return { data: result.data, total: result.total };
+    } catch {
+      return { data: [], total: 0 };
+    }
+  }
+
   async authenticate(email: string, password: string) {
     const res = await fetch('/api/auth/login', {
       method: 'POST',

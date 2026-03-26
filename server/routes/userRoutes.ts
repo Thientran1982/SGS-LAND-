@@ -8,6 +8,34 @@ import { withTenantContext } from '../db';
 export function createUserRoutes(authenticateToken: any) {
   const router = Router();
 
+  // GET /api/users/members — lightweight list for assignment dropdowns, all internal users
+  router.get('/members', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Không có quyền truy cập' });
+      }
+      const search = req.query.search as string | undefined;
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 50, 200));
+      const filters: any = { status: 'ACTIVE' };
+      if (search) filters.search = search;
+      const result = await userRepository.listUsers(user.tenantId, { page: 1, pageSize }, filters);
+      const members = result.data.map((u: any) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        avatar: u.avatar,
+        phone: u.phone,
+      }));
+      res.json({ data: members, total: result.total });
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      res.status(500).json({ error: 'Không thể tải danh sách thành viên' });
+    }
+  });
+
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;

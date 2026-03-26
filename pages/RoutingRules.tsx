@@ -150,7 +150,7 @@ export const RoutingRules: React.FC = () => {
         try {
             const [r, u, tm] = await Promise.all([
                 db.getRoutingRules(),
-                db.getTenantUsers(1, 100),
+                db.getMembers(),
                 db.getTeams()
             ]);
             setRules(r || []);

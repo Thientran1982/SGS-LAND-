@@ -17,8 +17,8 @@ export class ContractRepository extends BaseRepository {
       const values: any[] = [];
       let paramIndex = 1;
 
-      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
-      if (RESTRICTED.includes(userRole || '') && userId) {
+      const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
+      if (PARTNER_ROLES.includes(userRole || '') && userId) {
         conditions.push(`c.created_by_id = $${paramIndex++}`);
         values.push(userId);
       }
@@ -69,10 +69,12 @@ export class ContractRepository extends BaseRepository {
       const offset = (page - 1) * pageSize;
 
       const result = await client.query(
-        `SELECT c.*, l.name as lead_name, li.title as listing_title, li.code as listing_code
+        `SELECT c.*, l.name as lead_name, li.title as listing_title, li.code as listing_code,
+                u.name as assigned_to_name, u.email as assigned_to_email, u.avatar as assigned_to_avatar
          FROM contracts c
          LEFT JOIN leads l ON c.lead_id = l.id
          LEFT JOIN listings li ON c.listing_id = li.id
+         LEFT JOIN users u ON c.assigned_to_id = u.id
          ${whereClause}
          ORDER BY c.created_at DESC
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
@@ -176,10 +178,11 @@ export class ContractRepository extends BaseRepository {
           tenant_id, proposal_id, lead_id, listing_id, type, status, value,
           party_a, party_b, property_details, property_price, deposit_amount,
           payment_terms, payment_schedule, tax_responsibility, handover_date, handover_condition,
-          dispute_resolution, signed_place, contract_date, metadata, created_by, created_by_id
+          dispute_resolution, signed_place, contract_date, metadata, created_by, created_by_id,
+          assigned_to_id
         ) VALUES (
           current_setting('app.current_tenant_id', true)::uuid,
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
         ) RETURNING *`,
         [
           data.proposalId || null, data.leadId || null, data.listingId || null, data.type,
@@ -197,6 +200,7 @@ export class ContractRepository extends BaseRepository {
           data.metadata ? JSON.stringify(data.metadata) : null,
           data.createdBy || null,
           data.createdById || null,
+          data.assignedToId || null,
         ]
       );
       return this.flattenEntity(this.rowToEntity(result.rows[0]));
@@ -209,7 +213,7 @@ export class ContractRepository extends BaseRepository {
       const values: any[] = [];
       let paramIndex = 2;
 
-      const directFields = ['status', 'type', 'paymentTerms', 'taxResponsibility', 'handoverCondition', 'disputeResolution', 'createdBy'];
+      const directFields = ['status', 'type', 'paymentTerms', 'taxResponsibility', 'handoverCondition', 'disputeResolution', 'createdBy', 'assignedToId'];
       const numericFields = ['propertyPrice', 'depositAmount'];
 
       for (const field of directFields) {

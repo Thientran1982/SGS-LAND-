@@ -174,10 +174,10 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             setInteractions(history.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
             
             try {
-                const res = await db.getTenantUsers(1, 100);
+                const res = await db.getMembers();
                 setUsers([
                     { value: '', label: t('inbox.unassigned') },
-                    ...res.data.map(u => ({ value: u.id, label: u.name }))
+                    ...res.data.map((u: any) => ({ value: u.id, label: u.name }))
                 ]);
             } catch (e) {
                 console.error(e);

@@ -156,9 +156,9 @@ export const Inbox: React.FC = () => {
     }, [messages]);
 
     const { data: users = [] } = useQuery({
-        queryKey: ['tenantUsers'],
+        queryKey: ['tenantMembers'],
         queryFn: async () => {
-            const res = await db.getTenantUsers(1, 100);
+            const res = await db.getMembers();
             return res.data || [];
         },
         staleTime: 60_000,

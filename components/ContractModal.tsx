@@ -135,6 +135,16 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<TabId>(initialTab || 'parties');
     const contentRef = useRef<HTMLDivElement>(null);
+    const [members, setMembers] = useState<{ value: string; label: string }[]>([]);
+
+    useEffect(() => {
+        db.getMembers().then(res => {
+            setMembers([
+                { value: '', label: t('inbox.unassigned') },
+                ...res.data.map((u: any) => ({ value: u.id, label: u.name })),
+            ]);
+        }).catch(() => {});
+    }, [t]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape' && !loading) onClose(); };
@@ -285,6 +295,27 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                     <form id="contract-form" onSubmit={handleSubmit}>
                         {/* TAB: PARTIES */}
                         {activeTab === 'parties' && (
+                            <div className="space-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
+                                <div>
+                                    <label className={labelClass}>{t('contracts.assigned_to')}</label>
+                                    <Dropdown
+                                        value={(formData as any).assignedToId || ''}
+                                        onChange={val => handleChange('assignedToId' as any, val || null)}
+                                        options={members}
+                                        className="w-full"
+                                    />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>{t('contracts.contract_date')}</label>
+                                    <input
+                                        type="date"
+                                        value={(formData as any).contractDate || ''}
+                                        onChange={e => handleChange('contractDate' as any, e.target.value)}
+                                        className={inputClass}
+                                    />
+                                </div>
+                            </div>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-indigo-600 border-b border-indigo-100 pb-2">{t('contracts.party_a_title')}</h3>
@@ -379,6 +410,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                         )}
 

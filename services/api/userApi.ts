@@ -4,6 +4,9 @@ export const userApi = {
   getUsers: (page = 1, pageSize = 50, filters?: Record<string, any>): Promise<PaginatedResponse<any>> =>
     api.get('/api/users', { page, pageSize, ...filters }),
 
+  getMembers: (pageSize = 50, search?: string): Promise<{ data: any[]; total: number }> =>
+    api.get('/api/users/members', { pageSize, ...(search ? { search } : {}) }),
+
   getMe: (): Promise<{ user: any }> =>
     api.get('/api/users/me'),
 
