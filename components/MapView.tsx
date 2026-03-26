@@ -2,18 +2,25 @@
 import React, { useEffect, useRef, useState, memo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import 'leaflet.markercluster';
 import { Listing, PropertyType } from '../types';
 import { NO_IMAGE_URL } from '../utils/constants';
 import { buildVNGeoQueries, getDistrictFallback } from '../utils/vnAddress';
 
 const HCMC_CENTER: [number, number] = [10.7769, 106.7009];
+const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
+
+// Maximum number of Nominatim geocode calls per render cycle
+// (1 req/s rate limit → 20 = 22 s max wait, reasonable UX)
+const MAX_GEOCODE_REQUESTS = 20;
 
 const hasRealCoords = (listing: any): boolean =>
     listing.coordinates?.lat != null && listing.coordinates?.lng != null &&
     (listing.coordinates.lat !== 0 || listing.coordinates.lng !== 0);
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
 
 async function geocodeLocation(
     location: string,
@@ -22,7 +29,6 @@ async function geocodeLocation(
     if (cache.has(location)) return cache.get(location)!;
 
     const queries = buildVNGeoQueries(location);
-    console.log(`[SGS Geocode] Trying ${queries.length} queries for: "${location}"`);
     for (let i = 0; i < queries.length; i++) {
         if (i > 0) await sleep(1100);
         try {
@@ -30,7 +36,7 @@ async function geocodeLocation(
             const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn&viewbox=${HCMC_VIEWBOX}&bounded=1`;
             const res = await fetch(url, { headers: { 'Accept-Language': 'vi,en', 'User-Agent': 'SGSLand/1.0' } });
             const data = await res.json();
-            console.log(`[SGS Geocode] Q${i + 1}: "${queries[i]}" → ${data.length > 0 ? `${data[0].lat},${data[0].lon} (${data[0].display_name?.substring(0, 60)})` : 'no result'}`);
+            console.log(`[SGS Geocode] Q${i + 1}: "${queries[i]}" → ${data.length > 0 ? `${data[0].lat},${data[0].lon}` : 'no result'}`);
             if (data.length > 0) {
                 const coords: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
                 cache.set(location, coords);
@@ -40,9 +46,17 @@ async function geocodeLocation(
             console.warn(`[SGS Geocode] Q${i + 1} error:`, e);
         }
     }
-    console.warn(`[SGS Geocode] All queries failed for: "${location}"`);
     cache.set(location, null);
     return null;
+}
+
+// Resolve the best available fallback without calling Nominatim
+function getFallbackPoint(listing: any): [number, number] {
+    if (listing.location) {
+        const distFallback = getDistrictFallback(listing.location);
+        if (distFallback) return distFallback.coords;
+    }
+    return HCMC_CENTER;
 }
 
 interface MapViewProps {
@@ -57,10 +71,10 @@ interface MapViewProps {
 
 const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurrency, formatUnitPrice, formatCompactNumber, t, language = 'vn' }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
-    const mapInstanceRef = useRef<L.Map | null>(null);
+    const mapInstanceRef  = useRef<L.Map | null>(null);
     const geocodeCacheRef = useRef<Map<string, [number, number] | null>>(new Map());
+    const clusterGroupRef = useRef<any>(null);
 
-    // Selected listing panel state — Leaflet callbacks update this via ref
     const [selectedListing, setSelectedListing] = useState<{ listing: any; approximate: boolean } | null>(null);
     const selectedListingRef = useRef<((v: { listing: any; approximate: boolean } | null) => void)>(setSelectedListing);
     useEffect(() => { selectedListingRef.current = setSelectedListing; }, []);
@@ -88,6 +102,38 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
             }).addTo(map);
 
+            // Cluster group — custom icon matches pin design
+            const cluster = (L as any).markerClusterGroup({
+                maxClusterRadius: 60,
+                showCoverageOnHover: false,
+                zoomToBoundsOnClick: true,
+                spiderfyOnMaxZoom: true,
+                disableClusteringAtZoom: 17,
+                iconCreateFunction: (c: any) => {
+                    const count = c.getChildCount();
+                    const label = count >= 1000 ? `${Math.floor(count / 1000)}k+` : `${count}`;
+                    return L.divIcon({
+                        className: '',
+                        html: `
+                            <div style="display:inline-flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);transform-origin:bottom center;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.32));">
+                                <div style="background:#1d4ed8;color:#fff;font-size:11px;font-weight:800;padding:5px 14px;border-radius:8px;border:2px solid #fff;white-space:nowrap;letter-spacing:0.3px;line-height:1.4;display:flex;align-items:center;gap:5px;">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                    ${label} tin
+                                </div>
+                                <div style="position:relative;width:20px;height:10px;margin-top:-1px;flex-shrink:0;">
+                                    <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:11px solid #fff;"></div>
+                                    <div style="position:absolute;top:2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid #1d4ed8;"></div>
+                                </div>
+                            </div>`,
+                        iconSize: [0, 0],
+                        iconAnchor: [0, 0],
+                    });
+                },
+            });
+
+            cluster.addTo(map);
+            clusterGroupRef.current = cluster;
+
             // Click on map background → close panel
             map.on('click', () => selectedListingRef.current(null));
 
@@ -108,6 +154,7 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                 try { mapInstanceRef.current.stop(); } catch (_) {}
                 mapInstanceRef.current.remove();
                 mapInstanceRef.current = null;
+                clusterGroupRef.current = null;
             }
         };
     }, []);
@@ -115,13 +162,15 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
     // ── Markers Update ───────────────────────────────────────────────────────
     useEffect(() => {
         const map = mapInstanceRef.current;
-        if (!map) return;
+        const cluster = clusterGroupRef.current;
+        if (!map || !cluster) return;
 
         let cancelled = false;
 
         const run = async () => {
             try {
-                map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
+                cluster.clearLayers();
+                setSelectedListing(null);
                 if (listings.length === 0) return;
 
                 const bounds = L.latLngBounds([]);
@@ -131,6 +180,7 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                     if (cancelled) return;
                     bounds.extend(point);
 
+                    // Price label
                     let priceLabel = '';
                     if (formatCompactNumber) {
                         priceLabel = formatCompactNumber(listing.price);
@@ -151,19 +201,20 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                                 <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:11px solid #fff;"></div>
                                 <div style="position:absolute;top:2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid #0f172a;"></div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
 
                     const icon = L.divIcon({ className: '', html: pinHtml, iconSize: [0, 0], iconAnchor: [0, 0] });
-                    const marker = L.marker(point, { icon, zIndexOffset: approximate ? 50 : 100 }).addTo(map);
+                    const marker = L.marker(point, { icon, zIndexOffset: approximate ? 50 : 100 });
 
-                    // Click → open fixed side-panel (no auto-pan, no position issues)
                     marker.on('click', (e) => {
                         L.DomEvent.stopPropagation(e);
                         selectedListingRef.current({ listing, approximate });
                     });
+
+                    cluster.addLayer(marker);
                 };
 
+                // ── Phase 1: listings with stored GPS coordinates ────────────
                 for (const listing of listings) {
                     if (hasRealCoords(listing)) {
                         addMarker(listing, [listing.coordinates!.lat, listing.coordinates!.lng], false);
@@ -176,28 +227,36 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                     map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: false });
                 }
 
+                // ── Phase 2: geocode (cap at MAX_GEOCODE_REQUESTS) ──────────
+                // Listings beyond the cap go straight to district/HCMC fallback
+                // to avoid blocking the UI for thousands of Nominatim calls.
+                let geocodeCount = 0;
+
                 for (const listing of pendingGeocode) {
                     if (cancelled) break;
+
                     let point: [number, number] | null = null;
                     let approximate = true;
 
-                    if (listing.location) {
+                    const cached = listing.location ? geocodeCacheRef.current.get(listing.location) : undefined;
+
+                    if (cached !== undefined) {
+                        // Already in cache (hit or miss from previous render)
+                        point = cached ?? getFallbackPoint(listing);
+                        approximate = !cached;
+                    } else if (geocodeCount < MAX_GEOCODE_REQUESTS && listing.location) {
+                        // Budget remaining — call Nominatim
+                        if (geocodeCount > 0) await sleep(1100);
                         const geocoded = await geocodeLocation(listing.location, geocodeCacheRef.current);
+                        geocodeCount++;
                         if (geocoded) { point = geocoded; approximate = false; }
-                        else {
-                            const distFallback = getDistrictFallback(listing.location);
-                            if (distFallback) {
-                                console.log(`[SGS Geocode] District fallback for "${listing.location}" → ${distFallback.district} ${distFallback.coords}`);
-                                point = distFallback.coords;
-                            }
-                        }
-                        await sleep(1100);
+                        else { point = getFallbackPoint(listing); }
+                    } else {
+                        // Budget exhausted — use instant fallback
+                        point = getFallbackPoint(listing);
                     }
 
-                    if (!point) {
-                        console.warn(`[SGS Geocode] No district found for "${listing.location}" — using HCMC centre`);
-                        point = HCMC_CENTER;
-                    }
+                    if (!point) point = HCMC_CENTER;
                     if (!cancelled) addMarker(listing, point, approximate);
                 }
 
@@ -215,7 +274,7 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
 
     // ── Detail panel data ────────────────────────────────────────────────────
     const sel = selectedListing;
-    const imgUrl     = sel?.listing.images?.[0] || NO_IMAGE_URL;
+    const imgUrl      = sel?.listing.images?.[0] || NO_IMAGE_URL;
     const areaDisplay = sel?.listing.area ? `${sel.listing.area} m²` : '';
     const bedDisplay  = sel?.listing.bedrooms ? `${sel.listing.bedrooms} PN` : '';
     const unitPrice   = sel && sel.listing.area > 0 && sel.listing.type !== PropertyType.PROJECT && formatUnitPrice
@@ -237,6 +296,13 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
     return (
         <>
             <style>{`
+                /* Override default cluster styles to hide blue circles */
+                .marker-cluster-small,
+                .marker-cluster-medium,
+                .marker-cluster-large { background: transparent !important; }
+                .marker-cluster-small div,
+                .marker-cluster-medium div,
+                .marker-cluster-large div { background: transparent !important; }
                 .leaflet-control-zoom { display: flex !important; flex-direction: column; }
                 .sgs-price-pin { transition: filter 0.15s ease; }
                 .sgs-price-pin:hover { filter: drop-shadow(0 6px 14px rgba(0,0,0,0.40)) !important; }
