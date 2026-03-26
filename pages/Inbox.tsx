@@ -494,15 +494,13 @@ export const Inbox: React.FC = () => {
                 <div className="p-4 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] z-10 flex flex-col gap-3">
                     <div className="flex justify-between items-center">
                         <h2 className="font-bold text-[var(--text-primary)]">{t('menu.inbox')}</h2>
-                        {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
-                            <button 
-                                onClick={() => setIsWidgetModalOpen(true)}
-                                className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-                                {t('inbox.live_chat_widget')}
-                            </button>
-                        )}
+                        <button 
+                            onClick={() => setIsWidgetModalOpen(true)}
+                            className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                            {t('inbox.live_chat_widget')}
+                        </button>
                     </div>
                     <div className="relative group">
                         <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)]">
