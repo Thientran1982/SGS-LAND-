@@ -12,13 +12,13 @@ const MAX_GEOCODE_REQUESTS = 20;
 const CLUSTER_RADIUS_PX = 60;
 
 // ── Transaction → design tokens ──────────────────────────────────────────────
-// 2026: color-coded by transaction type, each with its own glow palette
-function pinTokens(transaction?: string) {
+// Priority: PropertyType.PROJECT → blue | TransactionType.RENT → violet | default → navy
+function pinTokens(transaction?: string, propertyType?: string) {
+    if (propertyType === 'PROJECT')
+        return { bg: '#0369a1', glow: 'rgba(3,105,161,0.38)' };
     if (transaction === 'RENT')
-        return { bg: '#6d28d9', glow: 'rgba(109,40,217,0.40)', label: 'CHO THUÊ' };
-    if (transaction === 'PROJECT')
-        return { bg: '#0369a1', glow: 'rgba(3,105,161,0.38)', label: 'DỰ ÁN' };
-    return { bg: '#0f172a', glow: 'rgba(15,23,42,0.38)', label: 'BÁN' };
+        return { bg: '#6d28d9', glow: 'rgba(109,40,217,0.40)' };
+    return { bg: '#0f172a', glow: 'rgba(15,23,42,0.38)' };
 }
 
 // ── Geo utilities ────────────────────────────────────────────────────────────
@@ -111,8 +111,8 @@ function formatPrice(price: number, language: string, formatCompactNumber?: (v: 
 
 // ── Pin HTML builders (2026 design) ──────────────────────────────────────────
 
-function priceIcon(label: string, approximate: boolean, transaction?: string, active = false): L.DivIcon {
-    const { bg, glow } = pinTokens(transaction);
+function priceIcon(label: string, approximate: boolean, transaction?: string, active = false, propertyType?: string): L.DivIcon {
+    const { bg, glow } = pinTokens(transaction, propertyType);
     const scale = active ? 'scale(1.12)' : 'scale(1)';
     const shadow = active
         ? `drop-shadow(0 0 0 2.5px #fff) drop-shadow(0 6px 18px ${glow})`
@@ -158,7 +158,10 @@ function priceIcon(label: string, approximate: boolean, transaction?: string, ac
 }
 
 function clusterIcon(count: number, dominantTx?: string): L.DivIcon {
-    const { bg, glow } = pinTokens(dominantTx);
+    // 'PROJECT_TYPE' is a sentinel: means majority are PROJECT property type
+    const { bg, glow } = dominantTx === 'PROJECT_TYPE'
+        ? pinTokens(undefined, 'PROJECT')
+        : pinTokens(dominantTx, undefined);
     const label = count >= 1000 ? `${Math.floor(count / 1000)}k+` : `${count}`;
     return L.divIcon({
         className: '',
@@ -272,7 +275,7 @@ const MapView: React.FC<MapViewProps> = memo(({
         if (activeMarker.current) {
             const { marker, entry } = activeMarker.current;
             const label = formatPrice(entry.listing.price, language, formatCompactNumber, t);
-            marker.setIcon(priceIcon(label, entry.approximate, entry.listing.transaction as string, false));
+            marker.setIcon(priceIcon(label, entry.approximate, entry.listing.transaction as string, false, entry.listing.type as string));
             activeMarker.current = null;
         }
         selectedIdRef.current = null;
@@ -297,7 +300,8 @@ const MapView: React.FC<MapViewProps> = memo(({
                 const { listing, point, approximate } = cluster[0];
                 const label  = formatPrice(listing.price, language, formatCompactNumber, t);
                 const isActive = selectedIdRef.current === listing.id;
-                const icon   = priceIcon(label, approximate, listing.transaction as string, isActive);
+                const pType  = listing.type as string;
+                const icon   = priceIcon(label, approximate, listing.transaction as string, isActive, pType);
                 const marker = L.marker(point, { icon, zIndexOffset: approximate ? 50 : 100 });
 
                 if (isActive) activeMarker.current = { marker, entry: cluster[0] };
@@ -307,7 +311,7 @@ const MapView: React.FC<MapViewProps> = memo(({
                     // Deselect previous
                     deselectPin();
                     // Activate this pin
-                    const activeIcon = priceIcon(label, approximate, listing.transaction as string, true);
+                    const activeIcon = priceIcon(label, approximate, listing.transaction as string, true, pType);
                     marker.setIcon(activeIcon);
                     marker.setZIndexOffset(500);
                     activeMarker.current = { marker, entry: cluster[0] };
@@ -317,10 +321,11 @@ const MapView: React.FC<MapViewProps> = memo(({
                 });
                 lg.addLayer(marker);
             } else {
-                // Dominant transaction type in cluster
+                // Dominant colour: PROJECT (propertyType) wins, then RENT, then SALE
+                const hasProject = cluster.some(e => (e.listing.type as string) === 'PROJECT');
                 const txCounts: Record<string, number> = {};
                 cluster.forEach(e => { const tx = (e.listing.transaction as string) || 'SALE'; txCounts[tx] = (txCounts[tx] || 0) + 1; });
-                const dominantTx = Object.entries(txCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+                const dominantTx  = hasProject ? 'PROJECT_TYPE' : Object.entries(txCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
 
                 const center = clusterCenter(cluster);
                 const icon   = clusterIcon(cluster.length, dominantTx);
@@ -418,7 +423,7 @@ const MapView: React.FC<MapViewProps> = memo(({
 
     // ── Panel data ────────────────────────────────────────────────────────────
     const sel         = selected;
-    const tokens      = sel ? pinTokens(sel.listing.transaction) : null;
+    const tokens      = sel ? pinTokens(sel.listing.transaction, sel.listing.type as string) : null;
     const imgUrl      = sel?.listing.images?.[0] || NO_IMAGE_URL;
     const areaDisplay = sel?.listing.area ? `${sel.listing.area} m²` : '';
     const bedDisplay  = sel?.listing.bedrooms ? `${sel.listing.bedrooms} PN` : '';
@@ -461,13 +466,12 @@ const MapView: React.FC<MapViewProps> = memo(({
                     pointerEvents: 'none',
                 }}>
                     {[
-                        { tx: 'SALE',    label: 'Bán' },
-                        { tx: 'RENT',    label: 'Thuê' },
-                        { tx: 'PROJECT', label: 'Dự án' },
-                    ].map(({ tx, label }) => {
-                        const { bg } = pinTokens(tx);
+                        { bg: pinTokens('SALE').bg,             label: language === 'vn' ? 'Bán'    : 'Sale'    },
+                        { bg: pinTokens('RENT').bg,             label: language === 'vn' ? 'Thuê'   : 'Rent'    },
+                        { bg: pinTokens(undefined, 'PROJECT').bg, label: language === 'vn' ? 'Dự án' : 'Project' },
+                    ].map(({ bg, label }) => {
                         return (
-                            <div key={tx} style={{
+                            <div key={label} style={{
                                 background: 'rgba(255,255,255,0.88)',
                                 backdropFilter: 'blur(12px)',
                                 border: '1px solid rgba(0,0,0,0.08)',
@@ -518,7 +522,7 @@ const MapView: React.FC<MapViewProps> = memo(({
                                 padding: '3px 8px', borderRadius: 6,
                                 letterSpacing: '0.6px', textTransform: 'uppercase' as const,
                             }}>
-                                {t(`transaction.${sel.listing.transaction}`) || tokens.label}
+                                {t(`transaction.${sel.listing.transaction}`) || (sel.listing.transaction === 'RENT' ? 'Cho thuê' : 'Bán')}
                             </div>
 
                             {/* Close */}
@@ -544,15 +548,6 @@ const MapView: React.FC<MapViewProps> = memo(({
 
                         {/* Body */}
                         <div style={{ padding: '11px 13px 13px' }}>
-                            {sel.approximate && (
-                                <div style={{
-                                    background: '#f8fafc', color: '#94a3b8',
-                                    fontSize: 9, fontWeight: 600, padding: '2px 7px',
-                                    borderRadius: 6, marginBottom: 7, display: 'inline-flex', alignItems: 'center', gap: 3,
-                                }}>
-                                    <span>📍</span>{t('map.approx_location') || 'Vị trí ước tính'}
-                                </div>
-                            )}
                             <h3 style={{ fontWeight: 700, color: '#0f172a', fontSize: 13, margin: '0 0 2px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                                 {sel.listing.title}
                             </h3>
@@ -599,8 +594,8 @@ const MapView: React.FC<MapViewProps> = memo(({
                             }}>×</button>
                         </div>
                         <div style={{ overflowY: 'auto', maxHeight: 318 }}>
-                            {clusterGroup.map(({ listing, approximate }) => {
-                                const { bg } = pinTokens(listing.transaction as string);
+                            {clusterGroup.map(({ listing }) => {
+                                const { bg } = pinTokens(listing.transaction as string, listing.type as string);
                                 const lp    = formatPrice(listing.price, language, formatCompactNumber, t);
                                 const thumb = listing.images?.[0] || NO_IMAGE_URL;
                                 return (
@@ -613,7 +608,6 @@ const MapView: React.FC<MapViewProps> = memo(({
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{ fontWeight: 700, fontSize: 12, color: '#0f172a', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{listing.title}</div>
                                             <div style={{ fontSize: 11, color: bg, fontWeight: 700, marginTop: 2 }}>{lp}</div>
-                                            {approximate && <div style={{ fontSize: 9, color: '#94a3b8', marginTop: 1 }}>📍 ước tính</div>}
                                         </div>
                                     </div>
                                 );
