@@ -325,7 +325,7 @@ const Contracts: React.FC = () => {
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_payment_progress')}</th>
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_status')}</th>
                                         <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)]">{t('contracts.col_date')}</th>
-                                        <th className="p-4 border-b border-[var(--glass-border)] w-12"></th>
+                                        <th className="p-4 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--glass-border)] text-right w-24">{t('common.actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[var(--glass-border)]">
