@@ -653,7 +653,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                             className="w-3.5 h-3.5 accent-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
                                         />
                                         <span className="text-xs2 font-bold text-indigo-700 uppercase flex items-center gap-1">
-                                            {ICONS.VERIFIED} {t('inventory.verified')}
+                                            {t('inventory.verified')}
                                         </span>
                                     </label>
                                     )}
