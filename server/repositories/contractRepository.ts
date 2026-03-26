@@ -17,8 +17,8 @@ export class ContractRepository extends BaseRepository {
       const values: any[] = [];
       let paramIndex = 1;
 
-      const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
-      if (PARTNER_ROLES.includes(userRole || '') && userId) {
+      const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER', 'PARTNER_ADMIN', 'PARTNER_AGENT'];
+      if (RESTRICTED_ROLES.includes(userRole || '') && userId) {
         conditions.push(`c.created_by_id = $${paramIndex++}`);
         values.push(userId);
       }

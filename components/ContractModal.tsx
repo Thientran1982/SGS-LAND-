@@ -136,13 +136,20 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
     const [activeTab, setActiveTab] = useState<TabId>(initialTab || 'parties');
     const contentRef = useRef<HTMLDivElement>(null);
     const [members, setMembers] = useState<{ value: string; label: string }[]>([]);
+    const [canAssign, setCanAssign] = useState(false);
 
     useEffect(() => {
-        db.getMembers().then(res => {
-            setMembers([
-                { value: '', label: t('inbox.unassigned') },
-                ...res.data.map((u: any) => ({ value: u.id, label: u.name })),
-            ]);
+        db.getCurrentUser().then(user => {
+            const ASSIGN_ROLES = ['ADMIN', 'TEAM_LEAD'];
+            if (user && ASSIGN_ROLES.includes(user.role)) {
+                setCanAssign(true);
+                db.getMembers().then(res => {
+                    setMembers([
+                        { value: '', label: t('inbox.unassigned') },
+                        ...res.data.map((u: any) => ({ value: u.id, label: u.name })),
+                    ]);
+                }).catch(() => {});
+            }
         }).catch(() => {});
     }, [t]);
 
@@ -296,6 +303,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         {/* TAB: PARTIES */}
                         {activeTab === 'parties' && (
                             <div className="space-y-6">
+                            {canAssign && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
                                 <div>
                                     <label className={labelClass}>{t('contracts.assigned_to')}</label>
@@ -316,6 +324,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                     />
                                 </div>
                             </div>
+                            )}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-indigo-600 border-b border-indigo-100 pb-2">{t('contracts.party_a_title')}</h3>

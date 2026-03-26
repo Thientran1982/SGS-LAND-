@@ -58,8 +58,14 @@ export function createContractRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Thiếu thông tin bắt buộc: loại hợp đồng' });
       }
 
+      const ASSIGN_ROLES = ['ADMIN', 'TEAM_LEAD'];
+      const body = { ...req.body };
+      if (!ASSIGN_ROLES.includes(user.role)) {
+        delete body.assignedToId;
+      }
+
       const contract = await contractRepository.create(user.tenantId, {
-        ...req.body,
+        ...body,
         createdBy: user.name || user.email,
         createdById: user.id,
       });
@@ -119,6 +125,12 @@ export function createContractRoutes(authenticateToken: any) {
       const updateData = { ...req.body };
       if (req.body.status === 'SIGNED' && !(current as any).signedAt) {
         updateData.signedAt = new Date().toISOString();
+      }
+
+      // Only ADMIN/TEAM_LEAD can change assignedToId
+      const ASSIGN_ROLES = ['ADMIN', 'TEAM_LEAD'];
+      if (!ASSIGN_ROLES.includes(user.role)) {
+        delete updateData.assignedToId;
       }
 
       const contract = await contractRepository.update(user.tenantId, String(req.params.id), updateData);
