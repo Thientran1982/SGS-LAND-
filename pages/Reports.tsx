@@ -334,14 +334,19 @@ const OverviewTab = memo(({ data, t, formatCurrency, formatCompactNumber, chartT
 const FUNNEL_COLORS = ['#6366f1', '#818cf8', '#a5b4fc', '#7c3aed', '#8b5cf6', '#4f46e5'];
 
 const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTheme: any }) => {
-    const hasData = data.funnel.length > 0;
+    // Separate LOST from active pipeline stages for display
+    const activeFunnel = data.funnel.filter(f => f.stage !== 'LOST');
+    const lostStage = data.funnel.find(f => f.stage === 'LOST');
+    const hasData = activeFunnel.length > 0;
     const colors = chartTheme?.colors || {};
 
-    const maxCount = hasData ? Math.max(...data.funnel.map(f => f.count)) : 1;
+    // maxCount based only on active stages so bars are properly scaled
+    const maxCount = hasData ? Math.max(...activeFunnel.map(f => f.count)) : 1;
+
+    // overallRate = WON / total (all stages including LOST) — from backend conversionRate
     const wonStage = data.funnel.find(f => f.stage === 'WON');
-    const newStage = data.funnel.find(f => f.stage === 'NEW');
-    const overallRate = newStage && newStage.count > 0 && wonStage
-        ? ((wonStage.count / newStage.count) * 100).toFixed(1)
+    const overallRate = wonStage && wonStage.conversionRate > 0
+        ? wonStage.conversionRate.toFixed(1)
         : null;
 
     return (
@@ -353,17 +358,26 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
                         <p className="text-xs text-[var(--text-tertiary)]">{t('reports.funnel_desc')}</p>
                         <p className="text-xs2 text-[var(--text-secondary)] mt-0.5">{t('reports.funnel_rate_note')}</p>
                     </div>
-                    {overallRate !== null && (
-                        <div className="flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-[14px] px-4 py-2 text-center">
-                            <div className="text-xs2 font-bold text-emerald-600 uppercase tracking-wider">{t('reports.funnel_overall_rate')}</div>
-                            <div className="text-2xl font-extrabold text-emerald-700">{overallRate}%</div>
-                        </div>
-                    )}
+                    <div className="flex items-start gap-3">
+                        {lostStage && lostStage.count > 0 && (
+                            <div className="flex-shrink-0 bg-rose-50 border border-rose-100 rounded-[14px] px-4 py-2 text-center">
+                                <div className="text-xs2 font-bold text-rose-500 uppercase tracking-wider">{t('stage.LOST')}</div>
+                                <div className="text-2xl font-extrabold text-rose-600">{lostStage.count.toLocaleString()}</div>
+                                <div className="text-xs2 text-rose-400">{lostStage.conversionRate}%</div>
+                            </div>
+                        )}
+                        {overallRate !== null && (
+                            <div className="flex-shrink-0 bg-emerald-50 border border-emerald-100 rounded-[14px] px-4 py-2 text-center">
+                                <div className="text-xs2 font-bold text-emerald-600 uppercase tracking-wider">{t('reports.funnel_overall_rate')}</div>
+                                <div className="text-2xl font-extrabold text-emerald-700">{overallRate}%</div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {hasData ? (
                     <div className="space-y-2">
-                        {data.funnel.map((step, idx) => {
+                        {activeFunnel.map((step, idx) => {
                             const barPct = maxCount > 0 ? (step.count / maxCount) * 100 : 0;
                             const color = FUNNEL_COLORS[idx % FUNNEL_COLORS.length];
                             return (
@@ -393,12 +407,18 @@ const FunnelTab = memo(({ data, t, chartTheme }: { data: BiData, t: any, chartTh
 
                 {hasData && (
                     <div className="mt-6 pt-4 border-t border-[var(--glass-border)] flex flex-wrap gap-3">
-                        {data.funnel.map((step, idx) => (
+                        {activeFunnel.map((step, idx) => (
                             <div key={step.stage} className="flex items-center gap-1.5">
                                 <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: FUNNEL_COLORS[idx % FUNNEL_COLORS.length] }} />
                                 <span className="text-xs3 text-[var(--text-tertiary)]">{t(`stage.${step.stage}`)}: <strong className="text-[var(--text-secondary)]">{step.count}</strong></span>
                             </div>
                         ))}
+                        {lostStage && lostStage.count > 0 && (
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0 bg-rose-400" />
+                                <span className="text-xs3 text-[var(--text-tertiary)]">{t('stage.LOST')}: <strong className="text-rose-500">{lostStage.count}</strong></span>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

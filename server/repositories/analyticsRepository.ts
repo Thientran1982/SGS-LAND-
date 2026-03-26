@@ -539,11 +539,16 @@ export class AnalyticsRepository extends BaseRepository {
         ? `AND l.assigned_to = '${safeUserId}'`
         : '';
 
+      // Same commission rate as getSummary — must be consistent across all revenue calculations
+      const commissionRate = parseFloat(process.env.COMMISSION_RATE || '0.02');
+
+      // Funnel: include ALL stages (including LOST) so the denominator for conversion rates
+      // reflects the true total. LOST leads are filtered out of the visual bars on the frontend
+      // but included in the total count used as the denominator.
       const funnelResult = await client.query(`
         SELECT stage, COUNT(*)::int as count
         FROM leads
         WHERE ${TENANT_FILTER}
-          AND stage != 'LOST'
           ${userLeadFilter}
           ${useTimeFilter ? `AND created_at >= NOW() - INTERVAL '${days} days'` : ''}
         GROUP BY stage
@@ -555,16 +560,18 @@ export class AnalyticsRepository extends BaseRepository {
             WHEN 'PROPOSAL' THEN 4
             WHEN 'NEGOTIATION' THEN 5
             WHEN 'WON' THEN 6
-            ELSE 7
+            WHEN 'LOST' THEN 7
+            ELSE 8
           END
       `);
 
+      // Revenue = final_price * commissionRate, consistent with getSummary and Dashboard
       const attributionResult = await client.query(`
         SELECT
           COALESCE(l.source, 'UNKNOWN') as source,
           COUNT(l.id)::int as lead_count,
           COUNT(l.id) FILTER (WHERE l.stage = 'WON')::int as won_count,
-          COALESCE(SUM(p.final_price) FILTER (WHERE l.stage = 'WON'), 0)::numeric as revenue
+          COALESCE(SUM(p.final_price * $1) FILTER (WHERE l.stage = 'WON'), 0)::numeric as revenue
         FROM leads l
         LEFT JOIN proposals p ON l.id = p.lead_id AND p.tenant_id = l.tenant_id AND p.status = 'APPROVED'
         WHERE l.${TENANT_FILTER}
@@ -572,7 +579,7 @@ export class AnalyticsRepository extends BaseRepository {
           ${timeFilterAnd.replace('created_at', 'l.created_at')}
         GROUP BY l.source
         ORDER BY revenue DESC
-      `);
+      `, [commissionRate]);
 
       // Campaign costs: always full-scope (company-level marketing spend)
       const campaignCostsResult = await client.query(`
@@ -662,12 +669,13 @@ export class AnalyticsRepository extends BaseRepository {
         count: row.count,
       }));
 
-      // conversionRate = each stage's count / NEW stage count (top-of-funnel %)
-      // e.g. WON: 5 out of 100 NEW = 5.00% — tells you how many leads made it through
-      const newStageCount = funnel.find((f: any) => f.stage === 'NEW')?.count || 0;
+      // Use TOTAL leads across ALL stages (including LOST) as denominator.
+      // This gives the true "what % of all leads ever reached this stage" metric.
+      // e.g. 100 total leads, 10 WON → 10.0% — not distorted by how many are still in NEW.
+      const totalLeadsCount = funnel.reduce((sum: number, f: any) => sum + f.count, 0);
       const funnelWithPercentage = funnel.map((f: any) => ({
         ...f,
-        conversionRate: newStageCount > 0 ? Math.round((f.count / newStageCount) * 10000) / 100 : 0,
+        conversionRate: totalLeadsCount > 0 ? Math.round((f.count / totalLeadsCount) * 10000) / 100 : 0,
       }));
 
       const campaignCostsListResult = await client.query(`
