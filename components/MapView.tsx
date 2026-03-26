@@ -65,15 +65,39 @@ async function geocodeLocation(
     return null;
 }
 
+// Deterministic micro-jitter so multiple listings that share the same district
+// fallback coordinate don't pile exactly on top of each other.
+// Offset ≈ ±0–120 m (0.0000–0.0011°) — invisible at city zoom, visible at zoom ≥ 16.
+function hashId(id: string): number {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < id.length; i++) {
+        h ^= id.charCodeAt(i);
+        h = Math.imul(h, 0x01000193);
+    }
+    return h >>> 0; // unsigned 32-bit
+}
+
 function getFallbackPoint(listing: any): [number, number] {
     if (listing.location) {
         const d = getDistrictFallback(listing.location);
-        if (d) return d.coords;
+        if (d) {
+            const [baseLat, baseLng] = d.coords;
+            const h = hashId(String(listing.id ?? listing.location));
+            // Two independent sub-hashes mapped to [-0.0005, +0.0005] ≈ ±55 m
+            const dLat = ((h & 0xFFFF)       / 0xFFFF - 0.5) * 0.001;
+            const dLng = (((h >>> 16) & 0xFFFF) / 0xFFFF - 0.5) * 0.001;
+            return [baseLat + dLat, baseLng + dLng];
+        }
     }
     return HCMC_CENTER;
 }
 
 // ── Custom clustering ────────────────────────────────────────────────────────
+
+// Zoom threshold at which clustering is completely disabled.
+// Above this zoom listings that share the same spot are already jitter-spread,
+// so they appear as distinct individual pins without needing a cluster bubble.
+const CLUSTER_MAX_ZOOM = 15;
 
 interface PointEntry {
     listing: Listing;
@@ -83,6 +107,12 @@ interface PointEntry {
 
 function buildClusters(entries: PointEntry[], map: L.Map): PointEntry[][] {
     if (!entries.length) return [];
+
+    // At close zoom: every listing is its own pin — no clustering.
+    // This also prevents listings at the same fallback district centroid from
+    // staying merged even when the user has zoomed all the way in.
+    if (map.getZoom() > CLUSTER_MAX_ZOOM) return entries.map(e => [e]);
+
     let screen: L.Point[];
     try {
         screen = entries.map(e => map.latLngToContainerPoint(L.latLng(e.point[0], e.point[1])));
@@ -376,7 +406,7 @@ const MapView: React.FC<MapViewProps> = memo(({
                     L.DomEvent.stopPropagation(e);
                     deselectPin();
                     setSelected(null);
-                    if (map.getZoom() < 16) {
+                    if (map.getZoom() <= CLUSTER_MAX_ZOOM) {
                         map.flyTo(center, map.getZoom() + 2, { animate: true, duration: 0.45 });
                     } else {
                         setClusterGroup(cluster);
