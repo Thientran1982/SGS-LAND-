@@ -797,14 +797,14 @@ export const Inbox: React.FC = () => {
                     </div>
 
                     {/* Input Bar */}
-                    <div className="p-3 md:p-4 bg-[var(--bg-surface)]/95 backdrop-blur border-t border-[var(--glass-border)] z-30 pb-safe">
-                        <div className="flex flex-wrap items-center justify-between mb-2 md:mb-3 gap-2">
+                    <div className="p-2 md:p-3 bg-[var(--bg-surface)]/95 backdrop-blur border-t border-[var(--glass-border)] z-30 pb-safe">
+                        <div className="flex flex-wrap items-center justify-between mb-1.5 gap-1.5">
                             <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-lg border border-[var(--glass-border)] overflow-x-auto no-scrollbar max-w-full">
                                 {[Channel.ZALO, Channel.EMAIL, Channel.SMS].map(ch => (
                                     <button 
                                         key={ch} 
                                         onClick={() => setChannel(ch)}
-                                        className={`px-2 md:px-3 py-1 min-h-[36px] rounded-md text-xs2 font-bold uppercase transition-all flex items-center gap-1.5 whitespace-nowrap ${channel === ch ? 'bg-[var(--bg-surface)] text-indigo-700 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
+                                        className={`px-2 py-0.5 min-h-[28px] rounded-md text-xs2 font-bold uppercase transition-all flex items-center gap-1 whitespace-nowrap ${channel === ch ? 'bg-[var(--bg-surface)] text-indigo-700 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
                                     >
                                         {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS} {channelLabel(ch)}
                                     </button>
@@ -812,13 +812,13 @@ export const Inbox: React.FC = () => {
                             </div>
                             
                             {!isAiActiveForSelected && (
-                                <div className="text-xs2 font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100 animate-pulse whitespace-nowrap">
+                                <div className="text-xs2 font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100 animate-pulse whitespace-nowrap">
                                     {t('inbox.supervisor_takeover_active')}
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex items-end gap-2 bg-[var(--bg-surface)] p-1.5 md:p-2 pl-2 md:pl-3 rounded-2xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/50 transition-all shadow-sm max-w-full">
+                        <div className="flex items-end gap-1.5 bg-[var(--bg-surface)] p-1 pl-2 rounded-xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/50 transition-all shadow-sm max-w-full">
                             <input 
                                 type="file" 
                                 ref={fileInputRef} 
@@ -829,7 +829,7 @@ export const Inbox: React.FC = () => {
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 aria-label={t('inbox.attach')}
-                                className="p-1.5 md:p-2 min-h-[44px] min-w-[44px] text-[var(--text-secondary)] hover:text-indigo-600 transition-colors rounded-xl hover:bg-indigo-50 shrink-0 self-end mb-0.5 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="p-1 min-h-[32px] min-w-[32px] text-[var(--text-secondary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-indigo-50 shrink-0 self-end mb-0.5 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
                                 {ICONS.ATTACH}
                             </button>
@@ -843,7 +843,7 @@ export const Inbox: React.FC = () => {
                                         handleSend();
                                     }
                                 }}
-                                className="flex-1 min-w-0 bg-transparent border-none text-sm outline-none max-h-32 min-h-[40px] md:min-h-[44px] py-2 md:py-3 resize-none placeholder:text-[var(--text-muted)] leading-relaxed focus:ring-0 no-scrollbar"
+                                className="flex-1 min-w-0 bg-transparent border-none text-sm outline-none max-h-28 min-h-[32px] py-1.5 resize-none placeholder:text-[var(--text-muted)] leading-relaxed focus:ring-0 no-scrollbar"
                                 placeholder={isAiActiveForSelected ? t('inbox.type_simulate') : t('inbox.reply_supervisor')}
                                 rows={1}
                             />
@@ -852,7 +852,7 @@ export const Inbox: React.FC = () => {
                                 onClick={handleSend}
                                 disabled={!input.trim() || isThinking}
                                 aria-label={t('inbox.send')}
-                                className="p-2 md:p-2.5 bg-indigo-600 text-white rounded-xl shadow-md hover:shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:shadow-none active:scale-95 shrink-0 mb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                                className="p-1.5 bg-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:shadow-none active:scale-95 shrink-0 mb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
                             >
                                 {ICONS.SEND}
                             </button>
