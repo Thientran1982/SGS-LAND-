@@ -17,12 +17,15 @@ let nominatimReachable = true;
 
 // ── Transaction → design tokens ──────────────────────────────────────────────
 // Priority: PropertyType.PROJECT → blue | TransactionType.RENT → violet | default → navy
+//
+// NOTE: PropertyType.PROJECT = 'Project' (PascalCase enum value stored in DB).
+//       Compare case-insensitively so we match 'Project', 'PROJECT', 'project', etc.
 function pinTokens(transaction?: string, propertyType?: string) {
-    if (propertyType === 'PROJECT')
-        return { bg: '#0369a1', glow: 'rgba(3,105,161,0.38)' };
-    if (transaction === 'RENT')
-        return { bg: '#6d28d9', glow: 'rgba(109,40,217,0.40)' };
-    return { bg: '#0f172a', glow: 'rgba(15,23,42,0.38)' };
+    if (propertyType?.toUpperCase() === 'PROJECT')
+        return { bg: '#0369a1', glow: 'rgba(3,105,161,0.38)' };      // sky-700 — Dự án
+    if (transaction?.toUpperCase() === 'RENT')
+        return { bg: '#6d28d9', glow: 'rgba(109,40,217,0.40)' };      // violet-700 — Thuê
+    return { bg: '#0f172a', glow: 'rgba(15,23,42,0.38)' };            // slate-900 — Bán
 }
 
 // ── Geo utilities ────────────────────────────────────────────────────────────
@@ -397,7 +400,7 @@ const MapView: React.FC<MapViewProps> = memo(({
                 lg.addLayer(marker);
             } else {
                 // Dominant colour: PROJECT (propertyType) wins, then RENT, then SALE
-                const hasProject = cluster.some(e => (e.listing.type as string) === 'PROJECT');
+                const hasProject = cluster.some(e => (e.listing.type as string)?.toUpperCase() === 'PROJECT');
                 const txCounts: Record<string, number> = {};
                 cluster.forEach(e => { const tx = (e.listing.transaction as string) || 'SALE'; txCounts[tx] = (txCounts[tx] || 0) + 1; });
                 const dominantTx  = hasProject ? 'PROJECT_TYPE' : Object.entries(txCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
