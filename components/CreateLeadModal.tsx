@@ -327,7 +327,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ onClose, onSuc
                                         <span className="text-amber-500 text-sm mt-0.5">⚠</span>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-xs font-semibold text-amber-700">Email đã tồn tại</p>
-                                            <p className="text-xs text-amber-600 truncate">{emailWarning.name} — {emailWarning.phone}</p>
+                                            <p className="text-xs text-amber-600 truncate">{emailWarning.name}</p>
                                         </div>
                                     </div>
                                 )}
