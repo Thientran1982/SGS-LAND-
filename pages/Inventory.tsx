@@ -259,12 +259,19 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                 <>
                     <td className="px-4 py-3 text-xs">
                         <div className="flex flex-col">
-                            <span className="font-bold text-[var(--text-secondary)] dark:text-slate-200 truncate max-w-[120px]" title={item.ownerName || '--'}>
-                                {item.ownerName || '--'}
-                            </span>
-                            <span className="text-xs2 text-[var(--text-tertiary)] font-mono">
-                                {item.ownerPhone || '--'}
-                            </span>
+                            {item.ownerName ? (
+                                <span className="font-bold text-[var(--text-secondary)] dark:text-slate-200 truncate max-w-[120px]" title={item.ownerName}>
+                                    {item.ownerName}
+                                </span>
+                            ) : null}
+                            {item.ownerPhone ? (
+                                <span className="text-xs2 text-[var(--text-tertiary)] font-mono">
+                                    {item.ownerPhone}
+                                </span>
+                            ) : null}
+                            {!item.ownerName && !item.ownerPhone && (
+                                <span className="text-[var(--text-tertiary)]">—</span>
+                            )}
                         </div>
                     </td>
 
@@ -952,7 +959,7 @@ export const Inventory: React.FC = () => {
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_unit_price')}</th>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right">{t('inventory.label_area')}</th>
                                                 <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-center">{t('inventory.label_status')}</th>
-                                                {canViewInternalInfo && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right sticky right-0 z-30 bg-[var(--glass-surface)] shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] border-l border-[var(--glass-border)]">{t('common.actions')}</th>}
+                                                {canViewInternalInfo && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase text-right sticky right-0 z-30 bg-[var(--glass-surface)] shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)]">{t('common.actions')}</th>}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
