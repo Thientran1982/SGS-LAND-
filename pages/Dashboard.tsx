@@ -16,7 +16,7 @@ import { useTheme } from '../services/theme';
 import { DashboardSkeleton } from '../components/Skeleton';
 import { GlassBento as BentoCard } from '../components/GlassBento';
 import { Dropdown } from '../components/Dropdown';
-import { useSocket } from '../services/websocket';
+import { useSocket, socket } from '../services/websocket';
 
 // --- ICONS ---
 const ICONS = {
@@ -153,6 +153,7 @@ const GeoLocationTable = memo(({ t }: { t: any }) => {
         queryKey: ['visitorStats'],
         queryFn: () => analyticsApi.getVisitorStats(30),
         staleTime: 60000,
+        refetchInterval: 120000, // Auto-refresh every 2 minutes
         retry: 1,
     });
 
@@ -459,9 +460,29 @@ export const Dashboard: React.FC = () => {
             ]);
             return { ...data, user };
         },
-        refetchInterval: 30000, // Auto-refresh every 30s
+        refetchInterval: 30000, // Auto-refresh every 30s as baseline
         staleTime: 10000,
     });
+
+    // Socket-triggered refetch: immediately react to lead/deal changes without waiting up to 30s
+    const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const scheduleRefetch = useCallback(() => {
+        if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+        // Debounce 2s so rapid bulk changes (imports, routing) generate only one API call
+        refreshTimerRef.current = setTimeout(() => refetch(), 2000);
+    }, [refetch]);
+
+    useEffect(() => {
+        socket.on('lead_created', scheduleRefetch);
+        socket.on('lead_updated', scheduleRefetch);
+        socket.on('lead_scored', scheduleRefetch);
+        return () => {
+            socket.off('lead_created', scheduleRefetch);
+            socket.off('lead_updated', scheduleRefetch);
+            socket.off('lead_scored', scheduleRefetch);
+            if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+        };
+    }, [scheduleRefetch]);
 
     if (isLoading) return <DashboardSkeleton />;
 
