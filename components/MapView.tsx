@@ -123,17 +123,18 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                     priceLabel = formatCurrency(listing.price);
                 }
 
-                // Modern pill-shaped price pin marker
-                // The outer wrapper uses padding-bottom to reserve space for the arrow tip,
-                // so that transform:translate(-50%,-100%) brings the very tip of the arrow
-                // exactly onto the geographic coordinate.
-                const ARROW_H = 8; // px the arrow tip protrudes below the pill
+                // Price pin: flex-column layout so the total height is pill + arrow,
+                // and transform:translate(-50%,-100%) places the arrow tip exactly at the geo-coordinate.
+                // filter:drop-shadow casts a unified shadow over both pill and arrow (box-shadow cannot do this).
                 const pinHtml = `
-                    <div style="position:relative;transform:translate(-50%,-100%);transform-origin:bottom center;cursor:pointer;white-space:nowrap;padding-bottom:${ARROW_H}px;">
-                        <div style="display:inline-flex;align-items:center;background:#0f172a;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,0.35);border:2px solid #fff;white-space:nowrap;">
+                    <div class="sgs-price-pin" style="display:inline-flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);transform-origin:bottom center;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.30));">
+                        <div style="background:#0f172a;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:8px;border:2px solid #fff;white-space:nowrap;letter-spacing:0.3px;line-height:1.4;transition:background 0.15s,transform 0.15s;">
                             ${priceLabel}
                         </div>
-                        <div style="position:absolute;bottom:0;left:50%;width:12px;height:12px;transform:translateX(-50%) rotate(45deg);border-right:2px solid #fff;border-bottom:2px solid #fff;border-radius:0 0 3px 0;background:#0f172a;"></div>
+                        <div style="position:relative;width:20px;height:10px;margin-top:-1px;flex-shrink:0;">
+                            <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:11px solid #fff;"></div>
+                            <div style="position:absolute;top:2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid #0f172a;"></div>
+                        </div>
                     </div>
                 `;
 
@@ -225,6 +226,9 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                     to   { opacity: 1; transform: scale(1) translateY(0); }
                 }
                 .leaflet-control-zoom { display: flex !important; flex-direction: column; }
+                .sgs-price-pin:hover > div:first-child { background: #334155 !important; transform: scale(1.08); }
+                .sgs-price-pin { transition: filter 0.15s ease; }
+                .sgs-price-pin:hover { filter: drop-shadow(0 6px 14px rgba(0,0,0,0.40)) !important; }
             `}</style>
             <div ref={mapContainerRef} style={{ width: '100%', height: '100%', background: '#e2e8f0' }} />
         </>
