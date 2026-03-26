@@ -238,8 +238,12 @@ const MapView: React.FC<MapViewProps> = memo(({
     const geoCache     = useRef<Map<string, [number, number] | null>>(new Map());
     const layerGroup   = useRef<L.LayerGroup | null>(null);
     const allEntries   = useRef<PointEntry[]>([]);
-    const cancelFlag   = useRef(false);
-    const activeMarker = useRef<{ marker: L.Marker; entry: PointEntry } | null>(null);
+    const cancelFlag      = useRef(false);
+    const activeMarker    = useRef<{ marker: L.Marker; entry: PointEntry } | null>(null);
+    // Tracks the sorted listing-ID string from the last geocoding run.
+    // Used to skip a full reset when the parent passes the same listings
+    // with a new array reference (common React pattern — causes spurious re-renders).
+    const prevListingKey  = useRef<string>('');
 
     const [selected, setSelected]       = useState<{ listing: any; approximate: boolean } | null>(null);
     const [clusterGroup, setClusterGroup] = useState<PointEntry[] | null>(null);
@@ -257,6 +261,10 @@ const MapView: React.FC<MapViewProps> = memo(({
             const map = L.map(mapRef.current, {
                 center: HCMC_CENTER, zoom: 13,
                 zoomControl: false, attributionControl: true,
+                // Disable CSS zoom animation — prevents the "_leaflet_pos undefined"
+                // race that fires when the map is unmounted during an in-flight
+                // CSS transition (happens on HMR and rapid navigation).
+                zoomAnimation: false,
             });
             L.control.zoom({ position: 'bottomright' }).addTo(map);
 
@@ -387,6 +395,18 @@ const MapView: React.FC<MapViewProps> = memo(({
 
     // ── Listings → resolve coords → cluster ───────────────────────────────────
     useEffect(() => {
+        // Build a stable identity key from listing IDs so we don't restart the
+        // expensive geocoding pipeline when the parent passes a new array reference
+        // containing the same listings (common in React — causes spurious re-renders).
+        const newKey = listings.map(l => l.id).sort().join(',');
+        if (newKey === prevListingKey.current && allEntries.current.length > 0) {
+            // Same listings already resolved — just re-cluster at current zoom.
+            // Use the ref so we always call the latest version (not a stale closure).
+            renderClustersRef.current();
+            return;
+        }
+        prevListingKey.current = newKey;
+
         cancelFlag.current = true;
         allEntries.current = [];
         layerGroup.current?.clearLayers();
@@ -414,7 +434,7 @@ const MapView: React.FC<MapViewProps> = memo(({
 
             allEntries.current = [...resolved];
             if (bounds.isValid()) mapInst.current!.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: false });
-            renderClusters();
+            renderClustersRef.current();
 
             let geocodeCount = 0;
             for (const listing of pending) {
@@ -444,13 +464,13 @@ const MapView: React.FC<MapViewProps> = memo(({
                 // Progressive render: update after every listing so the map shows
                 // pins as they resolve instead of waiting for the full batch.
                 allEntries.current = [...resolved];
-                renderClusters();
+                renderClustersRef.current();
             }
 
             if (!cancel()) {
                 allEntries.current = resolved;
                 if (bounds.isValid()) mapInst.current?.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: false });
-                renderClusters();
+                renderClustersRef.current();
             }
         };
 
