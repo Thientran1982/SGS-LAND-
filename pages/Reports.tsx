@@ -32,6 +32,7 @@ interface FunnelStep {
 interface ConversionPeriod {
     period: string;
     won: number;
+    lost: number;
     total: number;
     conversionRate: number;
 }

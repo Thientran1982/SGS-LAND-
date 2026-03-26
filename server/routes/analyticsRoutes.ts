@@ -34,6 +34,9 @@ export function createAnalyticsRoutes(authenticateToken: any) {
   router.get('/bi-marts', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      if (PARTNER_ROLES.includes(user.role)) {
+        return res.status(403).json({ error: 'Không có quyền truy cập' });
+      }
       const timeRange = (req.query.timeRange as string) || 'all';
       const result = await analyticsRepository.generateBiMarts(
         user.tenantId,
