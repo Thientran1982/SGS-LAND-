@@ -486,7 +486,7 @@ export const Inbox: React.FC = () => {
 
     return (
         <>
-        <div className="p-4 sm:p-6 h-[calc(100vh-100px)] md:h-[calc(100vh-140px)]">
+        <div className="p-4 sm:p-6 h-[calc(100vh-64px)] md:h-[calc(100vh-72px)]">
         <div className="flex h-full bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden animate-enter relative">
 
             {/* Sidebar List */}
