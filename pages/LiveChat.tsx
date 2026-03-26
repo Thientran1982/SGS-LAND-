@@ -76,10 +76,21 @@ export default function LiveChat() {
     // Agent ID from URL param (set by embed code) — links this chat session to a specific agent
     const agentId   = chatParams.get('agent') || w.SGSLAND_AGENT_ID   || undefined;
 
-    // Load lead from localStorage if exists
+    // Load lead from localStorage if exists.
+    // If the current ?agent= param differs from the agent that created the stored
+    // session, discard the old session so a new one is created for the correct agent.
     useEffect(() => {
-        const savedId = localStorage.getItem('livechat_lead_id');
+        const savedId    = localStorage.getItem('livechat_lead_id');
+        const savedAgent = localStorage.getItem('livechat_agent_id');
         if (!savedId) return;
+
+        // Agent mismatch → force a fresh session for the new agent
+        if (agentId && savedAgent && agentId !== savedAgent) {
+            localStorage.removeItem('livechat_lead_id');
+            localStorage.removeItem('livechat_agent_id');
+            return;
+        }
+
         publicGetMessages(savedId).then(data => {
             if (data) {
                 setLeadId(data.lead.id);
@@ -87,9 +98,11 @@ export default function LiveChat() {
                 setMessages(data.messages || []);
             } else {
                 localStorage.removeItem('livechat_lead_id');
+                localStorage.removeItem('livechat_agent_id');
             }
         }).catch(() => {
             localStorage.removeItem('livechat_lead_id');
+            localStorage.removeItem('livechat_agent_id');
         });
     }, []);
 
@@ -135,9 +148,9 @@ export default function LiveChat() {
             setLeadName(name.trim());
             setMessages([welcomeMsg]);
             localStorage.setItem('livechat_lead_id', id);
-
-            socket.emit('lead_created', { id, name: name.trim(), phone: phone.trim() });
-            socket.emit('send_message', { room: id, message: welcomeMsg });
+            // Remember which agent this session belongs to so we can detect mismatches later
+            if (agentId) localStorage.setItem('livechat_agent_id', agentId);
+            else localStorage.removeItem('livechat_agent_id');
         } catch (_err) {
             setStartError(t('auth.error_generic'));
         }
@@ -215,6 +228,7 @@ export default function LiveChat() {
 
     const handleEndChat = () => {
         localStorage.removeItem('livechat_lead_id');
+        localStorage.removeItem('livechat_agent_id');
         setLeadId(null);
         setLeadName('');
         setMessages([]);
