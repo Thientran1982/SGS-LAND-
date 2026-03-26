@@ -208,6 +208,15 @@ const Contracts: React.FC = () => {
 
     useEffect(() => { loadContracts(); }, [loadContracts]);
 
+    useEffect(() => {
+        const handler = () => {
+            const hash = window.location.hash.replace('#', '').replace(/^\//, '').split('/')[0].split('?')[0];
+            if (hash === 'contracts') loadContracts();
+        };
+        window.addEventListener('hashchange', handler);
+        return () => window.removeEventListener('hashchange', handler);
+    }, [loadContracts]);
+
     const handleDelete = async () => {
         if (!contractToDelete) return;
         const id = contractToDelete;
