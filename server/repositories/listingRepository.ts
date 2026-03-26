@@ -54,7 +54,10 @@ export class ListingRepository extends BaseRepository {
     if (filters?.area_lte !== undefined) { conditions.push(`area <= $${paramIndex++}`); values.push(filters.area_lte); }
     if (filters?.bedrooms_gte !== undefined) { conditions.push(`bedrooms >= $${paramIndex++}`); values.push(filters.bedrooms_gte); }
     if (filters?.projectCode) { conditions.push(`project_code = $${paramIndex++}`); values.push(filters.projectCode); }
-    if (filters?.noProjectCode) { conditions.push(`(project_code IS NULL OR project_code = '')`); }
+    // noProjectCode: exclude unit-level listings that belong to a project (they have a
+    // project_code pointing to their parent), but always show PROJECT master listings
+    // themselves even though they also carry a project_code.
+    if (filters?.noProjectCode) { conditions.push(`(project_code IS NULL OR project_code = '' OR type = 'Project')`); }
     if (filters?.isVerified !== undefined) { conditions.push(`is_verified = $${paramIndex++}`); values.push(filters.isVerified); }
     if (filters?.search) {
       conditions.push(`(title ILIKE $${paramIndex} OR location ILIKE $${paramIndex} OR code ILIKE $${paramIndex})`);
