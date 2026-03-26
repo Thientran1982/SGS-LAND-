@@ -73,13 +73,10 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const [priceShort, setPriceShort] = useState<string>('');
     const [priceUnit, setPriceUnit] = useState<number>(UNITS.BILLION.value);
 
-    const autoGeocode = async () => {
-        const addr = formData.location?.trim();
-        if (!addr) { setGeocodeMsg(t('inventory.geocode_no_addr') || 'Vui lòng nhập địa chỉ trước'); return; }
-        setGeocoding(true);
-        setGeocodeMsg('');
-
-        // HCMC bounding box — bounded=1 ensures Nominatim only returns results within this area
+    // Shared geocoding helper — returns { lat, lng } or null
+    // Uses HCMC viewbox + bounded=1 to prevent Nominatim from returning
+    // wrong locations (e.g. pins landing in the Sài Gòn River).
+    const geocodeAddress = async (addr: string): Promise<{ lat: number; lng: number } | null> => {
         const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
         const queries = [
             `${addr}, Thành phố Hồ Chí Minh, Việt Nam`,
@@ -87,10 +84,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             `${addr}, TP. HCM, Việt Nam`,
             `${addr}, Vietnam`,
         ];
-
-        let found = false;
         for (let i = 0; i < queries.length; i++) {
-            if (i > 0) await new Promise(r => setTimeout(r, 1100)); // Nominatim rate limit
+            if (i > 0) await new Promise(r => setTimeout(r, 1100));
             try {
                 const q = encodeURIComponent(queries[i]);
                 const res = await fetch(
@@ -99,17 +94,28 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                 );
                 const data = await res.json();
                 if (data.length > 0) {
-                    const lat = parseFloat(parseFloat(data[0].lat).toFixed(6));
-                    const lng = parseFloat(parseFloat(data[0].lon).toFixed(6));
-                    setFormData(prev => ({ ...prev, coordinates: { lat, lng } }));
-                    setGeocodeMsg(`✓ ${lat}, ${lng}`);
-                    found = true;
-                    break;
+                    return {
+                        lat: parseFloat(parseFloat(data[0].lat).toFixed(6)),
+                        lng: parseFloat(parseFloat(data[0].lon).toFixed(6)),
+                    };
                 }
             } catch { /* try next query */ }
         }
+        return null;
+    };
 
-        if (!found) setGeocodeMsg(t('inventory.geocode_not_found') || 'Không tìm thấy toạ độ — thử nhập địa chỉ đầy đủ hơn');
+    const autoGeocode = async () => {
+        const addr = formData.location?.trim();
+        if (!addr) { setGeocodeMsg(t('inventory.geocode_no_addr') || 'Vui lòng nhập địa chỉ trước'); return; }
+        setGeocoding(true);
+        setGeocodeMsg('');
+        const result = await geocodeAddress(addr);
+        if (result) {
+            setFormData(prev => ({ ...prev, coordinates: result }));
+            setGeocodeMsg(`✓ ${result.lat}, ${result.lng}`);
+        } else {
+            setGeocodeMsg(t('inventory.geocode_not_found') || 'Không tìm thấy toạ độ — thử nhập địa chỉ đầy đủ hơn');
+        }
         setGeocoding(false);
     };
 
@@ -289,15 +295,34 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
     const handleSubmit = async () => {
         if (!validate()) return;
         setIsSubmitting(true);
-        
+
         // Calculate final raw price for DB
         const finalPrice = parseFloat(priceShort) * priceUnit;
 
+        // Auto-geocode if coordinates are missing — this ensures every listing
+        // is stored with real coordinates so the map pin is always accurate.
+        let coordinates = formData.coordinates;
+        const hasCoords = coordinates?.lat != null && coordinates?.lng != null &&
+            (coordinates.lat !== 0 || coordinates.lng !== 0);
+
+        if (!hasCoords && formData.location?.trim()) {
+            setGeocodeMsg('Đang tự động lấy toạ độ...');
+            const result = await geocodeAddress(formData.location.trim());
+            if (result) {
+                coordinates = result;
+                setFormData(prev => ({ ...prev, coordinates: result }));
+                setGeocodeMsg(`✓ ${result.lat}, ${result.lng}`);
+            } else {
+                setGeocodeMsg('');
+            }
+        }
+
         try {
-            await onSubmit({ 
-                ...formData, 
+            await onSubmit({
+                ...formData,
                 price: finalPrice,
-                images 
+                images,
+                coordinates,
             });
         } finally {
             setIsSubmitting(false);

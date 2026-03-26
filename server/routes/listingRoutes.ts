@@ -3,6 +3,52 @@ import { Router, Request, Response } from 'express';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
 
+// ── Server-side geocoding (Nominatim / OpenStreetMap) ────────────────────────
+// Runs in the background after create/update so the API response is not delayed.
+// Uses HCMC bounding box with bounded=1 so results are always within HCMC.
+const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
+
+async function geocodeHCMC(location: string): Promise<{ lat: number; lng: number } | null> {
+  const queries = [
+    `${location}, Thành phố Hồ Chí Minh, Việt Nam`,
+    `${location}, Ho Chi Minh City, Vietnam`,
+    `${location}, TP. HCM, Việt Nam`,
+    `${location}, Vietnam`,
+  ];
+  for (let i = 0; i < queries.length; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 1200));
+    try {
+      const q = encodeURIComponent(queries[i]);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn&viewbox=${HCMC_VIEWBOX}&bounded=1`,
+        { headers: { 'Accept-Language': 'vi,en', 'User-Agent': 'SGSLand/1.0' } }
+      );
+      const data = (await res.json()) as any[];
+      if (data.length > 0) {
+        return {
+          lat: parseFloat(parseFloat(data[0].lat).toFixed(6)),
+          lng: parseFloat(parseFloat(data[0].lon).toFixed(6)),
+        };
+      }
+    } catch { /* try next */ }
+  }
+  return null;
+}
+
+/** Fire-and-forget: geocode and patch coordinates in DB without blocking the response */
+function scheduleGeocode(tenantId: string, listingId: string, location: string) {
+  (async () => {
+    try {
+      const coords = await geocodeHCMC(location);
+      if (coords) {
+        await listingRepository.update(tenantId, listingId, { coordinates: coords });
+      }
+    } catch (e) {
+      console.warn('[geocode] background geocoding failed for listing', listingId, e);
+    }
+  })();
+}
+
 const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
 const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
 /** SALES and MARKETING may edit/delete their own or assigned listings; VIEWER is read-only */
@@ -165,6 +211,13 @@ export function createListingRoutes(authenticateToken: any) {
         ipAddress: req.ip,
       });
 
+      // If no coordinates were provided, geocode the address in the background
+      const coords = req.body.coordinates;
+      const hasCoords = coords?.lat != null && coords?.lng != null && (coords.lat !== 0 || coords.lng !== 0);
+      if (!hasCoords && location) {
+        scheduleGeocode(user.tenantId, listing.id, location);
+      }
+
       res.status(201).json(listing);
     } catch (error) {
       console.error('Error creating listing:', error);
@@ -214,6 +267,14 @@ export function createListingRoutes(authenticateToken: any) {
         details: `Updated listing fields: ${Object.keys(req.body).join(', ')}`,
         ipAddress: req.ip,
       });
+
+      // If coordinates are missing or zeroed after update, geocode the address in the background
+      const updatedCoords = listing.coordinates as any;
+      const hasUpdatedCoords = updatedCoords?.lat != null && updatedCoords?.lng != null &&
+        (updatedCoords.lat !== 0 || updatedCoords.lng !== 0);
+      if (!hasUpdatedCoords && listing.location) {
+        scheduleGeocode(user.tenantId, String(req.params.id), listing.location);
+      }
 
       res.json(listing);
     } catch (error) {
