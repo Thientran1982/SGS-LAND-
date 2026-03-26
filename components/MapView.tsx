@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Listing, PropertyType } from '../types';
@@ -8,18 +8,11 @@ import { buildVNGeoQueries, getDistrictFallback } from '../utils/vnAddress';
 
 const HCMC_CENTER: [number, number] = [10.7769, 106.7009];
 
-// Resolve coordinates with three tiers:
-//   1. listing.coordinates (real GPS from DB) — note: check != null to handle lat/lng = 0
-//   2. Nominatim geocoded from location string (cached in geocodeCacheRef)
-//   3. Hash-based HCMC fallback (marked as approximate)
 const hasRealCoords = (listing: any): boolean =>
     listing.coordinates?.lat != null && listing.coordinates?.lng != null &&
     (listing.coordinates.lat !== 0 || listing.coordinates.lng !== 0);
 
-// Nominatim rate-limit: 1 request / 1.1 s per OSM policy
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-
-// HCMC geographic bounding box: lng_min, lat_min, lng_max, lat_max
 const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
 
 async function geocodeLocation(
@@ -28,15 +21,12 @@ async function geocodeLocation(
 ): Promise<[number, number] | null> {
     if (cache.has(location)) return cache.get(location)!;
 
-    // buildVNGeoQueries returns original + diacritics-restored variants × 4 city suffixes
-    // so Nominatim gets the best possible match even for no-diacritics input.
     const queries = buildVNGeoQueries(location);
     console.log(`[SGS Geocode] Trying ${queries.length} queries for: "${location}"`);
     for (let i = 0; i < queries.length; i++) {
-        if (i > 0) await sleep(1100); // Nominatim: 1 req/s
+        if (i > 0) await sleep(1100);
         try {
             const q = encodeURIComponent(queries[i]);
-            // bounded=1 forces results inside the HCMC viewbox only
             const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn&viewbox=${HCMC_VIEWBOX}&bounded=1`;
             const res = await fetch(url, { headers: { 'Accept-Language': 'vi,en', 'User-Agent': 'SGSLand/1.0' } });
             const data = await res.json();
@@ -70,7 +60,12 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
     const mapInstanceRef = useRef<L.Map | null>(null);
     const geocodeCacheRef = useRef<Map<string, [number, number] | null>>(new Map());
 
-    // Initial Map Setup
+    // Selected listing panel state — Leaflet callbacks update this via ref
+    const [selectedListing, setSelectedListing] = useState<{ listing: any; approximate: boolean } | null>(null);
+    const selectedListingRef = useRef<((v: { listing: any; approximate: boolean } | null) => void)>(setSelectedListing);
+    useEffect(() => { selectedListingRef.current = setSelectedListing; }, []);
+
+    // ── Initial Map Setup ────────────────────────────────────────────────────
     useEffect(() => {
         if (!mapContainerRef.current || mapInstanceRef.current) return;
 
@@ -93,6 +88,9 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
             }).addTo(map);
 
+            // Click on map background → close panel
+            map.on('click', () => selectedListingRef.current(null));
+
             mapInstanceRef.current = map;
 
             ro = new ResizeObserver(() => {
@@ -114,7 +112,7 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
         };
     }, []);
 
-    // Markers Update — async to support Nominatim geocoding for listings without coordinates
+    // ── Markers Update ───────────────────────────────────────────────────────
     useEffect(() => {
         const map = mapInstanceRef.current;
         if (!map) return;
@@ -123,11 +121,9 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
 
         const run = async () => {
             try {
-                // Clear existing markers
                 map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
                 if (listings.length === 0) return;
 
-                // --- Phase 1: plot all listings with known coordinates immediately ---
                 const bounds = L.latLngBounds([]);
                 const pendingGeocode: Listing[] = [];
 
@@ -161,58 +157,13 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                     const icon = L.divIcon({ className: '', html: pinHtml, iconSize: [0, 0], iconAnchor: [0, 0] });
                     const marker = L.marker(point, { icon, zIndexOffset: approximate ? 50 : 100 }).addTo(map);
 
-                    const imgUrl = listing.images?.[0] || NO_IMAGE_URL;
-                    const areaDisplay = listing.area ? `${listing.area}m²` : '';
-                    const bedDisplay = listing.bedrooms ? ` • ${listing.bedrooms} PN` : '';
-                    const unitPriceDisplay = (listing.area > 0 && listing.type !== PropertyType.PROJECT && formatUnitPrice)
-                        ? ` • ${formatUnitPrice(listing.price, listing.area, t)}` : '';
-
-                    const approxBadge = approximate
-                        ? `<div style="background:#f1f5f9;color:#64748b;font-size:9px;font-weight:600;padding:2px 8px;border-radius:8px;margin-bottom:6px;text-align:center;">📍 Vị trí ước tính</div>`
-                        : '';
-
-                    const popupContent = `
-                        <div style="width:260px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);font-family:sans-serif;cursor:pointer;" id="card-${listing.id}">
-                            <div style="position:relative;height:140px;overflow:hidden;">
-                                <img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;" alt="" referrerpolicy="no-referrer" />
-                                <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);"></div>
-                                <div style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.2);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;text-transform:uppercase;">
-                                    ${t(`transaction.${listing.transaction}`) || listing.transaction}
-                                </div>
-                                <div style="position:absolute;bottom:12px;left:12px;color:#fff;">
-                                    <div style="font-size:18px;font-weight:800;line-height:1;margin-bottom:4px;">${priceLabel}</div>
-                                    <div style="font-size:10px;opacity:0.9;">${areaDisplay}${bedDisplay}${unitPriceDisplay}</div>
-                                </div>
-                            </div>
-                            <div style="padding:14px;">
-                                ${approxBadge}
-                                <h3 style="font-weight:700;color:#1e293b;font-size:13px;margin:0 0 4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${listing.title}</h3>
-                                <div style="font-size:10px;color:#94a3b8;margin-bottom:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${listing.location}</div>
-                                <button id="btn-${listing.id}" style="width:100%;background:#0f172a;color:#fff;font-size:12px;font-weight:700;padding:10px;border-radius:12px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-                                    ${t('common.learn_more') || 'Xem Chi Tiết'}
-                                </button>
-                            </div>
-                        </div>
-                    `;
-
-                    marker.bindPopup(popupContent, {
-                        closeButton: false,
-                        offset: [0, -50],
-                        minWidth: 260,
-                        maxWidth: 260,
-                        autoPanPadding: [50, 50],
-                        className: 'sgs-map-popup',
-                    });
-
-                    marker.on('popupopen', () => {
-                        const btn = document.getElementById(`btn-${listing.id}`);
-                        const card = document.getElementById(`card-${listing.id}`);
-                        if (btn) btn.onclick = () => onNavigate(listing.id);
-                        if (card) card.onclick = () => onNavigate(listing.id);
+                    // Click → open fixed side-panel (no auto-pan, no position issues)
+                    marker.on('click', (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        selectedListingRef.current({ listing, approximate });
                     });
                 };
 
-                // Phase 1: render listings with real GPS immediately
                 for (const listing of listings) {
                     if (hasRealCoords(listing)) {
                         addMarker(listing, [listing.coordinates!.lat, listing.coordinates!.lng], false);
@@ -225,7 +176,6 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                     map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: false });
                 }
 
-                // Phase 2: geocode listings without coordinates (Nominatim, 1 req/s)
                 for (const listing of pendingGeocode) {
                     if (cancelled) break;
                     let point: [number, number] | null = null;
@@ -235,19 +185,15 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                         const geocoded = await geocodeLocation(listing.location, geocodeCacheRef.current);
                         if (geocoded) { point = geocoded; approximate = false; }
                         else {
-                            // Nominatim failed — try district-centre fallback so pin lands
-                            // inside the correct district instead of a random HCMC hash
-                            // (which can fall in the Sài Gòn River).
                             const distFallback = getDistrictFallback(listing.location);
                             if (distFallback) {
                                 console.log(`[SGS Geocode] District fallback for "${listing.location}" → ${distFallback.district} ${distFallback.coords}`);
                                 point = distFallback.coords;
                             }
                         }
-                        await sleep(1100); // Nominatim rate limit
+                        await sleep(1100);
                     }
 
-                    // Last resort: HCMC centre (never a random hash that can hit the river)
                     if (!point) {
                         console.warn(`[SGS Geocode] No district found for "${listing.location}" — using HCMC centre`);
                         point = HCMC_CENTER;
@@ -267,36 +213,116 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
         return () => { cancelled = true; };
     }, [listings, formatCurrency, onNavigate, t, formatUnitPrice, formatCompactNumber, language]);
 
+    // ── Detail panel data ────────────────────────────────────────────────────
+    const sel = selectedListing;
+    const imgUrl     = sel?.listing.images?.[0] || NO_IMAGE_URL;
+    const areaDisplay = sel?.listing.area ? `${sel.listing.area} m²` : '';
+    const bedDisplay  = sel?.listing.bedrooms ? `${sel.listing.bedrooms} PN` : '';
+    const unitPrice   = sel && sel.listing.area > 0 && sel.listing.type !== PropertyType.PROJECT && formatUnitPrice
+        ? formatUnitPrice(sel.listing.price, sel.listing.area, t) : '';
+
+    let priceLabel = '';
+    if (sel) {
+        if (formatCompactNumber) {
+            priceLabel = formatCompactNumber(sel.listing.price);
+        } else if (sel.listing.price >= 1_000_000_000) {
+            priceLabel = `${(sel.listing.price / 1_000_000_000).toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US', { maximumFractionDigits: 1 })} ${t('format.billion') || 'Tỷ'}`;
+        } else if (sel.listing.price >= 1_000_000) {
+            priceLabel = `${(sel.listing.price / 1_000_000).toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US', { maximumFractionDigits: 0 })} ${t('format.million') || 'Tr'}`;
+        } else {
+            priceLabel = formatCurrency(sel.listing.price);
+        }
+    }
+
     return (
         <>
             <style>{`
-                .sgs-map-popup .leaflet-popup-content-wrapper {
-                    background: transparent !important;
-                    box-shadow: none !important;
-                    padding: 0 !important;
-                    border-radius: 0 !important;
-                }
-                .sgs-map-popup .leaflet-popup-content {
-                    margin: 0 !important;
-                    width: auto !important;
-                }
-                .sgs-map-popup .leaflet-popup-tip-container {
-                    display: none !important;
-                }
-                .sgs-map-popup {
-                    animation: sgs-popup-in 0.2s cubic-bezier(0.16,1,0.3,1) forwards;
-                    transform-origin: bottom center;
-                }
-                @keyframes sgs-popup-in {
-                    from { opacity: 0; transform: scale(0.9) translateY(8px); }
-                    to   { opacity: 1; transform: scale(1) translateY(0); }
-                }
                 .leaflet-control-zoom { display: flex !important; flex-direction: column; }
                 .sgs-price-pin { transition: filter 0.15s ease; }
                 .sgs-price-pin:hover { filter: drop-shadow(0 6px 14px rgba(0,0,0,0.40)) !important; }
                 .sgs-price-pin:hover > div:first-child { transform: scale(1.08); }
+                @keyframes sgs-panel-in {
+                    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                .sgs-detail-panel { animation: sgs-panel-in 0.22s cubic-bezier(0.16,1,0.3,1) forwards; }
             `}</style>
-            <div ref={mapContainerRef} style={{ width: '100%', height: '100%', background: '#e2e8f0' }} />
+
+            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                <div ref={mapContainerRef} style={{ width: '100%', height: '100%', background: '#e2e8f0' }} />
+
+                {/* ── Fixed detail panel — bottom-left, always in-view ── */}
+                {sel && (
+                    <div
+                        className="sgs-detail-panel"
+                        style={{
+                            position: 'absolute',
+                            bottom: 24,
+                            left: 16,
+                            width: 272,
+                            background: '#fff',
+                            borderRadius: 20,
+                            overflow: 'hidden',
+                            boxShadow: '0 8px 40px rgba(0,0,0,0.22)',
+                            zIndex: 1000,
+                            fontFamily: 'sans-serif',
+                        }}
+                    >
+                        {/* Image */}
+                        <div style={{ position: 'relative', height: 148, overflow: 'hidden', cursor: 'pointer' }}
+                            onClick={() => onNavigate(sel.listing.id)}>
+                            <img
+                                src={imgUrl}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                alt=""
+                                referrerPolicy="no-referrer"
+                            />
+                            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.72), transparent)' }} />
+
+                            {/* Transaction badge */}
+                            <div style={{ position: 'absolute', top: 10, left: 12, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.22)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '3px 9px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                {t(`transaction.${sel.listing.transaction}`) || sel.listing.transaction}
+                            </div>
+
+                            {/* Close button */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setSelectedListing(null); }}
+                                style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, lineHeight: 1 }}
+                                aria-label="Đóng"
+                            >×</button>
+
+                            {/* Price overlay */}
+                            <div style={{ position: 'absolute', bottom: 12, left: 12, color: '#fff' }}>
+                                <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1, marginBottom: 3 }}>{priceLabel}</div>
+                                <div style={{ fontSize: 10, opacity: 0.88 }}>
+                                    {[areaDisplay, bedDisplay, unitPrice].filter(Boolean).join(' · ')}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Body */}
+                        <div style={{ padding: '12px 14px 14px' }}>
+                            {sel.approximate && (
+                                <div style={{ background: '#f1f5f9', color: '#64748b', fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 8, marginBottom: 8, display: 'inline-block' }}>
+                                    📍 {t('map.approx_location') || 'Vị trí ước tính'}
+                                </div>
+                            )}
+                            <h3 style={{ fontWeight: 700, color: '#1e293b', fontSize: 13, margin: '0 0 3px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                {sel.listing.title}
+                            </h3>
+                            <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 12, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                {sel.listing.location}
+                            </div>
+                            <button
+                                onClick={() => onNavigate(sel.listing.id)}
+                                style={{ width: '100%', background: '#0f172a', color: '#fff', fontSize: 12, fontWeight: 700, padding: '10px 0', borderRadius: 12, border: 'none', cursor: 'pointer', letterSpacing: '0.2px' }}
+                            >
+                                {t('common.learn_more') || 'Xem Chi Tiết'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </>
     );
 });
