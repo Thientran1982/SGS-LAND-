@@ -270,7 +270,7 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
                                 </span>
                             ) : null}
                             {!item.ownerName && !item.ownerPhone && (
-                                <span className="text-[var(--text-tertiary)]">—</span>
+                                <span className="text-[var(--text-tertiary)]">--</span>
                             )}
                         </div>
                     </td>
