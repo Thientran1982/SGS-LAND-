@@ -124,19 +124,23 @@ const MapView: React.FC<MapViewProps> = memo(({ listings, onNavigate, formatCurr
                 }
 
                 // Modern pill-shaped price pin marker
+                // The outer wrapper uses padding-bottom to reserve space for the arrow tip,
+                // so that transform:translate(-50%,-100%) brings the very tip of the arrow
+                // exactly onto the geographic coordinate.
+                const ARROW_H = 8; // px the arrow tip protrudes below the pill
                 const pinHtml = `
-                    <div style="position:absolute;transform:translate(-50%,-100%);transform-origin:bottom center;cursor:pointer;white-space:nowrap;">
+                    <div style="position:relative;transform:translate(-50%,-100%);transform-origin:bottom center;cursor:pointer;white-space:nowrap;padding-bottom:${ARROW_H}px;">
                         <div style="display:inline-flex;align-items:center;background:#0f172a;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,0.35);border:2px solid #fff;white-space:nowrap;">
                             ${priceLabel}
                         </div>
-                        <div style="position:absolute;bottom:-6px;left:50%;width:12px;height:12px;transform:translateX(-50%) rotate(45deg);border-right:2px solid #fff;border-bottom:2px solid #fff;border-radius:0 0 3px 0;background:#0f172a;"></div>
+                        <div style="position:absolute;bottom:0;left:50%;width:12px;height:12px;transform:translateX(-50%) rotate(45deg);border-right:2px solid #fff;border-bottom:2px solid #fff;border-radius:0 0 3px 0;background:#0f172a;"></div>
                     </div>
                 `;
 
                 const icon = L.divIcon({
                     className: '',
                     html: pinHtml,
-                    iconSize: [1, 1],
+                    iconSize: [0, 0],
                     iconAnchor: [0, 0],
                 });
 
