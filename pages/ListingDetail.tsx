@@ -1232,7 +1232,7 @@ export const ListingDetail: React.FC = () => {
             db.createPublicLead({
                 name: 'Khách quan tâm',
                 phone: listing.contactPhone || '0000000000',
-                notes: `📞 XEM SĐT\n📍 Sản phẩm: [${listing.code}] ${listing.title}\n🔗 Link: ${window.location.href}`,
+                notes: `📞 GỌI ĐIỆN TRỰC TIẾP\n📍 Sản phẩm: [${listing.code}] ${listing.title}\n🔗 Link: ${window.location.href}`,
                 source: 'WEBSITE',
                 stage: 'NEW',
             }).catch(() => {});
@@ -1649,28 +1649,22 @@ export const ListingDetail: React.FC = () => {
                         <button onClick={() => setBookingOpen(true)} className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2 mb-3">
                             {ICONS.CALENDAR} {t('detail.book_viewing')}
                         </button>
-                        {showPhone ? (
-                            listing.contactPhone ? (
-                                <a
-                                    href={`tel:${listing.contactPhone}`}
-                                    className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
-                                >
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    {displayPhone}
-                                </a>
-                            ) : (
-                                <div className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-700">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    {displayPhone}
-                                </div>
-                            )
-                        ) : (
-                            <button
+                        {listing.contactPhone ? (
+                            <a
+                                href={`tel:${listing.contactPhone}`}
                                 onClick={handleContact}
-                                className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-primary)] hover:bg-[var(--glass-surface)]"
+                                className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 active:scale-95"
                             >
-                                {ICONS.PHONE} {t('detail.contact_now')}
-                            </button>
+                                {ICONS.PHONE}
+                                {showPhone
+                                    ? <><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>{displayPhone}</>
+                                    : t('detail.contact_now')
+                                }
+                            </a>
+                        ) : (
+                            <div className="w-full py-4 border rounded-xl font-bold transition-all flex items-center justify-center gap-2 bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] cursor-not-allowed opacity-60">
+                                {ICONS.PHONE} {t('common.contact_on_site')}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -1718,6 +1712,33 @@ export const ListingDetail: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Mobile Bottom CTA Bar (hidden on lg+) */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] px-4 py-3 flex gap-3">
+                <button
+                    onClick={() => setBookingOpen(true)}
+                    className="flex-1 py-3.5 bg-slate-900 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+                >
+                    {ICONS.CALENDAR} {t('detail.book_viewing')}
+                </button>
+                {listing.contactPhone ? (
+                    <a
+                        href={`tel:${listing.contactPhone}`}
+                        onClick={handleContact}
+                        className="flex-1 py-3.5 border rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 active:scale-95"
+                    >
+                        {ICONS.PHONE}
+                        {showPhone
+                            ? <><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>{displayPhone}</>
+                            : t('detail.contact_now')
+                        }
+                    </a>
+                ) : (
+                    <div className="flex-1 py-3.5 border rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] opacity-60 cursor-not-allowed">
+                        {ICONS.PHONE} {t('common.contact_on_site')}
+                    </div>
+                )}
+            </div>
 
             {/* Modals */}
             {lightboxOpen && (
