@@ -53,6 +53,39 @@ export function createProposalRoutes(authenticateToken: any, getBroadcast?: () =
     }
   });
 
+  // Public endpoint — customer signals interest. No auth required; token is the credential.
+  router.post('/token/:token/interest', async (req: Request, res: Response) => {
+    try {
+      const proposal = await proposalRepository.findByTokenGlobal(String(req.params.token));
+      if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+
+      // Only allow interest on approved (sent-to-customer) proposals that are not expired
+      const now = new Date();
+      const isExpired = proposal.validUntil && new Date(proposal.validUntil) < now;
+      if (isExpired) return res.status(400).json({ error: 'Proposal has expired' });
+      if (proposal.status === 'ACCEPTED') return res.status(200).json({ alreadyAccepted: true });
+
+      // Update to ACCEPTED using the proposal's own tenantId
+      await proposalRepository.updateStatus((proposal as any).tenantId, proposal.id, 'ACCEPTED');
+
+      // Notify the agent who created this proposal via Socket.io
+      const io = getBroadcast?.();
+      if (io && (proposal as any).createdById) {
+        io.to(`user:${(proposal as any).createdById}`).emit('proposal_interest', {
+          proposalId: proposal.id,
+          leadId: (proposal as any).leadId,
+          leadName: (proposal as any).leadName || 'Khách hàng',
+          listingTitle: (proposal as any).listingTitle || '',
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error recording proposal interest:', error);
+      res.status(500).json({ error: 'Failed to record interest' });
+    }
+  });
+
   router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;

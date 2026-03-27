@@ -216,11 +216,10 @@ export const PublicProposal: React.FC<PublicProposalProps> = ({ token }) => {
                                             if (!proposal || isExpired || accepted || isAccepting) return;
                                             setIsAccepting(true);
                                             try {
-                                                await db.updateProposal(proposal.id, { status: 'ACCEPTED' });
+                                                await fetch(`/api/proposals/token/${token}/interest`, { method: 'POST' });
                                                 setAccepted(true);
                                             } catch (e) {
                                                 console.error('Accept proposal failed:', e);
-                                                // Still mark accepted locally so UI feels responsive
                                                 setAccepted(true);
                                             } finally {
                                                 setIsAccepting(false);
