@@ -61,7 +61,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   if (response.status === 403) {
-    throw new Error('Forbidden: Access denied');
+    const errorData = await response.json().catch(() => ({ error: 'FORBIDDEN', message: 'Forbidden: Access denied' }));
+    const error = new Error(errorData.message || 'Forbidden: Access denied');
+    (error as any).status = 403;
+    (error as any).data = errorData;
+    throw error;
   }
 
   if (!response.ok) {

@@ -269,9 +269,9 @@ export const ApprovalInbox: React.FC = () => {
 
     const { t, formatDateTime, formatCurrency } = useTranslation();
 
-    const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+    const notify = useCallback((msg: string, type: 'success' | 'error' = 'success', duration?: number) => {
         setToast({ msg, type });
-        setTimeout(() => setToast(null), RISK_CONSTANTS.TOAST_DURATION);
+        setTimeout(() => setToast(null), duration ?? RISK_CONSTANTS.TOAST_DURATION);
     }, []);
 
     const loadData = useCallback(async () => {
@@ -355,12 +355,33 @@ export const ApprovalInbox: React.FC = () => {
     };
 
     const processApproval = async (ids: string[]) => {
-        try {
-            await Promise.all(ids.map(id => db.approveProposal(id)));
-            notify(t('approvals.approve_success') + ` (${ids.length})`, 'success');
+        const results = await Promise.allSettled(ids.map(id => db.approveProposal(id)));
+        const failures = results.filter(r => r.status === 'rejected') as PromiseRejectedResult[];
+        const successes = results.filter(r => r.status === 'fulfilled').length;
+
+        if (successes > 0) {
+            notify(t('approvals.approve_success') + ` (${successes})`, 'success');
             setSelectedIds(new Set());
             loadData();
-        } catch (e) { notify(t('common.error'), 'error'); }
+        }
+
+        for (const failure of failures) {
+            const err = failure.reason as any;
+            const errCode = err?.data?.error;
+            if (errCode === 'AML_CLEARANCE_REQUIRED') {
+                const price = err?.data?.finalPrice;
+                const formattedPrice = price
+                    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price)
+                    : '';
+                notify(
+                    `🔒 Cần xác minh AML trước khi phê duyệt${formattedPrice ? ` — Giá trị: ${formattedPrice}` : ''}. Vui lòng hoàn tất quy trình AML cho giao dịch này.`,
+                    'error',
+                    8000
+                );
+            } else {
+                notify(err?.message || t('common.error'), 'error');
+            }
+        }
     };
 
     const processRejection = async (id: string, reason: string) => {
