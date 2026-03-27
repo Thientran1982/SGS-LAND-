@@ -154,7 +154,7 @@ const NotificationPanel = memo(({
                                         <button
                                             onClick={() => {
                                                 onMarkRead(notif.id);
-                                                onNavigate(`${ROUTES.LEADS}?id=${notif.metadata?.leadId}`);
+                                                onNavigate(`${ROUTES.LEADS}?leadId=${notif.metadata?.leadId}`);
                                                 onClose();
                                             }}
                                             className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"

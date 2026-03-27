@@ -630,6 +630,23 @@ export const Leads: React.FC = () => {
     const colSettingsBtnRef = useRef<HTMLButtonElement>(null);
     const colSettingsPanelRef = useRef<HTMLDivElement>(null);
 
+    // Deep-link: open lead from notification (e.g. /#/leads?leadId=xxx)
+    const openLeadFromHash = useCallback((hash: string) => {
+        const match = hash.match(/[?&]leadId=([a-f0-9-]+)/i);
+        const leadId = match?.[1];
+        if (!leadId) return;
+        db.getLeadById(leadId).then(lead => {
+            if (lead) { setEditingLead(lead); setIsDetailOpen(true); }
+        }).catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        openLeadFromHash(window.location.hash);
+        const onHashChange = () => openLeadFromHash(window.location.hash);
+        window.addEventListener('hashchange', onHashChange);
+        return () => window.removeEventListener('hashchange', onHashChange);
+    }, [openLeadFromHash]);
+
     // --- VIEW SETTINGS STATE (PERSISTED) ---
     const [density, setDensity] = useState<RowDensity>(() => {
         try { return (localStorage.getItem('sgs_leads_density') as RowDensity) || 'compact'; } catch { return 'compact'; }
