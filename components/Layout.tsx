@@ -343,36 +343,40 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
     const { theme, toggleTheme } = useTheme();
 
     useEffect(() => {
-        const loadUser = async () => {
-            const u = await db.getCurrentUser();
-            setUser(u);
-            if (u) {
-                db.getUserMenu(u.role).then(setMenuGroups);
-            }
-        };
-        loadUser();
-
-        window.addEventListener('user-updated', loadUser);
-        return () => window.removeEventListener('user-updated', loadUser);
-    }, []);
-
-    // Load notifications when user is confirmed authenticated, then poll every 60s for badge accuracy
-    useEffect(() => {
-        if (!user) return;
-        let cancelled = false;
+        let pollInterval: ReturnType<typeof setInterval> | null = null;
 
         const fetchNotifications = () => {
             notificationApi.getAll().then(({ notifications: n, unreadCount: c }) => {
-                if (cancelled) return;
                 setNotifications(n);
                 setUnreadCount(c);
             }).catch(() => {});
         };
 
-        fetchNotifications();
-        const interval = setInterval(fetchNotifications, 60_000);
-        return () => { cancelled = true; clearInterval(interval); };
-    }, [user?.id]);
+        const loadUser = async () => {
+            const u = await db.getCurrentUser();
+            setUser(u);
+            if (u) {
+                db.getUserMenu(u.role).then(setMenuGroups);
+                // Fetch notifications immediately when user confirmed
+                fetchNotifications();
+                // Then poll every 60s for badge accuracy even if socket drops
+                if (pollInterval) clearInterval(pollInterval);
+                pollInterval = setInterval(fetchNotifications, 60_000);
+            } else {
+                // Logged out — clear notifications
+                setNotifications([]);
+                setUnreadCount(0);
+                if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+            }
+        };
+
+        loadUser();
+        window.addEventListener('user-updated', loadUser);
+        return () => {
+            window.removeEventListener('user-updated', loadUser);
+            if (pollInterval) clearInterval(pollInterval);
+        };
+    }, []);
 
     // Real-time: add new notification to top when proposal_interest fires
     useEffect(() => {

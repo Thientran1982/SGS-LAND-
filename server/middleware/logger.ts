@@ -71,8 +71,9 @@ export function requestLogger(req: any, res: any, next: any) {
   res.end = function (...args: any[]) {
     const duration = Date.now() - start;
     const userId = req.user?.id;
-    if (!req.path.startsWith('/@') && !req.path.startsWith('/node_modules') && !req.path.includes('__vite')) {
-      logger.request(req.method, req.path, res.statusCode, duration, userId);
+    const logPath = req.originalUrl || req.path;
+    if (!logPath.startsWith('/@') && !logPath.startsWith('/node_modules') && !logPath.includes('__vite')) {
+      logger.request(req.method, logPath, res.statusCode, duration, userId);
     }
     originalEnd.apply(res, args);
   };
