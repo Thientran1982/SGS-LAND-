@@ -637,22 +637,6 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         />
                                     </div>
                                     <div className="col-span-2 flex flex-col gap-1 -mt-1">
-                                        <button
-                                            type="button"
-                                            onClick={autoGeocode}
-                                            disabled={geocoding || !formData.location?.trim()}
-                                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-fit"
-                                        >
-                                            {geocoding ? (
-                                                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeDashoffset="12"/></svg>
-                                            ) : (
-                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                            )}
-                                            {geocoding ? (t('inventory.geocoding') || 'Đang tìm toạ độ...') : (t('inventory.auto_geocode') || 'Lấy toạ độ từ địa chỉ')}
-                                        </button>
-                                        {geocodeMsg && (
-                                            <p className={`text-xs2 ${geocodeMsg.startsWith('✓') ? 'text-emerald-600 font-semibold' : 'text-amber-600'}`}>{geocodeMsg}</p>
-                                        )}
                                         <p className="text-xs2 text-[var(--text-secondary)]">{t('inventory.coordinates_hint')}</p>
                                     </div>
                                 </div>
