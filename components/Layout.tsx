@@ -356,13 +356,23 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         return () => window.removeEventListener('user-updated', loadUser);
     }, []);
 
-    // Load notifications on mount
+    // Load notifications when user is confirmed authenticated, then poll every 60s for badge accuracy
     useEffect(() => {
-        notificationApi.getAll().then(({ notifications: n, unreadCount: c }) => {
-            setNotifications(n);
-            setUnreadCount(c);
-        }).catch(() => {});
-    }, []);
+        if (!user) return;
+        let cancelled = false;
+
+        const fetchNotifications = () => {
+            notificationApi.getAll().then(({ notifications: n, unreadCount: c }) => {
+                if (cancelled) return;
+                setNotifications(n);
+                setUnreadCount(c);
+            }).catch(() => {});
+        };
+
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 60_000);
+        return () => { cancelled = true; clearInterval(interval); };
+    }, [user?.id]);
 
     // Real-time: add new notification to top when proposal_interest fires
     useEffect(() => {
