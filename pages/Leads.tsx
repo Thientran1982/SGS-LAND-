@@ -636,9 +636,18 @@ export const Leads: React.FC = () => {
         const leadId = match?.[1];
         if (!leadId) return;
         db.getLeadById(leadId).then(lead => {
-            if (lead) { setEditingLead(lead); setIsDetailOpen(true); }
-        }).catch(() => {});
-    }, []);
+            if (lead) {
+                setEditingLead(lead);
+                setIsDetailOpen(true);
+            } else {
+                setToast({ msg: t('leads.notif_lead_no_access'), type: 'error' });
+                setTimeout(() => setToast(null), 4000);
+            }
+        }).catch(() => {
+            setToast({ msg: t('leads.notif_lead_no_access'), type: 'error' });
+            setTimeout(() => setToast(null), 4000);
+        });
+    }, [t]);
 
     useEffect(() => {
         openLeadFromHash(window.location.hash);

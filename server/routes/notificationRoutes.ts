@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { notificationRepository } from '../repositories/notificationRepository';
+import { validateUUIDParam } from '../middleware/validation';
 
 export function createNotificationRoutes(authenticateToken: any) {
   const router = Router();
@@ -27,7 +28,7 @@ export function createNotificationRoutes(authenticateToken: any) {
     }
   });
 
-  router.patch('/:id/read', authenticateToken, async (req: Request, res: Response) => {
+  router.patch('/:id/read', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const notification = await notificationRepository.markRead(user.tenantId, user.id, req.params.id);
