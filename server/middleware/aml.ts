@@ -150,6 +150,13 @@ export function requireAmlClearance(req: Request, res: Response, next: NextFunct
     return;
   }
 
+  // ADMIN and TEAM_LEAD are trusted approvers — they bypass AML clearance check.
+  const userRole = (req as any).user?.role;
+  if (userRole === 'ADMIN' || userRole === 'TEAM_LEAD') {
+    next();
+    return;
+  }
+
   // The route handler should attach the proposal to req after fetching it.
   // We check req.proposal if set; otherwise pass (route will re-validate).
   const proposal = (req as any).proposalForAml;
