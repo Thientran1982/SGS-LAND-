@@ -2,6 +2,7 @@ import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { proposalRepository } from '../repositories/proposalRepository';
 import { auditRepository } from '../repositories/auditRepository';
+import { notificationRepository } from '../repositories/notificationRepository';
 import { amlProposalCheck, requireAmlClearance } from '../middleware/aml';
 
 export function createProposalRoutes(authenticateToken: any, getBroadcast?: () => any) {
@@ -68,14 +69,34 @@ export function createProposalRoutes(authenticateToken: any, getBroadcast?: () =
       // Update to ACCEPTED using the proposal's own tenantId
       await proposalRepository.updateStatus((proposal as any).tenantId, proposal.id, 'ACCEPTED');
 
-      // Notify the agent who created this proposal via Socket.io
+      const leadName = (proposal as any).leadName || 'Khách hàng';
+      const listingTitle = (proposal as any).listingTitle || '';
+
+      // Persist notification to DB so agent can review it later
+      if ((proposal as any).createdById && (proposal as any).tenantId) {
+        await notificationRepository.create({
+          tenantId: (proposal as any).tenantId,
+          userId: (proposal as any).createdById,
+          type: 'PROPOSAL_INTEREST',
+          title: leadName,
+          body: listingTitle,
+          metadata: {
+            proposalId: proposal.id,
+            leadId: (proposal as any).leadId,
+            leadName,
+            listingTitle,
+          },
+        });
+      }
+
+      // Notify the agent who created this proposal via Socket.io (real-time)
       const io = getBroadcast?.();
       if (io && (proposal as any).createdById) {
         io.to(`user:${(proposal as any).createdById}`).emit('proposal_interest', {
           proposalId: proposal.id,
           leadId: (proposal as any).leadId,
-          leadName: (proposal as any).leadName || 'Khách hàng',
-          listingTitle: (proposal as any).listingTitle || '',
+          leadName,
+          listingTitle,
         });
       }
 

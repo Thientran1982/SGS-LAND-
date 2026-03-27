@@ -44,6 +44,7 @@ import m021 from './021_inbox_performance';
 import m022 from './022_sequences_fix_columns';
 import m023 from './023_contract_assigned_to';
 import m024 from './024_leads_won_at';
+import m025 from './025_notifications';
 
 dotenv.config();
 
@@ -83,6 +84,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '022_sequences_fix_columns.ts': m022,
   '023_contract_assigned_to.ts': m023,
   '024_leads_won_at.ts': m024,
+  '025_notifications.ts': m025,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

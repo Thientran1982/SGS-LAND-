@@ -10,6 +10,8 @@ import { GlobalSearch } from './GlobalSearch';
 import { Logo } from './Logo';
 import { OnboardingWizard } from './OnboardingWizard';
 import { prefetchRoute } from '../utils/reactUtils';
+import { notificationApi, AppNotification } from '../services/api/notificationApi';
+import { socket } from '../services/websocket';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & ASSETS
@@ -335,6 +337,8 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
     const [user, setUser] = useState<User | null>(null);
     const [menuGroups, setMenuGroups] = useState<NavGroup[]>([]);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [notifications, setNotifications] = useState<AppNotification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
     const { t, language, setLanguage } = useTranslation();
     const { theme, toggleTheme } = useTheme();
 
@@ -343,7 +347,6 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
             const u = await db.getCurrentUser();
             setUser(u);
             if (u) {
-                // Fetch menu based on user role
                 db.getUserMenu(u.role).then(setMenuGroups);
             }
         };
@@ -351,6 +354,54 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
 
         window.addEventListener('user-updated', loadUser);
         return () => window.removeEventListener('user-updated', loadUser);
+    }, []);
+
+    // Load notifications on mount
+    useEffect(() => {
+        notificationApi.getAll().then(({ notifications: n, unreadCount: c }) => {
+            setNotifications(n);
+            setUnreadCount(c);
+        }).catch(() => {});
+    }, []);
+
+    // Real-time: add new notification to top when proposal_interest fires
+    useEffect(() => {
+        const handleInterest = (data: { proposalId: string; leadId: string; leadName: string; listingTitle: string }) => {
+            const newNotif: AppNotification = {
+                id: `temp-${Date.now()}`,
+                type: 'PROPOSAL_INTEREST',
+                title: data.leadName,
+                body: data.listingTitle,
+                metadata: { leadId: data.leadId, proposalId: data.proposalId },
+                readAt: null,
+                createdAt: new Date().toISOString(),
+            };
+            setNotifications(prev => [newNotif, ...prev].slice(0, 40));
+            setUnreadCount(prev => prev + 1);
+        };
+        socket.on('proposal_interest', handleInterest);
+        return () => { socket.off('proposal_interest', handleInterest); };
+    }, []);
+
+    const handleMarkRead = useCallback(async (id: string) => {
+        if (id.startsWith('temp-')) {
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, readAt: new Date().toISOString() } : n));
+            setUnreadCount(prev => Math.max(0, prev - 1));
+            return;
+        }
+        try {
+            await notificationApi.markRead(id);
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, readAt: new Date().toISOString() } : n));
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        } catch {}
+    }, []);
+
+    const handleMarkAllRead = useCallback(async () => {
+        try {
+            await notificationApi.markAllRead();
+            setNotifications(prev => prev.map(n => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
+            setUnreadCount(0);
+        } catch {}
     }, []);
 
     const handleNavigate = useCallback((path: string) => {
@@ -446,6 +497,10 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                             onMenuClick={() => setMobileMenuOpen(true)}
                             onNavigate={onNavigate}
                             isProfileActive={activePage === ROUTES.PROFILE}
+                            unreadCount={unreadCount}
+                            notifications={notifications}
+                            onMarkRead={handleMarkRead}
+                            onMarkAllRead={handleMarkAllRead}
                         />
                     )}
                 </div>
