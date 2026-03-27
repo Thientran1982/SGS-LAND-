@@ -169,8 +169,7 @@ export class ProposalRepository extends BaseRepository {
   // Do NOT expose tenant-controlled data beyond what the token authorises.
   async findByTokenGlobal(token: string): Promise<any | null> {
     const result = await pool.query(
-      `SELECT p.id, p.token, p.status, p.base_price, p.discount_amount, p.final_price,
-              p.notes, p.created_at, p.updated_at,
+      `SELECT p.*,
               l.name as lead_name, li.title as listing_title, li.location as listing_location
        FROM proposals p
        LEFT JOIN leads l ON p.lead_id = l.id
