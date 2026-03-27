@@ -1392,7 +1392,9 @@ export const DICTIONARY = {
 
         "property.PROJECT": "Dự án",
         "property.APARTMENT": "Căn hộ",
+        "property.PENTHOUSE": "Penthouse",
         "property.TOWNHOUSE": "Nhà phố",
+        "property.HOUSE": "Nhà riêng",
         "property.VILLA": "Biệt thự",
         "property.LAND": "Đất nền",
         "property.FACTORY": "Nhà xưởng",
@@ -3457,7 +3459,9 @@ export const DICTIONARY = {
 
         "property.PROJECT": "Project",
         "property.APARTMENT": "Apartment",
+        "property.PENTHOUSE": "Penthouse",
         "property.TOWNHOUSE": "Townhouse",
+        "property.HOUSE": "House",
         "property.VILLA": "Villa",
         "property.LAND": "Land",
         "property.FACTORY": "Factory",
