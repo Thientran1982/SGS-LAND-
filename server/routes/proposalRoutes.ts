@@ -4,7 +4,7 @@ import { proposalRepository } from '../repositories/proposalRepository';
 import { auditRepository } from '../repositories/auditRepository';
 import { amlProposalCheck, requireAmlClearance } from '../middleware/aml';
 
-export function createProposalRoutes(authenticateToken: any) {
+export function createProposalRoutes(authenticateToken: any, getBroadcast?: () => any) {
   const router = Router();
 
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
@@ -170,6 +170,17 @@ export function createProposalRoutes(authenticateToken: any) {
         details: status === 'REJECTED' && reason ? `Changed proposal status to: ${status}. Reason: ${reason}` : `Changed proposal status to: ${status}`,
         ipAddress: req.ip,
       });
+
+      if (status === 'APPROVED' && (proposal as any).createdById) {
+        const io = getBroadcast?.();
+        if (io) {
+          io.to(`user:${(proposal as any).createdById}`).emit('proposal_approved', {
+            proposalId: (proposal as any).id,
+            token: (proposal as any).token,
+            leadId: (proposal as any).leadId,
+          });
+        }
+      }
 
       res.json(proposal);
     } catch (error) {

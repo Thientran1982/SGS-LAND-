@@ -963,7 +963,7 @@ async function startServer() {
 
   app.use('/api/leads', apiRateLimit, createLeadRoutes(authenticateToken));
   app.use('/api/listings', apiRateLimit, createListingRoutes(authenticateToken));
-  app.use('/api/proposals', apiRateLimit, createProposalRoutes(authenticateToken));
+  app.use('/api/proposals', apiRateLimit, createProposalRoutes(authenticateToken, () => broadcastIo));
   app.use('/api/contracts', apiRateLimit, createContractRoutes(authenticateToken));
   app.use('/api/inbox', apiRateLimit, createInteractionRoutes(authenticateToken));
   app.use('/api/users', apiRateLimit, createUserRoutes(authenticateToken));
@@ -1360,6 +1360,9 @@ async function startServer() {
 
     if (socket.data.authUser?.tenantId) {
       socket.join(`tenant:${socket.data.authUser.tenantId}`);
+    }
+    if (socket.data.authUser?.id) {
+      socket.join(`user:${socket.data.authUser.id}`);
     }
 
     socket.on("join_room", (room) => {

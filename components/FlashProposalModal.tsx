@@ -60,7 +60,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lead, listings, onClose, onSuccess }) => {
     // UI Flow State
-    const [step, setStep] = useState<'SELECT' | 'CONFIRM' | 'DONE' | 'PENDING'>('SELECT');
+    const [step, setStep] = useState<'SELECT' | 'CONFIRM' | 'DONE' | 'PENDING' | 'APPROVED'>('SELECT');
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     
@@ -105,6 +105,20 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
     }, [processing, step, onClose]);
     
     const { t, formatCurrency, formatDate } = useTranslation();
+
+    // Check for existing APPROVED proposal for this lead on mount
+    useEffect(() => {
+        let cancelled = false;
+        db.getProposals(1, 5, { leadId: lead.id, statuses: 'APPROVED' }).then(result => {
+            if (cancelled) return;
+            const approvedProposal = result?.data?.[0];
+            if (approvedProposal?.token) {
+                setGeneratedLink(`${window.location.origin}/#/p/${approvedProposal.token}`);
+                setStep('APPROVED');
+            }
+        }).catch(() => {});
+        return () => { cancelled = true; };
+    }, [lead.id]);
 
     // Reset config on listing selection
     useEffect(() => {
@@ -579,6 +593,34 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                             <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('approvals.pending_title')}</h3>
                             <p className="text-[var(--text-tertiary)] mt-2 mb-6 text-sm max-w-xs">{t('approvals.subtitle')}</p>
                             <button onClick={() => { onClose(); onSuccess(); }} className="px-6 py-2.5 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-secondary)] font-bold rounded-xl text-sm transition-colors">{t('common.close')}</button>
+                        </div>
+                    )}
+
+                    {step === 'APPROVED' && (
+                        <div className="flex flex-col items-center justify-center p-8 md:p-12 text-center animate-enter h-full overflow-y-auto no-scrollbar">
+                            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-sm shrink-0">
+                                {ICONS.SUCCESS}
+                            </div>
+                            <h3 className="text-xl font-bold text-[var(--text-primary)]">{t('proposal.approved_step_title')}</h3>
+                            <p className="text-[var(--text-tertiary)] mt-2 mb-6 text-sm max-w-xs">{t('proposal.approved_step_subtitle')}</p>
+                            <div className="w-full bg-[var(--glass-surface)] p-4 rounded-xl border border-emerald-200 relative">
+                                <div className="text-xs2 uppercase font-bold text-[var(--text-secondary)] mb-1 text-left">{t('proposal.public_link_label')}</div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        readOnly
+                                        value={generatedLink}
+                                        className="font-mono text-xs text-indigo-600 bg-transparent outline-none w-full truncate"
+                                        onClick={(e) => e.currentTarget.select()}
+                                    />
+                                </div>
+                            </div>
+                            <button onClick={handleCopy} className="mt-6 w-full py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                                {ICONS.COPY}
+                                {t('proposal.approved_copy_link')}
+                            </button>
+                            <button onClick={() => setStep('SELECT')} className="mt-3 w-full py-2.5 bg-[var(--glass-surface-hover)] hover:bg-slate-200 text-[var(--text-secondary)] font-bold rounded-xl text-sm transition-colors">
+                                {t('proposal.btn_create')}
+                            </button>
                         </div>
                     )}
 

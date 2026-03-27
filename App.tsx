@@ -12,6 +12,8 @@ import { lazyLoad, registerPrefetch, prefetchRoutes } from './utils/reactUtils';
 import { updatePageSEO } from './utils/seo';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePageTracker } from './services/pageTracker';
+import { socket } from './services/websocket';
+import { copyToClipboard } from './utils/clipboard';
 
 // -----------------------------------------------------------------------------
 // 1. LAZY LOADED PAGES
@@ -361,6 +363,8 @@ const AppShell: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [accessDenied, setAccessDenied] = useState(false);
     const [sessionKey, setSessionKey] = useState(0);
+    const [approvedNotification, setApprovedNotification] = useState<{ link: string; proposalId: string } | null>(null);
+    const approvedNotifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useThemeConfig();
     usePageTracker(authState === 'AUTH');
@@ -432,6 +436,19 @@ const AppShell: React.FC = () => {
             window.removeEventListener('auth:logout', onLogout);
         };
     }, []);
+
+    // Listen for real-time proposal approval notifications
+    useEffect(() => {
+        if (authState !== 'AUTH') return;
+        const handleApproved = (data: { proposalId: string; token: string; leadId: string }) => {
+            const link = `${window.location.origin}/#/p/${data.token}`;
+            setApprovedNotification({ link, proposalId: data.proposalId });
+            if (approvedNotifTimerRef.current) clearTimeout(approvedNotifTimerRef.current);
+            approvedNotifTimerRef.current = setTimeout(() => setApprovedNotification(null), 15000);
+        };
+        socket.on('proposal_approved', handleApproved);
+        return () => { socket.off('proposal_approved', handleApproved); };
+    }, [authState]);
 
     // Route Guard — reacts to route changes using cached authState
     useEffect(() => {
@@ -698,6 +715,43 @@ const AppShell: React.FC = () => {
         const hasKnownPage = !!PAGE_REGISTRY[route.base];
         return (
             <Layout activePage={route.base} onNavigate={navigate} onLogout={handleLogout}>
+                {/* Proposal approved real-time notification banner */}
+                <AnimatePresence>
+                    {approvedNotification && (
+                        <motion.div
+                            key="proposal-approved-banner"
+                            initial={{ opacity: 0, y: -60 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -60 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                            className="absolute top-4 left-1/2 -translate-x-1/2 z-[300] flex items-center gap-3 px-4 py-3 bg-emerald-600 text-white text-sm font-medium rounded-2xl shadow-xl max-w-sm w-full"
+                            role="alert"
+                        >
+                            <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center shrink-0">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="font-bold text-xs uppercase tracking-wide opacity-80">{t('proposal.approved_banner_title')}</div>
+                                <div className="text-xs opacity-90 truncate mt-0.5">{t('proposal.approved_notification')}</div>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                    onClick={async () => {
+                                        await copyToClipboard(approvedNotification.link);
+                                        setApprovedNotification(null);
+                                    }}
+                                    className="px-3 py-1.5 bg-white text-emerald-700 font-bold rounded-lg text-xs hover:bg-emerald-50 transition-colors"
+                                >
+                                    {t('proposal.approved_copy_link')}
+                                </button>
+                                <button onClick={() => setApprovedNotification(null)} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* Access-denied toast for RBAC redirects */}
                 <AnimatePresence>
                     {accessDenied && (

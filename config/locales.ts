@@ -908,6 +908,11 @@ export const DICTIONARY = {
         "proposal.label_note": "Ghi chú cho khách hàng",
         "proposal.placeholder_note": "Nhập lời nhắn, điều khoản bổ sung...",
         "proposal.prepared_by": "Người lập báo giá",
+        "proposal.approved_step_title": "Báo Giá Đã Được Duyệt",
+        "proposal.approved_step_subtitle": "Sao chép link dưới đây để gửi cho khách hàng",
+        "proposal.approved_notification": "Báo giá của bạn đã được phê duyệt! Copy link để gửi cho khách.",
+        "proposal.approved_copy_link": "Sao chép link báo giá",
+        "proposal.approved_banner_title": "Báo Giá Được Phê Duyệt!",
 
         "approvals.title": "Phê Duyệt Giá",
         "approvals.subtitle": "Các yêu cầu giảm giá/chiết khấu cần duyệt.",
@@ -2953,6 +2958,11 @@ export const DICTIONARY = {
         "proposal.label_note": "Note to Customer",
         "proposal.placeholder_note": "Enter message, additional terms...",
         "proposal.prepared_by": "Prepared by",
+        "proposal.approved_step_title": "Proposal Approved",
+        "proposal.approved_step_subtitle": "Copy the link below to send to the customer",
+        "proposal.approved_notification": "Your proposal has been approved! Copy the link to send to the customer.",
+        "proposal.approved_copy_link": "Copy proposal link",
+        "proposal.approved_banner_title": "Proposal Approved!",
 
         "approvals.title": "Approvals",
         "approvals.subtitle": "Discount requests pending approval.",
