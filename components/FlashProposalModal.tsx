@@ -187,7 +187,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
                 metadata: {
                     depositRequired: depositAmount,
                     validityDays: validityDays,
-                    note: note || `Created via Flash Proposal`,
+                    note: note || t('proposal.default_note_flash'),
                     ...(proposedSchedule.length > 0 ? {
                         paymentSchedule: proposedSchedule.map(m => ({
                             id: m.id,
