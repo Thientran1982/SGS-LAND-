@@ -138,9 +138,12 @@ export function verifyWebhookSignature(platform: 'zalo' | 'facebook') {
   };
 }
 
+const UNSAFE_QUERY_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 export function preventParamPollution(req: Request, res: Response, next: NextFunction) {
   if (req.query) {
     for (const [key, value] of Object.entries(req.query)) {
+      if (UNSAFE_QUERY_KEYS.has(key)) continue;
       if (Array.isArray(value)) {
         (req.query as any)[key] = value[value.length - 1];
       }
