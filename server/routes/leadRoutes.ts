@@ -5,6 +5,17 @@ import { auditRepository } from '../repositories/auditRepository';
 import { routingRuleRepository } from '../repositories/routingRuleRepository';
 import { notificationRepository } from '../repositories/notificationRepository';
 
+const STAGE_LABEL_VN: Record<string, string> = {
+  NEW:         'Mới',
+  CONTACTED:   'Đã liên hệ',
+  QUALIFIED:   'Tiềm năng',
+  PROPOSAL:    'Báo giá',
+  NEGOTIATION: 'Thương lượng',
+  WON:         'Chốt deal',
+  LOST:        'Thất bại',
+  MANUAL:      'Thủ công',
+};
+
 export function createLeadRoutes(authenticateToken: any) {
   const router = Router();
 
@@ -268,7 +279,7 @@ export function createLeadRoutes(authenticateToken: any) {
           tenantId: user.tenantId,
           userId: lead.assignedTo,
           type: 'STAGE_CHANGE',
-          title: `Lead tiến đến ${req.body.stage}`,
+          title: `Lead tiến đến ${STAGE_LABEL_VN[req.body.stage] ?? req.body.stage}`,
           body: lead.name,
           metadata: { leadId: lead.id, leadName: lead.name, stage: req.body.stage },
         }).catch(() => {});
