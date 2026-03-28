@@ -302,7 +302,9 @@ const useRouter = () => {
         
         const path = hash.split('?')[0]; 
         const parts = path.split('/').filter(Boolean);
-        const base = parts[0] || ''; 
+        // Default to LANDING when hash is empty — prevents race condition where
+        // auth check resolves before the hashchange event fires, causing a brief 404.
+        const base = parts[0] || ROUTES.LANDING;
 
         return {
             base,
@@ -312,6 +314,15 @@ const useRouter = () => {
     }, []);
 
     const [route, setRoute] = useState(getHashData());
+
+    // Sync the URL bar to #/home on first load when there is no hash,
+    // so the address bar reflects what the router already treats as the current page.
+    useEffect(() => {
+        const currentHash = window.location.hash;
+        if (!currentHash || currentHash === '#' || currentHash === '#/') {
+            window.location.replace(`${window.location.pathname}#/${ROUTES.LANDING}`);
+        }
+    }, []);
 
     useEffect(() => {
         const handler = () => setRoute(getHashData());
