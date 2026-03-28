@@ -843,7 +843,7 @@ export const Leads: React.FC = () => {
     };
 
     const stageOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_stages') }, ...Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }))], [t]);
-    const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_sources') }, ...LEAD_SOURCES.map(s => ({ value: s, label: s }))], [t]);
+    const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_sources') }, ...LEAD_SOURCES.map(s => ({ value: s, label: t(`source.${s}`) !== `source.${s}` ? t(`source.${s}`) : s }))], [t]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 

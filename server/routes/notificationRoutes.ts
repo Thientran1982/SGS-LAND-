@@ -31,7 +31,7 @@ export function createNotificationRoutes(authenticateToken: any) {
   router.patch('/:id/read', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const notification = await notificationRepository.markRead(user.tenantId, user.id, req.params.id);
+      const notification = await notificationRepository.markRead(user.tenantId, user.id, String(req.params.id));
       if (!notification) return res.status(404).json({ error: 'Notification not found' });
       res.json(notification);
     } catch (error) {

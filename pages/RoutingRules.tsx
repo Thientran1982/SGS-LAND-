@@ -305,8 +305,16 @@ export const RoutingRules: React.FC = () => {
                                 </div>
                                 <div className="bg-indigo-50 p-3 rounded-xl">
                                     <div className="font-bold text-indigo-400 uppercase text-xs2 mb-1">{t('routing.action')}</div>
-                                    <div className="font-bold text-indigo-900">{t(`routing.stg_${rule.action.strategy}`)}</div>
-                                    <div className="text-indigo-700">➔ {rule.action.type === 'ASSIGN_USER' ? users.find(u => u.id === rule.action.targetId)?.name : teams.find(t => t.id === rule.action.targetId)?.name}</div>
+                                    {rule.action.strategy && (
+                                        <div className="font-bold text-indigo-900">{t(`routing.stg_${rule.action.strategy}`)}</div>
+                                    )}
+                                    <div className="text-indigo-700">➔ {(() => {
+                                        const a = rule.action as any;
+                                        if (a.type === 'ASSIGN_USER') {
+                                            return users.find(u => u.id === (a.targetId || a.userId))?.name || a.userName || a.targetId || '--';
+                                        }
+                                        return teams.find(t => t.id === (a.targetId || a.teamId))?.name || a.teamName || a.targetId || '--';
+                                    })()}</div>
                                 </div>
                             </div>
                         </div>
