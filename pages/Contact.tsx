@@ -69,12 +69,24 @@ export const Contact: React.FC = () => {
         }
 
         setSending(true);
-        setTimeout(() => {
+        try {
+            const res = await fetch('/api/public/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Gửi thất bại');
+            }
             notify(`${t('contact.success')} ${form.name}.`, 'success');
-            setSending(false);
             setForm({ name: '', email: '', subject: '', message: '' });
             setErrors({});
-        }, 1500);
+        } catch (err: any) {
+            notify(err.message || t('contact.err_check'), 'error');
+        } finally {
+            setSending(false);
+        }
     };
 
     const handleInputChange = (field: string, value: string) => {
@@ -147,7 +159,7 @@ export const Contact: React.FC = () => {
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-[var(--text-primary)]">{t('contact.email_label')}</h4>
-                                        <p className="text-[var(--text-tertiary)] text-sm mt-1">info@sgsgroup.vn</p>
+                                        <p className="text-[var(--text-tertiary)] text-sm mt-1">info@sgsland.vn</p>
                                     </div>
                                 </div>
                             </div>
