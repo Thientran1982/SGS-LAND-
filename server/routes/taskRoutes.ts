@@ -408,16 +408,19 @@ export function createTaskRoutes(authenticateToken: any) {
           throw Object.assign(new Error('VALIDATION'), { code: 'VALIDATION', message: 'Lý do hủy là bắt buộc khi đổi trạng thái sang cancelled' });
         }
 
-        const fields: any = { status };
-        if (status === 'done') {
-          if (actual_hours) fields.actual_hours = actual_hours;
-          if (completion_note) fields.completion_note = completion_note;
-        }
-        if (status === 'cancelled' && completion_note) fields.completion_note = completion_note;
+        const setClauses: string[] = ['status = $2'];
+        const vals: any[] = [req.params.id, status];
 
-        const setParts = Object.keys(fields).map((k, i) => `${k} = $${i + 2}`);
-        const vals = [req.params.id, ...Object.values(fields)];
-        const r = await client.query(`UPDATE wf_tasks SET ${setParts.join(', ')} WHERE id = $1 RETURNING *`, vals);
+        if (status === 'done') {
+          if (actual_hours) { setClauses.push(`actual_hours = $${vals.length + 1}`); vals.push(actual_hours); }
+          if (completion_note) { setClauses.push(`completion_note = $${vals.length + 1}`); vals.push(completion_note); }
+        }
+        if (status === 'cancelled' && completion_note) {
+          setClauses.push(`completion_note = $${vals.length + 1}`);
+          vals.push(completion_note);
+        }
+
+        const r = await client.query(`UPDATE wf_tasks SET ${setClauses.join(', ')} WHERE id = $1 RETURNING *`, vals);
 
         await client.query(`
           INSERT INTO task_activity_logs (tenant_id, task_id, user_id, action, old_value, new_value, detail)
