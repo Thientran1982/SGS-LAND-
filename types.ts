@@ -221,7 +221,8 @@ export enum LeadStage {
     PROPOSAL = 'PROPOSAL',
     NEGOTIATION = 'NEGOTIATION',
     WON = 'WON',
-    LOST = 'LOST'
+    LOST = 'LOST',
+    MANUAL = 'MANUAL'
 }
 
 export interface LeadScore {

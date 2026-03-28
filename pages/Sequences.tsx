@@ -511,15 +511,24 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
         className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden"
     >
         <div className="flex justify-between items-start mb-4">
-            <div>
-                <h3 className="font-bold text-[var(--text-primary)] group-hover:text-indigo-600 transition-colors">{sequence.name}</h3>
+            <div className="flex-1 min-w-0 pr-2">
+                <h3 className="font-bold text-[var(--text-primary)] group-hover:text-indigo-600 transition-colors truncate">{sequence.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
-                    <span className={`w-2 h-2 rounded-full ${sequence.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${sequence.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                     <span className="text-xs text-[var(--text-tertiary)]">{sequence.isActive ? t('seq.status_active') : t('seq.status_draft')}</span>
                 </div>
             </div>
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                {ICONS.EDIT}
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                <button
+                    onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                    className="p-2 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                    title={t('common.delete')}
+                >
+                    {ICONS.TRASH}
+                </button>
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl" title={t('common.edit')}>
+                    {ICONS.EDIT}
+                </div>
             </div>
         </div>
 
@@ -542,13 +551,6 @@ const SequenceCard = memo(({ sequence, onClick, onDelete, t }: { sequence: Seque
             <span>{sequence.steps.length} {t('seq.steps_unit')}</span>
             <span className="font-mono text-xs2 px-2 py-0.5 bg-[var(--glass-surface-hover)] rounded">{t(`stage.${sequence.triggerEvent}`)}</span>
         </div>
-
-        <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="absolute top-4 right-12 p-2 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-        >
-            {ICONS.TRASH}
-        </button>
     </div>
 ));
 

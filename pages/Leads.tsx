@@ -34,6 +34,7 @@ const STAGE_CONFIG: Record<LeadStage, { color: string, bg: string, border: strin
     [LeadStage.NEGOTIATION]: { color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200' },
     [LeadStage.WON]: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
     [LeadStage.LOST]: { color: 'text-[var(--text-tertiary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-[var(--glass-border)]' },
+    [LeadStage.MANUAL]: { color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200' },
 };
 
 // Added pointer-events-none to icons to prevent them from becoming the event target

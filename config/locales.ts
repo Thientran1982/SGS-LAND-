@@ -1426,6 +1426,7 @@ export const DICTIONARY = {
         "stage.NEGOTIATION": "Thương lượng",
         "stage.WON": "Chốt deal",
         "stage.LOST": "Thất bại",
+        "stage.MANUAL": "Thủ công",
 
         "contract_status.DRAFT": "Bản nháp",
         "contract_status.PENDING_SIGNATURE": "Chờ ký",
@@ -3499,6 +3500,7 @@ export const DICTIONARY = {
         "stage.NEGOTIATION": "Negotiation",
         "stage.WON": "Won",
         "stage.LOST": "Lost",
+        "stage.MANUAL": "Manual",
 
         "contract_status.DRAFT": "Draft",
         "contract_status.PENDING_SIGNATURE": "Pending Signature",
