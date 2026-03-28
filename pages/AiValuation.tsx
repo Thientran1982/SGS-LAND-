@@ -294,7 +294,7 @@ export const AiValuation: React.FC = () => {
                             <button 
                                 onClick={() => setStep('DETAILS')}
                                 disabled={!address}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold px-8 h-14 rounded-full transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
+                                className="bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold px-5 md:px-8 h-14 rounded-full transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap"
                             >
                                 Bắt Đầu
                             </button>
