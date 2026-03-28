@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
 import { DEFAULT_TENANT_ID } from '../constants';
+import { isBrevoConfigured, brevoSendEmail } from './brevoService';
 
 function escapeHtml(str: string): string {
   return str
@@ -70,10 +71,26 @@ function buildFromAddress(smtp: SmtpConfig): string {
 }
 
 async function sendEmail(tenantId: string, options: EmailOptions): Promise<EmailResult> {
+  // ── Priority 1: Brevo API (when BREVO_API_KEY is set) ──────────────────────
+  if (isBrevoConfigured()) {
+    const result = await brevoSendEmail({
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+    });
+    if (result.success) {
+      return { success: true, status: 'sent', messageId: result.messageId };
+    }
+    // Log but fall through to SMTP fallback
+    console.warn(`[EmailService] Brevo failed (${result.error}), attempting SMTP fallback.`);
+  }
+
+  // ── Priority 2: SMTP via nodemailer ────────────────────────────────────────
   const smtp = await getSmtpConfig(tenantId);
 
   if (!smtp.enabled || !smtp.host || !smtp.user) {
-    console.log(`[EmailService] SMTP not configured for tenant ${tenantId}. Email queued but not sent.`);
+    console.log(`[EmailService] No email provider configured for tenant ${tenantId}. Email queued (not sent).`);
     console.log(`  To: ${options.to}`);
     console.log(`  Subject: ${options.subject}`);
     return { success: true, status: 'queued_no_smtp', messageId: `console-${Date.now()}` };
@@ -91,10 +108,10 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
       html: options.html,
     });
 
-    console.log(`[EmailService] Email sent successfully: ${info.messageId}`);
+    console.log(`[EmailService] Email sent via SMTP: ${info.messageId}`);
     return { success: true, status: 'sent', messageId: info.messageId };
   } catch (error: any) {
-    console.error(`[EmailService] Failed to send email:`, error.message);
+    console.error(`[EmailService] SMTP send failed:`, error.message);
     return { success: false, status: 'failed', error: error.message };
   }
 }

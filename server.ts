@@ -131,9 +131,12 @@ async function startServer() {
       logger.warn('GEMINI_API_KEY not set — all AI features (chat, valuation, lead scoring) will be unavailable.');
     }
     const hasEmailAuth = !!(process.env.EMAIL_MAILGUN_SIGNING_KEY || process.env.EMAIL_SENDGRID_WEBHOOK_KEY ||
-      process.env.EMAIL_POSTMARK_WEBHOOK_TOKEN || process.env.EMAIL_WEBHOOK_TOKEN);
+      process.env.EMAIL_POSTMARK_WEBHOOK_TOKEN || process.env.EMAIL_WEBHOOK_TOKEN || process.env.BREVO_WEBHOOK_SECRET);
     if (!hasEmailAuth) {
-      logger.warn('No email webhook auth configured — /api/webhooks/email will reject all requests in production. Set EMAIL_MAILGUN_SIGNING_KEY, EMAIL_SENDGRID_WEBHOOK_KEY, EMAIL_POSTMARK_WEBHOOK_TOKEN, or EMAIL_WEBHOOK_TOKEN.');
+      logger.warn('No email webhook auth configured — /api/webhooks/email will reject all requests in production. Set EMAIL_MAILGUN_SIGNING_KEY, EMAIL_SENDGRID_WEBHOOK_KEY, EMAIL_POSTMARK_WEBHOOK_TOKEN, EMAIL_WEBHOOK_TOKEN, or BREVO_WEBHOOK_SECRET.');
+    }
+    if (!process.env.BREVO_API_KEY) {
+      logger.warn('BREVO_API_KEY not set — transactional emails will use SMTP fallback. Set BREVO_API_KEY for reliable email delivery.');
     }
   }
 
@@ -1339,6 +1342,97 @@ async function startServer() {
     } catch (error) {
       console.error('[Email Webhook] Error:', error);
       res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Brevo Webhook — Inbound emails + delivery events
+  // Configure in Brevo Dashboard → Settings → Inbound Parsing / Transactional → Webhooks
+  // Set URL to: https://yourdomain/api/webhooks/brevo
+  // Optional: Set BREVO_WEBHOOK_SECRET to verify payload signatures.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  app.post("/api/webhooks/brevo", webhookRateLimit, async (req, res) => {
+    try {
+      const { parseBrevoInbound, parseBrevoEvents, verifyBrevoWebhookSignature } = await import('./server/services/brevoService');
+      const rawBody: Buffer = (req as any).rawBody || Buffer.from(JSON.stringify(req.body));
+      const brevoSecret = process.env.BREVO_WEBHOOK_SECRET;
+      const brevoIsProduction = process.env.NODE_ENV === 'production';
+
+      // Verify signature if secret is configured
+      if (brevoSecret) {
+        const sig = req.headers['x-brevo-signature'] as string | undefined;
+        const valid = verifyBrevoWebhookSignature(rawBody, sig, brevoSecret);
+        if (!valid) {
+          logger.warn('[Brevo Webhook] Invalid signature');
+          return res.status(403).json({ error: 'Invalid webhook signature' });
+        }
+      } else if (brevoIsProduction) {
+        logger.warn('[Brevo Webhook] BREVO_WEBHOOK_SECRET not set — accepting request (production). Set BREVO_WEBHOOK_SECRET for security.');
+      }
+
+      const body = req.body;
+      const tenantId = DEFAULT_TENANT_ID;
+
+      // ── Determine payload type: inbound email or delivery event ─────────────
+      // Brevo inbound: contains "From", "To", "Subject", "RawTextBody" or "HtmlBody"
+      // Brevo events: contains "event" field (delivered, opened, clicked, bounced, etc.)
+      const isInbound = !!(
+        body.From || body.from || body.sender ||
+        body.RawTextBody || body.HtmlBody
+      );
+
+      if (isInbound) {
+        const parsed = parseBrevoInbound(body);
+        if (!parsed || !parsed.from) {
+          logger.warn('[Brevo Webhook] Inbound: missing from address');
+          return res.status(400).json({ error: 'Missing from address' });
+        }
+
+        logger.info(`[Brevo Webhook] Inbound email from ${parsed.from} | subject: ${parsed.subject}`);
+
+        await webhookQueue.add('email-event', {
+          platform: 'email',
+          payload: {
+            from: parsed.from,
+            fromName: parsed.fromName,
+            subject: parsed.subject,
+            body: parsed.body,
+            to: parsed.to,
+            htmlBody: parsed.htmlBody,
+            attachments: parsed.attachments,
+            tenantId,
+          },
+        });
+      } else {
+        // Delivery / tracking events
+        const events = parseBrevoEvents(body);
+        if (events.length > 0) {
+          for (const evt of events) {
+            logger.info(`[Brevo Webhook] Event: ${evt.event} for ${evt.email}`);
+            // Future: update lead interaction status, track opens/clicks, handle bounces
+          }
+        }
+      }
+
+      res.status(200).json({ message: 'OK' });
+    } catch (error) {
+      logger.error('[Brevo Webhook] Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // ── Brevo: test connection & account info (admin only) ─────────────────────
+  app.get("/api/brevo/status", authenticateToken, async (req, res) => {
+    try {
+      const { isBrevoConfigured, getBrevoAccountInfo } = await import('./server/services/brevoService');
+      if (!isBrevoConfigured()) {
+        return res.json({ configured: false, message: 'BREVO_API_KEY not set' });
+      }
+      const info = await getBrevoAccountInfo();
+      res.json({ configured: true, account: info });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch Brevo account info' });
     }
   });
 
