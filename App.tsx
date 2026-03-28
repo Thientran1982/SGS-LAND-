@@ -222,6 +222,7 @@ const PUBLIC_ROUTES = new Set([
     ROUTES.COOKIES,
     ROUTES.LOGIN,
     ROUTES.RESET_PASSWORD,
+    ROUTES.VERIFY_EMAIL,
     ROUTES.PUBLIC_PREFIX,
     ROUTES.LISTING
 ]);
@@ -635,7 +636,7 @@ const AppShell: React.FC = () => {
             return null;
         }
 
-        if (route.base === ROUTES.LOGIN) {
+        if (route.base === ROUTES.LOGIN || route.base === ROUTES.VERIFY_EMAIL) {
             return (
                 <AnimatePresence mode="sync">
                     <motion.div
