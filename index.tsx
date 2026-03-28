@@ -287,7 +287,10 @@ const mountApp = () => {
     
     // 1. Check Root
     if (!rootElement) {
-        document.body.innerHTML = `<div style="padding:20px;color:red;font-family:sans-serif;text-align:center">${TEXT.ERR_MISSING_ROOT}</div>`;
+        const errDiv = document.createElement('div');
+        errDiv.style.cssText = 'padding:20px;color:red;font-family:sans-serif;text-align:center';
+        errDiv.textContent = TEXT.ERR_MISSING_ROOT;
+        document.body.appendChild(errDiv);
         throw new Error(TEXT.ERR_MISSING_ROOT);
     }
 
