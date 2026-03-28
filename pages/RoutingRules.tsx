@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
-import { RoutingRule, RoutingStrategy, User, Team } from '../types';
+import { RoutingRule, RoutingStrategy, User, Team, LEAD_SOURCES } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -66,7 +66,15 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase block mb-1">{t('routing.cond_source')}</label>
-                                <input className="w-full border rounded-lg px-2 py-1.5 text-sm" placeholder={t('routing.placeholder_source')} value={form.conditions?.source?.[0] || ''} onChange={e => setForm({...form, conditions: {...form.conditions, source: e.target.value ? [e.target.value] : []}})} />
+                                <Dropdown
+                                    value={form.conditions?.source?.[0] || ''}
+                                    onChange={(v) => setForm({...form, conditions: {...form.conditions, source: v ? [v as string] : []}})}
+                                    options={[
+                                        { value: '', label: t('leads.all_sources') },
+                                        ...LEAD_SOURCES.map(s => ({ value: s, label: s }))
+                                    ]}
+                                    className="text-sm"
+                                />
                             </div>
                             <div>
                                 <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase block mb-1">{t('routing.cond_region')}</label>
@@ -242,6 +250,17 @@ export const RoutingRules: React.FC = () => {
         return map[key] ?? key;
     };
 
+    // Translate raw condition values (e.g. source "Giới thiệu" → "Giới thiệu", "REFERRAL" → "Giới thiệu")
+    const condValue = (key: string, v: unknown): string => {
+        if (key === 'source' && Array.isArray(v)) {
+            return v.map(s => {
+                const translated = t(`source.${s}`);
+                return translated !== `source.${s}` ? translated : s;
+            }).join(', ');
+        }
+        return Array.isArray(v) ? v.join(', ') : String(v);
+    };
+
     return (
         <>
         <div className="p-4 sm:p-6 space-y-6 pb-20 animate-enter relative">
@@ -297,7 +316,7 @@ export const RoutingRules: React.FC = () => {
                                         {Object.entries(rule.conditions || {}).map(([k, v]) => (
                                             <div key={k} className="flex justify-between gap-2">
                                                 <span className="text-[var(--text-tertiary)]">{condLabel(k)}:</span>
-                                                <span className="font-bold text-right">{Array.isArray(v) ? v.join(', ') : String(v)}</span>
+                                                <span className="font-bold text-right">{condValue(k, v)}</span>
                                             </div>
                                         ))}
                                         {Object.keys(rule.conditions || {}).length === 0 && <span className="text-[var(--text-secondary)] italic text-xs2">{t('routing.no_conditions')}</span>}
@@ -327,7 +346,15 @@ export const RoutingRules: React.FC = () => {
                     <div className="space-y-4 mb-6">
                         <div>
                             <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-1 block">{t('routing.cond_source')}</label>
-                            <input className="w-full border rounded-lg px-3 py-2 text-sm" value={simInput.source} onChange={e => setSimInput({...simInput, source: e.target.value})} />
+                            <Dropdown
+                                value={simInput.source}
+                                onChange={(v) => setSimInput({...simInput, source: v as string})}
+                                options={[
+                                    { value: '', label: t('leads.all_sources') },
+                                    ...LEAD_SOURCES.map(s => ({ value: s, label: s }))
+                                ]}
+                                className="text-sm"
+                            />
                         </div>
                         <div>
                             <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-1 block">{t('routing.cond_region')}</label>
