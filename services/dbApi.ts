@@ -916,7 +916,12 @@ class DatabaseApiClient {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Login failed' }));
-      throw new Error(err.error || 'Login failed');
+      const error: any = new Error(err.error || 'Login failed');
+      if (err.error === 'EMAIL_NOT_VERIFIED') {
+        error.code = 'EMAIL_NOT_VERIFIED';
+        error.email = err.email || email;
+      }
+      throw error;
     }
     const data = await res.json();
     this._isLoggedOut = false;
@@ -936,6 +941,36 @@ class DatabaseApiClient {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Registration failed' }));
       throw new Error(err.error || 'Registration failed');
+    }
+    return res.json();
+  }
+
+  async verifyEmail(token: string) {
+    const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, {
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Verification failed' }));
+      throw new Error(err.error || 'Verification failed');
+    }
+    const data = await res.json();
+    this._isLoggedOut = false;
+    _cache.clearAll();
+    this.cachedCurrentUser = data.user;
+    window.dispatchEvent(new CustomEvent('auth:login'));
+    return data;
+  }
+
+  async resendVerificationEmail(email: string) {
+    const res = await fetch('/api/auth/resend-verification', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to resend' }));
+      throw new Error(err.error || 'Failed to resend verification email');
     }
     return res.json();
   }

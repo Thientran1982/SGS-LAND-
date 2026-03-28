@@ -166,6 +166,54 @@ async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: st
   });
 }
 
+async function sendVerificationEmail(tenantId: string, to: string, userName: string, verifyUrl: string): Promise<EmailResult> {
+  const safeName = escapeHtml(userName);
+  const safeUrl = escapeHtml(verifyUrl);
+  return sendEmail(tenantId, {
+    to,
+    subject: 'SGS LAND - Xác minh địa chỉ email của bạn',
+    html: `
+      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <h1 style="color: #4F46E5; font-size: 24px; font-weight: 700; margin: 0;">SGS LAND</h1>
+          <p style="color: #64748B; font-size: 14px; margin-top: 4px;">Enterprise Real Estate Platform</p>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; background: #EEF2FF; border-radius: 16px; margin-bottom: 16px;">
+              <span style="font-size: 28px;">✉️</span>
+            </div>
+            <h2 style="color: #0F172A; font-size: 20px; font-weight: 700; margin: 0 0 8px;">Xác minh Email</h2>
+          </div>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 8px;">
+            Xin chào <strong>${safeName}</strong>,
+          </p>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 28px;">
+            Cảm ơn bạn đã đăng ký SGS LAND! Để hoàn tất, vui lòng nhấn nút bên dưới để xác minh địa chỉ email của bạn:
+          </p>
+          <div style="text-align: center; margin: 0 0 28px;">
+            <a href="${safeUrl}"
+               style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; letter-spacing: 0.3px; box-shadow: 0 4px 14px rgba(79,70,229,0.4);">
+              Xác minh Email ngay
+            </a>
+          </div>
+          <div style="background: #F8FAFC; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+            <p style="color: #64748B; font-size: 12px; margin: 0 0 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Hoặc sao chép link sau:</p>
+            <p style="color: #4F46E5; font-size: 11px; word-break: break-all; margin: 0; font-family: monospace;">${safeUrl}</p>
+          </div>
+          <p style="color: #94A3B8; font-size: 12px; line-height: 1.6; margin: 0; text-align: center;">
+            Link sẽ hết hạn sau <strong>24 giờ</strong>. Nếu bạn không đăng ký SGS LAND, hãy bỏ qua email này.
+          </p>
+        </div>
+        <p style="color: #CBD5E1; font-size: 11px; text-align: center; margin-top: 24px;">
+          &copy; ${new Date().getFullYear()} SGS LAND. All rights reserved.
+        </p>
+      </div>
+    `,
+    text: `Xin chào ${userName},\n\nXác minh email của bạn tại: ${verifyUrl}\n\nLink hết hạn sau 24 giờ.`,
+  });
+}
+
 async function sendWelcomeEmail(tenantId: string, to: string, userName: string): Promise<EmailResult> {
   return sendEmail(tenantId, {
     to,
@@ -244,6 +292,7 @@ async function sendSequenceEmail(tenantId: string, to: string, subject: string, 
 export const emailService = {
   sendEmail,
   sendPasswordResetEmail,
+  sendVerificationEmail,
   sendWelcomeEmail,
   sendInviteEmail,
   sendSequenceEmail,

@@ -187,6 +187,11 @@ async function startServer() {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
+      // Block login if email not yet verified (only for self-registered users)
+      if (!dbUser.emailVerified && dbUser.source === 'REGISTER') {
+        return res.status(403).json({ error: 'EMAIL_NOT_VERIFIED', email: dbUser.email });
+      }
+
       const jwtPayload = {
         id: dbUser.id,
         email: dbUser.email,
@@ -268,13 +273,17 @@ async function startServer() {
 
       // First user in the tenant becomes ADMIN (account owner), all subsequent users are SALES
       // IMPORTANT: Must use withTenantContext because the users table has RLS enabled.
-      // A raw pool.query() without tenant context always returns 0 rows (RLS blocks them),
-      // causing every registration to incorrectly receive the ADMIN role.
       const existingCount = await withTenantContext(tenantId, async (client) => {
         const r = await client.query(`SELECT COUNT(*)::int AS cnt FROM users`);
         return r.rows[0]?.cnt ?? 0;
       });
       const isFirstUser = existingCount === 0;
+
+      // Generate a secure email verification token
+      const crypto = await import('crypto');
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
       const dbUser = await userRepository.create(tenantId, {
         name: name || email.split('@')[0],
@@ -282,33 +291,140 @@ async function startServer() {
         password,
         role: isFirstUser ? 'ADMIN' : 'SALES',
         source: 'REGISTER',
+        status: 'PENDING',
+        emailVerified: false,
+        emailVerificationToken: tokenHash,
+        emailVerificationExpires: tokenExpires,
       });
 
-      const jwtPayload = {
-        id: dbUser.id,
-        email: dbUser.email,
-        name: dbUser.name,
-        role: dbUser.role,
-        tenantId,
-      };
-      const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
-      res.cookie('token', token, cookieOptions);
+      // Build the verification URL
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : `${req.protocol}://${req.get('host')}`;
+      const verifyUrl = `${baseUrl}/#/verify-email/${rawToken}`;
 
-      // Send welcome email and capture status for response feedback
-      const welcomeResult = await emailService.sendWelcomeEmail(tenantId, email, dbUser.name).catch(err => {
-        logger.error(`Failed to send welcome email to ${email}: ${err.message}`);
+      const verifyResult = await emailService.sendVerificationEmail(tenantId, email, dbUser.name, verifyUrl).catch(err => {
+        logger.error(`Failed to send verification email to ${email}: ${err.message}`);
         return { success: false, status: 'failed' as const, error: err.message };
       });
 
+      writeAuditLog(tenantId, dbUser.id, 'REGISTER', 'auth', dbUser.id, { email, emailSent: verifyResult.success }, req.ip);
+
+      // In dev mode without SMTP/Brevo, expose the raw token so developer can test
+      const isDevMode = !isProduction && verifyResult.status === 'queued_no_smtp';
+
       res.json({
-        message: 'Registered successfully',
-        user: userRepository.toPublicUser(dbUser),
-        token,
-        emailStatus: welcomeResult.status,
+        message: 'Registration successful. Please verify your email to continue.',
+        needsVerification: true,
+        email: dbUser.email,
+        emailStatus: verifyResult.status,
+        ...(isDevMode && { devVerifyToken: rawToken, devVerifyUrl: verifyUrl }),
       });
     } catch (error) {
       console.error('Register error:', error);
       res.status(500).json({ error: 'Registration failed' });
+    }
+  });
+
+  // ── Email Verification ──────────────────────────────────────────────────────
+  app.get("/api/auth/verify-email", authRateLimit, async (req, res) => {
+    try {
+      const rawToken = (req.query.token as string)?.trim();
+      if (!rawToken) return res.status(400).json({ error: 'Verification token is required' });
+
+      const crypto = await import('crypto');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const tenantId = DEFAULT_TENANT_ID;
+
+      // Look up user by verification token
+      const user = await withTenantContext(tenantId, async (client) => {
+        const r = await client.query(
+          `SELECT * FROM users WHERE email_verification_token = $1 AND email_verification_expires > NOW()`,
+          [tokenHash]
+        );
+        return r.rows[0] ? userRepository['rowToEntity']<any>(r.rows[0]) : null;
+      });
+
+      if (!user) {
+        return res.status(400).json({ error: 'Invalid or expired verification token' });
+      }
+
+      // Mark email as verified and activate the account
+      await withTenantContext(tenantId, async (client) => {
+        await client.query(
+          `UPDATE users SET email_verified = TRUE, status = 'ACTIVE', email_verification_token = NULL, email_verification_expires = NULL WHERE id = $1`,
+          [user.id]
+        );
+      });
+
+      // Issue JWT so user is immediately logged in
+      const jwtPayload = { id: user.id, email: user.email, name: user.name, role: user.role, tenantId };
+      const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
+      res.cookie('token', token, cookieOptions);
+
+      await userRepository.updateLastLogin(tenantId, user.id);
+      writeAuditLog(tenantId, user.id, 'EMAIL_VERIFIED', 'auth', user.id, { email: user.email }, req.ip);
+
+      // Send welcome email now that verification is complete
+      emailService.sendWelcomeEmail(tenantId, user.email, user.name).catch(() => {});
+
+      res.json({
+        message: 'Email verified successfully',
+        user: userRepository.toPublicUser({ ...user, emailVerified: true, status: 'ACTIVE' }),
+        token,
+      });
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).json({ error: 'Verification failed' });
+    }
+  });
+
+  // ── Resend Verification Email ───────────────────────────────────────────────
+  app.post("/api/auth/resend-verification", authRateLimit, async (req, res) => {
+    const uniformDelay = () => new Promise(r => setTimeout(r, 200 + Math.random() * 300));
+    try {
+      const email = req.body.email?.trim();
+      if (!email) return res.status(400).json({ error: 'Email is required' });
+
+      const tenantId = DEFAULT_TENANT_ID;
+      const user = await userRepository.findByEmail(tenantId, email);
+
+      // Always respond the same to prevent email enumeration
+      if (!user || user.emailVerified) {
+        await uniformDelay();
+        return res.json({ message: 'If a pending account exists, a new verification email has been sent.' });
+      }
+
+      const crypto = await import('crypto');
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      await withTenantContext(tenantId, async (client) => {
+        await client.query(
+          `UPDATE users SET email_verification_token = $1, email_verification_expires = $2 WHERE id = $3`,
+          [tokenHash, tokenExpires, user.id]
+        );
+      });
+
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : `${req.protocol}://${req.get('host')}`;
+      const verifyUrl = `${baseUrl}/#/verify-email/${rawToken}`;
+
+      const result = await emailService.sendVerificationEmail(tenantId, email, user.name, verifyUrl).catch(() =>
+        ({ success: false, status: 'failed' as const })
+      );
+
+      await uniformDelay();
+      const isDevMode = !isProduction && result.status === 'queued_no_smtp';
+      res.json({
+        message: 'If a pending account exists, a new verification email has been sent.',
+        ...(isDevMode && { devVerifyToken: rawToken, devVerifyUrl: verifyUrl }),
+      });
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      res.status(500).json({ error: 'Failed to resend verification email' });
     }
   });
 

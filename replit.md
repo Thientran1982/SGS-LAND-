@@ -11,8 +11,8 @@ AI-powered real estate CRM and management platform for the Vietnamese market.
 - **Database**: PostgreSQL with Row Level Security (multi-tenancy), 25 tables
 - **Queue**: BullMQ (falls back to in-memory if no Redis)
 - **AI**: Google Gemini via `@google/genai`
-- **Auth**: JWT with httpOnly cookies, bcrypt password hashing, password reset tokens
-- **Email**: Nodemailer (SMTP per-tenant from enterprise_config, console fallback)
+- **Auth**: JWT with httpOnly cookies, bcrypt password hashing, password reset tokens, **email verification on register**
+- **Email**: Brevo API (primary) + Nodemailer SMTP fallback + console fallback; verification email, password reset, welcome, invite, sequences
 
 ## Architecture
 

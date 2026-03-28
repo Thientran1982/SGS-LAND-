@@ -49,6 +49,7 @@ export const ROUTES = {
     PROFILE: 'profile',
     MOBILE_APP: 'mobile-app',
     RESET_PASSWORD: 'reset-password',
+    VERIFY_EMAIL: 'verify-email',
 
     // Task Management Module
     TASK_DASHBOARD: 'task-dashboard',

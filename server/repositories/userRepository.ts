@@ -20,6 +20,9 @@ export interface UserRow {
   metadata?: any;
   lastLoginAt?: string;
   createdAt?: string;
+  emailVerified?: boolean;
+  emailVerificationToken?: string | null;
+  emailVerificationExpires?: string | null;
 }
 
 export class UserRepository extends BaseRepository {
@@ -68,15 +71,21 @@ export class UserRepository extends BaseRepository {
     phone?: string;
     source?: string;
     metadata?: any;
+    status?: string;
+    emailVerified?: boolean;
+    emailVerificationToken?: string | null;
+    emailVerificationExpires?: Date | null;
   }): Promise<UserRow> {
     const passwordHash = data.password ? await bcrypt.hash(data.password, SALT_ROUNDS) : null;
+    const status = data.status ?? 'ACTIVE';
+    const emailVerified = data.emailVerified ?? (status === 'ACTIVE');
 
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `INSERT INTO users (tenant_id, name, email, password_hash, role, avatar, phone, source, metadata, status)
-         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6, $7, $8, 'ACTIVE')
+        `INSERT INTO users (tenant_id, name, email, password_hash, role, avatar, phone, source, metadata, status, email_verified, email_verification_token, email_verification_expires)
+         VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING *`,
-        [data.name, data.email, passwordHash, data.role || 'VIEWER', data.avatar || null, data.phone || null, data.source || 'SYSTEM', data.metadata ? JSON.stringify(data.metadata) : null]
+        [data.name, data.email, passwordHash, data.role || 'VIEWER', data.avatar || null, data.phone || null, data.source || 'SYSTEM', data.metadata ? JSON.stringify(data.metadata) : null, status, emailVerified, data.emailVerificationToken ?? null, data.emailVerificationExpires ?? null]
       );
       return this.rowToEntity<UserRow>(result.rows[0]);
     });

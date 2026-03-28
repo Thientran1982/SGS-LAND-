@@ -138,7 +138,7 @@ const MarketingColumn = memo(({ view, t }: { view: string, t: any }) => {
 //  MAIN COMPONENT
 // -----------------------------------------------------------------------------
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  const [view, setView] = useState<'LOGIN' | 'REGISTER' | 'FORGOT_REQUEST' | 'FORGOT_VERIFY'>('LOGIN');
+  const [view, setView] = useState<'LOGIN' | 'REGISTER' | 'FORGOT_REQUEST' | 'FORGOT_VERIFY' | 'VERIFY_EMAIL'>('LOGIN');
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -158,6 +158,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [shake, setShake] = useState(false);
   const [isPersonalEmail, setIsPersonalEmail] = useState(false);
   const [devToken, setDevToken] = useState('');
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [devVerifyInfo, setDevVerifyInfo] = useState<{token: string; url: string} | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resentSuccess, setResentSuccess] = useState('');
   
   const { t, language, setLanguage } = useTranslation();
 
@@ -170,6 +174,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       if (m.includes('sso is not enabled') || m.includes('sso not enabled')) return t('auth.error_sso_disabled');
       if (m.includes('invalid or expired') || m.includes('expired reset token')) return t('auth.error_token_expired');
       if (m.includes('sso login failed') || m.includes('sso error')) return t('auth.error_sso_disabled');
+      if (m === 'email_not_verified') return t('auth.verify_email_not_verified');
       return msg;
   };
 
@@ -178,6 +183,26 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       if (savedEmail) setEmail(savedEmail);
 
       const hash = window.location.hash;
+
+      // Handle email verification link: #/verify-email/{token}
+      const verifyMatch = hash.match(/\/verify-email\/([a-f0-9]+)/);
+      if (verifyMatch) {
+          const token = verifyMatch[1];
+          window.history.replaceState(null, '', `${window.location.pathname}#/${ROUTES.LOGIN}`);
+          setLoading(true);
+          setGlobalError('');
+          db.verifyEmail(token)
+              .then(() => {
+                  setSuccessMsg(t('auth.verify_email_success'));
+                  setTimeout(() => onLoginSuccess(), 1000);
+              })
+              .catch(err => {
+                  setGlobalError(t('auth.verify_email_invalid'));
+                  setLoading(false);
+              });
+          return;
+      }
+
       const match = hash.match(/reset_token=([a-f0-9]+)/);
       if (match) {
           setOtp(match[1]);
@@ -279,9 +304,19 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       if (isSsoMode) {
           await db.authenticateViaSSO(trimmedEmail);
       } 
-      // 4. REGISTER (B2B: Create Tenant)
+      // 4. REGISTER — triggers email verification flow
       else if (view === 'REGISTER') {
-        await db.register(name, trimmedEmail, password, company); 
+        const result = await db.register(name, trimmedEmail, password, company);
+        if (result?.needsVerification) {
+          setRegisteredEmail(trimmedEmail);
+          if (result?.devVerifyToken) {
+            setDevVerifyInfo({ token: result.devVerifyToken, url: result.devVerifyUrl || '' });
+          }
+          setView('VERIFY_EMAIL');
+          setLoading(false);
+          return;
+        }
+        // Fallback (shouldn't happen): auto-login if server skipped verification
         await db.authenticate(trimmedEmail, password);
       } 
       // 5. STANDARD LOGIN
@@ -297,11 +332,33 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       onLoginSuccess();
 
     } catch (err: any) {
+      // Special case: login blocked because email not yet verified
+      if (err?.code === 'EMAIL_NOT_VERIFIED') {
+        setRegisteredEmail(err.email || email.trim());
+        setView('VERIFY_EMAIL');
+        setLoading(false);
+        return;
+      }
       const msg = localizeServerError(err.message || '');
       setGlobalError(msg);
       triggerShake();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    const targetEmail = registeredEmail || email.trim();
+    if (!targetEmail) return;
+    setResending(true);
+    setResentSuccess('');
+    try {
+      await db.resendVerificationEmail(targetEmail);
+      setResentSuccess(t('auth.verify_email_resent'));
+    } catch {
+      setResentSuccess(t('auth.verify_email_resend_error'));
+    } finally {
+      setResending(false);
     }
   };
 
@@ -351,14 +408,54 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             
             <div className="space-y-2 mb-8">
                 <h1 className="text-3xl font-bold tracking-tight text-white animate-enter">
-                    {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : t('auth.welcome')}
+                    {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_title') : t('auth.welcome')}
                 </h1>
                 <p className="text-gray-400 text-sm leading-relaxed max-w-sm animate-enter" style={{animationDelay: '0.1s'}}>
-                    {view === 'REGISTER' ? t('auth.register_subtitle') : view.startsWith('FORGOT') ? t('auth.reset_subtitle') : t('auth.login_subtitle')}
+                    {view === 'REGISTER' ? t('auth.register_subtitle') : view.startsWith('FORGOT') ? t('auth.reset_subtitle') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_subtitle') : t('auth.login_subtitle')}
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className={`space-y-5 animate-enter ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`} style={{animationDelay: '0.2s'}}>
+            {/* ── VERIFY EMAIL VIEW ─────────────────────────── */}
+            {view === 'VERIFY_EMAIL' && (
+                <div className="space-y-5 animate-enter" style={{animationDelay: '0.2s'}}>
+                    {/* Envelope icon + email info */}
+                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-6 text-center">
+                        <div className="text-5xl mb-4">✉️</div>
+                        <p className="text-sm text-gray-400 mb-2">{t('auth.verify_email_sent_to')}</p>
+                        <p className="text-white font-bold text-base mb-4 break-all">{registeredEmail}</p>
+                        <p className="text-xs text-indigo-300 leading-relaxed">{t('auth.verify_email_instruction')}</p>
+                    </div>
+
+                    {/* Dev mode: show raw token for testing without email */}
+                    {devVerifyInfo && (
+                        <div className="bg-amber-500/10 p-4 rounded-xl border border-amber-500/30 animate-enter">
+                            <p className="text-xs2 font-bold text-amber-400 uppercase tracking-wider mb-2">[DEV] Link xác minh (không có email thật):</p>
+                            <a href={devVerifyInfo.url} className="text-xs text-amber-200 break-all font-mono hover:underline">
+                                {devVerifyInfo.url}
+                            </a>
+                        </div>
+                    )}
+
+                    {/* Resend button */}
+                    {resentSuccess ? (
+                        <div className="text-emerald-200 text-xs font-medium bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 text-center" role="status">
+                            {resentSuccess}
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handleResendVerification}
+                            disabled={resending}
+                            className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold rounded-xl py-3 text-sm hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+                        >
+                            {resending ? t('auth.verify_email_resending') : t('auth.verify_email_resend')}
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* ── AUTH FORMS (all other views) ──────────────── */}
+            <form onSubmit={handleSubmit} className={`space-y-5 animate-enter ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''} ${view === 'VERIFY_EMAIL' ? 'hidden' : ''}`} style={{animationDelay: '0.2s'}}>
                 {/* Global Feedback */}
                 {globalError && (
                     <div className="text-rose-200 text-xs font-medium bg-rose-500/10 p-4 rounded-xl border border-rose-500/20 flex items-start animate-pulse" role="alert">
@@ -553,17 +650,17 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             )}
 
             <div className="mt-auto py-8 text-center text-sm font-medium text-gray-500 animate-enter">
-                {view === 'REGISTER' ? t('auth.has_account') : view.startsWith('FORGOT') ? '' : t('auth.no_account')}
+                {view === 'REGISTER' ? t('auth.has_account') : (view.startsWith('FORGOT') || view === 'VERIFY_EMAIL') ? '' : t('auth.no_account')}
                 
-                {!view.startsWith('FORGOT') && (
+                {!view.startsWith('FORGOT') && view !== 'VERIFY_EMAIL' && (
                     <button type="button" onClick={() => { setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN'); setGlobalError(''); setFieldErrors({}); setPassword(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
                         {view === 'REGISTER' ? t('auth.login_link') : t('auth.register_link')}
                     </button>
                 )}
                 
-                {view.startsWith('FORGOT') && (
-                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
-                        ← {t('auth.back_to_login')}
+                {(view.startsWith('FORGOT') || view === 'VERIFY_EMAIL') && (
+                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setResentSuccess(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
+                        ← {t('auth.verify_email_back_login')}
                     </button>
                 )}
             </div>
