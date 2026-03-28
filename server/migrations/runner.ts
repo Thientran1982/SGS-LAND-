@@ -109,9 +109,20 @@ function getMigrationFiles(): string[] {
   return Object.keys(MIGRATION_REGISTRY).sort();
 }
 
+// Arbitrary unique lock key for this app's migration process
+const MIGRATION_ADVISORY_LOCK_KEY = 74839230;
+
 export async function runPendingMigrations(pool: Pool, isDryRun = false): Promise<void> {
   const client = await pool.connect();
+  let lockAcquired = false;
   try {
+    // Acquire session-level advisory lock so concurrent instances (autoscale)
+    // queue up instead of deadlocking on CREATE INDEX / DDL statements.
+    console.log('[migrations] Waiting for advisory lock...');
+    await client.query('SELECT pg_advisory_lock($1)', [MIGRATION_ADVISORY_LOCK_KEY]);
+    lockAcquired = true;
+    console.log('[migrations] Lock acquired.');
+
     await client.query('BEGIN');
     await ensureSchemaVersionsTable(client);
 
@@ -158,6 +169,14 @@ export async function runPendingMigrations(pool: Pool, isDryRun = false): Promis
     console.error('[migrations] FAILED — rolled back:', err);
     throw err;
   } finally {
+    if (lockAcquired) {
+      try {
+        await client.query('SELECT pg_advisory_unlock($1)', [MIGRATION_ADVISORY_LOCK_KEY]);
+        console.log('[migrations] Advisory lock released.');
+      } catch (_) {
+        // ignore unlock errors — connection will release the lock anyway
+      }
+    }
     client.release();
   }
 }
