@@ -268,7 +268,7 @@ export const Landing: React.FC = () => {
                             <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-3 lg:px-4 py-1.5 lg:py-2 text-xs2 lg:text-xs font-bold text-[var(--text-secondary)] dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden lg:flex min-h-[36px] items-center">
                                 {t('auth.btn_login')}
                             </button>
-                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="bg-slate-900 dark:bg-[var(--bg-surface)] text-white dark:text-[var(--text-primary)] px-3 lg:px-5 py-2 rounded-full text-xs2 lg:text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/10 active:scale-95 flex items-center gap-1.5 whitespace-nowrap min-h-[36px]">
+                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 lg:px-5 py-2 rounded-full text-xs2 lg:text-xs font-bold hover:bg-slate-700 dark:hover:bg-slate-100 transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/10 active:scale-95 flex items-center gap-1.5 whitespace-nowrap min-h-[36px]">
                                 {t('landing.cta_btn_register')} <span className="hidden sm:inline">{ICONS.ARROW_RIGHT}</span>
                             </button>
                         </div>
@@ -558,11 +558,11 @@ export const Landing: React.FC = () => {
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         {currentUser ? (
-                            <button onClick={() => navigateTo(ROUTES.DASHBOARD)} className="px-8 md:px-10 py-3 md:py-4 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-full font-bold text-base md:text-lg hover:scale-105 transition-transform shadow-2xl">
+                            <button onClick={() => navigateTo(ROUTES.DASHBOARD)} className="px-8 md:px-10 py-3 md:py-4 bg-white text-slate-900 rounded-full font-bold text-base md:text-lg hover:bg-slate-100 hover:scale-105 transition-all shadow-2xl">
                                 {t('menu.dashboard')}
                             </button>
                         ) : (
-                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-8 md:px-10 py-3 md:py-4 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-full font-bold text-base md:text-lg hover:scale-105 transition-transform shadow-2xl">
+                            <button onClick={() => navigateTo(ROUTES.LOGIN)} className="px-8 md:px-10 py-3 md:py-4 bg-white text-slate-900 rounded-full font-bold text-base md:text-lg hover:bg-slate-100 hover:scale-105 transition-all shadow-2xl">
                                 {t('landing.cta_btn_register')}
                             </button>
                         )}
