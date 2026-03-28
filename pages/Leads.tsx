@@ -868,35 +868,51 @@ export const Leads: React.FC = () => {
                 exportPage++;
             } while (exportPage <= totalPages);
 
-            const dataToExport = allLeads.map(lead => ({
-                'Tên khách hàng': lead.name,
-                'Số điện thoại': lead.phone,
-                'Email': lead.email || '',
-                'Địa chỉ': lead.address || '',
-                'Nguồn': lead.source,
-                'Trạng thái': t(`stage.${lead.stage}`),
-                'Tags': Array.isArray(lead.tags) ? lead.tags.join(', ') : (lead.tags || ''),
-                'Ghi chú': lead.notes || '',
-                'Điểm số': lead.score?.score || 0,
-                'Người phụ trách': lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || '',
-                'Ngày tạo': lead.createdAt ? formatDate(lead.createdAt) : '',
-            }));
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Leads');
 
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            worksheet.columns = [
+                { header: 'Tên khách hàng', key: 'name', width: 25 },
+                { header: 'Số điện thoại', key: 'phone', width: 20, style: { numFmt: '@' } },
+                { header: 'Email', key: 'email', width: 30 },
+                { header: 'Địa chỉ', key: 'address', width: 30 },
+                { header: 'Nguồn', key: 'source', width: 15 },
+                { header: 'Trạng thái', key: 'stage', width: 15 },
+                { header: 'Tags', key: 'tags', width: 20 },
+                { header: 'Ghi chú', key: 'notes', width: 30 },
+                { header: 'Điểm số', key: 'score', width: 10 },
+                { header: 'Người phụ trách', key: 'assignedTo', width: 20 },
+                { header: 'Ngày tạo', key: 'createdAt', width: 15 },
+            ];
 
-            // Force phone column ('B') to text so Excel doesn't strip leading zeros
-            const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-            for (let R = range.s.r + 1; R <= range.e.r; R++) {
-                const cellAddr = XLSX.utils.encode_cell({ r: R, c: 1 });
-                if (worksheet[cellAddr]) {
-                    worksheet[cellAddr].t = 's';
-                    worksheet[cellAddr].z = '@';
-                }
-            }
+            allLeads.forEach(lead => {
+                const row = worksheet.addRow({
+                    name: lead.name,
+                    phone: lead.phone,
+                    email: lead.email || '',
+                    address: lead.address || '',
+                    source: lead.source,
+                    stage: t(`stage.${lead.stage}`),
+                    tags: Array.isArray(lead.tags) ? lead.tags.join(', ') : (lead.tags || ''),
+                    notes: lead.notes || '',
+                    score: lead.score?.score || 0,
+                    assignedTo: lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || '',
+                    createdAt: lead.createdAt ? formatDate(lead.createdAt) : '',
+                });
+                // Force phone cell to text so Excel doesn't strip leading zeros
+                const phoneCell = row.getCell('phone');
+                phoneCell.numFmt = '@';
+                phoneCell.value = String(lead.phone || '');
+            });
 
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Leads");
-            XLSX.writeFile(workbook, "DanhSachKhachHang.xlsx");
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'DanhSachKhachHang.xlsx';
+            a.click();
+            URL.revokeObjectURL(url);
             notify(t('leads.export_success_count', { count: allLeads.length }), 'success');
         } catch {
             notify(t('common.error'), 'error');
@@ -928,9 +944,23 @@ export const Leads: React.FC = () => {
 
             setLoading(true);
             try {
-                const wb = XLSX.read(arrayBuffer, { type: 'array' });
-                const ws = wb.Sheets[wb.SheetNames[0]];
-                const data = XLSX.utils.sheet_to_json(ws, { raw: false });
+                const wb = new ExcelJS.Workbook();
+                await wb.xlsx.load(arrayBuffer as ArrayBuffer);
+                const ws = wb.worksheets[0];
+
+                const headers: string[] = [];
+                const data: Record<string, string>[] = [];
+                ws.eachRow((row, rowNumber) => {
+                    if (rowNumber === 1) {
+                        row.eachCell((cell) => { headers.push(String(cell.value ?? '')); });
+                    } else {
+                        const rowData: Record<string, string> = {};
+                        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                            rowData[headers[colNumber - 1]] = String(cell.value ?? '');
+                        });
+                        data.push(rowData);
+                    }
+                });
 
                 const MAX_IMPORT_ROWS = 1000;
                 if (data.length > MAX_IMPORT_ROWS) {
