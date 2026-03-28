@@ -22,7 +22,8 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       "style-src 'self' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
-      "connect-src 'self' wss: https://generativelanguage.googleapis.com; " +
+      "connect-src 'self' wss: https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org; " +
+      "frame-src https://maps.google.com https://www.google.com; " +
       "frame-ancestors 'none';"
     );
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -35,7 +36,8 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
-      "connect-src 'self' ws: wss: https://generativelanguage.googleapis.com; " +
+      "connect-src 'self' ws: wss: https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org; " +
+      "frame-src https://maps.google.com https://www.google.com; " +
       "frame-ancestors 'none';"
     );
   }
