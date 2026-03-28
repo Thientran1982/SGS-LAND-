@@ -242,7 +242,9 @@ export const RoutingRules: React.FC = () => {
             source: t('routing.cond_source'),
             region: t('routing.cond_region'),
             budgetMin: t('routing.cond_budgetMin'),
+            budget_min: t('routing.cond_budgetMin'),
             budgetMax: t('routing.cond_budgetMax'),
+            budget_max: t('routing.cond_budgetMax'),
             tags: t('routing.cond_tags'),
             projects: t('routing.cond_projects'),
             temperature: t('routing.cond_temperature'),
@@ -250,13 +252,18 @@ export const RoutingRules: React.FC = () => {
         return map[key] ?? key;
     };
 
-    // Translate raw condition values (e.g. source "Giới thiệu" → "Giới thiệu", "REFERRAL" → "Giới thiệu")
+    // Translate raw condition values — DB stores source as string OR array
     const condValue = (key: string, v: unknown): string => {
-        if (key === 'source' && Array.isArray(v)) {
-            return v.map(s => {
+        if (key === 'source') {
+            const sources = Array.isArray(v) ? v : [v as string];
+            return sources.map(s => {
                 const translated = t(`source.${s}`);
                 return translated !== `source.${s}` ? translated : s;
             }).join(', ');
+        }
+        if (key === 'budget_min' || key === 'budget_max' || key === 'budgetMin' || key === 'budgetMax') {
+            const num = Number(v);
+            return isNaN(num) ? String(v) : (num >= 1_000_000_000 ? `${(num / 1_000_000_000).toFixed(1)} tỷ` : `${(num / 1_000_000).toFixed(0)} triệu`);
         }
         return Array.isArray(v) ? v.join(', ') : String(v);
     };
