@@ -448,14 +448,14 @@ async function startServer() {
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
       await pool.query(
-        `UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL`,
+        `UPDATE password_reset_tokens SET used = TRUE WHERE user_id = $1 AND used = FALSE`,
         [user.id]
       );
 
       await pool.query(
-        `INSERT INTO password_reset_tokens (tenant_id, user_id, token, expires_at)
-         VALUES ($1, $2, $3, $4)`,
-        [tenantId, user.id, tokenHash, expiresAt]
+        `INSERT INTO password_reset_tokens (user_id, token, expires_at)
+         VALUES ($1, $2, $3)`,
+        [user.id, tokenHash, expiresAt]
       );
 
       const baseUrl = process.env.REPLIT_DEV_DOMAIN
@@ -497,11 +497,10 @@ async function startServer() {
       const crypto = await import('crypto');
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-      // Retrieve tenant_id from the token table itself — avoids a second cross-tenant pool.query()
       const result = await pool.query(
-        `UPDATE password_reset_tokens SET used_at = NOW()
-         WHERE token = $1 AND used_at IS NULL AND expires_at > NOW()
-         RETURNING user_id, tenant_id`,
+        `UPDATE password_reset_tokens SET used = TRUE
+         WHERE token = $1 AND used = FALSE AND expires_at > NOW()
+         RETURNING user_id`,
         [tokenHash]
       );
 
@@ -510,7 +509,7 @@ async function startServer() {
       }
 
       const userId = result.rows[0].user_id;
-      const tenantId = result.rows[0].tenant_id;
+      const tenantId = DEFAULT_TENANT_ID;
 
       await userRepository.updatePassword(tenantId, userId, newPassword);
 
