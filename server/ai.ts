@@ -541,18 +541,43 @@ class AiEngine {
             lang: lang || 'vn'
         };
 
-        const finalState = await this.workflow.compileAndRun(initialState);
-
-        return { 
-            agent: 'SGS_AGENT',
-            content: finalState.finalResponse, 
-            steps: finalState.trace, 
-            artifact: finalState.artifact,
-            confidence: finalState.plan?.confidence || 0.95,
-            sentiment: 'NEUTRAL',
-            suggestedAction: finalState.suggestedAction,
-            escalated: finalState.escalated
-        };
+        try {
+            const finalState = await this.workflow.compileAndRun(initialState);
+            return { 
+                agent: 'SGS_AGENT',
+                content: finalState.finalResponse, 
+                steps: finalState.trace, 
+                artifact: finalState.artifact,
+                confidence: finalState.plan?.confidence || 0.95,
+                sentiment: 'NEUTRAL',
+                suggestedAction: finalState.suggestedAction,
+                escalated: finalState.escalated
+            };
+        } catch (error: any) {
+            const msg = error?.message || String(error);
+            const isQuota = msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429');
+            const isAuth = msg.includes('API key not valid') || msg.includes('API_KEY_INVALID');
+            logger.error('[AI] processMessage error:', error);
+            return {
+                agent: 'SGS_AGENT',
+                content: isQuota
+                    ? (lang === 'en'
+                        ? 'The AI assistant is temporarily unavailable due to high demand. Please try again in a few minutes.'
+                        : 'Trợ lý AI hiện đang bận do lượng truy cập cao. Vui lòng thử lại sau ít phút.')
+                    : isAuth
+                    ? (lang === 'en'
+                        ? 'AI service configuration error. Please contact your system administrator.'
+                        : 'Cấu hình dịch vụ AI chưa hợp lệ. Vui lòng liên hệ quản trị viên.')
+                    : (lang === 'en'
+                        ? 'The AI assistant is temporarily unavailable. Please try again later.'
+                        : 'Trợ lý AI tạm thời không khả dụng. Vui lòng thử lại sau.'),
+                steps: [],
+                artifact: undefined,
+                confidence: 0,
+                sentiment: 'NEUTRAL',
+                suggestedAction: 'NONE',
+            };
+        }
     }
 
     async scoreLead(leadData: Partial<Lead>, messageContent?: string, weights?: Record<string, number>, lang: string = 'vn'): Promise<{ score: number, grade: string, reasoning: string }> {
@@ -616,9 +641,17 @@ class AiEngine {
                 grade: result.grade || 'C',
                 reasoning: result.reasoning || 'Thiếu dữ liệu để đánh giá chính xác.'
             };
-        } catch (e) {
+        } catch (e: any) {
+            const msg = e?.message || String(e);
+            const isQuota = msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429');
             logger.error("AI Scoring Error:", e);
-            return { score: 50, grade: 'C', reasoning: 'Lỗi hệ thống AI.' };
+            return {
+                score: 50,
+                grade: 'C',
+                reasoning: isQuota
+                    ? (lang === 'en' ? 'AI scoring unavailable — quota exceeded. Score estimated.' : 'Hệ thống AI đang bận, điểm được ước tính tạm thời.')
+                    : (lang === 'en' ? 'AI scoring temporarily unavailable.' : 'Hệ thống AI chấm điểm tạm thời không khả dụng.')
+            };
         }
     }
 
@@ -657,9 +690,13 @@ class AiEngine {
             });
 
             return response.text || (lang === 'en' ? "Unable to analyze lead at this time." : "Không thể phân tích khách hàng vào lúc này.");
-        } catch (e) {
+        } catch (e: any) {
+            const msg = e?.message || String(e);
+            const isQuota = msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429');
             logger.error("AI Summarization Error:", e);
-            return lang === 'en' ? "Error during AI analysis." : "Lỗi trong quá trình phân tích AI.";
+            return isQuota
+                ? (lang === 'en' ? 'AI analysis unavailable — system busy. Please try again in a few minutes.' : 'Hệ thống AI đang bận, vui lòng thử lại sau ít phút.')
+                : (lang === 'en' ? 'AI analysis temporarily unavailable.' : 'Phân tích AI tạm thời không khả dụng.');
         }
     }
 

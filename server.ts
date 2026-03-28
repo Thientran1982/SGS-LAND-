@@ -55,6 +55,7 @@ import { interactionRepository } from "./server/repositories/interactionReposito
 import { sessionRepository } from "./server/repositories/sessionRepository";
 import { visitorRepository } from "./server/repositories/visitorRepository";
 import { lookupIp, getClientIp } from "./server/services/geoService";
+import { sendAiError, parseAiError } from "./server/utils/aiErrorHandler";
 
 let broadcastIo: any = null;
 
@@ -435,8 +436,7 @@ async function startServer() {
       }
       res.json(result);
     } catch (error) {
-      console.error('AI process message error:', error);
-      res.status(500).json({ error: 'AI processing failed' });
+      sendAiError(res, error, 'process-message');
     }
   });
 
@@ -460,8 +460,7 @@ async function startServer() {
 
       res.json(result);
     } catch (error) {
-      logger.error('AI score lead error:', error);
-      res.status(500).json({ error: 'AI scoring failed' });
+      sendAiError(res, error, 'score-lead');
     }
   });
 
@@ -483,8 +482,7 @@ async function startServer() {
       const result = await aiService.summarizeLead(lead, interactions || [], lang);
       res.json({ summary: result });
     } catch (error) {
-      logger.error('AI summarize lead error:', error);
-      res.status(500).json({ error: 'AI summarization failed' });
+      sendAiError(res, error, 'summarize-lead');
     }
   });
 
@@ -502,8 +500,7 @@ async function startServer() {
 
       res.json(result);
     } catch (error) {
-      logger.error('AI valuation error:', error);
-      res.status(500).json({ error: 'AI valuation failed' });
+      sendAiError(res, error, 'valuation');
     }
   });
 
@@ -551,11 +548,15 @@ async function startServer() {
         res.json({ text: response.text });
       }
     } catch (error) {
-      console.error('AI generate content error:', error);
+      const parsed = parseAiError(error);
+      console.error('[AI Error][generate-content]', error);
       if (!res.headersSent) {
-        res.status(500).json({ error: 'AI generation failed' });
+        res.status(parsed.httpStatus).json({
+          error: parsed.userMessage,
+          code: parsed.isQuotaError ? 'AI_QUOTA_EXCEEDED' : parsed.isAuthError ? 'AI_AUTH_ERROR' : 'AI_UNAVAILABLE',
+        });
       } else {
-        res.write(`data: ${JSON.stringify({ error: 'AI generation failed' })}\n\n`);
+        res.write(`data: ${JSON.stringify({ error: parsed.userMessage })}\n\n`);
         res.end();
       }
     }
@@ -578,8 +579,7 @@ async function startServer() {
       
       res.json({ embeddings: response.embeddings?.[0]?.values || [] });
     } catch (error) {
-      console.error('AI embed content error:', error);
-      res.status(500).json({ error: 'AI embedding failed' });
+      sendAiError(res, error, 'embed-content');
     }
   });
 

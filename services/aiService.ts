@@ -1,5 +1,10 @@
 import { Lead, Interaction, AgentTraceResponse } from '../types';
 
+const AI_QUOTA_MESSAGE_VN = 'Hệ thống AI đang bận do lượng truy cập cao. Vui lòng thử lại sau ít phút.';
+const AI_QUOTA_MESSAGE_EN = 'The AI system is temporarily busy. Please try again in a few minutes.';
+const AI_ERROR_MESSAGE_VN = 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau.';
+const AI_ERROR_MESSAGE_EN = 'AI service temporarily unavailable. Please try again later.';
+
 class AiApiClient {
     private async fetchApi(endpoint: string, body: unknown): Promise<any> {
         const response = await fetch(endpoint, {
@@ -15,7 +20,18 @@ class AiApiClient {
             }
             throw new Error('Authentication required');
         }
-        if (!response.ok) throw new Error(`API request failed: ${response.statusText}`);
+        if (response.status === 429) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data?.error || AI_QUOTA_MESSAGE_VN);
+        }
+        if (response.status === 503) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data?.error || AI_ERROR_MESSAGE_VN);
+        }
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data?.error || `API request failed: ${response.statusText}`);
+        }
         return await response.json();
     }
 
@@ -40,9 +56,11 @@ class AiApiClient {
         try {
             const result = await this.fetchApi('/api/ai/summarize-lead', { lead, logs, lang });
             return result.summary || (lang === 'vn' ? `Khách hàng ${lead.name} đang được hệ thống AI phân tích chuyên sâu.` : `Lead ${lead.name} is undergoing deep AI analysis.`);
-        } catch (e) {
-            console.error("Summarize Lead Error:", e);
-            return lang === 'vn' ? "Hệ thống AI đang bận, vui lòng thử lại sau." : "AI Analysis system is busy, please try again later.";
+        } catch (e: any) {
+            console.warn("Summarize Lead Error:", e?.message);
+            const msg = e?.message || '';
+            if (msg && !msg.includes('API request failed')) return msg;
+            return lang === 'vn' ? AI_QUOTA_MESSAGE_VN : AI_QUOTA_MESSAGE_EN;
         }
     }
 
