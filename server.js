@@ -27796,15 +27796,23 @@ function createTaskRoutes(authenticateToken) {
         if (status === "cancelled" && !completion_note) {
           throw Object.assign(new Error("VALIDATION"), { code: "VALIDATION", message: "L\xFD do h\u1EE7y l\xE0 b\u1EAFt bu\u1ED9c khi \u0111\u1ED5i tr\u1EA1ng th\xE1i sang cancelled" });
         }
-        const fields = { status };
+        const setClauses = ["status = $2"];
+        const vals = [req.params.id, status];
         if (status === "done") {
-          if (actual_hours) fields.actual_hours = actual_hours;
-          if (completion_note) fields.completion_note = completion_note;
+          if (actual_hours) {
+            setClauses.push(`actual_hours = $${vals.length + 1}`);
+            vals.push(actual_hours);
+          }
+          if (completion_note) {
+            setClauses.push(`completion_note = $${vals.length + 1}`);
+            vals.push(completion_note);
+          }
         }
-        if (status === "cancelled" && completion_note) fields.completion_note = completion_note;
-        const setParts = Object.keys(fields).map((k, i) => `${k} = $${i + 2}`);
-        const vals = [req.params.id, ...Object.values(fields)];
-        const r = await client.query(`UPDATE wf_tasks SET ${setParts.join(", ")} WHERE id = $1 RETURNING *`, vals);
+        if (status === "cancelled" && completion_note) {
+          setClauses.push(`completion_note = $${vals.length + 1}`);
+          vals.push(completion_note);
+        }
+        const r = await client.query(`UPDATE wf_tasks SET ${setClauses.join(", ")} WHERE id = $1 RETURNING *`, vals);
         await client.query(`
           INSERT INTO task_activity_logs (tenant_id, task_id, user_id, action, old_value, new_value, detail)
           VALUES ($1, $2, $3, 'status_changed', $4, $5, $6)
@@ -28597,9 +28605,11 @@ function verifyWebhookSignature(platform) {
     next();
   };
 }
+var UNSAFE_QUERY_KEYS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
 function preventParamPollution(req, res, next) {
   if (req.query) {
     for (const [key, value] of Object.entries(req.query)) {
+      if (UNSAFE_QUERY_KEYS.has(key)) continue;
       if (Array.isArray(value)) {
         req.query[key] = value[value.length - 1];
       }
