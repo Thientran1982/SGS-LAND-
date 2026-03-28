@@ -11,7 +11,7 @@ import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useSocket } from '../services/websocket';
 import { aiService } from '../services/aiService';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 // -----------------------------------------------------------------------------
 //  CONSTANTS & STYLES

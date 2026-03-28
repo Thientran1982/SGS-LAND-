@@ -17,7 +17,7 @@ import { copyToClipboard } from '../utils/clipboard';
 import { ListingForm } from '../components/ListingForm';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Lock, Plus, Edit2, Trash2, Download, Upload, Sparkles, MoreVertical } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 // Icons with pointer-events-none to prevent click hijacking
 const ICONS = {
@@ -659,38 +659,44 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         }
     }, [tenantUsers, t, notify]);
 
-    const handleExportExcel = () => {
-        const dataToExport = units.map(unit => ({
-            'Mã SP': unit.code,
-            'Tiêu đề': unit.title,
-            'Loại': t(`property.${unit.type.toUpperCase()}`),
-            'Tầng': unit.attributes?.floor || '',
-            'Hướng': unit.attributes?.direction ? (t(`direction.${unit.attributes.direction}`) || unit.attributes.direction) : '',
-            'Diện tích (m2)': unit.area,
-            'Giá': unit.price,
-            'Trạng thái': t(`status.${unit.status}`),
-            'Vị trí': unit.location
-        }));
+    const handleExportExcel = async () => {
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet('Danh_sach_san_pham');
 
-        const ws = XLSX.utils.json_to_sheet(dataToExport);
-        
-        // Auto-size columns
-        const colWidths = [
-            { wch: 15 }, // Mã SP
-            { wch: 30 }, // Tiêu đề
-            { wch: 15 }, // Loại
-            { wch: 10 }, // Tầng
-            { wch: 15 }, // Hướng
-            { wch: 15 }, // Diện tích
-            { wch: 20 }, // Giá
-            { wch: 15 }, // Trạng thái
-            { wch: 30 }  // Vị trí
+        ws.columns = [
+            { header: 'Mã SP', key: 'maSP', width: 15 },
+            { header: 'Tiêu đề', key: 'tieuDe', width: 30 },
+            { header: 'Loại', key: 'loai', width: 15 },
+            { header: 'Tầng', key: 'tang', width: 10 },
+            { header: 'Hướng', key: 'huong', width: 15 },
+            { header: 'Diện tích (m2)', key: 'dienTich', width: 15 },
+            { header: 'Giá', key: 'gia', width: 20 },
+            { header: 'Trạng thái', key: 'trangThai', width: 15 },
+            { header: 'Vị trí', key: 'viTri', width: 30 },
         ];
-        ws['!cols'] = colWidths;
 
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Danh_sach_san_pham');
-        XLSX.writeFile(wb, `Du_an_${projectCode}_${new Date().getTime()}.xlsx`);
+        units.forEach(unit => {
+            ws.addRow({
+                maSP: unit.code,
+                tieuDe: unit.title,
+                loai: t(`property.${unit.type.toUpperCase()}`),
+                tang: unit.attributes?.floor || '',
+                huong: unit.attributes?.direction ? (t(`direction.${unit.attributes.direction}`) || unit.attributes.direction) : '',
+                dienTich: unit.area,
+                gia: unit.price,
+                trangThai: t(`status.${unit.status}`),
+                viTri: unit.location,
+            });
+        });
+
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Du_an_${projectCode}_${new Date().getTime()}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -734,11 +740,24 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         const reader = new FileReader();
         reader.onload = async (evt) => {
             try {
-                const arrayBuffer = evt.target?.result;
-                const wb = XLSX.read(arrayBuffer, { type: 'array' });
-                const wsname = wb.SheetNames[0];
-                const ws = wb.Sheets[wsname];
-                const data = XLSX.utils.sheet_to_json(ws);
+                const arrayBuffer = evt.target?.result as ArrayBuffer;
+                const wb = new ExcelJS.Workbook();
+                await wb.xlsx.load(arrayBuffer);
+                const ws = wb.worksheets[0];
+
+                const headers: string[] = [];
+                const data: Record<string, string>[] = [];
+                ws.eachRow((row, rowNumber) => {
+                    if (rowNumber === 1) {
+                        row.eachCell((cell) => { headers.push(String(cell.value ?? '')); });
+                    } else {
+                        const rowData: Record<string, string> = {};
+                        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                            rowData[headers[colNumber - 1]] = String(cell.value ?? '');
+                        });
+                        data.push(rowData);
+                    }
+                });
 
                 // Process and create listings
                 for (const row of data as any[]) {
