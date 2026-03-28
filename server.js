@@ -2413,11 +2413,11 @@ var init_logger = __esm({
           console.error(formatLog("ERROR", message, Object.keys(meta3).length > 0 ? meta3 : void 0));
         }
       },
-      request(method, path4, statusCode, durationMs, userId) {
+      request(method, path5, statusCode, durationMs, userId) {
         if (shouldLog("INFO")) {
-          const meta3 = { method, path: path4, status: statusCode, duration: `${durationMs}ms` };
+          const meta3 = { method, path: path5, status: statusCode, duration: `${durationMs}ms` };
           if (userId) meta3.userId = userId;
-          console.log(formatLog("INFO", `${method} ${path4} ${statusCode} ${durationMs}ms`, meta3));
+          console.log(formatLog("INFO", `${method} ${path5} ${statusCode} ${durationMs}ms`, meta3));
         }
       },
       audit(action, userId, details) {
@@ -5459,6 +5459,7 @@ var init_brevoService = __esm({
 init_db();
 init_runner();
 import express from "express";
+import path4 from "path";
 import { Server } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
@@ -11791,11 +11792,11 @@ function createActivityRoutes(authenticateToken) {
   router.post("/pageview", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const { path: path4, pageLabel } = req.body;
-      if (!path4 || typeof path4 !== "string") {
+      const { path: path5, pageLabel } = req.body;
+      if (!path5 || typeof path5 !== "string") {
         return res.status(400).json({ error: "path is required" });
       }
-      const cleanPath = path4.slice(0, 255);
+      const cleanPath = path5.slice(0, 255);
       const cleanLabel = (typeof pageLabel === "string" ? pageLabel : "").slice(0, 255);
       await pageViewRepository.recordView(user.tenantId, {
         userId: user.id,
@@ -12570,15 +12571,15 @@ function createScimRoutes() {
       if (!existing) return scimError(res, 404, "User not found");
       const updates = {};
       for (const op of Operations) {
-        const { op: opType, path: path4, value } = op;
+        const { op: opType, path: path5, value } = op;
         const operation = (opType || "").toLowerCase();
-        if ((operation === "replace" || operation === "add") && path4 === "active") {
+        if ((operation === "replace" || operation === "add") && path5 === "active") {
           updates.status = value === false || value === "false" ? "INACTIVE" : "ACTIVE";
-        } else if ((operation === "replace" || operation === "add") && path4 === "name.formatted") {
+        } else if ((operation === "replace" || operation === "add") && path5 === "name.formatted") {
           updates.name = value;
-        } else if ((operation === "replace" || operation === "add") && path4 === "title") {
+        } else if ((operation === "replace" || operation === "add") && path5 === "title") {
           updates.role = scimTitleToRole(value);
-        } else if (!path4 && value && typeof value === "object") {
+        } else if (!path5 && value && typeof value === "object") {
           if (value.active !== void 0) updates.status = value.active === false ? "INACTIVE" : "ACTIVE";
           if (value["name.formatted"]) updates.name = value["name.formatted"];
           if (value.title) updates.role = scimTitleToRole(value.title);
@@ -14384,10 +14385,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path4) {
-  if (!path4)
+function getElementAtPath(obj, path5) {
+  if (!path5)
     return obj;
-  return path4.reduce((acc, key) => acc?.[key], obj);
+  return path5.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -14770,11 +14771,11 @@ function aborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path4, issues) {
+function prefixIssues(path5, issues) {
   return issues.map((iss) => {
     var _a2;
     (_a2 = iss).path ?? (_a2.path = []);
-    iss.path.unshift(path4);
+    iss.path.unshift(path5);
     return iss;
   });
 }
@@ -14957,7 +14958,7 @@ function formatError(error48, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error48, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error49, path4 = []) => {
+  const processError = (error49, path5 = []) => {
     var _a2, _b;
     for (const issue2 of error49.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
@@ -14967,7 +14968,7 @@ function treeifyError(error48, mapper = (issue2) => issue2.message) {
       } else if (issue2.code === "invalid_element") {
         processError({ issues: issue2.issues }, issue2.path);
       } else {
-        const fullpath = [...path4, ...issue2.path];
+        const fullpath = [...path5, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -14999,8 +15000,8 @@ function treeifyError(error48, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path4 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path4) {
+  const path5 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path5) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -26977,13 +26978,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path4 = ref.slice(1).split("/").filter(Boolean);
-  if (path4.length === 0) {
+  const path5 = ref.slice(1).split("/").filter(Boolean);
+  if (path5.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path4[0] === defsKey) {
-    const key = path4[1];
+  if (path5[0] === defsKey) {
+    const key = path5[1];
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -34285,6 +34286,9 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     app.use(express.static("dist"));
+    app.get("*", (_req, res) => {
+      res.sendFile(path4.join(process.cwd(), "dist", "index.html"));
+    });
   }
   app.use(errorHandler);
   server.listen(PORT, "0.0.0.0", () => {

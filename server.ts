@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import { Server } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
@@ -1727,6 +1728,11 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     app.use(express.static("dist"));
+    // SPA fallback: serve index.html for any non-API, non-asset route
+    // so that client-side routing (hash or history mode) works on direct navigation
+    app.get('*', (_req, res) => {
+      res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+    });
   }
 
   app.use(errorHandler);
