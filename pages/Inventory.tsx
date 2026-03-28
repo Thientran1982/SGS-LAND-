@@ -277,9 +277,13 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
 
                     <td className="px-4 py-3 text-xs text-right">
                         <div className="flex flex-col items-end">
-                            <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                                {item.commission ? `${item.commission}${item.commissionUnit === 'PERCENT' ? '%' : ' VND'}` : '--'}
-                            </span>
+                            {item.commission ? (
+                                <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                                    {`${item.commission}${item.commissionUnit === 'PERCENT' ? '%' : ' VND'}`}
+                                </span>
+                            ) : (
+                                <span className="text-[var(--text-tertiary)]">--</span>
+                            )}
                         </div>
                     </td>
                 </>
