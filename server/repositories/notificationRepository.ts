@@ -22,11 +22,25 @@ class NotificationRepository {
 
   async findByUser(tenantId: string, userId: string, limit = 30): Promise<any[]> {
     const result = await pool.query(
-      `SELECT * FROM notifications
-       WHERE tenant_id = $1 AND user_id = $2
-       ORDER BY created_at DESC
+      `SELECT n.*, u.name AS user_name FROM notifications n
+       LEFT JOIN users u ON u.id = n.user_id
+       WHERE n.tenant_id = $1 AND n.user_id = $2
+       ORDER BY n.created_at DESC
        LIMIT $3`,
       [tenantId, userId, limit]
+    );
+    return result.rows.map(r => this.rowToEntity(r));
+  }
+
+  /** ADMIN: all notifications in the tenant, newest first */
+  async findByTenant(tenantId: string, limit = 60): Promise<any[]> {
+    const result = await pool.query(
+      `SELECT n.*, u.name AS user_name FROM notifications n
+       LEFT JOIN users u ON u.id = n.user_id
+       WHERE n.tenant_id = $1
+       ORDER BY n.created_at DESC
+       LIMIT $2`,
+      [tenantId, limit]
     );
     return result.rows.map(r => this.rowToEntity(r));
   }
@@ -36,6 +50,16 @@ class NotificationRepository {
       `SELECT COUNT(*)::int AS count FROM notifications
        WHERE tenant_id = $1 AND user_id = $2 AND read_at IS NULL`,
       [tenantId, userId]
+    );
+    return result.rows[0]?.count ?? 0;
+  }
+
+  /** ADMIN: count all unread in the tenant */
+  async countUnreadByTenant(tenantId: string): Promise<number> {
+    const result = await pool.query(
+      `SELECT COUNT(*)::int AS count FROM notifications
+       WHERE tenant_id = $1 AND read_at IS NULL`,
+      [tenantId]
     );
     return result.rows[0]?.count ?? 0;
   }
@@ -51,6 +75,18 @@ class NotificationRepository {
     return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
   }
 
+  /** ADMIN: mark any notification read without user restriction */
+  async markReadByTenant(tenantId: string, id: string): Promise<any | null> {
+    const result = await pool.query(
+      `UPDATE notifications
+       SET read_at = NOW()
+       WHERE id = $1 AND tenant_id = $2
+       RETURNING *`,
+      [id, tenantId]
+    );
+    return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+  }
+
   async markAllRead(tenantId: string, userId: string): Promise<void> {
     await pool.query(
       `UPDATE notifications
@@ -60,11 +96,22 @@ class NotificationRepository {
     );
   }
 
+  /** ADMIN: mark all notifications in the tenant as read */
+  async markAllReadByTenant(tenantId: string): Promise<void> {
+    await pool.query(
+      `UPDATE notifications
+       SET read_at = NOW()
+       WHERE tenant_id = $1 AND read_at IS NULL`,
+      [tenantId]
+    );
+  }
+
   private rowToEntity(row: Record<string, any>): any {
     return {
       id: row.id,
       tenantId: row.tenant_id,
       userId: row.user_id,
+      userName: row.user_name ?? null,
       type: row.type,
       title: row.title,
       body: row.body,

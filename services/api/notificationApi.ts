@@ -2,6 +2,8 @@ import { api } from './apiClient';
 
 export interface AppNotification {
   id: string;
+  userId?: string;
+  userName?: string;
   type: string;
   title: string;
   body?: string;

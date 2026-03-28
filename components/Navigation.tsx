@@ -155,7 +155,12 @@ const NotificationPanel = memo(({
                                 {notif.body && (
                                     <p className="text-xs text-[var(--text-secondary)] truncate mt-0.5">{notif.body}</p>
                                 )}
-                                <div className="flex items-center gap-2 mt-1.5">
+                                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                    {notif.userName && (
+                                        <span className="text-xs font-medium text-indigo-500 dark:text-indigo-400 shrink-0">
+                                            {notif.userName}
+                                        </span>
+                                    )}
                                     <span className="text-xs text-[var(--text-tertiary)]">{relativeTime(notif.createdAt, t)}</span>
                                     {notif.metadata?.leadId && (
                                         <button
