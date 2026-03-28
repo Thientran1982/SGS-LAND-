@@ -67,7 +67,7 @@ export async function brevoSendEmail(options: BrevoSendOptions): Promise<BrevoSe
       : [{ email: options.to }];
 
     const defaultFrom = {
-      email: process.env.BREVO_FROM_EMAIL || 'noreply@sgsland.vn',
+      email: process.env.BREVO_FROM_EMAIL || 'thientran022003@gmail.com',
       name: process.env.BREVO_FROM_NAME || 'SGS LAND',
     };
 
@@ -86,7 +86,8 @@ export async function brevoSendEmail(options: BrevoSendOptions): Promise<BrevoSe
 
     const result = await client.transactionalEmails.sendTransacEmail(payload);
 
-    const messageId = (result?.body as any)?.messageId || `brevo-${Date.now()}`;
+    // SDK returns data directly (not wrapped in .body)
+    const messageId = (result as any)?.messageId || `brevo-${Date.now()}`;
     logger.info(`[Brevo] Email sent → ${toArray.map(t => t.email).join(', ')} | messageId: ${messageId}`);
 
     return { success: true, messageId, provider: 'brevo' };
@@ -192,7 +193,8 @@ export async function getBrevoAccountInfo(): Promise<{ email: string; firstName:
   try {
     const client = getClient();
     const result = await client.account.getAccount();
-    const acct = (result?.body as any) || {};
+    // SDK returns data directly (not wrapped in .body)
+    const acct = (result as any) || {};
     return {
       email: acct.email || '',
       firstName: acct.firstName || '',
