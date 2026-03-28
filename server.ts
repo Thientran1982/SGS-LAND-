@@ -1729,8 +1729,9 @@ async function startServer() {
   } else {
     app.use(express.static("dist"));
     // SPA fallback: serve index.html for any non-API, non-asset route
-    // so that client-side routing (hash or history mode) works on direct navigation
-    app.get('*', (_req, res) => {
+    // so that client-side routing (hash or history mode) works on direct navigation.
+    // Uses app.use (not app.get('*')) — bare wildcard '*' is invalid in path-to-regexp v8+
+    app.use((_req, res) => {
       res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
     });
   }
