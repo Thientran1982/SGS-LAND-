@@ -17,7 +17,6 @@
  */
 
 import { Pool, PoolClient } from 'pg';
-import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
 import m001 from './001_baseline_schema';
@@ -221,18 +220,3 @@ export async function rollbackLastMigration(pool: Pool): Promise<void> {
   }
 }
 
-// CLI entrypoint
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const isDryRun = process.argv.includes('--dry-run');
-  const isRollback = process.argv.includes('--rollback');
-
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-  const action = isRollback
-    ? rollbackLastMigration(pool)
-    : runPendingMigrations(pool, isDryRun);
-
-  action
-    .then(() => process.exit(0))
-    .catch(() => process.exit(1));
-}

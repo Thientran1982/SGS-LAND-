@@ -67,4 +67,5 @@ PORT = "5000"
 [userenv.production]
 NODE_ENV = "production"
 PORT = "5000"
+ALLOWED_ORIGINS = "https://sgs-land.replit.app"
 # JWT_SECRET must be set via Replit Secrets (not here) — see replit.md for setup instructions

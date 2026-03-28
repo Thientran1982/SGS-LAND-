@@ -2120,8 +2120,6 @@ __export(runner_exports, {
   rollbackLastMigration: () => rollbackLastMigration,
   runPendingMigrations: () => runPendingMigrations
 });
-import { Pool } from "pg";
-import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 async function ensureSchemaVersionsTable(client) {
   await client.query(`
@@ -2290,13 +2288,6 @@ var init_runner = __esm({
       "026_email_verification.ts": email_verification_default
     };
     MIGRATION_ADVISORY_LOCK_KEY = 74839230;
-    if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-      const isDryRun = process.argv.includes("--dry-run");
-      const isRollback = process.argv.includes("--rollback");
-      const pool3 = new Pool({ connectionString: process.env.DATABASE_URL });
-      const action = isRollback ? rollbackLastMigration(pool3) : runPendingMigrations(pool3, isDryRun);
-      action.then(() => process.exit(0)).catch(() => process.exit(1));
-    }
   }
 });
 
@@ -2308,7 +2299,7 @@ __export(db_exports, {
   withTenantContext: () => withTenantContext,
   withTransaction: () => withTransaction
 });
-import { Pool as Pool2, types } from "pg";
+import { Pool, types } from "pg";
 import dotenv2 from "dotenv";
 async function initializeDatabase() {
   const { runPendingMigrations: runPendingMigrations2 } = await Promise.resolve().then(() => (init_runner(), runner_exports));
@@ -2353,7 +2344,7 @@ var init_db = __esm({
     dotenv2.config();
     types.setTypeParser(1700, (val) => parseFloat(val));
     types.setTypeParser(20, (val) => parseInt(val, 10));
-    pool = new Pool2({
+    pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       max: 50,
       idleTimeoutMillis: 3e4,
