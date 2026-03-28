@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { leadRepository } from '../repositories/leadRepository';
 import { auditRepository } from '../repositories/auditRepository';
 import { routingRuleRepository } from '../repositories/routingRuleRepository';
+import { notificationRepository } from '../repositories/notificationRepository';
 
 export function createLeadRoutes(authenticateToken: any) {
   const router = Router();
@@ -218,6 +219,12 @@ export function createLeadRoutes(authenticateToken: any) {
   router.put('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+
+      // Snapshot before update to detect assignment/stage changes
+      const before = await leadRepository.findByIdWithAccess(
+        user.tenantId, String(req.params.id), user.id, user.role
+      );
+
       const lead = await leadRepository.update(
         user.tenantId, String(req.params.id), req.body, user.id, user.role
       );
@@ -231,6 +238,41 @@ export function createLeadRoutes(authenticateToken: any) {
         details: `Updated lead fields: ${Object.keys(req.body).join(', ')}`,
         ipAddress: req.ip,
       });
+
+      // Notify new assignee when lead is re-assigned to a different user
+      if (
+        before &&
+        req.body.assignedTo &&
+        req.body.assignedTo !== before.assignedTo &&
+        req.body.assignedTo !== user.id
+      ) {
+        notificationRepository.create({
+          tenantId: user.tenantId,
+          userId: req.body.assignedTo,
+          type: 'LEAD_ASSIGNED',
+          title: 'Lead mới được phân công',
+          body: lead.name,
+          metadata: { leadId: lead.id, leadName: lead.name },
+        }).catch(() => {});
+      }
+
+      // Notify assignee when stage changes
+      if (
+        before &&
+        req.body.stage &&
+        req.body.stage !== before.stage &&
+        lead.assignedTo &&
+        lead.assignedTo !== user.id
+      ) {
+        notificationRepository.create({
+          tenantId: user.tenantId,
+          userId: lead.assignedTo,
+          type: 'STAGE_CHANGE',
+          title: `Lead tiến đến ${req.body.stage}`,
+          body: lead.name,
+          metadata: { leadId: lead.id, leadName: lead.name, stage: req.body.stage },
+        }).catch(() => {});
+      }
 
       res.json(lead);
     } catch (error) {

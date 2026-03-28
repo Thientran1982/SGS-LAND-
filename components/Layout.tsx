@@ -397,6 +397,25 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         return () => { socket.off('proposal_interest', handleInterest); };
     }, []);
 
+    // Real-time: update bell badge when proposal is approved
+    useEffect(() => {
+        const handleApproved = (data: { proposalId: string; leadId: string; token: string }) => {
+            const newNotif: AppNotification = {
+                id: `temp-approved-${Date.now()}`,
+                type: 'PROPOSAL_APPROVED',
+                title: 'Proposal được duyệt',
+                body: undefined,
+                metadata: { proposalId: data.proposalId, leadId: data.leadId, token: data.token },
+                readAt: null,
+                createdAt: new Date().toISOString(),
+            };
+            setNotifications(prev => [newNotif, ...prev].slice(0, 40));
+            setUnreadCount(prev => prev + 1);
+        };
+        socket.on('proposal_approved', handleApproved);
+        return () => { socket.off('proposal_approved', handleApproved); };
+    }, []);
+
     const handleMarkRead = useCallback(async (id: string) => {
         if (id.startsWith('temp-')) {
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, readAt: new Date().toISOString() } : n));

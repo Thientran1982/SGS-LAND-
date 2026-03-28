@@ -226,6 +226,20 @@ export function createProposalRoutes(authenticateToken: any, getBroadcast?: () =
       });
 
       if (status === 'APPROVED' && (proposal as any).createdById) {
+        // Persist to DB so the bell shows it even when agent was offline
+        notificationRepository.create({
+          tenantId: user.tenantId,
+          userId: (proposal as any).createdById,
+          type: 'PROPOSAL_APPROVED',
+          title: 'Proposal được duyệt',
+          body: (proposal as any).leadName || undefined,
+          metadata: {
+            proposalId: (proposal as any).id,
+            leadId: (proposal as any).leadId,
+            token: (proposal as any).token,
+          },
+        }).catch(() => {});
+
         const io = getBroadcast?.();
         if (io) {
           io.to(`user:${(proposal as any).createdById}`).emit('proposal_approved', {
