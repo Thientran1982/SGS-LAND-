@@ -258,15 +258,15 @@ export const AiValuation: React.FC = () => {
         <div className="min-h-screen bg-slate-900 font-sans text-white pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
             {/* Header */}
             <div className="sticky top-0 bg-slate-900/80 backdrop-blur-md z-50 border-b border-slate-800">
-                <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
-                    <button onClick={handleHome} className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-white transition-colors">
-                        {ICONS.BACK} {t('common.go_back')}
+                <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
+                    <button onClick={handleHome} className="flex items-center gap-1.5 text-sm font-bold text-slate-400 hover:text-white transition-colors min-h-[44px] shrink-0">
+                        {ICONS.BACK} <span className="hidden sm:inline">{t('common.go_back')}</span>
                     </button>
-                    <div className="flex items-center gap-2">
-                        <Logo className="w-6 h-6 text-emerald-400" />
-                        <span className="font-bold text-lg tracking-wider">SGS <span className="text-emerald-400">NEURAL ENGINE™</span></span>
+                    <div className="flex items-center gap-2 min-w-0">
+                        <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 shrink-0" />
+                        <span className="font-bold text-sm sm:text-lg tracking-wider hidden sm:inline truncate">SGS <span className="text-emerald-400">NEURAL ENGINE™</span></span>
                     </div>
-                    <button onClick={handleLogin} className="px-6 py-2 bg-emerald-500 text-[var(--text-primary)] font-bold rounded-xl hover:bg-emerald-400 transition-colors shadow-lg active:scale-95 text-sm">
+                    <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-emerald-500 text-[var(--text-primary)] font-bold rounded-xl hover:bg-emerald-400 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
                         {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
                     </button>
                 </div>
