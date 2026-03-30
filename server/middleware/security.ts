@@ -145,7 +145,12 @@ export function preventParamPollution(req: Request, res: Response, next: NextFun
     for (const [key, value] of Object.entries(req.query)) {
       if (UNSAFE_QUERY_KEYS.has(key)) continue;
       if (Array.isArray(value)) {
-        (req.query as any)[key] = value[value.length - 1];
+        Object.defineProperty(req.query, key, {
+          value: value[value.length - 1],
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        });
       }
     }
   }
