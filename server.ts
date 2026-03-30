@@ -233,6 +233,28 @@ async function startServer() {
         return res.status(403).json({ error: 'SSO is not enabled for this organisation. Please contact your administrator.' });
       }
 
+      // Verify server-to-server shared secret so only a trusted IdP proxy can call this endpoint.
+      // In production, SSO_SECRET must be set; without it the endpoint is blocked entirely.
+      const ssoSecret = process.env.SSO_SECRET;
+      if (isProduction && !ssoSecret) {
+        logger.warn('[Security] SSO_SECRET is not configured — blocking SSO login in production.');
+        return res.status(500).json({ error: 'SSO is not properly configured on the server.' });
+      }
+      if (ssoSecret) {
+        const provided = req.headers['x-sso-secret'] as string | undefined;
+        if (!provided) {
+          writeAuditLog(tenantId, 'system', 'LOGIN_FAILED', 'auth', undefined, { email, reason: 'missing_sso_secret' }, req.ip);
+          return res.status(401).json({ error: 'Missing X-SSO-Secret header' });
+        }
+        const { timingSafeEqual, createHash } = await import('crypto');
+        const a = createHash('sha256').update(provided).digest();
+        const b = createHash('sha256').update(ssoSecret).digest();
+        if (!timingSafeEqual(a, b)) {
+          writeAuditLog(tenantId, 'system', 'LOGIN_FAILED', 'auth', undefined, { email, reason: 'invalid_sso_secret' }, req.ip);
+          return res.status(401).json({ error: 'Invalid SSO secret' });
+        }
+      }
+
       let dbUser = await userRepository.findByEmail(tenantId, email);
 
       if (!dbUser) {

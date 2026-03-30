@@ -20,7 +20,12 @@ function sanitizeObject(obj: any): any {
   if (obj && typeof obj === 'object') {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(obj)) {
-      sanitized[sanitizeString(key)] = sanitizeObject(value);
+      Object.defineProperty(sanitized, sanitizeString(key), {
+        value: sanitizeObject(value),
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
     }
     return sanitized;
   }
