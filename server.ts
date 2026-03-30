@@ -534,7 +534,10 @@ async function startServer() {
       const userId = result.rows[0].user_id;
       const tenantId = DEFAULT_TENANT_ID;
 
-      await userRepository.updatePassword(tenantId, userId, newPassword);
+      const pwUpdated = await userRepository.updatePassword(tenantId, userId, newPassword);
+      if (!pwUpdated) {
+        return res.status(500).json({ error: 'Failed to update password' });
+      }
 
       // Activate invited users who are still PENDING — they've now set their password
       await withTenantContext(tenantId, async (client) => {

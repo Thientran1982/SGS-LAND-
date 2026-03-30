@@ -347,7 +347,10 @@ export function createUserRoutes(authenticateToken: any) {
         }
       }
 
-      await userRepository.updatePassword(user.tenantId, String(req.params.id), newPassword);
+      const updated = await userRepository.updatePassword(user.tenantId, String(req.params.id), newPassword);
+      if (!updated) {
+        return res.status(404).json({ error: 'Không tìm thấy người dùng hoặc không có quyền cập nhật' });
+      }
       res.json({ message: 'Đổi mật khẩu thành công' });
     } catch (error) {
       console.error('Error updating password:', error);

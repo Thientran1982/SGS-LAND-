@@ -121,7 +121,8 @@ export class UserRepository extends BaseRepository {
     const hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `UPDATE users SET password_hash = $1 WHERE id = $2`,
+        `UPDATE users SET password_hash = $1, updated_at = NOW()
+         WHERE id = $2 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid`,
         [hash, id]
       );
       return (result.rowCount ?? 0) > 0;

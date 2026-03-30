@@ -134,6 +134,8 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - Audit logging for login, CRUD operations, password changes
 - Session tracking with revocation support
 - Password reset: tokens hashed (SHA-256) in DB, atomic single-use consume, uniform response timing. Reset link format: `/#/reset-password/<token>` → App.tsx redirects to Login with token → Login.tsx auto-populates FORGOT_VERIFY view
+- **sanitizeInput password fix**: `sanitizeObject` now skips HTML encoding for sensitive fields (`password`, `currentPassword`, `newPassword`, `confirmPassword`, `secret`, `token`, etc.) — passwords must be hashed from their raw form, not HTML-encoded versions
+- **updatePassword silent-failure fix**: `userRepository.updatePassword` now includes explicit `tenant_id` in WHERE clause (via RLS `current_setting`) and updates `updated_at = NOW()`; route handler and `reset-password` endpoint both now return error if 0 rows updated instead of silently returning 200 success
 
 ## Business Logic
 

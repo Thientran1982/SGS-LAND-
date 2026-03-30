@@ -14,14 +14,21 @@ function sanitizeString(val: string): string {
     .replace(/'/g, '&#x27;');
 }
 
-function sanitizeObject(obj: any): any {
+const SENSITIVE_KEYS = new Set([
+  'password', 'currentPassword', 'newPassword', 'confirmPassword',
+  'secret', 'token', 'apiKey', 'api_key', 'privateKey', 'private_key',
+]);
+
+function sanitizeObject(obj: any, parentKey?: string): any {
   if (typeof obj === 'string') return sanitizeString(obj);
-  if (Array.isArray(obj)) return obj.map(sanitizeObject);
+  if (Array.isArray(obj)) return obj.map(item => sanitizeObject(item));
   if (obj && typeof obj === 'object') {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(obj)) {
-      Object.defineProperty(sanitized, sanitizeString(key), {
-        value: sanitizeObject(value),
+      const sanitizedKey = sanitizeString(key);
+      const isSensitive = SENSITIVE_KEYS.has(key) || SENSITIVE_KEYS.has(parentKey ?? '');
+      Object.defineProperty(sanitized, sanitizedKey, {
+        value: isSensitive ? value : sanitizeObject(value, key),
         writable: true,
         enumerable: true,
         configurable: true,
