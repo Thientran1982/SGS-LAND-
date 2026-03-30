@@ -158,6 +158,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [shake, setShake] = useState(false);
   const [isPersonalEmail, setIsPersonalEmail] = useState(false);
   const [devToken, setDevToken] = useState('');
+  const [tokenFromUrl, setTokenFromUrl] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
   const [devVerifyInfo, setDevVerifyInfo] = useState<{token: string; url: string} | null>(null);
   const [resending, setResending] = useState(false);
@@ -206,6 +207,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       const match = hash.match(/reset_token=([a-f0-9]+)/);
       if (match) {
           setOtp(match[1]);
+          setTokenFromUrl(true);
           setView('FORGOT_VERIFY');
           window.history.replaceState(null, '', `${window.location.pathname}#/${ROUTES.LOGIN}`);
       }
@@ -513,16 +515,25 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {/* --- FORGOT PASSWORD VERIFY STEP --- */}
                 {view === 'FORGOT_VERIFY' && (
                     <>
+                        {!tokenFromUrl && (
                         <div className="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20 mb-4 animate-enter">
                             <p className="text-xs text-indigo-200">{t('auth.otp_sent_msg')} <span className="font-bold text-white block mt-1 text-sm">{email}</span></p>
                             <p className="text-xs3 text-indigo-300 mt-2 leading-relaxed">{t('auth.otp_instruction')}</p>
                         </div>
+                        )}
                         {devToken && (
                             <div className="bg-amber-500/10 p-3 rounded-xl border border-amber-500/30 animate-enter">
                                 <p className="text-xs2 font-bold text-amber-400 uppercase tracking-wider mb-1">{t('auth.dev_token_notice')}</p>
                                 <code className="text-xs2 text-amber-200 break-all font-mono">{devToken}</code>
                             </div>
                         )}
+                        {tokenFromUrl ? (
+                            <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 animate-enter flex items-center gap-2">
+                                <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <p className="text-xs2 text-emerald-300">Liên kết đặt lại mật khẩu hợp lệ. Vui lòng nhập mật khẩu mới bên dưới.</p>
+                                <input type="hidden" value={otp} readOnly />
+                            </div>
+                        ) : (
                         <div className="space-y-1.5 group">
                             <label htmlFor="auth-otp" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.security_token')}</label>
                             <div className="relative">
@@ -531,6 +542,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             </div>
                             {fieldErrors.otp && <p id="err-otp" className="text-xs2 text-rose-400 ml-1">{fieldErrors.otp}</p>}
                         </div>
+                        )}
                     </>
                 )}
 
@@ -659,7 +671,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 )}
                 
                 {(view.startsWith('FORGOT') || view === 'VERIFY_EMAIL') && (
-                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setResentSuccess(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
+                    <button type="button" onClick={() => { setView('LOGIN'); setGlobalError(''); setFieldErrors({}); setSuccessMsg(''); setDevVerifyInfo(null); setResentSuccess(''); setTokenFromUrl(false); setOtp(''); }} className="text-white hover:text-indigo-300 font-bold ml-1 transition-colors">
                         ← {t('auth.verify_email_back_login')}
                     </button>
                 )}
