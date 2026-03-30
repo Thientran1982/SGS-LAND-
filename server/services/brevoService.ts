@@ -71,10 +71,23 @@ export async function brevoSendEmail(options: BrevoSendOptions): Promise<BrevoSe
       name: process.env.BREVO_FROM_NAME || 'SGS LAND',
     };
 
+    const effectiveSender = options.from ?? defaultFrom;
+
+    // Warn when sender is a Gmail address — Gmail DMARC p=reject will silently
+    // drop delivery even if Brevo API returns 200. Fix: set BREVO_FROM_EMAIL to
+    // a verified non-Gmail sender (e.g. noreply@sgsland.vn) after authenticating
+    // the domain in Brevo dashboard (Senders & IP → Domains).
+    if (effectiveSender.email.endsWith('@gmail.com')) {
+      logger.warn(
+        `[Brevo] ⚠️  Sender is ${effectiveSender.email} (Gmail). Gmail DMARC p=reject will cause silent delivery failure at most recipients. ` +
+        `Set BREVO_FROM_EMAIL env var to a verified non-Gmail sender (e.g. noreply@sgsland.vn).`
+      );
+    }
+
     const payload: Record<string, unknown> = {
       to: toArray,
       subject: options.subject,
-      sender: options.from ?? defaultFrom,
+      sender: effectiveSender,
     };
 
     if (options.html) payload.htmlContent = options.html;
