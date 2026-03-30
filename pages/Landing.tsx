@@ -270,7 +270,7 @@ export const Landing: React.FC = () => {
                             </button>
                             <button
                                 onClick={toggleTheme}
-                                className="md:hidden p-1.5 rounded-full text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface-hover)]/60 dark:hover:bg-slate-800/60 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+                                className="p-1.5 rounded-full text-[var(--text-secondary)] dark:text-slate-300 hover:bg-[var(--glass-surface-hover)]/60 dark:hover:bg-slate-800/60 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
                                 aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                             >
                                 {theme === 'dark' ? ICONS.SUN : ICONS.MOON}
@@ -636,7 +636,7 @@ export const Landing: React.FC = () => {
                         <div className="flex items-center gap-2 border-r border-[var(--glass-border)] dark:border-slate-700 pr-4 md:pr-6">
                             <button
                                 onClick={toggleTheme}
-                                className="hidden md:flex p-2 rounded-full text-[var(--text-tertiary)] dark:text-slate-400 hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-800 transition-colors items-center justify-center min-w-[44px] min-h-[44px]"
+                                className="hidden p-2 rounded-full text-[var(--text-tertiary)] dark:text-slate-400 hover:bg-[var(--glass-surface-hover)] dark:hover:bg-slate-800 transition-colors items-center justify-center min-w-[44px] min-h-[44px]"
                                 aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                             >
                                 {theme === 'dark' ? ICONS.SUN : ICONS.MOON}
