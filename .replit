@@ -58,6 +58,8 @@ build = ["npm", "run", "build"]
 [userenv.shared]
 COMMISSION_RATE = "0.02"
 MARKET_CACHE_TTL_HOURS = "6"
+BREVO_FROM_EMAIL = "noreply@sgsland.vn"
+BREVO_FROM_NAME = "SGS LAND"
 
 [userenv.development]
 NODE_ENV = "development"
