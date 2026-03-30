@@ -8,7 +8,7 @@ import {
   CUSTOM_THEME_STORAGE_KEY,
   applyCustomTheme,
   clearCustomTheme,
-} from '../services/theme';
+} from '../services/themeConfig';
 
 interface ThemeCustomizerProps {
   notify: (msg: string, type: 'success' | 'error') => void;
