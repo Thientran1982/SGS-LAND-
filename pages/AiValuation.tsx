@@ -293,20 +293,20 @@ export const AiValuation: React.FC = () => {
                             Nhập địa chỉ bất động sản để bắt đầu phân tích dữ liệu thị trường và quy hoạch từ AI.
                         </p>
 
-                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-full max-w-2xl mx-auto flex items-center gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-emerald-500/50 transition-all">
-                            <div className="pl-6 text-slate-400 flex items-center justify-center">{ICONS.SEARCH}</div>
+                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-full max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-emerald-500/50 transition-all overflow-hidden">
+                            <div className="pl-3 md:pl-6 shrink-0 text-slate-400 flex items-center justify-center">{ICONS.SEARCH}</div>
                             <input 
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
-                                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-[var(--text-tertiary)] text-lg h-14"
-                                placeholder="Nhập địa chỉ nhà, tên dự án (VD: 123 Lê Lợi...)"
+                                className="flex-1 min-w-0 bg-transparent border-none outline-none text-white placeholder:text-[var(--text-tertiary)] text-base md:text-lg h-14"
+                                placeholder="Nhập địa chỉ BĐS..."
                                 onKeyDown={(e) => e.key === 'Enter' && address && setStep('DETAILS')}
                                 autoFocus
                             />
                             {address && (
                                 <button 
                                     onClick={() => setAddress('')}
-                                    className="text-slate-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-700 mr-2 flex items-center justify-center"
+                                    className="shrink-0 text-slate-400 hover:text-white transition-colors p-1.5 rounded-full hover:bg-slate-700 flex items-center justify-center"
                                     title={t('common.clear_search')}
                                 >
                                     {ICONS.X}
@@ -315,7 +315,7 @@ export const AiValuation: React.FC = () => {
                             <button 
                                 onClick={() => setStep('DETAILS')}
                                 disabled={!address}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold px-5 md:px-8 h-14 rounded-full transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap"
+                                className="shrink-0 bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold px-4 md:px-8 h-14 rounded-full transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm md:text-base"
                             >
                                 Bắt Đầu
                             </button>
