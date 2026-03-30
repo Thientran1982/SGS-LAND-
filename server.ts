@@ -607,12 +607,22 @@ async function startServer() {
 
   app.post("/api/ai/valuation", aiRateLimit, validateBody(schemas.aiValuation), async (req, res) => {
     try {
-      const { address, area, roadWidth, legal, propertyType } = req.body;
+      const {
+        address, area, roadWidth, legal, propertyType,
+        // Advanced AVM inputs (Kfl, Kdir, Kmf, Kfurn)
+        floorLevel, direction, frontageWidth, furnishing, monthlyRent,
+      } = req.body;
       const { aiService } = await import('./server/ai');
 
       // Run AI valuation in parallel with cache warm-up (non-blocking)
       const [result] = await Promise.all([
-        aiService.getRealtimeValuation(address, area, roadWidth, legal, propertyType),
+        aiService.getRealtimeValuation(address, area, roadWidth, legal, propertyType, {
+          floorLevel:    floorLevel    !== undefined ? Number(floorLevel)    : undefined,
+          direction:     direction     || undefined,
+          frontageWidth: frontageWidth !== undefined ? Number(frontageWidth) : undefined,
+          furnishing:    furnishing    || undefined,
+          monthlyRent:   monthlyRent   !== undefined ? Number(monthlyRent)   : undefined,
+        }),
         // Populate/warm the market data cache from this request (fire-and-forget)
         marketDataService.getMarketData(address).catch(() => null),
       ]);

@@ -700,7 +700,13 @@ class AiEngine {
         }
     }
 
-    async getRealtimeValuation(address: string, area: number, roadWidth: number, legal: string, propertyType?: string): Promise<{
+    async getRealtimeValuation(address: string, area: number, roadWidth: number, legal: string, propertyType?: string, advanced?: {
+        floorLevel?: number;
+        direction?: string;
+        frontageWidth?: number;
+        furnishing?: 'FULL' | 'BASIC' | 'NONE';
+        monthlyRent?: number;
+    }): Promise<{
         basePrice: number;
         pricePerM2: number;
         totalPrice: number;
@@ -829,6 +835,11 @@ class AiEngine {
             const resolvedPropertyType = (propertyType || aiData.propertyTypeEstimate || 'townhouse_center') as import('./valuationEngine').PropertyType;
 
             // ── STEP 3: Apply AVM (Comps) + Income Approach + Reconciliation ──────
+            // Use user-provided monthlyRent override if given, otherwise use AI estimate
+            const effectiveRent = (advanced?.monthlyRent && advanced.monthlyRent > 0)
+                ? advanced.monthlyRent
+                : (monthlyRent > 0 ? monthlyRent : undefined);
+
             const avmResult = applyAVM({
                 marketBasePrice,
                 area,
@@ -837,7 +848,12 @@ class AiEngine {
                 confidence,
                 marketTrend,
                 propertyType: resolvedPropertyType,
-                monthlyRent: monthlyRent > 0 ? monthlyRent : undefined,
+                monthlyRent: effectiveRent,
+                // Advanced AVM coefficients from user input
+                floorLevel:    advanced?.floorLevel,
+                direction:     advanced?.direction as any,
+                frontageWidth: advanced?.frontageWidth,
+                furnishing:    advanced?.furnishing as any,
             });
 
             // Merge location factors (CONTEXT ONLY — already in marketBasePrice, NOT re-applied)
@@ -876,6 +892,9 @@ class AiEngine {
             const regional = getRegionalBasePrice(address);
             const resolvedPropertyType = (propertyType || 'townhouse_center') as import('./valuationEngine').PropertyType;
             const { estimateFallbackRent } = await import('./valuationEngine');
+            const fallbackRent = (advanced?.monthlyRent && advanced.monthlyRent > 0)
+                ? advanced.monthlyRent
+                : estimateFallbackRent(Math.round(regional.price * area), resolvedPropertyType, area);
             const avmResult = applyAVM({
                 marketBasePrice: regional.price,
                 area,
@@ -884,11 +903,12 @@ class AiEngine {
                 confidence: regional.confidence,
                 marketTrend: `Ước tính theo khu vực ${regional.region} — không có dữ liệu realtime`,
                 propertyType: resolvedPropertyType,
-                monthlyRent: estimateFallbackRent(
-                    Math.round(regional.price * area),
-                    resolvedPropertyType,
-                    area
-                ),
+                monthlyRent: fallbackRent,
+                // Advanced AVM coefficients from user input
+                floorLevel:    advanced?.floorLevel,
+                direction:     advanced?.direction as any,
+                frontageWidth: advanced?.frontageWidth,
+                furnishing:    advanced?.furnishing as any,
             });
 
             return {

@@ -60,6 +60,14 @@ export const AiValuation: React.FC = () => {
     const [roadWidth, setRoadWidth] = useState<string>('');
     const [legal, setLegal] = useState<'PINK_BOOK' | 'CONTRACT' | 'WAITING'>('PINK_BOOK');
     const [propertyType, setPropertyType] = useState<string>('townhouse_center');
+    // Advanced AVM inputs (Kfl, Kdir, Kmf, Kfurn)
+    const [direction, setDirection] = useState<string>('');
+    const [frontageWidth, setFrontageWidth] = useState<string>('');
+    const [furnishing, setFurnishing] = useState<'FULL' | 'BASIC' | 'NONE' | ''>('');
+    const [floorLevel, setFloorLevel] = useState<string>('');
+    const [monthlyRent, setMonthlyRent] = useState<string>('');
+
+    const isApartment = propertyType.startsWith('apartment');
 
     // Process State
     const [analysisLog, setAnalysisLog] = useState<string>('');
@@ -72,7 +80,7 @@ export const AiValuation: React.FC = () => {
         pricePerM2: number;
         range: [number, number];
         factors: { label: string; coefficient?: number; impact: number; isPositive: boolean; description?: string; type?: 'AVM' | 'LOCATION' }[];
-        coefficients?: { Kd: number; Kp: number; Ka: number };
+        coefficients?: { Kd: number; Kp: number; Ka: number; Kfl?: number; Kdir?: number; Kmf?: number; Kfurn?: number };
         formula?: string;
         confidence: number;
         marketTrend: string;
@@ -119,8 +127,16 @@ export const AiValuation: React.FC = () => {
         const roadNum = parseFloat(roadWidth) || 3;
 
         let aiResult: any;
+        // Collect optional advanced fields
+        const advancedParams = {
+            ...(direction && { direction }),
+            ...(frontageWidth && !isNaN(parseFloat(frontageWidth)) && { frontageWidth: parseFloat(frontageWidth) }),
+            ...(furnishing && { furnishing }),
+            ...(floorLevel && !isNaN(parseFloat(floorLevel)) && { floorLevel: parseFloat(floorLevel) }),
+            ...(monthlyRent && !isNaN(parseFloat(monthlyRent)) && { monthlyRent: parseFloat(monthlyRent) * 1_000_000 }),
+        };
         try {
-            aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal, propertyType);
+            aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal, propertyType, advancedParams);
         } catch (_err) {
             // Emergency client-side fallback (network completely down)
             // Uses same AVM coefficient logic as server/valuationEngine.ts
@@ -229,6 +245,11 @@ export const AiValuation: React.FC = () => {
         setArea('');
         setRoadWidth('');
         setPropertyType('townhouse_center');
+        setDirection('');
+        setFrontageWidth('');
+        setFurnishing('');
+        setFloorLevel('');
+        setMonthlyRent('');
         setStep('ADDRESS');
     };
 
@@ -393,6 +414,85 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 </div>
 
+                                {/* Hướng nhà */}
+                                <div>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Hướng Nhà <span className="text-slate-600 normal-case font-normal">(không bắt buộc)</span></label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {['Bắc','Đông Bắc','Đông','Đông Nam','Nam','Tây Nam','Tây','Tây Bắc'].map(d => (
+                                            <button
+                                                key={d}
+                                                type="button"
+                                                onClick={() => setDirection(prev => prev === d ? '' : d)}
+                                                className={`py-2 rounded-xl text-xs font-bold transition-all border ${direction === d ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                            >
+                                                {d}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Mặt tiền & Tầng */}
+                                <div className="grid grid-cols-2 gap-6">
+                                    {!isApartment && (
+                                        <div>
+                                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Mặt Tiền (m)</label>
+                                            <input
+                                                type="number"
+                                                value={frontageWidth}
+                                                onChange={e => setFrontageWidth(e.target.value)}
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                placeholder="4"
+                                                min="1"
+                                            />
+                                        </div>
+                                    )}
+                                    {isApartment && (
+                                        <div>
+                                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tầng</label>
+                                            <input
+                                                type="number"
+                                                value={floorLevel}
+                                                onChange={e => setFloorLevel(e.target.value)}
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                placeholder="10"
+                                                min="1"
+                                            />
+                                        </div>
+                                    )}
+                                    <div>
+                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Thuê Dự Kiến (tr/tháng)</label>
+                                        <input
+                                            type="number"
+                                            value={monthlyRent}
+                                            onChange={e => setMonthlyRent(e.target.value)}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                            placeholder="Tự động"
+                                            min="0"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Nội thất */}
+                                <div>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Nội Thất <span className="text-slate-600 normal-case font-normal">(không bắt buộc)</span></label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {[
+                                            { id: 'FULL', label: '✨ Đầy đủ' },
+                                            { id: 'BASIC', label: '🪑 Cơ bản' },
+                                            { id: 'NONE', label: '🏚️ Nhà thô' },
+                                        ].map(opt => (
+                                            <button
+                                                key={opt.id}
+                                                type="button"
+                                                onClick={() => setFurnishing(prev => prev === opt.id ? '' : opt.id as any)}
+                                                className={`py-3 rounded-xl text-xs font-bold transition-all border ${furnishing === opt.id ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <button 
                                     onClick={runCalculation}
                                     disabled={!area || !roadWidth || parseFloat(area) <= 0}
@@ -470,30 +570,39 @@ export const AiValuation: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* ── AVM COEFFICIENT TABLE ── */}
-                            {valuation.coefficients && (
-                                <div className="grid grid-cols-3 gap-3 mb-6">
-                                    {[
-                                        { key: 'Kd', label: 'Hệ số lộ giới', value: valuation.coefficients.Kd, icon: '🛣️' },
-                                        { key: 'Kp', label: 'Hệ số pháp lý', value: valuation.coefficients.Kp, icon: '📋' },
-                                        { key: 'Ka', label: 'Hệ số diện tích', value: valuation.coefficients.Ka, icon: '📐' },
-                                    ].map(c => {
-                                        const delta = c.value - 1.00;
-                                        const isPos = delta >= 0;
-                                        return (
-                                            <div key={c.key} className="bg-slate-900/70 rounded-xl p-4 border border-slate-700 text-center">
-                                                <div className="text-lg mb-1">{c.icon}</div>
-                                                <div className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold mb-1">{c.key}</div>
-                                                <div className="text-white font-black text-xl">{c.value.toFixed(2)}</div>
-                                                <div className={`text-xs font-bold mt-1 ${isPos ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                    {isPos ? '+' : ''}{(delta * 100).toFixed(0)}%
+                            {/* ── AVM COEFFICIENT TABLE (all active coefficients) ── */}
+                            {valuation.coefficients && (() => {
+                                const c = valuation.coefficients;
+                                const allCoeffs = [
+                                    { key: 'Kd',   label: 'Lộ giới',   value: c.Kd,   icon: '🛣️' },
+                                    { key: 'Kp',   label: 'Pháp lý',   value: c.Kp,   icon: '📋' },
+                                    { key: 'Ka',   label: 'Diện tích', value: c.Ka,   icon: '📐' },
+                                    ...(c.Kfl   != null ? [{ key: 'Kfl',  label: 'Vị trí tầng', value: c.Kfl,  icon: '🏢' }] : []),
+                                    ...(c.Kdir  != null ? [{ key: 'Kdir', label: 'Hướng nhà',   value: c.Kdir, icon: '🧭' }] : []),
+                                    ...(c.Kmf   != null ? [{ key: 'Kmf',  label: 'Mặt tiền',    value: c.Kmf,  icon: '🏠' }] : []),
+                                    ...(c.Kfurn != null ? [{ key: 'Kfurn',label: 'Nội thất',    value: c.Kfurn,icon: '🛋️' }] : []),
+                                ];
+                                const cols = allCoeffs.length <= 3 ? 'grid-cols-3' : allCoeffs.length === 4 ? 'grid-cols-4' : 'grid-cols-4 md:grid-cols-7';
+                                return (
+                                    <div className={`grid ${cols} gap-2 mb-6`}>
+                                        {allCoeffs.map(coeff => {
+                                            const delta = coeff.value - 1.00;
+                                            const isPos = delta >= 0;
+                                            return (
+                                                <div key={coeff.key} className="bg-slate-900/70 rounded-xl p-3 border border-slate-700 text-center">
+                                                    <div className="text-lg mb-1">{coeff.icon}</div>
+                                                    <div className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold mb-1">{coeff.key}</div>
+                                                    <div className="text-white font-black text-lg">{coeff.value.toFixed(2)}</div>
+                                                    <div className={`text-xs font-bold mt-1 ${isPos ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                        {isPos ? '+' : ''}{(delta * 100).toFixed(0)}%
+                                                    </div>
+                                                    <div className="text-[var(--text-secondary)] text-2xs mt-1 truncate">{coeff.label}</div>
                                                 </div>
-                                                <div className="text-[var(--text-secondary)] text-2xs mt-1 truncate">{c.label}</div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })()}
 
                             {/* ── FACTORS BREAKDOWN (XAI) ── */}
                             {valuation.factors.length > 0 && (() => {
