@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import { fileTypeFromFile } from 'file-type';
 import { DEFAULT_TENANT_ID } from '../constants';
 
 const UPLOAD_BASE = path.join(process.cwd(), 'uploads');
@@ -15,6 +16,19 @@ const ALLOWED_MIMES: Record<string, string[]> = {
 };
 
 const ALL_ALLOWED = [...ALLOWED_MIMES.image, ...ALLOWED_MIMES.document];
+
+// Real MIME types that file-type (magic bytes) can detect for each allowed format.
+// .doc (old binary Word) is detected as application/x-cfb (Compound File Binary Format).
+// text/plain has no magic bytes — file-type returns undefined; handled separately.
+const ALLOWED_REAL_MIMES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/x-cfb',
+]);
 
 const MIME_TO_EXT: Record<string, string> = {
   'image/jpeg': '.jpg',
@@ -89,7 +103,7 @@ function handleMulterError(err: any, _req: Request, res: Response, next: NextFun
 export function createUploadRoutes(authenticateToken: any) {
   const router = Router();
 
-  router.post('/', authenticateToken, upload.array('files', MAX_FILES), handleMulterError, (req: Request, res: Response) => {
+  router.post('/', authenticateToken, upload.array('files', MAX_FILES), handleMulterError, async (req: Request, res: Response) => {
     try {
       const files = req.files as Express.Multer.File[];
       if (!files || files.length === 0) {
@@ -98,13 +112,47 @@ export function createUploadRoutes(authenticateToken: any) {
 
       const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
 
-      const uploaded = files.map(f => ({
+      const accepted: Express.Multer.File[] = [];
+      const rejected: string[] = [];
+
+      for (const f of files) {
+        // text/plain files have no magic bytes — file-type returns undefined.
+        // We trust multer's header-based filter for plain text since there are no bytes to inspect.
+        if (f.mimetype === 'text/plain') {
+          accepted.push(f);
+          continue;
+        }
+
+        const detected = await fileTypeFromFile(f.path);
+
+        if (!detected || !ALLOWED_REAL_MIMES.has(detected.mime)) {
+          // Real content does not match any allowed type — delete and reject.
+          fs.unlinkSync(f.path);
+          rejected.push(f.originalname);
+          continue;
+        }
+
+        accepted.push(f);
+      }
+
+      if (accepted.length === 0) {
+        return res.status(415).json({
+          error: 'All files were rejected: file content does not match an allowed type.',
+          rejected,
+        });
+      }
+
+      const uploaded = accepted.map(f => ({
         filename: f.filename,
         originalName: f.originalname,
         mimetype: f.mimetype,
         size: f.size,
         url: `/uploads/${tenantId}/${f.filename}`,
       }));
+
+      if (rejected.length > 0) {
+        return res.json({ files: uploaded, warnings: [`${rejected.length} file(s) rejected — content did not match declared type: ${rejected.join(', ')}`] });
+      }
 
       res.json({ files: uploaded });
     } catch (error) {

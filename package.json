@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx server.ts",
     "start": "node server.js",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=esm --outfile=server.js --external:pg --external:bcrypt --external:socket.io --external:@socket.io/redis-adapter --external:redis --external:ioredis --external:bullmq --external:nodemailer --external:multer --external:pdf-parse --external:mammoth --external:pdfjs-dist --external:exceljs --external:ws --external:y-websocket --external:yjs --external:@google/genai --external:vite --external:express --external:cookie-parser --external:jsonwebtoken --external:helmet --external:dotenv",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=esm --outfile=server.js --external:pg --external:bcrypt --external:socket.io --external:@socket.io/redis-adapter --external:redis --external:ioredis --external:bullmq --external:nodemailer --external:multer --external:file-type --external:pdf-parse --external:mammoth --external:pdfjs-dist --external:exceljs --external:ws --external:y-websocket --external:yjs --external:@google/genai --external:vite --external:express --external:cookie-parser --external:jsonwebtoken --external:helmet --external:dotenv",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "seed": "tsx server/seed.ts",
@@ -39,6 +39,7 @@
     "esbuild": "^0.27.4",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
+    "file-type": "^21.3.4",
     "helmet": "^8.1.0",
     "html2canvas": "^1.4.1",
     "ioredis": "^5.10.1",
