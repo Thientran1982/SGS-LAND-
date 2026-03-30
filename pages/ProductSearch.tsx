@@ -357,7 +357,7 @@ export const ProductSearch: React.FC = () => {
 
                             {/* Right: Login (Mobile only) */}
                             <div className="shrink-0 flex items-center justify-end sm:hidden">
-                                <button onClick={handleLogin} className="px-5 py-2 min-h-[44px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center">
+                                <button onClick={handleLogin} className="px-5 py-2 min-h-[44px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center whitespace-nowrap shrink-0">
                                     {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
                                 </button>
                             </div>
@@ -387,7 +387,7 @@ export const ProductSearch: React.FC = () => {
 
                         {/* Right: Login (Desktop) */}
                         <div className="shrink-0 hidden sm:flex items-center justify-end">
-                            <button onClick={handleLogin} className="px-5 py-2 min-h-[44px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center">
+                            <button onClick={handleLogin} className="px-5 py-2 min-h-[44px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center whitespace-nowrap shrink-0">
                                 {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
                             </button>
                         </div>
