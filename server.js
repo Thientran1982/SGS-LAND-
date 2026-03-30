@@ -2114,6 +2114,33 @@ var init_email_verification = __esm({
   }
 });
 
+// server/migrations/027_activate_initial_admin.ts
+var migration27, activate_initial_admin_default;
+var init_activate_initial_admin = __esm({
+  "server/migrations/027_activate_initial_admin.ts"() {
+    migration27 = {
+      description: "Activate the initial admin account created via registration (info@sgsland.vn)",
+      async up(client) {
+        await client.query(`
+      UPDATE users
+      SET
+        email_verified = TRUE,
+        status = 'ACTIVE',
+        email_verification_token = NULL,
+        email_verification_expires = NULL,
+        updated_at = NOW()
+      WHERE email = 'info@sgsland.vn'
+        AND status = 'PENDING'
+        AND role = 'ADMIN';
+    `);
+      },
+      async down(client) {
+      }
+    };
+    activate_initial_admin_default = migration27;
+  }
+});
+
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -2166,15 +2193,15 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file2 of pending) {
-      const migration27 = MIGRATION_REGISTRY[file2];
-      if (!migration27 || typeof migration27.up !== "function") {
+      const migration28 = MIGRATION_REGISTRY[file2];
+      if (!migration28 || typeof migration28.up !== "function") {
         throw new Error(`[migrations] Invalid migration module for ${file2} \u2014 missing up() function`);
       }
-      console.log(`[migrations] Applying ${file2}: ${migration27.description || ""}`);
-      await migration27.up(client);
+      console.log(`[migrations] Applying ${file2}: ${migration28.description || ""}`);
+      await migration28.up(client);
       await client.query(
         "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
-        [file2, migration27.description || null]
+        [file2, migration28.description || null]
       );
       console.log(`[migrations] \u2713 ${file2}`);
     }
@@ -2209,15 +2236,15 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const migration27 = MIGRATION_REGISTRY[lastVersion];
-    if (!migration27) {
+    const migration28 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration28) {
       throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
     }
-    if (!migration27.down) {
+    if (!migration28.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
     console.log(`[migrations] Rolling back ${lastVersion}...`);
-    await migration27.down(client);
+    await migration28.down(client);
     await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
     await client.query("COMMIT");
     console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
@@ -2258,6 +2285,7 @@ var init_runner = __esm({
     init_leads_won_at();
     init_notifications();
     init_email_verification();
+    init_activate_initial_admin();
     dotenv.config();
     MIGRATION_REGISTRY = {
       "001_baseline_schema.ts": baseline_schema_default,
@@ -2285,7 +2313,8 @@ var init_runner = __esm({
       "023_contract_assigned_to.ts": contract_assigned_to_default,
       "024_leads_won_at.ts": leads_won_at_default,
       "025_notifications.ts": notifications_default,
-      "026_email_verification.ts": email_verification_default
+      "026_email_verification.ts": email_verification_default,
+      "027_activate_initial_admin.ts": activate_initial_admin_default
     };
     MIGRATION_ADVISORY_LOCK_KEY = 74839230;
   }
@@ -4866,7 +4895,7 @@ ${state.leadAnalysis}` : "";
           return isQuota ? lang === "en" ? "AI analysis unavailable \u2014 system busy. Please try again in a few minutes." : "H\u1EC7 th\u1ED1ng AI \u0111ang b\u1EADn, vui l\xF2ng th\u1EED l\u1EA1i sau \xEDt ph\xFAt." : lang === "en" ? "AI analysis temporarily unavailable." : "Ph\xE2n t\xEDch AI t\u1EA1m th\u1EDDi kh\xF4ng kh\u1EA3 d\u1EE5ng.";
         }
       }
-      async getRealtimeValuation(address, area, roadWidth, legal, propertyType) {
+      async getRealtimeValuation(address, area, roadWidth, legal, propertyType, advanced) {
         try {
           const searchPrompt = `
                 B\u1EA1n l\xE0 chuy\xEAn gia \u0111\u1ECBnh gi\xE1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EA1i Vi\u1EC7t Nam v\u1EDBi 20 n\u0103m kinh nghi\u1EC7m.
@@ -4966,6 +4995,7 @@ ${state.leadAnalysis}` : "";
           const locationFactors = aiData.locationFactors || [];
           const monthlyRent = aiData.monthlyRentEstimate || 0;
           const resolvedPropertyType = propertyType || aiData.propertyTypeEstimate || "townhouse_center";
+          const effectiveRent = advanced?.monthlyRent && advanced.monthlyRent > 0 ? advanced.monthlyRent : monthlyRent > 0 ? monthlyRent : void 0;
           const avmResult = applyAVM({
             marketBasePrice,
             area,
@@ -4974,7 +5004,12 @@ ${state.leadAnalysis}` : "";
             confidence,
             marketTrend,
             propertyType: resolvedPropertyType,
-            monthlyRent: monthlyRent > 0 ? monthlyRent : void 0
+            monthlyRent: effectiveRent,
+            // Advanced AVM coefficients from user input
+            floorLevel: advanced?.floorLevel,
+            direction: advanced?.direction,
+            frontageWidth: advanced?.frontageWidth,
+            furnishing: advanced?.furnishing
           });
           const allFactors = [
             ...avmResult.factors,
@@ -5007,6 +5042,7 @@ ${state.leadAnalysis}` : "";
           const regional = getRegionalBasePrice(address);
           const resolvedPropertyType = propertyType || "townhouse_center";
           const { estimateFallbackRent: estimateFallbackRent2 } = await Promise.resolve().then(() => (init_valuationEngine(), valuationEngine_exports));
+          const fallbackRent = advanced?.monthlyRent && advanced.monthlyRent > 0 ? advanced.monthlyRent : estimateFallbackRent2(Math.round(regional.price * area), resolvedPropertyType, area);
           const avmResult = applyAVM({
             marketBasePrice: regional.price,
             area,
@@ -5015,11 +5051,12 @@ ${state.leadAnalysis}` : "";
             confidence: regional.confidence,
             marketTrend: `\u01AF\u1EDBc t\xEDnh theo khu v\u1EF1c ${regional.region} \u2014 kh\xF4ng c\xF3 d\u1EEF li\u1EC7u realtime`,
             propertyType: resolvedPropertyType,
-            monthlyRent: estimateFallbackRent2(
-              Math.round(regional.price * area),
-              resolvedPropertyType,
-              area
-            )
+            monthlyRent: fallbackRent,
+            // Advanced AVM coefficients from user input
+            floorLevel: advanced?.floorLevel,
+            direction: advanced?.direction,
+            frontageWidth: advanced?.frontageWidth,
+            furnishing: advanced?.furnishing
           });
           return {
             basePrice: regional.price,
@@ -5369,10 +5406,16 @@ async function brevoSendEmail(options) {
       email: process.env.BREVO_FROM_EMAIL || "thientran022003@gmail.com",
       name: process.env.BREVO_FROM_NAME || "SGS LAND"
     };
+    const effectiveSender = options.from ?? defaultFrom;
+    if (effectiveSender.email.endsWith("@gmail.com")) {
+      logger.warn(
+        `[Brevo] \u26A0\uFE0F  Sender is ${effectiveSender.email} (Gmail). Gmail DMARC p=reject will cause silent delivery failure at most recipients. Set BREVO_FROM_EMAIL env var to a verified non-Gmail sender (e.g. noreply@sgsland.vn).`
+      );
+    }
     const payload = {
       to: toArray,
       subject: options.subject,
-      sender: options.from ?? defaultFrom
+      sender: effectiveSender
     };
     if (options.html) payload.htmlContent = options.html;
     if (options.text) payload.textContent = options.text;
@@ -5918,7 +5961,8 @@ var UserRepository = class extends BaseRepository {
     const hash2 = await bcrypt.hash(newPassword, SALT_ROUNDS);
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(
-        `UPDATE users SET password_hash = $1 WHERE id = $2`,
+        `UPDATE users SET password_hash = $1, updated_at = NOW()
+         WHERE id = $2 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid`,
         [hash2, id]
       );
       return (result.rowCount ?? 0) > 0;
@@ -6160,13 +6204,32 @@ function isValidUUID(val) {
 function sanitizeString(val) {
   return val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 }
-function sanitizeObject(obj) {
+var SENSITIVE_KEYS = /* @__PURE__ */ new Set([
+  "password",
+  "currentPassword",
+  "newPassword",
+  "confirmPassword",
+  "secret",
+  "token",
+  "apiKey",
+  "api_key",
+  "privateKey",
+  "private_key"
+]);
+function sanitizeObject(obj, parentKey) {
   if (typeof obj === "string") return sanitizeString(obj);
-  if (Array.isArray(obj)) return obj.map(sanitizeObject);
+  if (Array.isArray(obj)) return obj.map((item) => sanitizeObject(item));
   if (obj && typeof obj === "object") {
     const sanitized = {};
     for (const [key, value] of Object.entries(obj)) {
-      sanitized[sanitizeString(key)] = sanitizeObject(value);
+      const sanitizedKey = sanitizeString(key);
+      const isSensitive = SENSITIVE_KEYS.has(key) || SENSITIVE_KEYS.has(parentKey ?? "");
+      Object.defineProperty(sanitized, sanitizedKey, {
+        value: isSensitive ? value : sanitizeObject(value, key),
+        writable: true,
+        enumerable: true,
+        configurable: true
+      });
     }
     return sanitized;
   }
@@ -6284,7 +6347,12 @@ var schemas = {
   },
   aiValuation: {
     address: { required: true, type: "string", minLength: 1 },
-    area: { required: true, type: "number", min: 0 }
+    area: { required: true, type: "number", min: 0 },
+    // Optional advanced inputs (Kfl, Kdir, Kmf, Kfurn)
+    roadWidth: { required: false, type: "number", min: 0 },
+    floorLevel: { required: false, type: "number", min: 0 },
+    frontageWidth: { required: false, type: "number", min: 0 },
+    monthlyRent: { required: false, type: "number", min: 0 }
   }
 };
 
@@ -8858,7 +8926,10 @@ function createUserRoutes(authenticateToken) {
           }
         }
       }
-      await userRepository.updatePassword(user.tenantId, String(req.params.id), newPassword);
+      const updated = await userRepository.updatePassword(user.tenantId, String(req.params.id), newPassword);
+      if (!updated) {
+        return res.status(404).json({ error: "Kh\xF4ng t\xECm th\u1EA5y ng\u01B0\u1EDDi d\xF9ng ho\u1EB7c kh\xF4ng c\xF3 quy\u1EC1n c\u1EADp nh\u1EADt" });
+      }
       res.json({ message: "\u0110\u1ED5i m\u1EADt kh\u1EA9u th\xE0nh c\xF4ng" });
     } catch (error48) {
       console.error("Error updating password:", error48);
@@ -12107,6 +12178,7 @@ import multer from "multer";
 import path3 from "path";
 import fs3 from "fs";
 import crypto2 from "crypto";
+import { fileTypeFromFile } from "file-type";
 var UPLOAD_BASE2 = path3.join(process.cwd(), "uploads");
 var MAX_FILE_SIZE = 10 * 1024 * 1024;
 var MAX_FILES = 10;
@@ -12115,6 +12187,15 @@ var ALLOWED_MIMES = {
   document: ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword", "text/plain"]
 };
 var ALL_ALLOWED = [...ALLOWED_MIMES.image, ...ALLOWED_MIMES.document];
+var ALLOWED_REAL_MIMES = /* @__PURE__ */ new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/x-cfb"
+]);
 var MIME_TO_EXT = {
   "image/jpeg": ".jpg",
   "image/png": ".png",
@@ -12180,20 +12261,44 @@ function handleMulterError(err, _req, res, next) {
 }
 function createUploadRoutes(authenticateToken) {
   const router = Router18();
-  router.post("/", authenticateToken, upload.array("files", MAX_FILES), handleMulterError, (req, res) => {
+  router.post("/", authenticateToken, upload.array("files", MAX_FILES), handleMulterError, async (req, res) => {
     try {
       const files = req.files;
       if (!files || files.length === 0) {
         return res.status(400).json({ error: "No files uploaded" });
       }
       const tenantId = req.tenantId || DEFAULT_TENANT_ID;
-      const uploaded = files.map((f) => ({
+      const accepted = [];
+      const rejected = [];
+      for (const f of files) {
+        if (f.mimetype === "text/plain") {
+          accepted.push(f);
+          continue;
+        }
+        const detected = await fileTypeFromFile(f.path);
+        if (!detected || !ALLOWED_REAL_MIMES.has(detected.mime)) {
+          fs3.unlinkSync(f.path);
+          rejected.push(f.originalname);
+          continue;
+        }
+        accepted.push(f);
+      }
+      if (accepted.length === 0) {
+        return res.status(415).json({
+          error: "All files were rejected: file content does not match an allowed type.",
+          rejected
+        });
+      }
+      const uploaded = accepted.map((f) => ({
         filename: f.filename,
         originalName: f.originalname,
         mimetype: f.mimetype,
         size: f.size,
         url: `/uploads/${tenantId}/${f.filename}`
       }));
+      if (rejected.length > 0) {
+        return res.json({ files: uploaded, warnings: [`${rejected.length} file(s) rejected \u2014 content did not match declared type: ${rejected.join(", ")}`] });
+      }
       res.json({ files: uploaded });
     } catch (error48) {
       console.error("Upload error:", error48);
@@ -28611,7 +28716,12 @@ function preventParamPollution(req, res, next) {
     for (const [key, value] of Object.entries(req.query)) {
       if (UNSAFE_QUERY_KEYS.has(key)) continue;
       if (Array.isArray(value)) {
-        req.query[key] = value[value.length - 1];
+        Object.defineProperty(req.query, key, {
+          value: value[value.length - 1],
+          writable: true,
+          enumerable: true,
+          configurable: true
+        });
       }
     }
   }
@@ -33087,6 +33197,25 @@ async function startServer() {
       if (!enterpriseConfig?.sso?.enabled) {
         return res.status(403).json({ error: "SSO is not enabled for this organisation. Please contact your administrator." });
       }
+      const ssoSecret = process.env.SSO_SECRET;
+      if (isProduction && !ssoSecret) {
+        logger.warn("[Security] SSO_SECRET is not configured \u2014 blocking SSO login in production.");
+        return res.status(500).json({ error: "SSO is not properly configured on the server." });
+      }
+      if (ssoSecret) {
+        const provided = req.headers["x-sso-secret"];
+        if (!provided) {
+          writeAuditLog(tenantId, "system", "LOGIN_FAILED", "auth", void 0, { email: email3, reason: "missing_sso_secret" }, req.ip);
+          return res.status(401).json({ error: "Missing X-SSO-Secret header" });
+        }
+        const { timingSafeEqual: timingSafeEqual2, createHash: createHash2 } = await import("crypto");
+        const a = createHash2("sha256").update(provided).digest();
+        const b = createHash2("sha256").update(ssoSecret).digest();
+        if (!timingSafeEqual2(a, b)) {
+          writeAuditLog(tenantId, "system", "LOGIN_FAILED", "auth", void 0, { email: email3, reason: "invalid_sso_secret" }, req.ip);
+          return res.status(401).json({ error: "Invalid SSO secret" });
+        }
+      }
       let dbUser = await userRepository.findByEmail(tenantId, email3);
       if (!dbUser) {
         dbUser = await userRepository.create(tenantId, {
@@ -33299,7 +33428,10 @@ async function startServer() {
       }
       const userId = result.rows[0].user_id;
       const tenantId = DEFAULT_TENANT_ID;
-      await userRepository.updatePassword(tenantId, userId, newPassword);
+      const pwUpdated = await userRepository.updatePassword(tenantId, userId, newPassword);
+      if (!pwUpdated) {
+        return res.status(500).json({ error: "Failed to update password" });
+      }
       await withTenantContext(tenantId, async (client) => {
         await client.query(
           `UPDATE users SET status = 'ACTIVE' WHERE id = $1 AND status = 'PENDING'`,
@@ -33381,10 +33513,28 @@ async function startServer() {
   });
   app.post("/api/ai/valuation", aiRateLimit, validateBody(schemas.aiValuation), async (req, res) => {
     try {
-      const { address, area, roadWidth, legal, propertyType } = req.body;
+      const {
+        address,
+        area,
+        roadWidth,
+        legal,
+        propertyType,
+        // Advanced AVM inputs (Kfl, Kdir, Kmf, Kfurn)
+        floorLevel,
+        direction,
+        frontageWidth,
+        furnishing,
+        monthlyRent
+      } = req.body;
       const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
       const [result] = await Promise.all([
-        aiService2.getRealtimeValuation(address, area, roadWidth, legal, propertyType),
+        aiService2.getRealtimeValuation(address, area, roadWidth, legal, propertyType, {
+          floorLevel: floorLevel !== void 0 ? Number(floorLevel) : void 0,
+          direction: direction || void 0,
+          frontageWidth: frontageWidth !== void 0 ? Number(frontageWidth) : void 0,
+          furnishing: furnishing || void 0,
+          monthlyRent: monthlyRent !== void 0 ? Number(monthlyRent) : void 0
+        }),
         // Populate/warm the market data cache from this request (fire-and-forget)
         marketDataService.getMarketData(address).catch(() => null)
       ]);
