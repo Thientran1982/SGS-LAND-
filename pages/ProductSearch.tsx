@@ -343,21 +343,21 @@ export const ProductSearch: React.FC = () => {
                 <div className="max-w-[1920px] mx-auto">
                     {/* Top Row: Brand & Search & Login */}
                     <div className="px-4 md:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-                        <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-                            {/* Logo / Back */}
-                            <div className="flex items-center gap-2 shrink-0">
-                                <button onClick={handleHome} className="p-2 text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-[var(--glass-surface-hover)] min-w-[44px] min-h-[44px] flex items-center justify-center">
-                                    {ICONS.BACK}
-                                </button>
-                                <div onClick={handleHome} className="flex items-center gap-2 cursor-pointer">
-                                    <Logo className="w-7 h-7 text-indigo-600" />
-                                    <span className="font-bold text-lg tracking-tight hidden sm:inline">SGS<span className="text-slate-400">MARKET</span></span>
-                                </div>
+                        <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+                            {/* Left: Back button */}
+                            <button onClick={handleHome} className="p-2 text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-[var(--glass-surface-hover)] min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0">
+                                {ICONS.BACK}
+                            </button>
+
+                            {/* Center: Logo — centered on mobile, left-aligned on desktop */}
+                            <div onClick={handleHome} className="flex items-center gap-2 cursor-pointer flex-1 justify-center sm:flex-none sm:justify-start">
+                                <Logo className="w-7 h-7 text-indigo-600 shrink-0" />
+                                <span className="font-bold text-lg tracking-tight hidden sm:inline">SGS<span className="text-slate-400">MARKET</span></span>
                             </div>
 
                             {/* Right: Login (Mobile only) */}
                             <div className="shrink-0 flex items-center justify-end sm:hidden">
-                                <button onClick={handleLogin} className="px-5 py-2 min-h-[44px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center whitespace-nowrap shrink-0">
+                                <button onClick={handleLogin} className="px-5 py-2 min-h-[44px] bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-95 flex items-center justify-center whitespace-nowrap">
                                     {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
                                 </button>
                             </div>
