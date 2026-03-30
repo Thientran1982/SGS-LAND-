@@ -297,7 +297,19 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         localStorage.setItem(CONSTANTS.STORAGE_KEY, theme);
     }, [theme]);
 
-    // 3. Listen for cross-tab changes (Storage Event)
+    // 3. Listen for OS/system color-scheme changes in real-time
+    useEffect(() => {
+        const mq = window.matchMedia(CONSTANTS.MEDIA_QUERY);
+        const handleOsChange = (e: MediaQueryListEvent) => {
+            const newTheme: ThemeMode = e.matches ? 'dark' : 'light';
+            setThemeState(newTheme);
+            try { localStorage.setItem(CONSTANTS.STORAGE_KEY, newTheme); } catch (_) {}
+        };
+        mq.addEventListener('change', handleOsChange);
+        return () => mq.removeEventListener('change', handleOsChange);
+    }, []);
+
+    // 4. Listen for cross-tab changes (Storage Event)
     useEffect(() => {
         const handleStorageChange = (e: StorageEvent) => {
             if (e.key === CONSTANTS.STORAGE_KEY && e.newValue) {
