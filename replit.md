@@ -444,6 +444,19 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 4. **`fetchFavorites` stale closure** — empty deps `[]` while using `t` via `notify`; changed to `[t, notify]`
 - New locale key: `favorites.remove_confirm` (VI + EN)
 
+### Inbox AI Auto-Response Persistence Fix (March 2026)
+**Root cause:** `getInboxThreads()` in `dbApi.ts` hardcoded `status: ThreadStatus.AI_ACTIVE` for every thread — no DB column existed. Every page refresh reset all threads to AI=ON, discarding agent toggles.
+**Fix applied:**
+- **Migration 039** (`server/migrations/039_leads_thread_status.ts`): Added `thread_status VARCHAR(50) NOT NULL DEFAULT 'AI_ACTIVE'` column to `leads` table + index
+- **`interactionRepository.getInboxThreads`**: SQL now selects `COALESCE(l.thread_status, 'AI_ACTIVE') as thread_status`; mapped to `threadStatus` in result
+- **`dbApi.ts` `getInboxThreads`**: Maps `r.threadStatus` to actual `ThreadStatus` enum value (not hardcoded)
+- **New endpoint** `PUT /api/inbox/threads/:leadId/ai-mode` (in `interactionRoutes.ts`): Validates and persists `AI_ACTIVE` or `HUMAN_TAKEOVER` to DB
+- **`inboxApi.ts`**: Added `updateAiMode(leadId, status)` 
+- **`dbApi.ts`**: Added `updateThreadAiMode(leadId, status)` wrapper
+- **`Inbox.tsx` `toggleAiMode`**: Now `async`, calls `db.updateThreadAiMode()` after local state update; reverts on failure
+- **`handleEscalateToHuman`**: Also calls `db.updateThreadAiMode(leadId, 'HUMAN_TAKEOVER')` to persist escalation
+- **Manual send path**: When agent sends without `/` prefix (human takeover), also calls `db.updateThreadAiMode(selectedLeadId, 'HUMAN_TAKEOVER')`
+
 ### Inbox.tsx Audit & Fix (March 2026)
 4 bugs resolved in `pages/Inbox.tsx`:
 1. **Search placeholder wrong key** — `t('inbox.select')` ("Chọn hội thoại xem chi tiết") → `t('common.search')` ("Tìm kiếm")

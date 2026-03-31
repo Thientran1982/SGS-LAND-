@@ -473,7 +473,7 @@ class DatabaseApiClient {
           metadata: {},
         } as any : undefined,
         unreadCount: r.unreadCount || 0,
-        status: ThreadStatus.AI_ACTIVE,
+        status: r.threadStatus === 'HUMAN_TAKEOVER' ? ThreadStatus.HUMAN_TAKEOVER : ThreadStatus.AI_ACTIVE,
         lastChannel: r.lastChannel,
       }));
     } catch {
@@ -500,6 +500,10 @@ class DatabaseApiClient {
 
   async markThreadAsRead(leadId: string) {
     return inboxApi.markAsRead(leadId);
+  }
+
+  async updateThreadAiMode(leadId: string, status: 'AI_ACTIVE' | 'HUMAN_TAKEOVER') {
+    return inboxApi.updateAiMode(leadId, status);
   }
 
   async deleteConversation(leadId: string) {

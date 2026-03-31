@@ -114,7 +114,8 @@ export class InteractionRepository extends BaseRepository {
           lm.last_direction,
           lm.last_timestamp,
           lm.last_type,
-          COALESCE(uc.unread_count, 0) as unread_count
+          COALESCE(uc.unread_count, 0) as unread_count,
+          COALESCE(l.thread_status, 'AI_ACTIVE') as thread_status
         FROM latest_messages lm
         INNER JOIN leads l ON lm.lead_id = l.id
         LEFT JOIN users u ON l.assigned_to = u.id
@@ -137,6 +138,7 @@ export class InteractionRepository extends BaseRepository {
         lastTimestamp: row.last_timestamp,
         lastType: row.last_type,
         unreadCount: row.unread_count,
+        threadStatus: row.thread_status,
       }));
     });
   }
@@ -146,6 +148,15 @@ export class InteractionRepository extends BaseRepository {
       await client.query(
         `UPDATE interactions SET status = 'READ' WHERE lead_id = $1 AND direction = 'INBOUND' AND status != 'READ'`,
         [leadId]
+      );
+    });
+  }
+
+  async updateThreadAiMode(tenantId: string, leadId: string, status: 'AI_ACTIVE' | 'HUMAN_TAKEOVER'): Promise<void> {
+    return this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `UPDATE leads SET thread_status = $1, updated_at = NOW() WHERE id = $2`,
+        [status, leadId]
       );
     });
   }

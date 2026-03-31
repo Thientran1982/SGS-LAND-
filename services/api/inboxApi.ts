@@ -7,6 +7,9 @@ export const inboxApi = {
   markAsRead: (leadId: string): Promise<any> =>
     api.put(`/api/inbox/threads/${leadId}/read`),
 
+  updateAiMode: (leadId: string, status: 'AI_ACTIVE' | 'HUMAN_TAKEOVER'): Promise<any> =>
+    api.put(`/api/inbox/threads/${leadId}/ai-mode`, { status }),
+
   deleteConversation: (leadId: string): Promise<any> =>
     api.delete(`/api/inbox/threads/${leadId}`),
 

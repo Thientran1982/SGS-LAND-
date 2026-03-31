@@ -57,6 +57,7 @@ import m035 from './035_fix_hcmc_images_verified';
 import m036 from './036_hanoi_fix_and_dongnai_article';
 import m037 from './037_newsletter_subscribers';
 import m038 from './038_normalize_user_roles_uppercase';
+import m039 from './039_leads_thread_status';
 
 dotenv.config();
 
@@ -110,6 +111,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '036_hanoi_fix_and_dongnai_article.ts': m036,
   '037_newsletter_subscribers.ts': m037,
   '038_normalize_user_roles_uppercase.ts': m038,
+  '039_leads_thread_status.ts': m039,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

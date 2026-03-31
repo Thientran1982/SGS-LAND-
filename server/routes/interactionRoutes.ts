@@ -26,6 +26,21 @@ export function createInteractionRoutes(authenticateToken: any) {
     }
   });
 
+  router.put('/threads/:leadId/ai-mode', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { status } = req.body;
+      if (!['AI_ACTIVE', 'HUMAN_TAKEOVER'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status. Must be AI_ACTIVE or HUMAN_TAKEOVER' });
+      }
+      await interactionRepository.updateThreadAiMode(user.tenantId, String(req.params.leadId), status);
+      res.json({ leadId: req.params.leadId, status });
+    } catch (error) {
+      console.error('Error updating thread AI mode:', error);
+      res.status(500).json({ error: 'Failed to update AI mode' });
+    }
+  });
+
   router.delete('/threads/:leadId', authenticateToken, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;

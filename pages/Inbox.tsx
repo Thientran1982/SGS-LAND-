@@ -293,6 +293,7 @@ export const Inbox: React.FC = () => {
             const { leadId } = data;
             setAutoResponseMap(prev => ({ ...prev, [leadId]: false }));
             notify(t('inbox.escalated_to_human') || 'Đã chuyển sang hỗ trợ thủ công', 'error');
+            db.updateThreadAiMode(leadId, 'HUMAN_TAKEOVER').catch(() => {});
         };
 
         socket.on("receive_message", handleNewMessage);
@@ -379,6 +380,7 @@ export const Inbox: React.FC = () => {
                 if (autoResponseMapRef.current[selectedLeadId]) {
                     setAutoResponseMap(prev => ({ ...prev, [selectedLeadId]: false }));
                     notify(t('inbox.manual_enabled'), "success");
+                    db.updateThreadAiMode(selectedLeadId, 'HUMAN_TAKEOVER').catch(() => {});
                 }
 
                 const agentMsg = await db.sendInteraction(selectedLeadId, input, channel);
@@ -399,11 +401,18 @@ export const Inbox: React.FC = () => {
     };
 
     // --- TOGGLE AI MODE ---
-    const toggleAiMode = (e: React.MouseEvent, leadId: LeadId) => {
+    const toggleAiMode = async (e: React.MouseEvent, leadId: LeadId) => {
         e.stopPropagation();
         const newState = !autoResponseMap[leadId];
         setAutoResponseMap(prev => ({ ...prev, [leadId]: newState }));
         notify(newState ? t('inbox.ai_activated') : t('inbox.manual_enabled'), "success");
+        try {
+            await db.updateThreadAiMode(leadId, newState ? 'AI_ACTIVE' : 'HUMAN_TAKEOVER');
+        } catch {
+            // Revert on failure
+            setAutoResponseMap(prev => ({ ...prev, [leadId]: !newState }));
+            notify(t('inbox.ai_mode_save_error') || 'Không thể lưu cài đặt AI', 'error');
+        }
     };
 
     // --- FILE UPLOAD LOGIC ---
