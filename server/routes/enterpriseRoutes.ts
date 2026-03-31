@@ -308,7 +308,9 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
         return res.status(400).json({ error: 'appId, oaId và oaName là bắt buộc' });
       }
 
-      const webhookUrl = `${process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`}/api/webhooks/zalo`;
+      const baseUrl = process.env.PUBLIC_URL
+        || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `${req.protocol}://${req.get('host')}`);
+      const webhookUrl = `${baseUrl}/api/webhooks/zalo`;
 
       const zaloConfig = {
         enabled: true,
