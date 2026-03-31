@@ -155,8 +155,8 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
       const { pool } = await import('../db');
       await pool.query(
-        `INSERT INTO password_reset_tokens (tenant_id, user_id, token, expires_at) VALUES ($1, $2, $3, $4)`,
-        [user.tenantId, invited.id, tokenHash, expiresAt]
+        `INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
+        [invited.id, tokenHash, expiresAt]
       );
 
       const baseUrl = process.env.REPLIT_DEV_DOMAIN
@@ -249,8 +249,8 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
         [target.id]
       );
       await pool.query(
-        `INSERT INTO password_reset_tokens (tenant_id, user_id, token, expires_at) VALUES ($1, $2, $3, $4)`,
-        [user.tenantId, target.id, tokenHash, expiresAt]
+        `INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
+        [target.id, tokenHash, expiresAt]
       );
 
       const baseUrl = process.env.REPLIT_DEV_DOMAIN
