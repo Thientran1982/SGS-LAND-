@@ -286,7 +286,7 @@ class DatabaseApiClient {
       if (filters?.priceMin) params.priceMin = filters.priceMin;
       if (filters?.priceMax) params.priceMax = filters.priceMax;
       if (filters?.projectCode) params.projectCode = filters.projectCode;
-      const result = await api.get<any>('/api/public/listings', { params });
+      const result = await api.get<any>('/api/public/listings', params);
       return {
         data: result.data || [],
         total: result.total || 0,
@@ -1138,7 +1138,7 @@ class DatabaseApiClient {
 
   async getSimilarListings(listingId: string) {
     try {
-      const result = await api.get<any>('/api/public/listings', { params: { page: 1, pageSize: 8 } });
+      const result = await api.get<any>('/api/public/listings', { page: 1, pageSize: 8 });
       const items: any[] = result.data || [];
       return items.filter((l: any) => l.id !== listingId).slice(0, 4);
     } catch {

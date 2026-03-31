@@ -17,7 +17,6 @@ import { copyToClipboard } from '../utils/clipboard';
 import { ListingForm } from '../components/ListingForm';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Lock, Plus, Edit2, Trash2, Download, Upload, Sparkles, MoreVertical } from 'lucide-react';
-import ExcelJS from 'exceljs';
 
 // Icons with pointer-events-none to prevent click hijacking
 const ICONS = {
@@ -660,6 +659,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
     }, [tenantUsers, t, notify]);
 
     const handleExportExcel = async () => {
+        const ExcelJS = (await import('exceljs')).default;
         const wb = new ExcelJS.Workbook();
         const ws = wb.addWorksheet('Danh_sach_san_pham');
 
@@ -741,6 +741,7 @@ const ProjectUnits = memo(({ projectCode, parentLocation, parentContactPhone, t,
         reader.onload = async (evt) => {
             try {
                 const arrayBuffer = evt.target?.result as ArrayBuffer;
+                const ExcelJS = (await import('exceljs')).default;
                 const wb = new ExcelJS.Workbook();
                 await wb.xlsx.load(arrayBuffer);
                 const ws = wb.worksheets[0];

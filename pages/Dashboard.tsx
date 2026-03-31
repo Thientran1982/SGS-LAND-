@@ -2,7 +2,6 @@
 import React, { useEffect, useState, memo, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { 
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
     BarChart, Bar, LineChart, Line, ComposedChart, Legend, ScatterChart, Scatter, ZAxis, Cell
@@ -434,6 +433,7 @@ export const Dashboard: React.FC = () => {
             });
             
             const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = await import('jspdf');
             const pdf = new jsPDF({
                 orientation: canvas.width > canvas.height ? 'l' : 'p',
                 unit: 'px',

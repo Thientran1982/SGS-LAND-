@@ -11,7 +11,6 @@ import { Dropdown } from '../components/Dropdown';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useSocket } from '../services/websocket';
 import { aiService } from '../services/aiService';
-import ExcelJS from 'exceljs';
 
 // -----------------------------------------------------------------------------
 //  CONSTANTS & STYLES
@@ -868,6 +867,7 @@ export const Leads: React.FC = () => {
                 exportPage++;
             } while (exportPage <= totalPages);
 
+            const ExcelJS = (await import('exceljs')).default;
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Leads');
 
@@ -944,6 +944,7 @@ export const Leads: React.FC = () => {
 
             setLoading(true);
             try {
+                const ExcelJS = (await import('exceljs')).default;
                 const wb = new ExcelJS.Workbook();
                 await wb.xlsx.load(arrayBuffer as ArrayBuffer);
                 const ws = wb.worksheets[0];
