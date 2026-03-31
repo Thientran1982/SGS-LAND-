@@ -53,6 +53,7 @@ import m031 from './031_enrich_article_images';
 import m032 from './032_update_articles_to_2026';
 import m033 from './033_fix_hcmc_cover_image';
 import m034 from './034_update_dates_march_2026';
+import m035 from './035_fix_hcmc_images_verified';
 
 dotenv.config();
 
@@ -102,6 +103,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '032_update_articles_to_2026.ts': m032,
   '033_fix_hcmc_cover_image.ts': m033,
   '034_update_dates_march_2026.ts': m034,
+  '035_fix_hcmc_images_verified.ts': m035,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
