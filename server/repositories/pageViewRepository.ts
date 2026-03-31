@@ -67,7 +67,7 @@ class PageViewRepository extends BaseRepository {
            SELECT
              user_id,
              COUNT(*)::int AS total_views,
-             COUNT(*) FILTER (WHERE visited_at >= NOW() - INTERVAL '30 days')::int AS views_30d,
+             COUNT(*) FILTER (WHERE visited_at >= NOW() - INTERVAL '30 days')::int AS views30d,
              ${rangeFilter}
              MIN(visited_at) AS first_visit,
              MAX(visited_at) AS last_visit
@@ -88,7 +88,7 @@ class PageViewRepository extends BaseRepository {
            u.role AS user_role,
            u.avatar AS user_avatar,
            COALESCE(pv.total_views, 0) AS total_views,
-           COALESCE(pv.views_30d, 0) AS views_30d,
+           COALESCE(pv.views30d, 0) AS views30d,
            COALESCE(pv.views_in_range, 0) AS views_in_range,
            pv.first_visit,
            pv.last_visit,
