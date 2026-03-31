@@ -39,8 +39,8 @@ interface EmailResult {
 }
 
 // ── Shared email base layout ──────────────────────────────────────────────────
-// Uses table-based layout for maximum email client compatibility.
-// No linear-gradient, no display:inline-block on <td>, no border-radius on <td> cells.
+// Table-based layout + @media queries for full mobile responsiveness.
+// Tested compatible with: Gmail (web/app), Apple Mail, Outlook 2016+, iOS Mail, Samsung Mail.
 
 function emailBase(content: string, footerNote?: string): string {
   const year = new Date().getFullYear();
@@ -49,18 +49,39 @@ function emailBase(content: string, footerNote?: string): string {
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
   <title>SGS LAND</title>
+  <style type="text/css">
+    /* Reset */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    /* Mobile */
+    @media only screen and (max-width: 620px) {
+      .email-wrapper  { padding: 16px 8px !important; }
+      .email-container{ width: 100% !important; max-width: 100% !important; }
+      .email-header   { padding: 20px 20px !important; }
+      .email-body     { padding: 24px 20px 20px !important; }
+      .email-footer   { padding: 16px 20px !important; }
+      .btn-full       { width: 100% !important; }
+      .btn-link       { display: block !important; padding: 14px 20px !important; text-align: center !important; }
+      h1.email-title  { font-size: 19px !important; }
+      p.email-lead    { font-size: 14px !important; }
+      .hide-mobile    { display: none !important; }
+    }
+  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#F1F5F9;font-family:Arial,Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background-color:#F1F5F9;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+
 <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F1F5F9">
   <tr>
-    <td align="center" valign="top" style="padding:40px 16px;">
+    <td align="center" valign="top" class="email-wrapper" style="padding:40px 16px;">
 
-      <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;">
+      <table class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
 
         <!-- HEADER -->
         <tr>
-          <td bgcolor="#1E293B" style="padding:28px 40px;text-align:center;border-radius:12px 12px 0 0;">
+          <td class="email-header" bgcolor="#1E293B" style="padding:24px 40px;text-align:center;border-radius:12px 12px 0 0;">
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td align="center" style="padding-bottom:8px;">
@@ -68,7 +89,7 @@ function emailBase(content: string, footerNote?: string): string {
                     <tr>
                       <td bgcolor="#4F46E5" style="padding:7px 16px;border-radius:8px;">
                         <span style="color:#FFFFFF;font-size:16px;font-weight:bold;letter-spacing:3px;font-family:Arial,sans-serif;">SGS</span>
-                        <span style="color:#A5B4FC;font-size:16px;font-weight:bold;letter-spacing:3px;font-family:Arial,sans-serif;"> LAND</span>
+                        <span style="color:#A5B4FC;font-size:16px;font-weight:bold;letter-spacing:3px;font-family:Arial,sans-serif;">&nbsp;LAND</span>
                       </td>
                     </tr>
                   </table>
@@ -85,14 +106,14 @@ function emailBase(content: string, footerNote?: string): string {
 
         <!-- BODY -->
         <tr>
-          <td bgcolor="#FFFFFF" style="padding:36px 40px 28px;border-left:1px solid #E2E8F0;border-right:1px solid #E2E8F0;">
+          <td class="email-body" bgcolor="#FFFFFF" style="padding:32px 40px 24px;border-left:1px solid #E2E8F0;border-right:1px solid #E2E8F0;">
             ${content}
           </td>
         </tr>
 
         <!-- FOOTER -->
         <tr>
-          <td bgcolor="#F8FAFC" style="padding:20px 40px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 12px 12px;text-align:center;">
+          <td class="email-footer" bgcolor="#F8FAFC" style="padding:18px 40px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 12px 12px;text-align:center;">
             ${footerNote ? `<p style="color:#64748B;font-size:12px;line-height:1.6;margin:0 0 10px;font-family:Arial,sans-serif;">${footerNote}</p>` : ''}
             <p style="color:#94A3B8;font-size:11px;margin:0;line-height:1.8;font-family:Arial,sans-serif;">
               &copy; ${year} SGS LAND &mdash; Enterprise Real Estate Platform<br />
@@ -112,10 +133,10 @@ function emailBase(content: string, footerNote?: string): string {
 }
 
 function primaryButton(href: string, label: string): string {
-  return `<table cellpadding="0" cellspacing="0" border="0" align="center">
+  return `<table class="btn-full" cellpadding="0" cellspacing="0" border="0" align="center" style="min-width:200px;">
   <tr>
-    <td bgcolor="#4F46E5" style="border-radius:8px;padding:0;">
-      <a href="${href}" style="display:block;padding:14px 36px;color:#FFFFFF;font-size:15px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;letter-spacing:0.3px;border-radius:8px;white-space:nowrap;">${label}</a>
+    <td bgcolor="#4F46E5" style="border-radius:8px;padding:0;text-align:center;">
+      <a href="${href}" class="btn-link" style="display:inline-block;padding:14px 36px;color:#FFFFFF;font-size:15px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;letter-spacing:0.3px;border-radius:8px;">${label}</a>
     </td>
   </tr>
 </table>`;
@@ -123,9 +144,9 @@ function primaryButton(href: string, label: string): string {
 
 function divider(): string {
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr><td style="border-top:1px solid #E2E8F0;font-size:0;line-height:0;">&nbsp;</td></tr>
+  <tr><td style="border-top:1px solid #E2E8F0;font-size:0;line-height:0;height:1px;">&nbsp;</td></tr>
 </table>
-<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:20px;">&nbsp;</td></tr></table>`;
+<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:20px;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
 }
 
 function linkBox(url: string): string {
@@ -133,7 +154,7 @@ function linkBox(url: string): string {
   <tr>
     <td bgcolor="#F8FAFC" style="padding:14px 18px;border:1px solid #E2E8F0;border-radius:8px;">
       <p style="color:#64748B;font-size:11px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">Hoặc dán link này vào trình duyệt:</p>
-      <p style="color:#4F46E5;font-size:11px;word-break:break-all;margin:0;font-family:'Courier New',monospace;">${url}</p>
+      <p style="color:#4F46E5;font-size:11px;word-break:break-all;margin:0;font-family:'Courier New',monospace;line-height:1.5;">${url}</p>
     </td>
   </tr>
 </table>`;
@@ -144,7 +165,7 @@ function warningBox(title: string, body: string): string {
   <tr>
     <td bgcolor="#FFF7ED" style="padding:14px 18px;border:1px solid #FED7AA;border-radius:8px;">
       <p style="color:#92400E;font-size:12px;font-weight:bold;margin:0 0 4px;font-family:Arial,sans-serif;">${title}</p>
-      <p style="color:#78350F;font-size:12px;line-height:1.6;margin:0;font-family:Arial,sans-serif;">${body}</p>
+      <p style="color:#78350F;font-size:12px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">${body}</p>
     </td>
   </tr>
 </table>`;
@@ -153,8 +174,8 @@ function warningBox(title: string, body: string): string {
 function iconCircle(bgColor: string, emoji: string): string {
   return `<table cellpadding="0" cellspacing="0" border="0" align="center">
   <tr>
-    <td width="64" height="64" bgcolor="${bgColor}" align="center" valign="middle" style="border-radius:32px;width:64px;height:64px;text-align:center;">
-      <span style="font-size:28px;line-height:1;font-family:Arial,sans-serif;">${emoji}</span>
+    <td width="64" height="64" bgcolor="${bgColor}" align="center" valign="middle" style="border-radius:32px;width:64px;height:64px;text-align:center;font-size:28px;font-family:Arial,sans-serif;">
+      ${emoji}
     </td>
   </tr>
 </table>`;
@@ -264,7 +285,7 @@ async function sendVerificationEmail(tenantId: string, to: string, userName: str
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center"><h1 style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Xác Minh Địa Chỉ Email</h1></td></tr>
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Xác Minh Địa Chỉ Email</h1></td></tr>
       <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">Một bước nữa để hoàn tất đăng ký</span></td></tr>
     </table>
     ${spacer(24)}
@@ -302,7 +323,7 @@ async function sendPasswordResetEmail(tenantId: string, to: string, resetUrl: st
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center"><h1 style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Đặt Lại Mật Khẩu</h1></td></tr>
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Đặt Lại Mật Khẩu</h1></td></tr>
       <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">Yêu cầu khôi phục mật khẩu tài khoản</span></td></tr>
     </table>
     ${spacer(24)}
@@ -343,7 +364,7 @@ async function sendWelcomeEmail(tenantId: string, to: string, userName: string):
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center"><h1 style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Chào Mừng Đến Với SGS LAND!</h1></td></tr>
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Chào Mừng Đến Với SGS LAND!</h1></td></tr>
       <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">Tài khoản của bạn đã sẵn sàng</span></td></tr>
     </table>
     ${spacer(24)}
@@ -394,7 +415,7 @@ async function sendInviteEmail(tenantId: string, to: string, userName: string, r
     </table>
     ${spacer(20)}
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-      <tr><td align="center"><h1 style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Bạn Được Mời Tham Gia SGS LAND</h1></td></tr>
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Bạn Được Mời Tham Gia SGS LAND</h1></td></tr>
       <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">Lời mời tham gia nền tảng</span></td></tr>
     </table>
     ${spacer(24)}
