@@ -68,24 +68,49 @@ class SubscriptionRepository extends BaseRepository {
   async getUsageSummary(tenantId: string): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const currentPeriod = new Date().toISOString().slice(0, 7);
-      const result = await client.query(
-        `SELECT metric_type, COALESCE(SUM(count), 0)::int as total
-         FROM usage_tracking
-         WHERE period = $1
-         GROUP BY metric_type`,
-        [currentPeriod]
-      );
 
-      const usage: Record<string, number> = {};
-      for (const row of result.rows) {
-        usage[row.metric_type] = row.total;
+      // 1. Seats: count active users in this tenant
+      const seatsResult = await client.query(
+        `SELECT COUNT(*)::int AS total FROM users WHERE status = 'ACTIVE'`
+      );
+      const seatsUsed = seatsResult.rows[0]?.total || 0;
+
+      // 2. Emails: count USER_INVITED + sequence email actions from audit_logs this month
+      let emailsSent = 0;
+      try {
+        const emailResult = await client.query(
+          `SELECT COALESCE(SUM(count), 0)::int AS total
+           FROM usage_tracking
+           WHERE metric_type = 'emails' AND period = $1`,
+          [currentPeriod]
+        );
+        const tracked = emailResult.rows[0]?.total || 0;
+        // Also count invite emails from audit_logs this month
+        const auditEmailResult = await client.query(
+          `SELECT COUNT(*)::int AS total FROM audit_logs
+           WHERE action IN ('USER_INVITED', 'EMAIL_SENT', 'SEQUENCE_EMAIL_SENT')
+             AND created_at >= date_trunc('month', CURRENT_DATE)`
+        );
+        emailsSent = tracked + (auditEmailResult.rows[0]?.total || 0);
+      } catch {
+        emailsSent = 0;
       }
 
-      return {
-        seatsUsed: usage['seats'] || 0,
-        emailsSent: usage['emails'] || 0,
-        aiRequests: usage['ai_requests'] || 0,
-      };
+      // 3. AI requests: from usage_tracking table
+      let aiRequests = 0;
+      try {
+        const aiResult = await client.query(
+          `SELECT COALESCE(SUM(count), 0)::int AS total
+           FROM usage_tracking
+           WHERE metric_type = 'ai_requests' AND period = $1`,
+          [currentPeriod]
+        );
+        aiRequests = aiResult.rows[0]?.total || 0;
+      } catch {
+        aiRequests = 0;
+      }
+
+      return { seatsUsed, emailsSent, aiRequests };
     });
   }
 

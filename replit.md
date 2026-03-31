@@ -404,6 +404,11 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 
 - New locale keys (37): `billing.renews`, `billing.invoice_history`, `billing.inv_id/plan/date/amount/status`, `billing.status_paid/unpaid`, `billing.confirm_upgrade_title`, `billing.csv_title/id/date/plan/status/amount`, `billing.f_individual_{0-4}`, `billing.f_team_{0-5}`, `billing.f_enterprise_{0-6}` (VI + EN)
 
+### Billing.tsx — seatsUsed Bug Fix (March 2026)
+- **Bug**: `getUsageSummary()` in `subscriptionRepository.ts` queried `usage_tracking WHERE metric_type='seats'` which had no rows → `seatsUsed` always 0
+- **Fix**: Updated `getUsageSummary()` to `COUNT(*) FROM users WHERE status='ACTIVE'` for real seat count; `emailsSent` now sums `usage_tracking` + `audit_logs` rows with email actions; `aiRequests` still from `usage_tracking`
+- **Result**: `/api/billing/usage` now returns actual active user count (e.g. `seatsUsed: 2` matching 2 ACTIVE users); progress bar on Billing page shows real data
+
 ### Dashboard.tsx Audit & Fix (March 2026)
 7 bug groups resolved in `pages/Dashboard.tsx`:
 1. **Missing imports** — `useCallback` and `createPortal` were not imported; added to React and react-dom imports
