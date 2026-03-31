@@ -6,7 +6,7 @@ import { UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ROUTE_SEO, SEOConfig, getSEOOverrides, saveSEOOverride, clearSEOOverride, updatePageSEO } from '../utils/seo';
 import { copyToClipboard } from '../utils/clipboard';
-import seoApi from '../services/api/seoApi';
+import seoApi, { SeoOverride } from '../services/api/seoApi';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const ICONS = {
@@ -890,35 +890,32 @@ export const SeoManager: React.FC = () => {
     // Only changes when: user saves a route (onAfterSave) or manually selects from dropdown.
     const [serpSelectedKey, setSerpSelectedKey] = useState<string>('home');
 
-    // On mount: load overrides from server (source of truth) and merge into localStorage.
+    // On mount: load BOTH user session AND server SEO overrides in parallel before rendering.
+    // This prevents the race condition where getCurrentUser resolves first (loading=false)
+    // causing SERP Preview to render with empty overrides (falling back to stale ROUTE_SEO defaults).
     useEffect(() => {
-        seoApi.getAll().then(serverOverrides => {
+        Promise.all([
+            db.getCurrentUser().catch(() => null),
+            seoApi.getAll().catch((): Record<string, SeoOverride> | null => null),
+        ]).then(([u, serverOverrides]) => {
+            setIsAdmin(u?.role === UserRole.ADMIN || u?.role === UserRole.TEAM_LEAD);
+
             const local = getSEOOverrides();
             const merged: Record<string, { title: string; description: string }> = { ...local };
-            for (const [key, ov] of Object.entries(serverOverrides)) {
-                merged[key] = { title: ov.title, description: ov.description };
-                saveSEOOverride(key, ov.title, ov.description);
+            if (serverOverrides) {
+                for (const [key, ov] of Object.entries(serverOverrides)) {
+                    merged[key] = { title: ov.title, description: ov.description };
+                    saveSEOOverride(key, ov.title, ov.description);
+                }
             }
             setOverrides(merged);
             if (Object.keys(merged).length > 0) {
                 applyOverridesToDom(merged);
                 setSchemaVersion(1);
             }
-        }).catch(() => {
-            const stored = getSEOOverrides();
-            if (Object.keys(stored).length > 0) {
-                applyOverridesToDom(stored);
-                setSchemaVersion(1);
-            }
+            setLoading(false);
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    useEffect(() => {
-        db.getCurrentUser().then(u => {
-            setIsAdmin(u?.role === UserRole.ADMIN || u?.role === UserRole.TEAM_LEAD);
-            setLoading(false);
-        }).catch(() => setLoading(false));
     }, []);
 
     const TABS: { id: TabId; label: string }[] = [

@@ -12,14 +12,14 @@ export interface SEOConfig {
 export const ROUTE_SEO: Record<string, SEOConfig> = {
   // Default / root (hash empty)
   '': {
-    title: 'SGS LAND | Phần Mềm Quản Lý Bất Động Sản AI Số 1 Việt Nam',
-    description: 'SGS LAND - Phần mềm quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
+    title: 'SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam',
+    description: 'SGS LAND - Nền tảng quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
     path: '/',
   },
   // ROUTES.LANDING = 'home'
   home: {
-    title: 'SGS LAND | Phần Mềm Quản Lý Bất Động Sản AI Số 1 Việt Nam',
-    description: 'SGS LAND - Phần mềm quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
+    title: 'SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam',
+    description: 'SGS LAND - Nền tảng quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
     path: '/home',
   },
   // ROUTES.SEARCH = 'marketplace'
