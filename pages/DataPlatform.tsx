@@ -204,6 +204,8 @@ export const DataPlatform: React.FC = () => {
         notify(t('data.sync_started'), 'success');
         try {
             await connectorService.runSync(id);
+            // Give server-side async sync time to process before refreshing
+            await new Promise(r => setTimeout(r, 2500));
             fetchData();
         } catch (e: any) {
             notify(e.message, 'error');

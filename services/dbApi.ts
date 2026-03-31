@@ -1327,27 +1327,29 @@ class DatabaseApiClient {
   }
 
   async getConnectorConfigs() {
-    return [];
+    return api.get<any[]>('/api/connectors');
   }
 
   async createConnectorConfig(data: any) {
-    return { id: `conn_${Date.now()}`, ...data };
+    return api.post<any>('/api/connectors', data);
   }
 
   async saveConnectorConfig(id: string, data: any) {
-    return { id, ...data };
+    return api.put<any>(`/api/connectors/${id}`, data);
   }
 
   async deleteConnectorConfig(id: string) {
+    await api.delete<any>(`/api/connectors/${id}`);
     return true;
   }
 
   async getSyncJobs() {
-    return [];
+    return api.get<any[]>('/api/connectors/jobs');
   }
 
   async createSyncJob(data: any) {
-    return { id: `sync_${Date.now()}`, ...data };
+    const connectorId = typeof data === 'string' ? data : data.connectorId;
+    return api.post<any>(`/api/connectors/${connectorId}/sync`, {});
   }
 
   async updateSyncJob(id: string, data: any) {

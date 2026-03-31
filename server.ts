@@ -41,6 +41,7 @@ import { createTenantRoutes } from "./server/routes/tenantRoutes";
 import { createTaskRoutes } from "./server/routes/taskRoutes";
 import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
+import { createConnectorRoutes } from "./server/routes/connectorRoutes";
 import { marketDataService } from "./server/services/marketDataService";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
@@ -1388,6 +1389,7 @@ async function startServer() {
   app.use('/scim/v2', express.json({ type: ['application/json', 'application/scim+json'] }), createScimRoutes());
   // Advanced valuation: multi-source, 7-coefficient AVM + market cache
   app.use('/api/valuation', apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit));
+  app.use('/api/connectors', apiRateLimit, createConnectorRoutes(authenticateToken));
   // B2B2C: project management + partner access control
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
   app.use('/api/tenant', apiRateLimit, createTenantRoutes(authenticateToken));
