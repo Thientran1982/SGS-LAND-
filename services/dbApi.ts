@@ -459,6 +459,7 @@ class DatabaseApiClient {
           attributes: { avatar: r.leadAvatar },
           stage: r.leadStage,
           assignedTo: r.assignedTo,
+          assignedToName: r.assignedToName ?? undefined,
           score: r.leadScore ?? undefined,
         } as any,
         lastMessage: r.lastTimestamp ? {

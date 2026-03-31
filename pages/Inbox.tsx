@@ -89,6 +89,7 @@ export const Inbox: React.FC = () => {
             FACEBOOK: t('inbox.channel_facebook'),
             EMAIL: t('inbox.channel_email'),
             SMS: t('inbox.channel_sms'),
+            WEB: t('inbox.channel_web'),
         };
         return map[ch] ?? ch;
     }, [t]);
@@ -557,7 +558,7 @@ export const Inbox: React.FC = () => {
                             </button>
                         ))}
                         <div className="w-px bg-[var(--glass-border)] self-stretch mx-0.5" />
-                        {(['ALL', Channel.ZALO, Channel.FACEBOOK, Channel.EMAIL, Channel.SMS] as const).map(ch => (
+                        {(['ALL', Channel.WEB, Channel.ZALO, Channel.FACEBOOK, Channel.EMAIL, Channel.SMS] as const).map(ch => (
                             <button
                                 key={ch}
                                 onClick={() => setChannelFilter(ch)}
@@ -609,12 +610,14 @@ export const Inbox: React.FC = () => {
                                                     FACEBOOK: 'bg-[#1877F2]/10 text-[#1877F2]',
                                                     EMAIL: 'bg-indigo-50 text-indigo-600',
                                                     SMS: 'bg-emerald-50 text-emerald-600',
+                                                    WEB: 'bg-violet-50 text-violet-600',
                                                 };
                                                 const badgeLabels: Record<string, string> = {
                                                     ZALO: t('inbox.channel_badge_zalo'),
                                                     FACEBOOK: t('inbox.channel_badge_facebook'),
                                                     EMAIL: t('inbox.channel_badge_email'),
                                                     SMS: t('inbox.channel_badge_sms'),
+                                                    WEB: t('inbox.channel_badge_web'),
                                                 };
                                                 return (
                                                     <span className={`text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 ${styles[ch] || 'bg-slate-100 text-slate-500'}`}
