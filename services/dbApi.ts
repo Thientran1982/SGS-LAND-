@@ -632,7 +632,7 @@ class DatabaseApiClient {
         email: { enabled: false, host: '', port: 587, secure: false, user: '', password: '', fromName: 'SGS LAND', fromAddress: '' },
         ipAllowlist: [],
         sessionTimeoutMins: 480,
-        retention: { days: 365, autoDelete: false },
+        retention: { messagesDays: 365, auditLogsDays: 730 },
         legalHold: false,
         dlpRules: [],
         slaConfig: { responseTimeMinutes: 30, escalationTimeMinutes: 120 },
@@ -1355,16 +1355,33 @@ class DatabaseApiClient {
   }
 
   async getComplianceConfig(): Promise<ComplianceConfig> {
-    return {
-      retention: { messagesDays: 365, auditLogsDays: 730 },
-      legalHold: false,
-      dlpRules: [],
-      ipAllowlist: [],
-    };
+    try {
+      const config = await this.getEnterpriseConfig();
+      return {
+        retention: config.retention ?? { messagesDays: 365, auditLogsDays: 730 },
+        legalHold: config.legalHold ?? false,
+        dlpRules: config.dlpRules ?? [],
+        ipAllowlist: config.ipAllowlist ?? [],
+      };
+    } catch {
+      return { retention: { messagesDays: 365, auditLogsDays: 730 }, legalHold: false, dlpRules: [], ipAllowlist: [] };
+    }
   }
 
-  async saveComplianceConfig(data: any) {
-    return data;
+  async saveComplianceConfig(data: ComplianceConfig) {
+    const res = await fetch('/api/enterprise/config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        retention: data.retention,
+        legalHold: data.legalHold,
+        dlpRules: data.dlpRules,
+        ipAllowlist: data.ipAllowlist,
+      }),
+    });
+    if (!res.ok) throw new Error('Failed to save compliance config');
+    return res.json();
   }
 
   async getZaloStatus() {

@@ -241,10 +241,10 @@ export const SecurityCompliance: React.FC = () => {
                                 {/* Defensive iteration with optional chaining */}
                                 {sessions?.map(s => (
                                     <tr key={s.id} className="hover:bg-[var(--glass-surface)] transition-colors">
-                                        <td className="p-3 font-bold text-[var(--text-secondary)]">{s.userId}</td>
+                                        <td className="p-3 font-bold text-[var(--text-secondary)]">{s.userName || s.userEmail || s.userId}</td>
                                         <td className="p-3 font-mono text-[var(--text-secondary)]">{s.ipAddress}</td>
-                                        <td className="p-3 text-[var(--text-secondary)]">{s.deviceType}</td>
-                                        <td className="p-3 text-[var(--text-tertiary)]">{formatDateTime(s.lastActiveAt)}</td>
+                                        <td className="p-3 text-[var(--text-secondary)] truncate max-w-[160px]" title={s.userAgent}>{s.userAgent?.split(' ')[0] || '—'}</td>
+                                        <td className="p-3 text-[var(--text-tertiary)]">{formatDateTime(s.createdAt)}</td>
                                         <td className="p-3 text-right">
                                             <button onClick={() => handleRevokeSession(s.id)} className="text-xs font-bold text-rose-500 hover:bg-rose-50 px-3 py-1.5 rounded-lg transition-colors border border-rose-100">
                                                 {t('security.revoke')}

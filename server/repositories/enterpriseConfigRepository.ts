@@ -62,7 +62,7 @@ export class EnterpriseConfigRepository extends BaseRepository {
         email: config.email || { enabled: false, host: '', port: 587, secure: false, user: '', password: '', fromName: 'SGS LAND', fromAddress: '' },
         ipAllowlist: config.ipAllowlist || [],
         sessionTimeoutMins: config.sessionTimeoutMins || 480,
-        retention: config.retention || { days: 365, autoDelete: false },
+        retention: config.retention || { messagesDays: 365, auditLogsDays: 730 },
         legalHold: config.legalHold || false,
         dlpRules: config.dlpRules || [],
         slaConfig: config.slaConfig || { responseTimeMinutes: 30, escalationTimeMinutes: 120 },

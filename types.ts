@@ -669,8 +669,11 @@ export interface SecuritySession {
     id: UUID;
     userId: UserId;
     ipAddress: string;
-    deviceType: string;
-    lastActiveAt: ISOString;
+    userAgent: string;
+    createdAt: ISOString;
+    expiresAt: ISOString;
+    userName?: string;
+    userEmail?: string;
 }
 
 // =============================================================================
