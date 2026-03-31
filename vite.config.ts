@@ -61,7 +61,10 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           output: {
             manualChunks: {
-              // Split heavy vendor libs into separate cached chunks
+              // Split heavy vendor libs into separate cached chunks.
+              // NOTE: 'exceljs' and 'jspdf' are intentionally NOT listed here —
+              // they are lazy-loaded via dynamic import() in Dashboard, Leads, and
+              // ListingDetail and should only download when the user triggers an export.
               'vendor-react': ['react', 'react-dom'],
               'vendor-query': ['@tanstack/react-query'],
               'vendor-charts': ['recharts'],
