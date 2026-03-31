@@ -11,9 +11,10 @@ import { useTranslation } from '../services/i18n';
 import { injectArticleSEO, clearDynamicSEO } from '../utils/seo';
 
 const sanitizeHtml = (html: string): string => DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'span', 'div'],
-    ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'target', 'rel'],
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'span', 'div', 'figure', 'figcaption', 'footer'],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'target', 'rel', 'width', 'height'],
     ALLOW_DATA_ATTR: false,
+    FORCE_BODY: true,
 });
 
 // -----------------------------------------------------------------------------
