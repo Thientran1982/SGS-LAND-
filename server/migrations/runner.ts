@@ -48,6 +48,7 @@ import m026 from './026_email_verification';
 import m027 from './027_activate_initial_admin';
 import m028 from './028_seo_overrides';
 import m029 from './029_seed_initial_admin';
+import m030 from './030_seed_news_articles';
 
 dotenv.config();
 
@@ -92,6 +93,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '027_activate_initial_admin.ts': m027,
   '028_seo_overrides.ts': m028,
   '029_seed_initial_admin.ts': m029,
+  '030_seed_news_articles.ts': m030,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
