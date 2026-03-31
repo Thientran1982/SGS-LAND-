@@ -1266,7 +1266,12 @@ class DatabaseApiClient {
   }
 
   async ping(): Promise<boolean> {
-    return true;
+    try {
+      const res = await fetch('/api/health', { credentials: 'include' });
+      return res.ok;
+    } catch {
+      return false;
+    }
   }
 
   async getAiConfig() {

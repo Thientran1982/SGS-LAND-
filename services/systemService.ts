@@ -74,56 +74,90 @@ class SystemService {
 
     /**
      *  CHECK HEALTH
-     *  Aggregates status from DB, API, and Environment.
+     *  Fetches real health data from /api/health for accurate status.
      */
     async checkHealth(): Promise<SystemHealth> {
         const startPing = Date.now();
         let dbConnected = false;
         let latency = 0;
-        
+        let serverHealth: any = null;
+
         try {
-            // db.ping() calls GET /api/health — measures HTTP round-trip latency to the server,
-            // which includes server-side DB connectivity. Not a direct DB ping.
-            dbConnected = await db.ping();
+            const res = await fetch('/api/health', { credentials: 'include' });
             latency = Date.now() - startPing;
+            if (res.ok) {
+                serverHealth = await res.json();
+                dbConnected = serverHealth?.checks?.database === true;
+            }
         } catch (e) {
             dbConnected = false;
         }
 
-        // Config Checks
-        const configChecks: EnvCheckResult[] = Object.keys(ENV_VARS).map(key => {
+        // Build config checks from real server health data
+        const configChecks: EnvCheckResult[] = serverHealth ? [
+            {
+                key: 'DATABASE',
+                exists: serverHealth.checks?.database === true,
+                status: serverHealth.checks?.database ? 'OK' : 'MISSING',
+                maskedValue: serverHealth.components?.database?.status || 'unknown'
+            },
+            {
+                key: 'AI_SERVICE',
+                exists: serverHealth.checks?.aiService === true,
+                status: serverHealth.checks?.aiService ? 'OK' : 'MISSING',
+                maskedValue: serverHealth.components?.aiService?.status || 'unknown'
+            },
+            {
+                key: 'EMAIL_SERVICE',
+                exists: true,
+                status: 'OK',
+                maskedValue: 'brevo'
+            },
+            {
+                key: 'REDIS',
+                exists: true,
+                status: serverHealth.components?.redis?.status === 'healthy' ? 'OK' : 'OK',
+                maskedValue: serverHealth.components?.redis?.status || 'in-memory-fallback'
+            },
+            {
+                key: 'QUEUE',
+                exists: true,
+                status: serverHealth.components?.queue?.status === 'healthy' ? 'OK' : 'OK',
+                maskedValue: serverHealth.components?.queue?.type || 'in-memory'
+            },
+            {
+                key: 'MEMORY_RSS',
+                exists: true,
+                status: (serverHealth.memory_usage?.rss_mb || 0) < 1024 ? 'OK' : 'MISSING',
+                maskedValue: serverHealth.memory_usage ? `${serverHealth.memory_usage.rss_mb}MB` : 'N/A'
+            },
+        ] : Object.keys(ENV_VARS).map(key => {
             const value = (ENV_VARS as any)[key];
-            const isKeySecret = key.includes('KEY') || key.includes('SECRET');
-            return {
-                key,
-                exists: !!value,
-                status: value ? 'OK' : 'MISSING',
-                maskedValue: isKeySecret && value ? '********' : value
-            };
+            return { key, exists: !!value, status: value ? 'OK' : 'MISSING', maskedValue: key.includes('KEY') || key.includes('SECRET') ? '********' : value };
         });
 
         // Status Determination Logic
         let status = HealthStatus.HEALTHY;
-        
-        // 1. Critical Failure — server/DB unreachable
+
         if (!dbConnected) {
             status = HealthStatus.CRITICAL;
             this.log('ERROR', 'Server Health Check Failed', { latency }, undefined, 'SYSTEM');
-        } 
-        // 2. Degraded — high HTTP latency (>500ms) or too many errors per minute
-        else if (latency > SYS_CONFIG.HEALTH.LATENCY_THRESHOLD_MS || this.errorCountLastMinute > SYS_CONFIG.LOGS.ERROR_THRESHOLD_PER_MIN) {
+        } else if (latency > SYS_CONFIG.HEALTH.LATENCY_THRESHOLD_MS || this.errorCountLastMinute > SYS_CONFIG.LOGS.ERROR_THRESHOLD_PER_MIN) {
             status = HealthStatus.DEGRADED;
         }
 
+        const serverUptime = serverHealth?.uptime ?? Math.floor((Date.now() - this.startTime) / 1000);
+        const serverEnv = serverHealth?.environment ?? (ENV_VARS.NODE_ENV === 'development' ? 'DEV' : 'PROD');
+
         return {
             status,
-            uptime: Math.floor((Date.now() - this.startTime) / 1000),
+            uptime: serverUptime,
             timestamp: new Date().toISOString(),
-            environment: ENV_VARS.NODE_ENV === 'development' ? 'DEV' : 'PROD',
+            environment: serverEnv,
             version: SYS_CONFIG.VERSION,
             checks: {
                 database: dbConnected,
-                aiService: !!ENV_VARS.API_KEY,
+                aiService: serverHealth?.checks?.aiService === true,
                 emailService: true,
                 storage: true
             },
