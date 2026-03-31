@@ -481,10 +481,9 @@ export const News: React.FC = () => {
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
 
-    const handleSubscribe = (e: React.FormEvent) => {
+    const handleSubscribe = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        // Basic Email Validation
+
         if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
             setSubStatus('ERROR');
             setTimeout(() => setSubStatus('IDLE'), 2000);
@@ -492,13 +491,20 @@ export const News: React.FC = () => {
         }
 
         setSubStatus('LOADING');
-
-        // Simulate API Call
-        setTimeout(() => {
+        try {
+            const res = await fetch('/api/public/newsletter/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            if (!res.ok) throw new Error('server_error');
             setSubStatus('SUCCESS');
             setEmail('');
-            setTimeout(() => setSubStatus('IDLE'), 3000); // Reset for next
-        }, 1500);
+            setTimeout(() => setSubStatus('IDLE'), 3000);
+        } catch {
+            setSubStatus('ERROR');
+            setTimeout(() => setSubStatus('IDLE'), 3000);
+        }
     };
 
     const handleSaveArticle = async (articleData: Partial<Article>) => {

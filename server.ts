@@ -1172,6 +1172,59 @@ async function startServer() {
     }
   });
 
+  // Public newsletter subscribe — saves email + notifies info@sgsland.vn
+  app.post('/api/public/newsletter/subscribe', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { email } = req.body;
+      if (!email?.trim()) {
+        return res.status(400).json({ error: 'Vui lòng nhập email' });
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: 'Email không hợp lệ' });
+      }
+
+      const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || null;
+
+      // Save subscriber (ignore duplicate)
+      const insertResult = await pool.query(
+        `INSERT INTO newsletter_subscribers (email, ip_address, source)
+         VALUES ($1, $2, 'news_page')
+         ON CONFLICT (email) DO NOTHING
+         RETURNING id`,
+        [email.trim().toLowerCase(), ip]
+      );
+
+      const isNew = (insertResult.rowCount ?? 0) > 0;
+      const now = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+      // Notify info@sgsland.vn regardless of whether email is new or duplicate
+      const html = `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+          <h2 style="color:#4f46e5">📧 ${isNew ? 'Đăng ký nhận tin mới' : 'Đăng ký nhận tin (đã tồn tại)'}</h2>
+          <table style="width:100%;border-collapse:collapse;margin-top:16px">
+            <tr><td style="padding:8px;font-weight:bold;color:#555;width:140px">Email:</td><td style="padding:8px"><a href="mailto:${email}">${email}</a></td></tr>
+            <tr><td style="padding:8px;font-weight:bold;color:#555">Thời gian:</td><td style="padding:8px">${now}</td></tr>
+            <tr><td style="padding:8px;font-weight:bold;color:#555">Nguồn:</td><td style="padding:8px">Trang Tin Tức SGS LAND</td></tr>
+            <tr><td style="padding:8px;font-weight:bold;color:#555">IP:</td><td style="padding:8px">${ip || '—'}</td></tr>
+            <tr><td style="padding:8px;font-weight:bold;color:#555">Trạng thái:</td><td style="padding:8px">${isNew ? '✅ Mới — đã lưu vào danh sách' : '⚠️ Email đã đăng ký trước đó'}</td></tr>
+          </table>
+          <p style="margin-top:24px;color:#888;font-size:12px">— SGS Land · info@sgsland.vn</p>
+        </div>`;
+
+      await emailService.sendEmail(DEFAULT_TENANT_ID, {
+        to: 'info@sgsland.vn',
+        subject: `[Newsletter] ${isNew ? 'Đăng ký mới' : 'Đăng ký trùng'}: ${email}`,
+        html,
+      });
+
+      res.json({ success: true, isNew });
+    } catch (error) {
+      console.error('[Newsletter] Subscribe error:', error);
+      res.status(500).json({ error: 'Không thể đăng ký. Vui lòng thử lại.' });
+    }
+  });
+
   // ─── SEO Overrides API ─────────────────────────────────────────────────────
   // GET  /api/seo-overrides          — public read (used by server-side injector on start)
   // POST /api/seo-overrides/:key     — ADMIN only: upsert an override
