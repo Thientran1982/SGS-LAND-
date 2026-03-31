@@ -245,7 +245,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
       const { pool } = await import('../db');
       await pool.query(
-        `UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL`,
+        `UPDATE password_reset_tokens SET used = TRUE WHERE user_id = $1 AND used = FALSE`,
         [target.id]
       );
       await pool.query(

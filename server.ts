@@ -10,7 +10,7 @@ import { setupWSConnection } from "y-websocket/bin/utils";
 import { pool, withTenantContext } from "./server/db";
 import { runPendingMigrations } from "./server/migrations/runner";
 import { systemService } from "./server/services/systemService";
-import { webhookQueue, setupWebhookWorker } from "./server/queue";
+import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled } from "./server/queue";
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
@@ -1267,7 +1267,7 @@ async function startServer() {
         aiService: { status: health.checks?.aiService ? 'healthy' : 'unconfigured' },
         redis: { status: (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ? 'upstash-rest' : 'in-memory-fallback' },
         websocket: { status: 'healthy', adapter: 'in-memory' },
-        queue: { status: 'healthy', type: 'in-memory' },
+        queue: { status: 'healthy', type: isQStashEnabled() ? 'qstash' : 'in-memory' },
       };
 
       try {
@@ -1636,6 +1636,50 @@ async function startServer() {
     }
   });
 
+  // ---------------------------------------------------------------------------
+  // QStash — Nhận job callback từ Upstash QStash
+  // Endpoint này phải được đăng ký ở phần raw body trước khi express.json() parse
+  // ---------------------------------------------------------------------------
+  app.post("/api/qstash/process", express.raw({ type: '*/*' }), async (req, res) => {
+    try {
+      if (!isQStashEnabled()) {
+        logger.warn('[QStash] Nhận được callback nhưng QSTASH không được cấu hình — bỏ qua');
+        return res.status(503).json({ error: 'QStash không được cấu hình' });
+      }
+
+      const { Receiver } = await import('@upstash/qstash');
+      const receiver = new Receiver({
+        currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY!,
+        nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY || process.env.QSTASH_CURRENT_SIGNING_KEY!,
+      });
+
+      const rawBody = req.body instanceof Buffer ? req.body.toString('utf8') : String(req.body);
+      const signature = req.headers['upstash-signature'] as string;
+
+      try {
+        await receiver.verify({ signature, body: rawBody });
+      } catch (err: any) {
+        logger.warn(`[QStash] Xác minh chữ ký thất bại: ${err.message}`);
+        return res.status(401).json({ error: 'Chữ ký không hợp lệ' });
+      }
+
+      let job: any;
+      try {
+        job = JSON.parse(rawBody);
+      } catch {
+        logger.warn('[QStash] Body không phải JSON hợp lệ');
+        return res.status(400).json({ error: 'Body không hợp lệ' });
+      }
+
+      logger.info(`[QStash] Nhận job "${job.name}" (${job.id})`);
+      await processWebhookJob(io, job);
+      return res.json({ ok: true, jobId: job.id });
+    } catch (err: any) {
+      logger.error('[QStash] Lỗi xử lý job:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // Facebook Webhook Verification
   app.get("/api/webhooks/facebook", (req, res) => {
     const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
@@ -1890,11 +1934,11 @@ async function startServer() {
       logger.info('HTTP server closed.');
       try {
         await webhookWorker.close();
-        logger.info('BullMQ worker closed.');
+        logger.info('Webhook worker đã dừng.');
       } catch (e) { /* ignore */ }
       try {
         await webhookQueue.close();
-        logger.info('BullMQ queue closed.');
+        logger.info('Webhook queue đã đóng.');
       } catch (e) { /* queue may not be initialized */ }
       try {
         marketDataService.stop();

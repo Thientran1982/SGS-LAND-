@@ -9,7 +9,7 @@ AI-powered real estate CRM and management platform for the Vietnamese market.
 - **Build Tool**: Vite 6
 - **Real-time**: Socket.io, Yjs + y-websocket (CRDT collaboration)
 - **Database**: PostgreSQL with Row Level Security (multi-tenancy), 25 tables
-- **Queue**: BullMQ (falls back to in-memory if no Redis)
+- **Queue**: QStash (Upstash) with in-memory fallback when `QSTASH_TOKEN` not configured
 - **AI**: Google Gemini via `@google/genai`
 - **Auth**: JWT with httpOnly cookies, bcrypt password hashing, password reset tokens, **email verification on register**
 - **Email**: Brevo API (primary) + Nodemailer SMTP fallback + console fallback; verification email, password reset, welcome, invite, sequences

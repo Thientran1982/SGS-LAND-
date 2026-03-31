@@ -725,7 +725,7 @@ export const Dashboard: React.FC = () => {
                         <div className="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 mt-2">
                             <div className="flex flex-col gap-2">
                                 {(analytics.recentActivities || []).map((act, idx) => (
-                                    <ActivityItem key={act.id ?? idx} activity={act} />
+                                    <ActivityItem key={act.id != null ? `${act.id}-${idx}` : idx} activity={act} />
                                 ))}
                                 {(!analytics.recentActivities || analytics.recentActivities.length === 0) && (
                                     <div className="py-10">

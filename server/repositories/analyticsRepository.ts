@@ -523,6 +523,7 @@ export class AnalyticsRepository extends BaseRepository {
           : 0;
         const slaScore = Math.min(100, Math.round(row.close_rate * 0.7 + responseBonus));
         return {
+          id: row.id,
           name: row.name,
           avatar: row.avatar ?? null,
           deals: row.deals,
