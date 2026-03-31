@@ -80,6 +80,7 @@ export const Inbox: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const assignDropdownRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const isSendingRef = useRef(false);
     const { t, formatTime, formatCurrency, formatDate, formatDateTime, language } = useTranslation();
 
     const channelLabel = useCallback((ch: string): string => {
@@ -145,7 +146,8 @@ export const Inbox: React.FC = () => {
             return (msgs || []).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
         },
         enabled: !!selectedLeadId,
-        staleTime: 10_000,
+        staleTime: 30_000,
+        refetchOnWindowFocus: false,
     });
 
     // Scroll to bottom whenever messages load or change
@@ -307,12 +309,21 @@ export const Inbox: React.FC = () => {
     }, [selectedLeadId, socket, queryClient, notify, t]);
 
     // --- AI & SEND LOGIC ---
+    const appendInteraction = (leadId: string, msg: any) => {
+        queryClient.setQueryData<any[]>(['interactions', leadId], (old) => {
+            const list = old || [];
+            if (list.some((m: any) => m.id === msg.id)) return list;
+            return [...list, msg];
+        });
+    };
+
     const handleSend = async () => {
-        if (!input.trim() || !selectedLeadId) return;
+        if (!input.trim() || !selectedLeadId || isSendingRef.current) return;
         
         const currentLead = threads.find(t => t.lead.id === selectedLeadId)?.lead;
         if (!currentLead) return;
 
+        isSendingRef.current = true;
         const isSimulation = input.startsWith('/');
         const cleanInput = isSimulation ? input.substring(1).trim() : input;
 
@@ -321,8 +332,7 @@ export const Inbox: React.FC = () => {
                 const customerMsg = await db.sendInteraction(selectedLeadId, cleanInput, channel);
                 customerMsg.direction = Direction.INBOUND;
                 
-                // Optimistic Update
-                queryClient.setQueryData(['interactions', selectedLeadId], (old: any) => [...(old || []), customerMsg]);
+                appendInteraction(selectedLeadId, customerMsg);
                 socket.emit("send_message", { room: selectedLeadId, message: customerMsg });
                 
                 setInput('');
@@ -357,7 +367,7 @@ export const Inbox: React.FC = () => {
                         aiSentiment: aiResult.sentiment
                     };
 
-                    queryClient.setQueryData(['interactions', selectedLeadId], (old: any) => [...(old || []), aiMsg]);
+                    appendInteraction(selectedLeadId, aiMsg);
                     socket.emit("send_message", { room: selectedLeadId, message: aiMsg });
                     
                     setIsThinking(false);
@@ -372,7 +382,7 @@ export const Inbox: React.FC = () => {
                 }
 
                 const agentMsg = await db.sendInteraction(selectedLeadId, input, channel);
-                queryClient.setQueryData(['interactions', selectedLeadId], (old: any) => [...(old || []), agentMsg]);
+                appendInteraction(selectedLeadId, agentMsg);
                 socket.emit("send_message", { room: selectedLeadId, message: agentMsg });
                 
                 setInput('');
@@ -383,6 +393,8 @@ export const Inbox: React.FC = () => {
         } catch (e) {
             notify(t('common.error'), 'error');
             setIsThinking(false);
+        } finally {
+            isSendingRef.current = false;
         }
     };
 
