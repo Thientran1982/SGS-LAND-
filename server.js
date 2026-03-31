@@ -8632,7 +8632,7 @@ var emailService = {
 
 // server/routes/userRoutes.ts
 init_db();
-function createUserRoutes(authenticateToken) {
+function createUserRoutes(authenticateToken, jwtSecret) {
   const router = Router6();
   router.get("/members", authenticateToken, async (req, res) => {
     try {
@@ -8888,7 +8888,7 @@ function createUserRoutes(authenticateToken) {
       const { withTenantContext: withTenantContext2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       await withTenantContext2(user.tenantId, async (client) => {
         await client.query(
-          `UPDATE users SET email = $1 WHERE id = $2 AND tenant_id = $3`,
+          `UPDATE users SET email = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
           [newEmail.toLowerCase(), String(req.params.id), user.tenantId]
         );
       });
@@ -8901,6 +8901,25 @@ function createUserRoutes(authenticateToken) {
         details: `Email changed to: ${newEmail}`,
         ipAddress: req.ip
       });
+      if (user.id === String(req.params.id) && updated && jwtSecret) {
+        const jwt3 = await import("jsonwebtoken");
+        const JWT_SECRET = jwtSecret;
+        const isProduction = process.env.NODE_ENV === "production";
+        const jwtPayload = {
+          id: updated.id,
+          email: updated.email,
+          name: updated.name,
+          role: updated.role,
+          tenantId: user.tenantId
+        };
+        const newToken = jwt3.default.sign(jwtPayload, JWT_SECRET, { expiresIn: "24h" });
+        res.cookie("token", newToken, {
+          httpOnly: true,
+          maxAge: 24 * 60 * 60 * 1e3,
+          sameSite: isProduction ? "none" : "lax",
+          ...isProduction && { secure: true }
+        });
+      }
       res.json(userRepository.toPublicUser(updated));
     } catch (error48) {
       console.error("Error changing email:", error48);
@@ -33981,7 +34000,7 @@ async function startServer() {
   app.use("/api/proposals", apiRateLimit, createProposalRoutes(authenticateToken, () => broadcastIo));
   app.use("/api/contracts", apiRateLimit, createContractRoutes(authenticateToken));
   app.use("/api/inbox", apiRateLimit, createInteractionRoutes(authenticateToken));
-  app.use("/api/users", apiRateLimit, createUserRoutes(authenticateToken));
+  app.use("/api/users", apiRateLimit, createUserRoutes(authenticateToken, JWT_SECRET));
   app.use("/api/analytics", apiRateLimit, createAnalyticsRoutes(authenticateToken));
   app.use("/api/scoring", apiRateLimit, createScoringRoutes(authenticateToken));
   app.use("/api/routing-rules", apiRateLimit, createRoutingRuleRoutes(authenticateToken));

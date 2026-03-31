@@ -199,7 +199,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 ## Dev Credentials
 
-- Email: `admin@sgs.vn`, Password: `123456` (all seeded users use `123456`)
+- Email: `admin@sgs.vn`, Password: set via `SEED_PASSWORD` env var at seed time (all seeded users use the same password)
 - Default tenant ID: `00000000-0000-0000-0000-000000000001` (canonical const `DEFAULT_TENANT_ID` in `server/constants.ts`; also a module-level const in `services/dbApi.ts`)
 - 8 users, 20 leads, 15 listings, 7 proposals, 1 contract, 35 interactions seeded
 
