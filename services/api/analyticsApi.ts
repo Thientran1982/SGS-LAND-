@@ -5,7 +5,7 @@ export const analyticsApi = {
     api.get('/api/analytics/summary', timeRange ? { timeRange } : undefined),
 
   getAuditLogs: (page = 1, pageSize = 50, filters?: Record<string, any>): Promise<any> =>
-    api.get('/api/analytics/audit-logs', { page, pageSize, ...filters }),
+    api.get('/api/enterprise/audit-logs', { page, pageSize, ...filters }),
 
   getBiMarts: (timeRange?: string): Promise<any> =>
     api.get('/api/analytics/bi-marts', timeRange ? { timeRange } : undefined),
