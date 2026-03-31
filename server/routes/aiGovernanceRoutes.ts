@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { aiGovernanceRepository } from '../repositories/aiGovernanceRepository';
+import { GoogleGenAI } from '@google/genai';
 
 export function createAiGovernanceRoutes(authenticateToken: any) {
   const router = Router();
@@ -98,6 +99,30 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
     } catch (error) {
       console.error('Error updating AI config:', error);
       res.status(500).json({ error: 'Failed to update AI config' });
+    }
+  });
+
+  router.post('/simulate', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const { systemPrompt, userInput, model } = req.body;
+      if (!userInput?.trim()) return res.status(400).json({ error: 'userInput is required' });
+      const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+      if (!apiKey) return res.status(503).json({ error: 'AI service not configured' });
+      const ai = new GoogleGenAI({ apiKey });
+      const effectiveModel = model || 'gemini-2.5-flash';
+      const start = Date.now();
+      const response = await ai.models.generateContent({
+        model: effectiveModel,
+        contents: userInput,
+        config: systemPrompt?.trim()
+          ? { systemInstruction: systemPrompt }
+          : undefined,
+      });
+      const latencyMs = Date.now() - start;
+      res.json({ output: response.text || '', latencyMs, model: effectiveModel });
+    } catch (error: any) {
+      console.error('Error running prompt simulation:', error);
+      res.status(500).json({ error: error?.message || 'Simulation failed' });
     }
   });
 

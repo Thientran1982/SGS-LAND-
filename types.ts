@@ -776,12 +776,11 @@ export interface InboxThread {
 
 // Updated models based on Google GenAI SDK rules (Feb 2026 Compatible)
 export type AiModelType = 
-    | 'gemini-3-flash-preview' 
-    | 'gemini-3-pro-preview' 
-    | 'gemini-2.5-flash-image'
-    | 'gemini-3-pro-image-preview'
-    | 'gemini-2.5-flash-native-audio-preview-12-2025'
-    | 'veo-3.1-generate-preview'
+    | 'gemini-2.5-flash'
+    | 'gemini-2.5-pro'
+    | 'gemini-2.0-flash'
+    | 'gemini-1.5-flash'
+    | 'gemini-1.5-pro'
     | (string & {}); 
 
 export interface AiTenantConfig {

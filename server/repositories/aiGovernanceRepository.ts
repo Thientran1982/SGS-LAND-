@@ -75,14 +75,16 @@ class AiGovernanceRepository extends BaseRepository {
 
   async createPromptTemplate(tenantId: string, data: any): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
-      const versions = data.versions || [{ version: 1, content: data.content || '', status: 'DRAFT', createdAt: new Date().toISOString() }];
+      const contentText = data.content || '';
+      const versions = data.versions || [{ version: 1, content: contentText, status: 'DRAFT', createdAt: new Date().toISOString() }];
       const result = await client.query(
-        `INSERT INTO prompt_templates (tenant_id, name, description, category, active_version, versions, variables)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO prompt_templates (tenant_id, name, content, description, category, active_version, versions, variables)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
         [
           tenantId,
           data.name,
+          contentText,
           data.description || '',
           data.category || 'general',
           data.activeVersion || 1,
@@ -119,6 +121,13 @@ class AiGovernanceRepository extends BaseRepository {
       if (data.versions !== undefined) {
         fields.push(`versions = $${paramIndex++}`);
         values.push(JSON.stringify(data.versions));
+        // Also sync `content` with the active version's content
+        const activeVer = data.activeVersion;
+        const activeVersionObj = data.versions.find((v: any) => v.version === activeVer) || data.versions[data.versions.length - 1];
+        if (activeVersionObj?.content !== undefined) {
+          fields.push(`content = $${paramIndex++}`);
+          values.push(activeVersionObj.content);
+        }
       }
       if (data.variables !== undefined) {
         fields.push(`variables = $${paramIndex++}`);
@@ -156,8 +165,8 @@ class AiGovernanceRepository extends BaseRepository {
       }
       return {
         enabled: true,
-        allowedModels: ['gemini-3-flash-preview', 'gemini-3-pro-preview'],
-        defaultModel: 'gemini-3-flash-preview',
+        allowedModels: ['gemini-2.5-flash', 'gemini-2.5-pro'],
+        defaultModel: 'gemini-2.5-flash',
         budgetCapUsd: 100,
         currentSpendUsd: 0,
       };

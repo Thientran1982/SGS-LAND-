@@ -1273,7 +1273,7 @@ class DatabaseApiClient {
     try {
       return await api.get<any>('/api/ai/governance/config');
     } catch {
-      return { enabled: true, allowedModels: ['gemini-3-flash-preview'], defaultModel: 'gemini-3-flash-preview', budgetCapUsd: 100, currentSpendUsd: 0 };
+      return { enabled: true, allowedModels: ['gemini-2.5-flash', 'gemini-2.5-pro'], defaultModel: 'gemini-2.5-flash', budgetCapUsd: 100, currentSpendUsd: 0 };
     }
   }
 
@@ -1300,6 +1300,14 @@ class DatabaseApiClient {
 
   async createPromptTemplate(data: any) {
     return api.post<any>('/api/ai/governance/prompt-templates', data);
+  }
+
+  async updatePromptTemplate(id: string, data: any) {
+    return api.put<any>(`/api/ai/governance/prompt-templates/${id}`, data);
+  }
+
+  async simulatePrompt(systemPrompt: string, userInput: string, model?: string) {
+    return api.post<{ output: string }>('/api/ai/governance/simulate', { systemPrompt, userInput, model });
   }
 
   async getMarketplaceApps() {

@@ -14,12 +14,11 @@ interface ConfigTabProps {
 }
 
 const SUPPORTED_MODELS: AiModelType[] = [
-    'gemini-3-flash-preview', 
-    'gemini-3-pro-preview', 
-    'gemini-2.5-flash-image',
-    'gemini-3-pro-image-preview',
-    'gemini-2.5-flash-native-audio-preview-12-2025',
-    'veo-3.1-generate-preview'
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
 ];
 
 // Helper to format model names for display
@@ -299,14 +298,13 @@ export const AiGovernance: React.FC = () => {
     };
 
     const handleRunSim = async () => {
-        if (!testInput.trim()) return;
+        if (!selectedPrompt || !testInput.trim()) return;
         setIsEvalRunning(true);
         try {
-            // Mock LLM call via service
-            await new Promise(r => setTimeout(r, 800));
-            setLastEvalRun(t('ai.sim_result', { input: testInput, version: String(selectedPrompt?.activeVersion ?? '') }));
-        } catch (e) {
-            setLastEvalRun(t('ai.sim_error'));
+            const result = await db.simulatePrompt(editContent, testInput, config?.defaultModel);
+            setLastEvalRun(result.output || t('ai.sim_error'));
+        } catch (e: any) {
+            setLastEvalRun(e?.message || t('ai.sim_error'));
         } finally {
             setIsEvalRunning(false);
         }
@@ -315,10 +313,20 @@ export const AiGovernance: React.FC = () => {
     const handleSaveVersion = async (status: 'DRAFT' | 'APPROVED') => {
         if (!selectedPrompt) return;
         try {
-            // Mock Save
-            await new Promise(r => setTimeout(r, 500));
+            const currentVersions = selectedPrompt.versions || [];
+            const existingIdx = currentVersions.findIndex(v => v.version === selectedPrompt.activeVersion);
+            let newVersions;
+            if (existingIdx >= 0) {
+                newVersions = currentVersions.map((v, i) =>
+                    i === existingIdx ? { ...v, content: editContent, status } : v
+                );
+            } else {
+                const newVer = (selectedPrompt.activeVersion || 0) + 1;
+                newVersions = [...currentVersions, { version: newVer, content: editContent, status, createdAt: new Date().toISOString() }];
+            }
+            await db.updatePromptTemplate(selectedPrompt.id, { versions: newVersions, activeVersion: selectedPrompt.activeVersion });
             notify(status === 'APPROVED' ? t('ai.prompt_published') : t('ai.prompt_draft'), 'success');
-            // Optimistic update would go here in real app
+            fetchData();
         } catch (e) { notify(t('common.error'), 'error'); }
     };
 
