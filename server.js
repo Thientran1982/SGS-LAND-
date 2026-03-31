@@ -23904,6 +23904,142 @@ import nodemailer from "nodemailer";
 function escapeHtml(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 }
+function emailBase(content, footerNote) {
+  const year2 = (/* @__PURE__ */ new Date()).getFullYear();
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="vi">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <title>SGS LAND</title>
+  <style type="text/css">
+    /* Reset */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    /* Mobile */
+    @media only screen and (max-width: 620px) {
+      .email-wrapper  { padding: 16px 8px !important; }
+      .email-container{ width: 100% !important; max-width: 100% !important; }
+      .email-header   { padding: 20px 20px !important; }
+      .email-body     { padding: 24px 20px 20px !important; }
+      .email-footer   { padding: 16px 20px !important; }
+      .btn-full       { width: 100% !important; }
+      .btn-link       { display: block !important; padding: 14px 20px !important; text-align: center !important; }
+      h1.email-title  { font-size: 19px !important; }
+      p.email-lead    { font-size: 14px !important; }
+      .hide-mobile    { display: none !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#F1F5F9;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F1F5F9">
+  <tr>
+    <td align="center" valign="top" class="email-wrapper" style="padding:40px 16px;">
+
+      <table class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+        <!-- HEADER -->
+        <tr>
+          <td class="email-header" bgcolor="#1E293B" style="padding:24px 40px;text-align:center;border-radius:12px 12px 0 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td align="center" style="padding-bottom:8px;">
+                  <table cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td bgcolor="#4F46E5" style="padding:7px 16px;border-radius:8px;">
+                        <span style="color:#FFFFFF;font-size:16px;font-weight:bold;letter-spacing:3px;font-family:Arial,sans-serif;">SGS</span>
+                        <span style="color:#A5B4FC;font-size:16px;font-weight:bold;letter-spacing:3px;font-family:Arial,sans-serif;">&nbsp;LAND</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td align="center">
+                  <span style="color:#94A3B8;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,sans-serif;">Enterprise Real Estate Platform</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- BODY -->
+        <tr>
+          <td class="email-body" bgcolor="#FFFFFF" style="padding:32px 40px 24px;border-left:1px solid #E2E8F0;border-right:1px solid #E2E8F0;">
+            ${content}
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td class="email-footer" bgcolor="#F8FAFC" style="padding:18px 40px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 12px 12px;text-align:center;">
+            ${footerNote ? `<p style="color:#64748B;font-size:12px;line-height:1.6;margin:0 0 10px;font-family:Arial,sans-serif;">${footerNote}</p>` : ""}
+            <p style="color:#94A3B8;font-size:11px;margin:0;line-height:1.8;font-family:Arial,sans-serif;">
+              &copy; ${year2} SGS LAND &mdash; Enterprise Real Estate Platform<br />
+              <a href="https://sgsland.vn" style="color:#4F46E5;text-decoration:none;font-family:Arial,sans-serif;">sgsland.vn</a>
+              &nbsp;&bull;&nbsp;
+              <a href="mailto:support@sgsland.vn" style="color:#4F46E5;text-decoration:none;font-family:Arial,sans-serif;">support@sgsland.vn</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`;
+}
+function primaryButton(href, label) {
+  return `<table class="btn-full" cellpadding="0" cellspacing="0" border="0" align="center" style="min-width:200px;">
+  <tr>
+    <td bgcolor="#4F46E5" style="border-radius:8px;padding:0;text-align:center;">
+      <a href="${href}" class="btn-link" style="display:inline-block;padding:14px 36px;color:#FFFFFF;font-size:15px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;letter-spacing:0.3px;border-radius:8px;">${label}</a>
+    </td>
+  </tr>
+</table>`;
+}
+function divider() {
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr><td style="border-top:1px solid #E2E8F0;font-size:0;line-height:0;height:1px;">&nbsp;</td></tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:20px;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
+}
+function linkBox(url2) {
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td bgcolor="#F8FAFC" style="padding:14px 18px;border:1px solid #E2E8F0;border-radius:8px;">
+      <p style="color:#64748B;font-size:11px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">Ho\u1EB7c d\xE1n link n\xE0y v\xE0o tr\xECnh duy\u1EC7t:</p>
+      <p style="color:#4F46E5;font-size:11px;word-break:break-all;margin:0;font-family:'Courier New',monospace;line-height:1.5;">${url2}</p>
+    </td>
+  </tr>
+</table>`;
+}
+function warningBox(title, body) {
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td bgcolor="#FFF7ED" style="padding:14px 18px;border:1px solid #FED7AA;border-radius:8px;">
+      <p style="color:#92400E;font-size:12px;font-weight:bold;margin:0 0 4px;font-family:Arial,sans-serif;">${title}</p>
+      <p style="color:#78350F;font-size:12px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">${body}</p>
+    </td>
+  </tr>
+</table>`;
+}
+function iconCircle(bgColor, emoji3) {
+  return `<table cellpadding="0" cellspacing="0" border="0" align="center">
+  <tr>
+    <td width="64" height="64" bgcolor="${bgColor}" align="center" valign="middle" style="border-radius:32px;width:64px;height:64px;text-align:center;font-size:28px;font-family:Arial,sans-serif;">
+      ${emoji3}
+    </td>
+  </tr>
+</table>`;
+}
+function spacer(h) {
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:${h}px;font-size:0;line-height:0;">&nbsp;</td></tr></table>`;
+}
 async function getSmtpConfig(tenantId) {
   try {
     const config2 = await enterpriseConfigRepository.getConfig(tenantId);
@@ -23917,10 +24053,7 @@ function createTransporter(smtp) {
     host: smtp.host,
     port: smtp.port,
     secure: smtp.secure !== void 0 ? smtp.secure : smtp.port === 465,
-    auth: {
-      user: smtp.user,
-      pass: smtp.password
-    },
+    auth: { user: smtp.user, pass: smtp.password },
     connectionTimeout: 1e4,
     greetingTimeout: 1e4,
     socketTimeout: 15e3
@@ -23983,168 +24116,206 @@ async function testSmtpConnection(tenantId) {
     return { success: false, status: "failed", error: error48.message };
   }
 }
-async function sendPasswordResetEmail(tenantId, to, resetUrl, userName) {
-  const name = userName || to.split("@")[0];
-  return sendEmail(tenantId, {
-    to,
-    subject: "SGS LAND - Y\xEAu c\u1EA7u \u0111\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u",
-    html: `
-      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="color: #4F46E5; font-size: 24px; font-weight: 700; margin: 0;">SGS LAND</h1>
-          <p style="color: #64748B; font-size: 14px; margin-top: 4px;">Enterprise Real Estate Platform</p>
-        </div>
-        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px;">
-          <h2 style="color: #0F172A; font-size: 18px; font-weight: 600; margin: 0 0 16px;">Xin ch\xE0o ${name},</h2>
-          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-            B\u1EA1n \u0111\xE3 y\xEAu c\u1EA7u \u0111\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u cho t\xE0i kho\u1EA3n SGS LAND. Nh\u1EA5n n\xFAt b\xEAn d\u01B0\u1EDBi \u0111\u1EC3 ti\u1EBFp t\u1EE5c:
-          </p>
-          <div style="text-align: center; margin: 32px 0;">
-            <a href="${resetUrl}" style="display: inline-block; padding: 14px 32px; background: #4F46E5; color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">
-              \u0110\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u
-            </a>
-          </div>
-          <p style="color: #94A3B8; font-size: 12px; line-height: 1.6; margin: 0;">
-            Link n\xE0y s\u1EBD h\u1EBFt h\u1EA1n sau 1 gi\u1EDD. N\u1EBFu b\u1EA1n kh\xF4ng y\xEAu c\u1EA7u \u0111\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u, vui l\xF2ng b\u1ECF qua email n\xE0y.
-          </p>
-        </div>
-        <p style="color: #CBD5E1; font-size: 11px; text-align: center; margin-top: 24px;">
-          &copy; ${(/* @__PURE__ */ new Date()).getFullYear()} SGS LAND. All rights reserved.
-        </p>
-      </div>
-    `,
-    text: `Xin ch\xE0o ${name},
-
-B\u1EA1n \u0111\xE3 y\xEAu c\u1EA7u \u0111\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u. Truy c\u1EADp link sau: ${resetUrl}
-
-Link n\xE0y h\u1EBFt h\u1EA1n sau 1 gi\u1EDD.`
-  });
-}
 async function sendVerificationEmail(tenantId, to, userName, verifyUrl) {
   const safeName = escapeHtml(userName);
   const safeUrl = escapeHtml(verifyUrl);
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle("#EEF2FF", "&#9993;")}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">X\xE1c Minh \u0110\u1ECBa Ch\u1EC9 Email</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">M\u1ED9t b\u01B0\u1EDBc n\u1EEFa \u0111\u1EC3 ho\xE0n t\u1EA5t \u0111\u0103ng k\xFD</span></td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif;">Xin ch\xE0o <strong>${safeName}</strong>,</p>
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 28px;font-family:Arial,sans-serif;">
+      C\u1EA3m \u01A1n b\u1EA1n \u0111\xE3 \u0111\u0103ng k\xFD t\xE0i kho\u1EA3n tr\xEAn <strong>SGS LAND</strong>. \u0110\u1EC3 k\xEDch ho\u1EA1t t\xE0i kho\u1EA3n v\xE0 b\u1EAFt \u0111\u1EA7u s\u1EED d\u1EE5ng, vui l\xF2ng x\xE1c minh \u0111\u1ECBa ch\u1EC9 email c\u1EE7a b\u1EA1n.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton(safeUrl, "X\xE1c Minh Email Ngay")}</td></tr>
+    </table>
+    ${spacer(24)}
+    ${linkBox(safeUrl)}
+    ${spacer(20)}
+    <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;font-family:Arial,sans-serif;">
+      Link x\xE1c minh c\xF3 hi\u1EC7u l\u1EF1c trong <strong>24 gi\u1EDD</strong>.<br />N\u1EBFu b\u1EA1n kh\xF4ng th\u1EF1c hi\u1EC7n \u0111\u0103ng k\xFD n\xE0y, vui l\xF2ng b\u1ECF qua email.
+    </p>
+  `;
   return sendEmail(tenantId, {
     to,
-    subject: "SGS LAND - X\xE1c minh \u0111\u1ECBa ch\u1EC9 email c\u1EE7a b\u1EA1n",
-    html: `
-      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="color: #4F46E5; font-size: 24px; font-weight: 700; margin: 0;">SGS LAND</h1>
-          <p style="color: #64748B; font-size: 14px; margin-top: 4px;">Enterprise Real Estate Platform</p>
-        </div>
-        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; background: #EEF2FF; border-radius: 16px; margin-bottom: 16px;">
-              <span style="font-size: 28px;">\u2709\uFE0F</span>
-            </div>
-            <h2 style="color: #0F172A; font-size: 20px; font-weight: 700; margin: 0 0 8px;">X\xE1c minh Email</h2>
-          </div>
-          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 8px;">
-            Xin ch\xE0o <strong>${safeName}</strong>,
-          </p>
-          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 28px;">
-            C\u1EA3m \u01A1n b\u1EA1n \u0111\xE3 \u0111\u0103ng k\xFD SGS LAND! \u0110\u1EC3 ho\xE0n t\u1EA5t, vui l\xF2ng nh\u1EA5n n\xFAt b\xEAn d\u01B0\u1EDBi \u0111\u1EC3 x\xE1c minh \u0111\u1ECBa ch\u1EC9 email c\u1EE7a b\u1EA1n:
-          </p>
-          <div style="text-align: center; margin: 0 0 28px;">
-            <a href="${safeUrl}"
-               style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: #FFFFFF; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; letter-spacing: 0.3px; box-shadow: 0 4px 14px rgba(79,70,229,0.4);">
-              X\xE1c minh Email ngay
-            </a>
-          </div>
-          <div style="background: #F8FAFC; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
-            <p style="color: #64748B; font-size: 12px; margin: 0 0 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Ho\u1EB7c sao ch\xE9p link sau:</p>
-            <p style="color: #4F46E5; font-size: 11px; word-break: break-all; margin: 0; font-family: monospace;">${safeUrl}</p>
-          </div>
-          <p style="color: #94A3B8; font-size: 12px; line-height: 1.6; margin: 0; text-align: center;">
-            Link s\u1EBD h\u1EBFt h\u1EA1n sau <strong>24 gi\u1EDD</strong>. N\u1EBFu b\u1EA1n kh\xF4ng \u0111\u0103ng k\xFD SGS LAND, h\xE3y b\u1ECF qua email n\xE0y.
-          </p>
-        </div>
-        <p style="color: #CBD5E1; font-size: 11px; text-align: center; margin-top: 24px;">
-          &copy; ${(/* @__PURE__ */ new Date()).getFullYear()} SGS LAND. All rights reserved.
-        </p>
-      </div>
-    `,
+    subject: "SGS LAND \u2013 X\xE1c minh \u0111\u1ECBa ch\u1EC9 email c\u1EE7a b\u1EA1n",
+    html: emailBase(content, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi t\u1EF1 \u0111\u1ED9ng, vui l\xF2ng kh\xF4ng tr\u1EA3 l\u1EDDi."),
     text: `Xin ch\xE0o ${userName},
 
-X\xE1c minh email c\u1EE7a b\u1EA1n t\u1EA1i: ${verifyUrl}
+X\xE1c minh email c\u1EE7a b\u1EA1n t\u1EA1i:
+${verifyUrl}
 
-Link h\u1EBFt h\u1EA1n sau 24 gi\u1EDD.`
+Link h\u1EBFt h\u1EA1n sau 24 gi\u1EDD.
+
+\u2014 SGS LAND`
+  });
+}
+async function sendPasswordResetEmail(tenantId, to, resetUrl, userName) {
+  const name = escapeHtml(userName || to.split("@")[0]);
+  const safeUrl = escapeHtml(resetUrl);
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle("#FEF3C7", "&#128274;")}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">\u0110\u1EB7t L\u1EA1i M\u1EADt Kh\u1EA9u</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">Y\xEAu c\u1EA7u kh\xF4i ph\u1EE5c m\u1EADt kh\u1EA9u t\xE0i kho\u1EA3n</span></td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif;">Xin ch\xE0o <strong>${name}</strong>,</p>
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 28px;font-family:Arial,sans-serif;">
+      Ch\xFAng t\xF4i nh\u1EADn \u0111\u01B0\u1EE3c y\xEAu c\u1EA7u \u0111\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u cho t\xE0i kho\u1EA3n SGS LAND c\u1EE7a b\u1EA1n. Nh\u1EA5n n\xFAt b\xEAn d\u01B0\u1EDBi \u0111\u1EC3 t\u1EA1o m\u1EADt kh\u1EA9u m\u1EDBi.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton(safeUrl, "\u0110\u1EB7t L\u1EA1i M\u1EADt Kh\u1EA9u")}</td></tr>
+    </table>
+    ${spacer(24)}
+    ${linkBox(safeUrl)}
+    ${spacer(20)}
+    ${divider()}
+    ${warningBox("&#9888; L\u01B0u \xFD b\u1EA3o m\u1EADt", "Link n\xE0y c\xF3 hi\u1EC7u l\u1EF1c trong <strong>1 gi\u1EDD</strong>. N\u1EBFu b\u1EA1n kh\xF4ng y\xEAu c\u1EA7u \u0111\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u, t\xE0i kho\u1EA3n c\u1EE7a b\u1EA1n v\u1EABn an to\xE0n \u2014 h\xE3y b\u1ECF qua email n\xE0y.")}
+  `;
+  return sendEmail(tenantId, {
+    to,
+    subject: "SGS LAND \u2013 Y\xEAu c\u1EA7u \u0111\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u",
+    html: emailBase(content, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi t\u1EF1 \u0111\u1ED9ng, vui l\xF2ng kh\xF4ng tr\u1EA3 l\u1EDDi."),
+    text: `Xin ch\xE0o ${userName || to.split("@")[0]},
+
+\u0110\u1EB7t l\u1EA1i m\u1EADt kh\u1EA9u t\u1EA1i:
+${resetUrl}
+
+Link h\u1EBFt h\u1EA1n sau 1 gi\u1EDD. N\u1EBFu kh\xF4ng ph\u1EA3i b\u1EA1n y\xEAu c\u1EA7u, b\u1ECF qua email n\xE0y.
+
+\u2014 SGS LAND`
   });
 }
 async function sendWelcomeEmail(tenantId, to, userName) {
+  const safeName = escapeHtml(userName);
+  const featureRow = (text) => `<tr><td style="padding:5px 0;color:#334155;font-size:13px;font-family:Arial,sans-serif;">
+      <span style="color:#4F46E5;font-weight:bold;">&#10004;</span>&nbsp;&nbsp;${text}
+    </td></tr>`;
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle("#ECFDF5", "&#127881;")}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Ch\xE0o M\u1EEBng \u0110\u1EBFn V\u1EDBi SGS LAND!</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">T\xE0i kho\u1EA3n c\u1EE7a b\u1EA1n \u0111\xE3 s\u1EB5n s\xE0ng</span></td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif;">Xin ch\xE0o <strong>${safeName}</strong>,</p>
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">
+      T\xE0i kho\u1EA3n SGS LAND c\u1EE7a b\u1EA1n \u0111\xE3 \u0111\u01B0\u1EE3c k\xEDch ho\u1EA1t th\xE0nh c\xF4ng. B\xE2y gi\u1EDD b\u1EA1n c\xF3 th\u1EC3 truy c\u1EADp \u0111\u1EA7y \u0111\u1EE7 t\xEDnh n\u0103ng c\u1EE7a n\u1EC1n t\u1EA3ng qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n chuy\xEAn nghi\u1EC7p.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFC" style="border:1px solid #E2E8F0;border-radius:8px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          ${featureRow("Qu\u1EA3n l\xFD danh s\xE1ch b\u1EA5t \u0111\u1ED9ng s\u1EA3n")}
+          ${featureRow("Theo d\xF5i v\xE0 ch\u0103m s\xF3c kh\xE1ch h\xE0ng ti\u1EC1m n\u0103ng (Leads)")}
+          ${featureRow("Qu\u1EA3n l\xFD h\u1EE3p \u0111\u1ED3ng v\xE0 b\xE1o c\xE1o doanh thu")}
+          ${featureRow("AI h\u1ED7 tr\u1EE3 \u0111\u1ECBnh gi\xE1 v\xE0 t\u01B0 v\u1EA5n kh\xE1ch h\xE0ng")}
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(28)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton("https://sgsland.vn", "B\u1EAFt \u0110\u1EA7u Ngay")}</td></tr>
+    </table>
+  `;
   return sendEmail(tenantId, {
     to,
-    subject: "Ch\xE0o m\u1EEBng \u0111\u1EBFn v\u1EDBi SGS LAND!",
-    html: `
-      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="color: #4F46E5; font-size: 24px; font-weight: 700; margin: 0;">SGS LAND</h1>
-        </div>
-        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px;">
-          <h2 style="color: #0F172A; font-size: 18px; font-weight: 600; margin: 0 0 16px;">Ch\xE0o m\u1EEBng ${userName}!</h2>
-          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
-            T\xE0i kho\u1EA3n c\u1EE7a b\u1EA1n \u0111\xE3 \u0111\u01B0\u1EE3c t\u1EA1o th\xE0nh c\xF4ng tr\xEAn SGS LAND Enterprise Platform.
-          </p>
-          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0;">
-            B\u1EA1n c\xF3 th\u1EC3 \u0111\u0103ng nh\u1EADp ngay \u0111\u1EC3 b\u1EAFt \u0111\u1EA7u qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n, leads v\xE0 h\u1EE3p \u0111\u1ED3ng.
-          </p>
-        </div>
-      </div>
-    `,
+    subject: "SGS LAND \u2013 Ch\xE0o m\u1EEBng! T\xE0i kho\u1EA3n c\u1EE7a b\u1EA1n \u0111\xE3 s\u1EB5n s\xE0ng",
+    html: emailBase(content, "C\u1EA7n h\u1ED7 tr\u1EE3? Li\xEAn h\u1EC7 support@sgsland.vn"),
     text: `Ch\xE0o m\u1EEBng ${userName}!
 
-T\xE0i kho\u1EA3n SGS LAND c\u1EE7a b\u1EA1n \u0111\xE3 s\u1EB5n s\xE0ng.`
+T\xE0i kho\u1EA3n SGS LAND c\u1EE7a b\u1EA1n \u0111\xE3 \u0111\u01B0\u1EE3c k\xEDch ho\u1EA1t th\xE0nh c\xF4ng.
+
+\u0110\u0103ng nh\u1EADp t\u1EA1i: https://sgsland.vn
+
+\u2014 SGS LAND`
   });
 }
 async function sendInviteEmail(tenantId, to, userName, role, loginUrl) {
   const safeUser = escapeHtml(userName);
-  const safeRole = escapeHtml(role);
   const safeUrl = escapeHtml(loginUrl);
+  const roleLabels = {
+    admin: "Qu\u1EA3n tr\u1ECB vi\xEAn",
+    manager: "Qu\u1EA3n l\xFD",
+    agent: "M\xF4i gi\u1EDBi",
+    staff: "Nh\xE2n vi\xEAn"
+  };
+  const roleDisplay = roleLabels[role.toLowerCase()] || escapeHtml(role);
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle("#EEF2FF", "&#128100;")}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">B\u1EA1n \u0110\u01B0\u1EE3c M\u1EDDi Tham Gia SGS LAND</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">L\u1EDDi m\u1EDDi tham gia n\u1EC1n t\u1EA3ng</span></td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif;">Xin ch\xE0o <strong>${safeUser}</strong>,</p>
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">
+      B\u1EA1n \u0111\xE3 \u0111\u01B0\u1EE3c m\u1EDDi tham gia <strong>SGS LAND Enterprise Platform</strong>. Nh\u1EA5n n\xFAt b\xEAn d\u01B0\u1EDBi \u0111\u1EC3 thi\u1EBFt l\u1EADp m\u1EADt kh\u1EA9u v\xE0 b\u1EAFt \u0111\u1EA7u l\xE0m vi\u1EC7c.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF2FF" style="border:1px solid #C7D2FE;border-radius:8px;">
+      <tr>
+        <td style="padding:14px 20px;text-align:center;">
+          <p style="color:#64748B;font-size:11px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">Vai tr\xF2 \u0111\u01B0\u1EE3c ph\xE2n c\xF4ng</p>
+          <p style="color:#4F46E5;font-size:16px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">${roleDisplay}</p>
+        </td>
+      </tr>
+    </table>
+    ${spacer(28)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton(safeUrl, "K\xEDch Ho\u1EA1t T\xE0i Kho\u1EA3n")}</td></tr>
+    </table>
+    ${spacer(24)}
+    ${linkBox(safeUrl)}
+    ${spacer(20)}
+    <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;font-family:Arial,sans-serif;">
+      N\u1EBFu b\u1EA1n kh\xF4ng mong \u0111\u1EE3i l\u1EDDi m\u1EDDi n\xE0y, vui l\xF2ng b\u1ECF qua email.
+    </p>
+  `;
   return sendEmail(tenantId, {
     to,
-    subject: "B\u1EA1n \u0111\u01B0\u1EE3c m\u1EDDi tham gia SGS LAND",
-    html: `
-      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="color: #4F46E5; font-size: 24px; font-weight: 700; margin: 0;">SGS LAND</h1>
-        </div>
-        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px;">
-          <h2 style="color: #0F172A; font-size: 18px; font-weight: 600; margin: 0 0 16px;">Xin ch\xE0o ${safeUser}!</h2>
-          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
-            B\u1EA1n \u0111\xE3 \u0111\u01B0\u1EE3c m\u1EDDi tham gia SGS LAND v\u1EDBi vai tr\xF2 <strong>${safeRole}</strong>.
-          </p>
-          <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-            Vui l\xF2ng nh\u1EA5n v\xE0o n\xFAt b\xEAn d\u01B0\u1EDBi \u0111\u1EC3 \u0111\u1EB7t m\u1EADt kh\u1EA9u v\xE0 k\xEDch ho\u1EA1t t\xE0i kho\u1EA3n.
-          </p>
-          <div style="text-align: center; margin-bottom: 24px;">
-            <a href="${safeUrl}" style="display: inline-block; padding: 12px 32px; background: #4F46E5; color: #FFFFFF; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none;">K\xEDch ho\u1EA1t t\xE0i kho\u1EA3n</a>
-          </div>
-          <p style="color: #94A3B8; font-size: 12px; margin: 0;">N\u1EBFu b\u1EA1n kh\xF4ng y\xEAu c\u1EA7u l\u1EDDi m\u1EDDi n\xE0y, vui l\xF2ng b\u1ECF qua email n\xE0y.</p>
-        </div>
-      </div>
-    `,
+    subject: `SGS LAND \u2013 B\u1EA1n \u0111\u01B0\u1EE3c m\u1EDDi v\u1EDBi vai tr\xF2 ${roleDisplay}`,
+    html: emailBase(content, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi t\u1EF1 \u0111\u1ED9ng, vui l\xF2ng kh\xF4ng tr\u1EA3 l\u1EDDi."),
     text: `Xin ch\xE0o ${userName}!
 
-B\u1EA1n \u0111\u01B0\u1EE3c m\u1EDDi tham gia SGS LAND v\u1EDBi vai tr\xF2 ${role}.
-\u0110\u0103ng nh\u1EADp t\u1EA1i: ${loginUrl}`
+B\u1EA1n \u0111\u01B0\u1EE3c m\u1EDDi tham gia SGS LAND v\u1EDBi vai tr\xF2 ${roleDisplay}.
+
+K\xEDch ho\u1EA1t t\xE0i kho\u1EA3n t\u1EA1i:
+${loginUrl}
+
+\u2014 SGS LAND`
   });
 }
 async function sendSequenceEmail(tenantId, to, subject, content) {
-  const safeContent = escapeHtml(content);
-  const plainText = content.replace(/<[^>]*>/g, "");
+  const plainText = content.replace(/<[^>]*>/g, "").trim();
+  const body = `
+    <h2 style="color:#0F172A;font-size:18px;font-weight:bold;margin:0 0 20px;font-family:Arial,sans-serif;">${escapeHtml(subject)}</h2>
+    ${divider()}
+    <div style="color:#475569;font-size:14px;line-height:1.8;font-family:Arial,sans-serif;">${content}</div>
+  `;
   return sendEmail(tenantId, {
     to,
     subject,
-    html: `
-      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px; white-space: pre-wrap;">
-          ${safeContent}
-        </div>
-        <p style="color: #CBD5E1; font-size: 11px; text-align: center; margin-top: 24px;">
-          Sent via SGS LAND Automation
-        </p>
-      </div>
-    `,
+    html: emailBase(body, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi t\u1EF1 \u0111\u1ED9ng qua SGS LAND Automation."),
     text: plainText
   });
 }
@@ -48601,6 +48772,13 @@ var serverT = (lang = "vn") => (key) => {
   const dict = DICTIONARY[lang] || DICTIONARY["vn"] || {};
   return dict[key] ?? key;
 };
+function resolveBaseUrl(req) {
+  if (process.env.APP_URL) return process.env.APP_URL;
+  const replitDomain = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
+  if (replitDomain) return `https://${replitDomain}`;
+  if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  return `${req.protocol}://${req.get("host")}`;
+}
 async function startServer() {
   const app = express();
   const PORT = parseInt(process.env.PORT || "5000", 10);
@@ -48815,8 +48993,7 @@ async function startServer() {
         emailVerificationToken: tokenHash,
         emailVerificationExpires: tokenExpires
       });
-      const replitDomain = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
-      const baseUrl2 = process.env.APP_URL || (replitDomain ? `https://${replitDomain}` : null) || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null) || `${req.protocol}://${req.get("host")}`;
+      const baseUrl2 = resolveBaseUrl(req);
       const verifyUrl = `${baseUrl2}/#/verify-email/${rawToken}`;
       const verifyResult = await emailService.sendVerificationEmail(tenantId, email3, dbUser.name, verifyUrl).catch((err4) => {
         logger.error(`Failed to send verification email to ${email3}: ${err4.message}`);
@@ -48897,8 +49074,7 @@ async function startServer() {
           [tokenHash, tokenExpires, user.id]
         );
       });
-      const replitDomain2 = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
-      const baseUrl2 = process.env.APP_URL || (replitDomain2 ? `https://${replitDomain2}` : null) || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null) || `${req.protocol}://${req.get("host")}`;
+      const baseUrl2 = resolveBaseUrl(req);
       const verifyUrl = `${baseUrl2}/#/verify-email/${rawToken}`;
       const result = await emailService.sendVerificationEmail(tenantId, email3, user.name, verifyUrl).catch(
         () => ({ success: false, status: "failed" })
@@ -48938,8 +49114,7 @@ async function startServer() {
          VALUES ($1, $2, $3)`,
         [user.id, tokenHash, expiresAt]
       );
-      const replitDomain3 = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
-      const baseUrl2 = process.env.APP_URL || (replitDomain3 ? `https://${replitDomain3}` : null) || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null) || `${req.protocol}://${req.get("host")}`;
+      const baseUrl2 = resolveBaseUrl(req);
       const resetUrl = `${baseUrl2}/#/reset-password/${rawToken}`;
       const emailResult = await emailService.sendPasswordResetEmail(tenantId, email3, resetUrl, user.name);
       if (emailResult.status === "failed") {
