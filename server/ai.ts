@@ -459,7 +459,7 @@ class AiEngine {
             
             const analysisPrompt = `
                 Bạn là chuyên gia phân tích dữ liệu khách hàng.
-                KHÁCH HÀNG: ${state.lead.name}
+                KHÁCH HÀNG: ${state.lead?.name || 'Khách hàng chung'}
                 LỊCH SỬ TƯƠNG TÁC:
                 ${state.history.slice(-10).map(h => `- ${h.content}`).join('\n')}
                 
@@ -587,9 +587,11 @@ class AiEngine {
         const initialState: AgentState = {
             lead,
             userMessage,
-            history,
+            history: history || [],
             trace: [],
-            systemContext: `Customer: ${lead.name}. Lead Score: ${lead.score?.score || 'N/A'}.`,
+            systemContext: lead
+                ? `Customer: ${lead.name}. Lead Score: ${lead.score?.score || 'N/A'}.`
+                : 'General inquiry — no specific lead context.',
             finalResponse: "",
             suggestedAction: 'NONE',
             t,

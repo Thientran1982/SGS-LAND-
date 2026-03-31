@@ -134,7 +134,7 @@ export const schemas = {
   },
   register: {
     email: { required: true, type: 'email' as const },
-    password: { required: true, type: 'string' as const, minLength: 6 },
+    password: { required: true, type: 'string' as const, minLength: 8 },
     name: { required: false, type: 'string' as const, maxLength: 200 },
   },
   createLead: {
@@ -154,6 +154,8 @@ export const schemas = {
   createProposal: {
     leadId: { required: true, type: 'uuid' as const },
     listingId: { required: true, type: 'uuid' as const },
+    basePrice: { required: true, type: 'number' as const, min: 1 },
+    finalPrice: { required: true, type: 'number' as const, min: 1 },
   },
   createContract: {
     leadId: { required: true, type: 'uuid' as const },
