@@ -2200,6 +2200,38 @@ var init_seo_overrides = __esm({
   }
 });
 
+// server/migrations/029_seed_initial_admin.ts
+var TENANT_ID, ADMIN_EMAIL, ADMIN_NAME, PASSWORD_HASH, migration29, seed_initial_admin_default;
+var init_seed_initial_admin = __esm({
+  "server/migrations/029_seed_initial_admin.ts"() {
+    TENANT_ID = "00000000-0000-0000-0000-000000000001";
+    ADMIN_EMAIL = "info@sgsland.vn";
+    ADMIN_NAME = "SGS LAND Admin";
+    PASSWORD_HASH = "$2b$10$M3C28.QLrnfkM1nFWeab0uqfKDUvAtsgEhIWSV35sNRS250cfXYom";
+    migration29 = {
+      description: "Seed the initial admin account (info@sgsland.vn) if not present",
+      async up(client) {
+        await client.query(
+          `INSERT INTO users
+         (tenant_id, name, email, password_hash, role, status, email_verified, source, metadata, permissions)
+       VALUES ($1, $2, $3, $4, 'admin', 'active', true, 'seed', '{}', '{}')
+       ON CONFLICT (tenant_id, email) DO UPDATE
+         SET role           = 'admin',
+             status         = 'active',
+             email_verified = true,
+             password_hash  = EXCLUDED.password_hash,
+             updated_at     = NOW()
+       WHERE users.role <> 'admin'`,
+          [TENANT_ID, ADMIN_NAME, ADMIN_EMAIL, PASSWORD_HASH]
+        );
+      },
+      async down(_client) {
+      }
+    };
+    seed_initial_admin_default = migration29;
+  }
+});
+
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -2252,15 +2284,15 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file2 of pending) {
-      const migration29 = MIGRATION_REGISTRY[file2];
-      if (!migration29 || typeof migration29.up !== "function") {
+      const migration30 = MIGRATION_REGISTRY[file2];
+      if (!migration30 || typeof migration30.up !== "function") {
         throw new Error(`[migrations] Invalid migration module for ${file2} \u2014 missing up() function`);
       }
-      console.log(`[migrations] Applying ${file2}: ${migration29.description || ""}`);
-      await migration29.up(client);
+      console.log(`[migrations] Applying ${file2}: ${migration30.description || ""}`);
+      await migration30.up(client);
       await client.query(
         "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
-        [file2, migration29.description || null]
+        [file2, migration30.description || null]
       );
       console.log(`[migrations] \u2713 ${file2}`);
     }
@@ -2295,15 +2327,15 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const migration29 = MIGRATION_REGISTRY[lastVersion];
-    if (!migration29) {
+    const migration30 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration30) {
       throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
     }
-    if (!migration29.down) {
+    if (!migration30.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
     console.log(`[migrations] Rolling back ${lastVersion}...`);
-    await migration29.down(client);
+    await migration30.down(client);
     await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
     await client.query("COMMIT");
     console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
@@ -2346,6 +2378,7 @@ var init_runner = __esm({
     init_email_verification();
     init_activate_initial_admin();
     init_seo_overrides();
+    init_seed_initial_admin();
     dotenv.config();
     MIGRATION_REGISTRY = {
       "001_baseline_schema.ts": baseline_schema_default,
@@ -2375,7 +2408,8 @@ var init_runner = __esm({
       "025_notifications.ts": notifications_default,
       "026_email_verification.ts": email_verification_default,
       "027_activate_initial_admin.ts": activate_initial_admin_default,
-      "028_seo_overrides.ts": seo_overrides_default
+      "028_seo_overrides.ts": seo_overrides_default,
+      "029_seed_initial_admin.ts": seed_initial_admin_default
     };
     MIGRATION_ADVISORY_LOCK_KEY = 74839230;
   }
