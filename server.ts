@@ -64,6 +64,21 @@ const serverT = (lang: string = 'vn') => (key: string): string => {
   return dict[key] ?? key;
 };
 
+/**
+ * Resolve the canonical base URL for email links and external callbacks.
+ * Priority: APP_URL env var (explicit production override)
+ *   → REPLIT_DOMAINS first entry (Replit production domain, e.g. sgs-land.replit.app)
+ *   → REPLIT_DEV_DOMAIN (Replit dev proxy domain)
+ *   → req.protocol + host header (last resort / self-hosted)
+ */
+function resolveBaseUrl(req: express.Request): string {
+  if (process.env.APP_URL) return process.env.APP_URL;
+  const replitDomain = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim();
+  if (replitDomain) return `https://${replitDomain}`;
+  if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  return `${req.protocol}://${req.get('host')}`;
+}
+
 async function startServer() {
   const app = express();
   const PORT = parseInt(process.env.PORT || '5000', 10);
@@ -318,14 +333,8 @@ async function startServer() {
         emailVerificationExpires: tokenExpires,
       });
 
-      // Build the verification URL
-      // Priority: APP_URL (explicit production override) → REPLIT_DOMAINS (first production domain)
-      // → REPLIT_DEV_DOMAIN (dev fallback) → req host (last resort)
-      const replitDomain = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim();
-      const baseUrl = process.env.APP_URL
-        || (replitDomain ? `https://${replitDomain}` : null)
-        || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null)
-        || `${req.protocol}://${req.get('host')}`;
+      // Build the verification URL using the canonical base URL helper
+      const baseUrl = resolveBaseUrl(req);
       const verifyUrl = `${baseUrl}/#/verify-email/${rawToken}`;
 
       const verifyResult = await emailService.sendVerificationEmail(tenantId, email, dbUser.name, verifyUrl).catch(err => {
@@ -432,11 +441,7 @@ async function startServer() {
         );
       });
 
-      const replitDomain2 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim();
-      const baseUrl = process.env.APP_URL
-        || (replitDomain2 ? `https://${replitDomain2}` : null)
-        || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null)
-        || `${req.protocol}://${req.get('host')}`;
+      const baseUrl = resolveBaseUrl(req);
       const verifyUrl = `${baseUrl}/#/verify-email/${rawToken}`;
 
       const result = await emailService.sendVerificationEmail(tenantId, email, user.name, verifyUrl).catch(() =>
@@ -485,11 +490,7 @@ async function startServer() {
         [user.id, tokenHash, expiresAt]
       );
 
-      const replitDomain3 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim();
-      const baseUrl = process.env.APP_URL
-        || (replitDomain3 ? `https://${replitDomain3}` : null)
-        || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null)
-        || `${req.protocol}://${req.get('host')}`;
+      const baseUrl = resolveBaseUrl(req);
       const resetUrl = `${baseUrl}/#/reset-password/${rawToken}`;
 
       const emailResult = await emailService.sendPasswordResetEmail(tenantId, email, resetUrl, user.name);
