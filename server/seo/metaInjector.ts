@@ -72,6 +72,7 @@ export function buildListingMeta(listing: any): MetaData {
   const structuredData: any = {
     '@context': 'https://schema.org',
     '@type': 'RealEstateListing',
+    inLanguage: 'vi',
     name: listing.title || '',
     description,
     url,
@@ -103,6 +104,7 @@ export function buildArticleMeta(article: any): MetaData {
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
+    inLanguage: 'vi',
     headline: article.title || '',
     description,
     image,

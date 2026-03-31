@@ -332,6 +332,7 @@ export function injectListingSEO(listing: ListingForSEO): void {
   injectJsonLd({
     '@context': 'https://schema.org',
     '@type': 'RealEstateListing',
+    inLanguage: 'vi',
     name: listing.title,
     description,
     url: `${BASE_URL}${canonicalPath}`,
@@ -366,6 +367,7 @@ export function injectArticleSEO(article: ArticleForSEO): void {
   injectJsonLd({
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
+    inLanguage: 'vi',
     headline: article.title,
     description,
     image: image,

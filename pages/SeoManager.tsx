@@ -307,7 +307,7 @@ const SerpPreview: React.FC<{
             <SerpPageDropdown
                 value={selectedKey}
                 onChange={onSelect}
-                routes={ALL_ROUTES}
+                routes={PUBLIC_ROUTES}
                 overrides={overrides}
             />
 
@@ -853,7 +853,7 @@ export const SeoManager: React.FC = () => {
     const [serpSelectedKey, setSerpSelectedKey] = useState(() => {
         const stored = getSEOOverrides();
         const firstOverridden = PUBLIC_ROUTES.find(r => stored[r.key]);
-        return firstOverridden?.key ?? '';
+        return firstOverridden?.key ?? 'home';
     });
 
     // On mount: load overrides from server (source of truth) and merge into localStorage.
@@ -866,7 +866,16 @@ export const SeoManager: React.FC = () => {
                 saveSEOOverride(key, ov.title, ov.description);
             }
             setOverrides(merged);
+            // After server overrides load, auto-select the first overridden public route
+            // so the SERP Preview immediately shows meaningful edited content.
             if (Object.keys(merged).length > 0) {
+                setSerpSelectedKey(prev => {
+                    if (prev === '' || prev === 'home') {
+                        const firstOverridden = PUBLIC_ROUTES.find(r => merged[r.key]);
+                        return firstOverridden?.key ?? 'home';
+                    }
+                    return prev;
+                });
                 applyOverridesToDom(merged);
                 setSchemaVersion(1);
             }
