@@ -46,6 +46,7 @@ import m024 from './024_leads_won_at';
 import m025 from './025_notifications';
 import m026 from './026_email_verification';
 import m027 from './027_activate_initial_admin';
+import m028 from './028_seo_overrides';
 
 dotenv.config();
 
@@ -88,6 +89,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '025_notifications.ts': m025,
   '026_email_verification.ts': m026,
   '027_activate_initial_admin.ts': m027,
+  '028_seo_overrides.ts': m028,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

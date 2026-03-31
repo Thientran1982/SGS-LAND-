@@ -1160,6 +1160,78 @@ async function startServer() {
     }
   });
 
+  // ─── SEO Overrides API ─────────────────────────────────────────────────────
+  // GET  /api/seo-overrides          — public read (used by server-side injector on start)
+  // POST /api/seo-overrides/:key     — ADMIN only: upsert an override
+  // DELETE /api/seo-overrides/:key   — ADMIN only: remove an override
+
+  app.get('/api/seo-overrides', apiRateLimit, async (_req: express.Request, res: express.Response) => {
+    try {
+      const result = await pool.query(
+        'SELECT route_key, title, description, og_image, updated_at FROM seo_overrides ORDER BY route_key'
+      );
+      const map: Record<string, any> = {};
+      for (const row of result.rows) {
+        map[row.route_key] = {
+          routeKey: row.route_key,
+          title: row.title,
+          description: row.description,
+          ogImage: row.og_image,
+          updatedAt: row.updated_at,
+        };
+      }
+      res.json(map);
+    } catch (err) {
+      console.error('[SEO] GET overrides error:', err);
+      res.status(500).json({ error: 'Failed to fetch SEO overrides' });
+    }
+  });
+
+  app.post('/api/seo-overrides/:key', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    const user = (req as any).user;
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+      return res.status(403).json({ error: 'Chỉ ADMIN mới có thể cập nhật SEO' }) as any;
+    }
+    const routeKey = req.params.key;
+    const { title, description, ogImage } = req.body;
+    if (typeof title !== 'string' || typeof description !== 'string') {
+      return res.status(400).json({ error: 'title và description là bắt buộc' }) as any;
+    }
+    try {
+      const result = await pool.query(
+        `INSERT INTO seo_overrides (route_key, title, description, og_image, updated_at, updated_by)
+         VALUES ($1, $2, $3, $4, NOW(), $5)
+         ON CONFLICT (route_key) DO UPDATE
+           SET title = EXCLUDED.title,
+               description = EXCLUDED.description,
+               og_image = EXCLUDED.og_image,
+               updated_at = NOW(),
+               updated_by = EXCLUDED.updated_by
+         RETURNING route_key, title, description, og_image, updated_at`,
+        [routeKey, title, description, ogImage || null, user.id]
+      );
+      const row = result.rows[0];
+      res.json({ routeKey: row.route_key, title: row.title, description: row.description, ogImage: row.og_image, updatedAt: row.updated_at });
+    } catch (err) {
+      console.error('[SEO] POST override error:', err);
+      res.status(500).json({ error: 'Failed to save SEO override' });
+    }
+  });
+
+  app.delete('/api/seo-overrides/:key', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    const user = (req as any).user;
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+      return res.status(403).json({ error: 'Chỉ ADMIN mới có thể xóa SEO override' }) as any;
+    }
+    try {
+      await pool.query('DELETE FROM seo_overrides WHERE route_key = $1', [req.params.key]);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[SEO] DELETE override error:', err);
+      res.status(500).json({ error: 'Failed to delete SEO override' });
+    }
+  });
+
   app.use('/api/leads', apiRateLimit, createLeadRoutes(authenticateToken));
   app.use('/api/listings', apiRateLimit, createListingRoutes(authenticateToken));
   app.use('/api/proposals', apiRateLimit, createProposalRoutes(authenticateToken, () => broadcastIo));
@@ -1762,12 +1834,65 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
+    // ── Production: SSR meta-tag injection ────────────────────────────────────
+    // Import the injector lazily so it is never bundled when running in dev mode.
+    const { getBaseHtml, injectMeta, buildListingMeta, buildArticleMeta, buildStaticPageMeta } =
+      await import('./server/seo/metaInjector');
+
+    // Preload the base HTML once at startup to avoid repeated disk reads.
+    try { getBaseHtml(); } catch { /* dist not ready in some edge cases */ }
+
+    // Helper that sends injected HTML
+    const sendMeta = (res: express.Response, meta: Parameters<typeof injectMeta>[1]) => {
+      try {
+        const html = injectMeta(getBaseHtml(), meta);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+        res.send(html);
+      } catch {
+        res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+      }
+    };
+
+    // /listings/:id → inject listing-specific meta
+    app.get('/listings/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      try {
+        const listing = await listingRepository.findById(DEFAULT_TENANT_ID, String(req.params.id));
+        if (!listing) return next();
+        sendMeta(res, buildListingMeta(listing));
+      } catch { next(); }
+    });
+
+    // /news/:id → inject article-specific meta
+    app.get('/news/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      try {
+        const article = await articleRepository.findById(DEFAULT_TENANT_ID, String(req.params.id));
+        if (!article) return next();
+        sendMeta(res, buildArticleMeta(article));
+      } catch { next(); }
+    });
+
+    // All other SPA routes → inject admin-saved override or fallback to defaults
     app.use(express.static("dist"));
-    // SPA fallback: serve index.html for any non-API, non-asset route
-    // so that client-side routing (hash or history mode) works on direct navigation.
-    // Uses app.use (not app.get('*')) — bare wildcard '*' is invalid in path-to-regexp v8+
-    app.use((_req, res) => {
-      res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+    app.use(async (req: express.Request, res: express.Response) => {
+      try {
+        // Derive route key from pathname: strip leading "/"
+        const routeKey = req.path.replace(/^\//, '').split('/')[0] || '';
+        const result = await pool.query(
+          'SELECT title, description, og_image FROM seo_overrides WHERE route_key = $1',
+          [routeKey]
+        );
+        const row = result.rows[0];
+        const meta = buildStaticPageMeta(
+          row?.title,
+          row?.description,
+          row?.og_image,
+          req.path
+        );
+        sendMeta(res, meta);
+      } catch {
+        res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+      }
     });
   }
 

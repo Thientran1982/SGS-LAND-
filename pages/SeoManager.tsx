@@ -6,6 +6,7 @@ import { UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ROUTE_SEO, SEOConfig, getSEOOverrides, saveSEOOverride, clearSEOOverride, updatePageSEO } from '../utils/seo';
 import { copyToClipboard } from '../utils/clipboard';
+import seoApi from '../services/api/seoApi';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const ICONS = {
@@ -401,6 +402,8 @@ const MetaEditor: React.FC<{
     const [edits, setEdits] = useState<Record<string, { title: string; description: string }>>({});
     const [saved, setSaved] = useState<string | null>(null);
     const [previewing, setPreviewing] = useState<string | null>(null);
+    const [serverSaving, setServerSaving] = useState<string | null>(null);
+    const [serverError, setServerError] = useState<string | null>(null);
 
     const getTitle = (key: string) => edits[key]?.title ?? overrides[key]?.title ?? ROUTE_SEO[key]?.title ?? ROUTE_SEO[''].title;
     const getDesc  = (key: string) => edits[key]?.description ?? overrides[key]?.description ?? ROUTE_SEO[key]?.description ?? ROUTE_SEO[''].description;
@@ -409,16 +412,21 @@ const MetaEditor: React.FC<{
         setEdits(prev => ({ ...prev, [key]: { ...(prev[key] ?? { title: getTitle(key), description: getDesc(key) }), [field]: val } }));
     };
 
-    const handleSave = (key: string) => {
+    const handleSave = async (key: string) => {
         const t = getTitle(key);
         const d = getDesc(key);
+        setServerSaving(key);
+        setServerError(null);
+        try {
+            await seoApi.upsert(key, t, d);
+        } catch {
+            setServerError(`Không thể lưu lên server. Đã lưu tạm trong trình duyệt.`);
+        } finally {
+            setServerSaving(null);
+        }
         saveSEOOverride(key, t, d);
-        // Propagate new overrides to parent so SERP Preview updates immediately —
-        // no tab switch required.
         onOverridesChange(getSEOOverrides());
         setEdits(prev => { const next = { ...prev }; delete next[key]; return next; });
-        // Apply the saved route's SEO immediately so the admin can verify it in the browser tab,
-        // then restore admin page noindex after 3 seconds.
         setPreviewing(key);
         updatePageSEO(key);
         setSaved(key);
@@ -430,11 +438,13 @@ const MetaEditor: React.FC<{
         }, 3000);
     };
 
-    const handleReset = (key: string) => {
+    const handleReset = async (key: string) => {
+        try {
+            await seoApi.remove(key);
+        } catch { /* silent — still clear locally */ }
         clearSEOOverride(key);
         onOverridesChange(getSEOOverrides());
         setEdits(prev => { const next = { ...prev }; delete next[key]; return next; });
-        // Restore admin page SEO to preserve noindex
         updatePageSEO('seo-manager');
     };
 
@@ -454,7 +464,10 @@ const MetaEditor: React.FC<{
 
     return (
         <div className="space-y-4">
-            <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho các trang công khai. Thay đổi được lưu trong trình duyệt và <strong className="font-semibold text-[var(--text-secondary)]">có hiệu lực khi người dùng điều hướng đến trang đó</strong> — không áp dụng ngay vào trang hiện tại.</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Chỉnh sửa title và description cho các trang công khai. Thay đổi được <strong className="font-semibold text-emerald-600">lưu lên server</strong> — Google và mạng xã hội sẽ thấy meta mới khi crawl lại.</p>
+            {serverError && (
+                <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl px-3 py-2">{serverError}</div>
+            )}
 
             {PUBLIC_ROUTES.map(({ key, label }) => {
                 const dirty = isDirty(key);
@@ -505,10 +518,16 @@ const MetaEditor: React.FC<{
                             {dirty && (
                                 <button
                                     onClick={() => handleSave(key)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-2xs font-bold rounded-lg hover:bg-indigo-700 transition-colors active:scale-95"
+                                    disabled={serverSaving === key}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-2xs font-bold rounded-lg hover:bg-indigo-700 transition-colors active:scale-95 disabled:opacity-60"
                                 >
-                                    {saved === key ? ICONS.CHECK : ICONS.SAVE}
-                                    {saved === key ? 'Đã lưu' : 'Lưu'}
+                                    {serverSaving === key ? (
+                                        <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Đang lưu…</>
+                                    ) : saved === key ? (
+                                        <>{ICONS.CHECK} Đã lưu lên server</>
+                                    ) : (
+                                        <>{ICONS.SAVE} Lưu lên server</>
+                                    )}
                                 </button>
                             )}
                             {overridden && !dirty && (
@@ -837,14 +856,27 @@ export const SeoManager: React.FC = () => {
         return firstOverridden?.key ?? '';
     });
 
-    // On mount: sync DOM JSON-LD with stored overrides so StructuredData shows
-    // correct values even after a full page reload.
+    // On mount: load overrides from server (source of truth) and merge into localStorage.
     useEffect(() => {
-        const stored = getSEOOverrides();
-        if (Object.keys(stored).length > 0) {
-            applyOverridesToDom(stored);
-            setSchemaVersion(1);
-        }
+        seoApi.getAll().then(serverOverrides => {
+            const local = getSEOOverrides();
+            const merged: Record<string, { title: string; description: string }> = { ...local };
+            for (const [key, ov] of Object.entries(serverOverrides)) {
+                merged[key] = { title: ov.title, description: ov.description };
+                saveSEOOverride(key, ov.title, ov.description);
+            }
+            setOverrides(merged);
+            if (Object.keys(merged).length > 0) {
+                applyOverridesToDom(merged);
+                setSchemaVersion(1);
+            }
+        }).catch(() => {
+            const stored = getSEOOverrides();
+            if (Object.keys(stored).length > 0) {
+                applyOverridesToDom(stored);
+                setSchemaVersion(1);
+            }
+        });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
