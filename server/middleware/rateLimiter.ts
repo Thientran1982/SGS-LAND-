@@ -34,35 +34,33 @@ setInterval(() => {
 }, 60_000);
 
 // ---------------------------------------------------------------------------
-// Redis store (multi-process / production — used when REDIS_URL is set)
+// Upstash Redis REST store (production — used when UPSTASH_REDIS_REST_URL is set)
+// Uses HTTP REST API, no TCP connection required.
 // ---------------------------------------------------------------------------
 
-let redisClient: import('ioredis').Redis | null = null;
+let upstashClient: any | null = null;
 
-async function getRedisClient(): Promise<import('ioredis').Redis | null> {
-  if (!process.env.REDIS_URL) return null;
-  if (redisClient) return redisClient;
+async function getUpstashClient(): Promise<any | null> {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  if (upstashClient) return upstashClient;
   try {
-    const { default: Redis } = await import('ioredis');
-    redisClient = new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: 1,
-      enableOfflineQueue: false,
-      lazyConnect: true,
-    });
-    await redisClient.connect();
-    return redisClient;
-  } catch {
-    redisClient = null;
+    const { Redis } = await import('@upstash/redis');
+    upstashClient = new Redis({ url, token });
+    return upstashClient;
+  } catch (e) {
+    upstashClient = null;
     return null;
   }
 }
 
-async function redisIncr(redis: import('ioredis').Redis, key: string, windowSecs: number): Promise<number> {
-  const count = await redis.incr(key);
+async function upstashIncr(client: any, key: string, windowSecs: number): Promise<number> {
+  const count = await client.incr(key);
   if (count === 1) {
-    await redis.expire(key, windowSecs);
+    await client.expire(key, windowSecs);
   }
-  return count;
+  return count as number;
 }
 
 // ---------------------------------------------------------------------------
@@ -88,16 +86,15 @@ export function rateLimit(options: {
     let count: number;
     let resetAt: number;
 
-    const redis = await getRedisClient();
+    const redis = await getUpstashClient();
     if (redis) {
-      // Redis-backed: accurate across multiple processes/instances
       const redisKey = `rl:${name}:${key}`;
       try {
-        count = await redisIncr(redis, redisKey, windowSecs);
-        const ttl = await redis.ttl(redisKey);
+        count = await upstashIncr(redis, redisKey, windowSecs);
+        const ttl = await redis.ttl(redisKey) as number;
         resetAt = Date.now() + (ttl > 0 ? ttl * 1000 : windowMs);
       } catch {
-        // Redis error — fall through to in-memory
+        // Upstash error — fall through to in-memory
         const store = getStore(name);
         const now = Date.now();
         let entry = store.get(key);

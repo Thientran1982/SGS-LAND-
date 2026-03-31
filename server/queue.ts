@@ -1,14 +1,13 @@
-import { Queue, Worker, Job } from 'bullmq';
-import IORedis from 'ioredis';
 import { Server } from 'socket.io';
 import { logger } from './middleware/logger';
 
-
-const redisUrl = process.env.REDIS_URL;
-const useRedis = !!redisUrl;
-
-let connection: any;
-export let webhookQueue: any;
+// ---------------------------------------------------------------------------
+// Queue — Upstash REST (production) or in-memory (dev/fallback)
+//
+// Upstash does not support TCP pub/sub (BullMQ), so we use the REST API
+// for distributed rate limiting and fall back to in-memory job processing.
+// For true distributed job queues, upgrade to Upstash QStash.
+// ---------------------------------------------------------------------------
 
 const inMemoryJobs: any[] = [];
 let inMemoryProcessor: ((job: any) => Promise<void>) | null = null;
@@ -32,46 +31,25 @@ function runWithRetry(job: any, attempt = 1): void {
   }, attempt === 1 ? 0 : IN_MEMORY_BACKOFF_MS * Math.pow(2, attempt - 2));
 }
 
-if (useRedis) {
-  connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
-  connection.on('error', (err: any) => {
-    logger.error('Redis connection error in queue:', err);
-  });
-  webhookQueue = new Queue('webhook-events', {
-    connection,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: { type: 'exponential', delay: 2000 },
-      removeOnComplete: 100,
-      removeOnFail: 500,
-    },
-  });
-  webhookQueue.on('error', (err: any) => {
-    logger.error('Webhook queue error:', err);
-  });
-} else {
-  console.log("No REDIS_URL provided, using in-memory mock queue.");
-  webhookQueue = {
-    add: async (name: string, data: any) => {
-      const job = { name, data, id: `mock-${Date.now()}` };
-      if (inMemoryProcessor) {
-        runWithRetry(job);
-      } else {
-        inMemoryJobs.push(job);
-      }
-      return job;
+console.log("Using in-memory job queue (Upstash REST does not support BullMQ TCP pub/sub).");
+
+export const webhookQueue = {
+  add: async (name: string, data: any) => {
+    const job = { name, data, id: `job-${Date.now()}` };
+    if (inMemoryProcessor) {
+      runWithRetry(job);
+    } else {
+      inMemoryJobs.push(job);
     }
-  };
-}
+    return job;
+  },
+  close: async () => {},
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Look up or create a lead by social channel ID.
- * Returns the lead entity (existing or newly created).
- */
 async function upsertLeadBySocialId(
   tenantId: string,
   channel: 'zalo' | 'facebook',
@@ -80,17 +58,15 @@ async function upsertLeadBySocialId(
 ): Promise<any> {
   const { leadRepository } = await import('./repositories/leadRepository');
 
-  // 1. Try to find existing lead with this social ID
   const existing = await leadRepository.findBySocialId(tenantId, channel, socialId);
   if (existing) return existing;
 
-  // 2. Not found → create a new lead
   const sourceName = channel === 'zalo' ? 'Zalo' : 'Facebook';
   const name = displayName?.trim() || `${sourceName} User`;
 
   const lead = await leadRepository.create(tenantId, {
     name,
-    phone: '',           // No phone number from social channels
+    phone: '',
     source: sourceName,
     stage: 'NEW',
     socialIds: { [channel]: socialId },
@@ -115,7 +91,6 @@ export function setupWebhookWorker(io: Server) {
     if (platform === 'zalo') {
       const { event_name, sender, recipient, message, timestamp } = payload;
 
-      // recipient.id = OA ID → use it to find the correct tenant
       const oaId = recipient?.id as string | undefined;
       if (!oaId) {
         logger.warn('[Zalo Webhook] Missing recipient.id (OA ID), cannot resolve tenant — dropping event');
@@ -136,14 +111,12 @@ export function setupWebhookWorker(io: Server) {
         return;
       }
 
-      // Handle: new follower → create lead
       if (event_name === 'follow') {
         await upsertLeadBySocialId(tenantId, 'zalo', senderId, sender?.display_name);
         logger.info(`[Zalo] New follower ${senderId} → lead created/found`);
         return;
       }
 
-      // Handle: text message
       if (event_name === 'user_send_text') {
         const textContent = message?.text as string;
         if (!textContent) return;
@@ -171,7 +144,6 @@ export function setupWebhookWorker(io: Server) {
         io.to(leadId).emit('receive_message', { room: leadId, message: savedInteraction, isWebhook: true });
         io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Zalo' });
 
-        // AI scoring — fire-and-forget (do not block webhook processing)
         (async () => {
           try {
             const { aiService } = await import('./ai');
@@ -189,7 +161,6 @@ export function setupWebhookWorker(io: Server) {
         })();
       }
 
-      // Handle: image message
       if (event_name === 'user_send_image') {
         const imgUrl = message?.attachments?.[0]?.payload?.url as string | undefined;
         const lead = await upsertLeadBySocialId(tenantId, 'zalo', senderId, sender?.display_name);
@@ -217,7 +188,6 @@ export function setupWebhookWorker(io: Server) {
       if (object !== 'page' || !Array.isArray(entry)) return;
 
       for (const pageEntry of entry) {
-        // pageEntry.id = Page ID → use it to find the correct tenant
         const pageId = pageEntry.id as string | undefined;
         if (!pageId) {
           logger.warn('[Facebook Webhook] Missing pageEntry.id, cannot resolve tenant — skipping entry');
@@ -236,9 +206,8 @@ export function setupWebhookWorker(io: Server) {
 
         for (const webhookEvent of messagingEvents) {
           const senderId = webhookEvent.sender?.id as string | undefined;
-          if (!senderId || senderId === pageId) continue; // skip echoes from the page itself
+          if (!senderId || senderId === pageId) continue;
 
-          // Text message
           const messageText = webhookEvent.message?.text as string | undefined;
           if (messageText) {
             const lead = await upsertLeadBySocialId(tenantId, 'facebook', senderId);
@@ -264,7 +233,6 @@ export function setupWebhookWorker(io: Server) {
             io.to(leadId).emit('receive_message', { room: leadId, message: savedInteraction, isWebhook: true });
             io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Facebook' });
 
-            // AI scoring — fire-and-forget (do not block webhook processing)
             (async () => {
               try {
                 const { aiService } = await import('./ai');
@@ -282,7 +250,6 @@ export function setupWebhookWorker(io: Server) {
             })();
           }
 
-          // Image/attachment message
           const attachments = webhookEvent.message?.attachments as any[] | undefined;
           if (attachments?.length && !messageText) {
             const lead = await upsertLeadBySocialId(tenantId, 'facebook', senderId);
@@ -304,7 +271,6 @@ export function setupWebhookWorker(io: Server) {
             io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Facebook' });
           }
 
-          // Postback (button clicks)
           const postback = webhookEvent.postback;
           if (postback) {
             const lead = await upsertLeadBySocialId(tenantId, 'facebook', senderId);
@@ -339,18 +305,14 @@ export function setupWebhookWorker(io: Server) {
       }
       const tenantId = payloadTenantId;
 
-      // Normalize email address (strip display name if any)
       const fromEmail = (from.match(/<(.+?)>/) || [])[1] || from.trim();
       const senderName = fromName || (from.match(/^(.+?)\s*</) || [])[1]?.trim() || fromEmail.split('@')[0];
 
       const { leadRepository } = await import('./repositories/leadRepository');
       const { interactionRepository } = await import('./repositories/interactionRepository');
 
-      // Find existing lead by email or create new one
       let lead: any;
       try {
-        // Use withTenant to search by email
-        const { pool } = await import('./db');
         const { withTenantContext } = await import('./db');
         const existingResult = await withTenantContext(tenantId, async (client) => {
           return client.query(
@@ -360,13 +322,11 @@ export function setupWebhookWorker(io: Server) {
         });
 
         if (existingResult.rows[0]) {
-          // Use existing lead
           const { BaseRepository } = await import('./repositories/baseRepository');
           const br = new BaseRepository('leads');
           lead = (br as any).rowToEntity(existingResult.rows[0]);
           logger.info(`[Email] Matched existing lead ${lead.id} for ${fromEmail}`);
         } else {
-          // Create new lead
           lead = await leadRepository.create(tenantId, {
             name: senderName,
             phone: '',
@@ -382,7 +342,6 @@ export function setupWebhookWorker(io: Server) {
         return;
       }
 
-      // Build interaction content — subject + body
       const content = subject
         ? `**${subject}**\n\n${body || ''}`
         : (body || '[Email không có nội dung]');
@@ -413,31 +372,13 @@ export function setupWebhookWorker(io: Server) {
     }
   };
 
-  if (useRedis) {
-    const worker = new Worker('webhook-events', processJob, { connection });
-
-    worker.on('completed', job => {
-      logger.info(`Job ${job.id} completed`);
-    });
-
-    worker.on('failed', (job, err) => {
-      logger.error(`Job ${job?.id} failed`, err);
-    });
-
-    worker.on('error', (err) => {
-      logger.error('Webhook worker error:', err);
-    });
-
-    return worker;
-  } else {
-    inMemoryProcessor = processJob;
-    while (inMemoryJobs.length > 0) {
-      const job = inMemoryJobs.shift();
-      runWithRetry(job);
-    }
-    return {
-      on: () => {},
-      close: async () => {}
-    };
+  inMemoryProcessor = processJob;
+  while (inMemoryJobs.length > 0) {
+    const job = inMemoryJobs.shift();
+    runWithRetry(job);
   }
+  return {
+    on: () => {},
+    close: async () => {},
+  };
 }

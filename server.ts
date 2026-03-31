@@ -1,8 +1,6 @@
 import express from "express";
 import path from "path";
 import { Server } from "socket.io";
-import { createAdapter } from "@socket.io/redis-adapter";
-import { createClient } from "redis";
 import http from "http";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
@@ -125,8 +123,8 @@ async function startServer() {
     if (!process.env.ALLOWED_ORIGINS) {
       logger.warn('ALLOWED_ORIGINS not set — CORS will block all cross-origin requests in production. Set it to your deployment domain (e.g. https://yourdomain.replit.app).');
     }
-    if (!process.env.REDIS_URL) {
-      logger.warn('REDIS_URL not set — rate limiting uses in-memory store. Not safe for multi-instance deployments. Set REDIS_URL for production scale-out.');
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      logger.warn('UPSTASH_REDIS_REST_URL/TOKEN not set — rate limiting uses in-memory store. Not safe for multi-instance deployments.');
     }
     if (!process.env.GEMINI_API_KEY && !process.env.API_KEY) {
       logger.warn('GEMINI_API_KEY not set — all AI features (chat, valuation, lead scoring) will be unavailable.');
@@ -844,25 +842,9 @@ async function startServer() {
   // Start market data service — in-memory cache with 6h TTL + background refresh
   marketDataService.start(io);
 
-  // Redis Adapter Setup
-  if (process.env.REDIS_URL) {
-    try {
-      const redisUrl = process.env.REDIS_URL;
-      const pubClient = createClient({ url: redisUrl });
-      const subClient = pubClient.duplicate();
-
-      pubClient.on('error', (err) => console.warn('Redis pubClient error:', err.message));
-      subClient.on('error', (err) => console.warn('Redis subClient error:', err.message));
-
-      await Promise.all([pubClient.connect(), subClient.connect()]);
-      io.adapter(createAdapter(pubClient, subClient));
-      console.log("Redis adapter connected successfully for Socket.io");
-    } catch (err: any) {
-      console.warn("Redis connection failed, falling back to in-memory adapter:", err.message);
-    }
-  } else {
-    console.log("No REDIS_URL provided, using in-memory adapter for Socket.io");
-  }
+  // Socket.io uses in-memory adapter (single-instance).
+  // Upstash REST API does not support TCP pub/sub required by @socket.io/redis-adapter.
+  console.log("Socket.io using in-memory adapter (Upstash REST — no TCP pub/sub needed for single-instance).");
 
   // Initialize DB schema via migration runner (with retry for cold-start DB wakeup)
   if (process.env.DATABASE_URL) {
@@ -1283,9 +1265,9 @@ async function startServer() {
       const components: Record<string, any> = {
         database: { status: health.checks?.database ? 'healthy' : 'down' },
         aiService: { status: health.checks?.aiService ? 'healthy' : 'unconfigured' },
-        redis: { status: process.env.REDIS_URL ? 'healthy' : 'in-memory-fallback' },
-        websocket: { status: 'healthy', adapter: process.env.REDIS_URL ? 'redis' : 'in-memory' },
-        queue: { status: 'healthy', type: process.env.REDIS_URL ? 'bullmq' : 'in-memory' },
+        redis: { status: (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ? 'upstash-rest' : 'in-memory-fallback' },
+        websocket: { status: 'healthy', adapter: 'in-memory' },
+        queue: { status: 'healthy', type: 'in-memory' },
       };
 
       try {
@@ -1303,13 +1285,8 @@ async function startServer() {
         migrationVersion = migResult.rows[0]?.version ?? null;
       } catch { /* schema_versions may not exist yet */ }
 
-      // Queue depth (BullMQ only)
-      let queueDepth: number | null = null;
-      try {
-        if (webhookQueue?.getWaitingCount) {
-          queueDepth = await webhookQueue.getWaitingCount();
-        }
-      } catch { /* ignore */ }
+      // Queue depth — in-memory queue, depth not tracked
+      const queueDepth: number | null = null;
 
       // Memory usage
       const mem = process.memoryUsage();
