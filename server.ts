@@ -45,7 +45,7 @@ import { marketDataService } from "./server/services/marketDataService";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
-import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit } from "./server/middleware/rateLimiter";
+import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit } from "./server/middleware/rateLimiter";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
@@ -996,7 +996,7 @@ async function startServer() {
   });
 
   // Public LiveChat: get messages for a lead session (no auth — rate limited)
-  app.get('/api/public/livechat/messages/:leadId', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
+  app.get('/api/public/livechat/messages/:leadId', livechatRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const leadId = req.params.leadId as string;
       if (!leadId) return res.status(400).json({ error: 'leadId bắt buộc' }) as any;
@@ -1011,7 +1011,7 @@ async function startServer() {
   });
 
   // Public LiveChat: send a message (inbound from visitor or outbound welcome/system) — no auth, rate limited
-  app.post('/api/public/livechat/message', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
+  app.post('/api/public/livechat/message', livechatRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const { leadId, content, direction, metadata } = req.body;
       if (!leadId || !String(content || '').trim()) {
@@ -1041,7 +1041,7 @@ async function startServer() {
   });
 
   // Public AI endpoint: LiveChat widget AI reply (no auth required — uses rate limiting only)
-  app.post('/api/public/ai/livechat', publicLeadRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
+  app.post('/api/public/ai/livechat', livechatRateLimit, aiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const { leadId, message, lang } = req.body;
       if (!leadId || !String(message || '').trim()) {

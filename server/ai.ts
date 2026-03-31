@@ -10,9 +10,9 @@ import { logger } from './middleware/logger';
 
 const GENAI_CONFIG = {
     MODELS: {
-        // gemini-2.0-flash: supports Google Search grounding + JSON schema output
-        ROUTER: 'gemini-2.0-flash',
-        WRITER: 'gemini-2.0-flash'
+        // gemini-2.5-flash: latest stable model with full JSON schema support
+        ROUTER: 'gemini-2.5-flash',
+        WRITER: 'gemini-2.5-flash'
     }
 };
 

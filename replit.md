@@ -444,6 +444,11 @@ All dead `|| fallback` patterns removed, hardcoded strings i18n-ified, toast por
 4. **`fetchFavorites` stale closure** — empty deps `[]` while using `t` via `notify`; changed to `[t, notify]`
 - New locale key: `favorites.remove_confirm` (VI + EN)
 
+### LiveChat AI Auto-Response Fix (March 2026)
+Two root causes prevented AI from responding in the LiveChat widget:
+1. **Deprecated Gemini model** — `gemini-2.0-flash` and `gemini-2.0-flash-lite` are "no longer available to new users". Updated `server/ai.ts` `GENAI_CONFIG.MODELS` to `gemini-2.5-flash` (current stable model). Verified by listing models via `/v1beta/models` API.
+2. **Rate limiter too aggressive** — `publicLeadRateLimit` (5 req/min per IP) was applied to ALL public livechat routes: `/api/public/livechat/messages/:leadId` (GET), `/api/public/livechat/message` (POST), and `/api/public/ai/livechat` (POST). After just 2 messages from the same IP (lead creation + 1 message save + 1 AI call = 3 requests), the 3rd message was blocked. Created `livechatRateLimit` (60 req/min) in `server/middleware/rateLimiter.ts` specifically for livechat message and AI routes. Lead creation (`/api/public/leads`) retains the strict 5/min limit.
+
 ### Inbox AI Auto-Response Persistence Fix (March 2026)
 **Root cause:** `getInboxThreads()` in `dbApi.ts` hardcoded `status: ThreadStatus.AI_ACTIVE` for every thread — no DB column existed. Every page refresh reset all threads to AI=ON, discarding agent toggles.
 **Fix applied:**

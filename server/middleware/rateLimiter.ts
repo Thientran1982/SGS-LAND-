@@ -172,3 +172,13 @@ export const publicLeadRateLimit = rateLimit({
   keyFn: (req) => req.ip || 'anonymous',
   message: 'Too many lead submissions from this IP. Please try again later.',
 });
+
+// Separate, more generous limiter for livechat messaging (message save + AI reply)
+// A normal conversation: ~10-15 messages per minute is reasonable
+export const livechatRateLimit = rateLimit({
+  name: 'livechat',
+  windowMs: 60_000,
+  maxRequests: 60,
+  keyFn: (req) => req.ip || 'anonymous',
+  message: 'Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi một chút.',
+});
