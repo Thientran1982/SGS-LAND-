@@ -289,6 +289,27 @@ const SerpPageDropdown: React.FC<{
     );
 };
 
+// ── Search query shown in the Google SERP mockup bar — one per route ────────────
+const ROUTE_SEARCH_QUERY: Record<string, string> = {
+    '':               'sgs land phần mềm bất động sản',
+    home:             'sgs land phần mềm bất động sản',
+    marketplace:      'tìm kiếm bất động sản trực tuyến',
+    'ai-valuation':   'định giá bất động sản bằng ai',
+    'crm-platform':   'crm bất động sản việt nam',
+    'about-us':       'công ty sgs land',
+    news:             'tin tức bất động sản mới nhất',
+    contact:          'liên hệ tư vấn bất động sản',
+    careers:          'tuyển dụng bất động sản công nghệ',
+    'help-center':    'hướng dẫn sử dụng sgs land',
+    developers:       'api bất động sản việt nam',
+    status:           'sgs land system status',
+    'privacy-policy': 'chính sách bảo mật sgs land',
+    'terms-of-service': 'điều khoản sử dụng sgs land',
+    livechat:         'chat hỗ trợ bất động sản',
+    listing:          'chi tiết bất động sản sgs land',
+    billing:          'gói dịch vụ sgs land',
+};
+
 // ── Tab: SERP Preview ──────────────────────────────────────────────────────────
 const SerpPreview: React.FC<{
     selectedKey: string;
@@ -301,6 +322,7 @@ const SerpPreview: React.FC<{
     const titleTrunc = cfg.title.slice(0, 60);
     const descTrunc = cfg.description.slice(0, 160);
     const pathDisplay = `sgsland.vn${cfg.path || '/'}`;
+    const searchQuery = ROUTE_SEARCH_QUERY[selectedKey] ?? 'sgs land bất động sản';
 
     return (
         <div className="space-y-6">
@@ -322,7 +344,7 @@ const SerpPreview: React.FC<{
                 <div className="border-b border-slate-100 dark:border-slate-700 mb-4 pb-3">
                     <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 rounded-full px-4 py-2 max-w-lg text-sm text-slate-500 border border-slate-200 dark:border-slate-700">
                         <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                        phần mềm quản lý bất động sản ai việt nam
+                        {searchQuery}
                     </div>
                 </div>
 
