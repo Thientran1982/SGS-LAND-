@@ -1,12 +1,41 @@
+var __create = Object.create;
 var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
+  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
+}) : x)(function(x) {
+  if (typeof require !== "undefined") return require.apply(this, arguments);
+  throw Error('Dynamic require of "' + x + '" is not supported');
+});
 var __esm = (fn, res) => function __init() {
   return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __commonJS = (cb, mod) => function __require2() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 
 // server/migrations/001_baseline_schema.ts
 var migration, baseline_schema_default;
@@ -2141,6 +2170,36 @@ var init_activate_initial_admin = __esm({
   }
 });
 
+// server/migrations/028_seo_overrides.ts
+var migration28, seo_overrides_default;
+var init_seo_overrides = __esm({
+  "server/migrations/028_seo_overrides.ts"() {
+    migration28 = {
+      description: "Create seo_overrides table for server-side meta tag injection",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS seo_overrides (
+        route_key   VARCHAR(128) PRIMARY KEY,
+        title       TEXT NOT NULL DEFAULT '',
+        description TEXT NOT NULL DEFAULT '',
+        og_image    TEXT,
+        updated_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_by  UUID
+      );
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_seo_overrides_updated
+        ON seo_overrides (updated_at DESC);
+    `);
+      },
+      async down(client) {
+        await client.query(`DROP TABLE IF EXISTS seo_overrides;`);
+      }
+    };
+    seo_overrides_default = migration28;
+  }
+});
+
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -2193,24 +2252,24 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file2 of pending) {
-      const migration28 = MIGRATION_REGISTRY[file2];
-      if (!migration28 || typeof migration28.up !== "function") {
+      const migration29 = MIGRATION_REGISTRY[file2];
+      if (!migration29 || typeof migration29.up !== "function") {
         throw new Error(`[migrations] Invalid migration module for ${file2} \u2014 missing up() function`);
       }
-      console.log(`[migrations] Applying ${file2}: ${migration28.description || ""}`);
-      await migration28.up(client);
+      console.log(`[migrations] Applying ${file2}: ${migration29.description || ""}`);
+      await migration29.up(client);
       await client.query(
         "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
-        [file2, migration28.description || null]
+        [file2, migration29.description || null]
       );
       console.log(`[migrations] \u2713 ${file2}`);
     }
     await client.query("COMMIT");
     console.log("[migrations] All migrations applied successfully.");
-  } catch (err) {
+  } catch (err4) {
     await client.query("ROLLBACK");
-    console.error("[migrations] FAILED \u2014 rolled back:", err);
-    throw err;
+    console.error("[migrations] FAILED \u2014 rolled back:", err4);
+    throw err4;
   } finally {
     if (lockAcquired) {
       try {
@@ -2236,22 +2295,22 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const migration28 = MIGRATION_REGISTRY[lastVersion];
-    if (!migration28) {
+    const migration29 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration29) {
       throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
     }
-    if (!migration28.down) {
+    if (!migration29.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
     console.log(`[migrations] Rolling back ${lastVersion}...`);
-    await migration28.down(client);
+    await migration29.down(client);
     await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
     await client.query("COMMIT");
     console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
-  } catch (err) {
+  } catch (err4) {
     await client.query("ROLLBACK");
-    console.error("[migrations] Rollback FAILED:", err);
-    throw err;
+    console.error("[migrations] Rollback FAILED:", err4);
+    throw err4;
   } finally {
     client.release();
   }
@@ -2286,6 +2345,7 @@ var init_runner = __esm({
     init_notifications();
     init_email_verification();
     init_activate_initial_admin();
+    init_seo_overrides();
     dotenv.config();
     MIGRATION_REGISTRY = {
       "001_baseline_schema.ts": baseline_schema_default,
@@ -2314,7 +2374,8 @@ var init_runner = __esm({
       "024_leads_won_at.ts": leads_won_at_default,
       "025_notifications.ts": notifications_default,
       "026_email_verification.ts": email_verification_default,
-      "027_activate_initial_admin.ts": activate_initial_admin_default
+      "027_activate_initial_admin.ts": activate_initial_admin_default,
+      "028_seo_overrides.ts": seo_overrides_default
     };
     MIGRATION_ADVISORY_LOCK_KEY = 74839230;
   }
@@ -2388,10 +2449,10 @@ var init_db = __esm({
 function formatTimestamp() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
-function formatLog(level, message, meta3) {
+function formatLog(level, message2, meta3) {
   const timestamp = formatTimestamp();
   const metaStr = meta3 ? ` ${JSON.stringify(meta3)}` : "";
-  return `[${timestamp}] [${level}]${metaStr} ${message}`;
+  return `[${timestamp}] [${level}]${metaStr} ${message2}`;
 }
 function shouldLog(level) {
   return LOG_LEVELS[level] >= LOG_LEVELS[currentLevel];
@@ -2421,16 +2482,16 @@ var init_logger = __esm({
     };
     currentLevel = process.env.LOG_LEVEL || "INFO";
     logger = {
-      debug(message, meta3) {
-        if (shouldLog("DEBUG")) console.debug(formatLog("DEBUG", message, meta3));
+      debug(message2, meta3) {
+        if (shouldLog("DEBUG")) console.debug(formatLog("DEBUG", message2, meta3));
       },
-      info(message, meta3) {
-        if (shouldLog("INFO")) console.log(formatLog("INFO", message, meta3));
+      info(message2, meta3) {
+        if (shouldLog("INFO")) console.log(formatLog("INFO", message2, meta3));
       },
-      warn(message, meta3) {
-        if (shouldLog("WARN")) console.warn(formatLog("WARN", message, meta3));
+      warn(message2, meta3) {
+        if (shouldLog("WARN")) console.warn(formatLog("WARN", message2, meta3));
       },
-      error(message, error48) {
+      error(message2, error48) {
         if (shouldLog("ERROR")) {
           const meta3 = {};
           if (error48 instanceof Error) {
@@ -2439,14 +2500,14 @@ var init_logger = __esm({
           } else if (error48) {
             meta3.error = error48;
           }
-          console.error(formatLog("ERROR", message, Object.keys(meta3).length > 0 ? meta3 : void 0));
+          console.error(formatLog("ERROR", message2, Object.keys(meta3).length > 0 ? meta3 : void 0));
         }
       },
-      request(method, path5, statusCode, durationMs, userId) {
+      request(method, path6, statusCode, durationMs, userId) {
         if (shouldLog("INFO")) {
-          const meta3 = { method, path: path5, status: statusCode, duration: `${durationMs}ms` };
+          const meta3 = { method, path: path6, status: statusCode, duration: `${durationMs}ms` };
           if (userId) meta3.userId = userId;
-          console.log(formatLog("INFO", `${method} ${path5} ${statusCode} ${durationMs}ms`, meta3));
+          console.log(formatLog("INFO", `${method} ${path6} ${statusCode} ${durationMs}ms`, meta3));
         }
       },
       audit(action, userId, details) {
@@ -2455,6 +2516,10142 @@ var init_logger = __esm({
         console.log(formatLog("INFO", `AUDIT: ${action} by ${userId}`, meta3));
       }
     };
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/buffer_utils.js
+function concat(...buffers) {
+  const size = buffers.reduce((acc, { length }) => acc + length, 0);
+  const buf = new Uint8Array(size);
+  let i = 0;
+  for (const buffer of buffers) {
+    buf.set(buffer, i);
+    i += buffer.length;
+  }
+  return buf;
+}
+var encoder, decoder, MAX_INT32;
+var init_buffer_utils = __esm({
+  "node_modules/jose/dist/node/esm/lib/buffer_utils.js"() {
+    encoder = new TextEncoder();
+    decoder = new TextDecoder();
+    MAX_INT32 = 2 ** 32;
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/base64url.js
+import { Buffer as Buffer2 } from "node:buffer";
+function normalize(input) {
+  let encoded = input;
+  if (encoded instanceof Uint8Array) {
+    encoded = decoder.decode(encoded);
+  }
+  return encoded;
+}
+var decode;
+var init_base64url = __esm({
+  "node_modules/jose/dist/node/esm/runtime/base64url.js"() {
+    init_buffer_utils();
+    decode = (input) => new Uint8Array(Buffer2.from(normalize(input), "base64url"));
+  }
+});
+
+// node_modules/jose/dist/node/esm/util/errors.js
+var JOSEError, JWTClaimValidationFailed, JWTExpired, JOSEAlgNotAllowed, JOSENotSupported, JWSInvalid, JWTInvalid, JWSSignatureVerificationFailed;
+var init_errors = __esm({
+  "node_modules/jose/dist/node/esm/util/errors.js"() {
+    JOSEError = class extends Error {
+      static code = "ERR_JOSE_GENERIC";
+      code = "ERR_JOSE_GENERIC";
+      constructor(message2, options) {
+        super(message2, options);
+        this.name = this.constructor.name;
+        Error.captureStackTrace?.(this, this.constructor);
+      }
+    };
+    JWTClaimValidationFailed = class extends JOSEError {
+      static code = "ERR_JWT_CLAIM_VALIDATION_FAILED";
+      code = "ERR_JWT_CLAIM_VALIDATION_FAILED";
+      claim;
+      reason;
+      payload;
+      constructor(message2, payload, claim = "unspecified", reason = "unspecified") {
+        super(message2, { cause: { claim, reason, payload } });
+        this.claim = claim;
+        this.reason = reason;
+        this.payload = payload;
+      }
+    };
+    JWTExpired = class extends JOSEError {
+      static code = "ERR_JWT_EXPIRED";
+      code = "ERR_JWT_EXPIRED";
+      claim;
+      reason;
+      payload;
+      constructor(message2, payload, claim = "unspecified", reason = "unspecified") {
+        super(message2, { cause: { claim, reason, payload } });
+        this.claim = claim;
+        this.reason = reason;
+        this.payload = payload;
+      }
+    };
+    JOSEAlgNotAllowed = class extends JOSEError {
+      static code = "ERR_JOSE_ALG_NOT_ALLOWED";
+      code = "ERR_JOSE_ALG_NOT_ALLOWED";
+    };
+    JOSENotSupported = class extends JOSEError {
+      static code = "ERR_JOSE_NOT_SUPPORTED";
+      code = "ERR_JOSE_NOT_SUPPORTED";
+    };
+    JWSInvalid = class extends JOSEError {
+      static code = "ERR_JWS_INVALID";
+      code = "ERR_JWS_INVALID";
+    };
+    JWTInvalid = class extends JOSEError {
+      static code = "ERR_JWT_INVALID";
+      code = "ERR_JWT_INVALID";
+    };
+    JWSSignatureVerificationFailed = class extends JOSEError {
+      static code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
+      code = "ERR_JWS_SIGNATURE_VERIFICATION_FAILED";
+      constructor(message2 = "signature verification failed", options) {
+        super(message2, options);
+      }
+    };
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/is_key_object.js
+import * as util from "node:util";
+var is_key_object_default;
+var init_is_key_object = __esm({
+  "node_modules/jose/dist/node/esm/runtime/is_key_object.js"() {
+    is_key_object_default = (obj) => util.types.isKeyObject(obj);
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/webcrypto.js
+import * as crypto2 from "node:crypto";
+import * as util2 from "node:util";
+var webcrypto2, webcrypto_default, isCryptoKey;
+var init_webcrypto = __esm({
+  "node_modules/jose/dist/node/esm/runtime/webcrypto.js"() {
+    webcrypto2 = crypto2.webcrypto;
+    webcrypto_default = webcrypto2;
+    isCryptoKey = (key) => util2.types.isCryptoKey(key);
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/crypto_key.js
+function unusable(name, prop = "algorithm.name") {
+  return new TypeError(`CryptoKey does not support this operation, its ${prop} must be ${name}`);
+}
+function isAlgorithm(algorithm, name) {
+  return algorithm.name === name;
+}
+function getHashLength(hash2) {
+  return parseInt(hash2.name.slice(4), 10);
+}
+function getNamedCurve(alg) {
+  switch (alg) {
+    case "ES256":
+      return "P-256";
+    case "ES384":
+      return "P-384";
+    case "ES512":
+      return "P-521";
+    default:
+      throw new Error("unreachable");
+  }
+}
+function checkUsage(key, usages) {
+  if (usages.length && !usages.some((expected) => key.usages.includes(expected))) {
+    let msg = "CryptoKey does not support this operation, its usages must include ";
+    if (usages.length > 2) {
+      const last = usages.pop();
+      msg += `one of ${usages.join(", ")}, or ${last}.`;
+    } else if (usages.length === 2) {
+      msg += `one of ${usages[0]} or ${usages[1]}.`;
+    } else {
+      msg += `${usages[0]}.`;
+    }
+    throw new TypeError(msg);
+  }
+}
+function checkSigCryptoKey(key, alg, ...usages) {
+  switch (alg) {
+    case "HS256":
+    case "HS384":
+    case "HS512": {
+      if (!isAlgorithm(key.algorithm, "HMAC"))
+        throw unusable("HMAC");
+      const expected = parseInt(alg.slice(2), 10);
+      const actual = getHashLength(key.algorithm.hash);
+      if (actual !== expected)
+        throw unusable(`SHA-${expected}`, "algorithm.hash");
+      break;
+    }
+    case "RS256":
+    case "RS384":
+    case "RS512": {
+      if (!isAlgorithm(key.algorithm, "RSASSA-PKCS1-v1_5"))
+        throw unusable("RSASSA-PKCS1-v1_5");
+      const expected = parseInt(alg.slice(2), 10);
+      const actual = getHashLength(key.algorithm.hash);
+      if (actual !== expected)
+        throw unusable(`SHA-${expected}`, "algorithm.hash");
+      break;
+    }
+    case "PS256":
+    case "PS384":
+    case "PS512": {
+      if (!isAlgorithm(key.algorithm, "RSA-PSS"))
+        throw unusable("RSA-PSS");
+      const expected = parseInt(alg.slice(2), 10);
+      const actual = getHashLength(key.algorithm.hash);
+      if (actual !== expected)
+        throw unusable(`SHA-${expected}`, "algorithm.hash");
+      break;
+    }
+    case "EdDSA": {
+      if (key.algorithm.name !== "Ed25519" && key.algorithm.name !== "Ed448") {
+        throw unusable("Ed25519 or Ed448");
+      }
+      break;
+    }
+    case "Ed25519": {
+      if (!isAlgorithm(key.algorithm, "Ed25519"))
+        throw unusable("Ed25519");
+      break;
+    }
+    case "ES256":
+    case "ES384":
+    case "ES512": {
+      if (!isAlgorithm(key.algorithm, "ECDSA"))
+        throw unusable("ECDSA");
+      const expected = getNamedCurve(alg);
+      const actual = key.algorithm.namedCurve;
+      if (actual !== expected)
+        throw unusable(expected, "algorithm.namedCurve");
+      break;
+    }
+    default:
+      throw new TypeError("CryptoKey does not support this operation");
+  }
+  checkUsage(key, usages);
+}
+var init_crypto_key = __esm({
+  "node_modules/jose/dist/node/esm/lib/crypto_key.js"() {
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/invalid_key_input.js
+function message(msg, actual, ...types5) {
+  types5 = types5.filter(Boolean);
+  if (types5.length > 2) {
+    const last = types5.pop();
+    msg += `one of type ${types5.join(", ")}, or ${last}.`;
+  } else if (types5.length === 2) {
+    msg += `one of type ${types5[0]} or ${types5[1]}.`;
+  } else {
+    msg += `of type ${types5[0]}.`;
+  }
+  if (actual == null) {
+    msg += ` Received ${actual}`;
+  } else if (typeof actual === "function" && actual.name) {
+    msg += ` Received function ${actual.name}`;
+  } else if (typeof actual === "object" && actual != null) {
+    if (actual.constructor?.name) {
+      msg += ` Received an instance of ${actual.constructor.name}`;
+    }
+  }
+  return msg;
+}
+function withAlg(alg, actual, ...types5) {
+  return message(`Key for the ${alg} algorithm must be `, actual, ...types5);
+}
+var invalid_key_input_default;
+var init_invalid_key_input = __esm({
+  "node_modules/jose/dist/node/esm/lib/invalid_key_input.js"() {
+    invalid_key_input_default = (actual, ...types5) => {
+      return message("Key must be ", actual, ...types5);
+    };
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/is_key_like.js
+var is_key_like_default, types4;
+var init_is_key_like = __esm({
+  "node_modules/jose/dist/node/esm/runtime/is_key_like.js"() {
+    init_webcrypto();
+    init_is_key_object();
+    is_key_like_default = (key) => is_key_object_default(key) || isCryptoKey(key);
+    types4 = ["KeyObject"];
+    if (globalThis.CryptoKey || webcrypto_default?.CryptoKey) {
+      types4.push("CryptoKey");
+    }
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/is_disjoint.js
+var isDisjoint, is_disjoint_default;
+var init_is_disjoint = __esm({
+  "node_modules/jose/dist/node/esm/lib/is_disjoint.js"() {
+    isDisjoint = (...headers) => {
+      const sources = headers.filter(Boolean);
+      if (sources.length === 0 || sources.length === 1) {
+        return true;
+      }
+      let acc;
+      for (const header of sources) {
+        const parameters = Object.keys(header);
+        if (!acc || acc.size === 0) {
+          acc = new Set(parameters);
+          continue;
+        }
+        for (const parameter of parameters) {
+          if (acc.has(parameter)) {
+            return false;
+          }
+          acc.add(parameter);
+        }
+      }
+      return true;
+    };
+    is_disjoint_default = isDisjoint;
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/is_object.js
+function isObjectLike(value) {
+  return typeof value === "object" && value !== null;
+}
+function isObject(input) {
+  if (!isObjectLike(input) || Object.prototype.toString.call(input) !== "[object Object]") {
+    return false;
+  }
+  if (Object.getPrototypeOf(input) === null) {
+    return true;
+  }
+  let proto = input;
+  while (Object.getPrototypeOf(proto) !== null) {
+    proto = Object.getPrototypeOf(proto);
+  }
+  return Object.getPrototypeOf(input) === proto;
+}
+var init_is_object = __esm({
+  "node_modules/jose/dist/node/esm/lib/is_object.js"() {
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/is_jwk.js
+function isJWK(key) {
+  return isObject(key) && typeof key.kty === "string";
+}
+function isPrivateJWK(key) {
+  return key.kty !== "oct" && typeof key.d === "string";
+}
+function isPublicJWK(key) {
+  return key.kty !== "oct" && typeof key.d === "undefined";
+}
+function isSecretJWK(key) {
+  return isJWK(key) && key.kty === "oct" && typeof key.k === "string";
+}
+var init_is_jwk = __esm({
+  "node_modules/jose/dist/node/esm/lib/is_jwk.js"() {
+    init_is_object();
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/get_named_curve.js
+import { KeyObject } from "node:crypto";
+var namedCurveToJOSE, getNamedCurve2, get_named_curve_default;
+var init_get_named_curve = __esm({
+  "node_modules/jose/dist/node/esm/runtime/get_named_curve.js"() {
+    init_errors();
+    init_webcrypto();
+    init_is_key_object();
+    init_invalid_key_input();
+    init_is_key_like();
+    init_is_jwk();
+    namedCurveToJOSE = (namedCurve) => {
+      switch (namedCurve) {
+        case "prime256v1":
+          return "P-256";
+        case "secp384r1":
+          return "P-384";
+        case "secp521r1":
+          return "P-521";
+        case "secp256k1":
+          return "secp256k1";
+        default:
+          throw new JOSENotSupported("Unsupported key curve for this operation");
+      }
+    };
+    getNamedCurve2 = (kee, raw) => {
+      let key;
+      if (isCryptoKey(kee)) {
+        key = KeyObject.from(kee);
+      } else if (is_key_object_default(kee)) {
+        key = kee;
+      } else if (isJWK(kee)) {
+        return kee.crv;
+      } else {
+        throw new TypeError(invalid_key_input_default(kee, ...types4));
+      }
+      if (key.type === "secret") {
+        throw new TypeError('only "private" or "public" type keys can be used for this operation');
+      }
+      switch (key.asymmetricKeyType) {
+        case "ed25519":
+        case "ed448":
+          return `Ed${key.asymmetricKeyType.slice(2)}`;
+        case "x25519":
+        case "x448":
+          return `X${key.asymmetricKeyType.slice(1)}`;
+        case "ec": {
+          const namedCurve = key.asymmetricKeyDetails.namedCurve;
+          if (raw) {
+            return namedCurve;
+          }
+          return namedCurveToJOSE(namedCurve);
+        }
+        default:
+          throw new TypeError("Invalid asymmetric key type for this operation");
+      }
+    };
+    get_named_curve_default = getNamedCurve2;
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/check_key_length.js
+import { KeyObject as KeyObject2 } from "node:crypto";
+var check_key_length_default;
+var init_check_key_length = __esm({
+  "node_modules/jose/dist/node/esm/runtime/check_key_length.js"() {
+    check_key_length_default = (key, alg) => {
+      let modulusLength;
+      try {
+        if (key instanceof KeyObject2) {
+          modulusLength = key.asymmetricKeyDetails?.modulusLength;
+        } else {
+          modulusLength = Buffer.from(key.n, "base64url").byteLength << 3;
+        }
+      } catch {
+      }
+      if (typeof modulusLength !== "number" || modulusLength < 2048) {
+        throw new TypeError(`${alg} requires key modulusLength to be 2048 bits or larger`);
+      }
+    };
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/jwk_to_key.js
+import { createPrivateKey, createPublicKey } from "node:crypto";
+var parse, jwk_to_key_default;
+var init_jwk_to_key = __esm({
+  "node_modules/jose/dist/node/esm/runtime/jwk_to_key.js"() {
+    parse = (key) => {
+      if (key.d) {
+        return createPrivateKey({ format: "jwk", key });
+      }
+      return createPublicKey({ format: "jwk", key });
+    };
+    jwk_to_key_default = parse;
+  }
+});
+
+// node_modules/jose/dist/node/esm/key/import.js
+async function importJWK(jwk, alg) {
+  if (!isObject(jwk)) {
+    throw new TypeError("JWK must be an object");
+  }
+  alg ||= jwk.alg;
+  switch (jwk.kty) {
+    case "oct":
+      if (typeof jwk.k !== "string" || !jwk.k) {
+        throw new TypeError('missing "k" (Key Value) Parameter value');
+      }
+      return decode(jwk.k);
+    case "RSA":
+      if ("oth" in jwk && jwk.oth !== void 0) {
+        throw new JOSENotSupported('RSA JWK "oth" (Other Primes Info) Parameter value is not supported');
+      }
+    case "EC":
+    case "OKP":
+      return jwk_to_key_default({ ...jwk, alg });
+    default:
+      throw new JOSENotSupported('Unsupported "kty" (Key Type) Parameter value');
+  }
+}
+var init_import = __esm({
+  "node_modules/jose/dist/node/esm/key/import.js"() {
+    init_base64url();
+    init_jwk_to_key();
+    init_errors();
+    init_is_object();
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/check_key_type.js
+function checkKeyType(allowJwk, alg, key, usage) {
+  const symmetric = alg.startsWith("HS") || alg === "dir" || alg.startsWith("PBES2") || /^A\d{3}(?:GCM)?KW$/.test(alg);
+  if (symmetric) {
+    symmetricTypeCheck(alg, key, usage, allowJwk);
+  } else {
+    asymmetricTypeCheck(alg, key, usage, allowJwk);
+  }
+}
+var tag, jwkMatchesOp, symmetricTypeCheck, asymmetricTypeCheck, check_key_type_default, checkKeyTypeWithJwk;
+var init_check_key_type = __esm({
+  "node_modules/jose/dist/node/esm/lib/check_key_type.js"() {
+    init_invalid_key_input();
+    init_is_key_like();
+    init_is_jwk();
+    tag = (key) => key?.[Symbol.toStringTag];
+    jwkMatchesOp = (alg, key, usage) => {
+      if (key.use !== void 0 && key.use !== "sig") {
+        throw new TypeError("Invalid key for this operation, when present its use must be sig");
+      }
+      if (key.key_ops !== void 0 && key.key_ops.includes?.(usage) !== true) {
+        throw new TypeError(`Invalid key for this operation, when present its key_ops must include ${usage}`);
+      }
+      if (key.alg !== void 0 && key.alg !== alg) {
+        throw new TypeError(`Invalid key for this operation, when present its alg must be ${alg}`);
+      }
+      return true;
+    };
+    symmetricTypeCheck = (alg, key, usage, allowJwk) => {
+      if (key instanceof Uint8Array)
+        return;
+      if (allowJwk && isJWK(key)) {
+        if (isSecretJWK(key) && jwkMatchesOp(alg, key, usage))
+          return;
+        throw new TypeError(`JSON Web Key for symmetric algorithms must have JWK "kty" (Key Type) equal to "oct" and the JWK "k" (Key Value) present`);
+      }
+      if (!is_key_like_default(key)) {
+        throw new TypeError(withAlg(alg, key, ...types4, "Uint8Array", allowJwk ? "JSON Web Key" : null));
+      }
+      if (key.type !== "secret") {
+        throw new TypeError(`${tag(key)} instances for symmetric algorithms must be of type "secret"`);
+      }
+    };
+    asymmetricTypeCheck = (alg, key, usage, allowJwk) => {
+      if (allowJwk && isJWK(key)) {
+        switch (usage) {
+          case "sign":
+            if (isPrivateJWK(key) && jwkMatchesOp(alg, key, usage))
+              return;
+            throw new TypeError(`JSON Web Key for this operation be a private JWK`);
+          case "verify":
+            if (isPublicJWK(key) && jwkMatchesOp(alg, key, usage))
+              return;
+            throw new TypeError(`JSON Web Key for this operation be a public JWK`);
+        }
+      }
+      if (!is_key_like_default(key)) {
+        throw new TypeError(withAlg(alg, key, ...types4, allowJwk ? "JSON Web Key" : null));
+      }
+      if (key.type === "secret") {
+        throw new TypeError(`${tag(key)} instances for asymmetric algorithms must not be of type "secret"`);
+      }
+      if (usage === "sign" && key.type === "public") {
+        throw new TypeError(`${tag(key)} instances for asymmetric algorithm signing must be of type "private"`);
+      }
+      if (usage === "decrypt" && key.type === "public") {
+        throw new TypeError(`${tag(key)} instances for asymmetric algorithm decryption must be of type "private"`);
+      }
+      if (key.algorithm && usage === "verify" && key.type === "private") {
+        throw new TypeError(`${tag(key)} instances for asymmetric algorithm verifying must be of type "public"`);
+      }
+      if (key.algorithm && usage === "encrypt" && key.type === "private") {
+        throw new TypeError(`${tag(key)} instances for asymmetric algorithm encryption must be of type "public"`);
+      }
+    };
+    check_key_type_default = checkKeyType.bind(void 0, false);
+    checkKeyTypeWithJwk = checkKeyType.bind(void 0, true);
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/validate_crit.js
+function validateCrit(Err, recognizedDefault, recognizedOption, protectedHeader, joseHeader) {
+  if (joseHeader.crit !== void 0 && protectedHeader?.crit === void 0) {
+    throw new Err('"crit" (Critical) Header Parameter MUST be integrity protected');
+  }
+  if (!protectedHeader || protectedHeader.crit === void 0) {
+    return /* @__PURE__ */ new Set();
+  }
+  if (!Array.isArray(protectedHeader.crit) || protectedHeader.crit.length === 0 || protectedHeader.crit.some((input) => typeof input !== "string" || input.length === 0)) {
+    throw new Err('"crit" (Critical) Header Parameter MUST be an array of non-empty strings when present');
+  }
+  let recognized;
+  if (recognizedOption !== void 0) {
+    recognized = new Map([...Object.entries(recognizedOption), ...recognizedDefault.entries()]);
+  } else {
+    recognized = recognizedDefault;
+  }
+  for (const parameter of protectedHeader.crit) {
+    if (!recognized.has(parameter)) {
+      throw new JOSENotSupported(`Extension Header Parameter "${parameter}" is not recognized`);
+    }
+    if (joseHeader[parameter] === void 0) {
+      throw new Err(`Extension Header Parameter "${parameter}" is missing`);
+    }
+    if (recognized.get(parameter) && protectedHeader[parameter] === void 0) {
+      throw new Err(`Extension Header Parameter "${parameter}" MUST be integrity protected`);
+    }
+  }
+  return new Set(protectedHeader.crit);
+}
+var validate_crit_default;
+var init_validate_crit = __esm({
+  "node_modules/jose/dist/node/esm/lib/validate_crit.js"() {
+    init_errors();
+    validate_crit_default = validateCrit;
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/validate_algorithms.js
+var validateAlgorithms, validate_algorithms_default;
+var init_validate_algorithms = __esm({
+  "node_modules/jose/dist/node/esm/lib/validate_algorithms.js"() {
+    validateAlgorithms = (option, algorithms) => {
+      if (algorithms !== void 0 && (!Array.isArray(algorithms) || algorithms.some((s2) => typeof s2 !== "string"))) {
+        throw new TypeError(`"${option}" option must be an array of strings`);
+      }
+      if (!algorithms) {
+        return void 0;
+      }
+      return new Set(algorithms);
+    };
+    validate_algorithms_default = validateAlgorithms;
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/dsa_digest.js
+function dsaDigest(alg) {
+  switch (alg) {
+    case "PS256":
+    case "RS256":
+    case "ES256":
+    case "ES256K":
+      return "sha256";
+    case "PS384":
+    case "RS384":
+    case "ES384":
+      return "sha384";
+    case "PS512":
+    case "RS512":
+    case "ES512":
+      return "sha512";
+    case "Ed25519":
+    case "EdDSA":
+      return void 0;
+    default:
+      throw new JOSENotSupported(`alg ${alg} is not supported either by JOSE or your javascript runtime`);
+  }
+}
+var init_dsa_digest = __esm({
+  "node_modules/jose/dist/node/esm/runtime/dsa_digest.js"() {
+    init_errors();
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/node_key.js
+import { constants, KeyObject as KeyObject3 } from "node:crypto";
+function keyForCrypto(alg, key) {
+  let asymmetricKeyType;
+  let asymmetricKeyDetails;
+  let isJWK2;
+  if (key instanceof KeyObject3) {
+    asymmetricKeyType = key.asymmetricKeyType;
+    asymmetricKeyDetails = key.asymmetricKeyDetails;
+  } else {
+    isJWK2 = true;
+    switch (key.kty) {
+      case "RSA":
+        asymmetricKeyType = "rsa";
+        break;
+      case "EC":
+        asymmetricKeyType = "ec";
+        break;
+      case "OKP": {
+        if (key.crv === "Ed25519") {
+          asymmetricKeyType = "ed25519";
+          break;
+        }
+        if (key.crv === "Ed448") {
+          asymmetricKeyType = "ed448";
+          break;
+        }
+        throw new TypeError("Invalid key for this operation, its crv must be Ed25519 or Ed448");
+      }
+      default:
+        throw new TypeError("Invalid key for this operation, its kty must be RSA, OKP, or EC");
+    }
+  }
+  let options;
+  switch (alg) {
+    case "Ed25519":
+      if (asymmetricKeyType !== "ed25519") {
+        throw new TypeError(`Invalid key for this operation, its asymmetricKeyType must be ed25519`);
+      }
+      break;
+    case "EdDSA":
+      if (!["ed25519", "ed448"].includes(asymmetricKeyType)) {
+        throw new TypeError("Invalid key for this operation, its asymmetricKeyType must be ed25519 or ed448");
+      }
+      break;
+    case "RS256":
+    case "RS384":
+    case "RS512":
+      if (asymmetricKeyType !== "rsa") {
+        throw new TypeError("Invalid key for this operation, its asymmetricKeyType must be rsa");
+      }
+      check_key_length_default(key, alg);
+      break;
+    case "PS256":
+    case "PS384":
+    case "PS512":
+      if (asymmetricKeyType === "rsa-pss") {
+        const { hashAlgorithm, mgf1HashAlgorithm, saltLength } = asymmetricKeyDetails;
+        const length = parseInt(alg.slice(-3), 10);
+        if (hashAlgorithm !== void 0 && (hashAlgorithm !== `sha${length}` || mgf1HashAlgorithm !== hashAlgorithm)) {
+          throw new TypeError(`Invalid key for this operation, its RSA-PSS parameters do not meet the requirements of "alg" ${alg}`);
+        }
+        if (saltLength !== void 0 && saltLength > length >> 3) {
+          throw new TypeError(`Invalid key for this operation, its RSA-PSS parameter saltLength does not meet the requirements of "alg" ${alg}`);
+        }
+      } else if (asymmetricKeyType !== "rsa") {
+        throw new TypeError("Invalid key for this operation, its asymmetricKeyType must be rsa or rsa-pss");
+      }
+      check_key_length_default(key, alg);
+      options = {
+        padding: constants.RSA_PKCS1_PSS_PADDING,
+        saltLength: constants.RSA_PSS_SALTLEN_DIGEST
+      };
+      break;
+    case "ES256":
+    case "ES256K":
+    case "ES384":
+    case "ES512": {
+      if (asymmetricKeyType !== "ec") {
+        throw new TypeError("Invalid key for this operation, its asymmetricKeyType must be ec");
+      }
+      const actual = get_named_curve_default(key);
+      const expected = ecCurveAlgMap.get(alg);
+      if (actual !== expected) {
+        throw new TypeError(`Invalid key curve for the algorithm, its curve must be ${expected}, got ${actual}`);
+      }
+      options = { dsaEncoding: "ieee-p1363" };
+      break;
+    }
+    default:
+      throw new JOSENotSupported(`alg ${alg} is not supported either by JOSE or your javascript runtime`);
+  }
+  if (isJWK2) {
+    return { format: "jwk", key, ...options };
+  }
+  return options ? { ...options, key } : key;
+}
+var ecCurveAlgMap;
+var init_node_key = __esm({
+  "node_modules/jose/dist/node/esm/runtime/node_key.js"() {
+    init_get_named_curve();
+    init_errors();
+    init_check_key_length();
+    ecCurveAlgMap = /* @__PURE__ */ new Map([
+      ["ES256", "P-256"],
+      ["ES256K", "secp256k1"],
+      ["ES384", "P-384"],
+      ["ES512", "P-521"]
+    ]);
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/hmac_digest.js
+function hmacDigest(alg) {
+  switch (alg) {
+    case "HS256":
+      return "sha256";
+    case "HS384":
+      return "sha384";
+    case "HS512":
+      return "sha512";
+    default:
+      throw new JOSENotSupported(`alg ${alg} is not supported either by JOSE or your javascript runtime`);
+  }
+}
+var init_hmac_digest = __esm({
+  "node_modules/jose/dist/node/esm/runtime/hmac_digest.js"() {
+    init_errors();
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/get_sign_verify_key.js
+import { KeyObject as KeyObject4, createSecretKey } from "node:crypto";
+function getSignVerifyKey(alg, key, usage) {
+  if (key instanceof Uint8Array) {
+    if (!alg.startsWith("HS")) {
+      throw new TypeError(invalid_key_input_default(key, ...types4));
+    }
+    return createSecretKey(key);
+  }
+  if (key instanceof KeyObject4) {
+    return key;
+  }
+  if (isCryptoKey(key)) {
+    checkSigCryptoKey(key, alg, usage);
+    return KeyObject4.from(key);
+  }
+  if (isJWK(key)) {
+    if (alg.startsWith("HS")) {
+      return createSecretKey(Buffer.from(key.k, "base64url"));
+    }
+    return key;
+  }
+  throw new TypeError(invalid_key_input_default(key, ...types4, "Uint8Array", "JSON Web Key"));
+}
+var init_get_sign_verify_key = __esm({
+  "node_modules/jose/dist/node/esm/runtime/get_sign_verify_key.js"() {
+    init_webcrypto();
+    init_crypto_key();
+    init_invalid_key_input();
+    init_is_key_like();
+    init_is_jwk();
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/sign.js
+import * as crypto3 from "node:crypto";
+import { promisify } from "node:util";
+var oneShotSign, sign2, sign_default;
+var init_sign = __esm({
+  "node_modules/jose/dist/node/esm/runtime/sign.js"() {
+    init_dsa_digest();
+    init_hmac_digest();
+    init_node_key();
+    init_get_sign_verify_key();
+    oneShotSign = promisify(crypto3.sign);
+    sign2 = async (alg, key, data) => {
+      const k = getSignVerifyKey(alg, key, "sign");
+      if (alg.startsWith("HS")) {
+        const hmac = crypto3.createHmac(hmacDigest(alg), k);
+        hmac.update(data);
+        return hmac.digest();
+      }
+      return oneShotSign(dsaDigest(alg), data, keyForCrypto(alg, k));
+    };
+    sign_default = sign2;
+  }
+});
+
+// node_modules/jose/dist/node/esm/runtime/verify.js
+import * as crypto4 from "node:crypto";
+import { promisify as promisify2 } from "node:util";
+var oneShotVerify, verify2, verify_default;
+var init_verify = __esm({
+  "node_modules/jose/dist/node/esm/runtime/verify.js"() {
+    init_dsa_digest();
+    init_node_key();
+    init_sign();
+    init_get_sign_verify_key();
+    oneShotVerify = promisify2(crypto4.verify);
+    verify2 = async (alg, key, signature, data) => {
+      const k = getSignVerifyKey(alg, key, "verify");
+      if (alg.startsWith("HS")) {
+        const expected = await sign_default(alg, k, data);
+        const actual = signature;
+        try {
+          return crypto4.timingSafeEqual(actual, expected);
+        } catch {
+          return false;
+        }
+      }
+      const algorithm = dsaDigest(alg);
+      const keyInput = keyForCrypto(alg, k);
+      try {
+        return await oneShotVerify(algorithm, data, keyInput, signature);
+      } catch {
+        return false;
+      }
+    };
+    verify_default = verify2;
+  }
+});
+
+// node_modules/jose/dist/node/esm/jws/flattened/verify.js
+async function flattenedVerify(jws, key, options) {
+  if (!isObject(jws)) {
+    throw new JWSInvalid("Flattened JWS must be an object");
+  }
+  if (jws.protected === void 0 && jws.header === void 0) {
+    throw new JWSInvalid('Flattened JWS must have either of the "protected" or "header" members');
+  }
+  if (jws.protected !== void 0 && typeof jws.protected !== "string") {
+    throw new JWSInvalid("JWS Protected Header incorrect type");
+  }
+  if (jws.payload === void 0) {
+    throw new JWSInvalid("JWS Payload missing");
+  }
+  if (typeof jws.signature !== "string") {
+    throw new JWSInvalid("JWS Signature missing or incorrect type");
+  }
+  if (jws.header !== void 0 && !isObject(jws.header)) {
+    throw new JWSInvalid("JWS Unprotected Header incorrect type");
+  }
+  let parsedProt = {};
+  if (jws.protected) {
+    try {
+      const protectedHeader = decode(jws.protected);
+      parsedProt = JSON.parse(decoder.decode(protectedHeader));
+    } catch {
+      throw new JWSInvalid("JWS Protected Header is invalid");
+    }
+  }
+  if (!is_disjoint_default(parsedProt, jws.header)) {
+    throw new JWSInvalid("JWS Protected and JWS Unprotected Header Parameter names must be disjoint");
+  }
+  const joseHeader = {
+    ...parsedProt,
+    ...jws.header
+  };
+  const extensions = validate_crit_default(JWSInvalid, /* @__PURE__ */ new Map([["b64", true]]), options?.crit, parsedProt, joseHeader);
+  let b64 = true;
+  if (extensions.has("b64")) {
+    b64 = parsedProt.b64;
+    if (typeof b64 !== "boolean") {
+      throw new JWSInvalid('The "b64" (base64url-encode payload) Header Parameter must be a boolean');
+    }
+  }
+  const { alg } = joseHeader;
+  if (typeof alg !== "string" || !alg) {
+    throw new JWSInvalid('JWS "alg" (Algorithm) Header Parameter missing or invalid');
+  }
+  const algorithms = options && validate_algorithms_default("algorithms", options.algorithms);
+  if (algorithms && !algorithms.has(alg)) {
+    throw new JOSEAlgNotAllowed('"alg" (Algorithm) Header Parameter value not allowed');
+  }
+  if (b64) {
+    if (typeof jws.payload !== "string") {
+      throw new JWSInvalid("JWS Payload must be a string");
+    }
+  } else if (typeof jws.payload !== "string" && !(jws.payload instanceof Uint8Array)) {
+    throw new JWSInvalid("JWS Payload must be a string or an Uint8Array instance");
+  }
+  let resolvedKey = false;
+  if (typeof key === "function") {
+    key = await key(parsedProt, jws);
+    resolvedKey = true;
+    checkKeyTypeWithJwk(alg, key, "verify");
+    if (isJWK(key)) {
+      key = await importJWK(key, alg);
+    }
+  } else {
+    checkKeyTypeWithJwk(alg, key, "verify");
+  }
+  const data = concat(encoder.encode(jws.protected ?? ""), encoder.encode("."), typeof jws.payload === "string" ? encoder.encode(jws.payload) : jws.payload);
+  let signature;
+  try {
+    signature = decode(jws.signature);
+  } catch {
+    throw new JWSInvalid("Failed to base64url decode the signature");
+  }
+  const verified = await verify_default(alg, key, signature, data);
+  if (!verified) {
+    throw new JWSSignatureVerificationFailed();
+  }
+  let payload;
+  if (b64) {
+    try {
+      payload = decode(jws.payload);
+    } catch {
+      throw new JWSInvalid("Failed to base64url decode the payload");
+    }
+  } else if (typeof jws.payload === "string") {
+    payload = encoder.encode(jws.payload);
+  } else {
+    payload = jws.payload;
+  }
+  const result = { payload };
+  if (jws.protected !== void 0) {
+    result.protectedHeader = parsedProt;
+  }
+  if (jws.header !== void 0) {
+    result.unprotectedHeader = jws.header;
+  }
+  if (resolvedKey) {
+    return { ...result, key };
+  }
+  return result;
+}
+var init_verify2 = __esm({
+  "node_modules/jose/dist/node/esm/jws/flattened/verify.js"() {
+    init_base64url();
+    init_verify();
+    init_errors();
+    init_buffer_utils();
+    init_is_disjoint();
+    init_is_object();
+    init_check_key_type();
+    init_validate_crit();
+    init_validate_algorithms();
+    init_is_jwk();
+    init_import();
+  }
+});
+
+// node_modules/jose/dist/node/esm/jws/compact/verify.js
+async function compactVerify(jws, key, options) {
+  if (jws instanceof Uint8Array) {
+    jws = decoder.decode(jws);
+  }
+  if (typeof jws !== "string") {
+    throw new JWSInvalid("Compact JWS must be a string or Uint8Array");
+  }
+  const { 0: protectedHeader, 1: payload, 2: signature, length } = jws.split(".");
+  if (length !== 3) {
+    throw new JWSInvalid("Invalid Compact JWS");
+  }
+  const verified = await flattenedVerify({ payload, protected: protectedHeader, signature }, key, options);
+  const result = { payload: verified.payload, protectedHeader: verified.protectedHeader };
+  if (typeof key === "function") {
+    return { ...result, key: verified.key };
+  }
+  return result;
+}
+var init_verify3 = __esm({
+  "node_modules/jose/dist/node/esm/jws/compact/verify.js"() {
+    init_verify2();
+    init_errors();
+    init_buffer_utils();
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/epoch.js
+var epoch_default;
+var init_epoch = __esm({
+  "node_modules/jose/dist/node/esm/lib/epoch.js"() {
+    epoch_default = (date5) => Math.floor(date5.getTime() / 1e3);
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/secs.js
+var minute, hour, day, week, year, REGEX, secs_default;
+var init_secs = __esm({
+  "node_modules/jose/dist/node/esm/lib/secs.js"() {
+    minute = 60;
+    hour = minute * 60;
+    day = hour * 24;
+    week = day * 7;
+    year = day * 365.25;
+    REGEX = /^(\+|\-)? ?(\d+|\d+\.\d+) ?(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)(?: (ago|from now))?$/i;
+    secs_default = (str) => {
+      const matched = REGEX.exec(str);
+      if (!matched || matched[4] && matched[1]) {
+        throw new TypeError("Invalid time period format");
+      }
+      const value = parseFloat(matched[2]);
+      const unit = matched[3].toLowerCase();
+      let numericDate;
+      switch (unit) {
+        case "sec":
+        case "secs":
+        case "second":
+        case "seconds":
+        case "s":
+          numericDate = Math.round(value);
+          break;
+        case "minute":
+        case "minutes":
+        case "min":
+        case "mins":
+        case "m":
+          numericDate = Math.round(value * minute);
+          break;
+        case "hour":
+        case "hours":
+        case "hr":
+        case "hrs":
+        case "h":
+          numericDate = Math.round(value * hour);
+          break;
+        case "day":
+        case "days":
+        case "d":
+          numericDate = Math.round(value * day);
+          break;
+        case "week":
+        case "weeks":
+        case "w":
+          numericDate = Math.round(value * week);
+          break;
+        default:
+          numericDate = Math.round(value * year);
+          break;
+      }
+      if (matched[1] === "-" || matched[4] === "ago") {
+        return -numericDate;
+      }
+      return numericDate;
+    };
+  }
+});
+
+// node_modules/jose/dist/node/esm/lib/jwt_claims_set.js
+var normalizeTyp, checkAudiencePresence, jwt_claims_set_default;
+var init_jwt_claims_set = __esm({
+  "node_modules/jose/dist/node/esm/lib/jwt_claims_set.js"() {
+    init_errors();
+    init_buffer_utils();
+    init_epoch();
+    init_secs();
+    init_is_object();
+    normalizeTyp = (value) => value.toLowerCase().replace(/^application\//, "");
+    checkAudiencePresence = (audPayload, audOption) => {
+      if (typeof audPayload === "string") {
+        return audOption.includes(audPayload);
+      }
+      if (Array.isArray(audPayload)) {
+        return audOption.some(Set.prototype.has.bind(new Set(audPayload)));
+      }
+      return false;
+    };
+    jwt_claims_set_default = (protectedHeader, encodedPayload, options = {}) => {
+      let payload;
+      try {
+        payload = JSON.parse(decoder.decode(encodedPayload));
+      } catch {
+      }
+      if (!isObject(payload)) {
+        throw new JWTInvalid("JWT Claims Set must be a top-level JSON object");
+      }
+      const { typ } = options;
+      if (typ && (typeof protectedHeader.typ !== "string" || normalizeTyp(protectedHeader.typ) !== normalizeTyp(typ))) {
+        throw new JWTClaimValidationFailed('unexpected "typ" JWT header value', payload, "typ", "check_failed");
+      }
+      const { requiredClaims = [], issuer, subject, audience, maxTokenAge } = options;
+      const presenceCheck = [...requiredClaims];
+      if (maxTokenAge !== void 0)
+        presenceCheck.push("iat");
+      if (audience !== void 0)
+        presenceCheck.push("aud");
+      if (subject !== void 0)
+        presenceCheck.push("sub");
+      if (issuer !== void 0)
+        presenceCheck.push("iss");
+      for (const claim of new Set(presenceCheck.reverse())) {
+        if (!(claim in payload)) {
+          throw new JWTClaimValidationFailed(`missing required "${claim}" claim`, payload, claim, "missing");
+        }
+      }
+      if (issuer && !(Array.isArray(issuer) ? issuer : [issuer]).includes(payload.iss)) {
+        throw new JWTClaimValidationFailed('unexpected "iss" claim value', payload, "iss", "check_failed");
+      }
+      if (subject && payload.sub !== subject) {
+        throw new JWTClaimValidationFailed('unexpected "sub" claim value', payload, "sub", "check_failed");
+      }
+      if (audience && !checkAudiencePresence(payload.aud, typeof audience === "string" ? [audience] : audience)) {
+        throw new JWTClaimValidationFailed('unexpected "aud" claim value', payload, "aud", "check_failed");
+      }
+      let tolerance;
+      switch (typeof options.clockTolerance) {
+        case "string":
+          tolerance = secs_default(options.clockTolerance);
+          break;
+        case "number":
+          tolerance = options.clockTolerance;
+          break;
+        case "undefined":
+          tolerance = 0;
+          break;
+        default:
+          throw new TypeError("Invalid clockTolerance option type");
+      }
+      const { currentDate } = options;
+      const now = epoch_default(currentDate || /* @__PURE__ */ new Date());
+      if ((payload.iat !== void 0 || maxTokenAge) && typeof payload.iat !== "number") {
+        throw new JWTClaimValidationFailed('"iat" claim must be a number', payload, "iat", "invalid");
+      }
+      if (payload.nbf !== void 0) {
+        if (typeof payload.nbf !== "number") {
+          throw new JWTClaimValidationFailed('"nbf" claim must be a number', payload, "nbf", "invalid");
+        }
+        if (payload.nbf > now + tolerance) {
+          throw new JWTClaimValidationFailed('"nbf" claim timestamp check failed', payload, "nbf", "check_failed");
+        }
+      }
+      if (payload.exp !== void 0) {
+        if (typeof payload.exp !== "number") {
+          throw new JWTClaimValidationFailed('"exp" claim must be a number', payload, "exp", "invalid");
+        }
+        if (payload.exp <= now - tolerance) {
+          throw new JWTExpired('"exp" claim timestamp check failed', payload, "exp", "check_failed");
+        }
+      }
+      if (maxTokenAge) {
+        const age = now - payload.iat;
+        const max = typeof maxTokenAge === "number" ? maxTokenAge : secs_default(maxTokenAge);
+        if (age - tolerance > max) {
+          throw new JWTExpired('"iat" claim timestamp check failed (too far in the past)', payload, "iat", "check_failed");
+        }
+        if (age < 0 - tolerance) {
+          throw new JWTClaimValidationFailed('"iat" claim timestamp check failed (it should be in the past)', payload, "iat", "check_failed");
+        }
+      }
+      return payload;
+    };
+  }
+});
+
+// node_modules/jose/dist/node/esm/jwt/verify.js
+async function jwtVerify(jwt3, key, options) {
+  const verified = await compactVerify(jwt3, key, options);
+  if (verified.protectedHeader.crit?.includes("b64") && verified.protectedHeader.b64 === false) {
+    throw new JWTInvalid("JWTs MUST NOT use unencoded payload");
+  }
+  const payload = jwt_claims_set_default(verified.protectedHeader, verified.payload, options);
+  const result = { payload, protectedHeader: verified.protectedHeader };
+  if (typeof key === "function") {
+    return { ...result, key: verified.key };
+  }
+  return result;
+}
+var init_verify4 = __esm({
+  "node_modules/jose/dist/node/esm/jwt/verify.js"() {
+    init_verify3();
+    init_jwt_claims_set();
+    init_errors();
+  }
+});
+
+// node_modules/jose/dist/node/esm/util/base64url.js
+var init_base64url2 = __esm({
+  "node_modules/jose/dist/node/esm/util/base64url.js"() {
+  }
+});
+
+// node_modules/jose/dist/node/esm/index.js
+var init_esm = __esm({
+  "node_modules/jose/dist/node/esm/index.js"() {
+    init_verify4();
+    init_errors();
+    init_base64url2();
+  }
+});
+
+// node_modules/crypto-js/core.js
+var require_core = __commonJS({
+  "node_modules/crypto-js/core.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory();
+      } else if (typeof define === "function" && define.amd) {
+        define([], factory);
+      } else {
+        root.CryptoJS = factory();
+      }
+    })(exports, function() {
+      var CryptoJS = CryptoJS || (function(Math2, undefined2) {
+        var crypto8;
+        if (typeof window !== "undefined" && window.crypto) {
+          crypto8 = window.crypto;
+        }
+        if (typeof self !== "undefined" && self.crypto) {
+          crypto8 = self.crypto;
+        }
+        if (typeof globalThis !== "undefined" && globalThis.crypto) {
+          crypto8 = globalThis.crypto;
+        }
+        if (!crypto8 && typeof window !== "undefined" && window.msCrypto) {
+          crypto8 = window.msCrypto;
+        }
+        if (!crypto8 && typeof global !== "undefined" && global.crypto) {
+          crypto8 = global.crypto;
+        }
+        if (!crypto8 && typeof __require === "function") {
+          try {
+            crypto8 = __require("crypto");
+          } catch (err4) {
+          }
+        }
+        var cryptoSecureRandomInt = function() {
+          if (crypto8) {
+            if (typeof crypto8.getRandomValues === "function") {
+              try {
+                return crypto8.getRandomValues(new Uint32Array(1))[0];
+              } catch (err4) {
+              }
+            }
+            if (typeof crypto8.randomBytes === "function") {
+              try {
+                return crypto8.randomBytes(4).readInt32LE();
+              } catch (err4) {
+              }
+            }
+          }
+          throw new Error("Native crypto module could not be used to get secure random number.");
+        };
+        var create = Object.create || /* @__PURE__ */ (function() {
+          function F() {
+          }
+          return function(obj) {
+            var subtype;
+            F.prototype = obj;
+            subtype = new F();
+            F.prototype = null;
+            return subtype;
+          };
+        })();
+        var C = {};
+        var C_lib = C.lib = {};
+        var Base = C_lib.Base = /* @__PURE__ */ (function() {
+          return {
+            /**
+             * Creates a new object that inherits from this object.
+             *
+             * @param {Object} overrides Properties to copy into the new object.
+             *
+             * @return {Object} The new object.
+             *
+             * @static
+             *
+             * @example
+             *
+             *     var MyType = CryptoJS.lib.Base.extend({
+             *         field: 'value',
+             *
+             *         method: function () {
+             *         }
+             *     });
+             */
+            extend: function(overrides) {
+              var subtype = create(this);
+              if (overrides) {
+                subtype.mixIn(overrides);
+              }
+              if (!subtype.hasOwnProperty("init") || this.init === subtype.init) {
+                subtype.init = function() {
+                  subtype.$super.init.apply(this, arguments);
+                };
+              }
+              subtype.init.prototype = subtype;
+              subtype.$super = this;
+              return subtype;
+            },
+            /**
+             * Extends this object and runs the init method.
+             * Arguments to create() will be passed to init().
+             *
+             * @return {Object} The new object.
+             *
+             * @static
+             *
+             * @example
+             *
+             *     var instance = MyType.create();
+             */
+            create: function() {
+              var instance = this.extend();
+              instance.init.apply(instance, arguments);
+              return instance;
+            },
+            /**
+             * Initializes a newly created object.
+             * Override this method to add some logic when your objects are created.
+             *
+             * @example
+             *
+             *     var MyType = CryptoJS.lib.Base.extend({
+             *         init: function () {
+             *             // ...
+             *         }
+             *     });
+             */
+            init: function() {
+            },
+            /**
+             * Copies properties into this object.
+             *
+             * @param {Object} properties The properties to mix in.
+             *
+             * @example
+             *
+             *     MyType.mixIn({
+             *         field: 'value'
+             *     });
+             */
+            mixIn: function(properties) {
+              for (var propertyName in properties) {
+                if (properties.hasOwnProperty(propertyName)) {
+                  this[propertyName] = properties[propertyName];
+                }
+              }
+              if (properties.hasOwnProperty("toString")) {
+                this.toString = properties.toString;
+              }
+            },
+            /**
+             * Creates a copy of this object.
+             *
+             * @return {Object} The clone.
+             *
+             * @example
+             *
+             *     var clone = instance.clone();
+             */
+            clone: function() {
+              return this.init.prototype.extend(this);
+            }
+          };
+        })();
+        var WordArray = C_lib.WordArray = Base.extend({
+          /**
+           * Initializes a newly created word array.
+           *
+           * @param {Array} words (Optional) An array of 32-bit words.
+           * @param {number} sigBytes (Optional) The number of significant bytes in the words.
+           *
+           * @example
+           *
+           *     var wordArray = CryptoJS.lib.WordArray.create();
+           *     var wordArray = CryptoJS.lib.WordArray.create([0x00010203, 0x04050607]);
+           *     var wordArray = CryptoJS.lib.WordArray.create([0x00010203, 0x04050607], 6);
+           */
+          init: function(words, sigBytes) {
+            words = this.words = words || [];
+            if (sigBytes != undefined2) {
+              this.sigBytes = sigBytes;
+            } else {
+              this.sigBytes = words.length * 4;
+            }
+          },
+          /**
+           * Converts this word array to a string.
+           *
+           * @param {Encoder} encoder (Optional) The encoding strategy to use. Default: CryptoJS.enc.Hex
+           *
+           * @return {string} The stringified word array.
+           *
+           * @example
+           *
+           *     var string = wordArray + '';
+           *     var string = wordArray.toString();
+           *     var string = wordArray.toString(CryptoJS.enc.Utf8);
+           */
+          toString: function(encoder2) {
+            return (encoder2 || Hex).stringify(this);
+          },
+          /**
+           * Concatenates a word array to this word array.
+           *
+           * @param {WordArray} wordArray The word array to append.
+           *
+           * @return {WordArray} This word array.
+           *
+           * @example
+           *
+           *     wordArray1.concat(wordArray2);
+           */
+          concat: function(wordArray) {
+            var thisWords = this.words;
+            var thatWords = wordArray.words;
+            var thisSigBytes = this.sigBytes;
+            var thatSigBytes = wordArray.sigBytes;
+            this.clamp();
+            if (thisSigBytes % 4) {
+              for (var i = 0; i < thatSigBytes; i++) {
+                var thatByte = thatWords[i >>> 2] >>> 24 - i % 4 * 8 & 255;
+                thisWords[thisSigBytes + i >>> 2] |= thatByte << 24 - (thisSigBytes + i) % 4 * 8;
+              }
+            } else {
+              for (var j = 0; j < thatSigBytes; j += 4) {
+                thisWords[thisSigBytes + j >>> 2] = thatWords[j >>> 2];
+              }
+            }
+            this.sigBytes += thatSigBytes;
+            return this;
+          },
+          /**
+           * Removes insignificant bits.
+           *
+           * @example
+           *
+           *     wordArray.clamp();
+           */
+          clamp: function() {
+            var words = this.words;
+            var sigBytes = this.sigBytes;
+            words[sigBytes >>> 2] &= 4294967295 << 32 - sigBytes % 4 * 8;
+            words.length = Math2.ceil(sigBytes / 4);
+          },
+          /**
+           * Creates a copy of this word array.
+           *
+           * @return {WordArray} The clone.
+           *
+           * @example
+           *
+           *     var clone = wordArray.clone();
+           */
+          clone: function() {
+            var clone2 = Base.clone.call(this);
+            clone2.words = this.words.slice(0);
+            return clone2;
+          },
+          /**
+           * Creates a word array filled with random bytes.
+           *
+           * @param {number} nBytes The number of random bytes to generate.
+           *
+           * @return {WordArray} The random word array.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var wordArray = CryptoJS.lib.WordArray.random(16);
+           */
+          random: function(nBytes) {
+            var words = [];
+            for (var i = 0; i < nBytes; i += 4) {
+              words.push(cryptoSecureRandomInt());
+            }
+            return new WordArray.init(words, nBytes);
+          }
+        });
+        var C_enc = C.enc = {};
+        var Hex = C_enc.Hex = {
+          /**
+           * Converts a word array to a hex string.
+           *
+           * @param {WordArray} wordArray The word array.
+           *
+           * @return {string} The hex string.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var hexString = CryptoJS.enc.Hex.stringify(wordArray);
+           */
+          stringify: function(wordArray) {
+            var words = wordArray.words;
+            var sigBytes = wordArray.sigBytes;
+            var hexChars = [];
+            for (var i = 0; i < sigBytes; i++) {
+              var bite = words[i >>> 2] >>> 24 - i % 4 * 8 & 255;
+              hexChars.push((bite >>> 4).toString(16));
+              hexChars.push((bite & 15).toString(16));
+            }
+            return hexChars.join("");
+          },
+          /**
+           * Converts a hex string to a word array.
+           *
+           * @param {string} hexStr The hex string.
+           *
+           * @return {WordArray} The word array.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var wordArray = CryptoJS.enc.Hex.parse(hexString);
+           */
+          parse: function(hexStr) {
+            var hexStrLength = hexStr.length;
+            var words = [];
+            for (var i = 0; i < hexStrLength; i += 2) {
+              words[i >>> 3] |= parseInt(hexStr.substr(i, 2), 16) << 24 - i % 8 * 4;
+            }
+            return new WordArray.init(words, hexStrLength / 2);
+          }
+        };
+        var Latin1 = C_enc.Latin1 = {
+          /**
+           * Converts a word array to a Latin1 string.
+           *
+           * @param {WordArray} wordArray The word array.
+           *
+           * @return {string} The Latin1 string.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var latin1String = CryptoJS.enc.Latin1.stringify(wordArray);
+           */
+          stringify: function(wordArray) {
+            var words = wordArray.words;
+            var sigBytes = wordArray.sigBytes;
+            var latin1Chars = [];
+            for (var i = 0; i < sigBytes; i++) {
+              var bite = words[i >>> 2] >>> 24 - i % 4 * 8 & 255;
+              latin1Chars.push(String.fromCharCode(bite));
+            }
+            return latin1Chars.join("");
+          },
+          /**
+           * Converts a Latin1 string to a word array.
+           *
+           * @param {string} latin1Str The Latin1 string.
+           *
+           * @return {WordArray} The word array.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var wordArray = CryptoJS.enc.Latin1.parse(latin1String);
+           */
+          parse: function(latin1Str) {
+            var latin1StrLength = latin1Str.length;
+            var words = [];
+            for (var i = 0; i < latin1StrLength; i++) {
+              words[i >>> 2] |= (latin1Str.charCodeAt(i) & 255) << 24 - i % 4 * 8;
+            }
+            return new WordArray.init(words, latin1StrLength);
+          }
+        };
+        var Utf8 = C_enc.Utf8 = {
+          /**
+           * Converts a word array to a UTF-8 string.
+           *
+           * @param {WordArray} wordArray The word array.
+           *
+           * @return {string} The UTF-8 string.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var utf8String = CryptoJS.enc.Utf8.stringify(wordArray);
+           */
+          stringify: function(wordArray) {
+            try {
+              return decodeURIComponent(escape(Latin1.stringify(wordArray)));
+            } catch (e) {
+              throw new Error("Malformed UTF-8 data");
+            }
+          },
+          /**
+           * Converts a UTF-8 string to a word array.
+           *
+           * @param {string} utf8Str The UTF-8 string.
+           *
+           * @return {WordArray} The word array.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var wordArray = CryptoJS.enc.Utf8.parse(utf8String);
+           */
+          parse: function(utf8Str) {
+            return Latin1.parse(unescape(encodeURIComponent(utf8Str)));
+          }
+        };
+        var BufferedBlockAlgorithm = C_lib.BufferedBlockAlgorithm = Base.extend({
+          /**
+           * Resets this block algorithm's data buffer to its initial state.
+           *
+           * @example
+           *
+           *     bufferedBlockAlgorithm.reset();
+           */
+          reset: function() {
+            this._data = new WordArray.init();
+            this._nDataBytes = 0;
+          },
+          /**
+           * Adds new data to this block algorithm's buffer.
+           *
+           * @param {WordArray|string} data The data to append. Strings are converted to a WordArray using UTF-8.
+           *
+           * @example
+           *
+           *     bufferedBlockAlgorithm._append('data');
+           *     bufferedBlockAlgorithm._append(wordArray);
+           */
+          _append: function(data) {
+            if (typeof data == "string") {
+              data = Utf8.parse(data);
+            }
+            this._data.concat(data);
+            this._nDataBytes += data.sigBytes;
+          },
+          /**
+           * Processes available data blocks.
+           *
+           * This method invokes _doProcessBlock(offset), which must be implemented by a concrete subtype.
+           *
+           * @param {boolean} doFlush Whether all blocks and partial blocks should be processed.
+           *
+           * @return {WordArray} The processed data.
+           *
+           * @example
+           *
+           *     var processedData = bufferedBlockAlgorithm._process();
+           *     var processedData = bufferedBlockAlgorithm._process(!!'flush');
+           */
+          _process: function(doFlush) {
+            var processedWords;
+            var data = this._data;
+            var dataWords = data.words;
+            var dataSigBytes = data.sigBytes;
+            var blockSize = this.blockSize;
+            var blockSizeBytes = blockSize * 4;
+            var nBlocksReady = dataSigBytes / blockSizeBytes;
+            if (doFlush) {
+              nBlocksReady = Math2.ceil(nBlocksReady);
+            } else {
+              nBlocksReady = Math2.max((nBlocksReady | 0) - this._minBufferSize, 0);
+            }
+            var nWordsReady = nBlocksReady * blockSize;
+            var nBytesReady = Math2.min(nWordsReady * 4, dataSigBytes);
+            if (nWordsReady) {
+              for (var offset = 0; offset < nWordsReady; offset += blockSize) {
+                this._doProcessBlock(dataWords, offset);
+              }
+              processedWords = dataWords.splice(0, nWordsReady);
+              data.sigBytes -= nBytesReady;
+            }
+            return new WordArray.init(processedWords, nBytesReady);
+          },
+          /**
+           * Creates a copy of this object.
+           *
+           * @return {Object} The clone.
+           *
+           * @example
+           *
+           *     var clone = bufferedBlockAlgorithm.clone();
+           */
+          clone: function() {
+            var clone2 = Base.clone.call(this);
+            clone2._data = this._data.clone();
+            return clone2;
+          },
+          _minBufferSize: 0
+        });
+        var Hasher = C_lib.Hasher = BufferedBlockAlgorithm.extend({
+          /**
+           * Configuration options.
+           */
+          cfg: Base.extend(),
+          /**
+           * Initializes a newly created hasher.
+           *
+           * @param {Object} cfg (Optional) The configuration options to use for this hash computation.
+           *
+           * @example
+           *
+           *     var hasher = CryptoJS.algo.SHA256.create();
+           */
+          init: function(cfg) {
+            this.cfg = this.cfg.extend(cfg);
+            this.reset();
+          },
+          /**
+           * Resets this hasher to its initial state.
+           *
+           * @example
+           *
+           *     hasher.reset();
+           */
+          reset: function() {
+            BufferedBlockAlgorithm.reset.call(this);
+            this._doReset();
+          },
+          /**
+           * Updates this hasher with a message.
+           *
+           * @param {WordArray|string} messageUpdate The message to append.
+           *
+           * @return {Hasher} This hasher.
+           *
+           * @example
+           *
+           *     hasher.update('message');
+           *     hasher.update(wordArray);
+           */
+          update: function(messageUpdate) {
+            this._append(messageUpdate);
+            this._process();
+            return this;
+          },
+          /**
+           * Finalizes the hash computation.
+           * Note that the finalize operation is effectively a destructive, read-once operation.
+           *
+           * @param {WordArray|string} messageUpdate (Optional) A final message update.
+           *
+           * @return {WordArray} The hash.
+           *
+           * @example
+           *
+           *     var hash = hasher.finalize();
+           *     var hash = hasher.finalize('message');
+           *     var hash = hasher.finalize(wordArray);
+           */
+          finalize: function(messageUpdate) {
+            if (messageUpdate) {
+              this._append(messageUpdate);
+            }
+            var hash2 = this._doFinalize();
+            return hash2;
+          },
+          blockSize: 512 / 32,
+          /**
+           * Creates a shortcut function to a hasher's object interface.
+           *
+           * @param {Hasher} hasher The hasher to create a helper for.
+           *
+           * @return {Function} The shortcut function.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var SHA256 = CryptoJS.lib.Hasher._createHelper(CryptoJS.algo.SHA256);
+           */
+          _createHelper: function(hasher) {
+            return function(message2, cfg) {
+              return new hasher.init(cfg).finalize(message2);
+            };
+          },
+          /**
+           * Creates a shortcut function to the HMAC's object interface.
+           *
+           * @param {Hasher} hasher The hasher to use in this HMAC helper.
+           *
+           * @return {Function} The shortcut function.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var HmacSHA256 = CryptoJS.lib.Hasher._createHmacHelper(CryptoJS.algo.SHA256);
+           */
+          _createHmacHelper: function(hasher) {
+            return function(message2, key) {
+              return new C_algo.HMAC.init(hasher, key).finalize(message2);
+            };
+          }
+        });
+        var C_algo = C.algo = {};
+        return C;
+      })(Math);
+      return CryptoJS;
+    });
+  }
+});
+
+// node_modules/crypto-js/x64-core.js
+var require_x64_core = __commonJS({
+  "node_modules/crypto-js/x64-core.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function(undefined2) {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var Base = C_lib.Base;
+        var X32WordArray = C_lib.WordArray;
+        var C_x64 = C.x64 = {};
+        var X64Word = C_x64.Word = Base.extend({
+          /**
+           * Initializes a newly created 64-bit word.
+           *
+           * @param {number} high The high 32 bits.
+           * @param {number} low The low 32 bits.
+           *
+           * @example
+           *
+           *     var x64Word = CryptoJS.x64.Word.create(0x00010203, 0x04050607);
+           */
+          init: function(high, low) {
+            this.high = high;
+            this.low = low;
+          }
+          /**
+           * Bitwise NOTs this word.
+           *
+           * @return {X64Word} A new x64-Word object after negating.
+           *
+           * @example
+           *
+           *     var negated = x64Word.not();
+           */
+          // not: function () {
+          // var high = ~this.high;
+          // var low = ~this.low;
+          // return X64Word.create(high, low);
+          // },
+          /**
+           * Bitwise ANDs this word with the passed word.
+           *
+           * @param {X64Word} word The x64-Word to AND with this word.
+           *
+           * @return {X64Word} A new x64-Word object after ANDing.
+           *
+           * @example
+           *
+           *     var anded = x64Word.and(anotherX64Word);
+           */
+          // and: function (word) {
+          // var high = this.high & word.high;
+          // var low = this.low & word.low;
+          // return X64Word.create(high, low);
+          // },
+          /**
+           * Bitwise ORs this word with the passed word.
+           *
+           * @param {X64Word} word The x64-Word to OR with this word.
+           *
+           * @return {X64Word} A new x64-Word object after ORing.
+           *
+           * @example
+           *
+           *     var ored = x64Word.or(anotherX64Word);
+           */
+          // or: function (word) {
+          // var high = this.high | word.high;
+          // var low = this.low | word.low;
+          // return X64Word.create(high, low);
+          // },
+          /**
+           * Bitwise XORs this word with the passed word.
+           *
+           * @param {X64Word} word The x64-Word to XOR with this word.
+           *
+           * @return {X64Word} A new x64-Word object after XORing.
+           *
+           * @example
+           *
+           *     var xored = x64Word.xor(anotherX64Word);
+           */
+          // xor: function (word) {
+          // var high = this.high ^ word.high;
+          // var low = this.low ^ word.low;
+          // return X64Word.create(high, low);
+          // },
+          /**
+           * Shifts this word n bits to the left.
+           *
+           * @param {number} n The number of bits to shift.
+           *
+           * @return {X64Word} A new x64-Word object after shifting.
+           *
+           * @example
+           *
+           *     var shifted = x64Word.shiftL(25);
+           */
+          // shiftL: function (n) {
+          // if (n < 32) {
+          // var high = (this.high << n) | (this.low >>> (32 - n));
+          // var low = this.low << n;
+          // } else {
+          // var high = this.low << (n - 32);
+          // var low = 0;
+          // }
+          // return X64Word.create(high, low);
+          // },
+          /**
+           * Shifts this word n bits to the right.
+           *
+           * @param {number} n The number of bits to shift.
+           *
+           * @return {X64Word} A new x64-Word object after shifting.
+           *
+           * @example
+           *
+           *     var shifted = x64Word.shiftR(7);
+           */
+          // shiftR: function (n) {
+          // if (n < 32) {
+          // var low = (this.low >>> n) | (this.high << (32 - n));
+          // var high = this.high >>> n;
+          // } else {
+          // var low = this.high >>> (n - 32);
+          // var high = 0;
+          // }
+          // return X64Word.create(high, low);
+          // },
+          /**
+           * Rotates this word n bits to the left.
+           *
+           * @param {number} n The number of bits to rotate.
+           *
+           * @return {X64Word} A new x64-Word object after rotating.
+           *
+           * @example
+           *
+           *     var rotated = x64Word.rotL(25);
+           */
+          // rotL: function (n) {
+          // return this.shiftL(n).or(this.shiftR(64 - n));
+          // },
+          /**
+           * Rotates this word n bits to the right.
+           *
+           * @param {number} n The number of bits to rotate.
+           *
+           * @return {X64Word} A new x64-Word object after rotating.
+           *
+           * @example
+           *
+           *     var rotated = x64Word.rotR(7);
+           */
+          // rotR: function (n) {
+          // return this.shiftR(n).or(this.shiftL(64 - n));
+          // },
+          /**
+           * Adds this word with the passed word.
+           *
+           * @param {X64Word} word The x64-Word to add with this word.
+           *
+           * @return {X64Word} A new x64-Word object after adding.
+           *
+           * @example
+           *
+           *     var added = x64Word.add(anotherX64Word);
+           */
+          // add: function (word) {
+          // var low = (this.low + word.low) | 0;
+          // var carry = (low >>> 0) < (this.low >>> 0) ? 1 : 0;
+          // var high = (this.high + word.high + carry) | 0;
+          // return X64Word.create(high, low);
+          // }
+        });
+        var X64WordArray = C_x64.WordArray = Base.extend({
+          /**
+           * Initializes a newly created word array.
+           *
+           * @param {Array} words (Optional) An array of CryptoJS.x64.Word objects.
+           * @param {number} sigBytes (Optional) The number of significant bytes in the words.
+           *
+           * @example
+           *
+           *     var wordArray = CryptoJS.x64.WordArray.create();
+           *
+           *     var wordArray = CryptoJS.x64.WordArray.create([
+           *         CryptoJS.x64.Word.create(0x00010203, 0x04050607),
+           *         CryptoJS.x64.Word.create(0x18191a1b, 0x1c1d1e1f)
+           *     ]);
+           *
+           *     var wordArray = CryptoJS.x64.WordArray.create([
+           *         CryptoJS.x64.Word.create(0x00010203, 0x04050607),
+           *         CryptoJS.x64.Word.create(0x18191a1b, 0x1c1d1e1f)
+           *     ], 10);
+           */
+          init: function(words, sigBytes) {
+            words = this.words = words || [];
+            if (sigBytes != undefined2) {
+              this.sigBytes = sigBytes;
+            } else {
+              this.sigBytes = words.length * 8;
+            }
+          },
+          /**
+           * Converts this 64-bit word array to a 32-bit word array.
+           *
+           * @return {CryptoJS.lib.WordArray} This word array's data as a 32-bit word array.
+           *
+           * @example
+           *
+           *     var x32WordArray = x64WordArray.toX32();
+           */
+          toX32: function() {
+            var x64Words = this.words;
+            var x64WordsLength = x64Words.length;
+            var x32Words = [];
+            for (var i = 0; i < x64WordsLength; i++) {
+              var x64Word = x64Words[i];
+              x32Words.push(x64Word.high);
+              x32Words.push(x64Word.low);
+            }
+            return X32WordArray.create(x32Words, this.sigBytes);
+          },
+          /**
+           * Creates a copy of this word array.
+           *
+           * @return {X64WordArray} The clone.
+           *
+           * @example
+           *
+           *     var clone = x64WordArray.clone();
+           */
+          clone: function() {
+            var clone2 = Base.clone.call(this);
+            var words = clone2.words = this.words.slice(0);
+            var wordsLength = words.length;
+            for (var i = 0; i < wordsLength; i++) {
+              words[i] = words[i].clone();
+            }
+            return clone2;
+          }
+        });
+      })();
+      return CryptoJS;
+    });
+  }
+});
+
+// node_modules/crypto-js/lib-typedarrays.js
+var require_lib_typedarrays = __commonJS({
+  "node_modules/crypto-js/lib-typedarrays.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        if (typeof ArrayBuffer != "function") {
+          return;
+        }
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var superInit = WordArray.init;
+        var subInit = WordArray.init = function(typedArray) {
+          if (typedArray instanceof ArrayBuffer) {
+            typedArray = new Uint8Array(typedArray);
+          }
+          if (typedArray instanceof Int8Array || typeof Uint8ClampedArray !== "undefined" && typedArray instanceof Uint8ClampedArray || typedArray instanceof Int16Array || typedArray instanceof Uint16Array || typedArray instanceof Int32Array || typedArray instanceof Uint32Array || typedArray instanceof Float32Array || typedArray instanceof Float64Array) {
+            typedArray = new Uint8Array(typedArray.buffer, typedArray.byteOffset, typedArray.byteLength);
+          }
+          if (typedArray instanceof Uint8Array) {
+            var typedArrayByteLength = typedArray.byteLength;
+            var words = [];
+            for (var i = 0; i < typedArrayByteLength; i++) {
+              words[i >>> 2] |= typedArray[i] << 24 - i % 4 * 8;
+            }
+            superInit.call(this, words, typedArrayByteLength);
+          } else {
+            superInit.apply(this, arguments);
+          }
+        };
+        subInit.prototype = WordArray;
+      })();
+      return CryptoJS.lib.WordArray;
+    });
+  }
+});
+
+// node_modules/crypto-js/enc-utf16.js
+var require_enc_utf16 = __commonJS({
+  "node_modules/crypto-js/enc-utf16.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var C_enc = C.enc;
+        var Utf16BE = C_enc.Utf16 = C_enc.Utf16BE = {
+          /**
+           * Converts a word array to a UTF-16 BE string.
+           *
+           * @param {WordArray} wordArray The word array.
+           *
+           * @return {string} The UTF-16 BE string.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var utf16String = CryptoJS.enc.Utf16.stringify(wordArray);
+           */
+          stringify: function(wordArray) {
+            var words = wordArray.words;
+            var sigBytes = wordArray.sigBytes;
+            var utf16Chars = [];
+            for (var i = 0; i < sigBytes; i += 2) {
+              var codePoint = words[i >>> 2] >>> 16 - i % 4 * 8 & 65535;
+              utf16Chars.push(String.fromCharCode(codePoint));
+            }
+            return utf16Chars.join("");
+          },
+          /**
+           * Converts a UTF-16 BE string to a word array.
+           *
+           * @param {string} utf16Str The UTF-16 BE string.
+           *
+           * @return {WordArray} The word array.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var wordArray = CryptoJS.enc.Utf16.parse(utf16String);
+           */
+          parse: function(utf16Str) {
+            var utf16StrLength = utf16Str.length;
+            var words = [];
+            for (var i = 0; i < utf16StrLength; i++) {
+              words[i >>> 1] |= utf16Str.charCodeAt(i) << 16 - i % 2 * 16;
+            }
+            return WordArray.create(words, utf16StrLength * 2);
+          }
+        };
+        C_enc.Utf16LE = {
+          /**
+           * Converts a word array to a UTF-16 LE string.
+           *
+           * @param {WordArray} wordArray The word array.
+           *
+           * @return {string} The UTF-16 LE string.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var utf16Str = CryptoJS.enc.Utf16LE.stringify(wordArray);
+           */
+          stringify: function(wordArray) {
+            var words = wordArray.words;
+            var sigBytes = wordArray.sigBytes;
+            var utf16Chars = [];
+            for (var i = 0; i < sigBytes; i += 2) {
+              var codePoint = swapEndian(words[i >>> 2] >>> 16 - i % 4 * 8 & 65535);
+              utf16Chars.push(String.fromCharCode(codePoint));
+            }
+            return utf16Chars.join("");
+          },
+          /**
+           * Converts a UTF-16 LE string to a word array.
+           *
+           * @param {string} utf16Str The UTF-16 LE string.
+           *
+           * @return {WordArray} The word array.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var wordArray = CryptoJS.enc.Utf16LE.parse(utf16Str);
+           */
+          parse: function(utf16Str) {
+            var utf16StrLength = utf16Str.length;
+            var words = [];
+            for (var i = 0; i < utf16StrLength; i++) {
+              words[i >>> 1] |= swapEndian(utf16Str.charCodeAt(i) << 16 - i % 2 * 16);
+            }
+            return WordArray.create(words, utf16StrLength * 2);
+          }
+        };
+        function swapEndian(word) {
+          return word << 8 & 4278255360 | word >>> 8 & 16711935;
+        }
+      })();
+      return CryptoJS.enc.Utf16;
+    });
+  }
+});
+
+// node_modules/crypto-js/enc-base64.js
+var require_enc_base64 = __commonJS({
+  "node_modules/crypto-js/enc-base64.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var C_enc = C.enc;
+        var Base64 = C_enc.Base64 = {
+          /**
+           * Converts a word array to a Base64 string.
+           *
+           * @param {WordArray} wordArray The word array.
+           *
+           * @return {string} The Base64 string.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var base64String = CryptoJS.enc.Base64.stringify(wordArray);
+           */
+          stringify: function(wordArray) {
+            var words = wordArray.words;
+            var sigBytes = wordArray.sigBytes;
+            var map2 = this._map;
+            wordArray.clamp();
+            var base64Chars = [];
+            for (var i = 0; i < sigBytes; i += 3) {
+              var byte1 = words[i >>> 2] >>> 24 - i % 4 * 8 & 255;
+              var byte2 = words[i + 1 >>> 2] >>> 24 - (i + 1) % 4 * 8 & 255;
+              var byte3 = words[i + 2 >>> 2] >>> 24 - (i + 2) % 4 * 8 & 255;
+              var triplet = byte1 << 16 | byte2 << 8 | byte3;
+              for (var j = 0; j < 4 && i + j * 0.75 < sigBytes; j++) {
+                base64Chars.push(map2.charAt(triplet >>> 6 * (3 - j) & 63));
+              }
+            }
+            var paddingChar = map2.charAt(64);
+            if (paddingChar) {
+              while (base64Chars.length % 4) {
+                base64Chars.push(paddingChar);
+              }
+            }
+            return base64Chars.join("");
+          },
+          /**
+           * Converts a Base64 string to a word array.
+           *
+           * @param {string} base64Str The Base64 string.
+           *
+           * @return {WordArray} The word array.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var wordArray = CryptoJS.enc.Base64.parse(base64String);
+           */
+          parse: function(base64Str) {
+            var base64StrLength = base64Str.length;
+            var map2 = this._map;
+            var reverseMap = this._reverseMap;
+            if (!reverseMap) {
+              reverseMap = this._reverseMap = [];
+              for (var j = 0; j < map2.length; j++) {
+                reverseMap[map2.charCodeAt(j)] = j;
+              }
+            }
+            var paddingChar = map2.charAt(64);
+            if (paddingChar) {
+              var paddingIndex = base64Str.indexOf(paddingChar);
+              if (paddingIndex !== -1) {
+                base64StrLength = paddingIndex;
+              }
+            }
+            return parseLoop(base64Str, base64StrLength, reverseMap);
+          },
+          _map: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+        };
+        function parseLoop(base64Str, base64StrLength, reverseMap) {
+          var words = [];
+          var nBytes = 0;
+          for (var i = 0; i < base64StrLength; i++) {
+            if (i % 4) {
+              var bits1 = reverseMap[base64Str.charCodeAt(i - 1)] << i % 4 * 2;
+              var bits2 = reverseMap[base64Str.charCodeAt(i)] >>> 6 - i % 4 * 2;
+              var bitsCombined = bits1 | bits2;
+              words[nBytes >>> 2] |= bitsCombined << 24 - nBytes % 4 * 8;
+              nBytes++;
+            }
+          }
+          return WordArray.create(words, nBytes);
+        }
+      })();
+      return CryptoJS.enc.Base64;
+    });
+  }
+});
+
+// node_modules/crypto-js/enc-base64url.js
+var require_enc_base64url = __commonJS({
+  "node_modules/crypto-js/enc-base64url.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var C_enc = C.enc;
+        var Base64url = C_enc.Base64url = {
+          /**
+           * Converts a word array to a Base64url string.
+           *
+           * @param {WordArray} wordArray The word array.
+           *
+           * @param {boolean} urlSafe Whether to use url safe
+           *
+           * @return {string} The Base64url string.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var base64String = CryptoJS.enc.Base64url.stringify(wordArray);
+           */
+          stringify: function(wordArray, urlSafe) {
+            if (urlSafe === void 0) {
+              urlSafe = true;
+            }
+            var words = wordArray.words;
+            var sigBytes = wordArray.sigBytes;
+            var map2 = urlSafe ? this._safe_map : this._map;
+            wordArray.clamp();
+            var base64Chars = [];
+            for (var i = 0; i < sigBytes; i += 3) {
+              var byte1 = words[i >>> 2] >>> 24 - i % 4 * 8 & 255;
+              var byte2 = words[i + 1 >>> 2] >>> 24 - (i + 1) % 4 * 8 & 255;
+              var byte3 = words[i + 2 >>> 2] >>> 24 - (i + 2) % 4 * 8 & 255;
+              var triplet = byte1 << 16 | byte2 << 8 | byte3;
+              for (var j = 0; j < 4 && i + j * 0.75 < sigBytes; j++) {
+                base64Chars.push(map2.charAt(triplet >>> 6 * (3 - j) & 63));
+              }
+            }
+            var paddingChar = map2.charAt(64);
+            if (paddingChar) {
+              while (base64Chars.length % 4) {
+                base64Chars.push(paddingChar);
+              }
+            }
+            return base64Chars.join("");
+          },
+          /**
+           * Converts a Base64url string to a word array.
+           *
+           * @param {string} base64Str The Base64url string.
+           *
+           * @param {boolean} urlSafe Whether to use url safe
+           *
+           * @return {WordArray} The word array.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var wordArray = CryptoJS.enc.Base64url.parse(base64String);
+           */
+          parse: function(base64Str, urlSafe) {
+            if (urlSafe === void 0) {
+              urlSafe = true;
+            }
+            var base64StrLength = base64Str.length;
+            var map2 = urlSafe ? this._safe_map : this._map;
+            var reverseMap = this._reverseMap;
+            if (!reverseMap) {
+              reverseMap = this._reverseMap = [];
+              for (var j = 0; j < map2.length; j++) {
+                reverseMap[map2.charCodeAt(j)] = j;
+              }
+            }
+            var paddingChar = map2.charAt(64);
+            if (paddingChar) {
+              var paddingIndex = base64Str.indexOf(paddingChar);
+              if (paddingIndex !== -1) {
+                base64StrLength = paddingIndex;
+              }
+            }
+            return parseLoop(base64Str, base64StrLength, reverseMap);
+          },
+          _map: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+          _safe_map: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+        };
+        function parseLoop(base64Str, base64StrLength, reverseMap) {
+          var words = [];
+          var nBytes = 0;
+          for (var i = 0; i < base64StrLength; i++) {
+            if (i % 4) {
+              var bits1 = reverseMap[base64Str.charCodeAt(i - 1)] << i % 4 * 2;
+              var bits2 = reverseMap[base64Str.charCodeAt(i)] >>> 6 - i % 4 * 2;
+              var bitsCombined = bits1 | bits2;
+              words[nBytes >>> 2] |= bitsCombined << 24 - nBytes % 4 * 8;
+              nBytes++;
+            }
+          }
+          return WordArray.create(words, nBytes);
+        }
+      })();
+      return CryptoJS.enc.Base64url;
+    });
+  }
+});
+
+// node_modules/crypto-js/md5.js
+var require_md5 = __commonJS({
+  "node_modules/crypto-js/md5.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function(Math2) {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var Hasher = C_lib.Hasher;
+        var C_algo = C.algo;
+        var T = [];
+        (function() {
+          for (var i = 0; i < 64; i++) {
+            T[i] = Math2.abs(Math2.sin(i + 1)) * 4294967296 | 0;
+          }
+        })();
+        var MD5 = C_algo.MD5 = Hasher.extend({
+          _doReset: function() {
+            this._hash = new WordArray.init([
+              1732584193,
+              4023233417,
+              2562383102,
+              271733878
+            ]);
+          },
+          _doProcessBlock: function(M, offset) {
+            for (var i = 0; i < 16; i++) {
+              var offset_i = offset + i;
+              var M_offset_i = M[offset_i];
+              M[offset_i] = (M_offset_i << 8 | M_offset_i >>> 24) & 16711935 | (M_offset_i << 24 | M_offset_i >>> 8) & 4278255360;
+            }
+            var H = this._hash.words;
+            var M_offset_0 = M[offset + 0];
+            var M_offset_1 = M[offset + 1];
+            var M_offset_2 = M[offset + 2];
+            var M_offset_3 = M[offset + 3];
+            var M_offset_4 = M[offset + 4];
+            var M_offset_5 = M[offset + 5];
+            var M_offset_6 = M[offset + 6];
+            var M_offset_7 = M[offset + 7];
+            var M_offset_8 = M[offset + 8];
+            var M_offset_9 = M[offset + 9];
+            var M_offset_10 = M[offset + 10];
+            var M_offset_11 = M[offset + 11];
+            var M_offset_12 = M[offset + 12];
+            var M_offset_13 = M[offset + 13];
+            var M_offset_14 = M[offset + 14];
+            var M_offset_15 = M[offset + 15];
+            var a = H[0];
+            var b = H[1];
+            var c = H[2];
+            var d = H[3];
+            a = FF(a, b, c, d, M_offset_0, 7, T[0]);
+            d = FF(d, a, b, c, M_offset_1, 12, T[1]);
+            c = FF(c, d, a, b, M_offset_2, 17, T[2]);
+            b = FF(b, c, d, a, M_offset_3, 22, T[3]);
+            a = FF(a, b, c, d, M_offset_4, 7, T[4]);
+            d = FF(d, a, b, c, M_offset_5, 12, T[5]);
+            c = FF(c, d, a, b, M_offset_6, 17, T[6]);
+            b = FF(b, c, d, a, M_offset_7, 22, T[7]);
+            a = FF(a, b, c, d, M_offset_8, 7, T[8]);
+            d = FF(d, a, b, c, M_offset_9, 12, T[9]);
+            c = FF(c, d, a, b, M_offset_10, 17, T[10]);
+            b = FF(b, c, d, a, M_offset_11, 22, T[11]);
+            a = FF(a, b, c, d, M_offset_12, 7, T[12]);
+            d = FF(d, a, b, c, M_offset_13, 12, T[13]);
+            c = FF(c, d, a, b, M_offset_14, 17, T[14]);
+            b = FF(b, c, d, a, M_offset_15, 22, T[15]);
+            a = GG(a, b, c, d, M_offset_1, 5, T[16]);
+            d = GG(d, a, b, c, M_offset_6, 9, T[17]);
+            c = GG(c, d, a, b, M_offset_11, 14, T[18]);
+            b = GG(b, c, d, a, M_offset_0, 20, T[19]);
+            a = GG(a, b, c, d, M_offset_5, 5, T[20]);
+            d = GG(d, a, b, c, M_offset_10, 9, T[21]);
+            c = GG(c, d, a, b, M_offset_15, 14, T[22]);
+            b = GG(b, c, d, a, M_offset_4, 20, T[23]);
+            a = GG(a, b, c, d, M_offset_9, 5, T[24]);
+            d = GG(d, a, b, c, M_offset_14, 9, T[25]);
+            c = GG(c, d, a, b, M_offset_3, 14, T[26]);
+            b = GG(b, c, d, a, M_offset_8, 20, T[27]);
+            a = GG(a, b, c, d, M_offset_13, 5, T[28]);
+            d = GG(d, a, b, c, M_offset_2, 9, T[29]);
+            c = GG(c, d, a, b, M_offset_7, 14, T[30]);
+            b = GG(b, c, d, a, M_offset_12, 20, T[31]);
+            a = HH(a, b, c, d, M_offset_5, 4, T[32]);
+            d = HH(d, a, b, c, M_offset_8, 11, T[33]);
+            c = HH(c, d, a, b, M_offset_11, 16, T[34]);
+            b = HH(b, c, d, a, M_offset_14, 23, T[35]);
+            a = HH(a, b, c, d, M_offset_1, 4, T[36]);
+            d = HH(d, a, b, c, M_offset_4, 11, T[37]);
+            c = HH(c, d, a, b, M_offset_7, 16, T[38]);
+            b = HH(b, c, d, a, M_offset_10, 23, T[39]);
+            a = HH(a, b, c, d, M_offset_13, 4, T[40]);
+            d = HH(d, a, b, c, M_offset_0, 11, T[41]);
+            c = HH(c, d, a, b, M_offset_3, 16, T[42]);
+            b = HH(b, c, d, a, M_offset_6, 23, T[43]);
+            a = HH(a, b, c, d, M_offset_9, 4, T[44]);
+            d = HH(d, a, b, c, M_offset_12, 11, T[45]);
+            c = HH(c, d, a, b, M_offset_15, 16, T[46]);
+            b = HH(b, c, d, a, M_offset_2, 23, T[47]);
+            a = II(a, b, c, d, M_offset_0, 6, T[48]);
+            d = II(d, a, b, c, M_offset_7, 10, T[49]);
+            c = II(c, d, a, b, M_offset_14, 15, T[50]);
+            b = II(b, c, d, a, M_offset_5, 21, T[51]);
+            a = II(a, b, c, d, M_offset_12, 6, T[52]);
+            d = II(d, a, b, c, M_offset_3, 10, T[53]);
+            c = II(c, d, a, b, M_offset_10, 15, T[54]);
+            b = II(b, c, d, a, M_offset_1, 21, T[55]);
+            a = II(a, b, c, d, M_offset_8, 6, T[56]);
+            d = II(d, a, b, c, M_offset_15, 10, T[57]);
+            c = II(c, d, a, b, M_offset_6, 15, T[58]);
+            b = II(b, c, d, a, M_offset_13, 21, T[59]);
+            a = II(a, b, c, d, M_offset_4, 6, T[60]);
+            d = II(d, a, b, c, M_offset_11, 10, T[61]);
+            c = II(c, d, a, b, M_offset_2, 15, T[62]);
+            b = II(b, c, d, a, M_offset_9, 21, T[63]);
+            H[0] = H[0] + a | 0;
+            H[1] = H[1] + b | 0;
+            H[2] = H[2] + c | 0;
+            H[3] = H[3] + d | 0;
+          },
+          _doFinalize: function() {
+            var data = this._data;
+            var dataWords = data.words;
+            var nBitsTotal = this._nDataBytes * 8;
+            var nBitsLeft = data.sigBytes * 8;
+            dataWords[nBitsLeft >>> 5] |= 128 << 24 - nBitsLeft % 32;
+            var nBitsTotalH = Math2.floor(nBitsTotal / 4294967296);
+            var nBitsTotalL = nBitsTotal;
+            dataWords[(nBitsLeft + 64 >>> 9 << 4) + 15] = (nBitsTotalH << 8 | nBitsTotalH >>> 24) & 16711935 | (nBitsTotalH << 24 | nBitsTotalH >>> 8) & 4278255360;
+            dataWords[(nBitsLeft + 64 >>> 9 << 4) + 14] = (nBitsTotalL << 8 | nBitsTotalL >>> 24) & 16711935 | (nBitsTotalL << 24 | nBitsTotalL >>> 8) & 4278255360;
+            data.sigBytes = (dataWords.length + 1) * 4;
+            this._process();
+            var hash2 = this._hash;
+            var H = hash2.words;
+            for (var i = 0; i < 4; i++) {
+              var H_i = H[i];
+              H[i] = (H_i << 8 | H_i >>> 24) & 16711935 | (H_i << 24 | H_i >>> 8) & 4278255360;
+            }
+            return hash2;
+          },
+          clone: function() {
+            var clone2 = Hasher.clone.call(this);
+            clone2._hash = this._hash.clone();
+            return clone2;
+          }
+        });
+        function FF(a, b, c, d, x, s2, t) {
+          var n = a + (b & c | ~b & d) + x + t;
+          return (n << s2 | n >>> 32 - s2) + b;
+        }
+        function GG(a, b, c, d, x, s2, t) {
+          var n = a + (b & d | c & ~d) + x + t;
+          return (n << s2 | n >>> 32 - s2) + b;
+        }
+        function HH(a, b, c, d, x, s2, t) {
+          var n = a + (b ^ c ^ d) + x + t;
+          return (n << s2 | n >>> 32 - s2) + b;
+        }
+        function II(a, b, c, d, x, s2, t) {
+          var n = a + (c ^ (b | ~d)) + x + t;
+          return (n << s2 | n >>> 32 - s2) + b;
+        }
+        C.MD5 = Hasher._createHelper(MD5);
+        C.HmacMD5 = Hasher._createHmacHelper(MD5);
+      })(Math);
+      return CryptoJS.MD5;
+    });
+  }
+});
+
+// node_modules/crypto-js/sha1.js
+var require_sha1 = __commonJS({
+  "node_modules/crypto-js/sha1.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var Hasher = C_lib.Hasher;
+        var C_algo = C.algo;
+        var W = [];
+        var SHA1 = C_algo.SHA1 = Hasher.extend({
+          _doReset: function() {
+            this._hash = new WordArray.init([
+              1732584193,
+              4023233417,
+              2562383102,
+              271733878,
+              3285377520
+            ]);
+          },
+          _doProcessBlock: function(M, offset) {
+            var H = this._hash.words;
+            var a = H[0];
+            var b = H[1];
+            var c = H[2];
+            var d = H[3];
+            var e = H[4];
+            for (var i = 0; i < 80; i++) {
+              if (i < 16) {
+                W[i] = M[offset + i] | 0;
+              } else {
+                var n = W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16];
+                W[i] = n << 1 | n >>> 31;
+              }
+              var t = (a << 5 | a >>> 27) + e + W[i];
+              if (i < 20) {
+                t += (b & c | ~b & d) + 1518500249;
+              } else if (i < 40) {
+                t += (b ^ c ^ d) + 1859775393;
+              } else if (i < 60) {
+                t += (b & c | b & d | c & d) - 1894007588;
+              } else {
+                t += (b ^ c ^ d) - 899497514;
+              }
+              e = d;
+              d = c;
+              c = b << 30 | b >>> 2;
+              b = a;
+              a = t;
+            }
+            H[0] = H[0] + a | 0;
+            H[1] = H[1] + b | 0;
+            H[2] = H[2] + c | 0;
+            H[3] = H[3] + d | 0;
+            H[4] = H[4] + e | 0;
+          },
+          _doFinalize: function() {
+            var data = this._data;
+            var dataWords = data.words;
+            var nBitsTotal = this._nDataBytes * 8;
+            var nBitsLeft = data.sigBytes * 8;
+            dataWords[nBitsLeft >>> 5] |= 128 << 24 - nBitsLeft % 32;
+            dataWords[(nBitsLeft + 64 >>> 9 << 4) + 14] = Math.floor(nBitsTotal / 4294967296);
+            dataWords[(nBitsLeft + 64 >>> 9 << 4) + 15] = nBitsTotal;
+            data.sigBytes = dataWords.length * 4;
+            this._process();
+            return this._hash;
+          },
+          clone: function() {
+            var clone2 = Hasher.clone.call(this);
+            clone2._hash = this._hash.clone();
+            return clone2;
+          }
+        });
+        C.SHA1 = Hasher._createHelper(SHA1);
+        C.HmacSHA1 = Hasher._createHmacHelper(SHA1);
+      })();
+      return CryptoJS.SHA1;
+    });
+  }
+});
+
+// node_modules/crypto-js/sha256.js
+var require_sha256 = __commonJS({
+  "node_modules/crypto-js/sha256.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function(Math2) {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var Hasher = C_lib.Hasher;
+        var C_algo = C.algo;
+        var H = [];
+        var K = [];
+        (function() {
+          function isPrime(n2) {
+            var sqrtN = Math2.sqrt(n2);
+            for (var factor = 2; factor <= sqrtN; factor++) {
+              if (!(n2 % factor)) {
+                return false;
+              }
+            }
+            return true;
+          }
+          function getFractionalBits(n2) {
+            return (n2 - (n2 | 0)) * 4294967296 | 0;
+          }
+          var n = 2;
+          var nPrime = 0;
+          while (nPrime < 64) {
+            if (isPrime(n)) {
+              if (nPrime < 8) {
+                H[nPrime] = getFractionalBits(Math2.pow(n, 1 / 2));
+              }
+              K[nPrime] = getFractionalBits(Math2.pow(n, 1 / 3));
+              nPrime++;
+            }
+            n++;
+          }
+        })();
+        var W = [];
+        var SHA256 = C_algo.SHA256 = Hasher.extend({
+          _doReset: function() {
+            this._hash = new WordArray.init(H.slice(0));
+          },
+          _doProcessBlock: function(M, offset) {
+            var H2 = this._hash.words;
+            var a = H2[0];
+            var b = H2[1];
+            var c = H2[2];
+            var d = H2[3];
+            var e = H2[4];
+            var f = H2[5];
+            var g = H2[6];
+            var h = H2[7];
+            for (var i = 0; i < 64; i++) {
+              if (i < 16) {
+                W[i] = M[offset + i] | 0;
+              } else {
+                var gamma0x = W[i - 15];
+                var gamma0 = (gamma0x << 25 | gamma0x >>> 7) ^ (gamma0x << 14 | gamma0x >>> 18) ^ gamma0x >>> 3;
+                var gamma1x = W[i - 2];
+                var gamma1 = (gamma1x << 15 | gamma1x >>> 17) ^ (gamma1x << 13 | gamma1x >>> 19) ^ gamma1x >>> 10;
+                W[i] = gamma0 + W[i - 7] + gamma1 + W[i - 16];
+              }
+              var ch = e & f ^ ~e & g;
+              var maj = a & b ^ a & c ^ b & c;
+              var sigma0 = (a << 30 | a >>> 2) ^ (a << 19 | a >>> 13) ^ (a << 10 | a >>> 22);
+              var sigma1 = (e << 26 | e >>> 6) ^ (e << 21 | e >>> 11) ^ (e << 7 | e >>> 25);
+              var t1 = h + sigma1 + ch + K[i] + W[i];
+              var t2 = sigma0 + maj;
+              h = g;
+              g = f;
+              f = e;
+              e = d + t1 | 0;
+              d = c;
+              c = b;
+              b = a;
+              a = t1 + t2 | 0;
+            }
+            H2[0] = H2[0] + a | 0;
+            H2[1] = H2[1] + b | 0;
+            H2[2] = H2[2] + c | 0;
+            H2[3] = H2[3] + d | 0;
+            H2[4] = H2[4] + e | 0;
+            H2[5] = H2[5] + f | 0;
+            H2[6] = H2[6] + g | 0;
+            H2[7] = H2[7] + h | 0;
+          },
+          _doFinalize: function() {
+            var data = this._data;
+            var dataWords = data.words;
+            var nBitsTotal = this._nDataBytes * 8;
+            var nBitsLeft = data.sigBytes * 8;
+            dataWords[nBitsLeft >>> 5] |= 128 << 24 - nBitsLeft % 32;
+            dataWords[(nBitsLeft + 64 >>> 9 << 4) + 14] = Math2.floor(nBitsTotal / 4294967296);
+            dataWords[(nBitsLeft + 64 >>> 9 << 4) + 15] = nBitsTotal;
+            data.sigBytes = dataWords.length * 4;
+            this._process();
+            return this._hash;
+          },
+          clone: function() {
+            var clone2 = Hasher.clone.call(this);
+            clone2._hash = this._hash.clone();
+            return clone2;
+          }
+        });
+        C.SHA256 = Hasher._createHelper(SHA256);
+        C.HmacSHA256 = Hasher._createHmacHelper(SHA256);
+      })(Math);
+      return CryptoJS.SHA256;
+    });
+  }
+});
+
+// node_modules/crypto-js/sha224.js
+var require_sha224 = __commonJS({
+  "node_modules/crypto-js/sha224.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_sha256());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./sha256"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var C_algo = C.algo;
+        var SHA256 = C_algo.SHA256;
+        var SHA224 = C_algo.SHA224 = SHA256.extend({
+          _doReset: function() {
+            this._hash = new WordArray.init([
+              3238371032,
+              914150663,
+              812702999,
+              4144912697,
+              4290775857,
+              1750603025,
+              1694076839,
+              3204075428
+            ]);
+          },
+          _doFinalize: function() {
+            var hash2 = SHA256._doFinalize.call(this);
+            hash2.sigBytes -= 4;
+            return hash2;
+          }
+        });
+        C.SHA224 = SHA256._createHelper(SHA224);
+        C.HmacSHA224 = SHA256._createHmacHelper(SHA224);
+      })();
+      return CryptoJS.SHA224;
+    });
+  }
+});
+
+// node_modules/crypto-js/sha512.js
+var require_sha512 = __commonJS({
+  "node_modules/crypto-js/sha512.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_x64_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./x64-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var Hasher = C_lib.Hasher;
+        var C_x64 = C.x64;
+        var X64Word = C_x64.Word;
+        var X64WordArray = C_x64.WordArray;
+        var C_algo = C.algo;
+        function X64Word_create() {
+          return X64Word.create.apply(X64Word, arguments);
+        }
+        var K = [
+          X64Word_create(1116352408, 3609767458),
+          X64Word_create(1899447441, 602891725),
+          X64Word_create(3049323471, 3964484399),
+          X64Word_create(3921009573, 2173295548),
+          X64Word_create(961987163, 4081628472),
+          X64Word_create(1508970993, 3053834265),
+          X64Word_create(2453635748, 2937671579),
+          X64Word_create(2870763221, 3664609560),
+          X64Word_create(3624381080, 2734883394),
+          X64Word_create(310598401, 1164996542),
+          X64Word_create(607225278, 1323610764),
+          X64Word_create(1426881987, 3590304994),
+          X64Word_create(1925078388, 4068182383),
+          X64Word_create(2162078206, 991336113),
+          X64Word_create(2614888103, 633803317),
+          X64Word_create(3248222580, 3479774868),
+          X64Word_create(3835390401, 2666613458),
+          X64Word_create(4022224774, 944711139),
+          X64Word_create(264347078, 2341262773),
+          X64Word_create(604807628, 2007800933),
+          X64Word_create(770255983, 1495990901),
+          X64Word_create(1249150122, 1856431235),
+          X64Word_create(1555081692, 3175218132),
+          X64Word_create(1996064986, 2198950837),
+          X64Word_create(2554220882, 3999719339),
+          X64Word_create(2821834349, 766784016),
+          X64Word_create(2952996808, 2566594879),
+          X64Word_create(3210313671, 3203337956),
+          X64Word_create(3336571891, 1034457026),
+          X64Word_create(3584528711, 2466948901),
+          X64Word_create(113926993, 3758326383),
+          X64Word_create(338241895, 168717936),
+          X64Word_create(666307205, 1188179964),
+          X64Word_create(773529912, 1546045734),
+          X64Word_create(1294757372, 1522805485),
+          X64Word_create(1396182291, 2643833823),
+          X64Word_create(1695183700, 2343527390),
+          X64Word_create(1986661051, 1014477480),
+          X64Word_create(2177026350, 1206759142),
+          X64Word_create(2456956037, 344077627),
+          X64Word_create(2730485921, 1290863460),
+          X64Word_create(2820302411, 3158454273),
+          X64Word_create(3259730800, 3505952657),
+          X64Word_create(3345764771, 106217008),
+          X64Word_create(3516065817, 3606008344),
+          X64Word_create(3600352804, 1432725776),
+          X64Word_create(4094571909, 1467031594),
+          X64Word_create(275423344, 851169720),
+          X64Word_create(430227734, 3100823752),
+          X64Word_create(506948616, 1363258195),
+          X64Word_create(659060556, 3750685593),
+          X64Word_create(883997877, 3785050280),
+          X64Word_create(958139571, 3318307427),
+          X64Word_create(1322822218, 3812723403),
+          X64Word_create(1537002063, 2003034995),
+          X64Word_create(1747873779, 3602036899),
+          X64Word_create(1955562222, 1575990012),
+          X64Word_create(2024104815, 1125592928),
+          X64Word_create(2227730452, 2716904306),
+          X64Word_create(2361852424, 442776044),
+          X64Word_create(2428436474, 593698344),
+          X64Word_create(2756734187, 3733110249),
+          X64Word_create(3204031479, 2999351573),
+          X64Word_create(3329325298, 3815920427),
+          X64Word_create(3391569614, 3928383900),
+          X64Word_create(3515267271, 566280711),
+          X64Word_create(3940187606, 3454069534),
+          X64Word_create(4118630271, 4000239992),
+          X64Word_create(116418474, 1914138554),
+          X64Word_create(174292421, 2731055270),
+          X64Word_create(289380356, 3203993006),
+          X64Word_create(460393269, 320620315),
+          X64Word_create(685471733, 587496836),
+          X64Word_create(852142971, 1086792851),
+          X64Word_create(1017036298, 365543100),
+          X64Word_create(1126000580, 2618297676),
+          X64Word_create(1288033470, 3409855158),
+          X64Word_create(1501505948, 4234509866),
+          X64Word_create(1607167915, 987167468),
+          X64Word_create(1816402316, 1246189591)
+        ];
+        var W = [];
+        (function() {
+          for (var i = 0; i < 80; i++) {
+            W[i] = X64Word_create();
+          }
+        })();
+        var SHA512 = C_algo.SHA512 = Hasher.extend({
+          _doReset: function() {
+            this._hash = new X64WordArray.init([
+              new X64Word.init(1779033703, 4089235720),
+              new X64Word.init(3144134277, 2227873595),
+              new X64Word.init(1013904242, 4271175723),
+              new X64Word.init(2773480762, 1595750129),
+              new X64Word.init(1359893119, 2917565137),
+              new X64Word.init(2600822924, 725511199),
+              new X64Word.init(528734635, 4215389547),
+              new X64Word.init(1541459225, 327033209)
+            ]);
+          },
+          _doProcessBlock: function(M, offset) {
+            var H = this._hash.words;
+            var H0 = H[0];
+            var H1 = H[1];
+            var H2 = H[2];
+            var H3 = H[3];
+            var H4 = H[4];
+            var H5 = H[5];
+            var H6 = H[6];
+            var H7 = H[7];
+            var H0h = H0.high;
+            var H0l = H0.low;
+            var H1h = H1.high;
+            var H1l = H1.low;
+            var H2h = H2.high;
+            var H2l = H2.low;
+            var H3h = H3.high;
+            var H3l = H3.low;
+            var H4h = H4.high;
+            var H4l = H4.low;
+            var H5h = H5.high;
+            var H5l = H5.low;
+            var H6h = H6.high;
+            var H6l = H6.low;
+            var H7h = H7.high;
+            var H7l = H7.low;
+            var ah = H0h;
+            var al = H0l;
+            var bh = H1h;
+            var bl = H1l;
+            var ch = H2h;
+            var cl = H2l;
+            var dh = H3h;
+            var dl = H3l;
+            var eh = H4h;
+            var el = H4l;
+            var fh = H5h;
+            var fl = H5l;
+            var gh = H6h;
+            var gl = H6l;
+            var hh = H7h;
+            var hl = H7l;
+            for (var i = 0; i < 80; i++) {
+              var Wil;
+              var Wih;
+              var Wi = W[i];
+              if (i < 16) {
+                Wih = Wi.high = M[offset + i * 2] | 0;
+                Wil = Wi.low = M[offset + i * 2 + 1] | 0;
+              } else {
+                var gamma0x = W[i - 15];
+                var gamma0xh = gamma0x.high;
+                var gamma0xl = gamma0x.low;
+                var gamma0h = (gamma0xh >>> 1 | gamma0xl << 31) ^ (gamma0xh >>> 8 | gamma0xl << 24) ^ gamma0xh >>> 7;
+                var gamma0l = (gamma0xl >>> 1 | gamma0xh << 31) ^ (gamma0xl >>> 8 | gamma0xh << 24) ^ (gamma0xl >>> 7 | gamma0xh << 25);
+                var gamma1x = W[i - 2];
+                var gamma1xh = gamma1x.high;
+                var gamma1xl = gamma1x.low;
+                var gamma1h = (gamma1xh >>> 19 | gamma1xl << 13) ^ (gamma1xh << 3 | gamma1xl >>> 29) ^ gamma1xh >>> 6;
+                var gamma1l = (gamma1xl >>> 19 | gamma1xh << 13) ^ (gamma1xl << 3 | gamma1xh >>> 29) ^ (gamma1xl >>> 6 | gamma1xh << 26);
+                var Wi7 = W[i - 7];
+                var Wi7h = Wi7.high;
+                var Wi7l = Wi7.low;
+                var Wi16 = W[i - 16];
+                var Wi16h = Wi16.high;
+                var Wi16l = Wi16.low;
+                Wil = gamma0l + Wi7l;
+                Wih = gamma0h + Wi7h + (Wil >>> 0 < gamma0l >>> 0 ? 1 : 0);
+                Wil = Wil + gamma1l;
+                Wih = Wih + gamma1h + (Wil >>> 0 < gamma1l >>> 0 ? 1 : 0);
+                Wil = Wil + Wi16l;
+                Wih = Wih + Wi16h + (Wil >>> 0 < Wi16l >>> 0 ? 1 : 0);
+                Wi.high = Wih;
+                Wi.low = Wil;
+              }
+              var chh = eh & fh ^ ~eh & gh;
+              var chl = el & fl ^ ~el & gl;
+              var majh = ah & bh ^ ah & ch ^ bh & ch;
+              var majl = al & bl ^ al & cl ^ bl & cl;
+              var sigma0h = (ah >>> 28 | al << 4) ^ (ah << 30 | al >>> 2) ^ (ah << 25 | al >>> 7);
+              var sigma0l = (al >>> 28 | ah << 4) ^ (al << 30 | ah >>> 2) ^ (al << 25 | ah >>> 7);
+              var sigma1h = (eh >>> 14 | el << 18) ^ (eh >>> 18 | el << 14) ^ (eh << 23 | el >>> 9);
+              var sigma1l = (el >>> 14 | eh << 18) ^ (el >>> 18 | eh << 14) ^ (el << 23 | eh >>> 9);
+              var Ki = K[i];
+              var Kih = Ki.high;
+              var Kil = Ki.low;
+              var t1l = hl + sigma1l;
+              var t1h = hh + sigma1h + (t1l >>> 0 < hl >>> 0 ? 1 : 0);
+              var t1l = t1l + chl;
+              var t1h = t1h + chh + (t1l >>> 0 < chl >>> 0 ? 1 : 0);
+              var t1l = t1l + Kil;
+              var t1h = t1h + Kih + (t1l >>> 0 < Kil >>> 0 ? 1 : 0);
+              var t1l = t1l + Wil;
+              var t1h = t1h + Wih + (t1l >>> 0 < Wil >>> 0 ? 1 : 0);
+              var t2l = sigma0l + majl;
+              var t2h = sigma0h + majh + (t2l >>> 0 < sigma0l >>> 0 ? 1 : 0);
+              hh = gh;
+              hl = gl;
+              gh = fh;
+              gl = fl;
+              fh = eh;
+              fl = el;
+              el = dl + t1l | 0;
+              eh = dh + t1h + (el >>> 0 < dl >>> 0 ? 1 : 0) | 0;
+              dh = ch;
+              dl = cl;
+              ch = bh;
+              cl = bl;
+              bh = ah;
+              bl = al;
+              al = t1l + t2l | 0;
+              ah = t1h + t2h + (al >>> 0 < t1l >>> 0 ? 1 : 0) | 0;
+            }
+            H0l = H0.low = H0l + al;
+            H0.high = H0h + ah + (H0l >>> 0 < al >>> 0 ? 1 : 0);
+            H1l = H1.low = H1l + bl;
+            H1.high = H1h + bh + (H1l >>> 0 < bl >>> 0 ? 1 : 0);
+            H2l = H2.low = H2l + cl;
+            H2.high = H2h + ch + (H2l >>> 0 < cl >>> 0 ? 1 : 0);
+            H3l = H3.low = H3l + dl;
+            H3.high = H3h + dh + (H3l >>> 0 < dl >>> 0 ? 1 : 0);
+            H4l = H4.low = H4l + el;
+            H4.high = H4h + eh + (H4l >>> 0 < el >>> 0 ? 1 : 0);
+            H5l = H5.low = H5l + fl;
+            H5.high = H5h + fh + (H5l >>> 0 < fl >>> 0 ? 1 : 0);
+            H6l = H6.low = H6l + gl;
+            H6.high = H6h + gh + (H6l >>> 0 < gl >>> 0 ? 1 : 0);
+            H7l = H7.low = H7l + hl;
+            H7.high = H7h + hh + (H7l >>> 0 < hl >>> 0 ? 1 : 0);
+          },
+          _doFinalize: function() {
+            var data = this._data;
+            var dataWords = data.words;
+            var nBitsTotal = this._nDataBytes * 8;
+            var nBitsLeft = data.sigBytes * 8;
+            dataWords[nBitsLeft >>> 5] |= 128 << 24 - nBitsLeft % 32;
+            dataWords[(nBitsLeft + 128 >>> 10 << 5) + 30] = Math.floor(nBitsTotal / 4294967296);
+            dataWords[(nBitsLeft + 128 >>> 10 << 5) + 31] = nBitsTotal;
+            data.sigBytes = dataWords.length * 4;
+            this._process();
+            var hash2 = this._hash.toX32();
+            return hash2;
+          },
+          clone: function() {
+            var clone2 = Hasher.clone.call(this);
+            clone2._hash = this._hash.clone();
+            return clone2;
+          },
+          blockSize: 1024 / 32
+        });
+        C.SHA512 = Hasher._createHelper(SHA512);
+        C.HmacSHA512 = Hasher._createHmacHelper(SHA512);
+      })();
+      return CryptoJS.SHA512;
+    });
+  }
+});
+
+// node_modules/crypto-js/sha384.js
+var require_sha384 = __commonJS({
+  "node_modules/crypto-js/sha384.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_x64_core(), require_sha512());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./x64-core", "./sha512"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_x64 = C.x64;
+        var X64Word = C_x64.Word;
+        var X64WordArray = C_x64.WordArray;
+        var C_algo = C.algo;
+        var SHA512 = C_algo.SHA512;
+        var SHA384 = C_algo.SHA384 = SHA512.extend({
+          _doReset: function() {
+            this._hash = new X64WordArray.init([
+              new X64Word.init(3418070365, 3238371032),
+              new X64Word.init(1654270250, 914150663),
+              new X64Word.init(2438529370, 812702999),
+              new X64Word.init(355462360, 4144912697),
+              new X64Word.init(1731405415, 4290775857),
+              new X64Word.init(2394180231, 1750603025),
+              new X64Word.init(3675008525, 1694076839),
+              new X64Word.init(1203062813, 3204075428)
+            ]);
+          },
+          _doFinalize: function() {
+            var hash2 = SHA512._doFinalize.call(this);
+            hash2.sigBytes -= 16;
+            return hash2;
+          }
+        });
+        C.SHA384 = SHA512._createHelper(SHA384);
+        C.HmacSHA384 = SHA512._createHmacHelper(SHA384);
+      })();
+      return CryptoJS.SHA384;
+    });
+  }
+});
+
+// node_modules/crypto-js/sha3.js
+var require_sha3 = __commonJS({
+  "node_modules/crypto-js/sha3.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_x64_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./x64-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function(Math2) {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var Hasher = C_lib.Hasher;
+        var C_x64 = C.x64;
+        var X64Word = C_x64.Word;
+        var C_algo = C.algo;
+        var RHO_OFFSETS = [];
+        var PI_INDEXES = [];
+        var ROUND_CONSTANTS = [];
+        (function() {
+          var x = 1, y = 0;
+          for (var t = 0; t < 24; t++) {
+            RHO_OFFSETS[x + 5 * y] = (t + 1) * (t + 2) / 2 % 64;
+            var newX = y % 5;
+            var newY = (2 * x + 3 * y) % 5;
+            x = newX;
+            y = newY;
+          }
+          for (var x = 0; x < 5; x++) {
+            for (var y = 0; y < 5; y++) {
+              PI_INDEXES[x + 5 * y] = y + (2 * x + 3 * y) % 5 * 5;
+            }
+          }
+          var LFSR = 1;
+          for (var i = 0; i < 24; i++) {
+            var roundConstantMsw = 0;
+            var roundConstantLsw = 0;
+            for (var j = 0; j < 7; j++) {
+              if (LFSR & 1) {
+                var bitPosition = (1 << j) - 1;
+                if (bitPosition < 32) {
+                  roundConstantLsw ^= 1 << bitPosition;
+                } else {
+                  roundConstantMsw ^= 1 << bitPosition - 32;
+                }
+              }
+              if (LFSR & 128) {
+                LFSR = LFSR << 1 ^ 113;
+              } else {
+                LFSR <<= 1;
+              }
+            }
+            ROUND_CONSTANTS[i] = X64Word.create(roundConstantMsw, roundConstantLsw);
+          }
+        })();
+        var T = [];
+        (function() {
+          for (var i = 0; i < 25; i++) {
+            T[i] = X64Word.create();
+          }
+        })();
+        var SHA3 = C_algo.SHA3 = Hasher.extend({
+          /**
+           * Configuration options.
+           *
+           * @property {number} outputLength
+           *   The desired number of bits in the output hash.
+           *   Only values permitted are: 224, 256, 384, 512.
+           *   Default: 512
+           */
+          cfg: Hasher.cfg.extend({
+            outputLength: 512
+          }),
+          _doReset: function() {
+            var state = this._state = [];
+            for (var i = 0; i < 25; i++) {
+              state[i] = new X64Word.init();
+            }
+            this.blockSize = (1600 - 2 * this.cfg.outputLength) / 32;
+          },
+          _doProcessBlock: function(M, offset) {
+            var state = this._state;
+            var nBlockSizeLanes = this.blockSize / 2;
+            for (var i = 0; i < nBlockSizeLanes; i++) {
+              var M2i = M[offset + 2 * i];
+              var M2i1 = M[offset + 2 * i + 1];
+              M2i = (M2i << 8 | M2i >>> 24) & 16711935 | (M2i << 24 | M2i >>> 8) & 4278255360;
+              M2i1 = (M2i1 << 8 | M2i1 >>> 24) & 16711935 | (M2i1 << 24 | M2i1 >>> 8) & 4278255360;
+              var lane = state[i];
+              lane.high ^= M2i1;
+              lane.low ^= M2i;
+            }
+            for (var round = 0; round < 24; round++) {
+              for (var x = 0; x < 5; x++) {
+                var tMsw = 0, tLsw = 0;
+                for (var y = 0; y < 5; y++) {
+                  var lane = state[x + 5 * y];
+                  tMsw ^= lane.high;
+                  tLsw ^= lane.low;
+                }
+                var Tx = T[x];
+                Tx.high = tMsw;
+                Tx.low = tLsw;
+              }
+              for (var x = 0; x < 5; x++) {
+                var Tx4 = T[(x + 4) % 5];
+                var Tx1 = T[(x + 1) % 5];
+                var Tx1Msw = Tx1.high;
+                var Tx1Lsw = Tx1.low;
+                var tMsw = Tx4.high ^ (Tx1Msw << 1 | Tx1Lsw >>> 31);
+                var tLsw = Tx4.low ^ (Tx1Lsw << 1 | Tx1Msw >>> 31);
+                for (var y = 0; y < 5; y++) {
+                  var lane = state[x + 5 * y];
+                  lane.high ^= tMsw;
+                  lane.low ^= tLsw;
+                }
+              }
+              for (var laneIndex = 1; laneIndex < 25; laneIndex++) {
+                var tMsw;
+                var tLsw;
+                var lane = state[laneIndex];
+                var laneMsw = lane.high;
+                var laneLsw = lane.low;
+                var rhoOffset = RHO_OFFSETS[laneIndex];
+                if (rhoOffset < 32) {
+                  tMsw = laneMsw << rhoOffset | laneLsw >>> 32 - rhoOffset;
+                  tLsw = laneLsw << rhoOffset | laneMsw >>> 32 - rhoOffset;
+                } else {
+                  tMsw = laneLsw << rhoOffset - 32 | laneMsw >>> 64 - rhoOffset;
+                  tLsw = laneMsw << rhoOffset - 32 | laneLsw >>> 64 - rhoOffset;
+                }
+                var TPiLane = T[PI_INDEXES[laneIndex]];
+                TPiLane.high = tMsw;
+                TPiLane.low = tLsw;
+              }
+              var T0 = T[0];
+              var state0 = state[0];
+              T0.high = state0.high;
+              T0.low = state0.low;
+              for (var x = 0; x < 5; x++) {
+                for (var y = 0; y < 5; y++) {
+                  var laneIndex = x + 5 * y;
+                  var lane = state[laneIndex];
+                  var TLane = T[laneIndex];
+                  var Tx1Lane = T[(x + 1) % 5 + 5 * y];
+                  var Tx2Lane = T[(x + 2) % 5 + 5 * y];
+                  lane.high = TLane.high ^ ~Tx1Lane.high & Tx2Lane.high;
+                  lane.low = TLane.low ^ ~Tx1Lane.low & Tx2Lane.low;
+                }
+              }
+              var lane = state[0];
+              var roundConstant = ROUND_CONSTANTS[round];
+              lane.high ^= roundConstant.high;
+              lane.low ^= roundConstant.low;
+            }
+          },
+          _doFinalize: function() {
+            var data = this._data;
+            var dataWords = data.words;
+            var nBitsTotal = this._nDataBytes * 8;
+            var nBitsLeft = data.sigBytes * 8;
+            var blockSizeBits = this.blockSize * 32;
+            dataWords[nBitsLeft >>> 5] |= 1 << 24 - nBitsLeft % 32;
+            dataWords[(Math2.ceil((nBitsLeft + 1) / blockSizeBits) * blockSizeBits >>> 5) - 1] |= 128;
+            data.sigBytes = dataWords.length * 4;
+            this._process();
+            var state = this._state;
+            var outputLengthBytes = this.cfg.outputLength / 8;
+            var outputLengthLanes = outputLengthBytes / 8;
+            var hashWords = [];
+            for (var i = 0; i < outputLengthLanes; i++) {
+              var lane = state[i];
+              var laneMsw = lane.high;
+              var laneLsw = lane.low;
+              laneMsw = (laneMsw << 8 | laneMsw >>> 24) & 16711935 | (laneMsw << 24 | laneMsw >>> 8) & 4278255360;
+              laneLsw = (laneLsw << 8 | laneLsw >>> 24) & 16711935 | (laneLsw << 24 | laneLsw >>> 8) & 4278255360;
+              hashWords.push(laneLsw);
+              hashWords.push(laneMsw);
+            }
+            return new WordArray.init(hashWords, outputLengthBytes);
+          },
+          clone: function() {
+            var clone2 = Hasher.clone.call(this);
+            var state = clone2._state = this._state.slice(0);
+            for (var i = 0; i < 25; i++) {
+              state[i] = state[i].clone();
+            }
+            return clone2;
+          }
+        });
+        C.SHA3 = Hasher._createHelper(SHA3);
+        C.HmacSHA3 = Hasher._createHmacHelper(SHA3);
+      })(Math);
+      return CryptoJS.SHA3;
+    });
+  }
+});
+
+// node_modules/crypto-js/ripemd160.js
+var require_ripemd160 = __commonJS({
+  "node_modules/crypto-js/ripemd160.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function(Math2) {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var Hasher = C_lib.Hasher;
+        var C_algo = C.algo;
+        var _zl = WordArray.create([
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          7,
+          4,
+          13,
+          1,
+          10,
+          6,
+          15,
+          3,
+          12,
+          0,
+          9,
+          5,
+          2,
+          14,
+          11,
+          8,
+          3,
+          10,
+          14,
+          4,
+          9,
+          15,
+          8,
+          1,
+          2,
+          7,
+          0,
+          6,
+          13,
+          11,
+          5,
+          12,
+          1,
+          9,
+          11,
+          10,
+          0,
+          8,
+          12,
+          4,
+          13,
+          3,
+          7,
+          15,
+          14,
+          5,
+          6,
+          2,
+          4,
+          0,
+          5,
+          9,
+          7,
+          12,
+          2,
+          10,
+          14,
+          1,
+          3,
+          8,
+          11,
+          6,
+          15,
+          13
+        ]);
+        var _zr = WordArray.create([
+          5,
+          14,
+          7,
+          0,
+          9,
+          2,
+          11,
+          4,
+          13,
+          6,
+          15,
+          8,
+          1,
+          10,
+          3,
+          12,
+          6,
+          11,
+          3,
+          7,
+          0,
+          13,
+          5,
+          10,
+          14,
+          15,
+          8,
+          12,
+          4,
+          9,
+          1,
+          2,
+          15,
+          5,
+          1,
+          3,
+          7,
+          14,
+          6,
+          9,
+          11,
+          8,
+          12,
+          2,
+          10,
+          0,
+          4,
+          13,
+          8,
+          6,
+          4,
+          1,
+          3,
+          11,
+          15,
+          0,
+          5,
+          12,
+          2,
+          13,
+          9,
+          7,
+          10,
+          14,
+          12,
+          15,
+          10,
+          4,
+          1,
+          5,
+          8,
+          7,
+          6,
+          2,
+          13,
+          14,
+          0,
+          3,
+          9,
+          11
+        ]);
+        var _sl = WordArray.create([
+          11,
+          14,
+          15,
+          12,
+          5,
+          8,
+          7,
+          9,
+          11,
+          13,
+          14,
+          15,
+          6,
+          7,
+          9,
+          8,
+          7,
+          6,
+          8,
+          13,
+          11,
+          9,
+          7,
+          15,
+          7,
+          12,
+          15,
+          9,
+          11,
+          7,
+          13,
+          12,
+          11,
+          13,
+          6,
+          7,
+          14,
+          9,
+          13,
+          15,
+          14,
+          8,
+          13,
+          6,
+          5,
+          12,
+          7,
+          5,
+          11,
+          12,
+          14,
+          15,
+          14,
+          15,
+          9,
+          8,
+          9,
+          14,
+          5,
+          6,
+          8,
+          6,
+          5,
+          12,
+          9,
+          15,
+          5,
+          11,
+          6,
+          8,
+          13,
+          12,
+          5,
+          12,
+          13,
+          14,
+          11,
+          8,
+          5,
+          6
+        ]);
+        var _sr = WordArray.create([
+          8,
+          9,
+          9,
+          11,
+          13,
+          15,
+          15,
+          5,
+          7,
+          7,
+          8,
+          11,
+          14,
+          14,
+          12,
+          6,
+          9,
+          13,
+          15,
+          7,
+          12,
+          8,
+          9,
+          11,
+          7,
+          7,
+          12,
+          7,
+          6,
+          15,
+          13,
+          11,
+          9,
+          7,
+          15,
+          11,
+          8,
+          6,
+          6,
+          14,
+          12,
+          13,
+          5,
+          14,
+          13,
+          13,
+          7,
+          5,
+          15,
+          5,
+          8,
+          11,
+          14,
+          14,
+          6,
+          14,
+          6,
+          9,
+          12,
+          9,
+          12,
+          5,
+          15,
+          8,
+          8,
+          5,
+          12,
+          9,
+          12,
+          5,
+          14,
+          6,
+          8,
+          13,
+          6,
+          5,
+          15,
+          13,
+          11,
+          11
+        ]);
+        var _hl = WordArray.create([0, 1518500249, 1859775393, 2400959708, 2840853838]);
+        var _hr = WordArray.create([1352829926, 1548603684, 1836072691, 2053994217, 0]);
+        var RIPEMD160 = C_algo.RIPEMD160 = Hasher.extend({
+          _doReset: function() {
+            this._hash = WordArray.create([1732584193, 4023233417, 2562383102, 271733878, 3285377520]);
+          },
+          _doProcessBlock: function(M, offset) {
+            for (var i = 0; i < 16; i++) {
+              var offset_i = offset + i;
+              var M_offset_i = M[offset_i];
+              M[offset_i] = (M_offset_i << 8 | M_offset_i >>> 24) & 16711935 | (M_offset_i << 24 | M_offset_i >>> 8) & 4278255360;
+            }
+            var H = this._hash.words;
+            var hl = _hl.words;
+            var hr = _hr.words;
+            var zl = _zl.words;
+            var zr = _zr.words;
+            var sl = _sl.words;
+            var sr = _sr.words;
+            var al, bl, cl, dl, el;
+            var ar, br, cr, dr, er;
+            ar = al = H[0];
+            br = bl = H[1];
+            cr = cl = H[2];
+            dr = dl = H[3];
+            er = el = H[4];
+            var t;
+            for (var i = 0; i < 80; i += 1) {
+              t = al + M[offset + zl[i]] | 0;
+              if (i < 16) {
+                t += f1(bl, cl, dl) + hl[0];
+              } else if (i < 32) {
+                t += f2(bl, cl, dl) + hl[1];
+              } else if (i < 48) {
+                t += f3(bl, cl, dl) + hl[2];
+              } else if (i < 64) {
+                t += f4(bl, cl, dl) + hl[3];
+              } else {
+                t += f5(bl, cl, dl) + hl[4];
+              }
+              t = t | 0;
+              t = rotl(t, sl[i]);
+              t = t + el | 0;
+              al = el;
+              el = dl;
+              dl = rotl(cl, 10);
+              cl = bl;
+              bl = t;
+              t = ar + M[offset + zr[i]] | 0;
+              if (i < 16) {
+                t += f5(br, cr, dr) + hr[0];
+              } else if (i < 32) {
+                t += f4(br, cr, dr) + hr[1];
+              } else if (i < 48) {
+                t += f3(br, cr, dr) + hr[2];
+              } else if (i < 64) {
+                t += f2(br, cr, dr) + hr[3];
+              } else {
+                t += f1(br, cr, dr) + hr[4];
+              }
+              t = t | 0;
+              t = rotl(t, sr[i]);
+              t = t + er | 0;
+              ar = er;
+              er = dr;
+              dr = rotl(cr, 10);
+              cr = br;
+              br = t;
+            }
+            t = H[1] + cl + dr | 0;
+            H[1] = H[2] + dl + er | 0;
+            H[2] = H[3] + el + ar | 0;
+            H[3] = H[4] + al + br | 0;
+            H[4] = H[0] + bl + cr | 0;
+            H[0] = t;
+          },
+          _doFinalize: function() {
+            var data = this._data;
+            var dataWords = data.words;
+            var nBitsTotal = this._nDataBytes * 8;
+            var nBitsLeft = data.sigBytes * 8;
+            dataWords[nBitsLeft >>> 5] |= 128 << 24 - nBitsLeft % 32;
+            dataWords[(nBitsLeft + 64 >>> 9 << 4) + 14] = (nBitsTotal << 8 | nBitsTotal >>> 24) & 16711935 | (nBitsTotal << 24 | nBitsTotal >>> 8) & 4278255360;
+            data.sigBytes = (dataWords.length + 1) * 4;
+            this._process();
+            var hash2 = this._hash;
+            var H = hash2.words;
+            for (var i = 0; i < 5; i++) {
+              var H_i = H[i];
+              H[i] = (H_i << 8 | H_i >>> 24) & 16711935 | (H_i << 24 | H_i >>> 8) & 4278255360;
+            }
+            return hash2;
+          },
+          clone: function() {
+            var clone2 = Hasher.clone.call(this);
+            clone2._hash = this._hash.clone();
+            return clone2;
+          }
+        });
+        function f1(x, y, z2) {
+          return x ^ y ^ z2;
+        }
+        function f2(x, y, z2) {
+          return x & y | ~x & z2;
+        }
+        function f3(x, y, z2) {
+          return (x | ~y) ^ z2;
+        }
+        function f4(x, y, z2) {
+          return x & z2 | y & ~z2;
+        }
+        function f5(x, y, z2) {
+          return x ^ (y | ~z2);
+        }
+        function rotl(x, n) {
+          return x << n | x >>> 32 - n;
+        }
+        C.RIPEMD160 = Hasher._createHelper(RIPEMD160);
+        C.HmacRIPEMD160 = Hasher._createHmacHelper(RIPEMD160);
+      })(Math);
+      return CryptoJS.RIPEMD160;
+    });
+  }
+});
+
+// node_modules/crypto-js/hmac.js
+var require_hmac = __commonJS({
+  "node_modules/crypto-js/hmac.js"(exports, module) {
+    (function(root, factory) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var Base = C_lib.Base;
+        var C_enc = C.enc;
+        var Utf8 = C_enc.Utf8;
+        var C_algo = C.algo;
+        var HMAC = C_algo.HMAC = Base.extend({
+          /**
+           * Initializes a newly created HMAC.
+           *
+           * @param {Hasher} hasher The hash algorithm to use.
+           * @param {WordArray|string} key The secret key.
+           *
+           * @example
+           *
+           *     var hmacHasher = CryptoJS.algo.HMAC.create(CryptoJS.algo.SHA256, key);
+           */
+          init: function(hasher, key) {
+            hasher = this._hasher = new hasher.init();
+            if (typeof key == "string") {
+              key = Utf8.parse(key);
+            }
+            var hasherBlockSize = hasher.blockSize;
+            var hasherBlockSizeBytes = hasherBlockSize * 4;
+            if (key.sigBytes > hasherBlockSizeBytes) {
+              key = hasher.finalize(key);
+            }
+            key.clamp();
+            var oKey = this._oKey = key.clone();
+            var iKey = this._iKey = key.clone();
+            var oKeyWords = oKey.words;
+            var iKeyWords = iKey.words;
+            for (var i = 0; i < hasherBlockSize; i++) {
+              oKeyWords[i] ^= 1549556828;
+              iKeyWords[i] ^= 909522486;
+            }
+            oKey.sigBytes = iKey.sigBytes = hasherBlockSizeBytes;
+            this.reset();
+          },
+          /**
+           * Resets this HMAC to its initial state.
+           *
+           * @example
+           *
+           *     hmacHasher.reset();
+           */
+          reset: function() {
+            var hasher = this._hasher;
+            hasher.reset();
+            hasher.update(this._iKey);
+          },
+          /**
+           * Updates this HMAC with a message.
+           *
+           * @param {WordArray|string} messageUpdate The message to append.
+           *
+           * @return {HMAC} This HMAC instance.
+           *
+           * @example
+           *
+           *     hmacHasher.update('message');
+           *     hmacHasher.update(wordArray);
+           */
+          update: function(messageUpdate) {
+            this._hasher.update(messageUpdate);
+            return this;
+          },
+          /**
+           * Finalizes the HMAC computation.
+           * Note that the finalize operation is effectively a destructive, read-once operation.
+           *
+           * @param {WordArray|string} messageUpdate (Optional) A final message update.
+           *
+           * @return {WordArray} The HMAC.
+           *
+           * @example
+           *
+           *     var hmac = hmacHasher.finalize();
+           *     var hmac = hmacHasher.finalize('message');
+           *     var hmac = hmacHasher.finalize(wordArray);
+           */
+          finalize: function(messageUpdate) {
+            var hasher = this._hasher;
+            var innerHash = hasher.finalize(messageUpdate);
+            hasher.reset();
+            var hmac = hasher.finalize(this._oKey.clone().concat(innerHash));
+            return hmac;
+          }
+        });
+      })();
+    });
+  }
+});
+
+// node_modules/crypto-js/pbkdf2.js
+var require_pbkdf2 = __commonJS({
+  "node_modules/crypto-js/pbkdf2.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_sha256(), require_hmac());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./sha256", "./hmac"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var Base = C_lib.Base;
+        var WordArray = C_lib.WordArray;
+        var C_algo = C.algo;
+        var SHA256 = C_algo.SHA256;
+        var HMAC = C_algo.HMAC;
+        var PBKDF2 = C_algo.PBKDF2 = Base.extend({
+          /**
+           * Configuration options.
+           *
+           * @property {number} keySize The key size in words to generate. Default: 4 (128 bits)
+           * @property {Hasher} hasher The hasher to use. Default: SHA256
+           * @property {number} iterations The number of iterations to perform. Default: 250000
+           */
+          cfg: Base.extend({
+            keySize: 128 / 32,
+            hasher: SHA256,
+            iterations: 25e4
+          }),
+          /**
+           * Initializes a newly created key derivation function.
+           *
+           * @param {Object} cfg (Optional) The configuration options to use for the derivation.
+           *
+           * @example
+           *
+           *     var kdf = CryptoJS.algo.PBKDF2.create();
+           *     var kdf = CryptoJS.algo.PBKDF2.create({ keySize: 8 });
+           *     var kdf = CryptoJS.algo.PBKDF2.create({ keySize: 8, iterations: 1000 });
+           */
+          init: function(cfg) {
+            this.cfg = this.cfg.extend(cfg);
+          },
+          /**
+           * Computes the Password-Based Key Derivation Function 2.
+           *
+           * @param {WordArray|string} password The password.
+           * @param {WordArray|string} salt A salt.
+           *
+           * @return {WordArray} The derived key.
+           *
+           * @example
+           *
+           *     var key = kdf.compute(password, salt);
+           */
+          compute: function(password, salt) {
+            var cfg = this.cfg;
+            var hmac = HMAC.create(cfg.hasher, password);
+            var derivedKey = WordArray.create();
+            var blockIndex = WordArray.create([1]);
+            var derivedKeyWords = derivedKey.words;
+            var blockIndexWords = blockIndex.words;
+            var keySize = cfg.keySize;
+            var iterations = cfg.iterations;
+            while (derivedKeyWords.length < keySize) {
+              var block = hmac.update(salt).finalize(blockIndex);
+              hmac.reset();
+              var blockWords = block.words;
+              var blockWordsLength = blockWords.length;
+              var intermediate = block;
+              for (var i = 1; i < iterations; i++) {
+                intermediate = hmac.finalize(intermediate);
+                hmac.reset();
+                var intermediateWords = intermediate.words;
+                for (var j = 0; j < blockWordsLength; j++) {
+                  blockWords[j] ^= intermediateWords[j];
+                }
+              }
+              derivedKey.concat(block);
+              blockIndexWords[0]++;
+            }
+            derivedKey.sigBytes = keySize * 4;
+            return derivedKey;
+          }
+        });
+        C.PBKDF2 = function(password, salt, cfg) {
+          return PBKDF2.create(cfg).compute(password, salt);
+        };
+      })();
+      return CryptoJS.PBKDF2;
+    });
+  }
+});
+
+// node_modules/crypto-js/evpkdf.js
+var require_evpkdf = __commonJS({
+  "node_modules/crypto-js/evpkdf.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_sha1(), require_hmac());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./sha1", "./hmac"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var Base = C_lib.Base;
+        var WordArray = C_lib.WordArray;
+        var C_algo = C.algo;
+        var MD5 = C_algo.MD5;
+        var EvpKDF = C_algo.EvpKDF = Base.extend({
+          /**
+           * Configuration options.
+           *
+           * @property {number} keySize The key size in words to generate. Default: 4 (128 bits)
+           * @property {Hasher} hasher The hash algorithm to use. Default: MD5
+           * @property {number} iterations The number of iterations to perform. Default: 1
+           */
+          cfg: Base.extend({
+            keySize: 128 / 32,
+            hasher: MD5,
+            iterations: 1
+          }),
+          /**
+           * Initializes a newly created key derivation function.
+           *
+           * @param {Object} cfg (Optional) The configuration options to use for the derivation.
+           *
+           * @example
+           *
+           *     var kdf = CryptoJS.algo.EvpKDF.create();
+           *     var kdf = CryptoJS.algo.EvpKDF.create({ keySize: 8 });
+           *     var kdf = CryptoJS.algo.EvpKDF.create({ keySize: 8, iterations: 1000 });
+           */
+          init: function(cfg) {
+            this.cfg = this.cfg.extend(cfg);
+          },
+          /**
+           * Derives a key from a password.
+           *
+           * @param {WordArray|string} password The password.
+           * @param {WordArray|string} salt A salt.
+           *
+           * @return {WordArray} The derived key.
+           *
+           * @example
+           *
+           *     var key = kdf.compute(password, salt);
+           */
+          compute: function(password, salt) {
+            var block;
+            var cfg = this.cfg;
+            var hasher = cfg.hasher.create();
+            var derivedKey = WordArray.create();
+            var derivedKeyWords = derivedKey.words;
+            var keySize = cfg.keySize;
+            var iterations = cfg.iterations;
+            while (derivedKeyWords.length < keySize) {
+              if (block) {
+                hasher.update(block);
+              }
+              block = hasher.update(password).finalize(salt);
+              hasher.reset();
+              for (var i = 1; i < iterations; i++) {
+                block = hasher.finalize(block);
+                hasher.reset();
+              }
+              derivedKey.concat(block);
+            }
+            derivedKey.sigBytes = keySize * 4;
+            return derivedKey;
+          }
+        });
+        C.EvpKDF = function(password, salt, cfg) {
+          return EvpKDF.create(cfg).compute(password, salt);
+        };
+      })();
+      return CryptoJS.EvpKDF;
+    });
+  }
+});
+
+// node_modules/crypto-js/cipher-core.js
+var require_cipher_core = __commonJS({
+  "node_modules/crypto-js/cipher-core.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_evpkdf());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./evpkdf"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.lib.Cipher || (function(undefined2) {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var Base = C_lib.Base;
+        var WordArray = C_lib.WordArray;
+        var BufferedBlockAlgorithm = C_lib.BufferedBlockAlgorithm;
+        var C_enc = C.enc;
+        var Utf8 = C_enc.Utf8;
+        var Base64 = C_enc.Base64;
+        var C_algo = C.algo;
+        var EvpKDF = C_algo.EvpKDF;
+        var Cipher = C_lib.Cipher = BufferedBlockAlgorithm.extend({
+          /**
+           * Configuration options.
+           *
+           * @property {WordArray} iv The IV to use for this operation.
+           */
+          cfg: Base.extend(),
+          /**
+           * Creates this cipher in encryption mode.
+           *
+           * @param {WordArray} key The key.
+           * @param {Object} cfg (Optional) The configuration options to use for this operation.
+           *
+           * @return {Cipher} A cipher instance.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var cipher = CryptoJS.algo.AES.createEncryptor(keyWordArray, { iv: ivWordArray });
+           */
+          createEncryptor: function(key, cfg) {
+            return this.create(this._ENC_XFORM_MODE, key, cfg);
+          },
+          /**
+           * Creates this cipher in decryption mode.
+           *
+           * @param {WordArray} key The key.
+           * @param {Object} cfg (Optional) The configuration options to use for this operation.
+           *
+           * @return {Cipher} A cipher instance.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var cipher = CryptoJS.algo.AES.createDecryptor(keyWordArray, { iv: ivWordArray });
+           */
+          createDecryptor: function(key, cfg) {
+            return this.create(this._DEC_XFORM_MODE, key, cfg);
+          },
+          /**
+           * Initializes a newly created cipher.
+           *
+           * @param {number} xformMode Either the encryption or decryption transormation mode constant.
+           * @param {WordArray} key The key.
+           * @param {Object} cfg (Optional) The configuration options to use for this operation.
+           *
+           * @example
+           *
+           *     var cipher = CryptoJS.algo.AES.create(CryptoJS.algo.AES._ENC_XFORM_MODE, keyWordArray, { iv: ivWordArray });
+           */
+          init: function(xformMode, key, cfg) {
+            this.cfg = this.cfg.extend(cfg);
+            this._xformMode = xformMode;
+            this._key = key;
+            this.reset();
+          },
+          /**
+           * Resets this cipher to its initial state.
+           *
+           * @example
+           *
+           *     cipher.reset();
+           */
+          reset: function() {
+            BufferedBlockAlgorithm.reset.call(this);
+            this._doReset();
+          },
+          /**
+           * Adds data to be encrypted or decrypted.
+           *
+           * @param {WordArray|string} dataUpdate The data to encrypt or decrypt.
+           *
+           * @return {WordArray} The data after processing.
+           *
+           * @example
+           *
+           *     var encrypted = cipher.process('data');
+           *     var encrypted = cipher.process(wordArray);
+           */
+          process: function(dataUpdate) {
+            this._append(dataUpdate);
+            return this._process();
+          },
+          /**
+           * Finalizes the encryption or decryption process.
+           * Note that the finalize operation is effectively a destructive, read-once operation.
+           *
+           * @param {WordArray|string} dataUpdate The final data to encrypt or decrypt.
+           *
+           * @return {WordArray} The data after final processing.
+           *
+           * @example
+           *
+           *     var encrypted = cipher.finalize();
+           *     var encrypted = cipher.finalize('data');
+           *     var encrypted = cipher.finalize(wordArray);
+           */
+          finalize: function(dataUpdate) {
+            if (dataUpdate) {
+              this._append(dataUpdate);
+            }
+            var finalProcessedData = this._doFinalize();
+            return finalProcessedData;
+          },
+          keySize: 128 / 32,
+          ivSize: 128 / 32,
+          _ENC_XFORM_MODE: 1,
+          _DEC_XFORM_MODE: 2,
+          /**
+           * Creates shortcut functions to a cipher's object interface.
+           *
+           * @param {Cipher} cipher The cipher to create a helper for.
+           *
+           * @return {Object} An object with encrypt and decrypt shortcut functions.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var AES = CryptoJS.lib.Cipher._createHelper(CryptoJS.algo.AES);
+           */
+          _createHelper: /* @__PURE__ */ (function() {
+            function selectCipherStrategy(key) {
+              if (typeof key == "string") {
+                return PasswordBasedCipher;
+              } else {
+                return SerializableCipher;
+              }
+            }
+            return function(cipher) {
+              return {
+                encrypt: function(message2, key, cfg) {
+                  return selectCipherStrategy(key).encrypt(cipher, message2, key, cfg);
+                },
+                decrypt: function(ciphertext, key, cfg) {
+                  return selectCipherStrategy(key).decrypt(cipher, ciphertext, key, cfg);
+                }
+              };
+            };
+          })()
+        });
+        var StreamCipher = C_lib.StreamCipher = Cipher.extend({
+          _doFinalize: function() {
+            var finalProcessedBlocks = this._process(true);
+            return finalProcessedBlocks;
+          },
+          blockSize: 1
+        });
+        var C_mode = C.mode = {};
+        var BlockCipherMode = C_lib.BlockCipherMode = Base.extend({
+          /**
+           * Creates this mode for encryption.
+           *
+           * @param {Cipher} cipher A block cipher instance.
+           * @param {Array} iv The IV words.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var mode = CryptoJS.mode.CBC.createEncryptor(cipher, iv.words);
+           */
+          createEncryptor: function(cipher, iv) {
+            return this.Encryptor.create(cipher, iv);
+          },
+          /**
+           * Creates this mode for decryption.
+           *
+           * @param {Cipher} cipher A block cipher instance.
+           * @param {Array} iv The IV words.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var mode = CryptoJS.mode.CBC.createDecryptor(cipher, iv.words);
+           */
+          createDecryptor: function(cipher, iv) {
+            return this.Decryptor.create(cipher, iv);
+          },
+          /**
+           * Initializes a newly created mode.
+           *
+           * @param {Cipher} cipher A block cipher instance.
+           * @param {Array} iv The IV words.
+           *
+           * @example
+           *
+           *     var mode = CryptoJS.mode.CBC.Encryptor.create(cipher, iv.words);
+           */
+          init: function(cipher, iv) {
+            this._cipher = cipher;
+            this._iv = iv;
+          }
+        });
+        var CBC = C_mode.CBC = (function() {
+          var CBC2 = BlockCipherMode.extend();
+          CBC2.Encryptor = CBC2.extend({
+            /**
+             * Processes the data block at offset.
+             *
+             * @param {Array} words The data words to operate on.
+             * @param {number} offset The offset where the block starts.
+             *
+             * @example
+             *
+             *     mode.processBlock(data.words, offset);
+             */
+            processBlock: function(words, offset) {
+              var cipher = this._cipher;
+              var blockSize = cipher.blockSize;
+              xorBlock.call(this, words, offset, blockSize);
+              cipher.encryptBlock(words, offset);
+              this._prevBlock = words.slice(offset, offset + blockSize);
+            }
+          });
+          CBC2.Decryptor = CBC2.extend({
+            /**
+             * Processes the data block at offset.
+             *
+             * @param {Array} words The data words to operate on.
+             * @param {number} offset The offset where the block starts.
+             *
+             * @example
+             *
+             *     mode.processBlock(data.words, offset);
+             */
+            processBlock: function(words, offset) {
+              var cipher = this._cipher;
+              var blockSize = cipher.blockSize;
+              var thisBlock = words.slice(offset, offset + blockSize);
+              cipher.decryptBlock(words, offset);
+              xorBlock.call(this, words, offset, blockSize);
+              this._prevBlock = thisBlock;
+            }
+          });
+          function xorBlock(words, offset, blockSize) {
+            var block;
+            var iv = this._iv;
+            if (iv) {
+              block = iv;
+              this._iv = undefined2;
+            } else {
+              block = this._prevBlock;
+            }
+            for (var i = 0; i < blockSize; i++) {
+              words[offset + i] ^= block[i];
+            }
+          }
+          return CBC2;
+        })();
+        var C_pad = C.pad = {};
+        var Pkcs7 = C_pad.Pkcs7 = {
+          /**
+           * Pads data using the algorithm defined in PKCS #5/7.
+           *
+           * @param {WordArray} data The data to pad.
+           * @param {number} blockSize The multiple that the data should be padded to.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     CryptoJS.pad.Pkcs7.pad(wordArray, 4);
+           */
+          pad: function(data, blockSize) {
+            var blockSizeBytes = blockSize * 4;
+            var nPaddingBytes = blockSizeBytes - data.sigBytes % blockSizeBytes;
+            var paddingWord = nPaddingBytes << 24 | nPaddingBytes << 16 | nPaddingBytes << 8 | nPaddingBytes;
+            var paddingWords = [];
+            for (var i = 0; i < nPaddingBytes; i += 4) {
+              paddingWords.push(paddingWord);
+            }
+            var padding = WordArray.create(paddingWords, nPaddingBytes);
+            data.concat(padding);
+          },
+          /**
+           * Unpads data that had been padded using the algorithm defined in PKCS #5/7.
+           *
+           * @param {WordArray} data The data to unpad.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     CryptoJS.pad.Pkcs7.unpad(wordArray);
+           */
+          unpad: function(data) {
+            var nPaddingBytes = data.words[data.sigBytes - 1 >>> 2] & 255;
+            data.sigBytes -= nPaddingBytes;
+          }
+        };
+        var BlockCipher = C_lib.BlockCipher = Cipher.extend({
+          /**
+           * Configuration options.
+           *
+           * @property {Mode} mode The block mode to use. Default: CBC
+           * @property {Padding} padding The padding strategy to use. Default: Pkcs7
+           */
+          cfg: Cipher.cfg.extend({
+            mode: CBC,
+            padding: Pkcs7
+          }),
+          reset: function() {
+            var modeCreator;
+            Cipher.reset.call(this);
+            var cfg = this.cfg;
+            var iv = cfg.iv;
+            var mode = cfg.mode;
+            if (this._xformMode == this._ENC_XFORM_MODE) {
+              modeCreator = mode.createEncryptor;
+            } else {
+              modeCreator = mode.createDecryptor;
+              this._minBufferSize = 1;
+            }
+            if (this._mode && this._mode.__creator == modeCreator) {
+              this._mode.init(this, iv && iv.words);
+            } else {
+              this._mode = modeCreator.call(mode, this, iv && iv.words);
+              this._mode.__creator = modeCreator;
+            }
+          },
+          _doProcessBlock: function(words, offset) {
+            this._mode.processBlock(words, offset);
+          },
+          _doFinalize: function() {
+            var finalProcessedBlocks;
+            var padding = this.cfg.padding;
+            if (this._xformMode == this._ENC_XFORM_MODE) {
+              padding.pad(this._data, this.blockSize);
+              finalProcessedBlocks = this._process(true);
+            } else {
+              finalProcessedBlocks = this._process(true);
+              padding.unpad(finalProcessedBlocks);
+            }
+            return finalProcessedBlocks;
+          },
+          blockSize: 128 / 32
+        });
+        var CipherParams = C_lib.CipherParams = Base.extend({
+          /**
+           * Initializes a newly created cipher params object.
+           *
+           * @param {Object} cipherParams An object with any of the possible cipher parameters.
+           *
+           * @example
+           *
+           *     var cipherParams = CryptoJS.lib.CipherParams.create({
+           *         ciphertext: ciphertextWordArray,
+           *         key: keyWordArray,
+           *         iv: ivWordArray,
+           *         salt: saltWordArray,
+           *         algorithm: CryptoJS.algo.AES,
+           *         mode: CryptoJS.mode.CBC,
+           *         padding: CryptoJS.pad.PKCS7,
+           *         blockSize: 4,
+           *         formatter: CryptoJS.format.OpenSSL
+           *     });
+           */
+          init: function(cipherParams) {
+            this.mixIn(cipherParams);
+          },
+          /**
+           * Converts this cipher params object to a string.
+           *
+           * @param {Format} formatter (Optional) The formatting strategy to use.
+           *
+           * @return {string} The stringified cipher params.
+           *
+           * @throws Error If neither the formatter nor the default formatter is set.
+           *
+           * @example
+           *
+           *     var string = cipherParams + '';
+           *     var string = cipherParams.toString();
+           *     var string = cipherParams.toString(CryptoJS.format.OpenSSL);
+           */
+          toString: function(formatter) {
+            return (formatter || this.formatter).stringify(this);
+          }
+        });
+        var C_format = C.format = {};
+        var OpenSSLFormatter = C_format.OpenSSL = {
+          /**
+           * Converts a cipher params object to an OpenSSL-compatible string.
+           *
+           * @param {CipherParams} cipherParams The cipher params object.
+           *
+           * @return {string} The OpenSSL-compatible string.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var openSSLString = CryptoJS.format.OpenSSL.stringify(cipherParams);
+           */
+          stringify: function(cipherParams) {
+            var wordArray;
+            var ciphertext = cipherParams.ciphertext;
+            var salt = cipherParams.salt;
+            if (salt) {
+              wordArray = WordArray.create([1398893684, 1701076831]).concat(salt).concat(ciphertext);
+            } else {
+              wordArray = ciphertext;
+            }
+            return wordArray.toString(Base64);
+          },
+          /**
+           * Converts an OpenSSL-compatible string to a cipher params object.
+           *
+           * @param {string} openSSLStr The OpenSSL-compatible string.
+           *
+           * @return {CipherParams} The cipher params object.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var cipherParams = CryptoJS.format.OpenSSL.parse(openSSLString);
+           */
+          parse: function(openSSLStr) {
+            var salt;
+            var ciphertext = Base64.parse(openSSLStr);
+            var ciphertextWords = ciphertext.words;
+            if (ciphertextWords[0] == 1398893684 && ciphertextWords[1] == 1701076831) {
+              salt = WordArray.create(ciphertextWords.slice(2, 4));
+              ciphertextWords.splice(0, 4);
+              ciphertext.sigBytes -= 16;
+            }
+            return CipherParams.create({ ciphertext, salt });
+          }
+        };
+        var SerializableCipher = C_lib.SerializableCipher = Base.extend({
+          /**
+           * Configuration options.
+           *
+           * @property {Formatter} format The formatting strategy to convert cipher param objects to and from a string. Default: OpenSSL
+           */
+          cfg: Base.extend({
+            format: OpenSSLFormatter
+          }),
+          /**
+           * Encrypts a message.
+           *
+           * @param {Cipher} cipher The cipher algorithm to use.
+           * @param {WordArray|string} message The message to encrypt.
+           * @param {WordArray} key The key.
+           * @param {Object} cfg (Optional) The configuration options to use for this operation.
+           *
+           * @return {CipherParams} A cipher params object.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var ciphertextParams = CryptoJS.lib.SerializableCipher.encrypt(CryptoJS.algo.AES, message, key);
+           *     var ciphertextParams = CryptoJS.lib.SerializableCipher.encrypt(CryptoJS.algo.AES, message, key, { iv: iv });
+           *     var ciphertextParams = CryptoJS.lib.SerializableCipher.encrypt(CryptoJS.algo.AES, message, key, { iv: iv, format: CryptoJS.format.OpenSSL });
+           */
+          encrypt: function(cipher, message2, key, cfg) {
+            cfg = this.cfg.extend(cfg);
+            var encryptor = cipher.createEncryptor(key, cfg);
+            var ciphertext = encryptor.finalize(message2);
+            var cipherCfg = encryptor.cfg;
+            return CipherParams.create({
+              ciphertext,
+              key,
+              iv: cipherCfg.iv,
+              algorithm: cipher,
+              mode: cipherCfg.mode,
+              padding: cipherCfg.padding,
+              blockSize: cipher.blockSize,
+              formatter: cfg.format
+            });
+          },
+          /**
+           * Decrypts serialized ciphertext.
+           *
+           * @param {Cipher} cipher The cipher algorithm to use.
+           * @param {CipherParams|string} ciphertext The ciphertext to decrypt.
+           * @param {WordArray} key The key.
+           * @param {Object} cfg (Optional) The configuration options to use for this operation.
+           *
+           * @return {WordArray} The plaintext.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var plaintext = CryptoJS.lib.SerializableCipher.decrypt(CryptoJS.algo.AES, formattedCiphertext, key, { iv: iv, format: CryptoJS.format.OpenSSL });
+           *     var plaintext = CryptoJS.lib.SerializableCipher.decrypt(CryptoJS.algo.AES, ciphertextParams, key, { iv: iv, format: CryptoJS.format.OpenSSL });
+           */
+          decrypt: function(cipher, ciphertext, key, cfg) {
+            cfg = this.cfg.extend(cfg);
+            ciphertext = this._parse(ciphertext, cfg.format);
+            var plaintext = cipher.createDecryptor(key, cfg).finalize(ciphertext.ciphertext);
+            return plaintext;
+          },
+          /**
+           * Converts serialized ciphertext to CipherParams,
+           * else assumed CipherParams already and returns ciphertext unchanged.
+           *
+           * @param {CipherParams|string} ciphertext The ciphertext.
+           * @param {Formatter} format The formatting strategy to use to parse serialized ciphertext.
+           *
+           * @return {CipherParams} The unserialized ciphertext.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var ciphertextParams = CryptoJS.lib.SerializableCipher._parse(ciphertextStringOrParams, format);
+           */
+          _parse: function(ciphertext, format) {
+            if (typeof ciphertext == "string") {
+              return format.parse(ciphertext, this);
+            } else {
+              return ciphertext;
+            }
+          }
+        });
+        var C_kdf = C.kdf = {};
+        var OpenSSLKdf = C_kdf.OpenSSL = {
+          /**
+           * Derives a key and IV from a password.
+           *
+           * @param {string} password The password to derive from.
+           * @param {number} keySize The size in words of the key to generate.
+           * @param {number} ivSize The size in words of the IV to generate.
+           * @param {WordArray|string} salt (Optional) A 64-bit salt to use. If omitted, a salt will be generated randomly.
+           *
+           * @return {CipherParams} A cipher params object with the key, IV, and salt.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var derivedParams = CryptoJS.kdf.OpenSSL.execute('Password', 256/32, 128/32);
+           *     var derivedParams = CryptoJS.kdf.OpenSSL.execute('Password', 256/32, 128/32, 'saltsalt');
+           */
+          execute: function(password, keySize, ivSize, salt, hasher) {
+            if (!salt) {
+              salt = WordArray.random(64 / 8);
+            }
+            if (!hasher) {
+              var key = EvpKDF.create({ keySize: keySize + ivSize }).compute(password, salt);
+            } else {
+              var key = EvpKDF.create({ keySize: keySize + ivSize, hasher }).compute(password, salt);
+            }
+            var iv = WordArray.create(key.words.slice(keySize), ivSize * 4);
+            key.sigBytes = keySize * 4;
+            return CipherParams.create({ key, iv, salt });
+          }
+        };
+        var PasswordBasedCipher = C_lib.PasswordBasedCipher = SerializableCipher.extend({
+          /**
+           * Configuration options.
+           *
+           * @property {KDF} kdf The key derivation function to use to generate a key and IV from a password. Default: OpenSSL
+           */
+          cfg: SerializableCipher.cfg.extend({
+            kdf: OpenSSLKdf
+          }),
+          /**
+           * Encrypts a message using a password.
+           *
+           * @param {Cipher} cipher The cipher algorithm to use.
+           * @param {WordArray|string} message The message to encrypt.
+           * @param {string} password The password.
+           * @param {Object} cfg (Optional) The configuration options to use for this operation.
+           *
+           * @return {CipherParams} A cipher params object.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var ciphertextParams = CryptoJS.lib.PasswordBasedCipher.encrypt(CryptoJS.algo.AES, message, 'password');
+           *     var ciphertextParams = CryptoJS.lib.PasswordBasedCipher.encrypt(CryptoJS.algo.AES, message, 'password', { format: CryptoJS.format.OpenSSL });
+           */
+          encrypt: function(cipher, message2, password, cfg) {
+            cfg = this.cfg.extend(cfg);
+            var derivedParams = cfg.kdf.execute(password, cipher.keySize, cipher.ivSize, cfg.salt, cfg.hasher);
+            cfg.iv = derivedParams.iv;
+            var ciphertext = SerializableCipher.encrypt.call(this, cipher, message2, derivedParams.key, cfg);
+            ciphertext.mixIn(derivedParams);
+            return ciphertext;
+          },
+          /**
+           * Decrypts serialized ciphertext using a password.
+           *
+           * @param {Cipher} cipher The cipher algorithm to use.
+           * @param {CipherParams|string} ciphertext The ciphertext to decrypt.
+           * @param {string} password The password.
+           * @param {Object} cfg (Optional) The configuration options to use for this operation.
+           *
+           * @return {WordArray} The plaintext.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var plaintext = CryptoJS.lib.PasswordBasedCipher.decrypt(CryptoJS.algo.AES, formattedCiphertext, 'password', { format: CryptoJS.format.OpenSSL });
+           *     var plaintext = CryptoJS.lib.PasswordBasedCipher.decrypt(CryptoJS.algo.AES, ciphertextParams, 'password', { format: CryptoJS.format.OpenSSL });
+           */
+          decrypt: function(cipher, ciphertext, password, cfg) {
+            cfg = this.cfg.extend(cfg);
+            ciphertext = this._parse(ciphertext, cfg.format);
+            var derivedParams = cfg.kdf.execute(password, cipher.keySize, cipher.ivSize, ciphertext.salt, cfg.hasher);
+            cfg.iv = derivedParams.iv;
+            var plaintext = SerializableCipher.decrypt.call(this, cipher, ciphertext, derivedParams.key, cfg);
+            return plaintext;
+          }
+        });
+      })();
+    });
+  }
+});
+
+// node_modules/crypto-js/mode-cfb.js
+var require_mode_cfb = __commonJS({
+  "node_modules/crypto-js/mode-cfb.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.mode.CFB = (function() {
+        var CFB = CryptoJS.lib.BlockCipherMode.extend();
+        CFB.Encryptor = CFB.extend({
+          processBlock: function(words, offset) {
+            var cipher = this._cipher;
+            var blockSize = cipher.blockSize;
+            generateKeystreamAndEncrypt.call(this, words, offset, blockSize, cipher);
+            this._prevBlock = words.slice(offset, offset + blockSize);
+          }
+        });
+        CFB.Decryptor = CFB.extend({
+          processBlock: function(words, offset) {
+            var cipher = this._cipher;
+            var blockSize = cipher.blockSize;
+            var thisBlock = words.slice(offset, offset + blockSize);
+            generateKeystreamAndEncrypt.call(this, words, offset, blockSize, cipher);
+            this._prevBlock = thisBlock;
+          }
+        });
+        function generateKeystreamAndEncrypt(words, offset, blockSize, cipher) {
+          var keystream;
+          var iv = this._iv;
+          if (iv) {
+            keystream = iv.slice(0);
+            this._iv = void 0;
+          } else {
+            keystream = this._prevBlock;
+          }
+          cipher.encryptBlock(keystream, 0);
+          for (var i = 0; i < blockSize; i++) {
+            words[offset + i] ^= keystream[i];
+          }
+        }
+        return CFB;
+      })();
+      return CryptoJS.mode.CFB;
+    });
+  }
+});
+
+// node_modules/crypto-js/mode-ctr.js
+var require_mode_ctr = __commonJS({
+  "node_modules/crypto-js/mode-ctr.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.mode.CTR = (function() {
+        var CTR = CryptoJS.lib.BlockCipherMode.extend();
+        var Encryptor = CTR.Encryptor = CTR.extend({
+          processBlock: function(words, offset) {
+            var cipher = this._cipher;
+            var blockSize = cipher.blockSize;
+            var iv = this._iv;
+            var counter = this._counter;
+            if (iv) {
+              counter = this._counter = iv.slice(0);
+              this._iv = void 0;
+            }
+            var keystream = counter.slice(0);
+            cipher.encryptBlock(keystream, 0);
+            counter[blockSize - 1] = counter[blockSize - 1] + 1 | 0;
+            for (var i = 0; i < blockSize; i++) {
+              words[offset + i] ^= keystream[i];
+            }
+          }
+        });
+        CTR.Decryptor = Encryptor;
+        return CTR;
+      })();
+      return CryptoJS.mode.CTR;
+    });
+  }
+});
+
+// node_modules/crypto-js/mode-ctr-gladman.js
+var require_mode_ctr_gladman = __commonJS({
+  "node_modules/crypto-js/mode-ctr-gladman.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.mode.CTRGladman = (function() {
+        var CTRGladman = CryptoJS.lib.BlockCipherMode.extend();
+        function incWord(word) {
+          if ((word >> 24 & 255) === 255) {
+            var b1 = word >> 16 & 255;
+            var b2 = word >> 8 & 255;
+            var b3 = word & 255;
+            if (b1 === 255) {
+              b1 = 0;
+              if (b2 === 255) {
+                b2 = 0;
+                if (b3 === 255) {
+                  b3 = 0;
+                } else {
+                  ++b3;
+                }
+              } else {
+                ++b2;
+              }
+            } else {
+              ++b1;
+            }
+            word = 0;
+            word += b1 << 16;
+            word += b2 << 8;
+            word += b3;
+          } else {
+            word += 1 << 24;
+          }
+          return word;
+        }
+        function incCounter(counter) {
+          if ((counter[0] = incWord(counter[0])) === 0) {
+            counter[1] = incWord(counter[1]);
+          }
+          return counter;
+        }
+        var Encryptor = CTRGladman.Encryptor = CTRGladman.extend({
+          processBlock: function(words, offset) {
+            var cipher = this._cipher;
+            var blockSize = cipher.blockSize;
+            var iv = this._iv;
+            var counter = this._counter;
+            if (iv) {
+              counter = this._counter = iv.slice(0);
+              this._iv = void 0;
+            }
+            incCounter(counter);
+            var keystream = counter.slice(0);
+            cipher.encryptBlock(keystream, 0);
+            for (var i = 0; i < blockSize; i++) {
+              words[offset + i] ^= keystream[i];
+            }
+          }
+        });
+        CTRGladman.Decryptor = Encryptor;
+        return CTRGladman;
+      })();
+      return CryptoJS.mode.CTRGladman;
+    });
+  }
+});
+
+// node_modules/crypto-js/mode-ofb.js
+var require_mode_ofb = __commonJS({
+  "node_modules/crypto-js/mode-ofb.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.mode.OFB = (function() {
+        var OFB = CryptoJS.lib.BlockCipherMode.extend();
+        var Encryptor = OFB.Encryptor = OFB.extend({
+          processBlock: function(words, offset) {
+            var cipher = this._cipher;
+            var blockSize = cipher.blockSize;
+            var iv = this._iv;
+            var keystream = this._keystream;
+            if (iv) {
+              keystream = this._keystream = iv.slice(0);
+              this._iv = void 0;
+            }
+            cipher.encryptBlock(keystream, 0);
+            for (var i = 0; i < blockSize; i++) {
+              words[offset + i] ^= keystream[i];
+            }
+          }
+        });
+        OFB.Decryptor = Encryptor;
+        return OFB;
+      })();
+      return CryptoJS.mode.OFB;
+    });
+  }
+});
+
+// node_modules/crypto-js/mode-ecb.js
+var require_mode_ecb = __commonJS({
+  "node_modules/crypto-js/mode-ecb.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.mode.ECB = (function() {
+        var ECB = CryptoJS.lib.BlockCipherMode.extend();
+        ECB.Encryptor = ECB.extend({
+          processBlock: function(words, offset) {
+            this._cipher.encryptBlock(words, offset);
+          }
+        });
+        ECB.Decryptor = ECB.extend({
+          processBlock: function(words, offset) {
+            this._cipher.decryptBlock(words, offset);
+          }
+        });
+        return ECB;
+      })();
+      return CryptoJS.mode.ECB;
+    });
+  }
+});
+
+// node_modules/crypto-js/pad-ansix923.js
+var require_pad_ansix923 = __commonJS({
+  "node_modules/crypto-js/pad-ansix923.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.pad.AnsiX923 = {
+        pad: function(data, blockSize) {
+          var dataSigBytes = data.sigBytes;
+          var blockSizeBytes = blockSize * 4;
+          var nPaddingBytes = blockSizeBytes - dataSigBytes % blockSizeBytes;
+          var lastBytePos = dataSigBytes + nPaddingBytes - 1;
+          data.clamp();
+          data.words[lastBytePos >>> 2] |= nPaddingBytes << 24 - lastBytePos % 4 * 8;
+          data.sigBytes += nPaddingBytes;
+        },
+        unpad: function(data) {
+          var nPaddingBytes = data.words[data.sigBytes - 1 >>> 2] & 255;
+          data.sigBytes -= nPaddingBytes;
+        }
+      };
+      return CryptoJS.pad.Ansix923;
+    });
+  }
+});
+
+// node_modules/crypto-js/pad-iso10126.js
+var require_pad_iso10126 = __commonJS({
+  "node_modules/crypto-js/pad-iso10126.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.pad.Iso10126 = {
+        pad: function(data, blockSize) {
+          var blockSizeBytes = blockSize * 4;
+          var nPaddingBytes = blockSizeBytes - data.sigBytes % blockSizeBytes;
+          data.concat(CryptoJS.lib.WordArray.random(nPaddingBytes - 1)).concat(CryptoJS.lib.WordArray.create([nPaddingBytes << 24], 1));
+        },
+        unpad: function(data) {
+          var nPaddingBytes = data.words[data.sigBytes - 1 >>> 2] & 255;
+          data.sigBytes -= nPaddingBytes;
+        }
+      };
+      return CryptoJS.pad.Iso10126;
+    });
+  }
+});
+
+// node_modules/crypto-js/pad-iso97971.js
+var require_pad_iso97971 = __commonJS({
+  "node_modules/crypto-js/pad-iso97971.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.pad.Iso97971 = {
+        pad: function(data, blockSize) {
+          data.concat(CryptoJS.lib.WordArray.create([2147483648], 1));
+          CryptoJS.pad.ZeroPadding.pad(data, blockSize);
+        },
+        unpad: function(data) {
+          CryptoJS.pad.ZeroPadding.unpad(data);
+          data.sigBytes--;
+        }
+      };
+      return CryptoJS.pad.Iso97971;
+    });
+  }
+});
+
+// node_modules/crypto-js/pad-zeropadding.js
+var require_pad_zeropadding = __commonJS({
+  "node_modules/crypto-js/pad-zeropadding.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.pad.ZeroPadding = {
+        pad: function(data, blockSize) {
+          var blockSizeBytes = blockSize * 4;
+          data.clamp();
+          data.sigBytes += blockSizeBytes - (data.sigBytes % blockSizeBytes || blockSizeBytes);
+        },
+        unpad: function(data) {
+          var dataWords = data.words;
+          var i = data.sigBytes - 1;
+          for (var i = data.sigBytes - 1; i >= 0; i--) {
+            if (dataWords[i >>> 2] >>> 24 - i % 4 * 8 & 255) {
+              data.sigBytes = i + 1;
+              break;
+            }
+          }
+        }
+      };
+      return CryptoJS.pad.ZeroPadding;
+    });
+  }
+});
+
+// node_modules/crypto-js/pad-nopadding.js
+var require_pad_nopadding = __commonJS({
+  "node_modules/crypto-js/pad-nopadding.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      CryptoJS.pad.NoPadding = {
+        pad: function() {
+        },
+        unpad: function() {
+        }
+      };
+      return CryptoJS.pad.NoPadding;
+    });
+  }
+});
+
+// node_modules/crypto-js/format-hex.js
+var require_format_hex = __commonJS({
+  "node_modules/crypto-js/format-hex.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function(undefined2) {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var CipherParams = C_lib.CipherParams;
+        var C_enc = C.enc;
+        var Hex = C_enc.Hex;
+        var C_format = C.format;
+        var HexFormatter = C_format.Hex = {
+          /**
+           * Converts the ciphertext of a cipher params object to a hexadecimally encoded string.
+           *
+           * @param {CipherParams} cipherParams The cipher params object.
+           *
+           * @return {string} The hexadecimally encoded string.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var hexString = CryptoJS.format.Hex.stringify(cipherParams);
+           */
+          stringify: function(cipherParams) {
+            return cipherParams.ciphertext.toString(Hex);
+          },
+          /**
+           * Converts a hexadecimally encoded ciphertext string to a cipher params object.
+           *
+           * @param {string} input The hexadecimally encoded string.
+           *
+           * @return {CipherParams} The cipher params object.
+           *
+           * @static
+           *
+           * @example
+           *
+           *     var cipherParams = CryptoJS.format.Hex.parse(hexString);
+           */
+          parse: function(input) {
+            var ciphertext = Hex.parse(input);
+            return CipherParams.create({ ciphertext });
+          }
+        };
+      })();
+      return CryptoJS.format.Hex;
+    });
+  }
+});
+
+// node_modules/crypto-js/aes.js
+var require_aes = __commonJS({
+  "node_modules/crypto-js/aes.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_enc_base64(), require_md5(), require_evpkdf(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var BlockCipher = C_lib.BlockCipher;
+        var C_algo = C.algo;
+        var SBOX = [];
+        var INV_SBOX = [];
+        var SUB_MIX_0 = [];
+        var SUB_MIX_1 = [];
+        var SUB_MIX_2 = [];
+        var SUB_MIX_3 = [];
+        var INV_SUB_MIX_0 = [];
+        var INV_SUB_MIX_1 = [];
+        var INV_SUB_MIX_2 = [];
+        var INV_SUB_MIX_3 = [];
+        (function() {
+          var d = [];
+          for (var i = 0; i < 256; i++) {
+            if (i < 128) {
+              d[i] = i << 1;
+            } else {
+              d[i] = i << 1 ^ 283;
+            }
+          }
+          var x = 0;
+          var xi = 0;
+          for (var i = 0; i < 256; i++) {
+            var sx = xi ^ xi << 1 ^ xi << 2 ^ xi << 3 ^ xi << 4;
+            sx = sx >>> 8 ^ sx & 255 ^ 99;
+            SBOX[x] = sx;
+            INV_SBOX[sx] = x;
+            var x2 = d[x];
+            var x4 = d[x2];
+            var x8 = d[x4];
+            var t = d[sx] * 257 ^ sx * 16843008;
+            SUB_MIX_0[x] = t << 24 | t >>> 8;
+            SUB_MIX_1[x] = t << 16 | t >>> 16;
+            SUB_MIX_2[x] = t << 8 | t >>> 24;
+            SUB_MIX_3[x] = t;
+            var t = x8 * 16843009 ^ x4 * 65537 ^ x2 * 257 ^ x * 16843008;
+            INV_SUB_MIX_0[sx] = t << 24 | t >>> 8;
+            INV_SUB_MIX_1[sx] = t << 16 | t >>> 16;
+            INV_SUB_MIX_2[sx] = t << 8 | t >>> 24;
+            INV_SUB_MIX_3[sx] = t;
+            if (!x) {
+              x = xi = 1;
+            } else {
+              x = x2 ^ d[d[d[x8 ^ x2]]];
+              xi ^= d[d[xi]];
+            }
+          }
+        })();
+        var RCON = [0, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54];
+        var AES = C_algo.AES = BlockCipher.extend({
+          _doReset: function() {
+            var t;
+            if (this._nRounds && this._keyPriorReset === this._key) {
+              return;
+            }
+            var key = this._keyPriorReset = this._key;
+            var keyWords = key.words;
+            var keySize = key.sigBytes / 4;
+            var nRounds = this._nRounds = keySize + 6;
+            var ksRows = (nRounds + 1) * 4;
+            var keySchedule = this._keySchedule = [];
+            for (var ksRow = 0; ksRow < ksRows; ksRow++) {
+              if (ksRow < keySize) {
+                keySchedule[ksRow] = keyWords[ksRow];
+              } else {
+                t = keySchedule[ksRow - 1];
+                if (!(ksRow % keySize)) {
+                  t = t << 8 | t >>> 24;
+                  t = SBOX[t >>> 24] << 24 | SBOX[t >>> 16 & 255] << 16 | SBOX[t >>> 8 & 255] << 8 | SBOX[t & 255];
+                  t ^= RCON[ksRow / keySize | 0] << 24;
+                } else if (keySize > 6 && ksRow % keySize == 4) {
+                  t = SBOX[t >>> 24] << 24 | SBOX[t >>> 16 & 255] << 16 | SBOX[t >>> 8 & 255] << 8 | SBOX[t & 255];
+                }
+                keySchedule[ksRow] = keySchedule[ksRow - keySize] ^ t;
+              }
+            }
+            var invKeySchedule = this._invKeySchedule = [];
+            for (var invKsRow = 0; invKsRow < ksRows; invKsRow++) {
+              var ksRow = ksRows - invKsRow;
+              if (invKsRow % 4) {
+                var t = keySchedule[ksRow];
+              } else {
+                var t = keySchedule[ksRow - 4];
+              }
+              if (invKsRow < 4 || ksRow <= 4) {
+                invKeySchedule[invKsRow] = t;
+              } else {
+                invKeySchedule[invKsRow] = INV_SUB_MIX_0[SBOX[t >>> 24]] ^ INV_SUB_MIX_1[SBOX[t >>> 16 & 255]] ^ INV_SUB_MIX_2[SBOX[t >>> 8 & 255]] ^ INV_SUB_MIX_3[SBOX[t & 255]];
+              }
+            }
+          },
+          encryptBlock: function(M, offset) {
+            this._doCryptBlock(M, offset, this._keySchedule, SUB_MIX_0, SUB_MIX_1, SUB_MIX_2, SUB_MIX_3, SBOX);
+          },
+          decryptBlock: function(M, offset) {
+            var t = M[offset + 1];
+            M[offset + 1] = M[offset + 3];
+            M[offset + 3] = t;
+            this._doCryptBlock(M, offset, this._invKeySchedule, INV_SUB_MIX_0, INV_SUB_MIX_1, INV_SUB_MIX_2, INV_SUB_MIX_3, INV_SBOX);
+            var t = M[offset + 1];
+            M[offset + 1] = M[offset + 3];
+            M[offset + 3] = t;
+          },
+          _doCryptBlock: function(M, offset, keySchedule, SUB_MIX_02, SUB_MIX_12, SUB_MIX_22, SUB_MIX_32, SBOX2) {
+            var nRounds = this._nRounds;
+            var s0 = M[offset] ^ keySchedule[0];
+            var s1 = M[offset + 1] ^ keySchedule[1];
+            var s2 = M[offset + 2] ^ keySchedule[2];
+            var s3 = M[offset + 3] ^ keySchedule[3];
+            var ksRow = 4;
+            for (var round = 1; round < nRounds; round++) {
+              var t0 = SUB_MIX_02[s0 >>> 24] ^ SUB_MIX_12[s1 >>> 16 & 255] ^ SUB_MIX_22[s2 >>> 8 & 255] ^ SUB_MIX_32[s3 & 255] ^ keySchedule[ksRow++];
+              var t1 = SUB_MIX_02[s1 >>> 24] ^ SUB_MIX_12[s2 >>> 16 & 255] ^ SUB_MIX_22[s3 >>> 8 & 255] ^ SUB_MIX_32[s0 & 255] ^ keySchedule[ksRow++];
+              var t2 = SUB_MIX_02[s2 >>> 24] ^ SUB_MIX_12[s3 >>> 16 & 255] ^ SUB_MIX_22[s0 >>> 8 & 255] ^ SUB_MIX_32[s1 & 255] ^ keySchedule[ksRow++];
+              var t3 = SUB_MIX_02[s3 >>> 24] ^ SUB_MIX_12[s0 >>> 16 & 255] ^ SUB_MIX_22[s1 >>> 8 & 255] ^ SUB_MIX_32[s2 & 255] ^ keySchedule[ksRow++];
+              s0 = t0;
+              s1 = t1;
+              s2 = t2;
+              s3 = t3;
+            }
+            var t0 = (SBOX2[s0 >>> 24] << 24 | SBOX2[s1 >>> 16 & 255] << 16 | SBOX2[s2 >>> 8 & 255] << 8 | SBOX2[s3 & 255]) ^ keySchedule[ksRow++];
+            var t1 = (SBOX2[s1 >>> 24] << 24 | SBOX2[s2 >>> 16 & 255] << 16 | SBOX2[s3 >>> 8 & 255] << 8 | SBOX2[s0 & 255]) ^ keySchedule[ksRow++];
+            var t2 = (SBOX2[s2 >>> 24] << 24 | SBOX2[s3 >>> 16 & 255] << 16 | SBOX2[s0 >>> 8 & 255] << 8 | SBOX2[s1 & 255]) ^ keySchedule[ksRow++];
+            var t3 = (SBOX2[s3 >>> 24] << 24 | SBOX2[s0 >>> 16 & 255] << 16 | SBOX2[s1 >>> 8 & 255] << 8 | SBOX2[s2 & 255]) ^ keySchedule[ksRow++];
+            M[offset] = t0;
+            M[offset + 1] = t1;
+            M[offset + 2] = t2;
+            M[offset + 3] = t3;
+          },
+          keySize: 256 / 32
+        });
+        C.AES = BlockCipher._createHelper(AES);
+      })();
+      return CryptoJS.AES;
+    });
+  }
+});
+
+// node_modules/crypto-js/tripledes.js
+var require_tripledes = __commonJS({
+  "node_modules/crypto-js/tripledes.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_enc_base64(), require_md5(), require_evpkdf(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var WordArray = C_lib.WordArray;
+        var BlockCipher = C_lib.BlockCipher;
+        var C_algo = C.algo;
+        var PC1 = [
+          57,
+          49,
+          41,
+          33,
+          25,
+          17,
+          9,
+          1,
+          58,
+          50,
+          42,
+          34,
+          26,
+          18,
+          10,
+          2,
+          59,
+          51,
+          43,
+          35,
+          27,
+          19,
+          11,
+          3,
+          60,
+          52,
+          44,
+          36,
+          63,
+          55,
+          47,
+          39,
+          31,
+          23,
+          15,
+          7,
+          62,
+          54,
+          46,
+          38,
+          30,
+          22,
+          14,
+          6,
+          61,
+          53,
+          45,
+          37,
+          29,
+          21,
+          13,
+          5,
+          28,
+          20,
+          12,
+          4
+        ];
+        var PC2 = [
+          14,
+          17,
+          11,
+          24,
+          1,
+          5,
+          3,
+          28,
+          15,
+          6,
+          21,
+          10,
+          23,
+          19,
+          12,
+          4,
+          26,
+          8,
+          16,
+          7,
+          27,
+          20,
+          13,
+          2,
+          41,
+          52,
+          31,
+          37,
+          47,
+          55,
+          30,
+          40,
+          51,
+          45,
+          33,
+          48,
+          44,
+          49,
+          39,
+          56,
+          34,
+          53,
+          46,
+          42,
+          50,
+          36,
+          29,
+          32
+        ];
+        var BIT_SHIFTS = [1, 2, 4, 6, 8, 10, 12, 14, 15, 17, 19, 21, 23, 25, 27, 28];
+        var SBOX_P = [
+          {
+            0: 8421888,
+            268435456: 32768,
+            536870912: 8421378,
+            805306368: 2,
+            1073741824: 512,
+            1342177280: 8421890,
+            1610612736: 8389122,
+            1879048192: 8388608,
+            2147483648: 514,
+            2415919104: 8389120,
+            2684354560: 33280,
+            2952790016: 8421376,
+            3221225472: 32770,
+            3489660928: 8388610,
+            3758096384: 0,
+            4026531840: 33282,
+            134217728: 0,
+            402653184: 8421890,
+            671088640: 33282,
+            939524096: 32768,
+            1207959552: 8421888,
+            1476395008: 512,
+            1744830464: 8421378,
+            2013265920: 2,
+            2281701376: 8389120,
+            2550136832: 33280,
+            2818572288: 8421376,
+            3087007744: 8389122,
+            3355443200: 8388610,
+            3623878656: 32770,
+            3892314112: 514,
+            4160749568: 8388608,
+            1: 32768,
+            268435457: 2,
+            536870913: 8421888,
+            805306369: 8388608,
+            1073741825: 8421378,
+            1342177281: 33280,
+            1610612737: 512,
+            1879048193: 8389122,
+            2147483649: 8421890,
+            2415919105: 8421376,
+            2684354561: 8388610,
+            2952790017: 33282,
+            3221225473: 514,
+            3489660929: 8389120,
+            3758096385: 32770,
+            4026531841: 0,
+            134217729: 8421890,
+            402653185: 8421376,
+            671088641: 8388608,
+            939524097: 512,
+            1207959553: 32768,
+            1476395009: 8388610,
+            1744830465: 2,
+            2013265921: 33282,
+            2281701377: 32770,
+            2550136833: 8389122,
+            2818572289: 514,
+            3087007745: 8421888,
+            3355443201: 8389120,
+            3623878657: 0,
+            3892314113: 33280,
+            4160749569: 8421378
+          },
+          {
+            0: 1074282512,
+            16777216: 16384,
+            33554432: 524288,
+            50331648: 1074266128,
+            67108864: 1073741840,
+            83886080: 1074282496,
+            100663296: 1073758208,
+            117440512: 16,
+            134217728: 540672,
+            150994944: 1073758224,
+            167772160: 1073741824,
+            184549376: 540688,
+            201326592: 524304,
+            218103808: 0,
+            234881024: 16400,
+            251658240: 1074266112,
+            8388608: 1073758208,
+            25165824: 540688,
+            41943040: 16,
+            58720256: 1073758224,
+            75497472: 1074282512,
+            92274688: 1073741824,
+            109051904: 524288,
+            125829120: 1074266128,
+            142606336: 524304,
+            159383552: 0,
+            176160768: 16384,
+            192937984: 1074266112,
+            209715200: 1073741840,
+            226492416: 540672,
+            243269632: 1074282496,
+            260046848: 16400,
+            268435456: 0,
+            285212672: 1074266128,
+            301989888: 1073758224,
+            318767104: 1074282496,
+            335544320: 1074266112,
+            352321536: 16,
+            369098752: 540688,
+            385875968: 16384,
+            402653184: 16400,
+            419430400: 524288,
+            436207616: 524304,
+            452984832: 1073741840,
+            469762048: 540672,
+            486539264: 1073758208,
+            503316480: 1073741824,
+            520093696: 1074282512,
+            276824064: 540688,
+            293601280: 524288,
+            310378496: 1074266112,
+            327155712: 16384,
+            343932928: 1073758208,
+            360710144: 1074282512,
+            377487360: 16,
+            394264576: 1073741824,
+            411041792: 1074282496,
+            427819008: 1073741840,
+            444596224: 1073758224,
+            461373440: 524304,
+            478150656: 0,
+            494927872: 16400,
+            511705088: 1074266128,
+            528482304: 540672
+          },
+          {
+            0: 260,
+            1048576: 0,
+            2097152: 67109120,
+            3145728: 65796,
+            4194304: 65540,
+            5242880: 67108868,
+            6291456: 67174660,
+            7340032: 67174400,
+            8388608: 67108864,
+            9437184: 67174656,
+            10485760: 65792,
+            11534336: 67174404,
+            12582912: 67109124,
+            13631488: 65536,
+            14680064: 4,
+            15728640: 256,
+            524288: 67174656,
+            1572864: 67174404,
+            2621440: 0,
+            3670016: 67109120,
+            4718592: 67108868,
+            5767168: 65536,
+            6815744: 65540,
+            7864320: 260,
+            8912896: 4,
+            9961472: 256,
+            11010048: 67174400,
+            12058624: 65796,
+            13107200: 65792,
+            14155776: 67109124,
+            15204352: 67174660,
+            16252928: 67108864,
+            16777216: 67174656,
+            17825792: 65540,
+            18874368: 65536,
+            19922944: 67109120,
+            20971520: 256,
+            22020096: 67174660,
+            23068672: 67108868,
+            24117248: 0,
+            25165824: 67109124,
+            26214400: 67108864,
+            27262976: 4,
+            28311552: 65792,
+            29360128: 67174400,
+            30408704: 260,
+            31457280: 65796,
+            32505856: 67174404,
+            17301504: 67108864,
+            18350080: 260,
+            19398656: 67174656,
+            20447232: 0,
+            21495808: 65540,
+            22544384: 67109120,
+            23592960: 256,
+            24641536: 67174404,
+            25690112: 65536,
+            26738688: 67174660,
+            27787264: 65796,
+            28835840: 67108868,
+            29884416: 67109124,
+            30932992: 67174400,
+            31981568: 4,
+            33030144: 65792
+          },
+          {
+            0: 2151682048,
+            65536: 2147487808,
+            131072: 4198464,
+            196608: 2151677952,
+            262144: 0,
+            327680: 4198400,
+            393216: 2147483712,
+            458752: 4194368,
+            524288: 2147483648,
+            589824: 4194304,
+            655360: 64,
+            720896: 2147487744,
+            786432: 2151678016,
+            851968: 4160,
+            917504: 4096,
+            983040: 2151682112,
+            32768: 2147487808,
+            98304: 64,
+            163840: 2151678016,
+            229376: 2147487744,
+            294912: 4198400,
+            360448: 2151682112,
+            425984: 0,
+            491520: 2151677952,
+            557056: 4096,
+            622592: 2151682048,
+            688128: 4194304,
+            753664: 4160,
+            819200: 2147483648,
+            884736: 4194368,
+            950272: 4198464,
+            1015808: 2147483712,
+            1048576: 4194368,
+            1114112: 4198400,
+            1179648: 2147483712,
+            1245184: 0,
+            1310720: 4160,
+            1376256: 2151678016,
+            1441792: 2151682048,
+            1507328: 2147487808,
+            1572864: 2151682112,
+            1638400: 2147483648,
+            1703936: 2151677952,
+            1769472: 4198464,
+            1835008: 2147487744,
+            1900544: 4194304,
+            1966080: 64,
+            2031616: 4096,
+            1081344: 2151677952,
+            1146880: 2151682112,
+            1212416: 0,
+            1277952: 4198400,
+            1343488: 4194368,
+            1409024: 2147483648,
+            1474560: 2147487808,
+            1540096: 64,
+            1605632: 2147483712,
+            1671168: 4096,
+            1736704: 2147487744,
+            1802240: 2151678016,
+            1867776: 4160,
+            1933312: 2151682048,
+            1998848: 4194304,
+            2064384: 4198464
+          },
+          {
+            0: 128,
+            4096: 17039360,
+            8192: 262144,
+            12288: 536870912,
+            16384: 537133184,
+            20480: 16777344,
+            24576: 553648256,
+            28672: 262272,
+            32768: 16777216,
+            36864: 537133056,
+            40960: 536871040,
+            45056: 553910400,
+            49152: 553910272,
+            53248: 0,
+            57344: 17039488,
+            61440: 553648128,
+            2048: 17039488,
+            6144: 553648256,
+            10240: 128,
+            14336: 17039360,
+            18432: 262144,
+            22528: 537133184,
+            26624: 553910272,
+            30720: 536870912,
+            34816: 537133056,
+            38912: 0,
+            43008: 553910400,
+            47104: 16777344,
+            51200: 536871040,
+            55296: 553648128,
+            59392: 16777216,
+            63488: 262272,
+            65536: 262144,
+            69632: 128,
+            73728: 536870912,
+            77824: 553648256,
+            81920: 16777344,
+            86016: 553910272,
+            90112: 537133184,
+            94208: 16777216,
+            98304: 553910400,
+            102400: 553648128,
+            106496: 17039360,
+            110592: 537133056,
+            114688: 262272,
+            118784: 536871040,
+            122880: 0,
+            126976: 17039488,
+            67584: 553648256,
+            71680: 16777216,
+            75776: 17039360,
+            79872: 537133184,
+            83968: 536870912,
+            88064: 17039488,
+            92160: 128,
+            96256: 553910272,
+            100352: 262272,
+            104448: 553910400,
+            108544: 0,
+            112640: 553648128,
+            116736: 16777344,
+            120832: 262144,
+            124928: 537133056,
+            129024: 536871040
+          },
+          {
+            0: 268435464,
+            256: 8192,
+            512: 270532608,
+            768: 270540808,
+            1024: 268443648,
+            1280: 2097152,
+            1536: 2097160,
+            1792: 268435456,
+            2048: 0,
+            2304: 268443656,
+            2560: 2105344,
+            2816: 8,
+            3072: 270532616,
+            3328: 2105352,
+            3584: 8200,
+            3840: 270540800,
+            128: 270532608,
+            384: 270540808,
+            640: 8,
+            896: 2097152,
+            1152: 2105352,
+            1408: 268435464,
+            1664: 268443648,
+            1920: 8200,
+            2176: 2097160,
+            2432: 8192,
+            2688: 268443656,
+            2944: 270532616,
+            3200: 0,
+            3456: 270540800,
+            3712: 2105344,
+            3968: 268435456,
+            4096: 268443648,
+            4352: 270532616,
+            4608: 270540808,
+            4864: 8200,
+            5120: 2097152,
+            5376: 268435456,
+            5632: 268435464,
+            5888: 2105344,
+            6144: 2105352,
+            6400: 0,
+            6656: 8,
+            6912: 270532608,
+            7168: 8192,
+            7424: 268443656,
+            7680: 270540800,
+            7936: 2097160,
+            4224: 8,
+            4480: 2105344,
+            4736: 2097152,
+            4992: 268435464,
+            5248: 268443648,
+            5504: 8200,
+            5760: 270540808,
+            6016: 270532608,
+            6272: 270540800,
+            6528: 270532616,
+            6784: 8192,
+            7040: 2105352,
+            7296: 2097160,
+            7552: 0,
+            7808: 268435456,
+            8064: 268443656
+          },
+          {
+            0: 1048576,
+            16: 33555457,
+            32: 1024,
+            48: 1049601,
+            64: 34604033,
+            80: 0,
+            96: 1,
+            112: 34603009,
+            128: 33555456,
+            144: 1048577,
+            160: 33554433,
+            176: 34604032,
+            192: 34603008,
+            208: 1025,
+            224: 1049600,
+            240: 33554432,
+            8: 34603009,
+            24: 0,
+            40: 33555457,
+            56: 34604032,
+            72: 1048576,
+            88: 33554433,
+            104: 33554432,
+            120: 1025,
+            136: 1049601,
+            152: 33555456,
+            168: 34603008,
+            184: 1048577,
+            200: 1024,
+            216: 34604033,
+            232: 1,
+            248: 1049600,
+            256: 33554432,
+            272: 1048576,
+            288: 33555457,
+            304: 34603009,
+            320: 1048577,
+            336: 33555456,
+            352: 34604032,
+            368: 1049601,
+            384: 1025,
+            400: 34604033,
+            416: 1049600,
+            432: 1,
+            448: 0,
+            464: 34603008,
+            480: 33554433,
+            496: 1024,
+            264: 1049600,
+            280: 33555457,
+            296: 34603009,
+            312: 1,
+            328: 33554432,
+            344: 1048576,
+            360: 1025,
+            376: 34604032,
+            392: 33554433,
+            408: 34603008,
+            424: 0,
+            440: 34604033,
+            456: 1049601,
+            472: 1024,
+            488: 33555456,
+            504: 1048577
+          },
+          {
+            0: 134219808,
+            1: 131072,
+            2: 134217728,
+            3: 32,
+            4: 131104,
+            5: 134350880,
+            6: 134350848,
+            7: 2048,
+            8: 134348800,
+            9: 134219776,
+            10: 133120,
+            11: 134348832,
+            12: 2080,
+            13: 0,
+            14: 134217760,
+            15: 133152,
+            2147483648: 2048,
+            2147483649: 134350880,
+            2147483650: 134219808,
+            2147483651: 134217728,
+            2147483652: 134348800,
+            2147483653: 133120,
+            2147483654: 133152,
+            2147483655: 32,
+            2147483656: 134217760,
+            2147483657: 2080,
+            2147483658: 131104,
+            2147483659: 134350848,
+            2147483660: 0,
+            2147483661: 134348832,
+            2147483662: 134219776,
+            2147483663: 131072,
+            16: 133152,
+            17: 134350848,
+            18: 32,
+            19: 2048,
+            20: 134219776,
+            21: 134217760,
+            22: 134348832,
+            23: 131072,
+            24: 0,
+            25: 131104,
+            26: 134348800,
+            27: 134219808,
+            28: 134350880,
+            29: 133120,
+            30: 2080,
+            31: 134217728,
+            2147483664: 131072,
+            2147483665: 2048,
+            2147483666: 134348832,
+            2147483667: 133152,
+            2147483668: 32,
+            2147483669: 134348800,
+            2147483670: 134217728,
+            2147483671: 134219808,
+            2147483672: 134350880,
+            2147483673: 134217760,
+            2147483674: 134219776,
+            2147483675: 0,
+            2147483676: 133120,
+            2147483677: 2080,
+            2147483678: 131104,
+            2147483679: 134350848
+          }
+        ];
+        var SBOX_MASK = [
+          4160749569,
+          528482304,
+          33030144,
+          2064384,
+          129024,
+          8064,
+          504,
+          2147483679
+        ];
+        var DES = C_algo.DES = BlockCipher.extend({
+          _doReset: function() {
+            var key = this._key;
+            var keyWords = key.words;
+            var keyBits = [];
+            for (var i = 0; i < 56; i++) {
+              var keyBitPos = PC1[i] - 1;
+              keyBits[i] = keyWords[keyBitPos >>> 5] >>> 31 - keyBitPos % 32 & 1;
+            }
+            var subKeys = this._subKeys = [];
+            for (var nSubKey = 0; nSubKey < 16; nSubKey++) {
+              var subKey = subKeys[nSubKey] = [];
+              var bitShift = BIT_SHIFTS[nSubKey];
+              for (var i = 0; i < 24; i++) {
+                subKey[i / 6 | 0] |= keyBits[(PC2[i] - 1 + bitShift) % 28] << 31 - i % 6;
+                subKey[4 + (i / 6 | 0)] |= keyBits[28 + (PC2[i + 24] - 1 + bitShift) % 28] << 31 - i % 6;
+              }
+              subKey[0] = subKey[0] << 1 | subKey[0] >>> 31;
+              for (var i = 1; i < 7; i++) {
+                subKey[i] = subKey[i] >>> (i - 1) * 4 + 3;
+              }
+              subKey[7] = subKey[7] << 5 | subKey[7] >>> 27;
+            }
+            var invSubKeys = this._invSubKeys = [];
+            for (var i = 0; i < 16; i++) {
+              invSubKeys[i] = subKeys[15 - i];
+            }
+          },
+          encryptBlock: function(M, offset) {
+            this._doCryptBlock(M, offset, this._subKeys);
+          },
+          decryptBlock: function(M, offset) {
+            this._doCryptBlock(M, offset, this._invSubKeys);
+          },
+          _doCryptBlock: function(M, offset, subKeys) {
+            this._lBlock = M[offset];
+            this._rBlock = M[offset + 1];
+            exchangeLR.call(this, 4, 252645135);
+            exchangeLR.call(this, 16, 65535);
+            exchangeRL.call(this, 2, 858993459);
+            exchangeRL.call(this, 8, 16711935);
+            exchangeLR.call(this, 1, 1431655765);
+            for (var round = 0; round < 16; round++) {
+              var subKey = subKeys[round];
+              var lBlock = this._lBlock;
+              var rBlock = this._rBlock;
+              var f = 0;
+              for (var i = 0; i < 8; i++) {
+                f |= SBOX_P[i][((rBlock ^ subKey[i]) & SBOX_MASK[i]) >>> 0];
+              }
+              this._lBlock = rBlock;
+              this._rBlock = lBlock ^ f;
+            }
+            var t = this._lBlock;
+            this._lBlock = this._rBlock;
+            this._rBlock = t;
+            exchangeLR.call(this, 1, 1431655765);
+            exchangeRL.call(this, 8, 16711935);
+            exchangeRL.call(this, 2, 858993459);
+            exchangeLR.call(this, 16, 65535);
+            exchangeLR.call(this, 4, 252645135);
+            M[offset] = this._lBlock;
+            M[offset + 1] = this._rBlock;
+          },
+          keySize: 64 / 32,
+          ivSize: 64 / 32,
+          blockSize: 64 / 32
+        });
+        function exchangeLR(offset, mask) {
+          var t = (this._lBlock >>> offset ^ this._rBlock) & mask;
+          this._rBlock ^= t;
+          this._lBlock ^= t << offset;
+        }
+        function exchangeRL(offset, mask) {
+          var t = (this._rBlock >>> offset ^ this._lBlock) & mask;
+          this._lBlock ^= t;
+          this._rBlock ^= t << offset;
+        }
+        C.DES = BlockCipher._createHelper(DES);
+        var TripleDES = C_algo.TripleDES = BlockCipher.extend({
+          _doReset: function() {
+            var key = this._key;
+            var keyWords = key.words;
+            if (keyWords.length !== 2 && keyWords.length !== 4 && keyWords.length < 6) {
+              throw new Error("Invalid key length - 3DES requires the key length to be 64, 128, 192 or >192.");
+            }
+            var key1 = keyWords.slice(0, 2);
+            var key2 = keyWords.length < 4 ? keyWords.slice(0, 2) : keyWords.slice(2, 4);
+            var key3 = keyWords.length < 6 ? keyWords.slice(0, 2) : keyWords.slice(4, 6);
+            this._des1 = DES.createEncryptor(WordArray.create(key1));
+            this._des2 = DES.createEncryptor(WordArray.create(key2));
+            this._des3 = DES.createEncryptor(WordArray.create(key3));
+          },
+          encryptBlock: function(M, offset) {
+            this._des1.encryptBlock(M, offset);
+            this._des2.decryptBlock(M, offset);
+            this._des3.encryptBlock(M, offset);
+          },
+          decryptBlock: function(M, offset) {
+            this._des3.decryptBlock(M, offset);
+            this._des2.encryptBlock(M, offset);
+            this._des1.decryptBlock(M, offset);
+          },
+          keySize: 192 / 32,
+          ivSize: 64 / 32,
+          blockSize: 64 / 32
+        });
+        C.TripleDES = BlockCipher._createHelper(TripleDES);
+      })();
+      return CryptoJS.TripleDES;
+    });
+  }
+});
+
+// node_modules/crypto-js/rc4.js
+var require_rc4 = __commonJS({
+  "node_modules/crypto-js/rc4.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_enc_base64(), require_md5(), require_evpkdf(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var StreamCipher = C_lib.StreamCipher;
+        var C_algo = C.algo;
+        var RC4 = C_algo.RC4 = StreamCipher.extend({
+          _doReset: function() {
+            var key = this._key;
+            var keyWords = key.words;
+            var keySigBytes = key.sigBytes;
+            var S = this._S = [];
+            for (var i = 0; i < 256; i++) {
+              S[i] = i;
+            }
+            for (var i = 0, j = 0; i < 256; i++) {
+              var keyByteIndex = i % keySigBytes;
+              var keyByte = keyWords[keyByteIndex >>> 2] >>> 24 - keyByteIndex % 4 * 8 & 255;
+              j = (j + S[i] + keyByte) % 256;
+              var t = S[i];
+              S[i] = S[j];
+              S[j] = t;
+            }
+            this._i = this._j = 0;
+          },
+          _doProcessBlock: function(M, offset) {
+            M[offset] ^= generateKeystreamWord.call(this);
+          },
+          keySize: 256 / 32,
+          ivSize: 0
+        });
+        function generateKeystreamWord() {
+          var S = this._S;
+          var i = this._i;
+          var j = this._j;
+          var keystreamWord = 0;
+          for (var n = 0; n < 4; n++) {
+            i = (i + 1) % 256;
+            j = (j + S[i]) % 256;
+            var t = S[i];
+            S[i] = S[j];
+            S[j] = t;
+            keystreamWord |= S[(S[i] + S[j]) % 256] << 24 - n * 8;
+          }
+          this._i = i;
+          this._j = j;
+          return keystreamWord;
+        }
+        C.RC4 = StreamCipher._createHelper(RC4);
+        var RC4Drop = C_algo.RC4Drop = RC4.extend({
+          /**
+           * Configuration options.
+           *
+           * @property {number} drop The number of keystream words to drop. Default 192
+           */
+          cfg: RC4.cfg.extend({
+            drop: 192
+          }),
+          _doReset: function() {
+            RC4._doReset.call(this);
+            for (var i = this.cfg.drop; i > 0; i--) {
+              generateKeystreamWord.call(this);
+            }
+          }
+        });
+        C.RC4Drop = StreamCipher._createHelper(RC4Drop);
+      })();
+      return CryptoJS.RC4;
+    });
+  }
+});
+
+// node_modules/crypto-js/rabbit.js
+var require_rabbit = __commonJS({
+  "node_modules/crypto-js/rabbit.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_enc_base64(), require_md5(), require_evpkdf(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var StreamCipher = C_lib.StreamCipher;
+        var C_algo = C.algo;
+        var S = [];
+        var C_ = [];
+        var G = [];
+        var Rabbit = C_algo.Rabbit = StreamCipher.extend({
+          _doReset: function() {
+            var K = this._key.words;
+            var iv = this.cfg.iv;
+            for (var i = 0; i < 4; i++) {
+              K[i] = (K[i] << 8 | K[i] >>> 24) & 16711935 | (K[i] << 24 | K[i] >>> 8) & 4278255360;
+            }
+            var X = this._X = [
+              K[0],
+              K[3] << 16 | K[2] >>> 16,
+              K[1],
+              K[0] << 16 | K[3] >>> 16,
+              K[2],
+              K[1] << 16 | K[0] >>> 16,
+              K[3],
+              K[2] << 16 | K[1] >>> 16
+            ];
+            var C2 = this._C = [
+              K[2] << 16 | K[2] >>> 16,
+              K[0] & 4294901760 | K[1] & 65535,
+              K[3] << 16 | K[3] >>> 16,
+              K[1] & 4294901760 | K[2] & 65535,
+              K[0] << 16 | K[0] >>> 16,
+              K[2] & 4294901760 | K[3] & 65535,
+              K[1] << 16 | K[1] >>> 16,
+              K[3] & 4294901760 | K[0] & 65535
+            ];
+            this._b = 0;
+            for (var i = 0; i < 4; i++) {
+              nextState.call(this);
+            }
+            for (var i = 0; i < 8; i++) {
+              C2[i] ^= X[i + 4 & 7];
+            }
+            if (iv) {
+              var IV = iv.words;
+              var IV_0 = IV[0];
+              var IV_1 = IV[1];
+              var i0 = (IV_0 << 8 | IV_0 >>> 24) & 16711935 | (IV_0 << 24 | IV_0 >>> 8) & 4278255360;
+              var i2 = (IV_1 << 8 | IV_1 >>> 24) & 16711935 | (IV_1 << 24 | IV_1 >>> 8) & 4278255360;
+              var i1 = i0 >>> 16 | i2 & 4294901760;
+              var i3 = i2 << 16 | i0 & 65535;
+              C2[0] ^= i0;
+              C2[1] ^= i1;
+              C2[2] ^= i2;
+              C2[3] ^= i3;
+              C2[4] ^= i0;
+              C2[5] ^= i1;
+              C2[6] ^= i2;
+              C2[7] ^= i3;
+              for (var i = 0; i < 4; i++) {
+                nextState.call(this);
+              }
+            }
+          },
+          _doProcessBlock: function(M, offset) {
+            var X = this._X;
+            nextState.call(this);
+            S[0] = X[0] ^ X[5] >>> 16 ^ X[3] << 16;
+            S[1] = X[2] ^ X[7] >>> 16 ^ X[5] << 16;
+            S[2] = X[4] ^ X[1] >>> 16 ^ X[7] << 16;
+            S[3] = X[6] ^ X[3] >>> 16 ^ X[1] << 16;
+            for (var i = 0; i < 4; i++) {
+              S[i] = (S[i] << 8 | S[i] >>> 24) & 16711935 | (S[i] << 24 | S[i] >>> 8) & 4278255360;
+              M[offset + i] ^= S[i];
+            }
+          },
+          blockSize: 128 / 32,
+          ivSize: 64 / 32
+        });
+        function nextState() {
+          var X = this._X;
+          var C2 = this._C;
+          for (var i = 0; i < 8; i++) {
+            C_[i] = C2[i];
+          }
+          C2[0] = C2[0] + 1295307597 + this._b | 0;
+          C2[1] = C2[1] + 3545052371 + (C2[0] >>> 0 < C_[0] >>> 0 ? 1 : 0) | 0;
+          C2[2] = C2[2] + 886263092 + (C2[1] >>> 0 < C_[1] >>> 0 ? 1 : 0) | 0;
+          C2[3] = C2[3] + 1295307597 + (C2[2] >>> 0 < C_[2] >>> 0 ? 1 : 0) | 0;
+          C2[4] = C2[4] + 3545052371 + (C2[3] >>> 0 < C_[3] >>> 0 ? 1 : 0) | 0;
+          C2[5] = C2[5] + 886263092 + (C2[4] >>> 0 < C_[4] >>> 0 ? 1 : 0) | 0;
+          C2[6] = C2[6] + 1295307597 + (C2[5] >>> 0 < C_[5] >>> 0 ? 1 : 0) | 0;
+          C2[7] = C2[7] + 3545052371 + (C2[6] >>> 0 < C_[6] >>> 0 ? 1 : 0) | 0;
+          this._b = C2[7] >>> 0 < C_[7] >>> 0 ? 1 : 0;
+          for (var i = 0; i < 8; i++) {
+            var gx = X[i] + C2[i];
+            var ga = gx & 65535;
+            var gb = gx >>> 16;
+            var gh = ((ga * ga >>> 17) + ga * gb >>> 15) + gb * gb;
+            var gl = ((gx & 4294901760) * gx | 0) + ((gx & 65535) * gx | 0);
+            G[i] = gh ^ gl;
+          }
+          X[0] = G[0] + (G[7] << 16 | G[7] >>> 16) + (G[6] << 16 | G[6] >>> 16) | 0;
+          X[1] = G[1] + (G[0] << 8 | G[0] >>> 24) + G[7] | 0;
+          X[2] = G[2] + (G[1] << 16 | G[1] >>> 16) + (G[0] << 16 | G[0] >>> 16) | 0;
+          X[3] = G[3] + (G[2] << 8 | G[2] >>> 24) + G[1] | 0;
+          X[4] = G[4] + (G[3] << 16 | G[3] >>> 16) + (G[2] << 16 | G[2] >>> 16) | 0;
+          X[5] = G[5] + (G[4] << 8 | G[4] >>> 24) + G[3] | 0;
+          X[6] = G[6] + (G[5] << 16 | G[5] >>> 16) + (G[4] << 16 | G[4] >>> 16) | 0;
+          X[7] = G[7] + (G[6] << 8 | G[6] >>> 24) + G[5] | 0;
+        }
+        C.Rabbit = StreamCipher._createHelper(Rabbit);
+      })();
+      return CryptoJS.Rabbit;
+    });
+  }
+});
+
+// node_modules/crypto-js/rabbit-legacy.js
+var require_rabbit_legacy = __commonJS({
+  "node_modules/crypto-js/rabbit-legacy.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_enc_base64(), require_md5(), require_evpkdf(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var StreamCipher = C_lib.StreamCipher;
+        var C_algo = C.algo;
+        var S = [];
+        var C_ = [];
+        var G = [];
+        var RabbitLegacy = C_algo.RabbitLegacy = StreamCipher.extend({
+          _doReset: function() {
+            var K = this._key.words;
+            var iv = this.cfg.iv;
+            var X = this._X = [
+              K[0],
+              K[3] << 16 | K[2] >>> 16,
+              K[1],
+              K[0] << 16 | K[3] >>> 16,
+              K[2],
+              K[1] << 16 | K[0] >>> 16,
+              K[3],
+              K[2] << 16 | K[1] >>> 16
+            ];
+            var C2 = this._C = [
+              K[2] << 16 | K[2] >>> 16,
+              K[0] & 4294901760 | K[1] & 65535,
+              K[3] << 16 | K[3] >>> 16,
+              K[1] & 4294901760 | K[2] & 65535,
+              K[0] << 16 | K[0] >>> 16,
+              K[2] & 4294901760 | K[3] & 65535,
+              K[1] << 16 | K[1] >>> 16,
+              K[3] & 4294901760 | K[0] & 65535
+            ];
+            this._b = 0;
+            for (var i = 0; i < 4; i++) {
+              nextState.call(this);
+            }
+            for (var i = 0; i < 8; i++) {
+              C2[i] ^= X[i + 4 & 7];
+            }
+            if (iv) {
+              var IV = iv.words;
+              var IV_0 = IV[0];
+              var IV_1 = IV[1];
+              var i0 = (IV_0 << 8 | IV_0 >>> 24) & 16711935 | (IV_0 << 24 | IV_0 >>> 8) & 4278255360;
+              var i2 = (IV_1 << 8 | IV_1 >>> 24) & 16711935 | (IV_1 << 24 | IV_1 >>> 8) & 4278255360;
+              var i1 = i0 >>> 16 | i2 & 4294901760;
+              var i3 = i2 << 16 | i0 & 65535;
+              C2[0] ^= i0;
+              C2[1] ^= i1;
+              C2[2] ^= i2;
+              C2[3] ^= i3;
+              C2[4] ^= i0;
+              C2[5] ^= i1;
+              C2[6] ^= i2;
+              C2[7] ^= i3;
+              for (var i = 0; i < 4; i++) {
+                nextState.call(this);
+              }
+            }
+          },
+          _doProcessBlock: function(M, offset) {
+            var X = this._X;
+            nextState.call(this);
+            S[0] = X[0] ^ X[5] >>> 16 ^ X[3] << 16;
+            S[1] = X[2] ^ X[7] >>> 16 ^ X[5] << 16;
+            S[2] = X[4] ^ X[1] >>> 16 ^ X[7] << 16;
+            S[3] = X[6] ^ X[3] >>> 16 ^ X[1] << 16;
+            for (var i = 0; i < 4; i++) {
+              S[i] = (S[i] << 8 | S[i] >>> 24) & 16711935 | (S[i] << 24 | S[i] >>> 8) & 4278255360;
+              M[offset + i] ^= S[i];
+            }
+          },
+          blockSize: 128 / 32,
+          ivSize: 64 / 32
+        });
+        function nextState() {
+          var X = this._X;
+          var C2 = this._C;
+          for (var i = 0; i < 8; i++) {
+            C_[i] = C2[i];
+          }
+          C2[0] = C2[0] + 1295307597 + this._b | 0;
+          C2[1] = C2[1] + 3545052371 + (C2[0] >>> 0 < C_[0] >>> 0 ? 1 : 0) | 0;
+          C2[2] = C2[2] + 886263092 + (C2[1] >>> 0 < C_[1] >>> 0 ? 1 : 0) | 0;
+          C2[3] = C2[3] + 1295307597 + (C2[2] >>> 0 < C_[2] >>> 0 ? 1 : 0) | 0;
+          C2[4] = C2[4] + 3545052371 + (C2[3] >>> 0 < C_[3] >>> 0 ? 1 : 0) | 0;
+          C2[5] = C2[5] + 886263092 + (C2[4] >>> 0 < C_[4] >>> 0 ? 1 : 0) | 0;
+          C2[6] = C2[6] + 1295307597 + (C2[5] >>> 0 < C_[5] >>> 0 ? 1 : 0) | 0;
+          C2[7] = C2[7] + 3545052371 + (C2[6] >>> 0 < C_[6] >>> 0 ? 1 : 0) | 0;
+          this._b = C2[7] >>> 0 < C_[7] >>> 0 ? 1 : 0;
+          for (var i = 0; i < 8; i++) {
+            var gx = X[i] + C2[i];
+            var ga = gx & 65535;
+            var gb = gx >>> 16;
+            var gh = ((ga * ga >>> 17) + ga * gb >>> 15) + gb * gb;
+            var gl = ((gx & 4294901760) * gx | 0) + ((gx & 65535) * gx | 0);
+            G[i] = gh ^ gl;
+          }
+          X[0] = G[0] + (G[7] << 16 | G[7] >>> 16) + (G[6] << 16 | G[6] >>> 16) | 0;
+          X[1] = G[1] + (G[0] << 8 | G[0] >>> 24) + G[7] | 0;
+          X[2] = G[2] + (G[1] << 16 | G[1] >>> 16) + (G[0] << 16 | G[0] >>> 16) | 0;
+          X[3] = G[3] + (G[2] << 8 | G[2] >>> 24) + G[1] | 0;
+          X[4] = G[4] + (G[3] << 16 | G[3] >>> 16) + (G[2] << 16 | G[2] >>> 16) | 0;
+          X[5] = G[5] + (G[4] << 8 | G[4] >>> 24) + G[3] | 0;
+          X[6] = G[6] + (G[5] << 16 | G[5] >>> 16) + (G[4] << 16 | G[4] >>> 16) | 0;
+          X[7] = G[7] + (G[6] << 8 | G[6] >>> 24) + G[5] | 0;
+        }
+        C.RabbitLegacy = StreamCipher._createHelper(RabbitLegacy);
+      })();
+      return CryptoJS.RabbitLegacy;
+    });
+  }
+});
+
+// node_modules/crypto-js/blowfish.js
+var require_blowfish = __commonJS({
+  "node_modules/crypto-js/blowfish.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_enc_base64(), require_md5(), require_evpkdf(), require_cipher_core());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./enc-base64", "./md5", "./evpkdf", "./cipher-core"], factory);
+      } else {
+        factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      (function() {
+        var C = CryptoJS;
+        var C_lib = C.lib;
+        var BlockCipher = C_lib.BlockCipher;
+        var C_algo = C.algo;
+        const N = 16;
+        const ORIG_P = [
+          608135816,
+          2242054355,
+          320440878,
+          57701188,
+          2752067618,
+          698298832,
+          137296536,
+          3964562569,
+          1160258022,
+          953160567,
+          3193202383,
+          887688300,
+          3232508343,
+          3380367581,
+          1065670069,
+          3041331479,
+          2450970073,
+          2306472731
+        ];
+        const ORIG_S = [
+          [
+            3509652390,
+            2564797868,
+            805139163,
+            3491422135,
+            3101798381,
+            1780907670,
+            3128725573,
+            4046225305,
+            614570311,
+            3012652279,
+            134345442,
+            2240740374,
+            1667834072,
+            1901547113,
+            2757295779,
+            4103290238,
+            227898511,
+            1921955416,
+            1904987480,
+            2182433518,
+            2069144605,
+            3260701109,
+            2620446009,
+            720527379,
+            3318853667,
+            677414384,
+            3393288472,
+            3101374703,
+            2390351024,
+            1614419982,
+            1822297739,
+            2954791486,
+            3608508353,
+            3174124327,
+            2024746970,
+            1432378464,
+            3864339955,
+            2857741204,
+            1464375394,
+            1676153920,
+            1439316330,
+            715854006,
+            3033291828,
+            289532110,
+            2706671279,
+            2087905683,
+            3018724369,
+            1668267050,
+            732546397,
+            1947742710,
+            3462151702,
+            2609353502,
+            2950085171,
+            1814351708,
+            2050118529,
+            680887927,
+            999245976,
+            1800124847,
+            3300911131,
+            1713906067,
+            1641548236,
+            4213287313,
+            1216130144,
+            1575780402,
+            4018429277,
+            3917837745,
+            3693486850,
+            3949271944,
+            596196993,
+            3549867205,
+            258830323,
+            2213823033,
+            772490370,
+            2760122372,
+            1774776394,
+            2652871518,
+            566650946,
+            4142492826,
+            1728879713,
+            2882767088,
+            1783734482,
+            3629395816,
+            2517608232,
+            2874225571,
+            1861159788,
+            326777828,
+            3124490320,
+            2130389656,
+            2716951837,
+            967770486,
+            1724537150,
+            2185432712,
+            2364442137,
+            1164943284,
+            2105845187,
+            998989502,
+            3765401048,
+            2244026483,
+            1075463327,
+            1455516326,
+            1322494562,
+            910128902,
+            469688178,
+            1117454909,
+            936433444,
+            3490320968,
+            3675253459,
+            1240580251,
+            122909385,
+            2157517691,
+            634681816,
+            4142456567,
+            3825094682,
+            3061402683,
+            2540495037,
+            79693498,
+            3249098678,
+            1084186820,
+            1583128258,
+            426386531,
+            1761308591,
+            1047286709,
+            322548459,
+            995290223,
+            1845252383,
+            2603652396,
+            3431023940,
+            2942221577,
+            3202600964,
+            3727903485,
+            1712269319,
+            422464435,
+            3234572375,
+            1170764815,
+            3523960633,
+            3117677531,
+            1434042557,
+            442511882,
+            3600875718,
+            1076654713,
+            1738483198,
+            4213154764,
+            2393238008,
+            3677496056,
+            1014306527,
+            4251020053,
+            793779912,
+            2902807211,
+            842905082,
+            4246964064,
+            1395751752,
+            1040244610,
+            2656851899,
+            3396308128,
+            445077038,
+            3742853595,
+            3577915638,
+            679411651,
+            2892444358,
+            2354009459,
+            1767581616,
+            3150600392,
+            3791627101,
+            3102740896,
+            284835224,
+            4246832056,
+            1258075500,
+            768725851,
+            2589189241,
+            3069724005,
+            3532540348,
+            1274779536,
+            3789419226,
+            2764799539,
+            1660621633,
+            3471099624,
+            4011903706,
+            913787905,
+            3497959166,
+            737222580,
+            2514213453,
+            2928710040,
+            3937242737,
+            1804850592,
+            3499020752,
+            2949064160,
+            2386320175,
+            2390070455,
+            2415321851,
+            4061277028,
+            2290661394,
+            2416832540,
+            1336762016,
+            1754252060,
+            3520065937,
+            3014181293,
+            791618072,
+            3188594551,
+            3933548030,
+            2332172193,
+            3852520463,
+            3043980520,
+            413987798,
+            3465142937,
+            3030929376,
+            4245938359,
+            2093235073,
+            3534596313,
+            375366246,
+            2157278981,
+            2479649556,
+            555357303,
+            3870105701,
+            2008414854,
+            3344188149,
+            4221384143,
+            3956125452,
+            2067696032,
+            3594591187,
+            2921233993,
+            2428461,
+            544322398,
+            577241275,
+            1471733935,
+            610547355,
+            4027169054,
+            1432588573,
+            1507829418,
+            2025931657,
+            3646575487,
+            545086370,
+            48609733,
+            2200306550,
+            1653985193,
+            298326376,
+            1316178497,
+            3007786442,
+            2064951626,
+            458293330,
+            2589141269,
+            3591329599,
+            3164325604,
+            727753846,
+            2179363840,
+            146436021,
+            1461446943,
+            4069977195,
+            705550613,
+            3059967265,
+            3887724982,
+            4281599278,
+            3313849956,
+            1404054877,
+            2845806497,
+            146425753,
+            1854211946
+          ],
+          [
+            1266315497,
+            3048417604,
+            3681880366,
+            3289982499,
+            290971e4,
+            1235738493,
+            2632868024,
+            2414719590,
+            3970600049,
+            1771706367,
+            1449415276,
+            3266420449,
+            422970021,
+            1963543593,
+            2690192192,
+            3826793022,
+            1062508698,
+            1531092325,
+            1804592342,
+            2583117782,
+            2714934279,
+            4024971509,
+            1294809318,
+            4028980673,
+            1289560198,
+            2221992742,
+            1669523910,
+            35572830,
+            157838143,
+            1052438473,
+            1016535060,
+            1802137761,
+            1753167236,
+            1386275462,
+            3080475397,
+            2857371447,
+            1040679964,
+            2145300060,
+            2390574316,
+            1461121720,
+            2956646967,
+            4031777805,
+            4028374788,
+            33600511,
+            2920084762,
+            1018524850,
+            629373528,
+            3691585981,
+            3515945977,
+            2091462646,
+            2486323059,
+            586499841,
+            988145025,
+            935516892,
+            3367335476,
+            2599673255,
+            2839830854,
+            265290510,
+            3972581182,
+            2759138881,
+            3795373465,
+            1005194799,
+            847297441,
+            406762289,
+            1314163512,
+            1332590856,
+            1866599683,
+            4127851711,
+            750260880,
+            613907577,
+            1450815602,
+            3165620655,
+            3734664991,
+            3650291728,
+            3012275730,
+            3704569646,
+            1427272223,
+            778793252,
+            1343938022,
+            2676280711,
+            2052605720,
+            1946737175,
+            3164576444,
+            3914038668,
+            3967478842,
+            3682934266,
+            1661551462,
+            3294938066,
+            4011595847,
+            840292616,
+            3712170807,
+            616741398,
+            312560963,
+            711312465,
+            1351876610,
+            322626781,
+            1910503582,
+            271666773,
+            2175563734,
+            1594956187,
+            70604529,
+            3617834859,
+            1007753275,
+            1495573769,
+            4069517037,
+            2549218298,
+            2663038764,
+            504708206,
+            2263041392,
+            3941167025,
+            2249088522,
+            1514023603,
+            1998579484,
+            1312622330,
+            694541497,
+            2582060303,
+            2151582166,
+            1382467621,
+            776784248,
+            2618340202,
+            3323268794,
+            2497899128,
+            2784771155,
+            503983604,
+            4076293799,
+            907881277,
+            423175695,
+            432175456,
+            1378068232,
+            4145222326,
+            3954048622,
+            3938656102,
+            3820766613,
+            2793130115,
+            2977904593,
+            26017576,
+            3274890735,
+            3194772133,
+            1700274565,
+            1756076034,
+            4006520079,
+            3677328699,
+            720338349,
+            1533947780,
+            354530856,
+            688349552,
+            3973924725,
+            1637815568,
+            332179504,
+            3949051286,
+            53804574,
+            2852348879,
+            3044236432,
+            1282449977,
+            3583942155,
+            3416972820,
+            4006381244,
+            1617046695,
+            2628476075,
+            3002303598,
+            1686838959,
+            431878346,
+            2686675385,
+            1700445008,
+            1080580658,
+            1009431731,
+            832498133,
+            3223435511,
+            2605976345,
+            2271191193,
+            2516031870,
+            1648197032,
+            4164389018,
+            2548247927,
+            300782431,
+            375919233,
+            238389289,
+            3353747414,
+            2531188641,
+            2019080857,
+            1475708069,
+            455242339,
+            2609103871,
+            448939670,
+            3451063019,
+            1395535956,
+            2413381860,
+            1841049896,
+            1491858159,
+            885456874,
+            4264095073,
+            4001119347,
+            1565136089,
+            3898914787,
+            1108368660,
+            540939232,
+            1173283510,
+            2745871338,
+            3681308437,
+            4207628240,
+            3343053890,
+            4016749493,
+            1699691293,
+            1103962373,
+            3625875870,
+            2256883143,
+            3830138730,
+            1031889488,
+            3479347698,
+            1535977030,
+            4236805024,
+            3251091107,
+            2132092099,
+            1774941330,
+            1199868427,
+            1452454533,
+            157007616,
+            2904115357,
+            342012276,
+            595725824,
+            1480756522,
+            206960106,
+            497939518,
+            591360097,
+            863170706,
+            2375253569,
+            3596610801,
+            1814182875,
+            2094937945,
+            3421402208,
+            1082520231,
+            3463918190,
+            2785509508,
+            435703966,
+            3908032597,
+            1641649973,
+            2842273706,
+            3305899714,
+            1510255612,
+            2148256476,
+            2655287854,
+            3276092548,
+            4258621189,
+            236887753,
+            3681803219,
+            274041037,
+            1734335097,
+            3815195456,
+            3317970021,
+            1899903192,
+            1026095262,
+            4050517792,
+            356393447,
+            2410691914,
+            3873677099,
+            3682840055
+          ],
+          [
+            3913112168,
+            2491498743,
+            4132185628,
+            2489919796,
+            1091903735,
+            1979897079,
+            3170134830,
+            3567386728,
+            3557303409,
+            857797738,
+            1136121015,
+            1342202287,
+            507115054,
+            2535736646,
+            337727348,
+            3213592640,
+            1301675037,
+            2528481711,
+            1895095763,
+            1721773893,
+            3216771564,
+            62756741,
+            2142006736,
+            835421444,
+            2531993523,
+            1442658625,
+            3659876326,
+            2882144922,
+            676362277,
+            1392781812,
+            170690266,
+            3921047035,
+            1759253602,
+            3611846912,
+            1745797284,
+            664899054,
+            1329594018,
+            3901205900,
+            3045908486,
+            2062866102,
+            2865634940,
+            3543621612,
+            3464012697,
+            1080764994,
+            553557557,
+            3656615353,
+            3996768171,
+            991055499,
+            499776247,
+            1265440854,
+            648242737,
+            3940784050,
+            980351604,
+            3713745714,
+            1749149687,
+            3396870395,
+            4211799374,
+            3640570775,
+            1161844396,
+            3125318951,
+            1431517754,
+            545492359,
+            4268468663,
+            3499529547,
+            1437099964,
+            2702547544,
+            3433638243,
+            2581715763,
+            2787789398,
+            1060185593,
+            1593081372,
+            2418618748,
+            4260947970,
+            69676912,
+            2159744348,
+            86519011,
+            2512459080,
+            3838209314,
+            1220612927,
+            3339683548,
+            133810670,
+            1090789135,
+            1078426020,
+            1569222167,
+            845107691,
+            3583754449,
+            4072456591,
+            1091646820,
+            628848692,
+            1613405280,
+            3757631651,
+            526609435,
+            236106946,
+            48312990,
+            2942717905,
+            3402727701,
+            1797494240,
+            859738849,
+            992217954,
+            4005476642,
+            2243076622,
+            3870952857,
+            3732016268,
+            765654824,
+            3490871365,
+            2511836413,
+            1685915746,
+            3888969200,
+            1414112111,
+            2273134842,
+            3281911079,
+            4080962846,
+            172450625,
+            2569994100,
+            980381355,
+            4109958455,
+            2819808352,
+            2716589560,
+            2568741196,
+            3681446669,
+            3329971472,
+            1835478071,
+            660984891,
+            3704678404,
+            4045999559,
+            3422617507,
+            3040415634,
+            1762651403,
+            1719377915,
+            3470491036,
+            2693910283,
+            3642056355,
+            3138596744,
+            1364962596,
+            2073328063,
+            1983633131,
+            926494387,
+            3423689081,
+            2150032023,
+            4096667949,
+            1749200295,
+            3328846651,
+            309677260,
+            2016342300,
+            1779581495,
+            3079819751,
+            111262694,
+            1274766160,
+            443224088,
+            298511866,
+            1025883608,
+            3806446537,
+            1145181785,
+            168956806,
+            3641502830,
+            3584813610,
+            1689216846,
+            3666258015,
+            3200248200,
+            1692713982,
+            2646376535,
+            4042768518,
+            1618508792,
+            1610833997,
+            3523052358,
+            4130873264,
+            2001055236,
+            3610705100,
+            2202168115,
+            4028541809,
+            2961195399,
+            1006657119,
+            2006996926,
+            3186142756,
+            1430667929,
+            3210227297,
+            1314452623,
+            4074634658,
+            4101304120,
+            2273951170,
+            1399257539,
+            3367210612,
+            3027628629,
+            1190975929,
+            2062231137,
+            2333990788,
+            2221543033,
+            2438960610,
+            1181637006,
+            548689776,
+            2362791313,
+            3372408396,
+            3104550113,
+            3145860560,
+            296247880,
+            1970579870,
+            3078560182,
+            3769228297,
+            1714227617,
+            3291629107,
+            3898220290,
+            166772364,
+            1251581989,
+            493813264,
+            448347421,
+            195405023,
+            2709975567,
+            677966185,
+            3703036547,
+            1463355134,
+            2715995803,
+            1338867538,
+            1343315457,
+            2802222074,
+            2684532164,
+            233230375,
+            2599980071,
+            2000651841,
+            3277868038,
+            1638401717,
+            4028070440,
+            3237316320,
+            6314154,
+            819756386,
+            300326615,
+            590932579,
+            1405279636,
+            3267499572,
+            3150704214,
+            2428286686,
+            3959192993,
+            3461946742,
+            1862657033,
+            1266418056,
+            963775037,
+            2089974820,
+            2263052895,
+            1917689273,
+            448879540,
+            3550394620,
+            3981727096,
+            150775221,
+            3627908307,
+            1303187396,
+            508620638,
+            2975983352,
+            2726630617,
+            1817252668,
+            1876281319,
+            1457606340,
+            908771278,
+            3720792119,
+            3617206836,
+            2455994898,
+            1729034894,
+            1080033504
+          ],
+          [
+            976866871,
+            3556439503,
+            2881648439,
+            1522871579,
+            1555064734,
+            1336096578,
+            3548522304,
+            2579274686,
+            3574697629,
+            3205460757,
+            3593280638,
+            3338716283,
+            3079412587,
+            564236357,
+            2993598910,
+            1781952180,
+            1464380207,
+            3163844217,
+            3332601554,
+            1699332808,
+            1393555694,
+            1183702653,
+            3581086237,
+            1288719814,
+            691649499,
+            2847557200,
+            2895455976,
+            3193889540,
+            2717570544,
+            1781354906,
+            1676643554,
+            2592534050,
+            3230253752,
+            1126444790,
+            2770207658,
+            2633158820,
+            2210423226,
+            2615765581,
+            2414155088,
+            3127139286,
+            673620729,
+            2805611233,
+            1269405062,
+            4015350505,
+            3341807571,
+            4149409754,
+            1057255273,
+            2012875353,
+            2162469141,
+            2276492801,
+            2601117357,
+            993977747,
+            3918593370,
+            2654263191,
+            753973209,
+            36408145,
+            2530585658,
+            25011837,
+            3520020182,
+            2088578344,
+            530523599,
+            2918365339,
+            1524020338,
+            1518925132,
+            3760827505,
+            3759777254,
+            1202760957,
+            3985898139,
+            3906192525,
+            674977740,
+            4174734889,
+            2031300136,
+            2019492241,
+            3983892565,
+            4153806404,
+            3822280332,
+            352677332,
+            2297720250,
+            60907813,
+            90501309,
+            3286998549,
+            1016092578,
+            2535922412,
+            2839152426,
+            457141659,
+            509813237,
+            4120667899,
+            652014361,
+            1966332200,
+            2975202805,
+            55981186,
+            2327461051,
+            676427537,
+            3255491064,
+            2882294119,
+            3433927263,
+            1307055953,
+            942726286,
+            933058658,
+            2468411793,
+            3933900994,
+            4215176142,
+            1361170020,
+            2001714738,
+            2830558078,
+            3274259782,
+            1222529897,
+            1679025792,
+            2729314320,
+            3714953764,
+            1770335741,
+            151462246,
+            3013232138,
+            1682292957,
+            1483529935,
+            471910574,
+            1539241949,
+            458788160,
+            3436315007,
+            1807016891,
+            3718408830,
+            978976581,
+            1043663428,
+            3165965781,
+            1927990952,
+            4200891579,
+            2372276910,
+            3208408903,
+            3533431907,
+            1412390302,
+            2931980059,
+            4132332400,
+            1947078029,
+            3881505623,
+            4168226417,
+            2941484381,
+            1077988104,
+            1320477388,
+            886195818,
+            18198404,
+            3786409e3,
+            2509781533,
+            112762804,
+            3463356488,
+            1866414978,
+            891333506,
+            18488651,
+            661792760,
+            1628790961,
+            3885187036,
+            3141171499,
+            876946877,
+            2693282273,
+            1372485963,
+            791857591,
+            2686433993,
+            3759982718,
+            3167212022,
+            3472953795,
+            2716379847,
+            445679433,
+            3561995674,
+            3504004811,
+            3574258232,
+            54117162,
+            3331405415,
+            2381918588,
+            3769707343,
+            4154350007,
+            1140177722,
+            4074052095,
+            668550556,
+            3214352940,
+            367459370,
+            261225585,
+            2610173221,
+            4209349473,
+            3468074219,
+            3265815641,
+            314222801,
+            3066103646,
+            3808782860,
+            282218597,
+            3406013506,
+            3773591054,
+            379116347,
+            1285071038,
+            846784868,
+            2669647154,
+            3771962079,
+            3550491691,
+            2305946142,
+            453669953,
+            1268987020,
+            3317592352,
+            3279303384,
+            3744833421,
+            2610507566,
+            3859509063,
+            266596637,
+            3847019092,
+            517658769,
+            3462560207,
+            3443424879,
+            370717030,
+            4247526661,
+            2224018117,
+            4143653529,
+            4112773975,
+            2788324899,
+            2477274417,
+            1456262402,
+            2901442914,
+            1517677493,
+            1846949527,
+            2295493580,
+            3734397586,
+            2176403920,
+            1280348187,
+            1908823572,
+            3871786941,
+            846861322,
+            1172426758,
+            3287448474,
+            3383383037,
+            1655181056,
+            3139813346,
+            901632758,
+            1897031941,
+            2986607138,
+            3066810236,
+            3447102507,
+            1393639104,
+            373351379,
+            950779232,
+            625454576,
+            3124240540,
+            4148612726,
+            2007998917,
+            544563296,
+            2244738638,
+            2330496472,
+            2058025392,
+            1291430526,
+            424198748,
+            50039436,
+            29584100,
+            3605783033,
+            2429876329,
+            2791104160,
+            1057563949,
+            3255363231,
+            3075367218,
+            3463963227,
+            1469046755,
+            985887462
+          ]
+        ];
+        var BLOWFISH_CTX = {
+          pbox: [],
+          sbox: []
+        };
+        function F(ctx, x) {
+          let a = x >> 24 & 255;
+          let b = x >> 16 & 255;
+          let c = x >> 8 & 255;
+          let d = x & 255;
+          let y = ctx.sbox[0][a] + ctx.sbox[1][b];
+          y = y ^ ctx.sbox[2][c];
+          y = y + ctx.sbox[3][d];
+          return y;
+        }
+        function BlowFish_Encrypt(ctx, left, right) {
+          let Xl = left;
+          let Xr = right;
+          let temp;
+          for (let i = 0; i < N; ++i) {
+            Xl = Xl ^ ctx.pbox[i];
+            Xr = F(ctx, Xl) ^ Xr;
+            temp = Xl;
+            Xl = Xr;
+            Xr = temp;
+          }
+          temp = Xl;
+          Xl = Xr;
+          Xr = temp;
+          Xr = Xr ^ ctx.pbox[N];
+          Xl = Xl ^ ctx.pbox[N + 1];
+          return { left: Xl, right: Xr };
+        }
+        function BlowFish_Decrypt(ctx, left, right) {
+          let Xl = left;
+          let Xr = right;
+          let temp;
+          for (let i = N + 1; i > 1; --i) {
+            Xl = Xl ^ ctx.pbox[i];
+            Xr = F(ctx, Xl) ^ Xr;
+            temp = Xl;
+            Xl = Xr;
+            Xr = temp;
+          }
+          temp = Xl;
+          Xl = Xr;
+          Xr = temp;
+          Xr = Xr ^ ctx.pbox[1];
+          Xl = Xl ^ ctx.pbox[0];
+          return { left: Xl, right: Xr };
+        }
+        function BlowFishInit(ctx, key, keysize) {
+          for (let Row = 0; Row < 4; Row++) {
+            ctx.sbox[Row] = [];
+            for (let Col = 0; Col < 256; Col++) {
+              ctx.sbox[Row][Col] = ORIG_S[Row][Col];
+            }
+          }
+          let keyIndex = 0;
+          for (let index = 0; index < N + 2; index++) {
+            ctx.pbox[index] = ORIG_P[index] ^ key[keyIndex];
+            keyIndex++;
+            if (keyIndex >= keysize) {
+              keyIndex = 0;
+            }
+          }
+          let Data1 = 0;
+          let Data2 = 0;
+          let res = 0;
+          for (let i = 0; i < N + 2; i += 2) {
+            res = BlowFish_Encrypt(ctx, Data1, Data2);
+            Data1 = res.left;
+            Data2 = res.right;
+            ctx.pbox[i] = Data1;
+            ctx.pbox[i + 1] = Data2;
+          }
+          for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 256; j += 2) {
+              res = BlowFish_Encrypt(ctx, Data1, Data2);
+              Data1 = res.left;
+              Data2 = res.right;
+              ctx.sbox[i][j] = Data1;
+              ctx.sbox[i][j + 1] = Data2;
+            }
+          }
+          return true;
+        }
+        var Blowfish = C_algo.Blowfish = BlockCipher.extend({
+          _doReset: function() {
+            if (this._keyPriorReset === this._key) {
+              return;
+            }
+            var key = this._keyPriorReset = this._key;
+            var keyWords = key.words;
+            var keySize = key.sigBytes / 4;
+            BlowFishInit(BLOWFISH_CTX, keyWords, keySize);
+          },
+          encryptBlock: function(M, offset) {
+            var res = BlowFish_Encrypt(BLOWFISH_CTX, M[offset], M[offset + 1]);
+            M[offset] = res.left;
+            M[offset + 1] = res.right;
+          },
+          decryptBlock: function(M, offset) {
+            var res = BlowFish_Decrypt(BLOWFISH_CTX, M[offset], M[offset + 1]);
+            M[offset] = res.left;
+            M[offset + 1] = res.right;
+          },
+          blockSize: 64 / 32,
+          keySize: 128 / 32,
+          ivSize: 64 / 32
+        });
+        C.Blowfish = BlockCipher._createHelper(Blowfish);
+      })();
+      return CryptoJS.Blowfish;
+    });
+  }
+});
+
+// node_modules/crypto-js/index.js
+var require_crypto_js = __commonJS({
+  "node_modules/crypto-js/index.js"(exports, module) {
+    (function(root, factory, undef) {
+      if (typeof exports === "object") {
+        module.exports = exports = factory(require_core(), require_x64_core(), require_lib_typedarrays(), require_enc_utf16(), require_enc_base64(), require_enc_base64url(), require_md5(), require_sha1(), require_sha256(), require_sha224(), require_sha512(), require_sha384(), require_sha3(), require_ripemd160(), require_hmac(), require_pbkdf2(), require_evpkdf(), require_cipher_core(), require_mode_cfb(), require_mode_ctr(), require_mode_ctr_gladman(), require_mode_ofb(), require_mode_ecb(), require_pad_ansix923(), require_pad_iso10126(), require_pad_iso97971(), require_pad_zeropadding(), require_pad_nopadding(), require_format_hex(), require_aes(), require_tripledes(), require_rc4(), require_rabbit(), require_rabbit_legacy(), require_blowfish());
+      } else if (typeof define === "function" && define.amd) {
+        define(["./core", "./x64-core", "./lib-typedarrays", "./enc-utf16", "./enc-base64", "./enc-base64url", "./md5", "./sha1", "./sha256", "./sha224", "./sha512", "./sha384", "./sha3", "./ripemd160", "./hmac", "./pbkdf2", "./evpkdf", "./cipher-core", "./mode-cfb", "./mode-ctr", "./mode-ctr-gladman", "./mode-ofb", "./mode-ecb", "./pad-ansix923", "./pad-iso10126", "./pad-iso97971", "./pad-zeropadding", "./pad-nopadding", "./format-hex", "./aes", "./tripledes", "./rc4", "./rabbit", "./rabbit-legacy", "./blowfish"], factory);
+      } else {
+        root.CryptoJS = factory(root.CryptoJS);
+      }
+    })(exports, function(CryptoJS) {
+      return CryptoJS;
+    });
+  }
+});
+
+// node_modules/neverthrow/dist/index.cjs.js
+var require_index_cjs = __commonJS({
+  "node_modules/neverthrow/dist/index.cjs.js"(exports) {
+    "use strict";
+    var defaultErrorConfig = {
+      withStackTrace: false
+    };
+    var createNeverThrowError = (message2, result, config2 = defaultErrorConfig) => {
+      const data = result.isOk() ? { type: "Ok", value: result.value } : { type: "Err", value: result.error };
+      const maybeStack = config2.withStackTrace ? new Error().stack : void 0;
+      return {
+        data,
+        message: message2,
+        stack: maybeStack
+      };
+    };
+    function __awaiter(thisArg, _arguments, P, generator) {
+      function adopt(value) {
+        return value instanceof P ? value : new P(function(resolve) {
+          resolve(value);
+        });
+      }
+      return new (P || (P = Promise))(function(resolve, reject) {
+        function fulfilled(value) {
+          try {
+            step(generator.next(value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function rejected(value) {
+          try {
+            step(generator["throw"](value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function step(result) {
+          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+        }
+        step((generator = generator.apply(thisArg, [])).next());
+      });
+    }
+    function __values(o) {
+      var s2 = typeof Symbol === "function" && Symbol.iterator, m = s2 && o[s2], i = 0;
+      if (m) return m.call(o);
+      if (o && typeof o.length === "number") return {
+        next: function() {
+          if (o && i >= o.length) o = void 0;
+          return { value: o && o[i++], done: !o };
+        }
+      };
+      throw new TypeError(s2 ? "Object is not iterable." : "Symbol.iterator is not defined.");
+    }
+    function __await(v) {
+      return this instanceof __await ? (this.v = v, this) : new __await(v);
+    }
+    function __asyncGenerator(thisArg, _arguments, generator) {
+      if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+      var g = generator.apply(thisArg, _arguments || []), i, q = [];
+      return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function() {
+        return this;
+      }, i;
+      function verb(n) {
+        if (g[n]) i[n] = function(v) {
+          return new Promise(function(a, b) {
+            q.push([n, v, a, b]) > 1 || resume(n, v);
+          });
+        };
+      }
+      function resume(n, v) {
+        try {
+          step(g[n](v));
+        } catch (e) {
+          settle(q[0][3], e);
+        }
+      }
+      function step(r) {
+        r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);
+      }
+      function fulfill(value) {
+        resume("next", value);
+      }
+      function reject(value) {
+        resume("throw", value);
+      }
+      function settle(f, v) {
+        if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]);
+      }
+    }
+    function __asyncDelegator(o) {
+      var i, p;
+      return i = {}, verb("next"), verb("throw", function(e) {
+        throw e;
+      }), verb("return"), i[Symbol.iterator] = function() {
+        return this;
+      }, i;
+      function verb(n, f) {
+        i[n] = o[n] ? function(v) {
+          return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v;
+        } : f;
+      }
+    }
+    function __asyncValues(o) {
+      if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+      var m = o[Symbol.asyncIterator], i;
+      return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function() {
+        return this;
+      }, i);
+      function verb(n) {
+        i[n] = o[n] && function(v) {
+          return new Promise(function(resolve, reject) {
+            v = o[n](v), settle(resolve, reject, v.done, v.value);
+          });
+        };
+      }
+      function settle(resolve, reject, d, v) {
+        Promise.resolve(v).then(function(v2) {
+          resolve({ value: v2, done: d });
+        }, reject);
+      }
+    }
+    var ResultAsync = class _ResultAsync {
+      constructor(res) {
+        this._promise = res;
+      }
+      static fromSafePromise(promise2) {
+        const newPromise = promise2.then((value) => new Ok(value));
+        return new _ResultAsync(newPromise);
+      }
+      static fromPromise(promise2, errorFn) {
+        const newPromise = promise2.then((value) => new Ok(value)).catch((e) => new Err(errorFn(e)));
+        return new _ResultAsync(newPromise);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      static fromThrowable(fn, errorFn) {
+        return (...args) => {
+          return new _ResultAsync((() => __awaiter(this, void 0, void 0, function* () {
+            try {
+              return new Ok(yield fn(...args));
+            } catch (error48) {
+              return new Err(errorFn ? errorFn(error48) : error48);
+            }
+          }))());
+        };
+      }
+      static combine(asyncResultList) {
+        return combineResultAsyncList(asyncResultList);
+      }
+      static combineWithAllErrors(asyncResultList) {
+        return combineResultAsyncListWithAllErrors(asyncResultList);
+      }
+      map(f) {
+        return new _ResultAsync(this._promise.then((res) => __awaiter(this, void 0, void 0, function* () {
+          if (res.isErr()) {
+            return new Err(res.error);
+          }
+          return new Ok(yield f(res.value));
+        })));
+      }
+      andThrough(f) {
+        return new _ResultAsync(this._promise.then((res) => __awaiter(this, void 0, void 0, function* () {
+          if (res.isErr()) {
+            return new Err(res.error);
+          }
+          const newRes = yield f(res.value);
+          if (newRes.isErr()) {
+            return new Err(newRes.error);
+          }
+          return new Ok(res.value);
+        })));
+      }
+      andTee(f) {
+        return new _ResultAsync(this._promise.then((res) => __awaiter(this, void 0, void 0, function* () {
+          if (res.isErr()) {
+            return new Err(res.error);
+          }
+          try {
+            yield f(res.value);
+          } catch (e) {
+          }
+          return new Ok(res.value);
+        })));
+      }
+      mapErr(f) {
+        return new _ResultAsync(this._promise.then((res) => __awaiter(this, void 0, void 0, function* () {
+          if (res.isOk()) {
+            return new Ok(res.value);
+          }
+          return new Err(yield f(res.error));
+        })));
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+      andThen(f) {
+        return new _ResultAsync(this._promise.then((res) => {
+          if (res.isErr()) {
+            return new Err(res.error);
+          }
+          const newValue = f(res.value);
+          return newValue instanceof _ResultAsync ? newValue._promise : newValue;
+        }));
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+      orElse(f) {
+        return new _ResultAsync(this._promise.then((res) => __awaiter(this, void 0, void 0, function* () {
+          if (res.isErr()) {
+            return f(res.error);
+          }
+          return new Ok(res.value);
+        })));
+      }
+      match(ok5, _err) {
+        return this._promise.then((res) => res.match(ok5, _err));
+      }
+      unwrapOr(t) {
+        return this._promise.then((res) => res.unwrapOr(t));
+      }
+      /**
+       * Emulates Rust's `?` operator in `safeTry`'s body. See also `safeTry`.
+       */
+      safeUnwrap() {
+        return __asyncGenerator(this, arguments, function* safeUnwrap_1() {
+          return yield __await(yield __await(yield* __asyncDelegator(__asyncValues(yield __await(this._promise.then((res) => res.safeUnwrap()))))));
+        });
+      }
+      // Makes ResultAsync implement PromiseLike<Result>
+      then(successCallback, failureCallback) {
+        return this._promise.then(successCallback, failureCallback);
+      }
+    };
+    var okAsync = (value) => new ResultAsync(Promise.resolve(new Ok(value)));
+    var errAsync = (err5) => new ResultAsync(Promise.resolve(new Err(err5)));
+    var fromPromise = ResultAsync.fromPromise;
+    var fromSafePromise = ResultAsync.fromSafePromise;
+    var fromAsyncThrowable = ResultAsync.fromThrowable;
+    var combineResultList = (resultList) => {
+      let acc = ok4([]);
+      for (const result of resultList) {
+        if (result.isErr()) {
+          acc = err4(result.error);
+          break;
+        } else {
+          acc.map((list) => list.push(result.value));
+        }
+      }
+      return acc;
+    };
+    var combineResultAsyncList = (asyncResultList) => ResultAsync.fromSafePromise(Promise.all(asyncResultList)).andThen(combineResultList);
+    var combineResultListWithAllErrors = (resultList) => {
+      let acc = ok4([]);
+      for (const result of resultList) {
+        if (result.isErr() && acc.isErr()) {
+          acc.error.push(result.error);
+        } else if (result.isErr() && acc.isOk()) {
+          acc = err4([result.error]);
+        } else if (result.isOk() && acc.isOk()) {
+          acc.value.push(result.value);
+        }
+      }
+      return acc;
+    };
+    var combineResultAsyncListWithAllErrors = (asyncResultList) => ResultAsync.fromSafePromise(Promise.all(asyncResultList)).andThen(combineResultListWithAllErrors);
+    exports.Result = void 0;
+    (function(Result) {
+      function fromThrowable2(fn, errorFn) {
+        return (...args) => {
+          try {
+            const result = fn(...args);
+            return ok4(result);
+          } catch (e) {
+            return err4(errorFn ? errorFn(e) : e);
+          }
+        };
+      }
+      Result.fromThrowable = fromThrowable2;
+      function combine(resultList) {
+        return combineResultList(resultList);
+      }
+      Result.combine = combine;
+      function combineWithAllErrors(resultList) {
+        return combineResultListWithAllErrors(resultList);
+      }
+      Result.combineWithAllErrors = combineWithAllErrors;
+    })(exports.Result || (exports.Result = {}));
+    var ok4 = (value) => new Ok(value);
+    function err4(err5) {
+      return new Err(err5);
+    }
+    function safeTry(body) {
+      const n = body().next();
+      if (n instanceof Promise) {
+        return new ResultAsync(n.then((r) => r.value));
+      }
+      return n.value;
+    }
+    var Ok = class {
+      constructor(value) {
+        this.value = value;
+      }
+      isOk() {
+        return true;
+      }
+      isErr() {
+        return !this.isOk();
+      }
+      map(f) {
+        return ok4(f(this.value));
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      mapErr(_f) {
+        return ok4(this.value);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+      andThen(f) {
+        return f(this.value);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+      andThrough(f) {
+        return f(this.value).map((_value) => this.value);
+      }
+      andTee(f) {
+        try {
+          f(this.value);
+        } catch (e) {
+        }
+        return ok4(this.value);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+      orElse(_f) {
+        return ok4(this.value);
+      }
+      asyncAndThen(f) {
+        return f(this.value);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+      asyncAndThrough(f) {
+        return f(this.value).map(() => this.value);
+      }
+      asyncMap(f) {
+        return ResultAsync.fromSafePromise(f(this.value));
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      unwrapOr(_v) {
+        return this.value;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      match(ok5, _err) {
+        return ok5(this.value);
+      }
+      safeUnwrap() {
+        const value = this.value;
+        return (function* () {
+          return value;
+        })();
+      }
+      _unsafeUnwrap(_) {
+        return this.value;
+      }
+      _unsafeUnwrapErr(config2) {
+        throw createNeverThrowError("Called `_unsafeUnwrapErr` on an Ok", this, config2);
+      }
+    };
+    var Err = class {
+      constructor(error48) {
+        this.error = error48;
+      }
+      isOk() {
+        return false;
+      }
+      isErr() {
+        return !this.isOk();
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      map(_f) {
+        return err4(this.error);
+      }
+      mapErr(f) {
+        return err4(f(this.error));
+      }
+      andThrough(_f) {
+        return err4(this.error);
+      }
+      andTee(_f) {
+        return err4(this.error);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+      andThen(_f) {
+        return err4(this.error);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+      orElse(f) {
+        return f(this.error);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      asyncAndThen(_f) {
+        return errAsync(this.error);
+      }
+      asyncAndThrough(_f) {
+        return errAsync(this.error);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      asyncMap(_f) {
+        return errAsync(this.error);
+      }
+      unwrapOr(v) {
+        return v;
+      }
+      match(_ok, err5) {
+        return err5(this.error);
+      }
+      safeUnwrap() {
+        const error48 = this.error;
+        return (function* () {
+          yield err4(error48);
+          throw new Error("Do not use this generator out of `safeTry`");
+        })();
+      }
+      _unsafeUnwrap(config2) {
+        throw createNeverThrowError("Called `_unsafeUnwrap` on an Err", this, config2);
+      }
+      _unsafeUnwrapErr(_) {
+        return this.error;
+      }
+    };
+    var fromThrowable = exports.Result.fromThrowable;
+    exports.Err = Err;
+    exports.Ok = Ok;
+    exports.ResultAsync = ResultAsync;
+    exports.err = err4;
+    exports.errAsync = errAsync;
+    exports.fromAsyncThrowable = fromAsyncThrowable;
+    exports.fromPromise = fromPromise;
+    exports.fromSafePromise = fromSafePromise;
+    exports.fromThrowable = fromThrowable;
+    exports.ok = ok4;
+    exports.okAsync = okAsync;
+    exports.safeTry = safeTry;
+  }
+});
+
+// node_modules/@upstash/qstash/chunk-35B33QW3.mjs
+function updateWithAnalytics(providerInfo, analytics) {
+  switch (analytics.name) {
+    case "helicone": {
+      providerInfo.appendHeaders["Helicone-Auth"] = `Bearer ${analytics.token}`;
+      if (providerInfo.owner === "upstash") {
+        updateProviderInfo(providerInfo, "https://qstash.helicone.ai", [
+          "llm",
+          ...providerInfo.route
+        ]);
+      } else {
+        providerInfo.appendHeaders["Helicone-Target-Url"] = providerInfo.baseUrl;
+        updateProviderInfo(providerInfo, "https://gateway.helicone.ai", providerInfo.route);
+      }
+      return providerInfo;
+    }
+    default: {
+      throw new Error("Unknown analytics provider");
+    }
+  }
+}
+function updateProviderInfo(providerInfo, baseUrl2, route) {
+  providerInfo.baseUrl = baseUrl2;
+  providerInfo.route = route;
+  providerInfo.url = `${baseUrl2}/${route.join("/")}`;
+}
+function prefixHeaders(headers) {
+  const keysToBePrefixed = [...headers.keys()].filter((key) => !isIgnoredHeader(key));
+  for (const key of keysToBePrefixed) {
+    const value = headers.get(key);
+    if (value !== null) {
+      headers.set(`Upstash-Forward-${key}`, value);
+    }
+    headers.delete(key);
+  }
+  return headers;
+}
+function wrapWithGlobalHeaders(headers, globalHeaders, telemetryHeaders) {
+  if (!globalHeaders) {
+    return headers;
+  }
+  const finalHeaders = new Headers(globalHeaders);
+  headers.forEach((value, key) => {
+    finalHeaders.set(key, value);
+  });
+  telemetryHeaders?.forEach((value, key) => {
+    if (!value)
+      return;
+    finalHeaders.append(key, value);
+  });
+  return finalHeaders;
+}
+function processHeaders(request) {
+  const headers = prefixHeaders(new Headers(request.headers));
+  headers.set("Upstash-Method", request.method ?? "POST");
+  if (request.delay !== void 0) {
+    if (typeof request.delay === "string") {
+      headers.set("Upstash-Delay", request.delay);
+    } else {
+      headers.set("Upstash-Delay", `${request.delay.toFixed(0)}s`);
+    }
+  }
+  if (request.notBefore !== void 0) {
+    headers.set("Upstash-Not-Before", request.notBefore.toFixed(0));
+  }
+  if (request.deduplicationId !== void 0) {
+    headers.set("Upstash-Deduplication-Id", request.deduplicationId);
+  }
+  if (request.contentBasedDeduplication) {
+    headers.set("Upstash-Content-Based-Deduplication", "true");
+  }
+  if (request.retries !== void 0) {
+    headers.set("Upstash-Retries", request.retries.toFixed(0));
+  }
+  if (request.retryDelay !== void 0) {
+    headers.set("Upstash-Retry-Delay", request.retryDelay);
+  }
+  if (request.callback !== void 0) {
+    headers.set("Upstash-Callback", request.callback);
+  }
+  if (request.failureCallback !== void 0) {
+    headers.set("Upstash-Failure-Callback", request.failureCallback);
+  }
+  if (request.timeout !== void 0) {
+    if (typeof request.timeout === "string") {
+      headers.set("Upstash-Timeout", request.timeout);
+    } else {
+      headers.set("Upstash-Timeout", `${request.timeout}s`);
+    }
+  }
+  if (request.flowControl?.key) {
+    const parallelism = request.flowControl.parallelism?.toString();
+    const rate = (request.flowControl.rate ?? request.flowControl.ratePerSecond)?.toString();
+    const period = typeof request.flowControl.period === "number" ? `${request.flowControl.period}s` : request.flowControl.period;
+    const controlValue = [
+      parallelism ? `parallelism=${parallelism}` : void 0,
+      rate ? `rate=${rate}` : void 0,
+      period ? `period=${period}` : void 0
+    ].filter(Boolean);
+    if (controlValue.length === 0) {
+      throw new QstashError("Provide at least one of parallelism or ratePerSecond for flowControl");
+    }
+    headers.set("Upstash-Flow-Control-Key", request.flowControl.key);
+    headers.set("Upstash-Flow-Control-Value", controlValue.join(", "));
+  }
+  if (request.label !== void 0) {
+    headers.set("Upstash-Label", request.label);
+  }
+  if (request.redact !== void 0) {
+    const redactParts = [];
+    if (request.redact.body) {
+      redactParts.push("body");
+    }
+    if (request.redact.header !== void 0) {
+      if (request.redact.header === true) {
+        redactParts.push("header");
+      } else if (Array.isArray(request.redact.header) && request.redact.header.length > 0) {
+        for (const headerName of request.redact.header) {
+          redactParts.push(`header[${headerName}]`);
+        }
+      }
+    }
+    if (redactParts.length > 0) {
+      headers.set("Upstash-Redact-Fields", redactParts.join(","));
+    }
+  }
+  return headers;
+}
+function getRequestPath(request) {
+  const nonApiPath = request.url ?? request.urlGroup ?? request.topic;
+  if (nonApiPath)
+    return nonApiPath;
+  if (request.api?.name === "llm")
+    return `api/llm`;
+  if (request.api?.name === "email") {
+    const providerInfo = getProviderInfo(request.api, "not-needed");
+    return providerInfo.baseUrl;
+  }
+  throw new QstashError(`Failed to infer request path for ${JSON.stringify(request)}`);
+}
+function decodeBase64(base643) {
+  try {
+    const binString = atob(base643);
+    const intArray = Uint8Array.from(binString, (m) => m.codePointAt(0));
+    return new TextDecoder().decode(intArray);
+  } catch (error48) {
+    try {
+      const result = atob(base643);
+      console.warn(
+        `Upstash QStash: Failed while decoding base64 "${base643}". Decoding with atob and returning it instead. ${error48}`
+      );
+      return result;
+    } catch (error210) {
+      console.warn(
+        `Upstash QStash: Failed to decode base64 "${base643}" with atob. Returning it as it is. ${error210}`
+      );
+      return base643;
+    }
+  }
+}
+function buildBulkActionFilterPayload(request) {
+  const cursor = "cursor" in request ? request.cursor : void 0;
+  if ("all" in request) {
+    const count2 = "count" in request ? request.count ?? DEFAULT_BULK_COUNT : DEFAULT_BULK_COUNT;
+    return { count: count2, cursor };
+  }
+  if ("dlqIds" in request) {
+    const ids = request.dlqIds;
+    if (Array.isArray(ids) && ids.length === 0) {
+      throw new QstashError(
+        "Empty dlqIds array provided. If you intend to target all DLQ messages, use { all: true } explicitly."
+      );
+    }
+    return { dlqIds: ids, cursor };
+  }
+  if ("messageIds" in request && request.messageIds) {
+    if (request.messageIds.length === 0) {
+      throw new QstashError(
+        "Empty messageIds array provided. If you intend to target all messages, use { all: true } explicitly."
+      );
+    }
+    return { messageIds: request.messageIds, cursor };
+  }
+  const count = "count" in request ? request.count ?? DEFAULT_BULK_COUNT : DEFAULT_BULK_COUNT;
+  return {
+    ...renameUrlGroup(request.filter),
+    count,
+    cursor
+  };
+}
+function renameUrlGroup(filter) {
+  const { urlGroup, api, ...rest } = filter;
+  return { ...rest, ...urlGroup === void 0 ? {} : { topicName: urlGroup } };
+}
+function normalizeCursor(response) {
+  const cursor = response.cursor;
+  return { ...response, cursor: cursor || void 0 };
+}
+function getRuntime() {
+  if (typeof process === "object" && typeof process.versions == "object" && process.versions.bun)
+    return `bun@${process.versions.bun}`;
+  if (typeof EdgeRuntime === "string")
+    return "edge-light";
+  else if (typeof process === "object" && typeof process.version === "string")
+    return `node@${process.version}`;
+  return "";
+}
+function getSafeEnvironment() {
+  return typeof process === "undefined" ? {} : process.env;
+}
+function readEnvironmentVariables(environmentVariables, environment, region) {
+  const result = {};
+  for (const variable of environmentVariables) {
+    const key = region ? `${region}_${variable}` : variable;
+    result[variable] = environment[key];
+  }
+  return result;
+}
+function readClientEnvironmentVariables(environment, region) {
+  return readEnvironmentVariables(["QSTASH_URL", "QSTASH_TOKEN"], environment, region);
+}
+function readReceiverEnvironmentVariables(environment, region) {
+  return readEnvironmentVariables(
+    ["QSTASH_CURRENT_SIGNING_KEY", "QSTASH_NEXT_SIGNING_KEY"],
+    environment,
+    region
+  );
+}
+function normalizeRegionHeader(region) {
+  if (!region) {
+    return void 0;
+  }
+  region = region.replaceAll("-", "_").toUpperCase();
+  if (VALID_REGIONS.includes(region)) {
+    return region;
+  }
+  console.warn(
+    `[Upstash QStash] Invalid UPSTASH_REGION header value: "${region}". Expected one of: ${VALID_REGIONS.join(
+      ", "
+    )}.`
+  );
+  return void 0;
+}
+var import_crypto_js, import_neverthrow, import_neverthrow2, import_neverthrow3, BaseProvider, LLMProvider, upstash, openai, anthropic, custom, getProviderInfo, safeJoinHeaders, processApi, RATELIMIT_STATUS, QstashError, QstashRatelimitError, QstashChatRatelimitError, QstashDailyRatelimitError, QstashEmptyArrayError, QStashWorkflowError, QStashWorkflowAbort, formatWorkflowError, DEFAULT_BULK_COUNT, isIgnoredHeader, VALID_REGIONS, DEFAULT_QSTASH_URL, getRegionFromEnvironment, getReceiverSigningKeys, getClientCredentials, resolveCredentials, verifyCredentials, SignatureError, Receiver, DLQ, FlowControlApi, HttpClient, setupAnalytics, Chat, Messages, Queue, Schedules, UrlGroups, VERSION, Client, Workflow;
+var init_chunk_35B33QW3 = __esm({
+  "node_modules/@upstash/qstash/chunk-35B33QW3.mjs"() {
+    init_esm();
+    import_crypto_js = __toESM(require_crypto_js(), 1);
+    import_neverthrow = __toESM(require_index_cjs(), 1);
+    import_neverthrow2 = __toESM(require_index_cjs(), 1);
+    import_neverthrow3 = __toESM(require_index_cjs(), 1);
+    BaseProvider = class {
+      baseUrl;
+      token;
+      owner;
+      constructor(baseUrl2, token, owner) {
+        this.baseUrl = baseUrl2;
+        this.token = token;
+        this.owner = owner;
+      }
+      getUrl() {
+        return `${this.baseUrl}/${this.getRoute().join("/")}`;
+      }
+    };
+    LLMProvider = class extends BaseProvider {
+      apiKind = "llm";
+      organization;
+      method = "POST";
+      constructor(baseUrl2, token, owner, organization) {
+        super(baseUrl2, token, owner);
+        this.organization = organization;
+      }
+      getRoute() {
+        return this.owner === "anthropic" ? ["v1", "messages"] : ["v1", "chat", "completions"];
+      }
+      getHeaders(options) {
+        if (this.owner === "upstash" && !options.analytics) {
+          return { "content-type": "application/json" };
+        }
+        const header = this.owner === "anthropic" ? "x-api-key" : "authorization";
+        const headerValue = this.owner === "anthropic" ? this.token : `Bearer ${this.token}`;
+        const headers = {
+          [header]: headerValue,
+          "content-type": "application/json"
+        };
+        if (this.owner === "openai" && this.organization) {
+          headers["OpenAI-Organization"] = this.organization;
+        }
+        if (this.owner === "anthropic") {
+          headers["anthropic-version"] = "2023-06-01";
+        }
+        return headers;
+      }
+      /**
+       * Checks if callback exists and adds analytics in place if it's set.
+       *
+       * @param request
+       * @param options
+       */
+      onFinish(providerInfo, options) {
+        if (options.analytics) {
+          return updateWithAnalytics(providerInfo, options.analytics);
+        }
+        return providerInfo;
+      }
+    };
+    upstash = () => {
+      return new LLMProvider("https://qstash.upstash.io/llm", "", "upstash");
+    };
+    openai = ({
+      token,
+      organization
+    }) => {
+      return new LLMProvider("https://api.openai.com", token, "openai", organization);
+    };
+    anthropic = ({ token }) => {
+      return new LLMProvider("https://api.anthropic.com", token, "anthropic");
+    };
+    custom = ({
+      baseUrl: baseUrl2,
+      token
+    }) => {
+      const trimmedBaseUrl = baseUrl2.replace(/\/(v1\/)?chat\/completions$/, "");
+      return new LLMProvider(trimmedBaseUrl, token, "custom");
+    };
+    getProviderInfo = (api, upstashToken) => {
+      const { name, provider, ...parameters } = api;
+      const finalProvider = provider ?? upstash();
+      if (finalProvider.owner === "upstash" && !finalProvider.token) {
+        finalProvider.token = upstashToken;
+      }
+      if (!finalProvider.baseUrl)
+        throw new TypeError("baseUrl cannot be empty or undefined!");
+      if (!finalProvider.token)
+        throw new TypeError("token cannot be empty or undefined!");
+      if (finalProvider.apiKind !== name) {
+        throw new TypeError(
+          `Unexpected api name. Expected '${finalProvider.apiKind}', received ${name}`
+        );
+      }
+      const providerInfo = {
+        url: finalProvider.getUrl(),
+        baseUrl: finalProvider.baseUrl,
+        route: finalProvider.getRoute(),
+        appendHeaders: finalProvider.getHeaders(parameters),
+        owner: finalProvider.owner,
+        method: finalProvider.method
+      };
+      return finalProvider.onFinish(providerInfo, parameters);
+    };
+    safeJoinHeaders = (headers, record2) => {
+      const joinedHeaders = new Headers(record2);
+      for (const [header, value] of headers.entries()) {
+        joinedHeaders.set(header, value);
+      }
+      return joinedHeaders;
+    };
+    processApi = (request, headers, upstashToken) => {
+      if (!request.api) {
+        request.headers = headers;
+        return request;
+      }
+      const { url: url2, appendHeaders, owner, method } = getProviderInfo(request.api, upstashToken);
+      if (request.api.name === "llm") {
+        const callback = request.callback;
+        if (!callback) {
+          throw new TypeError("Callback cannot be undefined when using LLM api.");
+        }
+        return {
+          ...request,
+          method: request.method ?? method,
+          headers: safeJoinHeaders(headers, appendHeaders),
+          ...owner === "upstash" && !request.api.analytics ? { api: { name: "llm" }, url: void 0, callback } : { url: url2, api: void 0 }
+        };
+      } else {
+        return {
+          ...request,
+          method: request.method ?? method,
+          headers: safeJoinHeaders(headers, appendHeaders),
+          url: url2,
+          api: void 0
+        };
+      }
+    };
+    RATELIMIT_STATUS = 429;
+    QstashError = class extends Error {
+      status;
+      constructor(message2, status) {
+        super(message2);
+        this.name = "QstashError";
+        this.status = status;
+      }
+    };
+    QstashRatelimitError = class extends QstashError {
+      limit;
+      remaining;
+      reset;
+      constructor(args) {
+        super(`Exceeded burst rate limit. ${JSON.stringify(args)}`, RATELIMIT_STATUS);
+        this.name = "QstashRatelimitError";
+        this.limit = args.limit;
+        this.remaining = args.remaining;
+        this.reset = args.reset;
+      }
+    };
+    QstashChatRatelimitError = class extends QstashError {
+      limitRequests;
+      limitTokens;
+      remainingRequests;
+      remainingTokens;
+      resetRequests;
+      resetTokens;
+      constructor(args) {
+        super(`Exceeded chat rate limit. ${JSON.stringify(args)}`, RATELIMIT_STATUS);
+        this.name = "QstashChatRatelimitError";
+        this.limitRequests = args["limit-requests"];
+        this.limitTokens = args["limit-tokens"];
+        this.remainingRequests = args["remaining-requests"];
+        this.remainingTokens = args["remaining-tokens"];
+        this.resetRequests = args["reset-requests"];
+        this.resetTokens = args["reset-tokens"];
+      }
+    };
+    QstashDailyRatelimitError = class extends QstashError {
+      limit;
+      remaining;
+      reset;
+      constructor(args) {
+        super(`Exceeded daily rate limit. ${JSON.stringify(args)}`, RATELIMIT_STATUS);
+        this.name = "QstashDailyRatelimitError";
+        this.limit = args.limit;
+        this.remaining = args.remaining;
+        this.reset = args.reset;
+      }
+    };
+    QstashEmptyArrayError = class extends QstashError {
+      constructor(parameterName) {
+        super(
+          `Empty array provided for query parameter "${parameterName}". This would result in no filter being applied, which could affect all resources.`
+        );
+        this.name = "QstashEmptyArrayError";
+      }
+    };
+    QStashWorkflowError = class extends QstashError {
+      constructor(message2) {
+        super(message2);
+        this.name = "QStashWorkflowError";
+      }
+    };
+    QStashWorkflowAbort = class extends Error {
+      stepInfo;
+      stepName;
+      constructor(stepName, stepInfo) {
+        super(
+          `This is an Upstash Workflow error thrown after a step executes. It is expected to be raised. Make sure that you await for each step. Also, if you are using try/catch blocks, you should not wrap context.run/sleep/sleepUntil/call methods with try/catch. Aborting workflow after executing step '${stepName}'.`
+        );
+        this.name = "QStashWorkflowAbort";
+        this.stepName = stepName;
+        this.stepInfo = stepInfo;
+      }
+    };
+    formatWorkflowError = (error48) => {
+      return error48 instanceof Error ? {
+        error: error48.name,
+        message: error48.message
+      } : {
+        error: "Error",
+        message: "An error occured while executing workflow."
+      };
+    };
+    DEFAULT_BULK_COUNT = 100;
+    isIgnoredHeader = (header) => {
+      const lowerCaseHeader = header.toLowerCase();
+      return lowerCaseHeader.startsWith("content-type") || lowerCaseHeader.startsWith("upstash-");
+    };
+    VALID_REGIONS = ["EU_CENTRAL_1", "US_EAST_1"];
+    DEFAULT_QSTASH_URL = "https://qstash.upstash.io";
+    getRegionFromEnvironment = (environment) => {
+      const region = environment.QSTASH_REGION;
+      return normalizeRegionHeader(region);
+    };
+    getReceiverSigningKeys = ({
+      environment,
+      regionFromHeader,
+      config: config2
+    }) => {
+      if (config2?.currentSigningKey && config2.nextSigningKey) {
+        return {
+          currentSigningKey: config2.currentSigningKey,
+          nextSigningKey: config2.nextSigningKey
+        };
+      }
+      const regionEnvironment = getRegionFromEnvironment(environment);
+      if (regionEnvironment) {
+        const regionHeader = normalizeRegionHeader(regionFromHeader);
+        if (regionHeader) {
+          const regionCreds = readReceiverEnvironmentVariables(environment, regionHeader);
+          if (regionCreds.QSTASH_CURRENT_SIGNING_KEY && regionCreds.QSTASH_NEXT_SIGNING_KEY) {
+            return {
+              currentSigningKey: regionCreds.QSTASH_CURRENT_SIGNING_KEY,
+              nextSigningKey: regionCreds.QSTASH_NEXT_SIGNING_KEY,
+              region: regionHeader
+            };
+          } else {
+            console.warn(
+              `[Upstash QStash] Signing keys not found for region "${regionHeader}". Falling back to default signing keys.`
+            );
+          }
+        } else {
+          console.warn(
+            `[Upstash QStash] Invalid UPSTASH_REGION header value: "${regionFromHeader}". Expected one of: EU-CENTRAL-1, US-EAST-1. Falling back to default signing keys.`
+          );
+        }
+      }
+      const defaultCreds = readReceiverEnvironmentVariables(environment);
+      if (defaultCreds.QSTASH_CURRENT_SIGNING_KEY && defaultCreds.QSTASH_NEXT_SIGNING_KEY) {
+        return {
+          currentSigningKey: defaultCreds.QSTASH_CURRENT_SIGNING_KEY,
+          nextSigningKey: defaultCreds.QSTASH_NEXT_SIGNING_KEY
+        };
+      }
+    };
+    getClientCredentials = (clientCredentialConfig) => {
+      const credentials = resolveCredentials(clientCredentialConfig);
+      return verifyCredentials(credentials);
+    };
+    resolveCredentials = ({
+      environment,
+      config: config2
+    }) => {
+      if (config2?.baseUrl && config2.token) {
+        return {
+          baseUrl: config2.baseUrl,
+          token: config2.token
+        };
+      }
+      const region = getRegionFromEnvironment(environment);
+      if (region) {
+        const regionCreds = readClientEnvironmentVariables(environment, region);
+        if (regionCreds.QSTASH_URL && regionCreds.QSTASH_TOKEN) {
+          return {
+            baseUrl: regionCreds.QSTASH_URL,
+            token: regionCreds.QSTASH_TOKEN,
+            region
+          };
+        } else {
+          console.warn(
+            `[Upstash QStash] QSTASH_REGION is set to "${region}" but credentials are missing. Expected ${region}_QSTASH_URL and ${region}_QSTASH_TOKEN. Falling back to default credentials.`
+          );
+        }
+      }
+      const defaultCreds = readClientEnvironmentVariables(environment);
+      return {
+        baseUrl: config2?.baseUrl ?? defaultCreds.QSTASH_URL ?? DEFAULT_QSTASH_URL,
+        token: config2?.token ?? defaultCreds.QSTASH_TOKEN ?? ""
+      };
+    };
+    verifyCredentials = (credentials) => {
+      const token = credentials.token;
+      let baseUrl2 = credentials.baseUrl;
+      baseUrl2 = baseUrl2.replace(/\/$/, "");
+      if (baseUrl2 === "https://qstash.upstash.io/v2/publish") {
+        baseUrl2 = DEFAULT_QSTASH_URL;
+      }
+      if (!token) {
+        console.warn(
+          "[Upstash QStash] client token is not set. Either pass a token or set QSTASH_TOKEN env variable."
+        );
+      }
+      return { baseUrl: baseUrl2, token };
+    };
+    SignatureError = class extends Error {
+      constructor(message2) {
+        super(message2);
+        this.name = "SignatureError";
+      }
+    };
+    Receiver = class {
+      currentSigningKey;
+      nextSigningKey;
+      constructor(config2) {
+        this.currentSigningKey = config2?.currentSigningKey;
+        this.nextSigningKey = config2?.nextSigningKey;
+      }
+      /**
+       * Verify the signature of a request.
+       *
+       * Tries to verify the signature with the current signing key.
+       * If that fails, maybe because you have rotated the keys recently, it will
+       * try to verify the signature with the next signing key.
+       *
+       * If that fails, the signature is invalid and a `SignatureError` is thrown.
+       */
+      async verify(request) {
+        const environment = getSafeEnvironment();
+        const signingKeys = getReceiverSigningKeys({
+          environment,
+          regionFromHeader: request.upstashRegion,
+          config: {
+            currentSigningKey: this.currentSigningKey,
+            nextSigningKey: this.nextSigningKey
+          }
+        });
+        if (!signingKeys) {
+          throw new Error(
+            "[Upstash QStash] No signing keys available for verification. See the warning above for more details."
+          );
+        }
+        let payload;
+        try {
+          payload = await this.verifyWithKey(signingKeys.currentSigningKey, request);
+        } catch {
+          payload = await this.verifyWithKey(signingKeys.nextSigningKey, request);
+        }
+        this.verifyBodyAndUrl(payload, request);
+        return true;
+      }
+      /**
+       * Verify signature with a specific signing key
+       */
+      async verifyWithKey(key, request) {
+        const jwt3 = await jwtVerify(request.signature, new TextEncoder().encode(key), {
+          issuer: "Upstash",
+          clockTolerance: request.clockTolerance
+        }).catch((error48) => {
+          throw new SignatureError(error48.message);
+        });
+        return jwt3.payload;
+      }
+      verifyBodyAndUrl(payload, request) {
+        const p = payload;
+        if (request.url !== void 0 && p.sub !== request.url) {
+          throw new SignatureError(`invalid subject: ${p.sub}, want: ${request.url}`);
+        }
+        const bodyHash = import_crypto_js.default.SHA256(request.body).toString(import_crypto_js.default.enc.Base64url);
+        const padding = new RegExp(/=+$/);
+        if (p.body.replace(padding, "") !== bodyHash.replace(padding, "")) {
+          throw new SignatureError(`body hash does not match, want: ${p.body}, got: ${bodyHash}`);
+        }
+      }
+    };
+    DLQ = class {
+      http;
+      constructor(http2) {
+        this.http = http2;
+      }
+      /**
+       * List messages in the dlq
+       *
+       * Can be called with:
+       * - Filters: `listMessages({ filter: { url: "https://example.com" } })`
+       * - DLQ IDs: `listMessages({ dlqIds: ["id1", "id2"] })`
+       * - No filter (list all): `listMessages()`
+       */
+      async listMessages(options = {}) {
+        const query = {
+          count: options.count,
+          ..."dlqIds" in options ? { dlqIds: options.dlqIds } : { ...renameUrlGroup(options.filter ?? {}), cursor: options.cursor }
+        };
+        const messagesPayload = await this.http.request({
+          method: "GET",
+          path: ["v2", "dlq"],
+          query
+        });
+        return {
+          messages: messagesPayload.messages.map((message2) => {
+            return {
+              ...message2,
+              urlGroup: message2.topicName,
+              ratePerSecond: "rate" in message2 ? message2.rate : void 0
+            };
+          }),
+          cursor: messagesPayload.cursor
+        };
+      }
+      /**
+       * Remove messages from the dlq.
+       *
+       * Can be called with:
+       * - A single dlqId: `delete("id")`
+       * - An array of dlqIds: `delete(["id1", "id2"])`
+       * - An object with dlqIds: `delete({ dlqIds: ["id1", "id2"] })`
+       * - A filter object: `delete({ filter: { url: "https://example.com", label: "label" } })`
+       * - All messages: `delete({ all: true })`
+       *
+       * Pass `count` to limit the number of messages processed per call (defaults to 100).
+       * Call in a loop until cursor is undefined:
+       *
+       * ```ts
+       * let cursor: string | undefined;
+       * do {
+       *   const result = await dlq.delete({ all: true, count: 100, cursor });
+       *   cursor = result.cursor;
+       * } while (cursor);
+       * ```
+       */
+      async delete(request) {
+        if (typeof request === "string") {
+          await this.http.request({
+            method: "DELETE",
+            path: ["v2", "dlq", request],
+            parseResponseAsJson: false
+          });
+          return { deleted: 1 };
+        }
+        if (Array.isArray(request) && request.length === 0)
+          return { deleted: 0 };
+        const filters = Array.isArray(request) ? { dlqIds: request } : request;
+        return await this.http.request({
+          method: "DELETE",
+          path: ["v2", "dlq"],
+          query: buildBulkActionFilterPayload(filters)
+        });
+      }
+      /**
+       * Remove multiple messages from the dlq using their `dlqId`s
+       *
+       * @deprecated Use `delete` instead
+       */
+      async deleteMany(request) {
+        return await this.delete(request);
+      }
+      /**
+       * Retry messages from the dlq.
+       *
+       * Can be called with:
+       * - A single dlqId: `retry("id")`
+       * - An array of dlqIds: `retry(["id1", "id2"])`
+       * - An object with dlqIds: `retry({ dlqIds: ["id1", "id2"] })`
+       * - A filter object: `retry({ filter: { url: "https://example.com", label: "label" } })`
+       * - All messages: `retry({ all: true })`
+       *
+       * Pass `count` to limit the number of messages processed per call (defaults to 100).
+       * Call in a loop until cursor is undefined:
+       *
+       * ```ts
+       * let cursor: string | undefined;
+       * do {
+       *   const result = await dlq.retry({ all: true, count: 100, cursor });
+       *   cursor = result.cursor;
+       * } while (cursor);
+       * ```
+       */
+      async retry(request) {
+        if (typeof request === "string")
+          request = [request];
+        if (Array.isArray(request) && request.length === 0)
+          return { responses: [] };
+        const filters = Array.isArray(request) ? { dlqIds: request } : request;
+        return normalizeCursor(
+          await this.http.request({
+            method: "POST",
+            path: ["v2", "dlq", "retry"],
+            query: buildBulkActionFilterPayload(filters)
+          })
+        );
+      }
+    };
+    FlowControlApi = class {
+      http;
+      constructor(http2) {
+        this.http = http2;
+      }
+      /**
+       * Get a single flow control by key.
+       */
+      async get(flowControlKey) {
+        return await this.http.request({
+          method: "GET",
+          path: ["v2", "flowControl", flowControlKey]
+        });
+      }
+      /**
+       * Get the global parallelism info.
+       */
+      async getGlobalParallelism() {
+        const response = await this.http.request({
+          method: "GET",
+          path: ["v2", "globalParallelism"]
+        });
+        return {
+          parallelismMax: response.parallelismMax ?? 0,
+          parallelismCount: response.parallelismCount ?? 0
+        };
+      }
+      /**
+       * Pause message delivery for a flow-control key.
+       *
+       * Messages already in the waitlist will remain there.
+       * New incoming messages will be added directly to the waitlist.
+       */
+      async pause(flowControlKey) {
+        await this.http.request({
+          method: "POST",
+          path: ["v2", "flowControl", flowControlKey, "pause"],
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Resume message delivery for a flow-control key.
+       */
+      async resume(flowControlKey) {
+        await this.http.request({
+          method: "POST",
+          path: ["v2", "flowControl", flowControlKey, "resume"],
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Pin a processing configuration for a flow-control key.
+       *
+       * While pinned, the system ignores configurations provided by incoming
+       * messages and uses the pinned configuration instead.
+       */
+      async pin(flowControlKey, options) {
+        await this.http.request({
+          method: "POST",
+          path: ["v2", "flowControl", flowControlKey, "pin"],
+          query: {
+            parallelism: options.parallelism,
+            rate: options.rate,
+            period: options.period
+          },
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Remove the pinned configuration for a flow-control key.
+       *
+       * After unpinning, the system resumes updating the configuration
+       * based on incoming messages.
+       */
+      async unpin(flowControlKey, options) {
+        await this.http.request({
+          method: "POST",
+          path: ["v2", "flowControl", flowControlKey, "unpin"],
+          query: {
+            parallelism: options.parallelism,
+            rate: options.rate
+          },
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Reset the rate configuration state for a flow-control key.
+       *
+       * Clears the current rate count and immediately ends the current period.
+       * The current timestamp becomes the start of the new rate period.
+       */
+      async resetRate(flowControlKey) {
+        await this.http.request({
+          method: "POST",
+          path: ["v2", "flowControl", flowControlKey, "resetRate"],
+          parseResponseAsJson: false
+        });
+      }
+    };
+    HttpClient = class {
+      baseUrl;
+      authorization;
+      options;
+      retry;
+      headers;
+      telemetryHeaders;
+      constructor(config2) {
+        this.baseUrl = config2.baseUrl.replace(/\/$/, "");
+        this.authorization = config2.authorization;
+        this.retry = // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        typeof config2.retry === "boolean" && !config2.retry ? {
+          attempts: 1,
+          backoff: () => 0
+        } : {
+          attempts: config2.retry?.retries ?? 5,
+          backoff: config2.retry?.backoff ?? ((retryCount) => Math.exp(retryCount) * 50)
+        };
+        this.headers = config2.headers;
+        this.telemetryHeaders = config2.telemetryHeaders;
+      }
+      async request(request) {
+        const { response } = await this.requestWithBackoff(request);
+        if (request.parseResponseAsJson === false) {
+          return void 0;
+        }
+        return await response.json();
+      }
+      async *requestStream(request) {
+        const { response } = await this.requestWithBackoff(request);
+        if (!response.body) {
+          throw new Error("No response body");
+        }
+        const body = response.body;
+        const reader = body.getReader();
+        const decoder2 = new TextDecoder();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
+            const chunkText = decoder2.decode(value, { stream: true });
+            const chunks = chunkText.split("\n").filter(Boolean);
+            for (const chunk of chunks) {
+              if (chunk.startsWith("data: ")) {
+                const data = chunk.slice(6);
+                if (data === "[DONE]") {
+                  break;
+                }
+                yield JSON.parse(data);
+              }
+            }
+          }
+        } finally {
+          await reader.cancel();
+        }
+      }
+      requestWithBackoff = async (request) => {
+        const [url2, requestOptions] = this.processRequest(request);
+        let response = void 0;
+        let error48 = void 0;
+        for (let index = 0; index <= this.retry.attempts; index++) {
+          try {
+            response = await fetch(url2.toString(), requestOptions);
+            break;
+          } catch (error_) {
+            error48 = error_;
+            if (index < this.retry.attempts) {
+              await new Promise((r) => setTimeout(r, this.retry.backoff(index)));
+            }
+          }
+        }
+        if (!response) {
+          throw error48 ?? new Error("Exhausted all retries");
+        }
+        await this.checkResponse(response);
+        return {
+          response,
+          error: error48
+        };
+      };
+      processRequest = (request) => {
+        const headers = new Headers(request.headers);
+        if (!headers.has("Authorization")) {
+          headers.set("Authorization", this.authorization);
+        }
+        const requestOptions = {
+          method: request.method,
+          headers,
+          body: request.body,
+          keepalive: request.keepalive
+        };
+        const url2 = new URL([request.baseUrl ?? this.baseUrl, ...request.path].join("/"));
+        if (request.query) {
+          for (const [key, value] of Object.entries(request.query)) {
+            if (value === void 0)
+              continue;
+            if (Array.isArray(value)) {
+              if (value.length === 0) {
+                throw new QstashEmptyArrayError(key);
+              }
+              for (const item of value) {
+                url2.searchParams.append(key, item);
+              }
+            } else if (value instanceof Date) {
+              url2.searchParams.set(key, value.getTime().toString());
+            } else {
+              url2.searchParams.set(key, value.toString());
+            }
+          }
+        }
+        return [url2.toString(), requestOptions];
+      };
+      async checkResponse(response) {
+        if (response.status === 429) {
+          if (response.headers.get("x-ratelimit-limit-requests")) {
+            throw new QstashChatRatelimitError({
+              "limit-requests": response.headers.get("x-ratelimit-limit-requests"),
+              "limit-tokens": response.headers.get("x-ratelimit-limit-tokens"),
+              "remaining-requests": response.headers.get("x-ratelimit-remaining-requests"),
+              "remaining-tokens": response.headers.get("x-ratelimit-remaining-tokens"),
+              "reset-requests": response.headers.get("x-ratelimit-reset-requests"),
+              "reset-tokens": response.headers.get("x-ratelimit-reset-tokens")
+            });
+          } else if (response.headers.get("RateLimit-Limit")) {
+            throw new QstashDailyRatelimitError({
+              limit: response.headers.get("RateLimit-Limit"),
+              remaining: response.headers.get("RateLimit-Remaining"),
+              reset: response.headers.get("RateLimit-Reset")
+            });
+          }
+          throw new QstashRatelimitError({
+            limit: response.headers.get("Burst-RateLimit-Limit"),
+            remaining: response.headers.get("Burst-RateLimit-Remaining"),
+            reset: response.headers.get("Burst-RateLimit-Reset")
+          });
+        }
+        if (response.status < 200 || response.status >= 300) {
+          const body = await response.text();
+          throw new QstashError(
+            body.length > 0 ? body : `Error: status=${response.status}`,
+            response.status
+          );
+        }
+      }
+    };
+    setupAnalytics = (analytics, providerApiKey, providerBaseUrl, provider) => {
+      if (!analytics)
+        return {};
+      switch (analytics.name) {
+        case "helicone": {
+          switch (provider) {
+            case "upstash": {
+              return {
+                baseURL: "https://qstash.helicone.ai/llm/v1/chat/completions",
+                defaultHeaders: {
+                  "Helicone-Auth": `Bearer ${analytics.token}`,
+                  Authorization: `Bearer ${providerApiKey}`
+                }
+              };
+            }
+            default: {
+              return {
+                baseURL: "https://gateway.helicone.ai/v1/chat/completions",
+                defaultHeaders: {
+                  "Helicone-Auth": `Bearer ${analytics.token}`,
+                  "Helicone-Target-Url": providerBaseUrl,
+                  Authorization: `Bearer ${providerApiKey}`
+                }
+              };
+            }
+          }
+        }
+        default: {
+          throw new Error("Unknown analytics provider");
+        }
+      }
+    };
+    Chat = class _Chat {
+      http;
+      token;
+      constructor(http2, token) {
+        this.http = http2;
+        this.token = token;
+      }
+      static toChatRequest(request) {
+        const messages = [];
+        messages.push(
+          { role: "system", content: request.system },
+          { role: "user", content: request.user }
+        );
+        const chatRequest = { ...request, messages };
+        return chatRequest;
+      }
+      /**
+       * Calls the Upstash completions api given a ChatRequest.
+       *
+       * Returns a ChatCompletion or a stream of ChatCompletionChunks
+       * if stream is enabled.
+       *
+       * @param request ChatRequest with messages
+       * @returns Chat completion or stream
+       */
+      create = async (request) => {
+        if (request.provider.owner != "upstash")
+          return this.createThirdParty(request);
+        const body = JSON.stringify(request);
+        let baseUrl2 = void 0;
+        let headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.token}`,
+          ..."stream" in request && request.stream ? {
+            Connection: "keep-alive",
+            Accept: "text/event-stream",
+            "Cache-Control": "no-cache"
+          } : {}
+        };
+        if (request.analytics) {
+          const { baseURL, defaultHeaders } = setupAnalytics(
+            { name: "helicone", token: request.analytics.token },
+            this.getAuthorizationToken(),
+            request.provider.baseUrl,
+            "upstash"
+          );
+          headers = { ...headers, ...defaultHeaders };
+          baseUrl2 = baseURL;
+        }
+        const path6 = request.analytics ? [] : ["llm", "v1", "chat", "completions"];
+        return "stream" in request && request.stream ? this.http.requestStream({
+          path: path6,
+          method: "POST",
+          headers,
+          baseUrl: baseUrl2,
+          body
+        }) : this.http.request({
+          path: path6,
+          method: "POST",
+          headers,
+          baseUrl: baseUrl2,
+          body
+        });
+      };
+      /**
+       * Calls the Upstash completions api given a ChatRequest.
+       *
+       * Returns a ChatCompletion or a stream of ChatCompletionChunks
+       * if stream is enabled.
+       *
+       * @param request ChatRequest with messages
+       * @returns Chat completion or stream
+       */
+      createThirdParty = async (request) => {
+        const { baseUrl: baseUrl2, token, owner, organization } = request.provider;
+        if (owner === "upstash")
+          throw new Error("Upstash is not 3rd party provider!");
+        delete request.provider;
+        delete request.system;
+        const analytics = request.analytics;
+        delete request.analytics;
+        const body = JSON.stringify(request);
+        const isAnalyticsEnabled = analytics?.name && analytics.token;
+        const analyticsConfig = analytics?.name && analytics.token ? setupAnalytics({ name: analytics.name, token: analytics.token }, token, baseUrl2, owner) : { defaultHeaders: void 0, baseURL: baseUrl2 };
+        const isStream = "stream" in request && request.stream;
+        const headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          ...organization ? {
+            "OpenAI-Organization": organization
+          } : {},
+          ...isStream ? {
+            Connection: "keep-alive",
+            Accept: "text/event-stream",
+            "Cache-Control": "no-cache"
+          } : {},
+          ...analyticsConfig.defaultHeaders
+        };
+        const response = await this.http[isStream ? "requestStream" : "request"]({
+          path: isAnalyticsEnabled ? [] : ["v1", "chat", "completions"],
+          method: "POST",
+          headers,
+          body,
+          baseUrl: analyticsConfig.baseURL
+        });
+        return response;
+      };
+      // Helper method to get the authorization token
+      getAuthorizationToken() {
+        const authHeader = String(this.http.authorization);
+        const match = /Bearer (.+)/.exec(authHeader);
+        if (!match) {
+          throw new Error("Invalid authorization header format");
+        }
+        return match[1];
+      }
+      /**
+       * Calls the Upstash completions api given a PromptRequest.
+       *
+       * Returns a ChatCompletion or a stream of ChatCompletionChunks
+       * if stream is enabled.
+       *
+       * @param request PromptRequest with system and user messages.
+       *    Note that system parameter shouldn't be passed in the case of
+       *    mistralai/Mistral-7B-Instruct-v0.2 model.
+       * @returns Chat completion or stream
+       */
+      prompt = async (request) => {
+        const chatRequest = _Chat.toChatRequest(request);
+        return this.create(chatRequest);
+      };
+    };
+    Messages = class {
+      http;
+      constructor(http2) {
+        this.http = http2;
+      }
+      /**
+       * Get a message
+       */
+      async get(messageId) {
+        const messagePayload = await this.http.request({
+          method: "GET",
+          path: ["v2", "messages", messageId]
+        });
+        const message2 = {
+          ...messagePayload,
+          urlGroup: messagePayload.topicName,
+          ratePerSecond: "rate" in messagePayload ? messagePayload.rate : void 0
+        };
+        return message2;
+      }
+      /**
+       * Cancel messages.
+       *
+       * Can be called with:
+       * - A single messageId: `cancel("id")`
+       * - An array of messageIds: `cancel(["id1", "id2"])`
+       * - A filter object: `cancel({ filter: { flowControlKey: "key", label: "label" } })`
+       * - All messages: `cancel({ all: true })`
+       *
+       * Pass `count` to limit the number of messages processed per call (defaults to 100).
+       * Call in a loop until `cancelled` is 0:
+       *
+       * ```ts
+       * let cancelled: number;
+       * do {
+       *   const result = await messages.cancel({ all: true, count: 100 });
+       *   cancelled = result.cancelled;
+       * } while (cancelled > 0);
+       * ```
+       */
+      async cancel(request) {
+        if (typeof request === "string") {
+          return await this.http.request({
+            method: "DELETE",
+            path: ["v2", "messages", request]
+          });
+        }
+        if (Array.isArray(request) && request.length === 0)
+          return { cancelled: 0 };
+        const filters = Array.isArray(request) ? { messageIds: request } : request;
+        return await this.http.request({
+          method: "DELETE",
+          path: ["v2", "messages"],
+          query: buildBulkActionFilterPayload(filters)
+        });
+      }
+      /**
+       * Delete a message.
+       *
+       * @deprecated Use `cancel(messageId: string)` instead
+       */
+      async delete(messageId) {
+        await this.http.request({
+          method: "DELETE",
+          path: ["v2", "messages", messageId],
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Cancel multiple messages by their messageIds.
+       *
+       * @deprecated Use `cancel(messageIds: string[])` instead
+       */
+      async deleteMany(messageIds) {
+        const result = await this.cancel(messageIds);
+        return result.cancelled;
+      }
+      /**
+       * Cancel all messages
+       * @deprecated Use `cancel({all: true})` to cancel all
+       */
+      async deleteAll() {
+        const result = await this.cancel({ all: true });
+        return result.cancelled;
+      }
+    };
+    Queue = class {
+      http;
+      queueName;
+      constructor(http2, queueName) {
+        this.http = http2;
+        this.queueName = queueName;
+      }
+      /**
+       * Create or update the queue
+       */
+      async upsert(request) {
+        if (!this.queueName) {
+          throw new Error("Please provide a queue name to the Queue constructor");
+        }
+        const body = {
+          queueName: this.queueName,
+          parallelism: request.parallelism ?? 1,
+          paused: request.paused ?? false
+        };
+        await this.http.request({
+          method: "POST",
+          path: ["v2", "queues"],
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(body),
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Get the queue details
+       */
+      async get() {
+        if (!this.queueName) {
+          throw new Error("Please provide a queue name to the Queue constructor");
+        }
+        return await this.http.request({
+          method: "GET",
+          path: ["v2", "queues", this.queueName]
+        });
+      }
+      /**
+       * List queues
+       */
+      async list() {
+        return await this.http.request({
+          method: "GET",
+          path: ["v2", "queues"]
+        });
+      }
+      /**
+       * Delete the queue
+       */
+      async delete() {
+        if (!this.queueName) {
+          throw new Error("Please provide a queue name to the Queue constructor");
+        }
+        await this.http.request({
+          method: "DELETE",
+          path: ["v2", "queues", this.queueName],
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Enqueue a message to a queue.
+       */
+      async enqueue(request) {
+        if (!this.queueName) {
+          throw new Error("Please provide a queue name to the Queue constructor");
+        }
+        const headers = wrapWithGlobalHeaders(
+          processHeaders(request),
+          this.http.headers,
+          this.http.telemetryHeaders
+        );
+        const destination = getRequestPath(request);
+        const response = await this.http.request({
+          path: ["v2", "enqueue", this.queueName, destination],
+          body: request.body,
+          headers,
+          method: "POST"
+        });
+        return response;
+      }
+      /**
+       * Enqueue a message to a queue, serializing the body to JSON.
+       */
+      async enqueueJSON(request) {
+        const headers = prefixHeaders(new Headers(request.headers));
+        headers.set("Content-Type", "application/json");
+        const upstashToken = String(this.http.authorization).split("Bearer ")[1];
+        const nonApiRequest = processApi(request, headers, upstashToken);
+        const response = await this.enqueue({
+          ...nonApiRequest,
+          body: JSON.stringify(nonApiRequest.body)
+        });
+        return response;
+      }
+      /**
+       * Pauses the queue.
+       *
+       * A paused queue will not deliver messages until
+       * it is resumed.
+       */
+      async pause() {
+        if (!this.queueName) {
+          throw new Error("Please provide a queue name to the Queue constructor");
+        }
+        await this.http.request({
+          method: "POST",
+          path: ["v2", "queues", this.queueName, "pause"],
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Resumes the queue.
+       */
+      async resume() {
+        if (!this.queueName) {
+          throw new Error("Please provide a queue name to the Queue constructor");
+        }
+        await this.http.request({
+          method: "POST",
+          path: ["v2", "queues", this.queueName, "resume"],
+          parseResponseAsJson: false
+        });
+      }
+    };
+    Schedules = class {
+      http;
+      constructor(http2) {
+        this.http = http2;
+      }
+      /**
+       * Create a schedule
+       */
+      async create(request) {
+        const headers = prefixHeaders(new Headers(request.headers));
+        if (!headers.has("Content-Type")) {
+          headers.set("Content-Type", "application/json");
+        }
+        headers.set("Upstash-Cron", request.cron);
+        if (request.method !== void 0) {
+          headers.set("Upstash-Method", request.method);
+        }
+        if (request.delay !== void 0) {
+          if (typeof request.delay === "string") {
+            headers.set("Upstash-Delay", request.delay);
+          } else {
+            headers.set("Upstash-Delay", `${request.delay.toFixed(0)}s`);
+          }
+        }
+        if (request.retries !== void 0) {
+          headers.set("Upstash-Retries", request.retries.toFixed(0));
+        }
+        if (request.retryDelay !== void 0) {
+          headers.set("Upstash-Retry-Delay", request.retryDelay);
+        }
+        if (request.callback !== void 0) {
+          headers.set("Upstash-Callback", request.callback);
+        }
+        if (request.failureCallback !== void 0) {
+          headers.set("Upstash-Failure-Callback", request.failureCallback);
+        }
+        if (request.timeout !== void 0) {
+          if (typeof request.timeout === "string") {
+            headers.set("Upstash-Timeout", request.timeout);
+          } else {
+            headers.set("Upstash-Timeout", `${request.timeout}s`);
+          }
+        }
+        if (request.scheduleId !== void 0) {
+          headers.set("Upstash-Schedule-Id", request.scheduleId);
+        }
+        if (request.queueName !== void 0) {
+          headers.set("Upstash-Queue-Name", request.queueName);
+        }
+        if (request.flowControl?.key) {
+          const parallelism = request.flowControl.parallelism?.toString();
+          const rate = (request.flowControl.rate ?? request.flowControl.ratePerSecond)?.toString();
+          const period = typeof request.flowControl.period === "number" ? `${request.flowControl.period}s` : request.flowControl.period;
+          const controlValue = [
+            parallelism ? `parallelism=${parallelism}` : void 0,
+            rate ? `rate=${rate}` : void 0,
+            period ? `period=${period}` : void 0
+          ].filter(Boolean);
+          if (controlValue.length === 0) {
+            throw new QstashError(
+              "Provide at least one of parallelism or ratePerSecond for flowControl"
+            );
+          }
+          headers.set("Upstash-Flow-Control-Key", request.flowControl.key);
+          headers.set("Upstash-Flow-Control-Value", controlValue.join(", "));
+        }
+        if (request.label !== void 0) {
+          headers.set("Upstash-Label", request.label);
+        }
+        if (request.redact !== void 0) {
+          const redactParts = [];
+          if (request.redact.body) {
+            redactParts.push("body");
+          }
+          if (request.redact.header !== void 0) {
+            if (request.redact.header === true) {
+              redactParts.push("header");
+            } else if (Array.isArray(request.redact.header) && request.redact.header.length > 0) {
+              for (const headerName of request.redact.header) {
+                redactParts.push(`header[${headerName}]`);
+              }
+            }
+          }
+          if (redactParts.length > 0) {
+            headers.set("Upstash-Redact-Fields", redactParts.join(","));
+          }
+        }
+        return await this.http.request({
+          method: "POST",
+          headers: wrapWithGlobalHeaders(headers, this.http.headers, this.http.telemetryHeaders),
+          path: ["v2", "schedules", request.destination],
+          body: request.body
+        });
+      }
+      /**
+       * Get a schedule
+       */
+      async get(scheduleId) {
+        const schedule = await this.http.request({
+          method: "GET",
+          path: ["v2", "schedules", scheduleId]
+        });
+        if ("rate" in schedule)
+          schedule.ratePerSecond = schedule.rate;
+        return schedule;
+      }
+      /**
+       * List your schedules
+       */
+      async list() {
+        const schedules = await this.http.request({
+          method: "GET",
+          path: ["v2", "schedules"]
+        });
+        for (const schedule of schedules) {
+          if ("rate" in schedule)
+            schedule.ratePerSecond = schedule.rate;
+        }
+        return schedules;
+      }
+      /**
+       * Delete a schedule
+       */
+      async delete(scheduleId) {
+        return await this.http.request({
+          method: "DELETE",
+          path: ["v2", "schedules", scheduleId],
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Pauses the schedule.
+       *
+       * A paused schedule will not deliver messages until
+       * it is resumed.
+       */
+      async pause({ schedule }) {
+        await this.http.request({
+          method: "PATCH",
+          path: ["v2", "schedules", schedule, "pause"],
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Resumes the schedule.
+       */
+      async resume({ schedule }) {
+        await this.http.request({
+          method: "PATCH",
+          path: ["v2", "schedules", schedule, "resume"],
+          parseResponseAsJson: false
+        });
+      }
+    };
+    UrlGroups = class {
+      http;
+      constructor(http2) {
+        this.http = http2;
+      }
+      /**
+       * Create a new url group with the given name and endpoints
+       */
+      async addEndpoints(request) {
+        await this.http.request({
+          method: "POST",
+          path: ["v2", "topics", request.name, "endpoints"],
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoints: request.endpoints }),
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Remove endpoints from a url group.
+       */
+      async removeEndpoints(request) {
+        await this.http.request({
+          method: "DELETE",
+          path: ["v2", "topics", request.name, "endpoints"],
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoints: request.endpoints }),
+          parseResponseAsJson: false
+        });
+      }
+      /**
+       * Get a list of all url groups.
+       */
+      async list() {
+        return await this.http.request({
+          method: "GET",
+          path: ["v2", "topics"]
+        });
+      }
+      /**
+       * Get a single url group
+       */
+      async get(name) {
+        return await this.http.request({
+          method: "GET",
+          path: ["v2", "topics", name]
+        });
+      }
+      /**
+       * Delete a url group
+       */
+      async delete(name) {
+        return await this.http.request({
+          method: "DELETE",
+          path: ["v2", "topics", name],
+          parseResponseAsJson: false
+        });
+      }
+    };
+    VERSION = "2.10.1";
+    Client = class {
+      http;
+      token;
+      constructor(config2) {
+        const environment = getSafeEnvironment();
+        const { baseUrl: baseUrl2, token } = getClientCredentials({ environment, config: config2 });
+        const enableTelemetry = environment.UPSTASH_DISABLE_TELEMETRY ? false : config2?.enableTelemetry ?? true;
+        const isCloudflare = typeof caches !== "undefined" && "default" in caches;
+        const telemetryHeaders = new Headers(
+          enableTelemetry ? {
+            "Upstash-Telemetry-Sdk": `upstash-qstash-js@${VERSION}`,
+            "Upstash-Telemetry-Platform": isCloudflare ? "cloudflare" : environment.VERCEL ? "vercel" : environment.AWS_REGION ? "aws" : "",
+            "Upstash-Telemetry-Runtime": getRuntime()
+          } : {}
+        );
+        this.http = new HttpClient({
+          retry: config2?.retry,
+          baseUrl: baseUrl2,
+          authorization: `Bearer ${token}`,
+          //@ts-expect-error caused by undici and bunjs type overlap
+          headers: prefixHeaders(new Headers(config2?.headers ?? {})),
+          //@ts-expect-error caused by undici and bunjs type overlap
+          telemetryHeaders
+        });
+        this.token = token;
+      }
+      /**
+       * Access the urlGroup API.
+       *
+       * Create, read, update or delete urlGroups.
+       */
+      get urlGroups() {
+        return new UrlGroups(this.http);
+      }
+      /**
+       * Deprecated. Use urlGroups instead.
+       *
+       * Access the topic API.
+       *
+       * Create, read, update or delete topics.
+       */
+      get topics() {
+        return this.urlGroups;
+      }
+      /**
+       * Access the dlq API.
+       *
+       * List or remove messages from the DLQ.
+       */
+      get dlq() {
+        return new DLQ(this.http);
+      }
+      /**
+       * Access the message API.
+       *
+       * Read or cancel messages.
+       */
+      get messages() {
+        return new Messages(this.http);
+      }
+      /**
+       * Access the schedule API.
+       *
+       * Create, read or delete schedules.
+       */
+      get schedules() {
+        return new Schedules(this.http);
+      }
+      /**
+       * Access the flow control API.
+       *
+       * List, get, or reset flow controls.
+       */
+      get flowControl() {
+        return new FlowControlApi(this.http);
+      }
+      /**
+       * Access the workflow API.
+       *
+       * cancel workflows.
+       *
+       * @deprecated as of version 2.7.17. Will be removed in qstash-js 3.0.0.
+       * Please use @upstash/workflow instead https://github.com/upstash/workflow-js
+       * Migration Guide: https://upstash.com/docs/workflow/migration
+       */
+      get workflow() {
+        return new Workflow(this.http);
+      }
+      /**
+       * Access the queue API.
+       *
+       * Create, read, update or delete queues.
+       */
+      queue(request) {
+        return new Queue(this.http, request?.queueName);
+      }
+      /**
+       * Access the Chat API.
+       *
+       * @deprecated This will be removed in qstash-js 3.0.0. Please use an alternative SDK for interacting with LLMs.
+       *
+       * Use the create or prompt methods.
+       */
+      chat() {
+        return new Chat(this.http, this.token);
+      }
+      async publish(request) {
+        const headers = wrapWithGlobalHeaders(
+          processHeaders(request),
+          this.http.headers,
+          this.http.telemetryHeaders
+        );
+        const response = await this.http.request({
+          path: ["v2", "publish", getRequestPath(request)],
+          body: request.body,
+          headers,
+          method: "POST"
+        });
+        return response;
+      }
+      /**
+       * publishJSON is a utility wrapper around `publish` that automatically serializes the body
+       * and sets the `Content-Type` header to `application/json`.
+       */
+      async publishJSON(request) {
+        const headers = prefixHeaders(new Headers(request.headers));
+        headers.set("Content-Type", "application/json");
+        const upstashToken = String(this.http.authorization).split("Bearer ")[1];
+        const nonApiRequest = processApi(request, headers, upstashToken);
+        const response = await this.publish({
+          ...nonApiRequest,
+          body: JSON.stringify(nonApiRequest.body)
+        });
+        return response;
+      }
+      /**
+       * Batch publish messages to QStash.
+       */
+      async batch(request) {
+        const messages = [];
+        for (const message2 of request) {
+          const headers = wrapWithGlobalHeaders(
+            processHeaders(message2),
+            this.http.headers,
+            this.http.telemetryHeaders
+          );
+          const headerEntries = Object.fromEntries(headers.entries());
+          messages.push({
+            destination: getRequestPath(message2),
+            headers: headerEntries,
+            body: message2.body,
+            ...message2.queueName && { queue: message2.queueName }
+          });
+        }
+        const response = await this.http.request({
+          path: ["v2", "batch"],
+          body: JSON.stringify(messages),
+          headers: {
+            "Content-Type": "application/json"
+          },
+          method: "POST"
+        });
+        const arrayResposne = Array.isArray(response) ? response : [response];
+        return arrayResposne;
+      }
+      /**
+       * Batch publish messages to QStash, serializing each body to JSON.
+       */
+      async batchJSON(request) {
+        const batchPayload = request.map((message2) => {
+          if ("body" in message2) {
+            message2.body = JSON.stringify(message2.body);
+          }
+          const upstashToken = String(this.http.authorization).split("Bearer ")[1];
+          const nonApiMessage = processApi(message2, new Headers(message2.headers), upstashToken);
+          nonApiMessage.headers.set("Content-Type", "application/json");
+          return nonApiMessage;
+        });
+        const response = await this.batch(batchPayload);
+        return response;
+      }
+      /**
+       * Retrieve your logs.
+       *
+       * The logs endpoint is paginated and returns only 100 logs at a time.
+       * If you want to receive more logs, you can use the cursor to paginate.
+       *
+       * The cursor is a unix timestamp with millisecond precision
+       *
+       * @example
+       * ```ts
+       * let cursor = Date.now()
+       * const logs: Log[] = []
+       * while (cursor > 0) {
+       *   const res = await qstash.logs({ cursor })
+       *   logs.push(...res.logs)
+       *   cursor = res.cursor ?? 0
+       * }
+       * ```
+       */
+      async logs(request = {}) {
+        const query = {
+          count: request.count,
+          ..."messageIds" in request ? { messageIds: request.messageIds } : { ...renameUrlGroup(request.filter ?? {}), cursor: request.cursor }
+        };
+        const responsePayload = await this.http.request({
+          path: ["v2", "events"],
+          method: "GET",
+          query
+        });
+        const logs = responsePayload.events.map((event) => ({ ...event, urlGroup: event.topicName }));
+        return { cursor: responsePayload.cursor, logs, events: logs };
+      }
+      /**
+       * @deprecated Will be removed in the next major release. Use the `logs` method instead.
+       *
+       * Retrieve your logs.
+       *
+       * The logs endpoint is paginated and returns only 100 logs at a time.
+       * If you want to receive more logs, you can use the cursor to paginate.
+       *
+       * The cursor is a unix timestamp with millisecond precision
+       *
+       * @example
+       * ```ts
+       * let cursor = Date.now()
+       * const logs: Log[] = []
+       * while (cursor > 0) {
+       *   const res = await qstash.logs({ cursor })
+       *   logs.push(...res.logs)
+       *   cursor = res.cursor ?? 0
+       * }
+       * ```
+       */
+      async events(request) {
+        return await this.logs(request);
+      }
+    };
+    Workflow = class {
+      http;
+      constructor(http2) {
+        this.http = http2;
+      }
+      /**
+       * Cancel an ongoing workflow
+       *
+       * @param workflowRunId run id of the workflow to delete
+       * @returns true if workflow is succesfully deleted. Otherwise throws QStashError
+       */
+      async cancel(workflowRunId) {
+        const result = await this.http.request({
+          path: ["v2", "workflows", "runs", `${workflowRunId}?cancel=true`],
+          method: "DELETE",
+          parseResponseAsJson: false
+        });
+        return result ?? true;
+      }
+    };
+  }
+});
+
+// node_modules/@upstash/qstash/chunk-Z37KJCW7.mjs
+var EmailProvider, resend;
+var init_chunk_Z37KJCW7 = __esm({
+  "node_modules/@upstash/qstash/chunk-Z37KJCW7.mjs"() {
+    init_chunk_35B33QW3();
+    EmailProvider = class extends BaseProvider {
+      apiKind = "email";
+      batch;
+      method = "POST";
+      constructor(baseUrl2, token, owner, batch) {
+        super(baseUrl2, token, owner);
+        this.batch = batch;
+      }
+      getRoute() {
+        return this.batch ? ["emails", "batch"] : ["emails"];
+      }
+      getHeaders(_options) {
+        return {
+          authorization: `Bearer ${this.token}`
+        };
+      }
+      onFinish(providerInfo, _options) {
+        return providerInfo;
+      }
+    };
+    resend = ({
+      token,
+      batch = false
+    }) => {
+      return new EmailProvider("https://api.resend.com", token, "resend", batch);
+    };
+  }
+});
+
+// node_modules/@upstash/qstash/index.mjs
+var qstash_exports = {};
+__export(qstash_exports, {
+  Chat: () => Chat,
+  Client: () => Client,
+  FlowControlApi: () => FlowControlApi,
+  Messages: () => Messages,
+  QStashWorkflowAbort: () => QStashWorkflowAbort,
+  QStashWorkflowError: () => QStashWorkflowError,
+  QstashChatRatelimitError: () => QstashChatRatelimitError,
+  QstashDailyRatelimitError: () => QstashDailyRatelimitError,
+  QstashEmptyArrayError: () => QstashEmptyArrayError,
+  QstashError: () => QstashError,
+  QstashRatelimitError: () => QstashRatelimitError,
+  Receiver: () => Receiver,
+  Schedules: () => Schedules,
+  SignatureError: () => SignatureError,
+  UrlGroups: () => UrlGroups,
+  anthropic: () => anthropic,
+  custom: () => custom,
+  decodeBase64: () => decodeBase64,
+  formatWorkflowError: () => formatWorkflowError,
+  openai: () => openai,
+  resend: () => resend,
+  setupAnalytics: () => setupAnalytics,
+  upstash: () => upstash
+});
+var init_qstash = __esm({
+  "node_modules/@upstash/qstash/index.mjs"() {
+    init_chunk_Z37KJCW7();
+    init_chunk_35B33QW3();
   }
 });
 
@@ -3212,14 +13409,14 @@ var init_listingRepository = __esm({
       computeStats(rows) {
         const counts = { available: 0, hold: 0, sold: 0, rented: 0, booking: 0, opening: 0, inactive: 0 };
         for (const r of rows) {
-          const s = (r.status || "").toUpperCase();
-          if (s === "AVAILABLE") counts.available++;
-          else if (s === "HOLD") counts.hold++;
-          else if (s === "SOLD") counts.sold++;
-          else if (s === "RENTED") counts.rented++;
-          else if (s === "BOOKING") counts.booking++;
-          else if (s === "OPENING") counts.opening++;
-          else if (s === "INACTIVE") counts.inactive++;
+          const s2 = (r.status || "").toUpperCase();
+          if (s2 === "AVAILABLE") counts.available++;
+          else if (s2 === "HOLD") counts.hold++;
+          else if (s2 === "SOLD") counts.sold++;
+          else if (s2 === "RENTED") counts.rented++;
+          else if (s2 === "BOOKING") counts.booking++;
+          else if (s2 === "OPENING") counts.opening++;
+          else if (s2 === "INACTIVE") counts.inactive++;
         }
         return {
           availableCount: counts.available,
@@ -3705,7 +13902,7 @@ var init_listingRepository = __esm({
             };
           }
           const median = prices[Math.floor(prices.length / 2)];
-          const avg = Math.round(prices.reduce((s, p) => s + p, 0) / prices.length);
+          const avg = Math.round(prices.reduce((s2, p) => s2 + p, 0) / prices.length);
           const p25 = prices[Math.floor(prices.length * 0.25)];
           const p75 = prices[Math.floor(prices.length * 0.75)];
           const samples = result.rows.slice(0, maxSamples).map((r) => ({
@@ -5086,24 +15283,24 @@ async function withRetry(fn, attempts = 3, delay = 2e3, isTransient = () => true
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       return await fn();
-    } catch (err) {
-      lastErr = err;
-      if (attempt === attempts || !isTransient(err)) {
-        throw err;
+    } catch (err4) {
+      lastErr = err4;
+      if (attempt === attempts || !isTransient(err4)) {
+        throw err4;
       }
       const wait = delay * Math.pow(2, attempt - 1);
-      logger.warn(`[retry] Attempt ${attempt}/${attempts} failed: ${err.message}. Retrying in ${wait}ms\u2026`);
+      logger.warn(`[retry] Attempt ${attempt}/${attempts} failed: ${err4.message}. Retrying in ${wait}ms\u2026`);
       await new Promise((resolve) => setTimeout(resolve, wait));
     }
   }
   throw lastErr;
 }
-function isTransientError(err) {
-  const msg = (err?.message || "").toLowerCase();
+function isTransientError(err4) {
+  const msg = (err4?.message || "").toLowerCase();
   if (msg.includes("econnreset") || msg.includes("econnrefused") || msg.includes("etimedout") || msg.includes("enotfound") || msg.includes("network") || msg.includes("timeout") || msg.includes("socket hang up")) {
     return true;
   }
-  const status = err?.status || err?.statusCode || 0;
+  const status = err4?.status || err4?.statusCode || 0;
   if (status >= 500) return true;
   return false;
 }
@@ -5136,9 +15333,9 @@ async function sendZaloTextMessage(accessToken, userId, text) {
           body: JSON.stringify(body)
         });
         if (!response.ok) {
-          const err = new Error(`HTTP ${response.status}`);
-          err.status = response.status;
-          throw err;
+          const err4 = new Error(`HTTP ${response.status}`);
+          err4.status = response.status;
+          throw err4;
         }
         return response.json();
       },
@@ -5152,9 +15349,9 @@ async function sendZaloTextMessage(accessToken, userId, text) {
     }
     logger.info(`[Zalo] Message sent to ${userId}, msgId=${json2.data?.message_id}`);
     return { success: true, messageId: json2.data?.message_id };
-  } catch (err) {
-    logger.error("[Zalo] Network error sending message:", err);
-    return { success: false, error: err.message };
+  } catch (err4) {
+    logger.error("[Zalo] Network error sending message:", err4);
+    return { success: false, error: err4.message };
   }
 }
 async function getZaloAccessToken(tenantId) {
@@ -5199,9 +15396,9 @@ async function sendFacebookTextMessage(pageAccessToken, recipientId, text) {
           body: JSON.stringify(body)
         });
         if (!response.ok) {
-          const err = new Error(`HTTP ${response.status}`);
-          err.status = response.status;
-          throw err;
+          const err4 = new Error(`HTTP ${response.status}`);
+          err4.status = response.status;
+          throw err4;
         }
         return response.json();
       },
@@ -5222,9 +15419,9 @@ async function sendFacebookTextMessage(pageAccessToken, recipientId, text) {
       messageId: json2.message_id,
       recipientId: json2.recipient_id
     };
-  } catch (err) {
-    logger.error("[Facebook] Network error sending message:", err);
-    return { success: false, error: err.message };
+  } catch (err4) {
+    logger.error("[Facebook] Network error sending message:", err4);
+    return { success: false, error: err4.message };
   }
 }
 async function getFacebookPageAccessToken(tenantId, pageId) {
@@ -5389,7 +15586,7 @@ __export(brevoService_exports, {
   verifyBrevoWebhookSignature: () => verifyBrevoWebhookSignature
 });
 import { createRequire } from "module";
-import crypto from "crypto";
+import crypto5 from "crypto";
 function getClient() {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) throw new Error("BREVO_API_KEY is not configured");
@@ -5467,8 +15664,8 @@ function parseBrevoEvents(body) {
 function verifyBrevoWebhookSignature(rawBody, signature, secret) {
   if (!signature) return false;
   try {
-    const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
-    return signature.length === expected.length && crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+    const expected = crypto5.createHmac("sha256", secret).update(rawBody).digest("hex");
+    return signature.length === expected.length && crypto5.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
   } catch {
     return false;
   }
@@ -5498,14 +15695,5346 @@ var init_brevoService = __esm({
   }
 });
 
+// node_modules/uncrypto/dist/crypto.node.mjs
+import nodeCrypto from "node:crypto";
+var subtle;
+var init_crypto_node = __esm({
+  "node_modules/uncrypto/dist/crypto.node.mjs"() {
+    subtle = nodeCrypto.webcrypto?.subtle || {};
+  }
+});
+
+// node_modules/@upstash/redis/chunk-IH7W44G6.mjs
+function parseRecursive(obj) {
+  const parsed = Array.isArray(obj) ? obj.map((o) => {
+    try {
+      return parseRecursive(o);
+    } catch {
+      return o;
+    }
+  }) : JSON.parse(obj);
+  if (typeof parsed === "number" && parsed.toString() !== obj) {
+    return obj;
+  }
+  return parsed;
+}
+function parseResponse(result) {
+  try {
+    return parseRecursive(result);
+  } catch {
+    return result;
+  }
+}
+function deserializeScanResponse(result) {
+  return [result[0], ...parseResponse(result.slice(1))];
+}
+function deserializeScanWithTypesResponse(result) {
+  const [cursor, keys] = result;
+  const parsedKeys = [];
+  for (let i = 0; i < keys.length; i += 2) {
+    parsedKeys.push({ key: keys[i], type: keys[i + 1] });
+  }
+  return [cursor, parsedKeys];
+}
+function mergeHeaders(...headers) {
+  const merged = {};
+  for (const header of headers) {
+    if (!header) continue;
+    for (const [key, value] of Object.entries(header)) {
+      if (value !== void 0 && value !== null) {
+        merged[key] = value;
+      }
+    }
+  }
+  return merged;
+}
+function kvArrayToObject(v) {
+  if (typeof v === "object" && v !== null && !Array.isArray(v)) return v;
+  if (!Array.isArray(v)) return {};
+  const obj = {};
+  for (let i = 0; i < v.length; i += 2) {
+    if (typeof v[i] === "string") obj[v[i]] = v[i + 1];
+  }
+  return obj;
+}
+function base64decode(b64) {
+  let dec = "";
+  try {
+    const binString = atob(b64);
+    const size = binString.length;
+    const bytes = new Uint8Array(size);
+    for (let i = 0; i < size; i++) {
+      bytes[i] = binString.charCodeAt(i);
+    }
+    dec = new TextDecoder().decode(bytes);
+  } catch {
+    dec = b64;
+  }
+  return dec;
+}
+function decode4(raw) {
+  let result = void 0;
+  switch (typeof raw) {
+    case "undefined": {
+      return raw;
+    }
+    case "number": {
+      result = raw;
+      break;
+    }
+    case "object": {
+      if (Array.isArray(raw)) {
+        result = raw.map(
+          (v) => typeof v === "string" ? base64decode(v) : Array.isArray(v) ? v.map((element) => decode4(element)) : v
+        );
+      } else {
+        result = null;
+      }
+      break;
+    }
+    case "string": {
+      result = raw === "OK" ? "OK" : base64decode(raw);
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+  return result;
+}
+function merge2(obj, key, value) {
+  if (!value) {
+    return obj;
+  }
+  obj[key] = obj[key] ? [obj[key], value].join(",") : value;
+  return obj;
+}
+function isFieldType(value) {
+  return typeof value === "string" && FIELD_TYPES.includes(value);
+}
+function isDetailedField(value) {
+  return typeof value === "object" && value !== null && "type" in value && isFieldType(value.type);
+}
+function isNestedSchema(value) {
+  return typeof value === "object" && value !== null && !isDetailedField(value);
+}
+function flattenSchema(schema, pathPrefix = []) {
+  const fields = [];
+  for (const [key, value] of Object.entries(schema)) {
+    const currentPath = [...pathPrefix, key];
+    const pathString = currentPath.join(".");
+    if (isFieldType(value)) {
+      fields.push({
+        path: pathString,
+        type: value
+      });
+    } else if (isDetailedField(value)) {
+      fields.push({
+        path: pathString,
+        type: value.type,
+        fast: "fast" in value ? value.fast : void 0,
+        noTokenize: "noTokenize" in value ? value.noTokenize : void 0,
+        noStem: "noStem" in value ? value.noStem : void 0,
+        from: "from" in value ? value.from : void 0
+      });
+    } else if (isNestedSchema(value)) {
+      const nestedFields = flattenSchema(value, currentPath);
+      fields.push(...nestedFields);
+    }
+  }
+  return fields;
+}
+function deserializeQueryResponse(rawResponse) {
+  return rawResponse.map((itemRaw) => {
+    const raw = itemRaw;
+    const key = raw[0];
+    const score = Number(raw[1]);
+    const rawFields = raw[2];
+    if (rawFields === void 0) {
+      return { key, score };
+    }
+    if (!Array.isArray(rawFields) || rawFields.length === 0) {
+      return { key, score, data: {} };
+    }
+    let data = {};
+    for (const fieldRaw of rawFields) {
+      const key2 = fieldRaw[0];
+      const value = fieldRaw[1];
+      const pathParts = key2.split(".");
+      if (pathParts.length === 1) {
+        data[key2] = value;
+      } else {
+        let currentObj = data;
+        for (let i = 0; i < pathParts.length - 1; i++) {
+          const pathPart = pathParts[i];
+          if (!(pathPart in currentObj)) {
+            currentObj[pathPart] = {};
+          }
+          currentObj = currentObj[pathPart];
+        }
+        currentObj[pathParts.at(-1)] = value;
+      }
+    }
+    if ("$" in data) {
+      data = data["$"];
+    }
+    return { key, score, data };
+  });
+}
+function deserializeDescribeResponse(rawResponse) {
+  const description = {};
+  for (let i = 0; i < rawResponse.length; i += 2) {
+    const descriptor = rawResponse[i];
+    switch (descriptor) {
+      case "name": {
+        description["name"] = rawResponse[i + 1];
+        break;
+      }
+      case "type": {
+        description["dataType"] = rawResponse[i + 1].toLowerCase();
+        break;
+      }
+      case "prefixes": {
+        description["prefixes"] = rawResponse[i + 1];
+        break;
+      }
+      case "language": {
+        description["language"] = rawResponse[i + 1];
+        break;
+      }
+      case "schema": {
+        const schema = {};
+        for (const fieldDescription of rawResponse[i + 1]) {
+          const fieldName = fieldDescription[0];
+          const fieldInfo = { type: fieldDescription[1] };
+          if (fieldDescription.length > 2) {
+            for (let j = 2; j < fieldDescription.length; j++) {
+              const fieldOption = fieldDescription[j];
+              switch (fieldOption) {
+                case "NOSTEM": {
+                  fieldInfo.noStem = true;
+                  break;
+                }
+                case "NOTOKENIZE": {
+                  fieldInfo.noTokenize = true;
+                  break;
+                }
+                case "FAST": {
+                  fieldInfo.fast = true;
+                  break;
+                }
+                case "FROM": {
+                  fieldInfo.from = fieldDescription[++j];
+                  break;
+                }
+              }
+            }
+          }
+          schema[fieldName] = fieldInfo;
+        }
+        description["schema"] = schema;
+        break;
+      }
+    }
+  }
+  return description;
+}
+function parseCountResponse(rawResponse) {
+  return typeof rawResponse === "number" ? rawResponse : Number.parseInt(rawResponse, 10);
+}
+function deserializeAggregateResponse(rawResponse) {
+  return parseAggregationArray(rawResponse);
+}
+function parseAggregationArray(arr) {
+  const result = {};
+  for (let i = 0; i < arr.length; i += 2) {
+    const key = arr[i];
+    const value = arr[i + 1];
+    if (Array.isArray(value)) {
+      if (value.length > 0 && typeof value[0] === "string") {
+        result[key] = value[0] === "buckets" ? parseBucketsValue(value) : parseStatsValue(value);
+      } else {
+        result[key] = parseAggregationArray(value);
+      }
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+function coerceNumericString(value) {
+  if (typeof value === "string" && value !== "" && !Number.isNaN(Number(value))) {
+    return Number(value);
+  }
+  return value;
+}
+function parseStatsValue(arr) {
+  const result = {};
+  for (let i = 0; i < arr.length; i += 2) {
+    const key = arr[i];
+    const value = arr[i + 1];
+    if (Array.isArray(value) && value.length > 0) {
+      if (typeof value[0] === "string") {
+        result[key] = parseStatsValue(value);
+      } else if (Array.isArray(value[0]) && typeof value[0][0] === "string") {
+        result[key] = value.map((item) => parseStatsValue(item));
+      } else {
+        result[key] = value;
+      }
+    } else {
+      result[key] = coerceNumericString(value);
+    }
+  }
+  return result;
+}
+function parseBucketsValue(arr) {
+  if (arr[0] === "buckets" && Array.isArray(arr[1])) {
+    const result = {
+      buckets: arr[1].map((bucket) => {
+        const bucketObj = {};
+        for (let i = 0; i < bucket.length; i += 2) {
+          const key = bucket[i];
+          const value = bucket[i + 1];
+          bucketObj[key] = Array.isArray(value) && value.length > 0 && typeof value[0] === "string" ? parseStatsValue(value) : value;
+        }
+        return bucketObj;
+      })
+    };
+    for (let i = 2; i < arr.length; i += 2) {
+      result[arr[i]] = arr[i + 1];
+    }
+    return result;
+  }
+  return arr;
+}
+function buildQueryCommand(redisCommand, name, options) {
+  const query = JSON.stringify(options?.filter ?? {});
+  const command = [redisCommand, name, query];
+  if (options?.limit !== void 0) {
+    command.push("LIMIT", options.limit.toString());
+  }
+  if (options?.offset !== void 0) {
+    command.push("OFFSET", options.offset.toString());
+  }
+  if (options?.select && Object.keys(options.select).length === 0) {
+    command.push("NOCONTENT");
+  }
+  if (options) {
+    if ("orderBy" in options && options.orderBy) {
+      command.push("ORDERBY");
+      for (const [field, direction] of Object.entries(options.orderBy)) {
+        command.push(field, direction);
+      }
+    } else if ("scoreFunc" in options && options.scoreFunc) {
+      command.push("SCOREFUNC", ...buildScoreFunc(options.scoreFunc));
+    }
+  }
+  if (options?.highlight) {
+    command.push(
+      "HIGHLIGHT",
+      "FIELDS",
+      options.highlight.fields.length.toString(),
+      ...options.highlight.fields
+    );
+    if (options.highlight.preTag && options.highlight.postTag) {
+      command.push("TAGS", options.highlight.preTag, options.highlight.postTag);
+    }
+  }
+  if (options?.select && Object.keys(options.select).length > 0) {
+    command.push(
+      "SELECT",
+      Object.keys(options.select).length.toString(),
+      ...Object.keys(options.select)
+    );
+  }
+  return command;
+}
+function buildScoreFunc(scoreBy) {
+  const result = [];
+  if (typeof scoreBy === "string") {
+    result.push("FIELDVALUE", scoreBy);
+  } else if ("fields" in scoreBy) {
+    if (scoreBy.combineMode) {
+      result.push("COMBINEMODE", scoreBy.combineMode.toUpperCase());
+    }
+    if (scoreBy.scoreMode) {
+      result.push("SCOREMODE", scoreBy.scoreMode.toUpperCase());
+    }
+    for (const field of scoreBy.fields) {
+      result.push(...buildScoreFuncField(field));
+    }
+  } else {
+    result.push(...buildScoreFuncField(scoreBy));
+  }
+  return result;
+}
+function buildScoreFuncField(field) {
+  const result = [];
+  if (typeof field === "string") {
+    result.push("FIELDVALUE", field);
+  } else {
+    if (field.scoreMode) {
+      result.push("SCOREMODE", field.scoreMode.toUpperCase());
+    }
+    result.push("FIELDVALUE", field.field);
+    if (field.modifier) {
+      result.push("MODIFIER", field.modifier.toUpperCase());
+    }
+    if (field.factor !== void 0) {
+      result.push("FACTOR", field.factor.toString());
+    }
+    if (field.missing !== void 0) {
+      result.push("MISSING", field.missing.toString());
+    }
+  }
+  return result;
+}
+function buildCreateIndexCommand(params) {
+  const { name, schema, dataType, prefix, language, skipInitialScan, existsOk } = params;
+  const prefixArray = Array.isArray(prefix) ? prefix : [prefix];
+  const payload = [
+    name,
+    ...skipInitialScan ? ["SKIPINITIALSCAN"] : [],
+    ...existsOk ? ["EXISTSOK"] : [],
+    "ON",
+    dataType.toUpperCase(),
+    "PREFIX",
+    prefixArray.length.toString(),
+    ...prefixArray,
+    ...language ? ["LANGUAGE", language] : [],
+    "SCHEMA"
+  ];
+  const fields = flattenSchema(schema);
+  for (const field of fields) {
+    payload.push(field.path, field.type);
+    if (field.fast) {
+      payload.push("FAST");
+    }
+    if (field.noTokenize) {
+      payload.push("NOTOKENIZE");
+    }
+    if (field.noStem) {
+      payload.push("NOSTEM");
+    }
+    if (field.from) {
+      payload.push("FROM", field.from);
+    }
+  }
+  return ["SEARCH.CREATE", ...payload];
+}
+function buildAggregateCommand(name, options) {
+  const query = JSON.stringify(options?.filter ?? {});
+  const aggregations = JSON.stringify(options.aggregations);
+  return ["SEARCH.AGGREGATE", name, query, aggregations];
+}
+async function createIndex(client, params) {
+  const { name, schema } = params;
+  const createIndexCommand = buildCreateIndexCommand(params);
+  await new ExecCommand(createIndexCommand).exec(client);
+  return initIndex(client, { name, schema });
+}
+function initIndex(client, params) {
+  const { name, schema } = params;
+  return new SearchIndex({ name, schema, client });
+}
+async function listAliases(client) {
+  const command = ["SEARCH.LISTALIASES"];
+  const rawResult = await new ExecCommand(command).exec(client);
+  if (rawResult === 0 || Array.isArray(rawResult) && rawResult.length === 0) {
+    return {};
+  }
+  if (!Array.isArray(rawResult)) {
+    return {};
+  }
+  const aliases = {};
+  for (const pair of rawResult) {
+    if (Array.isArray(pair) && pair.length === 2) {
+      const [alias, index] = pair;
+      aliases[alias] = index;
+    }
+  }
+  return aliases;
+}
+async function addAlias(client, { indexName, alias }) {
+  const command = ["SEARCH.ALIASADD", alias, indexName];
+  const result = await new ExecCommand(command).exec(client);
+  return result;
+}
+async function delAlias(client, { alias }) {
+  const command = ["SEARCH.ALIASDEL", alias];
+  const result = await new ExecCommand(command).exec(client);
+  return result;
+}
+function deserialize(result) {
+  if (result.length === 0) {
+    return null;
+  }
+  const obj = {};
+  for (let i = 0; i < result.length; i += 2) {
+    const key = result[i];
+    const value = result[i + 1];
+    try {
+      obj[key] = JSON.parse(value);
+    } catch {
+      obj[key] = value;
+    }
+  }
+  return obj;
+}
+function deserialize2(result) {
+  if (!Array.isArray(result)) return [];
+  return result.map((libRaw) => {
+    const lib = kvArrayToObject(libRaw);
+    const functionsParsed = lib.functions.map(
+      (fnRaw) => kvArrayToObject(fnRaw)
+    );
+    return {
+      libraryName: lib.library_name,
+      engine: lib.engine,
+      functions: functionsParsed.map((fn) => ({
+        name: fn.name,
+        description: fn.description ?? void 0,
+        flags: fn.flags
+      })),
+      libraryCode: lib.library_code
+    };
+  });
+}
+function deserialize3(result) {
+  const rawEngines = kvArrayToObject(kvArrayToObject(result).engines);
+  const parsedEngines = Object.fromEntries(
+    Object.entries(rawEngines).map(([key, value]) => [key, kvArrayToObject(value)])
+  );
+  const final = {
+    engines: Object.fromEntries(
+      Object.entries(parsedEngines).map(([key, value]) => [
+        key,
+        {
+          librariesCount: value.libraries_count,
+          functionsCount: value.functions_count
+        }
+      ])
+    )
+  };
+  return final;
+}
+function transform2(result) {
+  const final = [];
+  for (const pos of result) {
+    if (!pos?.[0] || !pos?.[1]) {
+      continue;
+    }
+    final.push({ lng: Number.parseFloat(pos[0]), lat: Number.parseFloat(pos[1]) });
+  }
+  return final;
+}
+function deserialize4(result) {
+  if (result.length === 0) {
+    return null;
+  }
+  const obj = {};
+  for (let i = 0; i < result.length; i += 2) {
+    const key = result[i];
+    const value = result[i + 1];
+    try {
+      const valueIsNumberAndNotSafeInteger = !Number.isNaN(Number(value)) && !Number.isSafeInteger(Number(value));
+      obj[key] = valueIsNumberAndNotSafeInteger ? value : JSON.parse(value);
+    } catch {
+      obj[key] = value;
+    }
+  }
+  return obj;
+}
+function deserialize5(fields, result) {
+  if (result.every((field) => field === null)) {
+    return null;
+  }
+  const obj = {};
+  for (const [i, field] of fields.entries()) {
+    try {
+      obj[field] = JSON.parse(result[i]);
+    } catch {
+      obj[field] = result[i];
+    }
+  }
+  return obj;
+}
+function deserialize6(result) {
+  const obj = {};
+  for (const e of result) {
+    for (let i = 0; i < e.length; i += 2) {
+      const streamId = e[i];
+      const entries = e[i + 1];
+      if (!(streamId in obj)) {
+        obj[streamId] = {};
+      }
+      for (let j = 0; j < entries.length; j += 2) {
+        const field = entries[j];
+        const value = entries[j + 1];
+        try {
+          obj[streamId][field] = JSON.parse(value);
+        } catch {
+          obj[streamId][field] = value;
+        }
+      }
+    }
+  }
+  return obj;
+}
+function deserialize7(result) {
+  const obj = {};
+  for (const e of result) {
+    for (let i = 0; i < e.length; i += 2) {
+      const streamId = e[i];
+      const entries = e[i + 1];
+      if (!(streamId in obj)) {
+        obj[streamId] = {};
+      }
+      for (let j = 0; j < entries.length; j += 2) {
+        const field = entries[j];
+        const value = entries[j + 1];
+        try {
+          obj[streamId][field] = JSON.parse(value);
+        } catch {
+          obj[streamId][field] = value;
+        }
+      }
+    }
+  }
+  return obj;
+}
+function createAutoPipelineProxy(_redis, namespace = "root") {
+  const redis = _redis;
+  if (!redis.autoPipelineExecutor) {
+    redis.autoPipelineExecutor = new AutoPipelineExecutor(redis);
+  }
+  return new Proxy(redis, {
+    get: (redis2, command) => {
+      if (command === "pipelineCounter") {
+        return redis2.autoPipelineExecutor.pipelineCounter;
+      }
+      if (namespace === "root" && command === "json") {
+        return createAutoPipelineProxy(redis2, "json");
+      }
+      if (namespace === "root" && command === "functions") {
+        return createAutoPipelineProxy(redis2, "functions");
+      }
+      if (namespace === "root") {
+        const commandInRedisButNotPipeline = command in redis2 && !(command in redis2.autoPipelineExecutor.pipeline);
+        const isCommandExcluded = EXCLUDE_COMMANDS.has(command);
+        if (commandInRedisButNotPipeline || isCommandExcluded) {
+          return redis2[command];
+        }
+      }
+      const pipeline = redis2.autoPipelineExecutor.pipeline;
+      const targetFunction = namespace === "json" ? pipeline.json[command] : namespace === "functions" ? pipeline.functions[command] : pipeline[command];
+      const isFunction = typeof targetFunction === "function";
+      if (isFunction) {
+        return (...args) => {
+          return redis2.autoPipelineExecutor.withAutoPipeline((pipeline2) => {
+            const targetFunction2 = namespace === "json" ? pipeline2.json[command] : namespace === "functions" ? pipeline2.functions[command] : pipeline2[command];
+            targetFunction2(...args);
+          });
+        };
+      }
+      return targetFunction;
+    }
+  });
+}
+var __defProp2, __export2, error_exports, UpstashError, UrlError, UpstashJSONParseError, MAX_BUFFER_SIZE, HttpClient2, defaultSerializer, Command, ExecCommand, FIELD_TYPES, SearchIndex, HRandFieldCommand, AppendCommand, BitCountCommand, BitFieldCommand, BitOpCommand, BitPosCommand, ClientSetInfoCommand, CopyCommand, DBSizeCommand, DecrCommand, DecrByCommand, DelCommand, EchoCommand, EvalROCommand, EvalCommand, EvalshaROCommand, EvalshaCommand, ExistsCommand, ExpireCommand, ExpireAtCommand, FCallCommand, FCallRoCommand, FlushAllCommand, FlushDBCommand, FunctionDeleteCommand, FunctionFlushCommand, FunctionListCommand, FunctionLoadCommand, FunctionStatsCommand, GeoAddCommand, GeoDistCommand, GeoHashCommand, GeoPosCommand, GeoSearchCommand, GeoSearchStoreCommand, GetCommand, GetBitCommand, GetDelCommand, GetExCommand, GetRangeCommand, GetSetCommand, HDelCommand, HExistsCommand, HExpireCommand, HExpireAtCommand, HExpireTimeCommand, HPersistCommand, HPExpireCommand, HPExpireAtCommand, HPExpireTimeCommand, HPTtlCommand, HGetCommand, HGetAllCommand, HMGetCommand, HGetDelCommand, HGetExCommand, HIncrByCommand, HIncrByFloatCommand, HKeysCommand, HLenCommand, HMSetCommand, HScanCommand, HSetCommand, HSetExCommand, HSetNXCommand, HStrLenCommand, HTtlCommand, HValsCommand, IncrCommand, IncrByCommand, IncrByFloatCommand, JsonArrAppendCommand, JsonArrIndexCommand, JsonArrInsertCommand, JsonArrLenCommand, JsonArrPopCommand, JsonArrTrimCommand, JsonClearCommand, JsonDelCommand, JsonForgetCommand, JsonGetCommand, JsonMergeCommand, JsonMGetCommand, JsonMSetCommand, JsonNumIncrByCommand, JsonNumMultByCommand, JsonObjKeysCommand, JsonObjLenCommand, JsonRespCommand, JsonSetCommand, JsonStrAppendCommand, JsonStrLenCommand, JsonToggleCommand, JsonTypeCommand, KeysCommand, LIndexCommand, LInsertCommand, LLenCommand, LMoveCommand, LmPopCommand, LPopCommand, LPosCommand, LPushCommand, LPushXCommand, LRangeCommand, LRemCommand, LSetCommand, LTrimCommand, MGetCommand, MSetCommand, MSetNXCommand, PersistCommand, PExpireCommand, PExpireAtCommand, PfAddCommand, PfCountCommand, PfMergeCommand, PingCommand, PSetEXCommand, PTtlCommand, PublishCommand, RandomKeyCommand, RenameCommand, RenameNXCommand, RPopCommand, RPushCommand, RPushXCommand, SAddCommand, ScanCommand, SCardCommand, ScriptExistsCommand, ScriptFlushCommand, ScriptLoadCommand, SDiffCommand, SDiffStoreCommand, SetCommand, SetBitCommand, SetExCommand, SetNxCommand, SetRangeCommand, SInterCommand, SInterCardCommand, SInterStoreCommand, SIsMemberCommand, SMembersCommand, SMIsMemberCommand, SMoveCommand, SPopCommand, SRandMemberCommand, SRemCommand, SScanCommand, StrLenCommand, SUnionCommand, SUnionStoreCommand, TimeCommand, TouchCommand, TtlCommand, TypeCommand, UnlinkCommand, XAckCommand, XAckDelCommand, XAddCommand, XAutoClaim, XClaimCommand, XDelCommand, XDelExCommand, XGroupCommand, XInfoCommand, XLenCommand, XPendingCommand, XRangeCommand, UNBALANCED_XREAD_ERR, XReadCommand, UNBALANCED_XREADGROUP_ERR, XReadGroupCommand, XRevRangeCommand, XTrimCommand, ZAddCommand, ZCardCommand, ZCountCommand, ZIncrByCommand, ZInterStoreCommand, ZLexCountCommand, ZPopMaxCommand, ZPopMinCommand, ZRangeCommand, ZRankCommand, ZRemCommand, ZRemRangeByLexCommand, ZRemRangeByRankCommand, ZRemRangeByScoreCommand, ZRevRankCommand, ZScanCommand, ZScoreCommand, ZUnionCommand, ZUnionStoreCommand, ZDiffStoreCommand, ZMScoreCommand, Pipeline, EXCLUDE_COMMANDS, AutoPipelineExecutor, PSubscribeCommand, Subscriber, SubscribeCommand, parseWithTryCatch, Script, ScriptRO, Redis, VERSION2;
+var init_chunk_IH7W44G6 = __esm({
+  "node_modules/@upstash/redis/chunk-IH7W44G6.mjs"() {
+    init_crypto_node();
+    init_crypto_node();
+    __defProp2 = Object.defineProperty;
+    __export2 = (target, all) => {
+      for (var name in all)
+        __defProp2(target, name, { get: all[name], enumerable: true });
+    };
+    error_exports = {};
+    __export2(error_exports, {
+      UpstashError: () => UpstashError,
+      UpstashJSONParseError: () => UpstashJSONParseError,
+      UrlError: () => UrlError
+    });
+    UpstashError = class extends Error {
+      constructor(message2, options) {
+        super(message2, options);
+        this.name = "UpstashError";
+      }
+    };
+    UrlError = class extends Error {
+      constructor(url2) {
+        super(
+          `Upstash Redis client was passed an invalid URL. You should pass a URL starting with https. Received: "${url2}". `
+        );
+        this.name = "UrlError";
+      }
+    };
+    UpstashJSONParseError = class extends UpstashError {
+      constructor(body, options) {
+        const truncatedBody = body.length > 200 ? body.slice(0, 200) + "..." : body;
+        super(`Unable to parse response body: ${truncatedBody}`, options);
+        this.name = "UpstashJSONParseError";
+      }
+    };
+    MAX_BUFFER_SIZE = 1024 * 1024;
+    HttpClient2 = class {
+      baseUrl;
+      headers;
+      options;
+      readYourWrites;
+      upstashSyncToken = "";
+      hasCredentials;
+      retry;
+      constructor(config2) {
+        this.options = {
+          backend: config2.options?.backend,
+          agent: config2.agent,
+          responseEncoding: config2.responseEncoding ?? "base64",
+          // default to base64
+          cache: config2.cache,
+          signal: config2.signal,
+          keepAlive: config2.keepAlive ?? true
+        };
+        this.upstashSyncToken = "";
+        this.readYourWrites = config2.readYourWrites ?? true;
+        this.baseUrl = (config2.baseUrl || "").replace(/\/$/, "");
+        const urlRegex = /^https?:\/\/[^\s#$./?].\S*$/;
+        if (this.baseUrl && !urlRegex.test(this.baseUrl)) {
+          throw new UrlError(this.baseUrl);
+        }
+        this.headers = {
+          "Content-Type": "application/json",
+          ...config2.headers
+        };
+        this.hasCredentials = Boolean(this.baseUrl && this.headers.authorization.split(" ")[1]);
+        if (this.options.responseEncoding === "base64") {
+          this.headers["Upstash-Encoding"] = "base64";
+        }
+        this.retry = typeof config2.retry === "boolean" && !config2.retry ? {
+          attempts: 1,
+          backoff: () => 0
+        } : {
+          attempts: config2.retry?.retries ?? 5,
+          backoff: config2.retry?.backoff ?? ((retryCount) => Math.exp(retryCount) * 50)
+        };
+      }
+      mergeTelemetry(telemetry) {
+        this.headers = merge2(this.headers, "Upstash-Telemetry-Runtime", telemetry.runtime);
+        this.headers = merge2(this.headers, "Upstash-Telemetry-Platform", telemetry.platform);
+        this.headers = merge2(this.headers, "Upstash-Telemetry-Sdk", telemetry.sdk);
+      }
+      async request(req) {
+        const requestHeaders = mergeHeaders(this.headers, req.headers ?? {});
+        const requestUrl = [this.baseUrl, ...req.path ?? []].join("/");
+        const isEventStream = requestHeaders.Accept === "text/event-stream";
+        const signal = req.signal ?? this.options.signal;
+        const isSignalFunction = typeof signal === "function";
+        const requestOptions = {
+          cache: this.options.cache,
+          method: "POST",
+          headers: requestHeaders,
+          body: JSON.stringify(req.body),
+          keepalive: this.options.keepAlive,
+          agent: this.options.agent,
+          signal: isSignalFunction ? signal() : signal,
+          /**
+           * Fastly specific
+           */
+          backend: this.options.backend
+        };
+        if (!this.hasCredentials) {
+          console.warn(
+            "[Upstash Redis] Redis client was initialized without url or token. Failed to execute command."
+          );
+        }
+        if (this.readYourWrites) {
+          const newHeader = this.upstashSyncToken;
+          this.headers["upstash-sync-token"] = newHeader;
+        }
+        let res = null;
+        let error48 = null;
+        for (let i = 0; i <= this.retry.attempts; i++) {
+          try {
+            res = await fetch(requestUrl, requestOptions);
+            break;
+          } catch (error_) {
+            if (requestOptions.signal?.aborted && isSignalFunction) {
+              throw error_;
+            } else if (requestOptions.signal?.aborted) {
+              const myBlob = new Blob([
+                JSON.stringify({ result: requestOptions.signal.reason ?? "Aborted" })
+              ]);
+              const myOptions = {
+                status: 200,
+                statusText: requestOptions.signal.reason ?? "Aborted"
+              };
+              res = new Response(myBlob, myOptions);
+              break;
+            }
+            error48 = error_;
+            if (i < this.retry.attempts) {
+              await new Promise((r) => setTimeout(r, this.retry.backoff(i)));
+            }
+          }
+        }
+        if (!res) {
+          throw error48 ?? new Error("Exhausted all retries");
+        }
+        if (!res.ok) {
+          let body2;
+          const rawBody2 = await res.text();
+          try {
+            body2 = JSON.parse(rawBody2);
+          } catch (error210) {
+            throw new UpstashJSONParseError(rawBody2, { cause: error210 });
+          }
+          throw new UpstashError(`${body2.error}, command was: ${JSON.stringify(req.body)}`);
+        }
+        if (this.readYourWrites) {
+          const headers = res.headers;
+          this.upstashSyncToken = headers.get("upstash-sync-token") ?? "";
+        }
+        if (isEventStream && req && req.onMessage && res.body) {
+          const reader = res.body.getReader();
+          const decoder2 = new TextDecoder();
+          (async () => {
+            try {
+              let buffer = "";
+              while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += decoder2.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop() || "";
+                if (buffer.length > MAX_BUFFER_SIZE) {
+                  throw new Error("Buffer size exceeded (1MB)");
+                }
+                for (const line of lines) {
+                  if (line.startsWith("data: ")) {
+                    const data = line.slice(6);
+                    req.onMessage?.(data);
+                  }
+                }
+              }
+            } catch (error210) {
+              if (error210 instanceof Error && error210.name === "AbortError") {
+              } else {
+                console.error("Stream reading error:", error210);
+              }
+            } finally {
+              try {
+                await reader.cancel();
+              } catch {
+              }
+            }
+          })();
+          return { result: 1 };
+        }
+        let body;
+        const rawBody = await res.text();
+        try {
+          body = JSON.parse(rawBody);
+        } catch (error210) {
+          throw new UpstashJSONParseError(rawBody, { cause: error210 });
+        }
+        if (this.readYourWrites) {
+          const headers = res.headers;
+          this.upstashSyncToken = headers.get("upstash-sync-token") ?? "";
+        }
+        if (this.options.responseEncoding === "base64") {
+          if (Array.isArray(body)) {
+            return body.map(({ result: result2, error: error210 }) => ({
+              result: decode4(result2),
+              error: error210
+            }));
+          }
+          const result = decode4(body.result);
+          return { result, error: body.error };
+        }
+        return body;
+      }
+    };
+    defaultSerializer = (c) => {
+      switch (typeof c) {
+        case "string":
+        case "number":
+        case "boolean": {
+          return c;
+        }
+        default: {
+          return JSON.stringify(c);
+        }
+      }
+    };
+    Command = class {
+      command;
+      serialize;
+      deserialize;
+      headers;
+      path;
+      onMessage;
+      isStreaming;
+      signal;
+      /**
+       * Create a new command instance.
+       *
+       * You can define a custom `deserialize` function. By default we try to deserialize as json.
+       */
+      constructor(command, opts) {
+        this.serialize = defaultSerializer;
+        this.deserialize = opts?.automaticDeserialization === void 0 || opts.automaticDeserialization ? opts?.deserialize ?? parseResponse : (x) => x;
+        this.command = command.map((c) => this.serialize(c));
+        this.headers = opts?.headers;
+        this.path = opts?.path;
+        this.onMessage = opts?.streamOptions?.onMessage;
+        this.isStreaming = opts?.streamOptions?.isStreaming ?? false;
+        this.signal = opts?.streamOptions?.signal;
+        if (opts?.latencyLogging) {
+          const originalExec = this.exec.bind(this);
+          this.exec = async (client) => {
+            const start = performance.now();
+            const result = await originalExec(client);
+            const end = performance.now();
+            const loggerResult = (end - start).toFixed(2);
+            console.log(
+              `Latency for \x1B[38;2;19;185;39m${this.command[0].toString().toUpperCase()}\x1B[0m: \x1B[38;2;0;255;255m${loggerResult} ms\x1B[0m`
+            );
+            return result;
+          };
+        }
+      }
+      /**
+       * Execute the command using a client.
+       */
+      async exec(client) {
+        const { result, error: error48 } = await client.request({
+          body: this.command,
+          path: this.path,
+          upstashSyncToken: client.upstashSyncToken,
+          headers: this.headers,
+          onMessage: this.onMessage,
+          isStreaming: this.isStreaming,
+          signal: this.signal
+        });
+        if (error48) {
+          throw new UpstashError(error48);
+        }
+        if (result === void 0) {
+          throw new TypeError("Request did not return a result");
+        }
+        return this.deserialize(result);
+      }
+    };
+    ExecCommand = class extends Command {
+      constructor(cmd, opts) {
+        const normalizedCmd = cmd.map((arg) => typeof arg === "string" ? arg : String(arg));
+        super(normalizedCmd, opts);
+      }
+    };
+    FIELD_TYPES = [
+      "TEXT",
+      "U64",
+      "I64",
+      "F64",
+      "BOOL",
+      "DATE",
+      "KEYWORD",
+      "FACET"
+    ];
+    SearchIndex = class {
+      name;
+      schema;
+      client;
+      constructor({ name, schema, client }) {
+        this.name = name;
+        this.schema = schema;
+        this.client = client;
+      }
+      async waitIndexing() {
+        const command = ["SEARCH.WAITINDEXING", this.name];
+        return await new ExecCommand(command).exec(this.client);
+      }
+      async describe() {
+        const command = ["SEARCH.DESCRIBE", this.name];
+        const rawResult = await new ExecCommand(command).exec(
+          this.client
+        );
+        if (!rawResult) return null;
+        return deserializeDescribeResponse(rawResult);
+      }
+      async query(options) {
+        const command = buildQueryCommand("SEARCH.QUERY", this.name, options);
+        const rawResult = await new ExecCommand(command).exec(
+          this.client
+        );
+        if (!rawResult) return rawResult;
+        return deserializeQueryResponse(rawResult);
+      }
+      async aggregate(options) {
+        const command = buildAggregateCommand(this.name, options);
+        const rawResult = await new ExecCommand(
+          command
+        ).exec(this.client);
+        return deserializeAggregateResponse(rawResult);
+      }
+      async count({ filter }) {
+        const command = buildQueryCommand("SEARCH.COUNT", this.name, { filter });
+        const rawResult = await new ExecCommand(command).exec(
+          this.client
+        );
+        return { count: parseCountResponse(rawResult) };
+      }
+      async drop() {
+        const command = ["SEARCH.DROP", this.name];
+        const result = await new ExecCommand(command).exec(this.client);
+        return result;
+      }
+      async addAlias({ alias }) {
+        const command = ["SEARCH.ALIASADD", alias, this.name];
+        const result = await new ExecCommand(command).exec(this.client);
+        return result;
+      }
+    };
+    HRandFieldCommand = class extends Command {
+      constructor(cmd, opts) {
+        const command = ["hrandfield", cmd[0]];
+        if (typeof cmd[1] === "number") {
+          command.push(cmd[1]);
+        }
+        if (cmd[2]) {
+          command.push("WITHVALUES");
+        }
+        super(command, {
+          // @ts-expect-error to silence compiler
+          deserialize: cmd[2] ? (result) => deserialize(result) : opts?.deserialize,
+          ...opts
+        });
+      }
+    };
+    AppendCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["append", ...cmd], opts);
+      }
+    };
+    BitCountCommand = class extends Command {
+      constructor([key, start, end], opts) {
+        const command = ["bitcount", key];
+        if (typeof start === "number") {
+          command.push(start);
+        }
+        if (typeof end === "number") {
+          command.push(end);
+        }
+        super(command, opts);
+      }
+    };
+    BitFieldCommand = class {
+      constructor(args, client, opts, execOperation = (command) => command.exec(this.client)) {
+        this.client = client;
+        this.opts = opts;
+        this.execOperation = execOperation;
+        this.command = ["bitfield", ...args];
+      }
+      command;
+      chain(...args) {
+        this.command.push(...args);
+        return this;
+      }
+      get(...args) {
+        return this.chain("get", ...args);
+      }
+      set(...args) {
+        return this.chain("set", ...args);
+      }
+      incrby(...args) {
+        return this.chain("incrby", ...args);
+      }
+      overflow(overflow) {
+        return this.chain("overflow", overflow);
+      }
+      exec() {
+        const command = new Command(this.command, this.opts);
+        return this.execOperation(command);
+      }
+    };
+    BitOpCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["bitop", ...cmd], opts);
+      }
+    };
+    BitPosCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["bitpos", ...cmd], opts);
+      }
+    };
+    ClientSetInfoCommand = class extends Command {
+      constructor([attribute, value], opts) {
+        super(["CLIENT", "SETINFO", attribute.toUpperCase(), value], opts);
+      }
+    };
+    CopyCommand = class extends Command {
+      constructor([key, destinationKey, opts], commandOptions) {
+        super(["COPY", key, destinationKey, ...opts?.replace ? ["REPLACE"] : []], {
+          ...commandOptions,
+          deserialize(result) {
+            if (result > 0) {
+              return "COPIED";
+            }
+            return "NOT_COPIED";
+          }
+        });
+      }
+    };
+    DBSizeCommand = class extends Command {
+      constructor(opts) {
+        super(["dbsize"], opts);
+      }
+    };
+    DecrCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["decr", ...cmd], opts);
+      }
+    };
+    DecrByCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["decrby", ...cmd], opts);
+      }
+    };
+    DelCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["del", ...cmd], opts);
+      }
+    };
+    EchoCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["echo", ...cmd], opts);
+      }
+    };
+    EvalROCommand = class extends Command {
+      constructor([script, keys, args], opts) {
+        super(["eval_ro", script, keys.length, ...keys, ...args ?? []], opts);
+      }
+    };
+    EvalCommand = class extends Command {
+      constructor([script, keys, args], opts) {
+        super(["eval", script, keys.length, ...keys, ...args ?? []], opts);
+      }
+    };
+    EvalshaROCommand = class extends Command {
+      constructor([sha, keys, args], opts) {
+        super(["evalsha_ro", sha, keys.length, ...keys, ...args ?? []], opts);
+      }
+    };
+    EvalshaCommand = class extends Command {
+      constructor([sha, keys, args], opts) {
+        super(["evalsha", sha, keys.length, ...keys, ...args ?? []], opts);
+      }
+    };
+    ExistsCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["exists", ...cmd], opts);
+      }
+    };
+    ExpireCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["expire", ...cmd.filter(Boolean)], opts);
+      }
+    };
+    ExpireAtCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["expireat", ...cmd], opts);
+      }
+    };
+    FCallCommand = class extends Command {
+      constructor([functionName, keys, args], opts) {
+        super(["fcall", functionName, ...keys ? [keys.length, ...keys] : [0], ...args ?? []], opts);
+      }
+    };
+    FCallRoCommand = class extends Command {
+      constructor([functionName, keys, args], opts) {
+        super(
+          ["fcall_ro", functionName, ...keys ? [keys.length, ...keys] : [0], ...args ?? []],
+          opts
+        );
+      }
+    };
+    FlushAllCommand = class extends Command {
+      constructor(args, opts) {
+        const command = ["flushall"];
+        if (args && args.length > 0 && args[0].async) {
+          command.push("async");
+        }
+        super(command, opts);
+      }
+    };
+    FlushDBCommand = class extends Command {
+      constructor([opts], cmdOpts) {
+        const command = ["flushdb"];
+        if (opts?.async) {
+          command.push("async");
+        }
+        super(command, cmdOpts);
+      }
+    };
+    FunctionDeleteCommand = class extends Command {
+      constructor([libraryName], opts) {
+        super(["function", "delete", libraryName], opts);
+      }
+    };
+    FunctionFlushCommand = class extends Command {
+      constructor(opts) {
+        super(["function", "flush"], opts);
+      }
+    };
+    FunctionListCommand = class extends Command {
+      constructor([args], opts) {
+        const command = ["function", "list"];
+        if (args?.libraryName) {
+          command.push("libraryname", args.libraryName);
+        }
+        if (args?.withCode) {
+          command.push("withcode");
+        }
+        super(command, { deserialize: deserialize2, ...opts });
+      }
+    };
+    FunctionLoadCommand = class extends Command {
+      constructor([args], opts) {
+        super(["function", "load", ...args.replace ? ["replace"] : [], args.code], opts);
+      }
+    };
+    FunctionStatsCommand = class extends Command {
+      constructor(opts) {
+        super(["function", "stats"], { deserialize: deserialize3, ...opts });
+      }
+    };
+    GeoAddCommand = class extends Command {
+      constructor([key, arg1, ...arg2], opts) {
+        const command = ["geoadd", key];
+        if ("nx" in arg1 && arg1.nx) {
+          command.push("nx");
+        } else if ("xx" in arg1 && arg1.xx) {
+          command.push("xx");
+        }
+        if ("ch" in arg1 && arg1.ch) {
+          command.push("ch");
+        }
+        if ("latitude" in arg1 && arg1.latitude) {
+          command.push(arg1.longitude, arg1.latitude, arg1.member);
+        }
+        command.push(
+          ...arg2.flatMap(({ latitude, longitude, member }) => [longitude, latitude, member])
+        );
+        super(command, opts);
+      }
+    };
+    GeoDistCommand = class extends Command {
+      constructor([key, member1, member2, unit = "M"], opts) {
+        super(["GEODIST", key, member1, member2, unit], opts);
+      }
+    };
+    GeoHashCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key] = cmd;
+        const members = Array.isArray(cmd[1]) ? cmd[1] : cmd.slice(1);
+        super(["GEOHASH", key, ...members], opts);
+      }
+    };
+    GeoPosCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key] = cmd;
+        const members = Array.isArray(cmd[1]) ? cmd[1] : cmd.slice(1);
+        super(["GEOPOS", key, ...members], {
+          deserialize: (result) => transform2(result),
+          ...opts
+        });
+      }
+    };
+    GeoSearchCommand = class extends Command {
+      constructor([key, centerPoint, shape, order, opts], commandOptions) {
+        const command = ["GEOSEARCH", key];
+        if (centerPoint.type === "FROMMEMBER" || centerPoint.type === "frommember") {
+          command.push(centerPoint.type, centerPoint.member);
+        }
+        if (centerPoint.type === "FROMLONLAT" || centerPoint.type === "fromlonlat") {
+          command.push(centerPoint.type, centerPoint.coordinate.lon, centerPoint.coordinate.lat);
+        }
+        if (shape.type === "BYRADIUS" || shape.type === "byradius") {
+          command.push(shape.type, shape.radius, shape.radiusType);
+        }
+        if (shape.type === "BYBOX" || shape.type === "bybox") {
+          command.push(shape.type, shape.rect.width, shape.rect.height, shape.rectType);
+        }
+        command.push(order);
+        if (opts?.count) {
+          command.push("COUNT", opts.count.limit, ...opts.count.any ? ["ANY"] : []);
+        }
+        const transform22 = (result) => {
+          if (!opts?.withCoord && !opts?.withDist && !opts?.withHash) {
+            return result.map((member) => {
+              try {
+                return { member: JSON.parse(member) };
+              } catch {
+                return { member };
+              }
+            });
+          }
+          return result.map((members) => {
+            let counter = 1;
+            const obj = {};
+            try {
+              obj.member = JSON.parse(members[0]);
+            } catch {
+              obj.member = members[0];
+            }
+            if (opts.withDist) {
+              obj.dist = Number.parseFloat(members[counter++]);
+            }
+            if (opts.withHash) {
+              obj.hash = members[counter++].toString();
+            }
+            if (opts.withCoord) {
+              obj.coord = {
+                long: Number.parseFloat(members[counter][0]),
+                lat: Number.parseFloat(members[counter][1])
+              };
+            }
+            return obj;
+          });
+        };
+        super(
+          [
+            ...command,
+            ...opts?.withCoord ? ["WITHCOORD"] : [],
+            ...opts?.withDist ? ["WITHDIST"] : [],
+            ...opts?.withHash ? ["WITHHASH"] : []
+          ],
+          {
+            deserialize: transform22,
+            ...commandOptions
+          }
+        );
+      }
+    };
+    GeoSearchStoreCommand = class extends Command {
+      constructor([destination, key, centerPoint, shape, order, opts], commandOptions) {
+        const command = ["GEOSEARCHSTORE", destination, key];
+        if (centerPoint.type === "FROMMEMBER" || centerPoint.type === "frommember") {
+          command.push(centerPoint.type, centerPoint.member);
+        }
+        if (centerPoint.type === "FROMLONLAT" || centerPoint.type === "fromlonlat") {
+          command.push(centerPoint.type, centerPoint.coordinate.lon, centerPoint.coordinate.lat);
+        }
+        if (shape.type === "BYRADIUS" || shape.type === "byradius") {
+          command.push(shape.type, shape.radius, shape.radiusType);
+        }
+        if (shape.type === "BYBOX" || shape.type === "bybox") {
+          command.push(shape.type, shape.rect.width, shape.rect.height, shape.rectType);
+        }
+        command.push(order);
+        if (opts?.count) {
+          command.push("COUNT", opts.count.limit, ...opts.count.any ? ["ANY"] : []);
+        }
+        super([...command, ...opts?.storeDist ? ["STOREDIST"] : []], commandOptions);
+      }
+    };
+    GetCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["get", ...cmd], opts);
+      }
+    };
+    GetBitCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["getbit", ...cmd], opts);
+      }
+    };
+    GetDelCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["getdel", ...cmd], opts);
+      }
+    };
+    GetExCommand = class extends Command {
+      constructor([key, opts], cmdOpts) {
+        const command = ["getex", key];
+        if (opts) {
+          if ("ex" in opts && typeof opts.ex === "number") {
+            command.push("ex", opts.ex);
+          } else if ("px" in opts && typeof opts.px === "number") {
+            command.push("px", opts.px);
+          } else if ("exat" in opts && typeof opts.exat === "number") {
+            command.push("exat", opts.exat);
+          } else if ("pxat" in opts && typeof opts.pxat === "number") {
+            command.push("pxat", opts.pxat);
+          } else if ("persist" in opts && opts.persist) {
+            command.push("persist");
+          }
+        }
+        super(command, cmdOpts);
+      }
+    };
+    GetRangeCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["getrange", ...cmd], opts);
+      }
+    };
+    GetSetCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["getset", ...cmd], opts);
+      }
+    };
+    HDelCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["hdel", ...cmd], opts);
+      }
+    };
+    HExistsCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["hexists", ...cmd], opts);
+      }
+    };
+    HExpireCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key, fields, seconds, option] = cmd;
+        const fieldArray = Array.isArray(fields) ? fields : [fields];
+        super(
+          [
+            "hexpire",
+            key,
+            seconds,
+            ...option ? [option] : [],
+            "FIELDS",
+            fieldArray.length,
+            ...fieldArray
+          ],
+          opts
+        );
+      }
+    };
+    HExpireAtCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key, fields, timestamp, option] = cmd;
+        const fieldArray = Array.isArray(fields) ? fields : [fields];
+        super(
+          [
+            "hexpireat",
+            key,
+            timestamp,
+            ...option ? [option] : [],
+            "FIELDS",
+            fieldArray.length,
+            ...fieldArray
+          ],
+          opts
+        );
+      }
+    };
+    HExpireTimeCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key, fields] = cmd;
+        const fieldArray = Array.isArray(fields) ? fields : [fields];
+        super(["hexpiretime", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
+      }
+    };
+    HPersistCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key, fields] = cmd;
+        const fieldArray = Array.isArray(fields) ? fields : [fields];
+        super(["hpersist", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
+      }
+    };
+    HPExpireCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key, fields, milliseconds, option] = cmd;
+        const fieldArray = Array.isArray(fields) ? fields : [fields];
+        super(
+          [
+            "hpexpire",
+            key,
+            milliseconds,
+            ...option ? [option] : [],
+            "FIELDS",
+            fieldArray.length,
+            ...fieldArray
+          ],
+          opts
+        );
+      }
+    };
+    HPExpireAtCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key, fields, timestamp, option] = cmd;
+        const fieldArray = Array.isArray(fields) ? fields : [fields];
+        super(
+          [
+            "hpexpireat",
+            key,
+            timestamp,
+            ...option ? [option] : [],
+            "FIELDS",
+            fieldArray.length,
+            ...fieldArray
+          ],
+          opts
+        );
+      }
+    };
+    HPExpireTimeCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key, fields] = cmd;
+        const fieldArray = Array.isArray(fields) ? fields : [fields];
+        super(["hpexpiretime", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
+      }
+    };
+    HPTtlCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key, fields] = cmd;
+        const fieldArray = Array.isArray(fields) ? fields : [fields];
+        super(["hpttl", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
+      }
+    };
+    HGetCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["hget", ...cmd], opts);
+      }
+    };
+    HGetAllCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["hgetall", ...cmd], {
+          deserialize: (result) => deserialize4(result),
+          ...opts
+        });
+      }
+    };
+    HMGetCommand = class extends Command {
+      constructor([key, ...fields], opts) {
+        super(["hmget", key, ...fields], {
+          deserialize: (result) => deserialize5(fields, result),
+          ...opts
+        });
+      }
+    };
+    HGetDelCommand = class extends Command {
+      constructor([key, ...fields], opts) {
+        super(["hgetdel", key, "FIELDS", fields.length, ...fields], {
+          deserialize: (result) => deserialize5(fields.map(String), result),
+          ...opts
+        });
+      }
+    };
+    HGetExCommand = class extends Command {
+      constructor([key, opts, ...fields], cmdOpts) {
+        const command = ["hgetex", key];
+        if ("ex" in opts && typeof opts.ex === "number") {
+          command.push("EX", opts.ex);
+        } else if ("px" in opts && typeof opts.px === "number") {
+          command.push("PX", opts.px);
+        } else if ("exat" in opts && typeof opts.exat === "number") {
+          command.push("EXAT", opts.exat);
+        } else if ("pxat" in opts && typeof opts.pxat === "number") {
+          command.push("PXAT", opts.pxat);
+        } else if ("persist" in opts && opts.persist) {
+          command.push("PERSIST");
+        }
+        command.push("FIELDS", fields.length, ...fields);
+        super(command, {
+          deserialize: (result) => deserialize5(fields.map(String), result),
+          ...cmdOpts
+        });
+      }
+    };
+    HIncrByCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["hincrby", ...cmd], opts);
+      }
+    };
+    HIncrByFloatCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["hincrbyfloat", ...cmd], opts);
+      }
+    };
+    HKeysCommand = class extends Command {
+      constructor([key], opts) {
+        super(["hkeys", key], opts);
+      }
+    };
+    HLenCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["hlen", ...cmd], opts);
+      }
+    };
+    HMSetCommand = class extends Command {
+      constructor([key, kv], opts) {
+        super(["hmset", key, ...Object.entries(kv).flatMap(([field, value]) => [field, value])], opts);
+      }
+    };
+    HScanCommand = class extends Command {
+      constructor([key, cursor, cmdOpts], opts) {
+        const command = ["hscan", key, cursor];
+        if (cmdOpts?.match) {
+          command.push("match", cmdOpts.match);
+        }
+        if (typeof cmdOpts?.count === "number") {
+          command.push("count", cmdOpts.count);
+        }
+        super(command, {
+          deserialize: deserializeScanResponse,
+          ...opts
+        });
+      }
+    };
+    HSetCommand = class extends Command {
+      constructor([key, kv], opts) {
+        super(["hset", key, ...Object.entries(kv).flatMap(([field, value]) => [field, value])], opts);
+      }
+    };
+    HSetExCommand = class extends Command {
+      constructor([key, opts, kv], cmdOpts) {
+        const command = ["hsetex", key];
+        if (opts.conditional) {
+          command.push(opts.conditional.toUpperCase());
+        }
+        if (opts.expiration) {
+          if ("ex" in opts.expiration && typeof opts.expiration.ex === "number") {
+            command.push("EX", opts.expiration.ex);
+          } else if ("px" in opts.expiration && typeof opts.expiration.px === "number") {
+            command.push("PX", opts.expiration.px);
+          } else if ("exat" in opts.expiration && typeof opts.expiration.exat === "number") {
+            command.push("EXAT", opts.expiration.exat);
+          } else if ("pxat" in opts.expiration && typeof opts.expiration.pxat === "number") {
+            command.push("PXAT", opts.expiration.pxat);
+          } else if ("keepttl" in opts.expiration && opts.expiration.keepttl) {
+            command.push("KEEPTTL");
+          }
+        }
+        const entries = Object.entries(kv);
+        command.push("FIELDS", entries.length);
+        for (const [field, value] of entries) {
+          command.push(field, value);
+        }
+        super(command, cmdOpts);
+      }
+    };
+    HSetNXCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["hsetnx", ...cmd], opts);
+      }
+    };
+    HStrLenCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["hstrlen", ...cmd], opts);
+      }
+    };
+    HTtlCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key, fields] = cmd;
+        const fieldArray = Array.isArray(fields) ? fields : [fields];
+        super(["httl", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
+      }
+    };
+    HValsCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["hvals", ...cmd], opts);
+      }
+    };
+    IncrCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["incr", ...cmd], opts);
+      }
+    };
+    IncrByCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["incrby", ...cmd], opts);
+      }
+    };
+    IncrByFloatCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["incrbyfloat", ...cmd], opts);
+      }
+    };
+    JsonArrAppendCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.ARRAPPEND", ...cmd], opts);
+      }
+    };
+    JsonArrIndexCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.ARRINDEX", ...cmd], opts);
+      }
+    };
+    JsonArrInsertCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.ARRINSERT", ...cmd], opts);
+      }
+    };
+    JsonArrLenCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.ARRLEN", cmd[0], cmd[1] ?? "$"], opts);
+      }
+    };
+    JsonArrPopCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.ARRPOP", ...cmd], opts);
+      }
+    };
+    JsonArrTrimCommand = class extends Command {
+      constructor(cmd, opts) {
+        const path6 = cmd[1] ?? "$";
+        const start = cmd[2] ?? 0;
+        const stop = cmd[3] ?? 0;
+        super(["JSON.ARRTRIM", cmd[0], path6, start, stop], opts);
+      }
+    };
+    JsonClearCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.CLEAR", ...cmd], opts);
+      }
+    };
+    JsonDelCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.DEL", ...cmd], opts);
+      }
+    };
+    JsonForgetCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.FORGET", ...cmd], opts);
+      }
+    };
+    JsonGetCommand = class extends Command {
+      constructor(cmd, opts) {
+        const command = ["JSON.GET"];
+        if (typeof cmd[1] === "string") {
+          command.push(...cmd);
+        } else {
+          command.push(cmd[0]);
+          if (cmd[1]) {
+            if (cmd[1].indent) {
+              command.push("INDENT", cmd[1].indent);
+            }
+            if (cmd[1].newline) {
+              command.push("NEWLINE", cmd[1].newline);
+            }
+            if (cmd[1].space) {
+              command.push("SPACE", cmd[1].space);
+            }
+          }
+          command.push(...cmd.slice(2));
+        }
+        super(command, opts);
+      }
+    };
+    JsonMergeCommand = class extends Command {
+      constructor(cmd, opts) {
+        const command = ["JSON.MERGE", ...cmd];
+        super(command, opts);
+      }
+    };
+    JsonMGetCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.MGET", ...cmd[0], cmd[1]], opts);
+      }
+    };
+    JsonMSetCommand = class extends Command {
+      constructor(cmd, opts) {
+        const command = ["JSON.MSET"];
+        for (const c of cmd) {
+          command.push(c.key, c.path, c.value);
+        }
+        super(command, opts);
+      }
+    };
+    JsonNumIncrByCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.NUMINCRBY", ...cmd], opts);
+      }
+    };
+    JsonNumMultByCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.NUMMULTBY", ...cmd], opts);
+      }
+    };
+    JsonObjKeysCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.OBJKEYS", ...cmd], opts);
+      }
+    };
+    JsonObjLenCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.OBJLEN", ...cmd], opts);
+      }
+    };
+    JsonRespCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.RESP", ...cmd], opts);
+      }
+    };
+    JsonSetCommand = class extends Command {
+      constructor(cmd, opts) {
+        const command = ["JSON.SET", cmd[0], cmd[1], cmd[2]];
+        if (cmd[3]) {
+          if (cmd[3].nx) {
+            command.push("NX");
+          } else if (cmd[3].xx) {
+            command.push("XX");
+          }
+        }
+        super(command, opts);
+      }
+    };
+    JsonStrAppendCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.STRAPPEND", ...cmd], opts);
+      }
+    };
+    JsonStrLenCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.STRLEN", ...cmd], opts);
+      }
+    };
+    JsonToggleCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.TOGGLE", ...cmd], opts);
+      }
+    };
+    JsonTypeCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["JSON.TYPE", ...cmd], opts);
+      }
+    };
+    KeysCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["keys", ...cmd], opts);
+      }
+    };
+    LIndexCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["lindex", ...cmd], opts);
+      }
+    };
+    LInsertCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["linsert", ...cmd], opts);
+      }
+    };
+    LLenCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["llen", ...cmd], opts);
+      }
+    };
+    LMoveCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["lmove", ...cmd], opts);
+      }
+    };
+    LmPopCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [numkeys, keys, direction, count] = cmd;
+        super(["LMPOP", numkeys, ...keys, direction, ...count ? ["COUNT", count] : []], opts);
+      }
+    };
+    LPopCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["lpop", ...cmd], opts);
+      }
+    };
+    LPosCommand = class extends Command {
+      constructor(cmd, opts) {
+        const args = ["lpos", cmd[0], cmd[1]];
+        if (typeof cmd[2]?.rank === "number") {
+          args.push("rank", cmd[2].rank);
+        }
+        if (typeof cmd[2]?.count === "number") {
+          args.push("count", cmd[2].count);
+        }
+        if (typeof cmd[2]?.maxLen === "number") {
+          args.push("maxLen", cmd[2].maxLen);
+        }
+        super(args, opts);
+      }
+    };
+    LPushCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["lpush", ...cmd], opts);
+      }
+    };
+    LPushXCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["lpushx", ...cmd], opts);
+      }
+    };
+    LRangeCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["lrange", ...cmd], opts);
+      }
+    };
+    LRemCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["lrem", ...cmd], opts);
+      }
+    };
+    LSetCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["lset", ...cmd], opts);
+      }
+    };
+    LTrimCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["ltrim", ...cmd], opts);
+      }
+    };
+    MGetCommand = class extends Command {
+      constructor(cmd, opts) {
+        const keys = Array.isArray(cmd[0]) ? cmd[0] : cmd;
+        super(["mget", ...keys], opts);
+      }
+    };
+    MSetCommand = class extends Command {
+      constructor([kv], opts) {
+        super(["mset", ...Object.entries(kv).flatMap(([key, value]) => [key, value])], opts);
+      }
+    };
+    MSetNXCommand = class extends Command {
+      constructor([kv], opts) {
+        super(["msetnx", ...Object.entries(kv).flat()], opts);
+      }
+    };
+    PersistCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["persist", ...cmd], opts);
+      }
+    };
+    PExpireCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["pexpire", ...cmd], opts);
+      }
+    };
+    PExpireAtCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["pexpireat", ...cmd], opts);
+      }
+    };
+    PfAddCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["pfadd", ...cmd], opts);
+      }
+    };
+    PfCountCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["pfcount", ...cmd], opts);
+      }
+    };
+    PfMergeCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["pfmerge", ...cmd], opts);
+      }
+    };
+    PingCommand = class extends Command {
+      constructor(cmd, opts) {
+        const command = ["ping"];
+        if (cmd?.[0] !== void 0) {
+          command.push(cmd[0]);
+        }
+        super(command, opts);
+      }
+    };
+    PSetEXCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["psetex", ...cmd], opts);
+      }
+    };
+    PTtlCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["pttl", ...cmd], opts);
+      }
+    };
+    PublishCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["publish", ...cmd], opts);
+      }
+    };
+    RandomKeyCommand = class extends Command {
+      constructor(opts) {
+        super(["randomkey"], opts);
+      }
+    };
+    RenameCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["rename", ...cmd], opts);
+      }
+    };
+    RenameNXCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["renamenx", ...cmd], opts);
+      }
+    };
+    RPopCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["rpop", ...cmd], opts);
+      }
+    };
+    RPushCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["rpush", ...cmd], opts);
+      }
+    };
+    RPushXCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["rpushx", ...cmd], opts);
+      }
+    };
+    SAddCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["sadd", ...cmd], opts);
+      }
+    };
+    ScanCommand = class extends Command {
+      constructor([cursor, opts], cmdOpts) {
+        const command = ["scan", cursor];
+        if (opts?.match) {
+          command.push("match", opts.match);
+        }
+        if (typeof opts?.count === "number") {
+          command.push("count", opts.count);
+        }
+        if (opts && "withType" in opts && opts.withType === true) {
+          command.push("withtype");
+        } else if (opts && "type" in opts && opts.type && opts.type.length > 0) {
+          command.push("type", opts.type);
+        }
+        super(command, {
+          // @ts-expect-error ignore types here
+          deserialize: opts?.withType ? deserializeScanWithTypesResponse : deserializeScanResponse,
+          ...cmdOpts
+        });
+      }
+    };
+    SCardCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["scard", ...cmd], opts);
+      }
+    };
+    ScriptExistsCommand = class extends Command {
+      constructor(hashes, opts) {
+        super(["script", "exists", ...hashes], {
+          deserialize: (result) => result,
+          ...opts
+        });
+      }
+    };
+    ScriptFlushCommand = class extends Command {
+      constructor([opts], cmdOpts) {
+        const cmd = ["script", "flush"];
+        if (opts?.sync) {
+          cmd.push("sync");
+        } else if (opts?.async) {
+          cmd.push("async");
+        }
+        super(cmd, cmdOpts);
+      }
+    };
+    ScriptLoadCommand = class extends Command {
+      constructor(args, opts) {
+        super(["script", "load", ...args], opts);
+      }
+    };
+    SDiffCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["sdiff", ...cmd], opts);
+      }
+    };
+    SDiffStoreCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["sdiffstore", ...cmd], opts);
+      }
+    };
+    SetCommand = class extends Command {
+      constructor([key, value, opts], cmdOpts) {
+        const command = ["set", key, value];
+        if (opts) {
+          if ("nx" in opts && opts.nx) {
+            command.push("nx");
+          } else if ("xx" in opts && opts.xx) {
+            command.push("xx");
+          }
+          if ("get" in opts && opts.get) {
+            command.push("get");
+          }
+          if ("ex" in opts && typeof opts.ex === "number") {
+            command.push("ex", opts.ex);
+          } else if ("px" in opts && typeof opts.px === "number") {
+            command.push("px", opts.px);
+          } else if ("exat" in opts && typeof opts.exat === "number") {
+            command.push("exat", opts.exat);
+          } else if ("pxat" in opts && typeof opts.pxat === "number") {
+            command.push("pxat", opts.pxat);
+          } else if ("keepTtl" in opts && opts.keepTtl) {
+            command.push("keepTtl");
+          }
+        }
+        super(command, cmdOpts);
+      }
+    };
+    SetBitCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["setbit", ...cmd], opts);
+      }
+    };
+    SetExCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["setex", ...cmd], opts);
+      }
+    };
+    SetNxCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["setnx", ...cmd], opts);
+      }
+    };
+    SetRangeCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["setrange", ...cmd], opts);
+      }
+    };
+    SInterCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["sinter", ...cmd], opts);
+      }
+    };
+    SInterCardCommand = class extends Command {
+      constructor(cmd, cmdOpts) {
+        const [keys, opts] = cmd;
+        const command = ["sintercard", keys.length, ...keys];
+        if (opts?.limit !== void 0) {
+          command.push("LIMIT", opts.limit);
+        }
+        super(command, cmdOpts);
+      }
+    };
+    SInterStoreCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["sinterstore", ...cmd], opts);
+      }
+    };
+    SIsMemberCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["sismember", ...cmd], opts);
+      }
+    };
+    SMembersCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["smembers", ...cmd], opts);
+      }
+    };
+    SMIsMemberCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["smismember", cmd[0], ...cmd[1]], opts);
+      }
+    };
+    SMoveCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["smove", ...cmd], opts);
+      }
+    };
+    SPopCommand = class extends Command {
+      constructor([key, count], opts) {
+        const command = ["spop", key];
+        if (typeof count === "number") {
+          command.push(count);
+        }
+        super(command, opts);
+      }
+    };
+    SRandMemberCommand = class extends Command {
+      constructor([key, count], opts) {
+        const command = ["srandmember", key];
+        if (typeof count === "number") {
+          command.push(count);
+        }
+        super(command, opts);
+      }
+    };
+    SRemCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["srem", ...cmd], opts);
+      }
+    };
+    SScanCommand = class extends Command {
+      constructor([key, cursor, opts], cmdOpts) {
+        const command = ["sscan", key, cursor];
+        if (opts?.match) {
+          command.push("match", opts.match);
+        }
+        if (typeof opts?.count === "number") {
+          command.push("count", opts.count);
+        }
+        super(command, {
+          deserialize: deserializeScanResponse,
+          ...cmdOpts
+        });
+      }
+    };
+    StrLenCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["strlen", ...cmd], opts);
+      }
+    };
+    SUnionCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["sunion", ...cmd], opts);
+      }
+    };
+    SUnionStoreCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["sunionstore", ...cmd], opts);
+      }
+    };
+    TimeCommand = class extends Command {
+      constructor(opts) {
+        super(["time"], opts);
+      }
+    };
+    TouchCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["touch", ...cmd], opts);
+      }
+    };
+    TtlCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["ttl", ...cmd], opts);
+      }
+    };
+    TypeCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["type", ...cmd], opts);
+      }
+    };
+    UnlinkCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["unlink", ...cmd], opts);
+      }
+    };
+    XAckCommand = class extends Command {
+      constructor([key, group, id], opts) {
+        const ids = Array.isArray(id) ? [...id] : [id];
+        super(["XACK", key, group, ...ids], opts);
+      }
+    };
+    XAckDelCommand = class extends Command {
+      constructor([key, group, opts, ...ids], cmdOpts) {
+        const command = ["XACKDEL", key, group];
+        command.push(opts.toUpperCase(), "IDS", ids.length, ...ids);
+        super(command, cmdOpts);
+      }
+    };
+    XAddCommand = class extends Command {
+      constructor([key, id, entries, opts], commandOptions) {
+        const command = ["XADD", key];
+        if (opts) {
+          if (opts.nomkStream) {
+            command.push("NOMKSTREAM");
+          }
+          if (opts.trim) {
+            command.push(opts.trim.type, opts.trim.comparison, opts.trim.threshold);
+            if (opts.trim.limit !== void 0) {
+              command.push("LIMIT", opts.trim.limit);
+            }
+          }
+        }
+        command.push(id);
+        for (const [k, v] of Object.entries(entries)) {
+          command.push(k, v);
+        }
+        super(command, commandOptions);
+      }
+    };
+    XAutoClaim = class extends Command {
+      constructor([key, group, consumer, minIdleTime, start, options], opts) {
+        const commands = [];
+        if (options?.count) {
+          commands.push("COUNT", options.count);
+        }
+        if (options?.justId) {
+          commands.push("JUSTID");
+        }
+        super(["XAUTOCLAIM", key, group, consumer, minIdleTime, start, ...commands], opts);
+      }
+    };
+    XClaimCommand = class extends Command {
+      constructor([key, group, consumer, minIdleTime, id, options], opts) {
+        const ids = Array.isArray(id) ? [...id] : [id];
+        const commands = [];
+        if (options?.idleMS) {
+          commands.push("IDLE", options.idleMS);
+        }
+        if (options?.idleMS) {
+          commands.push("TIME", options.timeMS);
+        }
+        if (options?.retryCount) {
+          commands.push("RETRYCOUNT", options.retryCount);
+        }
+        if (options?.force) {
+          commands.push("FORCE");
+        }
+        if (options?.justId) {
+          commands.push("JUSTID");
+        }
+        if (options?.lastId) {
+          commands.push("LASTID", options.lastId);
+        }
+        super(["XCLAIM", key, group, consumer, minIdleTime, ...ids, ...commands], opts);
+      }
+    };
+    XDelCommand = class extends Command {
+      constructor([key, ids], opts) {
+        const cmds = Array.isArray(ids) ? [...ids] : [ids];
+        super(["XDEL", key, ...cmds], opts);
+      }
+    };
+    XDelExCommand = class extends Command {
+      constructor([key, opts, ...ids], cmdOpts) {
+        const command = ["XDELEX", key];
+        if (opts) {
+          command.push(opts.toUpperCase());
+        }
+        command.push("IDS", ids.length, ...ids);
+        super(command, cmdOpts);
+      }
+    };
+    XGroupCommand = class extends Command {
+      constructor([key, opts], commandOptions) {
+        const command = ["XGROUP"];
+        switch (opts.type) {
+          case "CREATE": {
+            command.push("CREATE", key, opts.group, opts.id);
+            if (opts.options) {
+              if (opts.options.MKSTREAM) {
+                command.push("MKSTREAM");
+              }
+              if (opts.options.ENTRIESREAD !== void 0) {
+                command.push("ENTRIESREAD", opts.options.ENTRIESREAD.toString());
+              }
+            }
+            break;
+          }
+          case "CREATECONSUMER": {
+            command.push("CREATECONSUMER", key, opts.group, opts.consumer);
+            break;
+          }
+          case "DELCONSUMER": {
+            command.push("DELCONSUMER", key, opts.group, opts.consumer);
+            break;
+          }
+          case "DESTROY": {
+            command.push("DESTROY", key, opts.group);
+            break;
+          }
+          case "SETID": {
+            command.push("SETID", key, opts.group, opts.id);
+            if (opts.options?.ENTRIESREAD !== void 0) {
+              command.push("ENTRIESREAD", opts.options.ENTRIESREAD.toString());
+            }
+            break;
+          }
+          default: {
+            throw new Error("Invalid XGROUP");
+          }
+        }
+        super(command, commandOptions);
+      }
+    };
+    XInfoCommand = class extends Command {
+      constructor([key, options], opts) {
+        const cmds = [];
+        if (options.type === "CONSUMERS") {
+          cmds.push("CONSUMERS", key, options.group);
+        } else {
+          cmds.push("GROUPS", key);
+        }
+        super(["XINFO", ...cmds], opts);
+      }
+    };
+    XLenCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["XLEN", ...cmd], opts);
+      }
+    };
+    XPendingCommand = class extends Command {
+      constructor([key, group, start, end, count, options], opts) {
+        const consumers = options?.consumer === void 0 ? [] : Array.isArray(options.consumer) ? [...options.consumer] : [options.consumer];
+        super(
+          [
+            "XPENDING",
+            key,
+            group,
+            ...options?.idleTime ? ["IDLE", options.idleTime] : [],
+            start,
+            end,
+            count,
+            ...consumers
+          ],
+          opts
+        );
+      }
+    };
+    XRangeCommand = class extends Command {
+      constructor([key, start, end, count], opts) {
+        const command = ["XRANGE", key, start, end];
+        if (typeof count === "number") {
+          command.push("COUNT", count);
+        }
+        super(command, {
+          deserialize: (result) => deserialize6(result),
+          ...opts
+        });
+      }
+    };
+    UNBALANCED_XREAD_ERR = "ERR Unbalanced XREAD list of streams: for each stream key an ID or '$' must be specified";
+    XReadCommand = class extends Command {
+      constructor([key, id, options], opts) {
+        if (Array.isArray(key) && Array.isArray(id) && key.length !== id.length) {
+          throw new Error(UNBALANCED_XREAD_ERR);
+        }
+        const commands = [];
+        if (typeof options?.count === "number") {
+          commands.push("COUNT", options.count);
+        }
+        if (typeof options?.blockMS === "number") {
+          commands.push("BLOCK", options.blockMS);
+        }
+        commands.push(
+          "STREAMS",
+          ...Array.isArray(key) ? [...key] : [key],
+          ...Array.isArray(id) ? [...id] : [id]
+        );
+        super(["XREAD", ...commands], opts);
+      }
+    };
+    UNBALANCED_XREADGROUP_ERR = "ERR Unbalanced XREADGROUP list of streams: for each stream key an ID or '$' must be specified";
+    XReadGroupCommand = class extends Command {
+      constructor([group, consumer, key, id, options], opts) {
+        if (Array.isArray(key) && Array.isArray(id) && key.length !== id.length) {
+          throw new Error(UNBALANCED_XREADGROUP_ERR);
+        }
+        const commands = [];
+        if (typeof options?.count === "number") {
+          commands.push("COUNT", options.count);
+        }
+        if (typeof options?.blockMS === "number") {
+          commands.push("BLOCK", options.blockMS);
+        }
+        if (typeof options?.NOACK === "boolean" && options.NOACK) {
+          commands.push("NOACK");
+        }
+        commands.push(
+          "STREAMS",
+          ...Array.isArray(key) ? [...key] : [key],
+          ...Array.isArray(id) ? [...id] : [id]
+        );
+        super(["XREADGROUP", "GROUP", group, consumer, ...commands], opts);
+      }
+    };
+    XRevRangeCommand = class extends Command {
+      constructor([key, end, start, count], opts) {
+        const command = ["XREVRANGE", key, end, start];
+        if (typeof count === "number") {
+          command.push("COUNT", count);
+        }
+        super(command, {
+          deserialize: (result) => deserialize7(result),
+          ...opts
+        });
+      }
+    };
+    XTrimCommand = class extends Command {
+      constructor([key, options], opts) {
+        const { limit, strategy, threshold, exactness = "~" } = options;
+        super(["XTRIM", key, strategy, exactness, threshold, ...limit ? ["LIMIT", limit] : []], opts);
+      }
+    };
+    ZAddCommand = class extends Command {
+      constructor([key, arg1, ...arg2], opts) {
+        const command = ["zadd", key];
+        if ("nx" in arg1 && arg1.nx) {
+          command.push("nx");
+        } else if ("xx" in arg1 && arg1.xx) {
+          command.push("xx");
+        }
+        if ("ch" in arg1 && arg1.ch) {
+          command.push("ch");
+        }
+        if ("incr" in arg1 && arg1.incr) {
+          command.push("incr");
+        }
+        if ("lt" in arg1 && arg1.lt) {
+          command.push("lt");
+        } else if ("gt" in arg1 && arg1.gt) {
+          command.push("gt");
+        }
+        if ("score" in arg1 && "member" in arg1) {
+          command.push(arg1.score, arg1.member);
+        }
+        command.push(...arg2.flatMap(({ score, member }) => [score, member]));
+        super(command, opts);
+      }
+    };
+    ZCardCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zcard", ...cmd], opts);
+      }
+    };
+    ZCountCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zcount", ...cmd], opts);
+      }
+    };
+    ZIncrByCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zincrby", ...cmd], opts);
+      }
+    };
+    ZInterStoreCommand = class extends Command {
+      constructor([destination, numKeys2, keyOrKeys, opts], cmdOpts) {
+        const command = ["zinterstore", destination, numKeys2];
+        if (Array.isArray(keyOrKeys)) {
+          command.push(...keyOrKeys);
+        } else {
+          command.push(keyOrKeys);
+        }
+        if (opts) {
+          if ("weights" in opts && opts.weights) {
+            command.push("weights", ...opts.weights);
+          } else if ("weight" in opts && typeof opts.weight === "number") {
+            command.push("weights", opts.weight);
+          }
+          if ("aggregate" in opts) {
+            command.push("aggregate", opts.aggregate);
+          }
+        }
+        super(command, cmdOpts);
+      }
+    };
+    ZLexCountCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zlexcount", ...cmd], opts);
+      }
+    };
+    ZPopMaxCommand = class extends Command {
+      constructor([key, count], opts) {
+        const command = ["zpopmax", key];
+        if (typeof count === "number") {
+          command.push(count);
+        }
+        super(command, opts);
+      }
+    };
+    ZPopMinCommand = class extends Command {
+      constructor([key, count], opts) {
+        const command = ["zpopmin", key];
+        if (typeof count === "number") {
+          command.push(count);
+        }
+        super(command, opts);
+      }
+    };
+    ZRangeCommand = class extends Command {
+      constructor([key, min, max, opts], cmdOpts) {
+        const command = ["zrange", key, min, max];
+        if (opts?.byScore) {
+          command.push("byscore");
+        }
+        if (opts?.byLex) {
+          command.push("bylex");
+        }
+        if (opts?.rev) {
+          command.push("rev");
+        }
+        if (opts?.count !== void 0 && opts.offset !== void 0) {
+          command.push("limit", opts.offset, opts.count);
+        }
+        if (opts?.withScores) {
+          command.push("withscores");
+        }
+        super(command, cmdOpts);
+      }
+    };
+    ZRankCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zrank", ...cmd], opts);
+      }
+    };
+    ZRemCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zrem", ...cmd], opts);
+      }
+    };
+    ZRemRangeByLexCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zremrangebylex", ...cmd], opts);
+      }
+    };
+    ZRemRangeByRankCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zremrangebyrank", ...cmd], opts);
+      }
+    };
+    ZRemRangeByScoreCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zremrangebyscore", ...cmd], opts);
+      }
+    };
+    ZRevRankCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zrevrank", ...cmd], opts);
+      }
+    };
+    ZScanCommand = class extends Command {
+      constructor([key, cursor, opts], cmdOpts) {
+        const command = ["zscan", key, cursor];
+        if (opts?.match) {
+          command.push("match", opts.match);
+        }
+        if (typeof opts?.count === "number") {
+          command.push("count", opts.count);
+        }
+        super(command, {
+          deserialize: deserializeScanResponse,
+          ...cmdOpts
+        });
+      }
+    };
+    ZScoreCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zscore", ...cmd], opts);
+      }
+    };
+    ZUnionCommand = class extends Command {
+      constructor([numKeys2, keyOrKeys, opts], cmdOpts) {
+        const command = ["zunion", numKeys2];
+        if (Array.isArray(keyOrKeys)) {
+          command.push(...keyOrKeys);
+        } else {
+          command.push(keyOrKeys);
+        }
+        if (opts) {
+          if ("weights" in opts && opts.weights) {
+            command.push("weights", ...opts.weights);
+          } else if ("weight" in opts && typeof opts.weight === "number") {
+            command.push("weights", opts.weight);
+          }
+          if ("aggregate" in opts) {
+            command.push("aggregate", opts.aggregate);
+          }
+          if (opts.withScores) {
+            command.push("withscores");
+          }
+        }
+        super(command, cmdOpts);
+      }
+    };
+    ZUnionStoreCommand = class extends Command {
+      constructor([destination, numKeys2, keyOrKeys, opts], cmdOpts) {
+        const command = ["zunionstore", destination, numKeys2];
+        if (Array.isArray(keyOrKeys)) {
+          command.push(...keyOrKeys);
+        } else {
+          command.push(keyOrKeys);
+        }
+        if (opts) {
+          if ("weights" in opts && opts.weights) {
+            command.push("weights", ...opts.weights);
+          } else if ("weight" in opts && typeof opts.weight === "number") {
+            command.push("weights", opts.weight);
+          }
+          if ("aggregate" in opts) {
+            command.push("aggregate", opts.aggregate);
+          }
+        }
+        super(command, cmdOpts);
+      }
+    };
+    ZDiffStoreCommand = class extends Command {
+      constructor(cmd, opts) {
+        super(["zdiffstore", ...cmd], opts);
+      }
+    };
+    ZMScoreCommand = class extends Command {
+      constructor(cmd, opts) {
+        const [key, members] = cmd;
+        super(["zmscore", key, ...members], opts);
+      }
+    };
+    Pipeline = class {
+      client;
+      commands;
+      commandOptions;
+      multiExec;
+      constructor(opts) {
+        this.client = opts.client;
+        this.commands = [];
+        this.commandOptions = opts.commandOptions;
+        this.multiExec = opts.multiExec ?? false;
+        if (this.commandOptions?.latencyLogging) {
+          const originalExec = this.exec.bind(this);
+          this.exec = async (options) => {
+            const start = performance.now();
+            const result = await (options ? originalExec(options) : originalExec());
+            const end = performance.now();
+            const loggerResult = (end - start).toFixed(2);
+            console.log(
+              `Latency for \x1B[38;2;19;185;39m${this.multiExec ? ["MULTI-EXEC"] : ["PIPELINE"].toString().toUpperCase()}\x1B[0m: \x1B[38;2;0;255;255m${loggerResult} ms\x1B[0m`
+            );
+            return result;
+          };
+        }
+      }
+      exec = async (options) => {
+        if (this.commands.length === 0) {
+          throw new Error("Pipeline is empty");
+        }
+        const path6 = this.multiExec ? ["multi-exec"] : ["pipeline"];
+        const res = await this.client.request({
+          path: path6,
+          body: Object.values(this.commands).map((c) => c.command)
+        });
+        return options?.keepErrors ? res.map(({ error: error48, result }, i) => {
+          return {
+            error: error48,
+            result: this.commands[i].deserialize(result)
+          };
+        }) : res.map(({ error: error48, result }, i) => {
+          if (error48) {
+            throw new UpstashError(
+              `Command ${i + 1} [ ${this.commands[i].command[0]} ] failed: ${error48}`
+            );
+          }
+          return this.commands[i].deserialize(result);
+        });
+      };
+      /**
+       * Returns the length of pipeline before the execution
+       */
+      length() {
+        return this.commands.length;
+      }
+      /**
+       * Pushes a command into the pipeline and returns a chainable instance of the
+       * pipeline
+       */
+      chain(command) {
+        this.commands.push(command);
+        return this;
+      }
+      /**
+       * @see https://redis.io/commands/append
+       */
+      append = (...args) => this.chain(new AppendCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/bitcount
+       */
+      bitcount = (...args) => this.chain(new BitCountCommand(args, this.commandOptions));
+      /**
+       * Returns an instance that can be used to execute `BITFIELD` commands on one key.
+       *
+       * @example
+       * ```typescript
+       * redis.set("mykey", 0);
+       * const result = await redis.pipeline()
+       *   .bitfield("mykey")
+       *   .set("u4", 0, 16)
+       *   .incr("u4", "#1", 1)
+       *   .exec();
+       * console.log(result); // [[0, 1]]
+       * ```
+       *
+       * @see https://redis.io/commands/bitfield
+       */
+      bitfield = (...args) => new BitFieldCommand(args, this.client, this.commandOptions, this.chain.bind(this));
+      /**
+       * @see https://redis.io/commands/bitop
+       */
+      bitop = (op, destinationKey, sourceKey, ...sourceKeys) => this.chain(
+        new BitOpCommand([op, destinationKey, sourceKey, ...sourceKeys], this.commandOptions)
+      );
+      /**
+       * @see https://redis.io/commands/bitpos
+       */
+      bitpos = (...args) => this.chain(new BitPosCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/client-setinfo
+       */
+      clientSetinfo = (...args) => this.chain(new ClientSetInfoCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/copy
+       */
+      copy = (...args) => this.chain(new CopyCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zdiffstore
+       */
+      zdiffstore = (...args) => this.chain(new ZDiffStoreCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/dbsize
+       */
+      dbsize = () => this.chain(new DBSizeCommand(this.commandOptions));
+      /**
+       * @see https://redis.io/commands/decr
+       */
+      decr = (...args) => this.chain(new DecrCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/decrby
+       */
+      decrby = (...args) => this.chain(new DecrByCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/del
+       */
+      del = (...args) => this.chain(new DelCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/echo
+       */
+      echo = (...args) => this.chain(new EchoCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/eval_ro
+       */
+      evalRo = (...args) => this.chain(new EvalROCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/eval
+       */
+      eval = (...args) => this.chain(new EvalCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/evalsha_ro
+       */
+      evalshaRo = (...args) => this.chain(new EvalshaROCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/evalsha
+       */
+      evalsha = (...args) => this.chain(new EvalshaCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/exists
+       */
+      exists = (...args) => this.chain(new ExistsCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/expire
+       */
+      expire = (...args) => this.chain(new ExpireCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/expireat
+       */
+      expireat = (...args) => this.chain(new ExpireAtCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/flushall
+       */
+      flushall = (args) => this.chain(new FlushAllCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/flushdb
+       */
+      flushdb = (...args) => this.chain(new FlushDBCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/geoadd
+       */
+      geoadd = (...args) => this.chain(new GeoAddCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/geodist
+       */
+      geodist = (...args) => this.chain(new GeoDistCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/geopos
+       */
+      geopos = (...args) => this.chain(new GeoPosCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/geohash
+       */
+      geohash = (...args) => this.chain(new GeoHashCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/geosearch
+       */
+      geosearch = (...args) => this.chain(new GeoSearchCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/geosearchstore
+       */
+      geosearchstore = (...args) => this.chain(new GeoSearchStoreCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/get
+       */
+      get = (...args) => this.chain(new GetCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/getbit
+       */
+      getbit = (...args) => this.chain(new GetBitCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/getdel
+       */
+      getdel = (...args) => this.chain(new GetDelCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/getex
+       */
+      getex = (...args) => this.chain(new GetExCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/getrange
+       */
+      getrange = (...args) => this.chain(new GetRangeCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/getset
+       */
+      getset = (key, value) => this.chain(new GetSetCommand([key, value], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hdel
+       */
+      hdel = (...args) => this.chain(new HDelCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hexists
+       */
+      hexists = (...args) => this.chain(new HExistsCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hexpire
+       */
+      hexpire = (...args) => this.chain(new HExpireCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hexpireat
+       */
+      hexpireat = (...args) => this.chain(new HExpireAtCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hexpiretime
+       */
+      hexpiretime = (...args) => this.chain(new HExpireTimeCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/httl
+       */
+      httl = (...args) => this.chain(new HTtlCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hpexpire
+       */
+      hpexpire = (...args) => this.chain(new HPExpireCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hpexpireat
+       */
+      hpexpireat = (...args) => this.chain(new HPExpireAtCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hpexpiretime
+       */
+      hpexpiretime = (...args) => this.chain(new HPExpireTimeCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hpttl
+       */
+      hpttl = (...args) => this.chain(new HPTtlCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hpersist
+       */
+      hpersist = (...args) => this.chain(new HPersistCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hget
+       */
+      hget = (...args) => this.chain(new HGetCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hgetall
+       */
+      hgetall = (...args) => this.chain(new HGetAllCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hgetdel
+       */
+      hgetdel = (...args) => this.chain(new HGetDelCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hgetex
+       */
+      hgetex = (...args) => this.chain(new HGetExCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hincrby
+       */
+      hincrby = (...args) => this.chain(new HIncrByCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hincrbyfloat
+       */
+      hincrbyfloat = (...args) => this.chain(new HIncrByFloatCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hkeys
+       */
+      hkeys = (...args) => this.chain(new HKeysCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hlen
+       */
+      hlen = (...args) => this.chain(new HLenCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hmget
+       */
+      hmget = (...args) => this.chain(new HMGetCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hmset
+       */
+      hmset = (key, kv) => this.chain(new HMSetCommand([key, kv], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hrandfield
+       */
+      hrandfield = (key, count, withValues) => this.chain(new HRandFieldCommand([key, count, withValues], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hscan
+       */
+      hscan = (...args) => this.chain(new HScanCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hset
+       */
+      hset = (key, kv) => this.chain(new HSetCommand([key, kv], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hsetex
+       */
+      hsetex = (...args) => this.chain(new HSetExCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hsetnx
+       */
+      hsetnx = (key, field, value) => this.chain(new HSetNXCommand([key, field, value], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hstrlen
+       */
+      hstrlen = (...args) => this.chain(new HStrLenCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/hvals
+       */
+      hvals = (...args) => this.chain(new HValsCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/incr
+       */
+      incr = (...args) => this.chain(new IncrCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/incrby
+       */
+      incrby = (...args) => this.chain(new IncrByCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/incrbyfloat
+       */
+      incrbyfloat = (...args) => this.chain(new IncrByFloatCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/keys
+       */
+      keys = (...args) => this.chain(new KeysCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/lindex
+       */
+      lindex = (...args) => this.chain(new LIndexCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/linsert
+       */
+      linsert = (key, direction, pivot, value) => this.chain(new LInsertCommand([key, direction, pivot, value], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/llen
+       */
+      llen = (...args) => this.chain(new LLenCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/lmove
+       */
+      lmove = (...args) => this.chain(new LMoveCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/lpop
+       */
+      lpop = (...args) => this.chain(new LPopCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/lmpop
+       */
+      lmpop = (...args) => this.chain(new LmPopCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/lpos
+       */
+      lpos = (...args) => this.chain(new LPosCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/lpush
+       */
+      lpush = (key, ...elements) => this.chain(new LPushCommand([key, ...elements], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/lpushx
+       */
+      lpushx = (key, ...elements) => this.chain(new LPushXCommand([key, ...elements], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/lrange
+       */
+      lrange = (...args) => this.chain(new LRangeCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/lrem
+       */
+      lrem = (key, count, value) => this.chain(new LRemCommand([key, count, value], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/lset
+       */
+      lset = (key, index, value) => this.chain(new LSetCommand([key, index, value], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/ltrim
+       */
+      ltrim = (...args) => this.chain(new LTrimCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/mget
+       */
+      mget = (...args) => this.chain(new MGetCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/mset
+       */
+      mset = (kv) => this.chain(new MSetCommand([kv], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/msetnx
+       */
+      msetnx = (kv) => this.chain(new MSetNXCommand([kv], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/persist
+       */
+      persist = (...args) => this.chain(new PersistCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/pexpire
+       */
+      pexpire = (...args) => this.chain(new PExpireCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/pexpireat
+       */
+      pexpireat = (...args) => this.chain(new PExpireAtCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/pfadd
+       */
+      pfadd = (...args) => this.chain(new PfAddCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/pfcount
+       */
+      pfcount = (...args) => this.chain(new PfCountCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/pfmerge
+       */
+      pfmerge = (...args) => this.chain(new PfMergeCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/ping
+       */
+      ping = (args) => this.chain(new PingCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/psetex
+       */
+      psetex = (key, ttl, value) => this.chain(new PSetEXCommand([key, ttl, value], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/pttl
+       */
+      pttl = (...args) => this.chain(new PTtlCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/publish
+       */
+      publish = (...args) => this.chain(new PublishCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/randomkey
+       */
+      randomkey = () => this.chain(new RandomKeyCommand(this.commandOptions));
+      /**
+       * @see https://redis.io/commands/rename
+       */
+      rename = (...args) => this.chain(new RenameCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/renamenx
+       */
+      renamenx = (...args) => this.chain(new RenameNXCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/rpop
+       */
+      rpop = (...args) => this.chain(new RPopCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/rpush
+       */
+      rpush = (key, ...elements) => this.chain(new RPushCommand([key, ...elements], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/rpushx
+       */
+      rpushx = (key, ...elements) => this.chain(new RPushXCommand([key, ...elements], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/sadd
+       */
+      sadd = (key, member, ...members) => this.chain(new SAddCommand([key, member, ...members], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/scan
+       */
+      scan = (...args) => this.chain(new ScanCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/scard
+       */
+      scard = (...args) => this.chain(new SCardCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/script-exists
+       */
+      scriptExists = (...args) => this.chain(new ScriptExistsCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/script-flush
+       */
+      scriptFlush = (...args) => this.chain(new ScriptFlushCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/script-load
+       */
+      scriptLoad = (...args) => this.chain(new ScriptLoadCommand(args, this.commandOptions));
+      /*)*
+       * @see https://redis.io/commands/sdiff
+       */
+      sdiff = (...args) => this.chain(new SDiffCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/sdiffstore
+       */
+      sdiffstore = (...args) => this.chain(new SDiffStoreCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/set
+       */
+      set = (key, value, opts) => this.chain(new SetCommand([key, value, opts], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/setbit
+       */
+      setbit = (...args) => this.chain(new SetBitCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/setex
+       */
+      setex = (key, ttl, value) => this.chain(new SetExCommand([key, ttl, value], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/setnx
+       */
+      setnx = (key, value) => this.chain(new SetNxCommand([key, value], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/setrange
+       */
+      setrange = (...args) => this.chain(new SetRangeCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/sinter
+       */
+      sinter = (...args) => this.chain(new SInterCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/sintercard
+       */
+      sintercard = (...args) => this.chain(new SInterCardCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/sinterstore
+       */
+      sinterstore = (...args) => this.chain(new SInterStoreCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/sismember
+       */
+      sismember = (key, member) => this.chain(new SIsMemberCommand([key, member], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/smembers
+       */
+      smembers = (...args) => this.chain(new SMembersCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/smismember
+       */
+      smismember = (key, members) => this.chain(new SMIsMemberCommand([key, members], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/smove
+       */
+      smove = (source, destination, member) => this.chain(new SMoveCommand([source, destination, member], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/spop
+       */
+      spop = (...args) => this.chain(new SPopCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/srandmember
+       */
+      srandmember = (...args) => this.chain(new SRandMemberCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/srem
+       */
+      srem = (key, ...members) => this.chain(new SRemCommand([key, ...members], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/sscan
+       */
+      sscan = (...args) => this.chain(new SScanCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/strlen
+       */
+      strlen = (...args) => this.chain(new StrLenCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/sunion
+       */
+      sunion = (...args) => this.chain(new SUnionCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/sunionstore
+       */
+      sunionstore = (...args) => this.chain(new SUnionStoreCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/time
+       */
+      time = () => this.chain(new TimeCommand(this.commandOptions));
+      /**
+       * @see https://redis.io/commands/touch
+       */
+      touch = (...args) => this.chain(new TouchCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/ttl
+       */
+      ttl = (...args) => this.chain(new TtlCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/type
+       */
+      type = (...args) => this.chain(new TypeCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/unlink
+       */
+      unlink = (...args) => this.chain(new UnlinkCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zadd
+       */
+      zadd = (...args) => {
+        if ("score" in args[1]) {
+          return this.chain(
+            new ZAddCommand([args[0], args[1], ...args.slice(2)], this.commandOptions)
+          );
+        }
+        return this.chain(
+          new ZAddCommand(
+            [args[0], args[1], ...args.slice(2)],
+            this.commandOptions
+          )
+        );
+      };
+      /**
+       * @see https://redis.io/commands/xadd
+       */
+      xadd = (...args) => this.chain(new XAddCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xack
+       */
+      xack = (...args) => this.chain(new XAckCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xackdel
+       */
+      xackdel = (...args) => this.chain(new XAckDelCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xdel
+       */
+      xdel = (...args) => this.chain(new XDelCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xdelex
+       */
+      xdelex = (...args) => this.chain(new XDelExCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xgroup
+       */
+      xgroup = (...args) => this.chain(new XGroupCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xread
+       */
+      xread = (...args) => this.chain(new XReadCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xreadgroup
+       */
+      xreadgroup = (...args) => this.chain(new XReadGroupCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xinfo
+       */
+      xinfo = (...args) => this.chain(new XInfoCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xlen
+       */
+      xlen = (...args) => this.chain(new XLenCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xpending
+       */
+      xpending = (...args) => this.chain(new XPendingCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xclaim
+       */
+      xclaim = (...args) => this.chain(new XClaimCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xautoclaim
+       */
+      xautoclaim = (...args) => this.chain(new XAutoClaim(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xtrim
+       */
+      xtrim = (...args) => this.chain(new XTrimCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xrange
+       */
+      xrange = (...args) => this.chain(new XRangeCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/xrevrange
+       */
+      xrevrange = (...args) => this.chain(new XRevRangeCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zcard
+       */
+      zcard = (...args) => this.chain(new ZCardCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zcount
+       */
+      zcount = (...args) => this.chain(new ZCountCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zincrby
+       */
+      zincrby = (key, increment, member) => this.chain(new ZIncrByCommand([key, increment, member], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zinterstore
+       */
+      zinterstore = (...args) => this.chain(new ZInterStoreCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zlexcount
+       */
+      zlexcount = (...args) => this.chain(new ZLexCountCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zmscore
+       */
+      zmscore = (...args) => this.chain(new ZMScoreCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zpopmax
+       */
+      zpopmax = (...args) => this.chain(new ZPopMaxCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zpopmin
+       */
+      zpopmin = (...args) => this.chain(new ZPopMinCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zrange
+       */
+      zrange = (...args) => this.chain(new ZRangeCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zrank
+       */
+      zrank = (key, member) => this.chain(new ZRankCommand([key, member], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zrem
+       */
+      zrem = (key, ...members) => this.chain(new ZRemCommand([key, ...members], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zremrangebylex
+       */
+      zremrangebylex = (...args) => this.chain(new ZRemRangeByLexCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zremrangebyrank
+       */
+      zremrangebyrank = (...args) => this.chain(new ZRemRangeByRankCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zremrangebyscore
+       */
+      zremrangebyscore = (...args) => this.chain(new ZRemRangeByScoreCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zrevrank
+       */
+      zrevrank = (key, member) => this.chain(new ZRevRankCommand([key, member], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zscan
+       */
+      zscan = (...args) => this.chain(new ZScanCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zscore
+       */
+      zscore = (key, member) => this.chain(new ZScoreCommand([key, member], this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zunionstore
+       */
+      zunionstore = (...args) => this.chain(new ZUnionStoreCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/zunion
+       */
+      zunion = (...args) => this.chain(new ZUnionCommand(args, this.commandOptions));
+      /**
+       * @see https://redis.io/commands/?group=json
+       */
+      get json() {
+        return {
+          /**
+           * @see https://redis.io/commands/json.arrappend
+           */
+          arrappend: (...args) => this.chain(new JsonArrAppendCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.arrindex
+           */
+          arrindex: (...args) => this.chain(new JsonArrIndexCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.arrinsert
+           */
+          arrinsert: (...args) => this.chain(new JsonArrInsertCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.arrlen
+           */
+          arrlen: (...args) => this.chain(new JsonArrLenCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.arrpop
+           */
+          arrpop: (...args) => this.chain(new JsonArrPopCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.arrtrim
+           */
+          arrtrim: (...args) => this.chain(new JsonArrTrimCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.clear
+           */
+          clear: (...args) => this.chain(new JsonClearCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.del
+           */
+          del: (...args) => this.chain(new JsonDelCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.forget
+           */
+          forget: (...args) => this.chain(new JsonForgetCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.get
+           */
+          get: (...args) => this.chain(new JsonGetCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.merge
+           */
+          merge: (...args) => this.chain(new JsonMergeCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.mget
+           */
+          mget: (...args) => this.chain(new JsonMGetCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.mset
+           */
+          mset: (...args) => this.chain(new JsonMSetCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.numincrby
+           */
+          numincrby: (...args) => this.chain(new JsonNumIncrByCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.nummultby
+           */
+          nummultby: (...args) => this.chain(new JsonNumMultByCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.objkeys
+           */
+          objkeys: (...args) => this.chain(new JsonObjKeysCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.objlen
+           */
+          objlen: (...args) => this.chain(new JsonObjLenCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.resp
+           */
+          resp: (...args) => this.chain(new JsonRespCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.set
+           */
+          set: (...args) => this.chain(new JsonSetCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.strappend
+           */
+          strappend: (...args) => this.chain(new JsonStrAppendCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.strlen
+           */
+          strlen: (...args) => this.chain(new JsonStrLenCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.toggle
+           */
+          toggle: (...args) => this.chain(new JsonToggleCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/commands/json.type
+           */
+          type: (...args) => this.chain(new JsonTypeCommand(args, this.commandOptions))
+        };
+      }
+      get functions() {
+        return {
+          /**
+           * @see https://redis.io/docs/latest/commands/function-load/
+           */
+          load: (...args) => this.chain(new FunctionLoadCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/docs/latest/commands/function-list/
+           */
+          list: (...args) => this.chain(new FunctionListCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/docs/latest/commands/function-delete/
+           */
+          delete: (...args) => this.chain(new FunctionDeleteCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/docs/latest/commands/function-flush/
+           */
+          flush: () => this.chain(new FunctionFlushCommand(this.commandOptions)),
+          /**
+           * @see https://redis.io/docs/latest/commands/function-stats/
+           */
+          stats: () => this.chain(new FunctionStatsCommand(this.commandOptions)),
+          /**
+           * @see https://redis.io/docs/latest/commands/fcall/
+           */
+          call: (...args) => this.chain(new FCallCommand(args, this.commandOptions)),
+          /**
+           * @see https://redis.io/docs/latest/commands/fcall_ro/
+           */
+          callRo: (...args) => this.chain(new FCallRoCommand(args, this.commandOptions))
+        };
+      }
+    };
+    EXCLUDE_COMMANDS = /* @__PURE__ */ new Set([
+      "scan",
+      "keys",
+      "flushdb",
+      "flushall",
+      "dbsize",
+      "hscan",
+      "hgetall",
+      "hkeys",
+      "lrange",
+      "sscan",
+      "smembers",
+      "xrange",
+      "xrevrange",
+      "zscan",
+      "zrange",
+      "exec"
+    ]);
+    AutoPipelineExecutor = class {
+      pipelinePromises = /* @__PURE__ */ new WeakMap();
+      activePipeline = null;
+      indexInCurrentPipeline = 0;
+      redis;
+      pipeline;
+      // only to make sure that proxy can work
+      pipelineCounter = 0;
+      // to keep track of how many times a pipeline was executed
+      constructor(redis) {
+        this.redis = redis;
+        this.pipeline = redis.pipeline();
+      }
+      async withAutoPipeline(executeWithPipeline) {
+        const pipeline = this.activePipeline ?? this.redis.pipeline();
+        if (!this.activePipeline) {
+          this.activePipeline = pipeline;
+          this.indexInCurrentPipeline = 0;
+        }
+        const index = this.indexInCurrentPipeline++;
+        executeWithPipeline(pipeline);
+        const pipelineDone = this.deferExecution().then(() => {
+          if (!this.pipelinePromises.has(pipeline)) {
+            const pipelinePromise = pipeline.exec({ keepErrors: true });
+            this.pipelineCounter += 1;
+            this.pipelinePromises.set(pipeline, pipelinePromise);
+            this.activePipeline = null;
+          }
+          return this.pipelinePromises.get(pipeline);
+        });
+        const results = await pipelineDone;
+        const commandResult = results[index];
+        if (commandResult.error) {
+          throw new UpstashError(`Command failed: ${commandResult.error}`);
+        }
+        return commandResult.result;
+      }
+      async deferExecution() {
+        await Promise.resolve();
+        await Promise.resolve();
+      }
+    };
+    PSubscribeCommand = class extends Command {
+      constructor(cmd, opts) {
+        const sseHeaders = {
+          Accept: "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive"
+        };
+        super([], {
+          ...opts,
+          headers: sseHeaders,
+          path: ["psubscribe", ...cmd],
+          streamOptions: {
+            isStreaming: true,
+            onMessage: opts?.streamOptions?.onMessage,
+            signal: opts?.streamOptions?.signal
+          }
+        });
+      }
+    };
+    Subscriber = class extends EventTarget {
+      subscriptions;
+      client;
+      listeners;
+      opts;
+      constructor(client, channels, isPattern = false, opts) {
+        super();
+        this.client = client;
+        this.subscriptions = /* @__PURE__ */ new Map();
+        this.listeners = /* @__PURE__ */ new Map();
+        this.opts = opts;
+        for (const channel of channels) {
+          if (isPattern) {
+            this.subscribeToPattern(channel);
+          } else {
+            this.subscribeToChannel(channel);
+          }
+        }
+      }
+      subscribeToChannel(channel) {
+        const controller = new AbortController();
+        const command = new SubscribeCommand([channel], {
+          streamOptions: {
+            signal: controller.signal,
+            onMessage: (data) => this.handleMessage(data, false)
+          }
+        });
+        command.exec(this.client).catch((error48) => {
+          if (error48.name !== "AbortError") {
+            this.dispatchToListeners("error", error48);
+          }
+        });
+        this.subscriptions.set(channel, {
+          command,
+          controller,
+          isPattern: false
+        });
+      }
+      subscribeToPattern(pattern) {
+        const controller = new AbortController();
+        const command = new PSubscribeCommand([pattern], {
+          streamOptions: {
+            signal: controller.signal,
+            onMessage: (data) => this.handleMessage(data, true)
+          }
+        });
+        command.exec(this.client).catch((error48) => {
+          if (error48.name !== "AbortError") {
+            this.dispatchToListeners("error", error48);
+          }
+        });
+        this.subscriptions.set(pattern, {
+          command,
+          controller,
+          isPattern: true
+        });
+      }
+      handleMessage(data, isPattern) {
+        const messageData = data.replace(/^data:\s*/, "");
+        const firstCommaIndex = messageData.indexOf(",");
+        const secondCommaIndex = messageData.indexOf(",", firstCommaIndex + 1);
+        const thirdCommaIndex = isPattern ? messageData.indexOf(",", secondCommaIndex + 1) : -1;
+        if (firstCommaIndex !== -1 && secondCommaIndex !== -1) {
+          const type = messageData.slice(0, firstCommaIndex);
+          if (isPattern && type === "pmessage" && thirdCommaIndex !== -1) {
+            const pattern = messageData.slice(firstCommaIndex + 1, secondCommaIndex);
+            const channel = messageData.slice(secondCommaIndex + 1, thirdCommaIndex);
+            const messageStr = messageData.slice(thirdCommaIndex + 1);
+            try {
+              const message2 = this.opts?.automaticDeserialization === false ? messageStr : JSON.parse(messageStr);
+              this.dispatchToListeners("pmessage", { pattern, channel, message: message2 });
+              this.dispatchToListeners(`pmessage:${pattern}`, { pattern, channel, message: message2 });
+            } catch (error48) {
+              this.dispatchToListeners("error", new Error(`Failed to parse message: ${error48}`));
+            }
+          } else {
+            const channel = messageData.slice(firstCommaIndex + 1, secondCommaIndex);
+            const messageStr = messageData.slice(secondCommaIndex + 1);
+            try {
+              if (type === "subscribe" || type === "psubscribe" || type === "unsubscribe" || type === "punsubscribe") {
+                const count = Number.parseInt(messageStr);
+                this.dispatchToListeners(type, count);
+              } else {
+                const message2 = this.opts?.automaticDeserialization === false ? messageStr : parseWithTryCatch(messageStr);
+                this.dispatchToListeners(type, { channel, message: message2 });
+                this.dispatchToListeners(`${type}:${channel}`, { channel, message: message2 });
+              }
+            } catch (error48) {
+              this.dispatchToListeners("error", new Error(`Failed to parse message: ${error48}`));
+            }
+          }
+        }
+      }
+      dispatchToListeners(type, data) {
+        const listeners = this.listeners.get(type);
+        if (listeners) {
+          for (const listener of listeners) {
+            listener(data);
+          }
+        }
+      }
+      on(type, listener) {
+        if (!this.listeners.has(type)) {
+          this.listeners.set(type, /* @__PURE__ */ new Set());
+        }
+        this.listeners.get(type)?.add(listener);
+      }
+      removeAllListeners() {
+        this.listeners.clear();
+      }
+      async unsubscribe(channels) {
+        if (channels) {
+          for (const channel of channels) {
+            const subscription = this.subscriptions.get(channel);
+            if (subscription) {
+              try {
+                subscription.controller.abort();
+              } catch {
+              }
+              this.subscriptions.delete(channel);
+            }
+          }
+        } else {
+          for (const subscription of this.subscriptions.values()) {
+            try {
+              subscription.controller.abort();
+            } catch {
+            }
+          }
+          this.subscriptions.clear();
+          this.removeAllListeners();
+        }
+      }
+      getSubscribedChannels() {
+        return [...this.subscriptions.keys()];
+      }
+    };
+    SubscribeCommand = class extends Command {
+      constructor(cmd, opts) {
+        const sseHeaders = {
+          Accept: "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive"
+        };
+        super([], {
+          ...opts,
+          headers: sseHeaders,
+          path: ["subscribe", ...cmd],
+          streamOptions: {
+            isStreaming: true,
+            onMessage: opts?.streamOptions?.onMessage,
+            signal: opts?.streamOptions?.signal
+          }
+        });
+      }
+    };
+    parseWithTryCatch = (str) => {
+      try {
+        return JSON.parse(str);
+      } catch {
+        return str;
+      }
+    };
+    Script = class {
+      script;
+      /**
+       * @deprecated This property is initialized to an empty string and will be set in the init method
+       * asynchronously. Do not use this property immidiately after the constructor.
+       *
+       * This property is only exposed for backwards compatibility and will be removed in the
+       * future major release.
+       */
+      sha1;
+      initPromise;
+      redis;
+      constructor(redis, script) {
+        this.redis = redis;
+        this.script = script;
+        this.sha1 = "";
+        void this.init(script);
+      }
+      /**
+       * Initialize the script by computing its SHA-1 hash.
+       */
+      init(script) {
+        if (!this.initPromise) {
+          this.initPromise = this.digest(script).then((sha1) => {
+            this.sha1 = sha1;
+          });
+        }
+        return this.initPromise;
+      }
+      /**
+       * Send an `EVAL` command to redis.
+       */
+      async eval(keys, args) {
+        await this.init(this.script);
+        return await this.redis.eval(this.script, keys, args);
+      }
+      /**
+       * Calculates the sha1 hash of the script and then calls `EVALSHA`.
+       */
+      async evalsha(keys, args) {
+        await this.init(this.script);
+        return await this.redis.evalsha(this.sha1, keys, args);
+      }
+      /**
+       * Optimistically try to run `EVALSHA` first.
+       * If the script is not loaded in redis, it will fall back and try again with `EVAL`.
+       *
+       * Following calls will be able to use the cached script
+       */
+      async exec(keys, args) {
+        await this.init(this.script);
+        const res = await this.redis.evalsha(this.sha1, keys, args).catch(async (error48) => {
+          if (error48 instanceof Error && error48.message.toLowerCase().includes("noscript")) {
+            return await this.redis.eval(this.script, keys, args);
+          }
+          throw error48;
+        });
+        return res;
+      }
+      /**
+       * Compute the sha1 hash of the script and return its hex representation.
+       */
+      async digest(s2) {
+        const data = new TextEncoder().encode(s2);
+        const hashBuffer = await subtle.digest("SHA-1", data);
+        const hashArray = [...new Uint8Array(hashBuffer)];
+        return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+      }
+    };
+    ScriptRO = class {
+      script;
+      /**
+       * @deprecated This property is initialized to an empty string and will be set in the init method
+       * asynchronously. Do not use this property immidiately after the constructor.
+       *
+       * This property is only exposed for backwards compatibility and will be removed in the
+       * future major release.
+       */
+      sha1;
+      initPromise;
+      redis;
+      constructor(redis, script) {
+        this.redis = redis;
+        this.sha1 = "";
+        this.script = script;
+        void this.init(script);
+      }
+      init(script) {
+        if (!this.initPromise) {
+          this.initPromise = this.digest(script).then((sha1) => {
+            this.sha1 = sha1;
+          });
+        }
+        return this.initPromise;
+      }
+      /**
+       * Send an `EVAL_RO` command to redis.
+       */
+      async evalRo(keys, args) {
+        await this.init(this.script);
+        return await this.redis.evalRo(this.script, keys, args);
+      }
+      /**
+       * Calculates the sha1 hash of the script and then calls `EVALSHA_RO`.
+       */
+      async evalshaRo(keys, args) {
+        await this.init(this.script);
+        return await this.redis.evalshaRo(this.sha1, keys, args);
+      }
+      /**
+       * Optimistically try to run `EVALSHA_RO` first.
+       * If the script is not loaded in redis, it will fall back and try again with `EVAL_RO`.
+       *
+       * Following calls will be able to use the cached script
+       */
+      async exec(keys, args) {
+        await this.init(this.script);
+        const res = await this.redis.evalshaRo(this.sha1, keys, args).catch(async (error48) => {
+          if (error48 instanceof Error && error48.message.toLowerCase().includes("noscript")) {
+            return await this.redis.evalRo(this.script, keys, args);
+          }
+          throw error48;
+        });
+        return res;
+      }
+      /**
+       * Compute the sha1 hash of the script and return its hex representation.
+       */
+      async digest(s2) {
+        const data = new TextEncoder().encode(s2);
+        const hashBuffer = await subtle.digest("SHA-1", data);
+        const hashArray = [...new Uint8Array(hashBuffer)];
+        return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+      }
+    };
+    Redis = class {
+      client;
+      opts;
+      enableTelemetry;
+      enableAutoPipelining;
+      /**
+       * Create a new redis client
+       *
+       * @example
+       * ```typescript
+       * const redis = new Redis({
+       *  url: "<UPSTASH_REDIS_REST_URL>",
+       *  token: "<UPSTASH_REDIS_REST_TOKEN>",
+       * });
+       * ```
+       */
+      constructor(client, opts) {
+        this.client = client;
+        this.opts = opts;
+        this.enableTelemetry = opts?.enableTelemetry ?? true;
+        if (opts?.readYourWrites === false) {
+          this.client.readYourWrites = false;
+        }
+        this.enableAutoPipelining = opts?.enableAutoPipelining ?? true;
+      }
+      get readYourWritesSyncToken() {
+        return this.client.upstashSyncToken;
+      }
+      set readYourWritesSyncToken(session) {
+        this.client.upstashSyncToken = session;
+      }
+      get json() {
+        return {
+          /**
+           * @see https://redis.io/commands/json.arrappend
+           */
+          arrappend: (...args) => new JsonArrAppendCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.arrindex
+           */
+          arrindex: (...args) => new JsonArrIndexCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.arrinsert
+           */
+          arrinsert: (...args) => new JsonArrInsertCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.arrlen
+           */
+          arrlen: (...args) => new JsonArrLenCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.arrpop
+           */
+          arrpop: (...args) => new JsonArrPopCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.arrtrim
+           */
+          arrtrim: (...args) => new JsonArrTrimCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.clear
+           */
+          clear: (...args) => new JsonClearCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.del
+           */
+          del: (...args) => new JsonDelCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.forget
+           */
+          forget: (...args) => new JsonForgetCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.get
+           */
+          get: (...args) => new JsonGetCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.merge
+           */
+          merge: (...args) => new JsonMergeCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.mget
+           */
+          mget: (...args) => new JsonMGetCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.mset
+           */
+          mset: (...args) => new JsonMSetCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.numincrby
+           */
+          numincrby: (...args) => new JsonNumIncrByCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.nummultby
+           */
+          nummultby: (...args) => new JsonNumMultByCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.objkeys
+           */
+          objkeys: (...args) => new JsonObjKeysCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.objlen
+           */
+          objlen: (...args) => new JsonObjLenCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.resp
+           */
+          resp: (...args) => new JsonRespCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.set
+           */
+          set: (...args) => new JsonSetCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.strappend
+           */
+          strappend: (...args) => new JsonStrAppendCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.strlen
+           */
+          strlen: (...args) => new JsonStrLenCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.toggle
+           */
+          toggle: (...args) => new JsonToggleCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/commands/json.type
+           */
+          type: (...args) => new JsonTypeCommand(args, this.opts).exec(this.client)
+        };
+      }
+      get functions() {
+        return {
+          /**
+           * @see https://redis.io/docs/latest/commands/function-load/
+           */
+          load: (...args) => new FunctionLoadCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/docs/latest/commands/function-list/
+           */
+          list: (...args) => new FunctionListCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/docs/latest/commands/function-delete/
+           */
+          delete: (...args) => new FunctionDeleteCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/docs/latest/commands/function-flush/
+           */
+          flush: () => new FunctionFlushCommand(this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/docs/latest/commands/function-stats/
+           *
+           * Note: `running_script` field is not supported and therefore not included in the type.
+           */
+          stats: () => new FunctionStatsCommand(this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/docs/latest/commands/fcall/
+           */
+          call: (...args) => new FCallCommand(args, this.opts).exec(this.client),
+          /**
+           * @see https://redis.io/docs/latest/commands/fcall_ro/
+           */
+          callRo: (...args) => new FCallRoCommand(args, this.opts).exec(this.client)
+        };
+      }
+      /**
+       * Wrap a new middleware around the HTTP client.
+       */
+      use = (middleware) => {
+        const makeRequest = this.client.request.bind(this.client);
+        this.client.request = (req) => middleware(req, makeRequest);
+      };
+      /**
+       * Technically this is not private, we can hide it from intellisense by doing this
+       */
+      addTelemetry = (telemetry) => {
+        if (!this.enableTelemetry) {
+          return;
+        }
+        try {
+          this.client.mergeTelemetry(telemetry);
+        } catch {
+        }
+      };
+      /**
+       * Creates a new script.
+       *
+       * Scripts offer the ability to optimistically try to execute a script without having to send the
+       * entire script to the server. If the script is loaded on the server, it tries again by sending
+       * the entire script. Afterwards, the script is cached on the server.
+       *
+       * @param script - The script to create
+       * @param opts - Optional options to pass to the script `{ readonly?: boolean }`
+       * @returns A new script
+       *
+       * @example
+       * ```ts
+       * const redis = new Redis({...})
+       *
+       * const script = redis.createScript<string>("return ARGV[1];")
+       * const arg1 = await script.eval([], ["Hello World"])
+       * expect(arg1, "Hello World")
+       * ```
+       * @example
+       * ```ts
+       * const redis = new Redis({...})
+       *
+       * const script = redis.createScript<string>("return ARGV[1];", { readonly: true })
+       * const arg1 = await script.evalRo([], ["Hello World"])
+       * expect(arg1, "Hello World")
+       * ```
+       */
+      createScript(script, opts) {
+        return opts?.readonly ? new ScriptRO(this, script) : new Script(this, script);
+      }
+      get search() {
+        return {
+          createIndex: (params) => {
+            return createIndex(this.client, params);
+          },
+          index: (params) => {
+            return initIndex(this.client, params);
+          },
+          alias: {
+            list: () => {
+              return listAliases(this.client);
+            },
+            add: ({ indexName, alias }) => {
+              return addAlias(this.client, { indexName, alias });
+            },
+            delete: ({ alias }) => {
+              return delAlias(this.client, { alias });
+            }
+          }
+        };
+      }
+      /**
+       * Create a new pipeline that allows you to send requests in bulk.
+       *
+       * @see {@link Pipeline}
+       */
+      pipeline = () => new Pipeline({
+        client: this.client,
+        commandOptions: this.opts,
+        multiExec: false
+      });
+      autoPipeline = () => {
+        return createAutoPipelineProxy(this);
+      };
+      /**
+       * Create a new transaction to allow executing multiple steps atomically.
+       *
+       * All the commands in a transaction are serialized and executed sequentially. A request sent by
+       * another client will never be served in the middle of the execution of a Redis Transaction. This
+       * guarantees that the commands are executed as a single isolated operation.
+       *
+       * @see {@link Pipeline}
+       */
+      multi = () => new Pipeline({
+        client: this.client,
+        commandOptions: this.opts,
+        multiExec: true
+      });
+      /**
+       * Returns an instance that can be used to execute `BITFIELD` commands on one key.
+       *
+       * @example
+       * ```typescript
+       * redis.set("mykey", 0);
+       * const result = await redis.bitfield("mykey")
+       *   .set("u4", 0, 16)
+       *   .incr("u4", "#1", 1)
+       *   .exec();
+       * console.log(result); // [0, 1]
+       * ```
+       *
+       * @see https://redis.io/commands/bitfield
+       */
+      bitfield = (...args) => new BitFieldCommand(args, this.client, this.opts);
+      /**
+       * @see https://redis.io/commands/append
+       */
+      append = (...args) => new AppendCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/bitcount
+       */
+      bitcount = (...args) => new BitCountCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/bitop
+       */
+      bitop = (op, destinationKey, sourceKey, ...sourceKeys) => new BitOpCommand([op, destinationKey, sourceKey, ...sourceKeys], this.opts).exec(
+        this.client
+      );
+      /**
+       * @see https://redis.io/commands/bitpos
+       */
+      bitpos = (...args) => new BitPosCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/client-setinfo
+       */
+      clientSetinfo = (...args) => new ClientSetInfoCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/copy
+       */
+      copy = (...args) => new CopyCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/dbsize
+       */
+      dbsize = () => new DBSizeCommand(this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/decr
+       */
+      decr = (...args) => new DecrCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/decrby
+       */
+      decrby = (...args) => new DecrByCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/del
+       */
+      del = (...args) => new DelCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/echo
+       */
+      echo = (...args) => new EchoCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/eval_ro
+       */
+      evalRo = (...args) => new EvalROCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/eval
+       */
+      eval = (...args) => new EvalCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/evalsha_ro
+       */
+      evalshaRo = (...args) => new EvalshaROCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/evalsha
+       */
+      evalsha = (...args) => new EvalshaCommand(args, this.opts).exec(this.client);
+      /**
+       * Generic method to execute any Redis command.
+       */
+      exec = (args) => new ExecCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/exists
+       */
+      exists = (...args) => new ExistsCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/expire
+       */
+      expire = (...args) => new ExpireCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/expireat
+       */
+      expireat = (...args) => new ExpireAtCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/flushall
+       */
+      flushall = (args) => new FlushAllCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/flushdb
+       */
+      flushdb = (...args) => new FlushDBCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/geoadd
+       */
+      geoadd = (...args) => new GeoAddCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/geopos
+       */
+      geopos = (...args) => new GeoPosCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/geodist
+       */
+      geodist = (...args) => new GeoDistCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/geohash
+       */
+      geohash = (...args) => new GeoHashCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/geosearch
+       */
+      geosearch = (...args) => new GeoSearchCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/geosearchstore
+       */
+      geosearchstore = (...args) => new GeoSearchStoreCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/get
+       */
+      get = (...args) => new GetCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/getbit
+       */
+      getbit = (...args) => new GetBitCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/getdel
+       */
+      getdel = (...args) => new GetDelCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/getex
+       */
+      getex = (...args) => new GetExCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/getrange
+       */
+      getrange = (...args) => new GetRangeCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/getset
+       */
+      getset = (key, value) => new GetSetCommand([key, value], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hdel
+       */
+      hdel = (...args) => new HDelCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hexists
+       */
+      hexists = (...args) => new HExistsCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hexpire
+       */
+      hexpire = (...args) => new HExpireCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hexpireat
+       */
+      hexpireat = (...args) => new HExpireAtCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hexpiretime
+       */
+      hexpiretime = (...args) => new HExpireTimeCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/httl
+       */
+      httl = (...args) => new HTtlCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hpexpire
+       */
+      hpexpire = (...args) => new HPExpireCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hpexpireat
+       */
+      hpexpireat = (...args) => new HPExpireAtCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hpexpiretime
+       */
+      hpexpiretime = (...args) => new HPExpireTimeCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hpttl
+       */
+      hpttl = (...args) => new HPTtlCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hpersist
+       */
+      hpersist = (...args) => new HPersistCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hget
+       */
+      hget = (...args) => new HGetCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hgetall
+       */
+      hgetall = (...args) => new HGetAllCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hgetdel
+       */
+      hgetdel = (...args) => new HGetDelCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hgetex
+       */
+      hgetex = (...args) => new HGetExCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hincrby
+       */
+      hincrby = (...args) => new HIncrByCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hincrbyfloat
+       */
+      hincrbyfloat = (...args) => new HIncrByFloatCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hkeys
+       */
+      hkeys = (...args) => new HKeysCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hlen
+       */
+      hlen = (...args) => new HLenCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hmget
+       */
+      hmget = (...args) => new HMGetCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hmset
+       */
+      hmset = (key, kv) => new HMSetCommand([key, kv], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hrandfield
+       */
+      hrandfield = (key, count, withValues) => new HRandFieldCommand([key, count, withValues], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hscan
+       */
+      hscan = (...args) => new HScanCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hset
+       */
+      hset = (key, kv) => new HSetCommand([key, kv], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hsetex
+       */
+      hsetex = (...args) => new HSetExCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hsetnx
+       */
+      hsetnx = (key, field, value) => new HSetNXCommand([key, field, value], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hstrlen
+       */
+      hstrlen = (...args) => new HStrLenCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/hvals
+       */
+      hvals = (...args) => new HValsCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/incr
+       */
+      incr = (...args) => new IncrCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/incrby
+       */
+      incrby = (...args) => new IncrByCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/incrbyfloat
+       */
+      incrbyfloat = (...args) => new IncrByFloatCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/keys
+       */
+      keys = (...args) => new KeysCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/lindex
+       */
+      lindex = (...args) => new LIndexCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/linsert
+       */
+      linsert = (key, direction, pivot, value) => new LInsertCommand([key, direction, pivot, value], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/llen
+       */
+      llen = (...args) => new LLenCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/lmove
+       */
+      lmove = (...args) => new LMoveCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/lpop
+       */
+      lpop = (...args) => new LPopCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/lmpop
+       */
+      lmpop = (...args) => new LmPopCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/lpos
+       */
+      lpos = (...args) => new LPosCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/lpush
+       */
+      lpush = (key, ...elements) => new LPushCommand([key, ...elements], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/lpushx
+       */
+      lpushx = (key, ...elements) => new LPushXCommand([key, ...elements], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/lrange
+       */
+      lrange = (...args) => new LRangeCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/lrem
+       */
+      lrem = (key, count, value) => new LRemCommand([key, count, value], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/lset
+       */
+      lset = (key, index, value) => new LSetCommand([key, index, value], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/ltrim
+       */
+      ltrim = (...args) => new LTrimCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/mget
+       */
+      mget = (...args) => new MGetCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/mset
+       */
+      mset = (kv) => new MSetCommand([kv], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/msetnx
+       */
+      msetnx = (kv) => new MSetNXCommand([kv], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/persist
+       */
+      persist = (...args) => new PersistCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/pexpire
+       */
+      pexpire = (...args) => new PExpireCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/pexpireat
+       */
+      pexpireat = (...args) => new PExpireAtCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/pfadd
+       */
+      pfadd = (...args) => new PfAddCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/pfcount
+       */
+      pfcount = (...args) => new PfCountCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/pfmerge
+       */
+      pfmerge = (...args) => new PfMergeCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/ping
+       */
+      ping = (args) => new PingCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/psetex
+       */
+      psetex = (key, ttl, value) => new PSetEXCommand([key, ttl, value], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/psubscribe
+       */
+      psubscribe = (patterns) => {
+        const patternArray = Array.isArray(patterns) ? patterns : [patterns];
+        return new Subscriber(this.client, patternArray, true, this.opts);
+      };
+      /**
+       * @see https://redis.io/commands/pttl
+       */
+      pttl = (...args) => new PTtlCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/publish
+       */
+      publish = (...args) => new PublishCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/randomkey
+       */
+      randomkey = () => new RandomKeyCommand().exec(this.client);
+      /**
+       * @see https://redis.io/commands/rename
+       */
+      rename = (...args) => new RenameCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/renamenx
+       */
+      renamenx = (...args) => new RenameNXCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/rpop
+       */
+      rpop = (...args) => new RPopCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/rpush
+       */
+      rpush = (key, ...elements) => new RPushCommand([key, ...elements], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/rpushx
+       */
+      rpushx = (key, ...elements) => new RPushXCommand([key, ...elements], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/sadd
+       */
+      sadd = (key, member, ...members) => new SAddCommand([key, member, ...members], this.opts).exec(this.client);
+      scan(cursor, opts) {
+        return new ScanCommand([cursor, opts], this.opts).exec(this.client);
+      }
+      /**
+       * @see https://redis.io/commands/scard
+       */
+      scard = (...args) => new SCardCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/script-exists
+       */
+      scriptExists = (...args) => new ScriptExistsCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/script-flush
+       */
+      scriptFlush = (...args) => new ScriptFlushCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/script-load
+       */
+      scriptLoad = (...args) => new ScriptLoadCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/sdiff
+       */
+      sdiff = (...args) => new SDiffCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/sdiffstore
+       */
+      sdiffstore = (...args) => new SDiffStoreCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/set
+       */
+      set = (key, value, opts) => new SetCommand([key, value, opts], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/setbit
+       */
+      setbit = (...args) => new SetBitCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/setex
+       */
+      setex = (key, ttl, value) => new SetExCommand([key, ttl, value], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/setnx
+       */
+      setnx = (key, value) => new SetNxCommand([key, value], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/setrange
+       */
+      setrange = (...args) => new SetRangeCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/sinter
+       */
+      sinter = (...args) => new SInterCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/sintercard
+       */
+      sintercard = (...args) => new SInterCardCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/sinterstore
+       */
+      sinterstore = (...args) => new SInterStoreCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/sismember
+       */
+      sismember = (key, member) => new SIsMemberCommand([key, member], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/smismember
+       */
+      smismember = (key, members) => new SMIsMemberCommand([key, members], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/smembers
+       */
+      smembers = (...args) => new SMembersCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/smove
+       */
+      smove = (source, destination, member) => new SMoveCommand([source, destination, member], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/spop
+       */
+      spop = (...args) => new SPopCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/srandmember
+       */
+      srandmember = (...args) => new SRandMemberCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/srem
+       */
+      srem = (key, ...members) => new SRemCommand([key, ...members], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/sscan
+       */
+      sscan = (...args) => new SScanCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/strlen
+       */
+      strlen = (...args) => new StrLenCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/subscribe
+       */
+      subscribe = (channels) => {
+        const channelArray = Array.isArray(channels) ? channels : [channels];
+        return new Subscriber(this.client, channelArray, false, this.opts);
+      };
+      /**
+       * @see https://redis.io/commands/sunion
+       */
+      sunion = (...args) => new SUnionCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/sunionstore
+       */
+      sunionstore = (...args) => new SUnionStoreCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/time
+       */
+      time = () => new TimeCommand().exec(this.client);
+      /**
+       * @see https://redis.io/commands/touch
+       */
+      touch = (...args) => new TouchCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/ttl
+       */
+      ttl = (...args) => new TtlCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/type
+       */
+      type = (...args) => new TypeCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/unlink
+       */
+      unlink = (...args) => new UnlinkCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xadd
+       */
+      xadd = (...args) => new XAddCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xack
+       */
+      xack = (...args) => new XAckCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xackdel
+       */
+      xackdel = (...args) => new XAckDelCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xdel
+       */
+      xdel = (...args) => new XDelCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xdelex
+       */
+      xdelex = (...args) => new XDelExCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xgroup
+       */
+      xgroup = (...args) => new XGroupCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xread
+       */
+      xread = (...args) => new XReadCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xreadgroup
+       */
+      xreadgroup = (...args) => new XReadGroupCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xinfo
+       */
+      xinfo = (...args) => new XInfoCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xlen
+       */
+      xlen = (...args) => new XLenCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xpending
+       */
+      xpending = (...args) => new XPendingCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xclaim
+       */
+      xclaim = (...args) => new XClaimCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xautoclaim
+       */
+      xautoclaim = (...args) => new XAutoClaim(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xtrim
+       */
+      xtrim = (...args) => new XTrimCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xrange
+       */
+      xrange = (...args) => new XRangeCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/xrevrange
+       */
+      xrevrange = (...args) => new XRevRangeCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zadd
+       */
+      zadd = (...args) => {
+        if ("score" in args[1]) {
+          return new ZAddCommand([args[0], args[1], ...args.slice(2)], this.opts).exec(
+            this.client
+          );
+        }
+        return new ZAddCommand(
+          [args[0], args[1], ...args.slice(2)],
+          this.opts
+        ).exec(this.client);
+      };
+      /**
+       * @see https://redis.io/commands/zcard
+       */
+      zcard = (...args) => new ZCardCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zcount
+       */
+      zcount = (...args) => new ZCountCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zdiffstore
+       */
+      zdiffstore = (...args) => new ZDiffStoreCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zincrby
+       */
+      zincrby = (key, increment, member) => new ZIncrByCommand([key, increment, member], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zinterstore
+       */
+      zinterstore = (...args) => new ZInterStoreCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zlexcount
+       */
+      zlexcount = (...args) => new ZLexCountCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zmscore
+       */
+      zmscore = (...args) => new ZMScoreCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zpopmax
+       */
+      zpopmax = (...args) => new ZPopMaxCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zpopmin
+       */
+      zpopmin = (...args) => new ZPopMinCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zrange
+       */
+      zrange = (...args) => new ZRangeCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zrank
+       */
+      zrank = (key, member) => new ZRankCommand([key, member], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zrem
+       */
+      zrem = (key, ...members) => new ZRemCommand([key, ...members], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zremrangebylex
+       */
+      zremrangebylex = (...args) => new ZRemRangeByLexCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zremrangebyrank
+       */
+      zremrangebyrank = (...args) => new ZRemRangeByRankCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zremrangebyscore
+       */
+      zremrangebyscore = (...args) => new ZRemRangeByScoreCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zrevrank
+       */
+      zrevrank = (key, member) => new ZRevRankCommand([key, member], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zscan
+       */
+      zscan = (...args) => new ZScanCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zscore
+       */
+      zscore = (key, member) => new ZScoreCommand([key, member], this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zunion
+       */
+      zunion = (...args) => new ZUnionCommand(args, this.opts).exec(this.client);
+      /**
+       * @see https://redis.io/commands/zunionstore
+       */
+      zunionstore = (...args) => new ZUnionStoreCommand(args, this.opts).exec(this.client);
+    };
+    VERSION2 = "v1.30.2";
+  }
+});
+
+// node_modules/@upstash/redis/nodejs.mjs
+var nodejs_exports = {};
+__export(nodejs_exports, {
+  Redis: () => Redis2,
+  SearchIndex: () => SearchIndex,
+  errors: () => error_exports,
+  s: () => s
+});
+var BUILD, TextFieldBuilder, NumericFieldBuilder, BoolFieldBuilder, DateFieldBuilder, KeywordFieldBuilder, FacetFieldBuilder, s, Redis2;
+var init_nodejs = __esm({
+  "node_modules/@upstash/redis/nodejs.mjs"() {
+    init_chunk_IH7W44G6();
+    BUILD = /* @__PURE__ */ Symbol("build");
+    TextFieldBuilder = class _TextFieldBuilder {
+      _noTokenize;
+      _noStem;
+      _from;
+      constructor(noTokenize = { noTokenize: false }, noStem = { noStem: false }, from = { from: null }) {
+        this._noTokenize = noTokenize;
+        this._noStem = noStem;
+        this._from = from;
+      }
+      noTokenize() {
+        return new _TextFieldBuilder({ noTokenize: true }, this._noStem, this._from);
+      }
+      noStem() {
+        return new _TextFieldBuilder(this._noTokenize, { noStem: true }, this._from);
+      }
+      from(field) {
+        return new _TextFieldBuilder(this._noTokenize, this._noStem, { from: field });
+      }
+      [BUILD]() {
+        return {
+          type: "TEXT",
+          ...this._noTokenize.noTokenize ? { noTokenize: true } : {},
+          ...this._noStem.noStem ? { noStem: true } : {},
+          ...this._from.from ? { from: this._from.from } : {}
+        };
+      }
+    };
+    NumericFieldBuilder = class _NumericFieldBuilder {
+      type;
+      _from;
+      constructor(type, from = { from: null }) {
+        this.type = type;
+        this._from = from;
+      }
+      from(field) {
+        return new _NumericFieldBuilder(this.type, { from: field });
+      }
+      [BUILD]() {
+        return this._from.from ? {
+          type: this.type,
+          fast: true,
+          from: this._from.from
+        } : {
+          type: this.type,
+          fast: true
+        };
+      }
+    };
+    BoolFieldBuilder = class _BoolFieldBuilder {
+      _fast;
+      _from;
+      constructor(fast = { fast: false }, from = { from: null }) {
+        this._fast = fast;
+        this._from = from;
+      }
+      fast() {
+        return new _BoolFieldBuilder({ fast: true }, this._from);
+      }
+      from(field) {
+        return new _BoolFieldBuilder(this._fast, { from: field });
+      }
+      [BUILD]() {
+        const hasFast = this._fast.fast;
+        const hasFrom = Boolean(this._from.from);
+        if (hasFast && hasFrom) {
+          return {
+            type: "BOOL",
+            fast: true,
+            from: this._from.from
+          };
+        }
+        if (hasFast) {
+          return {
+            type: "BOOL",
+            fast: true
+          };
+        }
+        if (hasFrom) {
+          return {
+            type: "BOOL",
+            from: this._from.from
+          };
+        }
+        return { type: "BOOL" };
+      }
+    };
+    DateFieldBuilder = class _DateFieldBuilder {
+      _fast;
+      _from;
+      constructor(fast = { fast: false }, from = { from: null }) {
+        this._fast = fast;
+        this._from = from;
+      }
+      fast() {
+        return new _DateFieldBuilder({ fast: true }, this._from);
+      }
+      from(field) {
+        return new _DateFieldBuilder(this._fast, { from: field });
+      }
+      [BUILD]() {
+        const hasFast = this._fast.fast;
+        const hasFrom = Boolean(this._from.from);
+        if (hasFast && hasFrom) {
+          return {
+            type: "DATE",
+            fast: true,
+            from: this._from.from
+          };
+        }
+        if (hasFast) {
+          return {
+            type: "DATE",
+            fast: true
+          };
+        }
+        if (hasFrom) {
+          return {
+            type: "DATE",
+            from: this._from.from
+          };
+        }
+        return { type: "DATE" };
+      }
+    };
+    KeywordFieldBuilder = class {
+      [BUILD]() {
+        return { type: "KEYWORD" };
+      }
+    };
+    FacetFieldBuilder = class {
+      [BUILD]() {
+        return { type: "FACET" };
+      }
+    };
+    s = {
+      string() {
+        return new TextFieldBuilder();
+      },
+      number(type = "F64") {
+        return new NumericFieldBuilder(type);
+      },
+      boolean() {
+        return new BoolFieldBuilder();
+      },
+      date() {
+        return new DateFieldBuilder();
+      },
+      keyword() {
+        return new KeywordFieldBuilder();
+      },
+      facet() {
+        return new FacetFieldBuilder();
+      },
+      object(fields) {
+        const result = {};
+        for (const [key, value] of Object.entries(fields)) {
+          if (value && typeof value === "object" && BUILD in value) {
+            result[key] = value[BUILD]();
+          } else {
+            result[key] = value;
+          }
+        }
+        return result;
+      }
+    };
+    if (typeof atob === "undefined") {
+      global.atob = (b64) => Buffer.from(b64, "base64").toString("utf8");
+    }
+    Redis2 = class _Redis extends Redis {
+      /**
+       * Create a new redis client by providing a custom `Requester` implementation
+       *
+       * @example
+       * ```ts
+       *
+       * import { UpstashRequest, Requester, UpstashResponse, Redis } from "@upstash/redis"
+       *
+       *  const requester: Requester = {
+       *    request: <TResult>(req: UpstashRequest): Promise<UpstashResponse<TResult>> => {
+       *      // ...
+       *    }
+       *  }
+       *
+       * const redis = new Redis(requester)
+       * ```
+       */
+      constructor(configOrRequester) {
+        if ("request" in configOrRequester) {
+          super(configOrRequester);
+          return;
+        }
+        if (!configOrRequester.url) {
+          console.warn(
+            `[Upstash Redis] The 'url' property is missing or undefined in your Redis config.`
+          );
+        } else if (configOrRequester.url.startsWith(" ") || configOrRequester.url.endsWith(" ") || /\r|\n/.test(configOrRequester.url)) {
+          console.warn(
+            "[Upstash Redis] The redis url contains whitespace or newline, which can cause errors!"
+          );
+        }
+        if (!configOrRequester.token) {
+          console.warn(
+            `[Upstash Redis] The 'token' property is missing or undefined in your Redis config.`
+          );
+        } else if (configOrRequester.token.startsWith(" ") || configOrRequester.token.endsWith(" ") || /\r|\n/.test(configOrRequester.token)) {
+          console.warn(
+            "[Upstash Redis] The redis token contains whitespace or newline, which can cause errors!"
+          );
+        }
+        const client = new HttpClient2({
+          baseUrl: configOrRequester.url,
+          retry: configOrRequester.retry,
+          headers: { authorization: `Bearer ${configOrRequester.token}` },
+          agent: configOrRequester.agent,
+          responseEncoding: configOrRequester.responseEncoding,
+          cache: configOrRequester.cache ?? "no-store",
+          signal: configOrRequester.signal,
+          keepAlive: configOrRequester.keepAlive,
+          readYourWrites: configOrRequester.readYourWrites
+        });
+        const safeEnv = typeof process === "object" && process && typeof process.env === "object" && process.env ? process.env : {};
+        super(client, {
+          automaticDeserialization: configOrRequester.automaticDeserialization,
+          enableTelemetry: configOrRequester.enableTelemetry ?? !safeEnv.UPSTASH_DISABLE_TELEMETRY,
+          latencyLogging: configOrRequester.latencyLogging,
+          enableAutoPipelining: configOrRequester.enableAutoPipelining
+        });
+        const nodeVersion = typeof process === "object" && process ? process.version : void 0;
+        this.addTelemetry({
+          runtime: (
+            // @ts-expect-error to silence compiler
+            typeof EdgeRuntime === "string" ? "edge-light" : nodeVersion ? `node@${nodeVersion}` : "unknown"
+          ),
+          platform: safeEnv.UPSTASH_CONSOLE ? "console" : safeEnv.VERCEL ? "vercel" : safeEnv.AWS_REGION ? "aws" : "unknown",
+          sdk: `@upstash/redis@${VERSION2}`
+        });
+        if (this.enableAutoPipelining) {
+          return this.autoPipeline();
+        }
+      }
+      /**
+       * Create a new Upstash Redis instance from environment variables.
+       *
+       * Use this to automatically load connection secrets from your environment
+       * variables. For instance when using the Vercel integration.
+       *
+       * This tries to load connection details from your environment using `process.env`:
+       * - URL: `UPSTASH_REDIS_REST_URL` or fallback to `KV_REST_API_URL`
+       * - Token: `UPSTASH_REDIS_REST_TOKEN` or fallback to `KV_REST_API_TOKEN`
+       *
+       * The fallback variables provide compatibility with Vercel KV and other platforms
+       * that may use different naming conventions.
+       */
+      static fromEnv(config2) {
+        if (typeof process !== "object" || !process || typeof process.env !== "object" || !process.env) {
+          throw new TypeError(
+            '[Upstash Redis] Unable to get environment variables, `process.env` is undefined. If you are deploying to cloudflare, please import from "@upstash/redis/cloudflare" instead'
+          );
+        }
+        const url2 = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+        if (!url2) {
+          console.warn("[Upstash Redis] Unable to find environment variable: `UPSTASH_REDIS_REST_URL`");
+        }
+        const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+        if (!token) {
+          console.warn(
+            "[Upstash Redis] Unable to find environment variable: `UPSTASH_REDIS_REST_TOKEN`"
+          );
+        }
+        return new _Redis({ ...config2, url: url2, token });
+      }
+    };
+  }
+});
+
+// server/seo/metaInjector.ts
+var metaInjector_exports = {};
+__export(metaInjector_exports, {
+  buildArticleMeta: () => buildArticleMeta,
+  buildListingMeta: () => buildListingMeta,
+  buildStaticPageMeta: () => buildStaticPageMeta,
+  getBaseHtml: () => getBaseHtml,
+  injectMeta: () => injectMeta
+});
+import { readFileSync } from "fs";
+import path4 from "path";
+function esc2(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function fmtVND(price) {
+  if (price >= 1e9) return `${(price / 1e9).toFixed(1)} t\u1EF7 \u0111\u1ED3ng`;
+  if (price >= 1e6) return `${Math.round(price / 1e6)} tri\u1EC7u \u0111\u1ED3ng`;
+  return price.toLocaleString("vi-VN") + " \u0111\u1ED3ng";
+}
+function buildListingMeta(listing) {
+  const priceStr = listing.price ? fmtVND(Number(listing.price)) : "";
+  const areaStr = listing.area ? `${listing.area}m\xB2` : "";
+  const transaction = listing.transaction === "RENT" ? "Cho thu\xEA" : "B\xE1n";
+  const type = listing.type ?? "";
+  const title = listing.title ? `${listing.title} | SGS LAND` : `${transaction} ${type} ${areaStr} - ${listing.location ?? ""} | SGS LAND`.trim();
+  const parts = [
+    listing.title || `${transaction} b\u1EA5t \u0111\u1ED9ng s\u1EA3n`,
+    listing.location ? `\u{1F4CD} ${listing.location}` : "",
+    priceStr ? `\u{1F4B0} Gi\xE1: ${priceStr}` : "",
+    areaStr ? `\u{1F4D0} Di\u1EC7n t\xEDch: ${areaStr}` : "",
+    listing.bedrooms ? `\u{1F6CF} ${listing.bedrooms} ph\xF2ng ng\u1EE7` : ""
+  ].filter(Boolean);
+  const description = parts.join(" \u2014 ").slice(0, 300);
+  const images = Array.isArray(listing.images) ? listing.images : [];
+  const image = images[0] || DEFAULT_IMAGE;
+  const url2 = `${APP_URL}/listings/${listing.id}`;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    inLanguage: "vi",
+    name: listing.title || "",
+    description,
+    url: url2,
+    image: images.slice(0, 5).length ? images.slice(0, 5) : void 0,
+    address: listing.location ? { "@type": "PostalAddress", streetAddress: listing.location, addressCountry: "VN" } : void 0,
+    ...listing.price ? { offers: { "@type": "Offer", price: String(listing.price), priceCurrency: listing.currency || "VND" } } : {},
+    ...listing.area ? { floorSize: { "@type": "QuantitativeValue", value: listing.area, unitCode: "MTK" } } : {},
+    ...listing.bedrooms != null ? { numberOfRooms: listing.bedrooms } : {}
+  };
+  return { title, description, image, url: url2, type: "website", structuredData };
+}
+function buildArticleMeta(article) {
+  const rawExcerpt = article.excerpt || (article.content ? article.content.replace(/<[^>]+>/g, "").slice(0, 160) : "");
+  const title = article.title ? `${article.title} - Tin T\u1EE9c B\u0110S | SGS LAND` : DEFAULT_META.title;
+  const description = rawExcerpt.slice(0, 300) || DEFAULT_META.description;
+  const image = article.coverImage || article.cover_image || DEFAULT_IMAGE;
+  const url2 = `${APP_URL}/news/${article.id}`;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    inLanguage: "vi",
+    headline: article.title || "",
+    description,
+    image,
+    url: url2,
+    datePublished: article.publishedAt || article.published_at || void 0,
+    dateModified: article.updatedAt || article.updated_at || void 0,
+    author: { "@type": "Person", name: article.author || "SGS LAND" },
+    publisher: {
+      "@type": "Organization",
+      name: "SGS LAND",
+      logo: { "@type": "ImageObject", url: `${APP_URL}/apple-touch-icon.png` }
+    }
+  };
+  return { title, description, image, url: url2, type: "article", structuredData };
+}
+function buildStaticPageMeta(overrideTitle, overrideDesc, ogImage, pagePath) {
+  return {
+    title: overrideTitle || DEFAULT_META.title,
+    description: overrideDesc || DEFAULT_META.description,
+    image: ogImage || DEFAULT_IMAGE,
+    url: `${APP_URL}${pagePath}`,
+    type: "website"
+  };
+}
+function injectMeta(baseHtml, meta3) {
+  const m = { ...DEFAULT_META, ...meta3 };
+  const t = esc2(m.title);
+  const d = esc2(m.description);
+  const img = m.image;
+  const u = m.url;
+  const type = m.type || "website";
+  let html = baseHtml;
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${t}</title>`);
+  html = html.replace(/(<meta\s+name="description"\s+content=")[^"]*(")/i, `$1${d}$2`);
+  html = html.replace(/(<meta\s+property="og:title"\s+content=")[^"]*(")/i, `$1${t}$2`);
+  html = html.replace(/(<meta\s+property="og:description"\s+content=")[^"]*(")/i, `$1${d}$2`);
+  html = html.replace(/(<meta\s+property="og:type"\s+content=")[^"]*(")/i, `$1${type}$2`);
+  html = html.replace(
+    /(<meta\s+(?:id="og-url"\s+)?property="og:url"\s+content=")[^"]*(")/i,
+    `$1${u}$2`
+  );
+  html = html.replace(/(<meta\s+property="og:image"\s+content=")[^"]*(")/i, `$1${img}$2`);
+  html = html.replace(/(<meta\s+property="og:image:secure_url"\s+content=")[^"]*(")/i, `$1${img}$2`);
+  html = html.replace(/(<meta\s+property="og:image:alt"\s+content=")[^"]*(")/i, `$1${t}$2`);
+  html = html.replace(/(<meta\s+name="twitter:title"\s+content=")[^"]*(")/i, `$1${t}$2`);
+  html = html.replace(/(<meta\s+name="twitter:description"\s+content=")[^"]*(")/i, `$1${d}$2`);
+  html = html.replace(/(<meta\s+name="twitter:image"\s+content=")[^"]*(")/i, `$1${img}$2`);
+  html = html.replace(
+    /(<link\s+(?:id="canonical-url"\s+)?rel="canonical"\s+href=")[^"]*(")/i,
+    `$1${u}$2`
+  );
+  if (m.noIndex) {
+    html = html.replace(
+      /(<meta\s+name="robots"\s+content=")[^"]*(")/i,
+      `$1noindex, nofollow$2`
+    );
+  }
+  if (m.structuredData) {
+    const jsonLd = `  <script type="application/ld+json">${JSON.stringify(m.structuredData)}</script>`;
+    html = html.replace("</head>", `${jsonLd}
+</head>`);
+  }
+  return html;
+}
+function getBaseHtml() {
+  if (!_cachedHtml) {
+    const distPath = path4.join(process.cwd(), "dist", "index.html");
+    _cachedHtml = readFileSync(distPath, "utf-8");
+  }
+  return _cachedHtml;
+}
+var APP_URL, DEFAULT_IMAGE, DEFAULT_META, _cachedHtml;
+var init_metaInjector = __esm({
+  "server/seo/metaInjector.ts"() {
+    APP_URL = (process.env.APP_URL || "https://sgsland.vn").replace(/\/$/, "");
+    DEFAULT_IMAGE = `${APP_URL}/og-image.jpg`;
+    DEFAULT_META = {
+      title: "SGS LAND | Ph\u1EA7n M\u1EC1m Qu\u1EA3n L\xFD B\u1EA5t \u0110\u1ED9ng S\u1EA3n AI S\u1ED1 1 Vi\u1EC7t Nam",
+      description: "SGS LAND - Ph\u1EA7n m\u1EC1m qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n th\u1EBF h\u1EC7 m\u1EDBi t\xEDch h\u1EE3p AI \u0111\u1ECBnh gi\xE1 t\u1EF1 \u0111\u1ED9ng, CRM \u0111a k\xEAnh v\xE0 qu\u1EA3n l\xFD kho h\xE0ng to\xE0n di\u1EC7n. Gi\u1EA3i ph\xE1p #1 cho s\xE0n giao d\u1ECBch v\xE0 doanh nghi\u1EC7p b\u1EA5t \u0111\u1ED9ng s\u1EA3n Vi\u1EC7t Nam.",
+      image: DEFAULT_IMAGE,
+      url: APP_URL,
+      type: "website"
+    };
+    _cachedHtml = null;
+  }
+});
+
 // server.ts
 init_db();
 init_runner();
 import express from "express";
-import path4 from "path";
+import path5 from "path";
 import { Server } from "socket.io";
-import { createAdapter } from "@socket.io/redis-adapter";
-import { createClient } from "redis";
 import http from "http";
 import cookieParser from "cookie-parser";
 import jwt2 from "jsonwebtoken";
@@ -5544,12 +21073,6 @@ var systemService = {
 
 // server/queue.ts
 init_logger();
-import { Queue, Worker } from "bullmq";
-import IORedis from "ioredis";
-var redisUrl = process.env.REDIS_URL;
-var useRedis = !!redisUrl;
-var connection;
-var webhookQueue;
 var inMemoryJobs = [];
 var inMemoryProcessor = null;
 var MAX_IN_MEMORY_ATTEMPTS = 3;
@@ -5558,48 +21081,69 @@ function runWithRetry(job, attempt = 1) {
   setTimeout(async () => {
     try {
       await inMemoryProcessor(job);
-    } catch (err) {
+    } catch (err4) {
       if (attempt < MAX_IN_MEMORY_ATTEMPTS) {
         const wait = IN_MEMORY_BACKOFF_MS * Math.pow(2, attempt - 1);
-        logger.warn(`[Queue] Job ${job.id} attempt ${attempt} failed: ${err.message}. Retrying in ${wait}ms\u2026`);
+        logger.warn(`[Queue] Job ${job.id} l\u1EA7n ${attempt} th\u1EA5t b\u1EA1i: ${err4.message}. Th\u1EED l\u1EA1i sau ${wait}ms\u2026`);
         runWithRetry(job, attempt + 1);
       } else {
-        logger.error(`[Queue] Job ${job.id} permanently failed after ${MAX_IN_MEMORY_ATTEMPTS} attempts`, err);
+        logger.error(`[Queue] Job ${job.id} th\u1EA5t b\u1EA1i v\u0129nh vi\u1EC5n sau ${MAX_IN_MEMORY_ATTEMPTS} l\u1EA7n`, err4);
       }
     }
   }, attempt === 1 ? 0 : IN_MEMORY_BACKOFF_MS * Math.pow(2, attempt - 2));
 }
-if (useRedis) {
-  connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
-  connection.on("error", (err) => {
-    logger.error("Redis connection error in queue:", err);
-  });
-  webhookQueue = new Queue("webhook-events", {
-    connection,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: { type: "exponential", delay: 2e3 },
-      removeOnComplete: 100,
-      removeOnFail: 500
-    }
-  });
-  webhookQueue.on("error", (err) => {
-    logger.error("Webhook queue error:", err);
-  });
+function isQStashEnabled() {
+  return !!(process.env.QSTASH_TOKEN && process.env.QSTASH_CURRENT_SIGNING_KEY);
+}
+function getReceiverUrl() {
+  if (process.env.QSTASH_RECEIVER_URL) return process.env.QSTASH_RECEIVER_URL;
+  const isProduction = process.env.NODE_ENV === "production";
+  if (isProduction) return "https://sgs-land.replit.app/api/qstash/process";
+  const devDomain = process.env.REPLIT_DEV_DOMAIN;
+  if (devDomain) return `https://${devDomain}/api/qstash/process`;
+  return "http://localhost:5000/api/qstash/process";
+}
+var QSTASH_ENABLED = isQStashEnabled();
+if (QSTASH_ENABLED) {
+  logger.info("[Queue] S\u1EED d\u1EE5ng Upstash QStash (job b\u1EC1n v\u1EEFng, retry t\u1EF1 \u0111\u1ED9ng).");
 } else {
-  console.log("No REDIS_URL provided, using in-memory mock queue.");
-  webhookQueue = {
-    add: async (name, data) => {
-      const job = { name, data, id: `mock-${Date.now()}` };
+  logger.info("[Queue] S\u1EED d\u1EE5ng in-memory queue (fallback). C\u1EA5u h\xECnh QSTASH_TOKEN \u0111\u1EC3 k\xEDch ho\u1EA1t QStash.");
+}
+var webhookQueue = {
+  add: async (name, data) => {
+    const job = { name, data, id: `job-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+    if (isQStashEnabled()) {
+      try {
+        const { Client: Client2 } = await Promise.resolve().then(() => (init_qstash(), qstash_exports));
+        const client = new Client2({ token: process.env.QSTASH_TOKEN });
+        const receiverUrl = getReceiverUrl();
+        await client.publishJSON({
+          url: receiverUrl,
+          body: job,
+          retries: 3,
+          headers: { "x-job-name": name }
+        });
+        logger.info(`[Queue] Job "${name}" (${job.id}) \u0111\xE3 g\u1EEDi l\xEAn QStash \u2192 ${receiverUrl}`);
+      } catch (err4) {
+        logger.error(`[Queue] Kh\xF4ng th\u1EC3 g\u1EEDi job l\xEAn QStash: ${err4.message}. Chuy\u1EC3n sang in-memory.`);
+        if (inMemoryProcessor) {
+          runWithRetry(job);
+        } else {
+          inMemoryJobs.push(job);
+        }
+      }
+    } else {
       if (inMemoryProcessor) {
         runWithRetry(job);
       } else {
         inMemoryJobs.push(job);
       }
-      return job;
     }
-  };
-}
+    return job;
+  },
+  close: async () => {
+  }
+};
 async function upsertLeadBySocialId(tenantId, channel, socialId, displayName) {
   const { leadRepository: leadRepository2 } = await Promise.resolve().then(() => (init_leadRepository(), leadRepository_exports));
   const existing = await leadRepository2.findBySocialId(tenantId, channel, socialId);
@@ -5609,281 +21153,266 @@ async function upsertLeadBySocialId(tenantId, channel, socialId, displayName) {
   const lead = await leadRepository2.create(tenantId, {
     name,
     phone: "",
-    // No phone number from social channels
     source: sourceName,
     stage: "NEW",
     socialIds: { [channel]: socialId },
     tags: [sourceName]
   });
-  logger.info(`[Webhook] Created new lead ${lead.id} from ${sourceName} (socialId: ${socialId})`);
+  logger.info(`[Webhook] T\u1EA1o lead m\u1EDBi ${lead.id} t\u1EEB ${sourceName} (socialId: ${socialId})`);
   return lead;
 }
-function setupWebhookWorker(io) {
-  const processJob = async (job) => {
-    const { platform, payload } = job.data;
-    if (platform === "zalo") {
-      const { event_name, sender, recipient, message, timestamp } = payload;
-      const oaId = recipient?.id;
-      if (!oaId) {
-        logger.warn("[Zalo Webhook] Missing recipient.id (OA ID), cannot resolve tenant \u2014 dropping event");
-        return;
+async function processWebhookJob(io, job) {
+  const { platform, payload } = job.data;
+  if (platform === "zalo") {
+    const { event_name, sender, recipient, message: message2, timestamp } = payload;
+    const oaId = recipient?.id;
+    if (!oaId) {
+      logger.warn("[Zalo Webhook] Thi\u1EBFu recipient.id (OA ID), kh\xF4ng x\xE1c \u0111\u1ECBnh \u0111\u01B0\u1EE3c tenant \u2014 b\u1ECF qua s\u1EF1 ki\u1EC7n");
+      return;
+    }
+    const { enterpriseConfigRepository: enterpriseConfigRepository2 } = await Promise.resolve().then(() => (init_enterpriseConfigRepository(), enterpriseConfigRepository_exports));
+    const foundTenant = await enterpriseConfigRepository2.findTenantByZaloOaId(oaId);
+    if (!foundTenant) {
+      logger.warn(`[Zalo Webhook] OA ID ${oaId} ch\u01B0a \u0111\u01B0\u1EE3c \u0111\u0103ng k\xFD cho tenant n\xE0o \u2014 b\u1ECF qua s\u1EF1 ki\u1EC7n`);
+      return;
+    }
+    const tenantId = foundTenant;
+    const senderId = sender?.id;
+    if (!senderId) {
+      logger.warn("[Zalo Webhook] Thi\u1EBFu sender.id trong payload");
+      return;
+    }
+    if (event_name === "follow") {
+      await upsertLeadBySocialId(tenantId, "zalo", senderId, sender?.display_name);
+      logger.info(`[Zalo] Ng\u01B0\u1EDDi theo d\xF5i m\u1EDBi ${senderId} \u2192 lead \u0111\xE3 t\u1EA1o/t\xECm th\u1EA5y`);
+      return;
+    }
+    if (event_name === "user_send_text") {
+      const textContent = message2?.text;
+      if (!textContent) return;
+      const lead = await upsertLeadBySocialId(tenantId, "zalo", senderId, sender?.display_name);
+      const leadId = lead.id;
+      const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
+      const savedInteraction = await interactionRepository2.create(tenantId, {
+        leadId,
+        channel: "ZALO",
+        direction: "INBOUND",
+        type: "TEXT",
+        content: textContent,
+        metadata: {
+          platform: "zalo",
+          senderId,
+          oaId,
+          originalTimestamp: timestamp
+        }
+      });
+      logger.info(`[Zalo] Tin nh\u1EAFn t\u1EEB ${senderId} \u2192 lead ${leadId}`);
+      io.to(leadId).emit("receive_message", { room: leadId, message: savedInteraction, isWebhook: true });
+      io.to(`tenant:${tenantId}`).emit("new_inbound_message", { leadId, message: savedInteraction, source: "Zalo" });
+      (async () => {
+        try {
+          const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
+          const scoreResult = await aiService2.scoreLead({ name: lead.name, source: "Zalo" }, textContent);
+          if (scoreResult) {
+            const { leadRepository: leadRepository2 } = await Promise.resolve().then(() => (init_leadRepository(), leadRepository_exports));
+            await leadRepository2.update(tenantId, leadId, {
+              score: { score: scoreResult.score || scoreResult.totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning }
+            });
+            io.to(`tenant:${tenantId}`).emit("lead_scored", { leadId, score: scoreResult });
+          }
+        } catch (err4) {
+          logger.error("[Zalo] L\u1ED7i AI scoring:", err4);
+        }
+      })();
+    }
+    if (event_name === "user_send_image") {
+      const imgUrl = message2?.attachments?.[0]?.payload?.url;
+      const lead = await upsertLeadBySocialId(tenantId, "zalo", senderId, sender?.display_name);
+      const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
+      const savedInteraction = await interactionRepository2.create(tenantId, {
+        leadId: lead.id,
+        channel: "ZALO",
+        direction: "INBOUND",
+        type: "IMAGE",
+        content: imgUrl || "[H\xECnh \u1EA3nh]",
+        metadata: { platform: "zalo", senderId, oaId, imageUrl: imgUrl }
+      });
+      io.to(lead.id).emit("receive_message", { room: lead.id, message: savedInteraction, isWebhook: true });
+      io.to(`tenant:${tenantId}`).emit("new_inbound_message", { leadId: lead.id, message: savedInteraction, source: "Zalo" });
+    }
+  } else if (platform === "facebook") {
+    const { object: object2, entry } = payload;
+    if (object2 !== "page" || !Array.isArray(entry)) return;
+    for (const pageEntry of entry) {
+      const pageId = pageEntry.id;
+      if (!pageId) {
+        logger.warn("[Facebook Webhook] Thi\u1EBFu pageEntry.id, kh\xF4ng x\xE1c \u0111\u1ECBnh \u0111\u01B0\u1EE3c tenant \u2014 b\u1ECF qua entry");
+        continue;
       }
       const { enterpriseConfigRepository: enterpriseConfigRepository2 } = await Promise.resolve().then(() => (init_enterpriseConfigRepository(), enterpriseConfigRepository_exports));
-      const foundTenant = await enterpriseConfigRepository2.findTenantByZaloOaId(oaId);
+      const foundTenant = await enterpriseConfigRepository2.findTenantByFacebookPageId(pageId);
       if (!foundTenant) {
-        logger.warn(`[Zalo Webhook] OA ID ${oaId} not registered to any tenant \u2014 dropping event`);
-        return;
+        logger.warn(`[Facebook Webhook] Page ID ${pageId} ch\u01B0a \u0111\u0103ng k\xFD cho tenant n\xE0o \u2014 b\u1ECF qua entry`);
+        continue;
       }
       const tenantId = foundTenant;
-      const senderId = sender?.id;
-      if (!senderId) {
-        logger.warn("[Zalo Webhook] Missing sender.id in payload");
-        return;
-      }
-      if (event_name === "follow") {
-        await upsertLeadBySocialId(tenantId, "zalo", senderId, sender?.display_name);
-        logger.info(`[Zalo] New follower ${senderId} \u2192 lead created/found`);
-        return;
-      }
-      if (event_name === "user_send_text") {
-        const textContent = message?.text;
-        if (!textContent) return;
-        const lead = await upsertLeadBySocialId(tenantId, "zalo", senderId, sender?.display_name);
-        const leadId = lead.id;
-        const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
-        const savedInteraction = await interactionRepository2.create(tenantId, {
-          leadId,
-          channel: "ZALO",
-          direction: "INBOUND",
-          type: "TEXT",
-          content: textContent,
-          metadata: {
-            platform: "zalo",
-            senderId,
-            oaId,
-            originalTimestamp: timestamp
-          }
-        });
-        logger.info(`[Zalo] Message from ${senderId} \u2192 lead ${leadId}`);
-        io.to(leadId).emit("receive_message", { room: leadId, message: savedInteraction, isWebhook: true });
-        io.to(`tenant:${tenantId}`).emit("new_inbound_message", { leadId, message: savedInteraction, source: "Zalo" });
-        (async () => {
-          try {
-            const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
-            const scoreResult = await aiService2.scoreLead({ name: lead.name, source: "Zalo" }, textContent);
-            if (scoreResult) {
-              const { leadRepository: leadRepository2 } = await Promise.resolve().then(() => (init_leadRepository(), leadRepository_exports));
-              await leadRepository2.update(tenantId, leadId, {
-                score: { score: scoreResult.score || scoreResult.totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning }
-              });
-              io.to(`tenant:${tenantId}`).emit("lead_scored", { leadId, score: scoreResult });
+      const messagingEvents = pageEntry.messaging || [];
+      for (const webhookEvent of messagingEvents) {
+        const senderId = webhookEvent.sender?.id;
+        if (!senderId || senderId === pageId) continue;
+        const messageText = webhookEvent.message?.text;
+        if (messageText) {
+          const lead = await upsertLeadBySocialId(tenantId, "facebook", senderId);
+          const leadId = lead.id;
+          const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
+          const savedInteraction = await interactionRepository2.create(tenantId, {
+            leadId,
+            channel: "FACEBOOK",
+            direction: "INBOUND",
+            type: "TEXT",
+            content: messageText,
+            metadata: {
+              platform: "facebook",
+              senderId,
+              pageId,
+              mid: webhookEvent.message?.mid
             }
-          } catch (err) {
-            logger.error("[Zalo] AI scoring error:", err);
-          }
-        })();
-      }
-      if (event_name === "user_send_image") {
-        const imgUrl = message?.attachments?.[0]?.payload?.url;
-        const lead = await upsertLeadBySocialId(tenantId, "zalo", senderId, sender?.display_name);
-        const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
-        const savedInteraction = await interactionRepository2.create(tenantId, {
-          leadId: lead.id,
-          channel: "ZALO",
-          direction: "INBOUND",
-          type: "IMAGE",
-          content: imgUrl || "[H\xECnh \u1EA3nh]",
-          metadata: { platform: "zalo", senderId, oaId, imageUrl: imgUrl }
-        });
-        io.to(lead.id).emit("receive_message", { room: lead.id, message: savedInteraction, isWebhook: true });
-        io.to(`tenant:${tenantId}`).emit("new_inbound_message", { leadId: lead.id, message: savedInteraction, source: "Zalo" });
-      }
-    } else if (platform === "facebook") {
-      const { object: object2, entry } = payload;
-      if (object2 !== "page" || !Array.isArray(entry)) return;
-      for (const pageEntry of entry) {
-        const pageId = pageEntry.id;
-        if (!pageId) {
-          logger.warn("[Facebook Webhook] Missing pageEntry.id, cannot resolve tenant \u2014 skipping entry");
-          continue;
-        }
-        const { enterpriseConfigRepository: enterpriseConfigRepository2 } = await Promise.resolve().then(() => (init_enterpriseConfigRepository(), enterpriseConfigRepository_exports));
-        const foundTenant = await enterpriseConfigRepository2.findTenantByFacebookPageId(pageId);
-        if (!foundTenant) {
-          logger.warn(`[Facebook Webhook] Page ID ${pageId} not registered to any tenant \u2014 skipping entry`);
-          continue;
-        }
-        const tenantId = foundTenant;
-        const messagingEvents = pageEntry.messaging || [];
-        for (const webhookEvent of messagingEvents) {
-          const senderId = webhookEvent.sender?.id;
-          if (!senderId || senderId === pageId) continue;
-          const messageText = webhookEvent.message?.text;
-          if (messageText) {
-            const lead = await upsertLeadBySocialId(tenantId, "facebook", senderId);
-            const leadId = lead.id;
-            const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
-            const savedInteraction = await interactionRepository2.create(tenantId, {
-              leadId,
-              channel: "FACEBOOK",
-              direction: "INBOUND",
-              type: "TEXT",
-              content: messageText,
-              metadata: {
-                platform: "facebook",
-                senderId,
-                pageId,
-                mid: webhookEvent.message?.mid
-              }
-            });
-            logger.info(`[Facebook] Message from ${senderId} \u2192 lead ${leadId}`);
-            io.to(leadId).emit("receive_message", { room: leadId, message: savedInteraction, isWebhook: true });
-            io.to(`tenant:${tenantId}`).emit("new_inbound_message", { leadId, message: savedInteraction, source: "Facebook" });
-            (async () => {
-              try {
-                const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
-                const scoreResult = await aiService2.scoreLead({ name: lead.name, source: "Facebook" }, messageText);
-                if (scoreResult) {
-                  const { leadRepository: leadRepository2 } = await Promise.resolve().then(() => (init_leadRepository(), leadRepository_exports));
-                  await leadRepository2.update(tenantId, leadId, {
-                    score: { score: scoreResult.score || scoreResult.totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning }
-                  });
-                  io.to(`tenant:${tenantId}`).emit("lead_scored", { leadId, score: scoreResult });
-                }
-              } catch (err) {
-                logger.error("[Facebook] AI scoring error:", err);
-              }
-            })();
-          }
-          const attachments = webhookEvent.message?.attachments;
-          if (attachments?.length && !messageText) {
-            const lead = await upsertLeadBySocialId(tenantId, "facebook", senderId);
-            const attachment = attachments[0];
-            const contentType = attachment.type === "image" ? "IMAGE" : "FILE";
-            const contentText = attachment.payload?.url || `[${attachment.type || "File"}]`;
-            const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
-            const savedInteraction = await interactionRepository2.create(tenantId, {
-              leadId: lead.id,
-              channel: "FACEBOOK",
-              direction: "INBOUND",
-              type: contentType,
-              content: contentText,
-              metadata: { platform: "facebook", senderId, pageId, attachmentType: attachment.type }
-            });
-            io.to(lead.id).emit("receive_message", { room: lead.id, message: savedInteraction, isWebhook: true });
-            io.to(`tenant:${tenantId}`).emit("new_inbound_message", { leadId: lead.id, message: savedInteraction, source: "Facebook" });
-          }
-          const postback = webhookEvent.postback;
-          if (postback) {
-            const lead = await upsertLeadBySocialId(tenantId, "facebook", senderId);
-            const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
-            await interactionRepository2.create(tenantId, {
-              leadId: lead.id,
-              channel: "FACEBOOK",
-              direction: "INBOUND",
-              type: "TEXT",
-              content: postback.title || postback.payload || "[Postback]",
-              metadata: { platform: "facebook", senderId, pageId, postbackPayload: postback.payload }
-            });
-          }
-        }
-      }
-    } else if (platform === "email") {
-      const { from, fromName, subject, body, to, tenantId: payloadTenantId } = payload;
-      if (!from) {
-        logger.warn("[Email Webhook] Missing from address");
-        return;
-      }
-      if (!payloadTenantId) {
-        logger.warn("[Email Webhook] Missing tenantId in payload \u2014 dropping event");
-        return;
-      }
-      const tenantId = payloadTenantId;
-      const fromEmail = (from.match(/<(.+?)>/) || [])[1] || from.trim();
-      const senderName = fromName || (from.match(/^(.+?)\s*</) || [])[1]?.trim() || fromEmail.split("@")[0];
-      const { leadRepository: leadRepository2 } = await Promise.resolve().then(() => (init_leadRepository(), leadRepository_exports));
-      const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
-      let lead;
-      try {
-        const { pool: pool3 } = await Promise.resolve().then(() => (init_db(), db_exports));
-        const { withTenantContext: withTenantContext2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-        const existingResult = await withTenantContext2(tenantId, async (client) => {
-          return client.query(
-            `SELECT * FROM leads WHERE LOWER(email) = LOWER($1) LIMIT 1`,
-            [fromEmail]
-          );
-        });
-        if (existingResult.rows[0]) {
-          const { BaseRepository: BaseRepository2 } = await Promise.resolve().then(() => (init_baseRepository(), baseRepository_exports));
-          const br = new BaseRepository2("leads");
-          lead = br.rowToEntity(existingResult.rows[0]);
-          logger.info(`[Email] Matched existing lead ${lead.id} for ${fromEmail}`);
-        } else {
-          lead = await leadRepository2.create(tenantId, {
-            name: senderName,
-            phone: "",
-            email: fromEmail,
-            source: "Email",
-            stage: "NEW",
-            tags: ["Email"]
           });
-          logger.info(`[Email] Created new lead ${lead.id} from ${fromEmail}`);
+          logger.info(`[Facebook] Tin nh\u1EAFn t\u1EEB ${senderId} \u2192 lead ${leadId}`);
+          io.to(leadId).emit("receive_message", { room: leadId, message: savedInteraction, isWebhook: true });
+          io.to(`tenant:${tenantId}`).emit("new_inbound_message", { leadId, message: savedInteraction, source: "Facebook" });
+          (async () => {
+            try {
+              const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
+              const scoreResult = await aiService2.scoreLead({ name: lead.name, source: "Facebook" }, messageText);
+              if (scoreResult) {
+                const { leadRepository: leadRepository2 } = await Promise.resolve().then(() => (init_leadRepository(), leadRepository_exports));
+                await leadRepository2.update(tenantId, leadId, {
+                  score: { score: scoreResult.score || scoreResult.totalScore, grade: scoreResult.grade, reasoning: scoreResult.reasoning }
+                });
+                io.to(`tenant:${tenantId}`).emit("lead_scored", { leadId, score: scoreResult });
+              }
+            } catch (err4) {
+              logger.error("[Facebook] L\u1ED7i AI scoring:", err4);
+            }
+          })();
         }
-      } catch (err) {
-        logger.error("[Email] Lead lookup/create error:", err);
-        return;
+        const attachments = webhookEvent.message?.attachments;
+        if (attachments?.length && !messageText) {
+          const lead = await upsertLeadBySocialId(tenantId, "facebook", senderId);
+          const attachment = attachments[0];
+          const contentType = attachment.type === "image" ? "IMAGE" : "FILE";
+          const contentText = attachment.payload?.url || `[${attachment.type || "File"}]`;
+          const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
+          const savedInteraction = await interactionRepository2.create(tenantId, {
+            leadId: lead.id,
+            channel: "FACEBOOK",
+            direction: "INBOUND",
+            type: contentType,
+            content: contentText,
+            metadata: { platform: "facebook", senderId, pageId, attachmentType: attachment.type }
+          });
+          io.to(lead.id).emit("receive_message", { room: lead.id, message: savedInteraction, isWebhook: true });
+          io.to(`tenant:${tenantId}`).emit("new_inbound_message", { leadId: lead.id, message: savedInteraction, source: "Facebook" });
+        }
+        const postback = webhookEvent.postback;
+        if (postback) {
+          const lead = await upsertLeadBySocialId(tenantId, "facebook", senderId);
+          const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
+          await interactionRepository2.create(tenantId, {
+            leadId: lead.id,
+            channel: "FACEBOOK",
+            direction: "INBOUND",
+            type: "TEXT",
+            content: postback.title || postback.payload || "[Postback]",
+            metadata: { platform: "facebook", senderId, pageId, postbackPayload: postback.payload }
+          });
+        }
       }
-      const content = subject ? `**${subject}**
+    }
+  } else if (platform === "email") {
+    const { from, fromName, subject, body, to, tenantId: payloadTenantId } = payload;
+    if (!from) {
+      logger.warn("[Email Webhook] Thi\u1EBFu \u0111\u1ECBa ch\u1EC9 from");
+      return;
+    }
+    if (!payloadTenantId) {
+      logger.warn("[Email Webhook] Thi\u1EBFu tenantId trong payload \u2014 b\u1ECF qua s\u1EF1 ki\u1EC7n");
+      return;
+    }
+    const tenantId = payloadTenantId;
+    const fromEmail = (from.match(/<(.+?)>/) || [])[1] || from.trim();
+    const senderName = fromName || (from.match(/^(.+?)\s*</) || [])[1]?.trim() || fromEmail.split("@")[0];
+    const { leadRepository: leadRepository2 } = await Promise.resolve().then(() => (init_leadRepository(), leadRepository_exports));
+    const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
+    let lead;
+    try {
+      const { withTenantContext: withTenantContext2 } = await Promise.resolve().then(() => (init_db(), db_exports));
+      const existingResult = await withTenantContext2(tenantId, async (client) => {
+        return client.query(
+          `SELECT * FROM leads WHERE LOWER(email) = LOWER($1) LIMIT 1`,
+          [fromEmail]
+        );
+      });
+      if (existingResult.rows[0]) {
+        const { BaseRepository: BaseRepository2 } = await Promise.resolve().then(() => (init_baseRepository(), baseRepository_exports));
+        const br = new BaseRepository2("leads");
+        lead = br.rowToEntity(existingResult.rows[0]);
+        logger.info(`[Email] T\xECm th\u1EA5y lead ${lead.id} cho ${fromEmail}`);
+      } else {
+        lead = await leadRepository2.create(tenantId, {
+          name: senderName,
+          phone: "",
+          email: fromEmail,
+          source: "Email",
+          stage: "NEW",
+          tags: ["Email"]
+        });
+        logger.info(`[Email] T\u1EA1o lead m\u1EDBi ${lead.id} t\u1EEB ${fromEmail}`);
+      }
+    } catch (err4) {
+      logger.error("[Email] L\u1ED7i tra c\u1EE9u/t\u1EA1o lead:", err4);
+      return;
+    }
+    const content = subject ? `**${subject}**
 
 ${body || ""}` : body || "[Email kh\xF4ng c\xF3 n\u1ED9i dung]";
-      try {
-        const savedInteraction = await interactionRepository2.create(tenantId, {
-          leadId: lead.id,
-          channel: "EMAIL",
-          direction: "INBOUND",
-          type: "TEXT",
-          content: content.slice(0, 5e3),
-          metadata: {
-            platform: "email",
-            fromEmail,
-            fromName: senderName,
-            subject,
-            to
-          }
-        });
-        logger.info(`[Email] Inbound email stored as interaction ${savedInteraction.id}`);
-        io.to(lead.id).emit("receive_message", { room: lead.id, message: savedInteraction, isWebhook: true });
-        io.to(`tenant:${tenantId}`).emit("new_inbound_message", { leadId: lead.id, message: savedInteraction, source: "Email" });
-      } catch (err) {
-        logger.error("[Email] Failed to create interaction:", err);
-      }
+    try {
+      const savedInteraction = await interactionRepository2.create(tenantId, {
+        leadId: lead.id,
+        channel: "EMAIL",
+        direction: "INBOUND",
+        type: "TEXT",
+        content: content.slice(0, 5e3),
+        metadata: {
+          platform: "email",
+          fromEmail,
+          fromName: senderName,
+          subject,
+          to
+        }
+      });
+      logger.info(`[Email] Email \u0111\u1EBFn \u0111\xE3 l\u01B0u th\xE0nh interaction ${savedInteraction.id}`);
+      io.to(lead.id).emit("receive_message", { room: lead.id, message: savedInteraction, isWebhook: true });
+      io.to(`tenant:${tenantId}`).emit("new_inbound_message", { leadId: lead.id, message: savedInteraction, source: "Email" });
+    } catch (err4) {
+      logger.error("[Email] Kh\xF4ng th\u1EC3 t\u1EA1o interaction:", err4);
+    }
+  }
+}
+function setupWebhookWorker(io) {
+  const processJob = (job) => processWebhookJob(io, job);
+  inMemoryProcessor = processJob;
+  while (inMemoryJobs.length > 0) {
+    const job = inMemoryJobs.shift();
+    runWithRetry(job);
+  }
+  return {
+    on: () => {
+    },
+    close: async () => {
     }
   };
-  if (useRedis) {
-    const worker = new Worker("webhook-events", processJob, { connection });
-    worker.on("completed", (job) => {
-      logger.info(`Job ${job.id} completed`);
-    });
-    worker.on("failed", (job, err) => {
-      logger.error(`Job ${job?.id} failed`, err);
-    });
-    worker.on("error", (err) => {
-      logger.error("Webhook worker error:", err);
-    });
-    return worker;
-  } else {
-    inMemoryProcessor = processJob;
-    while (inMemoryJobs.length > 0) {
-      const job = inMemoryJobs.shift();
-      runWithRetry(job);
-    }
-    return {
-      on: () => {
-      },
-      close: async () => {
-      }
-    };
-  }
 }
 
 // server/repositories/userRepository.ts
@@ -6485,7 +22014,7 @@ var RoutingRuleRepository = class extends BaseRepository {
         }
         if (cond.tags && cond.tags.length > 0) {
           const leadTags = lead.tags || [];
-          if (!cond.tags.some((tag) => leadTags.includes(tag))) continue;
+          if (!cond.tags.some((tag2) => leadTags.includes(tag2))) continue;
         }
         const budget = lead.preferences?.budget || 0;
         if (cond.budgetMin && cond.budgetMin > 0 && budget < cond.budgetMin) continue;
@@ -6977,10 +22506,10 @@ function createLeadRoutes(authenticateToken) {
             deliveryStatus = "PENDING";
             deliveryError = "Zalo OA Access Token ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\xECnh";
           }
-        } catch (err) {
+        } catch (err4) {
           deliveryStatus = "FAILED";
-          deliveryError = err.message;
-          console.error("[Zalo] Outbound send error:", err);
+          deliveryError = err4.message;
+          console.error("[Zalo] Outbound send error:", err4);
         }
       }
       if (resolvedChannel === "FACEBOOK" && lead.socialIds?.facebook) {
@@ -6997,10 +22526,10 @@ function createLeadRoutes(authenticateToken) {
             deliveryStatus = "PENDING";
             deliveryError = "Ch\u01B0a c\xF3 Facebook Page n\xE0o \u0111\u01B0\u1EE3c k\u1EBFt n\u1ED1i v\u1EDBi Access Token";
           }
-        } catch (err) {
+        } catch (err4) {
           deliveryStatus = "FAILED";
-          deliveryError = err.message;
-          console.error("[Facebook] Outbound send error:", err);
+          deliveryError = err4.message;
+          console.error("[Facebook] Outbound send error:", err4);
         }
       }
       const { interactionRepository: interactionRepository2 } = await Promise.resolve().then(() => (init_interactionRepository(), interactionRepository_exports));
@@ -7070,8 +22599,8 @@ var ADMIN_MAP = {
 function normalizeVNSrv(addr) {
   let r = addr;
   for (const [plain, diacritic] of Object.entries(HCMC_DISTRICT_MAP)) {
-    const esc2 = plain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    r = r.replace(new RegExp(`(?<![\\w\xC0-\u024F])${esc2}(?![\\w\xC0-\u024F])`, "gi"), diacritic);
+    const esc3 = plain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    r = r.replace(new RegExp(`(?<![\\w\xC0-\u024F])${esc3}(?![\\w\xC0-\u024F])`, "gi"), diacritic);
   }
   for (const [pat, diacritic] of Object.entries(ADMIN_MAP)) {
     r = r.replace(new RegExp(pat, "gi"), diacritic);
@@ -7088,7 +22617,7 @@ function buildGeoQueriesSrv(location) {
     ", TP. HCM, Vi\u1EC7t Nam",
     ", Vietnam"
   ];
-  return variants.flatMap((v) => suffixes.map((s) => `${v}${s}`));
+  return variants.flatMap((v) => suffixes.map((s2) => `${v}${s2}`));
 }
 async function geocodeHCMC(location) {
   const queries = buildGeoQueriesSrv(location);
@@ -8761,9 +24290,9 @@ function createUserRoutes(authenticateToken, jwtSecret) {
         details: `Invited user ${email3} with role ${invited.role}`,
         ipAddress: req.ip
       });
-      const crypto4 = await import("crypto");
-      const rawToken = crypto4.randomBytes(32).toString("hex");
-      const tokenHash = crypto4.createHash("sha256").update(rawToken).digest("hex");
+      const crypto8 = await import("crypto");
+      const rawToken = crypto8.randomBytes(32).toString("hex");
+      const tokenHash = crypto8.createHash("sha256").update(rawToken).digest("hex");
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3);
       const { pool: pool3 } = await Promise.resolve().then(() => (init_db(), db_exports));
       await pool3.query(
@@ -8772,8 +24301,8 @@ function createUserRoutes(authenticateToken, jwtSecret) {
       );
       const baseUrl2 = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : process.env.APP_URL || "https://app.sgsland.vn";
       const loginUrl = `${baseUrl2}/#/reset-password/${rawToken}`;
-      emailService.sendInviteEmail(user.tenantId, email3, name, invited.role, loginUrl).catch((err) => {
-        console.error("[Invite] Failed to send invite email:", err.message);
+      emailService.sendInviteEmail(user.tenantId, email3, name, invited.role, loginUrl).catch((err4) => {
+        console.error("[Invite] Failed to send invite email:", err4.message);
       });
       res.status(201).json(userRepository.toPublicUser(invited));
     } catch (error48) {
@@ -8835,13 +24364,13 @@ function createUserRoutes(authenticateToken, jwtSecret) {
         details: `Re-invite sent to ${target.email}`,
         ipAddress: req.ip
       });
-      const crypto4 = await import("crypto");
-      const rawToken = crypto4.randomBytes(32).toString("hex");
-      const tokenHash = crypto4.createHash("sha256").update(rawToken).digest("hex");
+      const crypto8 = await import("crypto");
+      const rawToken = crypto8.randomBytes(32).toString("hex");
+      const tokenHash = crypto8.createHash("sha256").update(rawToken).digest("hex");
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3);
       const { pool: pool3 } = await Promise.resolve().then(() => (init_db(), db_exports));
       await pool3.query(
-        `UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL`,
+        `UPDATE password_reset_tokens SET used = TRUE WHERE user_id = $1 AND used = FALSE`,
         [target.id]
       );
       await pool3.query(
@@ -8850,8 +24379,8 @@ function createUserRoutes(authenticateToken, jwtSecret) {
       );
       const baseUrl2 = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : process.env.APP_URL || "https://app.sgsland.vn";
       const loginUrl = `${baseUrl2}/#/reset-password/${rawToken}`;
-      emailService.sendInviteEmail(user.tenantId, target.email, target.name || target.email, target.role, loginUrl).catch((err) => {
-        console.error("[Invite] Failed to resend invite email:", err.message);
+      emailService.sendInviteEmail(user.tenantId, target.email, target.name || target.email, target.role, loginUrl).catch((err4) => {
+        console.error("[Invite] Failed to resend invite email:", err4.message);
       });
       res.json({ success: true, message: `Invite resent to ${target.email}` });
     } catch (error48) {
@@ -9407,6 +24936,7 @@ var AnalyticsRepository = class extends BaseRepository {
         const responseBonus = avgMins == null ? 0 : avgMins <= 10 ? 30 : avgMins <= 30 ? 20 : avgMins <= 60 ? 10 : 0;
         const slaScore = Math.min(100, Math.round(row.close_rate * 0.7 + responseBonus));
         return {
+          id: row.id,
           name: row.name,
           avatar: row.avatar ?? null,
           deals: row.deals,
@@ -9840,8 +25370,8 @@ var VisitorRepository = class {
           data.referrer ? data.referrer.slice(0, 512) : null
         ]
       );
-    } catch (err) {
-      logger.warn("[visitorRepository] Failed to log visitor: " + err.message);
+    } catch (err4) {
+      logger.warn("[visitorRepository] Failed to log visitor: " + err4.message);
     }
   }
   async getStats(tenantId, days = 30) {
@@ -10356,8 +25886,8 @@ function createKnowledgeRoutes(authenticateToken) {
           if (resolved.startsWith(tenantDir + path2.sep) || resolved.startsWith(tenantDir + "/")) {
             extractedContent = await extractTextFromFile(resolved);
           }
-        } catch (err) {
-          console.error("Text extraction failed:", err);
+        } catch (err4) {
+          console.error("Text extraction failed:", err4);
         }
       }
       const doc = await documentRepository.create(user.tenantId, {
@@ -11195,8 +26725,8 @@ function createSequenceRoutes(authenticateToken) {
           } else {
             results.push({ step: i, type: step.type, status: "skipped" });
           }
-        } catch (err) {
-          results.push({ step: i, type: step.type, status: "error", error: err.message });
+        } catch (err4) {
+          results.push({ step: i, type: step.type, status: "error", error: err4.message });
         }
       }
       res.json({ message: "Sequence executed", results });
@@ -11882,11 +27412,11 @@ function createActivityRoutes(authenticateToken) {
   router.post("/pageview", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const { path: path5, pageLabel } = req.body;
-      if (!path5 || typeof path5 !== "string") {
+      const { path: path6, pageLabel } = req.body;
+      if (!path6 || typeof path6 !== "string") {
         return res.status(400).json({ error: "path is required" });
       }
-      const cleanPath = path5.slice(0, 255);
+      const cleanPath = path6.slice(0, 255);
       const cleanLabel = (typeof pageLabel === "string" ? pageLabel : "").slice(0, 255);
       await pageViewRepository.recordView(user.tenantId, {
         userId: user.id,
@@ -12196,7 +27726,7 @@ import { Router as Router18 } from "express";
 import multer from "multer";
 import path3 from "path";
 import fs3 from "fs";
-import crypto2 from "crypto";
+import crypto6 from "crypto";
 import { fileTypeFromFile } from "file-type";
 var UPLOAD_BASE2 = path3.join(process.cwd(), "uploads");
 var MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -12246,7 +27776,7 @@ var storage = multer.diskStorage({
     cb(null, dir);
   },
   filename: (_req, file2, cb) => {
-    const uniqueId = crypto2.randomBytes(16).toString("hex");
+    const uniqueId = crypto6.randomBytes(16).toString("hex");
     const ext = MIME_TO_EXT[file2.mimetype] || path3.extname(file2.originalname).toLowerCase();
     cb(null, `${Date.now()}-${uniqueId}${ext}`);
   }
@@ -12263,20 +27793,20 @@ var upload = multer({
   fileFilter,
   limits: { fileSize: MAX_FILE_SIZE, files: MAX_FILES }
 });
-function handleMulterError(err, _req, res, next) {
-  if (err instanceof multer.MulterError) {
-    if (err.code === "LIMIT_FILE_SIZE") {
+function handleMulterError(err4, _req, res, next) {
+  if (err4 instanceof multer.MulterError) {
+    if (err4.code === "LIMIT_FILE_SIZE") {
       return res.status(413).json({ error: "File too large (max 10MB)" });
     }
-    if (err.code === "LIMIT_FILE_COUNT") {
+    if (err4.code === "LIMIT_FILE_COUNT") {
       return res.status(400).json({ error: "Too many files (max 10)" });
     }
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: err4.message });
   }
-  if (err?.message?.includes("File type")) {
-    return res.status(415).json({ error: err.message });
+  if (err4?.message?.includes("File type")) {
+    return res.status(415).json({ error: err4.message });
   }
-  next(err);
+  next(err4);
 }
 function createUploadRoutes(authenticateToken) {
   const router = Router18();
@@ -12405,7 +27935,7 @@ import { Router as Router19 } from "express";
 
 // server/middleware/scimAuth.ts
 init_enterpriseConfigRepository();
-import { createHash, timingSafeEqual } from "crypto";
+import { createHash, timingSafeEqual as timingSafeEqual2 } from "crypto";
 function extractTenantId(req) {
   if (req.query.tenantId) return req.query.tenantId;
   if (req.headers["x-tenant-id"]) return req.headers["x-tenant-id"];
@@ -12452,7 +27982,7 @@ async function scimAuthMiddleware(req, res, next) {
     const storedToken = config2.scim.token;
     const a = createHash("sha256").update(incomingToken).digest();
     const b = createHash("sha256").update(storedToken).digest();
-    const valid = timingSafeEqual(a, b);
+    const valid = timingSafeEqual2(a, b);
     if (!valid) {
       res.status(401).json({
         schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
@@ -12463,7 +27993,7 @@ async function scimAuthMiddleware(req, res, next) {
     }
     req.scimTenantId = tenantId;
     next();
-  } catch (err) {
+  } catch (err4) {
     res.status(500).json({
       schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
       status: "500",
@@ -12612,8 +28142,8 @@ function createScimRoutes() {
         itemsPerPage: count,
         Resources: result.data.map((u) => internalUserToScim(u, base))
       });
-    } catch (err) {
-      logger.error("[SCIM] GET /Users error:", err);
+    } catch (err4) {
+      logger.error("[SCIM] GET /Users error:", err4);
       scimError(res, 500, "Failed to list users");
     }
   });
@@ -12623,8 +28153,8 @@ function createScimRoutes() {
       const user = await userRepository.findByIdDirect(req.params.id, tenantId);
       if (!user) return scimError(res, 404, "User not found");
       res.json(internalUserToScim(user, baseUrl(req)));
-    } catch (err) {
-      logger.error("[SCIM] GET /Users/:id error:", err);
+    } catch (err4) {
+      logger.error("[SCIM] GET /Users/:id error:", err4);
       scimError(res, 500, "Failed to fetch user");
     }
   });
@@ -12656,8 +28186,8 @@ function createScimRoutes() {
       });
       logger.info(`[SCIM] Provisioned user ${user.id} (${email3}) for tenant ${tenantId}`);
       res.status(201).json(internalUserToScim(user, baseUrl(req)));
-    } catch (err) {
-      logger.error("[SCIM] POST /Users error:", err);
+    } catch (err4) {
+      logger.error("[SCIM] POST /Users error:", err4);
       scimError(res, 500, "Failed to create user");
     }
   });
@@ -12681,8 +28211,8 @@ function createScimRoutes() {
         logger.info(`[SCIM] Deprovisioned (deactivated) user ${req.params.id} for tenant ${tenantId}`);
       }
       res.json(internalUserToScim(updated, baseUrl(req)));
-    } catch (err) {
-      logger.error("[SCIM] PUT /Users/:id error:", err);
+    } catch (err4) {
+      logger.error("[SCIM] PUT /Users/:id error:", err4);
       scimError(res, 500, "Failed to update user");
     }
   });
@@ -12695,15 +28225,15 @@ function createScimRoutes() {
       if (!existing) return scimError(res, 404, "User not found");
       const updates = {};
       for (const op of Operations) {
-        const { op: opType, path: path5, value } = op;
+        const { op: opType, path: path6, value } = op;
         const operation = (opType || "").toLowerCase();
-        if ((operation === "replace" || operation === "add") && path5 === "active") {
+        if ((operation === "replace" || operation === "add") && path6 === "active") {
           updates.status = value === false || value === "false" ? "INACTIVE" : "ACTIVE";
-        } else if ((operation === "replace" || operation === "add") && path5 === "name.formatted") {
+        } else if ((operation === "replace" || operation === "add") && path6 === "name.formatted") {
           updates.name = value;
-        } else if ((operation === "replace" || operation === "add") && path5 === "title") {
+        } else if ((operation === "replace" || operation === "add") && path6 === "title") {
           updates.role = scimTitleToRole(value);
-        } else if (!path5 && value && typeof value === "object") {
+        } else if (!path6 && value && typeof value === "object") {
           if (value.active !== void 0) updates.status = value.active === false ? "INACTIVE" : "ACTIVE";
           if (value["name.formatted"]) updates.name = value["name.formatted"];
           if (value.title) updates.role = scimTitleToRole(value.title);
@@ -12714,8 +28244,8 @@ function createScimRoutes() {
       }
       const updated = await userRepository.findByIdDirect(req.params.id, tenantId);
       res.json(internalUserToScim(updated, baseUrl(req)));
-    } catch (err) {
-      logger.error("[SCIM] PATCH /Users/:id error:", err);
+    } catch (err4) {
+      logger.error("[SCIM] PATCH /Users/:id error:", err4);
       scimError(res, 500, "Failed to patch user");
     }
   });
@@ -12727,8 +28257,8 @@ function createScimRoutes() {
       await userRepository.update(tenantId, req.params.id, { status: "INACTIVE" });
       logger.info(`[SCIM] Deprovisioned user ${req.params.id} (set INACTIVE) for tenant ${tenantId}`);
       res.status(204).send();
-    } catch (err) {
-      logger.error("[SCIM] DELETE /Users/:id error:", err);
+    } catch (err4) {
+      logger.error("[SCIM] DELETE /Users/:id error:", err4);
       scimError(res, 500, "Failed to deprovision user");
     }
   });
@@ -12754,8 +28284,8 @@ function createScimRoutes() {
         itemsPerPage: resources.length,
         Resources: resources
       });
-    } catch (err) {
-      logger.error("[SCIM] GET /Groups error:", err);
+    } catch (err4) {
+      logger.error("[SCIM] GET /Groups error:", err4);
       scimError(res, 500, "Failed to list groups");
     }
   });
@@ -12885,8 +28415,8 @@ var MarketDataService = class _MarketDataService {
         fetchedAt: now.toISOString(),
         expiresAt: expiresAt.toISOString()
       };
-    } catch (err) {
-      logger.error(`[MarketData] AI fetch failed for "${location}":`, err.message);
+    } catch (err4) {
+      logger.error(`[MarketData] AI fetch failed for "${location}":`, err4.message);
       return this.fetchFromRegionalTable(location, key);
     }
   }
@@ -12932,8 +28462,8 @@ var MarketDataService = class _MarketDataService {
       try {
         await this.fetchAndCache(entry.location, entry.normalizedKey);
         await new Promise((r) => setTimeout(r, 1500));
-      } catch (err) {
-        logger.error(`[MarketData] Refresh failed for "${entry.location}":`, err.message);
+      } catch (err4) {
+        logger.error(`[MarketData] Refresh failed for "${entry.location}":`, err4.message);
       }
     }
     this.isRefreshing = false;
@@ -13120,8 +28650,8 @@ function createValuationRoutes(authenticateToken, aiRateLimit2) {
         region: data.region,
         isFresh: new Date(data.expiresAt) > /* @__PURE__ */ new Date()
       });
-    } catch (err) {
-      logger.error("[Valuation] Market index error:", err);
+    } catch (err4) {
+      logger.error("[Valuation] Market index error:", err4);
       res.status(500).json({ error: "Failed to get market data" });
     }
   });
@@ -13144,8 +28674,8 @@ function createValuationRoutes(authenticateToken, aiRateLimit2) {
         fetchedAt: data.fetchedAt,
         expiresAt: data.expiresAt
       });
-    } catch (err) {
-      logger.error("[Valuation] Market index refresh error:", err);
+    } catch (err4) {
+      logger.error("[Valuation] Market index refresh error:", err4);
       res.status(500).json({ error: "Failed to refresh market data" });
     }
   });
@@ -13169,8 +28699,8 @@ function createValuationRoutes(authenticateToken, aiRateLimit2) {
         medianPriceDisplay: comps.medianPricePerM2 > 0 ? `${(comps.medianPricePerM2 / 1e6).toFixed(0)} tri\u1EC7u/m\xB2` : "N/A",
         searchParams: { location, area, propertyType }
       });
-    } catch (err) {
-      logger.error("[Valuation] Comparables error:", err);
+    } catch (err4) {
+      logger.error("[Valuation] Comparables error:", err4);
       res.status(500).json({ error: "Failed to fetch comparables" });
     }
   });
@@ -13846,9 +29376,9 @@ __export(external_exports, {
   core: () => core_exports2,
   cuid: () => cuid3,
   cuid2: () => cuid22,
-  custom: () => custom,
+  custom: () => custom2,
   date: () => date3,
-  decode: () => decode2,
+  decode: () => decode3,
   decodeAsync: () => decodeAsync2,
   describe: () => describe2,
   discriminatedUnion: () => discriminatedUnion,
@@ -13923,7 +29453,7 @@ __export(external_exports, {
   object: () => object,
   optional: () => optional,
   overwrite: () => _overwrite,
-  parse: () => parse2,
+  parse: () => parse3,
   parseAsync: () => parseAsync2,
   partialRecord: () => partialRecord,
   pipe: () => pipe,
@@ -14225,7 +29755,7 @@ __export(core_exports2, {
   config: () => config,
   createStandardJSONSchemaMethod: () => createStandardJSONSchemaMethod,
   createToJSONSchemaMethod: () => createToJSONSchemaMethod,
-  decode: () => decode,
+  decode: () => decode2,
   decodeAsync: () => decodeAsync,
   describe: () => describe,
   encode: () => encode,
@@ -14242,7 +29772,7 @@ __export(core_exports2, {
   isValidJWT: () => isValidJWT,
   locales: () => locales_exports,
   meta: () => meta,
-  parse: () => parse,
+  parse: () => parse2,
   parseAsync: () => parseAsync,
   prettifyError: () => prettifyError,
   process: () => process2,
@@ -14371,7 +29901,7 @@ __export(util_exports, {
   getParsedType: () => getParsedType,
   getSizableOrigin: () => getSizableOrigin,
   hexToUint8Array: () => hexToUint8Array,
-  isObject: () => isObject,
+  isObject: () => isObject2,
   isPlainObject: () => isPlainObject,
   issue: () => issue,
   joinValues: () => joinValues,
@@ -14509,10 +30039,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path5) {
-  if (!path5)
+function getElementAtPath(obj, path6) {
+  if (!path6)
     return obj;
-  return path5.reduce((acc, key) => acc?.[key], obj);
+  return path6.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -14541,7 +30071,7 @@ function slugify(input) {
 }
 var captureStackTrace = "captureStackTrace" in Error ? Error.captureStackTrace : (..._args) => {
 };
-function isObject(data) {
+function isObject2(data) {
   return typeof data === "object" && data !== null && !Array.isArray(data);
 }
 var allowsEval = cached(() => {
@@ -14557,7 +30087,7 @@ var allowsEval = cached(() => {
   }
 });
 function isPlainObject(o) {
-  if (isObject(o) === false)
+  if (isObject2(o) === false)
     return false;
   const ctor = o.constructor;
   if (ctor === void 0)
@@ -14565,7 +30095,7 @@ function isPlainObject(o) {
   if (typeof ctor !== "function")
     return true;
   const prot = ctor.prototype;
-  if (isObject(prot) === false)
+  if (isObject2(prot) === false)
     return false;
   if (Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
     return false;
@@ -14895,22 +30425,22 @@ function aborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path5, issues) {
+function prefixIssues(path6, issues) {
   return issues.map((iss) => {
     var _a2;
     (_a2 = iss).path ?? (_a2.path = []);
-    iss.path.unshift(path5);
+    iss.path.unshift(path6);
     return iss;
   });
 }
-function unwrapMessage(message) {
-  return typeof message === "string" ? message : message?.message;
+function unwrapMessage(message2) {
+  return typeof message2 === "string" ? message2 : message2?.message;
 }
 function finalizeIssue(iss, ctx, config2) {
   const full = { ...iss, path: iss.path ?? [] };
   if (!iss.message) {
-    const message = unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(ctx?.error?.(iss)) ?? unwrapMessage(config2.customError?.(iss)) ?? unwrapMessage(config2.localeError?.(iss)) ?? "Invalid input";
-    full.message = message;
+    const message2 = unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ?? unwrapMessage(ctx?.error?.(iss)) ?? unwrapMessage(config2.customError?.(iss)) ?? unwrapMessage(config2.localeError?.(iss)) ?? "Invalid input";
+    full.message = message2;
   }
   delete full.inst;
   delete full.continue;
@@ -15082,7 +30612,7 @@ function formatError(error48, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error48, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error49, path5 = []) => {
+  const processError = (error49, path6 = []) => {
     var _a2, _b;
     for (const issue2 of error49.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
@@ -15092,7 +30622,7 @@ function treeifyError(error48, mapper = (issue2) => issue2.message) {
       } else if (issue2.code === "invalid_element") {
         processError({ issues: issue2.issues }, issue2.path);
       } else {
-        const fullpath = [...path5, ...issue2.path];
+        const fullpath = [...path6, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -15124,8 +30654,8 @@ function treeifyError(error48, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path5 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path5) {
+  const path6 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path6) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -15165,7 +30695,7 @@ var _parse = (_Err) => (schema, value, _ctx, _params) => {
   }
   return result.value;
 };
-var parse = /* @__PURE__ */ _parse($ZodRealError);
+var parse2 = /* @__PURE__ */ _parse($ZodRealError);
 var _parseAsync = (_Err) => async (schema, value, _ctx, params) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
   let result = schema._zod.run({ value, issues: [] }, ctx);
@@ -15210,7 +30740,7 @@ var encode = /* @__PURE__ */ _encode($ZodRealError);
 var _decode = (_Err) => (schema, value, _ctx) => {
   return _parse(_Err)(schema, value, _ctx);
 };
-var decode = /* @__PURE__ */ _decode($ZodRealError);
+var decode2 = /* @__PURE__ */ _decode($ZodRealError);
 var _encodeAsync = (_Err) => async (schema, value, _ctx) => {
   const ctx = _ctx ? Object.assign(_ctx, { direction: "backward" }) : { direction: "backward" };
   return _parseAsync(_Err)(schema, value, ctx);
@@ -16723,13 +32253,13 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     }
     return propValues;
   });
-  const isObject2 = isObject;
+  const isObject3 = isObject2;
   const catchall = def.catchall;
   let value;
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject2(input)) {
+    if (!isObject3(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -16827,7 +32357,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     return (payload, ctx) => fn(shape, payload, ctx);
   };
   let fastpass;
-  const isObject2 = isObject;
+  const isObject3 = isObject2;
   const jit = !globalConfig.jitless;
   const allowsEval2 = allowsEval;
   const fastEnabled = jit && allowsEval2.value;
@@ -16836,7 +32366,7 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
     const input = payload.value;
-    if (!isObject2(input)) {
+    if (!isObject3(input)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
@@ -17014,7 +32544,7 @@ var $ZodDiscriminatedUnion = /* @__PURE__ */ $constructor("$ZodDiscriminatedUnio
   });
   inst._zod.parse = (payload, ctx) => {
     const input = payload.value;
-    if (!isObject(input)) {
+    if (!isObject2(input)) {
       payload.issues.push({
         code: "invalid_type",
         expected: "object",
@@ -17838,10 +33368,10 @@ var $ZodFunction = /* @__PURE__ */ $constructor("$ZodFunction", (inst, def) => {
       throw new Error("implement() must be called with a function");
     }
     return function(...args) {
-      const parsedArgs = inst._def.input ? parse(inst._def.input, args) : args;
+      const parsedArgs = inst._def.input ? parse2(inst._def.input, args) : args;
       const result = Reflect.apply(func, this, parsedArgs);
       if (inst._def.output) {
-        return parse(inst._def.output, result);
+        return parse2(inst._def.output, result);
       }
       return result;
     };
@@ -24238,10 +39768,10 @@ function _property(property, schema, params) {
   });
 }
 // @__NO_SIDE_EFFECTS__
-function _mime(types2, params) {
+function _mime(types5, params) {
   return new $ZodCheckMimeType({
     check: "mime_type",
-    mime: types2,
+    mime: types5,
     ...normalizeParams(params)
   });
 }
@@ -25692,7 +41222,7 @@ __export(schemas_exports2, {
   codec: () => codec,
   cuid: () => cuid3,
   cuid2: () => cuid22,
-  custom: () => custom,
+  custom: () => custom2,
   date: () => date3,
   describe: () => describe2,
   discriminatedUnion: () => discriminatedUnion,
@@ -25890,12 +41420,12 @@ var ZodRealError = $constructor("ZodError", initializer2, {
 });
 
 // node_modules/zod/v4/classic/parse.js
-var parse2 = /* @__PURE__ */ _parse(ZodRealError);
+var parse3 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
 var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
 var encode2 = /* @__PURE__ */ _encode(ZodRealError);
-var decode2 = /* @__PURE__ */ _decode(ZodRealError);
+var decode3 = /* @__PURE__ */ _decode(ZodRealError);
 var encodeAsync2 = /* @__PURE__ */ _encodeAsync(ZodRealError);
 var decodeAsync2 = /* @__PURE__ */ _decodeAsync(ZodRealError);
 var safeEncode2 = /* @__PURE__ */ _safeEncode(ZodRealError);
@@ -25933,13 +41463,13 @@ var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
     reg.add(inst, meta3);
     return inst;
   });
-  inst.parse = (data, params) => parse2(inst, data, params, { callee: inst.parse });
+  inst.parse = (data, params) => parse3(inst, data, params, { callee: inst.parse });
   inst.safeParse = (data, params) => safeParse2(inst, data, params);
   inst.parseAsync = async (data, params) => parseAsync2(inst, data, params, { callee: inst.parseAsync });
   inst.safeParseAsync = async (data, params) => safeParseAsync2(inst, data, params);
   inst.spa = inst.safeParseAsync;
   inst.encode = (data, params) => encode2(inst, data, params);
-  inst.decode = (data, params) => decode2(inst, data, params);
+  inst.decode = (data, params) => decode3(inst, data, params);
   inst.encodeAsync = async (data, params) => encodeAsync2(inst, data, params);
   inst.decodeAsync = async (data, params) => decodeAsync2(inst, data, params);
   inst.safeEncode = (data, params) => safeEncode2(inst, data, params);
@@ -26673,7 +42203,7 @@ var ZodFile = /* @__PURE__ */ $constructor("ZodFile", (inst, def) => {
   inst._zod.processJSONSchema = (ctx, json2, params) => fileProcessor(inst, ctx, json2, params);
   inst.min = (size, params) => inst.check(_minSize(size, params));
   inst.max = (size, params) => inst.check(_maxSize(size, params));
-  inst.mime = (types2, params) => inst.check(_mime(Array.isArray(types2) ? types2 : [types2], params));
+  inst.mime = (types5, params) => inst.check(_mime(Array.isArray(types5) ? types5 : [types5], params));
 });
 function file(params) {
   return _file(ZodFile, params);
@@ -26934,7 +42464,7 @@ function check(fn) {
   ch._zod.check = fn;
   return ch;
 }
-function custom(fn, _params) {
+function custom2(fn, _params) {
   return _custom(ZodCustom, fn ?? (() => true), _params);
 }
 function refine(fn, _params = {}) {
@@ -27102,13 +42632,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path5 = ref.slice(1).split("/").filter(Boolean);
-  if (path5.length === 0) {
+  const path6 = ref.slice(1).split("/").filter(Boolean);
+  if (path6.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path5[0] === defsKey) {
-    const key = path5[1];
+  if (path6[0] === defsKey) {
+    const key = path6[1];
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -27415,12 +42945,12 @@ function convertSchema(schema, ctx) {
   let baseSchema = convertBaseSchema(schema, ctx);
   const hasExplicitType = schema.type || schema.enum !== void 0 || schema.const !== void 0;
   if (schema.anyOf && Array.isArray(schema.anyOf)) {
-    const options = schema.anyOf.map((s) => convertSchema(s, ctx));
+    const options = schema.anyOf.map((s2) => convertSchema(s2, ctx));
     const anyOfUnion = z.union(options);
     baseSchema = hasExplicitType ? z.intersection(baseSchema, anyOfUnion) : anyOfUnion;
   }
   if (schema.oneOf && Array.isArray(schema.oneOf)) {
-    const options = schema.oneOf.map((s) => convertSchema(s, ctx));
+    const options = schema.oneOf.map((s2) => convertSchema(s2, ctx));
     const oneOfUnion = z.xor(options);
     baseSchema = hasExplicitType ? z.intersection(baseSchema, oneOfUnion) : oneOfUnion;
   }
@@ -27584,7 +43114,7 @@ function enrichTask(row) {
 }
 function parseMultiParam(val) {
   if (!val) return [];
-  return val.split(",").map((s) => s.trim()).filter(Boolean);
+  return val.split(",").map((s2) => s2.trim()).filter(Boolean);
 }
 function createTaskRoutes(authenticateToken) {
   const router = Router23();
@@ -28639,7 +44169,7 @@ function createTaskReportRoutes(authenticateToken) {
 }
 
 // server/middleware/security.ts
-import crypto3 from "crypto";
+import crypto7 from "crypto";
 function securityHeaders(req, res, next) {
   const isProduction = process.env.NODE_ENV === "production";
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -28702,8 +44232,8 @@ function verifyWebhookSignature(platform) {
         return res.status(401).json({ error: "Missing webhook signature" });
       }
       const body = rawBody || Buffer.from(JSON.stringify(req.body));
-      const expectedSignature = "sha256=" + crypto3.createHmac("sha256", appSecret).update(body).digest("hex");
-      if (signature.length !== expectedSignature.length || !crypto3.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+      const expectedSignature = "sha256=" + crypto7.createHmac("sha256", appSecret).update(body).digest("hex");
+      if (signature.length !== expectedSignature.length || !crypto7.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
         return res.status(403).json({ error: "Invalid webhook signature" });
       }
     }
@@ -28721,8 +44251,8 @@ function verifyWebhookSignature(platform) {
         return res.status(401).json({ error: "Missing webhook signature" });
       }
       const body = rawBody || Buffer.from(JSON.stringify(req.body));
-      const mac3 = crypto3.createHmac("sha256", oaSecret).update(body).digest("hex");
-      if (mac3.length !== signature.length || !crypto3.timingSafeEqual(Buffer.from(mac3), Buffer.from(signature))) {
+      const mac3 = crypto7.createHmac("sha256", oaSecret).update(body).digest("hex");
+      if (mac3.length !== signature.length || !crypto7.timingSafeEqual(Buffer.from(mac3), Buffer.from(signature))) {
         return res.status(403).json({ error: "Invalid webhook signature" });
       }
     }
@@ -28750,33 +44280,33 @@ function preventParamPollution(req, res, next) {
 // server/middleware/errorHandler.ts
 init_logger();
 var AppError = class _AppError extends Error {
-  constructor(message, statusCode, isOperational = true) {
-    super(message);
+  constructor(message2, statusCode, isOperational = true) {
+    super(message2);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
     Object.setPrototypeOf(this, _AppError.prototype);
   }
 };
 var ValidationError = class extends AppError {
-  constructor(message, details = []) {
-    super(message, 400);
+  constructor(message2, details = []) {
+    super(message2, 400);
     this.details = details;
   }
 };
-function errorHandler(err, req, res, _next) {
-  if (err instanceof AppError) {
-    logger.warn(`[${req.method}] ${req.path} - ${err.statusCode}: ${err.message}`);
-    const response = { error: err.message };
-    if (err instanceof ValidationError && err.details.length > 0) {
-      response.details = err.details;
+function errorHandler(err4, req, res, _next) {
+  if (err4 instanceof AppError) {
+    logger.warn(`[${req.method}] ${req.path} - ${err4.statusCode}: ${err4.message}`);
+    const response = { error: err4.message };
+    if (err4 instanceof ValidationError && err4.details.length > 0) {
+      response.details = err4.details;
     }
-    return res.status(err.statusCode).json(response);
+    return res.status(err4.statusCode).json(response);
   }
-  logger.error(`[${req.method}] ${req.path} - Unhandled error:`, err);
+  logger.error(`[${req.method}] ${req.path} - Unhandled error:`, err4);
   const isDev = process.env.NODE_ENV !== "production";
   res.status(500).json({
     error: "Internal server error",
-    ...isDev && { message: err.message, stack: err.stack }
+    ...isDev && { message: err4.message, stack: err4.stack }
   });
 }
 
@@ -28801,33 +44331,30 @@ setInterval(() => {
     cleanupStore(store);
   }
 }, 6e4);
-var redisClient = null;
-async function getRedisClient() {
-  if (!process.env.REDIS_URL) return null;
-  if (redisClient) return redisClient;
+var upstashClient = null;
+async function getUpstashClient() {
+  const url2 = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url2 || !token) return null;
+  if (upstashClient) return upstashClient;
   try {
-    const { default: Redis } = await import("ioredis");
-    redisClient = new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: 1,
-      enableOfflineQueue: false,
-      lazyConnect: true
-    });
-    await redisClient.connect();
-    return redisClient;
-  } catch {
-    redisClient = null;
+    const { Redis: Redis3 } = await Promise.resolve().then(() => (init_nodejs(), nodejs_exports));
+    upstashClient = new Redis3({ url: url2, token });
+    return upstashClient;
+  } catch (e) {
+    upstashClient = null;
     return null;
   }
 }
-async function redisIncr(redis, key, windowSecs) {
-  const count = await redis.incr(key);
+async function upstashIncr(client, key, windowSecs) {
+  const count = await client.incr(key);
   if (count === 1) {
-    await redis.expire(key, windowSecs);
+    await client.expire(key, windowSecs);
   }
   return count;
 }
 function rateLimit(options) {
-  const { name, windowMs, maxRequests, message } = options;
+  const { name, windowMs, maxRequests, message: message2 } = options;
   const windowSecs = Math.ceil(windowMs / 1e3);
   const keyFn = options.keyFn || ((req) => {
     const user = req.user;
@@ -28837,11 +44364,11 @@ function rateLimit(options) {
     const key = keyFn(req);
     let count;
     let resetAt;
-    const redis = await getRedisClient();
+    const redis = await getUpstashClient();
     if (redis) {
       const redisKey = `rl:${name}:${key}`;
       try {
-        count = await redisIncr(redis, redisKey, windowSecs);
+        count = await upstashIncr(redis, redisKey, windowSecs);
         const ttl = await redis.ttl(redisKey);
         resetAt = Date.now() + (ttl > 0 ? ttl * 1e3 : windowMs);
       } catch {
@@ -28875,7 +44402,7 @@ function rateLimit(options) {
       const retryAfter = Math.ceil((resetAt - Date.now()) / 1e3);
       res.setHeader("Retry-After", retryAfter);
       return res.status(429).json({
-        error: message || "Too many requests. Please try again later.",
+        error: message2 || "Too many requests. Please try again later.",
         retryAfter
       });
     }
@@ -33016,8 +48543,8 @@ async function lookupIp(ip) {
     };
     geoCache.set(ip, { data: geo, ts: Date.now() });
     return geo;
-  } catch (err) {
-    logger.warn(`[geoService] Failed to lookup IP ${ip}: ${err.message}`);
+  } catch (err4) {
+    logger.warn(`[geoService] Failed to lookup IP ${ip}: ${err4.message}`);
     geoCache.set(ip, { data: null, ts: Date.now() });
     return null;
   }
@@ -33123,8 +48650,8 @@ async function startServer() {
     if (!process.env.ALLOWED_ORIGINS) {
       logger.warn("ALLOWED_ORIGINS not set \u2014 CORS will block all cross-origin requests in production. Set it to your deployment domain (e.g. https://yourdomain.replit.app).");
     }
-    if (!process.env.REDIS_URL) {
-      logger.warn("REDIS_URL not set \u2014 rate limiting uses in-memory store. Not safe for multi-instance deployments. Set REDIS_URL for production scale-out.");
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      logger.warn("UPSTASH_REDIS_REST_URL/TOKEN not set \u2014 rate limiting uses in-memory store. Not safe for multi-instance deployments.");
     }
     if (!process.env.GEMINI_API_KEY && !process.env.API_KEY) {
       logger.warn("GEMINI_API_KEY not set \u2014 all AI features (chat, valuation, lead scoring) will be unavailable.");
@@ -33154,8 +48681,8 @@ async function startServer() {
   const authenticateToken = (req, res, next) => {
     const token = req.cookies.token;
     if (!token) return res.status(401).json({ error: "Unauthorized" });
-    jwt2.verify(token, JWT_SECRET, (err, user) => {
-      if (err) return res.status(403).json({ error: "Forbidden" });
+    jwt2.verify(token, JWT_SECRET, (err4, user) => {
+      if (err4) return res.status(403).json({ error: "Forbidden" });
       req.user = user;
       if (user?.tenantId) req.tenantId = user.tenantId;
       next();
@@ -33227,10 +48754,10 @@ async function startServer() {
           writeAuditLog(tenantId, "system", "LOGIN_FAILED", "auth", void 0, { email: email3, reason: "missing_sso_secret" }, req.ip);
           return res.status(401).json({ error: "Missing X-SSO-Secret header" });
         }
-        const { timingSafeEqual: timingSafeEqual2, createHash: createHash2 } = await import("crypto");
+        const { timingSafeEqual: timingSafeEqual3, createHash: createHash2 } = await import("crypto");
         const a = createHash2("sha256").update(provided).digest();
         const b = createHash2("sha256").update(ssoSecret).digest();
-        if (!timingSafeEqual2(a, b)) {
+        if (!timingSafeEqual3(a, b)) {
           writeAuditLog(tenantId, "system", "LOGIN_FAILED", "auth", void 0, { email: email3, reason: "invalid_sso_secret" }, req.ip);
           return res.status(401).json({ error: "Invalid SSO secret" });
         }
@@ -33273,9 +48800,9 @@ async function startServer() {
         return r.rows[0]?.cnt ?? 0;
       });
       const isFirstUser = existingCount === 0;
-      const crypto4 = await import("crypto");
-      const rawToken = crypto4.randomBytes(32).toString("hex");
-      const tokenHash = crypto4.createHash("sha256").update(rawToken).digest("hex");
+      const crypto8 = await import("crypto");
+      const rawToken = crypto8.randomBytes(32).toString("hex");
+      const tokenHash = crypto8.createHash("sha256").update(rawToken).digest("hex");
       const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1e3);
       const dbUser = await userRepository.create(tenantId, {
         name: name || email3.split("@")[0],
@@ -33288,11 +48815,12 @@ async function startServer() {
         emailVerificationToken: tokenHash,
         emailVerificationExpires: tokenExpires
       });
-      const baseUrl2 = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `${req.protocol}://${req.get("host")}`;
+      const replitDomain = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
+      const baseUrl2 = process.env.APP_URL || (replitDomain ? `https://${replitDomain}` : null) || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null) || `${req.protocol}://${req.get("host")}`;
       const verifyUrl = `${baseUrl2}/#/verify-email/${rawToken}`;
-      const verifyResult = await emailService.sendVerificationEmail(tenantId, email3, dbUser.name, verifyUrl).catch((err) => {
-        logger.error(`Failed to send verification email to ${email3}: ${err.message}`);
-        return { success: false, status: "failed", error: err.message };
+      const verifyResult = await emailService.sendVerificationEmail(tenantId, email3, dbUser.name, verifyUrl).catch((err4) => {
+        logger.error(`Failed to send verification email to ${email3}: ${err4.message}`);
+        return { success: false, status: "failed", error: err4.message };
       });
       writeAuditLog(tenantId, dbUser.id, "REGISTER", "auth", dbUser.id, { email: email3, emailSent: verifyResult.success }, req.ip);
       const isDevMode = !isProduction && verifyResult.status === "queued_no_smtp";
@@ -33312,8 +48840,8 @@ async function startServer() {
     try {
       const rawToken = req.query.token?.trim();
       if (!rawToken) return res.status(400).json({ error: "Verification token is required" });
-      const crypto4 = await import("crypto");
-      const tokenHash = crypto4.createHash("sha256").update(rawToken).digest("hex");
+      const crypto8 = await import("crypto");
+      const tokenHash = crypto8.createHash("sha256").update(rawToken).digest("hex");
       const tenantId = DEFAULT_TENANT_ID;
       const user = await withTenantContext(tenantId, async (client) => {
         const r = await client.query(
@@ -33359,9 +48887,9 @@ async function startServer() {
         await uniformDelay();
         return res.json({ message: "If a pending account exists, a new verification email has been sent." });
       }
-      const crypto4 = await import("crypto");
-      const rawToken = crypto4.randomBytes(32).toString("hex");
-      const tokenHash = crypto4.createHash("sha256").update(rawToken).digest("hex");
+      const crypto8 = await import("crypto");
+      const rawToken = crypto8.randomBytes(32).toString("hex");
+      const tokenHash = crypto8.createHash("sha256").update(rawToken).digest("hex");
       const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1e3);
       await withTenantContext(tenantId, async (client) => {
         await client.query(
@@ -33369,7 +48897,8 @@ async function startServer() {
           [tokenHash, tokenExpires, user.id]
         );
       });
-      const baseUrl2 = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `${req.protocol}://${req.get("host")}`;
+      const replitDomain2 = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
+      const baseUrl2 = process.env.APP_URL || (replitDomain2 ? `https://${replitDomain2}` : null) || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null) || `${req.protocol}://${req.get("host")}`;
       const verifyUrl = `${baseUrl2}/#/verify-email/${rawToken}`;
       const result = await emailService.sendVerificationEmail(tenantId, email3, user.name, verifyUrl).catch(
         () => ({ success: false, status: "failed" })
@@ -33396,9 +48925,9 @@ async function startServer() {
         await uniformDelay();
         return res.json({ message: "If an account exists, a reset link has been sent." });
       }
-      const crypto4 = await import("crypto");
-      const rawToken = crypto4.randomBytes(32).toString("hex");
-      const tokenHash = crypto4.createHash("sha256").update(rawToken).digest("hex");
+      const crypto8 = await import("crypto");
+      const rawToken = crypto8.randomBytes(32).toString("hex");
+      const tokenHash = crypto8.createHash("sha256").update(rawToken).digest("hex");
       const expiresAt = new Date(Date.now() + 60 * 60 * 1e3);
       await pool.query(
         `UPDATE password_reset_tokens SET used = TRUE WHERE user_id = $1 AND used = FALSE`,
@@ -33409,7 +48938,8 @@ async function startServer() {
          VALUES ($1, $2, $3)`,
         [user.id, tokenHash, expiresAt]
       );
-      const baseUrl2 = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `${req.protocol}://${req.get("host")}`;
+      const replitDomain3 = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
+      const baseUrl2 = process.env.APP_URL || (replitDomain3 ? `https://${replitDomain3}` : null) || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null) || `${req.protocol}://${req.get("host")}`;
       const resetUrl = `${baseUrl2}/#/reset-password/${rawToken}`;
       const emailResult = await emailService.sendPasswordResetEmail(tenantId, email3, resetUrl, user.name);
       if (emailResult.status === "failed") {
@@ -33434,8 +48964,8 @@ async function startServer() {
       const { token, newPassword } = req.body;
       if (!token || !newPassword) return res.status(400).json({ error: "Token and new password are required" });
       if (newPassword.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
-      const crypto4 = await import("crypto");
-      const tokenHash = crypto4.createHash("sha256").update(token).digest("hex");
+      const crypto8 = await import("crypto");
+      const tokenHash = crypto8.createHash("sha256").update(token).digest("hex");
       const result = await pool.query(
         `UPDATE password_reset_tokens SET used = TRUE
          WHERE token = $1 AND used = FALSE AND expires_at > NOW()
@@ -33670,8 +49200,8 @@ async function startServer() {
         socket.data.authUser = null;
         return next();
       }
-      jwt2.verify(token, JWT_SECRET, (err, decoded) => {
-        socket.data.authUser = err ? null : decoded;
+      jwt2.verify(token, JWT_SECRET, (err4, decoded) => {
+        socket.data.authUser = err4 ? null : decoded;
         next();
       });
     } catch (e) {
@@ -33722,22 +49252,7 @@ async function startServer() {
   });
   const webhookWorker = setupWebhookWorker(io);
   marketDataService.start(io);
-  if (process.env.REDIS_URL) {
-    try {
-      const redisUrl2 = process.env.REDIS_URL;
-      const pubClient = createClient({ url: redisUrl2 });
-      const subClient = pubClient.duplicate();
-      pubClient.on("error", (err) => console.warn("Redis pubClient error:", err.message));
-      subClient.on("error", (err) => console.warn("Redis subClient error:", err.message));
-      await Promise.all([pubClient.connect(), subClient.connect()]);
-      io.adapter(createAdapter(pubClient, subClient));
-      console.log("Redis adapter connected successfully for Socket.io");
-    } catch (err) {
-      console.warn("Redis connection failed, falling back to in-memory adapter:", err.message);
-    }
-  } else {
-    console.log("No REDIS_URL provided, using in-memory adapter for Socket.io");
-  }
+  console.log("Socket.io using in-memory adapter (Upstash REST \u2014 no TCP pub/sub needed for single-instance).");
   if (process.env.DATABASE_URL) {
     const MAX_MIGRATION_ATTEMPTS = 3;
     let migrationOk = false;
@@ -33746,15 +49261,15 @@ async function startServer() {
         await runPendingMigrations(pool);
         migrationOk = true;
         break;
-      } catch (err) {
-        const isTransient = err?.message?.includes("timeout") || err?.message?.includes("ECONNREFUSED") || err?.message?.includes("terminated unexpectedly");
+      } catch (err4) {
+        const isTransient = err4?.message?.includes("timeout") || err4?.message?.includes("ECONNREFUSED") || err4?.message?.includes("terminated unexpectedly");
         if (attempt < MAX_MIGRATION_ATTEMPTS && isTransient) {
-          logger.warn(`[migrations] Connection attempt ${attempt}/${MAX_MIGRATION_ATTEMPTS} failed \u2014 retrying in 5s\u2026 (${err.message})`);
+          logger.warn(`[migrations] Connection attempt ${attempt}/${MAX_MIGRATION_ATTEMPTS} failed \u2014 retrying in 5s\u2026 (${err4.message})`);
           await new Promise((r) => setTimeout(r, 5e3));
         } else if (isTransient) {
-          logger.warn(`[migrations] DB unreachable after ${MAX_MIGRATION_ATTEMPTS} attempts \u2014 server starting without migrations. Will retry on first API request. (${err.message})`);
+          logger.warn(`[migrations] DB unreachable after ${MAX_MIGRATION_ATTEMPTS} attempts \u2014 server starting without migrations. Will retry on first API request. (${err4.message})`);
         } else {
-          throw err;
+          throw err4;
         }
       }
     }
@@ -33907,11 +49422,11 @@ async function startServer() {
   });
   app.post("/api/public/ai/livechat", publicLeadRateLimit, aiRateLimit, async (req, res) => {
     try {
-      const { leadId, message, lang } = req.body;
-      if (!leadId || !String(message || "").trim()) {
+      const { leadId, message: message2, lang } = req.body;
+      if (!leadId || !String(message2 || "").trim()) {
         return res.status(400).json({ error: "leadId v\xE0 message l\xE0 b\u1EAFt bu\u1ED9c" });
       }
-      const msgContent = String(message).trim().slice(0, 2e3);
+      const msgContent = String(message2).trim().slice(0, 2e3);
       const lead = await leadRepository.findById(PUBLIC_TENANT, leadId);
       if (!lead) return res.status(404).json({ error: "Lead not found" });
       const history = await interactionRepository.findByLead(PUBLIC_TENANT, leadId);
@@ -33961,8 +49476,8 @@ async function startServer() {
   });
   app.post("/api/public/contact", publicLeadRateLimit, async (req, res) => {
     try {
-      const { name, email: email3, subject, message } = req.body;
-      if (!name?.trim() || !email3?.trim() || !message?.trim()) {
+      const { name, email: email3, subject, message: message2 } = req.body;
+      if (!name?.trim() || !email3?.trim() || !message2?.trim()) {
         return res.status(400).json({ error: "Thi\u1EBFu th\xF4ng tin b\u1EAFt bu\u1ED9c" });
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -33980,7 +49495,7 @@ async function startServer() {
           </table>
           <div style="margin-top:16px;padding:16px;background:#f8f9fa;border-radius:8px;border-left:4px solid #4f46e5">
             <strong style="color:#555">N\u1ED9i dung:</strong>
-            <p style="margin-top:8px;white-space:pre-wrap">${message}</p>
+            <p style="margin-top:8px;white-space:pre-wrap">${message2}</p>
           </div>
           <p style="margin-top:24px;color:#888;font-size:12px">\u2014 SGS Land CRM \xB7 info@sgsland.vn</p>
         </div>`;
@@ -33993,6 +49508,70 @@ async function startServer() {
     } catch (error48) {
       console.error("[Contact] Failed to send contact email:", error48);
       res.status(500).json({ error: "Kh\xF4ng th\u1EC3 g\u1EEDi tin nh\u1EAFn. Vui l\xF2ng th\u1EED l\u1EA1i." });
+    }
+  });
+  app.get("/api/seo-overrides", apiRateLimit, async (_req, res) => {
+    try {
+      const result = await pool.query(
+        "SELECT route_key, title, description, og_image, updated_at FROM seo_overrides ORDER BY route_key"
+      );
+      const map2 = {};
+      for (const row of result.rows) {
+        map2[row.route_key] = {
+          routeKey: row.route_key,
+          title: row.title,
+          description: row.description,
+          ogImage: row.og_image,
+          updatedAt: row.updated_at
+        };
+      }
+      res.json(map2);
+    } catch (err4) {
+      console.error("[SEO] GET overrides error:", err4);
+      res.status(500).json({ error: "Failed to fetch SEO overrides" });
+    }
+  });
+  app.post("/api/seo-overrides/:key", apiRateLimit, authenticateToken, async (req, res) => {
+    const user = req.user;
+    if (!user || user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      return res.status(403).json({ error: "Ch\u1EC9 ADMIN m\u1EDBi c\xF3 th\u1EC3 c\u1EADp nh\u1EADt SEO" });
+    }
+    const routeKey = req.params.key;
+    const { title, description, ogImage } = req.body;
+    if (typeof title !== "string" || typeof description !== "string") {
+      return res.status(400).json({ error: "title v\xE0 description l\xE0 b\u1EAFt bu\u1ED9c" });
+    }
+    try {
+      const result = await pool.query(
+        `INSERT INTO seo_overrides (route_key, title, description, og_image, updated_at, updated_by)
+         VALUES ($1, $2, $3, $4, NOW(), $5)
+         ON CONFLICT (route_key) DO UPDATE
+           SET title = EXCLUDED.title,
+               description = EXCLUDED.description,
+               og_image = EXCLUDED.og_image,
+               updated_at = NOW(),
+               updated_by = EXCLUDED.updated_by
+         RETURNING route_key, title, description, og_image, updated_at`,
+        [routeKey, title, description, ogImage || null, user.id]
+      );
+      const row = result.rows[0];
+      res.json({ routeKey: row.route_key, title: row.title, description: row.description, ogImage: row.og_image, updatedAt: row.updated_at });
+    } catch (err4) {
+      console.error("[SEO] POST override error:", err4);
+      res.status(500).json({ error: "Failed to save SEO override" });
+    }
+  });
+  app.delete("/api/seo-overrides/:key", apiRateLimit, authenticateToken, async (req, res) => {
+    const user = req.user;
+    if (!user || user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      return res.status(403).json({ error: "Ch\u1EC9 ADMIN m\u1EDBi c\xF3 th\u1EC3 x\xF3a SEO override" });
+    }
+    try {
+      await pool.query("DELETE FROM seo_overrides WHERE route_key = $1", [req.params.key]);
+      res.json({ success: true });
+    } catch (err4) {
+      console.error("[SEO] DELETE override error:", err4);
+      res.status(500).json({ error: "Failed to delete SEO override" });
     }
   });
   app.use("/api/leads", apiRateLimit, createLeadRoutes(authenticateToken));
@@ -34038,9 +49617,9 @@ async function startServer() {
       const components = {
         database: { status: health.checks?.database ? "healthy" : "down" },
         aiService: { status: health.checks?.aiService ? "healthy" : "unconfigured" },
-        redis: { status: process.env.REDIS_URL ? "healthy" : "in-memory-fallback" },
-        websocket: { status: "healthy", adapter: process.env.REDIS_URL ? "redis" : "in-memory" },
-        queue: { status: "healthy", type: process.env.REDIS_URL ? "bullmq" : "in-memory" }
+        redis: { status: process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN ? "upstash-rest" : "in-memory-fallback" },
+        websocket: { status: "healthy", adapter: "in-memory" },
+        queue: { status: "healthy", type: isQStashEnabled() ? "qstash" : "in-memory" }
       };
       try {
         const dbCheck = await pool.query("SELECT 1");
@@ -34055,13 +49634,7 @@ async function startServer() {
         migrationVersion = migResult.rows[0]?.version ?? null;
       } catch {
       }
-      let queueDepth = null;
-      try {
-        if (webhookQueue?.getWaitingCount) {
-          queueDepth = await webhookQueue.getWaitingCount();
-        }
-      } catch {
-      }
+      const queueDepth = null;
       const mem = process.memoryUsage();
       const memoryUsage = {
         rss_mb: Math.round(mem.rss / 1024 / 1024),
@@ -34084,12 +49657,12 @@ async function startServer() {
   app.get("/api/system/metrics", authenticateToken, async (_req, res) => {
     try {
       const now = Date.now();
-      const window60s = requestSamples.filter((s) => s.ts >= now - 6e4);
-      const window5s = requestSamples.filter((s) => s.ts >= now - 5e3);
+      const window60s = requestSamples.filter((s2) => s2.ts >= now - 6e4);
+      const window5s = requestSamples.filter((s2) => s2.ts >= now - 5e3);
       const totalRequests60s = window60s.length;
       const rps = Math.round(window5s.length / 5 * 10) / 10;
-      const avgLatencyMs = window60s.length > 0 ? Math.round(window60s.reduce((sum, s) => sum + s.durationMs, 0) / window60s.length) : 0;
-      const errorCount = window60s.filter((s) => s.status >= 500).length;
+      const avgLatencyMs = window60s.length > 0 ? Math.round(window60s.reduce((sum, s2) => sum + s2.durationMs, 0) / window60s.length) : 0;
+      const errorCount = window60s.filter((s2) => s2.status >= 500).length;
       let dbLatencyMs = 0;
       try {
         const pingStart = Date.now();
@@ -34129,7 +49702,7 @@ async function startServer() {
   });
   app.post("/api/webhooks/zalo", webhookRateLimit, verifyWebhookSignature("zalo"), async (req, res) => {
     try {
-      const { sender, message, timestamp, event_name } = req.body;
+      const { sender, message: message2, timestamp, event_name } = req.body;
       console.log(`[Zalo Webhook] Received event: ${event_name} from ${sender?.id}`);
       if (event_name === "user_send_text") {
         await webhookQueue.add("zalo-event", { platform: "zalo", payload: req.body });
@@ -34155,7 +49728,7 @@ async function startServer() {
   });
   app.post("/api/webhooks/email", webhookRateLimit, async (req, res) => {
     try {
-      const { createHmac, timingSafeEqual: timingSafeEqual2 } = await import("crypto");
+      const { createHmac: createHmac2, timingSafeEqual: timingSafeEqual3 } = await import("crypto");
       const emailIsProduction = process.env.NODE_ENV === "production";
       const rawBody = req.rawBody || Buffer.from(JSON.stringify(req.body));
       const mailgunKey = process.env.EMAIL_MAILGUN_SIGNING_KEY;
@@ -34173,9 +49746,9 @@ async function startServer() {
         if (!verified && mailgunKey) {
           const sig = req.headers["x-mailgun-signature-256"];
           if (sig) {
-            const expected = createHmac("sha256", mailgunKey).update(rawBody).digest("hex");
+            const expected = createHmac2("sha256", mailgunKey).update(rawBody).digest("hex");
             try {
-              verified = sig.length === expected.length && timingSafeEqual2(Buffer.from(sig), Buffer.from(expected));
+              verified = sig.length === expected.length && timingSafeEqual3(Buffer.from(sig), Buffer.from(expected));
             } catch {
               verified = false;
             }
@@ -34186,10 +49759,10 @@ async function startServer() {
           if (sig) {
             const ts = req.headers["x-twilio-email-event-webhook-timestamp"];
             const payload = ts ? ts + rawBody.toString() : rawBody.toString();
-            const expected = createHmac("sha256", sendgridKey).update(payload).digest("base64");
+            const expected = createHmac2("sha256", sendgridKey).update(payload).digest("base64");
             const incoming = Buffer.from(sig, "base64").toString("base64");
             try {
-              verified = incoming.length === expected.length && timingSafeEqual2(Buffer.from(incoming), Buffer.from(expected));
+              verified = incoming.length === expected.length && timingSafeEqual3(Buffer.from(incoming), Buffer.from(expected));
             } catch {
               verified = false;
             }
@@ -34199,7 +49772,7 @@ async function startServer() {
           const sig = req.headers["x-postmark-signature"] || req.headers["x-postmark-server-token"];
           if (sig) {
             try {
-              verified = sig.length === postmarkToken.length && timingSafeEqual2(Buffer.from(sig), Buffer.from(postmarkToken));
+              verified = sig.length === postmarkToken.length && timingSafeEqual3(Buffer.from(sig), Buffer.from(postmarkToken));
             } catch {
               verified = false;
             }
@@ -34209,7 +49782,7 @@ async function startServer() {
           const incoming = req.headers["x-webhook-token"] || req.headers["x-mail-token"] || req.query.token;
           if (incoming) {
             try {
-              verified = incoming.length === genericToken.length && timingSafeEqual2(Buffer.from(incoming), Buffer.from(genericToken));
+              verified = incoming.length === genericToken.length && timingSafeEqual3(Buffer.from(incoming), Buffer.from(genericToken));
             } catch {
               verified = false;
             }
@@ -34316,6 +49889,40 @@ async function startServer() {
       res.status(500).json({ error: "Failed to fetch Brevo account info" });
     }
   });
+  app.post("/api/qstash/process", express.raw({ type: "*/*" }), async (req, res) => {
+    try {
+      if (!isQStashEnabled()) {
+        logger.warn("[QStash] Nh\u1EADn \u0111\u01B0\u1EE3c callback nh\u01B0ng QSTASH kh\xF4ng \u0111\u01B0\u1EE3c c\u1EA5u h\xECnh \u2014 b\u1ECF qua");
+        return res.status(503).json({ error: "QStash kh\xF4ng \u0111\u01B0\u1EE3c c\u1EA5u h\xECnh" });
+      }
+      const { Receiver: Receiver2 } = await Promise.resolve().then(() => (init_qstash(), qstash_exports));
+      const receiver = new Receiver2({
+        currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY,
+        nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY || process.env.QSTASH_CURRENT_SIGNING_KEY
+      });
+      const rawBody = req.body instanceof Buffer ? req.body.toString("utf8") : String(req.body);
+      const signature = req.headers["upstash-signature"];
+      try {
+        await receiver.verify({ signature, body: rawBody });
+      } catch (err4) {
+        logger.warn(`[QStash] X\xE1c minh ch\u1EEF k\xFD th\u1EA5t b\u1EA1i: ${err4.message}`);
+        return res.status(401).json({ error: "Ch\u1EEF k\xFD kh\xF4ng h\u1EE3p l\u1EC7" });
+      }
+      let job;
+      try {
+        job = JSON.parse(rawBody);
+      } catch {
+        logger.warn("[QStash] Body kh\xF4ng ph\u1EA3i JSON h\u1EE3p l\u1EC7");
+        return res.status(400).json({ error: "Body kh\xF4ng h\u1EE3p l\u1EC7" });
+      }
+      logger.info(`[QStash] Nh\u1EADn job "${job.name}" (${job.id})`);
+      await processWebhookJob(io, job);
+      return res.json({ ok: true, jobId: job.id });
+    } catch (err4) {
+      logger.error("[QStash] L\u1ED7i x\u1EED l\xFD job:", err4);
+      return res.status(500).json({ error: err4.message });
+    }
+  });
   app.get("/api/webhooks/facebook", (req, res) => {
     const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
     if (!VERIFY_TOKEN) return res.sendStatus(503);
@@ -34394,7 +50001,7 @@ async function startServer() {
       socket.data.user = user;
       socket.data.viewingLead = leadId;
       const sockets = await io.in(room).fetchSockets();
-      const users = sockets.map((s) => s.data.user).filter(Boolean);
+      const users = sockets.map((s2) => s2.data.user).filter(Boolean);
       const uniqueUsers = Array.from(new Map(users.map((u) => [u.id, u])).values());
       io.to(room).emit("active_viewers", uniqueUsers);
     }));
@@ -34404,7 +50011,7 @@ async function startServer() {
       socket.leave(room);
       socket.data.viewingLead = null;
       const sockets = await io.in(room).fetchSockets();
-      const users = sockets.map((s) => s.data.user).filter(Boolean);
+      const users = sockets.map((s2) => s2.data.user).filter(Boolean);
       const uniqueUsers = Array.from(new Map(users.map((u) => [u.id, u])).values());
       io.to(room).emit("active_viewers", uniqueUsers);
     }));
@@ -34428,8 +50035,8 @@ async function startServer() {
           data.senderName = user?.name;
         }
         socket.to(data.room).emit("receive_message", data);
-      } catch (err) {
-        logger.error("Failed to persist socket message to DB", err);
+      } catch (err4) {
+        logger.error("Failed to persist socket message to DB", err4);
         socket.emit("send_message_error", { error: "Failed to send message. Please try again." });
       }
     }));
@@ -34448,7 +50055,7 @@ async function startServer() {
       if (socket.data.viewingLead) {
         const room = `lead_view_${socket.data.viewingLead}`;
         const sockets = await io.in(room).fetchSockets();
-        const users = sockets.map((s) => s.data.user).filter(Boolean);
+        const users = sockets.map((s2) => s2.data.user).filter(Boolean);
         const uniqueUsers = Array.from(new Map(users.map((u) => [u.id, u])).values());
         io.to(room).emit("active_viewers", uniqueUsers);
       }
@@ -34464,9 +50071,58 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
+    const { getBaseHtml: getBaseHtml2, injectMeta: injectMeta2, buildListingMeta: buildListingMeta2, buildArticleMeta: buildArticleMeta2, buildStaticPageMeta: buildStaticPageMeta2 } = await Promise.resolve().then(() => (init_metaInjector(), metaInjector_exports));
+    try {
+      getBaseHtml2();
+    } catch {
+    }
+    const sendMeta = (res, meta3) => {
+      try {
+        const html = injectMeta2(getBaseHtml2(), meta3);
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+        res.send(html);
+      } catch {
+        res.sendFile(path5.join(process.cwd(), "dist", "index.html"));
+      }
+    };
+    app.get("/listings/:id", async (req, res, next) => {
+      try {
+        const listing = await listingRepository.findById(DEFAULT_TENANT_ID, String(req.params.id));
+        if (!listing) return next();
+        sendMeta(res, buildListingMeta2(listing));
+      } catch {
+        next();
+      }
+    });
+    app.get("/news/:id", async (req, res, next) => {
+      try {
+        const article = await articleRepository.findById(DEFAULT_TENANT_ID, String(req.params.id));
+        if (!article) return next();
+        sendMeta(res, buildArticleMeta2(article));
+      } catch {
+        next();
+      }
+    });
     app.use(express.static("dist"));
-    app.use((_req, res) => {
-      res.sendFile(path4.join(process.cwd(), "dist", "index.html"));
+    app.use(async (req, res) => {
+      try {
+        const routeKey = req.path.replace(/^\//, "").split("/")[0] || "";
+        const result = await pool.query(
+          "SELECT title, description, og_image FROM seo_overrides WHERE route_key = $1",
+          [routeKey]
+        );
+        const row = result.rows[0];
+        const meta3 = buildStaticPageMeta2(
+          row?.title,
+          row?.description,
+          row?.og_image,
+          req.path
+        );
+        sendMeta(res, meta3);
+      } catch {
+        res.sendFile(path5.join(process.cwd(), "dist", "index.html"));
+      }
     });
   }
   app.use(errorHandler);
@@ -34484,12 +50140,12 @@ async function startServer() {
       logger.info("HTTP server closed.");
       try {
         await webhookWorker.close();
-        logger.info("BullMQ worker closed.");
+        logger.info("Webhook worker \u0111\xE3 d\u1EEBng.");
       } catch (e) {
       }
       try {
         await webhookQueue.close();
-        logger.info("BullMQ queue closed.");
+        logger.info("Webhook queue \u0111\xE3 \u0111\xF3ng.");
       } catch (e) {
       }
       try {
@@ -34513,3 +50169,24 @@ async function startServer() {
   process.on("SIGINT", () => shutdown("SIGINT"));
 }
 startServer();
+/*! Bundled license information:
+
+crypto-js/ripemd160.js:
+  (** @preserve
+  	(c) 2012 by Cédric Mesnil. All rights reserved.
+  
+  	Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+  
+  	    - Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+  	    - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+  
+  	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  	*)
+
+crypto-js/mode-ctr-gladman.js:
+  (** @preserve
+   * Counter block mode compatible with  Dr Brian Gladman fileenc.c
+   * derived from CryptoJS.mode.CTR
+   * Jan Hruby jhruby.web@gmail.com
+   *)
+*/
