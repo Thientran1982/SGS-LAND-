@@ -3,12 +3,15 @@ import { Migration } from './runner';
 
 // Creates the initial admin account (info@sgsland.vn) if it does not already exist.
 // Safe to re-run: uses INSERT ... ON CONFLICT DO UPDATE only when role is not already admin.
-// Password hash = 'Lovejolie1' (bcrypt, 10 rounds).
+// Set INITIAL_ADMIN_PASSWORD_HASH env var to override the default seed hash.
+// IMPORTANT: Change the admin password immediately after first login.
 
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 const ADMIN_EMAIL = 'info@sgsland.vn';
 const ADMIN_NAME = 'SGS LAND Admin';
-const PASSWORD_HASH = '$2b$10$M3C28.QLrnfkM1nFWeab0uqfKDUvAtsgEhIWSV35sNRS250cfXYom';
+const PASSWORD_HASH =
+  process.env.INITIAL_ADMIN_PASSWORD_HASH ||
+  '$2b$10$M3C28.QLrnfkM1nFWeab0uqfKDUvAtsgEhIWSV35sNRS250cfXYom';
 
 const migration: Migration = {
   description: 'Seed the initial admin account (info@sgsland.vn) if not present',
