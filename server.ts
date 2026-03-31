@@ -1081,6 +1081,27 @@ async function startServer() {
     }
   });
 
+  // Normalise DB article entity → Article shape expected by the frontend
+  const normalizeArticle = (a: any) => {
+    const textContent = (a.content || '').replace(/<[^>]+>/g, '');
+    const wordCount = textContent.trim().split(/\s+/).filter(Boolean).length;
+    const readMins = Math.max(1, Math.round(wordCount / 200));
+    const publishedAt: Date | null = a.publishedAt ? new Date(a.publishedAt) : null;
+    const dateStr = publishedAt
+      ? publishedAt.toLocaleDateString('vi-VN', { day: '2-digit', month: 'long', year: 'numeric' })
+      : '';
+    return {
+      ...a,
+      image: a.coverImage || a.image || '',
+      date: dateStr,
+      readTime: `${readMins} phút`,
+      featured: a.featured ?? false,
+      tags: Array.isArray(a.tags) ? a.tags : [],
+      images: Array.isArray(a.images) ? a.images : [],
+      videos: Array.isArray(a.videos) ? a.videos : [],
+    };
+  };
+
   app.get('/api/public/articles', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -1089,7 +1110,7 @@ async function startServer() {
       if (req.query.category) filters.category = req.query.category;
       if (req.query.search) filters.search = req.query.search;
       const result = await articleRepository.findArticles(PUBLIC_TENANT, { page, pageSize }, filters);
-      res.json(result);
+      res.json({ ...result, data: (result.data || []).map(normalizeArticle) });
     } catch (error) {
       console.error('Error fetching public articles:', error);
       res.status(500).json({ error: 'Failed to fetch articles' });
@@ -1100,7 +1121,7 @@ async function startServer() {
     try {
       const article = await articleRepository.findById(PUBLIC_TENANT, String(req.params.id));
       if (!article) return res.status(404).json({ error: 'Article not found' }) as any;
-      res.json(article);
+      res.json(normalizeArticle(article));
     } catch (error) {
       console.error('Error fetching public article:', error);
       res.status(500).json({ error: 'Failed to fetch article' });
