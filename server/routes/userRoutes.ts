@@ -5,7 +5,7 @@ import { auditRepository } from '../repositories/auditRepository';
 import { emailService } from '../services/emailService';
 import { withTenantContext } from '../db';
 
-export function createUserRoutes(authenticateToken: any) {
+export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
   const router = Router();
 
   // GET /api/users/members — lightweight list for assignment dropdowns, all internal users
@@ -303,7 +303,7 @@ export function createUserRoutes(authenticateToken: any) {
       const { withTenantContext } = await import('../db');
       await withTenantContext(user.tenantId, async (client) => {
         await client.query(
-          `UPDATE users SET email = $1 WHERE id = $2 AND tenant_id = $3`,
+          `UPDATE users SET email = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
           [newEmail.toLowerCase(), String(req.params.id), user.tenantId]
         );
       });
@@ -317,6 +317,27 @@ export function createUserRoutes(authenticateToken: any) {
         details: `Email changed to: ${newEmail}`,
         ipAddress: req.ip,
       });
+
+      // Refresh the JWT cookie so the session reflects the new email immediately
+      if (user.id === String(req.params.id) && updated && jwtSecret) {
+        const jwt = await import('jsonwebtoken');
+        const JWT_SECRET = jwtSecret;
+        const isProduction = process.env.NODE_ENV === 'production';
+        const jwtPayload = {
+          id: updated.id,
+          email: updated.email,
+          name: updated.name,
+          role: updated.role,
+          tenantId: user.tenantId,
+        };
+        const newToken = jwt.default.sign(jwtPayload, JWT_SECRET, { expiresIn: '24h' });
+        res.cookie('token', newToken, {
+          httpOnly: true,
+          maxAge: 24 * 60 * 60 * 1000,
+          sameSite: isProduction ? 'none' : 'lax',
+          ...(isProduction && { secure: true }),
+        });
+      }
 
       res.json(userRepository.toPublicUser(updated!));
     } catch (error) {

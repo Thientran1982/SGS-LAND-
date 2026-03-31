@@ -1165,7 +1165,7 @@ async function startServer() {
   app.use('/api/proposals', apiRateLimit, createProposalRoutes(authenticateToken, () => broadcastIo));
   app.use('/api/contracts', apiRateLimit, createContractRoutes(authenticateToken));
   app.use('/api/inbox', apiRateLimit, createInteractionRoutes(authenticateToken));
-  app.use('/api/users', apiRateLimit, createUserRoutes(authenticateToken));
+  app.use('/api/users', apiRateLimit, createUserRoutes(authenticateToken, JWT_SECRET));
   app.use('/api/analytics', apiRateLimit, createAnalyticsRoutes(authenticateToken));
   app.use('/api/scoring', apiRateLimit, createScoringRoutes(authenticateToken));
   app.use('/api/routing-rules', apiRateLimit, createRoutingRuleRoutes(authenticateToken));
