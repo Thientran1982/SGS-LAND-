@@ -47,11 +47,11 @@ export const KnowledgeBase: React.FC = () => {
         return () => clearTimeout(handler);
     }, [search]);
 
-    const fetchData = useCallback(async (searchTerm?: string) => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const [data, user] = await Promise.all([
-                db.getDocuments(searchTerm || undefined),
+                db.getDocuments(undefined),
                 db.getCurrentUser(),
             ]);
             setDocs(data || []);
@@ -60,7 +60,11 @@ export const KnowledgeBase: React.FC = () => {
         } finally { setLoading(false); }
     }, []);
 
-    useEffect(() => { fetchData(debouncedSearch || undefined); }, [fetchData, debouncedSearch]);
+    useEffect(() => { fetchData(); }, [fetchData]);
+
+    const displayedDocs = debouncedSearch
+        ? docs.filter(d => normalizeString(d.title || '').includes(normalizeString(debouncedSearch)))
+        : docs;
 
     const canManage = currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD';
 
@@ -268,18 +272,18 @@ export const KnowledgeBase: React.FC = () => {
                     <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
                         {t('knowledge.uploaded_docs')}
                         <span className="px-2 py-0.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] rounded-full text-xs font-bold tabular-nums">
-                            {docs.length}
+                            {displayedDocs.length}
                         </span>
                     </h2>
-                    {debouncedSearch && docs.length > 0 && (
+                    {debouncedSearch && displayedDocs.length > 0 && (
                         <p className="text-xs text-[var(--text-tertiary)]">
-                            {docs.length} kết quả cho "<span className="font-semibold text-[var(--text-secondary)]">{debouncedSearch}</span>"
+                            {displayedDocs.length} kết quả cho "<span className="font-semibold text-[var(--text-secondary)]">{debouncedSearch}</span>"
                         </p>
                     )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {docs.map(doc => (
+                    {displayedDocs.map(doc => (
                         <div key={doc.id} className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group relative flex flex-col h-full">
                             <div className="flex gap-3 sm:gap-4 items-start mb-4">
                                 <div className="shrink-0 p-2 bg-[var(--glass-surface)] rounded-xl">
@@ -333,7 +337,7 @@ export const KnowledgeBase: React.FC = () => {
                     ))}
                 </div>
 
-                {docs.length === 0 && !loading && (
+                {displayedDocs.length === 0 && !loading && (
                     <div className="py-16 text-center bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] border-dashed">
                         <div className="w-14 h-14 bg-[var(--glass-surface)] rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--text-secondary)]">
                             {debouncedSearch ? ICONS.SEARCH : ICONS.DOCS}
