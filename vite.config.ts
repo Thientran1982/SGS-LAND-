@@ -57,7 +57,9 @@ export default defineConfig(({ mode }) => {
         ],
       },
       build: {
-        chunkSizeWarningLimit: 800,
+        // Raised to 1000 — exceljs (~940KB) and jspdf (~390KB) are intentionally
+        // lazy-loaded via dynamic import() and expected to be large separate chunks.
+        chunkSizeWarningLimit: 1000,
         rollupOptions: {
           output: {
             manualChunks: {
