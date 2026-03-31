@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { db } from '../services/dbApi';
@@ -12,7 +12,11 @@ const ICONS = {
     CLOCK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     MONEY: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     ARROW: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>,
-    CHECK: <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+    CHECK: <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
+    CLOSE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+    SEND: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
+    BRIEFCASE: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+    SPIN: <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>,
 };
 
 const JOBS = [
@@ -54,25 +58,187 @@ const JOBS = [
     }
 ];
 
+type FormState = { name: string; email: string; phone: string; message: string };
+type SendStatus = 'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR';
+
+const EMPTY_FORM: FormState = { name: '', email: '', phone: '', message: '' };
+
 export const Careers: React.FC = () => {
     const { t } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [appliedJob, setAppliedJob] = useState<string | null>(null);
+
+    // Modal state
+    const [selectedJob, setSelectedJob] = useState<string | null>(null);
+    const [form, setForm] = useState<FormState>(EMPTY_FORM);
+    const [errors, setErrors] = useState<Partial<FormState>>({});
+    const [sendStatus, setSendStatus] = useState<SendStatus>('IDLE');
 
     useEffect(() => {
         db.getCurrentUser().then(setCurrentUser);
     }, []);
 
+    // Lock body scroll when modal is open
+    useEffect(() => {
+        if (selectedJob) document.body.style.overflow = 'hidden';
+        else document.body.style.overflow = '';
+        return () => { document.body.style.overflow = ''; };
+    }, [selectedJob]);
+
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
 
-    const handleApply = (jobTitle: string) => {
-        setAppliedJob(jobTitle);
-        setTimeout(() => setAppliedJob(null), 5000);
+    const openModal = (jobTitle: string) => {
+        setSelectedJob(jobTitle);
+        setForm(EMPTY_FORM);
+        setErrors({});
+        setSendStatus('IDLE');
     };
+
+    const closeModal = () => {
+        if (sendStatus === 'LOADING') return;
+        setSelectedJob(null);
+    };
+
+    const validate = (): boolean => {
+        const e: Partial<FormState> = {};
+        if (!form.name.trim()) e.name = 'Vui lòng nhập họ và tên';
+        const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+        if (!form.email.trim()) e.email = 'Vui lòng nhập email';
+        else if (!emailOk) e.email = 'Email không hợp lệ';
+        if (!form.message.trim() || form.message.trim().length < 20)
+            e.message = 'Vui lòng viết ít nhất 20 ký tự';
+        setErrors(e);
+        return Object.keys(e).length === 0;
+    };
+
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!validate()) return;
+
+        setSendStatus('LOADING');
+        try {
+            const res = await fetch('/api/public/careers/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...form, jobTitle: selectedJob }),
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Gửi thất bại');
+            }
+            setSendStatus('SUCCESS');
+        } catch {
+            setSendStatus('ERROR');
+        }
+    }, [form, selectedJob]);
 
     return (
         <div className="min-h-screen bg-[var(--bg-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
+
+            {/* Apply Modal */}
+            {selectedJob && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-enter" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
+                    <div className="bg-[var(--bg-surface)] rounded-3xl shadow-2xl w-full max-w-lg border border-[var(--glass-border)] overflow-hidden">
+                        {/* Modal header */}
+                        <div className="flex items-start justify-between p-6 pb-4 border-b border-[var(--glass-border)]">
+                            <div>
+                                <div className="flex items-center gap-2 text-indigo-600 text-xs font-bold uppercase tracking-widest mb-1">
+                                    {ICONS.BRIEFCASE} Ứng Tuyển
+                                </div>
+                                <h2 className="text-lg font-black text-[var(--text-primary)] leading-snug">{selectedJob}</h2>
+                                <p className="text-xs text-[var(--text-tertiary)] mt-0.5">SGS LAND · Vui lòng điền đầy đủ thông tin bên dưới</p>
+                            </div>
+                            <button onClick={closeModal} disabled={sendStatus === 'LOADING'} className="p-2 rounded-xl hover:bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] transition-colors shrink-0 ml-2">
+                                {ICONS.CLOSE}
+                            </button>
+                        </div>
+
+                        {sendStatus === 'SUCCESS' ? (
+                            /* Success state */
+                            <div className="p-8 text-center">
+                                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                </div>
+                                <h3 className="text-xl font-black text-[var(--text-primary)] mb-2">Gửi thành công!</h3>
+                                <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-1">Hồ sơ ứng tuyển của <strong>{form.name}</strong> cho vị trí <strong>{selectedJob}</strong> đã được gửi.</p>
+                                <p className="text-[var(--text-tertiary)] text-xs">Đội ngũ SGS LAND sẽ liên hệ qua email <strong>{form.email}</strong> trong vòng 3–5 ngày làm việc.</p>
+                                <button onClick={closeModal} className="mt-6 px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors">
+                                    Đóng
+                                </button>
+                            </div>
+                        ) : (
+                            /* Form */
+                            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                                {sendStatus === 'ERROR' && (
+                                    <div className="px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm font-medium">
+                                        Có lỗi xảy ra. Vui lòng thử lại hoặc gửi email trực tiếp đến <strong>info@sgsland.vn</strong>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Họ và Tên <span className="text-rose-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            value={form.name}
+                                            onChange={e => { setForm(p => ({ ...p, name: e.target.value })); setErrors(p => ({ ...p, name: '' })); }}
+                                            placeholder="Nguyễn Văn A"
+                                            className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all ${errors.name ? 'border-rose-400 bg-rose-50' : 'border-[var(--glass-border)] focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`}
+                                        />
+                                        {errors.name && <p className="text-rose-500 text-xs mt-1">{errors.name}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Email <span className="text-rose-500">*</span></label>
+                                        <input
+                                            type="email"
+                                            value={form.email}
+                                            onChange={e => { setForm(p => ({ ...p, email: e.target.value })); setErrors(p => ({ ...p, email: '' })); }}
+                                            placeholder="ten@email.com"
+                                            className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all ${errors.email ? 'border-rose-400 bg-rose-50' : 'border-[var(--glass-border)] focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`}
+                                        />
+                                        {errors.email && <p className="text-rose-500 text-xs mt-1">{errors.email}</p>}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Số Điện Thoại <span className="text-[var(--text-tertiary)] font-normal normal-case">(không bắt buộc)</span></label>
+                                    <input
+                                        type="tel"
+                                        value={form.phone}
+                                        onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+                                        placeholder="0901 234 567"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-[var(--glass-border)] focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 text-sm outline-none transition-all"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wide">Thư Xin Việc / Giới Thiệu <span className="text-rose-500">*</span></label>
+                                    <textarea
+                                        rows={4}
+                                        value={form.message}
+                                        onChange={e => { setForm(p => ({ ...p, message: e.target.value })); setErrors(p => ({ ...p, message: '' })); }}
+                                        placeholder="Giới thiệu ngắn về bản thân, kinh nghiệm liên quan và lý do bạn muốn gia nhập SGS LAND..."
+                                        className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all resize-none ${errors.message ? 'border-rose-400 bg-rose-50' : 'border-[var(--glass-border)] focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`}
+                                    />
+                                    {errors.message && <p className="text-rose-500 text-xs mt-1">{errors.message}</p>}
+                                </div>
+
+                                <div className="flex items-center gap-3 pt-2">
+                                    <button type="submit" disabled={sendStatus === 'LOADING'} className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg">
+                                        {sendStatus === 'LOADING' ? <>{ICONS.SPIN} Đang gửi...</> : <>{ICONS.SEND} Gửi Hồ Sơ Ứng Tuyển</>}
+                                    </button>
+                                    <button type="button" onClick={closeModal} disabled={sendStatus === 'LOADING'} className="px-4 py-3 rounded-xl border border-[var(--glass-border)] text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors disabled:opacity-50">
+                                        Hủy
+                                    </button>
+                                </div>
+
+                                <p className="text-center text-[10px] text-[var(--text-tertiary)]">Thông tin của bạn sẽ được gửi đến <strong>info@sgsland.vn</strong> và chỉ dùng cho mục đích tuyển dụng.</p>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
@@ -157,7 +323,7 @@ export const Careers: React.FC = () => {
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => handleApply(job.title)}
+                                        onClick={() => openModal(job.title)}
                                         className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-lg group-hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2"
                                     >
                                         {t('careers.apply_btn')} {ICONS.ARROW}
@@ -168,17 +334,6 @@ export const Careers: React.FC = () => {
                     </div>
                 </div>
             </section>
-
-            {/* Apply success toast */}
-            {appliedJob && (
-                <div className="fixed bottom-6 right-6 z-[100] max-w-sm px-5 py-4 rounded-xl shadow-2xl flex items-start gap-3 animate-enter border bg-emerald-900/90 border-emerald-500 text-white">
-                    {ICONS.CHECK}
-                    <div>
-                        <p className="font-bold text-sm">{t('careers.toast_title')}</p>
-                        <p className="text-xs text-emerald-200 mt-0.5">{t('careers.toast_desc')} <span className="font-semibold">careers@sgsland.vn</span> — <span className="font-semibold">{appliedJob}</span></p>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

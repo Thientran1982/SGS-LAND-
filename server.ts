@@ -1225,6 +1225,73 @@ async function startServer() {
     }
   });
 
+  // Public careers apply — sends application email to info@sgsland.vn
+  app.post('/api/public/careers/apply', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { name, email, phone, message, jobTitle } = req.body;
+
+      if (!name?.trim() || !email?.trim() || !message?.trim() || !jobTitle?.trim()) {
+        return res.status(400).json({ error: 'Thiếu thông tin bắt buộc' });
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: 'Email không hợp lệ' });
+      }
+      if (message.trim().length < 20) {
+        return res.status(400).json({ error: 'Thư xin việc quá ngắn' });
+      }
+
+      const now = new Date().toLocaleDateString('vi-VN', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+
+      const html = `
+        <div style="font-family:sans-serif;max-width:640px;margin:0 auto">
+          <div style="background:#4f46e5;color:white;padding:24px 32px;border-radius:12px 12px 0 0">
+            <h2 style="margin:0;font-size:20px">📋 Hồ Sơ Ứng Tuyển Mới — SGS LAND</h2>
+            <p style="margin:6px 0 0;opacity:0.85;font-size:14px">Nhận lúc ${now}</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-top:none;padding:24px 32px;border-radius:0 0 12px 12px">
+            <table style="width:100%;border-collapse:collapse">
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:12px 8px;font-weight:700;color:#374151;width:160px">Vị trí ứng tuyển:</td>
+                <td style="padding:12px 8px;color:#4f46e5;font-weight:700">${jobTitle}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:12px 8px;font-weight:700;color:#374151">Họ và tên:</td>
+                <td style="padding:12px 8px">${name}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:12px 8px;font-weight:700;color:#374151">Email:</td>
+                <td style="padding:12px 8px"><a href="mailto:${email}" style="color:#4f46e5">${email}</a></td>
+              </tr>
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:12px 8px;font-weight:700;color:#374151">Số điện thoại:</td>
+                <td style="padding:12px 8px">${phone?.trim() || '—'}</td>
+              </tr>
+            </table>
+            <div style="margin-top:20px;padding:20px;background:#f9fafb;border-radius:10px;border-left:4px solid #4f46e5">
+              <p style="margin:0 0 8px;font-weight:700;color:#374151">Thư xin việc / Giới thiệu:</p>
+              <p style="margin:0;white-space:pre-wrap;color:#4b5563;line-height:1.7">${message}</p>
+            </div>
+            <p style="margin-top:24px;color:#9ca3af;font-size:12px;text-align:center">— SGS Land Tuyển Dụng · info@sgsland.vn</p>
+          </div>
+        </div>`;
+
+      await emailService.sendEmail(DEFAULT_TENANT_ID, {
+        to: 'info@sgsland.vn',
+        subject: `[Ứng Tuyển] ${jobTitle} — ${name}`,
+        html,
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[Careers] Apply error:', error);
+      res.status(500).json({ error: 'Không thể gửi hồ sơ. Vui lòng thử lại.' });
+    }
+  });
+
   // ─── SEO Overrides API ─────────────────────────────────────────────────────
   // GET  /api/seo-overrides          — public read (used by server-side injector on start)
   // POST /api/seo-overrides/:key     — ADMIN only: upsert an override
