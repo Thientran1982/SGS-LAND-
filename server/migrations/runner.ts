@@ -50,6 +50,8 @@ import m028 from './028_seo_overrides';
 import m029 from './029_seed_initial_admin';
 import m030 from './030_seed_news_articles';
 import m031 from './031_enrich_article_images';
+import m032 from './032_update_articles_to_2026';
+import m033 from './033_fix_hcmc_cover_image';
 
 dotenv.config();
 
@@ -96,6 +98,8 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '029_seed_initial_admin.ts': m029,
   '030_seed_news_articles.ts': m030,
   '031_enrich_article_images.ts': m031,
+  '032_update_articles_to_2026.ts': m032,
+  '033_fix_hcmc_cover_image.ts': m033,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
