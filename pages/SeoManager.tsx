@@ -289,26 +289,24 @@ const SerpPageDropdown: React.FC<{
     );
 };
 
-// ── Search query shown in the Google SERP mockup bar — one per route ────────────
-const ROUTE_SEARCH_QUERY: Record<string, string> = {
-    '':               'sgs land phần mềm bất động sản',
-    home:             'sgs land phần mềm bất động sản',
-    marketplace:      'tìm kiếm bất động sản trực tuyến',
-    'ai-valuation':   'định giá bất động sản bằng ai',
-    'crm-platform':   'crm bất động sản việt nam',
-    'about-us':       'công ty sgs land',
-    news:             'tin tức bất động sản mới nhất',
-    contact:          'liên hệ tư vấn bất động sản',
-    careers:          'tuyển dụng bất động sản công nghệ',
-    'help-center':    'hướng dẫn sử dụng sgs land',
-    developers:       'api bất động sản việt nam',
-    status:           'sgs land system status',
-    'privacy-policy': 'chính sách bảo mật sgs land',
-    'terms-of-service': 'điều khoản sử dụng sgs land',
-    livechat:         'chat hỗ trợ bất động sản',
-    listing:          'chi tiết bất động sản sgs land',
-    billing:          'gói dịch vụ sgs land',
-};
+// ── Derive a relevant search query from the effective page title ─────────────────
+// Always reflects the CURRENT title (including admin overrides) so the Google
+// SERP mockup search bar stays in sync after each meta edit + save.
+function deriveSearchQuery(title: string): string {
+    let q = title
+        // Strip leading "SGS LAND | " or "SGS LAND - " (homepage format)
+        .replace(/^SGS\s+LAND\s*[|–\-]\s*/i, '')
+        // Strip trailing " | SGS LAND" or " - SGS LAND" (other pages format)
+        .replace(/\s*[|–\-]\s*SGS\s+LAND\s*$/i, '')
+        .trim();
+
+    // If there's still a "|" separator, take only the first segment (the main topic)
+    const pipe = q.indexOf('|');
+    if (pipe > 15) q = q.slice(0, pipe).trim();
+
+    // Lowercase, collapse spaces, cap at 55 chars
+    return q.toLowerCase().replace(/\s+/g, ' ').slice(0, 55).trim();
+}
 
 // ── Tab: SERP Preview ──────────────────────────────────────────────────────────
 const SerpPreview: React.FC<{
@@ -322,7 +320,7 @@ const SerpPreview: React.FC<{
     const titleTrunc = cfg.title.slice(0, 60);
     const descTrunc = cfg.description.slice(0, 160);
     const pathDisplay = `sgsland.vn${cfg.path || '/'}`;
-    const searchQuery = ROUTE_SEARCH_QUERY[selectedKey] ?? 'sgs land bất động sản';
+    const searchQuery = deriveSearchQuery(cfg.title);
 
     return (
         <div className="space-y-6">
