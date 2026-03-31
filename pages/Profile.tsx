@@ -471,7 +471,7 @@ export const Profile: React.FC = () => {
                     <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight mb-2">{user.name}</h1>
                     <div className="flex items-center justify-center md:justify-start gap-3">
                         <span className="px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-md shadow-slate-200">
-                            {t(`role.${user.role}`)}
+                            {t(`role.${user.role?.toUpperCase()}`)}
                         </span>
                         <span className="px-3 py-1 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg text-xs font-mono text-[var(--text-tertiary)]">
                             {user.email}

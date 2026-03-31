@@ -314,7 +314,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                             {user.name}
                         </div>
                         <div className="text-xs2 text-[var(--text-tertiary)] font-medium">
-                            {t(`role.${user.role}`) || user.role}
+                            {t(`role.${user.role?.toUpperCase()}`) || user.role}
                         </div>
                     </div>
                     

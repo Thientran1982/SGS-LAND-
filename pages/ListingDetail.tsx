@@ -392,7 +392,7 @@ const AssigneeDropdown = memo(({
                                 <div className="flex-1 min-w-0 text-left">
                                     <div className={`truncate font-medium leading-tight ${isSelected ? 'text-indigo-700' : ''}`}>{u.name}</div>
                                     <div className="text-[10px] text-[var(--text-tertiary)] leading-tight mt-0.5">
-                                        {u.role ? t(`role.${u.role}`) : ''}
+                                        {u.role ? t(`role.${u.role.toUpperCase()}`) : ''}
                                     </div>
                                 </div>
                                 {isSelected && (
