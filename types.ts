@@ -1091,6 +1091,7 @@ export interface ScoringConfig {
         velocity: number;
         [key: string]: number;
     };
+    thresholds?: { A: number; B: number; C: number; D: number };
 }
 
 export interface Playbook {

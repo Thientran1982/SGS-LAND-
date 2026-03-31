@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { scoringConfigRepository } from '../repositories/scoringConfigRepository';
+import { scoringConfigRepository, DEFAULT_WEIGHTS, DEFAULT_THRESHOLDS } from '../repositories/scoringConfigRepository';
 
 export function createScoringRoutes(authenticateToken: any) {
   const router = Router();
@@ -10,11 +10,15 @@ export function createScoringRoutes(authenticateToken: any) {
       const config = await scoringConfigRepository.getByTenant(user.tenantId);
       if (!config) {
         return res.json({
-          weights: { engagement: 30, budget: 25, timeline: 20, fit: 15, source: 10 },
-          thresholds: { A: 80, B: 60, C: 40, D: 20 },
+          weights: DEFAULT_WEIGHTS,
+          thresholds: DEFAULT_THRESHOLDS,
+          version: 1,
         });
       }
-      res.json(config);
+      res.json({
+        ...config,
+        version: config.version ?? 1,
+      });
     } catch (error) {
       console.error('Error fetching scoring config:', error);
       res.status(500).json({ error: 'Failed to fetch scoring config' });
@@ -28,8 +32,17 @@ export function createScoringRoutes(authenticateToken: any) {
         return res.status(403).json({ error: 'Only admins can update scoring config' });
       }
       const { weights, thresholds } = req.body;
-      const result = await scoringConfigRepository.upsert(user.tenantId, { weights, thresholds });
-      res.json(result);
+      if (!weights || typeof weights !== 'object') {
+        return res.status(400).json({ error: 'weights is required' });
+      }
+      const result = await scoringConfigRepository.upsert(user.tenantId, {
+        weights,
+        thresholds: thresholds ?? DEFAULT_THRESHOLDS,
+      });
+      res.json({
+        ...result,
+        version: result.version ?? 1,
+      });
     } catch (error) {
       console.error('Error updating scoring config:', error);
       res.status(500).json({ error: 'Failed to update scoring config' });

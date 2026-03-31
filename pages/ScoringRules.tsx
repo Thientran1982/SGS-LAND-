@@ -83,8 +83,9 @@ export const ScoringRules: React.FC = () => {
         setLoading(true);
         setLoadError(false);
         try {
-            const data = await db.getScoringConfig();
-            setConfig(data ?? null);
+            const raw = await db.getScoringConfig();
+            const data = raw ? { ...raw, version: raw.version ?? 1 } : null;
+            setConfig(data);
             setWeights(data?.weights || { engagement: 0, completeness: 0, budgetFit: 0, velocity: 0 });
         } catch (e) {
             setLoadError(true);
@@ -104,10 +105,19 @@ export const ScoringRules: React.FC = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await db.updateScoringConfig(weights);
+            const DEFAULT_THRESHOLDS = { A: 80, B: 60, C: 40, D: 20 };
+            const updated = await db.updateScoringConfig({
+                weights,
+                thresholds: config?.thresholds ?? DEFAULT_THRESHOLDS,
+            });
             notify(t('scoring.update_success'), 'success');
-            // Optimistically update version in UI or reload
-            if (config) setConfig({ ...config, version: config.version + 1 });
+            if (config) {
+                setConfig({
+                    ...config,
+                    version: updated?.version ?? (config.version ?? 0) + 1,
+                    thresholds: updated?.thresholds ?? config.thresholds,
+                });
+            }
         } catch (e: any) {
             notify(e.message || t('common.error'), 'error');
         } finally {
@@ -175,7 +185,7 @@ export const ScoringRules: React.FC = () => {
                 </div>
                 <div className="text-right bg-[var(--glass-surface)] px-4 py-2 rounded-xl border border-[var(--glass-border)]">
                     <div className="text-xs2 font-bold text-[var(--text-secondary)] uppercase tracking-wider">{t('scoring.version')}</div>
-                    <div className="font-mono text-lg font-bold text-[var(--text-primary)]">v{config.version}.0</div>
+                    <div className="font-mono text-lg font-bold text-[var(--text-primary)]">v{config.version ?? 1}.0</div>
                 </div>
             </div>
 
