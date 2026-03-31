@@ -306,7 +306,7 @@ export const RoutingRules: React.FC = () => {
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="text-xs2 font-bold bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] px-2 py-0.5 rounded uppercase tracking-wider">{t('routing.priority')}: {rule.priority}</span>
-                                        {rule.enabled ? <span className="w-2 h-2 bg-emerald-500 rounded-full"></span> : <span className="w-2 h-2 bg-slate-300 rounded-full"></span>}
+                                        {(rule.isActive ?? rule.enabled) ? <span className="w-2 h-2 bg-emerald-500 rounded-full" title={t('common.active')}></span> : <span className="w-2 h-2 bg-slate-300 rounded-full" title={t('common.inactive')}></span>}
                                     </div>
                                     <h3 className="font-bold text-[var(--text-primary)]">{rule.name}</h3>
                                 </div>

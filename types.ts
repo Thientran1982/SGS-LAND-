@@ -502,6 +502,7 @@ export interface RoutingRule {
         requiredSkills?: string[];
     };
     enabled?: boolean;
+    isActive?: boolean;
 }
 
 // =============================================================================
