@@ -98,7 +98,7 @@ export const AiValuation: React.FC = () => {
     const [monthlyRent, setMonthlyRent] = useState<string>('');
     const [buildingAge, setBuildingAge] = useState<string>('');
 
-    const isApartment = propertyType.startsWith('apartment');
+    const isApartment = propertyType.startsWith('apartment') || propertyType === 'penthouse';
 
     // Live Accuracy Meter — increases as user fills in more details
     const accuracy = (() => {
@@ -521,23 +521,65 @@ export const AiValuation: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Loại Bất Động Sản</label>
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-3">Loại Bất Động Sản</label>
+
+                                    {/* Nhóm: Nhà ở */}
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">🏠 Nhà ở</div>
+                                    <div className="grid grid-cols-3 gap-2 mb-4">
                                         {[
                                             { id: 'townhouse_center', label: '🏘️ Nhà phố nội đô' },
-                                            { id: 'townhouse_suburb', label: '🏠 Nhà phố ngoại thành' },
+                                            { id: 'townhouse_suburb', label: '🏡 Nhà phố ngoại thành' },
+                                            { id: 'villa', label: '🏰 Biệt thự' },
                                             { id: 'apartment_center', label: '🏢 Căn hộ trung tâm' },
                                             { id: 'apartment_suburb', label: '🏬 Căn hộ ngoại ô' },
-                                            { id: 'shophouse', label: '🏪 Nhà phố thương mại' },
-                                            { id: 'villa', label: '🏰 Biệt thự' },
-                                            { id: 'land_urban', label: '🗺️ Đất thổ cư nội đô' },
-                                            { id: 'land_suburban', label: '🌿 Đất ngoại thành' },
+                                            { id: 'penthouse', label: '💎 Penthouse' },
                                         ].map(opt => (
-                                            <button
-                                                key={opt.id}
-                                                onClick={() => setPropertyType(opt.id)}
-                                                className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all border text-left ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}
-                                            >
+                                            <button key={opt.id} onClick={() => setPropertyType(opt.id)}
+                                                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Nhóm: Thương mại & Công nghiệp */}
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">🏪 Thương mại & Công nghiệp</div>
+                                    <div className="grid grid-cols-3 gap-2 mb-4">
+                                        {[
+                                            { id: 'shophouse', label: '🏪 Shophouse' },
+                                            { id: 'office', label: '🏢 Văn phòng' },
+                                            { id: 'warehouse', label: '🏭 Nhà xưởng / Kho' },
+                                        ].map(opt => (
+                                            <button key={opt.id} onClick={() => setPropertyType(opt.id)}
+                                                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Nhóm: Đất */}
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">🗺️ Đất</div>
+                                    <div className="grid grid-cols-2 gap-2 mb-4">
+                                        {[
+                                            { id: 'land_urban', label: '🗺️ Đất thổ cư nội đô' },
+                                            { id: 'land_suburban', label: '🌿 Đất thổ cư ngoại thành' },
+                                            { id: 'land_agricultural', label: '🌾 Đất nông nghiệp' },
+                                            { id: 'land_industrial', label: '🏗️ Đất khu công nghiệp' },
+                                        ].map(opt => (
+                                            <button key={opt.id} onClick={() => setPropertyType(opt.id)}
+                                                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Nhóm: Dự án */}
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">📐 Dự án</div>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        {[
+                                            { id: 'project', label: '📐 Dự án / Căn hộ off-plan (chưa bàn giao)' },
+                                        ].map(opt => (
+                                            <button key={opt.id} onClick={() => setPropertyType(opt.id)}
+                                                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
                                                 {opt.label}
                                             </button>
                                         ))}
@@ -562,45 +604,47 @@ export const AiValuation: React.FC = () => {
                                 </div>
 
                                 {/* Mặt tiền / Tầng & Tuổi nhà */}
-                                <div className="grid grid-cols-2 gap-6">
-                                    {!isApartment && (
-                                        <div>
-                                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Mặt Tiền (m)</label>
-                                            <input
-                                                type="number"
-                                                value={frontageWidth}
-                                                onChange={e => setFrontageWidth(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
-                                                placeholder="4"
-                                                min="1"
-                                            />
+                                {(() => {
+                                    const isLand = propertyType.startsWith('land_');
+                                    const showFrontage = !isApartment && !isLand && propertyType !== 'warehouse';
+                                    const showFloor    = isApartment || propertyType === 'project';
+                                    return (
+                                        <div className="grid grid-cols-2 gap-6">
+                                            {showFrontage && (
+                                                <div>
+                                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Mặt Tiền (m)</label>
+                                                    <input type="number" value={frontageWidth}
+                                                        onChange={e => setFrontageWidth(e.target.value)}
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                        placeholder="4" min="1" />
+                                                </div>
+                                            )}
+                                            {showFloor && (
+                                                <div>
+                                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
+                                                        {propertyType === 'penthouse' ? 'Tầng Penthouse' : 'Tầng'}
+                                                    </label>
+                                                    <input type="number" value={floorLevel}
+                                                        onChange={e => setFloorLevel(e.target.value)}
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                        placeholder={propertyType === 'penthouse' ? '25' : '10'} min="1" />
+                                                </div>
+                                            )}
+                                            {!isLand && (
+                                                <div>
+                                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
+                                                        {propertyType === 'warehouse' ? 'Tuổi Xưởng (năm)' : 'Tuổi Nhà (năm)'}
+                                                        <span className="text-slate-600 normal-case font-normal"> 0 = mới</span>
+                                                    </label>
+                                                    <input type="number" value={buildingAge}
+                                                        onChange={e => setBuildingAge(e.target.value)}
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                        placeholder="Tự động" min="0" />
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                    {isApartment && (
-                                        <div>
-                                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tầng</label>
-                                            <input
-                                                type="number"
-                                                value={floorLevel}
-                                                onChange={e => setFloorLevel(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
-                                                placeholder="10"
-                                                min="1"
-                                            />
-                                        </div>
-                                    )}
-                                    <div>
-                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tuổi Nhà (năm) <span className="text-slate-600 normal-case font-normal">0 = mới xây</span></label>
-                                        <input
-                                            type="number"
-                                            value={buildingAge}
-                                            onChange={e => setBuildingAge(e.target.value)}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
-                                            placeholder="Tự động"
-                                            min="0"
-                                        />
-                                    </div>
-                                </div>
+                                    );
+                                })()}
 
                                 {/* Thuê dự kiến */}
                                 <div>

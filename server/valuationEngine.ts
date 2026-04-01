@@ -43,7 +43,13 @@ export type PropertyType =
   | 'villa'
   | 'shophouse'
   | 'land_urban'
-  | 'land_suburban';
+  | 'land_suburban'
+  | 'penthouse'           // Penthouse (tầng cao nhất, view toàn cảnh)
+  | 'office'              // Văn phòng / Thương mại
+  | 'warehouse'           // Nhà xưởng / Kho bãi / Xưởng sản xuất
+  | 'land_agricultural'   // Đất nông nghiệp (chuyển đổi, nghỉ dưỡng)
+  | 'land_industrial'     // Đất khu công nghiệp
+  | 'project';            // Dự án / Căn hộ off-plan
 
 export interface AVMInput {
   marketBasePrice: number;   // raw price/m² for standard reference property (VNĐ)
@@ -143,6 +149,12 @@ export const DEFAULT_CAP_RATES: Record<PropertyType, number> = {
   shophouse:         0.055,  // Nhà phố thương mại
   land_urban:        0.040,  // Đất thổ cư nội đô (tích lũy giá trị)
   land_suburban:     0.070,  // Đất ngoại thành (cho thuê thấp hơn)
+  penthouse:         0.038,  // Penthouse — cap thấp nhất, cực kỳ cao cấp
+  office:            0.062,  // Văn phòng / Thương mại — yield ổn định
+  warehouse:         0.072,  // Nhà xưởng / Kho bãi — yield cao, ít tăng giá
+  land_agricultural: 0.012,  // Đất nông nghiệp — chủ yếu đầu cơ/chuyển đổi
+  land_industrial:   0.048,  // Đất KCN — yield từ cho thuê kho xưởng
+  project:           0.045,  // Off-plan — blended theo tiến độ dự án
 };
 
 // Reconciliation weights: comps vs income, by property type
@@ -157,6 +169,12 @@ const RECONCILE_WEIGHTS: Record<PropertyType, { comps: number; income: number }>
   shophouse:         { comps: 0.45, income: 0.55 },  // income-driven
   land_urban:        { comps: 0.75, income: 0.25 },  // comps-driven
   land_suburban:     { comps: 0.80, income: 0.20 },
+  penthouse:         { comps: 0.50, income: 0.50 },  // balanced — premium comps + strong income
+  office:            { comps: 0.40, income: 0.60 },  // income-driven (lease yield primary)
+  warehouse:         { comps: 0.35, income: 0.65 },  // strongly income-driven
+  land_agricultural: { comps: 0.88, income: 0.12 },  // almost pure comps — hard to yield
+  land_industrial:   { comps: 0.65, income: 0.35 },
+  project:           { comps: 0.60, income: 0.40 },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -282,8 +300,8 @@ function getKa(area: number): { value: number; label: string; description: strin
 //     Source: CBRE Vietnam 2024, floor premium analysis
 // ─────────────────────────────────────────────────────────────────────────────
 export function getKfl(floorLevel: number, propertyType?: PropertyType): { value: number; label: string; description: string } | null {
-  // Only apply for apartments
-  const isApartment = !propertyType || propertyType.startsWith('apartment');
+  // Apply for apartments and penthouse
+  const isApartment = !propertyType || propertyType.startsWith('apartment') || propertyType === 'penthouse';
   if (!isApartment) return null;
 
   if (floorLevel <= 1) return {
@@ -355,8 +373,9 @@ export function getKdir(direction: string): { value: number; label: string; desc
 //     Applies primarily to townhouses, shophouses, land (not apartments)
 // ─────────────────────────────────────────────────────────────────────────────
 export function getKmf(frontageWidth: number, propertyType?: PropertyType): { value: number; label: string; description: string } | null {
-  // Not applicable for apartments (uses Kfl instead)
-  if (propertyType?.startsWith('apartment')) return null;
+  // Not applicable for apartments, penthouse, warehouse, or pure land (uses Kfl instead)
+  if (propertyType?.startsWith('apartment') || propertyType === 'penthouse' ||
+      propertyType === 'warehouse' || propertyType?.startsWith('land_')) return null;
   if (!frontageWidth || frontageWidth <= 0) return null;
 
   if (frontageWidth >= 10) return {
@@ -833,6 +852,12 @@ const PROPERTY_TYPE_PRICE_MULT: Record<string, number> = {
   shophouse:         1.20,  // Shophouse: premium thương mại
   land_urban:        1.30,  // Đất thổ cư nội đô: premium (không có khấu hao nhà)
   land_suburban:     1.00,
+  penthouse:         0.60,  // Penthouse: ~60% nhà phố/m² nhưng floor premium bù lại
+  office:            1.10,  // Văn phòng: premium thương mại trên nhà phố
+  warehouse:         0.45,  // Nhà xưởng: rẻ/m² do diện tích lớn, hạ tầng đơn giản
+  land_agricultural: 0.06,  // Đất nông nghiệp: rất rẻ so với thổ cư
+  land_industrial:   0.35,  // Đất KCN: đắt hơn nông nghiệp, rẻ hơn thổ cư
+  project:           0.75,  // Off-plan: chiết khấu so với thứ cấp (chưa bàn giao)
 };
 
 export function getRegionalBasePrice(address: string, pType?: string): {
