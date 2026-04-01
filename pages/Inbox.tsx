@@ -556,8 +556,8 @@ export const Inbox: React.FC = () => {
                         Mobile/tablet : single scrollable row (touch pan-x)
                         Desktop (md+) : wraps to two lines — no scroll needed, no icons */}
                     <div
-                        className="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-auto md:overflow-visible no-scrollbar pb-0.5"
-                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+                        className="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-scroll overflow-y-hidden md:overflow-visible md:overflow-y-visible no-scrollbar pb-0.5 -mx-3 sm:-mx-4 px-3 sm:px-4 md:mx-0 md:px-0"
+                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
                     >
                         {/* Status chips */}
                         {([
@@ -870,13 +870,13 @@ export const Inbox: React.FC = () => {
                     </div>
 
                     {/* Input Bar */}
-                    <div className="px-2 pt-2 sm:px-3 sm:pt-2.5 pb-safe bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] z-30">
+                    <div className="px-3 pt-2 sm:px-4 sm:pt-2.5 pb-safe bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] z-30">
                         {/* Channel selector row + supervisor badge */}
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                            {/* Channel tabs — color-coded per channel */}
+                        <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+                            {/* Channel tabs — color-coded per channel; flex-1 min-w-0 ensures bounded width so overflow-x-scroll works */}
                             <div
-                                className="flex bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar shrink-0"
-                                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+                                className="flex flex-nowrap flex-1 min-w-0 bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-scroll overflow-y-hidden no-scrollbar"
+                                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
                             >
                                 {([
                                     { ch: Channel.ZALO,  icon: ICONS.ZALO,  activeClass: 'bg-blue-600 text-white shadow-sm',     inactiveClass: 'text-blue-400 hover:text-blue-600' },
