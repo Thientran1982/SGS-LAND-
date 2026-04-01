@@ -552,59 +552,64 @@ export const Inbox: React.FC = () => {
                             </div>
                         )}
                     </div>
-                    {/* Filter row: Status tabs + separator + Channel chips — swipeable on mobile */}
+                    {/* Filter row
+                        Mobile/tablet : single scrollable row (touch pan-x)
+                        Desktop (md+) : wraps to two lines — no scroll needed, no icons */}
                     <div
-                        className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5 scroll-smooth"
+                        className="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-auto md:overflow-visible no-scrollbar pb-0.5"
                         style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
                     >
-                        {/* Status: All / Unread */}
+                        {/* Status chips */}
                         {([
-                            { key: 'ALL',    label: t('inbox.filter_all'),    icon: null },
-                            { key: 'UNREAD', label: t('inbox.filter_unread'), icon: ICONS.UNREAD },
-                        ] as const).map(({ key, label, icon }) => (
+                            { key: 'ALL'   as const, label: t('inbox.filter_all')    },
+                            { key: 'UNREAD'as const, label: t('inbox.filter_unread') },
+                        ]).map(({ key, label }) => (
                             <button
                                 key={key}
                                 onClick={() => setStatusFilter(key)}
-                                className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[30px] ${
+                                className={`flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[28px] ${
                                     statusFilter === key
                                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                                         : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300 hover:text-indigo-600'
                                 }`}
                             >
-                                {icon}
+                                {/* Icon only below md */}
+                                {key === 'UNREAD' && <span className="md:hidden">{ICONS.UNREAD}</span>}
                                 {label}
                             </button>
                         ))}
 
-                        {/* Divider */}
-                        <div className="w-px bg-[var(--glass-border)] self-stretch shrink-0 mx-0.5" />
+                        {/* Divider — visible only on mobile scroll row */}
+                        <div className="md:hidden w-px bg-[var(--glass-border)] self-stretch shrink-0 mx-0.5" />
 
-                        {/* Channel chips with icons */}
+                        {/* Channel chips */}
                         {([
-                            { key: 'ALL',            label: t('inbox.filter_all'), icon: ICONS.FILTER },
-                            { key: Channel.WEB,      label: t('inbox.channel_web'),      icon: ICONS.WEB },
-                            { key: Channel.ZALO,     label: 'Zalo',                     icon: ICONS.ZALO },
-                            { key: Channel.FACEBOOK, label: 'Facebook',                 icon: ICONS.FACEBOOK },
-                            { key: Channel.EMAIL,    label: 'Email',                    icon: ICONS.EMAIL },
-                            { key: Channel.SMS,      label: 'SMS',                      icon: ICONS.SMS },
-                        ] as const).map(({ key, label, icon }) => {
+                            { key: 'ALL'            as const, label: t('inbox.filter_all'),   icon: ICONS.FILTER   },
+                            { key: Channel.WEB               , label: t('inbox.channel_web'),  icon: ICONS.WEB      },
+                            { key: Channel.ZALO              , label: 'Zalo',                  icon: ICONS.ZALO     },
+                            { key: Channel.FACEBOOK          , label: 'Facebook',              icon: ICONS.FACEBOOK },
+                            { key: Channel.EMAIL             , label: 'Email',                 icon: ICONS.EMAIL    },
+                            { key: Channel.SMS               , label: 'SMS',                   icon: ICONS.SMS      },
+                        ]).map(({ key, label, icon }) => {
                             const active = channelFilter === key;
-                            const channelColors: Record<string, string> = {
-                                ZALO:     active ? 'bg-blue-600 text-white border-blue-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-blue-300 hover:text-blue-600',
-                                FACEBOOK: active ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-blue-400 hover:text-[#1877F2]',
-                                EMAIL:    active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600',
-                                SMS:      active ? 'bg-emerald-600 text-white border-emerald-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-emerald-300 hover:text-emerald-600',
-                                WEB:      active ? 'bg-violet-600 text-white border-violet-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-violet-300 hover:text-violet-600',
-                                ALL:      active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600',
+                            const colorMap: Record<string, { on: string; off: string }> = {
+                                ZALO:     { on: 'bg-blue-600 text-white border-blue-600',     off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-blue-300 hover:text-blue-600' },
+                                FACEBOOK: { on: 'bg-[#1877F2] text-white border-[#1877F2]',  off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-blue-400 hover:text-[#1877F2]' },
+                                EMAIL:    { on: 'bg-indigo-600 text-white border-indigo-600', off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600' },
+                                SMS:      { on: 'bg-emerald-600 text-white border-emerald-600',off:'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-emerald-300 hover:text-emerald-600' },
+                                WEB:      { on: 'bg-violet-600 text-white border-violet-600', off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-violet-300 hover:text-violet-600' },
+                                ALL:      { on: 'bg-indigo-600 text-white border-indigo-600', off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600' },
                             };
+                            const c = colorMap[key] ?? colorMap['ALL'];
                             return (
                                 <button
                                     key={key}
                                     onClick={() => setChannelFilter(key)}
-                                    className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[30px] bg-[var(--glass-surface)] ${channelColors[key] || channelColors['ALL']} ${active ? 'shadow-sm' : ''}`}
+                                    className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[28px] bg-[var(--glass-surface)] ${active ? c.on + ' shadow-sm' : c.off}`}
                                 >
-                                    {icon}
-                                    <span className="hidden sm:inline">{label}</span>
+                                    {/* Icon only on mobile/tablet — desktop shows text-only to save space */}
+                                    <span className="md:hidden">{icon}</span>
+                                    {label}
                                 </button>
                             );
                         })}
@@ -881,8 +886,9 @@ export const Inbox: React.FC = () => {
                                         onClick={() => setChannel(ch)}
                                         className={`px-2.5 sm:px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
                                     >
-                                        {icon}
-                                        <span className="hidden sm:inline">{channelLabel(ch)}</span>
+                                        {/* Icon on mobile/sm only — desktop = text only */}
+                                        <span className="md:hidden">{icon}</span>
+                                        {channelLabel(ch)}
                                     </button>
                                 ))}
                             </div>
