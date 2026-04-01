@@ -90,7 +90,13 @@ async function startServer() {
     limit: '1mb',
     verify: (req: any, _res, buf) => { req.rawBody = buf; }
   }));
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({
+    limit: '10mb',
+    verify: (req: any, _res, buf) => {
+      // Store raw body for routes that need it (e.g. QStash signature verification)
+      req.rawBody = buf;
+    }
+  }));
   app.use(cookieParser());
   app.use(preventParamPollution);
   app.use(sanitizeInput);
@@ -1790,9 +1796,9 @@ async function startServer() {
 
   // ---------------------------------------------------------------------------
   // QStash — Nhận job callback từ Upstash QStash
-  // Endpoint này phải được đăng ký ở phần raw body trước khi express.json() parse
+  // Raw body được lưu bởi express.json() verify callback ở trên (req.rawBody)
   // ---------------------------------------------------------------------------
-  app.post("/api/qstash/process", express.raw({ type: '*/*' }), async (req, res) => {
+  app.post("/api/qstash/process", async (req, res) => {
     try {
       if (!isQStashEnabled()) {
         logger.warn('[QStash] Nhận được callback nhưng QSTASH không được cấu hình — bỏ qua');
@@ -1800,12 +1806,16 @@ async function startServer() {
       }
 
       const { Receiver } = await import('@upstash/qstash');
+      // Strip any surrounding quotes that may have been added when saving the secret
+      const stripQuotes = (s: string) => s?.replace(/^["']|["']$/g, '');
       const receiver = new Receiver({
-        currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY!,
-        nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY || process.env.QSTASH_CURRENT_SIGNING_KEY!,
+        currentSigningKey: stripQuotes(process.env.QSTASH_CURRENT_SIGNING_KEY!),
+        nextSigningKey: stripQuotes(process.env.QSTASH_NEXT_SIGNING_KEY || process.env.QSTASH_CURRENT_SIGNING_KEY!),
       });
 
-      const rawBody = req.body instanceof Buffer ? req.body.toString('utf8') : String(req.body);
+      // Use raw body stored by the global express.json() verify callback
+      const rawBodyBuf: Buffer | undefined = (req as any).rawBody;
+      const rawBody = rawBodyBuf ? rawBodyBuf.toString('utf8') : JSON.stringify(req.body);
       const signature = req.headers['upstash-signature'] as string;
 
       try {
