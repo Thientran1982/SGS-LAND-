@@ -818,55 +818,111 @@ export function applyAVM(input: AVMInput): AVMOutput {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 7. REGIONAL BASE PRICE TABLE (static fallback — no AI)
-//    Unit: VNĐ/m² for standard reference property (Sổ Hồng, 4m road, 60-100m²)
+//    Unit: VNĐ/m² for TOWNHOUSE reference (Sổ Hồng, 4m road, 60-100m²)
+//    Property-type multipliers applied to derive type-specific sanity ranges.
 // ─────────────────────────────────────────────────────────────────────────────
-export function getRegionalBasePrice(address: string): {
+
+// Multipliers relative to townhouse reference price (townhouse_center = 1.00)
+// Source: Batdongsan/Savills Vietnam 2024-2025 cross-type analysis
+const PROPERTY_TYPE_PRICE_MULT: Record<string, number> = {
+  apartment_center:  0.42,  // Căn hộ nội đô: ~42% giá nhà phố cùng khu vực
+  apartment_suburb:  0.50,  // Căn hộ ngoại thành: ~50%
+  townhouse_center:  1.00,  // Tham chiếu chuẩn
+  townhouse_suburb:  1.00,
+  villa:             0.85,  // Biệt thự: ít hơn/m² do diện tích lớn
+  shophouse:         1.20,  // Shophouse: premium thương mại
+  land_urban:        1.30,  // Đất thổ cư nội đô: premium (không có khấu hao nhà)
+  land_suburban:     1.00,
+};
+
+export function getRegionalBasePrice(address: string, pType?: string): {
   price: number;
   region: string;
   confidence: number;
 } {
   const addr = address.toLowerCase();
 
-  // TP.HCM
-  if (/quận 1\b|q\.?1\b|district 1/i.test(addr)) return { price: 280_000_000, region: 'Quận 1, TP.HCM', confidence: 60 };
-  if (/quận 3\b|q\.?3\b/i.test(addr)) return { price: 200_000_000, region: 'Quận 3, TP.HCM', confidence: 60 };
-  if (/quận 4\b|q\.?4\b/i.test(addr)) return { price: 130_000_000, region: 'Quận 4, TP.HCM', confidence: 60 };
-  if (/quận 5\b|q\.?5\b/i.test(addr)) return { price: 140_000_000, region: 'Quận 5, TP.HCM', confidence: 60 };
-  if (/quận 6\b|q\.?6\b/i.test(addr)) return { price: 90_000_000, region: 'Quận 6, TP.HCM', confidence: 60 };
-  if (/quận 7\b|q\.?7\b/i.test(addr)) return { price: 150_000_000, region: 'Quận 7, TP.HCM', confidence: 60 };
-  if (/quận 8\b|q\.?8\b/i.test(addr)) return { price: 80_000_000, region: 'Quận 8, TP.HCM', confidence: 60 };
-  if (/quận 9\b|q\.?9\b/i.test(addr)) return { price: 70_000_000, region: 'Quận 9, TP.HCM', confidence: 60 };
-  if (/quận 10\b|q\.?10\b/i.test(addr)) return { price: 160_000_000, region: 'Quận 10, TP.HCM', confidence: 60 };
-  if (/quận 11\b|q\.?11\b/i.test(addr)) return { price: 110_000_000, region: 'Quận 11, TP.HCM', confidence: 60 };
-  if (/quận 12\b|q\.?12\b/i.test(addr)) return { price: 65_000_000, region: 'Quận 12, TP.HCM', confidence: 60 };
-  if (/bình thạnh|binh thanh/i.test(addr)) return { price: 120_000_000, region: 'Bình Thạnh, TP.HCM', confidence: 60 };
-  if (/phú nhuận|phu nhuan/i.test(addr)) return { price: 150_000_000, region: 'Phú Nhuận, TP.HCM', confidence: 60 };
-  if (/tân bình|tan binh/i.test(addr)) return { price: 100_000_000, region: 'Tân Bình, TP.HCM', confidence: 60 };
-  if (/gò vấp|go vap/i.test(addr)) return { price: 75_000_000, region: 'Gò Vấp, TP.HCM', confidence: 60 };
-  if (/thủ đức|thu duc/i.test(addr)) return { price: 65_000_000, region: 'Thủ Đức, TP.HCM', confidence: 58 };
-  if (/bình dương|binh duong/i.test(addr)) return { price: 45_000_000, region: 'Bình Dương', confidence: 55 };
-  if (/hcm|hồ chí minh|ho chi minh|sài gòn|saigon/i.test(addr)) return { price: 100_000_000, region: 'TP.HCM (trung bình)', confidence: 55 };
+  // ── Street/corridor-level premium overrides (highest precision) ───────────
+  // These trump the district-level table when matched
+  let streetOverride: number | null = null;
+  if (/nguyễn huệ|le loi|lê lợi|dong khoi|đồng khởi/i.test(addr) && /quận 1|q\.?1/i.test(addr))
+    streetOverride = 450_000_000; // Pedestrian streets Q1 — ultra-premium
+  if (/vinhomes central park|binh thanh|bình thạnh.*vinhomes/i.test(addr))
+    streetOverride = 140_000_000;
+  if (/phú mỹ hưng|phu my hung/i.test(addr))
+    streetOverride = 160_000_000;
+  if (/thảo điền|thao dien/i.test(addr))
+    streetOverride = 180_000_000;
 
-  // Hà Nội
-  if (/hoàn kiếm|hoan kiem/i.test(addr)) return { price: 300_000_000, region: 'Hoàn Kiếm, Hà Nội', confidence: 60 };
-  if (/ba đình|ba dinh/i.test(addr)) return { price: 220_000_000, region: 'Ba Đình, Hà Nội', confidence: 60 };
-  if (/đống đa|dong da/i.test(addr)) return { price: 180_000_000, region: 'Đống Đa, Hà Nội', confidence: 60 };
-  if (/hai bà trưng|hai ba trung/i.test(addr)) return { price: 170_000_000, region: 'Hai Bà Trưng, Hà Nội', confidence: 60 };
-  if (/cầu giấy|cau giay/i.test(addr)) return { price: 120_000_000, region: 'Cầu Giấy, Hà Nội', confidence: 60 };
-  if (/tây hồ|tay ho/i.test(addr)) return { price: 130_000_000, region: 'Tây Hồ, Hà Nội', confidence: 60 };
-  if (/nam từ liêm|nam tu liem|bắc từ liêm|bac tu liem/i.test(addr)) return { price: 85_000_000, region: 'Từ Liêm, Hà Nội', confidence: 58 };
-  if (/long biên|long bien/i.test(addr)) return { price: 70_000_000, region: 'Long Biên, Hà Nội', confidence: 58 };
-  if (/hà đông|ha dong/i.test(addr)) return { price: 60_000_000, region: 'Hà Đông, Hà Nội', confidence: 55 };
-  if (/hà nội|hanoi|ha noi/i.test(addr)) return { price: 110_000_000, region: 'Hà Nội (trung bình)', confidence: 52 };
+  // Apply street override if matched
+  const getBase = (base: number, region: string, conf: number) => {
+    const refPrice = streetOverride ?? base;
+    const mult = PROPERTY_TYPE_PRICE_MULT[pType || 'townhouse_center'] ?? 1.00;
+    return { price: Math.round(refPrice * mult), region, confidence: conf };
+  };
 
-  // Thành phố lớn khác
-  if (/đà nẵng|da nang/i.test(addr)) return { price: 75_000_000, region: 'Đà Nẵng', confidence: 55 };
-  if (/nha trang/i.test(addr)) return { price: 60_000_000, region: 'Nha Trang', confidence: 52 };
-  if (/hải phòng|hai phong/i.test(addr)) return { price: 50_000_000, region: 'Hải Phòng', confidence: 52 };
-  if (/cần thơ|can tho/i.test(addr)) return { price: 35_000_000, region: 'Cần Thơ', confidence: 50 };
-  if (/long an|bình phước|đồng nai|dong nai/i.test(addr)) return { price: 30_000_000, region: 'Khu vực lân cận HCM', confidence: 48 };
+  // ── TP.HCM ────────────────────────────────────────────────────────────────
+  if (/quận 1\b|q\.?1\b|district 1/i.test(addr)) return getBase(280_000_000, 'Quận 1, TP.HCM', 62);
+  if (/quận 3\b|q\.?3\b/i.test(addr))             return getBase(200_000_000, 'Quận 3, TP.HCM', 62);
+  if (/quận 4\b|q\.?4\b/i.test(addr))             return getBase(130_000_000, 'Quận 4, TP.HCM', 62);
+  if (/quận 5\b|q\.?5\b/i.test(addr))             return getBase(140_000_000, 'Quận 5, TP.HCM', 62);
+  if (/quận 6\b|q\.?6\b/i.test(addr))             return getBase(90_000_000,  'Quận 6, TP.HCM', 60);
+  if (/quận 7\b|q\.?7\b/i.test(addr))             return getBase(150_000_000, 'Quận 7, TP.HCM', 62);
+  if (/quận 8\b|q\.?8\b/i.test(addr))             return getBase(80_000_000,  'Quận 8, TP.HCM', 60);
+  if (/quận 9\b|q\.?9\b/i.test(addr))             return getBase(70_000_000,  'Quận 9, TP.HCM', 60);
+  if (/quận 10\b|q\.?10\b/i.test(addr))           return getBase(160_000_000, 'Quận 10, TP.HCM', 62);
+  if (/quận 11\b|q\.?11\b/i.test(addr))           return getBase(110_000_000, 'Quận 11, TP.HCM', 60);
+  if (/quận 12\b|q\.?12\b/i.test(addr))           return getBase(65_000_000,  'Quận 12, TP.HCM', 60);
+  if (/bình chánh|binh chanh/i.test(addr))        return getBase(35_000_000,  'Bình Chánh, TP.HCM', 55);
+  if (/nhà bè|nha be/i.test(addr))                return getBase(45_000_000,  'Nhà Bè, TP.HCM', 55);
+  if (/hóc môn|hoc mon/i.test(addr))              return getBase(40_000_000,  'Hóc Môn, TP.HCM', 55);
+  if (/củ chi|cu chi/i.test(addr))                return getBase(25_000_000,  'Củ Chi, TP.HCM', 52);
+  if (/cần giờ|can gio/i.test(addr))              return getBase(20_000_000,  'Cần Giờ, TP.HCM', 50);
+  if (/bình thạnh|binh thanh/i.test(addr))        return getBase(120_000_000, 'Bình Thạnh, TP.HCM', 62);
+  if (/phú nhuận|phu nhuan/i.test(addr))          return getBase(150_000_000, 'Phú Nhuận, TP.HCM', 62);
+  if (/tân bình|tan binh/i.test(addr))            return getBase(100_000_000, 'Tân Bình, TP.HCM', 62);
+  if (/tân phú|tan phu/i.test(addr))              return getBase(80_000_000,  'Tân Phú, TP.HCM', 60);
+  if (/gò vấp|go vap/i.test(addr))                return getBase(75_000_000,  'Gò Vấp, TP.HCM', 60);
+  if (/thủ đức|thu duc/i.test(addr))              return getBase(65_000_000,  'Thủ Đức, TP.HCM', 60);
+  if (/bình dương|binh duong/i.test(addr))        return getBase(45_000_000,  'Bình Dương', 57);
+  if (/hcm|hồ chí minh|ho chi minh|sài gòn|saigon/i.test(addr)) return getBase(100_000_000, 'TP.HCM (trung bình)', 55);
 
-  return { price: 25_000_000, region: 'Tỉnh/Thành khác', confidence: 42 };
+  // ── Hà Nội ───────────────────────────────────────────────────────────────
+  if (/hoàn kiếm|hoan kiem/i.test(addr))           return getBase(300_000_000, 'Hoàn Kiếm, Hà Nội', 62);
+  if (/ba đình|ba dinh/i.test(addr))               return getBase(220_000_000, 'Ba Đình, Hà Nội', 62);
+  if (/đống đa|dong da/i.test(addr))               return getBase(180_000_000, 'Đống Đa, Hà Nội', 62);
+  if (/hai bà trưng|hai ba trung/i.test(addr))     return getBase(170_000_000, 'Hai Bà Trưng, Hà Nội', 62);
+  if (/cầu giấy|cau giay/i.test(addr))             return getBase(120_000_000, 'Cầu Giấy, Hà Nội', 60);
+  if (/tây hồ|tay ho/i.test(addr))                 return getBase(130_000_000, 'Tây Hồ, Hà Nội', 60);
+  if (/thanh xuân|thanh xuan/i.test(addr))         return getBase(100_000_000, 'Thanh Xuân, Hà Nội', 60);
+  if (/hoàng mai|hoang mai/i.test(addr))           return getBase(75_000_000,  'Hoàng Mai, Hà Nội', 58);
+  if (/nam từ liêm|nam tu liem|bắc từ liêm|bac tu liem/i.test(addr)) return getBase(85_000_000, 'Từ Liêm, Hà Nội', 58);
+  if (/long biên|long bien/i.test(addr))           return getBase(70_000_000,  'Long Biên, Hà Nội', 58);
+  if (/hà đông|ha dong/i.test(addr))               return getBase(60_000_000,  'Hà Đông, Hà Nội', 57);
+  if (/gia lâm|gia lam/i.test(addr))               return getBase(55_000_000,  'Gia Lâm, Hà Nội', 55);
+  if (/đông anh|dong anh/i.test(addr))             return getBase(50_000_000,  'Đông Anh, Hà Nội', 55);
+  if (/hà nội|hanoi|ha noi/i.test(addr))           return getBase(110_000_000, 'Hà Nội (trung bình)', 52);
+
+  // ── Thành phố trực thuộc TW & tỉnh lớn ──────────────────────────────────
+  if (/đà nẵng|da nang/i.test(addr))               return getBase(75_000_000,  'Đà Nẵng', 55);
+  if (/ngũ hành sơn|ngu hanh son/i.test(addr))     return getBase(55_000_000,  'Ngũ Hành Sơn, Đà Nẵng', 53);
+  if (/nha trang/i.test(addr))                     return getBase(60_000_000,  'Nha Trang', 53);
+  if (/cam ranh/i.test(addr))                      return getBase(25_000_000,  'Cam Ranh, Khánh Hòa', 50);
+  if (/hải phòng|hai phong/i.test(addr))           return getBase(50_000_000,  'Hải Phòng', 53);
+  if (/cần thơ|can tho/i.test(addr))               return getBase(35_000_000,  'Cần Thơ', 52);
+  if (/vũng tàu|vung tau/i.test(addr))             return getBase(50_000_000,  'Vũng Tàu', 53);
+  if (/bà rịa|ba ria/i.test(addr))                 return getBase(30_000_000,  'Bà Rịa, BR-VT', 50);
+  if (/huế|hue/i.test(addr))                       return getBase(30_000_000,  'Huế', 50);
+  if (/đà lạt|da lat/i.test(addr))                 return getBase(40_000_000,  'Đà Lạt', 52);
+  if (/buôn ma thuột|buon ma thuot|ban me thuot/i.test(addr)) return getBase(18_000_000, 'Buôn Ma Thuột', 48);
+  if (/vinh/i.test(addr))                          return getBase(22_000_000,  'Vinh, Nghệ An', 48);
+  if (/quy nhơn|quy nhon/i.test(addr))             return getBase(25_000_000,  'Quy Nhơn', 48);
+  if (/phan thiết|phan thiet/i.test(addr))         return getBase(30_000_000,  'Phan Thiết', 50);
+  if (/long an|bình phước|đồng nai|dong nai/i.test(addr)) return getBase(30_000_000, 'Khu vực lân cận HCM', 50);
+  if (/bắc ninh|bac ninh/i.test(addr))             return getBase(30_000_000,  'Bắc Ninh', 50);
+  if (/thái nguyên|thai nguyen/i.test(addr))       return getBase(20_000_000,  'Thái Nguyên', 48);
+
+  return getBase(25_000_000, 'Tỉnh/Thành khác', 42);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

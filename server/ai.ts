@@ -1195,55 +1195,107 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
             };
             const pTypeLabelSearch = pTypeLabels[resolvedPTypeForSearch] || 'Nhà phố / đất thổ cư';
 
-            const searchPrompt = `Địa chỉ cụ thể: "${address}" | Thời điểm: ${currentMonth} ${currentYear} | Loại BĐS: ${pTypeLabelSearch}
+            // ── PARALLEL DUAL SEARCH: dedicated sale search + dedicated rental search ──
+            // Two separate focused queries → better precision than one combined query
+            const saleSearchPrompt = `Địa chỉ: "${address}" | Thời điểm: ${currentMonth} ${currentYear} | Loại BĐS: ${pTypeLabelSearch}
 
-Tra cứu NGAY BÂY giá GIAO DỊCH THỰC TẾ (không phải giá rao bán) của BĐS THAM CHIẾU CHUẨN tại khu vực này:
-- Loại: ${pTypeLabelSearch}
-- Pháp lý: Sổ Hồng/Sổ Đỏ đầy đủ (loại pháp lý cao nhất)
-- Lộ giới/tiêu chuẩn tham chiếu: 4m (hẻm xe hơi chuẩn)
-- Diện tích tham chiếu: 60-100m²
+TÌM KIẾM CHUYÊN BIỆT: Giá BÁN/GIAO DỊCH THỰC TẾ (không phải rao bán)
+- Loại: ${pTypeLabelSearch} — pháp lý Sổ Hồng, lộ giới 4m chuẩn, 60-100m²
+- Nguồn: batdongsan.com.vn, cafeland.vn, cen.vn, alonhadat.com, onehousing.vn, CBRE/Savills/JLL Vietnam ${currentYear}
 
-Yêu cầu cung cấp:
-1. Giá GIAO DỊCH thực tế trung bình 1m² loại "${pTypeLabelSearch}" tại khu vực "${address}" — 6 tháng gần nhất ${currentYear}
-   (tìm kiếm từ batdongsan.com.vn, alonhadat, cafeland, cen.vn, Savills/CBRE/JLL Vietnam market reports, onehousing)
-2. Giá cho THUÊ thực tế hàng tháng của loại BĐS này tại khu vực
-3. Xu hướng giá: tăng/ổn định/giảm và biến động % so với năm ngoái
-4. Yếu tố vĩ mô ảnh hưởng đến khu vực (quy hoạch, metro, hạ tầng, tiện ích lân cận)
+Cần tìm:
+1. Giá giao dịch thực tế trung bình 1m² "${pTypeLabelSearch}" tại khu vực "${address}" — 6 tháng gần nhất ${currentYear}
+2. Khoảng giá (thấp nhất – cao nhất) từ các giao dịch thực tế tìm thấy
+3. Số lượng giao dịch/nguồn tìm thấy (ví dụ: "5 giao dịch từ 3 nguồn")
+4. Năm của dữ liệu giao dịch (${currentYear} hay năm nào?)
+5. Xu hướng giá khu vực % tăng/giảm vs năm ngoái
+6. Yếu tố quy hoạch/hạ tầng/tiện ích ảnh hưởng đến khu vực
 
-ƯU TIÊN: Số liệu giao dịch thực tế > số liệu rao bán > ước tính khu vực.
-Hệ thống AVM sẽ tự tính điều chỉnh Kd/Kp/Ka — chỉ cần giá cơ sở ĐÚNG LOẠI BĐS và khu vực.`;
+ƯU TIÊN TUYỆT ĐỐI: giá giao dịch thực tế > giá rao bán > ước tính.`;
 
-            const searchResponse = await getAiClient().models.generateContent({
-                model: GENAI_CONFIG.MODELS.WRITER,
-                contents: searchPrompt,
-                config: {
-                    systemInstruction: 'Bạn là chuyên gia định giá BĐS Việt Nam 20 năm kinh nghiệm. Nhiệm vụ: tra cứu và cung cấp giá thị trường chính xác.',
-                    tools: [{ googleSearch: {} }]
-                }
-            });
+            const rentalSearchPrompt = `Địa chỉ: "${address}" | Tháng ${currentMonth} ${currentYear} | Loại: ${pTypeLabelSearch}
 
-            const marketContext = searchResponse.text || '';
+TÌM KIẾM CHUYÊN BIỆT: Giá THUÊ thực tế hiện tại
+- Loại: ${pTypeLabelSearch} tại "${address}", diện tích ${area}m²
+- Nguồn: batdongsan.com.vn/cho-thue, homedy.com, muaban.net, nha.com.vn
 
-            // ── STEP 2: Extract structured data from market context ───────────────
-            // Schema asks for marketBasePrice, rent estimate, property type, location factors
+Cần tìm:
+1. Giá thuê trung bình tháng (triệu VNĐ/tháng) cho ${pTypeLabelSearch} ${area}m² tại "${address}"
+2. Khoảng giá thuê (thấp – cao) ghi nhận thực tế
+3. Tỷ suất cho thuê thực tế gross yield %/năm nếu có
+Chú ý: Phân biệt giá thuê nguyên căn vs thuê từng phòng.`;
+
+            // Run both searches in parallel — no sequential dependency
+            const [saleSearchRes, rentalSearchRes] = await Promise.all([
+                getAiClient().models.generateContent({
+                    model: GENAI_CONFIG.MODELS.WRITER,
+                    contents: saleSearchPrompt,
+                    config: {
+                        systemInstruction: 'Bạn là chuyên gia định giá BĐS Việt Nam. Tìm kiếm và cung cấp số liệu giá bán giao dịch thực tế chính xác nhất.',
+                        tools: [{ googleSearch: {} }]
+                    }
+                }),
+                getAiClient().models.generateContent({
+                    model: GENAI_CONFIG.MODELS.WRITER,
+                    contents: rentalSearchPrompt,
+                    config: {
+                        systemInstruction: 'Bạn là chuyên gia thị trường cho thuê BĐS Việt Nam. Tìm kiếm giá thuê thực tế hiện hành.',
+                        tools: [{ googleSearch: {} }]
+                    }
+                })
+            ]);
+
+            const saleContext   = saleSearchRes.text   || '';
+            const rentalContext = rentalSearchRes.text || '';
+            // Combine both contexts for extraction
+            const marketContext = `=== DỮ LIỆU GIÁ BÁN (từ tìm kiếm chuyên biệt) ===\n${saleContext}\n\n=== DỮ LIỆU GIÁ THUÊ (từ tìm kiếm chuyên biệt) ===\n${rentalContext}`;
+
+            // ── STEP 2: Extract structured data — statistical multi-point extraction ──
             const extractSchema: Schema = {
                 type: Type.OBJECT,
                 properties: {
-                    marketBasePrice: {
+                    // ── Sale price: statistical triple (min/median/max) ──────────────────
+                    priceMin: {
                         type: Type.NUMBER,
-                        description: "Giá trung bình 1m² (VNĐ) của BẤT ĐỘNG SẢN THAM CHIẾU CHUẨN (Sổ Hồng, 4m road, 60-100m²). Ví dụ: 120000000 = 120 triệu/m²"
+                        description: "Giá THẤP NHẤT giao dịch thực tế 1m² tìm thấy (VNĐ/m²). Nếu chỉ có 1 số liệu, để bằng priceMedian. Ví dụ: 90000000 = 90 triệu/m²"
+                    },
+                    priceMedian: {
+                        type: Type.NUMBER,
+                        description: "Giá TRUNG VỊ/TRUNG BÌNH giao dịch thực tế 1m² (VNĐ/m²) — ĐÂY LÀ SỐ LIỆU ĐỊNH GIÁ CHÍNH. BĐS tham chiếu chuẩn: Sổ Hồng, lộ giới 4m, 60-100m². Ví dụ: 120000000 = 120 triệu/m²"
+                    },
+                    priceMax: {
+                        type: Type.NUMBER,
+                        description: "Giá CAO NHẤT giao dịch thực tế 1m² tìm thấy (VNĐ/m²). Nếu chỉ có 1 số liệu, để bằng priceMedian."
+                    },
+                    sourceCount: {
+                        type: Type.NUMBER,
+                        description: "Số nguồn độc lập tìm thấy dữ liệu giá bán (1-10). Ví dụ: batdongsan + cafeland + Savills = 3 nguồn."
+                    },
+                    dataRecency: {
+                        type: Type.STRING,
+                        enum: ['current_year', 'last_year', 'older'] as string[],
+                        description: "Độ mới nhất của dữ liệu giao dịch tìm thấy: current_year = trong năm hiện tại, last_year = năm ngoái, older = cũ hơn."
                     },
                     confidence: {
                         type: Type.NUMBER,
-                        description: "Độ tin cậy dữ liệu thị trường từ 0-100. Khi bạn đã tìm thấy số liệu giao dịch thực tế từ các nguồn uy tín (batdongsan, cafeland, cen.vn, market reports), trả về 95-99. Chỉ trả về < 85 khi không có dữ liệu đủ tin cậy hoặc khu vực quá hẻo lánh."
+                        description: "Độ tin cậy dữ liệu từ 0-100. 95-99: có giao dịch thực tế từ nguồn uy tín. 85-94: chỉ giá rao bán. <85: thiếu dữ liệu / khu vực hẻo lánh."
                     },
                     marketTrend: {
                         type: Type.STRING,
                         description: "Xu hướng giá ngắn gọn, ví dụ: 'Tăng 8-12%/năm', 'Ổn định', 'Giảm nhẹ 3-5%'"
                     },
-                    monthlyRentEstimate: {
+                    // ── Rental: statistical triple ────────────────────────────────────
+                    rentMin: {
                         type: Type.NUMBER,
-                        description: `Ước tính giá cho thuê hàng tháng (TRIỆU VNĐ/THÁNG) cho BĐS ${area}m² tại khu vực này. Ví dụ: 15 = 15 triệu/tháng. Đây là tiền thuê thực tế thị trường, không phải tiền triệu đồng.`
+                        description: `Giá thuê THẤP NHẤT thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}". Ví dụ: 12 = 12 triệu/tháng.`
+                    },
+                    rentMedian: {
+                        type: Type.NUMBER,
+                        description: `Giá thuê TRUNG BÌNH thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}" — SỐ LIỆU THU NHẬP CHÍNH. Ví dụ: 18 = 18 triệu/tháng.`
+                    },
+                    rentMax: {
+                        type: Type.NUMBER,
+                        description: `Giá thuê CAO NHẤT thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}". Ví dụ: 25 = 25 triệu/tháng.`
                     },
                     propertyTypeEstimate: {
                         type: Type.STRING,
@@ -1264,23 +1316,31 @@ Hệ thống AVM sẽ tự tính điều chỉnh Kd/Kp/Ka — chỉ cần giá c
                         }
                     }
                 },
-                required: ["marketBasePrice", "confidence", "marketTrend", "monthlyRentEstimate", "propertyTypeEstimate", "locationFactors"]
+                required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors"]
             };
 
-            const extractPrompt = `Khu vực cụ thể: "${address}" | Diện tích: ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legal}
+            const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}
 
-DỮ LIỆU THỊ TRƯỜNG VỪA TRA CỨU:
+DỮ LIỆU THỊ TRƯỜNG VỪA TRA CỨU (2 nguồn song song — giá bán + giá thuê):
 ${marketContext}
 
 TRÍCH XUẤT CHÍNH XÁC:
-- marketBasePrice: Giá GIAO DỊCH THỰC TẾ trung bình 1m² của BĐS tham chiếu chuẩn (Sổ Hồng, hẻm 4m, 60-100m²) tại đúng khu vực "${address}".
-  QUAN TRỌNG: Đây là giá CƠ SỞ THAM CHIẾU trước khi AVM điều chỉnh Kd/Kp/Ka. Nếu lộ giới thực tế khác 4m, trả về giá chuẩn 4m.
-  Đơn vị: VNĐ/m² (ví dụ 150000000 = 150 triệu/m²).
-- confidence: 95-99 nếu có dữ liệu giao dịch thực tế từ nguồn uy tín; 85-94 nếu chỉ có giá rao bán; <85 nếu thiếu dữ liệu.
-- marketTrend: Xu hướng giá khu vực (ví dụ "Tăng 10-15%/năm do quy hoạch Metro", "Ổn định 2-3%/năm", "Giảm nhẹ 3%").
-- monthlyRentEstimate: Giá cho thuê thực tế thị trường (triệu VNĐ/tháng) cho diện tích ${area}m² tại "${address}".
-- propertyTypeEstimate: Loại BĐS phù hợp nhất dựa vào địa chỉ và ngữ cảnh.
-- locationFactors: 2-3 yếu tố VĨ MÔ KHU VỰC ảnh hưởng giá (KHÔNG lặp pháp lý/lộ giới/diện tích đã có trong AVM).`;
+
+GIÁ BÁN (từ phần DỮ LIỆU GIÁ BÁN):
+- priceMin, priceMedian, priceMax: Khoảng giá giao dịch thực tế 1m² của BĐS tham chiếu chuẩn (Sổ Hồng, hẻm 4m, 60-100m²) tại "${address}".
+  Đơn vị: VNĐ/m² (150000000 = 150 triệu/m²). Nếu chỉ có 1 con số → priceMin = priceMax = priceMedian.
+  QUAN TRỌNG: Giá cơ sở tham chiếu 4m (AVM tự điều chỉnh Kd/Kp/Ka sau).
+- sourceCount: Đếm số nguồn độc lập cung cấp dữ liệu giá bán.
+- dataRecency: Dữ liệu từ năm nào? current_year / last_year / older.
+- confidence: 95-99 nếu có giao dịch thực tế đa nguồn; 85-94 nếu chỉ rao bán; <85 nếu ít data.
+- marketTrend: Xu hướng % tăng/giảm khu vực (ví dụ "Tăng 10-15%/năm do Metro").
+
+GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
+- rentMin, rentMedian, rentMax: Khoảng giá thuê nguyên căn thực tế (triệu/tháng) cho diện tích ${area}m² tại "${address}".
+  Ví dụ: 18 = 18 triệu/tháng. Nếu chỉ 1 con số → cả 3 bằng nhau.
+
+- propertyTypeEstimate: Loại BĐS phù hợp nhất.
+- locationFactors: 2-3 yếu tố VĨ MÔ KHU VỰC (KHÔNG lặp pháp lý/lộ giới/diện tích).`;
 
             const extractResponse = await getAiClient().models.generateContent({
                 // Use Pro for structured extraction — better at following exact schema rules
@@ -1295,39 +1355,69 @@ TRÍCH XUẤT CHÍNH XÁC:
 
             const aiData = JSON.parse(extractResponse.text || '{}');
 
-            // ── Price sanity check against regional baseline ─────────────────────
-            // Tighten the plausible range: 0.5× – 2.5× regional baseline.
-            // Special override for ultra-prime districts where 2.5× isn't enough.
+            // ── Statistical price triple → use median as primary ──────────────────
+            const priceMin: number    = aiData.priceMin    || 0;
+            const priceMedian: number = aiData.priceMedian || 0;
+            const priceMax: number    = aiData.priceMax    || 0;
+            const rawAiPrice: number  = priceMedian || priceMin || priceMax || 0;
+
+            // Price spread ratio — wider spread = less data precision
+            const spreadRatio = (priceMax > 0 && priceMin > 0 && priceMedian > 0)
+                ? (priceMax - priceMin) / priceMedian
+                : 0;
+            const spreadPenalty = spreadRatio > 0.50 ? 8
+                                : spreadRatio > 0.30 ? 4
+                                : spreadRatio > 0.20 ? 2
+                                : 0;
+
+            // Source count bonus (0-4 pts)
+            const sourceCount: number = Math.min(10, Math.max(1, aiData.sourceCount || 1));
+            const sourceBonus = Math.min(4, Math.round((sourceCount - 1) * 1.5));
+
+            // Recency penalty
+            const dataRecency: string = aiData.dataRecency || 'current_year';
+            const recencyPenalty = dataRecency === 'older' ? 5 : dataRecency === 'last_year' ? 2 : 0;
+
+            // ── Sanity check against property-type-aware regional baseline ────────
+            // Critical fix: pass propertyType so apartments get type-adjusted baseline
             const { getRegionalBasePrice } = await import('./valuationEngine');
-            const regional = getRegionalBasePrice(address);
-            const rawAiPrice: number = aiData.marketBasePrice || regional.price;
+            const resolvedPropertyType = (propertyType || aiData.propertyTypeEstimate || 'townhouse_center') as import('./valuationEngine').PropertyType;
+            const regional = getRegionalBasePrice(address, resolvedPropertyType);
             const regionRef = regional.price;
 
-            // Prime districts (Q1 HN, Hoàn Kiếm, Ba Đình) allow higher ceiling
+            // Prime districts allow higher ceiling
             const addrLower = address.toLowerCase();
             const isPrimeDist = /quận 1\b|q\.?1\b|hoàn kiếm|ba đình|ba dinh|district 1/i.test(addrLower);
-            const priceLow  = regionRef * 0.50;                      // floor: 50% of regional
+            const priceLow  = regionRef * 0.45;                      // floor: 45% of type-adjusted regional
             const priceHigh = regionRef * (isPrimeDist ? 3.5 : 2.5); // ceiling: 2.5× (3.5× prime)
 
-            let marketBasePrice = rawAiPrice;
+            let marketBasePrice = rawAiPrice || regionRef;
             let sanityBlended = false;
-            if (rawAiPrice < priceLow || rawAiPrice > priceHigh) {
+            if (rawAiPrice > 0 && (rawAiPrice < priceLow || rawAiPrice > priceHigh)) {
                 // AI price is implausible — blend 60% regional + 40% AI as a guard
                 marketBasePrice = Math.round(regionRef * 0.60 + rawAiPrice * 0.40);
                 sanityBlended = true;
+            } else if (rawAiPrice === 0) {
+                // No AI price found — fall back to regional baseline entirely
+                marketBasePrice = regionRef;
+                sanityBlended = true;
             }
 
-            // Confidence logic:
-            // • Price passed sanity → trust grounding data → floor 95
-            // • Price failed sanity (blended) → AI may have hallucinated → use raw AI confidence (no boost)
-            const rawAiConfidence = Math.min(100, Math.max(0, aiData.confidence || 95));
+            // ── Confidence: raw AI signal adjusted by spread/source/recency ───────
+            // • Sanity passed → floor 93 (was 95, lowered to allow spread/recency to pull it down fairly)
+            // • Sanity blended → cap 88 regardless
+            const rawAiConfidence = Math.min(100, Math.max(0, aiData.confidence || 90));
+            const adjustedConfidence = rawAiConfidence - spreadPenalty + sourceBonus - recencyPenalty;
             const confidence = sanityBlended
-                ? Math.min(rawAiConfidence, 88)              // cap at 88 if price was blended
-                : Math.max(95, rawAiConfidence);             // floor 95 if price was plausible
+                ? Math.min(adjustedConfidence, 88)
+                : Math.max(93, Math.min(100, adjustedConfidence));
+
             const marketTrend = aiData.marketTrend || 'Đang cập nhật';
             const locationFactors = aiData.locationFactors || [];
-            const monthlyRent: number = aiData.monthlyRentEstimate || 0;
-            const resolvedPropertyType = (propertyType || aiData.propertyTypeEstimate || 'townhouse_center') as import('./valuationEngine').PropertyType;
+
+            // Use rentMedian as primary income approach input (more precise than single estimate)
+            const rentMedian: number = aiData.rentMedian || aiData.rentMin || 0;
+            const monthlyRent: number = rentMedian;
 
             // ── STEP 3: Apply AVM (Comps) + Income Approach + Reconciliation ──────
             // Use user-provided monthlyRent override if given, otherwise use AI estimate
