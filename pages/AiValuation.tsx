@@ -25,6 +25,29 @@ const ICONS = {
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 
+// --- GUEST QUOTA ---
+const GUEST_DAILY_LIMIT = 3;
+const GUEST_LS_KEY = 'sgs_guest_val';
+
+interface GuestValRecord { count: number; date: string }
+
+function todayStr(): string {
+    return new Date().toISOString().slice(0, 10);
+}
+function readGuestVal(): GuestValRecord {
+    try {
+        const raw = localStorage.getItem(GUEST_LS_KEY);
+        if (!raw) return { count: 0, date: todayStr() };
+        const parsed: GuestValRecord = JSON.parse(raw);
+        return parsed.date === todayStr() ? parsed : { count: 0, date: todayStr() };
+    } catch {
+        return { count: 0, date: todayStr() };
+    }
+}
+function writeGuestVal(v: GuestValRecord): void {
+    try { localStorage.setItem(GUEST_LS_KEY, JSON.stringify(v)); } catch { /* ignore */ }
+}
+
 // --- SIMULATED AI ENGINE ---
 const ANALYSIS_STEPS = [
     "SGS Neural Engine™ đang khởi động...",
@@ -37,6 +60,8 @@ const ANALYSIS_STEPS = [
 export const AiValuation: React.FC = () => {
     const { t, formatCurrency } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [guestUsed, setGuestUsed] = useState(0);
+    const [showGuestGate, setShowGuestGate] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
     const notify = (msg: string, type: 'success' | 'error' = 'error') => {
@@ -45,7 +70,12 @@ export const AiValuation: React.FC = () => {
     };
 
     useEffect(() => {
-        db.getCurrentUser().then(setCurrentUser);
+        db.getCurrentUser().then((user) => {
+            setCurrentUser(user);
+            if (!user) {
+                setGuestUsed(readGuestVal().count);
+            }
+        });
     }, []);
 
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
@@ -108,6 +138,15 @@ export const AiValuation: React.FC = () => {
 
     // --- LOGIC: SIMULATE AVM CALCULATION ---
     const runCalculation = async () => {
+        // Guest quota gate — check BEFORE switching to ANALYZING step
+        if (!currentUser) {
+            const v = readGuestVal();
+            if (v.count >= GUEST_DAILY_LIMIT) {
+                setShowGuestGate(true);
+                return;
+            }
+        }
+
         if (intervalRef.current) clearInterval(intervalRef.current);
         setStep('ANALYZING');
         setProgress(0);
@@ -188,6 +227,13 @@ export const AiValuation: React.FC = () => {
         setTimeout(() => {
             calculateResults(aiResult, areaNum, roadNum);
             setStep('RESULT');
+            // Increment guest daily usage counter after a successful valuation
+            if (!currentUser) {
+                const v = readGuestVal();
+                const updated: GuestValRecord = { count: v.count + 1, date: todayStr() };
+                writeGuestVal(updated);
+                setGuestUsed(updated.count);
+            }
         }, 500);
     };
 
@@ -266,9 +312,25 @@ export const AiValuation: React.FC = () => {
                         <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 shrink-0" />
                         <span className="font-bold text-sm sm:text-lg tracking-wider hidden sm:inline truncate">SGS <span className="text-emerald-400">NEURAL ENGINE™</span></span>
                     </div>
-                    <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-emerald-500 text-[var(--text-primary)] font-bold rounded-xl hover:bg-emerald-400 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
-                        {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                        {!currentUser && (
+                            <span
+                                className={`hidden sm:inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium border cursor-default select-none transition-colors ${
+                                    guestUsed >= GUEST_DAILY_LIMIT
+                                        ? 'bg-rose-900/40 border-rose-700/50 text-rose-300'
+                                        : 'bg-slate-800 border-slate-700 text-slate-400'
+                                }`}
+                                title="Lượt định giá miễn phí trong ngày"
+                            >
+                                {guestUsed >= GUEST_DAILY_LIMIT
+                                    ? 'Hết lượt hôm nay'
+                                    : `Còn ${GUEST_DAILY_LIMIT - guestUsed}/${GUEST_DAILY_LIMIT} lượt`}
+                            </span>
+                        )}
+                        <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-emerald-500 text-[var(--text-primary)] font-bold rounded-xl hover:bg-emerald-400 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] whitespace-nowrap">
+                            {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -821,6 +883,42 @@ export const AiValuation: React.FC = () => {
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             ) : null,
+            document.body
+        )}
+        {showGuestGate && createPortal(
+            <div className="fixed inset-0 z-[300] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowGuestGate(false)}>
+                <div
+                    className="max-w-sm w-full bg-slate-800 border border-slate-700 rounded-2xl p-7 flex flex-col items-center gap-5 text-center shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-bold text-white">Đã dùng hết {GUEST_DAILY_LIMIT} lượt miễn phí hôm nay</h2>
+                        <p className="text-sm text-slate-400 mt-2 leading-relaxed">
+                            Đăng nhập để định giá không giới hạn và truy cập đầy đủ tính năng SGS Land CRM bất động sản.
+                        </p>
+                    </div>
+                    <div className="flex flex-col gap-2.5 w-full">
+                        <button
+                            onClick={() => { window.location.hash = `#/${ROUTES.LOGIN}`; }}
+                            className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 active:scale-95 transition-all"
+                        >
+                            Đăng nhập / Đăng ký miễn phí
+                        </button>
+                        <button
+                            onClick={() => setShowGuestGate(false)}
+                            className="w-full py-2.5 bg-slate-700/60 text-slate-400 text-sm rounded-xl hover:bg-slate-700 transition-colors"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                    <p className="text-xs text-slate-600">Lượt định giá miễn phí reset mỗi ngày lúc 00:00</p>
+                </div>
+            </div>,
             document.body
         )}
         </>

@@ -46,7 +46,7 @@ import { marketDataService } from "./server/services/marketDataService";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
-import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit } from "./server/middleware/rateLimiter";
+import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit } from "./server/middleware/rateLimiter";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
@@ -186,6 +186,22 @@ async function startServer() {
       if (user?.tenantId) (req as any).tenantId = user.tenantId;
       next();
     });
+  };
+
+  // Optional auth — silently populates req.user if a valid token is present, never rejects.
+  const optionalAuth = (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    const token = req.cookies?.token;
+    if (token) {
+      jwt.verify(token, JWT_SECRET, (_err: any, user: any) => {
+        if (user) {
+          (req as any).user = user;
+          if (user.tenantId) (req as any).tenantId = user.tenantId;
+        }
+        next();
+      });
+    } else {
+      next();
+    }
   };
 
   const cookieOptions: any = {
@@ -650,7 +666,10 @@ async function startServer() {
     }
   });
 
-  app.post("/api/ai/valuation", aiRateLimit, validateBody(schemas.aiValuation), async (req, res) => {
+  app.post("/api/ai/valuation", optionalAuth, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const limiter = (req as any).user ? aiRateLimit : guestValuationRateLimit;
+    return limiter(req, res, next);
+  }, validateBody(schemas.aiValuation), async (req, res) => {
     try {
       const {
         address, area, roadWidth, legal, propertyType,
