@@ -2,9 +2,10 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { db } from '../services/dbApi';
-import { Listing, PropertyType } from '../types';
+import { Listing } from '../types';
 import { useTranslation } from '../services/i18n';
 import { ListingCard } from '../components/ListingCard';
+import { Dropdown } from '../components/Dropdown';
 import { ROUTES } from '../config/routes';
 import { ConfirmModal } from '../components/ConfirmModal';
 
@@ -114,14 +115,19 @@ export const Favorites: React.FC = () => {
         return Array.from(types) as string[];
     }, [allFavorites]);
 
+    const sortOptions = useMemo(() =>
+        SORT_KEYS.map(o => ({ value: o.value, label: t(o.key) })),
+    [t]);
+
     return (
         <>
         <div className="p-4 sm:p-6 h-full flex flex-col pb-20 animate-enter relative">
 
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-6">
                 <div className="flex flex-wrap items-center justify-between gap-2">
+                    {/* Fix 1: Correct count label grammar */}
                     <span className="text-sm font-bold text-indigo-600">
-                        {filtered.length}{filterType !== 'ALL' ? ` / ${allFavorites.length}` : ''} {t('favorites.title')}
+                        {filtered.length}{filterType !== 'ALL' ? ` / ${allFavorites.length}` : ''} {t('favorites.count_label')}
                     </span>
                     {allFavorites.length > 0 && (
                         <div className="flex flex-wrap items-center gap-2">
@@ -144,15 +150,13 @@ export const Favorites: React.FC = () => {
                                     ))}
                                 </div>
                             )}
-                            <select
+                            {/* Fix 3: Replace <select> with Dropdown component */}
+                            <Dropdown
                                 value={sortBy}
-                                onChange={e => setSortBy(e.target.value)}
-                                className="px-3 py-2 min-h-[36px] rounded-lg text-xs font-bold border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] focus:outline-none focus:border-indigo-400 cursor-pointer"
-                            >
-                                {SORT_KEYS.map(o => (
-                                    <option key={o.value} value={o.value}>{t(o.key)}</option>
-                                ))}
-                            </select>
+                                onChange={(val) => setSortBy(val as string)}
+                                options={sortOptions}
+                                className="min-w-[180px]"
+                            />
                         </div>
                     )}
                 </div>
@@ -172,13 +176,14 @@ export const Favorites: React.FC = () => {
                                 key={item.id}
                                 className={`min-h-full transition-all duration-300 ${removedIds.has(item.id) ? 'opacity-0 scale-90' : 'opacity-100 scale-100'}`}
                             >
+                                {/* Fix 2: Wire heart button → ConfirmModal (was dead code) */}
                                 <ListingCard
                                     item={item}
                                     t={t}
                                     formatCurrency={formatCurrency}
-                                    onToggleFavorite={performRemoval}
+                                    onToggleFavorite={(id) => setItemToDelete(id)}
                                     onEdit={() => {}}
-                                    onDelete={() => setItemToDelete(item.id)}
+                                    onDelete={(id) => setItemToDelete(id)}
                                     onClick={() => handleNavigate(item.id)}
                                     showActions={false}
                                 />
@@ -239,6 +244,7 @@ export const Favorites: React.FC = () => {
                 )}
             </div>
 
+            {/* ConfirmModal — now properly triggered by both heart button and delete action */}
             <ConfirmModal
                 isOpen={!!itemToDelete}
                 title={t('favorites.remove')}

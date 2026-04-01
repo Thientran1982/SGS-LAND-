@@ -924,6 +924,7 @@ export const DICTIONARY = {
         "favorites.load_error": "Không thể tải danh sách quan tâm",
         "favorites.remove_error": "Xóa thất bại, vui lòng thử lại",
         "favorites.remove_confirm": "Bỏ BĐS này khỏi danh sách quan tâm? BĐS sẽ không bị xóa, chỉ bị bỏ khỏi danh sách của bạn.",
+        "favorites.count_label": "BĐS quan tâm",
 
         "proposal.btn_create": "Tạo Báo Giá",
         "proposal.error_create": "Lỗi khi tạo báo giá",
@@ -3018,6 +3019,7 @@ export const DICTIONARY = {
         "favorites.load_error": "Unable to load watchlist",
         "favorites.remove_error": "Remove failed, please try again",
         "favorites.remove_confirm": "Remove this property from your watchlist? The property will not be deleted — it will only be removed from your list.",
+        "favorites.count_label": "saved properties",
 
         "proposal.btn_create": "Create Quote",
         "proposal.error_create": "Error creating quote",
