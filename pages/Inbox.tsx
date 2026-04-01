@@ -644,10 +644,8 @@ export const Inbox: React.FC = () => {
                             </div>
                         )}
                     </div>
-                    {/* Filter row — Mobile: two compact dropdowns | Desktop: chip pills */}
-
-                    {/* ── MOBILE dropdown row ── */}
-                    <div className="flex md:hidden gap-2">
+                    {/* Filter row — dropdowns on all screen sizes */}
+                    <div className="flex gap-2">
                         <InboxDropdown<'ALL' | 'UNREAD'>
                             value={statusFilter}
                             onChange={setStatusFilter}
@@ -674,58 +672,6 @@ export const Inbox: React.FC = () => {
                         />
                     </div>
 
-                    {/* ── DESKTOP chip pills ── */}
-                    <div className="hidden md:flex md:flex-wrap gap-1.5">
-                        {([
-                            { key: 'ALL'   as const, label: t('inbox.filter_all')    },
-                            { key: 'UNREAD'as const, label: t('inbox.filter_unread') },
-                        ]).map(({ key, label }) => (
-                            <button
-                                key={key}
-                                onClick={() => setStatusFilter(key)}
-                                className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[24px] ${
-                                    statusFilter === key
-                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                                        : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300 hover:text-indigo-600'
-                                }`}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                        <div className="w-px bg-[var(--glass-border)] self-stretch mx-0.5" />
-                        {([
-                            { key: 'ALL'            as const, label: t('inbox.filter_all')  },
-                            { key: Channel.WEB               , label: t('inbox.channel_web') },
-                            { key: Channel.ZALO              , label: 'Zalo'                 },
-                            { key: Channel.FACEBOOK          , label: 'Facebook'             },
-                            { key: Channel.EMAIL             , label: 'Email'                },
-                            { key: Channel.SMS               , label: 'SMS'                  },
-                            { key: Channel.WEBHOOK           , label: 'Webhook'              },
-                            { key: Channel.VOICE             , label: channelLabel(Channel.VOICE) },
-                        ]).map(({ key, label }) => {
-                            const active = channelFilter === key;
-                            const colorMap: Record<string, { on: string; off: string }> = {
-                                ZALO:     { on: 'bg-blue-600 text-white border-blue-600',     off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-blue-300 hover:text-blue-600' },
-                                FACEBOOK: { on: 'bg-[#1877F2] text-white border-[#1877F2]',  off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-blue-400 hover:text-[#1877F2]' },
-                                EMAIL:    { on: 'bg-indigo-600 text-white border-indigo-600', off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600' },
-                                SMS:      { on: 'bg-emerald-600 text-white border-emerald-600',off:'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-emerald-300 hover:text-emerald-600' },
-                                WEB:      { on: 'bg-violet-600 text-white border-violet-600', off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-violet-300 hover:text-violet-600' },
-                                WEBHOOK:  { on: 'bg-slate-600 text-white border-slate-600',   off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-slate-400 hover:text-slate-600' },
-                                VOICE:    { on: 'bg-amber-500 text-white border-amber-500',   off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-amber-400 hover:text-amber-600' },
-                                ALL:      { on: 'bg-indigo-600 text-white border-indigo-600', off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600' },
-                            };
-                            const c = colorMap[key] ?? colorMap['ALL'];
-                            return (
-                                <button
-                                    key={key}
-                                    onClick={() => setChannelFilter(key)}
-                                    className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[24px] bg-[var(--glass-surface)] ${active ? c.on + ' shadow-sm' : c.off}`}
-                                >
-                                    {label}
-                                </button>
-                            );
-                        })}
-                    </div>
                 </div>
                 <div className="flex-1 overflow-y-auto no-scrollbar">
                     {loadingThreads && threads.length === 0 ? (
