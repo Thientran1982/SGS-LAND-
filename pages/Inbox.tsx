@@ -750,8 +750,9 @@ export const Inbox: React.FC = () => {
                                         className="flex items-center gap-1.5 text-xs font-bold bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] rounded-lg px-2 py-1.5 min-h-[36px] hover:bg-[var(--glass-surface-hover)] transition-colors"
                                         title={t('inbox.assign_to')}
                                     >
-                                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                        <span className="hidden sm:inline truncate max-w-[80px] lg:max-w-[120px]">
+                                        {/* Mobile: icon only — Desktop/tablet: text only */}
+                                        <svg className="w-3.5 h-3.5 shrink-0 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                        <span className="hidden md:inline truncate max-w-[80px] lg:max-w-[120px]">
                                             {selectedThread.lead.assignedTo 
                                                 ? (selectedThread.lead.assignedToName || users.find((u: any) => u.id === selectedThread.lead.assignedTo)?.name || t('inbox.unassigned'))
                                                 : t('inbox.unassigned')}
@@ -796,8 +797,9 @@ export const Inbox: React.FC = () => {
                                 }`}
                                 title={t('inbox.toggle_ai')}
                             >
-                                {isAiActiveForSelected ? ICONS.ROBOT_ON : ICONS.ROBOT_OFF}
-                                <span className="hidden sm:inline">{isAiActiveForSelected ? t('inbox.auto_pilot') : t('inbox.manual')}</span>
+                                {/* Mobile: icon only — Desktop/tablet: text only */}
+                                <span className="md:hidden">{isAiActiveForSelected ? ICONS.ROBOT_ON : ICONS.ROBOT_OFF}</span>
+                                <span className="hidden md:inline">{isAiActiveForSelected ? t('inbox.auto_pilot') : t('inbox.manual')}</span>
                             </button>
 
                             {/* Delete */}
