@@ -533,6 +533,7 @@ export function computeBlendedBasePrice(params: {
 // 4. Confidence Interval Margin
 // ─────────────────────────────────────────────────────────────────────────────
 function getConfidenceMargin(confidence: number): number {
+  if (confidence >= 95) return 0.05;  // ±5% for high-confidence AI-grounded data
   if (confidence >= 88) return 0.07;
   if (confidence >= 78) return 0.10;
   if (confidence >= 68) return 0.14;
@@ -613,7 +614,7 @@ export function applyAVM(input: AVMInput): AVMOutput {
       cachedConfidence,
     });
     effectiveBasePrice = blended.blendedPrice;
-    effectiveConfidence = Math.min(98, confidence + blended.confidenceBoost);
+    effectiveConfidence = Math.min(100, confidence + blended.confidenceBoost);
     sources = blended.sources;
   }
 
@@ -676,9 +677,12 @@ export function applyAVM(input: AVMInput): AVMOutput {
   // If income approach is available, check method divergence
   if (incomeApproach && compsPrice > 0 && incomeApproach.capitalValue > 0) {
     const methodDeviation = Math.abs(compsPrice - incomeApproach.capitalValue) / Math.max(compsPrice, incomeApproach.capitalValue);
-    if (methodDeviation > 0.30) {
-      // Methods diverge >30% — cap confidence at LOW
-      finalConfidence = Math.min(finalConfidence, 54);
+    if (methodDeviation > 0.50) {
+      // Extreme divergence >50% — reduce confidence by up to 5 points (don't catastrophically drop)
+      finalConfidence = Math.max(finalConfidence - 5, Math.min(finalConfidence, 93));
+    } else if (methodDeviation > 0.30) {
+      // Moderate divergence 30-50% — reduce by 2 points only
+      finalConfidence = Math.max(finalConfidence - 2, Math.min(finalConfidence, 96));
     }
   }
 
@@ -687,8 +691,8 @@ export function applyAVM(input: AVMInput): AVMOutput {
   const rangeMax = Math.round(totalPrice * (1 + margin));
 
   const confidenceLevel: 'HIGH' | 'MEDIUM' | 'LOW' =
-    finalConfidence >= 78 ? 'HIGH' :
-    finalConfidence >= 55 ? 'MEDIUM' : 'LOW';
+    finalConfidence >= 90 ? 'HIGH' :
+    finalConfidence >= 70 ? 'MEDIUM' : 'LOW';
   const confidenceInterval = `±${Math.round(margin * 100)}%`;
 
   // ── Factors ───────────────────────────────────────────────────

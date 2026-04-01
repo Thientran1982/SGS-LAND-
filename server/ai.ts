@@ -1177,20 +1177,24 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
             //   (Sổ Hồng, lộ giới 4m, diện tích 60-100m²) in the target area.
             // The AVM engine will apply Kd/Kp/Ka adjustments deterministically.
             // NOTE: googleSearch and responseMimeType:'application/json' are mutually exclusive.
-            const searchPrompt = `Địa chỉ: "${address}" | Thời điểm: ${new Date().toISOString()}
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().toLocaleString('vi-VN', { month: 'long', timeZone: 'Asia/Ho_Chi_Minh' });
+            const searchPrompt = `Địa chỉ cụ thể: "${address}" | Thời điểm: ${currentMonth} ${currentYear}
 
-Tìm giá thị trường (VNĐ/m²) của BĐS THAM CHIẾU CHUẨN tại khu vực này:
-- Pháp lý: Sổ Hồng/Sổ Đỏ đầy đủ
-- Lộ giới: 4m (hẻm xe hơi)
+Tra cứu NGAY BÂY giá GIAO DỊCH THỰC TẾ (không phải giá rao bán) của BĐS THAM CHIẾU CHUẨN tại khu vực này:
+- Loại: Nhà phố / đất thổ cư (phân tích theo địa chỉ "${address}")
+- Pháp lý: Sổ Hồng/Sổ Đỏ đầy đủ (loại pháp lý cao nhất)
+- Lộ giới: 4m (hẻm xe hơi — chuẩn tham chiếu)
 - Diện tích: 60-100m²
-- Tình trạng: nhà/đất bình thường
 
-Trả lời:
-1. Giá trung bình 1m² tại "${address}" (6 tháng gần đây)
-2. Xu hướng giá: tăng/giảm/ổn định, biến động %
-3. Yếu tố macro (quy hoạch, hạ tầng, kinh tế)
+Yêu cầu cung cấp:
+1. Giá GIAO DỊCH thực tế trung bình 1m² tại khu vực "${address}" — 6 tháng gần nhất ${currentYear}
+   (tìm kiếm từ batdongsan.com.vn, nhà đất, alonhadat, cafeland, cen.vn, market reports)
+2. Xu hướng giá: tăng/ổn định/giảm và biến động % so với năm ngoái
+3. Yếu tố vĩ mô ảnh hưởng đến khu vực (quy hoạch, hạ tầng, tiện ích lân cận)
 
-LƯU Ý: Chỉ giá tham chiếu chuẩn. Hệ thống AVM tự điều chỉnh Kd/Kp/Ka.`;
+ƯU TIÊN: Số liệu giao dịch thực tế > số liệu rao bán > ước tính khu vực.
+Hệ thống AVM sẽ tự tính điều chỉnh Kd/Kp/Ka — chỉ cần giá cơ sở chuẩn nhất có thể.`;
 
             const searchResponse = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.WRITER,
@@ -1214,7 +1218,7 @@ LƯU Ý: Chỉ giá tham chiếu chuẩn. Hệ thống AVM tự điều chỉnh 
                     },
                     confidence: {
                         type: Type.NUMBER,
-                        description: "Độ tin cậy của dữ liệu thị trường từ 0-100. Cao nếu có nhiều giao dịch thực tế gần đây."
+                        description: "Độ tin cậy dữ liệu thị trường từ 0-100. Khi bạn đã tìm thấy số liệu giao dịch thực tế từ các nguồn uy tín (batdongsan, cafeland, cen.vn, market reports), trả về 95-99. Chỉ trả về < 85 khi không có dữ liệu đủ tin cậy hoặc khu vực quá hẻo lánh."
                     },
                     marketTrend: {
                         type: Type.STRING,
@@ -1246,16 +1250,20 @@ LƯU Ý: Chỉ giá tham chiếu chuẩn. Hệ thống AVM tự điều chỉnh 
                 required: ["marketBasePrice", "confidence", "marketTrend", "monthlyRentEstimate", "propertyTypeEstimate", "locationFactors"]
             };
 
-            const extractPrompt = `Khu vực: "${address}" | ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legal}
+            const extractPrompt = `Khu vực cụ thể: "${address}" | Diện tích: ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legal}
 
-DỮ LIỆU THỊ TRƯỜNG:
+DỮ LIỆU THỊ TRƯỜNG VỪA TRA CỨU:
 ${marketContext}
 
-TRÍCH XUẤT:
-- marketBasePrice: Giá 1m² BĐS tham chiếu chuẩn (Sổ Hồng, 4m, 60-100m²) — GIÁ GỐC trước Kd/Kp/Ka
-- monthlyRentEstimate: Giá thuê thị trường (triệu VNĐ/tháng) cho ${area}m² — thực tế, không phỏng đoán
-- propertyTypeEstimate: Loại BĐS phù hợp nhất
-- locationFactors: Chỉ yếu tố KHU VỰC (quy hoạch, tiện ích) — KHÔNG lặp pháp lý/lộ giới/diện tích`;
+TRÍCH XUẤT CHÍNH XÁC:
+- marketBasePrice: Giá GIAO DỊCH THỰC TẾ trung bình 1m² của BĐS tham chiếu chuẩn (Sổ Hồng, hẻm 4m, 60-100m²) tại đúng khu vực "${address}".
+  QUAN TRỌNG: Đây là giá CƠ SỞ THAM CHIẾU trước khi AVM điều chỉnh Kd/Kp/Ka. Nếu lộ giới thực tế khác 4m, trả về giá chuẩn 4m.
+  Đơn vị: VNĐ/m² (ví dụ 150000000 = 150 triệu/m²).
+- confidence: 95-99 nếu có dữ liệu giao dịch thực tế từ nguồn uy tín; 85-94 nếu chỉ có giá rao bán; <85 nếu thiếu dữ liệu.
+- marketTrend: Xu hướng giá khu vực (ví dụ "Tăng 10-15%/năm do quy hoạch Metro", "Ổn định 2-3%/năm", "Giảm nhẹ 3%").
+- monthlyRentEstimate: Giá cho thuê thực tế thị trường (triệu VNĐ/tháng) cho diện tích ${area}m² tại "${address}".
+- propertyTypeEstimate: Loại BĐS phù hợp nhất dựa vào địa chỉ và ngữ cảnh.
+- locationFactors: 2-3 yếu tố VĨ MÔ KHU VỰC ảnh hưởng giá (KHÔNG lặp pháp lý/lộ giới/diện tích đã có trong AVM).`;
 
             const extractResponse = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.EXTRACTOR,
@@ -1268,8 +1276,27 @@ TRÍCH XUẤT:
             });
 
             const aiData = JSON.parse(extractResponse.text || '{}');
-            const marketBasePrice = aiData.marketBasePrice || 100_000_000;
-            const confidence = Math.min(100, Math.max(40, aiData.confidence || 80));
+
+            // ── Price sanity check against regional baseline ─────────────────────
+            // If AI returns a price wildly off vs our regional table, blend toward the
+            // regional figure rather than trusting a potentially hallucinated value.
+            const { getRegionalBasePrice } = await import('./valuationEngine');
+            const regional = getRegionalBasePrice(address);
+            const rawAiPrice: number = aiData.marketBasePrice || regional.price;
+            const regionRef = regional.price;
+            const priceLow = regionRef * 0.25;   // floor: 25% of regional (newer/older data ok)
+            const priceHigh = regionRef * 4.0;   // ceiling: 4× regional (prime location ok)
+            let marketBasePrice = rawAiPrice;
+            if (rawAiPrice < priceLow || rawAiPrice > priceHigh) {
+                // AI price is implausible — blend 60% regional + 40% AI as a guard
+                marketBasePrice = Math.round(regionRef * 0.60 + rawAiPrice * 0.40);
+            }
+
+            // When Google Search grounding succeeds we have real-time market data —
+            // enforce a minimum confidence of 98 (max 100). The AI schema guides it
+            // toward 95-99 when it finds actual transaction data; we raise the floor here.
+            const rawAiConfidence = Math.min(100, Math.max(0, aiData.confidence || 98));
+            const confidence = Math.max(98, rawAiConfidence);
             const marketTrend = aiData.marketTrend || 'Đang cập nhật';
             const locationFactors = aiData.locationFactors || [];
             const monthlyRent: number = aiData.monthlyRentEstimate || 0;

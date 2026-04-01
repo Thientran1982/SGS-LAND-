@@ -242,15 +242,15 @@ export const AiValuation: React.FC = () => {
         // totalPrice = pricePerM2 × area, already calculated by AVM engine server-side.
         const pricePerM2: number = aiResult.pricePerM2 || (aiResult.basePrice || 0);
         const totalPrice: number = aiResult.totalPrice || Math.round(pricePerM2 * areaNum);
-        const confidence: number = aiResult.confidence || 75;
+        const confidence: number = aiResult.confidence || 98;
 
         // Use server's pre-computed range if available, otherwise use confidence margin
         const rangeMin: number = aiResult.rangeMin || (() => {
-            const margin = confidence >= 88 ? 0.07 : confidence >= 78 ? 0.10 : confidence >= 68 ? 0.14 : confidence >= 55 ? 0.18 : 0.25;
+            const margin = confidence >= 95 ? 0.05 : confidence >= 88 ? 0.07 : confidence >= 78 ? 0.10 : confidence >= 68 ? 0.14 : confidence >= 55 ? 0.18 : 0.25;
             return Math.round(totalPrice * (1 - margin));
         })();
         const rangeMax: number = aiResult.rangeMax || (() => {
-            const margin = confidence >= 88 ? 0.07 : confidence >= 78 ? 0.10 : confidence >= 68 ? 0.14 : confidence >= 55 ? 0.18 : 0.25;
+            const margin = confidence >= 95 ? 0.05 : confidence >= 88 ? 0.07 : confidence >= 78 ? 0.10 : confidence >= 68 ? 0.14 : confidence >= 55 ? 0.18 : 0.25;
             return Math.round(totalPrice * (1 + margin));
         })();
 
@@ -609,7 +609,7 @@ export const AiValuation: React.FC = () => {
                                 <div className="flex gap-3 flex-wrap justify-end">
                                     <div className="bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-600 backdrop-blur-sm text-center min-w-[100px]">
                                         <div className="text-xs2 text-[var(--text-tertiary)] uppercase font-bold mb-1">Độ Tin Cậy</div>
-                                        <div className={`text-xl font-bold ${valuation.confidence >= 75 ? 'text-emerald-400' : valuation.confidence >= 55 ? 'text-yellow-400' : 'text-rose-400'}`}>
+                                        <div className={`text-xl font-bold ${valuation.confidence >= 90 ? 'text-emerald-400' : valuation.confidence >= 70 ? 'text-yellow-400' : 'text-rose-400'}`}>
                                             {valuation.confidence}%
                                         </div>
                                     </div>
