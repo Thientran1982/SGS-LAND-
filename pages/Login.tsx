@@ -410,7 +410,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   };
 
   const getInputClass = useCallback((hasError: boolean) => {
-      return `w-full bg-white/5 border rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 transition-all outline-none text-white placeholder-white/25
+      return `w-full bg-white/5 border rounded-xl pl-10 pr-4 py-3 text-base focus:ring-2 transition-all outline-none text-white placeholder-white/25
       ${hasError 
           ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 bg-rose-500/5' 
           : 'border-white/10 focus:border-indigo-500/50 focus:ring-indigo-500/50 focus:bg-white/8'}`;
