@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useTranslation } from '../services/i18n';
 
@@ -88,14 +88,15 @@ const DELAYS = [
 interface LitWindowProps {
   winPts: string; haloPts: string; glarePts: string;
   hue: WinHue; speed: WinSpeed; delay: number;
+  isLaserActive: boolean;
 }
-const LitWindow: React.FC<LitWindowProps> = ({ winPts, haloPts, glarePts, hue, speed, delay }) => {
+const LitWindow = React.memo<LitWindowProps>(({ winPts, haloPts, glarePts, hue, speed, delay, isLaserActive }) => {
   const dur = CYCLE_DUR[speed];
   const { fill, glare } = WIN_COLOR[hue];
-  // Keyframes: tắt → bật nhanh → giữ sáng lâu → tắt chậm (như đèn thật)
   const opKf = [0.04, 0.90, 0.90, 0.90, 0.04];
   return (
-    <motion.g>
+    <g>
+      {/* Ambient window glow (independent blinking — người trong nhà) */}
       <motion.g filter="url(#winGlow)"
         initial={{ opacity: 0 }}
         animate={{ opacity: [0, 0.60, 0.60, 0.60, 0] }}
@@ -111,13 +112,51 @@ const LitWindow: React.FC<LitWindowProps> = ({ winPts, haloPts, glarePts, hue, s
         animate={{ opacity: [0, 0.50, 0.50, 0.50, 0] }}
         transition={{ duration: dur, delay: delay + 0.1, repeat: Infinity, ease: 'easeInOut' }}
       ><polygon points={glarePts} fill={glare} /></motion.g>
-    </motion.g>
+
+      {/* Laser scan flash — emerald burst khi laser quét qua hàng này */}
+      {isLaserActive && (
+        <motion.g
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0.55, 1, 0.55] }}
+          transition={{ duration: 0.25, repeat: Infinity, ease: 'linear' }}
+        >
+          <polygon points={haloPts} fill="#34D399" filter="url(#winGlow)" />
+          <polygon points={winPts} fill="#6EE7B7" opacity="0.85" />
+          <polygon points={glarePts} fill="#fff" opacity="0.7" />
+        </motion.g>
+      )}
+    </g>
   );
-};
+});
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────
 export const Hero3D = () => {
   const { language } = useTranslation();
+
+  // ── Laser row tracker — syncs window glow with scan position ──────────
+  // Laser animation: y=[0,320,0] over 3.5s → each of 8 rows = 30px
+  // Row R is active when laserY ∈ [R×30, (R+1)×30)
+  const [laserRow, setLaserRow] = useState(-1);
+  const frameRef = useRef<number>(0);
+  useEffect(() => {
+    const PERIOD = 3500; // ms — matches motion animation duration
+    const start = performance.now();
+    const tick = (now: number) => {
+      const elapsed = (now - start) % PERIOD;
+      // 0→0.5 going down, 0.5→1 going up
+      const phase = elapsed / PERIOD;
+      const laserY = phase < 0.5 ? phase * 2 * 320 : (1 - phase) * 2 * 320;
+      const row = Math.floor(laserY / 30);
+      setLaserRow(prev => {
+        const next = row >= 0 && row <= 7 ? row : -1;
+        return prev !== next ? next : prev;
+      });
+      frameRef.current = requestAnimationFrame(tick);
+    };
+    frameRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, []);
+
   const textPrice = language === 'vn' ? '24.5 Tỷ' : '$2.45M';
   const textMatch = language === 'vn' ? 'Độ khớp 98%' : '98% Match';
   const textTrend = language === 'vn' ? '↑ +5.2% / Năm' : '↑ +5.2% YoY';
@@ -343,6 +382,7 @@ export const Hero3D = () => {
             <LitWindow key={`wl-${i}`}
               winPts={leftPoly(col, row)} haloPts={leftHaloPoly(col, row)} glarePts={leftGlarePoly(col, row)}
               hue={hue} speed={speed} delay={DELAYS[i % DELAYS.length]}
+              isLaserActive={laserRow === row}
             />
           ))}
         </g>
@@ -359,6 +399,7 @@ export const Hero3D = () => {
             <LitWindow key={`wr-${i}`}
               winPts={rightPoly(col, row)} haloPts={rightHaloPoly(col, row)} glarePts={rightGlarePoly(col, row)}
               hue={hue} speed={speed} delay={DELAYS[(i + 8) % DELAYS.length]}
+              isLaserActive={laserRow === row}
             />
           ))}
         </g>
