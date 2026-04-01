@@ -1325,15 +1325,15 @@ Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
                     // ── Rental: statistical triple ────────────────────────────────────
                     rentMin: {
                         type: Type.NUMBER,
-                        description: `Giá thuê THẤP NHẤT thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}". Ví dụ: 12 = 12 triệu/tháng.`
+                        description: `Giá thuê THẤP NHẤT thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}". ĐƠN VỊ BẮT BUỘC: triệu VNĐ/tháng. Nếu dữ liệu là USD/m²/tháng → quy đổi: USD × 25,000 VNĐ × ${area}m² ÷ 1,000,000 = số triệu. Ví dụ: 3 USD/m²/th × 25,000 × ${area}m² ÷ 1M = ${(area * 3 * 25000 / 1000000).toFixed(0)} triệu/tháng.`
                     },
                     rentMedian: {
                         type: Type.NUMBER,
-                        description: `Giá thuê TRUNG BÌNH thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}" — SỐ LIỆU THU NHẬP CHÍNH. Ví dụ: 18 = 18 triệu/tháng.`
+                        description: `Giá thuê TRUNG BÌNH thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}" — SỐ LIỆU THU NHẬP CHÍNH. ĐƠN VỊ: triệu VNĐ/tháng. Nếu dữ liệu USD/m²/th → USD × 25,000 × ${area} ÷ 1,000,000. Ví dụ kho: 4 USD/m²/th × 25,000 × ${area} ÷ 1M = ${(area * 4 * 25000 / 1000000).toFixed(0)} tr/th. Ví dụ văn phòng: USD 12/m²/th × 25,000 × ${area} ÷ 1M = ${(area * 12 * 25000 / 1000000).toFixed(0)} tr/th.`
                     },
                     rentMax: {
                         type: Type.NUMBER,
-                        description: `Giá thuê CAO NHẤT thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}". Ví dụ: 25 = 25 triệu/tháng.`
+                        description: `Giá thuê CAO NHẤT thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}". ĐƠN VỊ: triệu VNĐ/tháng. Nếu dữ liệu USD → USD × 25,000 × ${area}m² ÷ 1,000,000. Ví dụ: 30 = 30 triệu/tháng.`
                     },
                     propertyTypeEstimate: {
                         type: Type.STRING,
@@ -1374,8 +1374,13 @@ GIÁ BÁN (từ phần DỮ LIỆU GIÁ BÁN):
 - marketTrend: Xu hướng % tăng/giảm khu vực (ví dụ "Tăng 10-15%/năm do Metro").
 
 GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
-- rentMin, rentMedian, rentMax: Khoảng giá thuê nguyên căn thực tế (triệu/tháng) cho diện tích ${area}m² tại "${address}".
+- rentMin, rentMedian, rentMax: Khoảng giá thuê nguyên căn thực tế (triệu VNĐ/tháng) cho diện tích ${area}m² tại "${address}".
   Ví dụ: 18 = 18 triệu/tháng. Nếu chỉ 1 con số → cả 3 bằng nhau.
+  QUAN TRỌNG — Quy đổi đơn vị nếu dữ liệu là USD/m²/tháng (thường gặp với kho xưởng, văn phòng, KCN):
+    Công thức: giá (USD/m²/th) × 25,000 VNĐ/USD × ${area} m² ÷ 1,000,000 = triệu VNĐ/tháng
+    Ví dụ: kho 3 USD/m²/th × 25,000 × ${area} ÷ 1,000,000 = ${(area * 3 * 25000 / 1000000).toFixed(1)} tr/th
+    Ví dụ: VP hạng B 12 USD/m²/th × 25,000 × ${area} ÷ 1,000,000 = ${(area * 12 * 25000 / 1000000).toFixed(1)} tr/th
+    Đất nông nghiệp/đất KCN thuê theo năm: chia đều ra tháng, rồi tính toàn bộ ${area}m².
 
 - propertyTypeEstimate: Loại BĐS phù hợp nhất.
 - locationFactors: 2-3 yếu tố VĨ MÔ KHU VỰC (KHÔNG lặp pháp lý/lộ giới/diện tích).`;

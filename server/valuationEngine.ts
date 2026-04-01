@@ -722,10 +722,11 @@ export function applyAVM(input: AVMInput): AVMOutput {
         };
       }
       totalPrice = conservativeValue;
-      finalConfidence = Math.max(finalConfidence - 3, 90); // small penalty only
+      // Honest penalty: 50%+ divergence = rental data unreliable, cap confidence at 82
+      finalConfidence = Math.min(finalConfidence, 82);
     } else if (methodDeviation > 0.30) {
-      // Moderate divergence 30-50% — slight penalty
-      finalConfidence = Math.max(finalConfidence - 1, 94);
+      // Moderate divergence 30-50% — cap at 88 (data partially inconsistent)
+      finalConfidence = Math.min(finalConfidence, 88);
     } else if (methodDeviation <= 0.15) {
       // Methods agree within 15% — convergence bonus (data is consistent)
       finalConfidence = Math.min(100, finalConfidence + 2);
@@ -842,22 +843,23 @@ export function applyAVM(input: AVMInput): AVMOutput {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Multipliers relative to townhouse reference price (townhouse_center = 1.00)
-// Source: Batdongsan/Savills Vietnam 2024-2025 cross-type analysis
-const PROPERTY_TYPE_PRICE_MULT: Record<string, number> = {
-  apartment_center:  0.42,  // Căn hộ nội đô: ~42% giá nhà phố cùng khu vực
-  apartment_suburb:  0.50,  // Căn hộ ngoại thành: ~50%
-  townhouse_center:  1.00,  // Tham chiếu chuẩn
-  townhouse_suburb:  1.00,
-  villa:             0.85,  // Biệt thự: ít hơn/m² do diện tích lớn
-  shophouse:         1.20,  // Shophouse: premium thương mại
-  land_urban:        1.30,  // Đất thổ cư nội đô: premium (không có khấu hao nhà)
-  land_suburban:     1.00,
-  penthouse:         0.60,  // Penthouse: ~60% nhà phố/m² nhưng floor premium bù lại
-  office:            1.10,  // Văn phòng: premium thương mại trên nhà phố
-  warehouse:         0.45,  // Nhà xưởng: rẻ/m² do diện tích lớn, hạ tầng đơn giản
-  land_agricultural: 0.06,  // Đất nông nghiệp: rất rẻ so với thổ cư
-  land_industrial:   0.35,  // Đất KCN: đắt hơn nông nghiệp, rẻ hơn thổ cư
-  project:           0.75,  // Off-plan: chiết khấu so với thứ cấp (chưa bàn giao)
+// Applied ONLY to regional fallback table and sanity-check bounds — NOT to AI-returned prices.
+// Source: Batdongsan/Savills/CBRE Vietnam 2024-2025 cross-type transaction analysis
+export const PROPERTY_TYPE_PRICE_MULT: Record<string, number> = {
+  apartment_center:  0.40,  // Căn hộ nội đô: ~40% giá nhà phố cùng khu vực (thực tế BĐS.com)
+  apartment_suburb:  0.45,  // Căn hộ ngoại thành: ~45%
+  townhouse_center:  1.00,  // Tham chiếu chuẩn — nhà phố nội đô Sổ Hồng, hẻm 4m
+  townhouse_suburb:  1.00,  // Nhà phố ngoại thành — tương đương mức cơ sở
+  villa:             0.80,  // Biệt thự: thấp hơn/m² vì DT lớn, ít giao dịch
+  shophouse:         1.25,  // Shophouse: premium thương mại cao nhất phân khúc nhà phố
+  land_urban:        1.30,  // Đất thổ cư nội đô: premium (không khấu hao công trình)
+  land_suburban:     1.00,  // Đất thổ cư ngoại thành: tương đương nhà phố (giá đất thuần)
+  penthouse:         0.62,  // Penthouse: ~62% nhà phố/m² nhưng được đền bù bởi Kfl cao
+  office:            0.75,  // Văn phòng: 75% nhà phố (office condotel/CBD B class ~50-80M/m²)
+  warehouse:         0.18,  // Kho xưởng RBW: 18% nhà phố — Bình Dương kho ~3-8M/m² (Savills 2024)
+  land_agricultural: 0.05,  // Đất nông nghiệp: rất rẻ, chủ yếu đầu cơ chuyển đổi
+  land_industrial:   0.28,  // Đất KCN: đắt hơn nông nghiệp nhưng thấp hơn thổ cư (~200-600 USD/m²)
+  project:           0.75,  // Căn hộ off-plan: chiết khấu ~25% so với thứ cấp thực tế
 };
 
 export function getRegionalBasePrice(address: string, pType?: string): {
@@ -1094,22 +1096,43 @@ export function getRegionalBasePrice(address: string, pType?: string): {
 // 8. FALLBACK MONTHLY RENT ESTIMATE (when AI is unavailable)
 //    Based on typical gross rental yield in each region
 // ─────────────────────────────────────────────────────────────────────────────
+// Type-specific fallback rent heuristics (triệu VNĐ/m²/tháng)
+// Used ONLY when cap-rate formula gives implausible result
+// Source: Batdongsan/CBRE Vietnam 2024-2025 rental market averages
+const FALLBACK_RENT_PER_M2: Record<string, number> = {
+  apartment_center:  0.35,  // 35K VNĐ/m²/month — căn hộ nội đô (100m² = 35tr/tháng)
+  apartment_suburb:  0.22,  // Căn hộ ngoại thành
+  townhouse_center:  0.20,  // Nhà phố nội đô cho thuê nguyên căn
+  townhouse_suburb:  0.14,  // Nhà phố ngoại thành
+  villa:             0.10,  // Biệt thự — ít thanh khoản thuê, giá/m² thấp
+  shophouse:         0.45,  // Shophouse — giá thuê cao vì thương mại (50m² = 22.5tr/th)
+  land_urban:        0.08,  // Đất thổ cư nội đô — cho thuê ki-ốt/mặt bằng
+  land_suburban:     0.04,  // Đất ngoại thành — cho thuê rất thấp
+  penthouse:         0.42,  // Penthouse — premium lớn vì view độc quyền
+  office:            0.35,  // Văn phòng — tương đương căn hộ nội đô (USD 8-15/m²/th → VNĐ)
+  warehouse:         0.06,  // Kho xưởng RBW — USD 2-4/m²/th × 25K = 50-100K VNĐ/m²/th
+  land_agricultural: 0.003, // Đất nông nghiệp — cho thuê canh tác ~3K VNĐ/m²/th
+  land_industrial:   0.05,  // Đất KCN — cho thuê dài hạn theo USD/m²/kỳ
+  project:           0.28,  // Căn hộ dự án — tương đương apartment_suburb khi bàn giao
+};
+
 export function estimateFallbackRent(
-  compsPrice: number,        // VNĐ
+  compsPrice: number,        // VNĐ (total property value)
   propertyType: PropertyType,
   area: number,
 ): number {
   const capRate = DEFAULT_CAP_RATES[propertyType];
-  const safeArea = area > 0 ? area : 1; // guard against zero area
+  const safeArea = area > 0 ? area : 1;
   const safeCap = capRate > 0 ? capRate : DEFAULT_CAP_RATE;
   const grossYield = safeCap + 0.015;  // gross ≈ cap rate + 1.5% (before vacancy/opex)
   const annualRentVND = compsPrice * grossYield;
   const monthlyRentTrieu = (annualRentVND / 12) / 1_000_000;
-  // Sanity check: rent/m² should be 0.05–5 triệu/m²/tháng
+  // Sanity check: rent/m²/month should be 0.002–8 triệu/m² (covers agricultural → penthouse)
   const rentPerM2 = monthlyRentTrieu / safeArea;
-  if (rentPerM2 < 0.05 || rentPerM2 > 5) {
-    // Fallback: use a simple heuristic
-    return Math.round(safeArea * 0.25 * 10) / 10;  // ~0.25 triệu/m²/tháng
+  if (rentPerM2 < 0.002 || rentPerM2 > 8) {
+    // Cap-rate formula gave implausible result — use type-specific floor
+    const floorPerM2 = FALLBACK_RENT_PER_M2[propertyType] ?? 0.20;
+    return Math.round(safeArea * floorPerM2 * 10) / 10;
   }
   return Math.round(monthlyRentTrieu * 10) / 10;
 }

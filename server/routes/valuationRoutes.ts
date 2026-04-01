@@ -9,7 +9,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { applyAVM, computeBlendedBasePrice, getRegionalBasePrice, estimateFallbackRent } from '../valuationEngine';
+import { applyAVM, getRegionalBasePrice, estimateFallbackRent, PROPERTY_TYPE_PRICE_MULT } from '../valuationEngine';
 import type { LegalStatus, PropertyType } from '../valuationEngine';
 import { marketDataService } from '../services/marketDataService';
 import { listingRepository } from '../repositories/listingRepository';
@@ -66,14 +66,22 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
       let marketDataSource: string;
 
       const cacheEntry = skipCache ? null : await marketDataService.getMarketData(address);
+      resolvedPropertyType = (propertyType || 'townhouse_center') as PropertyType;
 
       if (cacheEntry) {
-        marketBasePrice = cacheEntry.pricePerM2;
+        // CRITICAL: cache always stores townhouse_center reference price.
+        // Apply property-type multiplier so warehouse/office/land get correct base.
+        const cacheTypeMult = PROPERTY_TYPE_PRICE_MULT[resolvedPropertyType] ?? 1.00;
+        const refMult = PROPERTY_TYPE_PRICE_MULT['townhouse_center'];  // 1.00
+        const typeAdjustedPrice = resolvedPropertyType === 'townhouse_center' || resolvedPropertyType === 'townhouse_suburb'
+          ? cacheEntry.pricePerM2
+          : Math.round(cacheEntry.pricePerM2 * (cacheTypeMult / refMult));
+        marketBasePrice = typeAdjustedPrice;
         aiConfidence = cacheEntry.confidence;
         marketTrend = cacheEntry.marketTrend;
         monthlyRent = cacheEntry.monthlyRentEstimate;
         marketDataSource = cacheEntry.source;
-        resolvedPropertyType = (propertyType || 'townhouse_center') as PropertyType;
+        logger.info(`[Valuation] Cache hit: ${cacheEntry.pricePerM2 / 1_000_000}tr/m² → type-adjusted ${typeAdjustedPrice / 1_000_000}tr/m² (×${cacheTypeMult} for ${resolvedPropertyType})`);
       } else {
         // Fallback to full AI call
         try {
@@ -85,14 +93,13 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
           aiConfidence = aiResult.confidence;
           marketTrend = aiResult.marketTrend;
           monthlyRent = aiResult.incomeApproach?.monthlyRent;
-          resolvedPropertyType = (propertyType || 'townhouse_center') as PropertyType;
           marketDataSource = 'AI_LIVE';
         } catch {
-          const regional = getRegionalBasePrice(address);
+          // Regional table also uses correct type multiplier
+          const regional = getRegionalBasePrice(address, resolvedPropertyType);
           marketBasePrice = regional.price;
           aiConfidence = regional.confidence;
           marketTrend = `Ước tính khu vực ${regional.region}`;
-          resolvedPropertyType = (propertyType || 'townhouse_center') as PropertyType;
           marketDataSource = 'REGIONAL_TABLE';
         }
       }
@@ -142,9 +149,10 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
         frontageWidth: frontageWidth !== undefined ? Number(frontageWidth) : undefined,
         furnishing: furnishing || undefined,
         // Multi-source blending
+        // NOTE: pass the TYPE-ADJUSTED cache price (not raw townhouse_center reference)
         internalCompsMedian,
         internalCompsCount,
-        cachedMarketPrice: cacheEntry ? cacheEntry.pricePerM2 : undefined,
+        cachedMarketPrice: cacheEntry ? marketBasePrice : undefined,
         cachedConfidence: cacheEntry ? cacheEntry.confidence : undefined,
       });
 
