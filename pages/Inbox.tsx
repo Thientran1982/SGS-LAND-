@@ -990,24 +990,20 @@ export const Inbox: React.FC = () => {
                         {/* Channel selector row + supervisor badge */}
                         <div className="flex items-center justify-between gap-2 mb-2.5 min-w-0">
 
-                            {/* ── Channel tabs (mobile + desktop) ── */}
-                            <div className="flex flex-nowrap w-fit bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar">
-                                {([
-                                    { ch: Channel.ZALO,     activeClass: 'bg-blue-600 text-white shadow-sm',     inactiveClass: 'text-blue-400 hover:text-blue-600' },
-                                    { ch: Channel.FACEBOOK, activeClass: 'bg-[#1877F2] text-white shadow-sm',    inactiveClass: 'text-blue-500 hover:text-[#1877F2]' },
-                                    { ch: Channel.EMAIL,    activeClass: 'bg-indigo-600 text-white shadow-sm',   inactiveClass: 'text-indigo-400 hover:text-indigo-600' },
-                                    { ch: Channel.SMS,      activeClass: 'bg-emerald-600 text-white shadow-sm',  inactiveClass: 'text-emerald-500 hover:text-emerald-700' },
-                                    { ch: Channel.WEB,      activeClass: 'bg-violet-600 text-white shadow-sm',   inactiveClass: 'text-violet-400 hover:text-violet-600' },
-                                ] as const).map(({ ch, activeClass, inactiveClass }) => (
-                                    <button
-                                        key={ch}
-                                        onClick={() => setChannel(ch)}
-                                        className={`flex-none px-2.5 py-1 min-h-[28px] rounded-lg text-[11px] font-bold transition-all flex items-center justify-center whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
-                                    >
-                                        {channelLabel(ch)}
-                                    </button>
-                                ))}
-                            </div>
+                            {/* ── Channel selector dropdown ── */}
+                            <InboxDropdown<Channel>
+                                value={channel}
+                                onChange={setChannel}
+                                className="max-w-[160px]"
+                                defaultColor="blue"
+                                options={[
+                                    { value: Channel.ZALO,     label: 'Zalo',     icon: ICONS.ZALO,     color: 'blue'    },
+                                    { value: Channel.FACEBOOK, label: 'Facebook', icon: ICONS.FACEBOOK, color: 'blue'    },
+                                    { value: Channel.EMAIL,    label: 'Email',    icon: ICONS.EMAIL,    color: 'indigo'  },
+                                    { value: Channel.SMS,      label: 'SMS',      icon: ICONS.SMS,      color: 'emerald' },
+                                    { value: Channel.WEB,      label: t('inbox.channel_web'), icon: ICONS.WEB, color: 'indigo' },
+                                ]}
+                            />
 
                             {/* Supervisor mode badge */}
                             {!isAiActiveForSelected && (
