@@ -126,6 +126,11 @@ export const Hero3D = () => {
     return () => cancelAnimationFrame(frameRef.current);
   }, []);
 
+  // ── Floor indicator label — follows laser, T8 (top) → T1 (bottom)
+  const floorLabel = laserRow >= 0 ? `T${8 - laserRow}` : 'T—';
+  // ── Target floors: rows 3-4-5 = "tầng đang xem xét" (T5→T3)
+  const TARGET_ROWS = new Set([3, 4, 5]);
+
   const textPrice = language === 'vn' ? '24.5 Tỷ' : '$2.45M';
   const textMatch = language === 'vn' ? 'Độ khớp 98%' : '98% Match';
   const textTrend = language === 'vn' ? '↑ +5.2% / Năm' : '↑ +5.2% YoY';
@@ -305,6 +310,26 @@ export const Hero3D = () => {
             </g>
           ))}
 
+          {/* ── MOVING VEHICLES ── */}
+          {/* E-W road — car going east (left → right, upper lane y=−7) */}
+          <motion.g animate={{ x: [-195, 195] }} transition={{ duration: 9, repeat: Infinity, ease: 'linear', repeatType: 'loop' }}>
+            <rect x="-9" y="-10" width="18" height="8" rx="2" fill="#334155" opacity="0.85" />
+            <rect x="-6" y="-9" width="5" height="3" rx="0.5" fill="#BFDBFE" opacity="0.7" />
+            <rect x="3" y="-9" width="4" height="3" rx="0.5" fill="#BFDBFE" opacity="0.7" />
+          </motion.g>
+          {/* E-W road — car going west (right → left, lower lane y=+4) */}
+          <motion.g animate={{ x: [195, -195] }} transition={{ duration: 11, delay: 3.5, repeat: Infinity, ease: 'linear', repeatType: 'loop' }}>
+            <rect x="-9" y="4" width="18" height="8" rx="2" fill="#1E3A5F" opacity="0.80" />
+            <rect x="-6" y="5" width="5" height="3" rx="0.5" fill="#FCD34D" opacity="0.7" />
+            <rect x="3" y="5" width="4" height="3" rx="0.5" fill="#FCD34D" opacity="0.7" />
+          </motion.g>
+          {/* N-S road — car going south (top → bottom, right lane x=+5) */}
+          <motion.g animate={{ y: [-195, 195] }} transition={{ duration: 13, delay: 1.5, repeat: Infinity, ease: 'linear', repeatType: 'loop' }}>
+            <rect x="4" y="-9" width="8" height="18" rx="2" fill="#0F3460" opacity="0.80" />
+            <rect x="5" y="-6" width="3" height="5" rx="0.5" fill="#93C5FD" opacity="0.7" />
+            <rect x="5" y="3" width="3" height="4" rx="0.5" fill="#93C5FD" opacity="0.7" />
+          </motion.g>
+
         </g>
 
         {/* ── GROUND SHADOW ── */}
@@ -345,6 +370,22 @@ export const Hero3D = () => {
         <path d="M 240,330 L 400,410 M 240,300 L 400,380 M 240,270 L 400,350 M 240,240 L 400,320 M 240,210 L 400,290 M 240,180 L 400,260 M 240,150 L 400,230"
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
 
+        {/* Target floor strip — rows 3-4-5, left face (constant subtle indigo) */}
+        <polygon points="240,210 400,290 400,380 240,300"
+          fill="#6366F1" opacity="0.09" clipPath="url(#clipLeft)" />
+        <polygon points="240,210 400,290 400,380 240,300"
+          fill="#6366F1" opacity={TARGET_ROWS.has(laserRow) ? 0.07 : 0}
+          filter="url(#glow)" clipPath="url(#clipLeft)"
+          style={{ transition: 'opacity 0.15s' }} />
+
+        {/* ── Selection bracket — left side, pointing at target floors T3-T5 */}
+        <line x1="233" y1="210" x2="233" y2="300" stroke="#818CF8" strokeWidth="2" filter="url(#glow)" opacity="0.8" />
+        <line x1="233" y1="210" x2="242" y2="210" stroke="#818CF8" strokeWidth="2" filter="url(#glow)" opacity="0.8" />
+        <line x1="233" y1="300" x2="242" y2="300" stroke="#818CF8" strokeWidth="2" filter="url(#glow)" opacity="0.8" />
+        <rect x="160" y="246" width="68" height="18" rx="4" fill="#1E1B4B" stroke="#6366F1" strokeWidth="1" opacity="0.93" />
+        <text x="194" y="259" fill="#A5B4FC" fontSize="8" fontWeight="bold" textAnchor="middle"
+          fontFamily="system-ui,sans-serif" letterSpacing="0.8">T3 – T5</text>
+
         {/* Windows — Left face */}
         <g clipPath="url(#clipLeft)">
           {LEFT_WINDOWS.map(([col, row, hue], i) => (
@@ -360,6 +401,14 @@ export const Hero3D = () => {
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
         <path d="M 560,330 L 400,410 M 560,300 L 400,380 M 560,270 L 400,350 M 560,240 L 400,320 M 560,210 L 400,290 M 560,180 L 400,260 M 560,150 L 400,230"
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
+
+        {/* Target floor strip — rows 3-4-5, right face */}
+        <polygon points="400,290 560,210 560,300 400,380"
+          fill="#6366F1" opacity="0.09" clipPath="url(#clipRight)" />
+        <polygon points="400,290 560,210 560,300 400,380"
+          fill="#6366F1" opacity={TARGET_ROWS.has(laserRow) ? 0.07 : 0}
+          filter="url(#glow)" clipPath="url(#clipRight)"
+          style={{ transition: 'opacity 0.15s' }} />
 
         {/* Windows — Right face */}
         <g clipPath="url(#clipRight)">
@@ -395,6 +444,15 @@ export const Hero3D = () => {
           <circle cx="560" cy="120" r="6" fill="#10B981" opacity="0.18" filter="url(#glow)" />
           <circle cx="560" cy="120" r="3" fill="#10B981" filter="url(#glow)" />
           <circle cx="560" cy="120" r="1.2" fill="#fff" opacity="0.85" />
+          {/* ── Floor indicator — pill follows laser ── */}
+          <rect x="196" y="112" width="36" height="17" rx="4"
+            fill="#0F172A" stroke="#10B981" strokeWidth="1.2" opacity="0.95" />
+          <text x="214" y="124.5" fill="#34D399" fontSize="9.5" fontWeight="bold"
+            textAnchor="middle" fontFamily="monospace" letterSpacing="0.5">
+            {floorLabel}
+          </text>
+          {/* Tick line from pill to building edge */}
+          <line x1="232" y1="120" x2="239" y2="120" stroke="#34D399" strokeWidth="1" opacity="0.7" />
         </motion.g>
 
         {/* ── LOCATION PIN ── */}
