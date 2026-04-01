@@ -624,47 +624,6 @@ export const AiValuation: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* ── AVM FORMULA BOX ── */}
-                            {valuation.formula && (
-                                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl px-5 py-4 mb-6 font-mono text-sm">
-                                    <div className="text-emerald-400/60 text-xs2 uppercase font-bold tracking-widest mb-1">Công thức AVM đã áp dụng</div>
-                                    <div className="text-emerald-300 break-all">{valuation.formula}</div>
-                                </div>
-                            )}
-
-                            {/* ── AVM COEFFICIENT TABLE (all active coefficients) ── */}
-                            {valuation.coefficients && (() => {
-                                const c = valuation.coefficients;
-                                const allCoeffs = [
-                                    { key: 'Kd',   label: 'Lộ giới',   value: c.Kd,   icon: '🛣️' },
-                                    { key: 'Kp',   label: 'Pháp lý',   value: c.Kp,   icon: '📋' },
-                                    { key: 'Ka',   label: 'Diện tích', value: c.Ka,   icon: '📐' },
-                                    ...(c.Kfl   != null ? [{ key: 'Kfl',  label: 'Vị trí tầng', value: c.Kfl,  icon: '🏢' }] : []),
-                                    ...(c.Kdir  != null ? [{ key: 'Kdir', label: 'Hướng nhà',   value: c.Kdir, icon: '🧭' }] : []),
-                                    ...(c.Kmf   != null ? [{ key: 'Kmf',  label: 'Mặt tiền',    value: c.Kmf,  icon: '🏠' }] : []),
-                                    ...(c.Kfurn != null ? [{ key: 'Kfurn',label: 'Nội thất',    value: c.Kfurn,icon: '🛋️' }] : []),
-                                ];
-                                const cols = allCoeffs.length <= 3 ? 'grid-cols-3' : allCoeffs.length === 4 ? 'grid-cols-4' : 'grid-cols-4 md:grid-cols-7';
-                                return (
-                                    <div className={`grid ${cols} gap-2 mb-6`}>
-                                        {allCoeffs.map(coeff => {
-                                            const delta = coeff.value - 1.00;
-                                            const isPos = delta >= 0;
-                                            return (
-                                                <div key={coeff.key} className="bg-slate-900/70 rounded-xl p-3 border border-slate-700 text-center">
-                                                    <div className="text-lg mb-1">{coeff.icon}</div>
-                                                    <div className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold mb-1">{coeff.key}</div>
-                                                    <div className="text-white font-black text-lg">{coeff.value.toFixed(2)}</div>
-                                                    <div className={`text-xs font-bold mt-1 ${isPos ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                        {isPos ? '+' : ''}{(delta * 100).toFixed(0)}%
-                                                    </div>
-                                                    <div className="text-[var(--text-secondary)] text-2xs mt-1 truncate">{coeff.label}</div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                );
-                            })()}
 
                             {/* ── FACTORS BREAKDOWN (XAI) ── */}
                             {valuation.factors.length > 0 && (() => {
@@ -677,14 +636,9 @@ export const AiValuation: React.FC = () => {
                                         <div key={i} className="px-5 py-3">
                                             <div className="flex justify-between items-center mb-1">
                                                 <span className="text-slate-300 text-sm font-medium">{factor.label}</span>
-                                                <div className="flex items-center gap-3">
-                                                    {factor.coefficient != null && factor.coefficient !== 1 && (
-                                                        <span className="text-[var(--text-tertiary)] text-xs font-mono">×{factor.coefficient.toFixed(2)}</span>
-                                                    )}
-                                                    <span className={`font-bold text-sm ${factor.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                        {factor.impact === 0 ? 'Chuẩn' : `${sign}${factor.impact}%`}
-                                                    </span>
-                                                </div>
+                                                <span className={`font-bold text-sm ${factor.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                    {factor.impact === 0 ? 'Chuẩn' : `${sign}${factor.impact}%`}
+                                                </span>
                                             </div>
                                             {factor.description && (
                                                 <div className="text-[var(--text-secondary)] text-xs3 mb-1.5">{factor.description}</div>
