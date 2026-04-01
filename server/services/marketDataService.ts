@@ -207,13 +207,20 @@ async function fetchLightMarketPrice(
   const month = new Date().toLocaleString('vi-VN', { month: 'long', timeZone: 'Asia/Ho_Chi_Minh' });
 
   const pTypeLabels: Record<string, string> = {
-    apartment_center: 'Căn hộ chung cư',
-    townhouse_center: 'Nhà phố / đất thổ cư',
-    townhouse_suburb: 'Nhà phố / đất thổ cư ngoại thành',
-    villa:            'Biệt thự',
-    shophouse:        'Shophouse',
-    land_urban:       'Đất thổ cư nội đô',
-    land_suburban:    'Đất ngoại thành',
+    apartment_center:  'Căn hộ chung cư',
+    apartment_suburb:  'Căn hộ chung cư ngoại thành',
+    townhouse_center:  'Nhà phố / đất thổ cư',
+    townhouse_suburb:  'Nhà phố / đất thổ cư ngoại thành',
+    villa:             'Biệt thự',
+    shophouse:         'Shophouse / Nhà phố thương mại',
+    land_urban:        'Đất thổ cư nội đô (đất nền)',
+    land_suburban:     'Đất thổ cư ngoại thành (đất nền)',
+    penthouse:         'Penthouse / Căn hộ đỉnh tháp',
+    office:            'Văn phòng / Mặt bằng thương mại',
+    warehouse:         'Nhà xưởng / Kho bãi công nghiệp',
+    land_agricultural: 'Đất nông nghiệp / Đất vườn',
+    land_industrial:   'Đất khu công nghiệp (KCN)',
+    project:           'Căn hộ dự án / Off-plan',
   };
   const pLabel = pTypeLabels[pType] || 'Nhà phố / đất thổ cư';
 

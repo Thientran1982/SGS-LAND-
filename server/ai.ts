@@ -1184,54 +1184,93 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
             // Resolve human-readable property type label for search prompt
             const resolvedPTypeForSearch = propertyType || 'townhouse_center';
             const pTypeLabels: Record<string, string> = {
-                apartment_center: 'Căn hộ chung cư (nội đô)',
-                apartment_suburb: 'Căn hộ chung cư (ngoại thành)',
-                townhouse_center: 'Nhà phố / nhà liền kề (nội đô)',
-                townhouse_suburb: 'Nhà phố (ngoại thành)',
-                villa: 'Biệt thự',
-                shophouse: 'Nhà phố thương mại / shophouse',
-                land_urban: 'Đất thổ cư nội đô',
-                land_suburban: 'Đất ngoại thành',
+                apartment_center:  'Căn hộ chung cư (nội đô)',
+                apartment_suburb:  'Căn hộ chung cư (ngoại thành)',
+                townhouse_center:  'Nhà phố / nhà liền kề (nội đô)',
+                townhouse_suburb:  'Nhà phố (ngoại thành)',
+                villa:             'Biệt thự',
+                shophouse:         'Nhà phố thương mại / shophouse',
+                land_urban:        'Đất thổ cư nội đô (đất nền nhà phố)',
+                land_suburban:     'Đất thổ cư ngoại thành (đất nền)',
+                penthouse:         'Penthouse / Căn hộ đỉnh tháp (tầng cao nhất)',
+                office:            'Văn phòng / Mặt bằng thương mại',
+                warehouse:         'Nhà xưởng / Kho bãi công nghiệp',
+                land_agricultural: 'Đất nông nghiệp / Đất vườn / Đất trồng cây',
+                land_industrial:   'Đất khu công nghiệp (KCN)',
+                project:           'Căn hộ dự án / Off-plan / Chưa bàn giao',
             };
             const pTypeLabelSearch = pTypeLabels[resolvedPTypeForSearch] || 'Nhà phố / đất thổ cư';
 
+            // Whether this property type relies primarily on rental yield (not comps)
+            const isLandType = resolvedPTypeForSearch.startsWith('land_');
+            const isIndustrialOrWarehouse = resolvedPTypeForSearch === 'warehouse' || resolvedPTypeForSearch === 'land_industrial';
+            const isOffPlan = resolvedPTypeForSearch === 'project';
+
+            // ── Type-specific search hints ─────────────────────────────────────
+            const typeSpecificSaleHint = isIndustrialOrWarehouse
+                ? `- Tập trung: giá thuê/m²/tháng kho xưởng, giá chuyển nhượng đất KCN, suất đầu tư kho logistics\n- Đơn vị: VNĐ/m² (giá chuyển nhượng) hoặc USD/m²/tháng (giá thuê KCN quốc tế)\n- Nguồn: JLL Vietnam Industrial, Savills Vietnam, CBRE Vietnam Industrial Report ${currentYear}`
+                : isLandType
+                ? `- Tập trung: giá đất thổ cư/đất nông nghiệp giao dịch thực tế — KHÔNG tính giá trị công trình\n- Đơn vị: VNĐ/m² đất (không phải VNĐ/m² sàn xây dựng)\n- Nguồn: batdongsan.com.vn/ban-dat, nhadatviet.com, cafeland.vn/dat-nen`
+                : isOffPlan
+                ? `- Tập trung: giá bán sơ cấp (chủ đầu tư) và thứ cấp (chuyển nhượng) của các dự án căn hộ tại "${address}"\n- Ưu tiên: giá thứ cấp thực tế > giá chủ đầu tư công bố\n- Nguồn: batdongsan.com.vn, cafeland.vn, onehousing.vn`
+                : resolvedPTypeForSearch === 'office'
+                ? `- Tập trung: giá thuê văn phòng (USD/m²/tháng) và giá chuyển nhượng mặt bằng thương mại\n- Phân loại: hạng A/B/C theo tiêu chuẩn CBRE/JLL\n- Nguồn: JLL Vietnam, Savills Vietnam Office Market, CBRE Vietnam ${currentYear}`
+                : `- Loại tham chiếu: ${pTypeLabelSearch} — pháp lý Sổ Hồng, lộ giới 4m chuẩn, 60-100m²\n- Nguồn: batdongsan.com.vn, cafeland.vn, cen.vn, alonhadat.com, onehousing.vn, CBRE/Savills/JLL Vietnam ${currentYear}`;
+
             // ── PARALLEL DUAL SEARCH: dedicated sale search + dedicated rental search ──
-            // Two separate focused queries → better precision than one combined query
             const saleSearchPrompt = `Địa chỉ: "${address}" | Thời điểm: ${currentMonth} ${currentYear} | Loại BĐS: ${pTypeLabelSearch}
 
-TÌM KIẾM CHUYÊN BIỆT: Giá BÁN/GIAO DỊCH THỰC TẾ (không phải rao bán)
-- Loại: ${pTypeLabelSearch} — pháp lý Sổ Hồng, lộ giới 4m chuẩn, 60-100m²
-- Nguồn: batdongsan.com.vn, cafeland.vn, cen.vn, alonhadat.com, onehousing.vn, CBRE/Savills/JLL Vietnam ${currentYear}
+TÌM KIẾM CHUYÊN BIỆT: Giá BÁN/GIAO DỊCH THỰC TẾ
+${typeSpecificSaleHint}
 
 Cần tìm:
-1. Giá giao dịch thực tế trung bình 1m² "${pTypeLabelSearch}" tại khu vực "${address}" — 6 tháng gần nhất ${currentYear}
-2. Khoảng giá (thấp nhất – cao nhất) từ các giao dịch thực tế tìm thấy
-3. Số lượng giao dịch/nguồn tìm thấy (ví dụ: "5 giao dịch từ 3 nguồn")
+1. Giá giao dịch thực tế trung bình 1m² "${pTypeLabelSearch}" tại "${address}" — 6 tháng gần nhất ${currentYear}
+2. Khoảng giá (thấp nhất – cao nhất) từ các giao dịch thực tế
+3. Số lượng giao dịch/nguồn tìm thấy
 4. Năm của dữ liệu giao dịch (${currentYear} hay năm nào?)
 5. Xu hướng giá khu vực % tăng/giảm vs năm ngoái
-6. Yếu tố quy hoạch/hạ tầng/tiện ích ảnh hưởng đến khu vực
+6. Yếu tố quy hoạch/hạ tầng/tiện ích ảnh hưởng
 
-ƯU TIÊN TUYỆT ĐỐI: giá giao dịch thực tế > giá rao bán > ước tính.`;
+ƯU TIÊN: giá giao dịch thực tế > giá rao bán > ước tính khu vực.`;
 
-            const rentalSearchPrompt = `Địa chỉ: "${address}" | Tháng ${currentMonth} ${currentYear} | Loại: ${pTypeLabelSearch}
-
-TÌM KIẾM CHUYÊN BIỆT: Giá THUÊ thực tế hiện tại
-- Loại: ${pTypeLabelSearch} tại "${address}", diện tích ${area}m²
+            // Rental search: tailored by type — land has no conventional rent, use yield estimate instead
+            const rentalSearchPrompt = isLandType && !isIndustrialOrWarehouse
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear}
+Tìm tỷ suất sinh lời đầu tư đất (land yield) tại khu vực "${address}":
+1. Mức tăng giá trị đất %/năm gần nhất (capital gain)
+2. Thu nhập từ cho thuê đất (nếu có): đất nông nghiệp cho thuê canh tác, đất dịch vụ cho thuê
+3. Giá thuê đất nông nghiệp trung bình (triệu/sào hoặc triệu/m²/năm)
+Nguồn: batdongsan.com.vn, mogi.vn, nhadatviet.com`
+                : isIndustrialOrWarehouse
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: ${pTypeLabelSearch}
+Tìm giá thuê kho/xưởng/đất KCN thực tế tại "${address}":
+1. Giá thuê kho/xưởng: VNĐ/m²/tháng (ready-built warehouse)
+2. Giá thuê đất KCN: USD/m²/kỳ thuê (industrial land lease)
+3. Tỷ suất lấp đầy (occupancy rate) khu công nghiệp khu vực
+Nguồn: JLL Vietnam Industrial, Savills Vietnam, CBRE Industrial ${currentYear}`
+                : resolvedPTypeForSearch === 'office'
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear}
+Tìm giá thuê văn phòng/mặt bằng thương mại thực tế tại "${address}":
+1. Giá thuê hạng A (USD/m²/tháng), hạng B và hạng C (VNĐ/m²/tháng)
+2. Tỷ lệ lấp đầy (occupancy rate) văn phòng khu vực
+3. Giá thuê shophouse/mặt bằng tầng 1 (triệu VNĐ/tháng) cho ${area}m²
+Nguồn: JLL Vietnam, Savills Vietnam Office, CBRE Vietnam ${currentYear}`
+                : `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: ${pTypeLabelSearch}
+TÌM KIẾM CHUYÊN BIỆT: Giá THUÊ thực tế
+- ${pTypeLabelSearch} tại "${address}", diện tích ${area}m²
 - Nguồn: batdongsan.com.vn/cho-thue, homedy.com, muaban.net, nha.com.vn
+1. Giá thuê trung bình/tháng (triệu VNĐ) cho ${pTypeLabelSearch} ${area}m² tại "${address}"
+2. Khoảng giá thuê (thấp – cao) thực tế
+3. Tỷ suất cho thuê gross yield %/năm nếu có
+Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
 
-Cần tìm:
-1. Giá thuê trung bình tháng (triệu VNĐ/tháng) cho ${pTypeLabelSearch} ${area}m² tại "${address}"
-2. Khoảng giá thuê (thấp – cao) ghi nhận thực tế
-3. Tỷ suất cho thuê thực tế gross yield %/năm nếu có
-Chú ý: Phân biệt giá thuê nguyên căn vs thuê từng phòng.`;
-
-            // Run both searches in parallel — no sequential dependency
+            // Run both searches in parallel
             const [saleSearchRes, rentalSearchRes] = await Promise.all([
                 getAiClient().models.generateContent({
                     model: GENAI_CONFIG.MODELS.WRITER,
                     contents: saleSearchPrompt,
                     config: {
-                        systemInstruction: 'Bạn là chuyên gia định giá BĐS Việt Nam. Tìm kiếm và cung cấp số liệu giá bán giao dịch thực tế chính xác nhất.',
+                        systemInstruction: 'Bạn là chuyên gia định giá BĐS Việt Nam. Tìm kiếm số liệu giá giao dịch thực tế chính xác nhất từ thị trường.',
                         tools: [{ googleSearch: {} }]
                     }
                 }),
@@ -1239,7 +1278,7 @@ Chú ý: Phân biệt giá thuê nguyên căn vs thuê từng phòng.`;
                     model: GENAI_CONFIG.MODELS.WRITER,
                     contents: rentalSearchPrompt,
                     config: {
-                        systemInstruction: 'Bạn là chuyên gia thị trường cho thuê BĐS Việt Nam. Tìm kiếm giá thuê thực tế hiện hành.',
+                        systemInstruction: 'Bạn là chuyên gia thị trường BĐS Việt Nam. Tìm kiếm giá thuê/yield thực tế hiện hành.',
                         tools: [{ googleSearch: {} }]
                     }
                 })
@@ -1247,8 +1286,7 @@ Chú ý: Phân biệt giá thuê nguyên căn vs thuê từng phòng.`;
 
             const saleContext   = saleSearchRes.text   || '';
             const rentalContext = rentalSearchRes.text || '';
-            // Combine both contexts for extraction
-            const marketContext = `=== DỮ LIỆU GIÁ BÁN (từ tìm kiếm chuyên biệt) ===\n${saleContext}\n\n=== DỮ LIỆU GIÁ THUÊ (từ tìm kiếm chuyên biệt) ===\n${rentalContext}`;
+            const marketContext = `=== DỮ LIỆU GIÁ BÁN (từ tìm kiếm chuyên biệt) ===\n${saleContext}\n\n=== DỮ LIỆU GIÁ THUÊ / YIELD (từ tìm kiếm chuyên biệt) ===\n${rentalContext}`;
 
             // ── STEP 2: Extract structured data — statistical multi-point extraction ──
             const extractSchema: Schema = {
@@ -1299,7 +1337,7 @@ Chú ý: Phân biệt giá thuê nguyên căn vs thuê từng phòng.`;
                     },
                     propertyTypeEstimate: {
                         type: Type.STRING,
-                        enum: ['apartment_center','apartment_suburb','townhouse_center','townhouse_suburb','villa','shophouse','land_urban','land_suburban'] as string[],
+                        enum: ['apartment_center','apartment_suburb','townhouse_center','townhouse_suburb','villa','shophouse','land_urban','land_suburban','penthouse','office','warehouse','land_agricultural','land_industrial','project'] as string[],
                         description: `Loại BĐS phù hợp nhất dựa vào địa chỉ "${address}" và diện tích ${area}m². Mặc định: townhouse_center cho nhà phố nội đô.`
                     },
                     locationFactors: {
@@ -1404,13 +1442,13 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
             }
 
             // ── Confidence: raw AI signal adjusted by spread/source/recency ───────
-            // • Sanity passed → floor 93 (was 95, lowered to allow spread/recency to pull it down fairly)
+            // • Sanity passed → floor 90 (honest floor — spread/recency penalties apply freely)
             // • Sanity blended → cap 88 regardless
             const rawAiConfidence = Math.min(100, Math.max(0, aiData.confidence || 90));
             const adjustedConfidence = rawAiConfidence - spreadPenalty + sourceBonus - recencyPenalty;
             const confidence = sanityBlended
                 ? Math.min(adjustedConfidence, 88)
-                : Math.max(93, Math.min(100, adjustedConfidence));
+                : Math.max(90, Math.min(100, adjustedConfidence));
 
             const marketTrend = aiData.marketTrend || 'Đang cập nhật';
             const locationFactors = aiData.locationFactors || [];
