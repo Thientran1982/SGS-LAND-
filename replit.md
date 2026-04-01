@@ -162,16 +162,27 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 ## AI Integration
 
-- `POST /api/ai/process-message` — Multi-agent LangGraph workflow with Gemini (inventory search now uses real DB)
-- `POST /api/ai/score-lead` — Scores lead, persists score back to DB
-- `POST /api/ai/summarize-lead` — Reads interactions from DB if not provided
-- `POST /api/ai/valuation` — Real-time valuation with Google Search grounding; body: `{address, area, roadWidth, legal, propertyType?}`; returns `{totalPrice, compsPrice, incomeApproach, reconciliation, ...}`
+- `POST /api/ai/process-message` — 9-node LangGraph: ROUTER → [INVENTORY|FINANCE|LEGAL|SALES|MARKETING|CONTRACT|LEAD_ANALYST|VALUATION|ESCALATION] → WRITER → END
+- `POST /api/ai/score-lead` — Scores lead via AI, persists score back to DB
+- `POST /api/ai/summarize-lead` — Lead analysis with interaction history
+- `POST /api/ai/valuation` — Real-time AVM + Google Search grounding + Income Approach + reconciliation
 - `POST /api/ai/generate-content` — Generic Gemini proxy with streaming SSE
 - `POST /api/ai/embed-content` — Vector embeddings via text-embedding-004
-- `GET/PUT /api/ai/governance/config` — AI configuration management
+- `GET/PUT /api/ai/governance/config` — AI config (model, spend limits)
 - `GET /api/ai/governance/safety-logs` — AI safety/audit logs
-- `GET/POST/PUT/DELETE /api/ai/governance/prompt-templates` — Prompt template management
+- `GET/POST/PUT/DELETE /api/ai/governance/prompt-templates` — Prompt templates
 - All AI endpoints rate-limited (20 req/min per user)
+
+### AI Architecture (server/ai.ts)
+- **Singleton** `getAiClient()` — single GoogleGenAI instance
+- **4-layer cache**: modelCache (5min/tenant), valuationCache (1h), toolDataCache (5min for legal/marketing/contract/showroom/brandName), spendBuffer (30s batch flush)
+- **Cost model**: per-model pricing table (flash=$0.000375, 2.0-flash=$0.000150, lite=$0.000075, 1.5-pro=$0.003500, 2.5-pro=$0.005000 per 1K tokens)
+- **Governance**: per-tenant model selection with spend tracking, safety logging
+- **Prompts**: All Vietnamese, systemInstruction separated from contents, tenant-aware brandName in WRITER persona
+- **ROUTER**: 6-turn history, compact Vietnamese systemInstruction, JSON schema extraction with Vietnamese number parsing
+- **WRITER**: 12-turn history, full persona via getAgentSystemInstruction(tenantId), intent-aware label
+- **Confidence**: normalized to 0-1 range, clamped [0,1]
+- **Budget parse**: shared `parseBudgetFromMessage()` utility (Tỷ + Triệu)
 
 ## Entry Points
 
