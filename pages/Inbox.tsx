@@ -642,51 +642,30 @@ export const Inbox: React.FC = () => {
                     </div>
                     {/* Filter row — Mobile: two compact dropdowns | Desktop: chip pills */}
 
-                    {/* ── MOBILE tab rows ── */}
-                    <div className="flex md:hidden flex-col gap-1.5">
-                        {/* Status toggle pills */}
-                        <div className="flex gap-1.5">
-                            {([
-                                { value: 'ALL'    as const, label: t('inbox.filter_all'),    icon: ICONS.FILTER },
-                                { value: 'UNREAD' as const, label: t('inbox.filter_unread'), icon: ICONS.UNREAD },
-                            ]).map(opt => (
-                                <button
-                                    key={opt.value}
-                                    onClick={() => setStatusFilter(opt.value)}
-                                    className={`flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all flex-1 ${
-                                        statusFilter === opt.value
-                                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                                            : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)]'
-                                    }`}
-                                >
-                                    {opt.icon}
-                                    {opt.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Channel tabs — horizontal scrollable */}
-                        <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-                            {([
-                                { value: 'ALL'           as const, label: t('inbox.filter_all'),  icon: ICONS.FILTER,   on: 'bg-indigo-600 text-white border-indigo-600',     off: 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)]' },
-                                { value: Channel.WEB,              label: t('inbox.channel_web'), icon: ICONS.WEB,      on: 'bg-violet-600 text-white border-violet-600',     off: 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)]' },
-                                { value: Channel.ZALO,             label: 'Zalo',                 icon: ICONS.ZALO,     on: 'bg-blue-500 text-white border-blue-500',         off: 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)]' },
-                                { value: Channel.FACEBOOK,         label: 'Facebook',             icon: ICONS.FACEBOOK, on: 'bg-[#1877F2] text-white border-[#1877F2]',      off: 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)]' },
-                                { value: Channel.EMAIL,            label: 'Email',                icon: ICONS.EMAIL,    on: 'bg-indigo-600 text-white border-indigo-600',     off: 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)]' },
-                                { value: Channel.SMS,              label: 'SMS',                  icon: ICONS.SMS,      on: 'bg-emerald-600 text-white border-emerald-600',   off: 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)]' },
-                            ]).map(tab => (
-                                <button
-                                    key={tab.value}
-                                    onClick={() => setChannelFilter(tab.value)}
-                                    className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all whitespace-nowrap shrink-0 ${
-                                        channelFilter === tab.value ? tab.on + ' shadow-sm' : tab.off
-                                    }`}
-                                >
-                                    {tab.icon}
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
+                    {/* ── MOBILE dropdown row ── */}
+                    <div className="flex md:hidden gap-2">
+                        <InboxDropdown<'ALL' | 'UNREAD'>
+                            value={statusFilter}
+                            onChange={setStatusFilter}
+                            defaultColor="indigo"
+                            options={[
+                                { value: 'ALL',    label: t('inbox.filter_all'),    icon: ICONS.FILTER,  color: 'indigo' },
+                                { value: 'UNREAD', label: t('inbox.filter_unread'), icon: ICONS.UNREAD,  color: 'amber'  },
+                            ]}
+                        />
+                        <InboxDropdown<'ALL' | Channel>
+                            value={channelFilter}
+                            onChange={setChannelFilter}
+                            defaultColor="indigo"
+                            options={[
+                                { value: 'ALL',          label: t('inbox.filter_all'),    icon: ICONS.FILTER,   color: 'indigo'  },
+                                { value: Channel.WEB,    label: t('inbox.channel_web'),   icon: ICONS.WEB,      color: 'indigo'  },
+                                { value: Channel.ZALO,   label: 'Zalo',                   icon: ICONS.ZALO,     color: 'blue'    },
+                                { value: Channel.FACEBOOK,label: 'Facebook',              icon: ICONS.FACEBOOK, color: 'blue'    },
+                                { value: Channel.EMAIL,  label: 'Email',                  icon: ICONS.EMAIL,    color: 'indigo'  },
+                                { value: Channel.SMS,    label: 'SMS',                    icon: ICONS.SMS,      color: 'emerald' },
+                            ]}
+                        />
                     </div>
 
                     {/* ── DESKTOP chip pills ── */}
