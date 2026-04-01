@@ -10,11 +10,12 @@ import { getSEOOverrides } from '../utils/seo';
 // Public API helpers — no JWT required, all routes are rate-limited
 // ---------------------------------------------------------------------------
 
-async function publicCreateLead(name: string, phone: string, agentId?: string) {
+// source: LINK | EMBED | QR | WEB — tracks which embed method the visitor used
+async function publicCreateLead(name: string, phone: string, agentId?: string, source = 'WEB') {
     const res = await fetch('/api/public/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, source: 'WEB', stage: 'NEW', agentId: agentId || undefined })
+        body: JSON.stringify({ name, phone, source, stage: 'NEW', agentId: agentId || undefined })
     });
     if (!res.ok) throw new Error('create_lead_failed');
     return res.json() as Promise<{ id: string; success: boolean }>;
@@ -75,6 +76,8 @@ export default function LiveChat() {
     const chatDesc  = chatParams.get('desc')  || w.SGSLAND_CHAT_DESC  || livechatSEO?.description || t('livechat.subtitle');
     // Agent ID from URL param (set by embed code) — links this chat session to a specific agent
     const agentId   = chatParams.get('agent') || w.SGSLAND_AGENT_ID   || undefined;
+    // Source tracking: LINK | EMBED | QR (set by each embed option in the widget modal)
+    const chatSource = chatParams.get('source') || w.SGSLAND_CHAT_SOURCE || 'WEB';
 
     // Load lead from localStorage if exists.
     // If the current ?agent= param differs from the agent that created the stored
@@ -146,7 +149,7 @@ export default function LiveChat() {
         setStartError('');
 
         try {
-            const created = await publicCreateLead(name.trim(), phone.trim(), agentId);
+            const created = await publicCreateLead(name.trim(), phone.trim(), agentId, chatSource);
             const id = created.id;
 
             // Send welcome message as outbound (agent) — no auth needed

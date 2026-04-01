@@ -1086,12 +1086,12 @@ export const Inbox: React.FC = () => {
                                         <div className="flex gap-2">
                                             <input
                                                 readOnly
-                                                value={`${window.location.origin}/#/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}`}
+                                                value={`${window.location.origin}/#/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=LINK`}
                                                 className="flex-1 min-w-0 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm text-[var(--text-secondary)] font-mono"
                                             />
                                             <button
                                                 onClick={() => {
-                                                    navigator.clipboard.writeText(`${window.location.origin}/#/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}`).catch(() => {});
+                                                    navigator.clipboard.writeText(`${window.location.origin}/#/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=LINK`).catch(() => {});
                                                     notify(t('inbox.widget_link_copied'), 'success');
                                                 }}
                                                 className="px-4 py-2 bg-indigo-50 text-indigo-600 font-bold rounded-xl hover:bg-indigo-100 transition-colors text-sm whitespace-nowrap shrink-0"
@@ -1109,12 +1109,12 @@ export const Inbox: React.FC = () => {
                                             <textarea
                                                 readOnly
                                                 rows={6}
-                                                value={`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/#/livechat${currentUser?.id ? `?agent=${currentUser.id}` : ''}";\n  window.SGSLAND_CHAT_TITLE = "${widgetTitle}";\n  window.SGSLAND_CHAT_DESC = "${widgetDesc}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`}
+                                                value={`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/#/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=EMBED` : '?source=EMBED'}";\n  window.SGSLAND_CHAT_TITLE = "${widgetTitle}";\n  window.SGSLAND_CHAT_DESC = "${widgetDesc}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`}
                                                 className="w-full bg-slate-900 text-emerald-400 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono resize-none leading-relaxed no-scrollbar"
                                             />
                                             <button
                                                 onClick={() => {
-                                                    navigator.clipboard.writeText(`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/#/livechat${currentUser?.id ? `?agent=${currentUser.id}` : ''}";\n  window.SGSLAND_CHAT_TITLE = "${widgetTitle}";\n  window.SGSLAND_CHAT_DESC = "${widgetDesc}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`).catch(() => {});
+                                                    navigator.clipboard.writeText(`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/#/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=EMBED` : '?source=EMBED'}";\n  window.SGSLAND_CHAT_TITLE = "${widgetTitle}";\n  window.SGSLAND_CHAT_DESC = "${widgetDesc}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`).catch(() => {});
                                                     notify(t('inbox.widget_embed_copied'), 'success');
                                                 }}
                                                 aria-label={t('inbox.widget_copy')}
@@ -1131,13 +1131,13 @@ export const Inbox: React.FC = () => {
                                         <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_qr_label')}</label>
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                                             <div className="bg-[var(--bg-surface)] p-2 rounded-xl shadow-sm border border-[var(--glass-border)] shrink-0 mx-auto sm:mx-0">
-                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${window.location.origin}/#/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}`)}`} alt={t('inbox.widget_qr_label')} className="w-32 h-32" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${window.location.origin}/#/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=QR`)}`} alt={t('inbox.widget_qr_label')} className="w-32 h-32" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                             </div>
                                             <div className="text-center sm:text-left">
                                                 <h4 className="font-bold text-[var(--text-primary)] text-sm mb-1">{t('inbox.widget_qr_title')}</h4>
                                                 <p className="text-xs text-[var(--text-tertiary)] mb-4 leading-relaxed">{t('inbox.widget_qr_desc')}</p>
                                                 <a
-                                                    href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(`${window.location.origin}/#/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}`)}`}
+                                                    href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(`${window.location.origin}/#/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=QR`)}`}
                                                     download="livechat-qr.png"
                                                     target="_blank"
                                                     rel="noreferrer"
