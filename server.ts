@@ -661,7 +661,7 @@ async function startServer() {
 
       // Run AI valuation in parallel with cache warm-up (non-blocking)
       const [result] = await Promise.all([
-        aiService.getRealtimeValuation(address, area, roadWidth, legal, propertyType, {
+        aiService.getRealtimeValuation(address, area, roadWidth, legal, propertyType, (req as any).tenantId, {
           floorLevel:    floorLevel    !== undefined ? Number(floorLevel)    : undefined,
           direction:     direction     || undefined,
           frontageWidth: frontageWidth !== undefined ? Number(frontageWidth) : undefined,
