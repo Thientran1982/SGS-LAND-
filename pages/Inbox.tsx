@@ -977,7 +977,7 @@ export const Inbox: React.FC = () => {
                         <div className="flex items-center justify-between gap-2 mb-2.5 min-w-0">
 
                             {/* ── Channel tabs (mobile + desktop) ── */}
-                            <div className="flex flex-nowrap w-fit md:flex-1 md:min-w-0 bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar">
+                            <div className="flex flex-nowrap w-fit bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar">
                                 {([
                                     { ch: Channel.ZALO,  activeClass: 'bg-blue-600 text-white shadow-sm',     inactiveClass: 'text-blue-400 hover:text-blue-600' },
                                     { ch: Channel.EMAIL, activeClass: 'bg-indigo-600 text-white shadow-sm',   inactiveClass: 'text-indigo-400 hover:text-indigo-600' },
@@ -986,7 +986,7 @@ export const Inbox: React.FC = () => {
                                     <button
                                         key={ch}
                                         onClick={() => setChannel(ch)}
-                                        className={`flex-none md:flex-1 px-2.5 md:px-2 py-1 md:py-1.5 min-h-[30px] md:min-h-[34px] rounded-lg text-[11px] md:text-xs font-bold transition-all flex items-center justify-center gap-1 md:gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
+                                        className={`flex-none px-2.5 py-1 md:py-1.5 min-h-[30px] md:min-h-[34px] rounded-lg text-[11px] md:text-xs font-bold transition-all flex items-center justify-center gap-1 md:gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
                                     >
                                         {channel === ch && (
                                             <span className="hidden md:inline shrink-0">
