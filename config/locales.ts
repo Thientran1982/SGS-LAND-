@@ -537,7 +537,7 @@ export const DICTIONARY = {
 
         "leads.search_placeholder": "Tìm tên, SĐT, email...",
         "leads.total_leads": "Tổng số Lead",
-        "leads.new_leads": "Lead Mới",
+        "leads.new_leads": "Mới 30 ngày",
         "leads.win_rate": "Tỉ lệ chốt",
         "leads.avg_score": "Điểm chất lượng TB",
         "leads.all_stages": "Tất cả giai đoạn",
@@ -2626,7 +2626,7 @@ export const DICTIONARY = {
 
         "leads.search_placeholder": "Search name, phone, email...",
         "leads.total_leads": "Total Leads",
-        "leads.new_leads": "New Leads",
+        "leads.new_leads": "New (30d)",
         "leads.win_rate": "Win Rate",
         "leads.avg_score": "Avg Quality Score",
         "leads.all_stages": "All Stages",

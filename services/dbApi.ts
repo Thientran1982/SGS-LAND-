@@ -596,8 +596,10 @@ class DatabaseApiClient {
 
   async checkDuplicateLead(phone: string) {
     try {
-      const result = await leadApi.getLeads(1, 1, { search: phone });
-      return result.data.find((l: any) => l.phone === phone) || null;
+      const res = await fetch(`/api/leads/check-phone?phone=${encodeURIComponent(phone)}`, { credentials: 'include' });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.duplicate || null;
     } catch {
       return null;
     }

@@ -86,6 +86,31 @@ export function createLeadRoutes(authenticateToken: any) {
     }
   });
 
+  router.get('/check-phone', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const phone = (req.query.phone as string)?.trim();
+      if (!phone) return res.json({ duplicate: null });
+
+      const duplicate = await leadRepository.checkDuplicatePhone(user.tenantId, phone);
+      if (!duplicate) return res.json({ duplicate: null });
+
+      return res.json({
+        duplicate: {
+          id: duplicate.id,
+          name: duplicate.name,
+          phone: duplicate.phone,
+          email: duplicate.email ?? null,
+          stage: duplicate.stage,
+          assignedTo: duplicate.assignedTo ?? null,
+        }
+      });
+    } catch (error) {
+      console.error('Error checking phone duplicate:', error);
+      res.status(500).json({ duplicate: null });
+    }
+  });
+
   router.get('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
