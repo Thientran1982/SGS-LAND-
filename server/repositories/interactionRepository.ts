@@ -189,7 +189,7 @@ export class InteractionRepository extends BaseRepository {
         SELECT
           COUNT(*) FILTER (WHERE direction = 'INBOUND')::int as total_inbound,
           COUNT(*) FILTER (WHERE direction = 'OUTBOUND')::int as total_outbound,
-          COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND metadata->>'isAi' = 'true')::int as ai_outbound,
+          COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND (metadata->>'isAi' = 'true' OR metadata->>'isAgent' = 'true'))::int as ai_outbound,
           json_object_agg(
             channel, 
             channel_count
