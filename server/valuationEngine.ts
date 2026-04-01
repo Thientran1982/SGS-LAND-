@@ -903,26 +903,166 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/đông anh|dong anh/i.test(addr))             return getBase(50_000_000,  'Đông Anh, Hà Nội', 55);
   if (/hà nội|hanoi|ha noi/i.test(addr))           return getBase(110_000_000, 'Hà Nội (trung bình)', 52);
 
-  // ── Thành phố trực thuộc TW & tỉnh lớn ──────────────────────────────────
-  if (/đà nẵng|da nang/i.test(addr))               return getBase(75_000_000,  'Đà Nẵng', 55);
-  if (/ngũ hành sơn|ngu hanh son/i.test(addr))     return getBase(55_000_000,  'Ngũ Hành Sơn, Đà Nẵng', 53);
-  if (/nha trang/i.test(addr))                     return getBase(60_000_000,  'Nha Trang', 53);
-  if (/cam ranh/i.test(addr))                      return getBase(25_000_000,  'Cam Ranh, Khánh Hòa', 50);
-  if (/hải phòng|hai phong/i.test(addr))           return getBase(50_000_000,  'Hải Phòng', 53);
-  if (/cần thơ|can tho/i.test(addr))               return getBase(35_000_000,  'Cần Thơ', 52);
-  if (/vũng tàu|vung tau/i.test(addr))             return getBase(50_000_000,  'Vũng Tàu', 53);
-  if (/bà rịa|ba ria/i.test(addr))                 return getBase(30_000_000,  'Bà Rịa, BR-VT', 50);
-  if (/huế|hue/i.test(addr))                       return getBase(30_000_000,  'Huế', 50);
-  if (/đà lạt|da lat/i.test(addr))                 return getBase(40_000_000,  'Đà Lạt', 52);
-  if (/buôn ma thuột|buon ma thuot|ban me thuot/i.test(addr)) return getBase(18_000_000, 'Buôn Ma Thuột', 48);
-  if (/vinh/i.test(addr))                          return getBase(22_000_000,  'Vinh, Nghệ An', 48);
-  if (/quy nhơn|quy nhon/i.test(addr))             return getBase(25_000_000,  'Quy Nhơn', 48);
-  if (/phan thiết|phan thiet/i.test(addr))         return getBase(30_000_000,  'Phan Thiết', 50);
-  if (/long an|bình phước|đồng nai|dong nai/i.test(addr)) return getBase(30_000_000, 'Khu vực lân cận HCM', 50);
-  if (/bắc ninh|bac ninh/i.test(addr))             return getBase(30_000_000,  'Bắc Ninh', 50);
-  if (/thái nguyên|thai nguyen/i.test(addr))       return getBase(20_000_000,  'Thái Nguyên', 48);
+  // ── Đà Nẵng (TP trực thuộc TW) ───────────────────────────────────────────
+  if (/hải châu|hai chau/i.test(addr))             return getBase(90_000_000,  'Hải Châu, Đà Nẵng', 60);
+  if (/thanh khê|thanh khe/i.test(addr))           return getBase(70_000_000,  'Thanh Khê, Đà Nẵng', 58);
+  if (/sơn trà|son tra/i.test(addr))               return getBase(75_000_000,  'Sơn Trà, Đà Nẵng', 58);
+  if (/ngũ hành sơn|ngu hanh son/i.test(addr))     return getBase(60_000_000,  'Ngũ Hành Sơn, Đà Nẵng', 57);
+  if (/liên chiểu|lien chieu/i.test(addr))         return getBase(55_000_000,  'Liên Chiểu, Đà Nẵng', 55);
+  if (/đà nẵng|da nang/i.test(addr))               return getBase(75_000_000,  'Đà Nẵng', 57);
 
-  return getBase(25_000_000, 'Tỉnh/Thành khác', 42);
+  // ── Hải Phòng (TP trực thuộc TW) ────────────────────────────────────────
+  if (/hồng bàng|hong bang/i.test(addr))           return getBase(60_000_000,  'Hồng Bàng, Hải Phòng', 58);
+  if (/ngô quyền|ngo quyen/i.test(addr))           return getBase(55_000_000,  'Ngô Quyền, Hải Phòng', 57);
+  if (/lê chân|le chan/i.test(addr))               return getBase(50_000_000,  'Lê Chân, Hải Phòng', 57);
+  if (/hải an|hai an/i.test(addr))                 return getBase(38_000_000,  'Hải An, Hải Phòng', 55);
+  if (/đồ sơn|do son/i.test(addr))                 return getBase(40_000_000,  'Đồ Sơn, Hải Phòng', 53);
+  if (/hải phòng|hai phong/i.test(addr))           return getBase(50_000_000,  'Hải Phòng', 55);
+
+  // ── Cần Thơ (TP trực thuộc TW) ───────────────────────────────────────────
+  if (/ninh kiều|ninh kieu/i.test(addr))           return getBase(42_000_000,  'Ninh Kiều, Cần Thơ', 57);
+  if (/bình thuỷ|binh thuy/i.test(addr))           return getBase(28_000_000,  'Bình Thuỷ, Cần Thơ', 53);
+  if (/cần thơ|can tho/i.test(addr))               return getBase(35_000_000,  'Cần Thơ', 53);
+
+  // ── Khánh Hòa (Nha Trang) ────────────────────────────────────────────────
+  if (/nha trang/i.test(addr))                     return getBase(65_000_000,  'Nha Trang', 57);
+  if (/cam ranh/i.test(addr))                      return getBase(25_000_000,  'Cam Ranh, Khánh Hòa', 50);
+  if (/ninh hòa|ninh hoa/i.test(addr))             return getBase(15_000_000,  'Ninh Hòa, Khánh Hòa', 48);
+  if (/khánh hòa|khanh hoa/i.test(addr))           return getBase(55_000_000,  'Khánh Hòa', 53);
+
+  // ── Lâm Đồng (Đà Lạt) ────────────────────────────────────────────────────
+  if (/đà lạt|da lat/i.test(addr))                 return getBase(45_000_000,  'Đà Lạt', 57);
+  if (/bảo lộc|bao loc/i.test(addr))               return getBase(20_000_000,  'Bảo Lộc, Lâm Đồng', 50);
+  if (/lâm đồng|lam dong/i.test(addr))             return getBase(35_000_000,  'Lâm Đồng', 52);
+
+  // ── Bà Rịa – Vũng Tàu ────────────────────────────────────────────────────
+  if (/vũng tàu|vung tau/i.test(addr))             return getBase(55_000_000,  'Vũng Tàu', 57);
+  if (/phú mỹ.*brvt|phu my.*brvt/i.test(addr))    return getBase(35_000_000,  'Phú Mỹ, BR-VT', 53);
+  if (/bà rịa|ba ria/i.test(addr))                 return getBase(30_000_000,  'Bà Rịa', 52);
+  if (/bà rịa.?vũng tàu|br.?vt/i.test(addr))      return getBase(40_000_000,  'Bà Rịa-Vũng Tàu', 52);
+
+  // ── Đồng Nai ──────────────────────────────────────────────────────────────
+  if (/biên hòa|bien hoa/i.test(addr))             return getBase(42_000_000,  'Biên Hòa, Đồng Nai', 57);
+  if (/long thành|long thanh.*dong nai/i.test(addr)) return getBase(35_000_000, 'Long Thành, Đồng Nai', 55);
+  if (/nhơn trạch|nhon trach/i.test(addr))         return getBase(30_000_000,  'Nhơn Trạch, Đồng Nai', 53);
+  if (/đồng nai|dong nai/i.test(addr))             return getBase(35_000_000,  'Đồng Nai', 53);
+
+  // ── Bình Dương ────────────────────────────────────────────────────────────
+  if (/thuận an|thuan an/i.test(addr))             return getBase(55_000_000,  'Thuận An, Bình Dương', 58);
+  if (/dĩ an|di an/i.test(addr))                   return getBase(50_000_000,  'Dĩ An, Bình Dương', 57);
+  if (/thủ dầu một|thu dau mot/i.test(addr))       return getBase(45_000_000,  'Thủ Dầu Một, Bình Dương', 57);
+  if (/bến cát|ben cat/i.test(addr))               return getBase(30_000_000,  'Bến Cát, Bình Dương', 52);
+  if (/bình dương|binh duong/i.test(addr))         return getBase(45_000_000,  'Bình Dương', 57);
+
+  // ── Long An ───────────────────────────────────────────────────────────────
+  if (/tân an|tan an.*long an/i.test(addr))        return getBase(30_000_000,  'Tân An, Long An', 52);
+  if (/cần đước|can duoc/i.test(addr))             return getBase(22_000_000,  'Cần Đước, Long An', 48);
+  if (/long an/i.test(addr))                       return getBase(28_000_000,  'Long An', 52);
+
+  // ── Tây Ninh ──────────────────────────────────────────────────────────────
+  if (/tây ninh|tay ninh/i.test(addr))             return getBase(18_000_000,  'Tây Ninh', 48);
+
+  // ── Bình Phước ────────────────────────────────────────────────────────────
+  if (/đồng xoài|dong xoai/i.test(addr))           return getBase(16_000_000,  'Đồng Xoài, Bình Phước', 47);
+  if (/bình phước|binh phuoc/i.test(addr))         return getBase(18_000_000,  'Bình Phước', 47);
+
+  // ── Thừa Thiên Huế ───────────────────────────────────────────────────────
+  if (/huế|hue/i.test(addr))                       return getBase(32_000_000,  'TP. Huế', 52);
+  if (/thừa thiên|thua thien/i.test(addr))         return getBase(28_000_000,  'Thừa Thiên Huế', 50);
+
+  // ── Quảng Nam ─────────────────────────────────────────────────────────────
+  if (/hội an|hoi an/i.test(addr))                 return getBase(55_000_000,  'Hội An, Quảng Nam', 57);
+  if (/tam kỳ|tam ky/i.test(addr))                 return getBase(20_000_000,  'Tam Kỳ, Quảng Nam', 50);
+  if (/quảng nam|quang nam/i.test(addr))           return getBase(22_000_000,  'Quảng Nam', 50);
+
+  // ── Bình Định ─────────────────────────────────────────────────────────────
+  if (/quy nhơn|quy nhon/i.test(addr))             return getBase(28_000_000,  'Quy Nhơn', 52);
+  if (/bình định|binh dinh/i.test(addr))           return getBase(22_000_000,  'Bình Định', 50);
+
+  // ── Bình Thuận (Phan Thiết) ───────────────────────────────────────────────
+  if (/phan thiết|phan thiet/i.test(addr))         return getBase(32_000_000,  'Phan Thiết', 52);
+  if (/mũi né|mui ne/i.test(addr))                 return getBase(45_000_000,  'Mũi Né, Bình Thuận', 53);
+  if (/bình thuận|binh thuan/i.test(addr))         return getBase(25_000_000,  'Bình Thuận', 50);
+
+  // ── Ninh Thuận ────────────────────────────────────────────────────────────
+  if (/phan rang|ninh thuận|ninh thuan/i.test(addr)) return getBase(20_000_000, 'Ninh Thuận', 48);
+
+  // ── Phú Yên ───────────────────────────────────────────────────────────────
+  if (/tuy hòa|tuy hoa|phú yên|phu yen/i.test(addr)) return getBase(18_000_000, 'Phú Yên', 47);
+
+  // ── Quảng Ngãi ────────────────────────────────────────────────────────────
+  if (/quảng ngãi|quang ngai/i.test(addr))         return getBase(16_000_000,  'Quảng Ngãi', 47);
+
+  // ── Nghệ An ───────────────────────────────────────────────────────────────
+  if (/vinh|nghệ an|nghe an/i.test(addr))          return getBase(22_000_000,  'Vinh, Nghệ An', 50);
+
+  // ── Thanh Hóa ─────────────────────────────────────────────────────────────
+  if (/sầm sơn|sam son/i.test(addr))               return getBase(22_000_000,  'Sầm Sơn, Thanh Hóa', 50);
+  if (/thanh hóa|thanh hoa/i.test(addr))           return getBase(18_000_000,  'Thanh Hóa', 48);
+
+  // ── Hà Tĩnh ───────────────────────────────────────────────────────────────
+  if (/hà tĩnh|ha tinh/i.test(addr))               return getBase(14_000_000,  'Hà Tĩnh', 46);
+
+  // ── Quảng Bình ────────────────────────────────────────────────────────────
+  if (/đồng hới|dong hoi|quảng bình|quang binh/i.test(addr)) return getBase(14_000_000, 'Quảng Bình', 46);
+
+  // ── Quảng Trị ─────────────────────────────────────────────────────────────
+  if (/đông hà|dong ha|quảng trị|quang tri/i.test(addr)) return getBase(12_000_000, 'Quảng Trị', 45);
+
+  // ── Tây Nguyên ────────────────────────────────────────────────────────────
+  if (/buôn ma thuột|buon ma thuot|ban me thuot/i.test(addr)) return getBase(18_000_000, 'Buôn Ma Thuột, Đắk Lắk', 48);
+  if (/đắk lắk|dak lak/i.test(addr))               return getBase(16_000_000,  'Đắk Lắk', 46);
+  if (/pleiku|gia lai/i.test(addr))                 return getBase(16_000_000,  'Gia Lai', 46);
+  if (/đắk nông|dak nong|gia nghĩa|gia nghia/i.test(addr)) return getBase(13_000_000, 'Đắk Nông', 44);
+  if (/kon tum/i.test(addr))                        return getBase(12_000_000,  'Kon Tum', 44);
+
+  // ── Đồng bằng sông Cửu Long ──────────────────────────────────────────────
+  if (/mỹ tho|my tho|tiền giang|tien giang/i.test(addr)) return getBase(22_000_000, 'Tiền Giang', 50);
+  if (/bến tre|ben tre/i.test(addr))               return getBase(16_000_000,  'Bến Tre', 47);
+  if (/trà vinh|tra vinh/i.test(addr))             return getBase(13_000_000,  'Trà Vinh', 45);
+  if (/vĩnh long|vinh long/i.test(addr))           return getBase(16_000_000,  'Vĩnh Long', 47);
+  if (/cao lãnh|cao lanh|đồng tháp|dong thap/i.test(addr)) return getBase(14_000_000, 'Đồng Tháp', 46);
+  if (/long xuyên|long xuyen|châu đốc|chau doc|an giang/i.test(addr)) return getBase(18_000_000, 'An Giang', 48);
+  if (/phú quốc|phu quoc/i.test(addr))             return getBase(80_000_000,  'Phú Quốc, Kiên Giang', 57);
+  if (/rạch giá|rach gia|kiên giang|kien giang/i.test(addr)) return getBase(20_000_000, 'Kiên Giang', 48);
+  if (/vị thanh|vi thanh|hậu giang|hau giang/i.test(addr)) return getBase(12_000_000, 'Hậu Giang', 44);
+  if (/sóc trăng|soc trang/i.test(addr))           return getBase(12_000_000,  'Sóc Trăng', 44);
+  if (/bạc liêu|bac lieu/i.test(addr))             return getBase(12_000_000,  'Bạc Liêu', 44);
+  if (/cà mau/i.test(addr))                        return getBase(14_000_000,  'Cà Mau', 44);
+
+  // ── Quảng Ninh (Hạ Long) ─────────────────────────────────────────────────
+  if (/hạ long|ha long/i.test(addr))               return getBase(40_000_000,  'Hạ Long, Quảng Ninh', 55);
+  if (/móng cái|mong cai/i.test(addr))             return getBase(25_000_000,  'Móng Cái, Quảng Ninh', 50);
+  if (/quảng ninh|quang ninh/i.test(addr))         return getBase(35_000_000,  'Quảng Ninh', 53);
+
+  // ── Các tỉnh phía Bắc (quanh Hà Nội) ────────────────────────────────────
+  if (/bắc ninh|bac ninh/i.test(addr))             return getBase(32_000_000,  'Bắc Ninh', 52);
+  if (/bắc giang|bac giang/i.test(addr))           return getBase(22_000_000,  'Bắc Giang', 50);
+  if (/vĩnh phúc|vinh phuc/i.test(addr))           return getBase(26_000_000,  'Vĩnh Phúc', 50);
+  if (/hải dương|hai duong/i.test(addr))           return getBase(25_000_000,  'Hải Dương', 50);
+  if (/hưng yên|hung yen/i.test(addr))             return getBase(22_000_000,  'Hưng Yên', 50);
+  if (/thái bình|thai binh/i.test(addr))           return getBase(15_000_000,  'Thái Bình', 47);
+  if (/hà nam|ha nam/i.test(addr))                 return getBase(18_000_000,  'Hà Nam', 48);
+  if (/nam định|nam dinh/i.test(addr))             return getBase(18_000_000,  'Nam Định', 48);
+  if (/ninh bình|ninh binh/i.test(addr))           return getBase(20_000_000,  'Ninh Bình', 48);
+
+  // ── Trung du & Miền núi phía Bắc ─────────────────────────────────────────
+  if (/thái nguyên|thai nguyen/i.test(addr))       return getBase(20_000_000,  'Thái Nguyên', 49);
+  if (/phú thọ|phu tho/i.test(addr))               return getBase(18_000_000,  'Phú Thọ', 47);
+  if (/yên bái|yen bai/i.test(addr))               return getBase(10_000_000,  'Yên Bái', 45);
+  if (/lào cai|lao cai/i.test(addr))               return getBase(15_000_000,  'Lào Cai', 46);
+  if (/sa pa|sapa/i.test(addr))                    return getBase(28_000_000,  'Sa Pa, Lào Cai', 52);
+  if (/tuyên quang|tuyen quang/i.test(addr))       return getBase(10_000_000,  'Tuyên Quang', 44);
+  if (/hòa bình|hoa binh/i.test(addr))             return getBase(12_000_000,  'Hòa Bình', 45);
+  if (/sơn la|son la/i.test(addr))                 return getBase(10_000_000,  'Sơn La', 44);
+  if (/điện biên|dien bien/i.test(addr))           return getBase(8_000_000,   'Điện Biên', 42);
+  if (/lai châu|lai chau/i.test(addr))             return getBase(7_000_000,   'Lai Châu', 40);
+  if (/lạng sơn|lang son/i.test(addr))             return getBase(10_000_000,  'Lạng Sơn', 44);
+  if (/cao bằng|cao bang/i.test(addr))             return getBase(8_000_000,   'Cao Bằng', 42);
+  if (/bắc kạn|bac kan/i.test(addr))               return getBase(8_000_000,   'Bắc Kạn', 42);
+  if (/hà giang|ha giang/i.test(addr))             return getBase(8_000_000,   'Hà Giang', 42);
+
+  return getBase(20_000_000, 'Tỉnh/Thành khác', 42);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

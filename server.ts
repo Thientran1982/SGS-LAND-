@@ -881,8 +881,10 @@ async function startServer() {
   // Setup BullMQ Worker — capture instance so we can close it on shutdown
   const webhookWorker = setupWebhookWorker(io);
 
-  // Start market data service — in-memory cache with 6h TTL + background refresh
-  marketDataService.start(io);
+  // Start market data service — Redis persistence + background seed for all provinces
+  marketDataService.start(io).catch((err: any) =>
+    console.error('[MarketData] Start error:', err?.message)
+  );
 
   // Socket.io uses in-memory adapter (single-instance).
   // Upstash REST API does not support TCP pub/sub required by @socket.io/redis-adapter.
