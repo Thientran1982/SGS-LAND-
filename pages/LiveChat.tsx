@@ -174,11 +174,14 @@ export default function LiveChat() {
         setInput('');
 
         // 1. Save customer inbound message
+        // NOTE: The server broadcasts `receive_message` via socket BEFORE returning
+        // the HTTP response, so handleNewMessage may run first and add the message.
+        // We must deduplicate here to avoid showing the message twice.
         let msg: Interaction | null = null;
         try {
             msg = await publicSendMessage(leadId, content, 'INBOUND');
             msg.direction = Direction.INBOUND;
-            setMessages(prev => [...prev, msg!]);
+            setMessages(prev => prev.some(m => m.id === msg!.id) ? prev : [...prev, msg!]);
             socket.emit('send_message', { room: leadId, message: msg });
         } catch {
             // If save failed, show message locally anyway
