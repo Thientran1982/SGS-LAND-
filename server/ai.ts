@@ -372,9 +372,15 @@ class AiEngine {
                 CURRENT MESSAGE: "${state.userMessage}"
                 
                 TASK: Analyze intent using Vietnamese real estate context.
-                If user asks "có sổ chưa", mapping is LEGAL_CONCERN -> PINK_BOOK.
-                If user mentions "2 tỷ", extract 2000000000.
-                Extract location_keyword as a clean string (e.g., "Thủ Đức", "Quận 1", "District 2") without extra words like "Tìm nhà ở".
+                Examples:
+                - "có sổ chưa" → legal_concern: PINK_BOOK
+                - "2 tỷ" / "hai tỷ" → budget_max: 2000000000
+                - "trên 80m²" / "ít nhất 100 mét vuông" → area_min: 80 (or 100)
+                - "căn hộ", "nhà phố", "đất nền" → property_type
+                - "Thủ Đức", "Quận 1", "District 2" → location_keyword (clean string, no filler words)
+                - "lãi suất 7%", "vay 20 năm" → loan_rate: 7, loan_years: 20
+                Prioritize SEARCH_INVENTORY when user asks about listings/prices/location.
+                Use ESCALATE_TO_HUMAN only when user is clearly frustrated or requests a human agent.
             `;
 
             const routerModel = await getGovernanceModel(state.tenantId);
@@ -405,7 +411,8 @@ class AiEngine {
             }
 
             const searchRes = await TOOL_EXECUTOR.search_inventory(state.tenantId, extraction.location_keyword || '', budgetMax, extraction.property_type, extraction.area_min);
-            this.updateTrace(state.trace, `Retrieved inventory results.`);
+            const resultCount = searchRes.startsWith('Tìm thấy') ? searchRes.split('\n')[0] : 'Inventory queried';
+            this.updateTrace(state.trace, resultCount);
             return { systemContext: state.systemContext + `\n\n[INVENTORY DATA]:\n${searchRes}` };
         });
 
@@ -449,7 +456,7 @@ class AiEngine {
                     schedule
                 }
             };
-            this.updateTrace(state.trace, `Loan calculated for ${principal.toLocaleString()} VND`);
+            this.updateTrace(state.trace, `Vay ${(principal/1e9).toFixed(2)} Tỷ | ${rate}%/năm | ${years} năm | Trả ${Math.round(loanData.monthly).toLocaleString()} VNĐ/tháng`);
             return { 
                 systemContext: state.systemContext + `\nLoan Calc: Principal=${principal}, Monthly=${loanData.monthly}`,
                 artifact
@@ -500,14 +507,36 @@ class AiEngine {
         graph.addNode('LEAD_ANALYST', async (state) => {
             state.trace.push({ id: `step_2`, node: 'LEAD_ANALYST', status: 'RUNNING', timestamp: Date.now() });
             
+            const lead = state.lead;
+            const leadProfile = lead ? [
+                `Tên: ${lead.name}`,
+                `Nguồn: ${lead.source || 'Chưa rõ'}`,
+                `Giai đoạn: ${lead.stage || 'Chưa rõ'}`,
+                `Điểm lead: ${lead.score?.score ?? 'N/A'} (${lead.score?.grade ?? '?'})`,
+                `Ngân sách: ${lead.preferences?.budgetMax ? (lead.preferences.budgetMax / 1e9).toFixed(2) + ' Tỷ VNĐ' : 'Chưa rõ'}`,
+                `Loại hình: ${lead.preferences?.propertyTypes?.join(', ') || 'Chưa rõ'}`,
+                `Khu vực: ${lead.preferences?.regions?.join(', ') || 'Chưa rõ'}`,
+                `Ghi chú: ${lead.notes || 'Không có'}`,
+            ].join('\n') : 'Không có hồ sơ khách hàng cụ thể.';
+
             const analysisPrompt = `
-                Bạn là chuyên gia phân tích dữ liệu khách hàng.
-                KHÁCH HÀNG: ${state.lead?.name || 'Khách hàng chung'}
-                LỊCH SỬ TƯƠNG TÁC:
-                ${state.history.slice(-12).map(h => `- ${h.content}`).join('\n')}
+                Bạn là chuyên gia phân tích tâm lý và hành vi khách hàng Bất động sản cao cấp.
                 
-                NHIỆM VỤ: Phân tích tâm lý, nhu cầu thực sự và đưa ra chiến lược chốt deal cho Sales.
-                Trả về kết quả dưới dạng ghi chú hệ thống.
+                HỒ SƠ KHÁCH HÀNG:
+                ${leadProfile}
+                
+                LỊCH SỬ TƯƠNG TÁC GẦN ĐÂY (12 tin nhắn cuối):
+                ${state.history.slice(-12).map(h => `[${h.direction === 'INBOUND' ? 'Khách' : 'Sale'}]: ${h.content}`).join('\n')}
+                
+                TIN NHẮN HIỆN TẠI: "${state.userMessage}"
+                
+                NHIỆM VỤ:
+                1. Phân tích tâm lý và nhu cầu thực sự (không phải những gì khách nói, mà là ẩn ý)
+                2. Đánh giá mức độ sẵn sàng mua (0-100%)
+                3. Rủi ro và điểm cần chú ý
+                4. Chiến lược chốt deal tối ưu cho Sales (1-2 câu cụ thể)
+                
+                Trả lời ngắn gọn, sắc bén. Đây là ghi chú nội bộ cho Sales, không phải câu trả lời khách hàng.
             `;
 
             const analysisModel = await getGovernanceModel(state.tenantId);
@@ -541,7 +570,7 @@ class AiEngine {
                 CONTEXT:
                 ${state.systemContext}${leadAnalysisSection}
 
-                CONVERSATION HISTORY (last 10 messages):
+                CONVERSATION HISTORY (last 12 messages):
                 ${conversationHistory || '(No previous messages)'}
                 
                 USER INPUT: "${state.userMessage}"
@@ -627,14 +656,23 @@ class AiEngine {
             };
         }
 
+        const buildSystemContext = (lead: Lead | null): string => {
+            if (!lead) return 'General inquiry — no specific lead context.';
+            const parts = [`Customer: ${lead.name}`];
+            if (lead.stage)                        parts.push(`Stage: ${lead.stage}`);
+            if (lead.score?.score != null)         parts.push(`Score: ${lead.score.score} (${lead.score.grade || '?'})`);
+            if (lead.preferences?.budgetMax)       parts.push(`Budget: ${(lead.preferences.budgetMax / 1e9).toFixed(2)} Tỷ`);
+            if (lead.preferences?.regions?.length) parts.push(`Regions: ${lead.preferences.regions.join(', ')}`);
+            if (lead.preferences?.propertyTypes?.length) parts.push(`Types: ${lead.preferences.propertyTypes.join(', ')}`);
+            return parts.join(' | ');
+        };
+
         const initialState: AgentState = {
             lead,
             userMessage,
             history: history || [],
             trace: [],
-            systemContext: lead
-                ? `Customer: ${lead.name}. Lead Score: ${lead.score?.score || 'N/A'}.`
-                : 'General inquiry — no specific lead context.',
+            systemContext: buildSystemContext(lead),
             finalResponse: "",
             suggestedAction: 'NONE',
             t,
