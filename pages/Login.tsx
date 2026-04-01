@@ -179,12 +179,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       return msg;
   };
 
-  useEffect(() => {
-      const savedEmail = localStorage.getItem('sgs_last_email');
-      if (savedEmail) setEmail(savedEmail);
-
-      const hash = window.location.hash;
-
+  const handleHashTokens = useCallback((hash: string) => {
       // Handle email verification link: #/verify-email/{token}
       const verifyMatch = hash.match(/\/verify-email\/([a-f0-9]+)/);
       if (verifyMatch) {
@@ -197,11 +192,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   setSuccessMsg(t('auth.verify_email_success'));
                   setTimeout(() => onLoginSuccess(), 1000);
               })
-              .catch(err => {
+              .catch(() => {
                   setGlobalError(t('auth.verify_email_invalid'));
                   setLoading(false);
               });
-          return;
+          return true;
       }
 
       const match = hash.match(/reset_token=([a-f0-9]+)/);
@@ -209,9 +204,31 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           setOtp(match[1]);
           setTokenFromUrl(true);
           setView('FORGOT_VERIFY');
+          setGlobalError('');
+          setSuccessMsg('');
           window.history.replaceState(null, '', `${window.location.pathname}#/${ROUTES.LOGIN}`);
+          return true;
       }
-  }, []);
+
+      return false;
+  }, [t, onLoginSuccess]);
+
+  useEffect(() => {
+      const savedEmail = localStorage.getItem('sgs_last_email');
+      if (savedEmail) setEmail(savedEmail);
+
+      handleHashTokens(window.location.hash);
+  }, [handleHashTokens]);
+
+  // Re-check hash on every hashchange — fixes the case where the user is
+  // already on the Login page (e.g. FORGOT_REQUEST view) and then clicks
+  // the reset link in their email, which changes the hash without unmounting
+  // this component. Without this listener the useEffect above never re-fires.
+  useEffect(() => {
+      const onHashChange = () => handleHashTokens(window.location.hash);
+      window.addEventListener('hashchange', onHashChange);
+      return () => window.removeEventListener('hashchange', onHashChange);
+  }, [handleHashTokens]);
 
   // Real-time B2B Email Check
   useEffect(() => {
