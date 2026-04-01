@@ -9,7 +9,7 @@ interface ProjectReport {
   id: string;
   name: string;
   project_status: string;
-  property_type: string;
+  location?: string;
   total: number;
   done: number;
   in_progress: number;
