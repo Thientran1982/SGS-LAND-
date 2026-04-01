@@ -24,14 +24,18 @@ const ICONS = {
     TRASH: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
     ATTACH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>,
     MAGIC: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
-    ZALO: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S16.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm-1 4v4h-4v2h4v4h2v-4h4v-2h-4V6h-2z" fillRule="evenodd" /></svg>,
-    EMAIL: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+    ZALO: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zM8.5 8h7L10 16h5.5v1.5h-7L14 9.5H8.5V8z"/></svg>,
+    FACEBOOK: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>,
+    WEB: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>,
+    EMAIL: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
     SMS: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
     BACK: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     ROBOT_OFF: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>,
     ROBOT_ON: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>,
     ALERT: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
-    X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+    X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+    FILTER: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M7 12h10M10 18h4" /></svg>,
+    UNREAD: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="currentColor"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8"/></svg>,
 };
 
 export const Inbox: React.FC = () => {
@@ -548,27 +552,62 @@ export const Inbox: React.FC = () => {
                             </div>
                         )}
                     </div>
-                    {/* Status + Channel Filters — horizontally scrollable, never wraps */}
-                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-                        {(['ALL', 'UNREAD'] as const).map(s => (
+                    {/* Filter row: Status tabs + separator + Channel chips — swipeable on mobile */}
+                    <div
+                        className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5 scroll-smooth"
+                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+                    >
+                        {/* Status: All / Unread */}
+                        {([
+                            { key: 'ALL',    label: t('inbox.filter_all'),    icon: null },
+                            { key: 'UNREAD', label: t('inbox.filter_unread'), icon: ICONS.UNREAD },
+                        ] as const).map(({ key, label, icon }) => (
                             <button
-                                key={s}
-                                onClick={() => setStatusFilter(s)}
-                                className={`text-xs2 font-bold px-2.5 py-1 rounded-lg border transition-all whitespace-nowrap shrink-0 ${statusFilter === s ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                                key={key}
+                                onClick={() => setStatusFilter(key)}
+                                className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[30px] ${
+                                    statusFilter === key
+                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                        : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300 hover:text-indigo-600'
+                                }`}
                             >
-                                {s === 'ALL' ? t('inbox.filter_all') : t('inbox.filter_unread')}
+                                {icon}
+                                {label}
                             </button>
                         ))}
+
+                        {/* Divider */}
                         <div className="w-px bg-[var(--glass-border)] self-stretch shrink-0 mx-0.5" />
-                        {(['ALL', Channel.WEB, Channel.ZALO, Channel.FACEBOOK, Channel.EMAIL, Channel.SMS] as const).map(ch => (
-                            <button
-                                key={ch}
-                                onClick={() => setChannelFilter(ch)}
-                                className={`text-xs2 font-bold px-2.5 py-1 rounded-lg border transition-all whitespace-nowrap shrink-0 ${channelFilter === ch ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
-                            >
-                                {ch === 'ALL' ? t('inbox.filter_all') : channelLabel(ch)}
-                            </button>
-                        ))}
+
+                        {/* Channel chips with icons */}
+                        {([
+                            { key: 'ALL',            label: t('inbox.filter_all'), icon: ICONS.FILTER },
+                            { key: Channel.WEB,      label: t('inbox.channel_web'),      icon: ICONS.WEB },
+                            { key: Channel.ZALO,     label: 'Zalo',                     icon: ICONS.ZALO },
+                            { key: Channel.FACEBOOK, label: 'Facebook',                 icon: ICONS.FACEBOOK },
+                            { key: Channel.EMAIL,    label: 'Email',                    icon: ICONS.EMAIL },
+                            { key: Channel.SMS,      label: 'SMS',                      icon: ICONS.SMS },
+                        ] as const).map(({ key, label, icon }) => {
+                            const active = channelFilter === key;
+                            const channelColors: Record<string, string> = {
+                                ZALO:     active ? 'bg-blue-600 text-white border-blue-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-blue-300 hover:text-blue-600',
+                                FACEBOOK: active ? 'bg-[#1877F2] text-white border-[#1877F2]' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-blue-400 hover:text-[#1877F2]',
+                                EMAIL:    active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600',
+                                SMS:      active ? 'bg-emerald-600 text-white border-emerald-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-emerald-300 hover:text-emerald-600',
+                                WEB:      active ? 'bg-violet-600 text-white border-violet-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-violet-300 hover:text-violet-600',
+                                ALL:      active ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600',
+                            };
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => setChannelFilter(key)}
+                                    className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[30px] bg-[var(--glass-surface)] ${channelColors[key] || channelColors['ALL']} ${active ? 'shadow-sm' : ''}`}
+                                >
+                                    {icon}
+                                    <span className="hidden sm:inline">{label}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -827,15 +866,22 @@ export const Inbox: React.FC = () => {
                     <div className="px-2 pt-2 sm:px-3 sm:pt-2.5 pb-safe bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] z-30">
                         {/* Channel selector row + supervisor badge */}
                         <div className="flex items-center justify-between gap-2 mb-2">
-                            {/* Channel tabs */}
-                            <div className="flex bg-[var(--glass-surface)] p-0.5 rounded-lg border border-[var(--glass-border)] overflow-x-auto no-scrollbar shrink-0">
-                                {[Channel.ZALO, Channel.EMAIL, Channel.SMS].map(ch => (
+                            {/* Channel tabs — color-coded per channel */}
+                            <div
+                                className="flex bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar shrink-0"
+                                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+                            >
+                                {([
+                                    { ch: Channel.ZALO,  icon: ICONS.ZALO,  activeClass: 'bg-blue-600 text-white shadow-sm',     inactiveClass: 'text-blue-400 hover:text-blue-600' },
+                                    { ch: Channel.EMAIL, icon: ICONS.EMAIL, activeClass: 'bg-indigo-600 text-white shadow-sm',   inactiveClass: 'text-indigo-400 hover:text-indigo-600' },
+                                    { ch: Channel.SMS,   icon: ICONS.SMS,   activeClass: 'bg-emerald-600 text-white shadow-sm', inactiveClass: 'text-emerald-500 hover:text-emerald-700' },
+                                ] as const).map(({ ch, icon, activeClass, inactiveClass }) => (
                                     <button 
                                         key={ch} 
                                         onClick={() => setChannel(ch)}
-                                        className={`px-2 sm:px-2.5 py-1 min-h-[32px] rounded-md text-xs2 font-bold uppercase transition-all flex items-center gap-1 whitespace-nowrap ${channel === ch ? 'bg-[var(--bg-surface)] text-indigo-700 shadow-sm' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
+                                        className={`px-2.5 sm:px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
                                     >
-                                        {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS}
+                                        {icon}
                                         <span className="hidden sm:inline">{channelLabel(ch)}</span>
                                     </button>
                                 ))}
@@ -843,7 +889,7 @@ export const Inbox: React.FC = () => {
                             
                             {/* Supervisor mode badge */}
                             {!isAiActiveForSelected && (
-                                <div className="text-xs2 font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg animate-pulse whitespace-nowrap flex items-center gap-1 shrink-0">
+                                <div className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-lg whitespace-nowrap flex items-center gap-1.5 shrink-0">
                                     {ICONS.ALERT}
                                     <span className="hidden sm:inline">{t('inbox.supervisor_takeover_active')}</span>
                                     <span className="sm:hidden">Manual</span>
