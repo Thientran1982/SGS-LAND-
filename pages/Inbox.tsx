@@ -85,6 +85,30 @@ export const Inbox: React.FC = () => {
     const assignDropdownRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const isSendingRef = useRef(false);
+
+    // --- HORIZONTAL DRAG SCROLL (for filter chips & channel tabs on mobile) ---
+    const filterScrollRef = useRef<HTMLDivElement>(null);
+    const channelTabsRef  = useRef<HTMLDivElement>(null);
+    const filterTouch     = useRef({ startX: 0, scrollLeft: 0 });
+    const channelTouch    = useRef({ startX: 0, scrollLeft: 0 });
+
+    const makeTouchScroll = (
+        elRef: React.RefObject<HTMLDivElement>,
+        state: React.MutableRefObject<{ startX: number; scrollLeft: number }>
+    ) => ({
+        onTouchStart: (e: React.TouchEvent) => {
+            const el = elRef.current; if (!el) return;
+            state.current = { startX: e.touches[0].clientX, scrollLeft: el.scrollLeft };
+        },
+        onTouchMove: (e: React.TouchEvent) => {
+            const el = elRef.current; if (!el) return;
+            const dx = state.current.startX - e.touches[0].clientX;
+            if (Math.abs(dx) > 4) {
+                el.scrollLeft = state.current.scrollLeft + dx;
+                e.stopPropagation();
+            }
+        },
+    });
     const { t, formatTime, formatCurrency, formatDate, formatDateTime, language } = useTranslation();
 
     const channelLabel = useCallback((ch: string): string => {
@@ -519,7 +543,7 @@ export const Inbox: React.FC = () => {
 
             {/* Sidebar List */}
             <div className={`w-full md:w-80 lg:w-96 border-r border-[var(--glass-border)] flex flex-col ${selectedLeadId ? 'hidden md:flex' : 'flex'}`}>
-                <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-2 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] z-10 flex flex-col gap-2.5">
+                <div className="px-2 sm:px-4 pt-2.5 sm:pt-4 pb-2 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] z-10 flex flex-col gap-2">
                     <div className="flex justify-between items-center">
                         <h2 className="font-bold text-[var(--text-primary)]">{t('menu.inbox')}</h2>
                         <button 
@@ -553,11 +577,13 @@ export const Inbox: React.FC = () => {
                         )}
                     </div>
                     {/* Filter row
-                        Mobile/tablet : single scrollable row (touch pan-x)
+                        Mobile : single scrollable row with JS touch-drag handler (reliable on iOS/Android)
                         Desktop (md+) : wraps to two lines — no scroll needed, no icons */}
                     <div
-                        className="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-scroll overflow-y-hidden md:overflow-visible md:overflow-y-visible no-scrollbar pb-0.5 -mx-3 sm:-mx-4 px-3 sm:px-4 md:mx-0 md:px-0"
-                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
+                        ref={filterScrollRef}
+                        className="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-auto md:overflow-visible no-scrollbar pb-0.5"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                        {...makeTouchScroll(filterScrollRef, filterTouch)}
                     >
                         {/* Status chips */}
                         {([
@@ -870,13 +896,15 @@ export const Inbox: React.FC = () => {
                     </div>
 
                     {/* Input Bar */}
-                    <div className="px-3 pt-2 sm:px-4 sm:pt-2.5 pb-safe bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] z-30">
+                    <div className="px-2 pt-2 sm:px-3 sm:pt-2.5 pb-safe bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] z-30">
                         {/* Channel selector row + supervisor badge */}
                         <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
-                            {/* Channel tabs — color-coded per channel; flex-1 min-w-0 ensures bounded width so overflow-x-scroll works */}
+                            {/* Channel tabs — flex-1 min-w-0 bounds width so overflow triggers; JS touch-drag for iOS */}
                             <div
-                                className="flex flex-nowrap flex-1 min-w-0 bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-scroll overflow-y-hidden no-scrollbar"
-                                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
+                                ref={channelTabsRef}
+                                className="flex flex-nowrap flex-1 min-w-0 bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar"
+                                style={{ WebkitOverflowScrolling: 'touch' }}
+                                {...makeTouchScroll(channelTabsRef, channelTouch)}
                             >
                                 {([
                                     { ch: Channel.ZALO,  icon: ICONS.ZALO,  activeClass: 'bg-blue-600 text-white shadow-sm',     inactiveClass: 'text-blue-400 hover:text-blue-600' },
