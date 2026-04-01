@@ -519,7 +519,7 @@ export const Inbox: React.FC = () => {
 
             {/* Sidebar List */}
             <div className={`w-full md:w-80 lg:w-96 border-r border-[var(--glass-border)] flex flex-col ${selectedLeadId ? 'hidden md:flex' : 'flex'}`}>
-                <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-2 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] z-10 flex flex-col gap-2.5">
+                <div className="px-4 sm:px-5 pt-4 pb-2.5 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] z-10 flex flex-col gap-2.5">
                     <div className="flex justify-between items-center">
                         <h2 className="font-bold text-[var(--text-primary)]">{t('menu.inbox')}</h2>
                         <button 
@@ -552,14 +552,34 @@ export const Inbox: React.FC = () => {
                             </div>
                         )}
                     </div>
-                    {/* Filter row
-                        Mobile/tablet : single scrollable row (touch pan-x)
-                        Desktop (md+) : wraps to two lines — no scroll needed, no icons */}
-                    <div
-                        className="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-scroll overflow-y-hidden md:overflow-visible md:overflow-y-visible no-scrollbar pb-0.5 -mx-3 sm:-mx-4 px-3 sm:px-4 md:mx-0 md:px-0"
-                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
-                    >
-                        {/* Status chips */}
+                    {/* Filter row — Mobile: two compact dropdowns | Desktop: chip pills */}
+
+                    {/* ── MOBILE dropdown row ── */}
+                    <div className="flex md:hidden gap-2">
+                        <select
+                            value={statusFilter}
+                            onChange={e => setStatusFilter(e.target.value as 'ALL' | 'UNREAD')}
+                            className="flex-1 text-xs font-bold bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 min-h-[36px] text-[var(--text-secondary)] outline-none focus:border-indigo-400 transition-colors appearance-none cursor-pointer"
+                        >
+                            <option value="ALL">{t('inbox.filter_all')}</option>
+                            <option value="UNREAD">{t('inbox.filter_unread')}</option>
+                        </select>
+                        <select
+                            value={channelFilter}
+                            onChange={e => setChannelFilter(e.target.value as typeof channelFilter)}
+                            className="flex-1 text-xs font-bold bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 min-h-[36px] text-[var(--text-secondary)] outline-none focus:border-indigo-400 transition-colors appearance-none cursor-pointer"
+                        >
+                            <option value="ALL">{t('inbox.filter_all')}</option>
+                            <option value={Channel.WEB}>{t('inbox.channel_web')}</option>
+                            <option value={Channel.ZALO}>Zalo</option>
+                            <option value={Channel.FACEBOOK}>Facebook</option>
+                            <option value={Channel.EMAIL}>Email</option>
+                            <option value={Channel.SMS}>SMS</option>
+                        </select>
+                    </div>
+
+                    {/* ── DESKTOP chip pills ── */}
+                    <div className="hidden md:flex md:flex-wrap gap-1.5">
                         {([
                             { key: 'ALL'   as const, label: t('inbox.filter_all')    },
                             { key: 'UNREAD'as const, label: t('inbox.filter_unread') },
@@ -573,24 +593,18 @@ export const Inbox: React.FC = () => {
                                         : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300 hover:text-indigo-600'
                                 }`}
                             >
-                                {/* Icon only below md */}
-                                {key === 'UNREAD' && <span className="md:hidden">{ICONS.UNREAD}</span>}
                                 {label}
                             </button>
                         ))}
-
-                        {/* Divider — visible only on mobile scroll row */}
-                        <div className="md:hidden w-px bg-[var(--glass-border)] self-stretch shrink-0 mx-0.5" />
-
-                        {/* Channel chips */}
+                        <div className="w-px bg-[var(--glass-border)] self-stretch mx-0.5" />
                         {([
-                            { key: 'ALL'            as const, label: t('inbox.filter_all'),   icon: ICONS.FILTER   },
-                            { key: Channel.WEB               , label: t('inbox.channel_web'),  icon: ICONS.WEB      },
-                            { key: Channel.ZALO              , label: 'Zalo',                  icon: ICONS.ZALO     },
-                            { key: Channel.FACEBOOK          , label: 'Facebook',              icon: ICONS.FACEBOOK },
-                            { key: Channel.EMAIL             , label: 'Email',                 icon: ICONS.EMAIL    },
-                            { key: Channel.SMS               , label: 'SMS',                   icon: ICONS.SMS      },
-                        ]).map(({ key, label, icon }) => {
+                            { key: 'ALL'            as const, label: t('inbox.filter_all')  },
+                            { key: Channel.WEB               , label: t('inbox.channel_web') },
+                            { key: Channel.ZALO              , label: 'Zalo'                 },
+                            { key: Channel.FACEBOOK          , label: 'Facebook'             },
+                            { key: Channel.EMAIL             , label: 'Email'                },
+                            { key: Channel.SMS               , label: 'SMS'                  },
+                        ]).map(({ key, label }) => {
                             const active = channelFilter === key;
                             const colorMap: Record<string, { on: string; off: string }> = {
                                 ZALO:     { on: 'bg-blue-600 text-white border-blue-600',     off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-blue-300 hover:text-blue-600' },
@@ -607,8 +621,6 @@ export const Inbox: React.FC = () => {
                                     onClick={() => setChannelFilter(key)}
                                     className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[28px] bg-[var(--glass-surface)] ${active ? c.on + ' shadow-sm' : c.off}`}
                                 >
-                                    {/* Icon only on mobile/tablet — desktop shows text-only to save space */}
-                                    <span className="md:hidden">{icon}</span>
                                     {label}
                                 </button>
                             );
@@ -716,7 +728,7 @@ export const Inbox: React.FC = () => {
             {selectedThread ? (
                 <div className={`flex-1 flex flex-col bg-[var(--bg-surface)] h-full relative min-w-0 ${selectedLeadId ? 'flex' : 'hidden md:flex'}`}>
                     {/* Header */}
-                    <div className="px-3 py-2.5 md:px-4 md:py-3 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]/95 backdrop-blur-md z-20 shadow-sm gap-2">
+                    <div className="px-4 py-2.5 md:px-5 md:py-3 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]/95 backdrop-blur-md z-20 shadow-sm gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                             {/* Back button — mobile only */}
                             <button onClick={() => setSelectedLeadId(null)} aria-label={t('common.back')} className="md:hidden text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] p-1.5 min-h-[44px] min-w-[44px] rounded-full transition-colors shrink-0 -ml-1 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
@@ -816,7 +828,7 @@ export const Inbox: React.FC = () => {
                     </div>
 
                     {/* Messages List */}
-                    <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 bg-[var(--glass-surface)] space-y-3 sm:space-y-4 no-scrollbar scroll-smooth">
+                    <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4 bg-[var(--glass-surface)] space-y-3 sm:space-y-4 no-scrollbar scroll-smooth">
                         {messages.length === 0 && (
                             <div className="h-full flex flex-col items-center justify-center text-[var(--text-secondary)] opacity-60">
                                 <div className="text-4xl mb-2">💬</div>
@@ -870,14 +882,23 @@ export const Inbox: React.FC = () => {
                     </div>
 
                     {/* Input Bar */}
-                    <div className="px-3 pt-2 sm:px-4 sm:pt-2.5 pb-safe bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] z-30">
+                    <div className="px-4 pt-2.5 sm:px-5 sm:pt-3 pb-safe bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] z-30">
                         {/* Channel selector row + supervisor badge */}
-                        <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
-                            {/* Channel tabs — color-coded per channel; flex-1 min-w-0 ensures bounded width so overflow-x-scroll works */}
-                            <div
-                                className="flex flex-nowrap flex-1 min-w-0 bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-scroll overflow-y-hidden no-scrollbar"
-                                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
+                        <div className="flex items-center justify-between gap-2 mb-2.5 min-w-0">
+
+                            {/* ── MOBILE: single select dropdown ── */}
+                            <select
+                                value={channel}
+                                onChange={e => setChannel(e.target.value as Channel)}
+                                className="md:hidden flex-1 min-w-0 text-xs font-bold bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 min-h-[38px] text-[var(--text-secondary)] outline-none focus:border-indigo-400 transition-colors appearance-none cursor-pointer"
                             >
+                                <option value={Channel.ZALO}>Zalo</option>
+                                <option value={Channel.EMAIL}>Email</option>
+                                <option value={Channel.SMS}>SMS</option>
+                            </select>
+
+                            {/* ── DESKTOP: segmented tabs ── */}
+                            <div className="hidden md:flex flex-nowrap flex-1 min-w-0 bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar">
                                 {([
                                     { ch: Channel.ZALO,  icon: ICONS.ZALO,  activeClass: 'bg-blue-600 text-white shadow-sm',     inactiveClass: 'text-blue-400 hover:text-blue-600' },
                                     { ch: Channel.EMAIL, icon: ICONS.EMAIL, activeClass: 'bg-indigo-600 text-white shadow-sm',   inactiveClass: 'text-indigo-400 hover:text-indigo-600' },
@@ -886,15 +907,13 @@ export const Inbox: React.FC = () => {
                                     <button 
                                         key={ch} 
                                         onClick={() => setChannel(ch)}
-                                        className={`px-2.5 sm:px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
+                                        className={`px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
                                     >
-                                        {/* Icon on mobile/sm only — desktop = text only */}
-                                        <span className="md:hidden">{icon}</span>
                                         {channelLabel(ch)}
                                     </button>
                                 ))}
                             </div>
-                            
+
                             {/* Supervisor mode badge */}
                             {!isAiActiveForSelected && (
                                 <div className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded-lg whitespace-nowrap flex items-center gap-1.5 shrink-0">
