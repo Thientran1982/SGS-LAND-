@@ -185,7 +185,7 @@ export const Inbox: React.FC = () => {
             SMS: t('inbox.channel_sms'),
             WEB: t('inbox.channel_web'),
             WEBHOOK: 'Webhook',
-            VOICE: t('inbox.channel_voice') || 'Voice',
+            VOICE: t('inbox.channel_voice'),
         };
         return map[ch] ?? ch;
     }, [t]);
