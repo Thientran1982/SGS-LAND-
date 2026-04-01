@@ -36,6 +36,8 @@ const ICONS = {
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     FILTER: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M7 12h10M10 18h4" /></svg>,
     UNREAD: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="currentColor"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8"/></svg>,
+    WEBHOOK: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>,
+    VOICE: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>,
     CHECK: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>,
     CHEVRON: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>,
 };
@@ -182,6 +184,8 @@ export const Inbox: React.FC = () => {
             EMAIL: t('inbox.channel_email'),
             SMS: t('inbox.channel_sms'),
             WEB: t('inbox.channel_web'),
+            WEBHOOK: 'Webhook',
+            VOICE: t('inbox.channel_voice') || 'Voice',
         };
         return map[ch] ?? ch;
     }, [t]);
@@ -658,12 +662,14 @@ export const Inbox: React.FC = () => {
                             onChange={setChannelFilter}
                             defaultColor="indigo"
                             options={[
-                                { value: 'ALL',          label: t('inbox.filter_all'),    icon: ICONS.FILTER,   color: 'indigo'  },
-                                { value: Channel.WEB,    label: t('inbox.channel_web'),   icon: ICONS.WEB,      color: 'indigo'  },
-                                { value: Channel.ZALO,   label: 'Zalo',                   icon: ICONS.ZALO,     color: 'blue'    },
-                                { value: Channel.FACEBOOK,label: 'Facebook',              icon: ICONS.FACEBOOK, color: 'blue'    },
-                                { value: Channel.EMAIL,  label: 'Email',                  icon: ICONS.EMAIL,    color: 'indigo'  },
-                                { value: Channel.SMS,    label: 'SMS',                    icon: ICONS.SMS,      color: 'emerald' },
+                                { value: 'ALL',              label: t('inbox.filter_all'),    icon: ICONS.FILTER,   color: 'indigo'  },
+                                { value: Channel.WEB,        label: t('inbox.channel_web'),   icon: ICONS.WEB,      color: 'indigo'  },
+                                { value: Channel.ZALO,       label: 'Zalo',                   icon: ICONS.ZALO,     color: 'blue'    },
+                                { value: Channel.FACEBOOK,   label: 'Facebook',               icon: ICONS.FACEBOOK, color: 'blue'    },
+                                { value: Channel.EMAIL,      label: 'Email',                  icon: ICONS.EMAIL,    color: 'indigo'  },
+                                { value: Channel.SMS,        label: 'SMS',                    icon: ICONS.SMS,      color: 'emerald' },
+                                { value: Channel.WEBHOOK,    label: 'Webhook',                icon: ICONS.WEBHOOK,  color: 'indigo'  },
+                                { value: Channel.VOICE,      label: channelLabel(Channel.VOICE), icon: ICONS.VOICE, color: 'amber'   },
                             ]}
                         />
                     </div>
@@ -694,6 +700,8 @@ export const Inbox: React.FC = () => {
                             { key: Channel.FACEBOOK          , label: 'Facebook'             },
                             { key: Channel.EMAIL             , label: 'Email'                },
                             { key: Channel.SMS               , label: 'SMS'                  },
+                            { key: Channel.WEBHOOK           , label: 'Webhook'              },
+                            { key: Channel.VOICE             , label: channelLabel(Channel.VOICE) },
                         ]).map(({ key, label }) => {
                             const active = channelFilter === key;
                             const colorMap: Record<string, { on: string; off: string }> = {
@@ -702,6 +710,8 @@ export const Inbox: React.FC = () => {
                                 EMAIL:    { on: 'bg-indigo-600 text-white border-indigo-600', off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600' },
                                 SMS:      { on: 'bg-emerald-600 text-white border-emerald-600',off:'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-emerald-300 hover:text-emerald-600' },
                                 WEB:      { on: 'bg-violet-600 text-white border-violet-600', off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-violet-300 hover:text-violet-600' },
+                                WEBHOOK:  { on: 'bg-slate-600 text-white border-slate-600',   off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-slate-400 hover:text-slate-600' },
+                                VOICE:    { on: 'bg-amber-500 text-white border-amber-500',   off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-amber-400 hover:text-amber-600' },
                                 ALL:      { on: 'bg-indigo-600 text-white border-indigo-600', off: 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300 hover:text-indigo-600' },
                             };
                             const c = colorMap[key] ?? colorMap['ALL'];
@@ -754,18 +764,22 @@ export const Inbox: React.FC = () => {
                                             {thread.lastChannel && thread.lastChannel !== 'INTERNAL' && (() => {
                                                 const ch = thread.lastChannel;
                                                 const styles: Record<string, string> = {
-                                                    ZALO: 'bg-blue-100 text-blue-700',
-                                                    FACEBOOK: 'bg-[#1877F2]/10 text-[#1877F2]',
-                                                    EMAIL: 'bg-indigo-50 text-indigo-600',
-                                                    SMS: 'bg-emerald-50 text-emerald-600',
-                                                    WEB: 'bg-violet-50 text-violet-600',
+                                                    ZALO:    'bg-blue-100 text-blue-700',
+                                                    FACEBOOK:'bg-[#1877F2]/10 text-[#1877F2]',
+                                                    EMAIL:   'bg-indigo-50 text-indigo-600',
+                                                    SMS:     'bg-emerald-50 text-emerald-600',
+                                                    WEB:     'bg-violet-50 text-violet-600',
+                                                    WEBHOOK: 'bg-slate-100 text-slate-600',
+                                                    VOICE:   'bg-amber-50 text-amber-600',
                                                 };
                                                 const badgeLabels: Record<string, string> = {
-                                                    ZALO: t('inbox.channel_badge_zalo'),
-                                                    FACEBOOK: t('inbox.channel_badge_facebook'),
-                                                    EMAIL: t('inbox.channel_badge_email'),
-                                                    SMS: t('inbox.channel_badge_sms'),
-                                                    WEB: t('inbox.channel_badge_web'),
+                                                    ZALO:    t('inbox.channel_badge_zalo'),
+                                                    FACEBOOK:t('inbox.channel_badge_facebook'),
+                                                    EMAIL:   t('inbox.channel_badge_email'),
+                                                    SMS:     t('inbox.channel_badge_sms'),
+                                                    WEB:     t('inbox.channel_badge_web'),
+                                                    WEBHOOK: 'Hook',
+                                                    VOICE:   'Tel',
                                                 };
                                                 return (
                                                     <span className={`text-2xs font-bold px-1.5 py-0.5 rounded shrink-0 ${styles[ch] || 'bg-slate-100 text-slate-500'}`}
@@ -979,9 +993,11 @@ export const Inbox: React.FC = () => {
                             {/* ── Channel tabs (mobile + desktop) ── */}
                             <div className="flex flex-nowrap w-fit bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar">
                                 {([
-                                    { ch: Channel.ZALO,  activeClass: 'bg-blue-600 text-white shadow-sm',     inactiveClass: 'text-blue-400 hover:text-blue-600' },
-                                    { ch: Channel.EMAIL, activeClass: 'bg-indigo-600 text-white shadow-sm',   inactiveClass: 'text-indigo-400 hover:text-indigo-600' },
-                                    { ch: Channel.SMS,   activeClass: 'bg-emerald-600 text-white shadow-sm', inactiveClass: 'text-emerald-500 hover:text-emerald-700' },
+                                    { ch: Channel.ZALO,     activeClass: 'bg-blue-600 text-white shadow-sm',     inactiveClass: 'text-blue-400 hover:text-blue-600' },
+                                    { ch: Channel.FACEBOOK, activeClass: 'bg-[#1877F2] text-white shadow-sm',    inactiveClass: 'text-blue-500 hover:text-[#1877F2]' },
+                                    { ch: Channel.EMAIL,    activeClass: 'bg-indigo-600 text-white shadow-sm',   inactiveClass: 'text-indigo-400 hover:text-indigo-600' },
+                                    { ch: Channel.SMS,      activeClass: 'bg-emerald-600 text-white shadow-sm',  inactiveClass: 'text-emerald-500 hover:text-emerald-700' },
+                                    { ch: Channel.WEB,      activeClass: 'bg-violet-600 text-white shadow-sm',   inactiveClass: 'text-violet-400 hover:text-violet-600' },
                                 ] as const).map(({ ch, activeClass, inactiveClass }) => (
                                     <button
                                         key={ch}
