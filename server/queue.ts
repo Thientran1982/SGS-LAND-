@@ -137,6 +137,136 @@ async function upsertLeadBySocialId(
 }
 
 // ---------------------------------------------------------------------------
+// Auto-reply: gọi AI + gửi reply qua kênh tương ứng (fire-and-forget)
+// ---------------------------------------------------------------------------
+
+async function triggerAutoReply(
+  io: Server,
+  tenantId: string,
+  lead: any,
+  inboundText: string,
+  channel: 'ZALO' | 'FACEBOOK' | 'EMAIL'
+): Promise<void> {
+  try {
+    // 1. Kiểm tra thread_status — chỉ auto-reply khi AI_ACTIVE
+    const { withTenantContext } = await import('./db');
+    const statusResult = await withTenantContext(tenantId, async (client) => {
+      return client.query(
+        `SELECT COALESCE(thread_status, 'AI_ACTIVE') AS thread_status FROM leads WHERE id = $1`,
+        [lead.id]
+      );
+    });
+    const threadStatus: string = statusResult.rows[0]?.thread_status ?? 'AI_ACTIVE';
+    if (threadStatus === 'HUMAN_TAKEOVER') {
+      logger.info(`[AutoReply] Lead ${lead.id} đang ở chế độ HUMAN_TAKEOVER — bỏ qua auto-reply`);
+      return;
+    }
+
+    // 2. Lấy lịch sử hội thoại gần nhất (tối đa 20 tin)
+    const { interactionRepository } = await import('./repositories/interactionRepository');
+    const allHistory = await interactionRepository.findByLead(tenantId, lead.id);
+    const history = allHistory.slice(-20);
+
+    // 3. Gọi AI tạo câu trả lời
+    const { aiService } = await import('./ai');
+    const t = (key: string) => key;
+    const aiResult = await aiService.processMessage(lead, inboundText, history, t, tenantId, 'vn');
+    if (!aiResult?.content) {
+      logger.warn(`[AutoReply] AI không trả về nội dung cho lead ${lead.id}`);
+      return;
+    }
+
+    // 4. Lưu tin trả lời vào DB
+    const aiInteraction = await interactionRepository.create(tenantId, {
+      leadId: lead.id,
+      channel,
+      direction: 'OUTBOUND',
+      type: 'TEXT',
+      content: aiResult.content,
+      metadata: {
+        isAi: true,
+        isAgent: true,
+        aiConfidence: aiResult.confidence,
+        suggestedAction: aiResult.suggestedAction,
+        escalated: aiResult.escalated ?? false,
+      },
+    });
+
+    // 5. Gửi qua kênh thực tế
+    if (channel === 'ZALO') {
+      const zaloId: string | undefined = lead.socialIds?.zalo;
+      if (zaloId) {
+        const { sendZaloTextMessage, getZaloAccessToken } = await import('./services/zaloService');
+        const token = await getZaloAccessToken(tenantId);
+        if (token) {
+          const result = await sendZaloTextMessage(token, zaloId, aiResult.content);
+          if (!result.success) logger.warn(`[AutoReply] Gửi Zalo thất bại: ${result.error}`);
+        } else {
+          logger.warn('[AutoReply] Không tìm thấy Zalo OA Access Token cho tenant ' + tenantId);
+        }
+      }
+    } else if (channel === 'FACEBOOK') {
+      const fbId: string | undefined = lead.socialIds?.facebook;
+      if (fbId) {
+        const { sendFacebookTextMessage, getFacebookDefaultPage } = await import('./services/facebookService');
+        const page = await getFacebookDefaultPage(tenantId);
+        if (page?.accessToken) {
+          const result = await sendFacebookTextMessage(page.accessToken, fbId, aiResult.content);
+          if (!result.success) logger.warn(`[AutoReply] Gửi Facebook thất bại: ${result.error}`);
+        } else {
+          logger.warn('[AutoReply] Không tìm thấy Facebook Page Access Token cho tenant ' + tenantId);
+        }
+      }
+    } else if (channel === 'EMAIL') {
+      if (lead.email) {
+        const { emailService } = await import('./services/emailService');
+        const result = await emailService.sendSequenceEmail(
+          tenantId,
+          lead.email,
+          'Phản hồi từ SGS LAND',
+          aiResult.content
+        );
+        if (!result.success) logger.warn(`[AutoReply] Gửi Email thất bại: ${result.error}`);
+      } else {
+        logger.warn(`[AutoReply] Lead ${lead.id} không có địa chỉ email`);
+      }
+    }
+
+    // 6. Phát socket event cho UI cập nhật realtime
+    io.to(lead.id).emit('receive_message', {
+      room: lead.id,
+      message: aiInteraction,
+      isAi: true,
+    });
+    io.to(`tenant:${tenantId}`).emit('new_inbound_message', {
+      leadId: lead.id,
+      message: aiInteraction,
+      source: channel,
+      isAi: true,
+    });
+
+    logger.info(`[AutoReply] AI đã trả lời lead ${lead.id} qua ${channel} (confidence=${aiResult.confidence})`);
+
+    // 7. Nếu AI đề xuất chuyển agent → cập nhật HUMAN_TAKEOVER
+    if (aiResult.escalated) {
+      await withTenantContext(tenantId, async (client) => {
+        return client.query(
+          `UPDATE leads SET thread_status = 'HUMAN_TAKEOVER' WHERE id = $1`,
+          [lead.id]
+        );
+      });
+      io.to(`tenant:${tenantId}`).emit('escalate_to_human', {
+        leadId: lead.id,
+        reason: 'AI escalated conversation to human agent',
+      });
+      logger.info(`[AutoReply] Chuyển lead ${lead.id} sang HUMAN_TAKEOVER (AI escalated)`);
+    }
+  } catch (err: any) {
+    logger.error(`[AutoReply] Lỗi khi tạo auto-reply cho lead ${lead.id} (${channel}):`, err);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Bộ xử lý job — được export để /api/qstash/process gọi trực tiếp
 // ---------------------------------------------------------------------------
 
@@ -202,6 +332,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
       io.to(leadId).emit('receive_message', { room: leadId, message: savedInteraction, isWebhook: true });
       io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Zalo' });
 
+      // AI scoring + auto-reply chạy song song trong background
       (async () => {
         try {
           const { aiService } = await import('./ai');
@@ -217,6 +348,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           logger.error('[Zalo] Lỗi AI scoring:', err);
         }
       })();
+
+      // Auto-reply qua Zalo
+      triggerAutoReply(io, tenantId, lead, textContent, 'ZALO').catch((err) =>
+        logger.error('[Zalo] Lỗi triggerAutoReply:', err)
+      );
     }
 
     if (event_name === 'user_send_image') {
@@ -235,6 +371,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
 
       io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
       io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Zalo' });
+
+      // Trả lời tự động khi nhận hình ảnh
+      triggerAutoReply(io, tenantId, lead, '[Khách gửi hình ảnh]', 'ZALO').catch((err) =>
+        logger.error('[Zalo] Lỗi triggerAutoReply (image):', err)
+      );
     }
   }
 
@@ -291,6 +432,7 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
           io.to(leadId).emit('receive_message', { room: leadId, message: savedInteraction, isWebhook: true });
           io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Facebook' });
 
+          // AI scoring chạy background
           (async () => {
             try {
               const { aiService } = await import('./ai');
@@ -306,6 +448,11 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
               logger.error('[Facebook] Lỗi AI scoring:', err);
             }
           })();
+
+          // Auto-reply qua Facebook Messenger
+          triggerAutoReply(io, tenantId, lead, messageText, 'FACEBOOK').catch((err) =>
+            logger.error('[Facebook] Lỗi triggerAutoReply:', err)
+          );
         }
 
         const attachments = webhookEvent.message?.attachments as any[] | undefined;
@@ -327,20 +474,31 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
 
           io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
           io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Facebook' });
+
+          // Auto-reply cho file/ảnh
+          triggerAutoReply(io, tenantId, lead, `[Khách gửi ${attachment.type || 'file'}]`, 'FACEBOOK').catch((err) =>
+            logger.error('[Facebook] Lỗi triggerAutoReply (attachment):', err)
+          );
         }
 
         const postback = webhookEvent.postback;
         if (postback) {
           const lead = await upsertLeadBySocialId(tenantId, 'facebook', senderId);
           const { interactionRepository } = await import('./repositories/interactionRepository');
+          const pbContent = postback.title || postback.payload || '[Postback]';
           await interactionRepository.create(tenantId, {
             leadId: lead.id,
             channel: 'FACEBOOK',
             direction: 'INBOUND',
             type: 'TEXT',
-            content: postback.title || postback.payload || '[Postback]',
+            content: pbContent,
             metadata: { platform: 'facebook', senderId, pageId, postbackPayload: postback.payload },
           });
+
+          // Auto-reply cho postback
+          triggerAutoReply(io, tenantId, lead, pbContent, 'FACEBOOK').catch((err) =>
+            logger.error('[Facebook] Lỗi triggerAutoReply (postback):', err)
+          );
         }
       }
     }
@@ -424,6 +582,12 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
 
       io.to(lead.id).emit('receive_message', { room: lead.id, message: savedInteraction, isWebhook: true });
       io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId: lead.id, message: savedInteraction, source: 'Email' });
+
+      // Auto-reply qua Email (Brevo)
+      const emailBody = subject ? `${body || ''}` : (body || '');
+      triggerAutoReply(io, tenantId, lead, emailBody || subject || content, 'EMAIL').catch((err) =>
+        logger.error('[Email] Lỗi triggerAutoReply:', err)
+      );
     } catch (err) {
       logger.error('[Email] Không thể tạo interaction:', err);
     }

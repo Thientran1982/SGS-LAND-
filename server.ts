@@ -1686,7 +1686,7 @@ async function startServer() {
 
       await webhookQueue.add('email-event', {
         platform: 'email',
-        payload: { from, fromName, subject, body: emailBody, to },
+        payload: { from, fromName, subject, body: emailBody, to, tenantId: DEFAULT_TENANT_ID },
       });
 
       // Most email providers expect a 200 response quickly
