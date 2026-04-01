@@ -640,19 +640,68 @@ const EmailPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConf
             <div className={`bg-[var(--bg-surface)] p-6 rounded-3xl border border-[var(--glass-border)] shadow-sm space-y-5 transition-opacity ${!form.enabled ? 'opacity-50' : 'opacity-100'}`}>
                 <div className={!form.enabled ? 'pointer-events-none' : ''}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_host')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.host} onChange={e => setForm({...form, host: e.target.value.trim()})} placeholder={t('ent.email_smtp_placeholder')} /></div>
                         <div>
-                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_port')}</label>
-                            <input type="number" min={1} max={65535} className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={isNaN(form.port) || form.port === 0 ? '' : form.port} onChange={e => { const v = parseInt(e.target.value); setForm({...form, port: isNaN(v) ? 0 : v}); }} onBlur={e => { if (!form.port) setForm({...form, port: 587}); }} placeholder="587" />
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">{t('ent.email_host')}</label>
+                            <input
+                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                value={form.host}
+                                onChange={e => setForm({...form, host: e.target.value.trim()})}
+                                placeholder={t('ent.email_smtp_placeholder')}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">{t('ent.email_port')}</label>
+                            <input
+                                type="number" min={1} max={65535}
+                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                value={isNaN(form.port) || form.port === 0 ? '' : form.port}
+                                onChange={e => { const v = parseInt(e.target.value); setForm({...form, port: isNaN(v) ? 0 : v}); }}
+                                onBlur={() => { if (!form.port) setForm({...form, port: 587}); }}
+                                placeholder="587"
+                            />
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_user')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.user} onChange={e => setForm({...form, user: e.target.value.trim()})} placeholder={t('ent.email_user_placeholder')} /></div>
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_pass')}</label><input type="password" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} placeholder={CONSTANTS.MASK} /></div>
+                        <div>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">{t('ent.email_user')}</label>
+                            <input
+                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                value={form.user}
+                                onChange={e => setForm({...form, user: e.target.value.trim()})}
+                                placeholder={t('ent.email_user_placeholder')}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">{t('ent.email_pass')}</label>
+                            <input
+                                type="password"
+                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                value={form.password || ''}
+                                onChange={e => setForm({...form, password: e.target.value})}
+                                placeholder={CONSTANTS.MASK}
+                            />
+                        </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_from_name')}</label><input className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromName || ''} onChange={e => setForm({...form, fromName: e.target.value})} placeholder={t('ent.email_from_name_placeholder')} /></div>
-                        <div><label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.email_from_address')}</label><input type="email" className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" value={form.fromAddress || ''} onChange={e => setForm({...form, fromAddress: e.target.value.trim()})} placeholder={t('ent.email_from_addr_placeholder')} /></div>
+                        <div>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">{t('ent.email_from_name')}</label>
+                            <input
+                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                value={form.fromName || ''}
+                                onChange={e => setForm({...form, fromName: e.target.value})}
+                                placeholder={t('ent.email_from_name_placeholder')}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1.5">{t('ent.email_from_address')}</label>
+                            <input
+                                type="email"
+                                className="w-full border border-[var(--glass-border)] bg-[var(--glass-surface)] rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                value={form.fromAddress || ''}
+                                onChange={e => setForm({...form, fromAddress: e.target.value.trim()})}
+                                placeholder={t('ent.email_from_addr_placeholder')}
+                            />
+                        </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
                         <input type="checkbox" id="smtp-secure" checked={!!form.secure} onChange={e => setForm({...form, secure: e.target.checked})} className="w-4 h-4 accent-indigo-600 cursor-pointer" />
