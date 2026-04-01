@@ -1932,7 +1932,7 @@ export const DICTIONARY = {
         "scoring.velocity": "Tốc Độ Phản Hồi",
         "scoring.num_criteria": "Số Tiêu Chí",
 
-        "detail.ai_no_data": "Chưa đủ dữ liệu để AI phân tích. Hãy thêm tương tác với khách hàng.",
+        "detail.ai_no_data": "Nhấn nút làm mới để AI phân tích chân dung khách hàng.",
 
         "editor.prompt_diacritics": "Thêm dấu tiếng Việt cho đoạn văn bản sau, chỉ trả về văn bản đã chỉnh sửa:",
         "editor.prompt_grammar": "Sửa lỗi ngữ pháp và chính tả cho đoạn văn bản sau, chỉ trả về văn bản đã chỉnh sửa:",
@@ -4020,7 +4020,7 @@ export const DICTIONARY = {
         "scoring.velocity": "Response Velocity",
         "scoring.num_criteria": "Criteria Count",
 
-        "detail.ai_no_data": "Not enough data for AI analysis. Add more interactions with this lead.",
+        "detail.ai_no_data": "Click the refresh button to generate AI persona analysis.",
 
         "editor.prompt_diacritics": "Add Vietnamese diacritics to the following text, return only the corrected text:",
         "editor.prompt_grammar": "Fix grammar and spelling in the following text, return only the corrected text:",

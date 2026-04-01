@@ -10,6 +10,16 @@ import { Dropdown } from './Dropdown';
 import { ContractModal } from './ContractModal';
 import { useSocket } from '../services/websocket';
 
+const stripMarkdown = (text: string): string =>
+    text
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/\*(.+?)\*/g, '$1')
+        .replace(/#{1,6}\s*/g, '')
+        .replace(/^[-•]\s+/gm, '• ')
+        .replace(/__(.+?)__/g, '$1')
+        .replace(/`(.+?)`/g, '$1')
+        .trim();
+
 const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
     <div className="bg-gradient-to-br from-indigo-50/50 to-white p-5 rounded-2xl mb-8 border border-indigo-100/50 shadow-sm animate-enter relative group overflow-hidden">
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100/20 rounded-full blur-3xl group-hover:bg-indigo-200/30 transition-all duration-700"></div>
@@ -155,7 +165,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
         try {
             const history = await db.getInteractions(lead.id);
             const analysis = await aiService.summarizeLead(lead, history, language);
-            setAiSummary(analysis);
+            setAiSummary(stripMarkdown(analysis));
         } catch (e) {
             setAiSummary(t('detail.ai_unavailable'));
         } finally {
@@ -166,6 +176,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
     useEffect(() => {
         setFormData({ ...lead });
         setErrors({});
+        setAiSummary("");
         setLocalContractSchedule(null);
         setLocalContractInfo(null);
         
@@ -182,8 +193,6 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate,
             } catch (e) {
                 console.error(e);
             }
-
-            refreshAiSummary();
         };
         load();
     }, [lead, language]);
