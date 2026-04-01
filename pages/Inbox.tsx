@@ -976,32 +976,25 @@ export const Inbox: React.FC = () => {
                         {/* Channel selector row + supervisor badge */}
                         <div className="flex items-center justify-between gap-2 mb-2.5 min-w-0">
 
-                            {/* ── MOBILE: animated dropdown ── */}
-                            <div className="md:hidden flex-1 min-w-0">
-                                <InboxDropdown<Channel>
-                                    value={channel}
-                                    onChange={setChannel}
-                                    defaultColor="blue"
-                                    options={[
-                                        { value: Channel.ZALO,  label: 'Zalo',  icon: ICONS.ZALO,  color: 'blue'    },
-                                        { value: Channel.EMAIL, label: 'Email', icon: ICONS.EMAIL, color: 'indigo'  },
-                                        { value: Channel.SMS,   label: 'SMS',   icon: ICONS.SMS,   color: 'emerald' },
-                                    ]}
-                                />
-                            </div>
-
-                            {/* ── DESKTOP: segmented tabs ── */}
-                            <div className="hidden md:flex flex-nowrap flex-1 min-w-0 bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar">
+                            {/* ── Channel tabs (mobile + desktop) ── */}
+                            <div className="flex flex-nowrap flex-1 min-w-0 bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar">
                                 {([
-                                    { ch: Channel.ZALO,  icon: ICONS.ZALO,  activeClass: 'bg-blue-600 text-white shadow-sm',     inactiveClass: 'text-blue-400 hover:text-blue-600' },
-                                    { ch: Channel.EMAIL, icon: ICONS.EMAIL, activeClass: 'bg-indigo-600 text-white shadow-sm',   inactiveClass: 'text-indigo-400 hover:text-indigo-600' },
-                                    { ch: Channel.SMS,   icon: ICONS.SMS,   activeClass: 'bg-emerald-600 text-white shadow-sm', inactiveClass: 'text-emerald-500 hover:text-emerald-700' },
-                                ] as const).map(({ ch, icon, activeClass, inactiveClass }) => (
-                                    <button 
-                                        key={ch} 
+                                    { ch: Channel.ZALO,  activeClass: 'bg-blue-600 text-white shadow-sm',     inactiveClass: 'text-blue-400 hover:text-blue-600' },
+                                    { ch: Channel.EMAIL, activeClass: 'bg-indigo-600 text-white shadow-sm',   inactiveClass: 'text-indigo-400 hover:text-indigo-600' },
+                                    { ch: Channel.SMS,   activeClass: 'bg-emerald-600 text-white shadow-sm', inactiveClass: 'text-emerald-500 hover:text-emerald-700' },
+                                ] as const).map(({ ch, activeClass, inactiveClass }) => (
+                                    <button
+                                        key={ch}
                                         onClick={() => setChannel(ch)}
-                                        className={`px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
+                                        className={`flex-1 px-2 py-1.5 min-h-[34px] rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
                                     >
+                                        {channel === ch && (
+                                            <span className="shrink-0">
+                                                {ch === Channel.ZALO && ICONS.ZALO}
+                                                {ch === Channel.EMAIL && ICONS.EMAIL}
+                                                {ch === Channel.SMS && ICONS.SMS}
+                                            </span>
+                                        )}
                                         {channelLabel(ch)}
                                     </button>
                                 ))}
