@@ -92,7 +92,7 @@ const ROUTER_SCHEMA: Schema = {
     properties: {
         next_step: { 
             type: Type.STRING, 
-            enum: ['SEARCH_INVENTORY', 'CALCULATE_LOAN', 'DRAFT_BOOKING', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'DIRECT_ANSWER', 'ESCALATE_TO_HUMAN'] as string[],
+            enum: ['SEARCH_INVENTORY', 'CALCULATE_LOAN', 'DRAFT_BOOKING', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'ESTIMATE_VALUATION', 'DIRECT_ANSWER', 'ESCALATE_TO_HUMAN'] as string[],
             description: "The best strategic action to take."
         },
         extraction: {
@@ -100,14 +100,17 @@ const ROUTER_SCHEMA: Schema = {
             properties: {
                 explicit_question: { type: Type.STRING, description: "The EXACT question the customer asked." },
                 budget_max: { type: Type.NUMBER, description: "Budget in VND" },
-                location_keyword: { type: Type.STRING },
+                location_keyword: { type: Type.STRING, description: "Location mentioned for searching inventory" },
                 legal_concern: { type: Type.STRING, enum: ['PINK_BOOK', 'CONTRACT', 'NONE'] },
                 property_type: { type: Type.STRING },
                 area_min: { type: Type.NUMBER, description: "Minimum area in m² the customer requires" },
                 loan_rate: { type: Type.NUMBER, description: "Interest rate in percentage" },
                 loan_years: { type: Type.NUMBER, description: "Loan duration in years" },
                 marketing_campaign: { type: Type.STRING, description: "Name of the campaign or promotion mentioned" },
-                contract_type: { type: Type.STRING, description: "Type of contract (e.g., Deposit, Sales)" }
+                contract_type: { type: Type.STRING, description: "Type of contract (e.g., Deposit, Sales)" },
+                valuation_address: { type: Type.STRING, description: "Full address or area to estimate property value (for ESTIMATE_VALUATION route)" },
+                valuation_area: { type: Type.NUMBER, description: "Property area in m² to estimate value" },
+                valuation_legal: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'UNKNOWN'], description: "Legal status of the property to value" }
             }
         },
         confidence: { type: Type.NUMBER }
@@ -123,36 +126,45 @@ const TOOL_EXECUTOR = {
     async search_inventory(tenantId: string, query: string, priceMax?: number, propertyType?: string, areaMin?: number) {
         try {
             const filters: ListingFilters = {};
-            if (query) {
-                filters.search = query;
-            }
-            if (priceMax) {
-                filters.price_lte = priceMax;
-            }
-            if (propertyType) {
-                filters.type = propertyType;
-            }
-            if (areaMin) {
-                filters.area_gte = areaMin;
-            }
+            if (query) filters.search = query;
+            if (priceMax) filters.price_lte = priceMax;
+            if (propertyType) filters.type = propertyType;
+            if (areaMin) filters.area_gte = areaMin;
             filters.status = 'AVAILABLE';
 
             const result = await listingRepository.findListings(
                 tenantId,
-                { page: 1, pageSize: 10 },
+                { page: 1, pageSize: 15 },
                 filters
             );
 
             if (result.data.length === 0) {
-                return "Không tìm thấy bất động sản phù hợp với tiêu chí tìm kiếm.";
+                // Relax budget filter and retry with location only
+                const relaxed: ListingFilters = { status: 'AVAILABLE' };
+                if (query) relaxed.search = query;
+                if (propertyType) relaxed.type = propertyType;
+                const fallback = await listingRepository.findListings(tenantId, { page: 1, pageSize: 5 }, relaxed);
+                if (fallback.data.length === 0) return "Hiện tại kho hàng chưa có sản phẩm phù hợp. Vui lòng liên hệ Sales để cập nhật danh sách mới nhất.";
+                const fmt = fallback.data.slice(0, 5).map((l: any, i: number) => {
+                    const price = l.price ? `${(l.price / 1e9).toFixed(2)} Tỷ` : 'Liên hệ';
+                    return `${i + 1}. ${l.title || l.code} — ${l.location || 'N/A'} | ${price} | ${l.area || 'N/A'}m² | ${l.type || 'N/A'}`;
+                }).join('\n');
+                return `Không tìm thấy đúng tiêu chí, gợi ý gần nhất (${fallback.total} sản phẩm):\n${fmt}`;
             }
 
-            const formatted = result.data.map((listing: any, i: number) => {
-                const price = listing.price ? `${(listing.price / 1000000000).toFixed(2)} Tỷ` : 'Liên hệ';
-                return `${i + 1}. ${listing.title || listing.code} - ${listing.location || 'N/A'} | Giá: ${price} | DT: ${listing.area || 'N/A'}m² | Loại: ${listing.type || 'N/A'} | Trạng thái: ${listing.status}`;
+            // Sort by price proximity to budget if budget is known
+            const sorted = priceMax
+                ? [...result.data].sort((a: any, b: any) => Math.abs((a.price || 0) - priceMax) - Math.abs((b.price || 0) - priceMax))
+                : result.data;
+
+            const top = sorted.slice(0, 5);
+            const formatted = top.map((l: any, i: number) => {
+                const price = l.price ? `${(l.price / 1e9).toFixed(2)} Tỷ` : 'Liên hệ';
+                const delta = (priceMax && l.price) ? ` (±${Math.abs((l.price - priceMax) / 1e6).toFixed(0)}M)` : '';
+                return `${i + 1}. ${l.title || l.code} — ${l.location || 'N/A'} | ${price}${delta} | ${l.area || 'N/A'}m² | ${l.type || 'N/A'}`;
             }).join('\n');
 
-            return `Tìm thấy ${result.total} bất động sản (hiển thị ${result.data.length}):\n${formatted}`;
+            return `Tìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất):\n${formatted}`;
         } catch (error) {
             logger.error('Inventory search error:', error);
             return "Lỗi khi tìm kiếm kho hàng. Vui lòng thử lại.";
@@ -230,9 +242,9 @@ const TOOL_EXECUTOR = {
     async get_showroom_location(tenantId: string): Promise<string> {
         try {
             const loc = await enterpriseConfigRepository.getConfigKey(tenantId, 'showroomAddress');
-            return (loc && typeof loc === 'string' && loc.trim()) ? loc.trim() : 'Sales Gallery';
+            return (loc && typeof loc === 'string' && loc.trim()) ? loc.trim() : 'Phòng trưng bày SGS Land (liên hệ Sales để biết địa chỉ cụ thể)';
         } catch {
-            return 'Sales Gallery';
+            return 'Phòng trưng bày SGS Land (liên hệ Sales để biết địa chỉ cụ thể)';
         }
     }
 };
@@ -396,7 +408,10 @@ class AiEngine {
                 LOCATION EXTRACTION:
                 - "Thủ Đức", "Quận 1", "Q7", "District 2", "Bình Thạnh", "Ecopark", "Vinhomes" → location_keyword (clean name only)
 
+                - Hỏi định giá, ước tính giá trị tài sản của mình → ESTIMATE_VALUATION (valuation_address, valuation_area, valuation_legal)
+
                 PRIORITY: Nếu câu hỏi hỗn hợp (vừa hỏi giá vừa hỏi vay), ưu tiên SEARCH_INVENTORY.
+                PRIORITY: "Nhà tôi ở X diện tích Ym² giá bao nhiêu?" → ESTIMATE_VALUATION (không phải SEARCH_INVENTORY).
             `;
 
             const routerModel = await getGovernanceModel(state.tenantId);
@@ -410,7 +425,18 @@ class AiEngine {
             });
 
             const plan = JSON.parse(routerRes.text || '{}');
-            this.updateTrace(state.trace, `Intent: ${plan.next_step} | Entity: ${JSON.stringify(plan.extraction || {})}`);
+            const ext = plan.extraction || {};
+            const entityParts: string[] = [];
+            if (ext.budget_max)         entityParts.push(`Ngân sách: ${(ext.budget_max / 1e9).toFixed(2)} Tỷ`);
+            if (ext.location_keyword)   entityParts.push(`Khu vực: ${ext.location_keyword}`);
+            if (ext.property_type)      entityParts.push(`Loại: ${ext.property_type}`);
+            if (ext.area_min)           entityParts.push(`DT ≥ ${ext.area_min}m²`);
+            if (ext.loan_rate)          entityParts.push(`LS: ${ext.loan_rate}%`);
+            if (ext.loan_years)         entityParts.push(`${ext.loan_years} năm`);
+            if (ext.valuation_address)  entityParts.push(`Định giá: ${ext.valuation_address}`);
+            if (ext.legal_concern && ext.legal_concern !== 'NONE') entityParts.push(`Pháp lý: ${ext.legal_concern}`);
+            const entityStr = entityParts.length > 0 ? ` | ${entityParts.join(', ')}` : '';
+            this.updateTrace(state.trace, `→ ${plan.next_step} (conf: ${((plan.confidence || 0) * 100).toFixed(0)}%)${entityStr}`);
             
             return { plan };
         });
@@ -427,8 +453,8 @@ class AiEngine {
             }
 
             const searchRes = await TOOL_EXECUTOR.search_inventory(state.tenantId, extraction.location_keyword || '', budgetMax, extraction.property_type, extraction.area_min);
-            const resultCount = searchRes.startsWith('Tìm thấy') ? searchRes.split('\n')[0] : 'Inventory queried';
-            this.updateTrace(state.trace, resultCount);
+            const firstLine = searchRes.split('\n')[0];
+            this.updateTrace(state.trace, firstLine || 'Kho hàng đã được tra cứu.');
             return { systemContext: state.systemContext + `\n\n[INVENTORY DATA]:\n${searchRes}` };
         });
 
@@ -472,9 +498,10 @@ class AiEngine {
                     schedule
                 }
             };
-            this.updateTrace(state.trace, `Vay ${(principal/1e9).toFixed(2)} Tỷ | ${rate}%/năm | ${years} năm | Trả ${Math.round(loanData.monthly).toLocaleString()} VNĐ/tháng`);
+            const monthlyFmt = Math.round(loanData.monthly).toLocaleString('vi-VN');
+            this.updateTrace(state.trace, `Vay ${(principal/1e9).toFixed(2)} Tỷ | ${rate}%/năm | ${years} năm → Trả ${monthlyFmt} VNĐ/tháng`);
             return { 
-                systemContext: state.systemContext + `\nLoan Calc: Principal=${principal}, Monthly=${loanData.monthly}`,
+                systemContext: state.systemContext + `\n[LOAN CALCULATION]: Vay ${(principal/1e9).toFixed(2)} Tỷ, lãi ${rate}%/năm, kỳ hạn ${years} năm → Trả hàng tháng: ${monthlyFmt} VNĐ`,
                 artifact
             };
         });
@@ -589,7 +616,20 @@ class AiEngine {
                 ? 'Answer in English. Address the customer professionally.'
                 : 'Trả lời bằng Tiếng Việt tự nhiên. Xưng "em", gọi khách là "anh/chị". Không dùng bản dịch máy.';
 
-            const intentHint = state.plan?.next_step ? `ROUTER INTENT: ${state.plan.next_step}` : '';
+            const INTENT_LABELS: Record<string, string> = {
+                SEARCH_INVENTORY: 'Tìm kiếm kho hàng',
+                CALCULATE_LOAN: 'Tính toán tài chính vay',
+                EXPLAIN_LEGAL: 'Giải thích pháp lý',
+                DRAFT_BOOKING: 'Đặt lịch xem nhà',
+                EXPLAIN_MARKETING: 'Ưu đãi & Chiến dịch',
+                DRAFT_CONTRACT: 'Tư vấn hợp đồng',
+                ANALYZE_LEAD: 'Phân tích khách hàng',
+                ESTIMATE_VALUATION: 'Định giá bất động sản',
+                DIRECT_ANSWER: 'Trả lời trực tiếp',
+                ESCALATE_TO_HUMAN: 'Chuyển nhân viên',
+            };
+            const intentLabel = state.plan?.next_step ? (INTENT_LABELS[state.plan.next_step] || state.plan.next_step) : '';
+            const intentHint = intentLabel ? `NHIỆM VỤ CHÍNH: ${intentLabel}` : '';
 
             const writerPrompt = `
                 ${getAgentPersona()}
@@ -624,6 +664,49 @@ class AiEngine {
             return { finalResponse: writerRes.text || "Dạ, anh/chị cần em hỗ trợ thêm thông tin gì không ạ?" };
         });
 
+        // Node 2h: Valuation Agent (định giá BĐS realtime)
+        graph.addNode('VALUATION_AGENT', async (state) => {
+            state.trace.push({ id: `step_2`, node: 'VALUATION_AGENT', status: 'RUNNING', timestamp: Date.now() });
+            const ext = state.plan.extraction || {};
+            
+            // Extract valuation params from router output or fallback from message
+            const address = ext.valuation_address || ext.location_keyword || state.userMessage.slice(0, 100);
+            const area = ext.valuation_area || ext.area_min || 80; // default reference area
+            const legalMap: Record<string, string> = {
+                PINK_BOOK: 'PINK_BOOK', HDMB: 'HDMB', VI_BANG: 'VI_BANG', UNKNOWN: 'UNKNOWN'
+            };
+            const legal = legalMap[ext.valuation_legal || ''] || 'PINK_BOOK';
+            
+            try {
+                const valResult = await this.getRealtimeValuation(
+                    address, area, 4, legal, undefined, state.tenantId
+                );
+                
+                const totalFmt = (valResult.totalPrice / 1e9).toFixed(2);
+                const perM2Fmt = (valResult.pricePerM2 / 1e6).toFixed(1);
+                const rangeMin = (valResult.rangeMin / 1e9).toFixed(2);
+                const rangeMax = (valResult.rangeMax / 1e9).toFixed(2);
+                
+                const valuationSummary = `
+[ĐỊNH GIÁ BẤT ĐỘNG SẢN]:
+Địa chỉ: ${address} | Diện tích tham chiếu: ${area}m² | Pháp lý: ${legal}
+Giá thị trường: ${totalFmt} Tỷ VNĐ (${perM2Fmt} Triệu/m²)
+Khoảng giá: ${rangeMin} – ${rangeMax} Tỷ VNĐ
+Xu hướng thị trường: ${valResult.marketTrend}
+Độ tin cậy: ${valResult.confidence}%
+Yếu tố giá: ${valResult.factors.slice(0, 3).map(f => `${f.label} (${f.isPositive ? '+' : '-'}${f.impact}%)`).join(', ')}
+                `.trim();
+
+                this.updateTrace(state.trace, `Định giá ${address}: ${totalFmt} Tỷ (${rangeMin}–${rangeMax} Tỷ) | ${valResult.marketTrend} | Conf: ${valResult.confidence}%`);
+                return { systemContext: state.systemContext + '\n\n' + valuationSummary };
+            } catch (err: any) {
+                logger.error('[VALUATION_AGENT] Error:', err);
+                this.updateTrace(state.trace, `Định giá ${address}: lỗi tra cứu thị trường — sẽ tư vấn dựa trên kinh nghiệm.`);
+                const fallbackCtx = `[ĐỊNH GIÁ BẤT ĐỘNG SẢN]: Khu vực ${address}, ${area}m², pháp lý ${legal} — tạm thời không thể tra cứu giá thị trường realtime. Tư vấn dựa trên dữ liệu lịch sử.`;
+                return { systemContext: state.systemContext + '\n\n' + fallbackCtx };
+            }
+        });
+
         // Node 4: Escalation
         graph.addNode('ESCALATION_NODE', async (state) => {
             state.trace.push({ id: `step_esc`, node: 'ESCALATION_NODE', status: 'RUNNING', timestamp: Date.now() });
@@ -647,6 +730,7 @@ class AiEngine {
                 'EXPLAIN_MARKETING': 'MARKETING_AGENT',
                 'DRAFT_CONTRACT': 'CONTRACT_AGENT',
                 'ANALYZE_LEAD': 'LEAD_ANALYST',
+                'ESTIMATE_VALUATION': 'VALUATION_AGENT',
                 'DIRECT_ANSWER': 'WRITER',
                 'ESCALATE_TO_HUMAN': 'ESCALATION_NODE',
                 'default': 'WRITER'
@@ -660,6 +744,7 @@ class AiEngine {
         graph.addEdge('MARKETING_AGENT', 'WRITER');
         graph.addEdge('CONTRACT_AGENT', 'WRITER');
         graph.addEdge('LEAD_ANALYST', 'WRITER');
+        graph.addEdge('VALUATION_AGENT', 'WRITER');
         graph.addEdge('WRITER', 'END');
         graph.addEdge('ESCALATION_NODE', 'END');
 
