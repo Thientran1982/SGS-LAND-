@@ -986,15 +986,8 @@ export const Inbox: React.FC = () => {
                                     <button
                                         key={ch}
                                         onClick={() => setChannel(ch)}
-                                        className={`flex-none px-2.5 py-1 min-h-[28px] rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
+                                        className={`flex-none px-2.5 py-1 min-h-[28px] rounded-lg text-[11px] font-bold transition-all flex items-center justify-center whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
                                     >
-                                        {channel === ch && (
-                                            <span className="hidden md:inline shrink-0">
-                                                {ch === Channel.ZALO && ICONS.ZALO}
-                                                {ch === Channel.EMAIL && ICONS.EMAIL}
-                                                {ch === Channel.SMS && ICONS.SMS}
-                                            </span>
-                                        )}
                                         {channelLabel(ch)}
                                     </button>
                                 ))}
