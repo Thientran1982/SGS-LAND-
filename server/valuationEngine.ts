@@ -552,11 +552,14 @@ function applyIncomeApproach(
   propertyType: PropertyType,
   vacancyRate = DEFAULT_VACANCY_RATE,
   opexRate = DEFAULT_OPEX_RATE,
+  capRateAdj = 0,            // dynamic adjustment: negative = lower cap (higher value)
 ): IncomeApproachResult {
   // Clamp rates to valid ranges [0, 1]
   const safeVacancyRate = Math.min(1, Math.max(0, vacancyRate));
   const safeOpexRate = Math.min(1, Math.max(0, opexRate));
-  const capRate = DEFAULT_CAP_RATES[propertyType];
+  const baseCapRate = DEFAULT_CAP_RATES[propertyType];
+  // Apply trend-based adjustment, but clamp cap rate to sensible range [1.5%, 12%]
+  const capRate = Math.min(0.12, Math.max(0.015, baseCapRate + capRateAdj));
   const grossIncomeTrieu = monthlyRent * 12;                     // triệu/năm
   const vacancyLossTrieu = grossIncomeTrieu * safeVacancyRate;
   const effectiveIncomeTrieu = grossIncomeTrieu * (1 - safeVacancyRate);
@@ -654,7 +657,16 @@ export function applyAVM(input: AVMInput): AVMOutput {
   let totalPrice = compsPrice;
 
   if (monthlyRent && monthlyRent > 0) {
-    incomeApproach = applyIncomeApproach(monthlyRent, compsPrice, pType);
+    // Dynamic cap rate: positive growth trend → investors accept lower yield → lower cap rate
+    // Negative/stable trend → standard cap rate table
+    const trendLower = (marketTrend || '').toLowerCase();
+    const trendGrowthMatch = trendLower.match(/tăng\s+(\d+)/i) || trendLower.match(/(\d+)\s*%.*tăng/i);
+    const trendGrowthPct = trendGrowthMatch ? parseInt(trendGrowthMatch[1], 10) : 0;
+    const capRateAdj = trendGrowthPct >= 15 ? -0.005   // strong growth → lower cap −0.5%
+                     : trendGrowthPct >= 8  ? -0.003   // moderate growth → −0.3%
+                     : 0;                              // stable/declining → no adjustment
+
+    incomeApproach = applyIncomeApproach(monthlyRent, compsPrice, pType, undefined, undefined, capRateAdj);
 
     // ── Method 3: Reconciliation ──────────────────────────────
     const weights = RECONCILE_WEIGHTS[pType];
@@ -674,15 +686,30 @@ export function applyAVM(input: AVMInput): AVMOutput {
   // ── Confidence Interval & Level ───────────────────────────────
   let finalConfidence = effectiveConfidence;
 
-  // If income approach is available, check method divergence
+  // If income approach is available, check method divergence/convergence
   if (incomeApproach && compsPrice > 0 && incomeApproach.capitalValue > 0) {
     const methodDeviation = Math.abs(compsPrice - incomeApproach.capitalValue) / Math.max(compsPrice, incomeApproach.capitalValue);
+
     if (methodDeviation > 0.50) {
-      // Extreme divergence >50% — reduce confidence by up to 5 points (don't catastrophically drop)
-      finalConfidence = Math.max(finalConfidence - 5, Math.min(finalConfidence, 93));
+      // Extreme divergence >50% — income data is unreliable (bad rent estimate).
+      // Switch to comps-dominant blend (95% comps, 5% income) to preserve accuracy.
+      const conservativeValue = Math.round(compsPrice * 0.95 + incomeApproach.capitalValue * 0.05);
+      if (reconciliation) {
+        reconciliation = {
+          ...reconciliation,
+          compsWeight: 0.95,
+          incomeWeight: 0.05,
+          finalValue: conservativeValue,
+        };
+      }
+      totalPrice = conservativeValue;
+      finalConfidence = Math.max(finalConfidence - 3, 90); // small penalty only
     } else if (methodDeviation > 0.30) {
-      // Moderate divergence 30-50% — reduce by 2 points only
-      finalConfidence = Math.max(finalConfidence - 2, Math.min(finalConfidence, 96));
+      // Moderate divergence 30-50% — slight penalty
+      finalConfidence = Math.max(finalConfidence - 1, 94);
+    } else if (methodDeviation <= 0.15) {
+      // Methods agree within 15% — convergence bonus (data is consistent)
+      finalConfidence = Math.min(100, finalConfidence + 2);
     }
   }
 

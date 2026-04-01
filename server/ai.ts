@@ -1154,6 +1154,7 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
         frontageWidth?: number;
         furnishing?: 'FULL' | 'BASIC' | 'NONE';
         monthlyRent?: number;
+        buildingAge?: number;
         internalCompsMedian?: number;
         internalCompsCount?: number;
     }): Promise<{
@@ -1179,22 +1180,38 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
             // NOTE: googleSearch and responseMimeType:'application/json' are mutually exclusive.
             const currentYear = new Date().getFullYear();
             const currentMonth = new Date().toLocaleString('vi-VN', { month: 'long', timeZone: 'Asia/Ho_Chi_Minh' });
-            const searchPrompt = `Địa chỉ cụ thể: "${address}" | Thời điểm: ${currentMonth} ${currentYear}
+
+            // Resolve human-readable property type label for search prompt
+            const resolvedPTypeForSearch = propertyType || 'townhouse_center';
+            const pTypeLabels: Record<string, string> = {
+                apartment_center: 'Căn hộ chung cư (nội đô)',
+                apartment_suburb: 'Căn hộ chung cư (ngoại thành)',
+                townhouse_center: 'Nhà phố / nhà liền kề (nội đô)',
+                townhouse_suburb: 'Nhà phố (ngoại thành)',
+                villa: 'Biệt thự',
+                shophouse: 'Nhà phố thương mại / shophouse',
+                land_urban: 'Đất thổ cư nội đô',
+                land_suburban: 'Đất ngoại thành',
+            };
+            const pTypeLabelSearch = pTypeLabels[resolvedPTypeForSearch] || 'Nhà phố / đất thổ cư';
+
+            const searchPrompt = `Địa chỉ cụ thể: "${address}" | Thời điểm: ${currentMonth} ${currentYear} | Loại BĐS: ${pTypeLabelSearch}
 
 Tra cứu NGAY BÂY giá GIAO DỊCH THỰC TẾ (không phải giá rao bán) của BĐS THAM CHIẾU CHUẨN tại khu vực này:
-- Loại: Nhà phố / đất thổ cư (phân tích theo địa chỉ "${address}")
+- Loại: ${pTypeLabelSearch}
 - Pháp lý: Sổ Hồng/Sổ Đỏ đầy đủ (loại pháp lý cao nhất)
-- Lộ giới: 4m (hẻm xe hơi — chuẩn tham chiếu)
-- Diện tích: 60-100m²
+- Lộ giới/tiêu chuẩn tham chiếu: 4m (hẻm xe hơi chuẩn)
+- Diện tích tham chiếu: 60-100m²
 
 Yêu cầu cung cấp:
-1. Giá GIAO DỊCH thực tế trung bình 1m² tại khu vực "${address}" — 6 tháng gần nhất ${currentYear}
-   (tìm kiếm từ batdongsan.com.vn, nhà đất, alonhadat, cafeland, cen.vn, market reports)
-2. Xu hướng giá: tăng/ổn định/giảm và biến động % so với năm ngoái
-3. Yếu tố vĩ mô ảnh hưởng đến khu vực (quy hoạch, hạ tầng, tiện ích lân cận)
+1. Giá GIAO DỊCH thực tế trung bình 1m² loại "${pTypeLabelSearch}" tại khu vực "${address}" — 6 tháng gần nhất ${currentYear}
+   (tìm kiếm từ batdongsan.com.vn, alonhadat, cafeland, cen.vn, Savills/CBRE/JLL Vietnam market reports, onehousing)
+2. Giá cho THUÊ thực tế hàng tháng của loại BĐS này tại khu vực
+3. Xu hướng giá: tăng/ổn định/giảm và biến động % so với năm ngoái
+4. Yếu tố vĩ mô ảnh hưởng đến khu vực (quy hoạch, metro, hạ tầng, tiện ích lân cận)
 
 ƯU TIÊN: Số liệu giao dịch thực tế > số liệu rao bán > ước tính khu vực.
-Hệ thống AVM sẽ tự tính điều chỉnh Kd/Kp/Ka — chỉ cần giá cơ sở chuẩn nhất có thể.`;
+Hệ thống AVM sẽ tự tính điều chỉnh Kd/Kp/Ka — chỉ cần giá cơ sở ĐÚNG LOẠI BĐS và khu vực.`;
 
             const searchResponse = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.WRITER,
@@ -1266,10 +1283,11 @@ TRÍCH XUẤT CHÍNH XÁC:
 - locationFactors: 2-3 yếu tố VĨ MÔ KHU VỰC ảnh hưởng giá (KHÔNG lặp pháp lý/lộ giới/diện tích đã có trong AVM).`;
 
             const extractResponse = await getAiClient().models.generateContent({
-                model: GENAI_CONFIG.MODELS.EXTRACTOR,
+                // Use Pro for structured extraction — better at following exact schema rules
+                model: 'gemini-2.5-pro',
                 contents: extractPrompt,
                 config: {
-                    systemInstruction: 'Trích xuất số liệu định giá BĐS từ dữ liệu thị trường. Trả JSON hợp lệ theo schema.',
+                    systemInstruction: 'Bạn là chuyên gia định giá BĐS Việt Nam. Trích xuất số liệu chính xác từ dữ liệu thị trường. Trả JSON hợp lệ theo schema — không thêm text ngoài JSON.',
                     responseMimeType: 'application/json',
                     responseSchema: extractSchema
                 }
@@ -1278,25 +1296,34 @@ TRÍCH XUẤT CHÍNH XÁC:
             const aiData = JSON.parse(extractResponse.text || '{}');
 
             // ── Price sanity check against regional baseline ─────────────────────
-            // If AI returns a price wildly off vs our regional table, blend toward the
-            // regional figure rather than trusting a potentially hallucinated value.
+            // Tighten the plausible range: 0.5× – 2.5× regional baseline.
+            // Special override for ultra-prime districts where 2.5× isn't enough.
             const { getRegionalBasePrice } = await import('./valuationEngine');
             const regional = getRegionalBasePrice(address);
             const rawAiPrice: number = aiData.marketBasePrice || regional.price;
             const regionRef = regional.price;
-            const priceLow = regionRef * 0.25;   // floor: 25% of regional (newer/older data ok)
-            const priceHigh = regionRef * 4.0;   // ceiling: 4× regional (prime location ok)
+
+            // Prime districts (Q1 HN, Hoàn Kiếm, Ba Đình) allow higher ceiling
+            const addrLower = address.toLowerCase();
+            const isPrimeDist = /quận 1\b|q\.?1\b|hoàn kiếm|ba đình|ba dinh|district 1/i.test(addrLower);
+            const priceLow  = regionRef * 0.50;                      // floor: 50% of regional
+            const priceHigh = regionRef * (isPrimeDist ? 3.5 : 2.5); // ceiling: 2.5× (3.5× prime)
+
             let marketBasePrice = rawAiPrice;
+            let sanityBlended = false;
             if (rawAiPrice < priceLow || rawAiPrice > priceHigh) {
                 // AI price is implausible — blend 60% regional + 40% AI as a guard
                 marketBasePrice = Math.round(regionRef * 0.60 + rawAiPrice * 0.40);
+                sanityBlended = true;
             }
 
-            // When Google Search grounding succeeds we have real-time market data —
-            // enforce a minimum confidence of 98 (max 100). The AI schema guides it
-            // toward 95-99 when it finds actual transaction data; we raise the floor here.
-            const rawAiConfidence = Math.min(100, Math.max(0, aiData.confidence || 98));
-            const confidence = Math.max(98, rawAiConfidence);
+            // Confidence logic:
+            // • Price passed sanity → trust grounding data → floor 95
+            // • Price failed sanity (blended) → AI may have hallucinated → use raw AI confidence (no boost)
+            const rawAiConfidence = Math.min(100, Math.max(0, aiData.confidence || 95));
+            const confidence = sanityBlended
+                ? Math.min(rawAiConfidence, 88)              // cap at 88 if price was blended
+                : Math.max(95, rawAiConfidence);             // floor 95 if price was plausible
             const marketTrend = aiData.marketTrend || 'Đang cập nhật';
             const locationFactors = aiData.locationFactors || [];
             const monthlyRent: number = aiData.monthlyRentEstimate || 0;
@@ -1321,6 +1348,7 @@ TRÍCH XUẤT CHÍNH XÁC:
                 direction:     advanced?.direction as any,
                 frontageWidth: advanced?.frontageWidth,
                 furnishing:    advanced?.furnishing as any,
+                buildingAge:   advanced?.buildingAge,
                 internalCompsMedian: advanced?.internalCompsMedian,
                 internalCompsCount:  advanced?.internalCompsCount,
             });

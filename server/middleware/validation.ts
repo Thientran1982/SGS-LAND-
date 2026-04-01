@@ -174,11 +174,12 @@ export const schemas = {
   aiValuation: {
     address: { required: true, type: 'string' as const, minLength: 1 },
     area: { required: true, type: 'number' as const, min: 0 },
-    // Optional advanced inputs (Kfl, Kdir, Kmf, Kfurn)
+    // Optional advanced inputs (Kfl, Kdir, Kmf, Kfurn, Kage)
     roadWidth:    { required: false, type: 'number' as const, min: 0 },
     floorLevel:   { required: false, type: 'number' as const, min: 0 },
     frontageWidth:{ required: false, type: 'number' as const, min: 0 },
     monthlyRent:  { required: false, type: 'number' as const, min: 0 },
+    buildingAge:  { required: false, type: 'number' as const, min: 0 },
   },
 };
 

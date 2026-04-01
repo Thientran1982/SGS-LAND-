@@ -673,8 +673,8 @@ async function startServer() {
     try {
       const {
         address, area, roadWidth, legal, propertyType,
-        // Advanced AVM inputs (Kfl, Kdir, Kmf, Kfurn)
-        floorLevel, direction, frontageWidth, furnishing, monthlyRent,
+        // Advanced AVM inputs (Kfl, Kdir, Kmf, Kfurn, Kage)
+        floorLevel, direction, frontageWidth, furnishing, monthlyRent, buildingAge,
       } = req.body;
       const { aiService } = await import('./server/ai');
 
@@ -686,6 +686,7 @@ async function startServer() {
           frontageWidth: frontageWidth !== undefined ? Number(frontageWidth) : undefined,
           furnishing:    furnishing    || undefined,
           monthlyRent:   monthlyRent   !== undefined ? Number(monthlyRent)   : undefined,
+          buildingAge:   buildingAge   !== undefined ? Number(buildingAge)   : undefined,
         }),
         // Populate/warm the market data cache from this request (fire-and-forget)
         marketDataService.getMarketData(address).catch(() => null),

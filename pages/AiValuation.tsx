@@ -96,6 +96,7 @@ export const AiValuation: React.FC = () => {
     const [furnishing, setFurnishing] = useState<'FULL' | 'BASIC' | 'NONE' | ''>('');
     const [floorLevel, setFloorLevel] = useState<string>('');
     const [monthlyRent, setMonthlyRent] = useState<string>('');
+    const [buildingAge, setBuildingAge] = useState<string>('');
 
     const isApartment = propertyType.startsWith('apartment');
 
@@ -172,6 +173,7 @@ export const AiValuation: React.FC = () => {
             ...(frontageWidth && !isNaN(parseFloat(frontageWidth)) && { frontageWidth: parseFloat(frontageWidth) }),
             ...(furnishing && { furnishing }),
             ...(floorLevel && !isNaN(parseFloat(floorLevel)) && { floorLevel: parseFloat(floorLevel) }),
+            ...(buildingAge && !isNaN(parseFloat(buildingAge)) && { buildingAge: parseFloat(buildingAge) }),
             ...(monthlyRent && !isNaN(parseFloat(monthlyRent)) && { monthlyRent: parseFloat(monthlyRent) * 1_000_000 }),
         };
         try {
@@ -493,7 +495,7 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Mặt tiền & Tầng */}
+                                {/* Mặt tiền / Tầng & Tuổi nhà */}
                                 <div className="grid grid-cols-2 gap-6">
                                     {!isApartment && (
                                         <div>
@@ -522,16 +524,29 @@ export const AiValuation: React.FC = () => {
                                         </div>
                                     )}
                                     <div>
-                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Thuê Dự Kiến (tr/tháng)</label>
+                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tuổi Nhà (năm) <span className="text-slate-600 normal-case font-normal">0 = mới xây</span></label>
                                         <input
                                             type="number"
-                                            value={monthlyRent}
-                                            onChange={e => setMonthlyRent(e.target.value)}
+                                            value={buildingAge}
+                                            onChange={e => setBuildingAge(e.target.value)}
                                             className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
                                             placeholder="Tự động"
                                             min="0"
                                         />
                                     </div>
+                                </div>
+
+                                {/* Thuê dự kiến */}
+                                <div>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Thuê Dự Kiến (tr/tháng)</label>
+                                    <input
+                                        type="number"
+                                        value={monthlyRent}
+                                        onChange={e => setMonthlyRent(e.target.value)}
+                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                        placeholder="Tự động"
+                                        min="0"
+                                    />
                                 </div>
 
                                 {/* Nội thất */}
