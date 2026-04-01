@@ -101,12 +101,13 @@ async function writeSafetyLog(
     model: string,
     latencyMs: number,
     prompt: string,
-    response: string
+    response: string,
+    pipelineMultiplier: number = 1
 ): Promise<void> {
     try {
         const tokens = Math.round((prompt.length + response.length) / 4);
         const ratePerK = GENAI_CONFIG.MODEL_COSTS[model] ?? GENAI_CONFIG.MODEL_COSTS['gemini-2.5-flash'];
-        const costUsd = parseFloat(((tokens / 1000) * ratePerK).toFixed(6));
+        const costUsd = parseFloat(((tokens / 1000) * ratePerK * pipelineMultiplier).toFixed(6));
 
         await aiGovernanceRepository.createSafetyLog(tenantId, {
             taskType, model, latencyMs, costUsd,
@@ -161,34 +162,54 @@ function buildSystemContext(lead: Lead | null): string {
     return parts.join(' | ');
 }
 
-// JSON Schema for Router - Enhanced for Semantic Extraction
+// Typed Router plan output
+type RouterPlan = {
+    next_step: string;
+    extraction: {
+        explicit_question?: string;
+        budget_max?: number;
+        location_keyword?: string;
+        legal_concern?: string;
+        property_type?: string;
+        area_min?: number;
+        loan_rate?: number;
+        loan_years?: number;
+        marketing_campaign?: string;
+        contract_type?: string;
+        valuation_address?: string;
+        valuation_area?: number;
+        valuation_legal?: string;
+    };
+    confidence: number;
+};
+
 const ROUTER_SCHEMA: Schema = {
     type: Type.OBJECT,
     properties: {
         next_step: { 
             type: Type.STRING, 
             enum: ['SEARCH_INVENTORY', 'CALCULATE_LOAN', 'DRAFT_BOOKING', 'EXPLAIN_LEGAL', 'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'ESTIMATE_VALUATION', 'DIRECT_ANSWER', 'ESCALATE_TO_HUMAN'] as string[],
-            description: "The best strategic action to take."
+            description: "Hành động phù hợp nhất cho tin nhắn khách hàng."
         },
         extraction: {
             type: Type.OBJECT,
             properties: {
-                explicit_question: { type: Type.STRING, description: "The EXACT question the customer asked." },
-                budget_max: { type: Type.NUMBER, description: "Budget in VND" },
-                location_keyword: { type: Type.STRING, description: "Location mentioned for searching inventory" },
-                legal_concern: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'NONE'] },
-                property_type: { type: Type.STRING },
-                area_min: { type: Type.NUMBER, description: "Minimum area in m² the customer requires" },
-                loan_rate: { type: Type.NUMBER, description: "Interest rate in percentage" },
-                loan_years: { type: Type.NUMBER, description: "Loan duration in years" },
-                marketing_campaign: { type: Type.STRING, description: "Name of the campaign or promotion mentioned" },
-                contract_type: { type: Type.STRING, description: "Type of contract (e.g., Deposit, Sales)" },
-                valuation_address: { type: Type.STRING, description: "Full address or area to estimate property value (for ESTIMATE_VALUATION route)" },
-                valuation_area: { type: Type.NUMBER, description: "Property area in m² to estimate value" },
-                valuation_legal: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'UNKNOWN'], description: "Legal status of the property to value" }
+                explicit_question: { type: Type.STRING, description: "Câu hỏi chính xác của khách hàng." },
+                budget_max: { type: Type.NUMBER, description: "Ngân sách tối đa (VNĐ)" },
+                location_keyword: { type: Type.STRING, description: "Khu vực/địa điểm khách đề cập" },
+                legal_concern: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'NONE'], description: "Loại pháp lý khách quan tâm" },
+                property_type: { type: Type.STRING, description: "Loại BĐS (căn hộ, nhà phố, biệt thự, đất nền)" },
+                area_min: { type: Type.NUMBER, description: "Diện tích tối thiểu (m²)" },
+                loan_rate: { type: Type.NUMBER, description: "Lãi suất (%/năm)" },
+                loan_years: { type: Type.NUMBER, description: "Thời hạn vay (năm)" },
+                marketing_campaign: { type: Type.STRING, description: "Tên chiến dịch/ưu đãi" },
+                contract_type: { type: Type.STRING, description: "Loại hợp đồng (Đặt cọc, Mua bán)" },
+                valuation_address: { type: Type.STRING, description: "Địa chỉ BĐS cần định giá" },
+                valuation_area: { type: Type.NUMBER, description: "Diện tích BĐS cần định giá (m²)" },
+                valuation_legal: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'UNKNOWN'], description: "Pháp lý BĐS cần định giá" }
             }
         },
-        confidence: { type: Type.NUMBER }
+        confidence: { type: Type.NUMBER, description: "Độ tin cậy phân loại từ 0 đến 1 (ví dụ: 0.85 = 85%)" }
     },
     required: ['next_step', 'confidence', 'extraction']
 };
@@ -357,7 +378,7 @@ export type AgentState = {
     artifact?: AgentArtifact;
     finalResponse: string;
     suggestedAction: 'NONE' | 'CREATE_PROPOSAL' | 'SEND_DOCS' | 'BOOK_VIEWING';
-    plan?: any;
+    plan?: RouterPlan;
     t: (k: string) => string;
     error?: Error;
     tenantId: string;
@@ -448,6 +469,9 @@ class AiEngine {
             const last = trace[trace.length - 1];
             last.output = output;
             last.status = 'DONE';
+            if (last.timestamp) {
+                last.durationMs = Date.now() - last.timestamp;
+            }
         }
     }
 
@@ -456,7 +480,7 @@ class AiEngine {
 
         // Node 1: Router
         graph.addNode('ROUTER', async (state) => {
-            state.trace.push({ id: `step_1`, node: 'ROUTER', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'ROUTER', node: 'ROUTER', status: 'RUNNING', timestamp: Date.now() });
             
             // 6 turns (3 exchanges) sufficient for intent classification — saves ~50% router tokens
             const historyText = state.history.slice(-6)
@@ -518,9 +542,10 @@ BẢNG PHÂN LOẠI Ý ĐỊNH:
             if (ext.valuation_address)  entityParts.push(`Định giá: ${ext.valuation_address}`);
             if (ext.legal_concern && ext.legal_concern !== 'NONE') entityParts.push(`Pháp lý: ${ext.legal_concern}`);
             const entityStr = entityParts.length > 0 ? ` | ${entityParts.join(', ')}` : '';
-            // Normalize confidence: model may return 0-1 or 0-100
+            // Normalize confidence to [0,1]: model may return 0-1 or 0-100
             const rawConf = plan.confidence || 0;
-            const confPct = rawConf > 1 ? Math.round(rawConf) : Math.round(rawConf * 100);
+            plan.confidence = rawConf > 1 ? Math.max(0, Math.min(1, rawConf / 100)) : Math.max(0, Math.min(1, rawConf));
+            const confPct = Math.round(plan.confidence * 100);
             this.updateTrace(state.trace, `→ ${plan.next_step} (conf: ${confPct}%)${entityStr}`);
             
             return { plan };
@@ -528,7 +553,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH:
 
         // Node 2a: Inventory Agent
         graph.addNode('INVENTORY_AGENT', async (state) => {
-            state.trace.push({ id: `step_2`, node: 'INVENTORY_AGENT', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'INVENTORY', node: 'INVENTORY_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
             
             let budgetMax = extraction.budget_max;
@@ -542,7 +567,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH:
 
         // Node 2b: Finance Agent
         graph.addNode('FINANCE_AGENT', async (state) => {
-            state.trace.push({ id: `step_2`, node: 'FINANCE_AGENT', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'FINANCE', node: 'FINANCE_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
             
             let principal = extraction.budget_max || parseBudgetFromMessage(state.userMessage) || 2_000_000_000;
@@ -586,7 +611,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH:
 
         // Node 2c: Legal Agent
         graph.addNode('LEGAL_AGENT', async (state) => {
-            state.trace.push({ id: `step_2`, node: 'LEGAL_AGENT', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'LEGAL', node: 'LEGAL_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
             const term = extraction.legal_concern || 'PINK_BOOK';
             const legalInfo = await TOOL_EXECUTOR.get_legal_info(state.tenantId, term);
@@ -597,7 +622,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH:
 
         // Node 2d: Sales Agent
         graph.addNode('SALES_AGENT', async (state) => {
-            state.trace.push({ id: `step_2`, node: 'SALES_AGENT', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'SALES', node: 'SALES_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const location = await TOOL_EXECUTOR.get_showroom_location(state.tenantId);
             const proposedTime = new Date(Date.now() + 86400000);
             const timeFmt = proposedTime.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -616,7 +641,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH:
 
         // Node 2e: Marketing Agent
         graph.addNode('MARKETING_AGENT', async (state) => {
-            state.trace.push({ id: `step_2`, node: 'MARKETING_AGENT', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'MARKETING', node: 'MARKETING_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
             const marketingInfo = await TOOL_EXECUTOR.get_marketing_info(state.tenantId, extraction.marketing_campaign);
             const campaignCount = (marketingInfo.match(/\n- /g) || []).length;
@@ -626,7 +651,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH:
 
         // Node 2f: Contract Agent
         graph.addNode('CONTRACT_AGENT', async (state) => {
-            state.trace.push({ id: `step_2`, node: 'CONTRACT_AGENT', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'CONTRACT', node: 'CONTRACT_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
             const contractType = extraction.contract_type || 'Sales';
             const contractInfo = await TOOL_EXECUTOR.get_contract_info(state.tenantId, contractType);
@@ -637,7 +662,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH:
 
         // Node 2g: Lead Analyst
         graph.addNode('LEAD_ANALYST', async (state) => {
-            state.trace.push({ id: `step_2`, node: 'LEAD_ANALYST', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'LEAD_ANALYST', node: 'LEAD_ANALYST', status: 'RUNNING', timestamp: Date.now() });
             
             const lead = state.lead;
             const leadProfile = lead ? [
@@ -685,7 +710,7 @@ NHIỆM VỤ (ngắn gọn, sắc bén):
 
         // Node 3: Writer
         graph.addNode('WRITER', async (state) => {
-            state.trace.push({ id: `step_3`, node: 'WRITER', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'WRITER', node: 'WRITER', status: 'RUNNING', timestamp: Date.now() });
 
             const conversationHistory = state.history.slice(-12)
                 .map(h => `${h.direction === 'INBOUND' ? 'KHÁCH' : 'TƯ VẤN VIÊN'}: ${h.content}`)
@@ -744,7 +769,7 @@ YÊU CẦU:
 
         // Node 2h: Valuation Agent (định giá BĐS realtime)
         graph.addNode('VALUATION_AGENT', async (state) => {
-            state.trace.push({ id: `step_2`, node: 'VALUATION_AGENT', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'VALUATION', node: 'VALUATION_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const ext = state.plan?.extraction || {};
             
             // Extract valuation params from router output or fallback from message
@@ -794,7 +819,7 @@ Yếu tố giá: ${valResult.factors.slice(0, 3).map(f => `${f.label} (${f.isPos
 
         // Node 4: Escalation
         graph.addNode('ESCALATION_NODE', async (state) => {
-            state.trace.push({ id: `step_esc`, node: 'ESCALATION_NODE', status: 'RUNNING', timestamp: Date.now() });
+            state.trace.push({ id: 'ESCALATION', node: 'ESCALATION_NODE', status: 'RUNNING', timestamp: Date.now() });
             this.updateTrace(state.trace, "Chuyển tiếp đến nhân viên tư vấn.");
             return {
                 finalResponse: state.t('ai.escalate_to_human'),
@@ -886,7 +911,10 @@ Yếu tố giá: ${valResult.factors.slice(0, 3).map(f => `${f.label} (${f.isPos
             const effectiveTenantId = tenantId || 'default';
             const usedModel = await getGovernanceModel(effectiveTenantId).catch(() => GENAI_CONFIG.MODELS.WRITER);
             // Write safety log in background (don't await — don't block response)
-            writeSafetyLog(effectiveTenantId, 'CHAT', usedModel, latencyMs, userMessage, finalState.finalResponse).catch(() => {});
+            // Pipeline cost multiplier: ROUTER + Agent + WRITER = typically 2-3 AI calls
+            const nodeCount = finalState.trace.filter(s => s.status === 'DONE').length;
+            const pipelineMultiplier = Math.max(1, nodeCount);
+            writeSafetyLog(effectiveTenantId, 'CHAT', usedModel, latencyMs, userMessage, finalState.finalResponse, pipelineMultiplier).catch(() => {});
             return { 
                 agent: 'SGS_AGENT',
                 content: finalState.finalResponse, 
@@ -1063,32 +1091,28 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
             //   (Sổ Hồng, lộ giới 4m, diện tích 60-100m²) in the target area.
             // The AVM engine will apply Kd/Kp/Ka adjustments deterministically.
             // NOTE: googleSearch and responseMimeType:'application/json' are mutually exclusive.
-            const searchPrompt = `
-                Bạn là chuyên gia định giá bất động sản tại Việt Nam với 20 năm kinh nghiệm.
-                Địa chỉ cần định giá: "${address}"
-                Thời gian hiện tại: ${new Date().toISOString()}
-                
-                Nhiệm vụ: Tìm giá thị trường (VNĐ/m²) của BẤT ĐỘNG SẢN THAM CHIẾU CHUẨN tại khu vực này.
-                
-                ĐỊNH NGHĨA BẤT ĐỘNG SẢN THAM CHIẾU CHUẨN:
-                - Pháp lý: Sổ Hồng / Sổ Đỏ đầy đủ
-                - Lộ giới: 4m (hẻm xe hơi vào được)
-                - Diện tích: 60-100m²
-                - Tình trạng: nhà/đất bình thường (không phải biệt thự, không phải căn hộ cao tầng)
-                
-                Hãy tìm kiếm và trả lời:
-                1. Giá trung bình 1m² của tài sản tham chiếu trên tại khu vực "${address}" (6 tháng gần đây)
-                2. Xu hướng giá: tăng/giảm/ổn định, mức biến động
-                3. Các yếu tố macro ảnh hưởng đến giá khu vực (quy hoạch, hạ tầng, kinh tế)
-                
-                LƯU Ý: Chỉ cung cấp giá của tài sản tham chiếu chuẩn.
-                Hệ thống AVM sẽ tự động điều chỉnh theo lộ giới, pháp lý và diện tích thực tế của khách hàng.
-            `;
+            const searchPrompt = `Địa chỉ: "${address}" | Thời điểm: ${new Date().toISOString()}
+
+Tìm giá thị trường (VNĐ/m²) của BĐS THAM CHIẾU CHUẨN tại khu vực này:
+- Pháp lý: Sổ Hồng/Sổ Đỏ đầy đủ
+- Lộ giới: 4m (hẻm xe hơi)
+- Diện tích: 60-100m²
+- Tình trạng: nhà/đất bình thường
+
+Trả lời:
+1. Giá trung bình 1m² tại "${address}" (6 tháng gần đây)
+2. Xu hướng giá: tăng/giảm/ổn định, biến động %
+3. Yếu tố macro (quy hoạch, hạ tầng, kinh tế)
+
+LƯU Ý: Chỉ giá tham chiếu chuẩn. Hệ thống AVM tự điều chỉnh Kd/Kp/Ka.`;
 
             const searchResponse = await getAiClient().models.generateContent({
                 model: GENAI_CONFIG.MODELS.WRITER,
                 contents: searchPrompt,
-                config: { tools: [{ googleSearch: {} }] }
+                config: {
+                    systemInstruction: 'Bạn là chuyên gia định giá BĐS Việt Nam 20 năm kinh nghiệm. Nhiệm vụ: tra cứu và cung cấp giá thị trường chính xác.',
+                    tools: [{ googleSearch: {} }]
+                }
             });
 
             const marketContext = searchResponse.text || '';
@@ -1136,28 +1160,23 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
                 required: ["marketBasePrice", "confidence", "marketTrend", "monthlyRentEstimate", "propertyTypeEstimate", "locationFactors"]
             };
 
-            const extractPrompt = `
-                Dựa trên thông tin thị trường thu thập được, hãy trích xuất số liệu định giá.
-                
-                Khu vực: "${address}" | Diện tích: ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legal}
-                Thông tin thị trường:
-                ${marketContext}
-                
-                YÊU CẦU:
-                - marketBasePrice: Giá 1m² cho BẤT ĐỘNG SẢN THAM CHIẾU CHUẨN (Sổ Hồng, 4m road, 60-100m²)
-                  Đây là GIÁ GỐC TRƯỚC ĐIỀU CHỈNH — hệ thống sẽ tự nhân với hệ số Kd/Kp/Ka
-                - monthlyRentEstimate: Giá thuê thị trường (triệu VNĐ/tháng) cho BĐS ${area}m² tại khu vực này
-                  Dùng để tính phương pháp thu nhập (Income Approach). Phải thực tế, không phỏng đoán xa.
-                - propertyTypeEstimate: Loại BĐS phù hợp nhất
-                - locationFactors: Chỉ gồm các yếu tố KHU VỰC (quy hoạch, tiện ích, kinh tế)
-                  KHÔNG lặp lại pháp lý/lộ giới/diện tích vì đã có Kd/Kp/Ka xử lý
-            `;
+            const extractPrompt = `Khu vực: "${address}" | ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legal}
+
+DỮ LIỆU THỊ TRƯỜNG:
+${marketContext}
+
+TRÍCH XUẤT:
+- marketBasePrice: Giá 1m² BĐS tham chiếu chuẩn (Sổ Hồng, 4m, 60-100m²) — GIÁ GỐC trước Kd/Kp/Ka
+- monthlyRentEstimate: Giá thuê thị trường (triệu VNĐ/tháng) cho ${area}m² — thực tế, không phỏng đoán
+- propertyTypeEstimate: Loại BĐS phù hợp nhất
+- locationFactors: Chỉ yếu tố KHU VỰC (quy hoạch, tiện ích) — KHÔNG lặp pháp lý/lộ giới/diện tích`;
 
             const extractModel = await getGovernanceModel(tenantId || 'default');
             const extractResponse = await getAiClient().models.generateContent({
                 model: extractModel,
                 contents: extractPrompt,
                 config: {
+                    systemInstruction: 'Trích xuất số liệu định giá BĐS từ dữ liệu thị trường. Trả JSON hợp lệ theo schema.',
                     responseMimeType: 'application/json',
                     responseSchema: extractSchema
                 }

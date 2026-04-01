@@ -181,8 +181,12 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **Prompts**: All Vietnamese, systemInstruction separated from contents, tenant-aware brandName in WRITER persona
 - **ROUTER**: 6-turn history, compact Vietnamese systemInstruction, JSON schema extraction with Vietnamese number parsing
 - **WRITER**: 12-turn history, full persona via getAgentSystemInstruction(tenantId), intent-aware label
-- **Confidence**: normalized to 0-1 range, clamped [0,1]
+- **Confidence**: normalized to [0,1] at router parse + final response, auto-converts 0-100 scale
 - **Budget parse**: shared `parseBudgetFromMessage()` utility (Tỷ + Triệu)
+- **Trace**: unique IDs per node (ROUTER/INVENTORY/FINANCE/LEGAL/SALES/MARKETING/CONTRACT/LEAD_ANALYST/VALUATION/ESCALATION/WRITER), `durationMs` tracking
+- **RouterPlan**: typed interface (was `any`), ROUTER_SCHEMA all 13 descriptions Vietnamese
+- **Safety log**: `pipelineMultiplier` for accurate multi-node cost tracking
+- **Valuation prompts**: trimmed indentation, `systemInstruction` separated from contents
 
 ## Entry Points
 
