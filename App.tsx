@@ -651,7 +651,7 @@ const AppShell: React.FC = () => {
             return (
                 <AnimatePresence mode="sync">
                     <motion.div
-                        key={route.fullPath}
+                        key={route.base}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.1 }}

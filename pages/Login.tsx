@@ -299,8 +299,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           if ((result as any)?.devToken) {
               setDevToken((result as any).devToken);
               setOtp((result as any).devToken);
-              setView('FORGOT_VERIFY');
           }
+          setView('FORGOT_VERIFY');
           setLoading(false);
           return;
       }
