@@ -229,6 +229,9 @@ export function Employees() {
                       <span className="text-xs text-indigo-500">Đang làm: <b>{emp.in_progress}</b></span>
                       <span className="text-xs text-emerald-500">Hoàn thành: <b>{emp.done}</b></span>
                       <span className="text-xs text-slate-400">Chờ: <b>{emp.todo}</b></span>
+                      {emp.total_assigned > 0 && (
+                        <WorkloadBar score={emp.in_progress + emp.overdue * 2} />
+                      )}
                     </div>
                   </div>
                 </div>
