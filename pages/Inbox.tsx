@@ -359,15 +359,16 @@ export const Inbox: React.FC = () => {
                         return;
                     }
                     
-                    const aiMsg = await db.sendInteraction(selectedLeadId, aiResult.content, Channel.ZALO);
-                    
-                    aiMsg.metadata = {
-                        isAgent: true,
-                        trace: aiResult.steps,
-                        artifact: aiResult.artifact,
-                        aiConfidence: aiResult.confidence,
-                        aiSentiment: aiResult.sentiment
-                    };
+                    const aiMsg = await db.sendInteraction(selectedLeadId, aiResult.content, Channel.ZALO, {
+                        metadata: {
+                            isAi: true,
+                            isAgent: true,
+                            trace: aiResult.steps,
+                            artifact: aiResult.artifact,
+                            aiConfidence: aiResult.confidence,
+                            aiSentiment: aiResult.sentiment,
+                        },
+                    });
 
                     appendInteraction(selectedLeadId, aiMsg);
                     socket.emit("send_message", { room: selectedLeadId, message: aiMsg });

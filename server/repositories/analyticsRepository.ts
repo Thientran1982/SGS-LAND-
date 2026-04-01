@@ -26,7 +26,7 @@ export interface AnalyticsSummary {
   leadsBySource: Record<string, number>;
   revenueByMonth: { month: string; revenue: number }[];
   leadsTrend: { date: string; count: number }[];
-  recentActivities: { type: string; content: string; time: string }[];
+  recentActivities: { id: string; type: string; content: string; time: string }[];
   marketPulse: { location: string; area: number; price: number; interest: number }[];
   agentLeaderboard: { name: string; avatar: string | null; deals: number; closeRate: number; slaScore: number; avgResponseMinutes: number | null }[];
   // Scope context for the frontend to display correctly
@@ -329,8 +329,10 @@ export class AnalyticsRepository extends BaseRepository {
 
       const recentActivitiesResult = await client.query(`
         SELECT
+          i.id,
           i.type,
           i.content,
+          i.metadata,
           i.timestamp as created_at,
           l.name as lead_name
         FROM interactions i
@@ -489,14 +491,17 @@ export class AnalyticsRepository extends BaseRepository {
       }
 
       const recentActivities = recentActivitiesResult.rows.map((row: any) => {
+        const meta = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+        const isAi = meta.isAi === true;
         let type = 'SYSTEM';
         if (row.type === 'CALL' || row.type === 'NOTE') type = 'LEAD';
-        else if (row.type === 'EMAIL' || row.type === 'CHAT') type = 'AI';
+        else if (isAi || row.type === 'EMAIL' || row.type === 'CHAT') type = 'AI';
         else if (row.type === 'MEETING') type = 'DEAL';
 
         const timeAgo = getTimeAgo(new Date(row.created_at));
         const leadName = row.lead_name || 'Khách hàng';
         return {
+          id: row.id,
           type,
           content: `${leadName}: ${(row.content || '').substring(0, 60)}`,
           time: timeAgo,
