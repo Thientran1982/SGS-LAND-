@@ -171,10 +171,19 @@ const TOOL_EXECUTOR = {
         };
     },
 
-    get_legal_info(term: string) {
-        if (term === 'PINK_BOOK') return "Sổ Hồng (Certificate): Highest legal status in Vietnam. Ready for immediate transfer and bank mortgage.";
-        if (term === 'CONTRACT') return "HĐMB (Sales Contract): Standard for projects under construction. Bank loans supported by partner banks only.";
-        return "Legal status needs verification.";
+    async get_legal_info(tenantId: string, term: string): Promise<string> {
+        const DEFAULTS: Record<string, string> = {
+            PINK_BOOK: "Sổ Hồng (Certificate): Pháp lý cao nhất tại Việt Nam. Sẵn sàng sang tên và thế chấp ngân hàng ngay lập tức.",
+            CONTRACT: "HĐMB (Hợp đồng mua bán): Tiêu chuẩn cho dự án đang xây dựng. Vay ngân hàng chỉ qua ngân hàng đối tác của chủ đầu tư.",
+            NONE: "Cần xác minh thêm về pháp lý tài sản này. Vui lòng liên hệ Sales để được tư vấn chi tiết."
+        };
+        try {
+            const dbInfo = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiLegalInfo');
+            if (dbInfo && typeof dbInfo === 'object' && dbInfo[term]) return String(dbInfo[term]);
+            return DEFAULTS[term] || DEFAULTS.NONE;
+        } catch {
+            return DEFAULTS[term] || DEFAULTS.NONE;
+        }
     },
 
     async get_marketing_info(tenantId: string, campaign?: string): Promise<string> {
@@ -184,10 +193,9 @@ const TOOL_EXECUTOR = {
             "Miễn phí quản lý 2 năm đầu tiên cho cư dân mới."
         ];
         try {
-            const config = await enterpriseConfigRepository.getConfig(tenantId);
-            const dbCampaigns: string[] = config?.aiMarketingCampaigns;
+            const dbCampaigns = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiMarketingCampaigns');
             const campaigns = (Array.isArray(dbCampaigns) && dbCampaigns.length > 0)
-                ? dbCampaigns
+                ? dbCampaigns as string[]
                 : DEFAULT_CAMPAIGNS;
             if (campaign) {
                 const match = campaigns.find(c => c.toLowerCase().includes(campaign.toLowerCase()));
@@ -204,11 +212,28 @@ const TOOL_EXECUTOR = {
         }
     },
 
-    get_contract_info(type?: string) {
-        if (type === 'Deposit') {
-            return "Hợp đồng đặt cọc (Deposit Contract): Yêu cầu thanh toán 10% giá trị tài sản. Hoàn cọc trong 7 ngày nếu không thỏa thuận được HĐMB.";
+    async get_contract_info(tenantId: string, type?: string): Promise<string> {
+        const DEFAULTS: Record<string, string> = {
+            Deposit: "Hợp đồng đặt cọc: Yêu cầu thanh toán 10% giá trị tài sản. Hoàn cọc trong 7 ngày nếu không thỏa thuận được HĐMB.",
+            Sales: "Hợp đồng mua bán: Thanh toán theo tiến độ 5 đợt. Bàn giao nhà sau khi thanh toán 95%. 5% cuối cùng thanh toán khi nhận Sổ Hồng."
+        };
+        const key = type || 'Sales';
+        try {
+            const dbInfo = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiContractInfo');
+            if (dbInfo && typeof dbInfo === 'object' && dbInfo[key]) return String(dbInfo[key]);
+            return DEFAULTS[key] || DEFAULTS.Sales;
+        } catch {
+            return DEFAULTS[key] || DEFAULTS.Sales;
         }
-        return "Hợp đồng mua bán (Sales Contract): Thanh toán theo tiến độ 5 đợt. Bàn giao nhà sau khi thanh toán 95%. 5% cuối cùng thanh toán khi nhận Sổ Hồng.";
+    },
+
+    async get_showroom_location(tenantId: string): Promise<string> {
+        try {
+            const loc = await enterpriseConfigRepository.getConfigKey(tenantId, 'showroomAddress');
+            return (loc && typeof loc === 'string' && loc.trim()) ? loc.trim() : 'Sales Gallery';
+        } catch {
+            return 'Sales Gallery';
+        }
     }
 };
 
@@ -435,7 +460,7 @@ class AiEngine {
         graph.addNode('LEGAL_AGENT', async (state) => {
             state.trace.push({ id: `step_2`, node: 'LEGAL_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
-            const legalInfo = TOOL_EXECUTOR.get_legal_info(extraction.legal_concern || 'PINK_BOOK');
+            const legalInfo = await TOOL_EXECUTOR.get_legal_info(state.tenantId, extraction.legal_concern || 'PINK_BOOK');
             this.updateTrace(state.trace, "Retrieved legal definitions.");
             return { systemContext: state.systemContext + `\n[LEGAL KNOWLEDGE]: ${legalInfo}` };
         });
@@ -443,12 +468,13 @@ class AiEngine {
         // Node 2d: Sales Agent
         graph.addNode('SALES_AGENT', async (state) => {
             state.trace.push({ id: `step_2`, node: 'SALES_AGENT', status: 'RUNNING', timestamp: Date.now() });
+            const location = await TOOL_EXECUTOR.get_showroom_location(state.tenantId);
             const artifact: AgentArtifact = {
                 type: 'BOOKING_DRAFT',
                 title: state.t('inbox.booking_title'),
-                data: { time: new Date(Date.now() + 86400000).toISOString(), location: "Sales Gallery", notes: state.userMessage }
+                data: { time: new Date(Date.now() + 86400000).toISOString(), location, notes: state.userMessage }
             };
-            this.updateTrace(state.trace, "Drafted booking request.");
+            this.updateTrace(state.trace, `Drafted booking at ${location}.`);
             return { artifact, suggestedAction: 'BOOK_VIEWING' };
         });
 
@@ -465,7 +491,7 @@ class AiEngine {
         graph.addNode('CONTRACT_AGENT', async (state) => {
             state.trace.push({ id: `step_2`, node: 'CONTRACT_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
-            const contractInfo = TOOL_EXECUTOR.get_contract_info(extraction.contract_type);
+            const contractInfo = await TOOL_EXECUTOR.get_contract_info(state.tenantId, extraction.contract_type);
             this.updateTrace(state.trace, "Retrieved contract information.");
             return { systemContext: state.systemContext + `\n[CONTRACT KNOWLEDGE]: ${contractInfo}` };
         });

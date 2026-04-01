@@ -70,6 +70,16 @@ export class EnterpriseConfigRepository extends BaseRepository {
     });
   }
 
+  async getConfigKey(tenantId: string, key: string): Promise<any> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT config_value FROM enterprise_config WHERE config_key = $1 LIMIT 1`,
+        [key]
+      );
+      return result.rows[0]?.config_value ?? null;
+    });
+  }
+
   async upsertConfigKey(tenantId: string, key: string, value: any): Promise<void> {
     return this.withTenant(tenantId, async (client) => {
       await client.query(
