@@ -124,42 +124,40 @@ export const Favorites: React.FC = () => {
         <div className="p-4 sm:p-6 h-full flex flex-col pb-20 animate-enter relative">
 
             <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-6">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    {/* Fix 1: Correct count label grammar */}
+                {/* Row 1: count label + sort dropdown */}
+                <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-bold text-indigo-600">
                         {filtered.length}{filterType !== 'ALL' ? ` / ${allFavorites.length}` : ''} {t('favorites.count_label')}
                     </span>
                     {allFavorites.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-2">
-                            {availableTypes.length > 1 && (
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                    <button
-                                        onClick={() => setFilterType('ALL')}
-                                        className={`px-3 py-2 min-h-[36px] rounded-lg text-xs font-bold border transition-all ${filterType === 'ALL' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
-                                    >
-                                        {t('favorites.all_types')}
-                                    </button>
-                                    {availableTypes.map(type => (
-                                        <button
-                                            key={type}
-                                            onClick={() => setFilterType(type)}
-                                            className={`px-3 py-2 min-h-[36px] rounded-lg text-xs font-bold border transition-all ${filterType === type ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
-                                        >
-                                            {t(`property.${type}`)}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                            {/* Fix 3: Replace <select> with Dropdown component */}
-                            <Dropdown
-                                value={sortBy}
-                                onChange={(val) => setSortBy(val as string)}
-                                options={sortOptions}
-                                className="min-w-[180px]"
-                            />
-                        </div>
+                        <Dropdown
+                            value={sortBy}
+                            onChange={(val) => setSortBy(val as string)}
+                            options={sortOptions}
+                            className="min-w-[160px]"
+                        />
                     )}
                 </div>
+                {/* Row 2: type filter pills — only when multiple types exist */}
+                {allFavorites.length > 0 && availableTypes.length > 1 && (
+                    <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                        <button
+                            onClick={() => setFilterType('ALL')}
+                            className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-bold border transition-all ${filterType === 'ALL' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                        >
+                            {t('favorites.all_types')}
+                        </button>
+                        {availableTypes.map(type => (
+                            <button
+                                key={type}
+                                onClick={() => setFilterType(type)}
+                                className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-bold border transition-all ${filterType === type ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                            >
+                                {t(`property.${type}`)}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <div className="flex-1 overflow-auto no-scrollbar">
