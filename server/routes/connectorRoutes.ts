@@ -42,7 +42,7 @@ export function createConnectorRoutes(authenticateToken: any) {
       if (role !== 'ADMIN' && role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Only admins can update connectors' });
       }
-      const updated = await connectorRepository.update(tenantId, req.params.id, req.body);
+      const updated = await connectorRepository.update(tenantId, req.params.id as string, req.body);
       if (!updated) return res.status(404).json({ error: 'Connector not found' });
       res.json(updated);
     } catch (err) {
@@ -58,7 +58,7 @@ export function createConnectorRoutes(authenticateToken: any) {
       if (role !== 'ADMIN' && role !== 'TEAM_LEAD') {
         return res.status(403).json({ error: 'Only admins can delete connectors' });
       }
-      const deleted = await connectorRepository.delete(tenantId, req.params.id);
+      const deleted = await connectorRepository.delete(tenantId, req.params.id as string);
       if (!deleted) return res.status(404).json({ error: 'Connector not found' });
       res.json({ message: 'Connector deleted' });
     } catch (err) {
@@ -71,7 +71,7 @@ export function createConnectorRoutes(authenticateToken: any) {
   router.post('/:id/sync', authenticateToken, async (req: Request, res: Response) => {
     try {
       const { tenantId } = (req as any).user;
-      const connector = await connectorRepository.findById(tenantId, req.params.id);
+      const connector = await connectorRepository.findById(tenantId, req.params.id as string);
       if (!connector) return res.status(404).json({ error: 'Connector not found' });
 
       const job = await syncJobRepository.create(tenantId, {
@@ -131,7 +131,7 @@ export function createConnectorRoutes(authenticateToken: any) {
   router.get('/jobs/:jobId', authenticateToken, async (req: Request, res: Response) => {
     try {
       const { tenantId } = (req as any).user;
-      const job = await syncJobRepository.findById(tenantId, req.params.jobId);
+      const job = await syncJobRepository.findById(tenantId, req.params.jobId as string);
       if (!job) return res.status(404).json({ error: 'Job not found' });
       res.json(job);
     } catch (err) {

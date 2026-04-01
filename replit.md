@@ -467,6 +467,12 @@ Two root causes prevented AI from responding in the LiveChat widget:
 - **`handleEscalateToHuman`**: Also calls `db.updateThreadAiMode(leadId, 'HUMAN_TAKEOVER')` to persist escalation
 - **Manual send path**: When agent sends without `/` prefix (human takeover), also calls `db.updateThreadAiMode(selectedLeadId, 'HUMAN_TAKEOVER')`
 
+### ConnectorRoutes TypeScript Fix (April 2026)
+4 TypeScript errors in `server/routes/connectorRoutes.ts` fixed:
+- `req.params.id` (type `string | string[]`) now cast to `string` in PUT, DELETE, and POST /:id/sync handlers
+- `req.params.jobId` cast to `string` in GET /jobs/:jobId handler
+- All 4 errors confirmed resolved — typecheck now passes clean
+
 ### Inbox.tsx Audit & Fix (March 2026)
 4 bugs resolved in `pages/Inbox.tsx`:
 1. **Search placeholder wrong key** — `t('inbox.select')` ("Chọn hội thoại xem chi tiết") → `t('common.search')` ("Tìm kiếm")
