@@ -306,16 +306,39 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       }
 
       if (view === 'FORGOT_VERIFY') {
-          await db.resetPassword(otp, newPassword);
-          setSuccessMsg(t('auth.pass_changed_success'));
+          const resetResult = await db.resetPassword(otp, newPassword);
+          const resetEmail = (resetResult as any)?.email || email.trim();
           setDevToken('');
-          setTimeout(() => {
-              setSuccessMsg('');
-              setView('LOGIN');
+          setOtp('');
+
+          // Auto-login immediately after successful password reset
+          if (resetEmail) {
+              setSuccessMsg(t('auth.pass_changed_success'));
+              try {
+                  await db.authenticate(resetEmail, newPassword);
+                  if (rememberMe) localStorage.setItem('sgs_last_email', resetEmail);
+                  onLoginSuccess();
+              } catch {
+                  // Auto-login failed — fall back to login form with email pre-filled
+                  setEmail(resetEmail);
+                  setPassword('');
+                  setNewPassword('');
+                  setTokenFromUrl(false);
+                  setTimeout(() => {
+                      setSuccessMsg('');
+                      setView('LOGIN');
+                  }, 1500);
+              }
+          } else {
+              setSuccessMsg(t('auth.pass_changed_success'));
               setPassword('');
               setNewPassword('');
-              setOtp('');
-          }, 2000);
+              setTokenFromUrl(false);
+              setTimeout(() => {
+                  setSuccessMsg('');
+                  setView('LOGIN');
+              }, 2000);
+          }
           return;
       }
 

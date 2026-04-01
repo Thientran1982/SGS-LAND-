@@ -561,8 +561,14 @@ async function startServer() {
         );
       });
 
+      const userRow = await pool.query(
+        `SELECT email FROM users WHERE id = $1 AND tenant_id = $2`,
+        [userId, tenantId]
+      );
+      const userEmail = userRow.rows[0]?.email || '';
+
       writeAuditLog(tenantId, userId, 'PASSWORD_RESET_COMPLETE', 'auth', userId, undefined, req.ip);
-      res.json({ message: 'Password has been reset successfully' });
+      res.json({ message: 'Password has been reset successfully', email: userEmail });
     } catch (error) {
       console.error('Reset password error:', error);
       res.status(500).json({ error: 'Failed to reset password' });

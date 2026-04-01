@@ -1008,11 +1008,11 @@ class DatabaseApiClient {
       credentials: 'include',
       body: JSON.stringify({ token, newPassword }),
     });
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
       throw new Error(data.error || 'Failed to reset password');
     }
-    return true;
+    return data;
   }
 
   async testSmtpConnection() {
