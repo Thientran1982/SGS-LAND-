@@ -986,10 +986,10 @@ export const Inbox: React.FC = () => {
                                     <button
                                         key={ch}
                                         onClick={() => setChannel(ch)}
-                                        className={`flex-1 px-2 py-1.5 min-h-[34px] rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
+                                        className={`flex-1 px-1.5 md:px-2 py-1 md:py-1.5 min-h-[30px] md:min-h-[34px] rounded-lg text-[11px] md:text-xs font-bold transition-all flex items-center justify-center gap-1 md:gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
                                     >
                                         {channel === ch && (
-                                            <span className="shrink-0">
+                                            <span className="hidden md:inline shrink-0">
                                                 {ch === Channel.ZALO && ICONS.ZALO}
                                                 {ch === Channel.EMAIL && ICONS.EMAIL}
                                                 {ch === Channel.SMS && ICONS.SMS}
