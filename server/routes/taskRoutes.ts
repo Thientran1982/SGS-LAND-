@@ -262,6 +262,85 @@ export function createTaskRoutes(authenticateToken: any) {
     }
   });
 
+  // POST /api/tasks/bulk/status — bulk update task status
+  router.post('/bulk/status', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const tenantId = user.tenantId;
+
+      const { ids, status } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: 'ids phải là mảng không rỗng' });
+      }
+      if (!TaskStatuses.includes(status)) {
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: 'status không hợp lệ' });
+      }
+      if (ids.length > 100) {
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: 'Tối đa 100 task mỗi lần' });
+      }
+
+      const updated = await withTenantContext(tenantId, async (client) => {
+        let count = 0;
+        for (const id of ids) {
+          const current = await client.query('SELECT status FROM wf_tasks WHERE id = $1', [id]);
+          if (!current.rows[0]) continue;
+          const currentStatus = current.rows[0].status;
+          const allowed = VALID_TRANSITIONS[currentStatus] || [];
+          if (!allowed.includes(status) && !(status === currentStatus)) continue;
+          await client.query(`UPDATE wf_tasks SET status = $1 WHERE id = $2`, [status, id]);
+          await client.query(`
+            INSERT INTO task_activity_logs (tenant_id, task_id, user_id, action, old_value, new_value, detail)
+            VALUES ($1, $2, $3, 'status_changed', $4, $5, $6)
+          `, [tenantId, id, user.id,
+              JSON.stringify({ status: currentStatus }),
+              JSON.stringify({ status }),
+              `Cập nhật hàng loạt: ${currentStatus} → ${status}`]);
+          count++;
+        }
+        return count;
+      });
+
+      res.json({ updated });
+    } catch (error) {
+      console.error('Error bulk updating task status:', error);
+      res.status(500).json({ error: true, code: 'BULK_UPDATE_FAILED', message: 'Không thể cập nhật hàng loạt' });
+    }
+  });
+
+  // POST /api/tasks/bulk/delete — bulk delete tasks (admin/team lead only)
+  router.post('/bulk/delete', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const tenantId = user.tenantId;
+
+      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        return res.status(403).json({ error: true, code: 'FORBIDDEN', message: 'Chỉ admin mới có thể xóa task hàng loạt' });
+      }
+
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: 'ids phải là mảng không rỗng' });
+      }
+      if (ids.length > 100) {
+        return res.status(400).json({ error: true, code: 'VALIDATION', message: 'Tối đa 100 task mỗi lần' });
+      }
+
+      const deleted = await withTenantContext(tenantId, async (client) => {
+        const placeholders = ids.map((_: any, i: number) => `$${i + 1}`).join(', ');
+        const r = await client.query(
+          `DELETE FROM wf_tasks WHERE id IN (${placeholders}) RETURNING id`,
+          ids
+        );
+        return r.rows.length;
+      });
+
+      res.json({ deleted });
+    } catch (error) {
+      console.error('Error bulk deleting tasks:', error);
+      res.status(500).json({ error: true, code: 'BULK_DELETE_FAILED', message: 'Không thể xóa hàng loạt' });
+    }
+  });
+
   // GET /api/tasks/:id — task detail with assignees, comments count
   router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
