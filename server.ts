@@ -608,7 +608,7 @@ async function startServer() {
     try {
       const { leadData, messageContent, weights, lang } = req.body;
       const { aiService } = await import('./server/ai');
-      const result = await aiService.scoreLead(leadData, messageContent, weights, lang);
+      const result = await aiService.scoreLead(leadData, messageContent, weights, lang, (req as any).tenantId);
 
       if (result && leadData?.id) {
         const tenantId = (req as any).tenantId;
@@ -643,7 +643,7 @@ async function startServer() {
         }
       }
 
-      const result = await aiService.summarizeLead(lead, interactions || [], lang);
+      const result = await aiService.summarizeLead(lead, interactions || [], lang, (req as any).tenantId);
       res.json({ summary: result });
     } catch (error) {
       sendAiError(res, error, 'summarize-lead');

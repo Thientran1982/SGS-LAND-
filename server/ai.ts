@@ -467,8 +467,10 @@ class AiEngine {
         graph.addNode('LEGAL_AGENT', async (state) => {
             state.trace.push({ id: `step_2`, node: 'LEGAL_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
-            const legalInfo = await TOOL_EXECUTOR.get_legal_info(state.tenantId, extraction.legal_concern || 'PINK_BOOK');
-            this.updateTrace(state.trace, "Retrieved legal definitions.");
+            const term = extraction.legal_concern || 'PINK_BOOK';
+            const legalInfo = await TOOL_EXECUTOR.get_legal_info(state.tenantId, term);
+            const legalSnippet = legalInfo.slice(0, 80) + (legalInfo.length > 80 ? '...' : '');
+            this.updateTrace(state.trace, `Pháp lý [${term}]: ${legalSnippet}`);
             return { systemContext: state.systemContext + `\n[LEGAL KNOWLEDGE]: ${legalInfo}` };
         });
 
@@ -490,7 +492,8 @@ class AiEngine {
             state.trace.push({ id: `step_2`, node: 'MARKETING_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
             const marketingInfo = await TOOL_EXECUTOR.get_marketing_info(state.tenantId, extraction.marketing_campaign);
-            this.updateTrace(state.trace, "Retrieved marketing campaigns.");
+            const campaignLines = marketingInfo.split('\n- ').filter(Boolean).length;
+            this.updateTrace(state.trace, `Marketing: ${campaignLines > 1 ? campaignLines + ' ưu đãi đang áp dụng' : marketingInfo.slice(0, 80)}`);
             return { systemContext: state.systemContext + `\n[MARKETING KNOWLEDGE]: ${marketingInfo}` };
         });
 
@@ -498,8 +501,10 @@ class AiEngine {
         graph.addNode('CONTRACT_AGENT', async (state) => {
             state.trace.push({ id: `step_2`, node: 'CONTRACT_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
-            const contractInfo = await TOOL_EXECUTOR.get_contract_info(state.tenantId, extraction.contract_type);
-            this.updateTrace(state.trace, "Retrieved contract information.");
+            const contractType = extraction.contract_type || 'Sales';
+            const contractInfo = await TOOL_EXECUTOR.get_contract_info(state.tenantId, contractType);
+            const contractSnippet = contractInfo.slice(0, 80) + (contractInfo.length > 80 ? '...' : '');
+            this.updateTrace(state.trace, `Hợp đồng [${contractType}]: ${contractSnippet}`);
             return { systemContext: state.systemContext + `\n[CONTRACT KNOWLEDGE]: ${contractInfo}` };
         });
 
@@ -545,7 +550,8 @@ class AiEngine {
                 contents: analysisPrompt
             });
 
-            this.updateTrace(state.trace, "Lead analysis completed.");
+            const analysisSnippet = (analysisRes.text || '').slice(0, 100).replace(/\n/g, ' ');
+            this.updateTrace(state.trace, `Phân tích: ${analysisSnippet}${analysisSnippet.length >= 100 ? '...' : ''}`);
             return { leadAnalysis: analysisRes.text || '' };
         });
 
@@ -589,7 +595,8 @@ class AiEngine {
                 contents: writerPrompt
             });
 
-            this.updateTrace(state.trace, "Response generated.");
+            const preview = (writerRes.text || '').slice(0, 80).replace(/\n/g, ' ');
+            this.updateTrace(state.trace, preview || 'Đã tạo phản hồi.');
             return { finalResponse: writerRes.text || "Dạ, anh/chị cần em hỗ trợ thêm thông tin gì không ạ?" };
         });
 
@@ -725,7 +732,7 @@ class AiEngine {
         }
     }
 
-    async scoreLead(leadData: Partial<Lead>, messageContent?: string, weights?: Record<string, number>, lang: string = 'vn'): Promise<{ score: number, grade: string, reasoning: string }> {
+    async scoreLead(leadData: Partial<Lead>, messageContent?: string, weights?: Record<string, number>, lang: string = 'vn', tenantId: string = 'default'): Promise<{ score: number, grade: string, reasoning: string }> {
         try {
             const weightsStr = weights ? `
                 Trọng số đánh giá (Weights):
@@ -771,8 +778,9 @@ class AiEngine {
                 required: ['score', 'grade', 'reasoning']
             };
 
+            const scoreModel = await getGovernanceModel(tenantId);
             const response = await this.ai.models.generateContent({
-                model: GENAI_CONFIG.MODELS.ROUTER,
+                model: scoreModel,
                 contents: prompt,
                 config: {
                     responseMimeType: 'application/json',
@@ -800,7 +808,7 @@ class AiEngine {
         }
     }
 
-    async summarizeLead(lead: Lead, logs: any[], lang: string = 'vn') {
+    async summarizeLead(lead: Lead, logs: any[], lang: string = 'vn', tenantId: string = 'default') {
         try {
             const prompt = `
                 Bạn là chuyên gia phân tích khách hàng Bất động sản cao cấp. 
@@ -826,8 +834,9 @@ class AiEngine {
                 Hãy viết một cách chuyên nghiệp, súc tích và có chiều sâu.
             `;
 
+            const summarizeModel = await getGovernanceModel(tenantId);
             const response = await this.ai.models.generateContent({
-                model: GENAI_CONFIG.MODELS.WRITER,
+                model: summarizeModel,
                 contents: prompt,
                 config: {
                     systemInstruction: "Bạn là một chuyên gia tư vấn BĐS kỳ cựu với khả năng thấu cảm khách hàng cực tốt."
