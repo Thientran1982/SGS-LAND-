@@ -719,7 +719,6 @@ export const AiValuation: React.FC = () => {
                                         <div className="text-2xl font-black text-white mb-1">
                                             {formatSmartPrice(valuation.compsPrice || valuation.price, t)} <span className="text-sm text-emerald-400">VNĐ</span>
                                         </div>
-                                        <div className="text-slate-400 text-xs">{valuation.formula}</div>
                                         {valuation.reconciliation && (
                                             <div className="mt-3 text-xs bg-emerald-500/10 rounded-lg px-3 py-1.5 inline-block">
                                                 Trọng số: <span className="font-bold text-emerald-300">{(valuation.reconciliation.compsWeight * 100).toFixed(0)}%</span>
@@ -735,9 +734,6 @@ export const AiValuation: React.FC = () => {
                                         </div>
                                         <div className="text-2xl font-black text-white mb-1">
                                             {formatSmartPrice(valuation.incomeApproach.capitalValue, t)} <span className="text-sm text-indigo-400">VNĐ</span>
-                                        </div>
-                                        <div className="text-slate-400 text-xs font-mono">
-                                            NOI {valuation.incomeApproach.noi.toFixed(1)} Tr/năm ÷ Cap {(valuation.incomeApproach.capRate * 100).toFixed(1)}%
                                         </div>
                                         {valuation.reconciliation && (
                                             <div className="mt-3 text-xs bg-indigo-500/10 rounded-lg px-3 py-1.5 inline-block">
