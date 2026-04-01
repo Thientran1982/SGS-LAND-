@@ -27,12 +27,6 @@ const MODEL_GROUPS: { label: string; badge: string; badgeColor: string; models: 
         badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-200',
         models: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'],
     },
-    {
-        label: 'Gemini 2.0 / 1.5 — Deprecated',
-        badge: 'Ngừng hỗ trợ',
-        badgeColor: 'bg-rose-100 text-rose-700 border-rose-200',
-        models: ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'],
-    },
 ];
 
 const SUPPORTED_MODELS: AiModelType[] = MODEL_GROUPS.flatMap(g => g.models);
