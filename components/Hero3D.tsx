@@ -50,79 +50,48 @@ function rightGlarePoly(col: number, row: number): string {
 }
 
 // ─── WINDOW DEFINITIONS ───────────────────────────────────────────────────
-type WinHue   = 'warm' | 'cool';
-type WinSpeed = 'slow' | 'med' | 'fast';
+type WinHue = 'warm' | 'cool';
 
-// ánh đèn mở: warm = đèn vàng sợi đốt (2700K), cool = đèn LED trắng ấm (4000K)
+// warm = đèn vàng (2700K), cool = đèn LED trắng (4000K)
 const WIN_COLOR: Record<WinHue, { fill: string; glare: string }> = {
-  warm: { fill: '#FEF9C3', glare: '#FFFFFF' },   // yellow-100 — đèn sợi đốt
-  cool: { fill: '#EFF6FF', glare: '#FFFFFF' },   // blue-50 — đèn LED
+  warm: { fill: '#FEF9C3', glare: '#FFFFFF' },
+  cool: { fill: '#EFF6FF', glare: '#FFFFFF' },
 };
 
-// Chậm lại so với trước: slow 8s / med 6s / fast 4s
-const CYCLE_DUR: Record<WinSpeed, number> = { slow: 8, med: 6, fast: 4 };
+// Clean regular grid: cols 1–6, rows 1–6, alternating hue by checkerboard
+// [col, row, hue]
+const LEFT_WINDOWS: [number, number, WinHue][] = [];
+const RIGHT_WINDOWS: [number, number, WinHue][] = [];
+for (let row = 1; row <= 6; row++) {
+  for (let col = 1; col <= 6; col++) {
+    const hue: WinHue = (col + row) % 2 === 0 ? 'warm' : 'cool';
+    LEFT_WINDOWS.push([col, row, hue]);
+    RIGHT_WINDOWS.push([col, row, hue]);
+  }
+}
 
-const LEFT_WINDOWS:  [number, number, WinHue, WinSpeed][] = [
-  [1, 1, 'warm', 'slow'], [2, 0, 'cool', 'med'],  [3, 2, 'warm', 'fast'],
-  [4, 1, 'cool', 'slow'], [5, 0, 'warm', 'med'],  [6, 3, 'cool', 'fast'],
-  [0, 4, 'warm', 'med'],  [1, 5, 'cool', 'slow'], [3, 3, 'warm', 'fast'],
-  [5, 2, 'cool', 'med'],  [6, 4, 'warm', 'slow'], [2, 6, 'cool', 'fast'],
-  [4, 5, 'warm', 'med'],  [0, 2, 'cool', 'slow'], [5, 6, 'warm', 'fast'],
-];
-const RIGHT_WINDOWS: [number, number, WinHue, WinSpeed][] = [
-  [1, 2, 'cool', 'fast'],  [2, 0, 'warm', 'slow'], [3, 4, 'cool', 'med'],
-  [4, 1, 'warm', 'fast'],  [5, 3, 'cool', 'slow'], [6, 0, 'warm', 'med'],
-  [0, 5, 'cool', 'fast'],  [1, 3, 'warm', 'slow'], [4, 2, 'cool', 'med'],
-  [6, 5, 'warm', 'fast'],  [2, 4, 'cool', 'slow'], [5, 1, 'warm', 'med'],
-  [3, 6, 'cool', 'fast'],  [7, 3, 'warm', 'slow'], [6, 2, 'cool', 'fast'],
-];
-
-const DELAYS = [
-  0.0, 0.7, 1.5, 2.3, 3.2, 1.1, 4.0, 0.4,
-  2.8, 3.9, 1.8, 0.9, 5.1, 0.2, 2.0, 4.4,
-  1.3, 3.5, 6.0, 1.6, 3.8, 0.1, 2.6, 3.7,
-  5.0, 6.5, 0.6, 2.2,
-];
-
-// ─── ANIMATED WINDOW ─────────────────────────────────────────────────────
+// ─── WINDOW ───────────────────────────────────────────────────────────────
 interface LitWindowProps {
   winPts: string; haloPts: string; glarePts: string;
-  hue: WinHue; speed: WinSpeed; delay: number;
-  isLaserActive: boolean;
+  hue: WinHue; isLaserActive: boolean;
 }
-const LitWindow = React.memo<LitWindowProps>(({ winPts, haloPts, glarePts, hue, speed, delay, isLaserActive }) => {
-  const dur = CYCLE_DUR[speed];
+const LitWindow = React.memo<LitWindowProps>(({ winPts, haloPts, glarePts, hue, isLaserActive }) => {
   const { fill, glare } = WIN_COLOR[hue];
-  const opKf = [0.04, 0.90, 0.90, 0.90, 0.04];
   return (
     <g>
-      {/* Ambient window glow (independent blinking — người trong nhà) */}
-      <motion.g filter="url(#winGlow)"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.60, 0.60, 0.60, 0] }}
-        transition={{ duration: dur, delay, repeat: Infinity, ease: 'easeInOut' }}
-      ><polygon points={haloPts} fill={fill} /></motion.g>
+      {/* Static dim base — always visible, no blinking */}
+      <polygon points={winPts} fill={fill} opacity="0.10" />
 
-      <motion.g initial={{ opacity: 0.04 }}
-        animate={{ opacity: opKf }}
-        transition={{ duration: dur, delay, repeat: Infinity, ease: 'easeInOut' }}
-      ><polygon points={winPts} fill={fill} /></motion.g>
-
-      <motion.g initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.50, 0.50, 0.50, 0] }}
-        transition={{ duration: dur, delay: delay + 0.1, repeat: Infinity, ease: 'easeInOut' }}
-      ><polygon points={glarePts} fill={glare} /></motion.g>
-
-      {/* Laser scan flash — emerald burst khi laser quét qua hàng này */}
+      {/* Laser scan flash — sáng emerald khi laser qua hàng này */}
       {isLaserActive && (
         <motion.g
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0.55, 1, 0.55] }}
-          transition={{ duration: 0.25, repeat: Infinity, ease: 'linear' }}
+          initial={{ opacity: 0.6 }}
+          animate={{ opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 0.3, repeat: Infinity, ease: 'easeInOut' }}
         >
           <polygon points={haloPts} fill="#34D399" filter="url(#winGlow)" />
-          <polygon points={winPts} fill="#6EE7B7" opacity="0.85" />
-          <polygon points={glarePts} fill="#fff" opacity="0.7" />
+          <polygon points={winPts} fill="#6EE7B7" opacity="0.90" />
+          <polygon points={glarePts} fill={glare} opacity="0.65" />
         </motion.g>
       )}
     </g>
@@ -376,13 +345,12 @@ export const Hero3D = () => {
         <path d="M 240,330 L 400,410 M 240,300 L 400,380 M 240,270 L 400,350 M 240,240 L 400,320 M 240,210 L 400,290 M 240,180 L 400,260 M 240,150 L 400,230"
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
 
-        {/* Animated windows — Left face */}
+        {/* Windows — Left face */}
         <g clipPath="url(#clipLeft)">
-          {LEFT_WINDOWS.map(([col, row, hue, speed], i) => (
+          {LEFT_WINDOWS.map(([col, row, hue], i) => (
             <LitWindow key={`wl-${i}`}
               winPts={leftPoly(col, row)} haloPts={leftHaloPoly(col, row)} glarePts={leftGlarePoly(col, row)}
-              hue={hue} speed={speed} delay={DELAYS[i % DELAYS.length]}
-              isLaserActive={laserRow === row}
+              hue={hue} isLaserActive={laserRow === row}
             />
           ))}
         </g>
@@ -393,13 +361,12 @@ export const Hero3D = () => {
         <path d="M 560,330 L 400,410 M 560,300 L 400,380 M 560,270 L 400,350 M 560,240 L 400,320 M 560,210 L 400,290 M 560,180 L 400,260 M 560,150 L 400,230"
           stroke="#020617" strokeWidth="1.5" opacity="0.55" />
 
-        {/* Animated windows — Right face */}
+        {/* Windows — Right face */}
         <g clipPath="url(#clipRight)">
-          {RIGHT_WINDOWS.map(([col, row, hue, speed], i) => (
+          {RIGHT_WINDOWS.map(([col, row, hue], i) => (
             <LitWindow key={`wr-${i}`}
               winPts={rightPoly(col, row)} haloPts={rightHaloPoly(col, row)} glarePts={rightGlarePoly(col, row)}
-              hue={hue} speed={speed} delay={DELAYS[(i + 8) % DELAYS.length]}
-              isLaserActive={laserRow === row}
+              hue={hue} isLaserActive={laserRow === row}
             />
           ))}
         </g>
