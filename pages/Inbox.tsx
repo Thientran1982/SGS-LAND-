@@ -509,37 +509,38 @@ export const Inbox: React.FC = () => {
 
     return (
         <>
-        <div className="p-4 sm:p-6 h-[calc(100vh-64px)] md:h-[calc(100vh-72px)]">
-        <div className="flex h-full bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden animate-enter relative">
+        {/* Full-bleed on mobile, padded on sm+ — fills the flex-1 parent from Layout */}
+        <div className="h-full sm:p-4 md:p-6">
+        <div className="flex h-full bg-[var(--bg-surface)] sm:rounded-[24px] sm:border border-[var(--glass-border)] sm:shadow-sm overflow-hidden animate-enter relative">
 
             {/* Sidebar List */}
-            <div className={`w-full md:w-80 border-r border-[var(--glass-border)] flex flex-col ${selectedLeadId ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-4 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] z-10 flex flex-col gap-3">
+            <div className={`w-full md:w-80 lg:w-96 border-r border-[var(--glass-border)] flex flex-col ${selectedLeadId ? 'hidden md:flex' : 'flex'}`}>
+                <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-2 border-b border-[var(--glass-border)] bg-[var(--bg-surface)] z-10 flex flex-col gap-2.5">
                     <div className="flex justify-between items-center">
                         <h2 className="font-bold text-[var(--text-primary)]">{t('menu.inbox')}</h2>
                         <button 
                             onClick={() => setIsWidgetModalOpen(true)}
-                            className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                            className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-                            {t('inbox.live_chat_widget')}
+                            <span className="hidden sm:inline">{t('inbox.live_chat_widget')}</span>
                         </button>
                     </div>
-                    <div className="relative group">
+                    <div className="relative">
                         <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)]">
                             {ICONS.SEARCH}
                         </div>
                         <input 
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-9 pr-10 py-2.5 min-h-[44px] text-sm outline-none focus:border-indigo-500 transition-all"
+                            className="w-full bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl pl-9 pr-9 py-2.5 min-h-[44px] text-sm outline-none focus:border-indigo-500 transition-all"
                             placeholder={t('common.search')}
                         />
                         {search && (
                             <div className="absolute right-2 inset-y-0 flex items-center">
                                 <button 
                                     onClick={() => setSearch('')}
-                                    className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                    className="text-[var(--text-secondary)] transition-colors p-1 rounded-full hover:bg-[var(--glass-surface-hover)] flex items-center justify-center"
                                     title={t('common.clear_search')}
                                 >
                                     {ICONS.X}
@@ -547,23 +548,23 @@ export const Inbox: React.FC = () => {
                             </div>
                         )}
                     </div>
-                    {/* Status + Channel Filters */}
-                    <div className="flex gap-1.5 flex-wrap">
+                    {/* Status + Channel Filters — horizontally scrollable, never wraps */}
+                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
                         {(['ALL', 'UNREAD'] as const).map(s => (
                             <button
                                 key={s}
                                 onClick={() => setStatusFilter(s)}
-                                className={`text-xs2 font-bold px-2.5 py-1 rounded-lg border transition-all ${statusFilter === s ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                                className={`text-xs2 font-bold px-2.5 py-1 rounded-lg border transition-all whitespace-nowrap shrink-0 ${statusFilter === s ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
                             >
                                 {s === 'ALL' ? t('inbox.filter_all') : t('inbox.filter_unread')}
                             </button>
                         ))}
-                        <div className="w-px bg-[var(--glass-border)] self-stretch mx-0.5" />
+                        <div className="w-px bg-[var(--glass-border)] self-stretch shrink-0 mx-0.5" />
                         {(['ALL', Channel.WEB, Channel.ZALO, Channel.FACEBOOK, Channel.EMAIL, Channel.SMS] as const).map(ch => (
                             <button
                                 key={ch}
                                 onClick={() => setChannelFilter(ch)}
-                                className={`text-xs2 font-bold px-2.5 py-1 rounded-lg border transition-all ${channelFilter === ch ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
+                                className={`text-xs2 font-bold px-2.5 py-1 rounded-lg border transition-all whitespace-nowrap shrink-0 ${channelFilter === ch ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'}`}
                             >
                                 {ch === 'ALL' ? t('inbox.filter_all') : channelLabel(ch)}
                             </button>
@@ -671,46 +672,47 @@ export const Inbox: React.FC = () => {
             {selectedThread ? (
                 <div className={`flex-1 flex flex-col bg-[var(--bg-surface)] h-full relative min-w-0 ${selectedLeadId ? 'flex' : 'hidden md:flex'}`}>
                     {/* Header */}
-                    <div className="p-3 md:p-4 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]/95 backdrop-blur-md z-20 shadow-sm gap-2">
-                        <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                    <div className="px-3 py-2.5 md:px-4 md:py-3 border-b border-[var(--glass-border)] flex justify-between items-center bg-[var(--bg-surface)]/95 backdrop-blur-md z-20 shadow-sm gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {/* Back button — mobile only */}
                             <button onClick={() => setSelectedLeadId(null)} aria-label={t('common.back')} className="md:hidden text-[var(--text-tertiary)] hover:bg-[var(--glass-surface-hover)] p-1.5 min-h-[44px] min-w-[44px] rounded-full transition-colors shrink-0 -ml-1 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                                 {ICONS.BACK}
                             </button>
-                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[var(--glass-surface-hover)] flex items-center justify-center font-bold text-[var(--text-tertiary)] border border-[var(--glass-border)] shrink-0">
+                            {/* Avatar */}
+                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center font-bold text-indigo-600 border border-indigo-200 shrink-0 text-sm">
                                 {selectedThread.lead.name.charAt(0).toUpperCase()}
                             </div>
+                            {/* Name + status */}
                             <div className="min-w-0 flex-1">
-                                <div className="font-bold text-[var(--text-primary)] text-sm md:text-base flex items-center gap-2 min-w-0">
+                                <div className="font-bold text-[var(--text-primary)] text-sm flex items-center gap-1.5 min-w-0">
                                     <span className="truncate">{selectedThread.lead.name}</span>
-                                    <span className="text-2xs px-1.5 py-0.5 rounded uppercase font-bold border text-emerald-600 bg-emerald-50 border-emerald-100 shrink-0">
-                                        {selectedThread.lead.score?.score || 0} {t('scoring.pts')}
+                                    <span className="text-2xs px-1.5 py-0.5 rounded-md uppercase font-bold border text-emerald-600 bg-emerald-50 border-emerald-100 shrink-0 hidden sm:inline">
+                                        {selectedThread.lead.score?.score || 0}đ
                                     </span>
                                 </div>
-                                <div className="text-xs2 md:text-xs text-[var(--text-tertiary)] flex items-center gap-1.5 truncate">
-                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isAiActiveForSelected ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                                <div className="text-xs text-[var(--text-tertiary)] flex items-center gap-1.5">
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isAiActiveForSelected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
                                     <span className="truncate">{isAiActiveForSelected ? t('inbox.ai_agent_active') : t('inbox.human_control')}</span>
                                 </div>
                             </div>
                         </div>
                         
-                        <div className="flex items-center gap-1 md:gap-2 shrink-0">
-                            {/* Custom Assign Dropdown */}
+                        <div className="flex items-center gap-1 shrink-0">
+                            {/* Assign Dropdown */}
                             {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
                                 <div className="relative" ref={assignDropdownRef}>
                                     <button
                                         onClick={() => setIsAssignOpen(!isAssignOpen)}
-                                        className="flex items-center gap-1.5 text-xs font-bold bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] rounded-lg px-2 md:px-3 py-1.5 min-h-[44px] hover:bg-[var(--glass-surface-hover)] transition-colors"
+                                        className="flex items-center gap-1.5 text-xs font-bold bg-[var(--glass-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] rounded-lg px-2 py-1.5 min-h-[36px] hover:bg-[var(--glass-surface-hover)] transition-colors"
                                         title={t('inbox.assign_to')}
                                     >
-                                        <span className="truncate max-w-[60px] lg:max-w-[100px] hidden sm:inline md:hidden lg:inline">
+                                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                        <span className="hidden sm:inline truncate max-w-[80px] lg:max-w-[120px]">
                                             {selectedThread.lead.assignedTo 
                                                 ? (selectedThread.lead.assignedToName || users.find((u: any) => u.id === selectedThread.lead.assignedTo)?.name || t('inbox.unassigned'))
                                                 : t('inbox.unassigned')}
                                         </span>
-                                        <span className="sm:hidden md:inline lg:hidden text-[var(--text-tertiary)]">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                        </span>
-                                        <svg className={`w-3 h-3 transition-transform hidden sm:block md:hidden lg:block ${isAssignOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                        <svg className={`w-3 h-3 transition-transform text-[var(--text-tertiary)] ${isAssignOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                                     </button>
                                     
                                     {isAssignOpen && (
@@ -726,7 +728,7 @@ export const Inbox: React.FC = () => {
                                                             handleAssign(selectedThread.lead.id, u.id);
                                                             setIsAssignOpen(false);
                                                         }}
-                                                        className={`w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 transition-colors flex items-center justify-between gap-2 ${selectedThread.lead.assignedTo === u.id ? 'text-indigo-600 font-bold bg-indigo-50/50' : 'text-[var(--text-secondary)]'}`}
+                                                        className={`w-full text-left px-3 py-2.5 text-sm hover:bg-indigo-50 transition-colors flex items-center justify-between gap-2 ${selectedThread.lead.assignedTo === u.id ? 'text-indigo-600 font-bold bg-indigo-50/50' : 'text-[var(--text-secondary)]'}`}
                                                     >
                                                         <span className="truncate min-w-0 flex-1">{u.name}</span>
                                                         {selectedThread.lead.assignedTo === u.id && (
@@ -740,10 +742,10 @@ export const Inbox: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* AI Toggle / Takeover Button */}
+                            {/* AI Toggle */}
                             <button 
                                 onClick={(e) => toggleAiMode(e, selectedThread.lead.id)}
-                                className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-bold border transition-all ${
+                                className={`flex items-center gap-1.5 px-2 py-1.5 min-h-[36px] rounded-lg text-xs font-bold border transition-all ${
                                     isAiActiveForSelected
                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
                                     : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
@@ -751,15 +753,15 @@ export const Inbox: React.FC = () => {
                                 title={t('inbox.toggle_ai')}
                             >
                                 {isAiActiveForSelected ? ICONS.ROBOT_ON : ICONS.ROBOT_OFF}
-                                <span className="hidden sm:inline md:hidden lg:inline">{isAiActiveForSelected ? t('inbox.auto_pilot') : t('inbox.manual')}</span>
+                                <span className="hidden sm:inline">{isAiActiveForSelected ? t('inbox.auto_pilot') : t('inbox.manual')}</span>
                             </button>
 
-                            {/* Header Action: Delete */}
+                            {/* Delete */}
                             {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TEAM_LEAD') && (
                                 <button
                                     onClick={(e) => requestDelete(e, selectedThread.lead.id)}
                                     aria-label={t('inbox.menu_delete')}
-                                    className="p-1.5 md:p-2 min-h-[44px] min-w-[44px] text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors flex items-center justify-center"
+                                    className="p-1.5 min-h-[36px] min-w-[36px] text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors flex items-center justify-center"
                                 >
                                     {ICONS.TRASH}
                                 </button>
@@ -768,7 +770,7 @@ export const Inbox: React.FC = () => {
                     </div>
 
                     {/* Messages List */}
-                    <div className="flex-1 overflow-y-auto p-4 bg-[var(--glass-surface)] space-y-4 no-scrollbar scroll-smooth">
+                    <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 bg-[var(--glass-surface)] space-y-3 sm:space-y-4 no-scrollbar scroll-smooth">
                         {messages.length === 0 && (
                             <div className="h-full flex flex-col items-center justify-center text-[var(--text-secondary)] opacity-60">
                                 <div className="text-4xl mb-2">💬</div>
@@ -822,28 +824,35 @@ export const Inbox: React.FC = () => {
                     </div>
 
                     {/* Input Bar */}
-                    <div className="p-2 md:p-3 bg-[var(--bg-surface)]/95 backdrop-blur border-t border-[var(--glass-border)] z-30 pb-safe">
-                        <div className="flex flex-wrap items-center justify-between mb-1.5 gap-1.5">
-                            <div className="flex bg-[var(--glass-surface-hover)] p-0.5 rounded-lg border border-[var(--glass-border)] overflow-x-auto no-scrollbar max-w-full">
+                    <div className="px-2 pt-2 sm:px-3 sm:pt-2.5 pb-safe bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] z-30">
+                        {/* Channel selector row + supervisor badge */}
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                            {/* Channel tabs */}
+                            <div className="flex bg-[var(--glass-surface)] p-0.5 rounded-lg border border-[var(--glass-border)] overflow-x-auto no-scrollbar shrink-0">
                                 {[Channel.ZALO, Channel.EMAIL, Channel.SMS].map(ch => (
                                     <button 
                                         key={ch} 
                                         onClick={() => setChannel(ch)}
-                                        className={`px-2 py-0.5 min-h-[28px] rounded-md text-xs2 font-bold uppercase transition-all flex items-center gap-1 whitespace-nowrap ${channel === ch ? 'bg-[var(--bg-surface)] text-indigo-700 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
+                                        className={`px-2 sm:px-2.5 py-1 min-h-[32px] rounded-md text-xs2 font-bold uppercase transition-all flex items-center gap-1 whitespace-nowrap ${channel === ch ? 'bg-[var(--bg-surface)] text-indigo-700 shadow-sm' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
                                     >
-                                        {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS} {channelLabel(ch)}
+                                        {ch === Channel.ZALO ? ICONS.ZALO : ch === Channel.EMAIL ? ICONS.EMAIL : ICONS.SMS}
+                                        <span className="hidden sm:inline">{channelLabel(ch)}</span>
                                     </button>
                                 ))}
                             </div>
                             
+                            {/* Supervisor mode badge */}
                             {!isAiActiveForSelected && (
-                                <div className="text-xs2 font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100 animate-pulse whitespace-nowrap">
-                                    {t('inbox.supervisor_takeover_active')}
+                                <div className="text-xs2 font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg animate-pulse whitespace-nowrap flex items-center gap-1 shrink-0">
+                                    {ICONS.ALERT}
+                                    <span className="hidden sm:inline">{t('inbox.supervisor_takeover_active')}</span>
+                                    <span className="sm:hidden">Manual</span>
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex items-end gap-1.5 bg-[var(--bg-surface)] p-1 pl-2 rounded-xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/50 transition-all shadow-sm max-w-full">
+                        {/* Text input row */}
+                        <div className="flex items-end gap-1.5 bg-[var(--bg-surface)] p-1 pl-2.5 rounded-xl border border-[var(--glass-border)] focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/50 transition-all shadow-sm">
                             <input 
                                 type="file" 
                                 ref={fileInputRef} 
@@ -854,7 +863,7 @@ export const Inbox: React.FC = () => {
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 aria-label={t('inbox.attach')}
-                                className="p-1 min-h-[32px] min-w-[32px] text-[var(--text-secondary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-indigo-50 shrink-0 self-end mb-0.5 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="p-1.5 min-h-[36px] min-w-[36px] text-[var(--text-tertiary)] hover:text-indigo-600 transition-colors rounded-lg hover:bg-indigo-50 shrink-0 self-end mb-0.5 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
                                 {ICONS.ATTACH}
                             </button>
@@ -868,7 +877,7 @@ export const Inbox: React.FC = () => {
                                         handleSend();
                                     }
                                 }}
-                                className="flex-1 min-w-0 bg-transparent border-none text-sm outline-none max-h-28 min-h-[32px] py-1.5 resize-none placeholder:text-[var(--text-muted)] leading-relaxed focus:ring-0 no-scrollbar"
+                                className="flex-1 min-w-0 bg-transparent border-none text-sm outline-none max-h-32 min-h-[36px] py-2 resize-none placeholder:text-[var(--text-muted)] leading-relaxed focus:ring-0 no-scrollbar"
                                 placeholder={isAiActiveForSelected ? t('inbox.type_simulate') : t('inbox.reply_supervisor')}
                                 rows={1}
                             />
@@ -877,7 +886,7 @@ export const Inbox: React.FC = () => {
                                 onClick={handleSend}
                                 disabled={!input.trim() || isThinking}
                                 aria-label={t('inbox.send')}
-                                className="p-1.5 bg-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:shadow-none active:scale-95 shrink-0 mb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                                className="p-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:shadow-md hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:shadow-none active:scale-95 shrink-0 self-end mb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
                             >
                                 {ICONS.SEND}
                             </button>

@@ -100,6 +100,13 @@ html.dark {
   to   { opacity: 1; }
 }
 
+/* iOS safe-area bottom inset — used for input bars on notched devices.
+   Uses max() so it equals at least 8px (standard bottom padding) but expands
+   to the device's safe-area inset on notched iPhones. */
+.pb-safe {
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+}
+
 /* Markdown content styles */
 .markdown-body { font-family: inherit; }
 .markdown-body p { margin-bottom: 0.75em; }
