@@ -81,12 +81,34 @@ export class ContractRepository extends BaseRepository {
         [...values, pageSize, offset]
       );
 
+      const statsResult = await client.query(
+        `SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE status = 'DRAFT')::int AS draft_count,
+          COUNT(*) FILTER (WHERE status = 'PENDING_SIGNATURE')::int AS pending_count,
+          COUNT(*) FILTER (WHERE status = 'SIGNED')::int AS signed_count,
+          COUNT(*) FILTER (WHERE status = 'CANCELLED')::int AS cancelled_count,
+          COALESCE(SUM(property_price) FILTER (WHERE status = 'SIGNED'), 0)::bigint AS signed_value,
+          COALESCE(SUM(property_price), 0)::bigint AS total_value
+        FROM contracts c`
+      );
+      const s = statsResult.rows[0];
+
       return {
         data: result.rows.map(row => this.flattenEntity(this.rowToEntity(row))),
         total,
         page,
         pageSize,
         totalPages: Math.ceil(total / pageSize),
+        stats: {
+          total: s.total,
+          draftCount: s.draft_count,
+          pendingCount: s.pending_count,
+          signedCount: s.signed_count,
+          cancelledCount: s.cancelled_count,
+          signedValue: Number(s.signed_value),
+          totalValue: Number(s.total_value),
+        },
       };
     });
   }
