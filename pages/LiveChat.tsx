@@ -347,7 +347,7 @@ export default function LiveChat() {
                                 handleSend();
                             }
                         }}
-                        className="flex-1 bg-transparent border-none text-sm outline-none max-h-32 min-h-[40px] py-2 px-2 resize-none placeholder:text-[var(--text-muted)] no-scrollbar"
+                        className="flex-1 bg-transparent border-none text-[16px] md:text-sm outline-none max-h-32 min-h-[40px] py-2 px-2 resize-none placeholder:text-[var(--text-muted)] no-scrollbar"
                         placeholder={t('livechat.input_placeholder')}
                         rows={1}
                         aria-label={t('livechat.input_placeholder')}

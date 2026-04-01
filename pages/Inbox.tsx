@@ -1043,7 +1043,7 @@ export const Inbox: React.FC = () => {
                                         handleSend();
                                     }
                                 }}
-                                className="flex-1 min-w-0 bg-transparent border-none text-sm outline-none max-h-32 min-h-[36px] py-2 resize-none placeholder:text-[var(--text-muted)] leading-relaxed focus:ring-0 no-scrollbar"
+                                className="flex-1 min-w-0 bg-transparent border-none text-[16px] md:text-sm outline-none max-h-32 min-h-[36px] py-2 resize-none placeholder:text-[var(--text-muted)] leading-relaxed focus:ring-0 no-scrollbar"
                                 placeholder={isAiActiveForSelected ? t('inbox.type_simulate') : t('inbox.reply_supervisor')}
                                 rows={1}
                             />
