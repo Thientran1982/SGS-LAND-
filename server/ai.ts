@@ -4,6 +4,7 @@ import { listingRepository, ListingFilters } from './repositories/listingReposit
 import { applyAVM, getRegionalBasePrice, LegalStatus } from './valuationEngine';
 import { logger } from './middleware/logger';
 import { aiGovernanceRepository } from './repositories/aiGovernanceRepository';
+import { enterpriseConfigRepository } from './repositories/enterpriseConfigRepository';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -102,6 +103,7 @@ const ROUTER_SCHEMA: Schema = {
                 location_keyword: { type: Type.STRING },
                 legal_concern: { type: Type.STRING, enum: ['PINK_BOOK', 'CONTRACT', 'NONE'] },
                 property_type: { type: Type.STRING },
+                area_min: { type: Type.NUMBER, description: "Minimum area in m² the customer requires" },
                 loan_rate: { type: Type.NUMBER, description: "Interest rate in percentage" },
                 loan_years: { type: Type.NUMBER, description: "Loan duration in years" },
                 marketing_campaign: { type: Type.STRING, description: "Name of the campaign or promotion mentioned" },
@@ -175,16 +177,31 @@ const TOOL_EXECUTOR = {
         return "Legal status needs verification.";
     },
 
-    get_marketing_info(campaign?: string) {
-        const campaigns = [
+    async get_marketing_info(tenantId: string, campaign?: string): Promise<string> {
+        const DEFAULT_CAMPAIGNS = [
             "Chiết khấu 5% cho khách hàng thanh toán nhanh trong tháng này.",
             "Tặng gói nội thất 200 triệu cho căn hộ 3 phòng ngủ.",
             "Miễn phí quản lý 2 năm đầu tiên cho cư dân mới."
         ];
-        if (campaign) {
-            return `Thông tin chiến dịch "${campaign}": Đang áp dụng chiết khấu đặc biệt. Vui lòng liên hệ Sales để biết chi tiết.`;
+        try {
+            const config = await enterpriseConfigRepository.getConfig(tenantId);
+            const dbCampaigns: string[] = config?.aiMarketingCampaigns;
+            const campaigns = (Array.isArray(dbCampaigns) && dbCampaigns.length > 0)
+                ? dbCampaigns
+                : DEFAULT_CAMPAIGNS;
+            if (campaign) {
+                const match = campaigns.find(c => c.toLowerCase().includes(campaign.toLowerCase()));
+                return match
+                    ? `Thông tin chiến dịch "${campaign}": ${match}`
+                    : `Thông tin chiến dịch "${campaign}": Đang áp dụng chiết khấu đặc biệt. Vui lòng liên hệ Sales để biết chi tiết.`;
+            }
+            return `Các chương trình ưu đãi hiện tại:\n- ${campaigns.join('\n- ')}`;
+        } catch {
+            if (campaign) {
+                return `Thông tin chiến dịch "${campaign}": Đang áp dụng chiết khấu đặc biệt. Vui lòng liên hệ Sales để biết chi tiết.`;
+            }
+            return `Các chương trình ưu đãi hiện tại:\n- ${DEFAULT_CAMPAIGNS.join('\n- ')}`;
         }
-        return `Các chương trình ưu đãi hiện tại:\n- ${campaigns.join('\n- ')}`;
     },
 
     get_contract_info(type?: string) {
@@ -318,7 +335,7 @@ class AiEngine {
         graph.addNode('ROUTER', async (state) => {
             state.trace.push({ id: `step_1`, node: 'ROUTER', status: 'RUNNING', timestamp: Date.now() });
             
-            const historyText = state.history.slice(-15)
+            const historyText = state.history.slice(-12)
                 .map(h => `${h.direction === 'INBOUND' ? 'USER' : 'AGENT'}: "${h.content}"`)
                 .join('\n');
 
@@ -362,7 +379,7 @@ class AiEngine {
                  if(match) budgetMax = parseFloat(match[1].replace(',','.')) * 1000000000;
             }
 
-            const searchRes = await TOOL_EXECUTOR.search_inventory(state.tenantId, extraction.location_keyword || '', budgetMax, extraction.property_type);
+            const searchRes = await TOOL_EXECUTOR.search_inventory(state.tenantId, extraction.location_keyword || '', budgetMax, extraction.property_type, extraction.area_min);
             this.updateTrace(state.trace, `Retrieved inventory results.`);
             return { systemContext: state.systemContext + `\n\n[INVENTORY DATA]:\n${searchRes}` };
         });
@@ -439,7 +456,7 @@ class AiEngine {
         graph.addNode('MARKETING_AGENT', async (state) => {
             state.trace.push({ id: `step_2`, node: 'MARKETING_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
-            const marketingInfo = TOOL_EXECUTOR.get_marketing_info(extraction.marketing_campaign);
+            const marketingInfo = await TOOL_EXECUTOR.get_marketing_info(state.tenantId, extraction.marketing_campaign);
             this.updateTrace(state.trace, "Retrieved marketing campaigns.");
             return { systemContext: state.systemContext + `\n[MARKETING KNOWLEDGE]: ${marketingInfo}` };
         });
@@ -461,7 +478,7 @@ class AiEngine {
                 Bạn là chuyên gia phân tích dữ liệu khách hàng.
                 KHÁCH HÀNG: ${state.lead?.name || 'Khách hàng chung'}
                 LỊCH SỬ TƯƠNG TÁC:
-                ${state.history.slice(-10).map(h => `- ${h.content}`).join('\n')}
+                ${state.history.slice(-12).map(h => `- ${h.content}`).join('\n')}
                 
                 NHIỆM VỤ: Phân tích tâm lý, nhu cầu thực sự và đưa ra chiến lược chốt deal cho Sales.
                 Trả về kết quả dưới dạng ghi chú hệ thống.
@@ -481,7 +498,7 @@ class AiEngine {
         graph.addNode('WRITER', async (state) => {
             state.trace.push({ id: `step_3`, node: 'WRITER', status: 'RUNNING', timestamp: Date.now() });
 
-            const conversationHistory = state.history.slice(-10)
+            const conversationHistory = state.history.slice(-12)
                 .map(h => `${h.direction === 'INBOUND' ? 'CUSTOMER' : 'AGENT'}: ${h.content}`)
                 .join('\n');
 
