@@ -4,7 +4,7 @@
  * Multi-source, multi-coefficient approach:
  *
  *  Method 1 — AVM/Comps (Sales Comparison):
- *    P_adjusted/m² = P_blended × Kd × Kp × Ka × Kfl × Kdir × Kmf × Kfurn
+ *    P_adjusted/m² = P_blended × Kd × Kp × Ka × Kfl × Kdir × Kmf × Kfurn × Kage
  *    P_comps       = P_adjusted/m² × Area
  *    where P_blended = weighted blend of:
  *      - AI-researched market price (Google Search grounding)
@@ -19,6 +19,7 @@
  *    Kdir — Building direction (hướng)   : 0.95 – 1.05
  *    Kmf  — Frontage width (mặt tiền)    : 0.92 – 1.20
  *    Kfurn— Furnishing (nội thất)         : 0.95 – 1.07
+ *    Kage — Building age (tuổi nhà)      : 0.70 – 1.05
  *
  *  Method 2 — Income Capitalization:
  *    NOI           = Effective Gross Income − Operating Expenses
@@ -59,6 +60,8 @@ export interface AVMInput {
   direction?: string;            // hướng: 'S','SE','E','NE','N','NW','W','SW'
   frontageWidth?: number;        // mặt tiền (m) — width of the property facing the road
   furnishing?: 'FULL' | 'BASIC' | 'NONE';  // nội thất
+
+  buildingAge?: number;              // tuổi công trình (năm) — 0 = mới xây
 
   // Multi-source data
   internalCompsMedian?: number;  // VNĐ/m² from internal comparable listings DB
@@ -114,7 +117,7 @@ export interface AVMOutput {
   confidenceInterval: string; // e.g. "±10%"
   marketTrend: string;
   factors: AVMFactor[];
-  coefficients: { Kd: number; Kp: number; Ka: number; Kfl?: number; Kdir?: number; Kmf?: number; Kfurn?: number };
+  coefficients: { Kd: number; Kp: number; Ka: number; Kfl?: number; Kdir?: number; Kmf?: number; Kfurn?: number; Kage?: number };
   formula: string;
   incomeApproach?: IncomeApproachResult;
   reconciliation?: {
@@ -414,6 +417,47 @@ export function getKfurn(furnishing: 'FULL' | 'BASIC' | 'NONE' | undefined): { v
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 4e. Hệ số tuổi/tình trạng (Kage — Building Age/Condition Coefficient)
+//     Standard reference: 0-5 years (mới xây)
+//     Source: Vietnamese depreciation standards, SXD HCM guidelines
+// ─────────────────────────────────────────────────────────────────────────────
+export function getKage(buildingAge: number | undefined, propertyType?: PropertyType): { value: number; label: string; description: string } | null {
+  if (buildingAge === undefined || buildingAge < 0) return null;
+  if (propertyType?.startsWith('land')) return null;
+
+  if (buildingAge <= 2) return {
+    value: 1.05,
+    label: `Mới xây (${buildingAge} năm)`,
+    description: 'Nhà mới xây 0-2 năm — chất lượng tốt nhất, giá premium (+5%)'
+  };
+  if (buildingAge <= 5) return {
+    value: 1.00,
+    label: `Nhà mới (${buildingAge} năm)`,
+    description: 'Nhà 3-5 năm — chuẩn tham chiếu thị trường'
+  };
+  if (buildingAge <= 10) return {
+    value: 0.96,
+    label: `Nhà đã qua sử dụng (${buildingAge} năm)`,
+    description: 'Nhà 6-10 năm — bắt đầu xuống cấp nhẹ, cần bảo trì (-4%)'
+  };
+  if (buildingAge <= 20) return {
+    value: 0.90,
+    label: `Nhà cũ (${buildingAge} năm)`,
+    description: 'Nhà 11-20 năm — cần sửa chữa lớn, khấu hao đáng kể (-10%)'
+  };
+  if (buildingAge <= 30) return {
+    value: 0.82,
+    label: `Nhà rất cũ (${buildingAge} năm)`,
+    description: 'Nhà 21-30 năm — khấu hao nặng, có thể cần xây lại (-18%)'
+  };
+  return {
+    value: 0.70,
+    label: `Nhà xuống cấp (${buildingAge} năm)`,
+    description: 'Nhà trên 30 năm — giá trị chủ yếu ở đất, công trình gần hết hạn sử dụng (-30%)'
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Multi-source price blending
 // Combines: AI market research + internal DB comps + cached market index
 // Returns blended price/m² and source breakdown
@@ -550,7 +594,7 @@ function applyIncomeApproach(
 export function applyAVM(input: AVMInput): AVMOutput {
   const {
     marketBasePrice, area, roadWidth, legal, confidence, marketTrend, propertyType, monthlyRent,
-    floorLevel, direction, frontageWidth, furnishing,
+    floorLevel, direction, frontageWidth, furnishing, buildingAge,
     internalCompsMedian, internalCompsCount, cachedMarketPrice, cachedConfidence,
   } = input;
 
@@ -588,16 +632,18 @@ export function applyAVM(input: AVMInput): AVMOutput {
   const Kdir_data = direction ? getKdir(direction) : null;
   const Kmf_data = (frontageWidth !== undefined && frontageWidth > 0) ? getKmf(frontageWidth, pType) : null;
   const Kfurn_data = furnishing ? getKfurn(furnishing) : null;
+  const Kage_data = (buildingAge !== undefined) ? getKage(buildingAge, pType) : null;
 
   const Kfl = Kfl_data?.value ?? 1.0;
   const Kdir = Kdir_data?.value ?? 1.0;
   const Kmf = Kmf_data?.value ?? 1.0;
   const Kfurn = Kfurn_data?.value ?? 1.0;
+  const Kage = Kage_data?.value ?? 1.0;
 
   // ── Method 1: AVM/Comps ────────────────────────────────────────
   const safeArea = Math.max(1, area);
   const safeMarketBase = Math.max(0, effectiveBasePrice);
-  const rawPricePerM2 = safeMarketBase * Kd * Kp * Ka * Kfl * Kdir * Kmf * Kfurn;
+  const rawPricePerM2 = safeMarketBase * Kd * Kp * Ka * Kfl * Kdir * Kmf * Kfurn * Kage;
   const pricePerM2 = Math.max(0, Math.round(rawPricePerM2));
   const compsPrice = Math.max(0, Math.round(pricePerM2 * safeArea));
 
@@ -684,6 +730,11 @@ export function applyAVM(input: AVMInput): AVMOutput {
     impact: Math.abs(Math.round((Kfurn - 1.00) * 100)),
     isPositive: Kfurn >= 1.00, description: Kfurn_data.description, type: 'AVM'
   });
+  if (Kage_data) factors.push({
+    label: Kage_data.label, coefficient: Kage,
+    impact: Math.abs(Math.round((Kage - 1.00) * 100)),
+    isPositive: Kage >= 1.00, description: Kage_data.description, type: 'AVM'
+  });
 
   // Multi-source factor
   if (sources && sources.confidenceBoost > 0) {
@@ -708,7 +759,11 @@ export function applyAVM(input: AVMInput): AVMOutput {
   if (Kdir !== 1.0) activeCoeffs.push(`Kdir(${Kdir})`);
   if (Kmf !== 1.0) activeCoeffs.push(`Kmf(${Kmf})`);
   if (Kfurn !== 1.0) activeCoeffs.push(`Kfurn(${Kfurn})`);
-  const formula = `${(effectiveBasePrice / 1_000_000).toFixed(0)} tr/m² × ${activeCoeffs.join(' × ')} = ${(pricePerM2 / 1_000_000).toFixed(0)} tr/m²`;
+  if (Kage !== 1.0) activeCoeffs.push(`Kage(${Kage})`);
+  let formula = `${(effectiveBasePrice / 1_000_000).toFixed(0)} tr/m² × ${activeCoeffs.join(' × ')} = ${(pricePerM2 / 1_000_000).toFixed(0)} tr/m²`;
+  if (reconciliation) {
+    formula += ` → Hòa giải: Comps(${(reconciliation.compsWeight * 100).toFixed(0)}%) + Thu nhập(${(reconciliation.incomeWeight * 100).toFixed(0)}%) = ${(totalPrice / 1e9).toFixed(2)} Tỷ`;
+  }
 
   return {
     marketBasePrice: effectiveBasePrice,
@@ -722,7 +777,7 @@ export function applyAVM(input: AVMInput): AVMOutput {
     confidenceInterval,
     marketTrend,
     factors,
-    coefficients: { Kd, Kp, Ka, ...(Kfl_data && { Kfl }), ...(Kdir_data && { Kdir }), ...(Kmf_data && { Kmf }), ...(Kfurn_data && { Kfurn }) },
+    coefficients: { Kd, Kp, Ka, ...(Kfl_data && { Kfl }), ...(Kdir_data && { Kdir }), ...(Kmf_data && { Kmf }), ...(Kfurn_data && { Kfurn }), ...(Kage_data && { Kage }) },
     formula,
     incomeApproach,
     reconciliation,

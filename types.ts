@@ -857,6 +857,9 @@ export interface AgentTraceStep {
     output?: unknown; 
     timestamp: number;
     durationMs?: number;
+    modelUsed?: string;
+    tokensEstimate?: number;
+    costEstimate?: number;
 }
 
 export interface AgentTraceResponse {

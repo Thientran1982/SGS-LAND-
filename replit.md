@@ -187,6 +187,13 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **RouterPlan**: typed interface (was `any`), ROUTER_SCHEMA all 13 descriptions Vietnamese
 - **Safety log**: `pipelineMultiplier` for accurate multi-node cost tracking
 - **Valuation prompts**: trimmed indentation, `systemInstruction` separated from contents
+- **3-tier model strategy**: ROUTER=gemini-2.0-flash-lite (cheapest), EXTRACTOR=gemini-2.0-flash (JSON tasks), WRITER=gemini-2.5-flash (governance override)
+- **Prompt templates**: DB-backed via `getPromptTemplate()` with 5-min cache; keys: `ROUTER_SYSTEM`, `WRITER_PERSONA`; falls back to hardcoded defaults
+- **Internal DB comps**: VALUATION_AGENT queries internal listing DB for comparable properties → feeds `internalCompsMedian`/`internalCompsCount` to multi-source blending
+- **Per-node cost tracking**: `modelUsed`, `tokensEstimate`, `costEstimate` in each trace step
+- **AVM 8 coefficients**: Kd (road) × Kp (legal) × Ka (area) × Kfl (floor) × Kdir (direction) × Kmf (frontage) × Kfurn (furnishing) × Kage (building age 0.70–1.05)
+- **Router extraction**: added `valuation_road_width`, `valuation_direction` for AVM precision
+- **Formula string**: includes reconciliation line when income approach active
 
 ## Entry Points
 
