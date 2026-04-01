@@ -43,6 +43,18 @@ const modelCache: Map<string, { model: string; expiresAt: number }> = new Map();
 // Valuation result cache: 1-hour TTL (market data doesn't change per-minute)
 const valuationCache: Map<string, { result: any; expiresAt: number }> = new Map();
 
+// Tool data cache: 5-min TTL for enterprise config (legal/marketing/contract rarely change)
+const toolDataCache: Map<string, { value: any; expiresAt: number }> = new Map();
+
+function getCachedToolData<T>(key: string): T | null {
+    const entry = toolDataCache.get(key);
+    if (entry && Date.now() < entry.expiresAt) return entry.value as T;
+    return null;
+}
+function setCachedToolData(key: string, value: any, ttlMs = 300_000) {
+    toolDataCache.set(key, { value, expiresAt: Date.now() + ttlMs });
+}
+
 // Spend accumulator: flush to DB every 10 calls or 30s (avoid per-request DB write)
 const spendBuffer: Map<string, number> = new Map();
 let spendFlushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -138,7 +150,7 @@ const ROUTER_SCHEMA: Schema = {
                 explicit_question: { type: Type.STRING, description: "The EXACT question the customer asked." },
                 budget_max: { type: Type.NUMBER, description: "Budget in VND" },
                 location_keyword: { type: Type.STRING, description: "Location mentioned for searching inventory" },
-                legal_concern: { type: Type.STRING, enum: ['PINK_BOOK', 'CONTRACT', 'NONE'] },
+                legal_concern: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'NONE'] },
                 property_type: { type: Type.STRING },
                 area_min: { type: Type.NUMBER, description: "Minimum area in m² the customer requires" },
                 loan_rate: { type: Type.NUMBER, description: "Interest rate in percentage" },
@@ -222,13 +234,19 @@ const TOOL_EXECUTOR = {
 
     async get_legal_info(tenantId: string, term: string): Promise<string> {
         const DEFAULTS: Record<string, string> = {
-            PINK_BOOK: "Sổ Hồng (Certificate): Pháp lý cao nhất tại Việt Nam. Sẵn sàng sang tên và thế chấp ngân hàng ngay lập tức.",
-            CONTRACT: "HĐMB (Hợp đồng mua bán): Tiêu chuẩn cho dự án đang xây dựng. Vay ngân hàng chỉ qua ngân hàng đối tác của chủ đầu tư.",
-            NONE: "Cần xác minh thêm về pháp lý tài sản này. Vui lòng liên hệ Sales để được tư vấn chi tiết."
+            PINK_BOOK: "Sổ Hồng / Sổ Đỏ (Giấy chứng nhận QSDĐ): Pháp lý cao nhất tại Việt Nam. Sẵn sàng sang tên, thế chấp ngân hàng, và giao dịch tự do ngay lập tức.",
+            HDMB: "HĐMB (Hợp đồng mua bán công chứng): Phổ biến với dự án đang xây dựng. Quyền lợi được bảo vệ theo Luật Kinh doanh BĐS. Vay ngân hàng qua đối tác của chủ đầu tư. Nhận Sổ Hồng sau khi hoàn công.",
+            VI_BANG: "Vi bằng (Văn bản của Thừa phát lại): Chỉ ghi nhận sự kiện thực tế, KHÔNG phải giấy tờ pháp lý. Không sang tên, không thế chấp ngân hàng được. Rủi ro pháp lý cao — cần xác minh lý do chưa có Sổ Hồng.",
+            NONE: "Pháp lý chưa rõ — cần xác minh trực tiếp. Vui lòng liên hệ Sales để được kiểm tra đầy đủ trước khi quyết định."
         };
+        const cacheKey = `legal:${tenantId}`;
         try {
-            const dbInfo = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiLegalInfo');
-            if (dbInfo && typeof dbInfo === 'object' && dbInfo[term]) return String(dbInfo[term]);
+            let dbInfo = getCachedToolData<Record<string, string>>(cacheKey);
+            if (!dbInfo) {
+                dbInfo = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiLegalInfo') as Record<string, string>;
+                setCachedToolData(cacheKey, dbInfo);
+            }
+            if (dbInfo && typeof dbInfo === 'object' && (dbInfo as any)[term]) return String((dbInfo as any)[term]);
             return DEFAULTS[term] || DEFAULTS.NONE;
         } catch {
             return DEFAULTS[term] || DEFAULTS.NONE;
@@ -241,35 +259,43 @@ const TOOL_EXECUTOR = {
             "Tặng gói nội thất 200 triệu cho căn hộ 3 phòng ngủ.",
             "Miễn phí quản lý 2 năm đầu tiên cho cư dân mới."
         ];
+        const cacheKey = `marketing:${tenantId}`;
         try {
-            const dbCampaigns = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiMarketingCampaigns');
+            let dbCampaigns = getCachedToolData<string[]>(cacheKey);
+            if (!dbCampaigns) {
+                dbCampaigns = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiMarketingCampaigns') as string[];
+                setCachedToolData(cacheKey, dbCampaigns);
+            }
             const campaigns = (Array.isArray(dbCampaigns) && dbCampaigns.length > 0)
-                ? dbCampaigns as string[]
+                ? dbCampaigns
                 : DEFAULT_CAMPAIGNS;
             if (campaign) {
-                const match = campaigns.find(c => c.toLowerCase().includes(campaign.toLowerCase()));
+                const match = campaigns.find((c: string) => c.toLowerCase().includes(campaign.toLowerCase()));
                 return match
                     ? `Thông tin chiến dịch "${campaign}": ${match}`
                     : `Thông tin chiến dịch "${campaign}": Đang áp dụng chiết khấu đặc biệt. Vui lòng liên hệ Sales để biết chi tiết.`;
             }
             return `Các chương trình ưu đãi hiện tại:\n- ${campaigns.join('\n- ')}`;
         } catch {
-            if (campaign) {
-                return `Thông tin chiến dịch "${campaign}": Đang áp dụng chiết khấu đặc biệt. Vui lòng liên hệ Sales để biết chi tiết.`;
-            }
+            if (campaign) return `Thông tin chiến dịch "${campaign}": Đang áp dụng chiết khấu đặc biệt. Vui lòng liên hệ Sales để biết chi tiết.`;
             return `Các chương trình ưu đãi hiện tại:\n- ${DEFAULT_CAMPAIGNS.join('\n- ')}`;
         }
     },
 
     async get_contract_info(tenantId: string, type?: string): Promise<string> {
         const DEFAULTS: Record<string, string> = {
-            Deposit: "Hợp đồng đặt cọc: Yêu cầu thanh toán 10% giá trị tài sản. Hoàn cọc trong 7 ngày nếu không thỏa thuận được HĐMB.",
+            Deposit: "Hợp đồng đặt cọc: Thanh toán 10% giá trị tài sản. Hoàn cọc trong 7 ngày nếu không thỏa thuận được HĐMB.",
             Sales: "Hợp đồng mua bán: Thanh toán theo tiến độ 5 đợt. Bàn giao nhà sau khi thanh toán 95%. 5% cuối cùng thanh toán khi nhận Sổ Hồng."
         };
         const key = type || 'Sales';
+        const cacheKey = `contract:${tenantId}`;
         try {
-            const dbInfo = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiContractInfo');
-            if (dbInfo && typeof dbInfo === 'object' && dbInfo[key]) return String(dbInfo[key]);
+            let dbInfo = getCachedToolData<Record<string, string>>(cacheKey);
+            if (!dbInfo) {
+                dbInfo = await enterpriseConfigRepository.getConfigKey(tenantId, 'aiContractInfo') as Record<string, string>;
+                setCachedToolData(cacheKey, dbInfo);
+            }
+            if (dbInfo && typeof dbInfo === 'object' && (dbInfo as any)[key]) return String((dbInfo as any)[key]);
             return DEFAULTS[key] || DEFAULTS.Sales;
         } catch {
             return DEFAULTS[key] || DEFAULTS.Sales;
@@ -277,8 +303,13 @@ const TOOL_EXECUTOR = {
     },
 
     async get_showroom_location(tenantId: string): Promise<string> {
+        const cacheKey = `showroom:${tenantId}`;
         try {
-            const loc = await enterpriseConfigRepository.getConfigKey(tenantId, 'showroomAddress');
+            let loc = getCachedToolData<string>(cacheKey);
+            if (!loc) {
+                loc = await enterpriseConfigRepository.getConfigKey(tenantId, 'showroomAddress') as string;
+                setCachedToolData(cacheKey, loc);
+            }
             return (loc && typeof loc === 'string' && loc.trim()) ? loc.trim() : 'Phòng trưng bày SGS Land (liên hệ Sales để biết địa chỉ cụ thể)';
         } catch {
             return 'Phòng trưng bày SGS Land (liên hệ Sales để biết địa chỉ cụ thể)';
@@ -401,11 +432,12 @@ class AiEngine {
         graph.addNode('ROUTER', async (state) => {
             state.trace.push({ id: `step_1`, node: 'ROUTER', status: 'RUNNING', timestamp: Date.now() });
             
-            const historyText = state.history.slice(-12)
-                .map(h => `${h.direction === 'INBOUND' ? 'USER' : 'AGENT'}: "${h.content}"`)
+            // 6 turns (3 exchanges) sufficient for intent classification — saves ~50% router tokens
+            const historyText = state.history.slice(-6)
+                .map(h => `${h.direction === 'INBOUND' ? 'KHÁCH' : 'TƯ VẤN'}: "${h.content}"`)
                 .join('\n');
 
-            const routerPrompt = `CONVERSATION HISTORY (last 12 messages):
+            const routerPrompt = `LỊCH SỬ HỘI THOẠI (6 tin nhắn gần nhất):
 ${historyText || '(Chưa có lịch sử)'}
 
 CURRENT MESSAGE: "${state.userMessage}"
@@ -460,7 +492,10 @@ LOCATION: "Thủ Đức", "Quận 1", "Q7", "Bình Thạnh", "Ecopark", "Vinhome
             if (ext.valuation_address)  entityParts.push(`Định giá: ${ext.valuation_address}`);
             if (ext.legal_concern && ext.legal_concern !== 'NONE') entityParts.push(`Pháp lý: ${ext.legal_concern}`);
             const entityStr = entityParts.length > 0 ? ` | ${entityParts.join(', ')}` : '';
-            this.updateTrace(state.trace, `→ ${plan.next_step} (conf: ${((plan.confidence || 0) * 100).toFixed(0)}%)${entityStr}`);
+            // Normalize confidence: model may return 0-1 or 0-100
+            const rawConf = plan.confidence || 0;
+            const confPct = rawConf > 1 ? Math.round(rawConf) : Math.round(rawConf * 100);
+            this.updateTrace(state.trace, `→ ${plan.next_step} (conf: ${confPct}%)${entityStr}`);
             
             return { plan };
         });
@@ -545,13 +580,19 @@ LOCATION: "Thủ Đức", "Quận 1", "Q7", "Bình Thạnh", "Ecopark", "Vinhome
         graph.addNode('SALES_AGENT', async (state) => {
             state.trace.push({ id: `step_2`, node: 'SALES_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const location = await TOOL_EXECUTOR.get_showroom_location(state.tenantId);
+            const proposedTime = new Date(Date.now() + 86400000);
+            const timeFmt = proposedTime.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
             const artifact: AgentArtifact = {
                 type: 'BOOKING_DRAFT',
                 title: state.t('inbox.booking_title'),
-                data: { time: new Date(Date.now() + 86400000).toISOString(), location, notes: state.userMessage }
+                data: { time: proposedTime.toISOString(), location, notes: state.userMessage }
             };
             this.updateTrace(state.trace, `Đặt lịch xem nhà tại: ${location}`);
-            return { artifact, suggestedAction: 'BOOK_VIEWING' };
+            return {
+                artifact,
+                suggestedAction: 'BOOK_VIEWING',
+                systemContext: state.systemContext + `\n[ĐẶT LỊCH XEM NHÀ]: Đề xuất thời gian: ${timeFmt} | Địa điểm: ${location}`
+            };
         });
 
         // Node 2e: Marketing Agent
@@ -616,7 +657,10 @@ LOCATION: "Thủ Đức", "Quận 1", "Q7", "Bình Thạnh", "Ecopark", "Vinhome
             const analysisModel = await getGovernanceModel(state.tenantId);
             const analysisRes = await getAiClient().models.generateContent({
                 model: analysisModel,
-                contents: analysisPrompt
+                contents: analysisPrompt,
+                config: {
+                    systemInstruction: 'Bạn là chuyên gia phân tích tâm lý khách hàng BĐS cao cấp. Đây là GHI CHÚ NỘI BỘ cho Sales — không phải trả lời khách. Phân tích ngắn gọn, sắc bén, dựa trên dữ liệu thực tế.'
+                }
             });
 
             const analysisSnippet = (analysisRes.text || '').slice(0, 100).replace(/\n/g, ' ');
@@ -629,7 +673,7 @@ LOCATION: "Thủ Đức", "Quận 1", "Q7", "Bình Thạnh", "Ecopark", "Vinhome
             state.trace.push({ id: `step_3`, node: 'WRITER', status: 'RUNNING', timestamp: Date.now() });
 
             const conversationHistory = state.history.slice(-12)
-                .map(h => `${h.direction === 'INBOUND' ? 'CUSTOMER' : 'AGENT'}: ${h.content}`)
+                .map(h => `${h.direction === 'INBOUND' ? 'KHÁCH' : 'TƯ VẤN VIÊN'}: ${h.content}`)
                 .join('\n');
 
             const leadAnalysisSection = state.leadAnalysis
@@ -928,6 +972,7 @@ Yếu tố giá: ${valResult.factors.slice(0, 3).map(f => `${f.label} (${f.isPos
                 model: scoreModel,
                 contents: prompt,
                 config: {
+                    systemInstruction: 'Bạn là chuyên gia chấm điểm lead BĐS. Phân tích khách quan, dựa trên dữ liệu thực tế. Trả về JSON hợp lệ theo schema.',
                     responseMimeType: 'application/json',
                     responseSchema: schema
                 }
