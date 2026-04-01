@@ -17,12 +17,20 @@ const GENAI_CONFIG = {
         WRITER: 'gemini-2.5-flash',
     },
     MODEL_COSTS: {
-        'gemini-2.5-flash': 0.000375,
-        'gemini-2.0-flash': 0.000150,
-        'gemini-2.0-flash-lite': 0.000075,
-        'gemini-1.5-flash': 0.000200,
-        'gemini-1.5-pro': 0.003500,
-        'gemini-2.5-pro': 0.005000,
+        // Gemini 3.x (preview — April 2026)
+        'gemini-3.1-pro-preview':       0.008000,
+        'gemini-3-pro-preview':         0.007000,
+        'gemini-3.1-flash-lite-preview':0.000200,
+        'gemini-3-flash-preview':       0.000500,
+        // Gemini 2.5 (stable — recommended)
+        'gemini-2.5-pro':               0.005000,
+        'gemini-2.5-flash':             0.000375,
+        'gemini-2.5-flash-lite':        0.000100,
+        // Gemini 2.0 / 1.5 (deprecated — auto-upgraded by ensureSafeModel)
+        'gemini-2.0-flash':             0.000150,
+        'gemini-2.0-flash-lite':        0.000075,
+        'gemini-1.5-flash':             0.000200,
+        'gemini-1.5-pro':               0.003500,
     } as Record<string, number>,
 };
 
@@ -85,7 +93,13 @@ function scheduleSpendFlush() {
 // Models confirmed working with new API keys — gemini-2.0.x and 1.5.x are
 // restricted for new users so we silently upgrade them to the safe fallback.
 const SAFE_MODEL_FALLBACK = 'gemini-2.5-flash';
-const DEPRECATED_MODEL_PREFIXES = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-lite'];
+// Models blocked for new API keys — any config referencing these gets auto-upgraded
+const DEPRECATED_MODEL_PREFIXES = [
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+];
 
 function ensureSafeModel(model: string | undefined): string {
     if (!model) return SAFE_MODEL_FALLBACK;

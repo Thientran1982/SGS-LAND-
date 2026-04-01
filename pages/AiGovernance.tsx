@@ -13,13 +13,31 @@ interface ConfigTabProps {
     t: any;
 }
 
-const SUPPORTED_MODELS: AiModelType[] = [
-    'gemini-2.5-flash',
-    'gemini-2.5-pro',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
+// Models grouped by generation — verified working with Google GenAI API (April 2026)
+const MODEL_GROUPS: { label: string; badge: string; badgeColor: string; models: AiModelType[] }[] = [
+    {
+        label: 'Gemini 3.x — Preview',
+        badge: 'Mới nhất',
+        badgeColor: 'bg-violet-100 text-violet-700 border-violet-200',
+        models: ['gemini-3.1-pro-preview', 'gemini-3-pro-preview', 'gemini-3.1-flash-lite-preview', 'gemini-3-flash-preview'],
+    },
+    {
+        label: 'Gemini 2.5 — Ổn định',
+        badge: 'Khuyến nghị',
+        badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        models: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'],
+    },
+    {
+        label: 'Gemini 2.0 / 1.5 — Deprecated',
+        badge: 'Ngừng hỗ trợ',
+        badgeColor: 'bg-rose-100 text-rose-700 border-rose-200',
+        models: ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'],
+    },
 ];
+
+const SUPPORTED_MODELS: AiModelType[] = MODEL_GROUPS.flatMap(g => g.models);
+
+const DEPRECATED_MODELS = new Set(['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']);
 
 // Helper to format model names for display
 const formatModelName = (model: string) => {
@@ -28,8 +46,11 @@ const formatModelName = (model: string) => {
         .replace('gemini', 'Gemini')
         .replace('veo', 'Veo')
         .replace('preview', '')
+        .replace('flash lite', 'Flash Lite')
         .replace('flash', 'Flash')
         .replace('pro', 'Pro')
+        .replace('lite', 'Lite')
+        .replace(/\s+/g, ' ')
         .trim();
 };
 
@@ -67,23 +88,37 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
             <div className="space-y-4">
                 <div>
                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('ai.allowed')}</label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        {SUPPORTED_MODELS.map(m => (
-                            <label key={m} className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${config.allowedModels?.includes(m) ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)]'}`}>
-                                <input 
-                                    type="checkbox" 
-                                    className="hidden" 
-                                    checked={config.allowedModels?.includes(m) || false}
-                                    onChange={(e) => {
-                                        const current = config.allowedModels || [];
-                                        const newModels = e.target.checked 
-                                            ? [...current, m] 
-                                            : current.filter(x => x !== m);
-                                        onUpdateConfig('allowedModels', newModels);
-                                    }}
-                                />
-                                {formatModelName(m)}
-                            </label>
+                    <div className="mt-2 space-y-3">
+                        {MODEL_GROUPS.map(group => (
+                            <div key={group.label}>
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wide">{group.label}</span>
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${group.badgeColor}`}>{group.badge}</span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {group.models.map(m => {
+                                        const isChecked = config.allowedModels?.includes(m) || false;
+                                        const isDeprecated = DEPRECATED_MODELS.has(m as string);
+                                        return (
+                                            <label key={m} className={`px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${isChecked ? (isDeprecated ? 'bg-rose-50 border-rose-300 text-rose-700 line-through' : 'bg-indigo-50 border-indigo-200 text-indigo-700') : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-tertiary)]'}`}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="hidden" 
+                                                    checked={isChecked}
+                                                    onChange={(e) => {
+                                                        const current = config.allowedModels || [];
+                                                        const newModels = e.target.checked 
+                                                            ? [...current, m] 
+                                                            : current.filter(x => x !== m);
+                                                        onUpdateConfig('allowedModels', newModels);
+                                                    }}
+                                                />
+                                                {formatModelName(m)}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </div>
