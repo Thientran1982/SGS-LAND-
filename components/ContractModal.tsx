@@ -135,6 +135,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<TabId>(initialTab || 'parties');
     const contentRef = useRef<HTMLDivElement>(null);
+    const touchStartX = useRef<number>(0);
     const [members, setMembers] = useState<{ value: string; label: string }[]>([]);
     const [canAssign, setCanAssign] = useState(false);
 
@@ -197,6 +198,21 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
         }
     };
 
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.changedTouches[0].clientX;
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        const diff = touchStartX.current - e.changedTouches[0].clientX;
+        if (Math.abs(diff) < 50) return;
+        const currentIndex = TABS.findIndex(t => t.id === activeTab);
+        if (diff > 0 && currentIndex < TABS.length - 1) {
+            handleTabChange(TABS[currentIndex + 1].id);
+        } else if (diff < 0 && currentIndex > 0) {
+            handleTabChange(TABS[currentIndex - 1].id);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -232,12 +248,12 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                 className="relative bg-[var(--bg-surface)] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-enter"
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--glass-border)] shrink-0">
-                    <div className="flex flex-col">
-                        <h2 id="contract-modal-title" className="text-xl font-bold text-[var(--text-primary)]">
+                <div className="flex items-start justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-[var(--glass-border)] shrink-0 gap-3">
+                    <div className="flex flex-col min-w-0 flex-1">
+                        <h2 id="contract-modal-title" className="text-base sm:text-xl font-bold text-[var(--text-primary)] leading-tight">
                             {contract ? t('contracts.modal_edit_title') : t('contracts.modal_create_title')}
                         </h2>
-                        <div className="flex items-center gap-3 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
                             <Dropdown
                                 label=""
                                 value={formData.type as string}
@@ -246,7 +262,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                     { value: ContractType.DEPOSIT, label: t('contracts.type_DEPOSIT') },
                                     { value: ContractType.SALES, label: t('contracts.type_SALES') }
                                 ]}
-                                className="text-xs"
+                                className="text-xs flex-1 sm:flex-none"
                             />
                             <Dropdown
                                 label=""
@@ -258,41 +274,54 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                                     { value: ContractStatus.SIGNED, label: t('contracts.status_SIGNED') },
                                     { value: ContractStatus.CANCELLED, label: t('contracts.status_CANCELLED') }
                                 ]}
-                                className="text-xs"
+                                className="text-xs flex-1 sm:flex-none"
                             />
                         </div>
                     </div>
-                    <button onClick={onClose} aria-label={t('common.close')} className="p-2 min-h-[44px] min-w-[44px] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                    <button onClick={onClose} aria-label={t('common.close')} className="p-2 min-h-[44px] min-w-[44px] text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-full transition-colors flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
                 {/* Tab Bar */}
-                <div className="flex border-b border-[var(--glass-border)] shrink-0 overflow-x-auto no-scrollbar">
-                    {TABS.map(tab => (
-                        <button
-                            key={tab.id}
-                            type="button"
-                            onClick={() => handleTabChange(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap flex-1 justify-center ${
-                                activeTab === tab.id
-                                    ? tab.activeColor + ' border-current'
-                                    : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'
-                            }`}
-                        >
-                            {tab.icon}
-                            <span>{t(tab.labelKey)}</span>
-                            {tab.id === 'schedule' && scheduleCount > 0 && (
-                                <span className="bg-emerald-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                                    {scheduleCount}
-                                </span>
-                            )}
-                        </button>
-                    ))}
+                <div className="border-b border-[var(--glass-border)] shrink-0">
+                    <div className="flex overflow-x-auto no-scrollbar">
+                        {TABS.map(tab => (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => handleTabChange(tab.id)}
+                                className={`flex items-center justify-center gap-1.5 px-3 sm:px-5 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap flex-1 ${
+                                    activeTab === tab.id
+                                        ? tab.activeColor + ' border-current'
+                                        : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'
+                                }`}
+                            >
+                                {tab.icon}
+                                <span className="hidden sm:inline">{t(tab.labelKey)}</span>
+                                {tab.id === 'schedule' && scheduleCount > 0 && (
+                                    <span className="bg-emerald-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                        {scheduleCount}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                    {/* Mobile: current tab name indicator */}
+                    <div className="sm:hidden flex items-center justify-center gap-2 py-1.5 bg-[var(--glass-surface)] text-xs font-semibold text-[var(--text-secondary)]">
+                        {TABS.find(tab => tab.id === activeTab)?.icon}
+                        <span>{t(TABS.find(tab => tab.id === activeTab)?.labelKey || '')}</span>
+                        <span className="text-[var(--text-muted)]">({TABS.findIndex(tab => tab.id === activeTab) + 1}/{TABS.length})</span>
+                    </div>
                 </div>
 
-                {/* Content */}
-                <div ref={contentRef} className="flex-1 overflow-y-auto p-6 min-h-0">
+                {/* Content — swipeable on touch devices */}
+                <div
+                    ref={contentRef}
+                    className="flex-1 overflow-y-auto p-4 sm:p-6 min-h-0"
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                >
                     {error && (
                         <div role="alert" className="mb-4 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
                             <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
@@ -616,7 +645,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-[var(--glass-border)] flex items-center justify-between gap-3 bg-[var(--glass-surface)] rounded-b-2xl shrink-0">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-[var(--glass-border)] flex items-center justify-between gap-3 bg-[var(--glass-surface)] rounded-b-2xl shrink-0">
                     <div className="flex items-center gap-2">
                         {TABS.map((tab, i) => (
                             <button
