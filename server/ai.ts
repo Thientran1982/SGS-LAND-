@@ -12,8 +12,8 @@ import { enterpriseConfigRepository } from './repositories/enterpriseConfigRepos
 
 const GENAI_CONFIG = {
     MODELS: {
-        ROUTER: 'gemini-2.0-flash',
-        EXTRACTOR: 'gemini-2.0-flash',
+        ROUTER: 'gemini-2.5-flash',
+        EXTRACTOR: 'gemini-2.5-flash',
         WRITER: 'gemini-2.5-flash',
     },
     MODEL_COSTS: {
@@ -82,16 +82,27 @@ function scheduleSpendFlush() {
     }, 30_000); // flush every 30s
 }
 
+// Models confirmed working with new API keys — gemini-2.0.x and 1.5.x are
+// restricted for new users so we silently upgrade them to the safe fallback.
+const SAFE_MODEL_FALLBACK = 'gemini-2.5-flash';
+const DEPRECATED_MODEL_PREFIXES = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-lite'];
+
+function ensureSafeModel(model: string | undefined): string {
+    if (!model) return SAFE_MODEL_FALLBACK;
+    const isDeprecated = DEPRECATED_MODEL_PREFIXES.some(prefix => model.startsWith(prefix));
+    return isDeprecated ? SAFE_MODEL_FALLBACK : model;
+}
+
 async function getGovernanceModel(tenantId: string): Promise<string> {
     const cached = modelCache.get(tenantId);
     if (cached && Date.now() < cached.expiresAt) return cached.model;
     try {
         const config = await aiGovernanceRepository.getAiConfig(tenantId);
-        const model = config?.defaultModel || GENAI_CONFIG.MODELS.ROUTER;
+        const model = ensureSafeModel(config?.defaultModel) || GENAI_CONFIG.MODELS.WRITER;
         modelCache.set(tenantId, { model, expiresAt: Date.now() + 300_000 }); // 5-min TTL
         return model;
     } catch {
-        return GENAI_CONFIG.MODELS.ROUTER;
+        return GENAI_CONFIG.MODELS.WRITER;
     }
 }
 
