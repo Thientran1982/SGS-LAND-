@@ -944,7 +944,7 @@ export const Inbox: React.FC = () => {
                                     { ch: Channel.EMAIL,    label: 'Email',                    icon: ICONS.EMAIL    },
                                     { ch: Channel.SMS,      label: 'SMS',                      icon: ICONS.SMS      },
                                     { ch: Channel.WEB,      label: t('inbox.channel_web'),     icon: ICONS.WEB      },
-                                ] as const).map(({ ch, label, icon }) => (
+                                ] as const).map(({ ch, label }) => (
                                     <button
                                         key={ch}
                                         type="button"
@@ -955,8 +955,7 @@ export const Inbox: React.FC = () => {
                                                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                                         }`}
                                     >
-                                        <span className="shrink-0">{icon}</span>
-                                        <span>{label}</span>
+                                        {label}
                                     </button>
                                 ))}
                             </div>
