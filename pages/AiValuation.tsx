@@ -50,7 +50,7 @@ function writeGuestVal(v: GuestValRecord): void {
 
 // --- SIMULATED AI ENGINE ---
 const ANALYSIS_STEPS = [
-    "SGS Neural Engine™ đang khởi động...",
+    "Hệ thống SGS Định Giá AI™ đang khởi động...",
     "Phân tích 1.204.592 điểm dữ liệu không gian...",
     "Đang chạy hồi quy trên các giao dịch tương đương...",
     "Điều chỉnh theo yếu tố pháp lý & thanh khoản...",
@@ -328,7 +328,7 @@ export const AiValuation: React.FC = () => {
                     </button>
                     <div className="flex items-center gap-2 min-w-0">
                         <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 shrink-0" />
-                        <span className="font-bold text-sm sm:text-lg tracking-wider hidden sm:inline truncate">SGS <span className="text-emerald-400">NEURAL ENGINE™</span></span>
+                        <span className="font-bold text-sm sm:text-lg tracking-wider hidden sm:inline truncate">SGS <span className="text-emerald-400">ĐỊNH GIÁ AI™</span></span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         {!currentUser && (
@@ -363,7 +363,7 @@ export const AiValuation: React.FC = () => {
                     <div className="text-center animate-enter">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-6">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Live Valuation Model
+                            Định Giá Thời Gian Thực
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
                             Định Giá Bất Động Sản <br/>
@@ -938,7 +938,7 @@ export const AiValuation: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <div className="bg-slate-800/50 p-8 rounded-[32px] border border-slate-700 hover:border-emerald-500/50 transition-colors group">
                             <div className="mb-6 group-hover:scale-110 transition-transform duration-300">{ICONS.AI_CHIP}</div>
-                            <h3 className="text-xl font-bold text-white mb-3">SGS Neural Engine™</h3>
+                            <h3 className="text-xl font-bold text-white mb-3">SGS Định Giá AI™</h3>
                             <p className="text-slate-400 leading-relaxed">Thuật toán độc quyền kết hợp giữa so sánh giá thị trường và phân tích dòng tiền tương lai.</p>
                         </div>
                         <div className="bg-slate-800/50 p-8 rounded-[32px] border border-slate-700 hover:border-indigo-500/50 transition-colors group">
