@@ -437,6 +437,24 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
         } catch {}
     }, []);
 
+    const handleDeleteNotification = useCallback(async (id: string) => {
+        try {
+            await notificationApi.deleteOne(id);
+            setNotifications(prev => {
+                const removed = prev.find(n => n.id === id);
+                if (removed && !removed.readAt) setUnreadCount(c => Math.max(0, c - 1));
+                return prev.filter(n => n.id !== id);
+            });
+        } catch {}
+    }, []);
+
+    const handleDeleteAllRead = useCallback(async () => {
+        try {
+            await notificationApi.deleteAllRead();
+            setNotifications(prev => prev.filter(n => !n.readAt));
+        } catch {}
+    }, []);
+
     const handleNavigate = useCallback((path: string) => {
         onNavigate(path);
         setMobileMenuOpen(false);
@@ -534,6 +552,8 @@ export const Layout: React.FC<LayoutProps> = memo(({ children, activePage, onNav
                             notifications={notifications}
                             onMarkRead={handleMarkRead}
                             onMarkAllRead={handleMarkAllRead}
+                            onDeleteNotification={handleDeleteNotification}
+                            onDeleteAllRead={handleDeleteAllRead}
                         />
                     )}
                 </div>

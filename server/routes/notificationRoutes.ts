@@ -72,5 +72,36 @@ export function createNotificationRoutes(authenticateToken: any) {
     }
   });
 
+  router.delete('/read-all', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const isAdmin = ADMIN_ROLES.includes(user.role);
+      if (isAdmin) {
+        await notificationRepository.deleteAllReadByTenant(user.tenantId);
+      } else {
+        await notificationRepository.deleteAllRead(user.tenantId, user.id);
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting read notifications:', error);
+      res.status(500).json({ error: 'Failed to delete read notifications' });
+    }
+  });
+
+  router.delete('/:id', authenticateToken, validateUUIDParam(), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const isAdmin = ADMIN_ROLES.includes(user.role);
+      const deleted = isAdmin
+        ? await notificationRepository.deleteOneByTenant(user.tenantId, String(req.params.id))
+        : await notificationRepository.deleteOne(user.tenantId, user.id, String(req.params.id));
+      if (!deleted) return res.status(404).json({ error: 'Notification not found' });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      res.status(500).json({ error: 'Failed to delete notification' });
+    }
+  });
+
   return router;
 }

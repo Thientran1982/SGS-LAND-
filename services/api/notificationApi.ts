@@ -24,4 +24,10 @@ export const notificationApi = {
 
   markAllRead: (): Promise<{ success: boolean }> =>
     api.post('/api/notifications/read-all', {}),
+
+  deleteOne: (id: string): Promise<{ success: boolean }> =>
+    api.delete(`/api/notifications/${id}`),
+
+  deleteAllRead: (): Promise<{ success: boolean }> =>
+    api.delete('/api/notifications/read-all'),
 };

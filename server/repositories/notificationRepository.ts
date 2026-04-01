@@ -106,6 +106,36 @@ class NotificationRepository {
     );
   }
 
+  async deleteOne(tenantId: string, userId: string, id: string): Promise<boolean> {
+    const result = await pool.query(
+      `DELETE FROM notifications WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+      [id, tenantId, userId]
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async deleteOneByTenant(tenantId: string, id: string): Promise<boolean> {
+    const result = await pool.query(
+      `DELETE FROM notifications WHERE id = $1 AND tenant_id = $2`,
+      [id, tenantId]
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async deleteAllRead(tenantId: string, userId: string): Promise<void> {
+    await pool.query(
+      `DELETE FROM notifications WHERE tenant_id = $1 AND user_id = $2 AND read_at IS NOT NULL`,
+      [tenantId, userId]
+    );
+  }
+
+  async deleteAllReadByTenant(tenantId: string): Promise<void> {
+    await pool.query(
+      `DELETE FROM notifications WHERE tenant_id = $1 AND read_at IS NOT NULL`,
+      [tenantId]
+    );
+  }
+
   private rowToEntity(row: Record<string, any>): any {
     return {
       id: row.id,

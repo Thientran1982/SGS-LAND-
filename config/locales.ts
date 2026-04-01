@@ -222,6 +222,9 @@ export const DICTIONARY = {
         "notif.minutes_ago": "phút trước",
         "notif.hours_ago": "giờ trước",
         "notif.days_ago": "ngày trước",
+        "notif.mark_read": "Đánh dấu đã đọc",
+        "notif.delete": "Xoá thông báo",
+        "notif.delete_all_read": "Xoá tất cả đã đọc",
 
         "menu.home": "Trang Chủ",
         "menu.dashboard": "Tổng Quan",
@@ -2317,6 +2320,9 @@ export const DICTIONARY = {
         "notif.minutes_ago": "min ago",
         "notif.hours_ago": "hr ago",
         "notif.days_ago": "d ago",
+        "notif.mark_read": "Mark as read",
+        "notif.delete": "Delete notification",
+        "notif.delete_all_read": "Delete all read",
 
         "menu.home": "Home",
         "menu.dashboard": "Dashboard",

@@ -16,6 +16,8 @@ interface CommandCenterProps {
     notifications?: AppNotification[];
     onMarkRead?: (id: string) => void;
     onMarkAllRead?: () => void;
+    onDeleteNotification?: (id: string) => void;
+    onDeleteAllRead?: () => void;
 }
 
 // -----------------------------------------------------------------------------
@@ -29,6 +31,7 @@ const ICONS = {
     BELL: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>,
     HEART: <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>,
     CHECK_ALL: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7M3 17l4 4L19 5" /></svg>,
+    TRASH: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
 };
 
 // -----------------------------------------------------------------------------
@@ -100,6 +103,8 @@ const NotificationPanel = memo(({
     notifications, 
     onMarkRead, 
     onMarkAllRead,
+    onDelete,
+    onDeleteAllRead,
     onNavigate,
     onClose,
     t,
@@ -107,25 +112,42 @@ const NotificationPanel = memo(({
     notifications: AppNotification[];
     onMarkRead: (id: string) => void;
     onMarkAllRead: () => void;
+    onDelete: (id: string) => void;
+    onDeleteAllRead: () => void;
     onNavigate: (path: string) => void;
     onClose: () => void;
     t: (key: string) => string;
 }) => {
+    const hasRead = notifications.some(n => !!n.readAt);
+    const hasUnread = notifications.some(n => !n.readAt);
+
     return (
         <div className="absolute right-0 top-full mt-2 w-80 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-2xl shadow-slate-200/60 dark:shadow-slate-900/60 z-50 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--glass-border)]">
                 <span className="text-sm font-bold text-[var(--text-primary)]">{t('nav.notifications')}</span>
-                {notifications.some(n => !n.readAt) && (
-                    <button
-                        onClick={() => { onMarkAllRead(); }}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-                        title={t('nav.mark_all_read')}
-                    >
-                        {ICONS.CHECK_ALL}
-                        {t('nav.mark_all_read')}
-                    </button>
-                )}
+                <div className="flex items-center gap-2">
+                    {hasUnread && (
+                        <button
+                            onClick={onMarkAllRead}
+                            className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                            title={t('nav.mark_all_read')}
+                        >
+                            {ICONS.CHECK_ALL}
+                            <span className="hidden sm:inline">{t('nav.mark_all_read')}</span>
+                        </button>
+                    )}
+                    {hasRead && (
+                        <button
+                            onClick={onDeleteAllRead}
+                            className="flex items-center gap-1 text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+                            title={t('notif.delete_all_read')}
+                        >
+                            {ICONS.TRASH}
+                            <span className="hidden sm:inline">{t('notif.delete_all_read')}</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* List */}
@@ -139,7 +161,7 @@ const NotificationPanel = memo(({
                     notifications.map(notif => (
                         <div 
                             key={notif.id}
-                            className={`flex items-start gap-3 px-4 py-3 border-b border-[var(--glass-border)] last:border-0 transition-colors ${!notif.readAt ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-[var(--glass-surface-hover)]'}`}
+                            className={`group flex items-start gap-3 px-4 py-3 border-b border-[var(--glass-border)] last:border-0 transition-colors ${!notif.readAt ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-[var(--glass-surface-hover)]'}`}
                         >
                             {/* Icon */}
                             <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0 mt-0.5">
@@ -177,16 +199,25 @@ const NotificationPanel = memo(({
                                 </div>
                             </div>
 
-                            {/* Mark read dot */}
-                            {!notif.readAt && (
+                            {/* Action buttons: mark read + delete */}
+                            <div className="flex flex-col items-center gap-1 shrink-0 mt-0.5">
+                                {!notif.readAt && (
+                                    <button
+                                        onClick={() => onMarkRead(notif.id)}
+                                        className="w-5 h-5 rounded-full text-slate-300 hover:text-indigo-500 transition-colors flex items-center justify-center"
+                                        title={t('notif.mark_read')}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                    </button>
+                                )}
                                 <button
-                                    onClick={() => onMarkRead(notif.id)}
-                                    className="w-5 h-5 rounded-full text-slate-300 hover:text-indigo-500 transition-colors shrink-0 mt-0.5 flex items-center justify-center"
-                                    title="Đánh dấu đã đọc"
+                                    onClick={() => onDelete(notif.id)}
+                                    className="w-5 h-5 rounded-full text-slate-200 hover:text-rose-500 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
+                                    title={t('notif.delete')}
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                    {ICONS.TRASH}
                                 </button>
-                            )}
+                            </div>
                         </div>
                     ))
                 )}
@@ -210,6 +241,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
     notifications = [],
     onMarkRead,
     onMarkAllRead,
+    onDeleteNotification,
+    onDeleteAllRead,
 }) => {
     const { t } = useTranslation();
     const [panelOpen, setPanelOpen] = useState(false);
@@ -295,6 +328,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                             notifications={notifications}
                             onMarkRead={(id) => { onMarkRead?.(id); }}
                             onMarkAllRead={() => { onMarkAllRead?.(); }}
+                            onDelete={(id) => { onDeleteNotification?.(id); }}
+                            onDeleteAllRead={() => { onDeleteAllRead?.(); }}
                             onNavigate={onNavigate}
                             onClose={() => setPanelOpen(false)}
                             t={t}
