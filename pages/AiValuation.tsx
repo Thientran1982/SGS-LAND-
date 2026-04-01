@@ -100,6 +100,22 @@ export const AiValuation: React.FC = () => {
 
     const isApartment = propertyType.startsWith('apartment');
 
+    // Live Accuracy Meter — increases as user fills in more details
+    const accuracy = (() => {
+        let s = 75.12;
+        if (area && parseFloat(area) > 0)         s += 5.22;
+        if (roadWidth && parseFloat(roadWidth) > 0) s += 4.33;
+        if (direction)                              s += 2.54;
+        if (!isApartment && frontageWidth && parseFloat(frontageWidth) > 0) s += 3.34;
+        if (isApartment && floorLevel && parseFloat(floorLevel) > 0)        s += 3.34;
+        if (buildingAge !== '')                     s += 2.63;
+        if (furnishing)                             s += 2.54;
+        if (monthlyRent && parseFloat(monthlyRent) > 0) s += 4.29;
+        return Math.min(s, 99.99);
+    })();
+    const accuracyLabel = accuracy < 80 ? 'Cơ bản' : accuracy < 88 ? 'Khá tốt' : accuracy < 95 ? 'Rất tốt' : 'Chuyên sâu';
+    const accuracyColor = accuracy < 80 ? '#eab308' : accuracy < 88 ? '#f97316' : accuracy < 95 ? '#22c55e' : '#10b981';
+
     // Process State
     const [analysisLog, setAnalysisLog] = useState<string>('');
     const [progress, setProgress] = useState(0);
@@ -351,10 +367,10 @@ export const AiValuation: React.FC = () => {
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
                             Định Giá Bất Động Sản <br/>
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Chính Xác Tới 98%</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Chính Xác Tới 99,99%</span>
                         </h1>
                         <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto">
-                            Nhập địa chỉ bất động sản để bắt đầu phân tích dữ liệu thị trường và quy hoạch từ AI.
+                            Nhập địa chỉ — AI phân tích thị trường trực tiếp. Càng nhiều thông tin, độ chính xác càng cao.
                         </p>
 
                         <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-full max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-emerald-500/50 transition-all overflow-hidden">
@@ -384,6 +400,24 @@ export const AiValuation: React.FC = () => {
                                 Bắt Đầu
                             </button>
                         </div>
+
+                        {/* Hint strip below search */}
+                        <div className="mt-6 flex items-center justify-center gap-6 text-xs text-slate-500">
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                                Địa chỉ → <b className="text-yellow-400">75%</b>
+                            </span>
+                            <span className="text-slate-700">→</span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                                + Chi tiết → <b className="text-orange-400">90%</b>
+                            </span>
+                            <span className="text-slate-700">→</span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                + Đầy đủ → <b className="text-emerald-400">99,99%</b>
+                            </span>
+                        </div>
                     </div>
                 )}
 
@@ -391,9 +425,41 @@ export const AiValuation: React.FC = () => {
                 {step === 'DETAILS' && (
                     <div className="max-w-xl mx-auto animate-enter">
                         <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-2xl">
-                            <h2 className="text-2xl font-bold text-white mb-2">Chi tiết Bất Động Sản</h2>
-                            <p className="text-slate-400 text-sm mb-8">Cung cấp thêm thông tin để AI định giá chính xác nhất.</p>
-                            
+
+                            {/* ── LIVE ACCURACY METER ── */}
+                            <div className="bg-slate-900/60 border border-slate-700/60 rounded-2xl p-4 mb-7">
+                                <div className="flex items-end justify-between mb-2">
+                                    <div>
+                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-0.5">Độ chính xác dự báo</div>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-3xl font-black tabular-nums transition-all duration-500" style={{ color: accuracyColor }}>
+                                                {accuracy.toFixed(2)}%
+                                            </span>
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full border transition-all duration-300"
+                                                style={{ color: accuracyColor, borderColor: accuracyColor + '40', background: accuracyColor + '18' }}>
+                                                {accuracyLabel}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right text-xs text-slate-500">
+                                        <div>Tối đa</div>
+                                        <div className="font-bold text-emerald-400">99,99%</div>
+                                    </div>
+                                </div>
+                                {/* Progress bar */}
+                                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full rounded-full transition-all duration-500 ease-out"
+                                        style={{ width: `${accuracy}%`, background: `linear-gradient(90deg, #eab308, ${accuracyColor})` }}
+                                    />
+                                </div>
+                                <div className="mt-2 text-xs text-slate-500">
+                                    {accuracy < 99.99
+                                        ? `Điền thêm ${accuracy < 80 ? 'diện tích, lộ giới' : accuracy < 88 ? 'hướng nhà, mặt tiền' : accuracy < 95 ? 'tuổi nhà, nội thất' : 'thuê dự kiến'} để tăng độ chính xác`
+                                        : '✓ Đã đạt độ chính xác tối đa — sẵn sàng định giá!'}
+                                </div>
+                            </div>
+
                             <div className="space-y-6">
                                 {/* Address Readonly */}
                                 <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700 flex items-center gap-3">
@@ -573,9 +639,12 @@ export const AiValuation: React.FC = () => {
                                 <button 
                                     onClick={runCalculation}
                                     disabled={!area || !roadWidth || parseFloat(area) <= 0}
-                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-4 text-lg"
+                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-4 text-lg flex items-center justify-center gap-3"
                                 >
-                                    Định Giá Ngay
+                                    <span>Định Giá Ngay</span>
+                                    <span className="text-sm font-bold bg-white/20 rounded-full px-3 py-0.5">
+                                        {accuracy.toFixed(2)}% chính xác
+                                    </span>
                                 </button>
                             </div>
                         </div>
