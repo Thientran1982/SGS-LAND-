@@ -242,55 +242,57 @@ const Contracts: React.FC = () => {
 
     return (
         <>
-        <div className="p-6 h-full flex flex-col animate-enter">
+        <div className="p-4 sm:p-6 h-full flex flex-col animate-enter">
             {/* Header row */}
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-lg font-black text-[var(--text-primary)] tracking-tight">{t('contracts.title')}</h1>
                 <button
                     onClick={() => { setEditingContract(null); setIsModalOpen(true); }}
                     className="px-4 py-2 min-h-[44px] bg-[var(--primary-600)] text-white rounded-xl font-bold text-sm shadow-sm hover:opacity-90 transition-all flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
-                    {t('contracts.btn_create')}
+                    <span className="hidden sm:inline">{t('contracts.btn_create')}</span>
+                    <span className="sm:hidden">Tạo HĐ</span>
                 </button>
             </div>
 
             {/* Stats bar */}
             {stats && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                    <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3.5 flex items-center gap-3 shadow-sm">
-                        <div className="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+                    <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </div>
-                        <div>
-                            <div className="text-xs text-[var(--text-tertiary)] font-medium">{t('contracts.stat_total')}</div>
-                            <div className="text-xl font-black text-[var(--text-primary)]">{stats.total}</div>
-                        </div>
-                    </div>
-                    <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3.5 flex items-center gap-3 shadow-sm">
-                        <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z"/></svg>
-                        </div>
-                        <div>
-                            <div className="text-xs text-[var(--text-tertiary)] font-medium">{t('contracts.stat_pending')}</div>
-                            <div className="text-xl font-black text-amber-600">{stats.pendingCount}</div>
+                        <div className="min-w-0">
+                            <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_total')}</div>
+                            <div className="text-lg sm:text-xl font-black text-[var(--text-primary)]">{stats.total}</div>
                         </div>
                     </div>
-                    <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3.5 flex items-center gap-3 shadow-sm">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z"/></svg>
                         </div>
-                        <div>
-                            <div className="text-xs text-[var(--text-tertiary)] font-medium">{t('contracts.stat_signed')}</div>
-                            <div className="text-xl font-black text-emerald-600">{stats.signedCount}</div>
+                        <div className="min-w-0">
+                            <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_pending')}</div>
+                            <div className="text-lg sm:text-xl font-black text-amber-600">{stats.pendingCount}</div>
                         </div>
                     </div>
-                    <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3.5 flex items-center gap-3 shadow-sm">
-                        <div className="w-9 h-9 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
-                        <div>
-                            <div className="text-xs text-[var(--text-tertiary)] font-medium">{t('contracts.stat_signed_value')}</div>
-                            <div className="text-base font-black text-violet-600">{formatCurrency(stats.signedValue)}</div>
+                        <div className="min-w-0">
+                            <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_signed')}</div>
+                            <div className="text-lg sm:text-xl font-black text-emerald-600">{stats.signedCount}</div>
+                        </div>
+                    </div>
+                    <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div className="min-w-0">
+                            <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_signed_value')}</div>
+                            <div className="text-sm sm:text-base font-black text-violet-600 truncate">{formatCurrency(stats.signedValue)}</div>
                         </div>
                     </div>
                 </div>
@@ -298,17 +300,18 @@ const Contracts: React.FC = () => {
 
             <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-sm flex-1 flex flex-col overflow-hidden">
                 {/* Filter bar */}
-                <div className="p-4 border-b border-[var(--glass-border)] flex flex-wrap gap-4 items-center">
-                    <div className="relative flex-1 min-w-[200px] group">
+                <div className="p-3 sm:p-4 border-b border-[var(--glass-border)] flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    {/* Search – full width */}
+                    <div className="relative flex-1 group">
                         <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>
                         <input
                             type="text"
                             placeholder={t('contracts.search_placeholder')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
+                            className="w-full pl-9 sm:pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                         />
                         {search && (
                             <div className="absolute right-2 inset-y-0 flex items-center">
@@ -322,28 +325,31 @@ const Contracts: React.FC = () => {
                             </div>
                         )}
                     </div>
-                    <Dropdown
-                        value={typeFilter}
-                        onChange={(val) => setTypeFilter(val as any)}
-                        options={[
-                            { value: 'ALL', label: t('contracts.all_types') },
-                            { value: ContractType.DEPOSIT, label: t('contracts.type_DEPOSIT') },
-                            { value: ContractType.SALES, label: t('contracts.type_SALES') }
-                        ]}
-                        className="w-48"
-                    />
-                    <Dropdown
-                        value={statusFilter}
-                        onChange={(val) => setStatusFilter(val as any)}
-                        options={[
-                            { value: 'ALL', label: t('contracts.all_statuses') },
-                            { value: ContractStatus.DRAFT, label: t('contracts.status_DRAFT') },
-                            { value: ContractStatus.PENDING_SIGNATURE, label: t('contracts.status_PENDING_SIGNATURE') },
-                            { value: ContractStatus.SIGNED, label: t('contracts.status_SIGNED') },
-                            { value: ContractStatus.CANCELLED, label: t('contracts.status_CANCELLED') }
-                        ]}
-                        className="w-48"
-                    />
+                    {/* Dropdowns – side by side on mobile, natural width on desktop */}
+                    <div className="flex gap-2 sm:gap-3">
+                        <Dropdown
+                            value={typeFilter}
+                            onChange={(val) => setTypeFilter(val as any)}
+                            options={[
+                                { value: 'ALL', label: t('contracts.all_types') },
+                                { value: ContractType.DEPOSIT, label: t('contracts.type_DEPOSIT') },
+                                { value: ContractType.SALES, label: t('contracts.type_SALES') }
+                            ]}
+                            className="flex-1 sm:flex-none sm:w-44"
+                        />
+                        <Dropdown
+                            value={statusFilter}
+                            onChange={(val) => setStatusFilter(val as any)}
+                            options={[
+                                { value: 'ALL', label: t('contracts.all_statuses') },
+                                { value: ContractStatus.DRAFT, label: t('contracts.status_DRAFT') },
+                                { value: ContractStatus.PENDING_SIGNATURE, label: t('contracts.status_PENDING_SIGNATURE') },
+                                { value: ContractStatus.SIGNED, label: t('contracts.status_SIGNED') },
+                                { value: ContractStatus.CANCELLED, label: t('contracts.status_CANCELLED') }
+                            ]}
+                            className="flex-1 sm:flex-none sm:w-44"
+                        />
+                    </div>
                 </div>
 
                 {/* Table */}
