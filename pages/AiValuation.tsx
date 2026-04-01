@@ -724,7 +724,7 @@ export const AiValuation: React.FC = () => {
                                     <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest mb-2 flex items-center gap-2">
                                         <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
                                         {valuation.reconciliation
-                                            ? `Giá trị tổng hợp (${(valuation.reconciliation.compsWeight * 100).toFixed(0)}% Comps + ${(valuation.reconciliation.incomeWeight * 100).toFixed(0)}% Income)`
+                                            ? `Giá trị tổng hợp (${(valuation.reconciliation.compsWeight * 100).toFixed(0)}% So Sánh + ${(valuation.reconciliation.incomeWeight * 100).toFixed(0)}% Thu Nhập)`
                                             : 'Giá trị thị trường ước tính'}
                                     </h3>
                                     <div className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-slate-400 tracking-tight">
@@ -789,7 +789,7 @@ export const AiValuation: React.FC = () => {
                                             <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 overflow-hidden">
                                                 <div className="px-5 py-3 border-b border-slate-700/50 flex items-center gap-2">
                                                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                                                    <span className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold tracking-widest">Điều chỉnh AVM — đã áp dụng vào giá</span>
+                                                    <span className="text-[var(--text-tertiary)] text-xs2 uppercase font-bold tracking-widest">Hệ số điều chỉnh — đã áp dụng vào giá</span>
                                                 </div>
                                                 <div className="divide-y divide-slate-800">
                                                     {avmFactors.map(renderFactor)}
@@ -818,7 +818,7 @@ export const AiValuation: React.FC = () => {
                             <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-2xl mb-6">
                                 <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest mb-6 flex items-center gap-2">
                                     <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
-                                    Phân tích đa phương pháp (Multi-Method Valuation)
+                                    Phân tích đa phương pháp
                                 </h3>
 
                                 {/* Two-column: Comps vs Income */}
@@ -827,7 +827,7 @@ export const AiValuation: React.FC = () => {
                                     <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5">
                                         <div className="flex items-center gap-2 mb-3">
                                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
-                                            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Phương pháp So sánh (AVM/Comps)</span>
+                                            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Phương pháp So sánh thị trường</span>
                                         </div>
                                         <div className="text-2xl font-black text-white mb-1">
                                             {formatSmartPrice(valuation.compsPrice || valuation.price, t)} <span className="text-sm text-emerald-400">VNĐ</span>
@@ -843,7 +843,7 @@ export const AiValuation: React.FC = () => {
                                     <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-5">
                                         <div className="flex items-center gap-2 mb-3">
                                             <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 flex-shrink-0"></span>
-                                            <span className="text-indigo-400 text-xs font-bold uppercase tracking-widest">Phương pháp Thu nhập (Income Cap.)</span>
+                                            <span className="text-indigo-400 text-xs font-bold uppercase tracking-widest">Phương pháp Thu nhập & Vốn hóa</span>
                                         </div>
                                         <div className="text-2xl font-black text-white mb-1">
                                             {formatSmartPrice(valuation.incomeApproach.capitalValue, t)} <span className="text-sm text-indigo-400">VNĐ</span>
@@ -864,8 +864,8 @@ export const AiValuation: React.FC = () => {
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-slate-800">
                                         {[
                                             { label: 'Tiền thuê/tháng', value: `${valuation.incomeApproach.monthlyRent.toFixed(1)} Tr`, hint: 'Ước tính thị trường' },
-                                            { label: 'NOI ròng/năm', value: `${valuation.incomeApproach.noi.toFixed(1)} Tr`, hint: 'Sau khấu trống & OPEX' },
-                                            { label: 'Cap Rate', value: `${(valuation.incomeApproach.capRate * 100).toFixed(1)}%`, hint: 'Thị trường VN 2024-25' },
+                                            { label: 'Thu nhập ròng/năm', value: `${valuation.incomeApproach.noi.toFixed(1)} Tr`, hint: 'Sau khấu trống & chi phí vận hành' },
+                                            { label: 'Tỷ suất vốn hóa', value: `${(valuation.incomeApproach.capRate * 100).toFixed(1)}%`, hint: 'Thị trường VN 2024-25' },
                                             { label: 'Thời gian hoàn vốn', value: `${valuation.incomeApproach.paybackYears.toFixed(1)} năm`, hint: 'Theo NOI hiện tại' },
                                         ].map((item, i) => (
                                             <div key={i} className="px-4 py-3 text-center">
@@ -879,12 +879,12 @@ export const AiValuation: React.FC = () => {
 
                                 {/* Gross Rental Yield */}
                                 <div className="flex items-center gap-3 text-sm">
-                                    <span className="text-slate-400">Gross Rental Yield (GRY):</span>
+                                    <span className="text-slate-400">Tỷ suất cho thuê gộp:</span>
                                     <span className={`font-bold ${valuation.incomeApproach.grossRentalYield >= 5 ? 'text-emerald-400' : valuation.incomeApproach.grossRentalYield >= 3 ? 'text-yellow-400' : 'text-rose-400'}`}>
                                         {valuation.incomeApproach.grossRentalYield.toFixed(2)}%/năm
                                     </span>
                                     <span className="text-slate-600">|</span>
-                                    <span className="text-slate-400">Vacancy Rate: 8% | OPEX: 20%</span>
+                                    <span className="text-slate-400">Khấu trống: 8% | Chi phí vận hành: 20%</span>
                                 </div>
                             </div>
                         )}
