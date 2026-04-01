@@ -412,6 +412,7 @@ class DatabaseApiClient {
           page: result.page,
           pageSize: result.pageSize,
           totalPages: result.totalPages,
+          stats: result.stats,
         };
         _cache.set(cacheKey, out, 'contracts:', snap);
         return out;

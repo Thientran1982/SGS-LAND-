@@ -1,7 +1,21 @@
 import { api, PaginatedResponse } from './apiClient';
 
+interface ContractStats {
+  total: number;
+  draftCount: number;
+  pendingCount: number;
+  signedCount: number;
+  cancelledCount: number;
+  signedValue: number;
+  totalValue: number;
+}
+
+interface ContractListResponse extends PaginatedResponse<any> {
+  stats: ContractStats;
+}
+
 export const contractApi = {
-  getContracts: (page = 1, pageSize = 20, filters?: Record<string, any>): Promise<PaginatedResponse<any>> =>
+  getContracts: (page = 1, pageSize = 20, filters?: Record<string, any>): Promise<ContractListResponse> =>
     api.get('/api/contracts', { page, pageSize, ...filters }),
 
   getContractById: (id: string): Promise<any> =>
