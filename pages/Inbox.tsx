@@ -677,7 +677,7 @@ export const Inbox: React.FC = () => {
                             <button
                                 key={key}
                                 onClick={() => setStatusFilter(key)}
-                                className={`flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[28px] ${
+                                className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[24px] ${
                                     statusFilter === key
                                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                                         : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300 hover:text-indigo-600'
@@ -709,7 +709,7 @@ export const Inbox: React.FC = () => {
                                 <button
                                     key={key}
                                     onClick={() => setChannelFilter(key)}
-                                    className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[28px] bg-[var(--glass-surface)] ${active ? c.on + ' shadow-sm' : c.off}`}
+                                    className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border transition-all whitespace-nowrap shrink-0 min-h-[24px] bg-[var(--glass-surface)] ${active ? c.on + ' shadow-sm' : c.off}`}
                                 >
                                     {label}
                                 </button>
@@ -986,7 +986,7 @@ export const Inbox: React.FC = () => {
                                     <button
                                         key={ch}
                                         onClick={() => setChannel(ch)}
-                                        className={`flex-none px-2.5 py-1 md:py-1.5 min-h-[30px] md:min-h-[34px] rounded-lg text-[11px] md:text-xs font-bold transition-all flex items-center justify-center gap-1 md:gap-1.5 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
+                                        className={`flex-none px-2.5 py-1 min-h-[28px] rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 whitespace-nowrap ${channel === ch ? activeClass : inactiveClass}`}
                                     >
                                         {channel === ch && (
                                             <span className="hidden md:inline shrink-0">
