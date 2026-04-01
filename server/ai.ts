@@ -12,7 +12,7 @@ import { enterpriseConfigRepository } from './repositories/enterpriseConfigRepos
 
 const GENAI_CONFIG = {
     MODELS: {
-        ROUTER: 'gemini-2.0-flash-lite',
+        ROUTER: 'gemini-2.0-flash',
         EXTRACTOR: 'gemini-2.0-flash',
         WRITER: 'gemini-2.5-flash',
     },

@@ -364,14 +364,9 @@ export const Inbox: React.FC = () => {
         const handleNewInboundMessage = (data: { leadId: string, message: any }) => {
             const { leadId, message: msg } = data;
 
-            // Append to interactions cache (if the chat pane is open for this lead)
-            if (msg) {
-                queryClient.setQueryData<any[]>(['interactions', leadId], (old) => {
-                    if (!old) return old;
-                    if (old.some((m: any) => m.id === msg.id)) return old;
-                    return [...old, msg];
-                });
-            }
+            // NOTE: Do NOT append to interactions cache here — handleNewMessage
+            // (via receive_message) already does it for the active chat pane.
+            // This handler is responsible ONLY for updating the sidebar.
 
             // Update thread sidebar in-place
             patchThread(leadId, (th) => ({
@@ -466,11 +461,12 @@ export const Inbox: React.FC = () => {
                         },
                     });
 
-                    appendInteraction(selectedLeadId, aiMsg);
-                    socket.emit("send_message", { room: selectedLeadId, message: aiMsg });
-                    
+                    // Clear streaming bubble BEFORE appending committed msg to avoid
+                    // a render where both the streamed bubble and the final msg are visible
                     setIsThinking(false);
                     setStreamingMessage('');
+                    appendInteraction(selectedLeadId, aiMsg);
+                    socket.emit("send_message", { room: selectedLeadId, message: aiMsg });
                     scrollToBottom();
                 }
             } else {
