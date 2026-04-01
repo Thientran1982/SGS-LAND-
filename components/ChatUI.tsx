@@ -250,7 +250,7 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                 </div>
             )}
             
-            <div className={`flex gap-2 max-w-[85%] md:max-w-[75%] ${isOutbound ? 'flex-row-reverse' : 'flex-row'}`}>
+            <div className={`flex gap-2 max-w-[82%] md:max-w-[74%] ${isOutbound ? 'flex-row-reverse' : 'flex-row'}`}>
                 {/* Avatar Column */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm border overflow-hidden
                     ${isOutbound 

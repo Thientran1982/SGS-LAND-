@@ -36,7 +36,95 @@ const ICONS = {
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
     FILTER: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M7 12h10M10 18h4" /></svg>,
     UNREAD: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="currentColor"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8"/></svg>,
+    CHECK: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>,
+    CHEVRON: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>,
 };
+
+/* ── Colour tokens for InboxDropdown — must be static strings for Tailwind ── */
+const DD_COLORS: Record<string, { open: string; item: string; check: string }> = {
+    indigo:  { open: 'bg-indigo-50 border-indigo-400 text-indigo-700',   item: 'bg-indigo-50 text-indigo-700',   check: 'text-indigo-600'  },
+    blue:    { open: 'bg-blue-50 border-blue-400 text-blue-700',         item: 'bg-blue-50 text-blue-700',       check: 'text-blue-600'    },
+    emerald: { open: 'bg-emerald-50 border-emerald-400 text-emerald-700',item: 'bg-emerald-50 text-emerald-700', check: 'text-emerald-600' },
+    amber:   { open: 'bg-amber-50 border-amber-400 text-amber-700',      item: 'bg-amber-50 text-amber-700',     check: 'text-amber-600'   },
+};
+
+/* ── Reusable animated dropdown for inbox filters ────────────────────────── */
+type DropdownOption<T extends string> = { value: T; label: string; icon?: React.ReactNode; color?: string };
+
+function InboxDropdown<T extends string>({
+    value, onChange, options, className = '', defaultColor = 'indigo'
+}: {
+    value: T;
+    onChange: (v: T) => void;
+    options: DropdownOption<T>[];
+    className?: string;
+    defaultColor?: string;
+}) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    const selected = options.find(o => o.value === value);
+    const triggerKey = selected?.color ?? defaultColor;
+    const triggerTokens = DD_COLORS[triggerKey] ?? DD_COLORS.indigo;
+
+    useEffect(() => {
+        const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, []);
+
+    return (
+        <div ref={ref} className={`relative flex-1 min-w-0 ${className}`}>
+            <button
+                type="button"
+                onClick={() => setOpen(v => !v)}
+                className={`w-full flex items-center justify-between gap-1.5 text-xs font-bold rounded-xl px-3 py-2 min-h-[38px] outline-none transition-all border ${
+                    open ? triggerTokens.open : 'bg-[var(--glass-surface)] border-[var(--glass-border)] text-[var(--text-secondary)]'
+                }`}
+            >
+                <span className="flex items-center gap-1.5 truncate min-w-0">
+                    {selected?.icon && <span className="shrink-0">{selected.icon}</span>}
+                    <span className="truncate">{selected?.label ?? '—'}</span>
+                </span>
+                <span className={`shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
+                    {ICONS.CHEVRON}
+                </span>
+            </button>
+
+            <AnimatePresence>
+                {open && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                        transition={{ duration: 0.13, ease: 'easeOut' }}
+                        className="absolute z-[60] top-full left-0 mt-1.5 w-full min-w-[140px] bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-xl overflow-hidden"
+                    >
+                        <div className="py-1">
+                            {options.map(opt => {
+                                const isActive = value === opt.value;
+                                const tokens = DD_COLORS[opt.color ?? defaultColor] ?? DD_COLORS.indigo;
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => { onChange(opt.value); setOpen(false); }}
+                                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-bold transition-colors text-left ${
+                                            isActive ? tokens.item : 'text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'
+                                        }`}
+                                    >
+                                        {opt.icon && <span className="shrink-0 opacity-80">{opt.icon}</span>}
+                                        <span className="flex-1">{opt.label}</span>
+                                        {isActive && <span className={`${tokens.check} shrink-0`}>{ICONS.CHECK}</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
 
 export const Inbox: React.FC = () => {
     const queryClient = useQueryClient();
@@ -47,7 +135,7 @@ export const Inbox: React.FC = () => {
     const [channel, setChannel] = useState<Channel>(Channel.ZALO);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
-    const [channelFilter, setChannelFilter] = useState<'ALL' | string>('ALL');
+    const [channelFilter, setChannelFilter] = useState<'ALL' | Channel>('ALL');
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'UNREAD'>('ALL');
     const [threadToDelete, setThreadToDelete] = useState<LeadId | null>(null);
 
@@ -556,26 +644,28 @@ export const Inbox: React.FC = () => {
 
                     {/* ── MOBILE dropdown row ── */}
                     <div className="flex md:hidden gap-2">
-                        <select
+                        <InboxDropdown<'ALL' | 'UNREAD'>
                             value={statusFilter}
-                            onChange={e => setStatusFilter(e.target.value as 'ALL' | 'UNREAD')}
-                            className="flex-1 text-xs font-bold bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 min-h-[36px] text-[var(--text-secondary)] outline-none focus:border-indigo-400 transition-colors appearance-none cursor-pointer"
-                        >
-                            <option value="ALL">{t('inbox.filter_all')}</option>
-                            <option value="UNREAD">{t('inbox.filter_unread')}</option>
-                        </select>
-                        <select
+                            onChange={setStatusFilter}
+                            defaultColor="indigo"
+                            options={[
+                                { value: 'ALL',    label: t('inbox.filter_all'),    icon: ICONS.FILTER,  color: 'indigo' },
+                                { value: 'UNREAD', label: t('inbox.filter_unread'), icon: ICONS.UNREAD,  color: 'amber'  },
+                            ]}
+                        />
+                        <InboxDropdown<'ALL' | Channel>
                             value={channelFilter}
-                            onChange={e => setChannelFilter(e.target.value as typeof channelFilter)}
-                            className="flex-1 text-xs font-bold bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 min-h-[36px] text-[var(--text-secondary)] outline-none focus:border-indigo-400 transition-colors appearance-none cursor-pointer"
-                        >
-                            <option value="ALL">{t('inbox.filter_all')}</option>
-                            <option value={Channel.WEB}>{t('inbox.channel_web')}</option>
-                            <option value={Channel.ZALO}>Zalo</option>
-                            <option value={Channel.FACEBOOK}>Facebook</option>
-                            <option value={Channel.EMAIL}>Email</option>
-                            <option value={Channel.SMS}>SMS</option>
-                        </select>
+                            onChange={setChannelFilter}
+                            defaultColor="indigo"
+                            options={[
+                                { value: 'ALL',          label: t('inbox.filter_all'),    icon: ICONS.FILTER,   color: 'indigo'  },
+                                { value: Channel.WEB,    label: t('inbox.channel_web'),   icon: ICONS.WEB,      color: 'indigo'  },
+                                { value: Channel.ZALO,   label: 'Zalo',                   icon: ICONS.ZALO,     color: 'blue'    },
+                                { value: Channel.FACEBOOK,label: 'Facebook',              icon: ICONS.FACEBOOK, color: 'blue'    },
+                                { value: Channel.EMAIL,  label: 'Email',                  icon: ICONS.EMAIL,    color: 'indigo'  },
+                                { value: Channel.SMS,    label: 'SMS',                    icon: ICONS.SMS,      color: 'emerald' },
+                            ]}
+                        />
                     </div>
 
                     {/* ── DESKTOP chip pills ── */}
@@ -886,16 +976,19 @@ export const Inbox: React.FC = () => {
                         {/* Channel selector row + supervisor badge */}
                         <div className="flex items-center justify-between gap-2 mb-2.5 min-w-0">
 
-                            {/* ── MOBILE: single select dropdown ── */}
-                            <select
-                                value={channel}
-                                onChange={e => setChannel(e.target.value as Channel)}
-                                className="md:hidden flex-1 min-w-0 text-xs font-bold bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-3 py-2 min-h-[38px] text-[var(--text-secondary)] outline-none focus:border-indigo-400 transition-colors appearance-none cursor-pointer"
-                            >
-                                <option value={Channel.ZALO}>Zalo</option>
-                                <option value={Channel.EMAIL}>Email</option>
-                                <option value={Channel.SMS}>SMS</option>
-                            </select>
+                            {/* ── MOBILE: animated dropdown ── */}
+                            <div className="md:hidden flex-1 min-w-0">
+                                <InboxDropdown<Channel>
+                                    value={channel}
+                                    onChange={setChannel}
+                                    defaultColor="blue"
+                                    options={[
+                                        { value: Channel.ZALO,  label: 'Zalo',  icon: ICONS.ZALO,  color: 'blue'    },
+                                        { value: Channel.EMAIL, label: 'Email', icon: ICONS.EMAIL, color: 'indigo'  },
+                                        { value: Channel.SMS,   label: 'SMS',   icon: ICONS.SMS,   color: 'emerald' },
+                                    ]}
+                                />
+                            </div>
 
                             {/* ── DESKTOP: segmented tabs ── */}
                             <div className="hidden md:flex flex-nowrap flex-1 min-w-0 bg-[var(--glass-surface)] p-0.5 rounded-xl border border-[var(--glass-border)] overflow-x-auto no-scrollbar">
