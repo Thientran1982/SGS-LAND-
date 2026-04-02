@@ -971,8 +971,8 @@ export function applyAVM(input: AVMInput): AVMOutput {
 //  project:          0.68 → off-plan chiết khấu 32% vs thứ cấp (10-15% under comps)
 // ─────────────────────────────────────────────────────────────────────────────
 export const PROPERTY_TYPE_PRICE_MULT: Record<string, number> = {
-  apartment_center:  0.52,  // Căn hộ nội đô: ~52% nhà phố (thực tế 55-70M/m² vs 120M/m² nhà phố Q.BT)
-  apartment_suburb:  0.48,  // Căn hộ ngoại thành/trung cấp: ~48%
+  apartment_center:  0.55,  // Căn hộ nội đô: ~55% nhà phố (thực tế 60-85M/m² vs 120M/m² nhà phố Q.BT — Q1/2026)
+  apartment_suburb:  0.50,  // Căn hộ ngoại thành/trung cấp: ~50% (tăng từ 0.48 — CPI bất động sản +8% 2024)
   townhouse_center:  1.00,  // Tham chiếu chuẩn — nhà phố nội đô Sổ Hồng, hẻm 4m
   townhouse_suburb:  1.00,  // Nhà phố ngoại thành — tương đương mức cơ sở
   villa:             0.85,  // Biệt thự: thấp hơn/m² vì DT lớn, ít giao dịch
@@ -1049,8 +1049,8 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/quận 6\b|q\.?6\b/i.test(enrichedAddr))             return getBase(90_000_000,  'Quận 6, TP.HCM', 60);
   if (/quận 7\b|q\.?7\b/i.test(enrichedAddr))             return getBase(150_000_000, 'Quận 7, TP.HCM', 62);
   if (/quận 8\b|q\.?8\b/i.test(enrichedAddr))             return getBase(80_000_000,  'Quận 8, TP.HCM', 60);
-  if (/quận 9\b|q\.?9\b/i.test(enrichedAddr))             return getBase(70_000_000,  'Quận 9, TP.HCM', 60);
-  if (/quận 10\b|q\.?10\b/i.test(enrichedAddr))           return getBase(160_000_000, 'Quận 10, TP.HCM', 62);
+  if (/quận 9\b|q\.?9\b/i.test(enrichedAddr))             return getBase(75_000_000,  'Quận 9, TP.HCM', 60);
+  if (/quận 10\b|q\.?10\b/i.test(enrichedAddr))           return getBase(165_000_000, 'Quận 10, TP.HCM', 62);
   if (/quận 11\b|q\.?11\b/i.test(enrichedAddr))           return getBase(110_000_000, 'Quận 11, TP.HCM', 60);
   if (/quận 12\b|q\.?12\b/i.test(enrichedAddr))           return getBase(65_000_000,  'Quận 12, TP.HCM', 60);
   if (/bình chánh|binh chanh/i.test(enrichedAddr))        return getBase(35_000_000,  'Bình Chánh, TP.HCM', 55);
@@ -1063,7 +1063,7 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/tân bình|tan binh/i.test(enrichedAddr))            return getBase(100_000_000, 'Tân Bình, TP.HCM', 62);
   if (/tân phú|tan phu/i.test(enrichedAddr))              return getBase(80_000_000,  'Tân Phú, TP.HCM', 60);
   if (/gò vấp|go vap/i.test(enrichedAddr))                return getBase(75_000_000,  'Gò Vấp, TP.HCM', 60);
-  if (/thủ đức|thu duc/i.test(enrichedAddr))              return getBase(65_000_000,  'Thủ Đức, TP.HCM', 60);
+  if (/thủ đức|thu duc/i.test(enrichedAddr))              return getBase(78_000_000,  'Thủ Đức, TP.HCM', 60);
   if (/hcm|hồ chí minh|ho chi minh|sài gòn|saigon/i.test(enrichedAddr)) return getBase(100_000_000, 'TP.HCM (trung bình)', 55);
 
   // ── Hà Nội ───────────────────────────────────────────────────────────────
@@ -1076,10 +1076,10 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/thanh xuân|thanh xuan/i.test(enrichedAddr))         return getBase(100_000_000, 'Thanh Xuân, Hà Nội', 60);
   if (/hoàng mai|hoang mai/i.test(enrichedAddr))           return getBase(75_000_000,  'Hoàng Mai, Hà Nội', 58);
   if (/nam từ liêm|nam tu liem|bắc từ liêm|bac tu liem/i.test(enrichedAddr)) return getBase(85_000_000, 'Từ Liêm, Hà Nội', 58);
-  if (/long biên|long bien/i.test(enrichedAddr))           return getBase(70_000_000,  'Long Biên, Hà Nội', 58);
-  if (/hà đông|ha dong/i.test(enrichedAddr))               return getBase(60_000_000,  'Hà Đông, Hà Nội', 57);
-  if (/gia lâm|gia lam/i.test(enrichedAddr))               return getBase(55_000_000,  'Gia Lâm, Hà Nội', 55);
-  if (/đông anh|dong anh/i.test(enrichedAddr))             return getBase(50_000_000,  'Đông Anh, Hà Nội', 55);
+  if (/long biên|long bien/i.test(enrichedAddr))           return getBase(80_000_000,  'Long Biên, Hà Nội', 58);
+  if (/hà đông|ha dong/i.test(enrichedAddr))               return getBase(70_000_000,  'Hà Đông, Hà Nội', 57);
+  if (/gia lâm|gia lam/i.test(enrichedAddr))               return getBase(65_000_000,  'Gia Lâm, Hà Nội', 55);
+  if (/đông anh|dong anh/i.test(enrichedAddr))             return getBase(60_000_000,  'Đông Anh, Hà Nội', 55);
   if (/hà nội|hanoi|ha noi/i.test(enrichedAddr))           return getBase(110_000_000, 'Hà Nội (trung bình)', 52);
 
   // ── Đà Nẵng (TP trực thuộc TW) ───────────────────────────────────────────

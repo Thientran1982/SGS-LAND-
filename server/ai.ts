@@ -1173,6 +1173,7 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
         formula: string;
         incomeApproach?: import('./valuationEngine').IncomeApproachResult;
         reconciliation?: { compsWeight: number; incomeWeight: number; compsValue: number; incomeValue: number; finalValue: number };
+        isRealtime: boolean;
     }> {
         try {
             // ── STEP 1: Google Search grounding → get RAW market text data ──────────
@@ -1207,6 +1208,7 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
             const isLandType = resolvedPTypeForSearch.startsWith('land_');
             const isIndustrialOrWarehouse = resolvedPTypeForSearch === 'warehouse' || resolvedPTypeForSearch === 'land_industrial';
             const isOffPlan = resolvedPTypeForSearch === 'project';
+            const isApartmentType = resolvedPTypeForSearch === 'apartment_center' || resolvedPTypeForSearch === 'apartment_suburb' || resolvedPTypeForSearch === 'penthouse';
 
             // ── Type-specific search hints ─────────────────────────────────────
             const typeSpecificSaleHint = isIndustrialOrWarehouse
@@ -1217,6 +1219,8 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
                 ? `- Tập trung: giá bán sơ cấp (chủ đầu tư) và thứ cấp (chuyển nhượng) của các dự án căn hộ tại "${address}"\n- Ưu tiên: giá thứ cấp thực tế > giá chủ đầu tư công bố\n- Nguồn: batdongsan.com.vn, cafeland.vn, onehousing.vn`
                 : resolvedPTypeForSearch === 'office'
                 ? `- Tập trung: giá thuê văn phòng (USD/m²/tháng) và giá chuyển nhượng mặt bằng thương mại\n- Phân loại: hạng A/B/C theo tiêu chuẩn CBRE/JLL\n- Nguồn: JLL Vietnam, Savills Vietnam Office Market, CBRE Vietnam ${currentYear}`
+                : isApartmentType
+                ? `- Tham chiếu căn hộ chuẩn: Sổ Hồng/Sổ Đỏ, 2 phòng ngủ, 60-80m², tầng trung (5-15), nội thất cơ bản — KHÔNG phải nhà phố\n- ƯU TIÊN: Giá thứ cấp (chuyển nhượng thực tế) > giá sơ cấp (chủ đầu tư công bố)\n- Giá sàn VNĐ/m² căn hộ = tổng giá bán / diện tích thông thủy\n- Nguồn: batdongsan.com.vn, onehousing.vn, cafeland.vn, CBRE/Savills Vietnam Residential Report ${currentYear}`
                 : `- Loại tham chiếu: ${pTypeLabelSearch} — pháp lý Sổ Hồng, lộ giới 4m chuẩn, 60-100m²\n- Nguồn: batdongsan.com.vn, cafeland.vn, cen.vn, alonhadat.com, onehousing.vn, CBRE/Savills/JLL Vietnam ${currentYear}`;
 
             // ── PARALLEL DUAL SEARCH: dedicated sale search + dedicated rental search ──
@@ -1363,7 +1367,20 @@ Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
                 required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors"]
             };
 
-            const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}
+            // Reference description for extraction prompt — must match the property type's pricing convention
+            const extractRefDescription = isApartmentType
+                ? `căn hộ chuẩn (Sổ Hồng, 2PN, 60-80m², tầng trung 5-15, nội thất cơ bản) — ĐÂY LÀ GIÁ CĂN HỘ, không phải nhà phố`
+                : isOffPlan
+                ? `căn hộ dự án thứ cấp (Sổ Hồng/hợp đồng mua bán, 60-80m²) — ưu tiên giá chuyển nhượng thực tế`
+                : isLandType && !isIndustrialOrWarehouse
+                ? `đất thổ cư/nông nghiệp (VNĐ/m² đất — KHÔNG tính công trình)`
+                : isIndustrialOrWarehouse
+                ? `kho xưởng/đất KCN (VNĐ/m² hoặc USD/m²/tháng — đổi về VNĐ/m² tổng giá trị)`
+                : resolvedPTypeForSearch === 'office'
+                ? `mặt bằng văn phòng/thương mại (VNĐ/m² hoặc USD/m²/tháng × 25,000 × diện tích)`
+                : `nhà phố/đất thổ cư tham chiếu chuẩn (Sổ Hồng, hẻm 4m, 60-100m²)`;
+
+            const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | ${isApartmentType ? 'Tầng/căn hộ' : 'Lộ giới: ' + roadWidth + 'm'} | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}
 
 DỮ LIỆU THỊ TRƯỜNG VỪA TRA CỨU (2 nguồn song song — giá bán + giá thuê):
 ${marketContext}
@@ -1371,9 +1388,9 @@ ${marketContext}
 TRÍCH XUẤT CHÍNH XÁC:
 
 GIÁ BÁN (từ phần DỮ LIỆU GIÁ BÁN):
-- priceMin, priceMedian, priceMax: Khoảng giá giao dịch thực tế 1m² của BĐS tham chiếu chuẩn (Sổ Hồng, hẻm 4m, 60-100m²) tại "${address}".
+- priceMin, priceMedian, priceMax: Khoảng giá giao dịch thực tế 1m² của ${extractRefDescription} tại "${address}".
   Đơn vị: VNĐ/m² (150000000 = 150 triệu/m²). Nếu chỉ có 1 con số → priceMin = priceMax = priceMedian.
-  QUAN TRỌNG: Giá cơ sở tham chiếu 4m (AVM tự điều chỉnh Kd/Kp/Ka sau).
+  QUAN TRỌNG: Đây là giá cơ sở — AVM sẽ tự điều chỉnh hệ số tầng/hướng/mặt tiền/tuổi nhà sau.
 - sourceCount: Đếm số nguồn độc lập cung cấp dữ liệu giá bán.
 - dataRecency: Dữ liệu từ năm nào? current_year / last_year / older.
 - confidence: 95-99 nếu có giao dịch thực tế đa nguồn; 85-94 nếu chỉ rao bán; <85 nếu ít data.
@@ -1393,12 +1410,12 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
 - locationFactors: 2-3 yếu tố VĨ MÔ KHU VỰC (KHÔNG lặp pháp lý/lộ giới/diện tích).`;
 
             // Use Flash for extraction — Pro hits 503 under load; Flash is fast + reliable for structured JSON
-            let extractResponse: Awaited<ReturnType<typeof getAiClient>['models']['generateContent']>;
+            let extractText: string = '{}';
             {
                 let extractAttempts = 0;
                 while (true) {
                     try {
-                        extractResponse = await getAiClient().models.generateContent({
+                        const resp = await getAiClient().models.generateContent({
                             model: GENAI_CONFIG.MODELS.WRITER,
                             contents: extractPrompt,
                             config: {
@@ -1407,6 +1424,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                                 responseSchema: extractSchema
                             }
                         });
+                        extractText = resp.text || '{}';
                         break;
                     } catch (retryErr: any) {
                         extractAttempts++;
@@ -1419,7 +1437,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 }
             }
 
-            const aiData = JSON.parse(extractResponse.text || '{}');
+            const aiData = JSON.parse(extractText);
 
             // ── Statistical price triple → use median as primary ──────────────────
             let priceMin: number    = aiData.priceMin    || 0;
@@ -1595,6 +1613,14 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 furnishing:    advanced?.furnishing as any,
             });
 
+            // Estimate regional growth rate for fallback chart (not flat-zero)
+            const addrFallback = address.toLowerCase();
+            const fallbackGrowthPct =
+                /quận 1|hoàn kiếm|ba đình|quận 3|quận 7|phú mỹ hưng|thảo điền|vinhome/i.test(addrFallback) ? 8
+                : /hcm|hồ chí minh|saigon|sài gòn|hà nội|hanoi|đà nẵng|da nang/i.test(addrFallback) ? 7
+                : /bình dương|thuận an|dĩ an|đồng nai|biên hòa|nha trang|đà lạt|phú quốc|hạ long|bắc ninh/i.test(addrFallback) ? 6
+                : 5;
+
             return {
                 basePrice: regional.price,
                 pricePerM2: avmResult.pricePerM2,
@@ -1604,7 +1630,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 rangeMax: avmResult.rangeMax,
                 confidence: avmResult.confidence,
                 marketTrend: avmResult.marketTrend,
-                trendGrowthPct: 0,
+                trendGrowthPct: fallbackGrowthPct,
                 factors: avmResult.factors,
                 coefficients: avmResult.coefficients,
                 formula: avmResult.formula,
