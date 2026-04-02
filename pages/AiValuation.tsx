@@ -25,6 +25,57 @@ const ICONS = {
     X: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
 };
 
+// ─── AUTO-DETECT PROPERTY TYPE FROM ADDRESS / FREE-TEXT ───────────────────────
+// Phân tích văn bản địa chỉ để tự nhận dạng loại BĐS.
+// Ưu tiên: keyword mạnh (căn hộ, biệt thự) → keyword yếu (đất, nhà)
+function detectPropertyTypeFromText(text: string): string | null {
+    const t = text.toLowerCase();
+    // Penthouse (priority over apartment)
+    if (/penthouse|ph\s/i.test(t)) return 'penthouse';
+    // Apartment — project names + generic keywords
+    if (/căn hộ|chung cư|apartment|vinhome|vinhomes|the sun|masteri|diamond|icon|botanica|river gate|gateway|sky |sunrise|estella|flora|richstar|sky garden|block [a-z]\d|tầng \d{2,}|p\d+\.\d+|m\d+\.\d+|imperia|celadon|akari|westgate|waterpoint|one |eaton|picity|tecco|goldmark|mipec|times city|season avenue|d'capitale/i.test(t))
+        return 'apartment_center';
+    if (/căn hộ ngoại|chung cư ngoại|căn hộ huyện|căn hộ bình dương|căn hộ đồng nai|căn hộ long an/i.test(t))
+        return 'apartment_suburb';
+    // Villa
+    if (/biệt thự|villa\b|resort villa|compound villa/i.test(t)) return 'villa';
+    // Shophouse
+    if (/shophouse|shop house|nhà phố thương mại|mặt bằng kinh doanh/i.test(t)) return 'shophouse';
+    // Warehouse / industrial
+    if (/kho xưởng|nhà xưởng|warehouse|factory|xưởng sản xuất|logistics|kho hàng|kho lạnh/i.test(t)) return 'warehouse';
+    // Office
+    if (/văn phòng|office|tòa nhà vp|building vp/i.test(t)) return 'office';
+    // Land types
+    if (/đất nông nghiệp|đất rẫy|đất vườn|đất ao|đất ruộng|đất canh tác/i.test(t)) return 'land_agricultural';
+    if (/đất kcn|khu công nghiệp|industrial park/i.test(t)) return 'land_industrial';
+    if (/đất ngoại thành|đất huyện|đất ngoại ô|đất bình chánh|đất nhà bè|đất hóc môn|đất củ chi/i.test(t)) return 'land_suburban';
+    if (/lô đất|đất nền|đất thổ cư|đất mặt tiền|đất sổ|đất ở/i.test(t)) return 'land_urban';
+    // Off-plan project
+    if (/dự án|off.plan|chưa bàn giao|off plan|căn hộ hình thành|nhà hình thành/i.test(t)) return 'project';
+    // Townhouse
+    if (/nhà phố ngoại|nhà ngoại thành|nhà huyện|nhà liền kề/i.test(t)) return 'townhouse_suburb';
+    if (/nhà phố|nhà mặt tiền|nhà mặt phố|nhà phố nội|townhouse/i.test(t)) return 'townhouse_center';
+    return null; // no detection
+}
+
+// Tên hiển thị loại BĐS (cho badge trên form)
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+    apartment_center:  '🏢 Căn hộ nội đô',
+    apartment_suburb:  '🏬 Căn hộ ngoại ô',
+    penthouse:         '💎 Penthouse',
+    villa:             '🏰 Biệt thự',
+    shophouse:         '🏪 Shophouse',
+    warehouse:         '🏭 Kho / Xưởng',
+    office:            '🏢 Văn phòng',
+    land_agricultural: '🌾 Đất nông nghiệp',
+    land_industrial:   '🏗️ Đất KCN',
+    land_suburban:     '🌿 Đất ngoại thành',
+    land_urban:        '🗺️ Đất thổ cư',
+    project:           '📐 Off-plan',
+    townhouse_suburb:  '🏡 Nhà phố ngoại thành',
+    townhouse_center:  '🏘️ Nhà phố nội đô',
+};
+
 // --- GUEST QUOTA ---
 const GUEST_DAILY_LIMIT = 3;
 const GUEST_LS_KEY = 'sgs_guest_val';
@@ -90,6 +141,7 @@ export const AiValuation: React.FC = () => {
     const [roadWidth, setRoadWidth] = useState<string>('');
     const [legal, setLegal] = useState<'PINK_BOOK' | 'CONTRACT' | 'WAITING'>('PINK_BOOK');
     const [propertyType, setPropertyType] = useState<string>('townhouse_center');
+    const [autoDetectedType, setAutoDetectedType] = useState<string | null>(null); // null = user hasn't changed
     // Advanced AVM inputs (Kfl, Kdir, Kmf, Kfurn)
     const [direction, setDirection] = useState<string>('');
     const [frontageWidth, setFrontageWidth] = useState<string>('');
@@ -383,15 +435,21 @@ export const AiValuation: React.FC = () => {
                             <div className="pl-3 md:pl-6 shrink-0 text-slate-400 flex items-center justify-center">{ICONS.SEARCH}</div>
                             <input 
                                 value={address}
-                                onChange={(e) => setAddress(e.target.value)}
+                                onChange={(e) => { setAddress(e.target.value); setAutoDetectedType(null); }}
                                 className="flex-1 min-w-0 bg-transparent border-none outline-none text-white placeholder:text-[var(--text-tertiary)] text-base md:text-lg h-14"
-                                placeholder="Nhập địa chỉ BĐS..."
-                                onKeyDown={(e) => e.key === 'Enter' && address && setStep('DETAILS')}
+                                placeholder="Nhập địa chỉ hoặc tên BĐS... (vd: Căn hộ Vinhomes Q.Bình Thạnh)"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && address) {
+                                        const detected = detectPropertyTypeFromText(address);
+                                        if (detected) { setPropertyType(detected); setAutoDetectedType(detected); }
+                                        setStep('DETAILS');
+                                    }
+                                }}
                                 autoFocus
                             />
                             {address && (
                                 <button 
-                                    onClick={() => setAddress('')}
+                                    onClick={() => { setAddress(''); setAutoDetectedType(null); }}
                                     className="shrink-0 text-slate-400 hover:text-white transition-colors p-1.5 rounded-full hover:bg-slate-700 flex items-center justify-center"
                                     title={t('common.clear_search')}
                                 >
@@ -399,7 +457,11 @@ export const AiValuation: React.FC = () => {
                                 </button>
                             )}
                             <button 
-                                onClick={() => setStep('DETAILS')}
+                                onClick={() => {
+                                    const detected = detectPropertyTypeFromText(address);
+                                    if (detected) { setPropertyType(detected); setAutoDetectedType(detected); }
+                                    setStep('DETAILS');
+                                }}
                                 disabled={!address}
                                 className="shrink-0 bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold px-4 md:px-8 h-14 rounded-full transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm md:text-base"
                             >
@@ -467,11 +529,25 @@ export const AiValuation: React.FC = () => {
                             </div>
 
                             <div className="space-y-6">
-                                {/* Address Readonly */}
+                                {/* Address Readonly + Auto-Detect Badge */}
                                 <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700 flex items-center gap-3">
                                     <div className="text-emerald-500">{ICONS.SEARCH}</div>
-                                    <div className="flex-1 truncate text-slate-300 font-medium">{address}</div>
-                                    <button onClick={() => setStep('ADDRESS')} className="text-xs font-bold text-emerald-400 hover:underline">Sửa</button>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="truncate text-slate-300 font-medium">{address}</div>
+                                        {autoDetectedType && (
+                                            <div className="flex items-center gap-1.5 mt-1">
+                                                <span className="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-bold">
+                                                    ✨ Tự nhận dạng: {PROPERTY_TYPE_LABELS[autoDetectedType] ?? autoDetectedType}
+                                                </span>
+                                                <button
+                                                    onClick={() => setAutoDetectedType(null)}
+                                                    className="text-xs text-slate-500 hover:text-slate-300"
+                                                    title="Xoá nhận dạng tự động"
+                                                >✕</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button onClick={() => { setStep('ADDRESS'); setAutoDetectedType(null); }} className="text-xs font-bold text-emerald-400 hover:underline shrink-0">Sửa</button>
                                 </div>
 
                                 {/* Inputs */}
