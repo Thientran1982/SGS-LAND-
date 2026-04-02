@@ -447,7 +447,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     {view === 'REGISTER' ? t('auth.register_title') : view.startsWith('FORGOT') ? t('auth.reset_title') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_title') : t('auth.welcome')}
                 </h1>
                 <p className="text-gray-400 text-sm leading-relaxed max-w-sm animate-enter" style={{animationDelay: '0.1s'}}>
-                    {view === 'REGISTER' ? t('auth.register_subtitle') : view.startsWith('FORGOT') ? t('auth.reset_subtitle') : view === 'VERIFY_EMAIL' ? t('auth.verify_email_subtitle') : t('auth.login_subtitle')}
+                    {view === 'REGISTER' ? t('auth.register_subtitle') : 
+                     view === 'FORGOT_VERIFY' && !tokenFromUrl ? (t('auth.check_email_subtitle') || 'Chúng tôi đã gửi link tới hộp thư của bạn.') :
+                     view === 'FORGOT_VERIFY' && tokenFromUrl ? (t('auth.new_pass_subtitle') || 'Đặt mật khẩu mới cho tài khoản của bạn.') :
+                     view === 'FORGOT_REQUEST' ? t('auth.reset_subtitle') :
+                     view === 'VERIFY_EMAIL' ? t('auth.verify_email_subtitle') : t('auth.login_subtitle')}
                 </p>
             </div>
 
@@ -549,33 +553,32 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {/* --- FORGOT PASSWORD VERIFY STEP --- */}
                 {view === 'FORGOT_VERIFY' && (
                     <>
-                        {!tokenFromUrl && (
-                        <div className="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20 mb-4 animate-enter">
-                            <p className="text-xs text-indigo-200">{t('auth.otp_sent_msg')} <span className="font-bold text-white block mt-1 text-sm">{email}</span></p>
-                            <p className="text-xs3 text-indigo-300 mt-2 leading-relaxed">{t('auth.otp_instruction')}</p>
-                        </div>
-                        )}
-                        {tokenFromUrl ? (
+                        {!tokenFromUrl ? (
+                            /* Waiting for user to click email link — no form needed */
+                            <div className="bg-indigo-500/10 p-5 rounded-2xl border border-indigo-500/20 animate-enter text-center space-y-3">
+                                <div className="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto">
+                                    <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                </div>
+                                <p className="text-sm font-bold text-white">{t('auth.check_email_title') || 'Kiểm tra hộp thư'}</p>
+                                <p className="text-xs text-indigo-200 leading-relaxed">
+                                    {t('auth.check_email_body') || 'Chúng tôi đã gửi link đặt lại mật khẩu đến'} <span className="font-bold text-white">{email}</span>.<br/>
+                                    {t('auth.check_email_instruction') || 'Nhấn vào link trong email để tiếp tục.'}
+                                </p>
+                                <p className="text-xs2 text-indigo-300/60">{t('auth.check_email_spam') || 'Không thấy email? Hãy kiểm tra thư mục Spam.'}</p>
+                            </div>
+                        ) : (
+                            /* Token from URL — valid link, show new password form */
                             <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 animate-enter flex items-center gap-2">
                                 <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 <p className="text-xs2 text-emerald-300">Liên kết đặt lại mật khẩu hợp lệ. Vui lòng nhập mật khẩu mới bên dưới.</p>
                                 <input type="hidden" value={otp} readOnly />
                             </div>
-                        ) : (
-                        <div className="space-y-1.5 group">
-                            <label htmlFor="auth-otp" className="text-xs3 font-bold uppercase tracking-wider ml-1 text-gray-400">{t('auth.security_token')}</label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-3.5 text-white/35"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg></span>
-                                <input id="auth-otp" value={otp} onChange={e => setOtp(e.target.value)} className={getInputClass(!!fieldErrors.otp)} placeholder={t('auth.placeholder_otp')} autoComplete="one-time-code" aria-describedby={fieldErrors.otp ? 'err-otp' : undefined} />
-                            </div>
-                            {fieldErrors.otp && <p id="err-otp" className="text-xs2 text-rose-400 ml-1">{fieldErrors.otp}</p>}
-                        </div>
                         )}
                     </>
                 )}
 
                 {/* --- PASSWORD INPUT --- */}
-                {(view !== 'FORGOT_REQUEST' && !isSsoMode) && (
+                {(view !== 'FORGOT_REQUEST' && !isSsoMode && !(view === 'FORGOT_VERIFY' && !tokenFromUrl)) && (
                     <div className="space-y-1.5 group">
                         <div className="flex justify-between ml-1 items-center">
                             <label htmlFor="auth-password" className="text-xs3 font-bold uppercase tracking-wider text-gray-400">
@@ -647,6 +650,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </div>
                 )}
 
+                {!(view === 'FORGOT_VERIFY' && !tokenFromUrl) && (
                 <button 
                     type="submit" 
                     disabled={loading} 
@@ -659,6 +663,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         t('auth.btn_login')
                     )}
                 </button>
+                )}
             </form>
 
             {/* ACTION FOOTER */}
