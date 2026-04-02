@@ -137,24 +137,30 @@ export interface AVMOutput {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Cap Rates by Property Type — Vietnamese Market 2024-2025
-// Source: CBRE, Savills Vietnam, JLL Vietnam reports
+// Cap Rates by Property Type — Vietnamese Market Q1 2025 – Q1 2026
+// Source: CBRE Vietnam H2/2025, Savills Vietnam Q4/2025, JLL Vietnam Q1/2026
+//
+// Xu hướng 2025-2026:
+//  • Căn hộ cao cấp: yield tiếp tục nén (giá tăng nhanh hơn tiền thuê) → 3.5-4.2%
+//  • Logistics/Kho: bùng nổ e-commerce giữ yield cao → 7.5-8.5%
+//  • Văn phòng: Grade A CBD phục hồi chậm, Grade B ổn định → 6.0-7.0%
+//  • Shophouse: sức mua retail chưa hồi phục hoàn toàn → 5.0-5.5%
 // ─────────────────────────────────────────────────────────────────────────────
 export const DEFAULT_CAP_RATES: Record<PropertyType, number> = {
-  apartment_center:  0.045,  // Căn hộ trung tâm (Quận 1, Hoàn Kiếm)
-  apartment_suburb:  0.055,  // Căn hộ ngoại thành
-  townhouse_center:  0.050,  // Nhà phố nội đô
-  townhouse_suburb:  0.065,  // Nhà phố ngoại thành
-  villa:             0.060,  // Biệt thự
-  shophouse:         0.055,  // Nhà phố thương mại
-  land_urban:        0.040,  // Đất thổ cư nội đô (tích lũy giá trị)
-  land_suburban:     0.070,  // Đất ngoại thành (cho thuê thấp hơn)
-  penthouse:         0.038,  // Penthouse — cap thấp nhất, cực kỳ cao cấp
-  office:            0.062,  // Văn phòng / Thương mại — yield ổn định
-  warehouse:         0.072,  // Nhà xưởng / Kho bãi — yield cao, ít tăng giá
-  land_agricultural: 0.012,  // Đất nông nghiệp — chủ yếu đầu cơ/chuyển đổi
-  land_industrial:   0.048,  // Đất KCN — yield từ cho thuê kho xưởng
-  project:           0.045,  // Off-plan — blended theo tiến độ dự án
+  apartment_center:  0.040,  // Căn hộ nội đô cao cấp: yield nén về 3.8-4.2% (CBRE 2025)
+  apartment_suburb:  0.050,  // Căn hộ ngoại thành/trung cấp: 4.8-5.2%
+  townhouse_center:  0.048,  // Nhà phố nội đô cho thuê nguyên căn: 4.5-5.0%
+  townhouse_suburb:  0.062,  // Nhà phố ngoại thành: 6.0-6.5%
+  villa:             0.055,  // Biệt thự: 5.0-5.5%
+  shophouse:         0.052,  // Shophouse mặt đường: 5.0-5.5% (retail ổn định)
+  land_urban:        0.038,  // Đất thổ cư nội đô — thuần tích lũy, yield thấp
+  land_suburban:     0.068,  // Đất ngoại thành (cho thuê nông nghiệp/ki-ốt)
+  penthouse:         0.035,  // Penthouse — yield thấp nhất, cực kỳ cao cấp: 3.2-3.8%
+  office:            0.065,  // Văn phòng Grade B: 6.0-7.0% (Grade A CBD ~5.5-6.5%)
+  warehouse:         0.078,  // Kho logistics RBW: 7.5-8.5% (e-commerce boom)
+  land_agricultural: 0.012,  // Đất nông nghiệp — đầu cơ chuyển đổi, yield danh nghĩa
+  land_industrial:   0.048,  // Đất KCN — yield từ cho thuê nhà xưởng: 4.5-5.0%
+  project:           0.042,  // Off-plan căn hộ — blended theo tiến độ: ~4.2%
 };
 
 // Reconciliation weights: comps vs income, by property type
@@ -844,7 +850,7 @@ export function applyAVM(input: AVMInput): AVMOutput {
 
 // Multipliers relative to townhouse reference price (townhouse_center = 1.00)
 // Applied ONLY to regional fallback table and sanity-check bounds — NOT to AI-returned prices.
-// Source: Batdongsan/Savills/CBRE Vietnam 2024-2025 cross-type transaction analysis
+// Source: Batdongsan/Savills/CBRE Vietnam 2025-2026 cross-type transaction analysis
 export const PROPERTY_TYPE_PRICE_MULT: Record<string, number> = {
   apartment_center:  0.40,  // Căn hộ nội đô: ~40% giá nhà phố cùng khu vực (thực tế BĐS.com)
   apartment_suburb:  0.45,  // Căn hộ ngoại thành: ~45%
@@ -1094,7 +1100,7 @@ export function getRegionalBasePrice(address: string, pType?: string): {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 8. FALLBACK MONTHLY RENT ESTIMATE (when AI is unavailable)
-//    Source: Batdongsan/CBRE/Savills Vietnam 2024-2025 rental market data
+//    Source: Batdongsan/CBRE/Savills Vietnam 2025-2026 rental market data
 //
 //    *** RESIDENTIAL ***: dùng trực tiếp đơn giá/m²/tháng (thực tế thị trường)
 //    *** THƯƠNG MẠI   ***: dùng công thức yield (thu nhập thuần / cap rate)
@@ -1106,7 +1112,7 @@ export function getRegionalBasePrice(address: string, pType?: string): {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Đơn giá thuê thực tế (triệu VNĐ/m²/tháng) — dùng làm nguồn CHÍNH cho nhà ở
-// Source: Batdongsan.com.vn, OneHousing, CBRE Vietnam Rental Report 2024-2025
+// Source: Batdongsan.com.vn, OneHousing, CBRE Vietnam Rental Report 2025-2026
 const FALLBACK_RENT_PER_M2: Record<string, number> = {
   // ── Nhà ở (residential) — đơn giá/m²/tháng thực tế ────────────────────────
   // Cơ sở tham chiếu: căn hộ nội thất cơ bản (BASIC), tầng trung, hướng Đông

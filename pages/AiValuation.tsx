@@ -272,17 +272,23 @@ export const AiValuation: React.FC = () => {
             return Math.round(totalPrice * (1 + margin));
         })();
 
-        // Chart: simulate 12 months around total price in billions
+        // Chart: model-estimated price trend for last 12 months
+        // Note: Không có API dữ liệu lịch sử giao dịch thực tế.
+        // Dữ liệu được mô phỏng từ xu hướng thị trường & AVM để minh hoạ biến động khu vực.
         const baseBillion = totalPrice / 1_000_000_000;
-        // Trend direction from marketTrend string
         const isBullish = /tăng|tăng mạnh|tốt/i.test(aiResult.marketTrend || '');
         const isBearish = /giảm|giảm mạnh/i.test(aiResult.marketTrend || '');
         const trend = isBullish ? 0.007 : isBearish ? -0.005 : 0.002; // monthly drift
-        const chartData = Array.from({ length: 12 }, (_, i) => ({
-            month: `T${i + 1}`,
-            // Start from 11 months ago, drift toward current price
-            price: Number((baseBillion * (1 - (11 - i) * trend + (Math.random() - 0.5) * 0.04)).toFixed(3))
-        }));
+        // Generate actual calendar month labels: last 12 months up to today
+        const now = new Date();
+        const chartData = Array.from({ length: 12 }, (_, i) => {
+            const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+            const monthLabel = `T${d.getMonth() + 1}/${String(d.getFullYear()).slice(2)}`;
+            return {
+                month: monthLabel,
+                price: Number((baseBillion * (1 - (11 - i) * trend + (Math.random() - 0.5) * 0.03)).toFixed(3))
+            };
+        });
 
         setValuation({
             price: totalPrice,
@@ -865,7 +871,7 @@ export const AiValuation: React.FC = () => {
                                         {[
                                             { label: 'Tiền thuê/tháng', value: `${valuation.incomeApproach.monthlyRent.toFixed(1)} Tr`, hint: 'Ước tính thị trường' },
                                             { label: 'Thu nhập ròng/năm', value: `${valuation.incomeApproach.noi.toFixed(1)} Tr`, hint: 'Sau khấu trống & chi phí vận hành' },
-                                            { label: 'Tỷ suất vốn hóa', value: `${(valuation.incomeApproach.capRate * 100).toFixed(1)}%`, hint: 'Thị trường VN 2024-25' },
+                                            { label: 'Tỷ suất vốn hóa', value: `${(valuation.incomeApproach.capRate * 100).toFixed(1)}%`, hint: 'Thị trường VN 2025-26' },
                                             { label: 'Thời gian hoàn vốn', value: `${valuation.incomeApproach.paybackYears.toFixed(1)} năm`, hint: 'Theo NOI hiện tại' },
                                         ].map((item, i) => (
                                             <div key={i} className="px-4 py-3 text-center">
@@ -891,12 +897,15 @@ export const AiValuation: React.FC = () => {
 
                         {/* Chart Simulation */}
                         <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-sm relative">
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-center mb-2">
                                 <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest">Lịch sử biến động giá khu vực</h3>
                                 <span className="bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1 rounded-full border border-emerald-500/20 font-medium">
                                     {valuation.marketTrend}
                                 </span>
                             </div>
+                            <p className="text-slate-600 text-xs mb-5 italic">
+                                ⚠ Dữ liệu mô phỏng từ AVM — chưa có API lịch sử giao dịch thực tế. Chỉ mang tính minh hoạ xu hướng.
+                            </p>
                             <div className="h-[300px] w-full relative">
                                 <ResponsiveContainer width="100%" height="100%" minHeight={250} minWidth={250}>
                                     <AreaChart data={valuation.chartData}>
