@@ -1399,9 +1399,19 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
             const aiData = JSON.parse(extractResponse.text || '{}');
 
             // ── Statistical price triple → use median as primary ──────────────────
-            const priceMin: number    = aiData.priceMin    || 0;
-            const priceMedian: number = aiData.priceMedian || 0;
-            const priceMax: number    = aiData.priceMax    || 0;
+            let priceMin: number    = aiData.priceMin    || 0;
+            let priceMedian: number = aiData.priceMedian || 0;
+            let priceMax: number    = aiData.priceMax    || 0;
+
+            // AUTO-CORRECT UNIT CONFUSION: AI sometimes returns price in "triệu" scale
+            // (e.g. 150 meaning 150 triệu/m²) instead of VNĐ (150_000_000).
+            // Any real estate value < 10,000 VNĐ/m² is impossible (even agri land ≥ 3M/m²)
+            // so if the value looks like it's in triệu scale, multiply by 1,000,000.
+            const autoCorrectPrice = (p: number): number => (p > 0 && p < 10_000) ? p * 1_000_000 : p;
+            priceMin    = autoCorrectPrice(priceMin);
+            priceMedian = autoCorrectPrice(priceMedian);
+            priceMax    = autoCorrectPrice(priceMax);
+
             const rawAiPrice: number  = priceMedian || priceMin || priceMax || 0;
 
             // Price spread ratio — wider spread = less data precision
@@ -1423,7 +1433,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
 
             // ── Sanity check against property-type-aware regional baseline ────────
             // Critical fix: pass propertyType so apartments get type-adjusted baseline
-            const { getRegionalBasePrice } = await import('./valuationEngine');
+            const { getRegionalBasePrice, estimateFallbackRent: getFallbackRent } = await import('./valuationEngine');
             const resolvedPropertyType = (propertyType || aiData.propertyTypeEstimate || 'townhouse_center') as import('./valuationEngine').PropertyType;
             const regional = getRegionalBasePrice(address, resolvedPropertyType);
             const regionRef = regional.price;
@@ -1440,6 +1450,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 // AI price is implausible — blend 60% regional + 40% AI as a guard
                 marketBasePrice = Math.round(regionRef * 0.60 + rawAiPrice * 0.40);
                 sanityBlended = true;
+                logger.warn(`[Valuation AI] Price sanity fail: rawAI=${(rawAiPrice/1e6).toFixed(0)}M, regional=${(regionRef/1e6).toFixed(0)}M, blended=${(marketBasePrice/1e6).toFixed(0)}M`);
             } else if (rawAiPrice === 0) {
                 // No AI price found — fall back to regional baseline entirely
                 marketBasePrice = regionRef;
@@ -1458,12 +1469,25 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
             const marketTrend = aiData.marketTrend || 'Đang cập nhật';
             const locationFactors = aiData.locationFactors || [];
 
-            // Use rentMedian as primary income approach input (more precise than single estimate)
-            const rentMedian: number = aiData.rentMedian || aiData.rentMin || 0;
-            const monthlyRent: number = rentMedian;
+            // ── Rent sanity check ─────────────────────────────────────────────────
+            // AI-derived rent in triệu/tháng for the property (full area).
+            // Sanity: 0.001–15 triệu/m²/month covers all types (agri → penthouse).
+            // If outside this range → AI likely returned wrong unit (USD/m²/month without converting,
+            // or per-m² value instead of total, or VNĐ instead of triệu) → use type-specific fallback.
+            let aiRentMedian: number = aiData.rentMedian || aiData.rentMin || 0;
+            if (aiRentMedian > 0) {
+                const rentPerM2 = aiRentMedian / Math.max(1, area);
+                if (rentPerM2 < 0.001 || rentPerM2 > 15) {
+                    // Out-of-range: use deterministic fallback instead
+                    const estimatedTotal = marketBasePrice * area;
+                    aiRentMedian = getFallbackRent(estimatedTotal, resolvedPropertyType, area);
+                    logger.warn(`[Valuation AI] Rent sanity fail (${rentPerM2.toFixed(4)} tr/m²/th) → fallback ${aiRentMedian.toFixed(1)} tr/th`);
+                }
+            }
+            const monthlyRent: number = aiRentMedian;
 
             // ── STEP 3: Apply AVM (Comps) + Income Approach + Reconciliation ──────
-            // Use user-provided monthlyRent override if given, otherwise use AI estimate
+            // User-provided monthlyRent override is already in triệu/tháng (frontend sends raw triệu)
             const effectiveRent = (advanced?.monthlyRent && advanced.monthlyRent > 0)
                 ? advanced.monthlyRent
                 : (monthlyRent > 0 ? monthlyRent : undefined);

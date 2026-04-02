@@ -190,7 +190,7 @@ export const AiValuation: React.FC = () => {
             ...(furnishing && { furnishing }),
             ...(floorLevel && !isNaN(parseFloat(floorLevel)) && { floorLevel: parseFloat(floorLevel) }),
             ...(buildingAge && !isNaN(parseFloat(buildingAge)) && { buildingAge: parseFloat(buildingAge) }),
-            ...(monthlyRent && !isNaN(parseFloat(monthlyRent)) && { monthlyRent: parseFloat(monthlyRent) * 1_000_000 }),
+            ...(monthlyRent && !isNaN(parseFloat(monthlyRent)) && { monthlyRent: parseFloat(monthlyRent) }),
         };
         try {
             aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal, propertyType, advancedParams);

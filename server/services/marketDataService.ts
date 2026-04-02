@@ -202,7 +202,7 @@ async function fetchLightMarketPrice(
   location: string,
   pType: string = 'townhouse_center',
 ): Promise<{ priceMedian: number; priceMin: number; priceMax: number; trend: string; confidence: number; rentMedian: number; sourceCount: number; dataRecency: string }> {
-  const { Type, Schema } = await import('@google/genai');
+  const { Type } = await import('@google/genai');
   const year  = new Date().getFullYear();
   const month = new Date().toLocaleString('vi-VN', { month: 'long', timeZone: 'Asia/Ho_Chi_Minh' });
 

@@ -79,9 +79,16 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
         marketBasePrice = typeAdjustedPrice;
         aiConfidence = cacheEntry.confidence;
         marketTrend = cacheEntry.marketTrend;
-        monthlyRent = cacheEntry.monthlyRentEstimate;
+        // Cache stores rent estimate for 60m² reference property.
+        // Scale to actual area: if area≠60, adjust proportionally.
+        // Cap at 5× reference to prevent extreme outliers.
+        if (cacheEntry.monthlyRentEstimate && cacheEntry.monthlyRentEstimate > 0) {
+          const CACHE_RENT_REF_AREA = 60; // m² the cache rent was computed for
+          const areaScale = Math.min(5, areaNum / CACHE_RENT_REF_AREA);
+          monthlyRent = Math.round(cacheEntry.monthlyRentEstimate * areaScale * 10) / 10;
+        }
         marketDataSource = cacheEntry.source;
-        logger.info(`[Valuation] Cache hit: ${cacheEntry.pricePerM2 / 1_000_000}tr/m² → type-adjusted ${typeAdjustedPrice / 1_000_000}tr/m² (×${cacheTypeMult} for ${resolvedPropertyType})`);
+        logger.info(`[Valuation] Cache hit: ${cacheEntry.pricePerM2 / 1_000_000}tr/m² → type-adjusted ${typeAdjustedPrice / 1_000_000}tr/m² (×${cacheTypeMult} for ${resolvedPropertyType}), rent scaled ${(cacheEntry.monthlyRentEstimate||0).toFixed(1)}→${(monthlyRent||0).toFixed(1)}tr/th`);
       } else {
         // Fallback to full AI call
         try {
