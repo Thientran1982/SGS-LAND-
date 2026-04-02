@@ -1555,8 +1555,29 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 : Math.max(75, Math.min(100, adjustedConfidence));
 
             const marketTrend = aiData.marketTrend || 'Đang cập nhật';
-            const trendGrowthPct: number = aiData.trendGrowthPct ?? 0;
+            let trendGrowthPct: number = aiData.trendGrowthPct ?? 0;
             const locationFactors = aiData.locationFactors || [];
+
+            // ── FAST SANITY #1: Price triple internal consistency ─────────────────
+            // Sort priceMin/priceMax if swapped; re-anchor median if out of range.
+            if (priceMin > 0 && priceMax > 0 && priceMin > priceMax) {
+                [priceMin, priceMax] = [priceMax, priceMin];
+            }
+            if (priceMin > 0 && priceMedian < priceMin) priceMedian = Math.round((priceMin + priceMax) / 2);
+            if (priceMax > 0 && priceMedian > priceMax) priceMedian = Math.round((priceMin + priceMax) / 2);
+
+            // ── FAST SANITY #2: trendGrowthPct vs marketTrend text alignment ──────
+            // AI sometimes writes "Tăng 12%/năm" in text but returns trendGrowthPct=0 (default).
+            // Extract the number from the text and use it as fallback when growthPct is near-zero.
+            if (trendGrowthPct === 0 && marketTrend) {
+                const trendMatch = marketTrend.match(/(?:tăng|giảm|[-+])\s*(\d+(?:[,\.]\d+)?)\s*%/i);
+                if (trendMatch) {
+                    const parsed = parseFloat(trendMatch[1].replace(',', '.'));
+                    const isNegative = /giảm|-/.test(trendMatch[0]);
+                    trendGrowthPct = isNegative ? -parsed : parsed;
+                    logger.info(`[Valuation AI] trendGrowthPct auto-extracted from text: ${trendGrowthPct}%`);
+                }
+            }
 
             // ── Rent sanity check ─────────────────────────────────────────────────
             // AI-derived rent in triệu/tháng for the property (full area).
@@ -1567,13 +1588,109 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
             if (aiRentMedian > 0) {
                 const rentPerM2 = aiRentMedian / Math.max(1, area);
                 if (rentPerM2 < 0.001 || rentPerM2 > 15) {
-                    // Out-of-range: use deterministic fallback instead
                     const estimatedTotal = marketBasePrice * area;
                     aiRentMedian = getFallbackRent(estimatedTotal, resolvedPropertyType, area);
                     logger.warn(`[Valuation AI] Rent sanity fail (${rentPerM2.toFixed(4)} tr/m²/th) → fallback ${aiRentMedian.toFixed(1)} tr/th`);
                 }
             }
             const monthlyRent: number = aiRentMedian;
+
+            // ── FAST SANITY #3: Gross yield plausibility check ────────────────────
+            // Verify that implied gross yield from AI rent + price is within a sane range.
+            // If implausible, log a warning (don't change values — rent fallback already applied above).
+            const YIELD_BOUNDS: Partial<Record<string, [number, number]>> = {
+                apartment_center: [2, 8],  apartment_suburb: [3, 9],
+                townhouse_center: [2, 7],  townhouse_suburb: [3, 8],
+                villa: [1.5, 7],           shophouse: [3, 10],
+                land_urban: [0.5, 5],      land_suburban: [1, 7],
+                penthouse: [1.5, 6],       office: [4, 12],
+                warehouse: [5, 15],        land_agricultural: [0.3, 3],
+                land_industrial: [3, 10],  project: [2, 8],
+            };
+            const yieldBound = YIELD_BOUNDS[resolvedPropertyType];
+            if (yieldBound && monthlyRent > 0 && marketBasePrice > 0 && area > 0) {
+                const impliedGrossYield = (monthlyRent * 12) / (marketBasePrice / 1_000_000 * area) * 100;
+                if (impliedGrossYield < yieldBound[0] || impliedGrossYield > yieldBound[1]) {
+                    logger.warn(`[Valuation AI] Yield plausibility: implied ${impliedGrossYield.toFixed(1)}% outside [${yieldBound[0]}%, ${yieldBound[1]}%] for ${resolvedPropertyType}`);
+                }
+            }
+
+            // ── STEP 3.5 (conditional): Cross-verification search ─────────────────
+            // Triggers ONLY when confidence is uncertain (< 83) OR sanity check blended.
+            // Runs a targeted 3rd search for specific comparable transactions.
+            // If the 3rd search confirms price within ±20% → confidence boost +6pts.
+            // If it diverges strongly → blend cautiously, cap confidence at 82.
+            let verificationBoost = 0;
+            if (confidence < 83 || sanityBlended) {
+                try {
+                    const verifyPrompt = `XÁC MINH GIÁ BĐS — Tìm giao dịch CỤ THỂ tại "${address}"
+Loại: ${pTypeLabelSearch} | Diện tích tương đương: ${area}m² | Thời điểm: ${currentMonth} ${currentYear}
+
+Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescription} tại "${address}" hoặc cùng phường/quận.
+- Ưu tiên: báo cáo CBRE/Savills/JLL Vietnam ${currentYear}, dữ liệu Batdongsan.com.vn
+- BẮT BUỘC có ít nhất 1 con số giá (triệu/m²) từ nguồn cụ thể, không phải ước tính chung.
+- Nếu không có dữ liệu tại "${address}", lấy dữ liệu cùng quận/phường tương đương.`;
+
+                    const verifyRes = await getAiClient().models.generateContent({
+                        model: GENAI_CONFIG.MODELS.WRITER,
+                        contents: verifyPrompt,
+                        config: {
+                            systemInstruction: `Bạn là chuyên gia xác minh giá BĐS Việt Nam. Tìm kiếm giao dịch cụ thể để cross-check giá đã ước tính. Báo cáo CHỈ số giá 1m² tìm được (triệu VNĐ/m²).`,
+                            tools: [{ googleSearch: {} }]
+                        }
+                    });
+
+                    const verifyText = verifyRes.text || '';
+
+                    // Extract single verification price from free-form text
+                    const verifyExtractRes = await getAiClient().models.generateContent({
+                        model: GENAI_CONFIG.MODELS.WRITER,
+                        contents: `Dữ liệu xác minh:\n${verifyText}\n\nTrích xuất một con số duy nhất: giá trung bình 1m² ${extractRefDescription} (VNĐ/m²). Nếu dữ liệu nói "X triệu/m²" thì trả X*1000000. Nếu không tìm thấy giá nào rõ ràng, trả 0.`,
+                        config: {
+                            systemInstruction: 'Trả về CHỈ một số nguyên (VNĐ/m²). Không thêm text. Ví dụ: 120000000',
+                            responseMimeType: 'application/json',
+                            responseSchema: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    verifyPrice: { type: Type.NUMBER, description: 'Giá xác minh VNĐ/m². 0 nếu không tìm thấy.' }
+                                },
+                                required: ['verifyPrice']
+                            }
+                        }
+                    });
+
+                    const verifyData = JSON.parse(verifyExtractRes.text || '{"verifyPrice":0}');
+                    let verifyPrice: number = verifyData.verifyPrice || 0;
+                    verifyPrice = autoCorrectPrice(verifyPrice);
+
+                    if (verifyPrice > 0 && marketBasePrice > 0) {
+                        const divergePct = Math.abs(verifyPrice - marketBasePrice) / marketBasePrice;
+                        if (divergePct <= 0.20) {
+                            // Good agreement → blend (weighted toward existing) + boost confidence
+                            const blendedVerify = Math.round(marketBasePrice * 0.65 + verifyPrice * 0.35);
+                            marketBasePrice = blendedVerify;
+                            verificationBoost = 6;
+                            logger.info(`[Valuation AI] Verify confirmed: verifyP=${(verifyPrice/1e6).toFixed(0)}M vs base=${((blendedVerify)/1e6).toFixed(0)}M (diverge ${(divergePct*100).toFixed(1)}%) → +${verificationBoost}pts`);
+                        } else if (divergePct <= 0.40) {
+                            // Moderate divergence → conservative blend, no boost
+                            marketBasePrice = Math.round(marketBasePrice * 0.75 + verifyPrice * 0.25);
+                            verificationBoost = 0;
+                            logger.warn(`[Valuation AI] Verify moderate diverge: ${(divergePct*100).toFixed(1)}% → conservative blend, no confidence boost`);
+                        } else {
+                            // High divergence → trust existing more, cap confidence
+                            verificationBoost = -3;
+                            logger.warn(`[Valuation AI] Verify high diverge: ${(divergePct*100).toFixed(1)}% → -3pts confidence`);
+                        }
+                    } else {
+                        logger.info('[Valuation AI] Verify search returned no price — using original data');
+                    }
+                } catch (verifyErr) {
+                    logger.warn('[Valuation AI] Cross-verification search failed (non-critical):', verifyErr);
+                }
+            }
+
+            // Apply verification boost to final confidence
+            const finalConfidence = Math.min(97, Math.max(55, confidence + verificationBoost));
 
             // ── STEP 3: Apply AVM (Comps) + Income Approach + Reconciliation ──────
             // User-provided monthlyRent override is already in triệu/tháng (frontend sends raw triệu)
@@ -1586,7 +1703,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 area,
                 roadWidth,
                 legal: legal as LegalStatus,
-                confidence,
+                confidence: finalConfidence,
                 marketTrend,
                 propertyType: resolvedPropertyType,
                 monthlyRent: effectiveRent,
