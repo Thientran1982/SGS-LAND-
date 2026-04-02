@@ -1210,8 +1210,10 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
             const isOffPlan = resolvedPTypeForSearch === 'project';
             const isApartmentType = resolvedPTypeForSearch === 'apartment_center' || resolvedPTypeForSearch === 'apartment_suburb' || resolvedPTypeForSearch === 'penthouse';
 
-            const isVilla     = resolvedPTypeForSearch === 'villa';
-            const isShophouse = resolvedPTypeForSearch === 'shophouse';
+            const isVilla             = resolvedPTypeForSearch === 'villa';
+            const isShophouse         = resolvedPTypeForSearch === 'shophouse';
+            const isTownhouseCenter   = resolvedPTypeForSearch === 'townhouse_center';
+            const isTownhouseSuburb   = resolvedPTypeForSearch === 'townhouse_suburb';
 
             // ── Type-specific search hints ─────────────────────────────────────
             const typeSpecificSaleHint = isIndustrialOrWarehouse
@@ -1228,7 +1230,11 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
                 ? `- Tham chiếu biệt thự chuẩn: Sổ Hồng, đường ô tô 6-12m, diện tích 200-500m² đất, có sân vườn/hồ bơi\n- Giá tính trên m² đất (đất + công trình); không dùng m² sàn xây dựng\n- Phân khúc: biệt thự đơn lập / song lập / liền kề có sân; KHÔNG phải nhà phố thông thường\n- Nguồn: batdongsan.com.vn, cen.vn, savills.com.vn, CBRE Vietnam Residential ${currentYear}`
                 : isShophouse
                 ? `- Tham chiếu shophouse chuẩn: Sổ Hồng, mặt đường chính 8-20m, tầng trệt kinh doanh, 60-120m² sàn\n- Giá phản ánh giá trị thương mại: vị trí mặt tiền đường lớn, tầng 1 cho thuê kinh doanh\n- KHÔNG nhầm với nhà phố trong hẻm — shophouse luôn mặt đường ô tô chính\n- Nguồn: batdongsan.com.vn, cen.vn, savills.com.vn, CBRE Vietnam Commercial ${currentYear}`
-                : `- Loại tham chiếu: ${pTypeLabelSearch} — pháp lý Sổ Hồng, lộ giới 4m chuẩn, 60-100m²\n- Nguồn: batdongsan.com.vn, cafeland.vn, cen.vn, alonhadat.com, onehousing.vn, CBRE/Savills/JLL Vietnam ${currentYear}`;
+                : isTownhouseCenter
+                ? `- Tham chiếu nhà phố nội đô chuẩn: Sổ Hồng, đường xe hơi 6-12m, 60-120m² sàn, 3-5 tầng\n- Phân khúc: nhà phố liền thổ trung tâm thành phố, đường ô tô thông thoáng — KHÔNG phải nhà hẻm nhỏ dưới 4m\n- Giá tính theo m² đất (thổ cư, Sổ Hồng); nhà phố nội đô cao hơn ngoại thành 40-100%\n- Nguồn: batdongsan.com.vn, cafeland.vn, cen.vn, onehousing.vn, CBRE/Savills Vietnam Residential ${currentYear}`
+                : isTownhouseSuburb
+                ? `- Tham chiếu nhà phố ngoại thành chuẩn: Sổ Hồng, hẻm 3-6m hoặc đường nội bộ, 60-120m², 2-3 tầng\n- Phân khúc: nhà phố/liền kề vùng ven, khu đô thị mới, huyện ngoại thành — giá thấp hơn nội đô 40-60%\n- Giá tính theo m² đất thổ cư; không tính đất nông nghiệp hoặc đất phân lô\n- Nguồn: batdongsan.com.vn, cafeland.vn, mogi.vn, alonhadat.com, CBRE/Savills Vietnam ${currentYear}`
+                : `- Loại tham chiếu: ${pTypeLabelSearch} — pháp lý Sổ Hồng, 60-100m²\n- Nguồn: batdongsan.com.vn, cafeland.vn, cen.vn, alonhadat.com, onehousing.vn, CBRE/Savills/JLL Vietnam ${currentYear}`;
 
             // ── PARALLEL DUAL SEARCH: dedicated sale search + dedicated rental search ──
             const saleSearchPrompt = `Địa chỉ: "${address}" | Thời điểm: ${currentMonth} ${currentYear} | Loại BĐS: ${pTypeLabelSearch}
@@ -1297,6 +1303,22 @@ Tìm giá thuê dự kiến / tỷ suất sinh lời ước tính tại "${addre
 3. Lịch sử cho thuê của các dự án căn hộ cùng phân khúc gần đây tại "${address}"
 Lưu ý: dự án chưa bàn giao — dùng dữ liệu các dự án tương tự đã bàn giao làm tham chiếu.
 Nguồn: batdongsan.com.vn, onehousing.vn, cafeland.vn`
+                : isTownhouseCenter
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: Nhà phố nội đô
+Tìm giá thuê nhà phố nội đô thực tế tại "${address}":
+1. Giá thuê nguyên căn (triệu VNĐ/tháng) cho nhà phố ${area}m², 3-5 tầng, đường 6-12m — mục đích ở hoặc kinh doanh tầng trệt
+2. Khoảng giá thuê (thấp – cao): phân biệt cho thuê làm văn phòng / nhà ở / mặt bằng kinh doanh
+3. Tỷ suất cho thuê gross yield %/năm (nhà phố nội đô thường 3.5-5%/năm)
+Lưu ý: thuê nguyên căn, không tính thuê từng phòng. Ưu tiên giá thực tế ký hợp đồng.
+Nguồn: batdongsan.com.vn/cho-thue-nha, homedy.com, mogi.vn, muaban.net, nha.com.vn`
+                : isTownhouseSuburb
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: Nhà phố ngoại thành / liền kề vùng ven
+Tìm giá thuê nhà phố ngoại thành thực tế tại "${address}":
+1. Giá thuê nguyên căn (triệu VNĐ/tháng) cho nhà phố/liền kề ${area}m², 2-3 tầng, hẻm 3-6m
+2. Khoảng giá thuê (thấp – cao) thực tế — có nội thất vs trống
+3. Tỷ suất cho thuê gross yield %/năm (nhà phố ngoại thành thường 4.5-6%/năm)
+Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh nhỏ. Không tính nhà trọ hay chia phòng.
+Nguồn: batdongsan.com.vn/cho-thue-nha, homedy.com, mogi.vn, muaban.net`
                 : `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: ${pTypeLabelSearch}
 TÌM KIẾM CHUYÊN BIỆT: Giá THUÊ thực tế
 - ${pTypeLabelSearch} tại "${address}", diện tích ${area}m²
@@ -1345,7 +1367,11 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                 ? `biệt thự (Sổ Hồng, đường 6-12m, 200-500m² đất, có sân vườn) — giá tính trên m² đất gộp công trình`
                 : isShophouse
                 ? `shophouse / nhà phố thương mại (Sổ Hồng, mặt đường chính 8-20m, tầng trệt kinh doanh) — KHÔNG phải nhà phố trong hẻm`
-                : `nhà phố/đất thổ cư tham chiếu chuẩn (Sổ Hồng, hẻm 4m, 60-100m²)`;
+                : isTownhouseCenter
+                ? `nhà phố nội đô (Sổ Hồng, đường xe hơi 6-12m, 60-120m² sàn, 3-5 tầng) — KHÔNG phải nhà hẻm nhỏ dưới 4m`
+                : isTownhouseSuburb
+                ? `nhà phố/liền kề ngoại thành (Sổ Hồng, hẻm 3-6m hoặc đường nội bộ, 60-120m², 2-3 tầng)`
+                : `nhà phố/đất thổ cư tham chiếu (Sổ Hồng, lộ giới 4m, 60-100m²)`;
 
             // ── STEP 2: Extract structured data — statistical multi-point extraction ──
             const extractSchema: Schema = {
