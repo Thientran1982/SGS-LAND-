@@ -197,6 +197,11 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **Regional table**: Bình Dương province entries (Thuận An 55M, Dĩ An 50M, etc.) matched correctly; Nghệ An regex narrowed to avoid false Vĩnh Long matches
 - **Router extraction**: added `valuation_road_width`, `valuation_direction` for AVM precision
 - **Formula string**: includes reconciliation line when income approach active
+- **Progressive Lead Enrichment**: ROUTER auto-updates lead.preferences (budgetMax, regions, propertyTypes, areaMin) from each extraction — DB atomic JSONB merge via `mergePreferences()`
+- **Intent History Tracking**: `_intentHistory` (last 10 intents) stored in preferences; `buildSystemContext` detects behavioral patterns (e.g., "EXPLAIN_LEGAL(3x)")
+- **Lead Analysis Persistence**: LEAD_ANALYST saves `_lastAnalysisSummary` (200 chars) + `_lastAnalysisDate` to lead preferences for cross-session context
+- **Conversation Memory Digest**: when history >12 messages, older messages are scanned for topics (giá cả, pháp lý, tài chính, hợp đồng) and locations — injected as `[TRÍ NHỚ HỘI THOẠI]` in systemContext
+- **`leadRepository.mergePreferences()`**: atomic `COALESCE(preferences, '{}') || $patch` — avoids race conditions on concurrent read-modify-write
 
 ## Entry Points
 

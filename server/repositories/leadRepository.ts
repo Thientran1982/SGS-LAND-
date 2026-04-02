@@ -335,6 +335,15 @@ export class LeadRepository extends BaseRepository {
     });
   }
 
+  async mergePreferences(tenantId: string, id: string, patch: Record<string, any>): Promise<void> {
+    return this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `UPDATE leads SET preferences = COALESCE(preferences, '{}'::jsonb) || $2::jsonb, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid`,
+        [id, JSON.stringify(patch)]
+      );
+    });
+  }
+
   /**
    * Find a lead by a specific social channel ID (zalo, facebook, telegram, ...).
    * e.g. findBySocialId(tenantId, 'zalo', '123456789')

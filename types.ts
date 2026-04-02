@@ -240,6 +240,10 @@ export interface LeadPreferences {
     directions?: string[];
     propertyTypes?: PropertyType[];
     regions?: string[];
+    _intentHistory?: string[];
+    _lastInteraction?: string;
+    _lastAnalysisSummary?: string;
+    _lastAnalysisDate?: string;
 }
 
 export type AmlStatus = 'PENDING' | 'CLEAR' | 'FLAGGED' | 'BLOCKED';

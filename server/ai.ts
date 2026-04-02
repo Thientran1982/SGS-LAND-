@@ -5,6 +5,7 @@ import { applyAVM, getRegionalBasePrice, LegalStatus } from './valuationEngine';
 import { logger } from './middleware/logger';
 import { aiGovernanceRepository } from './repositories/aiGovernanceRepository';
 import { enterpriseConfigRepository } from './repositories/enterpriseConfigRepository';
+import { leadRepository } from './repositories/leadRepository';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -214,10 +215,35 @@ function buildSystemContext(lead: Lead | null): string {
     if (lead.stage)                              parts.push(`Giai đoạn: ${lead.stage}`);
     if (lead.score?.score != null)               parts.push(`Điểm: ${lead.score.score} (${lead.score.grade || '?'})`);
     if (lead.preferences?.budgetMax)             parts.push(`Ngân sách: ${(lead.preferences.budgetMax / 1e9).toFixed(2)} Tỷ`);
-    if (lead.preferences?.regions?.length)       parts.push(`Khu vực: ${lead.preferences.regions.join(', ')}`);
+    if (lead.preferences?.areaMin)               parts.push(`DT tối thiểu: ${lead.preferences.areaMin}m²`);
+    if (lead.preferences?.regions?.length)       parts.push(`Khu vực quan tâm: ${lead.preferences.regions.join(', ')}`);
     if (lead.preferences?.propertyTypes?.length) parts.push(`Loại BĐS: ${lead.preferences.propertyTypes.join(', ')}`);
     if (lead.phone)                              parts.push('SĐT: Có');
     if (lead.email)                              parts.push('Email: Có');
+
+    // Behavioral pattern: phát hiện xu hướng từ lịch sử intent
+    const intentHistory: string[] = lead.preferences?._intentHistory || [];
+    if (intentHistory.length >= 3) {
+        const intentCount: Record<string, number> = {};
+        intentHistory.forEach(i => { intentCount[i] = (intentCount[i] || 0) + 1; });
+        const topIntents = Object.entries(intentCount)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 2)
+            .map(([intent, count]) => `${intent}(${count}x)`);
+        parts.push(`Xu hướng hỏi: ${topIntents.join(', ')}`);
+    }
+
+    // Last analysis summary (nếu có)
+    if (lead.preferences?._lastAnalysisSummary) {
+        parts.push(`Phân tích gần nhất: ${lead.preferences._lastAnalysisSummary}`);
+    }
+
+    if (lead.preferences?._lastInteraction) {
+        const lastDate = new Date(lead.preferences._lastInteraction);
+        const diffDays = Math.floor((Date.now() - lastDate.getTime()) / 86400000);
+        if (diffDays > 0) parts.push(`Lần cuối tương tác: ${diffDays} ngày trước`);
+    }
+
     return parts.join(' | ');
 }
 
@@ -687,7 +713,53 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
             plan.confidence = rawConf > 1 ? Math.max(0, Math.min(1, rawConf / 100)) : Math.max(0, Math.min(1, rawConf));
             const confPct = Math.round(plan.confidence * 100);
             this.updateTrace(state.trace, `→ ${plan.next_step} (conf: ${confPct}%)${entityStr}`, GENAI_CONFIG.MODELS.ROUTER);
-            
+
+            // --- PROGRESSIVE LEAD ENRICHMENT ---
+            // Ghi nhớ dài hạn: tự cập nhật lead.preferences từ mỗi extraction
+            // Lần sau AI sẽ nhớ ngân sách, khu vực, loại BĐS từ hội thoại trước
+            if (state.lead?.id) {
+                try {
+                    const currentPrefs = state.lead.preferences || {};
+                    const updates: Record<string, any> = {};
+                    let hasChange = false;
+
+                    if (ext.budget_max && ext.budget_max !== currentPrefs.budgetMax) {
+                        updates.budgetMax = ext.budget_max;
+                        hasChange = true;
+                    }
+                    if (ext.area_min && ext.area_min !== currentPrefs.areaMin) {
+                        updates.areaMin = ext.area_min;
+                        hasChange = true;
+                    }
+                    if (ext.location_keyword) {
+                        const existingRegions: string[] = currentPrefs.regions || [];
+                        if (!existingRegions.includes(ext.location_keyword)) {
+                            updates.regions = [...existingRegions, ext.location_keyword].slice(-5); // keep last 5
+                            hasChange = true;
+                        }
+                    }
+                    if (ext.property_type) {
+                        const existingTypes: string[] = currentPrefs.propertyTypes || [];
+                        if (!existingTypes.includes(ext.property_type)) {
+                            updates.propertyTypes = [...existingTypes, ext.property_type].slice(-3);
+                            hasChange = true;
+                        }
+                    }
+
+                    // Track intent history for behavioral pattern detection
+                    const intentHistory: string[] = currentPrefs._intentHistory || [];
+                    intentHistory.push(plan.next_step);
+                    updates._intentHistory = intentHistory.slice(-10); // last 10 intents
+                    updates._lastInteraction = new Date().toISOString();
+                    hasChange = true;
+
+                    if (hasChange) {
+                        leadRepository.mergePreferences(state.tenantId, state.lead.id, updates).catch(() => {});
+                        state.lead.preferences = { ...currentPrefs, ...updates };
+                    }
+                } catch { /* non-blocking — enrichment is optional */ }
+            }
+
             return { plan };
         });
 
@@ -872,9 +944,25 @@ Viết ngắn gọn, tiếng Việt, bullet point, sắc bén — tối đa 150 
                 }
             });
 
-            const analysisSnippet = (analysisRes.text || '').slice(0, 100).replace(/\n/g, ' ');
+            const analysisText = analysisRes.text || '';
+            const analysisSnippet = analysisText.slice(0, 100).replace(/\n/g, ' ');
             this.updateTrace(state.trace, `Phân tích: ${analysisSnippet}${analysisSnippet.length >= 100 ? '...' : ''}`, GENAI_CONFIG.MODELS.EXTRACTOR);
-            return { leadAnalysis: analysisRes.text || '' };
+
+            // --- LEAD ANALYSIS PERSISTENCE ---
+            // Lưu kết quả phân tích tâm lý khách vào DB cho lần tương tác sau
+            if (state.lead?.id && analysisText.length > 20) {
+                try {
+                    const summaryLine = analysisText.split('\n').filter(l => l.trim()).slice(0, 2).join('; ').slice(0, 200);
+                    const analysisPatch = {
+                        _lastAnalysisSummary: summaryLine,
+                        _lastAnalysisDate: new Date().toISOString(),
+                    };
+                    leadRepository.mergePreferences(state.tenantId, state.lead.id, analysisPatch).catch(() => {});
+                    state.lead.preferences = { ...(state.lead.preferences || {}), ...analysisPatch };
+                } catch { /* non-blocking */ }
+            }
+
+            return { leadAnalysis: analysisText };
         });
 
         // Node 3: Writer
@@ -1095,12 +1183,41 @@ ${reconcileLine ? reconcileLine + '\n' : ''}Yếu tố: ${valResult.factors.slic
             } catch {}
         }
 
+        // --- CONVERSATION MEMORY DIGEST ---
+        // Khi lịch sử dài (>12 tin), tóm tắt các tin cũ bị cắt bởi slice(-6/-12)
+        // để không mất context hội thoại trước đó
+        let memoryDigest = '';
+        const fullHistory = history || [];
+        if (fullHistory.length > 12) {
+            const olderMessages = fullHistory.slice(Math.max(0, fullHistory.length - 50), -12);
+            const topics = new Set<string>();
+            const mentions: string[] = [];
+            for (const msg of olderMessages) {
+                const text = (msg.content || '').toLowerCase();
+                if (text.includes('giá') || text.includes('tỷ') || text.includes('triệu')) topics.add('giá cả');
+                if (text.includes('pháp lý') || text.includes('sổ')) topics.add('pháp lý');
+                if (text.includes('vay') || text.includes('lãi')) topics.add('tài chính/vay');
+                if (text.includes('hợp đồng') || text.includes('đặt cọc')) topics.add('hợp đồng');
+                if (text.includes('diện tích') || text.includes('m²')) topics.add('diện tích');
+                if (text.includes('phòng ngủ') || text.includes('bedroom')) topics.add('phòng ngủ');
+                const locMatch = text.match(/(quận \d+|q\d+|thủ đức|bình thạnh|nhà bè|gò vấp|tân bình|phú nhuận|bình chánh|hóc môn|long an|bình dương|đồng nai|hà nội|đà nẵng)/i);
+                if (locMatch) mentions.push(locMatch[1]);
+            }
+            if (topics.size > 0 || mentions.length > 0) {
+                const parts: string[] = [];
+                if (topics.size > 0) parts.push(`Đã hỏi về: ${[...topics].join(', ')}`);
+                if (mentions.length > 0) parts.push(`Khu vực nhắc đến: ${[...new Set(mentions)].join(', ')}`);
+                parts.push(`Tổng ${olderMessages.length} tin nhắn trước đó`);
+                memoryDigest = `\n[TRÍ NHỚ HỘI THOẠI]: ${parts.join(' | ')}`;
+            }
+        }
+
         const initialState: AgentState = {
             lead,
             userMessage,
-            history: history || [],
+            history: fullHistory,
             trace: [],
-            systemContext: buildSystemContext(lead),
+            systemContext: buildSystemContext(lead) + memoryDigest,
             finalResponse: "",
             suggestedAction: 'NONE',
             t,
