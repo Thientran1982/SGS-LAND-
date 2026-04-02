@@ -68,6 +68,7 @@ export interface AVMInput {
   furnishing?: 'FULL' | 'BASIC' | 'NONE';  // nội thất
 
   buildingAge?: number;              // tuổi công trình (năm) — 0 = mới xây
+  bedrooms?: number;                 // số phòng ngủ — 0 = studio, 1, 2 (ref), 3, 4+
 
   // Multi-source data
   internalCompsMedian?: number;  // VNĐ/m² from internal comparable listings DB
@@ -512,6 +513,45 @@ export function getKage(buildingAge: number | undefined, propertyType?: Property
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 4f. Hệ số số phòng ngủ (Kbr — Bedroom Count Coefficient)
+//     Standard reference: 2 phòng ngủ (phổ biến nhất, thanh khoản cao nhất)
+//     Chỉ áp dụng với căn hộ/penthouse — không áp dụng cho nhà phố, đất, kho.
+//     Source: Batdongsan transaction data Q1/2026, Savills Vietnam Apartment Market
+// ─────────────────────────────────────────────────────────────────────────────
+export function getKbr(bedrooms: number | undefined, propertyType?: PropertyType): { value: number; label: string; description: string } | null {
+  // Only applies to apartment-type properties
+  if (bedrooms === undefined || bedrooms === null) return null;
+  const pType = propertyType || '';
+  if (!pType.startsWith('apartment') && pType !== 'penthouse' && pType !== 'project') return null;
+
+  if (bedrooms === 0) return {
+    value: 0.95,
+    label: 'Studio (không phòng ngủ)',
+    description: 'Studio: thanh khoản thấp hơn, nhu cầu gia đình giới hạn — -5% vs 2PN chuẩn'
+  };
+  if (bedrooms === 1) return {
+    value: 0.98,
+    label: '1 Phòng ngủ',
+    description: '1PN: phổ biến với nhà đầu tư nhỏ, thấp hơn 2PN chuẩn (-2%)'
+  };
+  if (bedrooms === 2) return {
+    value: 1.00,
+    label: '2 Phòng ngủ (chuẩn)',
+    description: '2PN: loại phòng ngủ tham chiếu thị trường — thanh khoản và nhu cầu cao nhất'
+  };
+  if (bedrooms === 3) return {
+    value: 1.05,
+    label: '3 Phòng ngủ',
+    description: '3PN: căn gia đình cao cấp, khan hiếm hơn, nhu cầu cao từ hộ đa thế hệ (+5%)'
+  };
+  return {
+    value: 1.10,
+    label: `${bedrooms} Phòng ngủ (cao cấp)`,
+    description: `${bedrooms}PN: căn hạng sang/penthouse gia đình, premium cao nhất phân khúc (+10%)`
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Multi-source price blending
 // Combines: AI market research + internal DB comps + cached market index
 // Returns blended price/m² and source breakdown
@@ -686,7 +726,7 @@ function applyIncomeApproach(
 export function applyAVM(input: AVMInput): AVMOutput {
   const {
     marketBasePrice, area, roadWidth, legal, confidence, marketTrend, propertyType, monthlyRent,
-    floorLevel, direction, frontageWidth, furnishing, buildingAge,
+    floorLevel, direction, frontageWidth, furnishing, buildingAge, bedrooms,
     internalCompsMedian, internalCompsCount, cachedMarketPrice, cachedConfidence,
   } = input;
 
@@ -727,17 +767,19 @@ export function applyAVM(input: AVMInput): AVMOutput {
   const Kmf_data = (frontageWidth !== undefined && frontageWidth > 0) ? getKmf(frontageWidth, pType) : null;
   const Kfurn_data = furnishing ? getKfurn(furnishing) : null;
   const Kage_data = (buildingAge !== undefined) ? getKage(buildingAge, pType) : null;
+  const Kbr_data = (bedrooms !== undefined) ? getKbr(bedrooms, pType) : null;
 
   const Kfl = Kfl_data?.value ?? 1.0;
   const Kdir = Kdir_data?.value ?? 1.0;
   const Kmf = Kmf_data?.value ?? 1.0;
   const Kfurn = Kfurn_data?.value ?? 1.0;
   const Kage = Kage_data?.value ?? 1.0;
+  const Kbr = Kbr_data?.value ?? 1.0;
 
   // ── Method 1: AVM/Comps ────────────────────────────────────────
   const safeArea = Math.max(1, area);
   const safeMarketBase = Math.max(0, effectiveBasePrice);
-  const rawPricePerM2 = safeMarketBase * Kd * Kp * Ka * Kfl * Kdir * Kmf * Kfurn * Kage;
+  const rawPricePerM2 = safeMarketBase * Kd * Kp * Ka * Kfl * Kdir * Kmf * Kfurn * Kage * Kbr;
   const pricePerM2 = Math.max(0, Math.round(rawPricePerM2));
   const compsPrice = Math.max(0, Math.round(pricePerM2 * safeArea));
 
@@ -857,6 +899,11 @@ export function applyAVM(input: AVMInput): AVMOutput {
     impact: Math.abs(Math.round((Kage - 1.00) * 100)),
     isPositive: Kage >= 1.00, description: Kage_data.description, type: 'AVM'
   });
+  if (Kbr_data) factors.push({
+    label: Kbr_data.label, coefficient: Kbr,
+    impact: Math.abs(Math.round((Kbr - 1.00) * 100)),
+    isPositive: Kbr >= 1.00, description: Kbr_data.description, type: 'AVM'
+  });
 
   // Multi-source factor
   if (sources && sources.confidenceBoost > 0) {
@@ -882,6 +929,7 @@ export function applyAVM(input: AVMInput): AVMOutput {
   if (Kmf !== 1.0) activeCoeffs.push(`Kmf(${Kmf})`);
   if (Kfurn !== 1.0) activeCoeffs.push(`Kfurn(${Kfurn})`);
   if (Kage !== 1.0) activeCoeffs.push(`Kage(${Kage})`);
+  if (Kbr !== 1.0) activeCoeffs.push(`Kbr(${Kbr})`);
   let formula = `${(effectiveBasePrice / 1_000_000).toFixed(0)} tr/m² × ${activeCoeffs.join(' × ')} = ${(pricePerM2 / 1_000_000).toFixed(0)} tr/m²`;
   if (reconciliation) {
     formula += ` → Hòa giải: Comps(${(reconciliation.compsWeight * 100).toFixed(0)}%) + Thu nhập(${(reconciliation.incomeWeight * 100).toFixed(0)}%) = ${(totalPrice / 1e9).toFixed(2)} Tỷ`;
@@ -899,7 +947,7 @@ export function applyAVM(input: AVMInput): AVMOutput {
     confidenceInterval,
     marketTrend,
     factors,
-    coefficients: { Kd, Kp, Ka, ...(Kfl_data && { Kfl }), ...(Kdir_data && { Kdir }), ...(Kmf_data && { Kmf }), ...(Kfurn_data && { Kfurn }), ...(Kage_data && { Kage }) },
+    coefficients: { Kd, Kp, Ka, ...(Kfl_data && { Kfl }), ...(Kdir_data && { Kdir }), ...(Kmf_data && { Kmf }), ...(Kfurn_data && { Kfurn }), ...(Kage_data && { Kage }), ...(Kbr_data && { Kbr }) },
     formula,
     incomeApproach,
     reconciliation,

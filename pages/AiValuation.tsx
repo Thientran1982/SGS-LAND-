@@ -149,14 +149,17 @@ export const AiValuation: React.FC = () => {
     const [floorLevel, setFloorLevel] = useState<string>('');
     const [monthlyRent, setMonthlyRent] = useState<string>('');
     const [buildingAge, setBuildingAge] = useState<string>('');
+    const [bedrooms, setBedrooms] = useState<number | null>(null);
 
     const isApartment = propertyType.startsWith('apartment') || propertyType === 'penthouse';
+    const isApartmentOrProject = isApartment || propertyType === 'project';
 
     // Live Accuracy Meter — increases as user fills in more details
     const accuracy = (() => {
         let s = 75.12;
         if (area && parseFloat(area) > 0)         s += 5.22;
         if (roadWidth && parseFloat(roadWidth) > 0) s += 4.33;
+        if (isApartmentOrProject && bedrooms !== null) s += 3.50;
         if (direction)                              s += 2.54;
         if (!isApartment && frontageWidth && parseFloat(frontageWidth) > 0) s += 3.34;
         if (isApartment && floorLevel && parseFloat(floorLevel) > 0)        s += 3.34;
@@ -244,6 +247,7 @@ export const AiValuation: React.FC = () => {
             ...(floorLevel && !isNaN(parseFloat(floorLevel)) && { floorLevel: parseFloat(floorLevel) }),
             ...(buildingAge && !isNaN(parseFloat(buildingAge)) && { buildingAge: parseFloat(buildingAge) }),
             ...(monthlyRent && !isNaN(parseFloat(monthlyRent)) && { monthlyRent: parseFloat(monthlyRent) }),
+            ...(bedrooms !== null && isApartmentOrProject && { bedrooms }),
         };
         try {
             aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal, propertyType, advancedParams);
@@ -522,7 +526,7 @@ export const AiValuation: React.FC = () => {
                                 </div>
                                 <div className="mt-2 text-xs text-slate-500">
                                     {accuracy < 99.99
-                                        ? `Điền thêm ${accuracy < 80 ? 'diện tích, lộ giới' : accuracy < 88 ? 'hướng nhà, mặt tiền' : accuracy < 95 ? 'tuổi nhà, nội thất' : 'thuê dự kiến'} để tăng độ chính xác`
+                                        ? `Điền thêm ${accuracy < 80 ? (isApartmentOrProject ? 'diện tích, lộ giới, số phòng ngủ' : 'diện tích, lộ giới') : accuracy < 88 ? (isApartmentOrProject && bedrooms === null ? 'số phòng ngủ, hướng nhà' : 'hướng nhà, mặt tiền') : accuracy < 95 ? 'tuổi nhà, nội thất' : 'thuê dự kiến'} để tăng độ chính xác`
                                         : '✓ Đã đạt độ chính xác tối đa — sẵn sàng định giá!'}
                                 </div>
                             </div>
@@ -704,6 +708,41 @@ export const AiValuation: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
+
+                                {/* ── Số phòng ngủ — chỉ căn hộ / dự án ── */}
+                                {isApartmentOrProject && (
+                                    <div>
+                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
+                                            Số Phòng Ngủ
+                                            <span className="text-emerald-500 ml-1 normal-case font-bold text-[10px]">★ quan trọng với căn hộ</span>
+                                        </label>
+                                        <div className="grid grid-cols-5 gap-2">
+                                            {[
+                                                { value: 0, label: 'Studio' },
+                                                { value: 1, label: '1 PN' },
+                                                { value: 2, label: '2 PN' },
+                                                { value: 3, label: '3 PN' },
+                                                { value: 4, label: '4 PN+' },
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() => setBedrooms(prev => prev === opt.value ? null : opt.value)}
+                                                    className={`py-3 rounded-xl text-xs font-bold transition-all border ${bedrooms === opt.value ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {bedrooms !== null && bedrooms !== 2 && (
+                                            <div className="text-slate-500 text-xs mt-1.5 italic">
+                                                {bedrooms === 0 ? 'Studio: -5% vs 2PN chuẩn' :
+                                                 bedrooms === 1 ? '1PN: -2% vs 2PN chuẩn' :
+                                                 bedrooms === 3 ? '3PN: +5% vs 2PN chuẩn' : '4PN+: +10% vs 2PN chuẩn'}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Hướng nhà */}
                                 <div>

@@ -1155,6 +1155,7 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
         furnishing?: 'FULL' | 'BASIC' | 'NONE';
         monthlyRent?: number;
         buildingAge?: number;
+        bedrooms?: number;
         internalCompsMedian?: number;
         internalCompsCount?: number;
     }): Promise<{
@@ -1534,6 +1535,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 frontageWidth: advanced?.frontageWidth,
                 furnishing:    advanced?.furnishing as any,
                 buildingAge:   advanced?.buildingAge,
+                bedrooms:      advanced?.bedrooms,
                 internalCompsMedian: advanced?.internalCompsMedian,
                 internalCompsCount:  advanced?.internalCompsCount,
             });
