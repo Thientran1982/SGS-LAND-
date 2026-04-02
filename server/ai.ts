@@ -1282,14 +1282,29 @@ Tìm giá thuê shophouse/mặt bằng thương mại thực tế tại "${addre
 2. Giá thuê theo m²/tháng so sánh với khu vực lân cận
 3. Tỷ suất cho thuê gross yield %/năm (shophouse thường 5-8%/năm)
 Nguồn: batdongsan.com.vn/cho-thue-mat-bang, savills.com.vn, JLL Vietnam Retail ${currentYear}`
+                : isApartmentType
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: ${pTypeLabelSearch}
+Tìm giá thuê căn hộ thực tế tại "${address}":
+1. Giá thuê nguyên căn trung bình (triệu VNĐ/tháng) cho căn hộ ${area}m² (${resolvedPTypeForSearch === 'penthouse' ? 'penthouse tầng cao' : '2PN tầng trung'}) tại "${address}"
+2. Khoảng giá thuê (thấp – cao) — phân biệt có nội thất vs trống
+3. Tỷ suất cho thuê gross yield %/năm (căn hộ Việt Nam thường 4-6%/năm)
+Nguồn: batdongsan.com.vn/cho-thue-can-ho, homedy.com, mogi.vn, muaban.net`
+                : isOffPlan
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: Căn hộ dự án
+Tìm giá thuê dự kiến / tỷ suất sinh lời ước tính tại "${address}":
+1. Giá thuê căn hộ tương tự đã bàn giao (triệu VNĐ/tháng) cho ${area}m² khu vực "${address}"
+2. Tỷ suất cho thuê gross yield % ước tính cho dự án căn hộ khu vực này
+3. Lịch sử cho thuê của các dự án căn hộ cùng phân khúc gần đây tại "${address}"
+Lưu ý: dự án chưa bàn giao — dùng dữ liệu các dự án tương tự đã bàn giao làm tham chiếu.
+Nguồn: batdongsan.com.vn, onehousing.vn, cafeland.vn`
                 : `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: ${pTypeLabelSearch}
 TÌM KIẾM CHUYÊN BIỆT: Giá THUÊ thực tế
 - ${pTypeLabelSearch} tại "${address}", diện tích ${area}m²
 - Nguồn: batdongsan.com.vn/cho-thue, homedy.com, muaban.net, nha.com.vn
-1. Giá thuê trung bình/tháng (triệu VNĐ) cho ${pTypeLabelSearch} ${area}m² tại "${address}"
+1. Giá thuê nguyên căn trung bình/tháng (triệu VNĐ) cho ${pTypeLabelSearch} ${area}m² tại "${address}"
 2. Khoảng giá thuê (thấp – cao) thực tế
-3. Tỷ suất cho thuê gross yield %/năm nếu có
-Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
+3. Tỷ suất cho thuê gross yield %/năm (nhà phố thường 3-5%/năm)
+Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê từng phòng.`;
 
             // Run both searches in parallel
             const [saleSearchRes, rentalSearchRes] = await Promise.all([
@@ -1347,7 +1362,7 @@ Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
                     },
                     priceMax: {
                         type: Type.NUMBER,
-                        description: "Giá CAO NHẤT giao dịch thực tế 1m² tìm thấy (VNĐ/m²). Nếu chỉ có 1 số liệu, để bằng priceMedian."
+                        description: `Giá CAO NHẤT giao dịch thực tế 1m² tìm thấy (VNĐ/m²) của ${extractRefDescription}. Nếu chỉ có 1 số liệu, để bằng priceMedian.`
                     },
                     sourceCount: {
                         type: Type.NUMBER,
@@ -1405,7 +1420,7 @@ Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
                 required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors"]
             };
 
-            const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | ${isApartmentType ? 'Tầng/căn hộ' : 'Lộ giới: ' + roadWidth + 'm'} | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}
+            const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | ${(isApartmentType || isOffPlan) ? 'Tầng/căn hộ' : 'Lộ giới: ' + roadWidth + 'm'} | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}
 
 DỮ LIỆU THỊ TRƯỜNG VỪA TRA CỨU (2 nguồn song song — giá bán + giá thuê):
 ${marketContext}
@@ -1423,13 +1438,15 @@ GIÁ BÁN (từ phần DỮ LIỆU GIÁ BÁN):
 - trendGrowthPct: Số %/năm tăng (+) hoặc giảm (-). Ví dụ: "Tăng 10-15%/năm" → trendGrowthPct = 12.
 
 GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
-- rentMin, rentMedian, rentMax: Khoảng giá thuê nguyên căn thực tế (triệu VNĐ/tháng) cho diện tích ${area}m² tại "${address}".
-  Ví dụ: 18 = 18 triệu/tháng. Nếu chỉ 1 con số → cả 3 bằng nhau.
-  QUAN TRỌNG — Quy đổi đơn vị nếu dữ liệu là USD/m²/tháng (thường gặp với kho xưởng, văn phòng, KCN):
+- rentMin, rentMedian, rentMax: Khoảng giá thuê thực tế (triệu VNĐ/tháng) cho diện tích ${area}m² tại "${address}".
+  Ví dụ: 18 = 18 triệu/tháng. Nếu chỉ 1 con số → cả 3 bằng nhau.${(isIndustrialOrWarehouse || resolvedPTypeForSearch === 'office') ? `
+  QUAN TRỌNG — Quy đổi đơn vị USD/m²/tháng (phổ biến với kho xưởng, văn phòng, KCN):
     Công thức: giá (USD/m²/th) × 25,000 VNĐ/USD × ${area} m² ÷ 1,000,000 = triệu VNĐ/tháng
-    Ví dụ: kho 3 USD/m²/th × 25,000 × ${area} ÷ 1,000,000 = ${(area * 3 * 25000 / 1000000).toFixed(1)} tr/th
-    Ví dụ: VP hạng B 12 USD/m²/th × 25,000 × ${area} ÷ 1,000,000 = ${(area * 12 * 25000 / 1000000).toFixed(1)} tr/th
-    Đất nông nghiệp/đất KCN thuê theo năm: chia đều ra tháng, rồi tính toàn bộ ${area}m².
+    Ví dụ kho: 3 USD/m²/th × 25,000 × ${area} ÷ 1,000,000 = ${(area * 3 * 25000 / 1000000).toFixed(1)} tr/th
+    Ví dụ VP hạng B: 12 USD/m²/th × 25,000 × ${area} ÷ 1,000,000 = ${(area * 12 * 25000 / 1000000).toFixed(1)} tr/th` : isLandType ? `
+  Đất nông nghiệp/đất KCN thuê theo năm: quy đổi về triệu VNĐ/tháng cho toàn bộ ${area}m².
+  Ví dụ: đất nông nghiệp thuê 5 triệu/sào/năm, 1 sào = 360m² → ${area}m² × 5/(360×12) = ${(area * 5 / (360 * 12)).toFixed(2)} tr/th.` : `
+  Đơn vị: triệu VNĐ/tháng — KHÔNG dùng USD hoặc VNĐ thô. Ví dụ: 15 = 15 triệu/tháng.`}
 
 - propertyTypeEstimate: Loại BĐS phù hợp nhất.
 - locationFactors: 2-3 yếu tố VĨ MÔ KHU VỰC (KHÔNG lặp pháp lý/lộ giới/diện tích).`;
