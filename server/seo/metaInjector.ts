@@ -14,9 +14,9 @@ const APP_URL = (process.env.APP_URL || 'https://sgsland.vn').replace(/\/$/, '')
 const DEFAULT_IMAGE = `${APP_URL}/og-image.jpg`;
 
 const DEFAULT_META = {
-  title: 'SGS LAND | Phần Mềm Quản Lý Bất Động Sản AI Số 1 Việt Nam',
+  title: 'SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam',
   description:
-    'SGS LAND - Phần mềm quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
+    'SGS LAND - Nền tảng quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
   image: DEFAULT_IMAGE,
   url: APP_URL,
   type: 'website',

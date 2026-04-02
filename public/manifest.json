@@ -1,7 +1,7 @@
 {
-  "name": "SGS LAND - Phần Mềm Quản Lý Bất Động Sản",
+  "name": "SGS LAND - Nền Tảng Quản Lý Bất Động Sản",
   "short_name": "SGS LAND",
-  "description": "Phần mềm quản lý bất động sản thế hệ mới tích hợp AI định giá tự động và CRM đa kênh.",
+  "description": "Nền tảng quản lý bất động sản thế hệ mới tích hợp AI định giá tự động và CRM đa kênh.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FAFAFA",
