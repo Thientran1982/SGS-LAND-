@@ -264,7 +264,7 @@ const ROUTER_SCHEMA: Schema = {
                 loan_rate: { type: Type.NUMBER, description: "Lãi suất (%/năm)" },
                 loan_years: { type: Type.NUMBER, description: "Thời hạn vay (năm)" },
                 marketing_campaign: { type: Type.STRING, description: "Tên chiến dịch/ưu đãi" },
-                contract_type: { type: Type.STRING, description: "Loại hợp đồng (Đặt cọc, Mua bán)" },
+                contract_type: { type: Type.STRING, enum: ['Deposit', 'Sales', 'Lease', 'Broker'], description: "Loại hợp đồng: Deposit (đặt cọc/cọc), Sales (mua bán/HĐMB), Lease (thuê/cho thuê), Broker (môi giới/phí dịch vụ)" },
                 valuation_address: { type: Type.STRING, description: "Địa chỉ BĐS cần định giá" },
                 valuation_area: { type: Type.NUMBER, description: "Diện tích BĐS cần định giá (m²)" },
                 valuation_legal: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'UNKNOWN'], description: "Pháp lý BĐS cần định giá" },
@@ -306,7 +306,9 @@ const TOOL_EXECUTOR = {
                 if (fallback.data.length === 0) return "Hiện tại kho hàng chưa có sản phẩm phù hợp. Vui lòng liên hệ Sales để cập nhật danh sách mới nhất.";
                 const fmt = fallback.data.slice(0, 5).map((l: any, i: number) => {
                     const price = l.price ? `${(l.price / 1e9).toFixed(2)} Tỷ` : 'Liên hệ';
-                    return `${i + 1}. ${l.title || l.code} — ${l.location || 'N/A'} | ${price} | ${l.area || 'N/A'}m² | ${l.type || 'N/A'}`;
+                    const bedroomStr = l.bedrooms ? ` | ${l.bedrooms}PN` : '';
+                    const pricePerM2 = (l.price && l.area) ? ` | ${(l.price / l.area / 1e6).toFixed(0)}Tr/m²` : '';
+                    return `${i + 1}. ${l.title || l.code} — ${l.location || 'N/A'} | ${price}${pricePerM2} | ${l.area || 'N/A'}m²${bedroomStr} | ${l.type || 'N/A'}`;
                 }).join('\n');
                 return `Không tìm thấy đúng tiêu chí, gợi ý gần nhất (${fallback.total} sản phẩm):\n${fmt}`;
             }
@@ -320,7 +322,11 @@ const TOOL_EXECUTOR = {
             const formatted = top.map((l: any, i: number) => {
                 const price = l.price ? `${(l.price / 1e9).toFixed(2)} Tỷ` : 'Liên hệ';
                 const delta = (priceMax && l.price) ? ` (±${Math.abs((l.price - priceMax) / 1e6).toFixed(0)}M)` : '';
-                return `${i + 1}. ${l.title || l.code} — ${l.location || 'N/A'} | ${price}${delta} | ${l.area || 'N/A'}m² | ${l.type || 'N/A'}`;
+                const bedroomStr = l.bedrooms ? ` | ${l.bedrooms}PN` : '';
+                const floorStr = l.floor ? ` | Tầng ${l.floor}` : '';
+                const pricePerM2 = (l.price && l.area) ? ` | ${(l.price / l.area / 1e6).toFixed(0)}Tr/m²` : '';
+                const desc = l.description ? ` — ${l.description.slice(0, 60)}${l.description.length > 60 ? '...' : ''}` : '';
+                return `${i + 1}. ${l.title || l.code} — ${l.location || 'N/A'} | ${price}${delta}${pricePerM2} | ${l.area || 'N/A'}m²${bedroomStr}${floorStr} | ${l.type || 'N/A'}${desc}`;
             }).join('\n');
 
             return `Tìm thấy ${result.total} sản phẩm phù hợp (top 5 gần ngân sách nhất):\n${formatted}`;
@@ -634,6 +640,7 @@ BẢNG PHÂN LOẠI Ý ĐỊNH (10 loại — chọn 1):
 3. CALCULATE_LOAN — Hỏi: vay ngân hàng, trả góp, lãi suất, khả năng vay, tính toán tài chính, vay bao nhiêu được, ân hạn nợ gốc
 4. EXPLAIN_MARKETING — Hỏi: ưu đãi, chiết khấu, khuyến mãi, giảm giá, quà tặng, chính sách bán hàng, brochure, tài liệu, nhận báo giá
 5. DRAFT_CONTRACT — Hỏi: hợp đồng, đặt cọc, thanh lý, điều khoản, phí công chứng, tiến độ thanh toán, môi giới, thuê nhà, cho thuê
+   → contract_type: Deposit (đặt cọc/cọc) | Sales (mua bán/HĐMB/chuyển nhượng) | Lease (thuê/cho thuê/hợp đồng thuê) | Broker (môi giới/phí dịch vụ)
 6. DRAFT_BOOKING — Muốn: đặt lịch, xem thực địa, gặp trực tiếp, hẹn gặp nhân viên, tham quan dự án, booking tour
 7. ANALYZE_LEAD — Yêu cầu: xem hồ sơ khách này, phân tích khách hàng, lead này thế nào, tiềm năng không (dùng nội bộ)
 8. ESTIMATE_VALUATION — Hỏi: nhà/đất của tôi giá bao nhiêu, định giá, ước tính giá trị, giá thị trường nhà tôi, bán được không
@@ -703,12 +710,21 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
             state.trace.push({ id: 'FINANCE', node: 'FINANCE_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
             
-            let principal = extraction.budget_max || parseBudgetFromMessage(state.userMessage) || 2_000_000_000;
-            
+            // Detect explicit loan amount vs total budget:
+            // If user says "vay 2 tỷ" → budget_max = 2 Tỷ (direct loan intent)
+            // If user says "nhà 3 tỷ, vay 70%" → should use 70% of budget
+            // Heuristic: if loan_years or loan_rate present → user is asking about a loan, not searching
+            // Use budget_max as the loan principal (user may say "vay 2 tỷ" → router extracts budget_max: 2e9)
+            const rawAmount = extraction.budget_max || parseBudgetFromMessage(state.userMessage);
+            const isDefaultAmount = !rawAmount;
+            const principal = rawAmount || 2_000_000_000; // 2 Tỷ default sample
+
             const rate = extraction.loan_rate || 8.5;
             const years = extraction.loan_years || 20;
 
             const loanData = await TOOL_EXECUTOR.calculate_loan(principal, rate, years);
+            const totalInterest = Math.round(loanData.monthly * loanData.months - principal);
+            const totalRepay = Math.round(loanData.monthly * loanData.months);
             
             const schedule = [];
             let balance = principal;
@@ -729,15 +745,18 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
                 title: state.t('inbox.loan_title'),
                 data: {
                     monthlyPayment: loanData.monthly,
-                    totalInterest: Math.round(loanData.monthly * loanData.months - principal),
+                    totalInterest,
                     input: { principal, rate: loanData.rate, months: loanData.months },
                     schedule
                 }
             };
             const monthlyFmt = Math.round(loanData.monthly).toLocaleString('vi-VN');
-            this.updateTrace(state.trace, `Vay ${(principal/1e9).toFixed(2)} Tỷ | ${rate}%/năm | ${years} năm → Trả ${monthlyFmt} VNĐ/tháng`);
+            const totalInterestFmt = (totalInterest / 1e9).toFixed(2);
+            const totalRepayFmt = (totalRepay / 1e9).toFixed(2);
+            const defaultNote = isDefaultAmount ? ' (ví dụ minh họa — chưa có số tiền vay cụ thể)' : '';
+            this.updateTrace(state.trace, `Vay ${(principal/1e9).toFixed(2)} Tỷ | ${rate}%/năm | ${years} năm → ${monthlyFmt} VNĐ/tháng${defaultNote}`);
             return { 
-                systemContext: state.systemContext + `\n[LOAN CALCULATION]: Vay ${(principal/1e9).toFixed(2)} Tỷ, lãi ${rate}%/năm, kỳ hạn ${years} năm → Trả hàng tháng: ${monthlyFmt} VNĐ`,
+                systemContext: state.systemContext + `\n[LOAN CALCULATION]${defaultNote}:\nSố tiền vay: ${(principal/1e9).toFixed(2)} Tỷ VNĐ | Lãi suất: ${rate}%/năm | Kỳ hạn: ${years} năm\nTrả hàng tháng: ${monthlyFmt} VNĐ/tháng\nTổng lãi phải trả: ${totalInterestFmt} Tỷ VNĐ | Tổng trả cả gốc lẫn lãi: ${totalRepayFmt} Tỷ VNĐ\nLưu ý: Ngân hàng thường cho vay 70-80% giá trị BĐS. Lãi suất thả nổi sau ưu đãi có thể tăng 9-11%/năm.`,
                 artifact
             };
         });
@@ -757,18 +776,26 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
         graph.addNode('SALES_AGENT', async (state) => {
             state.trace.push({ id: 'SALES', node: 'SALES_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const location = await TOOL_EXECUTOR.get_showroom_location(state.tenantId);
-            const proposedTime = new Date(Date.now() + 86400000);
-            const timeFmt = proposedTime.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+            // Snap booking to next business day at 10:00 AM Vietnam time (Mon-Sat)
+            const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+            const proposed = new Date(now);
+            proposed.setDate(proposed.getDate() + 1); // start from tomorrow
+            proposed.setHours(10, 0, 0, 0);
+            // Skip Sunday (0) — move to Monday
+            if (proposed.getDay() === 0) proposed.setDate(proposed.getDate() + 1);
+
+            const timeFmt = proposed.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
             const artifact: AgentArtifact = {
                 type: 'BOOKING_DRAFT',
                 title: state.t('inbox.booking_title'),
-                data: { time: proposedTime.toISOString(), location, notes: state.userMessage }
+                data: { time: proposed.toISOString(), location, notes: state.userMessage }
             };
-            this.updateTrace(state.trace, `Đặt lịch xem nhà tại: ${location}`);
+            this.updateTrace(state.trace, `Đặt lịch xem nhà tại: ${location} — ${timeFmt}`);
             return {
                 artifact,
                 suggestedAction: 'BOOK_VIEWING',
-                systemContext: state.systemContext + `\n[ĐẶT LỊCH XEM NHÀ]: Đề xuất thời gian: ${timeFmt} | Địa điểm: ${location}`
+                systemContext: state.systemContext + `\n[ĐẶT LỊCH XEM NHÀ]: Đề xuất thời gian: ${timeFmt} (Thứ 2–Thứ 7, 9:00–17:00) | Địa điểm: ${location} | Khách có thể chọn buổi sáng (9-12h) hoặc chiều (14-17h)`
             };
         });
 
