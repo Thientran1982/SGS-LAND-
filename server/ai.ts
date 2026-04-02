@@ -1263,13 +1263,29 @@ Cần tìm:
 ƯU TIÊN: giá giao dịch thực tế > giá rao bán > ước tính khu vực.`;
 
             // Rental search: tailored by type — land has no conventional rent, use yield estimate instead
-            const rentalSearchPrompt = isLandType && !isIndustrialOrWarehouse
-                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear}
-Tìm tỷ suất sinh lời đầu tư đất (land yield) tại khu vực "${address}":
-1. Mức tăng giá trị đất %/năm gần nhất (capital gain)
-2. Thu nhập từ cho thuê đất (nếu có): đất nông nghiệp cho thuê canh tác, đất dịch vụ cho thuê
-3. Giá thuê đất nông nghiệp trung bình (triệu/sào hoặc triệu/m²/năm)
-Nguồn: batdongsan.com.vn, mogi.vn, nhadatviet.com`
+            const rentalSearchPrompt = isLandAgricultural
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: Đất nông nghiệp / Đất vườn
+Tìm tỷ suất sinh lời đầu tư đất nông nghiệp tại khu vực "${address}":
+1. Mức tăng giá trị đất nông nghiệp %/năm gần nhất (capital gain — kỳ vọng chuyển đổi mục đích sử dụng)
+2. Thu nhập từ cho thuê đất nông nghiệp: cho thuê canh tác, trồng cây, đất vườn — (triệu/sào/năm hoặc triệu/m²/năm)
+3. Giá thuê đất nông nghiệp trung bình khu vực "${address}": triệu/sào/năm (1 sào Bắc = 360m², 1 sào Nam = 1000m²)
+Lưu ý: đất nông nghiệp cho thuê canh tác thường rất thấp (0.5-3 triệu/sào/năm) — lợi nhuận chủ yếu từ tăng giá đất.
+Nguồn: batdongsan.com.vn, mogi.vn, nhadatviet.com, cafeland.vn`
+                : isLandUrban
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: Đất thổ cư nội đô
+Tìm thu nhập cho thuê từ đất thổ cư nội đô tại khu vực "${address}":
+1. Mức tăng giá trị đất thổ cư nội đô %/năm (capital gain — đây là nguồn lợi tức chính)
+2. Thu nhập cho thuê mặt bằng kinh doanh / bãi đậu xe / ki-ốt trên lô đất trống ${area}m² (triệu VNĐ/tháng)
+3. Tỷ suất cho thuê gross yield %/năm (đất thổ cư nội đô thường 2-4%/năm — thấp do giá đất cao)
+Lưu ý: đất thổ cư nội đô hiếm khi để trống — lợi tức chủ yếu từ tăng giá đất, không phải thu nhập thuê.
+Nguồn: batdongsan.com.vn/cho-thue-dat, mogi.vn, cafeland.vn, nhadatviet.com`
+                : isLandSuburban
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: Đất thổ cư ngoại thành
+Tìm thu nhập cho thuê từ đất thổ cư ngoại thành tại khu vực "${address}":
+1. Mức tăng giá trị đất thổ cư ngoại thành %/năm gần nhất (capital gain)
+2. Thu nhập cho thuê đất: bãi đậu xe, kho chứa hàng, ki-ốt kinh doanh nhỏ trên lô ${area}m² (triệu VNĐ/tháng)
+3. Tỷ suất cho thuê gross yield %/năm (đất ngoại thành thường 4-7%/năm — cao hơn nội đô do giá đất thấp hơn)
+Nguồn: batdongsan.com.vn/cho-thue-dat, mogi.vn, nhadatviet.com, alonhadat.com`
                 : isIndustrialOrWarehouse
                 ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: ${pTypeLabelSearch}
 Tìm giá thuê kho/xưởng/đất KCN thực tế tại "${address}":
