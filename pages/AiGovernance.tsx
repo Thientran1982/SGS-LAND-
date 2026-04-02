@@ -5,6 +5,7 @@ import { aiService } from '../services/aiService';
 import { AiTenantConfig, PromptTemplate, AiSafetyLog, AiModelType } from '../types';
 import { useTranslation } from '../services/i18n';
 import { Dropdown } from '../components/Dropdown';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface ConfigTabProps {
     config: AiTenantConfig;
@@ -265,12 +266,302 @@ const PromptsTab = memo(({
     </div>
 ));
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RLHF Tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface RlhfStats {
+    totalFeedback: number;
+    positiveCount: number;
+    negativeCount: number;
+    approvalRate: number;
+    byIntent: Array<{ intent: string; positive: number; negative: number; rate: number }>;
+    byNode: Array<{ agentNode: string; positive: number; negative: number; rate: number }>;
+    recentCorrections: Array<{ userMessage: string; aiResponse: string; correction: string; intent: string; createdAt: string }>;
+}
+
+interface RewardSignal {
+    intent: string;
+    positiveCount: number;
+    negativeCount: number;
+    avgScore: number;
+    lastComputed: string;
+    fewShotCache: any[];
+    topExamples: any[];
+    negativePatterns: any[];
+}
+
+const INTENT_LABELS: Record<string, string> = {
+    SEARCH_INVENTORY: 'Tìm BĐS',
+    CALCULATE_LOAN: 'Tính vay',
+    EXPLAIN_LEGAL: 'Pháp lý',
+    DRAFT_BOOKING: 'Đặt cọc',
+    EXPLAIN_MARKETING: 'Marketing',
+    DRAFT_CONTRACT: 'Hợp đồng',
+    ANALYZE_LEAD: 'Phân tích lead',
+    ESTIMATE_VALUATION: 'Định giá',
+    DIRECT_ANSWER: 'Trả lời',
+    GREETING: 'Chào hỏi',
+    UNKNOWN: 'Không xác định',
+};
+
+const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, formatTime }: {
+    stats: RlhfStats | null;
+    signals: RewardSignal[];
+    trends: any[];
+    onRecompute: () => void;
+    isRecomputing: boolean;
+    formatTime: (d: any) => string;
+}) => {
+    const [showCorrections, setShowCorrections] = useState(false);
+    const [expandedSignal, setExpandedSignal] = useState<string | null>(null);
+
+    const approvalColor = (rate: number) => rate >= 80 ? 'text-emerald-600' : rate >= 60 ? 'text-amber-500' : 'text-rose-500';
+    const approvalBg = (rate: number) => rate >= 80 ? 'bg-emerald-500' : rate >= 60 ? 'bg-amber-400' : 'bg-rose-500';
+
+    return (
+        <div className="space-y-6 animate-enter">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                    { label: 'Tổng phản hồi', value: stats?.totalFeedback || 0, icon: '💬', color: 'text-indigo-600' },
+                    { label: 'Tỷ lệ chấp thuận', value: `${stats?.approvalRate || 0}%`, icon: '⭐', color: stats?.approvalRate && stats.approvalRate >= 70 ? 'text-emerald-600' : 'text-amber-500' },
+                    { label: 'Phản hồi tốt', value: stats?.positiveCount || 0, icon: '👍', color: 'text-emerald-600' },
+                    { label: 'Cần cải thiện', value: stats?.negativeCount || 0, icon: '👎', color: 'text-rose-500' },
+                ].map(card => (
+                    <div key={card.label} className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm">
+                        <div className="text-2xl mb-2">{card.icon}</div>
+                        <div className={`text-2xl font-extrabold ${card.color}`}>{card.value}</div>
+                        <div className="text-xs text-[var(--text-tertiary)] mt-1 font-medium">{card.label}</div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Trend Chart + Recompute */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+                    <h3 className="font-bold text-[var(--text-primary)] mb-4 text-sm">Xu hướng phản hồi theo tuần</h3>
+                    {trends.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={180}>
+                            <BarChart data={trends} barSize={16} barGap={2}>
+                                <XAxis dataKey="week" tick={{ fontSize: 10 }} tickFormatter={w => w.slice(5)} />
+                                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                                <Tooltip
+                                    formatter={(val: any, name: string) => [val, name === 'positive' ? 'Tốt' : 'Cần sửa']}
+                                    labelFormatter={l => `Tuần ${l}`}
+                                    contentStyle={{ fontSize: 11, borderRadius: 8 }}
+                                />
+                                <Bar dataKey="positive" name="positive" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="negative" name="negative" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="h-[180px] flex items-center justify-center text-[var(--text-tertiary)] italic text-sm">
+                            Chưa có dữ liệu xu hướng — cần ít nhất 1 tuần phản hồi
+                        </div>
+                    )}
+                </div>
+
+                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm flex flex-col gap-4">
+                    <h3 className="font-bold text-[var(--text-primary)] text-sm">Huấn luyện RLHF</h3>
+                    <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                        Khi nhấn <strong>Tính lại Reward</strong>, hệ thống sẽ tổng hợp tất cả phản hồi tích cực/tiêu cực thành bộ quy tắc few-shot và negative-rule. AI sẽ tự động học từ các phản hồi này trong các cuộc hội thoại tiếp theo.
+                    </p>
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-700 space-y-1">
+                        <div className="font-bold">Kiến trúc RLHF:</div>
+                        <div>① Thu feedback (👍/👎 + sửa lỗi)</div>
+                        <div>② Tính Reward Signal per-intent</div>
+                        <div>③ Inject few-shot vào Writer prompt</div>
+                        <div>④ AI cải thiện tự động theo chu kỳ</div>
+                    </div>
+                    <button
+                        onClick={onRecompute}
+                        disabled={isRecomputing}
+                        className="mt-auto w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow hover:bg-indigo-700 disabled:opacity-60 flex items-center justify-center gap-2 transition-all active:scale-95 text-sm"
+                    >
+                        {isRecomputing ? (
+                            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Đang tính...</>
+                        ) : (
+                            <>🔄 Tính lại Reward Signals</>
+                        )}
+                    </button>
+                    <div className="text-xs text-[var(--text-tertiary)] text-center">Tự động chạy hàng ngày lúc 2:00 SA</div>
+                </div>
+            </div>
+
+            {/* Intent Breakdown */}
+            {(stats?.byIntent || []).length > 0 && (
+                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+                    <h3 className="font-bold text-[var(--text-primary)] mb-4 text-sm">Hiệu suất theo loại yêu cầu (Intent)</h3>
+                    <div className="space-y-3">
+                        {(stats?.byIntent || []).map(item => (
+                            <div key={item.intent} className="flex items-center gap-3">
+                                <div className="w-28 shrink-0">
+                                    <span className="text-xs font-bold text-[var(--text-secondary)]">{INTENT_LABELS[item.intent] || item.intent}</span>
+                                </div>
+                                <div className="flex-1 bg-[var(--glass-surface-hover)] rounded-full h-2 overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all ${approvalBg(item.rate)}`}
+                                        style={{ width: `${item.rate}%` }}
+                                    />
+                                </div>
+                                <div className={`w-12 text-right text-xs font-bold ${approvalColor(item.rate)}`}>{item.rate}%</div>
+                                <div className="w-20 text-right text-xs text-[var(--text-tertiary)]">
+                                    <span className="text-emerald-600">+{item.positive}</span> / <span className="text-rose-500">-{item.negative}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Reward Signals Table */}
+            {signals.length > 0 && (
+                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+                    <h3 className="font-bold text-[var(--text-primary)] mb-4 text-sm">Reward Signals đã tích lũy</h3>
+                    <div className="overflow-x-auto no-scrollbar">
+                        <table className="min-w-full text-xs">
+                            <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)]">
+                                <tr>
+                                    <th className="p-3 text-left rounded-l-lg">Intent</th>
+                                    <th className="p-3 text-center">Tốt / Xấu</th>
+                                    <th className="p-3 text-center">Điểm TB</th>
+                                    <th className="p-3 text-center">Few-shot</th>
+                                    <th className="p-3 text-center">Negative Rules</th>
+                                    <th className="p-3 text-left rounded-r-lg">Cập nhật lần cuối</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[var(--glass-border)]">
+                                {signals.map(sig => {
+                                    const fewShot = Array.isArray(sig.fewShotCache) ? sig.fewShotCache.length : 0;
+                                    const negRules = Array.isArray(sig.negativePatterns) ? sig.negativePatterns.length : 0;
+                                    const isExpanded = expandedSignal === sig.intent;
+                                    return (
+                                        <React.Fragment key={sig.intent}>
+                                            <tr
+                                                className="hover:bg-[var(--glass-surface)] transition-colors cursor-pointer"
+                                                onClick={() => setExpandedSignal(isExpanded ? null : sig.intent)}
+                                            >
+                                                <td className="p-3 font-bold text-[var(--text-secondary)]">{INTENT_LABELS[sig.intent] || sig.intent}</td>
+                                                <td className="p-3 text-center">
+                                                    <span className="text-emerald-600 font-bold">{sig.positiveCount}</span>
+                                                    <span className="text-[var(--text-tertiary)] mx-1">/</span>
+                                                    <span className="text-rose-500 font-bold">{sig.negativeCount}</span>
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    <span className={`font-bold ${approvalColor(Math.round((sig.avgScore + 1) / 2 * 100))}`}>
+                                                        {typeof sig.avgScore === 'number' ? sig.avgScore.toFixed(2) : '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    <span className={`px-2 py-0.5 rounded-full font-bold ${fewShot > 0 ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>
+                                                        {fewShot > 0 ? `${fewShot} mẫu` : '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    <span className={`px-2 py-0.5 rounded-full font-bold ${negRules > 0 ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>
+                                                        {negRules > 0 ? `${negRules} quy tắc` : '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 text-[var(--text-tertiary)] font-mono">
+                                                    {sig.lastComputed ? formatTime(sig.lastComputed) : '—'}
+                                                </td>
+                                            </tr>
+                                            {isExpanded && (sig.topExamples?.length > 0 || sig.negativePatterns?.length > 0) && (
+                                                <tr>
+                                                    <td colSpan={6} className="px-4 pb-4 bg-[var(--glass-surface)]/50">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+                                                            {sig.topExamples?.length > 0 && (
+                                                                <div>
+                                                                    <div className="text-xs font-bold text-emerald-700 mb-2">✅ Mẫu trả lời tốt (Few-shot)</div>
+                                                                    {sig.topExamples.slice(0, 2).map((ex: any, i: number) => (
+                                                                        <div key={i} className="bg-emerald-50 border border-emerald-100 rounded-lg p-2 mb-2">
+                                                                            <div className="text-xs text-[var(--text-tertiary)] mb-1">Khách: <span className="text-[var(--text-secondary)]">{(ex.userMessage || '').slice(0, 100)}</span></div>
+                                                                            <div className="text-xs text-emerald-700">AI: {(ex.aiResponse || '').slice(0, 200)}</div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                            {sig.negativePatterns?.length > 0 && (
+                                                                <div>
+                                                                    <div className="text-xs font-bold text-rose-700 mb-2">⚠️ Lỗi cần tránh (Negative Rules)</div>
+                                                                    {sig.negativePatterns.slice(0, 2).map((p: any, i: number) => (
+                                                                        <div key={i} className="bg-rose-50 border border-rose-100 rounded-lg p-2 mb-2">
+                                                                            <div className="text-xs text-[var(--text-tertiary)] mb-1">Câu hỏi: <span className="text-[var(--text-secondary)]">{(p.userMessage || '').slice(0, 80)}</span></div>
+                                                                            <div className="text-xs text-rose-700">→ Nên sửa: {(p.correction || '').slice(0, 150)}</div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Recent Corrections */}
+            {(stats?.recentCorrections || []).length > 0 && (
+                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-[var(--text-primary)] text-sm">Sửa lỗi gần đây từ người dùng</h3>
+                        <button onClick={() => setShowCorrections(!showCorrections)} className="text-xs text-indigo-600 font-bold">
+                            {showCorrections ? 'Ẩn bớt' : 'Xem tất cả'}
+                        </button>
+                    </div>
+                    <div className="space-y-3">
+                        {(stats?.recentCorrections || []).slice(0, showCorrections ? 20 : 5).map((c, i) => (
+                            <div key={i} className="border border-[var(--glass-border)] rounded-xl overflow-hidden">
+                                <div className="bg-[var(--glass-surface)] px-4 py-2 flex justify-between items-center">
+                                    <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{INTENT_LABELS[c.intent] || c.intent || 'Chung'}</span>
+                                    <span className="text-xs text-[var(--text-tertiary)] font-mono">{formatTime(c.createdAt)}</span>
+                                </div>
+                                <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                    <div>
+                                        <div className="font-bold text-[var(--text-tertiary)] mb-1">💬 Câu hỏi</div>
+                                        <div className="text-[var(--text-secondary)]">{(c.userMessage || '').slice(0, 120)}</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-rose-500 mb-1">❌ AI đã trả lời sai</div>
+                                        <div className="text-[var(--text-secondary)] line-through opacity-60">{(c.aiResponse || '').slice(0, 120)}</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-emerald-600 mb-1">✅ Sửa đúng</div>
+                                        <div className="text-emerald-700">{(c.correction || '').slice(0, 150)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Empty state */}
+            {!stats?.totalFeedback && (
+                <div className="bg-[var(--bg-surface)] p-12 rounded-[24px] border border-[var(--glass-border)] shadow-sm text-center">
+                    <div className="text-5xl mb-4">🤖</div>
+                    <div className="font-bold text-[var(--text-primary)] mb-2">Chưa có dữ liệu huấn luyện</div>
+                    <div className="text-sm text-[var(--text-tertiary)] max-w-sm mx-auto">
+                        Khi người dùng đánh giá câu trả lời AI (👍/👎) trong hộp thư inbox, dữ liệu sẽ tự động xuất hiện ở đây để AI học và cải thiện.
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+});
+
 export const AiGovernance: React.FC = () => {
     const [config, setConfig] = useState<AiTenantConfig | null>(null);
     const [prompts, setPrompts] = useState<PromptTemplate[]>([]);
     const [safetyLogs, setSafetyLogs] = useState<AiSafetyLog[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'CONFIG' | 'PROMPTS' | 'SAFETY'>('CONFIG');
+    const [activeTab, setActiveTab] = useState<'CONFIG' | 'PROMPTS' | 'SAFETY' | 'RLHF'>('CONFIG');
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     
     // Prompts State
@@ -281,11 +572,32 @@ export const AiGovernance: React.FC = () => {
     const [lastEvalRun, setLastEvalRun] = useState<string>('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+    // RLHF State
+    const [rlhfStats, setRlhfStats] = useState<RlhfStats | null>(null);
+    const [rewardSignals, setRewardSignals] = useState<RewardSignal[]>([]);
+    const [feedbackTrends, setFeedbackTrends] = useState<any[]>([]);
+    const [isRecomputing, setIsRecomputing] = useState(false);
+
     const { t, formatTime } = useTranslation();
 
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
+    }, []);
+
+    const fetchRlhfData = useCallback(async () => {
+        try {
+            const [stats, signals, trends] = await Promise.all([
+                db.getFeedbackStats(30),
+                db.getRewardSignals(),
+                db.getFeedbackTrends(90),
+            ]);
+            setRlhfStats(stats);
+            setRewardSignals(signals || []);
+            setFeedbackTrends(trends || []);
+        } catch {
+            // silent
+        }
     }, []);
 
     const fetchData = useCallback(async () => {
@@ -305,6 +617,7 @@ export const AiGovernance: React.FC = () => {
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+    useEffect(() => { if (activeTab === 'RLHF') fetchRlhfData(); }, [activeTab, fetchRlhfData]);
 
     const handleUpdateConfig = useCallback((key: keyof AiTenantConfig, value: any) => {
         if (!config) return;
@@ -368,6 +681,19 @@ export const AiGovernance: React.FC = () => {
         } catch (e) { notify(t('common.error'), 'error'); }
     };
 
+    const handleRecompute = async () => {
+        setIsRecomputing(true);
+        try {
+            await db.recomputeRewards();
+            notify('Đã tính lại Reward Signals thành công — AI sẽ học từ dữ liệu mới!', 'success');
+            await fetchRlhfData();
+        } catch {
+            notify('Lỗi khi tính lại Reward Signals', 'error');
+        } finally {
+            setIsRecomputing(false);
+        }
+    };
+
     if (loading || !config) return <div className="p-10 text-center text-[var(--text-secondary)] font-mono animate-pulse">{t('ai.loading')}</div>;
 
     return (
@@ -379,10 +705,11 @@ export const AiGovernance: React.FC = () => {
                     <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('ai.title')}</h2>
                     <p className="text-sm text-[var(--text-tertiary)]">{t('ai.subtitle')}</p>
                 </div>
-                <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl">
-                    <button onClick={() => setActiveTab('CONFIG')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'CONFIG' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_config')}</button>
-                    <button onClick={() => setActiveTab('PROMPTS')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'PROMPTS' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_prompts')}</button>
-                    <button onClick={() => setActiveTab('SAFETY')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'SAFETY' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_safety')}</button>
+                <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl flex-wrap gap-y-1">
+                    <button onClick={() => setActiveTab('CONFIG')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'CONFIG' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_config')}</button>
+                    <button onClick={() => setActiveTab('PROMPTS')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'PROMPTS' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_prompts')}</button>
+                    <button onClick={() => setActiveTab('SAFETY')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'SAFETY' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_safety')}</button>
+                    <button onClick={() => setActiveTab('RLHF')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'RLHF' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>🧠 RLHF</button>
                 </div>
             </div>
 
@@ -453,6 +780,17 @@ export const AiGovernance: React.FC = () => {
                         </table>
                     </div>
                 </div>
+            )}
+
+            {activeTab === 'RLHF' && (
+                <RlhfTab
+                    stats={rlhfStats}
+                    signals={rewardSignals}
+                    trends={feedbackTrends}
+                    onRecompute={handleRecompute}
+                    isRecomputing={isRecomputing}
+                    formatTime={formatTime}
+                />
             )}
 
             {/* Create Prompt Modal */}

@@ -97,6 +97,44 @@ class AiApiClient {
         return this.fetchApi('/api/ai/governance/feedback', data);
     }
 
+    async getFeedbackStats(days: number = 30): Promise<any> {
+        const response = await fetch(`/api/ai/governance/feedback/stats?days=${days}`, {
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Không thể tải thống kê phản hồi');
+        return response.json();
+    }
+
+    async getRewardSignals(): Promise<any[]> {
+        const response = await fetch('/api/ai/governance/feedback/rewards', {
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Không thể tải reward signals');
+        return response.json();
+    }
+
+    async getFeedbackTrends(days: number = 90): Promise<any[]> {
+        const response = await fetch(`/api/ai/governance/feedback/trends?days=${days}`, {
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Không thể tải xu hướng phản hồi');
+        return response.json();
+    }
+
+    async listFeedback(page: number = 1, intent?: string): Promise<any> {
+        const params = new URLSearchParams({ page: String(page) });
+        if (intent) params.set('intent', intent);
+        const response = await fetch(`/api/ai/governance/feedback/list?${params}`, {
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Không thể tải danh sách phản hồi');
+        return response.json();
+    }
+
+    async recomputeRewards(): Promise<any> {
+        return this.fetchApi('/api/ai/governance/feedback/recompute', {});
+    }
+
     async parseSearchQuery(query: string): Promise<any> {
         const prompt = `
             Bạn là một hệ thống phân tích ngôn ngữ tự nhiên cho công cụ tìm kiếm bất động sản.

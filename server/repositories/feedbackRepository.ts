@@ -233,6 +233,79 @@ class FeedbackRepository extends BaseRepository {
       return this.rowsToEntities(result.rows);
     });
   }
+
+  async getTrends(tenantId: string, days: number = 30): Promise<Array<{
+    week: string;
+    positive: number;
+    negative: number;
+    total: number;
+    approvalRate: number;
+  }>> {
+    return this.withTenant(tenantId, async (client: PoolClient) => {
+      const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+      const result = await client.query(
+        `SELECT
+           TO_CHAR(DATE_TRUNC('week', created_at), 'YYYY-MM-DD') AS week,
+           COUNT(*) FILTER (WHERE rating = 1)::int  AS positive,
+           COUNT(*) FILTER (WHERE rating = -1)::int AS negative,
+           COUNT(*)::int                             AS total
+         FROM ai_feedback
+         WHERE created_at >= $1
+         GROUP BY DATE_TRUNC('week', created_at)
+         ORDER BY week ASC`,
+        [cutoff]
+      );
+      return result.rows.map(r => ({
+        week: r.week,
+        positive: r.positive,
+        negative: r.negative,
+        total: r.total,
+        approvalRate: r.total > 0 ? Math.round((r.positive / r.total) * 100) : 0,
+      }));
+    });
+  }
+
+  async listFeedback(tenantId: string, page: number = 1, pageSize: number = 20, intent?: string): Promise<{
+    data: any[];
+    total: number;
+  }> {
+    return this.withTenant(tenantId, async (client: PoolClient) => {
+      const offset = (page - 1) * pageSize;
+      const conditions: string[] = [];
+      const params: any[] = [];
+      if (intent) {
+        conditions.push(`intent = $${params.length + 1}`);
+        params.push(intent);
+      }
+      const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+      const totalRes = await client.query(
+        `SELECT COUNT(*)::int as total FROM ai_feedback ${where}`,
+        params
+      );
+      const dataRes = await client.query(
+        `SELECT id, rating, correction, agent_node, intent, user_message, ai_response, model, created_at
+         FROM ai_feedback ${where}
+         ORDER BY created_at DESC
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, pageSize, offset]
+      );
+      return {
+        data: this.rowsToEntities(dataRes.rows),
+        total: totalRes.rows[0]?.total || 0,
+      };
+    });
+  }
+
+  async computeAllRewardSignals(tenantId: string): Promise<void> {
+    const INTENTS = [
+      'SEARCH_INVENTORY', 'CALCULATE_LOAN', 'EXPLAIN_LEGAL', 'DRAFT_BOOKING',
+      'EXPLAIN_MARKETING', 'DRAFT_CONTRACT', 'ANALYZE_LEAD', 'ESTIMATE_VALUATION',
+      'DIRECT_ANSWER', 'GREETING', 'UNKNOWN',
+    ];
+    await Promise.all(INTENTS.map(intent =>
+      this.computeRewardSignal(tenantId, intent).catch(() => {})
+    ));
+  }
 }
 
 export const feedbackRepository = new FeedbackRepository();

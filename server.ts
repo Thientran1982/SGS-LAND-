@@ -14,6 +14,7 @@ import { webhookQueue, setupWebhookWorker, processWebhookJob, isQStashEnabled } 
 import { userRepository } from "./server/repositories/userRepository";
 import { listingRepository } from "./server/repositories/listingRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
+import { feedbackRepository } from "./server/repositories/feedbackRepository";
 import { articleRepository } from "./server/repositories/articleRepository";
 import { createLeadRoutes } from "./server/routes/leadRoutes";
 import { createListingRoutes } from "./server/routes/listingRoutes";
@@ -1869,6 +1870,44 @@ async function startServer() {
     }
   });
 
+  // ---------------------------------------------------------------------------
+  // RLHF Internal Scheduled Recompute — gọi từ QStash (cron hàng ngày)
+  // ---------------------------------------------------------------------------
+  app.post("/api/internal/rlhf-recompute", async (req, res) => {
+    try {
+      const secret = req.headers['x-internal-secret'] || req.body?.secret;
+      const configuredSecret = process.env.RLHF_CRON_SECRET || process.env.JWT_SECRET?.slice(0, 32);
+      if (!secret || secret !== configuredSecret) {
+        return res.status(401).json({ error: 'Không có quyền truy cập' });
+      }
+      const tenantId = req.body?.tenantId;
+      if (tenantId && tenantId !== 'all') {
+        logger.info(`[RLHF Cron] Bắt đầu recompute reward signals cho tenant ${tenantId}`);
+        await feedbackRepository.computeAllRewardSignals(tenantId);
+        logger.info(`[RLHF Cron] Đã hoàn thành recompute reward signals cho tenant ${tenantId}`);
+        return res.json({ ok: true, tenantId, recomputedAt: new Date().toISOString() });
+      }
+      // Run for all active tenants
+      logger.info('[RLHF Cron] Bắt đầu recompute reward signals cho tất cả tenants');
+      const tenantsResult = await pool.query(`SELECT id FROM tenants WHERE is_active = true ORDER BY id`);
+      const tenants = tenantsResult.rows.map((r: any) => r.id);
+      const results: Record<string, string> = {};
+      await Promise.allSettled(tenants.map(async (tid: string) => {
+        try {
+          await feedbackRepository.computeAllRewardSignals(tid);
+          results[tid] = 'ok';
+        } catch (e: any) {
+          results[tid] = e.message;
+        }
+      }));
+      logger.info(`[RLHF Cron] Hoàn thành recompute cho ${tenants.length} tenants`);
+      return res.json({ ok: true, tenantCount: tenants.length, results, recomputedAt: new Date().toISOString() });
+    } catch (err: any) {
+      logger.error('[RLHF Cron] Lỗi recompute reward signals:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // Facebook Webhook Verification
   app.get("/api/webhooks/facebook", (req, res) => {
     const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
@@ -2108,8 +2147,43 @@ async function startServer() {
 
   app.use(errorHandler);
 
-  server.listen(PORT, "0.0.0.0", () => {
+  server.listen(PORT, "0.0.0.0", async () => {
     logger.info(`Server running on http://localhost:${PORT}`);
+    // Đăng ký QStash daily schedule cho RLHF recompute
+    if (isQStashEnabled()) {
+      try {
+        const qstashToken = process.env.QSTASH_TOKEN!;
+        const rlhfSecret = process.env.RLHF_CRON_SECRET || process.env.JWT_SECRET?.slice(0, 32) || '';
+        const devDomain = process.env.REPLIT_DEV_DOMAIN;
+        const prodDomain = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
+        const appDomain = prodDomain || devDomain;
+        if (appDomain && rlhfSecret) {
+          const scheduleUrl = `https://${appDomain}/api/internal/rlhf-recompute`;
+          const scheduleId = 'rlhf-daily-recompute';
+          const qstashScheduleEndpoint = `https://qstash.upstash.io/v2/schedules/${scheduleId}`;
+          const body = JSON.stringify({ tenantId: 'all', secret: rlhfSecret });
+          const resp = await fetch(qstashScheduleEndpoint, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${qstashToken}`,
+              'Content-Type': 'application/json',
+              'Upstash-Destination': scheduleUrl,
+              'Upstash-Cron': '0 19 * * *', // 2:00 SA ICT = 19:00 UTC
+              'Upstash-Method': 'POST',
+            },
+            body,
+          });
+          if (resp.ok) {
+            logger.info('[RLHF] Đã đăng ký QStash daily schedule — chạy lúc 2:00 SA ICT');
+          } else {
+            const errText = await resp.text();
+            logger.warn(`[RLHF] Không thể đăng ký QStash schedule: ${resp.status} ${errText}`);
+          }
+        }
+      } catch (e: any) {
+        logger.warn('[RLHF] Lỗi khi đăng ký QStash schedule:', e.message);
+      }
+    }
   });
 
   const shutdown = async (signal: string) => {

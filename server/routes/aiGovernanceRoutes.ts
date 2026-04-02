@@ -176,6 +176,32 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
     }
   });
 
+  router.get('/feedback/trends', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req as any).user?.tenantId;
+      const days = Math.max(7, Math.min(parseInt(req.query.days as string) || 90, 365));
+      const trends = await feedbackRepository.getTrends(tenantId, days);
+      res.json(trends);
+    } catch (error) {
+      console.error('Error fetching feedback trends:', error);
+      res.status(500).json({ error: 'Failed to fetch feedback trends' });
+    }
+  });
+
+  router.get('/feedback/list', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req as any).user?.tenantId;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 100));
+      const intent = req.query.intent as string | undefined;
+      const result = await feedbackRepository.listFeedback(tenantId, page, pageSize, intent);
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching feedback list:', error);
+      res.status(500).json({ error: 'Failed to fetch feedback list' });
+    }
+  });
+
   router.post('/feedback/recompute', authenticateToken, async (req: Request, res: Response) => {
     try {
       const tenantId = (req as any).user?.tenantId;

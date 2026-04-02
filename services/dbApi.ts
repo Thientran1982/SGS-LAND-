@@ -1319,6 +1319,44 @@ class DatabaseApiClient {
     return api.post<{ output: string }>('/api/ai/governance/simulate', { systemPrompt, userInput, model });
   }
 
+  async getFeedbackStats(days: number = 30) {
+    try {
+      return await api.get<any>('/api/ai/governance/feedback/stats', { days });
+    } catch {
+      return { totalFeedback: 0, positiveCount: 0, negativeCount: 0, approvalRate: 0, byIntent: [], byNode: [], recentCorrections: [] };
+    }
+  }
+
+  async getRewardSignals() {
+    try {
+      return await api.get<any[]>('/api/ai/governance/feedback/rewards');
+    } catch {
+      return [];
+    }
+  }
+
+  async getFeedbackTrends(days: number = 90) {
+    try {
+      return await api.get<any[]>('/api/ai/governance/feedback/trends', { days });
+    } catch {
+      return [];
+    }
+  }
+
+  async listFeedback(page: number = 1, intent?: string) {
+    try {
+      const params: any = { page };
+      if (intent) params.intent = intent;
+      return await api.get<any>('/api/ai/governance/feedback/list', params);
+    } catch {
+      return { data: [], total: 0 };
+    }
+  }
+
+  async recomputeRewards() {
+    return api.post<any>('/api/ai/governance/feedback/recompute', {});
+  }
+
   async getMarketplaceApps() {
     return [];
   }
