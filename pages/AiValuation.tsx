@@ -367,6 +367,7 @@ export const AiValuation: React.FC = () => {
         setArea('');
         setRoadWidth('');
         setPropertyType('townhouse_center');
+        setAutoDetectedType(null);
         setDirection('');
         setFrontageWidth('');
         setFurnishing('');
@@ -552,35 +553,73 @@ export const AiValuation: React.FC = () => {
 
                                 {/* Inputs */}
                                 <div className="grid grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Diện Tích (m²)</label>
-                                        <div className="relative">
-                                            <input 
-                                                type="number" 
-                                                value={area}
-                                                onChange={e => setArea(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
-                                                placeholder="50"
-                                                min="1"
-                                                autoFocus
-                                            />
-                                            <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-[var(--text-tertiary)] text-sm">{ICONS.HOME}</div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Lộ Giới (m)</label>
-                                        <div className="relative">
-                                            <input 
-                                                type="number" 
-                                                value={roadWidth}
-                                                onChange={e => setRoadWidth(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
-                                                placeholder="5"
-                                                min="1"
-                                            />
-                                            <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-[var(--text-tertiary)] text-sm">{ICONS.ROAD}</div>
-                                        </div>
-                                    </div>
+                                    {/* ── Diện Tích với placeholder thông minh theo loại ── */}
+                                    {(() => {
+                                        const isLandType = propertyType.startsWith('land_');
+                                        let areaPlaceholder = '50';
+                                        let areaLabel = 'Diện Tích (m²)';
+                                        if (isApartment) { areaPlaceholder = '70'; areaLabel = 'Diện Tích Căn hộ (m²)'; }
+                                        else if (propertyType === 'villa') { areaPlaceholder = '200'; areaLabel = 'Diện Tích Biệt thự (m²)'; }
+                                        else if (propertyType === 'warehouse') { areaPlaceholder = '500'; areaLabel = 'Diện Tích Xưởng / Kho (m²)'; }
+                                        else if (propertyType === 'office') { areaPlaceholder = '100'; areaLabel = 'Diện Tích Sàn VP (m²)'; }
+                                        else if (isLandType) { areaPlaceholder = '200'; areaLabel = 'Diện Tích Đất (m²)'; }
+                                        return (
+                                            <div>
+                                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">{areaLabel}</label>
+                                                <div className="relative">
+                                                    <input 
+                                                        type="number" 
+                                                        value={area}
+                                                        onChange={e => setArea(e.target.value)}
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                        placeholder={areaPlaceholder}
+                                                        min="1"
+                                                        autoFocus
+                                                    />
+                                                    <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-[var(--text-tertiary)] text-sm">{ICONS.HOME}</div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                    {/* ── Lộ Giới với label & placeholder thông minh theo loại ── */}
+                                    {(() => {
+                                        let roadLabel = 'Lộ Giới (m)';
+                                        let roadPlaceholder = '5';
+                                        let roadHint = '';
+                                        if (isApartment) {
+                                            roadLabel = 'Đường vào Tòa Nhà (m)';
+                                            roadPlaceholder = '15';
+                                            roadHint = 'vd: đường 20m';
+                                        } else if (propertyType === 'warehouse') {
+                                            roadLabel = 'Lộ Giới trước Kho (m)';
+                                            roadPlaceholder = '10';
+                                        } else if (propertyType.startsWith('land_')) {
+                                            roadLabel = 'Lộ Giới đường trước (m)';
+                                            roadPlaceholder = '6';
+                                        } else if (propertyType === 'office') {
+                                            roadLabel = 'Lộ Giới đường (m)';
+                                            roadPlaceholder = '20';
+                                        }
+                                        return (
+                                            <div>
+                                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
+                                                    {roadLabel}
+                                                    {roadHint && <span className="text-slate-600 normal-case font-normal ml-1">({roadHint})</span>}
+                                                </label>
+                                                <div className="relative">
+                                                    <input 
+                                                        type="number" 
+                                                        value={roadWidth}
+                                                        onChange={e => setRoadWidth(e.target.value)}
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                        placeholder={roadPlaceholder}
+                                                        min="1"
+                                                    />
+                                                    <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-[var(--text-tertiary)] text-sm">{ICONS.ROAD}</div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 <div>
@@ -616,7 +655,7 @@ export const AiValuation: React.FC = () => {
                                             { id: 'apartment_suburb', label: '🏬 Căn hộ ngoại ô' },
                                             { id: 'penthouse', label: '💎 Penthouse' },
                                         ].map(opt => (
-                                            <button key={opt.id} onClick={() => setPropertyType(opt.id)}
+                                            <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
                                                 {opt.label}
                                             </button>
@@ -631,7 +670,7 @@ export const AiValuation: React.FC = () => {
                                             { id: 'office', label: '🏢 Văn phòng' },
                                             { id: 'warehouse', label: '🏭 Nhà xưởng / Kho' },
                                         ].map(opt => (
-                                            <button key={opt.id} onClick={() => setPropertyType(opt.id)}
+                                            <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
                                                 {opt.label}
                                             </button>
@@ -647,7 +686,7 @@ export const AiValuation: React.FC = () => {
                                             { id: 'land_agricultural', label: '🌾 Đất nông nghiệp' },
                                             { id: 'land_industrial', label: '🏗️ Đất khu công nghiệp' },
                                         ].map(opt => (
-                                            <button key={opt.id} onClick={() => setPropertyType(opt.id)}
+                                            <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
                                                 {opt.label}
                                             </button>
@@ -660,7 +699,7 @@ export const AiValuation: React.FC = () => {
                                         {[
                                             { id: 'project', label: '📐 Dự án / Căn hộ off-plan (chưa bàn giao)' },
                                         ].map(opt => (
-                                            <button key={opt.id} onClick={() => setPropertyType(opt.id)}
+                                            <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
                                                 {opt.label}
                                             </button>
@@ -728,39 +767,62 @@ export const AiValuation: React.FC = () => {
                                     );
                                 })()}
 
-                                {/* Thuê dự kiến */}
-                                <div>
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Thuê Dự Kiến (tr/tháng)</label>
-                                    <input
-                                        type="number"
-                                        value={monthlyRent}
-                                        onChange={e => setMonthlyRent(e.target.value)}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
-                                        placeholder="Tự động"
-                                        min="0"
-                                    />
-                                </div>
-
-                                {/* Nội thất */}
-                                <div>
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Nội Thất <span className="text-slate-600 normal-case font-normal">(không bắt buộc)</span></label>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        {[
-                                            { id: 'FULL', label: '✨ Đầy đủ' },
-                                            { id: 'BASIC', label: '🪑 Cơ bản' },
-                                            { id: 'NONE', label: '🏚️ Nhà thô' },
-                                        ].map(opt => (
-                                            <button
-                                                key={opt.id}
-                                                type="button"
-                                                onClick={() => setFurnishing(prev => prev === opt.id ? '' : opt.id as any)}
-                                                className={`py-3 rounded-xl text-xs font-bold transition-all border ${furnishing === opt.id ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
-                                            >
-                                                {opt.label}
-                                            </button>
-                                        ))}
+                                {/* ── Thuê dự kiến — ẩn với đất nông nghiệp, đổi label với thương mại ── */}
+                                {propertyType !== 'land_agricultural' && (
+                                    <div>
+                                        {(() => {
+                                            const isCommercialType = ['shophouse', 'office', 'warehouse'].includes(propertyType);
+                                            const rentLabel = isCommercialType
+                                                ? (propertyType === 'warehouse' ? 'Giá Thuê Kho (tr/tháng)' : 'Giá Thuê TM (tr/tháng)')
+                                                : 'Thuê Dự Kiến (tr/tháng)';
+                                            const rentPlaceholder = isCommercialType ? 'Tự động' : 'Tự động';
+                                            const rentHint = isCommercialType
+                                                ? (propertyType === 'warehouse' ? 'vd: 50 tr/tháng cho 500m²' : 'vd: 30 tr/tháng cho 100m²')
+                                                : (isApartment ? 'vd: 20 tr/tháng cho 70m²' : '');
+                                            return (
+                                                <>
+                                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
+                                                        {rentLabel}
+                                                        {rentHint && <span className="text-slate-600 normal-case font-normal ml-1">({rentHint})</span>}
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={monthlyRent}
+                                                        onChange={e => setMonthlyRent(e.target.value)}
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                        placeholder={rentPlaceholder}
+                                                        min="0"
+                                                    />
+                                                </>
+                                            );
+                                        })()}
                                     </div>
-                                </div>
+                                )}
+
+                                {/* ── Nội thất — chỉ hiện với nhà ở / căn hộ (ẩn với đất, kho xưởng) ── */}
+                                {!propertyType.startsWith('land_') && propertyType !== 'warehouse' && (
+                                    <div>
+                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
+                                            {propertyType === 'office' ? 'Tình Trạng VP' : 'Nội Thất'}
+                                            <span className="text-slate-600 normal-case font-normal"> (không bắt buộc)</span>
+                                        </label>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {(propertyType === 'office'
+                                                ? [{ id: 'FULL', label: '✅ Hoàn thiện' }, { id: 'BASIC', label: '🔧 Shell & Core' }, { id: 'NONE', label: '🏚️ Thô' }]
+                                                : [{ id: 'FULL', label: '✨ Đầy đủ' }, { id: 'BASIC', label: '🪑 Cơ bản' }, { id: 'NONE', label: '🏚️ Nhà thô' }]
+                                            ).map(opt => (
+                                                <button
+                                                    key={opt.id}
+                                                    type="button"
+                                                    onClick={() => setFurnishing(prev => prev === opt.id ? '' : opt.id as any)}
+                                                    className={`py-3 rounded-xl text-xs font-bold transition-all border ${furnishing === opt.id ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <button 
                                     onClick={runCalculation}
