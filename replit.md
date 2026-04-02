@@ -47,6 +47,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `sessionRepository.ts` — User session tracking, revocation
 - `templateRepository.ts` — Message/email templates CRUD
 - `aiGovernanceRepository.ts` — AI safety logs, prompt templates, AI config
+- `feedbackRepository.ts` — RLHF feedback CRUD, aggregate stats, reward signal computation, top examples/negative patterns for few-shot learning
 
 ### API Routes (`server/routes/`)
 - `leadRoutes.ts` — `/api/leads/*`
@@ -64,7 +65,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `uploadRoutes.ts` — `/api/upload` (POST multi-file upload with multer, DELETE by filename; tenant-isolated storage in `uploads/<tenantId>/`)
 - `billingRoutes.ts` — `/api/billing/*` (subscription, upgrade, usage, invoices)
 - `sessionRoutes.ts` — `/api/sessions/*` (list, revoke)
-- `aiGovernanceRoutes.ts` — `/api/ai/governance/*` (safety-logs, prompt-templates, config)
+- `aiGovernanceRoutes.ts` — `/api/ai/governance/*` (safety-logs, prompt-templates, config, feedback CRUD, feedback/stats, feedback/rewards, feedback/recompute)
 - `taskRoutes.ts` — `/api/tasks/*` (CRUD, status transitions, assign/unassign, comments, activity)
 - `departmentRoutes.ts` — `/api/departments/*` (list, user workload stats)
 - `taskReportRoutes.ts` — `/api/dashboard/task-stats`, `/api/reports/task-summary`, `/api/reports/task-export/csv`, `/api/reports/task-by-project`
@@ -202,6 +203,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **Lead Analysis Persistence**: LEAD_ANALYST saves `_lastAnalysisSummary` (200 chars) + `_lastAnalysisDate` to lead preferences for cross-session context
 - **Conversation Memory Digest**: when history >12 messages, older messages are scanned for topics (giá cả, pháp lý, tài chính, hợp đồng) and locations — injected as `[TRÍ NHỚ HỘI THOẠI]` in systemContext
 - **`leadRepository.mergePreferences()`**: atomic `COALESCE(preferences, '{}') || $patch` — avoids race conditions on concurrent read-modify-write
+- **RLHF Self-Improvement Loop**: `ai_feedback` table (rating ±1, correction, intent, interaction_id) + `ai_reward_signals` (per-intent aggregated signals with few-shot cache). Flow: user feedback → `feedbackRepository.create()` → fire-and-forget `computeRewardSignal()` → `buildRlhfContext()` injects top-rated examples + negative correction rules into WRITER prompt as `[MẪU TRẢ LỜI ĐƯỢC ĐÁNH GIÁ TỐT]` / `[LƯU Ý TỪ FEEDBACK]`. 10-min cache per intent. Dedup via unique index on `(tenant_id, interaction_id, user_id)`. Input validation: whitelist intents, cap text lengths. Frontend: `AiFeedbackButtons` component (thumbs up/down + correction textarea) on AI messages in ChatUI/Inbox.
 
 ## Entry Points
 

@@ -410,6 +410,24 @@ export const Inbox: React.FC = () => {
         });
     };
 
+    const handleAiFeedback = useCallback(async (msg: any, rating: -1 | 1, correction?: string): Promise<boolean> => {
+        try {
+            await aiService.submitFeedback({
+                interactionId: msg.id,
+                leadId: selectedLeadId || undefined,
+                rating,
+                correction,
+                agentNode: msg.metadata?.suggestedAction,
+                intent: msg.metadata?.intent,
+                userMessage: msg.metadata?.userMessage,
+                aiResponse: msg.content?.slice(0, 500),
+            });
+            return true;
+        } catch {
+            return false;
+        }
+    }, [selectedLeadId]);
+
     const handleSend = async () => {
         if (!input.trim() || !selectedLeadId || isSendingRef.current) return;
         
@@ -458,6 +476,8 @@ export const Inbox: React.FC = () => {
                             artifact: aiResult.artifact,
                             aiConfidence: aiResult.confidence,
                             aiSentiment: aiResult.sentiment,
+                            intent: aiResult.intent,
+                            userMessage: cleanInput?.slice(0, 300),
                         },
                     });
 
@@ -891,6 +911,7 @@ export const Inbox: React.FC = () => {
                                 formatDate={formatDate}
                                 formatDateTime={formatDateTime}
                                 showDate={idx === 0 || new Date(msg.timestamp).getDate() !== new Date(messages[idx-1].timestamp).getDate()}
+                                onAiFeedback={handleAiFeedback}
                             />
                         ))}
                         {isThinking && (

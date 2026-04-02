@@ -230,12 +230,102 @@ export const FileBubble = memo(({ name, size, url }: { name: string, size?: numb
     );
 });
 
-export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatDate, formatDateTime, showDate }: any) => {
-    // DIRECTION LOGIC:
-    // OUTBOUND = Agent/System/AI -> RIGHT Side
-    // INBOUND = Customer -> LEFT Side
+const AiFeedbackButtons = memo(({ msg, onFeedback }: { msg: any; onFeedback?: (rating: -1 | 1, correction?: string) => Promise<boolean> }) => {
+    const [feedbackState, setFeedbackState] = useState<-1 | 0 | 1>(0);
+    const [showCorrection, setShowCorrection] = useState(false);
+    const [correction, setCorrection] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    if (!onFeedback) return null;
+
+    const handleFeedback = async (rating: -1 | 1) => {
+        if (feedbackState !== 0 || submitting) return;
+        if (rating === -1) {
+            setShowCorrection(true);
+            return;
+        }
+        setSubmitting(true);
+        const ok = await onFeedback(rating);
+        setSubmitting(false);
+        if (ok) setFeedbackState(rating);
+    };
+
+    const submitCorrection = async () => {
+        setSubmitting(true);
+        const ok = await onFeedback(-1, correction || undefined);
+        setSubmitting(false);
+        if (ok) {
+            setFeedbackState(-1);
+            setShowCorrection(false);
+        }
+    };
+
+    if (feedbackState !== 0 && !showCorrection) {
+        return (
+            <div className="flex items-center gap-1 mt-1">
+                <span className={`text-xs2 font-medium ${feedbackState === 1 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                    {feedbackState === 1 ? '✓ Hữu ích' : '✓ Đã ghi nhận'}
+                </span>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col items-end gap-1 mt-1">
+            {!showCorrection ? (
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => handleFeedback(1)}
+                        className="p-1 rounded-md hover:bg-emerald-500/20 text-white/60 hover:text-emerald-400 transition-colors"
+                        title="Phản hồi tốt"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                        </svg>
+                    </button>
+                    <button
+                        onClick={() => handleFeedback(-1)}
+                        className="p-1 rounded-md hover:bg-amber-500/20 text-white/60 hover:text-amber-400 transition-colors"
+                        title="Cần cải thiện"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                        </svg>
+                    </button>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-1.5 w-full max-w-[280px] animate-enter">
+                    <textarea
+                        value={correction}
+                        onChange={(e) => setCorrection(e.target.value)}
+                        placeholder="Câu trả lời đúng nên là gì? (tùy chọn)"
+                        className="w-full text-xs bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5 text-white placeholder:text-white/40 focus:outline-none focus:border-amber-400/50 resize-none"
+                        rows={2}
+                    />
+                    <div className="flex gap-1.5 justify-end">
+                        <button
+                            onClick={() => { setShowCorrection(false); setCorrection(''); }}
+                            className="text-xs2 px-2 py-1 text-white/50 hover:text-white/80 transition-colors"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            onClick={submitCorrection}
+                            className="text-xs2 px-2.5 py-1 bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 rounded-md font-medium transition-colors"
+                        >
+                            Gửi góp ý
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+});
+AiFeedbackButtons.displayName = 'AiFeedbackButtons';
+
+export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatDate, formatDateTime, showDate, onAiFeedback }: any) => {
     const isOutbound = msg.direction === Direction.OUTBOUND;
-    const isAgent = msg.metadata?.isAgent; // True if generated by AI
+    const isAgent = msg.metadata?.isAgent;
     const artifact = msg.metadata?.artifact as AgentArtifact | undefined;
     const trace = msg.metadata?.trace as AgentTraceStep[] | undefined;
     const grounding = msg.metadata?.groundingMetadata as GroundingMetadata | undefined;
@@ -313,6 +403,14 @@ export const MessageBubble = memo(({ msg, t, formatTime, formatCurrency, formatD
                         
                         {/* Grounding Sources (Usually AI) */}
                         {grounding && <GroundingPill sources={grounding} t={t} />}
+
+                        {/* RLHF Feedback (AI messages only) */}
+                        {isAgent && (
+                            <AiFeedbackButtons
+                                msg={msg}
+                                onFeedback={onAiFeedback ? (rating: -1 | 1, correction?: string) => onAiFeedback(msg, rating, correction) : undefined}
+                            />
+                        )}
                     </div>
                 </div>
             </div>

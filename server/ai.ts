@@ -6,6 +6,7 @@ import { logger } from './middleware/logger';
 import { aiGovernanceRepository } from './repositories/aiGovernanceRepository';
 import { enterpriseConfigRepository } from './repositories/enterpriseConfigRepository';
 import { leadRepository } from './repositories/leadRepository';
+import { feedbackRepository } from './repositories/feedbackRepository';
 
 // -----------------------------------------------------------------------------
 // 1. CONFIGURATION & SCHEMA DEFINITIONS
@@ -62,6 +63,47 @@ function getCachedToolData<T>(key: string): T | null {
 }
 function setCachedToolData(key: string, value: any, ttlMs = 300_000) {
     toolDataCache.set(key, { value, expiresAt: Date.now() + ttlMs });
+}
+
+// --- RLHF: Few-shot examples & negative rules from feedback ---
+interface RlhfContext {
+    fewShotSection: string;
+    negativeRulesSection: string;
+}
+
+async function buildRlhfContext(tenantId: string, intent: string): Promise<RlhfContext> {
+    const cacheKey = `rlhf:${tenantId}:${intent}`;
+    const cached = getCachedToolData<RlhfContext>(cacheKey);
+    if (cached) return cached;
+
+    try {
+        const signal = await feedbackRepository.getRewardSignal(tenantId, intent);
+        if (!signal) return { fewShotSection: '', negativeRulesSection: '' };
+
+        let fewShotSection = '';
+        const topExamples = (signal as any).topExamples || [];
+        if (topExamples.length > 0) {
+            const exLines = topExamples.slice(0, 2).map((ex: any, i: number) =>
+                `VD ${i + 1}:\n  Khách: "${(ex.userMessage || '').slice(0, 150)}"\n  Trả lời tốt: "${(ex.aiResponse || '').slice(0, 300)}"`
+            ).join('\n');
+            fewShotSection = `\n[MẪU TRẢ LỜI ĐƯỢC ĐÁNH GIÁ TỐT (RLHF)]:\n${exLines}`;
+        }
+
+        let negativeRulesSection = '';
+        const negPatterns = (signal as any).negativePatterns || [];
+        if (negPatterns.length > 0) {
+            const negLines = negPatterns.slice(0, 3).map((p: any) =>
+                `- Khi khách hỏi "${(p.userMessage || '').slice(0, 100)}" → Sửa lại: "${(p.correction || '').slice(0, 200)}"`
+            ).join('\n');
+            negativeRulesSection = `\n[LƯU Ý TỪ FEEDBACK NGƯỜI DÙNG]:\nCác trường hợp phản hồi cần tránh lặp lại:\n${negLines}`;
+        }
+
+        const result = { fewShotSection, negativeRulesSection };
+        setCachedToolData(cacheKey, result, 600_000); // cache 10 minutes
+        return result;
+    } catch {
+        return { fewShotSection: '', negativeRulesSection: '' };
+    }
 }
 
 // Spend accumulator: flush to DB every 10 calls or 30s (avoid per-request DB write)
@@ -1019,11 +1061,17 @@ YÊU CẦU VIẾT PHẢN HỒI:
 - Kết thúc bằng 1 câu hỏi ngược tự nhiên, liên quan đến nhu cầu của khách (không hỏi chung "Anh/chị cần gì thêm?").
 - Giọng điệu: tự tin nhưng không áp đặt, thấu cảm và cá nhân hoá theo thông tin Lead Analysis (nếu có).`;
 
+            // --- RLHF INJECTION ---
+            // Fetch few-shot examples + negative rules from accumulated feedback
+            const currentIntent = state.plan?.next_step || 'DIRECT_ANSWER';
+            const rlhf = await buildRlhfContext(state.tenantId, currentIntent);
+            const rlhfPromptAddition = rlhf.fewShotSection + rlhf.negativeRulesSection;
+
             const writerModel = await getGovernanceModel(state.tenantId);
             const writerInstruction = await getAgentSystemInstruction(state.tenantId);
             const writerRes = await getAiClient().models.generateContent({
                 model: writerModel,
-                contents: writerPrompt,
+                contents: writerPrompt + rlhfPromptAddition,
                 config: { systemInstruction: writerInstruction }
             });
 
@@ -1244,7 +1292,9 @@ ${reconcileLine ? reconcileLine + '\n' : ''}Yếu tố: ${valResult.factors.slic
                 confidence: (() => { const c = finalState.plan?.confidence || 0.95; const n = c > 1 ? c / 100 : c; return Math.max(0, Math.min(1, n)); })(),
                 sentiment: 'NEUTRAL',
                 suggestedAction: finalState.suggestedAction,
-                escalated: finalState.escalated
+                escalated: finalState.escalated,
+                intent: finalState.plan?.next_step,
+                userMessage: userMessage?.slice(0, 300),
             };
         } catch (error: any) {
             const msg = error?.message || String(error);

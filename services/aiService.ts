@@ -84,6 +84,19 @@ class AiApiClient {
         });
     }
 
+    async submitFeedback(data: {
+        interactionId?: string;
+        leadId?: string;
+        rating: -1 | 1;
+        correction?: string;
+        agentNode?: string;
+        intent?: string;
+        userMessage?: string;
+        aiResponse?: string;
+    }): Promise<any> {
+        return this.fetchApi('/api/ai/governance/feedback', data);
+    }
+
     async parseSearchQuery(query: string): Promise<any> {
         const prompt = `
             Bạn là một hệ thống phân tích ngôn ngữ tự nhiên cho công cụ tìm kiếm bất động sản.

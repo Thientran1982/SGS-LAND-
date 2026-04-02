@@ -881,6 +881,8 @@ export interface AgentTraceResponse {
     confidence: number;
     sentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'ANGRY';
     escalated?: boolean;
+    intent?: string;
+    userMessage?: string;
 }
 
 export interface GraphState {

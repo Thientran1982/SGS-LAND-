@@ -193,6 +193,8 @@ async function triggerAutoReply(
         aiConfidence: aiResult.confidence,
         suggestedAction: aiResult.suggestedAction,
         escalated: aiResult.escalated ?? false,
+        intent: aiResult.intent,
+        userMessage: inboundText?.slice(0, 300),
       },
     });
 
