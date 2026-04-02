@@ -184,6 +184,7 @@ export const AiValuation: React.FC = () => {
         confidence: number;
         marketTrend: string;
         chartData: { month: string; price: number }[];
+        isRealtime?: boolean;
         incomeApproach?: {
             monthlyRent: number; grossIncome: number; vacancyLoss: number;
             effectiveIncome: number; opex: number; noi: number;
@@ -349,6 +350,7 @@ export const AiValuation: React.FC = () => {
             confidence,
             marketTrend: aiResult.marketTrend || 'Đang cập nhật',
             chartData,
+            isRealtime: aiResult.isRealtime ?? true,
             incomeApproach: aiResult.incomeApproach,
             reconciliation: aiResult.reconciliation,
         });
@@ -1029,16 +1031,29 @@ export const AiValuation: React.FC = () => {
                             </div>
                         )}
 
+                        {/* Fallback warning banner */}
+                        {valuation.isRealtime === false && (
+                            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-3 flex items-start gap-3">
+                                <svg className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                                <div>
+                                    <p className="text-amber-400 text-xs font-semibold">Dữ liệu thị trường tạm thời không khả dụng</p>
+                                    <p className="text-amber-300/70 text-xs mt-0.5">Kết quả ước tính dựa trên bảng giá khu vực tĩnh (không phải realtime). Vui lòng thử lại sau vài phút để nhận định giá từ dữ liệu thị trường thực.</p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Chart Simulation */}
                         <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-sm relative">
                             <div className="flex justify-between items-center mb-2">
-                                <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest">Lịch sử biến động giá khu vực</h3>
-                                <span className="bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1 rounded-full border border-emerald-500/20 font-medium">
+                                <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest">Xu hướng giá ước tính</h3>
+                                <span className={`text-xs px-3 py-1 rounded-full border font-medium ${valuation.isRealtime === false ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
                                     {valuation.marketTrend}
                                 </span>
                             </div>
                             <p className="text-slate-600 text-xs mb-5 italic">
-                                Xu hướng giá khu vực — tính từ dữ liệu thị trường realtime qua AI.
+                                {valuation.isRealtime === false
+                                    ? 'Mô phỏng xu hướng dựa trên bảng giá khu vực — không phải dữ liệu realtime.'
+                                    : 'Mô phỏng xu hướng 12 tháng — tính từ tỷ lệ tăng trưởng thị trường AI trích xuất.'}
                             </p>
                             <div className="h-[300px] w-full relative">
                                 <ResponsiveContainer width="100%" height="100%" minHeight={250} minWidth={250}>

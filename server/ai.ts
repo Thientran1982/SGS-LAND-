@@ -1391,16 +1391,32 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
 - propertyTypeEstimate: Loại BĐS phù hợp nhất.
 - locationFactors: 2-3 yếu tố VĨ MÔ KHU VỰC (KHÔNG lặp pháp lý/lộ giới/diện tích).`;
 
-            const extractResponse = await getAiClient().models.generateContent({
-                // Use Pro for structured extraction — better at following exact schema rules
-                model: 'gemini-2.5-pro',
-                contents: extractPrompt,
-                config: {
-                    systemInstruction: 'Bạn là chuyên gia định giá BĐS Việt Nam. Trích xuất số liệu chính xác từ dữ liệu thị trường. Trả JSON hợp lệ theo schema — không thêm text ngoài JSON.',
-                    responseMimeType: 'application/json',
-                    responseSchema: extractSchema
+            // Use Flash for extraction — Pro hits 503 under load; Flash is fast + reliable for structured JSON
+            let extractResponse: Awaited<ReturnType<typeof getAiClient>['models']['generateContent']>;
+            {
+                let extractAttempts = 0;
+                while (true) {
+                    try {
+                        extractResponse = await getAiClient().models.generateContent({
+                            model: GENAI_CONFIG.MODELS.WRITER,
+                            contents: extractPrompt,
+                            config: {
+                                systemInstruction: 'Bạn là chuyên gia định giá BĐS Việt Nam. Trích xuất số liệu chính xác từ dữ liệu thị trường. Trả JSON hợp lệ theo schema — không thêm text ngoài JSON.',
+                                responseMimeType: 'application/json',
+                                responseSchema: extractSchema
+                            }
+                        });
+                        break;
+                    } catch (retryErr: any) {
+                        extractAttempts++;
+                        const msg = String(retryErr?.message || retryErr?.toString() || '');
+                        const is503 = msg.includes('503') || msg.includes('UNAVAILABLE') || msg.includes('high demand');
+                        if (extractAttempts >= 2 || !is503) throw retryErr;
+                        logger.warn(`[Valuation AI] Extraction model 503 — retrying in 3s (attempt ${extractAttempts})`);
+                        await new Promise(r => setTimeout(r, 3000));
+                    }
                 }
-            });
+            }
 
             const aiData = JSON.parse(extractResponse.text || '{}');
 
@@ -1549,6 +1565,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 formula: avmResult.formula,
                 incomeApproach: avmResult.incomeApproach,
                 reconciliation: avmResult.reconciliation,
+                isRealtime: true,
             };
 
         } catch (error) {
@@ -1591,6 +1608,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 formula: avmResult.formula,
                 incomeApproach: avmResult.incomeApproach,
                 reconciliation: avmResult.reconciliation,
+                isRealtime: false,
             };
         }
     }
