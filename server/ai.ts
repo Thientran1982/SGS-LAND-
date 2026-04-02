@@ -1214,16 +1214,26 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
             const isShophouse         = resolvedPTypeForSearch === 'shophouse';
             const isTownhouseCenter   = resolvedPTypeForSearch === 'townhouse_center';
             const isTownhouseSuburb   = resolvedPTypeForSearch === 'townhouse_suburb';
+            const isPenthouse         = resolvedPTypeForSearch === 'penthouse';
+            const isLandAgricultural  = resolvedPTypeForSearch === 'land_agricultural';
+            const isLandUrban         = resolvedPTypeForSearch === 'land_urban';
+            const isLandSuburban      = resolvedPTypeForSearch === 'land_suburban';
 
             // ── Type-specific search hints ─────────────────────────────────────
             const typeSpecificSaleHint = isIndustrialOrWarehouse
                 ? `- Tập trung: giá thuê/m²/tháng kho xưởng, giá chuyển nhượng đất KCN, suất đầu tư kho logistics\n- Đơn vị: VNĐ/m² (giá chuyển nhượng) hoặc USD/m²/tháng (giá thuê KCN quốc tế)\n- Nguồn: JLL Vietnam Industrial, Savills Vietnam, CBRE Vietnam Industrial Report ${currentYear}`
-                : isLandType
-                ? `- Tập trung: giá đất thổ cư/đất nông nghiệp giao dịch thực tế — KHÔNG tính giá trị công trình\n- Đơn vị: VNĐ/m² đất (không phải VNĐ/m² sàn xây dựng)\n- Nguồn: batdongsan.com.vn/ban-dat, nhadatviet.com, cafeland.vn/dat-nen`
+                : isLandAgricultural
+                ? `- CHÚ Ý: Đây là ĐẤT NÔNG NGHIỆP — giá thấp hơn đất thổ cư rất nhiều (thường 3-30 triệu/m² vs 50-400 triệu/m² đất thổ cư)\n- Tập trung: giá đất nông nghiệp/đất vườn giao dịch thực tế tại khu vực "${address}" — KHÔNG tính công trình\n- Đơn vị: VNĐ/m² đất nông nghiệp (không phải đất thổ cư); 1 sào Bắc = 360m², 1 sào Nam = 1000m²\n- Nguồn: batdongsan.com.vn/ban-dat-nuong-nghiep, nhadatviet.com, cafeland.vn/dat-nen, mogi.vn`
+                : isLandUrban
+                ? `- Tập trung: giá ĐẤT THỔ CƯ NỘI ĐÔ (đất nền nhà phố thành phố) giao dịch thực tế — KHÔNG tính giá trị công trình\n- Phân khúc: đất thổ cư Sổ Hồng/Sổ Đỏ trong nội thành, đất nền nhà phố trung tâm — giá cao 50-400 triệu/m²\n- Đơn vị: VNĐ/m² đất (không phải VNĐ/m² sàn xây dựng)\n- Nguồn: batdongsan.com.vn/ban-dat, nhadatviet.com, cafeland.vn/dat-nen, cen.vn`
+                : isLandSuburban
+                ? `- Tập trung: giá ĐẤT THỔ CƯ NGOẠI THÀNH (đất nền vùng ven, khu đô thị mới) giao dịch thực tế — KHÔNG tính công trình\n- Phân khúc: đất thổ cư Sổ Hồng huyện ngoại thành, đất nền dự án ven đô — giá 10-80 triệu/m²\n- Đơn vị: VNĐ/m² đất thổ cư; phân biệt rõ đất thổ cư vs đất nông nghiệp (chênh lệch lớn)\n- Nguồn: batdongsan.com.vn/ban-dat, nhadatviet.com, mogi.vn, cafeland.vn/dat-nen, alonhadat.com`
                 : isOffPlan
                 ? `- Tập trung: giá bán sơ cấp (chủ đầu tư) và thứ cấp (chuyển nhượng) của các dự án căn hộ tại "${address}"\n- Ưu tiên: giá thứ cấp thực tế > giá chủ đầu tư công bố\n- Nguồn: batdongsan.com.vn, cafeland.vn, onehousing.vn`
                 : resolvedPTypeForSearch === 'office'
                 ? `- Tập trung: giá thuê văn phòng (USD/m²/tháng) và giá chuyển nhượng mặt bằng thương mại\n- Phân loại: hạng A/B/C theo tiêu chuẩn CBRE/JLL\n- Nguồn: JLL Vietnam, Savills Vietnam Office Market, CBRE Vietnam ${currentYear}`
+                : isPenthouse
+                ? `- Tham chiếu penthouse chuẩn: Sổ Hồng, tầng cao nhất/áp mái (tầng 30+), 150-400m² thông thủy, view toàn thành phố, nội thất cao cấp\n- Phân khúc: ultra-premium — giá cao hơn căn hộ thường cùng tòa 50-120%; có sân thượng riêng / hồ bơi riêng\n- ƯU TIÊN: giá chuyển nhượng thực tế thứ cấp > giá chủ đầu tư; penthouse hiếm giao dịch — lấy cả dữ liệu toàn quốc\n- Nguồn: batdongsan.com.vn, onehousing.vn, CBRE/Savills Vietnam Luxury Residential ${currentYear}, cafeland.vn`
                 : isApartmentType
                 ? `- Tham chiếu căn hộ chuẩn: Sổ Hồng/Sổ Đỏ, 2 phòng ngủ, 60-80m², tầng trung (5-15), nội thất cơ bản — KHÔNG phải nhà phố\n- ƯU TIÊN: Giá thứ cấp (chuyển nhượng thực tế) > giá sơ cấp (chủ đầu tư công bố)\n- Giá sàn VNĐ/m² căn hộ = tổng giá bán / diện tích thông thủy\n- Nguồn: batdongsan.com.vn, onehousing.vn, cafeland.vn, CBRE/Savills Vietnam Residential Report ${currentYear}`
                 : isVilla
@@ -1288,10 +1298,18 @@ Tìm giá thuê shophouse/mặt bằng thương mại thực tế tại "${addre
 2. Giá thuê theo m²/tháng so sánh với khu vực lân cận
 3. Tỷ suất cho thuê gross yield %/năm (shophouse thường 5-8%/năm)
 Nguồn: batdongsan.com.vn/cho-thue-mat-bang, savills.com.vn, JLL Vietnam Retail ${currentYear}`
+                : isPenthouse
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: Penthouse / Căn hộ đỉnh tháp
+Tìm giá thuê penthouse thực tế tại "${address}":
+1. Giá thuê nguyên căn penthouse (triệu VNĐ/tháng) diện tích ${area}m², tầng cao nhất — phân khúc luxury/ultra-premium
+2. Khoảng giá (thấp – cao): phân biệt penthouse có hồ bơi riêng / sân thượng / không có
+3. Tỷ suất cho thuê gross yield %/năm (penthouse Việt Nam thường 2.5-3.5%/năm — thấp do giá vốn cao)
+Lưu ý: penthouse hiếm — nếu thiếu dữ liệu tại "${address}", dùng dự án tương đương cùng phân khúc.
+Nguồn: batdongsan.com.vn/cho-thue-can-ho, airbnb.vn, homedy.com, cen.vn, CBRE Luxury Residential ${currentYear}`
                 : isApartmentType
                 ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: ${pTypeLabelSearch}
 Tìm giá thuê căn hộ thực tế tại "${address}":
-1. Giá thuê nguyên căn trung bình (triệu VNĐ/tháng) cho căn hộ ${area}m² (${resolvedPTypeForSearch === 'penthouse' ? 'penthouse tầng cao' : '2PN tầng trung'}) tại "${address}"
+1. Giá thuê nguyên căn trung bình (triệu VNĐ/tháng) cho căn hộ ${area}m² (2PN tầng trung) tại "${address}"
 2. Khoảng giá thuê (thấp – cao) — phân biệt có nội thất vs trống
 3. Tỷ suất cho thuê gross yield %/năm (căn hộ Việt Nam thường 4-6%/năm)
 Nguồn: batdongsan.com.vn/cho-thue-can-ho, homedy.com, mogi.vn, muaban.net`
@@ -1353,12 +1371,18 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
             const marketContext = `=== DỮ LIỆU GIÁ BÁN (từ tìm kiếm chuyên biệt) ===\n${saleContext}\n\n=== DỮ LIỆU GIÁ THUÊ / YIELD (từ tìm kiếm chuyên biệt) ===\n${rentalContext}`;
 
             // ── Reference description for extraction — placed before schema so it can be used in schema descriptions ──
-            const extractRefDescription = isApartmentType
+            const extractRefDescription = isPenthouse
+                ? `penthouse (Sổ Hồng, tầng cao nhất/áp mái tầng 30+, 150-400m² thông thủy, nội thất cao cấp, view toàn thành phố) — GIÁ CAO HƠN căn hộ thường cùng tòa 50-120%`
+                : isApartmentType
                 ? `căn hộ chuẩn (Sổ Hồng, 2PN, 60-80m², tầng trung 5-15, nội thất cơ bản) — ĐÂY LÀ GIÁ CĂN HỘ, không phải nhà phố`
                 : isOffPlan
                 ? `căn hộ dự án thứ cấp (Sổ Hồng/hợp đồng mua bán, 60-80m²) — ưu tiên giá chuyển nhượng thực tế`
-                : isLandType && !isIndustrialOrWarehouse
-                ? `đất thổ cư/nông nghiệp (VNĐ/m² đất — KHÔNG tính công trình)`
+                : isLandAgricultural
+                ? `đất nông nghiệp / đất vườn (VNĐ/m² đất nông nghiệp — KHÔNG phải đất thổ cư; giá thấp hơn đất thổ cư 5-50 lần)`
+                : isLandUrban
+                ? `đất thổ cư nội đô / đất nền nhà phố thành phố (VNĐ/m² đất thổ cư — KHÔNG tính công trình; Sổ Hồng/Sổ Đỏ)`
+                : isLandSuburban
+                ? `đất thổ cư ngoại thành / đất nền vùng ven (VNĐ/m² đất thổ cư — KHÔNG tính công trình; phân biệt với đất nông nghiệp)`
                 : isIndustrialOrWarehouse
                 ? `kho xưởng/đất KCN (VNĐ/m² hoặc USD/m²/tháng — đổi về VNĐ/m² tổng giá trị)`
                 : resolvedPTypeForSearch === 'office'
