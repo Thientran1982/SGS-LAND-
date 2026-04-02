@@ -1166,6 +1166,7 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
         rangeMax: number;
         confidence: number;
         marketTrend: string;
+        trendGrowthPct: number;
         factors: { label: string; coefficient: number; impact: number; isPositive: boolean; description: string; type: 'AVM' | 'LOCATION' | 'MULTI_SOURCE' }[];
         coefficients: { Kd: number; Kp: number; Ka: number };
         formula: string;
@@ -1322,6 +1323,10 @@ Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
                         type: Type.STRING,
                         description: "Xu hướng giá ngắn gọn, ví dụ: 'Tăng 8-12%/năm', 'Ổn định', 'Giảm nhẹ 3-5%'"
                     },
+                    trendGrowthPct: {
+                        type: Type.NUMBER,
+                        description: "Tỷ lệ tăng/giảm giá trung bình %/năm. Dương = tăng, âm = giảm. Ví dụ: 10 = tăng 10%/năm, -5 = giảm 5%/năm, 0 = ổn định."
+                    },
                     // ── Rental: statistical triple ────────────────────────────────────
                     rentMin: {
                         type: Type.NUMBER,
@@ -1354,7 +1359,7 @@ Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
                         }
                     }
                 },
-                required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors"]
+                required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors"]
             };
 
             const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}
@@ -1372,6 +1377,7 @@ GIÁ BÁN (từ phần DỮ LIỆU GIÁ BÁN):
 - dataRecency: Dữ liệu từ năm nào? current_year / last_year / older.
 - confidence: 95-99 nếu có giao dịch thực tế đa nguồn; 85-94 nếu chỉ rao bán; <85 nếu ít data.
 - marketTrend: Xu hướng % tăng/giảm khu vực (ví dụ "Tăng 10-15%/năm do Metro").
+- trendGrowthPct: Số %/năm tăng (+) hoặc giảm (-). Ví dụ: "Tăng 10-15%/năm" → trendGrowthPct = 12.
 
 GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
 - rentMin, rentMedian, rentMax: Khoảng giá thuê nguyên căn thực tế (triệu VNĐ/tháng) cho diện tích ${area}m² tại "${address}".
@@ -1432,27 +1438,32 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
             const recencyPenalty = dataRecency === 'older' ? 5 : dataRecency === 'last_year' ? 2 : 0;
 
             // ── Sanity check against property-type-aware regional baseline ────────
-            // Critical fix: pass propertyType so apartments get type-adjusted baseline
             const { getRegionalBasePrice, estimateFallbackRent: getFallbackRent } = await import('./valuationEngine');
             const resolvedPropertyType = (propertyType || aiData.propertyTypeEstimate || 'townhouse_center') as import('./valuationEngine').PropertyType;
             const regional = getRegionalBasePrice(address, resolvedPropertyType);
             const regionRef = regional.price;
+            const regionConf = regional.confidence;
 
-            // Prime districts allow higher ceiling
             const addrLower = address.toLowerCase();
             const isPrimeDist = /quận 1\b|q\.?1\b|hoàn kiếm|ba đình|ba dinh|district 1/i.test(addrLower);
-            const priceLow  = regionRef * 0.45;                      // floor: 45% of type-adjusted regional
-            const priceHigh = regionRef * (isPrimeDist ? 3.5 : 2.5); // ceiling: 2.5× (3.5× prime)
+            const priceLow  = regionRef * 0.35;
+            const priceHigh = regionRef * (isPrimeDist ? 4.0 : 3.0);
 
             let marketBasePrice = rawAiPrice || regionRef;
             let sanityBlended = false;
+
             if (rawAiPrice > 0 && (rawAiPrice < priceLow || rawAiPrice > priceHigh)) {
-                // AI price is implausible — blend 60% regional + 40% AI as a guard
-                marketBasePrice = Math.round(regionRef * 0.60 + rawAiPrice * 0.40);
-                sanityBlended = true;
-                logger.warn(`[Valuation AI] Price sanity fail: rawAI=${(rawAiPrice/1e6).toFixed(0)}M, regional=${(regionRef/1e6).toFixed(0)}M, blended=${(marketBasePrice/1e6).toFixed(0)}M`);
+                if (regionConf <= 50) {
+                    marketBasePrice = rawAiPrice;
+                    sanityBlended = false;
+                    logger.warn(`[Valuation AI] Low regional conf (${regionConf}) — trusting AI: rawAI=${(rawAiPrice/1e6).toFixed(0)}M, regional=${(regionRef/1e6).toFixed(0)}M`);
+                } else {
+                    const aiWeight = regionConf <= 55 ? 0.70 : 0.40;
+                    marketBasePrice = Math.round(regionRef * (1 - aiWeight) + rawAiPrice * aiWeight);
+                    sanityBlended = true;
+                    logger.warn(`[Valuation AI] Price sanity fail: rawAI=${(rawAiPrice/1e6).toFixed(0)}M, regional=${(regionRef/1e6).toFixed(0)}M, blended=${(marketBasePrice/1e6).toFixed(0)}M (aiW=${aiWeight})`);
+                }
             } else if (rawAiPrice === 0) {
-                // No AI price found — fall back to regional baseline entirely
                 marketBasePrice = regionRef;
                 sanityBlended = true;
             }
@@ -1467,6 +1478,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 : Math.max(75, Math.min(100, adjustedConfidence));
 
             const marketTrend = aiData.marketTrend || 'Đang cập nhật';
+            const trendGrowthPct: number = aiData.trendGrowthPct ?? 0;
             const locationFactors = aiData.locationFactors || [];
 
             // ── Rent sanity check ─────────────────────────────────────────────────
@@ -1531,6 +1543,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 rangeMax: avmResult.rangeMax,
                 confidence: avmResult.confidence,
                 marketTrend: avmResult.marketTrend,
+                trendGrowthPct,
                 factors: allFactors,
                 coefficients: avmResult.coefficients,
                 formula: avmResult.formula,
@@ -1541,7 +1554,6 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
         } catch (error) {
             logger.error("[Valuation AI] Error:", error);
 
-            // ── FALLBACK: Regional base price table + AVM + estimated income ──────
             const regional = getRegionalBasePrice(address);
             const resolvedPropertyType = (propertyType || 'townhouse_center') as import('./valuationEngine').PropertyType;
             const { estimateFallbackRent } = await import('./valuationEngine');
@@ -1573,6 +1585,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                 rangeMax: avmResult.rangeMax,
                 confidence: avmResult.confidence,
                 marketTrend: avmResult.marketTrend,
+                trendGrowthPct: 0,
                 factors: avmResult.factors,
                 coefficients: avmResult.coefficients,
                 formula: avmResult.formula,

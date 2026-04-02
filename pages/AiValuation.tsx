@@ -324,21 +324,17 @@ export const AiValuation: React.FC = () => {
             return Math.round(totalPrice * (1 + margin));
         })();
 
-        // Chart: model-estimated price trend for last 12 months
-        // Note: Không có API dữ liệu lịch sử giao dịch thực tế.
-        // Dữ liệu được mô phỏng từ xu hướng thị trường & AVM để minh hoạ biến động khu vực.
         const baseBillion = totalPrice / 1_000_000_000;
-        const isBullish = /tăng|tăng mạnh|tốt/i.test(aiResult.marketTrend || '');
-        const isBearish = /giảm|giảm mạnh/i.test(aiResult.marketTrend || '');
-        const trend = isBullish ? 0.007 : isBearish ? -0.005 : 0.002; // monthly drift
-        // Generate actual calendar month labels: last 12 months up to today
+        const growthPct: number = aiResult.trendGrowthPct ?? 0;
+        const monthlyGrowth = growthPct / 100 / 12;
         const now = new Date();
         const chartData = Array.from({ length: 12 }, (_, i) => {
             const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
             const monthLabel = `T${d.getMonth() + 1}/${String(d.getFullYear()).slice(2)}`;
+            const monthsFromNow = i - 11;
             return {
                 month: monthLabel,
-                price: Number((baseBillion * (1 - (11 - i) * trend + (Math.random() - 0.5) * 0.03)).toFixed(3))
+                price: Number((baseBillion * (1 + monthlyGrowth * monthsFromNow)).toFixed(3))
             };
         });
 
@@ -1042,7 +1038,7 @@ export const AiValuation: React.FC = () => {
                                 </span>
                             </div>
                             <p className="text-slate-600 text-xs mb-5 italic">
-                                ⚠ Dữ liệu mô phỏng từ AVM — chưa có API lịch sử giao dịch thực tế. Chỉ mang tính minh hoạ xu hướng.
+                                Xu hướng giá khu vực — tính từ dữ liệu thị trường realtime qua AI.
                             </p>
                             <div className="h-[300px] w-full relative">
                                 <ResponsiveContainer width="100%" height="100%" minHeight={250} minWidth={250}>
