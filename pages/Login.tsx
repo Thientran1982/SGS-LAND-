@@ -162,6 +162,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [devVerifyInfo, setDevVerifyInfo] = useState<{token: string; url: string} | null>(null);
   const [resending, setResending] = useState(false);
   const [resentSuccess, setResentSuccess] = useState('');
+  const [resendingReset, setResendingReset] = useState(false);
+  const [resentResetMsg, setResentResetMsg] = useState('');
   
   const { t, language, setLanguage } = useTranslation();
 
@@ -273,6 +275,20 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       }
 
       return errors;
+  };
+
+  const handleResendReset = async () => {
+      if (resendingReset || !email) return;
+      setResendingReset(true);
+      setResentResetMsg('');
+      try {
+          await db.requestPasswordReset(email.trim());
+          setResentResetMsg(t('auth.resend_reset_sent'));
+      } catch {
+          setResentResetMsg(t('auth.error_generic'));
+      } finally {
+          setResendingReset(false);
+      }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -554,23 +570,35 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {view === 'FORGOT_VERIFY' && (
                     <>
                         {!tokenFromUrl ? (
-                            /* Waiting for user to click email link — no form needed */
-                            <div className="bg-indigo-500/10 p-5 rounded-2xl border border-indigo-500/20 animate-enter text-center space-y-3">
+                            /* Waiting for user to click email link — no form, just info + resend */
+                            <div className="bg-indigo-500/10 p-5 rounded-2xl border border-indigo-500/20 animate-enter text-center space-y-4">
                                 <div className="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto">
                                     <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                 </div>
-                                <p className="text-sm font-bold text-white">{t('auth.check_email_title') || 'Kiểm tra hộp thư'}</p>
+                                <p className="text-sm font-bold text-white">{t('auth.check_email_title')}</p>
                                 <p className="text-xs text-indigo-200 leading-relaxed">
-                                    {t('auth.check_email_body') || 'Chúng tôi đã gửi link đặt lại mật khẩu đến'} <span className="font-bold text-white">{email}</span>.<br/>
-                                    {t('auth.check_email_instruction') || 'Nhấn vào link trong email để tiếp tục.'}
+                                    {t('auth.check_email_body')} <span className="font-bold text-white">{email}</span>.<br/>
+                                    {t('auth.check_email_instruction')}
                                 </p>
-                                <p className="text-xs2 text-indigo-300/60">{t('auth.check_email_spam') || 'Không thấy email? Hãy kiểm tra thư mục Spam.'}</p>
+                                <p className="text-xs2 text-indigo-300/60">{t('auth.check_email_spam')}</p>
+                                {resentResetMsg ? (
+                                    <p className={`text-xs2 font-semibold ${resentResetMsg === t('auth.resend_reset_sent') ? 'text-emerald-400' : 'text-rose-400'}`}>{resentResetMsg}</p>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={handleResendReset}
+                                        disabled={resendingReset}
+                                        className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-60 underline underline-offset-2"
+                                    >
+                                        {resendingReset ? t('auth.resend_reset_sending') : t('auth.resend_reset_email')}
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             /* Token from URL — valid link, show new password form */
                             <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 animate-enter flex items-center gap-2">
                                 <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                <p className="text-xs2 text-emerald-300">Liên kết đặt lại mật khẩu hợp lệ. Vui lòng nhập mật khẩu mới bên dưới.</p>
+                                <p className="text-xs2 text-emerald-300">{t('auth.valid_reset_link')}</p>
                                 <input type="hidden" value={otp} readOnly />
                             </div>
                         )}
