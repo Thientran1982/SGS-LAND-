@@ -1458,13 +1458,13 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
             }
 
             // ── Confidence: raw AI signal adjusted by spread/source/recency ───────
-            // • Sanity passed → floor 90 (honest floor — spread/recency penalties apply freely)
-            // • Sanity blended → cap 88 regardless
-            const rawAiConfidence = Math.min(100, Math.max(0, aiData.confidence || 90));
+            // • Sanity passed → floor 75 (realistic minimum; penalties can reduce freely)
+            // • Sanity blended → cap 88 regardless (methods diverged > 30%)
+            const rawAiConfidence = Math.min(100, Math.max(0, aiData.confidence || 80));
             const adjustedConfidence = rawAiConfidence - spreadPenalty + sourceBonus - recencyPenalty;
             const confidence = sanityBlended
                 ? Math.min(adjustedConfidence, 88)
-                : Math.max(90, Math.min(100, adjustedConfidence));
+                : Math.max(75, Math.min(100, adjustedConfidence));
 
             const marketTrend = aiData.marketTrend || 'Đang cập nhật';
             const locationFactors = aiData.locationFactors || [];

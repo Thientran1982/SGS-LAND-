@@ -140,27 +140,25 @@ export interface AVMOutput {
 // Cap Rates by Property Type — Vietnamese Market Q1 2025 – Q1 2026
 // Source: CBRE Vietnam H2/2025, Savills Vietnam Q4/2025, JLL Vietnam Q1/2026
 //
-// Xu hướng 2025-2026:
-//  • Căn hộ cao cấp: yield tiếp tục nén (giá tăng nhanh hơn tiền thuê) → 3.5-4.2%
-//  • Logistics/Kho: bùng nổ e-commerce giữ yield cao → 7.5-8.5%
-//  • Văn phòng: Grade A CBD phục hồi chậm, Grade B ổn định → 6.0-7.0%
-//  • Shophouse: sức mua retail chưa hồi phục hoàn toàn → 5.0-5.5%
+// IMPORTANT: These cap rates are GROSS YIELD caps (annual gross rent / property value)
+// NOT NOI caps — aligned with Vietnamese market practice where "tỷ suất cho thuê"
+// is always reported as gross yield (before vacancy/opex deductions).
 // ─────────────────────────────────────────────────────────────────────────────
 export const DEFAULT_CAP_RATES: Record<PropertyType, number> = {
-  apartment_center:  0.040,  // Căn hộ nội đô cao cấp: yield nén về 3.8-4.2% (CBRE 2025)
-  apartment_suburb:  0.050,  // Căn hộ ngoại thành/trung cấp: 4.8-5.2%
-  townhouse_center:  0.048,  // Nhà phố nội đô cho thuê nguyên căn: 4.5-5.0%
-  townhouse_suburb:  0.062,  // Nhà phố ngoại thành: 6.0-6.5%
-  villa:             0.055,  // Biệt thự: 5.0-5.5%
-  shophouse:         0.052,  // Shophouse mặt đường: 5.0-5.5% (retail ổn định)
+  apartment_center:  0.038,  // Căn hộ nội đô: gross yield 3.5-4.0% (CBRE 2025 — yield nén)
+  apartment_suburb:  0.046,  // Căn hộ ngoại thành/trung cấp: 4.4-4.8% gross
+  townhouse_center:  0.042,  // Nhà phố nội đô: gross yield 4.0-4.5% (cho thuê nguyên căn)
+  townhouse_suburb:  0.055,  // Nhà phố ngoại thành: 5.2-5.8% gross
+  villa:             0.045,  // Biệt thự: 4.2-4.8% gross (diện tích lớn, yield thấp hơn)
+  shophouse:         0.052,  // Shophouse mặt đường: 5.0-5.5% gross (retail ổn định)
   land_urban:        0.038,  // Đất thổ cư nội đô — thuần tích lũy, yield thấp
-  land_suburban:     0.068,  // Đất ngoại thành (cho thuê nông nghiệp/ki-ốt)
-  penthouse:         0.035,  // Penthouse — yield thấp nhất, cực kỳ cao cấp: 3.2-3.8%
-  office:            0.065,  // Văn phòng Grade B: 6.0-7.0% (Grade A CBD ~5.5-6.5%)
-  warehouse:         0.078,  // Kho logistics RBW: 7.5-8.5% (e-commerce boom)
+  land_suburban:     0.060,  // Đất ngoại thành (cho thuê nông nghiệp/ki-ốt)
+  penthouse:         0.030,  // Penthouse — yield thấp nhất: 2.8-3.2% gross (ultra-premium)
+  office:            0.065,  // Văn phòng Grade B: 6.0-7.0% gross (Grade A CBD ~5.5-6.5%)
+  warehouse:         0.078,  // Kho logistics RBW: 7.5-8.5% gross (e-commerce boom)
   land_agricultural: 0.012,  // Đất nông nghiệp — đầu cơ chuyển đổi, yield danh nghĩa
   land_industrial:   0.048,  // Đất KCN — yield từ cho thuê nhà xưởng: 4.5-5.0%
-  project:           0.042,  // Off-plan căn hộ — blended theo tiến độ: ~4.2%
+  project:           0.040,  // Off-plan căn hộ — blended theo tiến độ: ~4.0%
 };
 
 // Reconciliation weights: comps vs income, by property type
@@ -260,9 +258,40 @@ function getKp(legal: LegalStatus): { value: number; label: string; description:
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. Hệ số diện tích (Ka — Area Size Coefficient)
-//    Standard reference: 60-100m²
+//    Standard reference: 60-100m² for buildings, 100-500m² for land
+//    NOTE: For land types, larger area → lower per-m² (harder to liquidate)
 // ─────────────────────────────────────────────────────────────────────────────
-function getKa(area: number): { value: number; label: string; description: string } {
+function getKa(area: number, propertyType?: PropertyType): { value: number; label: string; description: string } {
+  // ── Đặc biệt cho đất: diện tích lớn → giảm thanh khoản → Ka < 1.0 ─────────
+  if (propertyType?.startsWith('land_')) {
+    if (area < 50) return {
+      value: 1.05,
+      label: `Đất nhỏ ${area}m²`,
+      description: 'Đất < 50m² nội đô — đắt/m² do khan hiếm, tiện phân lô',
+    };
+    if (area < 200) return {
+      value: 1.00,
+      label: `Đất chuẩn ${area}m²`,
+      description: 'Diện tích đất chuẩn tham chiếu 50-200m² — thanh khoản tốt',
+    };
+    if (area < 500) return {
+      value: 0.97,
+      label: `Đất vừa ${area}m²`,
+      description: 'Đất 200-500m² — ít người mua tổng, thanh khoản giảm nhẹ (-3%)',
+    };
+    if (area < 2_000) return {
+      value: 0.93,
+      label: `Đất lớn ${area}m²`,
+      description: 'Đất 500-2000m² — cần nhiều vốn, thường dành nhà phát triển (-7%)',
+    };
+    return {
+      value: 0.88,
+      label: `Đất rất lớn ${area}m²`,
+      description: 'Đất ≥ 2000m² — phân lô/đầu tư, giảm giá/m² do ít người mua (-12%)',
+    };
+  }
+
+  // ── Nhà ở / Thương mại: diện tích lớn hơn = cao hơn một chút ────────────
   if (area < 25) return {
     value: 0.90,
     label: `Siêu nhỏ ${area}m²`,
@@ -271,7 +300,7 @@ function getKa(area: number): { value: number; label: string; description: strin
   if (area < 40) return {
     value: 0.95,
     label: `Nhỏ ${area}m²`,
-    description: 'Diện tích 25-40m² — phù hợp mua đầu tư, ít nhu cầu ở'
+    description: 'Diện tích 25-40m² — phù hợp đầu tư cho thuê'
   };
   if (area < 60) return {
     value: 0.98,
@@ -295,7 +324,7 @@ function getKa(area: number): { value: number; label: string; description: strin
   };
   return {
     value: 1.10,
-    label: `Đất lớn ${area}m²`,
+    label: `Rất rộng ${area}m²`,
     description: 'Diện tích ≥ 250m² — quý hiếm, tiềm năng phân lô hoặc xây cao tầng'
   };
 }
@@ -567,37 +596,71 @@ function getConfidenceMargin(confidence: number): number {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Type-specific operating expense rates (% of gross annual income)
+// Vietnamese market context:
+//   Residential: quản lý phí thường do tenant trả → chủ sở hữu chỉ chịu thuế + bảo hiểm (~8-10%)
+//   Thương mại:  utilities + maintenance + management on owner → 18-22%
+//   Đất:         thuế đất duy nhất → 3-5%
+// ─────────────────────────────────────────────────────────────────────────────
+const OPEX_RATES_BY_TYPE: Partial<Record<PropertyType, number>> = {
+  apartment_center:  0.09,   // Thuế + bảo hiểm + quản lý (phần chủ chịu)
+  apartment_suburb:  0.09,
+  townhouse_center:  0.10,
+  townhouse_suburb:  0.10,
+  villa:             0.10,
+  penthouse:         0.08,   // Penthouse: low maintenance, high-grade materials
+  project:           0.09,
+  shophouse:         0.18,   // Thương mại: utilities/maintenance on owner
+  office:            0.22,   // VP: cao nhất — HVAC, cleaning, management
+  warehouse:         0.12,   // Kho: bảo hiểm + bảo trì kết cấu
+  land_urban:        0.04,   // Thuế đất thổ cư
+  land_suburban:     0.04,
+  land_agricultural: 0.02,   // Thuế đất nông nghiệp tối thiểu
+  land_industrial:   0.06,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 5. Income Capitalization Engine
-//    NOI = Effective Gross Income - OPEX
-//    Value = NOI / Cap Rate
+//    Vietnamese market: "tỷ suất cho thuê" = gross yield (annual gross rent / value)
+//    → capitalValue = grossIncome / grossYieldCap  (matches market convention)
+//    NOI & payback still calculated for transparency / professional reports.
 // ─────────────────────────────────────────────────────────────────────────────
 function applyIncomeApproach(
   monthlyRent: number,       // triệu VNĐ/tháng
-  totalPrice: number,        // VNĐ (comps value — used to compute yield)
+  totalPrice: number,        // VNĐ (comps value — used to compute gross yield %)
   propertyType: PropertyType,
   vacancyRate = DEFAULT_VACANCY_RATE,
-  opexRate = DEFAULT_OPEX_RATE,
+  opexRate?: number,         // if undefined → uses OPEX_RATES_BY_TYPE
   capRateAdj = 0,            // dynamic adjustment: negative = lower cap (higher value)
 ): IncomeApproachResult {
   // Clamp rates to valid ranges [0, 1]
   const safeVacancyRate = Math.min(1, Math.max(0, vacancyRate));
-  const safeOpexRate = Math.min(1, Math.max(0, opexRate));
+  // Use type-specific opex rate (more accurate than single DEFAULT_OPEX_RATE)
+  const resolvedOpexRate = opexRate !== undefined
+    ? opexRate
+    : (OPEX_RATES_BY_TYPE[propertyType] ?? DEFAULT_OPEX_RATE);
+  const safeOpexRate = Math.min(1, Math.max(0, resolvedOpexRate));
+
   const baseCapRate = DEFAULT_CAP_RATES[propertyType];
-  // Apply trend-based adjustment, but clamp cap rate to sensible range [1.5%, 12%]
+  // Apply trend-based adjustment, clamp to sensible range [1.5%, 12%]
   const capRate = Math.min(0.12, Math.max(0.015, baseCapRate + capRateAdj));
-  const grossIncomeTrieu = monthlyRent * 12;                     // triệu/năm
+
+  const grossIncomeTrieu = monthlyRent * 12;                       // triệu/năm
   const vacancyLossTrieu = grossIncomeTrieu * safeVacancyRate;
   const effectiveIncomeTrieu = grossIncomeTrieu * (1 - safeVacancyRate);
-  const opexTrieu = grossIncomeTrieu * safeOpexRate;
-  const noiTrieu = Math.max(0, effectiveIncomeTrieu - opexTrieu); // NOI cannot be negative
+  const opexTrieu = grossIncomeTrieu * safeOpexRate;               // opex on gross (VN standard)
+  const noiTrieu = Math.max(0, effectiveIncomeTrieu - opexTrieu);  // NOI for display
 
-  // Convert to VNĐ for capital value
-  const noiVND = noiTrieu * 1_000_000;
+  // ── Capital value: GROSS INCOME / gross yield cap ──────────────────────────
+  // Aligned with Vietnamese market convention: gross yield = gross rent / value.
+  // This is more accurate than NOI/cap for residential where management fees
+  // are paid by tenant (lower effective owner cost than gross opex implies).
+  const grossIncomeVND = grossIncomeTrieu * 1_000_000;
   const safeCapRate = capRate > 0 ? capRate : DEFAULT_CAP_RATE;
-  const capitalValue = Math.max(0, Math.round(noiVND / safeCapRate));
+  const capitalValue = Math.max(0, Math.round(grossIncomeVND / safeCapRate));
 
   const grossRentalYield = totalPrice > 0
-    ? (grossIncomeTrieu * 1_000_000) / totalPrice * 100
+    ? grossIncomeVND / totalPrice * 100
     : 0;
   const paybackYears = noiTrieu > 0
     ? (capitalValue / 1_000_000) / noiTrieu
@@ -646,17 +709,19 @@ export function applyAVM(input: AVMInput): AVMOutput {
     sources = blended.sources;
   }
 
+  // ── Resolve property type early (used by multiple coefficient functions) ────
+  const pType = propertyType || 'townhouse_center';
+
   // ── Core coefficients ─────────────────────────────────────────
   const Kd_data = getKd(roadWidth);
   const Kp_data = getKp(legal);
-  const Ka_data = getKa(area);
+  const Ka_data = getKa(area, pType);
 
   const Kd = Kd_data.value;
   const Kp = Kp_data.value;
   const Ka = Ka_data.value;
 
   // ── Optional coefficients ─────────────────────────────────────
-  const pType = propertyType || 'townhouse_center';
   const Kfl_data = (floorLevel !== undefined && floorLevel > 0) ? getKfl(floorLevel, pType) : null;
   const Kdir_data = direction ? getKdir(direction) : null;
   const Kmf_data = (frontageWidth !== undefined && frontageWidth > 0) ? getKmf(frontageWidth, pType) : null;
@@ -850,22 +915,28 @@ export function applyAVM(input: AVMInput): AVMOutput {
 
 // Multipliers relative to townhouse reference price (townhouse_center = 1.00)
 // Applied ONLY to regional fallback table and sanity-check bounds — NOT to AI-returned prices.
-// Source: Batdongsan/Savills/CBRE Vietnam 2025-2026 cross-type transaction analysis
+// Source: Batdongsan/Savills/CBRE Vietnam Q1/2026 cross-type transaction analysis
+// ─────────────────────────────────────────────────────────────────────────────
+// Calibration notes:
+//  apartment_center: 0.52 → Q.Bình Thạnh: 120M × 0.52 = 62M/m² (Vinhomes thực tế 65-95M) ✓
+//  penthouse:        0.78 → Q.Bình Thạnh: 120M × 0.78 = 94M/m² (Vinhomes PH ~100-180M) ✓
+//  project:          0.68 → off-plan chiết khấu 32% vs thứ cấp (10-15% under comps)
+// ─────────────────────────────────────────────────────────────────────────────
 export const PROPERTY_TYPE_PRICE_MULT: Record<string, number> = {
-  apartment_center:  0.40,  // Căn hộ nội đô: ~40% giá nhà phố cùng khu vực (thực tế BĐS.com)
-  apartment_suburb:  0.45,  // Căn hộ ngoại thành: ~45%
+  apartment_center:  0.52,  // Căn hộ nội đô: ~52% nhà phố (thực tế 55-70M/m² vs 120M/m² nhà phố Q.BT)
+  apartment_suburb:  0.48,  // Căn hộ ngoại thành/trung cấp: ~48%
   townhouse_center:  1.00,  // Tham chiếu chuẩn — nhà phố nội đô Sổ Hồng, hẻm 4m
   townhouse_suburb:  1.00,  // Nhà phố ngoại thành — tương đương mức cơ sở
-  villa:             0.80,  // Biệt thự: thấp hơn/m² vì DT lớn, ít giao dịch
+  villa:             0.85,  // Biệt thự: thấp hơn/m² vì DT lớn, ít giao dịch
   shophouse:         1.25,  // Shophouse: premium thương mại cao nhất phân khúc nhà phố
   land_urban:        1.30,  // Đất thổ cư nội đô: premium (không khấu hao công trình)
   land_suburban:     1.00,  // Đất thổ cư ngoại thành: tương đương nhà phố (giá đất thuần)
-  penthouse:         0.62,  // Penthouse: ~62% nhà phố/m² nhưng được đền bù bởi Kfl cao
-  office:            0.75,  // Văn phòng: 75% nhà phố (office condotel/CBD B class ~50-80M/m²)
-  warehouse:         0.18,  // Kho xưởng RBW: 18% nhà phố — Bình Dương kho ~3-8M/m² (Savills 2024)
+  penthouse:         0.78,  // Penthouse: ~78% nhà phố/m² (Vinhomes PH ~100-180M/m²) + Kfl boost
+  office:            0.75,  // Văn phòng: 75% nhà phố (CBD B-class ~50-80M/m²)
+  warehouse:         0.18,  // Kho xưởng RBW: 18% nhà phố — Bình Dương ~3-8M/m² (Savills 2024)
   land_agricultural: 0.05,  // Đất nông nghiệp: rất rẻ, chủ yếu đầu cơ chuyển đổi
-  land_industrial:   0.28,  // Đất KCN: đắt hơn nông nghiệp nhưng thấp hơn thổ cư (~200-600 USD/m²)
-  project:           0.75,  // Căn hộ off-plan: chiết khấu ~25% so với thứ cấp thực tế
+  land_industrial:   0.28,  // Đất KCN: ~200-600 USD/m² → 5-15M VNĐ/m²
+  project:           0.68,  // Căn hộ off-plan: chiết khấu ~32% vs thứ cấp (thực tế 10-15%)
 };
 
 export function getRegionalBasePrice(address: string, pType?: string): {
@@ -1113,32 +1184,39 @@ export function getRegionalBasePrice(address: string, pType?: string): {
 
 // Đơn giá thuê thực tế (triệu VNĐ/m²/tháng) — dùng làm nguồn CHÍNH cho nhà ở
 // Source: Batdongsan.com.vn, OneHousing, CBRE Vietnam Rental Report 2025-2026
+// ─────────────────────────────────────────────────────────────────────────────
+// Calibration (tháng 4/2026):
+//   apartment_center  0.28: Vinhomes BT 80m² = 22.4tr ✓ (thực tế 20-28tr)
+//   townhouse_center  0.32: nhà phố 100m² Bình Thạnh = 32tr ✓ (thực tế 28-45tr)
+//   villa             0.18: biệt thự 200m² = 36tr ✓ (thực tế 30-80tr)
+//   penthouse         0.40: PH Vinhomes 150m² = 60tr ✓ (thực tế 50-120tr)
+// ─────────────────────────────────────────────────────────────────────────────
 const FALLBACK_RENT_PER_M2: Record<string, number> = {
   // ── Nhà ở (residential) — đơn giá/m²/tháng thực tế ────────────────────────
-  // Cơ sở tham chiếu: căn hộ nội thất cơ bản (BASIC), tầng trung, hướng Đông
-  // Vinhome 75-85m² = 22-25 triệu → 0.28 tr/m²/tháng (BASIC)
-  // Có nội thất đầy đủ: Kfurn = 1.07 → ~0.30 tr/m²/tháng
   apartment_center:  0.28,  // Căn hộ nội đô cao cấp: 70m²=19.6tr, 80m²=22.4tr, 90m²=25.2tr
   apartment_suburb:  0.20,  // Căn hộ ngoại thành/trung cấp: 70m²=14tr, 80m²=16tr
-  townhouse_center:  0.22,  // Nhà phố nội đô cho thuê nguyên căn (ít phổ biến)
-  townhouse_suburb:  0.15,  // Nhà phố ngoại thành
-  villa:             0.11,  // Biệt thự — diện tích lớn, giá/m² thấp hơn
-  penthouse:         0.38,  // Penthouse — premium view + tiện ích độc quyền
-  project:           0.22,  // Căn hộ dự án — tương đương apartment_suburb khi bàn giao
+  townhouse_center:  0.32,  // Nhà phố nội đô cho thuê nguyên căn: 100m²=32tr (thực tế 28-45tr)
+  townhouse_suburb:  0.20,  // Nhà phố ngoại thành: 100m²=20tr (thực tế 15-28tr)
+  villa:             0.18,  // Biệt thự: 200m²=36tr, 300m²=54tr (thực tế 30-80tr)
+  penthouse:         0.40,  // Penthouse: 150m²=60tr (thực tế 50-120tr, premium view)
+  project:           0.23,  // Căn hộ off-plan: tương đương apartment_suburb + nhỉnh khi bàn giao
 
-  // ── Thương mại / Công nghiệp — yield formula đáng tin cậy hơn ──────────────
-  shophouse:         0.45,  // Shophouse mặt đường: 50m² = 22.5tr (thương mại)
-  office:            0.33,  // Văn phòng B-class: ~USD 12/m²/th → 300K VNĐ/m²/th
-  warehouse:         0.06,  // Kho xưởng RBW: USD 2-4/m²/th
+  // ── Thương mại / Công nghiệp ────────────────────────────────────────────────
+  shophouse:         0.45,  // Shophouse mặt đường: 50m²=22.5tr (thực tế 20-50tr/50m²)
+  office:            0.33,  // VP B-class: USD 12/m²/th ≈ 300K VNĐ/m²/th
+  warehouse:         0.075, // Kho RBW: USD 3-5/m²/th ≈ 75-125K VNĐ/m²/th (Savills 2024)
   land_urban:        0.08,  // Đất thổ cư nội đô — cho thuê ki-ốt/mặt bằng
   land_suburban:     0.04,  // Đất ngoại thành
   land_agricultural: 0.003, // Đất nông nghiệp — cho thuê canh tác
   land_industrial:   0.05,  // Đất KCN — cho thuê dài hạn
 };
 
-// Các loại nhà ở dùng đơn giá/m²/tháng thực tế (KHÔNG dùng yield từ comps value)
+// Loại nhà ở dùng đơn giá/m²/tháng thực tế (KHÔNG dùng yield từ comps value).
+// Lý do: yield thực tế nhà ở (2.8-3.8%) ≠ DEFAULT_CAP_RATE bảng → tính yield ra sai.
 const RESIDENTIAL_TYPES_FOR_RENT: PropertyType[] = [
-  'apartment_center', 'apartment_suburb', 'villa', 'penthouse', 'project',
+  'apartment_center', 'apartment_suburb',
+  'townhouse_center', 'townhouse_suburb',
+  'villa', 'penthouse', 'project',
 ];
 
 export function estimateFallbackRent(
