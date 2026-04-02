@@ -60,20 +60,20 @@ function detectPropertyTypeFromText(text: string): string | null {
 
 // Tên hiển thị loại BĐS (cho badge trên form)
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
-    apartment_center:  '🏢 Căn hộ nội đô',
-    apartment_suburb:  '🏬 Căn hộ ngoại ô',
-    penthouse:         '💎 Penthouse',
-    villa:             '🏰 Biệt thự',
-    shophouse:         '🏪 Shophouse',
-    warehouse:         '🏭 Kho / Xưởng',
-    office:            '🏢 Văn phòng',
-    land_agricultural: '🌾 Đất nông nghiệp',
-    land_industrial:   '🏗️ Đất KCN',
-    land_suburban:     '🌿 Đất ngoại thành',
-    land_urban:        '🗺️ Đất thổ cư',
-    project:           '📐 Off-plan',
-    townhouse_suburb:  '🏡 Nhà phố ngoại thành',
-    townhouse_center:  '🏘️ Nhà phố nội đô',
+    apartment_center:  'Căn hộ nội đô',
+    apartment_suburb:  'Căn hộ ngoại ô',
+    penthouse:         'Penthouse',
+    villa:             'Biệt thự',
+    shophouse:         'Shophouse',
+    warehouse:         'Kho / Xưởng',
+    office:            'Văn phòng',
+    land_agricultural: 'Đất nông nghiệp',
+    land_industrial:   'Đất KCN',
+    land_suburban:     'Đất ngoại thành',
+    land_urban:        'Đất thổ cư',
+    project:           'Off-plan',
+    townhouse_suburb:  'Nhà phố ngoại thành',
+    townhouse_center:  'Nhà phố nội đô',
 };
 
 // --- GUEST QUOTA ---
@@ -534,7 +534,7 @@ export const AiValuation: React.FC = () => {
                                         {autoDetectedType && (
                                             <div className="flex items-center gap-1.5 mt-1">
                                                 <span className="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-bold">
-                                                    ✨ Tự nhận dạng: {PROPERTY_TYPE_LABELS[autoDetectedType] ?? autoDetectedType}
+                                                    Tự nhận dạng: {PROPERTY_TYPE_LABELS[autoDetectedType] ?? autoDetectedType}
                                                 </span>
                                                 <button
                                                     onClick={() => setAutoDetectedType(null)}
@@ -641,15 +641,15 @@ export const AiValuation: React.FC = () => {
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-3">Loại Bất Động Sản</label>
 
                                     {/* Nhóm: Nhà ở */}
-                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">🏠 Nhà ở</div>
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">Nhà ở</div>
                                     <div className="grid grid-cols-3 gap-2 mb-4">
                                         {[
-                                            { id: 'townhouse_center', label: '🏘️ Nhà phố nội đô' },
-                                            { id: 'townhouse_suburb', label: '🏡 Nhà phố ngoại thành' },
-                                            { id: 'villa', label: '🏰 Biệt thự' },
-                                            { id: 'apartment_center', label: '🏢 Căn hộ trung tâm' },
-                                            { id: 'apartment_suburb', label: '🏬 Căn hộ ngoại ô' },
-                                            { id: 'penthouse', label: '💎 Penthouse' },
+                                            { id: 'townhouse_center', label: 'Nhà phố nội đô' },
+                                            { id: 'townhouse_suburb', label: 'Nhà phố ngoại thành' },
+                                            { id: 'villa', label: 'Biệt thự' },
+                                            { id: 'apartment_center', label: 'Căn hộ trung tâm' },
+                                            { id: 'apartment_suburb', label: 'Căn hộ ngoại ô' },
+                                            { id: 'penthouse', label: 'Penthouse' },
                                         ].map(opt => (
                                             <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
@@ -659,12 +659,12 @@ export const AiValuation: React.FC = () => {
                                     </div>
 
                                     {/* Nhóm: Thương mại & Công nghiệp */}
-                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">🏪 Thương mại & Công nghiệp</div>
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">Thương mại & Công nghiệp</div>
                                     <div className="grid grid-cols-3 gap-2 mb-4">
                                         {[
-                                            { id: 'shophouse', label: '🏪 Shophouse' },
-                                            { id: 'office', label: '🏢 Văn phòng' },
-                                            { id: 'warehouse', label: '🏭 Nhà xưởng / Kho' },
+                                            { id: 'shophouse', label: 'Shophouse' },
+                                            { id: 'office', label: 'Văn phòng' },
+                                            { id: 'warehouse', label: 'Nhà xưởng / Kho' },
                                         ].map(opt => (
                                             <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
@@ -674,13 +674,13 @@ export const AiValuation: React.FC = () => {
                                     </div>
 
                                     {/* Nhóm: Đất */}
-                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">🗺️ Đất</div>
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">Đất</div>
                                     <div className="grid grid-cols-2 gap-2 mb-4">
                                         {[
-                                            { id: 'land_urban', label: '🗺️ Đất thổ cư nội đô' },
-                                            { id: 'land_suburban', label: '🌿 Đất thổ cư ngoại thành' },
-                                            { id: 'land_agricultural', label: '🌾 Đất nông nghiệp' },
-                                            { id: 'land_industrial', label: '🏗️ Đất khu công nghiệp' },
+                                            { id: 'land_urban', label: 'Đất thổ cư nội đô' },
+                                            { id: 'land_suburban', label: 'Đất thổ cư ngoại thành' },
+                                            { id: 'land_agricultural', label: 'Đất nông nghiệp' },
+                                            { id: 'land_industrial', label: 'Đất khu công nghiệp' },
                                         ].map(opt => (
                                             <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
@@ -690,10 +690,10 @@ export const AiValuation: React.FC = () => {
                                     </div>
 
                                     {/* Nhóm: Dự án */}
-                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">📐 Dự án</div>
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">Dự án</div>
                                     <div className="grid grid-cols-1 gap-2">
                                         {[
-                                            { id: 'project', label: '📐 Dự án / Căn hộ off-plan (chưa bàn giao)' },
+                                            { id: 'project', label: 'Dự án / Căn hộ off-plan (chưa bàn giao)' },
                                         ].map(opt => (
                                             <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
@@ -804,8 +804,8 @@ export const AiValuation: React.FC = () => {
                                         </label>
                                         <div className="grid grid-cols-3 gap-3">
                                             {(propertyType === 'office'
-                                                ? [{ id: 'FULL', label: '✅ Hoàn thiện' }, { id: 'BASIC', label: '🔧 Shell & Core' }, { id: 'NONE', label: '🏚️ Thô' }]
-                                                : [{ id: 'FULL', label: '✨ Đầy đủ' }, { id: 'BASIC', label: '🪑 Cơ bản' }, { id: 'NONE', label: '🏚️ Nhà thô' }]
+                                                ? [{ id: 'FULL', label: 'Hoàn thiện' }, { id: 'BASIC', label: 'Shell & Core' }, { id: 'NONE', label: 'Thô' }]
+                                                : [{ id: 'FULL', label: 'Đầy đủ' }, { id: 'BASIC', label: 'Cơ bản' }, { id: 'NONE', label: 'Nhà thô' }]
                                             ).map(opt => (
                                                 <button
                                                     key={opt.id}
