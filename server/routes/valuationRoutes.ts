@@ -79,12 +79,19 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
         marketBasePrice = typeAdjustedPrice;
         aiConfidence = cacheEntry.confidence;
         marketTrend = cacheEntry.marketTrend;
-        // Cache stores rent estimate for 60m² reference property.
-        // Scale to actual area: if area≠60, adjust proportionally.
-        // Cap at 5× reference to prevent extreme outliers.
-        if (cacheEntry.monthlyRentEstimate && cacheEntry.monthlyRentEstimate > 0) {
-          const CACHE_RENT_REF_AREA = 60; // m² the cache rent was computed for
-          const areaScale = Math.min(5, areaNum / CACHE_RENT_REF_AREA);
+        // Cache stores rent estimate for a 70m² townhouse_center reference
+        // (see marketDataService.fetchAndCache — uses area=70, townhouse_center).
+        // Only reuse cache rent for townhouse types where it is directly applicable.
+        // For apartments, villas, etc. skip — estimateFallbackRent (below) will
+        // compute a type-specific estimate from per-m² market rates instead,
+        // avoiding the inflated result caused by scaling a townhouse rent onto
+        // apartment pricing (e.g. Vinhome 80m² ≠ townhouse_reference × 1.33).
+        const isTownhouseType = resolvedPropertyType === 'townhouse_center'
+          || resolvedPropertyType === 'townhouse_suburb'
+          || resolvedPropertyType === 'shophouse';
+        if (isTownhouseType && cacheEntry.monthlyRentEstimate && cacheEntry.monthlyRentEstimate > 0) {
+          const CACHE_RENT_REF_AREA = 70; // matches fetchAndCache(area=70, townhouse_center)
+          const areaScale = Math.min(4, areaNum / CACHE_RENT_REF_AREA);
           monthlyRent = Math.round(cacheEntry.monthlyRentEstimate * areaScale * 10) / 10;
         }
         marketDataSource = cacheEntry.source;

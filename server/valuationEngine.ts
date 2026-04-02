@@ -1094,43 +1094,72 @@ export function getRegionalBasePrice(address: string, pType?: string): {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 8. FALLBACK MONTHLY RENT ESTIMATE (when AI is unavailable)
-//    Based on typical gross rental yield in each region
+//    Source: Batdongsan/CBRE/Savills Vietnam 2024-2025 rental market data
+//
+//    *** RESIDENTIAL ***: dùng trực tiếp đơn giá/m²/tháng (thực tế thị trường)
+//    *** THƯƠNG MẠI   ***: dùng công thức yield (thu nhập thuần / cap rate)
+//
+//    Apartment: KHÔNG dùng công thức yield từ comps value vì:
+//      - Vinhome 80m² ~ 7.5 tỷ → grossYield 6% → 37.5tr/th (SAI — thực tế 22-25tr)
+//      - Yield thực tế căn hộ premium chỉ ~3-3.5%, không phải 6%
+//      - Dùng đơn giá/m²/tháng cho kết quả chính xác hơn
 // ─────────────────────────────────────────────────────────────────────────────
-// Type-specific fallback rent heuristics (triệu VNĐ/m²/tháng)
-// Used ONLY when cap-rate formula gives implausible result
-// Source: Batdongsan/CBRE Vietnam 2024-2025 rental market averages
+
+// Đơn giá thuê thực tế (triệu VNĐ/m²/tháng) — dùng làm nguồn CHÍNH cho nhà ở
+// Source: Batdongsan.com.vn, OneHousing, CBRE Vietnam Rental Report 2024-2025
 const FALLBACK_RENT_PER_M2: Record<string, number> = {
-  apartment_center:  0.35,  // 35K VNĐ/m²/month — căn hộ nội đô (100m² = 35tr/tháng)
-  apartment_suburb:  0.22,  // Căn hộ ngoại thành
-  townhouse_center:  0.20,  // Nhà phố nội đô cho thuê nguyên căn
-  townhouse_suburb:  0.14,  // Nhà phố ngoại thành
-  villa:             0.10,  // Biệt thự — ít thanh khoản thuê, giá/m² thấp
-  shophouse:         0.45,  // Shophouse — giá thuê cao vì thương mại (50m² = 22.5tr/th)
+  // ── Nhà ở (residential) — đơn giá/m²/tháng thực tế ────────────────────────
+  // Cơ sở tham chiếu: căn hộ nội thất cơ bản (BASIC), tầng trung, hướng Đông
+  // Vinhome 75-85m² = 22-25 triệu → 0.28 tr/m²/tháng (BASIC)
+  // Có nội thất đầy đủ: Kfurn = 1.07 → ~0.30 tr/m²/tháng
+  apartment_center:  0.28,  // Căn hộ nội đô cao cấp: 70m²=19.6tr, 80m²=22.4tr, 90m²=25.2tr
+  apartment_suburb:  0.20,  // Căn hộ ngoại thành/trung cấp: 70m²=14tr, 80m²=16tr
+  townhouse_center:  0.22,  // Nhà phố nội đô cho thuê nguyên căn (ít phổ biến)
+  townhouse_suburb:  0.15,  // Nhà phố ngoại thành
+  villa:             0.11,  // Biệt thự — diện tích lớn, giá/m² thấp hơn
+  penthouse:         0.38,  // Penthouse — premium view + tiện ích độc quyền
+  project:           0.22,  // Căn hộ dự án — tương đương apartment_suburb khi bàn giao
+
+  // ── Thương mại / Công nghiệp — yield formula đáng tin cậy hơn ──────────────
+  shophouse:         0.45,  // Shophouse mặt đường: 50m² = 22.5tr (thương mại)
+  office:            0.33,  // Văn phòng B-class: ~USD 12/m²/th → 300K VNĐ/m²/th
+  warehouse:         0.06,  // Kho xưởng RBW: USD 2-4/m²/th
   land_urban:        0.08,  // Đất thổ cư nội đô — cho thuê ki-ốt/mặt bằng
-  land_suburban:     0.04,  // Đất ngoại thành — cho thuê rất thấp
-  penthouse:         0.42,  // Penthouse — premium lớn vì view độc quyền
-  office:            0.35,  // Văn phòng — tương đương căn hộ nội đô (USD 8-15/m²/th → VNĐ)
-  warehouse:         0.06,  // Kho xưởng RBW — USD 2-4/m²/th × 25K = 50-100K VNĐ/m²/th
-  land_agricultural: 0.003, // Đất nông nghiệp — cho thuê canh tác ~3K VNĐ/m²/th
-  land_industrial:   0.05,  // Đất KCN — cho thuê dài hạn theo USD/m²/kỳ
-  project:           0.28,  // Căn hộ dự án — tương đương apartment_suburb khi bàn giao
+  land_suburban:     0.04,  // Đất ngoại thành
+  land_agricultural: 0.003, // Đất nông nghiệp — cho thuê canh tác
+  land_industrial:   0.05,  // Đất KCN — cho thuê dài hạn
 };
 
+// Các loại nhà ở dùng đơn giá/m²/tháng thực tế (KHÔNG dùng yield từ comps value)
+const RESIDENTIAL_TYPES_FOR_RENT: PropertyType[] = [
+  'apartment_center', 'apartment_suburb', 'villa', 'penthouse', 'project',
+];
+
 export function estimateFallbackRent(
-  compsPrice: number,        // VNĐ (total property value)
+  compsPrice: number,        // VNĐ (total property value — chỉ dùng cho thương mại)
   propertyType: PropertyType,
   area: number,
 ): number {
-  const capRate = DEFAULT_CAP_RATES[propertyType];
   const safeArea = area > 0 ? area : 1;
+
+  // ── Nhà ở: dùng đơn giá/m²/tháng thực tế ─────────────────────────────────
+  // Phương pháp yield (compsPrice × grossYield) cho kết quả sai với nhà ở cao cấp
+  // vì yield thực tế (2.8-3.5%) thấp hơn nhiều so với cap rate danh nghĩa (4.5-6%)
+  if (RESIDENTIAL_TYPES_FOR_RENT.includes(propertyType)) {
+    const perM2Rate = FALLBACK_RENT_PER_M2[propertyType] ?? 0.25;
+    return Math.round(safeArea * perM2Rate * 10) / 10;
+  }
+
+  // ── Thương mại / Công nghiệp: dùng công thức yield ──────────────────────
+  const capRate = DEFAULT_CAP_RATES[propertyType];
   const safeCap = capRate > 0 ? capRate : DEFAULT_CAP_RATE;
-  const grossYield = safeCap + 0.015;  // gross ≈ cap rate + 1.5% (before vacancy/opex)
+  const grossYield = safeCap + 0.015;  // gross ≈ cap rate + 1.5% (trước vacancy/opex)
   const annualRentVND = compsPrice * grossYield;
   const monthlyRentTrieu = (annualRentVND / 12) / 1_000_000;
-  // Sanity check: rent/m²/month should be 0.002–8 triệu/m² (covers agricultural → penthouse)
+
+  // Kiểm tra sanity: rent/m²/tháng phải nằm trong 0.002–8 triệu/m²
   const rentPerM2 = monthlyRentTrieu / safeArea;
   if (rentPerM2 < 0.002 || rentPerM2 > 8) {
-    // Cap-rate formula gave implausible result — use type-specific floor
     const floorPerM2 = FALLBACK_RENT_PER_M2[propertyType] ?? 0.20;
     return Math.round(safeArea * floorPerM2 * 10) / 10;
   }
