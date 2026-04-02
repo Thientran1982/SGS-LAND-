@@ -48,7 +48,6 @@ class QueueService {
         };
         
         this.queue.push(task);
-        console.log(`[Queue] Task ${id} (${type}) enqueued. Queue length: ${this.queue.length}`);
         
         // Start processing if not already running
         this.processQueue();
@@ -105,34 +104,27 @@ class QueueService {
      * Execute a single task with retry logic.
      */
     private async executeTask(task: QueueTask) {
-        console.log(`[Queue] Processing task ${task.id} (${task.type})...`);
-        
         const handler = this.handlers.get(task.type);
         if (!handler) {
             task.status = 'FAILED';
             task.error = `No handler registered for task type: ${task.type}`;
             task.completedAt = Date.now();
-            console.error(`[Queue] Task ${task.id} failed: ${task.error}`);
             return;
         }
 
         try {
-            // Use Exponential Backoff for the handler execution
             const result = await withRetry(
                 () => handler(task.payload),
-                3, // max retries
-                2000 // base delay 2s
+                3,
+                2000
             );
-            
             task.status = 'COMPLETED';
             task.result = result;
             task.completedAt = Date.now();
-            console.log(`[Queue] Task ${task.id} completed successfully.`);
         } catch (error: any) {
             task.status = 'FAILED';
             task.error = error.message || 'Unknown error';
             task.completedAt = Date.now();
-            console.error(`[Queue] Task ${task.id} failed after retries:`, error);
         }
     }
     

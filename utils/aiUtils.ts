@@ -57,7 +57,6 @@ export const withRetry = async <T>(
             const jitter = Math.random() * 200;
             const delay = baseDelayMs * Math.pow(2, attempt - 1) + jitter;
             
-            console.log(`[Retry Mechanism] Waiting ${Math.round(delay)}ms before next attempt...`);
             await new Promise(resolve => setTimeout(resolve, delay));
         }
     }

@@ -3,6 +3,7 @@ import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepo
 import { auditRepository } from '../repositories/auditRepository';
 import { emailService } from '../services/emailService';
 import { randomBytes } from 'crypto';
+import { logger } from '../middleware/logger';
 import { promises as dns } from 'dns';
 
 export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
@@ -334,7 +335,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
         ipAddress: req.ip,
       });
 
-      console.log(`[Zalo] Tenant ${user.tenantId} connected OA: ${oaName} (${oaId})`);
+      logger.info(`[Zalo] Tenant ${user.tenantId} connected OA: ${oaName} (${oaId})`);
       res.json({ success: true, webhookUrl, zalo: zaloConfig });
     } catch (error: any) {
       console.error('Zalo connect error:', error);
@@ -381,7 +382,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
         ipAddress: req.ip,
       });
 
-      console.log(`[Zalo] Tenant ${user.tenantId} updated OA access token`);
+      logger.info(`[Zalo] Tenant ${user.tenantId} updated OA access token`);
       res.json({ success: true });
     } catch (error: any) {
       console.error('Zalo token update error:', error);
@@ -412,7 +413,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
         ipAddress: req.ip,
       });
 
-      console.log(`[Zalo] Tenant ${user.tenantId} disconnected Zalo OA`);
+      logger.info(`[Zalo] Tenant ${user.tenantId} disconnected Zalo OA`);
       res.json({ success: true });
     } catch (error: any) {
       console.error('Zalo disconnect error:', error);
@@ -489,7 +490,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
         ipAddress: req.ip,
       });
 
-      console.log(`[Facebook] Tenant ${user.tenantId} connected page: ${name} (${pageId})`);
+      logger.info(`[Facebook] Tenant ${user.tenantId} connected page: ${name} (${pageId})`);
       res.status(201).json({ success: true, page: newPage });
     } catch (error: any) {
       console.error('Facebook connect error:', error);
@@ -523,7 +524,7 @@ export function createEnterpriseRoutes(authenticateToken: any, io?: any) {
         ipAddress: req.ip,
       });
 
-      console.log(`[Facebook] Tenant ${user.tenantId} disconnected page: ${pageId}`);
+      logger.info(`[Facebook] Tenant ${user.tenantId} disconnected page: ${pageId}`);
       res.json({ success: true });
     } catch (error: any) {
       console.error('Facebook disconnect error:', error);

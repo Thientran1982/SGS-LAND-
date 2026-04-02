@@ -887,7 +887,7 @@ async function startServer() {
 
   // Socket.io uses in-memory adapter (single-instance).
   // Upstash REST API does not support TCP pub/sub required by @socket.io/redis-adapter.
-  console.log("Socket.io using in-memory adapter (Upstash REST — no TCP pub/sub needed for single-instance).");
+  logger.info("Socket.io using in-memory adapter (Upstash REST — no TCP pub/sub needed for single-instance).");
 
   // Initialize DB schema via migration runner (with retry for cold-start DB wakeup)
   if (process.env.DATABASE_URL) {

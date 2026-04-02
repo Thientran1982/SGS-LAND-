@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import { enterpriseConfigRepository } from '../repositories/enterpriseConfigRepository';
 import { DEFAULT_TENANT_ID } from '../constants';
 import { isBrevoConfigured, brevoSendEmail } from './brevoService';
+import { logger } from '../middleware/logger';
 
 function escapeHtml(str: string): string {
   return str
@@ -235,10 +236,8 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
   const smtp = await getSmtpConfig(tenantId);
 
   if (!smtp.enabled || !smtp.host || !smtp.user) {
-    console.log(`[EmailService] No email provider configured for tenant ${tenantId}. Email queued (not sent).`);
-    console.log(`  To: ${options.to}`);
-    console.log(`  Subject: ${options.subject}`);
-    return { success: true, status: 'queued_no_smtp', messageId: `console-${Date.now()}` };
+    logger.warn(`[EmailService] No email provider configured for tenant ${tenantId}. Email queued (not sent). To: ${options.to}, Subject: ${options.subject}`);
+    return { success: true, status: 'queued_no_smtp', messageId: `queued-${Date.now()}` };
   }
 
   try {
@@ -251,7 +250,7 @@ async function sendEmail(tenantId: string, options: EmailOptions): Promise<Email
       text: options.text,
       html: options.html,
     });
-    console.log(`[EmailService] Email sent via SMTP: ${info.messageId}`);
+    logger.info(`[EmailService] Email sent via SMTP: ${info.messageId}`);
     return { success: true, status: 'sent', messageId: info.messageId };
   } catch (error: any) {
     console.error(`[EmailService] SMTP send failed:`, error.message);

@@ -11,11 +11,7 @@ import { db } from './services/dbApi';
 // Register Queue Handlers
 queueService.registerHandler('SCORE_LEAD', async (payload: any) => {
     const { leadId, leadData, weights, lang } = payload;
-    console.log(`[Queue Handler] Scoring lead ${leadId}...`);
-    
     const aiScore = await aiService.scoreLead(leadData, undefined, weights, lang);
-    
-    // Update the lead in the mock database
     const lead = await db.getLeadById(leadId);
     if (lead) {
         lead.score = {
@@ -24,9 +20,7 @@ queueService.registerHandler('SCORE_LEAD', async (payload: any) => {
             reasoning: aiScore.reasoning
         };
         await db.updateLead(leadId, lead);
-        console.log(`[Queue Handler] Lead ${leadId} scored successfully: ${aiScore.score}`);
     }
-    
     return aiScore;
 });
 

@@ -50,7 +50,11 @@ export function isQStashEnabled(): boolean {
 function getReceiverUrl(): string {
   if (process.env.QSTASH_RECEIVER_URL) return process.env.QSTASH_RECEIVER_URL;
   const isProduction = process.env.NODE_ENV === 'production';
-  if (isProduction) return 'https://sgs-land.replit.app/api/qstash/process';
+  if (isProduction) {
+    const domains = process.env.REPLIT_DOMAINS;
+    const domain = domains ? domains.split(',')[0].trim() : process.env.APP_DOMAIN || 'sgs-land.replit.app';
+    return `https://${domain}/api/qstash/process`;
+  }
   const devDomain = process.env.REPLIT_DEV_DOMAIN;
   if (devDomain) return `https://${devDomain}/api/qstash/process`;
   return 'http://localhost:5000/api/qstash/process';
