@@ -157,7 +157,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [shake, setShake] = useState(false);
   const [isPersonalEmail, setIsPersonalEmail] = useState(false);
-  const [devToken, setDevToken] = useState('');
   const [tokenFromUrl, setTokenFromUrl] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
   const [devVerifyInfo, setDevVerifyInfo] = useState<{token: string; url: string} | null>(null);
@@ -294,12 +293,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     try {
       const trimmedEmail = email.trim();
       if (view === 'FORGOT_REQUEST') {
-          const result = await db.requestPasswordReset(trimmedEmail);
+          await db.requestPasswordReset(trimmedEmail);
           setSuccessMsg(t('auth.success_reset'));
-          if ((result as any)?.devToken) {
-              setDevToken((result as any).devToken);
-              setOtp((result as any).devToken);
-          }
           setView('FORGOT_VERIFY');
           setLoading(false);
           return;
@@ -308,7 +303,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       if (view === 'FORGOT_VERIFY') {
           const resetResult = await db.resetPassword(otp, newPassword);
           const resetEmail = (resetResult as any)?.email || email.trim();
-          setDevToken('');
           setOtp('');
 
           // Auto-login immediately after successful password reset
@@ -560,12 +554,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                             <p className="text-xs text-indigo-200">{t('auth.otp_sent_msg')} <span className="font-bold text-white block mt-1 text-sm">{email}</span></p>
                             <p className="text-xs3 text-indigo-300 mt-2 leading-relaxed">{t('auth.otp_instruction')}</p>
                         </div>
-                        )}
-                        {devToken && (
-                            <div className="bg-amber-500/10 p-3 rounded-xl border border-amber-500/30 animate-enter">
-                                <p className="text-xs2 font-bold text-amber-400 uppercase tracking-wider mb-1">{t('auth.dev_token_notice')}</p>
-                                <code className="text-xs2 text-amber-200 break-all font-mono">{devToken}</code>
-                            </div>
                         )}
                         {tokenFromUrl ? (
                             <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 animate-enter flex items-center gap-2">

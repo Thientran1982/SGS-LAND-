@@ -67,7 +67,7 @@ export async function brevoSendEmail(options: BrevoSendOptions): Promise<BrevoSe
       : [{ email: options.to }];
 
     const defaultFrom = {
-      email: process.env.BREVO_FROM_EMAIL || 'thientran022003@gmail.com',
+      email: process.env.BREVO_FROM_EMAIL || 'no-reply@sgsland.vn',
       name: process.env.BREVO_FROM_NAME || 'SGS LAND',
     };
 

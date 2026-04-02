@@ -525,15 +525,13 @@ async function startServer() {
 
       writeAuditLog(tenantId, user.id, 'PASSWORD_RESET_REQUEST', 'auth', user.id, { email }, req.ip);
       await uniformDelay();
-      // emailStatus is intentionally NOT included in the public forgot-password response.
-      // Any asymmetry between user-found and user-not-found paths (e.g. 'sent' vs 'not_sent')
-      // would allow account enumeration on this public endpoint.
-      // The real delivery status is logged server-side; admins should check server logs.
-      // Dev mode only: expose devToken (implies user was found — acceptable in non-production).
-      const isDevMode = !isProduction && emailResult.status === 'queued_no_smtp';
+      // Uniform response regardless of whether user exists or email was sent.
+      // No devToken exposed — reset link is always delivered via email only.
+      if (emailResult.status === 'queued_no_smtp' || emailResult.status === 'failed') {
+        logger.warn(`[ForgotPassword] Email not delivered for ${email} — status: ${emailResult.status}. Check BREVO_FROM_EMAIL / SMTP config.`);
+      }
       res.json({
         message: 'If an account exists, a reset link has been sent.',
-        ...(isDevMode && { devToken: rawToken }),
       });
     } catch (error) {
       console.error('Forgot password error:', error);
