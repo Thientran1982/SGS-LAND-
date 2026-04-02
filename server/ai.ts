@@ -1210,6 +1210,9 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
             const isOffPlan = resolvedPTypeForSearch === 'project';
             const isApartmentType = resolvedPTypeForSearch === 'apartment_center' || resolvedPTypeForSearch === 'apartment_suburb' || resolvedPTypeForSearch === 'penthouse';
 
+            const isVilla     = resolvedPTypeForSearch === 'villa';
+            const isShophouse = resolvedPTypeForSearch === 'shophouse';
+
             // ── Type-specific search hints ─────────────────────────────────────
             const typeSpecificSaleHint = isIndustrialOrWarehouse
                 ? `- Tập trung: giá thuê/m²/tháng kho xưởng, giá chuyển nhượng đất KCN, suất đầu tư kho logistics\n- Đơn vị: VNĐ/m² (giá chuyển nhượng) hoặc USD/m²/tháng (giá thuê KCN quốc tế)\n- Nguồn: JLL Vietnam Industrial, Savills Vietnam, CBRE Vietnam Industrial Report ${currentYear}`
@@ -1221,6 +1224,10 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
                 ? `- Tập trung: giá thuê văn phòng (USD/m²/tháng) và giá chuyển nhượng mặt bằng thương mại\n- Phân loại: hạng A/B/C theo tiêu chuẩn CBRE/JLL\n- Nguồn: JLL Vietnam, Savills Vietnam Office Market, CBRE Vietnam ${currentYear}`
                 : isApartmentType
                 ? `- Tham chiếu căn hộ chuẩn: Sổ Hồng/Sổ Đỏ, 2 phòng ngủ, 60-80m², tầng trung (5-15), nội thất cơ bản — KHÔNG phải nhà phố\n- ƯU TIÊN: Giá thứ cấp (chuyển nhượng thực tế) > giá sơ cấp (chủ đầu tư công bố)\n- Giá sàn VNĐ/m² căn hộ = tổng giá bán / diện tích thông thủy\n- Nguồn: batdongsan.com.vn, onehousing.vn, cafeland.vn, CBRE/Savills Vietnam Residential Report ${currentYear}`
+                : isVilla
+                ? `- Tham chiếu biệt thự chuẩn: Sổ Hồng, đường ô tô 6-12m, diện tích 200-500m² đất, có sân vườn/hồ bơi\n- Giá tính trên m² đất (đất + công trình); không dùng m² sàn xây dựng\n- Phân khúc: biệt thự đơn lập / song lập / liền kề có sân; KHÔNG phải nhà phố thông thường\n- Nguồn: batdongsan.com.vn, cen.vn, savills.com.vn, CBRE Vietnam Residential ${currentYear}`
+                : isShophouse
+                ? `- Tham chiếu shophouse chuẩn: Sổ Hồng, mặt đường chính 8-20m, tầng trệt kinh doanh, 60-120m² sàn\n- Giá phản ánh giá trị thương mại: vị trí mặt tiền đường lớn, tầng 1 cho thuê kinh doanh\n- KHÔNG nhầm với nhà phố trong hẻm — shophouse luôn mặt đường ô tô chính\n- Nguồn: batdongsan.com.vn, cen.vn, savills.com.vn, CBRE Vietnam Commercial ${currentYear}`
                 : `- Loại tham chiếu: ${pTypeLabelSearch} — pháp lý Sổ Hồng, lộ giới 4m chuẩn, 60-100m²\n- Nguồn: batdongsan.com.vn, cafeland.vn, cen.vn, alonhadat.com, onehousing.vn, CBRE/Savills/JLL Vietnam ${currentYear}`;
 
             // ── PARALLEL DUAL SEARCH: dedicated sale search + dedicated rental search ──
@@ -1261,6 +1268,20 @@ Tìm giá thuê văn phòng/mặt bằng thương mại thực tế tại "${add
 2. Tỷ lệ lấp đầy (occupancy rate) văn phòng khu vực
 3. Giá thuê shophouse/mặt bằng tầng 1 (triệu VNĐ/tháng) cho ${area}m²
 Nguồn: JLL Vietnam, Savills Vietnam Office, CBRE Vietnam ${currentYear}`
+                : isVilla
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: Biệt thự
+Tìm giá thuê nguyên căn biệt thự thực tế tại "${address}":
+1. Giá thuê nguyên căn biệt thự (triệu VNĐ/tháng) diện tích ${area}m² — phân khúc cao cấp
+2. Khoảng giá: biệt thự nghỉ dưỡng / biệt thự đô thị / biệt thự dự án
+3. Tỷ suất cho thuê gross yield %/năm (biệt thự Việt Nam thường 3-6%/năm)
+Nguồn: batdongsan.com.vn/cho-thue-biet-thu, airbnb.vn, homedy.com, cen.vn`
+                : isShophouse
+                ? `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: Shophouse / Nhà phố thương mại
+Tìm giá thuê shophouse/mặt bằng thương mại thực tế tại "${address}":
+1. Giá thuê tầng trệt (triệu VNĐ/tháng) cho ${area}m² — shophouse mặt đường chính
+2. Giá thuê theo m²/tháng so sánh với khu vực lân cận
+3. Tỷ suất cho thuê gross yield %/năm (shophouse thường 5-8%/năm)
+Nguồn: batdongsan.com.vn/cho-thue-mat-bang, savills.com.vn, JLL Vietnam Retail ${currentYear}`
                 : `Địa chỉ: "${address}" | ${currentMonth} ${currentYear} | Loại: ${pTypeLabelSearch}
 TÌM KIẾM CHUYÊN BIỆT: Giá THUÊ thực tế
 - ${pTypeLabelSearch} tại "${address}", diện tích ${area}m²
@@ -1294,6 +1315,23 @@ Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
             const rentalContext = rentalSearchRes.text || '';
             const marketContext = `=== DỮ LIỆU GIÁ BÁN (từ tìm kiếm chuyên biệt) ===\n${saleContext}\n\n=== DỮ LIỆU GIÁ THUÊ / YIELD (từ tìm kiếm chuyên biệt) ===\n${rentalContext}`;
 
+            // ── Reference description for extraction — placed before schema so it can be used in schema descriptions ──
+            const extractRefDescription = isApartmentType
+                ? `căn hộ chuẩn (Sổ Hồng, 2PN, 60-80m², tầng trung 5-15, nội thất cơ bản) — ĐÂY LÀ GIÁ CĂN HỘ, không phải nhà phố`
+                : isOffPlan
+                ? `căn hộ dự án thứ cấp (Sổ Hồng/hợp đồng mua bán, 60-80m²) — ưu tiên giá chuyển nhượng thực tế`
+                : isLandType && !isIndustrialOrWarehouse
+                ? `đất thổ cư/nông nghiệp (VNĐ/m² đất — KHÔNG tính công trình)`
+                : isIndustrialOrWarehouse
+                ? `kho xưởng/đất KCN (VNĐ/m² hoặc USD/m²/tháng — đổi về VNĐ/m² tổng giá trị)`
+                : resolvedPTypeForSearch === 'office'
+                ? `mặt bằng văn phòng/thương mại (VNĐ/m² hoặc USD/m²/tháng × 25,000 × diện tích)`
+                : isVilla
+                ? `biệt thự (Sổ Hồng, đường 6-12m, 200-500m² đất, có sân vườn) — giá tính trên m² đất gộp công trình`
+                : isShophouse
+                ? `shophouse / nhà phố thương mại (Sổ Hồng, mặt đường chính 8-20m, tầng trệt kinh doanh) — KHÔNG phải nhà phố trong hẻm`
+                : `nhà phố/đất thổ cư tham chiếu chuẩn (Sổ Hồng, hẻm 4m, 60-100m²)`;
+
             // ── STEP 2: Extract structured data — statistical multi-point extraction ──
             const extractSchema: Schema = {
                 type: Type.OBJECT,
@@ -1301,11 +1339,11 @@ Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
                     // ── Sale price: statistical triple (min/median/max) ──────────────────
                     priceMin: {
                         type: Type.NUMBER,
-                        description: "Giá THẤP NHẤT giao dịch thực tế 1m² tìm thấy (VNĐ/m²). Nếu chỉ có 1 số liệu, để bằng priceMedian. Ví dụ: 90000000 = 90 triệu/m²"
+                        description: `Giá THẤP NHẤT giao dịch thực tế 1m² tìm thấy (VNĐ/m²) của ${extractRefDescription}. Nếu chỉ có 1 số liệu, để bằng priceMedian. Ví dụ: 90000000 = 90 triệu/m²`
                     },
                     priceMedian: {
                         type: Type.NUMBER,
-                        description: "Giá TRUNG VỊ/TRUNG BÌNH giao dịch thực tế 1m² (VNĐ/m²) — ĐÂY LÀ SỐ LIỆU ĐỊNH GIÁ CHÍNH. BĐS tham chiếu chuẩn: Sổ Hồng, lộ giới 4m, 60-100m². Ví dụ: 120000000 = 120 triệu/m²"
+                        description: `Giá TRUNG VỊ/TRUNG BÌNH giao dịch thực tế 1m² (VNĐ/m²) — ĐÂY LÀ SỐ LIỆU ĐỊNH GIÁ CHÍNH. Tham chiếu: ${extractRefDescription}. Ví dụ: 120000000 = 120 triệu/m²`
                     },
                     priceMax: {
                         type: Type.NUMBER,
@@ -1366,19 +1404,6 @@ Phân biệt: thuê nguyên căn vs thuê từng phòng.`;
                 },
                 required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors"]
             };
-
-            // Reference description for extraction prompt — must match the property type's pricing convention
-            const extractRefDescription = isApartmentType
-                ? `căn hộ chuẩn (Sổ Hồng, 2PN, 60-80m², tầng trung 5-15, nội thất cơ bản) — ĐÂY LÀ GIÁ CĂN HỘ, không phải nhà phố`
-                : isOffPlan
-                ? `căn hộ dự án thứ cấp (Sổ Hồng/hợp đồng mua bán, 60-80m²) — ưu tiên giá chuyển nhượng thực tế`
-                : isLandType && !isIndustrialOrWarehouse
-                ? `đất thổ cư/nông nghiệp (VNĐ/m² đất — KHÔNG tính công trình)`
-                : isIndustrialOrWarehouse
-                ? `kho xưởng/đất KCN (VNĐ/m² hoặc USD/m²/tháng — đổi về VNĐ/m² tổng giá trị)`
-                : resolvedPTypeForSearch === 'office'
-                ? `mặt bằng văn phòng/thương mại (VNĐ/m² hoặc USD/m²/tháng × 25,000 × diện tích)`
-                : `nhà phố/đất thổ cư tham chiếu chuẩn (Sổ Hồng, hẻm 4m, 60-100m²)`;
 
             const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | ${isApartmentType ? 'Tầng/căn hộ' : 'Lộ giới: ' + roadWidth + 'm'} | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}
 
