@@ -56,7 +56,7 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
   // ROUTES.CONTACT = 'contact'
   contact: {
     title: 'Liên Hệ Tư Vấn | SGS LAND',
-    description: 'Liên hệ với đội ngũ tư vấn SGS LAND để được hỗ trợ demo, tư vấn gói dịch vụ và tích hợp phần mềm quản lý bất động sản.',
+    description: 'Liên hệ với đội ngũ tư vấn SGS LAND để được hỗ trợ demo, tư vấn gói dịch vụ và tích hợp nền tảng quản lý bất động sản.',
     path: '/contact',
   },
   // ROUTES.CAREERS = 'careers'
@@ -133,7 +133,7 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
   // ROUTES.BILLING = 'billing'
   billing: {
     title: 'Gói Dịch Vụ & Thanh Toán | SGS LAND',
-    description: 'Các gói dịch vụ phần mềm quản lý bất động sản SGS LAND phù hợp với mọi quy mô doanh nghiệp.',
+    description: 'Các gói dịch vụ nền tảng quản lý bất động sản SGS LAND phù hợp với mọi quy mô doanh nghiệp.',
     path: '/billing',
     noIndex: true,
   },
