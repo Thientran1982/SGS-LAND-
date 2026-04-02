@@ -1009,8 +1009,8 @@ export const AiValuation: React.FC = () => {
                                         {[
                                             { label: 'Tiền thuê/tháng', value: `${valuation.incomeApproach.monthlyRent.toFixed(1)} Tr`, hint: 'Ước tính thị trường' },
                                             { label: 'Thu nhập ròng/năm', value: `${valuation.incomeApproach.noi.toFixed(1)} Tr`, hint: 'Sau khấu trống & chi phí vận hành' },
-                                            { label: 'Tỷ suất vốn hóa', value: `${(valuation.incomeApproach.capRate * 100).toFixed(1)}%`, hint: 'Thị trường VN 2025-26' },
-                                            { label: 'Thời gian hoàn vốn', value: `${valuation.incomeApproach.paybackYears.toFixed(1)} năm`, hint: 'Theo NOI hiện tại' },
+                                            { label: 'Tỷ suất cho thuê', value: `${(valuation.incomeApproach.capRate * 100).toFixed(1)}%`, hint: 'Gross yield — VN 2025-26' },
+                                            { label: 'Thời gian hoàn vốn', value: `${valuation.incomeApproach.paybackYears.toFixed(1)} năm`, hint: 'Theo thu nhập gộp' },
                                         ].map((item, i) => (
                                             <div key={i} className="px-4 py-3 text-center">
                                                 <div className="text-[var(--text-tertiary)] text-xs2 mb-1">{item.label}</div>

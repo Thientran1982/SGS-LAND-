@@ -192,6 +192,9 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **Internal DB comps**: VALUATION_AGENT queries internal listing DB for comparable properties → feeds `internalCompsMedian`/`internalCompsCount` to multi-source blending
 - **Per-node cost tracking**: `modelUsed`, `tokensEstimate`, `costEstimate` in each trace step
 - **AVM 8 coefficients**: Kd (road) × Kp (legal) × Ka (area) × Kfl (floor) × Kdir (direction) × Kmf (frontage) × Kfurn (furnishing) × Kage (building age 0.70–1.05)
+- **Income approach (VN gross yield convention)**: `capitalValue = grossIncome / grossYieldCap` — DEFAULT_CAP_RATES are gross yield caps, NOT NOI cap rates. paybackYears uses gross income (not NOI).
+- **estimateFallbackRent**: commercial types use `grossYield = safeCap` (no +0.015 phantom offset)
+- **Regional table**: Bình Dương province entries (Thuận An 55M, Dĩ An 50M, etc.) matched correctly; Nghệ An regex narrowed to avoid false Vĩnh Long matches
 - **Router extraction**: added `valuation_road_width`, `valuation_direction` for AVM precision
 - **Formula string**: includes reconciliation line when income approach active
 

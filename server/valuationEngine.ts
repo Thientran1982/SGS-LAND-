@@ -21,9 +21,9 @@
  *    Kfurn— Furnishing (nội thất)         : 0.95 – 1.07
  *    Kage — Building age (tuổi nhà)      : 0.70 – 1.05
  *
- *  Method 2 — Income Capitalization:
- *    NOI           = Effective Gross Income − Operating Expenses
- *    P_income      = NOI / Cap Rate
+ *  Method 2 — Income Capitalization (Vietnamese gross yield convention):
+ *    GrossIncome   = MonthlyRent × 12
+ *    P_income      = GrossIncome / GrossYieldCap
  *
  *  Method 3 — Reconciliation (weighted average):
  *    P_final       = P_comps × W_comps + P_income × W_income
@@ -108,7 +108,7 @@ export interface IncomeApproachResult {
   capRate: number;           // % (e.g. 0.050 = 5.0%)
   capitalValue: number;      // VNĐ
   grossRentalYield: number;  // % gross yield
-  paybackYears: number;      // years to recoup at current NOI
+  paybackYears: number;      // years to recoup at current gross income
 }
 
 export interface AVMOutput {
@@ -662,8 +662,8 @@ function applyIncomeApproach(
   const grossRentalYield = totalPrice > 0
     ? grossIncomeVND / totalPrice * 100
     : 0;
-  const paybackYears = noiTrieu > 0
-    ? (capitalValue / 1_000_000) / noiTrieu
+  const paybackYears = grossIncomeTrieu > 0
+    ? (capitalValue / 1_000_000) / grossIncomeTrieu
     : 0;
 
   return {
@@ -988,7 +988,6 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/tân phú|tan phu/i.test(addr))              return getBase(80_000_000,  'Tân Phú, TP.HCM', 60);
   if (/gò vấp|go vap/i.test(addr))                return getBase(75_000_000,  'Gò Vấp, TP.HCM', 60);
   if (/thủ đức|thu duc/i.test(addr))              return getBase(65_000_000,  'Thủ Đức, TP.HCM', 60);
-  if (/bình dương|binh duong/i.test(addr))        return getBase(45_000_000,  'Bình Dương', 57);
   if (/hcm|hồ chí minh|ho chi minh|sài gòn|saigon/i.test(addr)) return getBase(100_000_000, 'TP.HCM (trung bình)', 55);
 
   // ── Hà Nội ───────────────────────────────────────────────────────────────
@@ -1098,7 +1097,7 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/quảng ngãi|quang ngai/i.test(addr))         return getBase(16_000_000,  'Quảng Ngãi', 47);
 
   // ── Nghệ An ───────────────────────────────────────────────────────────────
-  if (/vinh|nghệ an|nghe an/i.test(addr))          return getBase(22_000_000,  'Vinh, Nghệ An', 50);
+  if (/tp\.?\s*vinh|thành phố vinh|thanh pho vinh|nghệ an|nghe an/i.test(addr)) return getBase(22_000_000, 'Vinh, Nghệ An', 50);
 
   // ── Thanh Hóa ─────────────────────────────────────────────────────────────
   if (/sầm sơn|sam son/i.test(addr))               return getBase(22_000_000,  'Sầm Sơn, Thanh Hóa', 50);
@@ -1237,7 +1236,7 @@ export function estimateFallbackRent(
   // ── Thương mại / Công nghiệp: dùng công thức yield ──────────────────────
   const capRate = DEFAULT_CAP_RATES[propertyType];
   const safeCap = capRate > 0 ? capRate : DEFAULT_CAP_RATE;
-  const grossYield = safeCap + 0.015;  // gross ≈ cap rate + 1.5% (trước vacancy/opex)
+  const grossYield = safeCap;  // DEFAULT_CAP_RATES are already gross yield caps (VN market standard)
   const annualRentVND = compsPrice * grossYield;
   const monthlyRentTrieu = (annualRentVND / 12) / 1_000_000;
 
