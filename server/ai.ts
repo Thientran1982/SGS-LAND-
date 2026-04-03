@@ -309,6 +309,10 @@ type RouterPlan = {
         valuation_legal?: string;
         valuation_road_width?: number;
         valuation_direction?: string;
+        valuation_floor?: number;
+        valuation_frontage?: number;
+        valuation_furnishing?: 'FULL' | 'BASIC' | 'NONE';
+        valuation_building_age?: number;
     };
     confidence: number;
 };
@@ -338,7 +342,11 @@ const ROUTER_SCHEMA: Schema = {
                 valuation_area: { type: Type.NUMBER, description: "Diện tích BĐS cần định giá (m²)" },
                 valuation_legal: { type: Type.STRING, enum: ['PINK_BOOK', 'HDMB', 'VI_BANG', 'UNKNOWN'], description: "Pháp lý BĐS cần định giá" },
                 valuation_road_width: { type: Type.NUMBER, description: "Lộ giới/chiều rộng đường trước nhà (mét). VD: 'hẻm 3m' → 3, 'mặt tiền 12m' → 12" },
-                valuation_direction: { type: Type.STRING, description: "Hướng nhà: Đông, Tây, Nam, Bắc, Đông Nam, Tây Bắc, v.v." }
+                valuation_direction: { type: Type.STRING, description: "Hướng nhà: Đông, Tây, Nam, Bắc, Đông Nam, Tây Bắc, v.v." },
+                valuation_floor: { type: Type.NUMBER, description: "Vị trí tầng (cho căn hộ). VD: 'tầng 10' → 10, 'tầng trệt' → 1, 'tầng cao nhất/penthouse' → 30" },
+                valuation_frontage: { type: Type.NUMBER, description: "Chiều rộng mặt tiền nhà/lô đất (mét). VD: 'mặt tiền 5m' → 5, 'ngang 4m' → 4, 'mặt ngang 6 mét' → 6" },
+                valuation_furnishing: { type: Type.STRING, enum: ['FULL', 'BASIC', 'NONE'], description: "Tình trạng nội thất. FULL=full nội thất/đầy đủ, BASIC=nội thất cơ bản/một phần, NONE=không nội thất/bàn giao thô" },
+                valuation_building_age: { type: Type.NUMBER, description: "Tuổi công trình (năm). VD: 'nhà xây 2010' → 15 (năm 2025), 'mới xây/2024' → 1, 'xây 5 năm' → 5, 'cũ 20 năm' → 20" }
             }
         },
         confidence: { type: Type.NUMBER, description: "Độ tin cậy phân loại từ 0 đến 1 (ví dụ: 0.85 = 85%)" }
@@ -701,6 +709,10 @@ QUY TẮC NHẬN DẠNG SỐ TIẾNG VIỆT — bắt buộc:
 - "vay 20 năm" / "20 năm" / "hai mươi năm" → loan_years: 20
 - "lộ giới 12m" / "mặt tiền đường 8m" / "hẻm 4m" / "ngõ 3m" → valuation_road_width: 12/8/4/3
 - "hướng nam" / "hướng đông nam" / "hướng bắc" → valuation_direction
+- "tầng 5" / "tầng 15" / "tầng trệt" / "lầu 3" → valuation_floor: 5/15/1/4 (lầu N = tầng N+1)
+- "mặt tiền 5m" / "ngang 4 mét" / "rộng 6m" / "mặt ngang 7m" → valuation_frontage: 5/4/6/7
+- "full nội thất" / "đầy đủ nội thất" → valuation_furnishing: FULL | "nội thất cơ bản" / "một phần" → BASIC | "bàn giao thô" / "không nội thất" → NONE
+- "nhà xây năm 2015" → valuation_building_age: 10 (năm 2025) | "mới xây" / "xây 2024" → 1 | "cũ 15 năm" → 15 | "nhà cũ" (không rõ) → 20
 
 BẢNG PHÂN LOẠI Ý ĐỊNH (10 loại — chọn 1):
 1. EXPLAIN_LEGAL — Hỏi: sổ hồng, sổ đỏ, pháp lý, giấy tờ, vi bằng, HĐMB, sang tên, thế chấp, quy hoạch
@@ -1039,7 +1051,39 @@ Viết ngắn gọn, tiếng Việt, bullet point, sắc bén — tối đa 150 
             const intentLabel = state.plan?.next_step ? (INTENT_LABELS[state.plan.next_step] || state.plan.next_step) : '';
             const intentHint = intentLabel ? `NHIỆM VỤ CHÍNH: ${intentLabel}` : '';
 
-            const writerPrompt = `${intentHint ? intentHint + '\n\n' : ''}CONTEXT (dữ liệu tra cứu thực tế):
+            // Define currentIntent early (also used in RLHF section below)
+            const currentIntent = state.plan?.next_step || 'DIRECT_ANSWER';
+
+            // ── Dedicated WRITER prompt for ESTIMATE_VALUATION ──────────────────────────
+            const isValuationIntent = currentIntent === 'ESTIMATE_VALUATION';
+            const writerPrompt = isValuationIntent
+                ? `NHIỆM VỤ: ĐỊNH GIÁ BẤT ĐỘNG SẢN — Viết báo cáo định giá chuyên nghiệp, dễ hiểu
+
+KẾT QUẢ ĐỊNH GIÁ AI (dữ liệu thực tế — dùng chính xác, không tự tính lại):
+${state.systemContext}${leadAnalysisSection}
+
+LỊCH SỬ HỘI THOẠI (12 tin nhắn gần nhất):
+${conversationHistory || '(Chưa có lịch sử)'}
+
+TIN NHẮN KHÁCH: "${state.userMessage}"
+
+YÊU CẦU — Viết báo cáo định giá ngắn gọn (150-250 từ) theo bố cục sau:
+1. **KẾT QUẢ**: Nêu NGAY con số chính xác từ [ĐỊNH GIÁ BẤT ĐỘNG SẢN] — giá (X,XX Tỷ VNĐ), đơn giá (XX Triệu/m²), khoảng giá (min–max Tỷ), mức độ tin cậy
+2. **YẾU TỐ ẢNH HƯỞNG**: Giải thích bằng tiếng Việt thông thường 2-3 yếu tố quan trọng nhất đã điều chỉnh giá:
+   - Lộ giới/hẻm/đường: ảnh hưởng tăng/giảm bao nhiêu % so với chuẩn
+   - Pháp lý (Sổ Hồng / HĐMB / Vi Bằng): cộng/trừ bao nhiêu %
+   - Vị trí tầng (nếu là căn hộ), nội thất, tuổi nhà, mặt tiền — nếu có trong dữ liệu
+   - KHÔNG dùng ký hiệu kỹ thuật như "Kd", "Ka", "AVM", "reconciliation" — diễn đạt tự nhiên
+3. **THỊ TRƯỜNG**: 1-2 câu về xu hướng giá khu vực (đang tăng/giảm/ổn định, % nếu có)
+4. **GỢI Ý THỰC TẾ**: Nên bán ngay / chờ thêm / đặt giá chào bán khoảng bao nhiêu (thường cao hơn định giá 5-10% để có room thương lượng)
+5. **CÂU HỎI**: Kết thúc bằng câu hỏi hỏi thêm thông tin để định giá chính xác hơn (VD: tầng bao nhiêu? nội thất thế nào? nhà xây năm nào? mặt tiền rộng bao nhiêu?)
+
+QUAN TRỌNG:
+- ${langInstruction}
+- Dùng số liệu CHÍNH XÁC từ CONTEXT [ĐỊNH GIÁ BẤT ĐỘNG SẢN] — KHÔNG bịa đặt hay ước lượng
+- Giá BĐS: "X,XX Tỷ VNĐ" | Đơn giá: "XX Triệu/m²" | Tỷ suất: "%/năm"
+- Giọng điệu: chuyên nghiệp, thân thiện, ngắn gọn — không rườm rà, không dùng thuật ngữ kỹ thuật`
+                : `${intentHint ? intentHint + '\n\n' : ''}CONTEXT (dữ liệu tra cứu thực tế):
 ${state.systemContext}${leadAnalysisSection}
 
 LỊCH SỬ HỘI THOẠI (12 tin nhắn gần nhất):
@@ -1064,7 +1108,7 @@ YÊU CẦU VIẾT PHẢN HỒI:
 
             // --- RLHF INJECTION ---
             // Fetch few-shot examples + negative rules from accumulated feedback
-            const currentIntent = state.plan?.next_step || 'DIRECT_ANSWER';
+            // (currentIntent already defined above before writerPrompt)
             const rlhf = await buildRlhfContext(state.tenantId, currentIntent);
             const rlhfPromptAddition = rlhf.fewShotSection + rlhf.negativeRulesSection;
 
@@ -1090,10 +1134,56 @@ YÊU CẦU VIẾT PHẢN HỒI:
             const area = ext.valuation_area || ext.area_min || 80;
             const roadWidth = ext.valuation_road_width || 4;
             const direction = ext.valuation_direction;
+            const floorLevel = ext.valuation_floor;
+            const frontageWidth = ext.valuation_frontage;
+            const furnishing = ext.valuation_furnishing as 'FULL' | 'BASIC' | 'NONE' | undefined;
+            const buildingAge = ext.valuation_building_age;
             const legalToEngine: Record<string, LegalStatus> = {
                 PINK_BOOK: 'PINK_BOOK', HDMB: 'CONTRACT', VI_BANG: 'WAITING', UNKNOWN: 'WAITING'
             };
             const legal: LegalStatus = legalToEngine[ext.valuation_legal || ''] || 'PINK_BOOK';
+
+            // ── Normalize free-text property_type (Vietnamese or English) → internal enum ──
+            const PROP_TYPE_NORMALIZE: Record<string, string> = {
+                // Căn hộ / Apartment
+                'căn hộ': 'apartment_center', 'chung cư': 'apartment_center',
+                'căn hộ nội đô': 'apartment_center', 'apartment': 'apartment_center',
+                'apartment_center': 'apartment_center',
+                'căn hộ ngoại thành': 'apartment_suburb', 'chung cư ngoại thành': 'apartment_suburb',
+                'apartment_suburb': 'apartment_suburb',
+                // Nhà phố / Townhouse
+                'nhà phố': 'townhouse_center', 'nhà liền kề': 'townhouse_center',
+                'nhà liên kế': 'townhouse_center', 'townhouse': 'townhouse_center',
+                'townhouse_center': 'townhouse_center', 'nhà phố nội đô': 'townhouse_center',
+                'nhà': 'townhouse_center',
+                'nhà phố ngoại thành': 'townhouse_suburb', 'nhà vùng ven': 'townhouse_suburb',
+                'nhà ngoại thành': 'townhouse_suburb', 'townhouse_suburb': 'townhouse_suburb',
+                // Biệt thự / Villa
+                'biệt thự': 'villa', 'villa': 'villa', 'biệt thự đơn lập': 'villa',
+                'biệt thự song lập': 'villa',
+                // Shophouse
+                'shophouse': 'shophouse', 'nhà phố thương mại': 'shophouse',
+                'nhà mặt tiền thương mại': 'shophouse',
+                // Penthouse
+                'penthouse': 'penthouse', 'căn hộ đỉnh tháp': 'penthouse',
+                // Đất nền / Land
+                'đất': 'land_urban', 'đất nền': 'land_urban', 'đất thổ cư': 'land_urban',
+                'land_urban': 'land_urban', 'đất nội đô': 'land_urban',
+                'đất ngoại thành': 'land_suburban', 'đất vùng ven': 'land_suburban',
+                'land_suburban': 'land_suburban',
+                'đất nông nghiệp': 'land_agricultural', 'đất vườn': 'land_agricultural',
+                'land_agricultural': 'land_agricultural',
+                'đất khu công nghiệp': 'land_industrial', 'đất kcn': 'land_industrial',
+                'land_industrial': 'land_industrial',
+                // Văn phòng / Office / Kho
+                'văn phòng': 'office', 'mặt bằng': 'office', 'office': 'office',
+                'kho': 'warehouse', 'nhà xưởng': 'warehouse', 'warehouse': 'warehouse',
+                // Dự án / Off-plan
+                'dự án': 'project', 'căn hộ dự án': 'project', 'off-plan': 'project',
+                'project': 'project',
+            };
+            const rawPType = (ext.property_type || '').toLowerCase().trim();
+            const resolvedPTypeFromExt: string = PROP_TYPE_NORMALIZE[rawPType] || rawPType || 'townhouse_center';
 
             try {
                 // Query internal DB for comparable listings
@@ -1115,7 +1205,7 @@ YÊU CẦU VIẾT PHẢN HỒI:
                     }
                 } catch { /* internal comps are optional — silent fallback */ }
 
-                const cacheKey = `${state.tenantId}|${address}|${area}|${roadWidth}|${legal}|${direction || ''}`;
+                const cacheKey = `${state.tenantId}|${address}|${area}|${roadWidth}|${legal}|${direction || ''}|${floorLevel || ''}|${frontageWidth || ''}|${furnishing || ''}|${buildingAge || ''}|${resolvedPTypeFromExt}`;
                 const cached = valuationCache.get(cacheKey);
                 const valResult = (cached && Date.now() < cached.expiresAt)
                     ? cached.result
@@ -1125,7 +1215,7 @@ YÊU CẦU VIẾT PHẢN HỒI:
                         let r: any;
                         try {
                             const { marketDataService } = await import('./services/marketDataService');
-                            const resolvedPType: PropertyType = (state.plan?.extraction?.property_type || 'townhouse_center') as PropertyType;
+                            const resolvedPType: PropertyType = resolvedPTypeFromExt as PropertyType;
                             const marketEntry = await marketDataService.getMarketData(address);
                             // Apply property-type multiplier (cache stores townhouse_center reference)
                             const cacheTypeMult = PROPERTY_TYPE_PRICE_MULT[resolvedPType] ?? 1.00;
@@ -1143,6 +1233,10 @@ YÊU CẦU VIẾT PHẢN HỒI:
                                 propertyType: resolvedPType,
                                 monthlyRent: fallbackRent,
                                 direction,
+                                floorLevel,
+                                frontageWidth,
+                                furnishing,
+                                buildingAge,
                                 internalCompsMedian,
                                 internalCompsCount,
                             });
@@ -1169,8 +1263,12 @@ YÊU CẦU VIẾT PHẢN HỒI:
                         } catch (cacheErr: any) {
                             // Fallback to direct AI call if marketDataService unavailable
                             logger.warn(`[VALUATION_AGENT] marketDataService failed, falling back to direct AI: ${cacheErr.message}`);
-                            r = await this.getRealtimeValuation(address, area, roadWidth, legal, undefined, state.tenantId, {
+                            r = await this.getRealtimeValuation(address, area, roadWidth, legal, resolvedPTypeFromExt, state.tenantId, {
                                 direction,
+                                floorLevel,
+                                frontageWidth,
+                                furnishing,
+                                buildingAge,
                                 internalCompsMedian,
                                 internalCompsCount,
                             });
@@ -1190,8 +1288,15 @@ YÊU CẦU VIẾT PHẢN HỒI:
                     ? `Hòa giải: Comps ${(valResult.reconciliation.compsWeight * 100).toFixed(0)}% + Thu nhập ${(valResult.reconciliation.incomeWeight * 100).toFixed(0)}%`
                     : '';
 
+                const extraParams: string[] = [];
+                if (floorLevel) extraParams.push(`Tầng: ${floorLevel}`);
+                if (frontageWidth) extraParams.push(`Mặt tiền: ${frontageWidth}m`);
+                if (furnishing) extraParams.push(`Nội thất: ${furnishing === 'FULL' ? 'Đầy đủ' : furnishing === 'BASIC' ? 'Cơ bản' : 'Không'}`);
+                if (buildingAge) extraParams.push(`Tuổi nhà: ${buildingAge} năm`);
+                const extraParamsStr = extraParams.length > 0 ? ` | ${extraParams.join(' | ')}` : '';
+
                 const valuationSummary = `[ĐỊNH GIÁ BẤT ĐỘNG SẢN]:
-Địa chỉ: ${address} | ${area}m² | Lộ giới: ${roadWidth}m | Pháp lý: ${legal}${direction ? ` | Hướng: ${direction}` : ''}
+Địa chỉ: ${address} | ${area}m² | Loại: ${resolvedPTypeFromExt} | Lộ giới: ${roadWidth}m | Pháp lý: ${legal}${direction ? ` | Hướng: ${direction}` : ''}${extraParamsStr}
 Giá thị trường: ${totalFmt} Tỷ VNĐ (${perM2Fmt} Triệu/m²)
 Khoảng giá: ${rangeMin} – ${rangeMax} Tỷ VNĐ (${valResult.confidenceLevel || ''} ±${valResult.confidenceInterval || ''})
 Xu hướng: ${valResult.marketTrend} | Độ tin cậy: ${valResult.confidence}%${compsNote}

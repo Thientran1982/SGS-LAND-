@@ -197,7 +197,9 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **Income approach (VN gross yield convention)**: `capitalValue = grossIncome / grossYieldCap` — DEFAULT_CAP_RATES are gross yield caps, NOT NOI cap rates. paybackYears uses gross income (not NOI).
 - **estimateFallbackRent**: commercial types use `grossYield = safeCap` (no +0.015 phantom offset)
 - **Regional table**: Bình Dương province entries (Thuận An 55M, Dĩ An 50M, etc.) matched correctly; Nghệ An regex narrowed to avoid false Vĩnh Long matches
-- **Router extraction**: added `valuation_road_width`, `valuation_direction` for AVM precision
+- **Router extraction**: added `valuation_road_width`, `valuation_direction`, `valuation_floor`, `valuation_frontage`, `valuation_furnishing`, `valuation_building_age` for full 9-coefficient AVM coverage in chat
+- **Property type normalization**: VALUATION_AGENT maps free-text Vietnamese ("căn hộ", "biệt thự", "đất nền"…) → internal PropertyType enum via `PROP_TYPE_NORMALIZE` lookup table (32+ aliases). Previously cast raw string → silent enum mismatch
+- **ESTIMATE_VALUATION writer branch**: WRITER uses dedicated structured prompt when `currentIntent === 'ESTIMATE_VALUATION'`: 5-section report (kết quả, yếu tố ảnh hưởng, thị trường, gợi ý thực tế, câu hỏi tìm thêm thông tin). Plain Vietnamese — no technical symbols (Kd, AVM, reconciliation)
 - **Formula string**: includes reconciliation line when income approach active
 - **Progressive Lead Enrichment**: ROUTER auto-updates lead.preferences (budgetMax, regions, propertyTypes, areaMin) from each extraction — DB atomic JSONB merge via `mergePreferences()`
 - **Intent History Tracking**: `_intentHistory` (last 10 intents) stored in preferences; `buildSystemContext` detects behavioral patterns (e.g., "EXPLAIN_LEGAL(3x)")
