@@ -173,47 +173,23 @@ function formatPrice(price: number, language: string, formatCompactNumber?: (v: 
 
 // ── Pin HTML builders (2026 design) ──────────────────────────────────────────
 
+function pinColorClass(transaction?: string, propertyType?: string): string {
+    if (propertyType?.toUpperCase() === 'PROJECT') return 'sgs-pin-project';
+    if (transaction?.toUpperCase() === 'RENT')      return 'sgs-pin-rent';
+    return 'sgs-pin-sale';
+}
+
 function priceIcon(label: string, approximate: boolean, transaction?: string, active = false, propertyType?: string): L.DivIcon {
-    const { bg, glow } = pinTokens(transaction, propertyType);
-    const scale = active ? 'scale(1.12)' : 'scale(1)';
+    const { glow } = pinTokens(transaction, propertyType);
+    const colorCls = pinColorClass(transaction, propertyType);
+    const activeCls = active ? ' sgs-pin-active' : '';
     const shadow = active
         ? `drop-shadow(0 0 0 2.5px #fff) drop-shadow(0 6px 18px ${glow})`
         : `drop-shadow(0 2px 8px ${glow})`;
 
     return L.divIcon({
         className: 'custom-map-pin-container',
-        html: `
-          <div style="
-            display:inline-flex;flex-direction:column;align-items:center;
-            transform:translate(-50%,-100%) ${scale};
-            transform-origin:bottom center;
-            transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1),filter 0.18s ease;
-            filter:${shadow};
-            will-change:transform,filter;
-          ">
-            <div style="
-              background:${bg};
-              color:#fff;
-              font-size:11.5px;font-weight:750;
-              padding:5px 12px;
-              border-radius:10px;
-              border:2px solid rgba(255,255,255,${active ? 1 : 0.92});
-              white-space:nowrap;letter-spacing:0.25px;line-height:1.45;
-              font-family:system-ui,-apple-system,sans-serif;
-              cursor:pointer;
-              background-image:linear-gradient(160deg,rgba(255,255,255,0.13) 0%,transparent 60%);
-            ">
-              ${approximate ? '<span style="opacity:0.72;font-size:10px;margin-right:2px;">~</span>' : ''}${label}
-            </div>
-            <div style="
-              width:0;height:0;
-              border-left:7px solid transparent;
-              border-right:7px solid transparent;
-              border-top:8px solid ${bg};
-              margin-top:-1px;
-              filter:drop-shadow(0 2px 0 rgba(0,0,0,0.08));
-            "></div>
-          </div>`,
+        html: `<div class="sgs-pin-outer${activeCls}" style="filter:${shadow}"><div class="sgs-pin-bubble ${colorCls}${activeCls}">${approximate ? '<span style="opacity:0.72;font-size:10px;margin-right:2px">~</span>' : ''}${label}</div><div class="sgs-pin-tail ${colorCls}"></div></div>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
     });
@@ -221,40 +197,15 @@ function priceIcon(label: string, approximate: boolean, transaction?: string, ac
 
 function clusterIcon(count: number, dominantTx?: string): L.DivIcon {
     // 'PROJECT_TYPE' is a sentinel: means majority are PROJECT property type
-    const { bg, glow } = dominantTx === 'PROJECT_TYPE'
+    const { glow } = dominantTx === 'PROJECT_TYPE'
         ? pinTokens(undefined, 'PROJECT')
         : pinTokens(dominantTx, undefined);
+    const colorCls = dominantTx === 'PROJECT_TYPE' ? 'sgs-pin-project'
+        : dominantTx?.toUpperCase() === 'RENT' ? 'sgs-pin-rent' : 'sgs-pin-sale';
     const label = count >= 1000 ? `${Math.floor(count / 1000)}k+` : `${count}`;
     return L.divIcon({
         className: 'custom-map-pin-container',
-        html: `
-          <div style="
-            display:inline-flex;flex-direction:column;align-items:center;
-            transform:translate(-50%,-100%);transform-origin:bottom center;
-            filter:drop-shadow(0 4px 14px ${glow});
-          ">
-            <div class="sgs-cluster-pulse" style="
-              background:${bg};
-              background-image:linear-gradient(135deg,rgba(255,255,255,0.18) 0%,transparent 55%);
-              color:#fff;
-              font-size:12.5px;font-weight:800;
-              padding:7px 16px;
-              border-radius:12px;
-              border:2.5px solid rgba(255,255,255,0.95);
-              white-space:nowrap;letter-spacing:0.3px;line-height:1.4;
-              font-family:system-ui,-apple-system,sans-serif;
-              cursor:pointer;
-              display:flex;align-items:center;gap:6px;
-              position:relative;
-            ">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-              ${label} tin
-            </div>
-            <div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid ${bg};margin-top:-1px;"></div>
-          </div>`,
+        html: `<div class="sgs-pin-outer" style="filter:drop-shadow(0 4px 14px ${glow})"><div class="sgs-cluster-bubble sgs-cluster-pulse ${colorCls}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>${label} tin</div><div class="sgs-cluster-tail ${colorCls}"></div></div>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
     });
