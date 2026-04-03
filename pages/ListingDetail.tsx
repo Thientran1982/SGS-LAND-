@@ -1672,7 +1672,9 @@ export const ListingDetail: React.FC = () => {
                             )}
                         </div>
 
-                        <button onClick={() => setBookingOpen(true)} className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2 mb-3">
+                        {/* Hidden on mobile — replaced by the fixed bottom CTA bar (lg:hidden) */}
+                        <div className="hidden lg:block space-y-3">
+                        <button onClick={() => setBookingOpen(true)} className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2">
                             {ICONS.CALENDAR} {t('detail.book_viewing')}
                         </button>
                         {listing.contactPhone ? (
@@ -1692,6 +1694,7 @@ export const ListingDetail: React.FC = () => {
                                 {ICONS.PHONE} {t('common.contact_on_site')}
                             </div>
                         )}
+                        </div>
                     </div>
                 </div>
             </div>
