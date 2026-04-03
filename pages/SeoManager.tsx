@@ -628,7 +628,7 @@ const HealthChecklist: React.FC = () => {
         // 4. Robots meta — pass on public pages that include 'index'; admin/noindex pages pass by expectation
         const robotsMeta = document.querySelector<HTMLMetaElement>('meta[name="robots"]')?.content ?? '';
         const isCurrentPageNoIndex = robotsMeta.includes('noindex');
-        const currentRouteKey = window.location.hash.replace('#/', '').split('/')[0] || '';
+        const currentRouteKey = window.location.pathname.replace(/^\//, '').split('/')[0] || '';
         const routeExpectsNoIndex = !!ROUTE_SEO[currentRouteKey]?.noIndex;
         const robotsOk = routeExpectsNoIndex ? isCurrentPageNoIndex : robotsMeta.includes('index');
         const robotsDetail = routeExpectsNoIndex

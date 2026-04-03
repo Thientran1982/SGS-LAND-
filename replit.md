@@ -5,6 +5,7 @@ AI-powered real estate CRM and management platform for the Vietnamese market.
 ## Tech Stack
 
 - **Frontend**: React 18 + TypeScript, Tailwind CSS (PostCSS/npm build, NOT CDN), Framer Motion, TanStack Query, Recharts
+- **Routing**: Custom browser history router (`pushState`/`popstate`) in `App.tsx`. Clean URLs (no `#`). Legacy `/#/xxx` hash URLs are auto-redirected to `/xxx` on first load. Files that still use `window.location.hash = '#/xxx'` are intercepted via `hashchange` listener and converted to clean URLs automatically.
 - **Backend**: Node.js + Express (unified server with Vite middleware in dev)
 - **Build Tool**: Vite 6
 - **Real-time**: Socket.io, Yjs + y-websocket (CRDT collaboration)

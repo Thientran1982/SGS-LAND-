@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var CHAT_URL = window.SGSLAND_CHAT_URL || window.location.origin + '/#/livechat';
+  var CHAT_URL = window.SGSLAND_CHAT_URL || window.location.origin + '/livechat';
 
   var BUBBLE_SIZE = 60;
   var IFRAME_W = 380;

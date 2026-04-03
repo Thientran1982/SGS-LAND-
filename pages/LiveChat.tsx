@@ -42,11 +42,9 @@ async function publicGetMessages(leadId: string): Promise<{ messages: Interactio
 // Component
 // ---------------------------------------------------------------------------
 
-// Parse query params from hash-based URL (e.g. /#/livechat?title=...&desc=...)
-function getHashQueryParams(): URLSearchParams {
-    const hash = window.location.hash; // "#/livechat?title=...&desc=..."
-    const qIndex = hash.indexOf('?');
-    return new URLSearchParams(qIndex >= 0 ? hash.slice(qIndex + 1) : '');
+// Parse query params from URL search (e.g. /livechat?title=...&desc=...)
+function getSearchQueryParams(): URLSearchParams {
+    return new URLSearchParams(window.location.search);
 }
 
 export default function LiveChat() {
@@ -63,11 +61,11 @@ export default function LiveChat() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Resolve title/desc from URL params > window globals (embed) > default translations
-    const [chatParams, setChatParams] = useState(() => getHashQueryParams());
+    const [chatParams, setChatParams] = useState(() => getSearchQueryParams());
     useEffect(() => {
-        const handler = () => setChatParams(getHashQueryParams());
-        window.addEventListener('hashchange', handler);
-        return () => window.removeEventListener('hashchange', handler);
+        const handler = () => setChatParams(getSearchQueryParams());
+        window.addEventListener('popstate', handler);
+        return () => window.removeEventListener('popstate', handler);
     }, []);
     const w = window as any;
     // Priority: URL params → embed window globals → SEO overrides (admin-set custom text) → default translation

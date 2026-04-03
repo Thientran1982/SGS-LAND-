@@ -188,10 +188,9 @@ export const ProductSearch: React.FC = () => {
     }, [query]);
 
     useEffect(() => {
-        const hash = window.location.hash;
-        if (hash.includes('?')) {
-            const queryString = hash.split('?')[1];
-            const params = new URLSearchParams(queryString);
+        const search = window.location.search;
+        if (search) {
+            const params = new URLSearchParams(search);
             const q = params.get('q');
             if (q) setQuery(decodeURIComponent(q));
         }

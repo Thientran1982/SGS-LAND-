@@ -113,7 +113,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             if (cancelled) return;
             const approvedProposal = result?.data?.[0];
             if (approvedProposal?.token) {
-                setGeneratedLink(`${window.location.origin}/#/p/${approvedProposal.token}`);
+                setGeneratedLink(`${window.location.origin}/p/${approvedProposal.token}`);
                 setStep('APPROVED');
             }
         }).catch(() => {});
@@ -205,8 +205,7 @@ export const FlashProposalModal: React.FC<FlashProposalModalProps> = memo(({ lea
             if (proposal.status === ProposalStatus.PENDING_APPROVAL) {
                 setStep('PENDING');
             } else {
-                // Correctly link to HashRouter format
-                setGeneratedLink(`${window.location.origin}/#/p/${proposal.token}`);
+                setGeneratedLink(`${window.location.origin}/p/${proposal.token}`);
                 setStep('DONE');
             }
         } catch (e: any) { 

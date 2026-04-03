@@ -212,11 +212,11 @@ const Contracts: React.FC = () => {
 
     useEffect(() => {
         const handler = () => {
-            const hash = window.location.hash.replace('#', '').replace(/^\//, '').split('/')[0].split('?')[0];
-            if (hash === 'contracts') loadContracts();
+            const segment = window.location.pathname.split('/').filter(Boolean)[0] || '';
+            if (segment === 'contracts') loadContracts();
         };
-        window.addEventListener('hashchange', handler);
-        return () => window.removeEventListener('hashchange', handler);
+        window.addEventListener('popstate', handler);
+        return () => window.removeEventListener('popstate', handler);
     }, [loadContracts]);
 
     const handleDelete = async () => {
@@ -474,8 +474,8 @@ const Contracts: React.FC = () => {
                                                 <RowMenu
                                                     contract={c}
                                                     onEdit={() => handleEdit(c)}
-                                                    onViewPDF={() => { window.location.hash = `#/p/contract_${c.id}`; }}
-                                                    onShare={() => { setShareLink(`${window.location.origin}/#/p/contract_${c.id}`); setLinkCopied(false); }}
+                                                    onViewPDF={() => { window.history.pushState(null, '', `/p/contract_${c.id}`); window.dispatchEvent(new PopStateEvent('popstate')); }}
+                                                    onShare={() => { setShareLink(`${window.location.origin}/p/contract_${c.id}`); setLinkCopied(false); }}
                                                     onDelete={() => setContractToDelete(c.id)}
                                                 />
                                             </td>

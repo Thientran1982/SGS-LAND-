@@ -37,10 +37,9 @@ function serializeFilters(f: TaskFilters, sort: SortKey, dir: SortDir, page: num
 
 function deserializeFilters(): { filters: TaskFilters; sort: SortKey; dir: SortDir; page: number } {
   try {
-    const hash = window.location.hash;
-    const qIdx = hash.indexOf('?');
-    if (qIdx < 0) return { filters: EMPTY_FILTERS, sort: 'created_at', dir: 'desc', page: 1 };
-    const qs = new URLSearchParams(hash.slice(qIdx + 1));
+    const search = window.location.search;
+    if (!search) return { filters: EMPTY_FILTERS, sort: 'created_at', dir: 'desc', page: 1 };
+    const qs = new URLSearchParams(search);
     return {
       filters: {
         search: qs.get('q') || '',
@@ -62,8 +61,8 @@ function deserializeFilters(): { filters: TaskFilters; sort: SortKey; dir: SortD
   }
 }
 
-function getTaskIdFromHash(): string | null {
-  const parts = window.location.hash.slice(1).split('?')[0].split('/').filter(Boolean);
+function getTaskIdFromPath(): string | null {
+  const parts = window.location.pathname.split('/').filter(Boolean);
   return parts[0] === ROUTES.TASKS && parts.length > 1 ? parts[1] : null;
 }
 
@@ -118,8 +117,7 @@ function TaskList() {
 
   useEffect(() => {
     const qs = serializeFilters(filters, sortKey, sortDir, page);
-    const newHash = `#/${ROUTES.TASKS}${qs ? '?' + qs : ''}`;
-    window.history.replaceState(null, '', newHash);
+    window.history.replaceState(null, '', `/${ROUTES.TASKS}${qs ? '?' + qs : ''}`);
   }, [filters, sortKey, sortDir, page]);
 
   const loadTasks = useCallback(async (f: TaskFilters, sk: SortKey, sd: SortDir, pg: number) => {
@@ -165,8 +163,9 @@ function TaskList() {
   }, [filters, sortKey, sortDir, page, loadTasks]);
 
   const openTask = useCallback((id: string) => {
-    const qs = window.location.hash.split('?')[1] || '';
-    window.location.hash = `#/${ROUTES.TASKS}/${id}${qs ? '?' + qs : ''}`;
+    const qs = window.location.search.slice(1);
+    window.history.pushState(null, '', `/${ROUTES.TASKS}/${id}${qs ? '?' + qs : ''}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }, []);
 
   const handleFiltersChange = useCallback((f: TaskFilters) => {
@@ -521,23 +520,24 @@ function TaskList() {
 }
 
 export function Tasks() {
-  const [hash, setHash] = useState(window.location.hash);
+  const [path, setPath] = useState(window.location.pathname);
 
   useEffect(() => {
-    const handler = () => setHash(window.location.hash);
-    window.addEventListener('hashchange', handler);
-    return () => window.removeEventListener('hashchange', handler);
+    const handler = () => setPath(window.location.pathname);
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
   }, []);
 
-  const taskId = useMemo(() => getTaskIdFromHash(), [hash]);
+  const taskId = useMemo(() => getTaskIdFromPath(), [path]);
 
   if (taskId) {
     return (
       <TaskDetailContent
         taskId={taskId}
         onBack={() => {
-          const qs = window.location.hash.split('?')[1] || '';
-          window.location.hash = `#/${ROUTES.TASKS}${qs ? '?' + qs : ''}`;
+          const qs = window.location.search;
+          window.history.pushState(null, '', `/${ROUTES.TASKS}${qs || ''}`);
+          window.dispatchEvent(new PopStateEvent('popstate'));
         }}
       />
     );

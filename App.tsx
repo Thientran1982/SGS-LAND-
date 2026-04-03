@@ -281,7 +281,7 @@ const NotFound: React.FC = () => {
             <h2 className="text-xl font-bold mb-2">{t('404.title') || "Page Not Found"}</h2>
             <p className="text-[var(--text-secondary)] text-sm mb-6">{t('404.desc') || "The page you are looking for does not exist."}</p>
             <button 
-                onClick={() => window.location.hash = `#/${ROUTES.LANDING}`}
+                onClick={() => { window.history.pushState(null, '', `/${ROUTES.LANDING}`); window.dispatchEvent(new PopStateEvent('popstate')); }}
                 className="px-6 py-2.5 bg-[var(--primary-600)] text-white rounded-xl font-bold text-sm shadow-lg hover:opacity-90 transition-all"
             >
                 {t('common.go_back')}
@@ -295,40 +295,58 @@ const NotFound: React.FC = () => {
 // -----------------------------------------------------------------------------
 
 const useRouter = () => {
-    const getHashData = useCallback(() => {
-        let hash = window.location.hash.slice(1); // remove '#'
-        if (hash.startsWith('/')) hash = hash.slice(1);
-        if (hash.endsWith('/')) hash = hash.slice(0, -1);
-        
-        const path = hash.split('?')[0]; 
-        const parts = path.split('/').filter(Boolean);
-        // Default to LANDING when hash is empty — prevents race condition where
-        // auth check resolves before the hashchange event fires, causing a brief 404.
+    const getPathData = useCallback(() => {
+        let pathname = window.location.pathname;
+        if (pathname.endsWith('/') && pathname.length > 1) pathname = pathname.slice(0, -1);
+        const parts = pathname.split('/').filter(Boolean);
         const base = parts[0] || ROUTES.LANDING;
-
         return {
             base,
             params: parts.slice(1),
-            fullPath: window.location.hash
+            fullPath: pathname + window.location.search
         };
     }, []);
 
-    const [route, setRoute] = useState(getHashData());
+    const [route, setRoute] = useState(getPathData());
 
-    // Sync the URL bar to #/home on first load when there is no hash,
-    // so the address bar reflects what the router already treats as the current page.
+    // On first load: convert legacy hash URLs (/#/xxx) to clean paths (/xxx)
     useEffect(() => {
-        const currentHash = window.location.hash;
-        if (!currentHash || currentHash === '#' || currentHash === '#/') {
-            window.location.replace(`${window.location.pathname}#/${ROUTES.LANDING}`);
+        const hash = window.location.hash;
+        const pathname = window.location.pathname;
+        if (hash && hash.startsWith('#/')) {
+            const after = hash.slice(2); // 'home?foo=1' or 'home'
+            const sepIdx = after.indexOf('?');
+            const pathPart = sepIdx >= 0 ? after.slice(0, sepIdx) : after;
+            const queryPart = sepIdx >= 0 ? after.slice(sepIdx) : '';
+            window.history.replaceState(null, '', '/' + pathPart + queryPart);
+            setRoute(getPathData());
+        } else if (pathname === '/' || pathname === '') {
+            window.history.replaceState(null, '', `/${ROUTES.LANDING}`);
+            setRoute(getPathData());
         }
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
-        const handler = () => setRoute(getHashData());
-        window.addEventListener('hashchange', handler);
-        return () => window.removeEventListener('hashchange', handler);
-    }, [getHashData]);
+        // Intercept legacy hash navigation (window.location.hash = '#/xxx') and convert to clean URLs
+        const handleHashChange = () => {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#/')) {
+                const after = hash.slice(2);
+                const sepIdx = after.indexOf('?');
+                const pathPart = sepIdx >= 0 ? after.slice(0, sepIdx) : after;
+                const queryPart = sepIdx >= 0 ? after.slice(sepIdx) : '';
+                window.history.replaceState(null, '', '/' + pathPart + queryPart);
+                setRoute(getPathData());
+            }
+        };
+        const handlePopState = () => setRoute(getPathData());
+        window.addEventListener('hashchange', handleHashChange);
+        window.addEventListener('popstate', handlePopState);
+        return () => {
+            window.removeEventListener('hashchange', handleHashChange);
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [getPathData]);
 
     useEffect(() => {
         updatePageSEO(route.base);
@@ -336,8 +354,9 @@ const useRouter = () => {
 
     const navigate = useCallback((path: string) => {
         const target = path.startsWith('/') ? path : `/${path}`;
-        window.location.hash = target;
-    }, []);
+        window.history.pushState(null, '', target);
+        setRoute(getPathData());
+    }, [getPathData]);
 
     return { route, navigate };
 };
@@ -455,7 +474,7 @@ const AppShell: React.FC = () => {
     useEffect(() => {
         if (authState !== 'AUTH') return;
         const handleApproved = (data: { proposalId: string; token: string; leadId: string }) => {
-            const link = `${window.location.origin}/#/p/${data.token}`;
+            const link = `${window.location.origin}/p/${data.token}`;
             setApprovedNotification({ link, proposalId: data.proposalId });
             if (approvedNotifTimerRef.current) clearTimeout(approvedNotifTimerRef.current);
             approvedNotifTimerRef.current = setTimeout(() => setApprovedNotification(null), 15000);
@@ -638,9 +657,9 @@ const AppShell: React.FC = () => {
         }
 
         if (route.base === ROUTES.RESET_PASSWORD) {
-            const tokenFromUrl = route.params[0] || window.location.hash.match(/token=([a-f0-9]+)/)?.[1] || '';
+            const tokenFromUrl = route.params[0] || new URLSearchParams(window.location.search).get('reset_token') || '';
             if (tokenFromUrl) {
-                window.location.hash = `#/${ROUTES.LOGIN}?reset_token=${tokenFromUrl}`;
+                navigate(`${ROUTES.LOGIN}?reset_token=${tokenFromUrl}`);
             } else {
                 navigate(ROUTES.LOGIN);
             }
