@@ -1742,7 +1742,31 @@ export const ListingDetail: React.FC = () => {
                 </div>
             )}
 
-            {/* Mobile Bottom CTA Bar (hidden on lg+) */}
+            {/* Modals */}
+            {lightboxOpen && (
+                <Lightbox 
+                    images={images} 
+                    initialIndex={lightboxIndex} 
+                    onClose={() => setLightboxOpen(false)} 
+                />
+            )}
+            
+            <BookingModal 
+                isOpen={bookingOpen} 
+                onClose={() => setBookingOpen(false)} 
+                onConfirm={handleBooking} 
+                t={t} 
+            />
+
+            <ShareModal 
+                isOpen={shareOpen} 
+                onClose={() => setShareOpen(false)} 
+                t={t} 
+            />
+        </article>
+        {/* Mobile Bottom CTA Bar — rendered via portal on document.body so position:fixed
+            works correctly on iOS Safari (fixed inside overflow-y:auto containers is broken) */}
+        {createPortal(
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--glass-border)] px-4 py-3 flex gap-3">
                 <button
                     onClick={() => setBookingOpen(true)}
@@ -1767,30 +1791,9 @@ export const ListingDetail: React.FC = () => {
                         {ICONS.PHONE} {t('common.contact_on_site')}
                     </div>
                 )}
-            </div>
-
-            {/* Modals */}
-            {lightboxOpen && (
-                <Lightbox 
-                    images={images} 
-                    initialIndex={lightboxIndex} 
-                    onClose={() => setLightboxOpen(false)} 
-                />
-            )}
-            
-            <BookingModal 
-                isOpen={bookingOpen} 
-                onClose={() => setBookingOpen(false)} 
-                onConfirm={handleBooking} 
-                t={t} 
-            />
-
-            <ShareModal 
-                isOpen={shareOpen} 
-                onClose={() => setShareOpen(false)} 
-                t={t} 
-            />
-        </article>
+            </div>,
+            document.body
+        )}
         {createPortal(
             toast ? (
                 <div className={`fixed top-6 right-4 md:right-6 z-[100] px-4 md:px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border max-w-[calc(100vw-2rem)] ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
