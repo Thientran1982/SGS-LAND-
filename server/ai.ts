@@ -822,14 +822,60 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
         graph.addNode('INVENTORY_AGENT', async (state) => {
             state.trace.push({ id: 'INVENTORY', node: 'INVENTORY_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
-            
+
             let budgetMax = extraction.budget_max;
             if (!budgetMax) budgetMax = parseBudgetFromMessage(state.userMessage);
 
             const searchRes = await TOOL_EXECUTOR.search_inventory(state.tenantId, extraction.location_keyword || '', budgetMax, extraction.property_type, extraction.area_min);
+
+            // ── Buyer profile detection for branching ──────────────────────────────
+            const msg = state.userMessage.toLowerCase();
+            const isInvestor = (state.lead?.score?.score ?? 0) > 70
+                || /đầu tư|cho thuê|sinh lời|dòng tiền|yield|lợi nhuận|tỷ suất/.test(msg);
+            const isFirstBuyer = /lần đầu|chưa có nhà|ở thực|mua để ở|nhà đầu tiên|tự ở/.test(msg);
+            const isUrgent = /gấp|tháng này|tuần này|tháng sau|sắp hết hàng|cần ngay|khẩn/.test(msg);
+            const budgetTier = !budgetMax ? 'Chưa rõ'
+                : budgetMax < 3e9 ? 'Dưới 3 Tỷ'
+                : budgetMax < 7e9 ? '3–7 Tỷ'
+                : budgetMax < 15e9 ? '7–15 Tỷ' : 'Trên 15 Tỷ';
+            const buyerProfile = isInvestor ? 'ĐẦU_TƯ' : isFirstBuyer ? 'Ở_THỰC_LẦN_ĐẦU' : 'CHƯA_RÕ';
+
+            // ── Gemini pre-processing: rank + differentiate top matches ─────────────
+            const inventoryAnalysisPrompt = `Bạn là chuyên gia tư vấn BĐS Việt Nam. Dưới đây là kết quả tìm kiếm kho hàng thô:
+
+${searchRes}
+
+HỒ SƠ YÊU CẦU:
+- Ngân sách: ${budgetTier}
+- Khu vực: ${extraction.location_keyword || 'Chưa rõ'}
+- Loại BĐS: ${extraction.property_type || 'Chưa rõ'}
+- Diện tích tối thiểu: ${extraction.area_min ? extraction.area_min + 'm²' : 'Chưa rõ'}
+- Mục đích: ${isInvestor ? 'ĐẦU TƯ (sinh lời/cho thuê)' : isFirstBuyer ? 'Ở THỰC (lần đầu mua)' : 'Chưa rõ — có thể ở thực hoặc đầu tư'}
+- Mức độ khẩn cấp: ${isUrgent ? 'GẤP — cần quyết định sớm' : 'Bình thường'}
+
+NHIỆM VỤ: Phân tích top 3 BĐS phù hợp nhất, viết ngắn gọn dạng structured data cho tư vấn viên:
+1. Xếp hạng theo mức độ phù hợp với hồ sơ (lý do ngắn gọn)
+2. Mỗi BĐS: điểm KHÁC BIỆT nổi bật so với các BĐS còn lại (không chỉ liệt kê thông số)
+3. Nếu mục đích ĐẦU TƯ: ước tính tỷ suất cho thuê (giá thuê thị trường / giá bán × 100%)
+4. 1 điểm mạnh đặc biệt + 1 rủi ro tiềm ẩn cho mỗi BĐS
+5. Đề xuất BĐS phù hợp nhất với hồ sơ này — giải thích 1 câu ngắn
+
+Viết tiếng Việt, bullet point, tối đa 200 từ.`;
+
+            const inventoryAI = await getAiClient().models.generateContent({
+                model: GENAI_CONFIG.MODELS.EXTRACTOR,
+                contents: inventoryAnalysisPrompt,
+                config: { systemInstruction: 'Bạn là chuyên gia phân tích kho BĐS Việt Nam. Phân tích ngắn gọn, thực tế, không hoa mỹ. Luôn dùng tiếng Việt.' }
+            });
+            const inventoryAnalysisText = inventoryAI.text || '';
             const firstLine = searchRes.split('\n')[0];
-            this.updateTrace(state.trace, firstLine || 'Kho hàng đã được tra cứu.');
-            return { systemContext: state.systemContext + `\n\n[INVENTORY DATA]:\n${searchRes}` };
+            this.updateTrace(state.trace, firstLine || 'Kho hàng đã được tra cứu.', GENAI_CONFIG.MODELS.EXTRACTOR);
+            return {
+                systemContext: state.systemContext
+                    + `\n\n[INVENTORY DATA]:\n${searchRes}`
+                    + `\n\n[PHÂN TÍCH KHO HÀNG]:\n${inventoryAnalysisText}`
+                    + `\n[BUYER_PROFILE]: ${buyerProfile} | Khẩn_cấp: ${isUrgent ? 'CÓ' : 'KHÔNG'} | Ngân_sách: ${budgetTier}`
+            };
         });
 
         // Node 2b: Finance Agent
@@ -894,9 +940,52 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
             const extraction = state.plan.extraction || {};
             const term = extraction.legal_concern || 'PINK_BOOK';
             const legalInfo = await TOOL_EXECUTOR.get_legal_info(state.tenantId, term);
+
+            // ── Scenario branching ─────────────────────────────────────────────────
+            const msg = state.userMessage.toLowerCase();
+            const isDispute   = /tranh chấp|kiện|tòa|sai sót|vấn đề|bị lừa|không hợp lệ|rủi ro pháp/.test(msg);
+            const isBuyer     = /mua|nhận chuyển nhượng|nhận bàn giao|mua nhà|mua đất/.test(msg);
+            const isSeller    = /bán|chuyển nhượng|sang tên|bán nhà|bán đất/.test(msg);
+            const legalScenario = isDispute ? 'TRANH_CHẤP'
+                : isBuyer  ? 'NGƯỜI_MUA'
+                : isSeller ? 'NGƯỜI_BÁN'
+                : 'CHUNG';
+            const scenarioDesc = isDispute
+                ? 'tập trung rủi ro, biện pháp bảo vệ, quy trình giải quyết tranh chấp'
+                : isBuyer  ? 'tập trung thẩm định, kiểm tra pháp lý, bảo vệ người mua'
+                : isSeller ? 'tập trung thủ tục, thuế phí, thời gian hoàn tất sang tên'
+                : 'giải thích khái niệm rõ ràng, dễ hiểu cho người không học luật';
+
+            const legalAnalysisPrompt = `Kiến thức pháp lý BĐS Việt Nam:
+${legalInfo}
+
+CHỦ ĐỀ: ${term}
+KỊCH BẢN: ${legalScenario} — ${scenarioDesc}
+TIN NHẮN KHÁCH: "${state.userMessage}"
+
+NHIỆM VỤ: Phân tích pháp lý theo góc độ ${legalScenario} cho tư vấn viên:
+1. Điểm CỐT LÕI cần biết (2-3 điều quan trọng nhất, dễ hiểu)
+2. Rủi ro pháp lý cụ thể cần lưu ý${isDispute ? ' (nêu rõ mức độ: Cao / Trung bình / Thấp)' : ''}
+3. Các bước thực tế cần làm — theo thứ tự ưu tiên
+4. Thời gian & chi phí ước tính (nếu có dữ liệu)
+5. Khi nào cần thuê luật sư / đến văn phòng công chứng bắt buộc?
+
+Viết tiếng Việt, bullet point, tối đa 180 từ. Tuyệt đối không trích dẫn điều khoản luật khô khan — dùng ngôn ngữ thực tế.`;
+
+            const legalAI = await getAiClient().models.generateContent({
+                model: GENAI_CONFIG.MODELS.EXTRACTOR,
+                contents: legalAnalysisPrompt,
+                config: { systemInstruction: 'Bạn là luật sư chuyên BĐS Việt Nam. Giải thích pháp lý chính xác, thực tế, dùng ngôn ngữ dễ hiểu cho người không học luật. Luôn dùng tiếng Việt.' }
+            });
+            const legalAnalysisText = legalAI.text || '';
+
             const legalSnippet = legalInfo.slice(0, 80) + (legalInfo.length > 80 ? '...' : '');
-            this.updateTrace(state.trace, `Pháp lý [${term}]: ${legalSnippet}`);
-            return { systemContext: state.systemContext + `\n[LEGAL KNOWLEDGE]: ${legalInfo}` };
+            this.updateTrace(state.trace, `Pháp lý [${term}] | ${legalScenario}: ${legalSnippet}`, GENAI_CONFIG.MODELS.EXTRACTOR);
+            return {
+                systemContext: state.systemContext
+                    + `\n[LEGAL KNOWLEDGE]: ${legalInfo}`
+                    + `\n\n[PHÂN TÍCH PHÁP LÝ — ${legalScenario}]:\n${legalAnalysisText}`
+            };
         });
 
         // Node 2d: Sales Agent
@@ -931,9 +1020,51 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
             state.trace.push({ id: 'MARKETING', node: 'MARKETING_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
             const marketingInfo = await TOOL_EXECUTOR.get_marketing_info(state.tenantId, extraction.marketing_campaign);
+
+            // ── Buyer segmentation for campaign matching ───────────────────────────
+            const msg = state.userMessage.toLowerCase();
+            const budgetMax = extraction.budget_max || parseBudgetFromMessage(state.userMessage);
+            const isInvestorMkt = /đầu tư|cho thuê|sinh lời|dòng tiền|roi|tỷ suất/.test(msg);
+            const isUrgentMkt   = /gấp|hạn|deadline|cuối tháng|sắp hết|còn ít|còn suất/.test(msg);
+            const budgetLabel   = !budgetMax ? 'Chưa rõ'
+                : budgetMax < 3e9  ? 'Tầm trung-thấp (<3 Tỷ)'
+                : budgetMax < 7e9  ? 'Tầm trung (3–7 Tỷ)'
+                : budgetMax < 15e9 ? 'Cao cấp (7–15 Tỷ)' : 'Luxury (>15 Tỷ)';
+
+            const marketingAnalysisPrompt = `Thông tin marketing & ưu đãi BĐS:
+${marketingInfo}
+
+HỒ SƠ KHÁCH:
+- Ngân sách: ${budgetLabel}
+- Mục đích: ${isInvestorMkt ? 'ĐẦU TƯ (cần ROI tốt)' : 'Ở thực / chưa rõ'}
+- Mức độ khẩn cấp: ${isUrgentMkt ? 'CÓ (đang hỏi deadline / số lượng còn)' : 'Bình thường'}
+- Câu hỏi khách: "${state.userMessage}"
+
+NHIỆM VỤ: Match ưu đãi phù hợp nhất với hồ sơ này:
+1. Top 2-3 ưu đãi/chiến dịch PHÙ HỢP NHẤT — lý do match cụ thể
+2. Ưu đãi nào có thể dùng như "closing hook" để thúc đẩy quyết định ngay?
+3. Điều kiện hưởng ưu đãi: thời hạn, mức đặt cọc, giấy tờ cần thiết
+4. Nếu là nhà đầu tư: ưu đãi nào tác động tốt nhất đến tỷ suất sinh lời?
+5. Cảnh báo: ưu đãi nào SẮP HẾT HẠN hoặc SẮP HẾT SUẤT?
+
+Viết tiếng Việt, bullet point, thực tế, tối đa 160 từ.`;
+
+            const marketingAI = await getAiClient().models.generateContent({
+                model: GENAI_CONFIG.MODELS.EXTRACTOR,
+                contents: marketingAnalysisPrompt,
+                config: { systemInstruction: 'Bạn là chuyên gia sales BĐS cao cấp Việt Nam. Phân tích ưu đãi từ góc độ closing — giúp tư vấn viên chốt deal hiệu quả. Luôn dùng tiếng Việt.' }
+            });
+            const marketingAnalysisText = marketingAI.text || '';
+
             const campaignCount = (marketingInfo.match(/\n- /g) || []).length;
-            this.updateTrace(state.trace, campaignCount > 0 ? `Marketing: ${campaignCount} ưu đãi đang áp dụng` : `Marketing: ${marketingInfo.slice(0, 80)}`);
-            return { systemContext: state.systemContext + `\n[MARKETING KNOWLEDGE]: ${marketingInfo}` };
+            this.updateTrace(state.trace,
+                campaignCount > 0 ? `Marketing: ${campaignCount} ưu đãi | Phân khúc: ${budgetLabel}` : `Marketing: ${marketingInfo.slice(0, 80)}`,
+                GENAI_CONFIG.MODELS.EXTRACTOR);
+            return {
+                systemContext: state.systemContext
+                    + `\n[MARKETING KNOWLEDGE]: ${marketingInfo}`
+                    + `\n\n[PHÂN TÍCH ƯU ĐÃI — ${budgetLabel}]:\n${marketingAnalysisText}`
+            };
         });
 
         // Node 2f: Contract Agent
@@ -942,9 +1073,54 @@ QUY TẮC ƯU TIÊN khi tin nhắn hỗn hợp:
             const extraction = state.plan.extraction || {};
             const contractType = extraction.contract_type || 'Sales';
             const contractInfo = await TOOL_EXECUTOR.get_contract_info(state.tenantId, contractType);
+
+            // ── Contract scenario branching ────────────────────────────────────────
+            const msg = state.userMessage.toLowerCase();
+            const isRisk    = /rủi ro|bẫy|lừa|không an toàn|điều khoản bất lợi|thiệt thòi|tranh chấp hợp đồng/.test(msg);
+            const isLease   = /thuê|cho thuê|hợp đồng thuê/.test(msg)
+                || /lease|rent/i.test(contractType);
+            const isDeposit = /đặt cọc|cọc|giữ chỗ/.test(msg)
+                || /deposit/i.test(contractType);
+            const contractScenario = isRisk    ? 'RỦI_RO'
+                : isDeposit ? 'ĐẶT_CỌC'
+                : isLease   ? 'CHO_THUÊ'
+                : 'MUA_BÁN';
+            const scenarioFocus = isRisk
+                ? 'phân tích điều khoản bất lợi, cạm bẫy pháp lý thường gặp'
+                : isDeposit ? 'quy trình đặt cọc, mức cọc tiêu chuẩn, hoàn cọc khi vi phạm'
+                : isLease   ? 'điều khoản thuê, quyền & nghĩa vụ hai bên, chấm dứt hợp đồng'
+                : 'quy trình pháp lý mua bán, lịch thanh toán, bàn giao, sang tên';
+
+            const contractAnalysisPrompt = `Thông tin hợp đồng BĐS Việt Nam:
+${contractInfo}
+
+LOẠI HỢP ĐỒNG: ${contractType}
+KỊCH BẢN: ${contractScenario} — ${scenarioFocus}
+TIN NHẮN KHÁCH: "${state.userMessage}"
+
+NHIỆM VỤ: Phân tích hợp đồng theo kịch bản ${contractScenario}:
+1. Điều khoản QUAN TRỌNG NHẤT cần đọc kỹ trước khi ký (3-4 điều cụ thể)
+2. Điều khoản RỦI RO thường gặp trong loại HĐ này — dấu hiệu nhận biết
+3. ${isDeposit ? 'Mức cọc phổ biến (5-10%), quy trình & thời hạn hoàn cọc khi một bên vi phạm' : isLease ? 'Điều khoản tăng giá thuê, gia hạn, bồi thường khi chấm dứt trước hạn' : 'Lịch thanh toán/tiến độ tiêu chuẩn — thông thường chia làm mấy đợt'}
+4. Quyền của bên ${isLease ? 'thuê' : isDeposit ? 'đặt cọc' : 'mua'} khi bên kia vi phạm
+5. Thủ tục công chứng bắt buộc, thuế phí, thời gian sang tên (nếu áp dụng)
+
+Viết tiếng Việt, bullet point, thực tế, tối đa 200 từ. Không trích dẫn điều luật — dùng ngôn ngữ thực tế.`;
+
+            const contractAI = await getAiClient().models.generateContent({
+                model: GENAI_CONFIG.MODELS.EXTRACTOR,
+                contents: contractAnalysisPrompt,
+                config: { systemInstruction: 'Bạn là luật sư hợp đồng BĐS Việt Nam 15 năm kinh nghiệm. Phân tích điều khoản thực tế, bảo vệ quyền lợi khách hàng. Luôn dùng tiếng Việt.' }
+            });
+            const contractAnalysisText = contractAI.text || '';
+
             const contractSnippet = contractInfo.slice(0, 80) + (contractInfo.length > 80 ? '...' : '');
-            this.updateTrace(state.trace, `Hợp đồng [${contractType}]: ${contractSnippet}`);
-            return { systemContext: state.systemContext + `\n[CONTRACT KNOWLEDGE]: ${contractInfo}` };
+            this.updateTrace(state.trace, `Hợp đồng [${contractType}] | ${contractScenario}: ${contractSnippet}`, GENAI_CONFIG.MODELS.EXTRACTOR);
+            return {
+                systemContext: state.systemContext
+                    + `\n[CONTRACT KNOWLEDGE]: ${contractInfo}`
+                    + `\n\n[PHÂN TÍCH HỢP ĐỒNG — ${contractScenario}]:\n${contractAnalysisText}`
+            };
         });
 
         // Node 2g: Lead Analyst
@@ -1054,57 +1230,200 @@ Viết ngắn gọn, tiếng Việt, bullet point, sắc bén — tối đa 150 
             // Define currentIntent early (also used in RLHF section below)
             const currentIntent = state.plan?.next_step || 'DIRECT_ANSWER';
 
-            // ── Dedicated WRITER prompt for ESTIMATE_VALUATION ──────────────────────────
-            const isValuationIntent = currentIntent === 'ESTIMATE_VALUATION';
-            const writerPrompt = isValuationIntent
-                ? `NHIỆM VỤ: ĐỊNH GIÁ BẤT ĐỘNG SẢN — Viết báo cáo định giá chuyên nghiệp, dễ hiểu
+            // ── Per-intent WRITER prompt — 9 branches ─────────────────────────────
+            const _ctx  = `CONTEXT (dữ liệu đã được phân tích thực tế):\n${state.systemContext}${leadAnalysisSection}`;
+            const _hist = `LỊCH SỬ HỘI THOẠI (12 tin nhắn gần nhất):\n${conversationHistory || '(Chưa có lịch sử)'}`;
+            const _msg  = `TIN NHẮN KHÁCH: "${state.userMessage}"`;
 
-KẾT QUẢ ĐỊNH GIÁ AI (dữ liệu thực tế — dùng chính xác, không tự tính lại):
+
+            const writerPrompt: string = (() => {
+                switch (currentIntent) {
+
+                    // ── 1. ĐỊNH GIÁ ──────────────────────────────────────────────────────
+                    case 'ESTIMATE_VALUATION':
+                        return `NHIỆM VỤ: ĐỊNH GIÁ BẤT ĐỘNG SẢN — Viết báo cáo định giá chuyên nghiệp, dễ hiểu
+
+KẾT QUẢ ĐỊNH GIÁ AI (dùng chính xác, không tự tính lại):
 ${state.systemContext}${leadAnalysisSection}
 
-LỊCH SỬ HỘI THOẠI (12 tin nhắn gần nhất):
-${conversationHistory || '(Chưa có lịch sử)'}
+${_hist}
 
-TIN NHẮN KHÁCH: "${state.userMessage}"
+${_msg}
 
-YÊU CẦU — Viết báo cáo định giá ngắn gọn (150-250 từ) theo bố cục sau:
-1. **KẾT QUẢ**: Nêu NGAY con số chính xác từ [ĐỊNH GIÁ BẤT ĐỘNG SẢN] — giá (X,XX Tỷ VNĐ), đơn giá (XX Triệu/m²), khoảng giá (min–max Tỷ), mức độ tin cậy
-2. **YẾU TỐ ẢNH HƯỞNG**: Giải thích bằng tiếng Việt thông thường 2-3 yếu tố quan trọng nhất đã điều chỉnh giá:
-   - Lộ giới/hẻm/đường: ảnh hưởng tăng/giảm bao nhiêu % so với chuẩn
-   - Pháp lý (Sổ Hồng / HĐMB / Vi Bằng): cộng/trừ bao nhiêu %
-   - Vị trí tầng (nếu là căn hộ), nội thất, tuổi nhà, mặt tiền — nếu có trong dữ liệu
-   - KHÔNG dùng ký hiệu kỹ thuật như "Kd", "Ka", "AVM", "reconciliation" — diễn đạt tự nhiên
-3. **THỊ TRƯỜNG**: 1-2 câu về xu hướng giá khu vực (đang tăng/giảm/ổn định, % nếu có)
-4. **GỢI Ý THỰC TẾ**: Nên bán ngay / chờ thêm / đặt giá chào bán khoảng bao nhiêu (thường cao hơn định giá 5-10% để có room thương lượng)
-5. **CÂU HỎI**: Kết thúc bằng câu hỏi hỏi thêm thông tin để định giá chính xác hơn (VD: tầng bao nhiêu? nội thất thế nào? nhà xây năm nào? mặt tiền rộng bao nhiêu?)
+YÊU CẦU — Viết báo cáo định giá (150-250 từ) theo bố cục:
+1. **KẾT QUẢ**: Nêu NGAY — giá (X,XX Tỷ VNĐ), đơn giá (XX Triệu/m²), khoảng min–max Tỷ, mức tin cậy
+2. **YẾU TỐ ẢNH HƯỞNG**: Giải thích tự nhiên 2-3 yếu tố quan trọng nhất (lộ giới, pháp lý, tầng/nội thất/tuổi nhà) — KHÔNG dùng ký hiệu "Kd/Ka/AVM"
+3. **THỊ TRƯỜNG**: 1-2 câu xu hướng giá khu vực (tăng/giảm/ổn định, % nếu có)
+4. **GỢI Ý THỰC TẾ**: Giá chào bán đề xuất (thường định giá + 5-10% để có room thương lượng)
+5. **CÂU HỎI**: Hỏi thêm 1 thông tin cụ thể để cải thiện độ chính xác (tầng? nội thất? tuổi nhà? mặt tiền?)
 
-QUAN TRỌNG:
+${_lang}
+QUAN TRỌNG: Dùng số liệu CHÍNH XÁC từ [ĐỊNH GIÁ BẤT ĐỘNG SẢN] — không bịa đặt. Giá: "X,XX Tỷ VNĐ" | Đơn giá: "XX Triệu/m²"`;
+
+                    // ── 2. TÌM BĐS ───────────────────────────────────────────────────────
+                    case 'SEARCH_INVENTORY':
+                        return `NHIỆM VỤ: TƯ VẤN TÌM BĐS — Giới thiệu kho hàng phù hợp, cá nhân hoá theo hồ sơ khách
+
+${_ctx}
+
+${_hist}
+
+${_msg}
+
+YÊU CẦU VIẾT PHẢN HỒI (120-200 từ):
 - ${langInstruction}
-- Dùng số liệu CHÍNH XÁC từ CONTEXT [ĐỊNH GIÁ BẤT ĐỘNG SẢN] — KHÔNG bịa đặt hay ước lượng
-- Giá BĐS: "X,XX Tỷ VNĐ" | Đơn giá: "XX Triệu/m²" | Tỷ suất: "%/năm"
-- Giọng điệu: chuyên nghiệp, thân thiện, ngắn gọn — không rườm rà, không dùng thuật ngữ kỹ thuật`
-                : `${intentHint ? intentHint + '\n\n' : ''}CONTEXT (dữ liệu tra cứu thực tế):
-${state.systemContext}${leadAnalysisSection}
+- Dùng [PHÂN TÍCH KHO HÀNG] làm nguồn chính — KHÔNG copy nguyên [INVENTORY DATA] thô
+- Giới thiệu 2-3 BĐS: mỗi căn nêu 1 điểm KHÁC BIỆT nổi bật, không liệt kê spec đơn thuần
+- Nếu [BUYER_PROFILE] = ĐẦU_TƯ: nhấn mạnh tỷ suất cho thuê, tiềm năng tăng giá
+- Nếu [BUYER_PROFILE] = Ở_THỰC_LẦN_ĐẦU: nhấn mạnh pháp lý sạch, vay được ngân hàng, gần tiện ích
+- Nếu Khẩn_cấp: CÓ — đề cập ngay bước xem nhà và đặt giữ chỗ trước khi hết
+- Kết thúc bằng câu hỏi thu hẹp: "Anh/chị ưu tiên diện tích hay vị trí hơn ạ?" hoặc "Căn nào em giới thiệu thêm chi tiết?"
+- Giọng điệu: nhiệt tình như người quen tư vấn — không đọc catalogue`;
 
-LỊCH SỬ HỘI THOẠI (12 tin nhắn gần nhất):
-${conversationHistory || '(Chưa có lịch sử)'}
+                    // ── 3. TÀI CHÍNH VAY ─────────────────────────────────────────────────
+                    case 'CALCULATE_LOAN':
+                        return `NHIỆM VỤ: TƯ VẤN TÀI CHÍNH VAY MUA BĐS — Giúp khách hiểu khả năng tài chính, ra quyết định sáng suốt
 
-TIN NHẮN KHÁCH: "${state.userMessage}"
+${_ctx}
+
+${_hist}
+
+${_msg}
+
+YÊU CẦU VIẾT PHẢN HỒI (120-180 từ):
+- ${langInstruction}
+- Dùng số liệu CHÍNH XÁC từ [LOAN CALCULATION]: trả/tháng, tổng lãi, tổng trả
+- Bố cục gợi ý:
+  1. Con số chính ngay đầu: "Trả khoảng X triệu/tháng trong Y năm"
+  2. Phân tích khả năng: thu nhập tối thiểu cần có (trả/tháng ≤ 40% thu nhập)
+  3. Lưu ý thực tế: lãi suất thả nổi sau ưu đãi thường tăng 9-11%/năm
+  4. Ngân hàng cho vay 70-80% giá trị BĐS — cần vốn tự có bao nhiêu?
+- Nếu khách hỏi "vay được không" / "có khả năng không": đánh giá thẳng thắn
+- Kết thúc: "Anh/chị muốn em so sánh kịch bản vay ngắn hơn hoặc lãi suất khác không ạ?"
+- TRÁNH: copy bảng amortization, dùng từ "amortization", "principal", "lãi suất danh nghĩa"`;
+
+                    // ── 4. PHÁP LÝ ───────────────────────────────────────────────────────
+                    case 'EXPLAIN_LEGAL':
+                        return `NHIỆM VỤ: TƯ VẤN PHÁP LÝ BĐS — Giải thích rõ ràng, bảo vệ quyền lợi, ngôn ngữ thực tế
+
+${_ctx}
+
+${_hist}
+
+${_msg}
+
+YÊU CẦU VIẾT PHẢN HỒI (150-220 từ):
+- ${langInstruction}
+- Dùng [PHÂN TÍCH PHÁP LÝ] làm nguồn chính — không copy [LEGAL KNOWLEDGE] thô
+- Nếu kịch bản TRANH_CHẤP: mở đầu bằng đánh giá mức độ rủi ro (Cao/Trung bình/Thấp) + bước khẩn cấp cần làm NGAY
+- Nếu kịch bản NGƯỜI_MUA: nhấn mạnh checklist thẩm định trước khi ký
+- Nếu kịch bản NGƯỜI_BÁN: nhấn mạnh thủ tục, thuế phí thực tế (thuế TNCN 2%, lệ phí trước bạ)
+- Giải thích bằng ví dụ cụ thể: "Ví dụ: nhà vi bằng nghĩa là…" thay vì trích điều luật
+- Nêu rõ: khi nào cần công chứng bắt buộc vs. tuỳ chọn
+- Kết thúc: "Anh/chị đang ở giai đoạn nào — chưa ký / đã ký / đang tranh chấp ạ?"
+- TUYỆT ĐỐI KHÔNG: "Theo điều X Luật Y…" — thay bằng "Theo quy định hiện hành…"`;
+
+                    // ── 5. ĐẶT LỊCH XEM NHÀ ─────────────────────────────────────────────
+                    case 'DRAFT_BOOKING':
+                        return `NHIỆM VỤ: XÁC NHẬN LỊCH XEM NHÀ — Chuyên nghiệp, thân thiện, khuyến khích khách xác nhận
+
+${_ctx}
+
+${_hist}
+
+${_msg}
+
+YÊU CẦU VIẾT PHẢN HỒI (80-130 từ):
+- ${langInstruction}
+- Dùng [ĐẶT LỊCH XEM NHÀ]: nêu rõ thời gian đề xuất, địa điểm
+- Bố cục:
+  1. Xác nhận: "Em đã ghi nhận lịch xem nhà vào [thời gian] tại [địa điểm]"
+  2. Hỏi ưu tiên: buổi sáng (9-12h) hay chiều (14-17h)? Đi một mình hay có gia đình?
+  3. Nhắc nhở nhẹ: mang CMND/CCCD để tư vấn nhanh hơn
+  4. Tạo kỳ vọng: 1 câu giới thiệu điểm nổi bật nhất của BĐS sẽ xem
+- Giọng điệu: ấm áp, chuyên nghiệp — như nhân viên resort 5 sao
+- KHÔNG dùng: "hệ thống đã ghi nhận", "cảm ơn quý khách", ngôn ngữ robot/template`;
+
+                    // ── 6. ƯU ĐÃI MARKETING ──────────────────────────────────────────────
+                    case 'EXPLAIN_MARKETING':
+                        return `NHIỆM VỤ: TƯ VẤN ƯU ĐÃI & CHIẾN DỊCH — Kết nối ưu đãi với nhu cầu cụ thể, tạo urgency tự nhiên
+
+${_ctx}
+
+${_hist}
+
+${_msg}
+
+YÊU CẦU VIẾT PHẢN HỒI (120-180 từ):
+- ${langInstruction}
+- Dùng [PHÂN TÍCH ƯU ĐÃI] làm nguồn chính — không liệt kê toàn bộ ưu đãi chung chung
+- Nêu 2-3 ưu đãi PHÙ HỢP NHẤT với hồ sơ khách, mỗi cái kèm lợi ích bằng con số thực tế
+  (VD: "Tiết kiệm được X triệu", "Giảm X% chi phí ban đầu")
+- Nếu ưu đãi sắp hết hạn: tạo urgency — "Chương trình này còn hiệu lực đến ngày…"
+- Nếu khách là nhà đầu tư: nhấn mạnh ưu đãi tác động tốt nhất đến ROI
+- Kết thúc bằng câu hỏi closing: "Anh/chị muốn em giữ suất ưu đãi này trước khi hết hạn không ạ?"
+- TRÁNH: "hiện có nhiều ưu đãi hấp dẫn", số chung chung không đo được`;
+
+                    // ── 7. HỢP ĐỒNG ──────────────────────────────────────────────────────
+                    case 'DRAFT_CONTRACT':
+                        return `NHIỆM VỤ: TƯ VẤN HỢP ĐỒNG BĐS — Giúp khách hiểu điều khoản, bảo vệ quyền lợi, quyết định an toàn
+
+${_ctx}
+
+${_hist}
+
+${_msg}
+
+YÊU CẦU VIẾT PHẢN HỒI (150-220 từ):
+- ${langInstruction}
+- Dùng [PHÂN TÍCH HỢP ĐỒNG] làm nguồn chính — không copy [CONTRACT KNOWLEDGE] thô
+- Mở đầu: xác nhận loại hợp đồng (mua bán / đặt cọc / cho thuê)
+- Nêu 3 điều khoản QUAN TRỌNG NHẤT cần kiểm tra kỹ trước khi ký
+- Nếu kịch bản RỦI_RO: mở đầu ngay "Điều khoản này có thể bất lợi vì…"
+- Nếu kịch bản ĐẶT_CỌC: nêu rõ mức cọc phổ biến (5-10%), quy trình hoàn cọc khi vi phạm
+- Nếu kịch bản CHO_THUÊ: nhấn mạnh điều khoản tăng giá thuê, gia hạn, bồi thường chấm dứt sớm
+- Kết thúc: "Anh/chị có muốn em xem qua một số điều khoản cụ thể trong hợp đồng không ạ?"
+- KHÔNG dùng: "pháp nhân", "bên nhận chuyển nhượng", "điều X khoản Y" — dùng ngôn ngữ thông thường`;
+
+                    // ── 8. PHÂN TÍCH KHÁCH HÀNG (COACHING) ───────────────────────────────
+                    case 'ANALYZE_LEAD':
+                        return `NHIỆM VỤ: TRẢ LỜI KHÁCH + COACHING SALES — Vừa trả lời tự nhiên, vừa dùng insight phân tích để tư vấn đúng giai đoạn
+
+${_ctx}
+
+${_hist}
+
+${_msg}
+
+YÊU CẦU VIẾT PHẢN HỒI (100-160 từ):
+- ${langInstruction}
+- Trả lời TIN NHẮN KHÁCH trực tiếp và tự nhiên — đây là tin nhắn khách thấy
+- Tích hợp ngầm insight từ [LEAD ANALYSIS]: điều chỉnh tông giọng và nội dung theo giai đoạn
+  • Awareness → giáo dục, cung cấp thông tin tổng quan
+  • Consideration → so sánh cụ thể, nêu điểm khác biệt rõ
+  • Decision → tập trung vào closing, loại bỏ trở ngại cuối cùng
+- Điều chỉnh phong cách: Formal (doanh nhân/nhà đầu tư) | Casual (trẻ/lần đầu) | Data-driven (IT/tài chính)
+- Kết thúc bằng hành động phù hợp giai đoạn (không chỉ "Anh/chị cần gì thêm?")
+- KHÔNG đề cập đến AI, hệ thống phân tích, hay "theo dữ liệu"`;
+
+                    // ── 9. DIRECT / ESCALATE / DEFAULT ───────────────────────────────────
+                    default:
+                        return `${intentHint ? intentHint + '\n\n' : ''}${_ctx}
+
+${_hist}
+
+${_msg}
 
 YÊU CẦU VIẾT PHẢN HỒI:
 - ${langInstruction}
-- Độ dài: 3-5 câu cho câu hỏi đơn giản. Dùng bullet point khi trình bày nhiều thông tin (pháp lý, hợp đồng, so sánh BĐS).
-- Tích hợp dữ liệu từ CONTEXT tự nhiên, KHÔNG copy nguyên văn, KHÔNG lặp nhãn "[INVENTORY DATA]" hay "[LEGAL KNOWLEDGE]".
-- Giá BĐS: dùng "Tỷ" / "Triệu VNĐ". Lãi suất: "%/năm". Diện tích: "m²". Tỷ suất: "%/năm".
-- KHÔNG lặp lại câu hỏi của khách. KHÔNG bịa đặt số liệu giá, lãi suất, pháp lý không có trong CONTEXT.
-- Nếu CONTEXT có [ĐỊNH GIÁ BẤT ĐỘNG SẢN]: nêu rõ con số (Tỷ VNĐ, Triệu/m²), khoảng giá min-max và xu hướng thị trường.
-- Nếu CONTEXT có [LOAN CALCULATION]: trình bày rõ số tiền trả hàng tháng và tổng chi phí lãi suất.
-- Nếu CONTEXT có [INVENTORY DATA]: giới thiệu 2-3 BĐS phù hợp nhất, nêu điểm nổi bật khác biệt nhau.
-- Nếu CONTEXT có [MARKETING KNOWLEDGE]: nêu ưu đãi cụ thể, tránh nói chung chung "có nhiều ưu đãi".
-- Nếu CONTEXT có [LEGAL KNOWLEDGE]: giải thích pháp lý theo ngôn ngữ khách hàng — tránh thuật ngữ pháp lý khô khan.
-- Nếu CONTEXT có [ĐẶT LỊCH XEM NHÀ]: xác nhận thời gian, địa điểm và hỏi thêm ưu tiên (buổi sáng/chiều).
-- Kết thúc bằng 1 câu hỏi ngược tự nhiên, liên quan đến nhu cầu của khách (không hỏi chung "Anh/chị cần gì thêm?").
-- Giọng điệu: tự tin nhưng không áp đặt, thấu cảm và cá nhân hoá theo thông tin Lead Analysis (nếu có).`;
+- Độ dài: 3-5 câu cho câu hỏi đơn giản. Dùng bullet point khi trình bày nhiều thông tin.
+- Tích hợp dữ liệu từ CONTEXT tự nhiên — KHÔNG copy nguyên văn, KHÔNG lặp nhãn kỹ thuật.
+- Giá BĐS: "Tỷ" / "Triệu VNĐ". Lãi suất: "%/năm". Diện tích: "m²".
+- KHÔNG lặp lại câu hỏi của khách. KHÔNG bịa đặt số liệu không có trong CONTEXT.
+- Kết thúc bằng 1 câu hỏi ngược tự nhiên, liên quan đến nhu cầu cụ thể của khách.
+- Giọng điệu: tự tin, thấu cảm, cá nhân hoá theo Lead Analysis (nếu có).`;
+                }
+            })();
 
             // --- RLHF INJECTION ---
             // Fetch few-shot examples + negative rules from accumulated feedback
