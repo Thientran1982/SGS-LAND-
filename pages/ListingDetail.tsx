@@ -1121,8 +1121,14 @@ export const ListingDetail: React.FC = () => {
         return false;
     }, [currentUser, listing]);
 
-    // Get ID from Hash URL
-    const id = window.location.hash.split('/').pop();
+    // Get ID from clean URL (/listing/id) or legacy hash URL (#/listing/id)
+    const id = (() => {
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#/')) {
+            return hash.split('/').filter(Boolean).pop() || '';
+        }
+        return window.location.pathname.split('/').filter(Boolean).pop() || '';
+    })();
 
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
@@ -1130,7 +1136,7 @@ export const ListingDetail: React.FC = () => {
     }, []);
 
     const fetchListingData = useCallback(async () => {
-        if (!id) return;
+        if (!id || id === 'listing') { setLoading(false); return; }
         setLoading(true);
         try {
             const [user, item, sim] = await Promise.all([
