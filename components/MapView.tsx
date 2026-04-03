@@ -181,7 +181,7 @@ function priceIcon(label: string, approximate: boolean, transaction?: string, ac
         : `drop-shadow(0 2px 8px ${glow})`;
 
     return L.divIcon({
-        className: '',
+        className: 'custom-map-pin-container',
         html: `
           <div style="
             display:inline-flex;flex-direction:column;align-items:center;
@@ -226,7 +226,7 @@ function clusterIcon(count: number, dominantTx?: string): L.DivIcon {
         : pinTokens(dominantTx, undefined);
     const label = count >= 1000 ? `${Math.floor(count / 1000)}k+` : `${count}`;
     return L.divIcon({
-        className: '',
+        className: 'custom-map-pin-container',
         html: `
           <div style="
             display:inline-flex;flex-direction:column;align-items:center;
