@@ -16,16 +16,16 @@ const CLUSTER_RADIUS_PX = 60;
 let nominatimReachable = true;
 
 // ── Transaction → design tokens ──────────────────────────────────────────────
-// Priority: PropertyType.PROJECT → blue | TransactionType.RENT → violet | default → navy
-//
+// Priority: PropertyType.PROJECT → blue-600 | TransactionType.RENT → violet-500 | default → slate-900
+// bg values MUST match the CSS classes in critical.css (.sgs-pin-sale/rent/project).
 // NOTE: PropertyType.PROJECT = 'Project' (PascalCase enum value stored in DB).
 //       Compare case-insensitively so we match 'Project', 'PROJECT', 'project', etc.
 function pinTokens(transaction?: string, propertyType?: string) {
     if (propertyType?.toUpperCase() === 'PROJECT')
-        return { bg: '#0369a1', glow: 'rgba(3,105,161,0.38)' };      // sky-700 — Dự án
+        return { bg: '#2563eb', glow: 'rgba(37,99,235,0.40)' };       // blue-600 — Dự án
     if (transaction?.toUpperCase() === 'RENT')
-        return { bg: '#6d28d9', glow: 'rgba(109,40,217,0.40)' };      // violet-700 — Thuê
-    return { bg: '#0f172a', glow: 'rgba(15,23,42,0.38)' };            // slate-900 — Bán
+        return { bg: '#7c3aed', glow: 'rgba(124,58,237,0.40)' };      // violet-600 — Thuê
+    return { bg: '#0f172a', glow: 'rgba(15,23,42,0.40)' };            // slate-900 — Bán
 }
 
 // ── Geo utilities ────────────────────────────────────────────────────────────
