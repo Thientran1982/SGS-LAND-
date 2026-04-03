@@ -637,8 +637,11 @@ export const Leads: React.FC = () => {
 
     // Deep-link: open lead from notification (e.g. /#/leads?leadId=xxx)
     const openLeadFromHash = useCallback((hash: string) => {
+        // Support both legacy hash URL (#/leads?leadId=xxx) and clean URL (/leads?leadId=xxx).
+        // After App.tsx converts hash → pathname, ?leadId= moves to window.location.search.
+        const leadIdFromSearch = new URLSearchParams(window.location.search).get('leadId');
         const match = hash.match(/[?&]leadId=([a-f0-9-]+)/i);
-        const leadId = match?.[1];
+        const leadId = leadIdFromSearch || match?.[1];
         if (!leadId) return;
         db.getLeadById(leadId).then(lead => {
             if (lead) {

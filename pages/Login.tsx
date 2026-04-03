@@ -181,11 +181,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   };
 
   const handleHashTokens = useCallback((hash: string) => {
-      // Handle email verification link: #/verify-email/{token}
-      const verifyMatch = hash.match(/\/verify-email\/([a-f0-9]+)/);
+      // Support both legacy hash URLs and clean URLs.
+      // After App.tsx converts #/xxx → /xxx, tokens move from hash to pathname/search.
+
+      // 1. Email verification: #/verify-email/{token} → /verify-email/{token}
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const verifyFromPath = pathParts[0] === 'verify-email' && pathParts[1] ? pathParts[1] : null;
+      const verifyMatch = hash.match(/\/verify-email\/([a-f0-9]+)/) || (verifyFromPath ? [null, verifyFromPath] : null);
       if (verifyMatch) {
           const token = verifyMatch[1];
-          window.history.replaceState(null, '', `${window.location.pathname}#/${ROUTES.LOGIN}`);
+          window.history.replaceState(null, '', `/${ROUTES.LOGIN}`);
           setLoading(true);
           setGlobalError('');
           db.verifyEmail(token)
@@ -200,14 +205,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           return true;
       }
 
-      const match = hash.match(/reset_token=([a-f0-9]+)/);
-      if (match) {
-          setOtp(match[1]);
+      // 2. Password reset: #/login?reset_token={token} → /login?reset_token={token}
+      const resetFromSearch = new URLSearchParams(window.location.search).get('reset_token');
+      const resetMatch = hash.match(/reset_token=([a-f0-9]+)/) || (resetFromSearch ? [null, resetFromSearch] : null);
+      if (resetMatch) {
+          setOtp(resetMatch[1] as string);
           setTokenFromUrl(true);
           setView('FORGOT_VERIFY');
           setGlobalError('');
           setSuccessMsg('');
-          window.history.replaceState(null, '', `${window.location.pathname}#/${ROUTES.LOGIN}`);
+          window.history.replaceState(null, '', `/${ROUTES.LOGIN}`);
           return true;
       }
 
