@@ -1122,12 +1122,16 @@ export const ListingDetail: React.FC = () => {
     }, [currentUser, listing]);
 
     // Get ID from clean URL (/listing/id) or legacy hash URL (#/listing/id)
+    // Guard: chỉ nhận UUID hợp lệ (8-4-4-4-12 hex) để tránh gọi API khi URL đang ở route khác
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const id = (() => {
         const hash = window.location.hash;
         if (hash && hash.startsWith('#/')) {
-            return hash.split('/').filter(Boolean).pop() || '';
+            const seg = hash.split('/').filter(Boolean).pop() || '';
+            return UUID_RE.test(seg) ? seg : '';
         }
-        return window.location.pathname.split('/').filter(Boolean).pop() || '';
+        const seg = window.location.pathname.split('/').filter(Boolean).pop() || '';
+        return UUID_RE.test(seg) ? seg : '';
     })();
 
     const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
