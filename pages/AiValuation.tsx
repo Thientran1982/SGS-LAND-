@@ -191,6 +191,21 @@ export const AiValuation: React.FC = () => {
     const [monthlyRent, setMonthlyRent] = useState<string>('');
     const [buildingAge, setBuildingAge] = useState<string>('');
     const [bedrooms, setBedrooms] = useState<number | null>(null);
+    // Ngang × Dài calculator — auto-computes area & syncs frontageWidth
+    const [ngang, setNgang] = useState<string>('');
+    const [dai, setDai] = useState<string>('');
+
+    const handleNgangChange = (val: string) => {
+        setNgang(val);
+        setFrontageWidth(val); // ngang = mặt tiền
+        const n = parseFloat(val), d = parseFloat(dai);
+        if (n > 0 && d > 0) setArea(String(Math.round(n * d)));
+    };
+    const handleDaiChange = (val: string) => {
+        setDai(val);
+        const n = parseFloat(ngang), d = parseFloat(val);
+        if (n > 0 && d > 0) setArea(String(Math.round(n * d)));
+    };
 
     const isApartment = propertyType.startsWith('apartment') || propertyType === 'penthouse';
     const isApartmentOrProject = isApartment || propertyType === 'project';
@@ -203,6 +218,7 @@ export const AiValuation: React.FC = () => {
         if (isApartmentOrProject && bedrooms !== null) s += 3.50;
         if (direction)                              s += 2.54;
         if (!isApartment && frontageWidth && parseFloat(frontageWidth) > 0) s += 3.34;
+        if (!isApartment && ngang && dai && parseFloat(ngang) > 0 && parseFloat(dai) > 0) s += 1.50;
         if (isApartment && floorLevel && parseFloat(floorLevel) > 0)        s += 3.34;
         if (buildingAge !== '')                     s += 2.63;
         if (furnishing)                             s += 2.54;
@@ -577,6 +593,9 @@ export const AiValuation: React.FC = () => {
                                                     setLegal(h.legal);
                                                     setPropertyType(h.propertyType);
                                                     setAutoDetectedType(null);
+                                                    setNgang('');
+                                                    setDai('');
+                                                    setFrontageWidth('');
                                                     const detected = detectPropertyTypeFromText(h.address);
                                                     if (detected) setAutoDetectedType(detected);
                                                     setStep('DETAILS');
@@ -646,7 +665,7 @@ export const AiValuation: React.FC = () => {
                                 </div>
                                 <div className="mt-2 text-xs text-slate-500">
                                     {accuracy < 99.99
-                                        ? `Điền thêm ${accuracy < 80 ? (isApartmentOrProject ? 'diện tích, lộ giới, số phòng ngủ' : 'diện tích, lộ giới') : accuracy < 88 ? (isApartmentOrProject && bedrooms === null ? 'số phòng ngủ, hướng nhà' : 'hướng nhà, mặt tiền') : accuracy < 95 ? 'tuổi nhà, nội thất' : 'thuê dự kiến'} để tăng độ chính xác`
+                                        ? `Điền thêm ${accuracy < 80 ? (isApartmentOrProject ? 'diện tích, lộ giới, số phòng ngủ' : 'diện tích, lộ giới, ngang × dài') : accuracy < 88 ? (isApartmentOrProject && bedrooms === null ? 'số phòng ngủ, hướng nhà' : 'hướng nhà, mặt tiền') : accuracy < 95 ? 'tuổi nhà, nội thất' : 'thuê dự kiến'} để tăng độ chính xác`
                                         : '✓ Đã đạt độ chính xác tối đa — sẵn sàng định giá!'}
                                 </div>
                             </div>
@@ -670,7 +689,7 @@ export const AiValuation: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <button onClick={() => { setStep('ADDRESS'); setAutoDetectedType(null); }} className="text-xs font-bold text-emerald-400 hover:underline shrink-0">Sửa</button>
+                                    <button onClick={() => { setStep('ADDRESS'); setAutoDetectedType(null); setNgang(''); setDai(''); }} className="text-xs font-bold text-emerald-400 hover:underline shrink-0">Sửa</button>
                                 </div>
 
                                 {/* Inputs */}
@@ -743,6 +762,65 @@ export const AiValuation: React.FC = () => {
                                         );
                                     })()}
                                 </div>
+
+                                {/* ── NGANG × DÀI CALCULATOR — chỉ hiện với nhà đất (không phải căn hộ) ── */}
+                                {!isApartment && (
+                                    <div className="bg-slate-900/50 border border-slate-700/60 rounded-2xl p-4">
+                                        <div className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-widest mb-3">
+                                            Kích Thước (Ngang × Dài)
+                                            <span className="text-slate-600 normal-case font-normal ml-1">— tự động tính diện tích</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1">
+                                                <input
+                                                    type="number"
+                                                    value={ngang}
+                                                    onChange={e => handleNgangChange(e.target.value)}
+                                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-center focus:border-emerald-500 outline-none transition-all"
+                                                    placeholder="Ngang (m)"
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                                <div className="text-center text-xs text-slate-600 mt-1">Chiều ngang</div>
+                                            </div>
+                                            <div className="text-slate-500 font-bold text-lg select-none pb-4">×</div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="number"
+                                                    value={dai}
+                                                    onChange={e => handleDaiChange(e.target.value)}
+                                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold text-center focus:border-emerald-500 outline-none transition-all"
+                                                    placeholder="Dài (m)"
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                                <div className="text-center text-xs text-slate-600 mt-1">Chiều dài</div>
+                                            </div>
+                                            <div className="text-slate-500 font-bold text-lg select-none pb-4">=</div>
+                                            <div className="flex-1 text-center pb-4">
+                                                {ngang && dai && parseFloat(ngang) > 0 && parseFloat(dai) > 0 ? (
+                                                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2.5">
+                                                        <span className="text-emerald-400 font-black text-lg">
+                                                            {Math.round(parseFloat(ngang) * parseFloat(dai))}
+                                                        </span>
+                                                        <span className="text-emerald-500/70 text-xs font-bold"> m²</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5">
+                                                        <span className="text-slate-600 text-sm">? m²</span>
+                                                    </div>
+                                                )}
+                                                <div className="text-center text-xs text-slate-600 mt-1">Diện tích</div>
+                                            </div>
+                                        </div>
+                                        {ngang && dai && parseFloat(ngang) > 0 && parseFloat(dai) > 0 && (
+                                            <div className="flex items-center gap-2 mt-2.5 text-xs text-emerald-400/80">
+                                                <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                Đã cập nhật Diện Tích ({Math.round(parseFloat(ngang) * parseFloat(dai))}m²) và Mặt Tiền ({parseFloat(ngang)}m)
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tình Trạng Pháp Lý</label>
