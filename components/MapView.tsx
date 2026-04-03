@@ -524,7 +524,15 @@ const MapView: React.FC<MapViewProps> = memo(({
             }
 
             allEntries.current = [...resolved];
-            if (bounds.isValid()) {
+            // Only auto-zoom on initial paint when ALL listings already have real
+            // coordinates (e.g. single-listing detail view).  When there are pending
+            // listings to geocode we skip this early fitBounds so the map stays at
+            // the HCMC default centre instead of jumping to a lone outlier (e.g. a
+            // project in Nhơn Trạch / Đồng Nai that happens to be the only entry with
+            // stored coordinates while hundreds of HCMC listings are still being
+            // resolved).  The final fitBounds at the end of the geocoding loop will
+            // show the full distribution once all points are known.
+            if (bounds.isValid() && pending.length === 0) {
                 mapInst.current!.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: false });
                 // Never auto-zoom below 13 — below that, district centroids cluster
                 // together and the user sees only one big cluster bubble instead of pins.
