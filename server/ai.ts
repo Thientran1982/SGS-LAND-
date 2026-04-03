@@ -1,7 +1,8 @@
 import { GoogleGenAI, GenerateContentResponse, Type, Schema } from "@google/genai";
 import { Lead, Interaction, AgentTraceStep, AgentArtifact, AgentTraceResponse } from '../types';
 import { listingRepository, ListingFilters } from './repositories/listingRepository';
-import { applyAVM, getRegionalBasePrice, LegalStatus } from './valuationEngine';
+import { applyAVM, getRegionalBasePrice, estimateFallbackRent, PROPERTY_TYPE_PRICE_MULT, LegalStatus } from './valuationEngine';
+import type { PropertyType } from './valuationEngine';
 import { logger } from './middleware/logger';
 import { aiGovernanceRepository } from './repositories/aiGovernanceRepository';
 import { enterpriseConfigRepository } from './repositories/enterpriseConfigRepository';
@@ -1119,11 +1120,61 @@ YÊU CẦU VIẾT PHẢN HỒI:
                 const valResult = (cached && Date.now() < cached.expiresAt)
                     ? cached.result
                     : await (async () => {
-                        const r = await this.getRealtimeValuation(address, area, roadWidth, legal, undefined, state.tenantId, {
-                            direction,
-                            internalCompsMedian,
-                            internalCompsCount,
-                        });
+                        // ── Use shared marketDataService cache (same source as the form) ──
+                        // This ensures chat and form return CONSISTENT prices for the same location.
+                        let r: any;
+                        try {
+                            const { marketDataService } = await import('./services/marketDataService');
+                            const resolvedPType: PropertyType = (state.plan?.extraction?.property_type || 'townhouse_center') as PropertyType;
+                            const marketEntry = await marketDataService.getMarketData(address);
+                            // Apply property-type multiplier (cache stores townhouse_center reference)
+                            const cacheTypeMult = PROPERTY_TYPE_PRICE_MULT[resolvedPType] ?? 1.00;
+                            const marketBasePrice = (resolvedPType === 'townhouse_center' || resolvedPType === 'townhouse_suburb')
+                                ? marketEntry.pricePerM2
+                                : Math.round(marketEntry.pricePerM2 * cacheTypeMult);
+                            const fallbackRent = estimateFallbackRent(marketBasePrice * area, resolvedPType, area);
+                            const avmResult = applyAVM({
+                                marketBasePrice,
+                                area,
+                                roadWidth,
+                                legal,
+                                confidence: marketEntry.confidence,
+                                marketTrend: marketEntry.marketTrend,
+                                propertyType: resolvedPType,
+                                monthlyRent: fallbackRent,
+                                direction,
+                                internalCompsMedian,
+                                internalCompsCount,
+                            });
+                            r = {
+                                basePrice: avmResult.marketBasePrice,
+                                pricePerM2: avmResult.pricePerM2,
+                                totalPrice: avmResult.totalPrice,
+                                compsPrice: avmResult.compsPrice,
+                                rangeMin: avmResult.rangeMin,
+                                rangeMax: avmResult.rangeMax,
+                                confidence: avmResult.confidence,
+                                confidenceLevel: avmResult.confidenceLevel,
+                                confidenceInterval: avmResult.confidenceInterval,
+                                marketTrend: avmResult.marketTrend,
+                                trendGrowthPct: 0,
+                                factors: avmResult.factors,
+                                coefficients: avmResult.coefficients,
+                                formula: avmResult.formula,
+                                incomeApproach: avmResult.incomeApproach,
+                                reconciliation: avmResult.reconciliation,
+                                isRealtime: marketEntry.source === 'AI' || marketEntry.source === 'SEED',
+                            };
+                            logger.info(`[VALUATION_AGENT] Used shared marketDataService cache for "${address}" → ${(avmResult.totalPrice / 1e9).toFixed(2)} Tỷ (src: ${marketEntry.source})`);
+                        } catch (cacheErr: any) {
+                            // Fallback to direct AI call if marketDataService unavailable
+                            logger.warn(`[VALUATION_AGENT] marketDataService failed, falling back to direct AI: ${cacheErr.message}`);
+                            r = await this.getRealtimeValuation(address, area, roadWidth, legal, undefined, state.tenantId, {
+                                direction,
+                                internalCompsMedian,
+                                internalCompsCount,
+                            });
+                        }
                         valuationCache.set(cacheKey, { result: r, expiresAt: Date.now() + 3_600_000 });
                         return r;
                     })();

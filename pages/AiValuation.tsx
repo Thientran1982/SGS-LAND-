@@ -99,6 +99,45 @@ function writeGuestVal(v: GuestValRecord): void {
     try { localStorage.setItem(GUEST_LS_KEY, JSON.stringify(v)); } catch { /* ignore */ }
 }
 
+// --- VALUATION HISTORY (localStorage) ---
+const HISTORY_LS_KEY = 'sgs_val_history';
+const HISTORY_MAX = 8;
+
+interface ValuationHistoryItem {
+    id: string;
+    date: string;
+    address: string;
+    area: number;
+    propertyType: string;
+    legal: 'PINK_BOOK' | 'CONTRACT' | 'WAITING';
+    totalPrice: number;
+    pricePerM2: number;
+    rangeMin: number;
+    rangeMax: number;
+    confidence: number;
+    marketTrend: string;
+}
+
+function readHistory(): ValuationHistoryItem[] {
+    try {
+        const raw = localStorage.getItem(HISTORY_LS_KEY);
+        if (!raw) return [];
+        return JSON.parse(raw) as ValuationHistoryItem[];
+    } catch { return []; }
+}
+
+function addToHistory(item: ValuationHistoryItem): void {
+    try {
+        const current = readHistory().filter(h => h.id !== item.id);
+        const updated = [item, ...current].slice(0, HISTORY_MAX);
+        localStorage.setItem(HISTORY_LS_KEY, JSON.stringify(updated));
+    } catch { /* ignore */ }
+}
+
+function clearHistory(): void {
+    try { localStorage.removeItem(HISTORY_LS_KEY); } catch { /* ignore */ }
+}
+
 // --- SIMULATED AI ENGINE ---
 const ANALYSIS_STEPS = [
     "Hệ thống SGS Định Giá AI™ đang khởi động...",
@@ -114,6 +153,7 @@ export const AiValuation: React.FC = () => {
     const [guestUsed, setGuestUsed] = useState(0);
     const [showGuestGate, setShowGuestGate] = useState(false);
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+    const [history, setHistory] = useState<ValuationHistoryItem[]>([]);
 
     const notify = (msg: string, type: 'success' | 'error' = 'error') => {
         setToast({ msg, type });
@@ -121,6 +161,7 @@ export const AiValuation: React.FC = () => {
     };
 
     useEffect(() => {
+        setHistory(readHistory());
         db.getCurrentUser().then((user) => {
             setCurrentUser(user);
             if (!user) {
@@ -302,6 +343,26 @@ export const AiValuation: React.FC = () => {
         setTimeout(() => {
             calculateResults(aiResult, areaNum, roadNum);
             setStep('RESULT');
+            // Save to history
+            const totalPrice: number = aiResult.totalPrice || Math.round((aiResult.pricePerM2 || aiResult.basePrice || 0) * areaNum);
+            if (totalPrice > 0 && address) {
+                const histItem: ValuationHistoryItem = {
+                    id: `${Date.now()}`,
+                    date: new Date().toISOString(),
+                    address,
+                    area: areaNum,
+                    propertyType,
+                    legal,
+                    totalPrice,
+                    pricePerM2: aiResult.pricePerM2 || aiResult.basePrice || 0,
+                    rangeMin: aiResult.rangeMin || Math.round(totalPrice * 0.85),
+                    rangeMax: aiResult.rangeMax || Math.round(totalPrice * 1.15),
+                    confidence: aiResult.confidence || 75,
+                    marketTrend: aiResult.marketTrend || '',
+                };
+                addToHistory(histItem);
+                setHistory(readHistory());
+            }
             // Increment guest daily usage counter after a successful valuation
             if (!currentUser) {
                 const v = readGuestVal();
@@ -489,6 +550,65 @@ export const AiValuation: React.FC = () => {
                                 + Đầy đủ → <b className="text-emerald-400">99,99%</b>
                             </span>
                         </div>
+
+                        {/* Valuation History */}
+                        {history.length > 0 && (
+                            <div className="mt-14 text-left max-w-2xl mx-auto">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Lịch sử định giá</h3>
+                                    <button
+                                        onClick={() => { clearHistory(); setHistory([]); }}
+                                        className="text-xs text-slate-600 hover:text-rose-400 transition-colors"
+                                    >
+                                        Xóa tất cả
+                                    </button>
+                                </div>
+                                <div className="space-y-2">
+                                    {history.map((h) => {
+                                        const legalLabel = h.legal === 'PINK_BOOK' ? 'Sổ Hồng' : h.legal === 'CONTRACT' ? 'HĐMB' : 'Vi Bằng';
+                                        const ptLabel = PROPERTY_TYPE_LABELS[h.propertyType] || h.propertyType;
+                                        const dateStr = new Date(h.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                                        return (
+                                            <button
+                                                key={h.id}
+                                                onClick={() => {
+                                                    setAddress(h.address);
+                                                    setArea(String(h.area));
+                                                    setLegal(h.legal);
+                                                    setPropertyType(h.propertyType);
+                                                    setAutoDetectedType(null);
+                                                    const detected = detectPropertyTypeFromText(h.address);
+                                                    if (detected) setAutoDetectedType(detected);
+                                                    setStep('DETAILS');
+                                                }}
+                                                className="w-full flex items-center gap-4 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-emerald-500/30 rounded-2xl px-4 py-3 text-left transition-all group"
+                                            >
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-semibold text-sm text-white truncate group-hover:text-emerald-300 transition-colors">{h.address}</div>
+                                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                        <span className="text-xs text-slate-500">{h.area}m²</span>
+                                                        <span className="text-slate-700">·</span>
+                                                        <span className="text-xs text-slate-500">{ptLabel}</span>
+                                                        <span className="text-slate-700">·</span>
+                                                        <span className="text-xs text-slate-500">{legalLabel}</span>
+                                                        <span className="text-slate-700">·</span>
+                                                        <span className="text-xs text-slate-600">{dateStr}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <div className="font-black text-emerald-400 text-base tabular-nums">
+                                                        {(h.totalPrice / 1_000_000_000).toFixed(2)} tỷ
+                                                    </div>
+                                                    <div className="text-xs text-slate-500">
+                                                        {(h.pricePerM2 / 1_000_000).toFixed(0)} tr/m²
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

@@ -148,6 +148,10 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
         monthlyRent = estimateFallbackRent(marketBasePrice * areaNum, resolvedPropertyType, areaNum);
       }
 
+      // NOTE on blending: when we hit the cache, `marketBasePrice` already IS the cache price.
+      // Passing cachedMarketPrice = marketBasePrice would double-count it (same value treated as
+      // two independent sources → artificial confidence boost). Only pass cachedMarketPrice
+      // when the AI returned a FRESH price so the cache can serve as a cross-check.
       const avmResult = applyAVM({
         marketBasePrice,
         area: areaNum,
@@ -162,12 +166,13 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
         direction: direction || undefined,
         frontageWidth: frontageWidth !== undefined ? Number(frontageWidth) : undefined,
         furnishing: furnishing || undefined,
-        // Multi-source blending
-        // NOTE: pass the TYPE-ADJUSTED cache price (not raw townhouse_center reference)
+        // Multi-source blending — internal comps only (cache not double-counted)
         internalCompsMedian,
         internalCompsCount,
-        cachedMarketPrice: cacheEntry ? marketBasePrice : undefined,
-        cachedConfidence: cacheEntry ? cacheEntry.confidence : undefined,
+        // Only pass cachedMarketPrice when it is genuinely DIFFERENT from marketBasePrice
+        // (i.e. when the route fetched a fresh AI price AND a cached reference is available)
+        cachedMarketPrice: (!cacheEntry && marketDataSource === 'AI_LIVE') ? undefined : undefined,
+        cachedConfidence: undefined,
       });
 
       // ── Response ──────────────────────────────────────────────────────────
