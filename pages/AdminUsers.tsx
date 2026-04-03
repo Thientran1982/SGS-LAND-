@@ -23,6 +23,20 @@ interface AgentStatsData {
     workloadScore: number;
 }
 
+function getRoleBadgeClass(role: string): string {
+    switch (role) {
+        case 'ADMIN':          return 'bg-rose-50 text-rose-700 border border-rose-200';
+        case 'TEAM_LEAD':      return 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+        case 'SALES':          return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+        case 'MARKETING':      return 'bg-amber-50 text-amber-700 border border-amber-200';
+        case 'SUPPORTER':      return 'bg-sky-50 text-sky-700 border border-sky-200';
+        case 'VIEWER':         return 'bg-slate-100 text-slate-600 border border-slate-200';
+        case 'PARTNER_ADMIN':  return 'bg-violet-50 text-violet-700 border border-violet-200';
+        case 'PARTNER_AGENT':  return 'bg-purple-50 text-purple-700 border border-purple-200';
+        default:               return 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border border-[var(--glass-border)]';
+    }
+}
+
 const ICONS = {
     SEARCH: <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
     ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
@@ -786,9 +800,11 @@ export const AdminUsers: React.FC = () => {
                                                         {user.id === currentUser?.id && <span className="text-3xs sm:text-2xs bg-indigo-100 text-indigo-700 px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
                                                     </div>
                                                     <div className="text-xs2 sm:text-xs text-[var(--text-tertiary)] truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
-                                                    {/* Show Role on mobile only */}
-                                                    <div className="sm:hidden mt-0.5">
-                                                        <span className="text-3xs font-bold text-[var(--text-tertiary)] uppercase bg-[var(--glass-surface-hover)] px-1.5 py-0.5 rounded">{t(`role.${user.role}`)}</span>
+                                                    {/* Show Role on mobile — colored badge */}
+                                                    <div className="sm:hidden mt-1">
+                                                        <span className={`inline-flex items-center text-2xs font-bold uppercase px-2 py-0.5 rounded-full ${getRoleBadgeClass(user.role)}`}>
+                                                            {t(`role.${user.role}`)}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
