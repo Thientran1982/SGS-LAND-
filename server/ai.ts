@@ -882,54 +882,101 @@ Viết tiếng Việt, bullet point, tối đa 200 từ.`;
         graph.addNode('FINANCE_AGENT', async (state) => {
             state.trace.push({ id: 'FINANCE', node: 'FINANCE_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const extraction = state.plan.extraction || {};
-            
-            // Detect explicit loan amount vs total budget:
-            // If user says "vay 2 tỷ" → budget_max = 2 Tỷ (direct loan intent)
-            // If user says "nhà 3 tỷ, vay 70%" → should use 70% of budget
-            // Heuristic: if loan_years or loan_rate present → user is asking about a loan, not searching
-            // Use budget_max as the loan principal (user may say "vay 2 tỷ" → router extracts budget_max: 2e9)
+
+            // ── Loan scenario detection ────────────────────────────────────────────
+            const msg = state.userMessage.toLowerCase();
+            const isAffordabilityQ  = /vay được không|có khả năng|đủ tiền|khả năng tài chính|có nên vay/.test(msg);
+            const isCompareScenario = /15 năm|20 năm|25 năm|ngắn hơn|dài hơn|so sánh kỳ hạn|kỳ hạn nào/.test(msg);
+            const isInvestorLoan    = /đầu tư|cho thuê|dòng tiền|sinh lời|tỷ suất|mua thêm căn/.test(msg);
+            const isFirstBuyerLoan  = /lần đầu|chưa vay|chưa có nhà|nhà đầu tiên|nhà ở xã hội/.test(msg);
+            const isRefinance       = /tái cơ cấu|chuyển ngân hàng|đảo nợ|lãi suất cao quá/.test(msg);
+
+            const loanScenario = isRefinance       ? 'TÁI_CƠ_CẤU'
+                : isInvestorLoan    ? 'ĐẦU_TƯ'
+                : isFirstBuyerLoan  ? 'MUA_LẦN_ĐẦU'
+                : isCompareScenario ? 'SO_SÁNH_KỲ_HẠN'
+                : isAffordabilityQ  ? 'ĐÁNH_GIÁ_KHẢ_NĂNG'
+                : 'TÍNH_THÔNG_THƯỜNG';
+
+            // Detect principal — explicit "vay X tỷ" vs % of property value
             const rawAmount = extraction.budget_max || parseBudgetFromMessage(state.userMessage);
             const isDefaultAmount = !rawAmount;
-            const principal = rawAmount || 2_000_000_000; // 2 Tỷ default sample
+            const principal = rawAmount || 2_000_000_000;
 
-            const rate = extraction.loan_rate || 8.5;
+            const rate  = extraction.loan_rate  || 8.5;
             const years = extraction.loan_years || 20;
 
+            // ── Primary loan calculation ───────────────────────────────────────────
             const loanData = await TOOL_EXECUTOR.calculate_loan(principal, rate, years);
             const totalInterest = Math.round(loanData.monthly * loanData.months - principal);
-            const totalRepay = Math.round(loanData.monthly * loanData.months);
-            
+            const totalRepay    = Math.round(loanData.monthly * loanData.months);
+
             const schedule = [];
             let balance = principal;
             for (let i = 1; i <= 3; i++) {
-                const interest = balance * (loanData.rate / 100 / 12);
-                const principalPayment = loanData.monthly - interest;
+                const interest          = balance * (loanData.rate / 100 / 12);
+                const principalPayment  = loanData.monthly - interest;
                 balance -= principalPayment;
-                schedule.push({
-                    month: i,
-                    principal: Math.round(principalPayment),
-                    interest: Math.round(interest),
-                    balance: Math.round(balance)
-                });
+                schedule.push({ month: i, principal: Math.round(principalPayment), interest: Math.round(interest), balance: Math.round(balance) });
+            }
+
+            // ── Alternative scenario for compare/affordability ────────────────────
+            let altContext = '';
+            if (isCompareScenario || isAffordabilityQ || isInvestorLoan) {
+                const altYears = years === 20 ? 15 : 20;
+                const altLoan  = await TOOL_EXECUTOR.calculate_loan(principal, rate, altYears);
+                const altTotalInterest = Math.round(altLoan.monthly * altLoan.months - principal);
+                altContext = `\n[KỊCH BẢN SO SÁNH — ${altYears} năm]: Trả hàng tháng: ${Math.round(altLoan.monthly).toLocaleString('vi-VN')} VNĐ/tháng | Tổng lãi: ${(altTotalInterest / 1e9).toFixed(2)} Tỷ VNĐ (${altTotalInterest > totalInterest ? 'lãi nhiều hơn' : 'tiết kiệm'} ${Math.abs((altTotalInterest - totalInterest) / 1e6).toFixed(0)} triệu so với ${years} năm)`;
             }
 
             const artifact: AgentArtifact = {
                 type: 'LOAN_SCHEDULE',
                 title: state.t('inbox.loan_title'),
-                data: {
-                    monthlyPayment: loanData.monthly,
-                    totalInterest,
-                    input: { principal, rate: loanData.rate, months: loanData.months },
-                    schedule
-                }
+                data: { monthlyPayment: loanData.monthly, totalInterest, input: { principal, rate: loanData.rate, months: loanData.months }, schedule }
             };
-            const monthlyFmt = Math.round(loanData.monthly).toLocaleString('vi-VN');
+
+            const monthlyFmt       = Math.round(loanData.monthly).toLocaleString('vi-VN');
             const totalInterestFmt = (totalInterest / 1e9).toFixed(2);
-            const totalRepayFmt = (totalRepay / 1e9).toFixed(2);
-            const defaultNote = isDefaultAmount ? ' (ví dụ minh họa — chưa có số tiền vay cụ thể)' : '';
-            this.updateTrace(state.trace, `Vay ${(principal/1e9).toFixed(2)} Tỷ | ${rate}%/năm | ${years} năm → ${monthlyFmt} VNĐ/tháng${defaultNote}`);
-            return { 
-                systemContext: state.systemContext + `\n[LOAN CALCULATION]${defaultNote}:\nSố tiền vay: ${(principal/1e9).toFixed(2)} Tỷ VNĐ | Lãi suất: ${rate}%/năm | Kỳ hạn: ${years} năm\nTrả hàng tháng: ${monthlyFmt} VNĐ/tháng\nTổng lãi phải trả: ${totalInterestFmt} Tỷ VNĐ | Tổng trả cả gốc lẫn lãi: ${totalRepayFmt} Tỷ VNĐ\nLưu ý: Ngân hàng thường cho vay 70-80% giá trị BĐS. Lãi suất thả nổi sau ưu đãi có thể tăng 9-11%/năm.`,
+            const totalRepayFmt    = (totalRepay    / 1e9).toFixed(2);
+            const defaultNote      = isDefaultAmount ? ' (ví dụ minh họa — chưa có số tiền vay cụ thể)' : '';
+
+            // ── Gemini financial advisory ──────────────────────────────────────────
+            const financeAdvisoryPrompt = `Dữ liệu tính toán vay mua BĐS:
+Số tiền vay: ${(principal / 1e9).toFixed(2)} Tỷ VNĐ${defaultNote}
+Lãi suất: ${rate}%/năm (ưu đãi ban đầu — thả nổi sau thường 9-11%/năm)
+Kỳ hạn: ${years} năm
+Trả hàng tháng: ${monthlyFmt} VNĐ
+Tổng lãi phải trả: ${totalInterestFmt} Tỷ VNĐ
+Tổng trả gốc + lãi: ${totalRepayFmt} Tỷ VNĐ
+${altContext}
+
+KỊCH BẢN KHÁCH: ${loanScenario}
+HỒ SƠ KHÁCH: ${state.lead ? `Tên: ${state.lead.name} | Ngân sách: ${state.lead.preferences?.budgetMax ? (state.lead.preferences.budgetMax / 1e9).toFixed(2) + ' Tỷ' : 'Chưa rõ'} | Giai đoạn: ${state.lead.stage || 'Chưa rõ'}` : 'Chưa có hồ sơ'}
+TIN NHẮN KHÁCH: "${state.userMessage}"
+
+NHIỆM VỤ: Phân tích tài chính theo kịch bản ${loanScenario} cho tư vấn viên:
+1. Đánh giá khả năng: thu nhập tối thiểu cần có (trả/tháng ≤ 40% thu nhập) = bao nhiêu triệu/tháng?
+2. ${isCompareScenario ? 'So sánh kỳ hạn: kỳ hạn nào tối ưu hơn trong trường hợp này — giải thích bằng số' : isInvestorLoan ? 'Phân tích dòng tiền đầu tư: nếu cho thuê X triệu/tháng, bao lâu hoà vốn? Tỷ suất lợi nhuận thực?' : isAffordabilityQ ? 'Đánh giá thẳng thắn: có vay được không, điều kiện gì cần chuẩn bị?' : 'Rủi ro tài chính chính cần cảnh báo khách'}
+3. Ngân hàng cho vay 70-80% giá trị BĐS — cần vốn tự có bao nhiêu? Gợi ý tiết kiệm nếu chưa đủ
+4. ${isRefinance ? 'Điều kiện và chi phí tái cơ cấu — có thực sự tiết kiệm không?' : 'Tối ưu hoá: nên chọn kỳ hạn nào, ngân hàng nào thường có lãi suất tốt nhất?'}
+5. Cảnh báo: lãi suất thả nổi sau ưu đãi — kịch bản xấu nhất trả bao nhiêu?
+
+Viết tiếng Việt, bullet point, sắc bén, tối đa 180 từ. Dùng số cụ thể — không nói chung chung.`;
+
+            const financeAI = await getAiClient().models.generateContent({
+                model: GENAI_CONFIG.MODELS.EXTRACTOR,
+                contents: financeAdvisoryPrompt,
+                config: { systemInstruction: 'Bạn là chuyên gia tài chính BĐS Việt Nam với 15 năm kinh nghiệm tư vấn vay ngân hàng. Phân tích thực tế, trung thực, bảo vệ lợi ích khách. Luôn dùng tiếng Việt.' }
+            });
+            const financeAdvisoryText = financeAI.text || '';
+
+            this.updateTrace(state.trace, `Vay ${(principal/1e9).toFixed(2)} Tỷ | ${rate}%/${years}năm → ${monthlyFmt}đ/tháng | ${loanScenario}`, GENAI_CONFIG.MODELS.EXTRACTOR);
+            return {
+                systemContext: state.systemContext
+                    + `\n[LOAN CALCULATION]${defaultNote}:\nSố tiền vay: ${(principal/1e9).toFixed(2)} Tỷ VNĐ | Lãi suất: ${rate}%/năm | Kỳ hạn: ${years} năm\nTrả hàng tháng: ${monthlyFmt} VNĐ/tháng | Tổng lãi: ${totalInterestFmt} Tỷ VNĐ | Tổng trả: ${totalRepayFmt} Tỷ VNĐ`
+                    + altContext
+                    + `\n[KỊCH_BẢN_VAY]: ${loanScenario}`
+                    + `\n\n[TƯ VẤN TÀI CHÍNH — ${loanScenario}]:\n${financeAdvisoryText}`,
                 artifact
             };
         });
@@ -992,26 +1039,89 @@ Viết tiếng Việt, bullet point, tối đa 180 từ. Tuyệt đối không t
         graph.addNode('SALES_AGENT', async (state) => {
             state.trace.push({ id: 'SALES', node: 'SALES_AGENT', status: 'RUNNING', timestamp: Date.now() });
             const location = await TOOL_EXECUTOR.get_showroom_location(state.tenantId);
+            const extraction = state.plan.extraction || {};
 
-            // Snap booking to next business day at 10:00 AM Vietnam time (Mon-Sat)
+            // ── Visitor profile & time preference detection ────────────────────────
+            const msg = state.userMessage.toLowerCase();
+            const isUrgentVisit   = /gấp|hôm nay|ngày mai|sớm|càng sớm|tuần này/.test(msg);
+            const isWeekend       = /cuối tuần|thứ 7|chủ nhật|saturday|sunday/.test(msg);
+            const isMorningPref   = /sáng|9 giờ|10 giờ|11 giờ|buổi sáng/.test(msg);
+            const isAfternoonPref = /chiều|14 giờ|15 giờ|16 giờ|buổi chiều/.test(msg);
+            const isGroupVisit    = /gia đình|vợ|chồng|bố mẹ|anh em|mang theo|cả nhà/.test(msg);
+            const isFirstVisit    = /lần đầu|chưa xem|chưa ghé|muốn xem thử/.test(msg);
+            const isReturnVisit   = /xem lại|đã xem rồi|xem lần 2|ghé lại|cân nhắc thêm/.test(msg);
+
+            const visitorProfile = isReturnVisit ? 'QUAY_LẠI_CÂN_NHẮC'
+                : isFirstVisit   ? 'LẦN_ĐẦU_XEM'
+                : isGroupVisit   ? 'NHÓM_GIA_ĐÌNH'
+                : isUrgentVisit  ? 'GẤP'
+                : 'THÔNG_THƯỜNG';
+
+            // ── Snap booking to next business day (VN timezone, Mon–Sat) ──────────
             const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
             const proposed = new Date(now);
-            proposed.setDate(proposed.getDate() + 1); // start from tomorrow
-            proposed.setHours(10, 0, 0, 0);
-            // Skip Sunday (0) — move to Monday
-            if (proposed.getDay() === 0) proposed.setDate(proposed.getDate() + 1);
+            proposed.setDate(proposed.getDate() + 1);
+
+            // Respect time preference
+            const preferredHour = isMorningPref ? 9 : isAfternoonPref ? 14 : isUrgentVisit ? 9 : 10;
+            proposed.setHours(preferredHour, 0, 0, 0);
+
+            // Weekend preference: jump to next Saturday if requested, else skip Sunday
+            if (isWeekend) {
+                while (proposed.getDay() !== 6) proposed.setDate(proposed.getDate() + 1);
+            } else if (proposed.getDay() === 0) {
+                proposed.setDate(proposed.getDate() + 1); // skip Sunday
+            }
 
             const timeFmt = proposed.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+            // ── Build BĐS of interest context ─────────────────────────────────────
+            const bdsOfInterest = extraction.location_keyword || extraction.property_type
+                ? `${extraction.property_type || 'BĐS'} tại ${extraction.location_keyword || 'khu vực quan tâm'}`
+                : state.lead?.preferences?.regions?.join(', ') || 'BĐS đang quan tâm';
+
             const artifact: AgentArtifact = {
                 type: 'BOOKING_DRAFT',
                 title: state.t('inbox.booking_title'),
                 data: { time: proposed.toISOString(), location, notes: state.userMessage }
             };
-            this.updateTrace(state.trace, `Đặt lịch xem nhà tại: ${location} — ${timeFmt}`);
+
+            // ── Gemini booking personalizer ───────────────────────────────────────
+            const bookingPersonalizerPrompt = `Thông tin đặt lịch xem nhà:
+Khách: ${state.lead?.name || 'Khách hàng'}
+BĐS quan tâm: ${bdsOfInterest}
+Thời gian đề xuất: ${timeFmt}
+Địa điểm: ${location}
+Hồ sơ khách: ${visitorProfile}
+${state.lead ? `Giai đoạn: ${state.lead.stage || 'Chưa rõ'} | Ngân sách: ${state.lead.preferences?.budgetMax ? (state.lead.preferences.budgetMax / 1e9).toFixed(2) + ' Tỷ' : 'Chưa rõ'} | Điểm lead: ${state.lead.score?.grade || '?'}` : ''}
+${isGroupVisit ? 'Lưu ý: khách đi cùng gia đình/nhóm.' : ''}
+${isReturnVisit ? 'Lưu ý: khách đã xem lần trước — đang ở giai đoạn cân nhắc quyết định.' : ''}
+Tin nhắn khách: "${state.userMessage}"
+
+NHIỆM VỤ: Viết ghi chú cá nhân hoá cho tư vấn viên chuẩn bị trước buổi xem nhà:
+1. Điểm chú ý cá nhân hoá cho buổi xem này (dựa trên hồ sơ và lần này là lần mấy)
+2. Câu hỏi "khởi động" nên hỏi ngay khi gặp (1-2 câu mở đầu thân thiện, phá băng)
+3. Điểm nổi bật của ${bdsOfInterest} nên giới thiệu ưu tiên cho profile này
+4. ${isReturnVisit ? 'Chiến thuật closing: khách quay lại nghĩa là quan tâm thật — nên xử lý trở ngại nào?' : 'Chuẩn bị tài liệu gì: pháp lý, bảng giá, ưu đãi hiện tại?'}
+5. Bước tiếp theo sau buổi xem: follow-up trong bao lâu, cách nào?
+
+Viết tiếng Việt, bullet point, thực tế, tối đa 150 từ. Đây là ghi chú NỘI BỘ cho Sales — không phải tin nhắn trả lời khách.`;
+
+            const bookingAI = await getAiClient().models.generateContent({
+                model: GENAI_CONFIG.MODELS.EXTRACTOR,
+                contents: bookingPersonalizerPrompt,
+                config: { systemInstruction: 'Bạn là Sales Manager BĐS cao cấp Việt Nam. Chuẩn bị brief cho tư vấn viên trước buổi xem nhà — ngắn gọn, thực tế, cá nhân hoá. Luôn dùng tiếng Việt.' }
+            });
+            const bookingBriefText = bookingAI.text || '';
+
+            this.updateTrace(state.trace, `Lịch xem nhà: ${timeFmt} tại ${location} | ${visitorProfile}`, GENAI_CONFIG.MODELS.EXTRACTOR);
             return {
                 artifact,
                 suggestedAction: 'BOOK_VIEWING',
-                systemContext: state.systemContext + `\n[ĐẶT LỊCH XEM NHÀ]: Đề xuất thời gian: ${timeFmt} (Thứ 2–Thứ 7, 9:00–17:00) | Địa điểm: ${location} | Khách có thể chọn buổi sáng (9-12h) hoặc chiều (14-17h)`
+                systemContext: state.systemContext
+                    + `\n[ĐẶT LỊCH XEM NHÀ]: Thời gian: ${timeFmt} (Thứ 2–Thứ 7, 9:00–17:00) | Địa điểm: ${location} | Ưu tiên: ${isMorningPref ? 'buổi sáng' : isAfternoonPref ? 'buổi chiều' : 'linh hoạt'}`
+                    + `\n[VISITOR_PROFILE]: ${visitorProfile} | ${isGroupVisit ? 'Đi nhóm/gia đình' : 'Đi một mình'} | Khẩn_cấp: ${isUrgentVisit ? 'CÓ' : 'KHÔNG'}`
+                    + `\n\n[BRIEF CHUẨN BỊ XEM NHÀ]:\n${bookingBriefText}`
             };
         });
 
@@ -1257,7 +1367,7 @@ YÊU CẦU — Viết báo cáo định giá (150-250 từ) theo bố cục:
 4. **GỢI Ý THỰC TẾ**: Giá chào bán đề xuất (thường định giá + 5-10% để có room thương lượng)
 5. **CÂU HỎI**: Hỏi thêm 1 thông tin cụ thể để cải thiện độ chính xác (tầng? nội thất? tuổi nhà? mặt tiền?)
 
-${_lang}
+NGÔN NGỮ & XƯNG HÔ: ${langInstruction}
 QUAN TRỌNG: Dùng số liệu CHÍNH XÁC từ [ĐỊNH GIÁ BẤT ĐỘNG SẢN] — không bịa đặt. Giá: "X,XX Tỷ VNĐ" | Đơn giá: "XX Triệu/m²"`;
 
                     // ── 2. TÌM BĐS ───────────────────────────────────────────────────────
@@ -1290,17 +1400,20 @@ ${_hist}
 
 ${_msg}
 
-YÊU CẦU VIẾT PHẢN HỒI (120-180 từ):
+YÊU CẦU VIẾT PHẢN HỒI (120-200 từ):
 - ${langInstruction}
 - Dùng số liệu CHÍNH XÁC từ [LOAN CALCULATION]: trả/tháng, tổng lãi, tổng trả
-- Bố cục gợi ý:
-  1. Con số chính ngay đầu: "Trả khoảng X triệu/tháng trong Y năm"
-  2. Phân tích khả năng: thu nhập tối thiểu cần có (trả/tháng ≤ 40% thu nhập)
-  3. Lưu ý thực tế: lãi suất thả nổi sau ưu đãi thường tăng 9-11%/năm
-  4. Ngân hàng cho vay 70-80% giá trị BĐS — cần vốn tự có bao nhiêu?
-- Nếu khách hỏi "vay được không" / "có khả năng không": đánh giá thẳng thắn
-- Kết thúc: "Anh/chị muốn em so sánh kịch bản vay ngắn hơn hoặc lãi suất khác không ạ?"
-- TRÁNH: copy bảng amortization, dùng từ "amortization", "principal", "lãi suất danh nghĩa"`;
+- Dùng [TƯ VẤN TÀI CHÍNH] đã có trong CONTEXT làm nguồn phân tích — không lặp lại tính toán thô
+- Điều chỉnh theo [KỊCH_BẢN_VAY]:
+  • TÁI_CƠ_CẤU → đánh giá thực sự có tiết kiệm không, chi phí chuyển đổi
+  • ĐẦU_TƯ → tập trung dòng tiền, tỷ suất, thời gian hoà vốn
+  • MUA_LẦN_ĐẦU → ưu tiên an toàn, cần bao nhiêu vốn tự có, gói vay phù hợp
+  • SO_SÁNH_KỲ_HẠN → so sánh bằng con số cụ thể: tháng X triệu, tổng lãi Y tỷ
+  • ĐÁNH_GIÁ_KHẢ_NĂNG → trả lời thẳng thắn có vay được không, điều kiện cụ thể
+- Con số chính nêu NGAY đầu phản hồi
+- Cảnh báo lãi suất thả nổi sau ưu đãi — nêu kịch bản xấu nhất trả bao nhiêu
+- Kết thúc: câu hỏi liên quan đến kịch bản cụ thể của khách (không hỏi chung)
+- TRÁNH: copy bảng số, dùng "amortization", "principal", thuật ngữ kỹ thuật tài chính`;
 
                     // ── 4. PHÁP LÝ ───────────────────────────────────────────────────────
                     case 'EXPLAIN_LEGAL':
@@ -1325,7 +1438,7 @@ YÊU CẦU VIẾT PHẢN HỒI (150-220 từ):
 
                     // ── 5. ĐẶT LỊCH XEM NHÀ ─────────────────────────────────────────────
                     case 'DRAFT_BOOKING':
-                        return `NHIỆM VỤ: XÁC NHẬN LỊCH XEM NHÀ — Chuyên nghiệp, thân thiện, khuyến khích khách xác nhận
+                        return `NHIỆM VỤ: XÁC NHẬN LỊCH XEM NHÀ — Cá nhân hoá, ấm áp, tạo anticipation
 
 ${_ctx}
 
@@ -1333,16 +1446,17 @@ ${_hist}
 
 ${_msg}
 
-YÊU CẦU VIẾT PHẢN HỒI (80-130 từ):
+YÊU CẦU VIẾT PHẢN HỒI (80-140 từ):
 - ${langInstruction}
-- Dùng [ĐẶT LỊCH XEM NHÀ]: nêu rõ thời gian đề xuất, địa điểm
-- Bố cục:
-  1. Xác nhận: "Em đã ghi nhận lịch xem nhà vào [thời gian] tại [địa điểm]"
-  2. Hỏi ưu tiên: buổi sáng (9-12h) hay chiều (14-17h)? Đi một mình hay có gia đình?
-  3. Nhắc nhở nhẹ: mang CMND/CCCD để tư vấn nhanh hơn
-  4. Tạo kỳ vọng: 1 câu giới thiệu điểm nổi bật nhất của BĐS sẽ xem
-- Giọng điệu: ấm áp, chuyên nghiệp — như nhân viên resort 5 sao
-- KHÔNG dùng: "hệ thống đã ghi nhận", "cảm ơn quý khách", ngôn ngữ robot/template`;
+- Dùng [ĐẶT LỊCH XEM NHÀ]: nêu thời gian đề xuất đã match với ưu tiên (sáng/chiều/cuối tuần), địa điểm
+- Điều chỉnh theo [VISITOR_PROFILE]:
+  • QUAY_LẠI_CÂN_NHẮC → tông giọng quen thuộc, "Lần này em sẽ…", tập trung giải quyết băn khoăn còn lại
+  • LẦN_ĐẦU_XEM → tông warm, giới thiệu sơ lịch trình buổi xem, giảm bớt lo ngại
+  • NHÓM_GIA_ĐÌNH → đề cập không gian thoải mái cho cả nhóm, thời gian dư dả
+  • GẤP → xác nhận ngay và đề xuất 2 slot cụ thể để khách chọn nhanh
+- Bố cục cơ bản: xác nhận lịch → hỏi 1 ưu tiên còn lại (nếu chưa biết) → nhắc CMND/CCCD → 1 câu tạo kỳ vọng
+- Giọng điệu: ấm áp như nhân viên resort 5 sao — không robot, không template
+- KHÔNG dùng: "hệ thống đã ghi nhận", "cảm ơn quý khách", "[VISITOR_PROFILE]" hay bất kỳ nhãn kỹ thuật nào`;
 
                     // ── 6. ƯU ĐÃI MARKETING ──────────────────────────────────────────────
                     case 'EXPLAIN_MARKETING':
