@@ -640,7 +640,7 @@ export const AiValuation: React.FC = () => {
                             <div className="bg-slate-900/60 border border-slate-700/60 rounded-2xl p-4 mb-7">
                                 <div className="flex items-end justify-between mb-2">
                                     <div>
-                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-0.5">Độ chính xác dự báo</div>
+                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-0.5">Độ đầy đủ thông tin</div>
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-3xl font-black tabular-nums transition-all duration-500" style={{ color: accuracyColor }}>
                                                 {accuracy.toFixed(2)}%
@@ -665,8 +665,8 @@ export const AiValuation: React.FC = () => {
                                 </div>
                                 <div className="mt-2 text-xs text-slate-500">
                                     {accuracy < 99.99
-                                        ? `Điền thêm ${accuracy < 80 ? (isApartmentOrProject ? 'diện tích, lộ giới, số phòng ngủ' : 'diện tích, lộ giới, ngang × dài') : accuracy < 88 ? (isApartmentOrProject && bedrooms === null ? 'số phòng ngủ, hướng nhà' : 'hướng nhà, mặt tiền') : accuracy < 95 ? 'tuổi nhà, nội thất' : 'thuê dự kiến'} để tăng độ chính xác`
-                                        : '✓ Đã đạt độ chính xác tối đa — sẵn sàng định giá!'}
+                                        ? `Điền thêm ${accuracy < 80 ? (isApartmentOrProject ? 'diện tích, lộ giới, số phòng ngủ' : 'diện tích, lộ giới, ngang × dài') : accuracy < 88 ? (isApartmentOrProject && bedrooms === null ? 'số phòng ngủ, hướng nhà' : 'hướng nhà, mặt tiền') : accuracy < 95 ? 'tuổi nhà, nội thất' : 'thuê dự kiến'} để thu hẹp sai số`
+                                        : '✓ Dữ liệu đầy đủ — AI định giá với sai số ±5%!'}
                                 </div>
                             </div>
 
@@ -1066,7 +1066,7 @@ export const AiValuation: React.FC = () => {
                                 >
                                     <span>Định Giá Ngay</span>
                                     <span className="text-sm font-bold bg-white/20 rounded-full px-3 py-0.5">
-                                        {accuracy.toFixed(2)}% chính xác
+                                        {accuracy.toFixed(2)}% dữ liệu
                                     </span>
                                 </button>
                             </div>

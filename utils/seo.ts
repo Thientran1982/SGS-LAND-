@@ -30,8 +30,8 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
   },
   // ROUTES.AI_VALUATION = 'ai-valuation'
   'ai-valuation': {
-    title: 'Định Giá Bất Động Sản Bằng AI Tự Động | Chính Xác 98% - SGS LAND',
-    description: 'Công nghệ định giá bất động sản AI tự động từ SGS LAND. Phân tích hàng nghìn giao dịch thực tế, cho kết quả chính xác 98% chỉ trong vài giây. Hoàn toàn miễn phí.',
+    title: 'Định Giá Bất Động Sản Bằng AI | Sai Số ±5% - SGS LAND',
+    description: 'Công nghệ định giá bất động sản AI từ SGS LAND. Phân tích đa nguồn (CBRE, Savills, batdongsan.com.vn) với sai số chỉ ±5–10% — ngang chuẩn thẩm định viên chuyên nghiệp. Hoàn toàn miễn phí.',
     path: '/ai-valuation',
   },
   // ROUTES.CRM_SOLUTION = 'crm-platform'

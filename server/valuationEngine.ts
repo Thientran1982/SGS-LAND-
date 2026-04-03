@@ -757,7 +757,10 @@ export function applyAVM(input: AVMInput): AVMOutput {
   const Kp_data = getKp(legal);
   const Ka_data = getKa(area, pType);
 
-  const Kd = Kd_data.value;
+  // For apartments & penthouse: road width affects value INDIRECTLY (building entrance, not direct frontage)
+  // Cap Kd at 1.10 (+10%) — full +30% for đại lộ only applies to nhà phố/shophouse/land facing the road directly.
+  const isApartmentType = pType === 'apartment_center' || pType === 'apartment_suburb' || pType === 'penthouse';
+  const Kd = isApartmentType ? Math.min(1.10, Kd_data.value) : Kd_data.value;
   const Kp = Kp_data.value;
   const Ka = Ka_data.value;
 
@@ -968,7 +971,7 @@ export function applyAVM(input: AVMInput): AVMOutput {
 // Calibration notes:
 //  apartment_center: 0.52 → Q.Bình Thạnh: 120M × 0.52 = 62M/m² (Vinhomes thực tế 65-95M) ✓
 //  penthouse:        0.78 → Q.Bình Thạnh: 120M × 0.78 = 94M/m² (Vinhomes PH ~100-180M) ✓
-//  project:          0.68 → off-plan chiết khấu 32% vs thứ cấp (10-15% under comps)
+//  project:          0.85 → off-plan chiết khấu 15% vs thứ cấp (thị trường VN Q1/2026: 8-15%)
 // ─────────────────────────────────────────────────────────────────────────────
 export const PROPERTY_TYPE_PRICE_MULT: Record<string, number> = {
   apartment_center:  0.55,  // Căn hộ nội đô: ~55% nhà phố (thực tế 60-85M/m² vs 120M/m² nhà phố Q.BT — Q1/2026)
@@ -984,7 +987,7 @@ export const PROPERTY_TYPE_PRICE_MULT: Record<string, number> = {
   warehouse:         0.18,  // Kho xưởng RBW: 18% nhà phố — Bình Dương ~3-8M/m² (Savills 2024)
   land_agricultural: 0.05,  // Đất nông nghiệp: rất rẻ, chủ yếu đầu cơ chuyển đổi
   land_industrial:   0.28,  // Đất KCN: ~200-600 USD/m² → 5-15M VNĐ/m²
-  project:           0.68,  // Căn hộ off-plan: chiết khấu ~32% vs thứ cấp (thực tế 10-15%)
+  project:           0.85,  // Căn hộ off-plan: chiết khấu ~15% vs thứ cấp (thị trường VN Q1/2026: 8-15%)
 };
 
 export function getRegionalBasePrice(address: string, pType?: string): {
