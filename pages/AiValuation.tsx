@@ -223,7 +223,7 @@ export const AiValuation: React.FC = () => {
         if (buildingAge !== '')                     s += 2.63;
         if (furnishing)                             s += 2.54;
         if (monthlyRent && parseFloat(monthlyRent) > 0) s += 4.29;
-        return Math.min(s, 99.99);
+        return Math.min(s, 98);
     })();
     const accuracyLabel = accuracy < 80 ? 'Cơ bản' : accuracy < 88 ? 'Khá tốt' : accuracy < 95 ? 'Rất tốt' : 'Chuyên sâu';
     const accuracyColor = accuracy < 80 ? '#eab308' : accuracy < 88 ? '#f97316' : accuracy < 95 ? '#22c55e' : '#10b981';
@@ -505,7 +505,7 @@ export const AiValuation: React.FC = () => {
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
                             Định Giá Bất Động Sản <br/>
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Chính Xác Tới 99,99%</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Chính Xác Tới 98%</span>
                         </h1>
                         <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto">
                             Nhập địa chỉ — AI phân tích thị trường trực tiếp. Càng nhiều thông tin, độ chính xác càng cao.
@@ -563,7 +563,7 @@ export const AiValuation: React.FC = () => {
                             <span className="text-slate-700">→</span>
                             <span className="flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                + Đầy đủ → <b className="text-emerald-400">99,99%</b>
+                                + Đầy đủ → <b className="text-emerald-400">98%</b>
                             </span>
                         </div>
 
@@ -653,7 +653,7 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                     <div className="text-right text-xs text-slate-500">
                                         <div>Tối đa</div>
-                                        <div className="font-bold text-emerald-400">99,99%</div>
+                                        <div className="font-bold text-emerald-400">98%</div>
                                     </div>
                                 </div>
                                 {/* Progress bar */}
@@ -664,7 +664,7 @@ export const AiValuation: React.FC = () => {
                                     />
                                 </div>
                                 <div className="mt-2 text-xs text-slate-500">
-                                    {accuracy < 99.99
+                                    {accuracy < 98
                                         ? `Điền thêm ${accuracy < 80 ? (isApartmentOrProject ? 'diện tích, lộ giới, số phòng ngủ' : 'diện tích, lộ giới, ngang × dài') : accuracy < 88 ? (isApartmentOrProject && bedrooms === null ? 'số phòng ngủ, hướng nhà' : 'hướng nhà, mặt tiền') : accuracy < 95 ? 'tuổi nhà, nội thất' : 'thuê dự kiến'} để thu hẹp sai số`
                                         : '✓ Dữ liệu đầy đủ — AI định giá với sai số ±5%!'}
                                 </div>
