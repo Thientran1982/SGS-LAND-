@@ -17,7 +17,7 @@ import { leadRepository } from "./server/repositories/leadRepository";
 import { feedbackRepository } from "./server/repositories/feedbackRepository";
 import { articleRepository } from "./server/repositories/articleRepository";
 import { createLeadRoutes } from "./server/routes/leadRoutes";
-import { createListingRoutes } from "./server/routes/listingRoutes";
+import { createListingRoutes, scheduleGeocode } from "./server/routes/listingRoutes";
 import { createProposalRoutes } from "./server/routes/proposalRoutes";
 import { createContractRoutes } from "./server/routes/contractRoutes";
 import { createInteractionRoutes } from "./server/routes/interactionRoutes";
@@ -965,8 +965,11 @@ async function startServer() {
       const listing = await listingRepository.findById(PUBLIC_TENANT, String(req.params.id));
       if (!listing) return res.status(404).json({ error: 'Listing not found' }) as any;
       res.json(listing);
-      // Increment view count and log visitor in background (non-blocking)
+      // Increment view count, log visitor, và tự geocode nếu thiếu tọa độ (background, non-blocking)
       const ip = getClientIp(req);
+      const pl = listing as any;
+      const plMissingCoords = !pl.coordinates?.lat || !pl.coordinates?.lng || (pl.coordinates.lat === 0 && pl.coordinates.lng === 0);
+      if (plMissingCoords && pl.location) scheduleGeocode(PUBLIC_TENANT, String(req.params.id), pl.location);
       Promise.all([
         listingRepository.incrementViewCount(PUBLIC_TENANT, String(req.params.id)),
         lookupIp(ip).then(geo => visitorRepository.log({

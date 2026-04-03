@@ -73,7 +73,7 @@ async function geocodeHCMC(location: string): Promise<{ lat: number; lng: number
 }
 
 /** Fire-and-forget: geocode and patch coordinates in DB without blocking the response */
-function scheduleGeocode(tenantId: string, listingId: string, location: string) {
+export function scheduleGeocode(tenantId: string, listingId: string, location: string) {
   (async () => {
     try {
       const coords = await geocodeHCMC(location);
@@ -187,6 +187,9 @@ export function createListingRoutes(authenticateToken: any) {
         if (!listing) return res.status(404).json({ error: 'Listing not found' });
         res.json(redactSensitiveFields(listing));
         listingRepository.incrementViewCount(user.tenantId, String(req.params.id)).catch(() => {});
+        const pl = listing as any;
+        const pcMissing = !pl.coordinates?.lat || !pl.coordinates?.lng || (pl.coordinates.lat === 0 && pl.coordinates.lng === 0);
+        if (pcMissing && pl.location) scheduleGeocode(user.tenantId, String(req.params.id), pl.location);
         return;
       }
 
@@ -205,9 +208,19 @@ export function createListingRoutes(authenticateToken: any) {
         }
       }
 
-      // Respond immediately, increment view count in background
+      // Respond immediately, increment view count + geocode (if needed) in background
       res.json(listing);
       listingRepository.incrementViewCount(user.tenantId, String(req.params.id)).catch(() => {});
+      // Auto-geocode: nếu listing thiếu coordinates (ví dụ PROJECT vừa tạo), tự bổ sung để
+      // lần load tiếp theo có tọa độ thật trên bản đồ.
+      const anyListing = listing as any;
+      const missingCoords =
+        !anyListing.coordinates?.lat ||
+        !anyListing.coordinates?.lng ||
+        (anyListing.coordinates.lat === 0 && anyListing.coordinates.lng === 0);
+      if (missingCoords && anyListing.location) {
+        scheduleGeocode(user.tenantId, String(req.params.id), anyListing.location);
+      }
     } catch (error) {
       console.error('Error fetching listing:', error);
       res.status(500).json({ error: 'Failed to fetch listing' });
