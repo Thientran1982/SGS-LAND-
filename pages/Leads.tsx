@@ -202,7 +202,7 @@ const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPage
 });
 
 // --- TABLE ROW ---
-const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDuplicate, onDelete, t, visibleColumns, density, formatDate, users }: any) => {
+const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDuplicate, onDelete, canDelete, t, visibleColumns, density, formatDate, users }: any) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
     const btnRef = useRef<HTMLButtonElement>(null);
@@ -416,11 +416,13 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
                             className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
                             {ICONS.DUPLICATE} <span>{t('common.duplicate')}</span>
                         </button>
+                        {canDelete && <>
                         <div className="my-1 mx-3 border-t border-[var(--glass-border)]" />
                         <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(lead); }}
                             className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors">
                             {ICONS.TRASH} <span>{t('common.delete')}</span>
                         </button>
+                        </>}
                     </div>,
                     document.body
                 )}
@@ -430,11 +432,12 @@ const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDupli
 });
 
 // --- KANBAN BOARD CARD ---
-const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, users }: {
+const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, formatDate, users }: {
     lead: Lead;
     onClick: (l: Lead) => void;
     onDelete: (l: Lead) => void;
     onProposal: (l: Lead) => void;
+    canDelete?: boolean;
     t: any;
     formatDate: any;
     users: any[];
@@ -546,6 +549,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
                         <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         {t('leads.create_proposal')}
                     </button>
+                    {canDelete && <>
                     <div className="border-t border-[var(--glass-border)] my-1" />
                     <button
                         onClick={() => { setMenuOpen(false); onDelete(lead); }}
@@ -554,6 +558,7 @@ const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, t, formatDate, u
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         {t('common.delete')}
                     </button>
+                    </>}
                 </div>,
                 document.body
             )}
@@ -1057,6 +1062,7 @@ export const Leads: React.FC = () => {
     const metrics = serverStats;
     const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
     const isScopedView = currentUser && RESTRICTED_ROLES.includes(currentUser.role);
+    const canDelete = currentUser && ['ADMIN', 'PARTNER_ADMIN'].includes(currentUser.role);
 
     return (
         <>
@@ -1204,7 +1210,7 @@ export const Leads: React.FC = () => {
 
                         <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
 
-                        {selectedLeads.size > 0 && (
+                        {selectedLeads.size > 0 && canDelete && (
                             <button 
                                 onClick={() => setBulkDeletePending(true)}
                                 className="hidden md:flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-200 text-rose-700 font-bold rounded-xl text-xs shadow-sm hover:bg-rose-100 transition-all whitespace-nowrap active:scale-95 shrink-0"
@@ -1355,6 +1361,7 @@ export const Leads: React.FC = () => {
                                                     onProposal={() => setProposalLead(lead)}
                                                     onDuplicate={handleDuplicate}
                                                     onDelete={handleDeleteClick}
+                                                    canDelete={canDelete}
                                                     t={t}
                                                     visibleColumns={visibleColumns}
                                                     density={density}
@@ -1417,7 +1424,7 @@ export const Leads: React.FC = () => {
                                         </div>
                                         <div className="flex-1 overflow-y-auto p-2 no-scrollbar min-h-0">
                                             {groupedLeads[stage]?.map(lead => (
-                                                <KanbanCard key={lead.id} lead={lead} onClick={handleEdit} onDelete={handleDeleteClick} onProposal={(l) => setProposalLead(l)} t={t} formatDate={formatDate} users={users} />
+                                                <KanbanCard key={lead.id} lead={lead} onClick={handleEdit} onDelete={handleDeleteClick} onProposal={(l) => setProposalLead(l)} canDelete={canDelete} t={t} formatDate={formatDate} users={users} />
                                             ))}
                                             {(!groupedLeads[stage] || groupedLeads[stage].length === 0) && !loading && (
                                                 <div className="flex flex-col items-center justify-center h-28 gap-2 text-center">
