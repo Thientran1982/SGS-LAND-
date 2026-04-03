@@ -800,11 +800,21 @@ export const AdminUsers: React.FC = () => {
                                                         {user.id === currentUser?.id && <span className="text-3xs sm:text-2xs bg-indigo-100 text-indigo-700 px-1 sm:px-1.5 py-0.5 rounded shrink-0">{t('admin.users.you')}</span>}
                                                     </div>
                                                     <div className="text-xs2 sm:text-xs text-[var(--text-tertiary)] truncate max-w-[140px] sm:max-w-[200px]">{user.email}</div>
-                                                    {/* Show Role on mobile — colored badge */}
-                                                    <div className="sm:hidden mt-1">
-                                                        <span className={`inline-flex items-center text-2xs font-bold uppercase px-2 py-0.5 rounded-full ${getRoleBadgeClass(user.role)}`}>
-                                                            {t(`role.${user.role}`)}
-                                                        </span>
+                                                    {/* Role selector on mobile — interactive dropdown */}
+                                                    <div className="sm:hidden mt-1.5" onClick={e => e.stopPropagation()}>
+                                                        {user.id === currentUser?.id ? (
+                                                            <span className={`inline-flex items-center text-2xs font-bold uppercase px-2 py-0.5 rounded-full ${getRoleBadgeClass(user.role)}`}>
+                                                                {t(`role.${user.role}`)}
+                                                            </span>
+                                                        ) : (
+                                                            <Dropdown
+                                                                value={user.role}
+                                                                onChange={(v) => handleRoleChange(user.id, v as UserRole)}
+                                                                options={userRoleOptions}
+                                                                disabled={user.id === currentUser?.id}
+                                                                className="text-2xs"
+                                                            />
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
