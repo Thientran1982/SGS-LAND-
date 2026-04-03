@@ -382,7 +382,7 @@ export function injectArticleSEO(article: ArticleForSEO): void {
       name: 'SGS LAND',
       logo: {
         '@type': 'ImageObject',
-        url: `${BASE_URL}/logo.png`,
+        url: `${BASE_URL}/logo.svg`,
       },
     },
     url: `${BASE_URL}${canonicalPath}`,

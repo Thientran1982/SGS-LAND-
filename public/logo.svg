@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="SGS LAND Logo">
+  <rect width="512" height="512" rx="64" fill="#4F46E5"/>
+  <path d="M256 80L96 168l160 88 160-88L256 80z" fill="white" opacity="0.95"/>
+  <path d="M96 256l160 88 160-88" fill="none" stroke="white" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+  <path d="M96 344l160 88 160-88" fill="none" stroke="white" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" opacity="0.70"/>
+  <text x="256" y="480" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="700" fill="white" text-anchor="middle" opacity="0.90">SGS LAND</text>
+</svg>

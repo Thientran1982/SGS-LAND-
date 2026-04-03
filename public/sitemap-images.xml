@@ -14,9 +14,18 @@
   <url>
     <loc>https://sgsland.vn/ai-valuation</loc>
     <image:image>
-      <image:loc>https://sgsland.vn/og-valuation.jpg</image:loc>
+      <image:loc>https://sgsland.vn/og-image.jpg</image:loc>
       <image:title>Định Giá Bất Động Sản Bằng AI - SGS LAND</image:title>
       <image:caption>Công nghệ định giá bất động sản tự động sử dụng trí tuệ nhân tạo</image:caption>
+      <image:geo_location>Vietnam</image:geo_location>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://sgsland.vn/marketplace</loc>
+    <image:image>
+      <image:loc>https://sgsland.vn/og-image.jpg</image:loc>
+      <image:title>Tìm Kiếm Bất Động Sản - SGS LAND</image:title>
+      <image:caption>Kho hàng bất động sản cập nhật realtime trên toàn quốc</image:caption>
       <image:geo_location>Vietnam</image:geo_location>
     </image:image>
   </url>
