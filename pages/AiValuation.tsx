@@ -307,7 +307,14 @@ export const AiValuation: React.FC = () => {
             ...(bedrooms !== null && isApartmentOrProject && { bedrooms }),
         };
         try {
-            aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal, propertyType, advancedParams);
+            if (currentUser) {
+                // Authenticated: use the full multi-source engine
+                // (Redis cache → internal DB comparables → Gemini → 7-coefficient AVM)
+                aiResult = await aiService.getAdvancedValuation(address, areaNum, roadNum, legal, propertyType, advancedParams);
+            } else {
+                // Guest: use live Gemini path (3 free valuations/day)
+                aiResult = await aiService.getRealtimeValuation(address, areaNum, roadNum, legal, propertyType, advancedParams);
+            }
         } catch (_err) {
             // Emergency client-side fallback (network completely down)
             // Uses same AVM coefficient logic as server/valuationEngine.ts

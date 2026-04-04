@@ -36,6 +36,9 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
         direction,
         frontageWidth,
         furnishing,
+        buildingAge,
+        bedrooms,
+        monthlyRent: monthlyRentInput,
         // Override flags
         skipCache = false,
         skipInternalComps = false,
@@ -144,6 +147,10 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
       }
 
       // ── Step 3: Apply AVM with all 7 coefficients + multi-source blend ────
+      // User-provided monthly rent (triệu VNĐ) takes precedence over all estimates
+      if (monthlyRentInput !== undefined && !isNaN(Number(monthlyRentInput)) && Number(monthlyRentInput) > 0) {
+        monthlyRent = Number(monthlyRentInput); // engine uses triệu VNĐ unit
+      }
       if (!monthlyRent) {
         monthlyRent = estimateFallbackRent(marketBasePrice * areaNum, resolvedPropertyType, areaNum);
       }
@@ -166,6 +173,8 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
         direction: direction || undefined,
         frontageWidth: frontageWidth !== undefined ? Number(frontageWidth) : undefined,
         furnishing: furnishing || undefined,
+        buildingAge: buildingAge !== undefined ? Number(buildingAge) : undefined,
+        bedrooms: bedrooms !== undefined ? Number(bedrooms) : undefined,
         // Multi-source blending — internal comps only (cache not double-counted)
         internalCompsMedian,
         internalCompsCount,

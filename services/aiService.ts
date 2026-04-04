@@ -76,9 +76,33 @@ class AiApiClient {
             frontageWidth?: number;
             furnishing?: string;
             monthlyRent?: number;
+            buildingAge?: number;
+            bedrooms?: number;
         }
     ): Promise<any> {
         return this.fetchApi('/api/ai/valuation', {
+            address, area, roadWidth, legal, propertyType,
+            ...(advanced ?? {}),
+        });
+    }
+
+    async getAdvancedValuation(
+        address: string,
+        area: number,
+        roadWidth: number,
+        legal: string,
+        propertyType?: string,
+        advanced?: {
+            floorLevel?: number;
+            direction?: string;
+            frontageWidth?: number;
+            furnishing?: string;
+            monthlyRent?: number;
+            buildingAge?: number;
+            bedrooms?: number;
+        }
+    ): Promise<any> {
+        return this.fetchApi('/api/valuation/advanced', {
             address, area, roadWidth, legal, propertyType,
             ...(advanced ?? {}),
         });
