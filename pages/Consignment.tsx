@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
-import { useTranslation } from '../services/i18n';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 
@@ -213,7 +212,6 @@ const FaqItem: React.FC<{ q: string; a: string; defaultOpen?: boolean }> = ({ q,
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export const Consignment: React.FC = () => {
-    const { t } = useTranslation();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [form, setForm] = useState<FormData>(INITIAL_FORM);
     const [submitting, setSubmitting] = useState(false);
@@ -391,12 +389,12 @@ export const Consignment: React.FC = () => {
                         >
                             Đăng ký ký gửi ngay →
                         </button>
-                        <a
-                            href="tel:+84info"
+                        <button
+                            onClick={() => navigate(ROUTES.CONTACT)}
                             className="px-8 py-4 border-2 border-white/30 text-white font-bold rounded-2xl hover:border-white/60 transition-all text-lg"
                         >
-                            Gọi tư vấn miễn phí
-                        </a>
+                            Liên hệ tư vấn miễn phí
+                        </button>
                     </div>
                     <div className="mt-12 grid grid-cols-3 gap-6 max-w-lg mx-auto">
                         {[['5.000+', 'Môi giới'], ['10.000+', 'Giao dịch'], ['98%', 'Hài lòng']].map(([val, label]) => (
@@ -442,13 +440,14 @@ export const Consignment: React.FC = () => {
                     </div>
 
                     <div className="overflow-x-auto rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-sm">
-                        <table className="w-full text-sm min-w-[600px]">
+                        <table className="w-full text-sm min-w-[900px]">
                             <thead>
                                 <tr className="bg-indigo-600 text-white">
                                     <th className="px-5 py-4 text-left font-bold">Loại giao dịch</th>
                                     <th className="px-5 py-4 text-center font-bold">Mức hoa hồng</th>
                                     <th className="px-5 py-4 text-left font-bold">Cơ sở tính</th>
                                     <th className="px-5 py-4 text-right font-bold">Tối thiểu</th>
+                                    <th className="px-5 py-4 text-left font-bold">Điều kiện thu</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -459,7 +458,8 @@ export const Consignment: React.FC = () => {
                                             <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-black px-3 py-1 rounded-full text-sm">{row.rate}</span>
                                         </td>
                                         <td className="px-5 py-4 text-[var(--text-secondary)]">{row.base}</td>
-                                        <td className="px-5 py-4 text-right font-bold text-[var(--text-primary)]">{row.min}</td>
+                                        <td className="px-5 py-4 text-right font-bold text-[var(--text-primary)] whitespace-nowrap">{row.min}</td>
+                                        <td className="px-5 py-4 text-xs text-[var(--text-secondary)] italic">{row.note}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -551,7 +551,7 @@ export const Consignment: React.FC = () => {
                             <h3 className="text-2xl font-black text-emerald-700 dark:text-emerald-400 mb-3">Đăng ký thành công!</h3>
                             <p className="text-[var(--text-secondary)] mb-2">Chúng tôi đã nhận được yêu cầu ký gửi của bạn.</p>
                             <p className="text-[var(--text-secondary)] mb-6">Chuyên viên SGS LAND sẽ liên hệ qua số điện thoại bạn đã cung cấp trong vòng <strong>4 giờ làm việc</strong>.</p>
-                            <p className="text-xs text-[var(--text-tertiary)]">Bạn cũng sẽ nhận được email xác nhận (nếu đã cung cấp) từ <strong>info@sgsland.vn</strong></p>
+                            <p className="text-xs text-[var(--text-tertiary)]">Mọi thắc mắc vui lòng liên hệ trực tiếp: <a href="mailto:info@sgsland.vn" className="text-indigo-600 font-semibold">info@sgsland.vn</a></p>
                             <button
                                 onClick={() => setSubmitted(false)}
                                 className="mt-8 px-6 py-2.5 border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-secondary)] hover:text-indigo-600 transition-colors"
