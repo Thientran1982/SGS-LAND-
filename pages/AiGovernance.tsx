@@ -806,11 +806,11 @@ export const AiGovernance: React.FC = () => {
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ai.prompt_name')}</label>
-                                    <input name="name" required className="w-full border rounded-xl px-3 py-2 text-sm" autoFocus />
+                                    <input name="name" required className="w-full border rounded-xl px-3 py-2 text-[16px]" autoFocus />
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ai.prompt_desc')}</label>
-                                    <input name="desc" className="w-full border rounded-xl px-3 py-2 text-sm" />
+                                    <input name="desc" className="w-full border rounded-xl px-3 py-2 text-[16px]" />
                                 </div>
                                 <div className="flex gap-3 pt-2">
                                     <button type="button" onClick={() => setIsCreateOpen(false)} className="flex-1 py-2 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] font-bold rounded-xl text-sm">{t('common.cancel')}</button>

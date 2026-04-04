@@ -77,7 +77,7 @@ const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange
                     value={value} 
                     onChange={onChange}
                     disabled={disabled}
-                    className={`w-full bg-[var(--glass-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all resize-none h-32 placeholder:text-[var(--text-muted)]
+                    className={`w-full bg-[var(--glass-surface)] border rounded-xl px-4 py-3 text-[16px] outline-none transition-all resize-none h-32 placeholder:text-[var(--text-muted)]
                         ${error 
                             ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20 bg-rose-50 text-rose-900' 
                             : 'border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500/20 focus:bg-[var(--bg-surface)] text-[var(--text-primary)]'}
@@ -92,7 +92,7 @@ const InputField: React.FC<InputFieldProps> = memo(({ id, label, value, onChange
                     value={value} 
                     onChange={onChange}
                     disabled={disabled}
-                    className={`w-full bg-[var(--glass-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-[var(--text-muted)]
+                    className={`w-full bg-[var(--glass-surface)] border rounded-xl px-4 py-3 text-[16px] outline-none transition-all placeholder:text-[var(--text-muted)]
                         ${error 
                             ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20 bg-rose-50 text-rose-900' 
                             : 'border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500/20 focus:bg-[var(--bg-surface)] text-[var(--text-primary)]'}
@@ -572,7 +572,7 @@ export const Profile: React.FC = () => {
                                                     value={emailData.newEmail}
                                                     onChange={e => { setEmailData(d => ({ ...d, newEmail: e.target.value })); setEmailErrors(er => ({ ...er, newEmail: '' })); }}
                                                     placeholder={t('profile.email_new_placeholder')}
-                                                    className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
+                                                    className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-[16px] outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
                                                         ${emailErrors.newEmail ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 text-[var(--text-primary)]'}`}
                                                 />
                                                 {emailErrors.newEmail && <p className="text-xs2 font-bold text-rose-500 ml-1">{emailErrors.newEmail}</p>}
@@ -585,7 +585,7 @@ export const Profile: React.FC = () => {
                                                     onChange={e => { setEmailData(d => ({ ...d, confirmPass: e.target.value })); setEmailErrors(er => ({ ...er, confirmPass: '' })); }}
                                                     placeholder={t('common.password_placeholder')}
                                                     onKeyDown={e => e.key === 'Enter' && handleSubmitEmailChange()}
-                                                    className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-sm outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
+                                                    className={`w-full bg-[var(--bg-surface)] border rounded-xl px-4 py-3 text-[16px] outline-none transition-all placeholder:text-[var(--text-muted)] focus:ring-2
                                                         ${emailErrors.confirmPass ? 'border-rose-300 focus:ring-rose-500/20 bg-rose-50 text-rose-900' : 'border-[var(--glass-border)] focus:ring-indigo-500/20 text-[var(--text-primary)]'}`}
                                                 />
                                                 {emailErrors.confirmPass && <p className="text-xs2 font-bold text-rose-500 ml-1">{emailErrors.confirmPass}</p>}

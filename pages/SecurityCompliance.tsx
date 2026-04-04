@@ -41,11 +41,11 @@ const RuleEditor = ({ isOpen, onClose, onSave, t }: any) => {
                 <div className="space-y-4">
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('security.label_rule_name')}</label>
-                        <input className="w-full border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder={t('security.placeholder_name')} />
+                        <input className="w-full border rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-indigo-500/20 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder={t('security.placeholder_name')} />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('security.label_pattern')}</label>
-                        <input className="w-full border rounded-xl px-4 py-2 text-sm font-mono focus:ring-2 focus:ring-indigo-500/20 outline-none" value={form.pattern} onChange={e => setForm({...form, pattern: e.target.value})} placeholder={t('security.placeholder_pattern')} />
+                        <input className="w-full border rounded-xl px-4 py-2 text-[16px] font-mono focus:ring-2 focus:ring-indigo-500/20 outline-none" value={form.pattern} onChange={e => setForm({...form, pattern: e.target.value})} placeholder={t('security.placeholder_pattern')} />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('security.label_action')}</label>

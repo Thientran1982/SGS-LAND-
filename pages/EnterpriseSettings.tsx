@@ -800,19 +800,19 @@ const SSOPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseConfig
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_client_id')}</label>
-                            <input className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.clientId || ''} onChange={e => setSso({...sso, clientId: e.target.value.trim()})} placeholder={t('ent.sso_client_id_placeholder')} />
+                            <input className="w-full border rounded-xl px-4 py-3 text-[16px] font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.clientId || ''} onChange={e => setSso({...sso, clientId: e.target.value.trim()})} placeholder={t('ent.sso_client_id_placeholder')} />
                         </div>
                         <div>
                             <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_client_secret')}</label>
                             <div className="relative">
-                                <input type={showSecret ? "text" : "password"} className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.clientSecret || ''} onChange={e => setSso({...sso, clientSecret: e.target.value})} placeholder={CONSTANTS.MASK} />
+                                <input type={showSecret ? "text" : "password"} className="w-full border rounded-xl px-4 py-3 text-[16px] font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.clientSecret || ''} onChange={e => setSso({...sso, clientSecret: e.target.value})} placeholder={CONSTANTS.MASK} />
                                 <button onClick={() => setShowSecret(!showSecret)} className="absolute right-3 top-3.5 text-xs2 font-bold text-indigo-600 hover:underline">{showSecret ? t('ent.sso_hide') : t('ent.sso_show')}</button>
                             </div>
                         </div>
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('ent.sso_login_url')} <span className="text-[var(--text-secondary)] normal-case font-normal">{t('ent.sso_login_url_optional')}</span></label>
-                        <input type="url" placeholder={t('ent.sso_login_url_placeholder')} className="w-full border rounded-xl px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.loginUrl || ''} onChange={e => setSso({...sso, loginUrl: e.target.value.trim()})} />
+                        <input type="url" placeholder={t('ent.sso_login_url_placeholder')} className="w-full border rounded-xl px-4 py-3 text-[16px] font-mono outline-none focus:ring-2 focus:ring-indigo-500/20" value={sso.loginUrl || ''} onChange={e => setSso({...sso, loginUrl: e.target.value.trim()})} />
                     </div>
                     <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
@@ -886,7 +886,7 @@ const DomainPanel = memo(({ config, onRefresh, notify }: { config: EnterpriseCon
             <SectionHeader title={t('ent.domain_title')} subtitle={t('ent.domain_subtitle')} />
             <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm mb-6">
                 <div className="flex flex-col sm:flex-row gap-3">
-                    <input className="flex-1 border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" placeholder={t('ent.domain_placeholder')} value={newDomain} onChange={e => setNewDomain(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()} />
+                    <input className="flex-1 border rounded-xl px-4 py-3 text-[16px] outline-none focus:ring-2 focus:ring-indigo-500/20" placeholder={t('ent.domain_placeholder')} value={newDomain} onChange={e => setNewDomain(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()} />
                     <button onClick={handleAdd} className="px-6 py-3 sm:py-0 bg-slate-900 text-white font-bold rounded-xl text-sm hover:bg-slate-800 transition-colors">{t('ent.domain_add')}</button>
                 </div>
             </div>

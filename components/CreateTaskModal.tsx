@@ -140,7 +140,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
   };
 
   const inputCls = (field: string) =>
-    `w-full h-[38px] px-3 text-sm bg-[var(--glass-surface-hover)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors ${errors[field] ? 'border-rose-400' : 'border-[var(--glass-border)] focus:border-indigo-400'}`;
+    `w-full h-[38px] px-3 text-[16px] bg-[var(--glass-surface-hover)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors ${errors[field] ? 'border-rose-400' : 'border-[var(--glass-border)] focus:border-indigo-400'}`;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true">
@@ -176,7 +176,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
               value={form.description}
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
               placeholder="Mô tả chi tiết công việc..."
-              className="w-full px-3 py-2.5 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 resize-none transition-colors"
+              className="w-full px-3 py-2.5 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 resize-none transition-colors"
             />
           </div>
 
@@ -256,7 +256,7 @@ export function CreateTaskModal({ onClose, onCreated, defaultDeptId }: Props) {
                 onChange={e => { setAssigneeSearch(e.target.value); setUserPickerOpen(true); }}
                 onFocus={() => setUserPickerOpen(true)}
                 placeholder="Tìm tên nhân viên..."
-                className="w-full h-[38px] pl-9 pr-3 text-sm bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+                className="w-full h-[38px] pl-9 pr-3 text-[16px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
               />
               {userPickerOpen && (userResults.length > 0 || searchingUsers) && (
                 <div className="absolute top-full mt-1 left-0 right-0 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl z-20 overflow-hidden max-h-[200px] overflow-y-auto no-scrollbar">

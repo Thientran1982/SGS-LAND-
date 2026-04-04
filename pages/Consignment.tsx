@@ -603,7 +603,7 @@ export const Consignment: React.FC = () => {
                                         <input
                                             type="text" name="name" value={form.name} onChange={handleChange} required
                                             placeholder="Nguyễn Văn A"
-                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
                                     <div>
@@ -611,7 +611,7 @@ export const Consignment: React.FC = () => {
                                         <input
                                             type="tel" name="phone" value={form.phone} onChange={handleChange} required
                                             placeholder="0901 234 567"
-                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
                                 </div>
@@ -620,7 +620,7 @@ export const Consignment: React.FC = () => {
                                     <input
                                         type="email" name="email" value={form.email} onChange={handleChange}
                                         placeholder="email@cua-ban.com (nhận xác nhận và báo cáo)"
-                                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
                             </div>
@@ -674,7 +674,7 @@ export const Consignment: React.FC = () => {
                                     <input
                                         type="text" name="address" value={form.address} onChange={handleChange} required
                                         placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
-                                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
 
@@ -685,7 +685,7 @@ export const Consignment: React.FC = () => {
                                             type="number" name="area" value={form.area} onChange={handleChange}
                                             placeholder="Ví dụ: 80"
                                             min="1"
-                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
                                     <div>
@@ -693,7 +693,7 @@ export const Consignment: React.FC = () => {
                                         <input
                                             type="text" name="price" value={form.price} onChange={handleChange}
                                             placeholder="Ví dụ: 5 tỷ hoặc 15 triệu/tháng"
-                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[16px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
                                 </div>

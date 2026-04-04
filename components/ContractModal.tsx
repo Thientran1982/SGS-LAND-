@@ -233,7 +233,7 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
         }
     };
 
-    const inputClass = "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]";
+    const inputClass = "w-full border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[16px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-[var(--glass-surface)] focus:bg-[var(--bg-surface)]";
     const labelClass = "block text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1";
 
     const scheduleCount = (formData.paymentSchedule || []).length;

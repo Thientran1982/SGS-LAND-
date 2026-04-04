@@ -54,11 +54,11 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                 <div className="space-y-4">
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('routing.rule_name')}</label>
-                        <input className="w-full border rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                        <input className="w-full border rounded-xl px-4 py-2.5 text-[16px] focus:border-indigo-500 outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('routing.priority')}</label>
-                        <input type="number" className="w-full border rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none" value={form.priority} onChange={e => setForm({...form, priority: Number(e.target.value)})} />
+                        <input type="number" className="w-full border rounded-xl px-4 py-2.5 text-[16px] focus:border-indigo-500 outline-none" value={form.priority} onChange={e => setForm({...form, priority: Number(e.target.value)})} />
                     </div>
                     
                     <div className="bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
@@ -78,11 +78,11 @@ const RuleModal = ({ isOpen, onClose, onSave, rule, users, teams, t }: any) => {
                             </div>
                             <div>
                                 <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase block mb-1">{t('routing.cond_region')}</label>
-                                <input className="w-full border rounded-lg px-2 py-1.5 text-sm" placeholder={t('routing.placeholder_region')} value={form.conditions?.region?.[0] || ''} onChange={e => setForm({...form, conditions: {...form.conditions, region: e.target.value ? [e.target.value] : []}})} />
+                                <input className="w-full border rounded-lg px-2 py-1.5 text-[16px]" placeholder={t('routing.placeholder_region')} value={form.conditions?.region?.[0] || ''} onChange={e => setForm({...form, conditions: {...form.conditions, region: e.target.value ? [e.target.value] : []}})} />
                             </div>
                             <div>
                                 <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase block mb-1">{t('routing.cond_budget')}</label>
-                                <input type="number" className="w-full border rounded-lg px-2 py-1.5 text-sm" value={form.conditions?.budgetMin || 0} onChange={e => setForm({...form, conditions: {...form.conditions, budgetMin: Number(e.target.value)}})} />
+                                <input type="number" className="w-full border rounded-lg px-2 py-1.5 text-[16px]" value={form.conditions?.budgetMin || 0} onChange={e => setForm({...form, conditions: {...form.conditions, budgetMin: Number(e.target.value)}})} />
                             </div>
                         </div>
                     </div>
@@ -365,11 +365,11 @@ export const RoutingRules: React.FC = () => {
                         </div>
                         <div>
                             <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-1 block">{t('routing.cond_region')}</label>
-                            <input className="w-full border rounded-lg px-3 py-2 text-sm" value={simInput.region} onChange={e => setSimInput({...simInput, region: e.target.value})} />
+                            <input className="w-full border rounded-lg px-3 py-2 text-[16px]" value={simInput.region} onChange={e => setSimInput({...simInput, region: e.target.value})} />
                         </div>
                         <div>
                             <label className="text-xs2 font-bold text-[var(--text-secondary)] uppercase mb-1 block">{t('routing.cond_budget')}</label>
-                            <input type="number" className="w-full border rounded-lg px-3 py-2 text-sm" value={simInput.budget} onChange={e => setSimInput({...simInput, budget: Number(e.target.value)})} />
+                            <input type="number" className="w-full border rounded-lg px-3 py-2 text-[16px]" value={simInput.budget} onChange={e => setSimInput({...simInput, budget: Number(e.target.value)})} />
                         </div>
                         <button onClick={runSimulation} className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
                             {ICONS.PLAY} {t('routing.sim_btn_run')}

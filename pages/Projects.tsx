@@ -91,7 +91,7 @@ function ProjectFormModal({ project, onSave, onClose, t }: ProjectFormProps) {
         }
     };
 
-    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-indigo-500';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
 
     return (
@@ -230,7 +230,7 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
     const activePartnerIds = new Set(accesses.filter(a => a.status === 'ACTIVE').map(a => a.partner_tenant_id));
     const availableTenants = tenants.filter(t2 => !activePartnerIds.has(t2.id));
 
-    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-indigo-500';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
 
     return (
@@ -711,7 +711,7 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
     // Inline revoke confirm: key = `${listingId}::${partnerTenantId}`
     const [revokeKey, setRevokeKey] = useState<string | null>(null);
 
-    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-500';
+    const inputCls = 'w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 bg-[var(--bg-app)] text-[var(--text-primary)] text-[16px] focus:outline-none focus:ring-2 focus:ring-violet-500';
     const labelCls = 'block text-xs font-semibold text-[var(--text-secondary)] mb-1 uppercase tracking-wide';
 
     // Load access list for each listing
