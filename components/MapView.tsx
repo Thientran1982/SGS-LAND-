@@ -162,12 +162,37 @@ function clusterCenter(cluster: PointEntry[]): [number, number] {
 
 // ── Price formatting ──────────────────────────────────────────────────────────
 
-function formatPrice(price: number, language: string, formatCompactNumber?: (v: number) => string, t?: any): string {
-    if (formatCompactNumber) return formatCompactNumber(price);
-    if (price >= 1_000_000_000)
-        return `${(price / 1_000_000_000).toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US', { maximumFractionDigits: 1 })} ${t?.('format.billion') || 'Tỷ'}`;
-    if (price >= 1_000_000)
-        return `${(price / 1_000_000).toLocaleString(language === 'vn' ? 'vi-VN' : 'en-US', { maximumFractionDigits: 0 })} ${t?.('format.million') || 'Tr'}`;
+/**
+ * Format a price value for use as a map-pin label.
+ *
+ * We intentionally do NOT delegate to `formatCompactNumber` (the i18n
+ * formatter) here, because that function:
+ *   1. Uses `toLocaleString('vi-VN', …)` which produces a COMMA as the
+ *      decimal separator ("6,5 Tỷ"), which looks like broken text inside
+ *      the small pin bubble.
+ *   2. Returns the full word "Triệu" (5 chars) for millions, making the
+ *      label too long for the pin.
+ *
+ * Instead we build a compact, consistent label:
+ *   - Decimal separator is always "." (universally readable)
+ *   - Trailing ".0" is removed (e.g. 12.0 Tỷ → "12 Tỷ")
+ *   - Millions use the short suffix "Tr" (not "Triệu")
+ *   - English mode shows "B" / "M" suffixes
+ */
+function formatPrice(price: number, language: string, _ignored?: (v: number) => string, t?: any): string {
+    if (!price || isNaN(price)) return '—';
+    const isVn = language === 'vn';
+    if (price >= 1_000_000_000) {
+        const val  = Math.round(price / 100_000_000) / 10;
+        const disp = Number.isInteger(val) ? String(val) : val.toFixed(1);
+        const unit = isVn ? (t?.('format.billion') || 'Tỷ') : 'B';
+        return `${disp} ${unit}`;
+    }
+    if (price >= 1_000_000) {
+        const val  = Math.round(price / 1_000_000);
+        const unit = isVn ? 'Tr' : 'M';
+        return `${val} ${unit}`;
+    }
     return price.toLocaleString();
 }
 
