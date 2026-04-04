@@ -302,7 +302,7 @@ const LegalLayout: React.FC<{ title: string; children: React.ReactNode; lastUpda
                     <button onClick={handleHome} className="hover:text-indigo-600 transition-colors">{t('legal.back_home')}</button>
                 </div>
                 <div className="mt-4 text-center text-xs text-slate-400">
-                    SGS Land Corp · MST: [Cập nhật số ĐKKD] · TP. Hồ Chí Minh, Việt Nam
+                    SGS Land Corp · MST: 0312960439 · TP. Hồ Chí Minh, Việt Nam
                 </div>
             </div>
         </div>
