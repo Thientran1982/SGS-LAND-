@@ -15,6 +15,49 @@ import { marketDataService } from '../services/marketDataService';
 import { listingRepository } from '../repositories/listingRepository';
 import { logger } from '../middleware/logger';
 
+/**
+ * Strip property-type prefix keywords from an address string before market-data lookup.
+ *
+ * The market-data cache stores TOWNHOUSE reference prices keyed by location only.
+ * When the user address includes type keywords (e.g. "căn hộ Vinhome …"), the AI
+ * sometimes returns type-specific prices (apartment rates) instead of the townhouse
+ * reference, causing the AVM to double-apply the type multiplier and undervalue the
+ * property by ~40-50%.
+ *
+ * By stripping these prefixes we ensure the cache key is location-only and the AI
+ * fetches a neutral reference price.
+ */
+function stripPropertyTypePrefix(address: string): string {
+  const prefixes = [
+    /^căn\s+hộ\s+/i,
+    /^can\s+ho\s+/i,
+    /^chung\s+cư\s+/i,
+    /^nhà\s+phố\s+/i,
+    /^nha\s+pho\s+/i,
+    /^nhà\s+ở\s+/i,
+    /^biệt\s+thự\s+/i,
+    /^biet\s+thu\s+/i,
+    /^đất\s+nền\s+/i,
+    /^đất\s+/i,
+    /^dat\s+nen\s+/i,
+    /^kho\s+xưởng\s+/i,
+    /^kho\s+xuong\s+/i,
+    /^shophouse\s+/i,
+    /^shop\s+house\s+/i,
+    /^văn\s+phòng\s+/i,
+    /^van\s+phong\s+/i,
+    /^penthouse\s+/i,
+    /^condotel\s+/i,
+    /^officetel\s+/i,
+    /^villa\s+/i,
+  ];
+  let result = address.trim();
+  for (const re of prefixes) {
+    result = result.replace(re, '');
+  }
+  return result.trim();
+}
+
 export function createValuationRoutes(
   authenticateToken: any,
   aiRateLimit: any,
@@ -80,37 +123,57 @@ export function createValuationRoutes(
       let resolvedPropertyType: PropertyType;
       let marketDataSource: string;
 
-      const cacheEntry = skipCache ? null : await marketDataService.getMarketData(address);
       resolvedPropertyType = (propertyType || 'townhouse_center') as PropertyType;
 
+      // Strip property-type prefix keywords (e.g. "căn hộ", "nhà phố") from the address
+      // so the cache key is location-only, preventing the AI from returning type-specific
+      // prices that confuse the type multiplier logic.
+      const marketAddress = stripPropertyTypePrefix(address);
+
+      // Pass resolvedPropertyType so the cache uses a type-specific key
+      // (e.g. "vinhome central park binh thanh:apartment_center") for non-townhouse types.
+      // The cached price is then already accurate for that type and no multiplier is needed.
+      const cacheEntry = skipCache ? null : await marketDataService.getMarketData(marketAddress, resolvedPropertyType);
+
       if (cacheEntry) {
-        // CRITICAL: cache always stores townhouse_center reference price.
-        // Apply property-type multiplier so warehouse/office/land get correct base.
-        const cacheTypeMult = PROPERTY_TYPE_PRICE_MULT[resolvedPropertyType] ?? 1.00;
-        const refMult = PROPERTY_TYPE_PRICE_MULT['townhouse_center'];  // 1.00
-        const typeAdjustedPrice = resolvedPropertyType === 'townhouse_center' || resolvedPropertyType === 'townhouse_suburb'
-          ? cacheEntry.pricePerM2
-          : Math.round(cacheEntry.pricePerM2 * (cacheTypeMult / refMult));
+        // Determine if this cache entry is type-specific (key contains ':' separator).
+        // Type-specific entries have the correct price for the requested property type
+        // and must NOT be multiplied again. Townhouse-reference entries (legacy baseline)
+        // still need the type multiplier to project the price onto other property types.
+        const isTypeSpecificCache = cacheEntry.normalizedKey.includes(':');
+        let typeAdjustedPrice: number;
+        if (isTypeSpecificCache) {
+          // Price is already for the correct property type → use as-is
+          typeAdjustedPrice = cacheEntry.pricePerM2;
+          logger.info(`[Valuation] Cache hit (type-specific): ${cacheEntry.pricePerM2 / 1_000_000}tr/m² for ${resolvedPropertyType}`);
+        } else {
+          // Legacy townhouse reference → apply type multiplier
+          const cacheTypeMult = PROPERTY_TYPE_PRICE_MULT[resolvedPropertyType] ?? 1.00;
+          typeAdjustedPrice = resolvedPropertyType === 'townhouse_center' || resolvedPropertyType === 'townhouse_suburb'
+            ? cacheEntry.pricePerM2
+            : Math.round(cacheEntry.pricePerM2 * cacheTypeMult);
+          logger.info(`[Valuation] Cache hit (townhouse ref): ${cacheEntry.pricePerM2 / 1_000_000}tr/m² → type-adjusted ${typeAdjustedPrice / 1_000_000}tr/m² (×${PROPERTY_TYPE_PRICE_MULT[resolvedPropertyType] ?? 1} for ${resolvedPropertyType})`);
+        }
         marketBasePrice = typeAdjustedPrice;
         aiConfidence = cacheEntry.confidence;
         marketTrend = cacheEntry.marketTrend;
-        // Cache stores rent estimate for a 70m² townhouse_center reference
-        // (see marketDataService.fetchAndCache — uses area=70, townhouse_center).
-        // Only reuse cache rent for townhouse types where it is directly applicable.
-        // For apartments, villas, etc. skip — estimateFallbackRent (below) will
-        // compute a type-specific estimate from per-m² market rates instead,
-        // avoiding the inflated result caused by scaling a townhouse rent onto
-        // apartment pricing (e.g. Vinhome 80m² ≠ townhouse_reference × 1.33).
-        const isTownhouseType = resolvedPropertyType === 'townhouse_center'
-          || resolvedPropertyType === 'townhouse_suburb'
-          || resolvedPropertyType === 'shophouse';
-        if (isTownhouseType && cacheEntry.monthlyRentEstimate && cacheEntry.monthlyRentEstimate > 0) {
-          const CACHE_RENT_REF_AREA = 70; // matches fetchAndCache(area=70, townhouse_center)
-          const areaScale = Math.min(4, areaNum / CACHE_RENT_REF_AREA);
-          monthlyRent = Math.round(cacheEntry.monthlyRentEstimate * areaScale * 10) / 10;
+        // Rent from cache:
+        // - For type-specific cache (apartment / villa / etc.): the cache was fetched
+        //   with the correct property type, so the rent estimate IS type-accurate.
+        //   Scale it by area (cache reference area = 70m²).
+        // - For legacy townhouse-reference cache: only reuse rent for townhouse types.
+        //   For other types let estimateFallbackRent() compute a type-specific value.
+        if (cacheEntry.monthlyRentEstimate && cacheEntry.monthlyRentEstimate > 0) {
+          const isTownhouseType = resolvedPropertyType === 'townhouse_center'
+            || resolvedPropertyType === 'townhouse_suburb'
+            || resolvedPropertyType === 'shophouse';
+          if (isTypeSpecificCache || isTownhouseType) {
+            const CACHE_RENT_REF_AREA = 70;
+            const areaScale = Math.min(4, areaNum / CACHE_RENT_REF_AREA);
+            monthlyRent = Math.round(cacheEntry.monthlyRentEstimate * areaScale * 10) / 10;
+          }
         }
         marketDataSource = cacheEntry.source;
-        logger.info(`[Valuation] Cache hit: ${cacheEntry.pricePerM2 / 1_000_000}tr/m² → type-adjusted ${typeAdjustedPrice / 1_000_000}tr/m² (×${cacheTypeMult} for ${resolvedPropertyType}), rent scaled ${(cacheEntry.monthlyRentEstimate||0).toFixed(1)}→${(monthlyRent||0).toFixed(1)}tr/th`);
       } else {
         // Fallback to full AI call
         try {

@@ -333,21 +333,37 @@ class MarketDataService {
     logger.info('[MarketData] Service stopped');
   }
 
-  /** Get market data for a location. Hits cache first, fetches if stale/missing */
-  async getMarketData(location: string): Promise<MarketDataEntry> {
-    const key = normalizeLocation(location);
+  /**
+   * Get market data for a location.
+   *
+   * When `propertyType` is supplied and is NOT a townhouse variant, the cache
+   * uses a type-specific key (`normalizedLocation:propertyType`) so that
+   * apartment / villa / warehouse prices are fetched with the correct AI type
+   * and stored separately from the townhouse reference baseline. The returned
+   * price is already type-accurate and should NOT have a type multiplier applied
+   * in the calling code.
+   *
+   * For townhouse_center / townhouse_suburb (the reference baseline) the
+   * original key format is used so the background seed entries are still hit.
+   */
+  async getMarketData(location: string, propertyType?: string): Promise<MarketDataEntry> {
+    const baseKey = normalizeLocation(location);
+    const isTownhouseRef = !propertyType
+      || propertyType === 'townhouse_center'
+      || propertyType === 'townhouse_suburb';
+    const key = isTownhouseRef ? baseKey : `${baseKey}:${propertyType}`;
     const cached = this.cache.get(key);
     if (cached && new Date(cached.expiresAt) > new Date()) {
       logger.debug(`[MarketData] Cache HIT for "${key}"`);
       return cached;
     }
-    return this.fetchAndCache(location, key);
+    return this.fetchAndCache(location, key, isTownhouseRef ? 'townhouse_center' : propertyType!);
   }
 
   /** Force refresh a location (bypasses TTL) */
   async forceRefresh(location: string): Promise<MarketDataEntry> {
     const key = normalizeLocation(location);
-    return this.fetchAndCache(location, key);
+    return this.fetchAndCache(location, key, 'townhouse_center');
   }
 
   /** Get all currently cached entries (for admin/monitoring) */
@@ -452,13 +468,21 @@ class MarketDataService {
     }
   }
 
-  /** Fetch + cache using the full AVM pipeline (per-request, high precision) */
-  private async fetchAndCache(location: string, key: string): Promise<MarketDataEntry> {
+  /**
+   * Fetch + cache using the full AVM pipeline (per-request, high precision).
+   *
+   * `fetchPropertyType` controls what the AI is asked to price:
+   *  - 'townhouse_center' (default) → reference baseline price for the area
+   *  - any other type → type-specific price stored under key `location:type`
+   */
+  private async fetchAndCache(location: string, key: string, fetchPropertyType: string = 'townhouse_center'): Promise<MarketDataEntry> {
     let entry: MarketDataEntry;
 
     try {
       const { aiService } = await import('../ai');
-      const result = await aiService.getRealtimeValuation(location, 70, 4, 'PINK_BOOK', 'townhouse_center');
+      const result = await aiService.getRealtimeValuation(
+        location, 70, 4, 'PINK_BOOK', fetchPropertyType as any
+      );
       const now = new Date();
       entry = {
         location,
