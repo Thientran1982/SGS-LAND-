@@ -294,6 +294,24 @@ Nguyên tắc:
 • Kho xưởng / văn phòng / KCN thường định giá bằng USD/m²/tháng — quy đổi về VNĐ.
 • Trả JSON hợp lệ theo schema — không thêm text ngoài JSON.`;
 
+const DEFAULT_VALUATION_SEARCH_SYSTEM =
+`Bạn là chuyên gia định giá bất động sản Việt Nam với 15 năm kinh nghiệm giao dịch thực tế.
+Nhiệm vụ: Tìm kiếm và thu thập số liệu GIÁ BÁN giao dịch thực tế từ thị trường BĐS Việt Nam.
+Nguyên tắc:
+• Ưu tiên: giá chuyển nhượng thực tế (thứ cấp) > giá rao bán (niêm yết) > giá sơ cấp chủ đầu tư.
+• Thu thập đa nguồn: batdongsan.com.vn, cafeland.vn, onehousing.vn, nhadatviet.com, Savills/CBRE Vietnam.
+• Chỉ lấy dữ liệu trong vòng 24 tháng gần nhất — đánh dấu rõ nếu dữ liệu cũ hơn.
+• Phân biệt đơn vị rõ ràng: VNĐ/m² đất thổ cư vs. VNĐ/m² sàn xây dựng vs. tỷ/căn.`;
+
+const DEFAULT_VALUATION_RENTAL_SYSTEM =
+`Bạn là chuyên gia thị trường cho thuê bất động sản Việt Nam với 15 năm kinh nghiệm.
+Nhiệm vụ: Tìm kiếm và thu thập số liệu GIÁ THUÊ và YIELD thực tế từ thị trường BĐS Việt Nam.
+Nguyên tắc:
+• Tìm giá thuê nguyên căn thực tế — không tính thuê từng phòng trọ.
+• Đơn vị: triệu VNĐ/tháng (nhà ở) hoặc USD/m²/tháng (kho xưởng, văn phòng, KCN).
+• Thu thập đa nguồn: batdongsan.com.vn/cho-thue, homedy.com, nha.com.vn, muaban.net.
+• Tính Gross Yield = (giá thuê năm / giá bán) × 100%; nhà phố trung tâm thường 3-5%/năm.`;
+
 // ── Helper functions — load từ DB (admin override) hoặc dùng default ──────
 async function getInventoryInstruction(tenantId: string): Promise<string> {
     return getPromptTemplate(tenantId, 'INVENTORY_SYSTEM', DEFAULT_INVENTORY_SYSTEM);
@@ -318,6 +336,12 @@ async function getLeadAnalystInstruction(tenantId: string): Promise<string> {
 }
 async function getValuationInstruction(tenantId: string): Promise<string> {
     return getPromptTemplate(tenantId, 'VALUATION_SYSTEM', DEFAULT_VALUATION_SYSTEM);
+}
+async function getValuationSearchInstruction(tenantId: string): Promise<string> {
+    return getPromptTemplate(tenantId, 'VALUATION_SEARCH_SYSTEM', DEFAULT_VALUATION_SEARCH_SYSTEM);
+}
+async function getValuationRentalInstruction(tenantId: string): Promise<string> {
+    return getPromptTemplate(tenantId, 'VALUATION_RENTAL_SYSTEM', DEFAULT_VALUATION_RENTAL_SYSTEM);
 }
 
 async function getPromptTemplate(tenantId: string, templateKey: string, fallback: string): Promise<string> {
@@ -2348,13 +2372,29 @@ TÌM KIẾM CHUYÊN BIỆT: Giá THUÊ thực tế
 3. Tỷ suất cho thuê gross yield %/năm (nhà phố thường 3-5%/năm)
 Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê từng phòng.`;
 
-            // Run both searches in parallel
+            // ── Load tất cả Skill instructions + RLHF trước khi chạy AI (song song để tiết kiệm latency) ──
+            const tid = tenantId || '';
+            const [
+                valSearchInstruction,
+                valRentalInstruction,
+                valuationSystemInstruction,
+                rlhf,
+            ] = await Promise.all([
+                getValuationSearchInstruction(tid).catch(() => DEFAULT_VALUATION_SEARCH_SYSTEM),
+                getValuationRentalInstruction(tid).catch(() => DEFAULT_VALUATION_RENTAL_SYSTEM),
+                getValuationInstruction(tid).catch(() => DEFAULT_VALUATION_SYSTEM),
+                tid
+                    ? buildRlhfContext(tid, 'ESTIMATE_VALUATION').catch(() => ({ fewShotSection: '', negativeRulesSection: '' }))
+                    : Promise.resolve({ fewShotSection: '', negativeRulesSection: '' }),
+            ]);
+
+            // Run both searches in parallel — STEP 1 (Google Search grounding)
             const [saleSearchRes, rentalSearchRes] = await Promise.all([
                 getAiClient().models.generateContent({
                     model: GENAI_CONFIG.MODELS.WRITER,
                     contents: saleSearchPrompt,
                     config: {
-                        systemInstruction: 'Bạn là chuyên gia định giá BĐS Việt Nam. Tìm kiếm số liệu giá giao dịch thực tế chính xác nhất từ thị trường.',
+                        systemInstruction: valSearchInstruction,
                         tools: [{ googleSearch: {} }]
                     }
                 }),
@@ -2362,7 +2402,7 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                     model: GENAI_CONFIG.MODELS.WRITER,
                     contents: rentalSearchPrompt,
                     config: {
-                        systemInstruction: 'Bạn là chuyên gia thị trường BĐS Việt Nam. Tìm kiếm giá thuê/yield thực tế hiện hành.',
+                        systemInstruction: valRentalInstruction,
                         tools: [{ googleSearch: {} }]
                     }
                 })
@@ -2471,16 +2511,6 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                 },
                 required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors"]
             };
-
-            // ── RLHF + Skill: load in parallel — RLHF few-shot examples + admin-tunable system instruction ──
-            const [rlhf, valuationSystemInstruction] = await Promise.all([
-                tenantId
-                    ? buildRlhfContext(tenantId, 'ESTIMATE_VALUATION').catch(() => ({ fewShotSection: '', negativeRulesSection: '' }))
-                    : Promise.resolve({ fewShotSection: '', negativeRulesSection: '' }),
-                tenantId
-                    ? getValuationInstruction(tenantId).catch(() => DEFAULT_VALUATION_SYSTEM)
-                    : Promise.resolve(DEFAULT_VALUATION_SYSTEM),
-            ]);
 
             // Generate unique ID for this valuation call (allows feedback to be tied back)
             const interactionId: string = crypto.randomUUID();
@@ -2700,7 +2730,7 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
                         model: GENAI_CONFIG.MODELS.WRITER,
                         contents: verifyPrompt,
                         config: {
-                            systemInstruction: `Bạn là chuyên gia xác minh giá BĐS Việt Nam. Tìm kiếm giao dịch cụ thể để cross-check giá đã ước tính. Báo cáo CHỈ số giá 1m² tìm được (triệu VNĐ/m²).`,
+                            systemInstruction: valSearchInstruction,
                             tools: [{ googleSearch: {} }]
                         }
                     });

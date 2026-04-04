@@ -176,7 +176,9 @@ const AGENT_SKILL_CATALOG: { key: string; agent: string; desc: string }[] = [
     { key: 'MARKETING_SYSTEM',    agent: 'Marketing',       desc: 'Phân tích ưu đãi, chiến dịch marketing' },
     { key: 'CONTRACT_SYSTEM',     agent: 'Contract',        desc: 'Phân tích điều khoản hợp đồng BĐS' },
     { key: 'LEAD_ANALYST_SYSTEM', agent: 'Lead Analyst',   desc: 'Phân tích tâm lý & hành vi khách hàng' },
-    { key: 'VALUATION_SYSTEM',    agent: 'Valuation AVM',  desc: 'Trích xuất giá thị trường — định giá BĐS AVM' },
+    { key: 'VALUATION_SYSTEM',        agent: 'Valuation Extract', desc: 'STEP 2: Trích xuất JSON giá thị trường → AVM' },
+    { key: 'VALUATION_SEARCH_SYSTEM', agent: 'Valuation Sale',    desc: 'STEP 1a: Tìm kiếm giá bán giao dịch thực tế' },
+    { key: 'VALUATION_RENTAL_SYSTEM', agent: 'Valuation Rental',  desc: 'STEP 1b: Tìm kiếm giá thuê & Gross Yield' },
 ];
 
 const PromptsTab = memo(({ 
