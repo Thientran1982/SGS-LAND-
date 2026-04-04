@@ -16,6 +16,7 @@ import { listingRepository } from "./server/repositories/listingRepository";
 import { leadRepository } from "./server/repositories/leadRepository";
 import { feedbackRepository } from "./server/repositories/feedbackRepository";
 import { articleRepository } from "./server/repositories/articleRepository";
+import { resolveBaseUrl } from "./server/utils/resolveBaseUrl";
 import { createLeadRoutes } from "./server/routes/leadRoutes";
 import { createListingRoutes, scheduleGeocode } from "./server/routes/listingRoutes";
 import { createProposalRoutes } from "./server/routes/proposalRoutes";
@@ -66,20 +67,6 @@ const serverT = (lang: string = 'vn') => (key: string): string => {
   return dict[key] ?? key;
 };
 
-/**
- * Resolve the canonical base URL for email links and external callbacks.
- * Priority: APP_URL env var (explicit production override)
- *   → REPLIT_DOMAINS first entry (Replit production domain, e.g. sgs-land.replit.app)
- *   → REPLIT_DEV_DOMAIN (Replit dev proxy domain)
- *   → req.protocol + host header (last resort / self-hosted)
- */
-function resolveBaseUrl(req: express.Request): string {
-  if (process.env.APP_URL) return process.env.APP_URL;
-  const replitDomain = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim();
-  if (replitDomain) return `https://${replitDomain}`;
-  if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  return `${req.protocol}://${req.get('host')}`;
-}
 
 async function startServer() {
   const app = express();

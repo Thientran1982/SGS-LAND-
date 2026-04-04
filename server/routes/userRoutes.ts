@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { userRepository } from '../repositories/userRepository';
 import { auditRepository } from '../repositories/auditRepository';
 import { emailService } from '../services/emailService';
+import { resolveBaseUrl } from '../utils/resolveBaseUrl';
 import { withTenantContext } from '../db';
 
 export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
@@ -159,10 +160,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
         [invited.id, tokenHash, expiresAt]
       );
 
-      const baseUrl = process.env.REPLIT_DEV_DOMAIN
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-        : process.env.APP_URL || 'https://app.sgsland.vn';
-      const loginUrl = `${baseUrl}/#/reset-password/${rawToken}`;
+      const loginUrl = `${resolveBaseUrl(req)}/#/reset-password/${rawToken}`;
       emailService.sendInviteEmail(user.tenantId, email, name, invited.role, loginUrl).catch((err: any) => {
         console.error('[Invite] Failed to send invite email:', err.message);
       });
@@ -253,10 +251,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
         [target.id, tokenHash, expiresAt]
       );
 
-      const baseUrl = process.env.REPLIT_DEV_DOMAIN
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-        : process.env.APP_URL || 'https://app.sgsland.vn';
-      const loginUrl = `${baseUrl}/#/reset-password/${rawToken}`;
+      const loginUrl = `${resolveBaseUrl(req)}/#/reset-password/${rawToken}`;
       emailService.sendInviteEmail(user.tenantId, target.email!, target.name || target.email!, target.role, loginUrl).catch((err: any) => {
         console.error('[Invite] Failed to resend invite email:', err.message);
       });
