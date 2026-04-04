@@ -241,19 +241,19 @@ html, body {
 /* Bubble shared styles */
 .sgs-pin-bubble {
   color: #fff !important;
-  font-size: 11.5px !important;
+  font-size: 12px !important;
   font-weight: 700 !important;
-  padding: 5px 12px !important;
-  border-radius: 10px 10px 4px 4px !important;
+  padding: 5px 11px !important;
+  border-radius: 10px 10px 0 0 !important;
   border: 2px solid rgba(255,255,255,0.92) !important;
   border-bottom: none !important;
   white-space: nowrap !important;
-  letter-spacing: 0.25px !important;
-  line-height: 1.45 !important;
+  letter-spacing: 0.2px !important;
+  line-height: 1.4 !important;
   font-family: system-ui,-apple-system,sans-serif !important;
   cursor: pointer !important;
   display: inline-block !important;
-  background-image: linear-gradient(160deg,rgba(255,255,255,0.13) 0%,transparent 60%) !important;
+  background-image: linear-gradient(160deg,rgba(255,255,255,0.15) 0%,transparent 60%) !important;
 }
 .sgs-pin-bubble.sgs-pin-active {
   border-color: rgba(255,255,255,1) !important;
@@ -263,23 +263,23 @@ html, body {
 .sgs-pin-sale    { background-color: #4f46e5 !important; }
 .sgs-pin-rent    { background-color: #7c3aed !important; }
 .sgs-pin-project { background-color: #2563eb !important; }
-/* Tail triangles */
+/* Tail triangles — larger arrow so pin is clearly a pointer, not a box */
 .sgs-pin-tail {
   width: 0 !important; height: 0 !important;
-  border-left: 7px solid transparent !important;
-  border-right: 7px solid transparent !important;
-  margin-top: 0 !important;
+  border-left: 10px solid transparent !important;
+  border-right: 10px solid transparent !important;
+  margin-top: -1px !important;
 }
-.sgs-pin-tail.sgs-pin-sale    { border-top: 8px solid #4f46e5 !important; }
-.sgs-pin-tail.sgs-pin-rent    { border-top: 8px solid #7c3aed !important; }
-.sgs-pin-tail.sgs-pin-project { border-top: 8px solid #2563eb !important; }
+.sgs-pin-tail.sgs-pin-sale    { border-top: 11px solid #4f46e5 !important; }
+.sgs-pin-tail.sgs-pin-rent    { border-top: 11px solid #7c3aed !important; }
+.sgs-pin-tail.sgs-pin-project { border-top: 11px solid #2563eb !important; }
 /* Cluster bubble */
 .sgs-cluster-bubble {
   color: #fff !important;
   font-size: 12.5px !important;
   font-weight: 800 !important;
   padding: 7px 16px !important;
-  border-radius: 12px 12px 4px 4px !important;
+  border-radius: 12px 12px 0 0 !important;
   border: 2.5px solid rgba(255,255,255,0.95) !important;
   border-bottom: none !important;
   white-space: nowrap !important;
@@ -298,13 +298,13 @@ html, body {
 .sgs-cluster-bubble.sgs-pin-project { background-color: #2563eb !important; }
 .sgs-cluster-tail {
   width: 0 !important; height: 0 !important;
-  border-left: 8px solid transparent !important;
-  border-right: 8px solid transparent !important;
-  margin-top: 0 !important;
+  border-left: 12px solid transparent !important;
+  border-right: 12px solid transparent !important;
+  margin-top: -1px !important;
 }
-.sgs-cluster-tail.sgs-pin-sale    { border-top: 9px solid #4f46e5 !important; }
-.sgs-cluster-tail.sgs-pin-rent    { border-top: 9px solid #7c3aed !important; }
-.sgs-cluster-tail.sgs-pin-project { border-top: 9px solid #2563eb !important; }
+.sgs-cluster-tail.sgs-pin-sale    { border-top: 13px solid #4f46e5 !important; }
+.sgs-cluster-tail.sgs-pin-rent    { border-top: 13px solid #7c3aed !important; }
+.sgs-cluster-tail.sgs-pin-project { border-top: 13px solid #2563eb !important; }
 
 /* --- LANDING PAGE ANIMATIONS --- */
 @keyframes scroll-x {
