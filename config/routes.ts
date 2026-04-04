@@ -17,6 +17,7 @@ export const ROUTES = {
     API_DOCS: 'developers',
     STATUS_PUBLIC: 'status',
     LIVE_CHAT: 'livechat',
+    KY_GUI: 'ky-gui-bat-dong-san',
     
     // Legal Pages
     PRIVACY: 'privacy-policy',

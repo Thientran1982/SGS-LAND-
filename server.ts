@@ -1334,6 +1334,94 @@ async function startServer() {
     }
   });
 
+  // Public consignment request — sends form data email to info@sgsland.vn
+  app.post('/api/public/consignment', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const { name, phone, email, propertyType, transaction, address, area, price, notes, agreed } = req.body;
+
+      if (!name?.trim() || !phone?.trim() || !address?.trim()) {
+        return res.status(400).json({ error: 'Thiếu thông tin bắt buộc: Họ tên, Số điện thoại, Địa chỉ bất động sản' });
+      }
+      if (email?.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+          return res.status(400).json({ error: 'Email không hợp lệ' });
+        }
+      }
+      if (!agreed) {
+        return res.status(400).json({ error: 'Vui lòng xác nhận đồng ý với điều khoản ký gửi' });
+      }
+
+      const transactionLabel = transaction === 'SELL' ? 'Mua bán' : 'Cho thuê';
+      const now = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+      const html = `
+        <div style="font-family:sans-serif;max-width:640px;margin:0 auto">
+          <div style="background:#4f46e5;color:#fff;padding:24px 32px;border-radius:12px 12px 0 0">
+            <h2 style="margin:0;font-size:20px">📋 Yêu cầu ký gửi bất động sản mới</h2>
+            <p style="margin:6px 0 0;opacity:0.85;font-size:14px">Nhận lúc ${now}</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-top:none;padding:24px 32px;border-radius:0 0 12px 12px">
+            <p style="margin:0 0 16px;font-weight:700;color:#374151;font-size:16px">Thông tin chủ sở hữu</p>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:10px 8px;font-weight:700;color:#374151;width:180px">Họ và tên:</td>
+                <td style="padding:10px 8px">${name}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:10px 8px;font-weight:700;color:#374151">Số điện thoại:</td>
+                <td style="padding:10px 8px"><a href="tel:${phone}" style="color:#4f46e5">${phone}</a></td>
+              </tr>
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:10px 8px;font-weight:700;color:#374151">Email:</td>
+                <td style="padding:10px 8px">${email?.trim() ? `<a href="mailto:${email}" style="color:#4f46e5">${email}</a>` : '—'}</td>
+              </tr>
+            </table>
+            <p style="margin:0 0 16px;font-weight:700;color:#374151;font-size:16px">Thông tin bất động sản</p>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:10px 8px;font-weight:700;color:#374151;width:180px">Loại BĐS:</td>
+                <td style="padding:10px 8px">${propertyType || '—'}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:10px 8px;font-weight:700;color:#374151">Giao dịch:</td>
+                <td style="padding:10px 8px;color:#4f46e5;font-weight:700">${transactionLabel}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:10px 8px;font-weight:700;color:#374151">Địa chỉ:</td>
+                <td style="padding:10px 8px">${address}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:10px 8px;font-weight:700;color:#374151">Diện tích:</td>
+                <td style="padding:10px 8px">${area ? `${area} m²` : '—'}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #f3f4f6">
+                <td style="padding:10px 8px;font-weight:700;color:#374151">Giá kỳ vọng:</td>
+                <td style="padding:10px 8px">${price || '—'}</td>
+              </tr>
+            </table>
+            ${notes?.trim() ? `
+            <div style="margin-top:8px;padding:16px;background:#f9fafb;border-radius:10px;border-left:4px solid #4f46e5">
+              <p style="margin:0 0 6px;font-weight:700;color:#374151">Thông tin thêm:</p>
+              <p style="margin:0;white-space:pre-wrap;color:#4b5563;line-height:1.7">${notes}</p>
+            </div>` : ''}
+            <p style="margin-top:24px;color:#9ca3af;font-size:12px;text-align:center">— SGS Land Ký Gửi BĐS · info@sgsland.vn</p>
+          </div>
+        </div>`;
+
+      await emailService.sendEmail(DEFAULT_TENANT_ID, {
+        to: 'info@sgsland.vn',
+        subject: `[Ký Gửi BĐS] ${transactionLabel} — ${name} — ${address}`,
+        html,
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[Consignment] Submit error:', error);
+      res.status(500).json({ error: 'Không thể gửi yêu cầu. Vui lòng thử lại hoặc liên hệ info@sgsland.vn.' });
+    }
+  });
+
   // ─── SEO Overrides API ─────────────────────────────────────────────────────
   // GET  /api/seo-overrides          — public read (used by server-side injector on start)
   // POST /api/seo-overrides/:key     — ADMIN only: upsert an override

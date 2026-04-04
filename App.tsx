@@ -51,6 +51,7 @@ const LiveChat = lazyLoad(() => import('./pages/LiveChat'), 'LiveChat');
 const PrivacyPolicy = lazyLoad(() => import('./pages/Legal'), 'PrivacyPolicy');
 const TermsOfService = lazyLoad(() => import('./pages/Legal'), 'TermsOfService');
 const CookieSettings = lazyLoad(() => import('./pages/Legal'), 'CookieSettings');
+const Consignment = lazyLoad(() => import('./pages/Consignment'), 'Consignment');
 
 // Private Pages - Core
 const Dashboard = lazyLoad(() => import('./pages/Dashboard'), 'Dashboard');
@@ -165,6 +166,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.PRIVACY]: PrivacyPolicy,
     [ROUTES.TERMS]: TermsOfService,
     [ROUTES.COOKIES]: CookieSettings,
+    [ROUTES.KY_GUI]: Consignment,
     [ROUTES.LOGIN]: Login,
     [ROUTES.LISTING]: ListingDetail, 
 
@@ -220,6 +222,7 @@ const PUBLIC_ROUTES = new Set([
     ROUTES.PRIVACY,
     ROUTES.TERMS,
     ROUTES.COOKIES,
+    ROUTES.KY_GUI,
     ROUTES.LOGIN,
     ROUTES.RESET_PASSWORD,
     ROUTES.VERIFY_EMAIL,
