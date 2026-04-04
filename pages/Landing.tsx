@@ -243,7 +243,7 @@ export const Landing: React.FC = () => {
     );
 
     return (
-        <div className="bg-[var(--bg-surface)] dark:bg-slate-900 text-[var(--text-primary)] dark:text-white font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden min-h-screen transition-colors duration-300">
+        <div className="bg-[var(--bg-surface)] dark:bg-slate-900 text-[var(--text-primary)] dark:text-white font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-clip min-h-[100dvh] transition-colors duration-300">
             
             {/* NAVBAR — only shown for guests (when logged in, Layout's CommandCenter handles navigation) */}
             {!currentUser && (
@@ -284,7 +284,7 @@ export const Landing: React.FC = () => {
             )}
 
             {/* HERO SECTION */}
-            <section className={`relative ${currentUser ? 'pt-8 md:pt-12' : 'pt-32 md:pt-40'} pb-20 md:pb-32 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center items-center`}>
+            <section className={`relative ${currentUser ? 'pt-8 md:pt-12' : 'pt-32 md:pt-40'} pb-20 md:pb-32 px-6 overflow-hidden min-h-[90svh] flex flex-col justify-center items-center`}>
                 {/* Background Decor */}
                 <motion.div 
                     animate={{ 
@@ -581,7 +581,7 @@ export const Landing: React.FC = () => {
             </section>
 
             {/* FOOTER */}
-            <footer className="bg-[var(--bg-surface)] dark:bg-slate-900 text-sm py-16 md:py-20 px-6 border-t border-[var(--glass-border)] dark:border-slate-800">
+            <footer className="bg-[var(--bg-surface)] dark:bg-slate-900 text-sm py-16 md:py-20 px-6 border-t border-[var(--glass-border)] dark:border-slate-800 pb-safe-footer">
                 <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 md:gap-12">
                     <div className="col-span-2">
                         <div className="flex items-center gap-2 mb-4 md:mb-6">
