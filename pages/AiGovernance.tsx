@@ -166,11 +166,55 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
     </div>
 ));
 
+const AGENT_SKILL_CATALOG: { key: string; agent: string; desc: string }[] = [
+    { key: 'ROUTER_SYSTEM',       agent: 'Router',          desc: 'Phân tích ý định & định tuyến agent phù hợp' },
+    { key: 'WRITER_PERSONA',      agent: 'Writer',          desc: 'Tính cách & phong cách tư vấn viên trả lời' },
+    { key: 'INVENTORY_SYSTEM',    agent: 'Inventory',       desc: 'Phân tích & tìm kiếm bất động sản' },
+    { key: 'FINANCE_SYSTEM',      agent: 'Finance',         desc: 'Tư vấn tài chính, vay ngân hàng, lãi suất' },
+    { key: 'LEGAL_SYSTEM',        agent: 'Legal',           desc: 'Tư vấn pháp lý, sổ đỏ, thủ tục sang tên' },
+    { key: 'SALES_SYSTEM',        agent: 'Sales',           desc: 'Chuẩn bị brief xem nhà, chốt deal' },
+    { key: 'MARKETING_SYSTEM',    agent: 'Marketing',       desc: 'Phân tích ưu đãi, chiến dịch marketing' },
+    { key: 'CONTRACT_SYSTEM',     agent: 'Contract',        desc: 'Phân tích điều khoản hợp đồng BĐS' },
+    { key: 'LEAD_ANALYST_SYSTEM', agent: 'Lead Analyst',   desc: 'Phân tích tâm lý & hành vi khách hàng' },
+];
+
 const PromptsTab = memo(({ 
     prompts, selectedPrompt, editContent, isEvalRunning, testInput, lastEvalRun,
     onSelect, onEditContent, onInsertVar, onRunSim, onSaveVersion, onCreateOpen, onSetTestInput, t 
-}: PromptsTabProps) => (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-enter">
+}: PromptsTabProps) => {
+    const configuredKeys = new Set((prompts || []).map(p => p.name));
+    return (
+    <div className="space-y-4 animate-enter">
+        {/* AGENT SKILLS CATALOG */}
+        <div className="bg-[var(--bg-surface)] p-4 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+            <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Catalog Agent Skills — Tên template khớp key để override mặc định</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                {AGENT_SKILL_CATALOG.map(({ key, agent, desc }) => {
+                    const configured = configuredKeys.has(key);
+                    return (
+                        <div
+                            key={key}
+                            onClick={() => !configured && onCreateOpen()}
+                            title={configured ? 'Đã có template — chọn từ danh sách bên dưới' : `Nhấn để tạo template "${key}"`}
+                            className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all select-none ${configured ? 'bg-emerald-50 border-emerald-200' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] hover:border-indigo-200 hover:bg-indigo-50'}`}
+                        >
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                                {configured
+                                    ? <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                    : <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-tertiary)] opacity-40 shrink-0"></span>
+                                }
+                                <span className={`font-bold truncate ${configured ? 'text-emerald-700' : 'text-[var(--text-secondary)]'}`}>{agent}</span>
+                            </div>
+                            <code className="text-[10px] text-[var(--text-tertiary)] font-mono block truncate">{key}</code>
+                            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5 leading-tight hidden sm:block">{desc}</p>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+
+        {/* LIST + EDITOR */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LIST */}
         <div className="bg-[var(--bg-surface)] p-4 rounded-[24px] border border-[var(--glass-border)] shadow-sm h-[600px] flex flex-col">
             <div className="flex justify-between items-center mb-4 px-2">
@@ -263,8 +307,10 @@ const PromptsTab = memo(({
                 </div>
             )}
         </div>
+        </div>
     </div>
-));
+    );
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RLHF Tab
