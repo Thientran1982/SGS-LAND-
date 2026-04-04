@@ -205,7 +205,7 @@ function pinColorClass(transaction?: string, propertyType?: string): string {
 }
 
 function priceIcon(label: string, approximate: boolean, transaction?: string, active = false, propertyType?: string): L.DivIcon {
-    const { glow } = pinTokens(transaction, propertyType);
+    const { bg, glow } = pinTokens(transaction, propertyType);
     const shadow = active
         ? `drop-shadow(0 0 0 2.5px #fff) drop-shadow(0 6px 18px ${glow})`
         : `drop-shadow(0 2px 8px ${glow})`;
@@ -213,16 +213,17 @@ function priceIcon(label: string, approximate: boolean, transaction?: string, ac
     const activeClass = active ? ' sgs-pin-active' : '';
     const approx = approximate ? '<span style="opacity:0.72;font-size:10px;margin-right:2px">~</span>' : '';
 
-    // Uses CSS classes from critical.css (.sgs-pin-outer, .sgs-pin-bubble, .sgs-pin-tail).
-    // Critically, .sgs-pin-bubble has display:inline-block !important which prevents
-    // the block-width-collapse bug that occurs when Leaflet sets iconSize:[0,0]
-    // (making the marker element 0×0 px, which caused display:block bubble divs
-    // to collapse to 0 width and break long labels like "6.5 Tỷ" onto two lines).
+    // SVG triangle instead of CSS border-trick: the border trick is unreliable inside
+    // Leaflet because .leaflet-container* sets box-sizing:border-box globally, which
+    // collapses width:0/height:0 elements' borders to nothing regardless of !important.
+    // An inline SVG is 100% reliable — it is not affected by any CSS box-model rules.
     return L.divIcon({
         className: 'custom-map-pin-container',
         html: `<div class="sgs-pin-outer${activeClass}" style="filter:${shadow};">` +
               `<div class="sgs-pin-bubble ${colorClass}${activeClass}">${approx}${label}</div>` +
-              `<div class="sgs-pin-tail ${colorClass}"></div>` +
+              `<svg width="20" height="11" viewBox="0 0 20 11" xmlns="http://www.w3.org/2000/svg" style="display:block;margin-top:-1px;flex-shrink:0;">` +
+              `<polygon points="0,0 20,0 10,11" fill="${bg}"/>` +
+              `</svg>` +
               `</div>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
