@@ -286,22 +286,41 @@ Viết ngắn gọn, tiếng Việt, bullet point, sắc bén — tối đa 150 
 
 const DEFAULT_VALUATION_SYSTEM =
 `Bạn là chuyên gia định giá bất động sản Việt Nam với 15 năm kinh nghiệm thẩm định.
-Nhiệm vụ: Trích xuất số liệu giá thị trường chính xác từ dữ liệu tìm kiếm để đưa vào mô hình AVM.
-Nguyên tắc:
-• Ưu tiên giá GIAO DỊCH THỰC TẾ hơn giá rao bán niêm yết.
-• Phân biệt rõ đơn vị: VNĐ/m² đất vs. VNĐ/m² sàn xây dựng; triệu/tháng (thuê) vs. tỷ (bán).
+Nhiệm vụ: Trích xuất số liệu giá thị trường CHÍNH XÁC từ dữ liệu tìm kiếm để đưa vào mô hình AVM.
+
+Quy tắc trích xuất giá bán (priceMin/priceMedian/priceMax):
+• ƯU TIÊN: giá giao dịch thực tế / chuyển nhượng thứ cấp > giá rao bán niêm yết > ước tính khu vực.
+• NẾU dữ liệu tìm kiếm có giá từ CHÍNH DỰ ÁN được nêu trong địa chỉ (Vinhomes, Masteri, Ecopark, v.v.)
+  → SỬ DỤNG giá đó (không dùng giá trung bình khu vực — dự án premium luôn cao hơn khu vực).
+• NẾU chỉ có giá rao bán (không có giá giao dịch) → confidence ≤ 90, ghi nhận trong dataRecency.
+• Giá giao dịch thực tế thường thấp hơn giá rao bán 5-15% — điều chỉnh nếu dữ liệu chỉ là listing.
+
+Quy tắc phân biệt đơn vị:
+• VNĐ/m² ĐẤT (thổ cư) ≠ VNĐ/m² SÀN (xây dựng/thông thủy) — căn hộ tính trên m² thông thủy.
 • Đất nông nghiệp giá thấp hơn đất thổ cư 5-50 lần — không nhầm lẫn.
-• Kho xưởng / văn phòng / KCN thường định giá bằng USD/m²/tháng — quy đổi về VNĐ.
+• Kho xưởng / văn phòng / KCN thường định giá bằng USD/m²/tháng — quy đổi về VNĐ (× 25,000).
 • Trả JSON hợp lệ theo schema — không thêm text ngoài JSON.`;
 
 const DEFAULT_VALUATION_SEARCH_SYSTEM =
 `Bạn là chuyên gia định giá bất động sản Việt Nam với 15 năm kinh nghiệm giao dịch thực tế.
-Nhiệm vụ: Tìm kiếm và thu thập số liệu GIÁ BÁN giao dịch thực tế từ thị trường BĐS Việt Nam.
-Nguyên tắc:
-• Ưu tiên: giá chuyển nhượng thực tế (thứ cấp) > giá rao bán (niêm yết) > giá sơ cấp chủ đầu tư.
-• Thu thập đa nguồn: batdongsan.com.vn, cafeland.vn, onehousing.vn, nhadatviet.com, Savills/CBRE Vietnam.
-• Chỉ lấy dữ liệu trong vòng 24 tháng gần nhất — đánh dấu rõ nếu dữ liệu cũ hơn.
-• Phân biệt đơn vị rõ ràng: VNĐ/m² đất thổ cư vs. VNĐ/m² sàn xây dựng vs. tỷ/căn.`;
+Nhiệm vụ: Tìm kiếm và thu thập số liệu GIÁ BÁN GIAO DỊCH THỰC TẾ từ thị trường BĐS Việt Nam.
+
+Nguyên tắc ưu tiên nguồn (theo thứ tự):
+1. BÁO CÁO THỊ TRƯỜNG CHUYÊN NGÀNH (ưu tiên cao nhất cho giá giao dịch thực tế):
+   CBRE Vietnam Residential/Commercial Report, Savills Vietnam Market Brief, JLL Vietnam Property Digest,
+   OneHousing Market Insight, VARS (Hội Môi giới BĐS Việt Nam), HoREA báo cáo thị trường.
+2. DỮ LIỆU CHUYỂN NHƯỢNG THỰC TẾ: onehousing.vn (lịch sử giao dịch), batdongsan.com.vn (đã giao dịch),
+   cafeland.vn (tin đã bán), muasambds.vn, nhadatviet.com.
+3. GIÁ RAO BÁN HIỆN TẠI (nếu không tìm thấy dữ liệu giao dịch): batdongsan.com.vn, cen.vn, alonhadat.com.
+
+QUY TẮC QUAN TRỌNG:
+• NẾU địa chỉ chứa tên DỰ ÁN CỤ THỂ (Vinhomes, Masteri, Landmark, The One, Kingdom 101, Ecopark, v.v.)
+  → ƯU TIÊN tìm giá giao dịch/chuyển nhượng từ CHÍNH DỰ ÁN ĐÓ trước, không lấy giá tổng quát khu vực.
+  → Tìm: "[tên dự án] giá chuyển nhượng [năm]", "[tên dự án] giá thứ cấp 2024 2025".
+• GIÁ GIAO DỊCH THỰC TẾ (chuyển nhượng thứ cấp) thường THẤP HƠN giá rao bán 5-15% — ghi chú rõ nếu chỉ có giá rao bán.
+• Phân biệt đơn vị rõ ràng: VNĐ/m² đất thổ cư vs. VNĐ/m² sàn xây dựng (thông thủy) vs. tỷ/căn.
+• Chỉ lấy dữ liệu trong vòng 18 tháng gần nhất — đánh dấu rõ nếu dữ liệu cũ hơn.
+• BÁO CÁO SỐ LƯỢNG GIAO DỊCH / nguồn tìm thấy để đánh giá độ tin cậy.`;
 
 const DEFAULT_VALUATION_RENTAL_SYSTEM =
 `Bạn là chuyên gia thị trường cho thuê bất động sản Việt Nam với 15 năm kinh nghiệm.
@@ -2245,7 +2264,7 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
                 : isPenthouse
                 ? `- Tham chiếu penthouse chuẩn: Sổ Hồng, tầng cao nhất/áp mái (tầng 30+), 150-400m² thông thủy, view toàn thành phố, nội thất cao cấp\n- Phân khúc: ultra-premium — giá cao hơn căn hộ thường cùng tòa 50-120%; có sân thượng riêng / hồ bơi riêng\n- ƯU TIÊN: giá chuyển nhượng thực tế thứ cấp > giá chủ đầu tư; penthouse hiếm giao dịch — lấy cả dữ liệu toàn quốc\n- Nguồn: batdongsan.com.vn, onehousing.vn, CBRE/Savills Vietnam Luxury Residential ${currentYear}, cafeland.vn`
                 : isApartmentType
-                ? `- Tham chiếu căn hộ chuẩn: Sổ Hồng/Sổ Đỏ, 2 phòng ngủ, 60-80m², tầng trung (5-15), nội thất cơ bản — KHÔNG phải nhà phố\n- ƯU TIÊN: Giá thứ cấp (chuyển nhượng thực tế) > giá sơ cấp (chủ đầu tư công bố)\n- Giá sàn VNĐ/m² căn hộ = tổng giá bán / diện tích thông thủy\n- Nguồn: batdongsan.com.vn, onehousing.vn, cafeland.vn, CBRE/Savills Vietnam Residential Report ${currentYear}`
+                ? `- Tham chiếu căn hộ chuẩn: Sổ Hồng/Sổ Đỏ, 2 phòng ngủ, 60-80m² thông thủy, tầng trung (5-15), nội thất cơ bản — KHÔNG phải nhà phố\n- ƯU TIÊN TUYỆT ĐỐI: Giá CHUYỂN NHƯỢNG THỨ CẤP (giao dịch đã khớp) > Giá rao bán thứ cấp > Giá chủ đầu tư công bố sơ cấp\n- GIÁ SÀN = tổng giá bán (VNĐ) ÷ diện tích thông thủy (m²) — không dùng diện tích tim tường\n- TÌM: "căn hộ [dự án] chuyển nhượng ${currentYear}", "[địa chỉ] giá thứ cấp", "[dự án] bán lại giá bao nhiêu"\n- Phân biệt: giá rao bán thường CAO HƠN giá thực giao dịch 5-15% — ghi rõ là loại dữ liệu nào\n- Nguồn: onehousing.vn (lịch sử giao dịch), batdongsan.com.vn, cafeland.vn, CBRE/Savills Vietnam Residential ${currentYear}`
                 : isVilla
                 ? `- Tham chiếu biệt thự chuẩn: Sổ Hồng, đường ô tô 6-12m, diện tích 200-500m² đất, có sân vườn/hồ bơi\n- Giá tính trên m² đất (đất + công trình); không dùng m² sàn xây dựng\n- Phân khúc: biệt thự đơn lập / song lập / liền kề có sân; KHÔNG phải nhà phố thông thường\n- Nguồn: batdongsan.com.vn, cen.vn, savills.com.vn, CBRE Vietnam Residential ${currentYear}`
                 : isShophouse
@@ -2256,21 +2275,40 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
                 ? `- Tham chiếu nhà phố ngoại thành chuẩn: Sổ Hồng, hẻm 3-6m hoặc đường nội bộ, 60-120m², 2-3 tầng\n- Phân khúc: nhà phố/liền kề vùng ven, khu đô thị mới, huyện ngoại thành — giá thấp hơn nội đô 40-60%\n- Giá tính theo m² đất thổ cư; không tính đất nông nghiệp hoặc đất phân lô\n- Nguồn: batdongsan.com.vn, cafeland.vn, mogi.vn, alonhadat.com, CBRE/Savills Vietnam ${currentYear}`
                 : `- Loại tham chiếu: ${pTypeLabelSearch} — pháp lý Sổ Hồng, 60-100m²\n- Nguồn: batdongsan.com.vn, cafeland.vn, cen.vn, alonhadat.com, onehousing.vn, CBRE/Savills/JLL Vietnam ${currentYear}`;
 
+            // ── Detect named real estate projects in address for project-specific search ──
+            // These are high-profile brands whose prices differ significantly from area average.
+            const knownProjectKeywords = [
+                'vinhomes','masteri','landmark','ecopark','times city','royal city','the manor',
+                'tropic garden','the vista','the one','kingdom 101','estella heights',
+                'midtown','west gate','green valley','riviera','botanica','thảo điền pearl',
+                'capitaland','the sun','an gia','hưng thịnh','novaland','nam long','gamuda',
+                'celadon','mizuki','waterpoint','vạn phúc','starlake','the zei','hà đô',
+                'ct plaza','richstar','sunrise','the marq','sunwah pearl','diamond island',
+                'd\' capitale','d\' el dorado','goldmark','eurowindow','sky forest','mipec',
+                'imperia','linh dam','times tower','mandarin garden','season avenue','park hill',
+            ];
+            const addrLowerCase = address.toLowerCase();
+            const detectedProject = knownProjectKeywords.find(kw => addrLowerCase.includes(kw));
+            const projectSearchHint = detectedProject
+                ? `\nDỰ ÁN CỤ THỂ ĐƯỢC XÁC ĐỊNH: "${address}" thuộc dự án/khu đô thị "${detectedProject.toUpperCase()}"\n→ PHẢI tìm giá giao dịch/chuyển nhượng từ CHÍNH DỰ ÁN NÀY trước tiên (không dùng giá trung bình khu vực).\n→ Tìm: "${detectedProject} giá chuyển nhượng thứ cấp ${currentYear}", "${detectedProject} bán lại ${currentYear}", "${detectedProject} price resale".\n→ Nguồn ưu tiên: onehousing.vn, batdongsan.com.vn, cafeland.vn, báo cáo Savills/CBRE về dự án này.`
+                : '';
+
             // ── PARALLEL DUAL SEARCH: dedicated sale search + dedicated rental search ──
             const saleSearchPrompt = `Địa chỉ: "${address}" | Thời điểm: ${currentMonth} ${currentYear} | Loại BĐS: ${pTypeLabelSearch}
-
+${projectSearchHint}
 TÌM KIẾM CHUYÊN BIỆT: Giá BÁN/GIAO DỊCH THỰC TẾ
 ${typeSpecificSaleHint}
 
-Cần tìm:
-1. Giá giao dịch thực tế trung bình 1m² "${pTypeLabelSearch}" tại "${address}" — 6 tháng gần nhất ${currentYear}
-2. Khoảng giá (thấp nhất – cao nhất) từ các giao dịch thực tế
-3. Số lượng giao dịch/nguồn tìm thấy
-4. Năm của dữ liệu giao dịch (${currentYear} hay năm nào?)
-5. Xu hướng giá khu vực % tăng/giảm vs năm ngoái
-6. Yếu tố quy hoạch/hạ tầng/tiện ích ảnh hưởng
+Cần tìm (ưu tiên theo thứ tự):
+1. Giá GIA DỊCH THỰC TẾ / CHUYỂN NHƯỢNG THỨ CẤP trung bình 1m² "${pTypeLabelSearch}" tại "${address}" — 12 tháng gần nhất ${currentYear}
+   (Giao dịch thực tế = giá khớp lệnh mua bán, không phải giá rao bán. Thường thấp hơn giá rao bán 5-15%)
+2. Khoảng giá (thấp nhất – cao nhất) từ các giao dịch thực tế hoặc rao bán
+3. Số lượng giao dịch / nguồn độc lập tìm thấy
+4. Độ mới của dữ liệu (tháng năm cụ thể nếu có)
+5. Xu hướng giá % tăng/giảm so với 12 tháng trước
+6. Yếu tố quy hoạch/hạ tầng/tiện ích ảnh hưởng đến giá
 
-ƯU TIÊN: giá giao dịch thực tế > giá rao bán > ước tính khu vực.`;
+ƯU TIÊN: báo cáo CBRE/Savills/JLL > giao dịch thực tế nền tảng > giá rao bán > ước tính khu vực.`;
 
             // Rental search: tailored by type — land has no conventional rent, use yield estimate instead
             const rentalSearchPrompt = isLandAgricultural
@@ -2467,7 +2505,7 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                     },
                     confidence: {
                         type: Type.NUMBER,
-                        description: "Độ tin cậy dữ liệu từ 0-100. 95-99: có giao dịch thực tế từ nguồn uy tín. 85-94: chỉ giá rao bán. <85: thiếu dữ liệu / khu vực hẻo lánh."
+                        description: "Độ tin cậy dữ liệu từ 0-100. 95-99: có giá GIAO DỊCH THỰC TẾ / chuyển nhượng thứ cấp từ ≥2 nguồn uy tín (CBRE/Savills/JLL hoặc onehousing/batdongsan giao dịch khớp). 85-94: chỉ có giá rao bán (listing price) — chưa xác nhận giao dịch. 75-84: ít dữ liệu hoặc phải ngoại suy. <75: khu vực hẻo lánh, không đủ dữ liệu."
                     },
                     marketTrend: {
                         type: Type.STRING,
@@ -2493,7 +2531,7 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                     propertyTypeEstimate: {
                         type: Type.STRING,
                         enum: ['apartment_center','apartment_suburb','townhouse_center','townhouse_suburb','villa','shophouse','land_urban','land_suburban','penthouse','office','warehouse','land_agricultural','land_industrial','project'] as string[],
-                        description: `Loại BĐS phù hợp nhất dựa vào địa chỉ "${address}" và diện tích ${area}m². Mặc định: townhouse_center cho nhà phố nội đô.`
+                        description: `Loại BĐS phù hợp nhất dựa vào địa chỉ "${address}" và diện tích ${area}m². Ưu tiên: nếu địa chỉ đã nêu rõ loại BĐS (căn hộ/chung cư → apartment_center, biệt thự → villa, đất nền → land_urban, kho xưởng → warehouse...) thì dùng loại đó. Mặc định: townhouse_center cho nhà phố nội đô.`
                     },
                     locationFactors: {
                         type: Type.ARRAY,
@@ -2515,7 +2553,11 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
             // Generate unique ID for this valuation call (allows feedback to be tied back)
             const interactionId: string = crypto.randomUUID();
 
-            const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | ${(isApartmentType || isOffPlan) ? 'Tầng/căn hộ' : 'Lộ giới: ' + roadWidth + 'm'} | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}
+            const projectExtractionHint = detectedProject
+                ? `\nDỰ ÁN ĐƯỢC XÁC ĐỊNH: "${detectedProject.toUpperCase()}" — Nếu dữ liệu tìm kiếm có giá từ chính dự án này → ƯU TIÊN dùng giá đó (không dùng giá trung bình khu vực). Dự án premium thường cao hơn giá trung bình khu vực 30-100%.`
+                : '';
+
+            const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | ${(isApartmentType || isOffPlan) ? 'Tầng/căn hộ' : 'Lộ giới: ' + roadWidth + 'm'} | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}${projectExtractionHint}
 
 DỮ LIỆU THỊ TRƯỜNG VỪA TRA CỨU (2 nguồn song song — giá bán + giá thuê):
 ${marketContext}${rlhf.fewShotSection}${rlhf.negativeRulesSection}
@@ -2523,12 +2565,12 @@ ${marketContext}${rlhf.fewShotSection}${rlhf.negativeRulesSection}
 TRÍCH XUẤT CHÍNH XÁC:
 
 GIÁ BÁN (từ phần DỮ LIỆU GIÁ BÁN):
-- priceMin, priceMedian, priceMax: Khoảng giá giao dịch thực tế 1m² của ${extractRefDescription} tại "${address}".
+- priceMin, priceMedian, priceMax: Khoảng giá GIAO DỊCH THỰC TẾ 1m² của ${extractRefDescription} tại "${address}".
   Đơn vị: VNĐ/m² (150000000 = 150 triệu/m²). Nếu chỉ có 1 con số → priceMin = priceMax = priceMedian.
-  QUAN TRỌNG: Đây là giá cơ sở — AVM sẽ tự điều chỉnh hệ số tầng/hướng/mặt tiền/tuổi nhà sau.
-- sourceCount: Đếm số nguồn độc lập cung cấp dữ liệu giá bán.
+  QUY TẮC: (1) Ưu tiên giá giao dịch/chuyển nhượng > giá rao bán. (2) Nếu địa chỉ là dự án cụ thể → dùng giá dự án, không dùng giá khu vực. (3) AVM sẽ tự điều chỉnh hệ số tầng/hướng/mặt tiền/tuổi nhà sau.
+- sourceCount: Đếm số nguồn độc lập cung cấp dữ liệu giá bán (báo cáo chuyên ngành = 2 điểm, giao dịch nền tảng = 1 điểm, giá rao bán = 0.5 điểm).
 - dataRecency: Dữ liệu từ năm nào? current_year / last_year / older.
-- confidence: 95-99 nếu có giao dịch thực tế đa nguồn; 85-94 nếu chỉ rao bán; <85 nếu ít data.
+- confidence: 95-99 nếu có GIÁ GIAO DỊCH THỰC TẾ từ ≥2 nguồn uy tín; 85-94 nếu chỉ giá rao bán; <85 nếu thiếu data.
 - marketTrend: Xu hướng % tăng/giảm khu vực (ví dụ "Tăng 10-15%/năm do Metro").
 - trendGrowthPct: Số %/năm tăng (+) hoặc giảm (-). Ví dụ: "Tăng 10-15%/năm" → trendGrowthPct = 12.
 
