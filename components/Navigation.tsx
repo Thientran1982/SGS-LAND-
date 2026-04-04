@@ -188,7 +188,13 @@ const NotificationPanel = memo(({
                                         <button
                                             onClick={() => {
                                                 onMarkRead(notif.id);
-                                                onNavigate(`${ROUTES.LEADS}?leadId=${notif.metadata?.leadId}`);
+                                                const lid = notif.metadata?.leadId as string;
+                                                onNavigate(ROUTES.LEADS);
+                                                // Dispatch after a tick so the Leads component is
+                                                // shown (it stays mounted but hidden via display:none).
+                                                setTimeout(() => window.dispatchEvent(
+                                                    new CustomEvent('sgs:open-lead', { detail: { leadId: lid } })
+                                                ), 80);
                                                 onClose();
                                             }}
                                             className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"

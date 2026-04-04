@@ -660,9 +660,32 @@ export const Leads: React.FC = () => {
     useEffect(() => {
         openLeadFromHash(window.location.hash);
         const onHashChange = () => openLeadFromHash(window.location.hash);
+        // Handle notification click: Navigation dispatches 'sgs:open-lead' after switching
+        // to this page. The page is kept alive (display:none) so it won't remount; we need
+        // a custom event to open the correct lead when the user is already on this page.
+        const onOpenLead = (e: Event) => {
+            const { leadId } = (e as CustomEvent<{ leadId: string }>).detail;
+            if (!leadId) return;
+            db.getLeadById(leadId).then(lead => {
+                if (lead) {
+                    setEditingLead(lead);
+                    setIsDetailOpen(true);
+                } else {
+                    setToast({ msg: t('leads.notif_lead_no_access'), type: 'error' });
+                    setTimeout(() => setToast(null), 4000);
+                }
+            }).catch(() => {
+                setToast({ msg: t('leads.notif_lead_no_access'), type: 'error' });
+                setTimeout(() => setToast(null), 4000);
+            });
+        };
         window.addEventListener('hashchange', onHashChange);
-        return () => window.removeEventListener('hashchange', onHashChange);
-    }, [openLeadFromHash]);
+        window.addEventListener('sgs:open-lead', onOpenLead);
+        return () => {
+            window.removeEventListener('hashchange', onHashChange);
+            window.removeEventListener('sgs:open-lead', onOpenLead);
+        };
+    }, [openLeadFromHash, t]);
 
     // --- VIEW SETTINGS STATE (PERSISTED) ---
     const [density, setDensity] = useState<RowDensity>(() => {
