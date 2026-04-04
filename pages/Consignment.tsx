@@ -4,6 +4,38 @@ import { Logo } from '../components/Logo';
 import { db } from '../services/dbApi';
 import { User } from '../types';
 
+// ─── SVG Icon helper ──────────────────────────────────────────────────────────
+
+function Ico({ d, d2, cls = 'w-6 h-6' }: { d: string; d2?: string; cls?: string }) {
+    return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d={d} />
+            {d2 && <path strokeLinecap="round" strokeLinejoin="round" d={d2} />}
+        </svg>
+    );
+}
+
+const P = {
+    clipboard:   'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
+    scale:       'M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3',
+    docCheck:    'M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12',
+    megaphone:   'M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46',
+    users:       'M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z',
+    currency:    'M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+    globe:       'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418',
+    shieldCheck: 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z',
+    cpuChip:     'M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z',
+    lock:        'M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z',
+    chartBar:    'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z',
+    gift:        'M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1019.5 7.125c0 1.088-.293 2.109-.809 2.981m-13.882 0a2.624 2.624 0 01-.809-2.981A2.625 2.625 0 014.5 7.125 2.625 2.625 0 017.125 4.5c.884 0 1.67.383 2.218.996m5.25 4.504H3.75',
+    star:        'M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z',
+    lightBulb:   'M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18',
+    checkCircle: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+    tag:         'M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z',
+    tagDot:      'M6 6h.008v.008H6V6z',
+    key:         'M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.169.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z',
+};
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface FormData {
@@ -31,42 +63,42 @@ const INITIAL_FORM: FormData = {
 const PROCESS_STEPS = [
     {
         num: '01',
-        icon: '📋',
+        icon: <Ico d={P.clipboard} cls="w-6 h-6" />,
         title: 'Tiếp nhận hồ sơ',
         desc: 'Điền form đăng ký ký gửi. Chuyên viên SGS LAND liên hệ trong vòng 4 giờ làm việc để xác nhận thông tin và thu thập hồ sơ pháp lý ban đầu.',
         detail: 'Giấy chứng nhận quyền sử dụng đất, CMND/CCCD chủ sở hữu, giấy phép xây dựng (nếu có)',
     },
     {
         num: '02',
-        icon: '⚖️',
+        icon: <Ico d={P.scale} cls="w-6 h-6" />,
         title: 'Thẩm định pháp lý',
         desc: 'Đội ngũ pháp lý SGS LAND kiểm tra tính hợp lệ của hồ sơ: tình trạng tranh chấp, quy hoạch, nghĩa vụ tài chính còn lại.',
         detail: 'Hoàn thành trong 1–3 ngày làm việc. Kết quả thẩm định được thông báo bằng văn bản.',
     },
     {
         num: '03',
-        icon: '📝',
+        icon: <Ico d={P.docCheck} cls="w-6 h-6" />,
         title: 'Ký kết hợp đồng ký gửi',
         desc: 'Hai bên ký Hợp đồng Ký gửi Bất động sản xác định rõ mức hoa hồng, thời hạn ký gửi, quyền và nghĩa vụ từng bên. Hợp đồng có giá trị pháp lý đầy đủ.',
         detail: 'Căn cứ: Điều 41–42 Luật KDBĐS 2023 & Nghị định 96/2024/NĐ-CP.',
     },
     {
         num: '04',
-        icon: '📣',
+        icon: <Ico d={P.megaphone} cls="w-6 h-6" />,
         title: 'Định giá & Triển khai marketing',
         desc: 'Định giá bằng AI (AVM) kết hợp thẩm định thực tế. Đăng tin trên SGS LAND, sàn giao dịch đối tác, mạng xã hội và kênh môi giới nội bộ.',
         detail: 'Bộ ảnh chuyên nghiệp, video thực tế, mô tả chuẩn SEO — tất cả miễn phí khi ký gửi.',
     },
     {
         num: '05',
-        icon: '🤝',
+        icon: <Ico d={P.users} cls="w-6 h-6" />,
         title: 'Kết nối khách & Đàm phán',
         desc: 'Môi giới SGS LAND dẫn dắt toàn bộ quá trình xem nhà, đàm phán giá, điều khoản hợp đồng mua bán / thuê — chủ sở hữu không cần trực tiếp gặp gỡ.',
         detail: 'Chủ sở hữu được cập nhật tiến độ định kỳ qua app hoặc email.',
     },
     {
         num: '06',
-        icon: '💰',
+        icon: <Ico d={P.currency} cls="w-6 h-6" />,
         title: 'Ký kết & Thu hoa hồng',
         desc: 'Sau khi hợp đồng mua bán / thuê được ký kết hợp lệ và tiền cọc hoặc tiền mua được chuyển vào tài khoản của chủ sở hữu, hoa hồng của SGS LAND được thanh toán theo hợp đồng ký gửi.',
         detail: 'Hoa hồng chỉ phát sinh khi giao dịch thành công — không thu phí nếu không giao dịch.',
@@ -99,32 +131,32 @@ const COMMISSION_TABLE = [
 
 const BENEFITS = [
     {
-        icon: '📡',
+        icon: <Ico d={P.globe} cls="w-7 h-7" />,
         title: 'Phủ sóng marketing tối đa',
         desc: 'Tài sản của bạn được đăng trên hệ sinh thái SGS LAND, 50+ sàn đối tác, và kênh môi giới nội bộ hơn 5.000 môi giới đang hoạt động.',
     },
     {
-        icon: '⚖️',
+        icon: <Ico d={P.shieldCheck} cls="w-7 h-7" />,
         title: 'Hoa hồng được bảo vệ bằng HĐ',
         desc: 'Hợp đồng ký gửi xác định rõ ràng mức hoa hồng, điều kiện phát sinh, thời hạn — không tranh cãi, không mờ ám. SGS LAND tuân thủ Luật KDBĐS 2023.',
     },
     {
-        icon: '🤖',
+        icon: <Ico d={P.cpuChip} cls="w-7 h-7" />,
         title: 'Định giá AI chính xác',
         desc: 'Mô hình định giá AVM của SGS LAND phân tích hàng ngàn điểm dữ liệu giúp chủ sở hữu có mức giá cạnh tranh — bán / cho thuê nhanh hơn.',
     },
     {
-        icon: '🔒',
+        icon: <Ico d={P.lock} cls="w-7 h-7" />,
         title: 'An toàn thông tin',
         desc: 'Thông tin tài sản và thông tin cá nhân được bảo mật theo NĐ 13/2023/NĐ-CP. Chỉ chia sẻ với khách mua / thuê sau khi có sự đồng ý của chủ sở hữu.',
     },
     {
-        icon: '📊',
+        icon: <Ico d={P.chartBar} cls="w-7 h-7" />,
         title: 'Báo cáo định kỳ',
         desc: 'Chủ sở hữu nhận báo cáo hàng tuần: số lượt xem, phản hồi thị trường, khách tiềm năng — minh bạch 100% qua dashboard hoặc email.',
     },
     {
-        icon: '🆓',
+        icon: <Ico d={P.gift} cls="w-7 h-7" />,
         title: 'Không phí ký gửi ban đầu',
         desc: 'Hoàn toàn miễn phí khi đăng ký ký gửi. Chi phí marketing (ảnh, video, quảng cáo) do SGS LAND chi trả. Hoa hồng chỉ thu khi giao dịch thành công.',
     },
@@ -177,12 +209,12 @@ const StepCard: React.FC<typeof PROCESS_STEPS[0]> = ({ num, icon, title, desc, d
         </div>
         <div className="pb-10 flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">{icon}</span>
+                <span className="text-indigo-600 flex-shrink-0">{icon}</span>
                 <h3 className="text-lg font-bold text-[var(--text-primary)]">{title}</h3>
             </div>
             <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-2">{desc}</p>
-            <div className="text-xs text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-lg inline-block">
-                💡 {detail}
+            <div className="flex items-start gap-1.5 text-xs text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-lg inline-flex">
+                <Ico d={P.lightBulb} cls="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />{detail}
             </div>
         </div>
     </div>
@@ -371,7 +403,7 @@ export const Consignment: React.FC = () => {
                 </div>
                 <div className="relative max-w-4xl mx-auto text-center">
                     <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur text-indigo-200 text-xs font-bold px-4 py-2 rounded-full mb-6 border border-white/20">
-                        🏆 Nền tảng ký gửi BĐS uy tín số 1 TP. Hồ Chí Minh
+                        <Ico d={P.star} cls="w-4 h-4 text-yellow-400" /> Nền tảng ký gửi BĐS uy tín số 1 TP. Hồ Chí Minh
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black leading-tight mb-6 tracking-tight">
                         Ký Gửi Bất Động Sản
@@ -417,7 +449,7 @@ export const Consignment: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {BENEFITS.map((b) => (
                             <div key={b.title} className="bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-2xl p-6 hover:shadow-md transition-shadow">
-                                <div className="text-3xl mb-4">{b.icon}</div>
+                                <div className="mb-4 text-indigo-600">{b.icon}</div>
                                 <h3 className="font-bold text-[var(--text-primary)] mb-2">{b.title}</h3>
                                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{b.desc}</p>
                             </div>
@@ -436,7 +468,7 @@ export const Consignment: React.FC = () => {
 
                     {/* Important legal notice */}
                     <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-5 mb-8 text-sm text-amber-800 dark:text-amber-300">
-                        <strong>⚖️ Căn cứ pháp lý:</strong> Biểu phí hoa hồng này được xác lập trong Hợp đồng Ký gửi Bất động sản, có giá trị pháp lý đầy đủ theo Điều 41–42 Luật Kinh doanh Bất động sản 2023 (Luật số 29/2023/QH15, có hiệu lực từ 01/01/2025) và Nghị định 96/2024/NĐ-CP. <strong>Hoa hồng phát sinh khi và chỉ khi giao dịch thành công</strong> — được xác định là thời điểm hợp đồng mua bán hoặc hợp đồng thuê được ký kết và tiền đặt cọc / tiền thuê tháng đầu được thanh toán hợp lệ cho chủ sở hữu.
+                        <strong className="inline-flex items-center gap-1"><Ico d={P.scale} cls="w-4 h-4" /> Căn cứ pháp lý:</strong> Biểu phí hoa hồng này được xác lập trong Hợp đồng Ký gửi Bất động sản, có giá trị pháp lý đầy đủ theo Điều 41–42 Luật Kinh doanh Bất động sản 2023 (Luật số 29/2023/QH15, có hiệu lực từ 01/01/2025) và Nghị định 96/2024/NĐ-CP. <strong>Hoa hồng phát sinh khi và chỉ khi giao dịch thành công</strong> — được xác định là thời điểm hợp đồng mua bán hoặc hợp đồng thuê được ký kết và tiền đặt cọc / tiền thuê tháng đầu được thanh toán hợp lệ cho chủ sở hữu.
                     </div>
 
                     <div className="overflow-x-auto rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] shadow-sm">
@@ -499,7 +531,7 @@ export const Consignment: React.FC = () => {
                 <div className="max-w-4xl mx-auto">
                     <div className="border border-indigo-700 rounded-2xl p-8 md:p-10">
                         <div className="flex gap-4 items-start">
-                            <span className="text-4xl flex-shrink-0">🔏</span>
+                            <span className="flex-shrink-0 text-indigo-300"><Ico d={P.lock} cls="w-10 h-10" /></span>
                             <div>
                                 <h2 className="text-xl md:text-2xl font-black mb-4 text-white">Cam Kết Pháp Lý Về Hoa Hồng</h2>
                                 <div className="space-y-3 text-sm text-indigo-200 leading-relaxed">
@@ -547,7 +579,7 @@ export const Consignment: React.FC = () => {
 
                     {submitted ? (
                         <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-10 text-center animate-enter">
-                            <div className="text-5xl mb-4">✅</div>
+                            <div className="mb-4 flex justify-center text-emerald-500"><Ico d={P.checkCircle} cls="w-14 h-14" /></div>
                             <h3 className="text-2xl font-black text-emerald-700 dark:text-emerald-400 mb-3">Đăng ký thành công!</h3>
                             <p className="text-[var(--text-secondary)] mb-2">Chúng tôi đã nhận được yêu cầu ký gửi của bạn.</p>
                             <p className="text-[var(--text-secondary)] mb-6">Chuyên viên SGS LAND sẽ liên hệ qua số điện thoại bạn đã cung cấp trong vòng <strong>4 giờ làm việc</strong>.</p>
@@ -626,7 +658,11 @@ export const Consignment: React.FC = () => {
                                                         onChange={handleChange}
                                                         className="accent-indigo-600"
                                                     />
-                                                    <span className="text-sm font-medium text-[var(--text-primary)]">{v === 'SELL' ? '🏷 Bán' : '🔑 Cho thuê'}</span>
+                                                    <span className="inline-flex items-center gap-1 text-sm font-medium text-[var(--text-primary)]">
+                                                        {v === 'SELL'
+                                                            ? <><Ico d={P.tag} d2={P.tagDot} cls="w-4 h-4" /> Bán</>
+                                                            : <><Ico d={P.key} cls="w-4 h-4" /> Cho thuê</>}
+                                                    </span>
                                                 </label>
                                             ))}
                                         </div>
