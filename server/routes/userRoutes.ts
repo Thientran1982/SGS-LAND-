@@ -66,7 +66,9 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
     try {
       const user = (req as any).user;
       const dbUser = await userRepository.findByIdDirect(user.id, user.tenantId);
-      if (!dbUser) return res.json({ user });
+      // If the JWT user ID is not in the DB (e.g. stale token from a different environment
+      // or after a DB reset), force the client to log out and re-authenticate.
+      if (!dbUser) return res.status(401).json({ error: 'SESSION_STALE', message: 'Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.' });
       res.json({ user: userRepository.toPublicUser(dbUser) });
     } catch (error) {
       res.json({ user: (req as any).user });
