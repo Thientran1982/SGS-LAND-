@@ -284,6 +284,16 @@ Nguyên tắc phân tích:
 • Phong cách tư vấn phù hợp: Formal (khách doanh nhân/nhà đầu tư) | Casual (khách trẻ/lần đầu mua) | Data-driven (khách IT/tài chính).
 Viết ngắn gọn, tiếng Việt, bullet point, sắc bén — tối đa 150 từ.`;
 
+const DEFAULT_VALUATION_SYSTEM =
+`Bạn là chuyên gia định giá bất động sản Việt Nam với 15 năm kinh nghiệm thẩm định.
+Nhiệm vụ: Trích xuất số liệu giá thị trường chính xác từ dữ liệu tìm kiếm để đưa vào mô hình AVM.
+Nguyên tắc:
+• Ưu tiên giá GIAO DỊCH THỰC TẾ hơn giá rao bán niêm yết.
+• Phân biệt rõ đơn vị: VNĐ/m² đất vs. VNĐ/m² sàn xây dựng; triệu/tháng (thuê) vs. tỷ (bán).
+• Đất nông nghiệp giá thấp hơn đất thổ cư 5-50 lần — không nhầm lẫn.
+• Kho xưởng / văn phòng / KCN thường định giá bằng USD/m²/tháng — quy đổi về VNĐ.
+• Trả JSON hợp lệ theo schema — không thêm text ngoài JSON.`;
+
 // ── Helper functions — load từ DB (admin override) hoặc dùng default ──────
 async function getInventoryInstruction(tenantId: string): Promise<string> {
     return getPromptTemplate(tenantId, 'INVENTORY_SYSTEM', DEFAULT_INVENTORY_SYSTEM);
@@ -305,6 +315,9 @@ async function getContractInstruction(tenantId: string): Promise<string> {
 }
 async function getLeadAnalystInstruction(tenantId: string): Promise<string> {
     return getPromptTemplate(tenantId, 'LEAD_ANALYST_SYSTEM', DEFAULT_LEAD_ANALYST_SYSTEM);
+}
+async function getValuationInstruction(tenantId: string): Promise<string> {
+    return getPromptTemplate(tenantId, 'VALUATION_SYSTEM', DEFAULT_VALUATION_SYSTEM);
 }
 
 async function getPromptTemplate(tenantId: string, templateKey: string, fallback: string): Promise<string> {
@@ -2459,10 +2472,15 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                 required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors"]
             };
 
-            // ── RLHF injection: load few-shot examples + negative rules from past feedback ──
-            const rlhf = tenantId
-                ? await buildRlhfContext(tenantId, 'ESTIMATE_VALUATION').catch(() => ({ fewShotSection: '', negativeRulesSection: '' }))
-                : { fewShotSection: '', negativeRulesSection: '' };
+            // ── RLHF + Skill: load in parallel — RLHF few-shot examples + admin-tunable system instruction ──
+            const [rlhf, valuationSystemInstruction] = await Promise.all([
+                tenantId
+                    ? buildRlhfContext(tenantId, 'ESTIMATE_VALUATION').catch(() => ({ fewShotSection: '', negativeRulesSection: '' }))
+                    : Promise.resolve({ fewShotSection: '', negativeRulesSection: '' }),
+                tenantId
+                    ? getValuationInstruction(tenantId).catch(() => DEFAULT_VALUATION_SYSTEM)
+                    : Promise.resolve(DEFAULT_VALUATION_SYSTEM),
+            ]);
 
             // Generate unique ID for this valuation call (allows feedback to be tied back)
             const interactionId: string = crypto.randomUUID();
@@ -2508,7 +2526,7 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
                             model: GENAI_CONFIG.MODELS.WRITER,
                             contents: extractPrompt,
                             config: {
-                                systemInstruction: 'Bạn là chuyên gia định giá BĐS Việt Nam. Trích xuất số liệu chính xác từ dữ liệu thị trường. Trả JSON hợp lệ theo schema — không thêm text ngoài JSON.',
+                                systemInstruction: valuationSystemInstruction,
                                 responseMimeType: 'application/json',
                                 responseSchema: extractSchema
                             }
