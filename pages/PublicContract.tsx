@@ -492,13 +492,26 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                     </p>
                     <p style={{ margin: '4px 0' }}>
                         <strong>{isDeposit ? '3.' : '2.'} Phương thức thanh toán: </strong>
-                        Chuyển khoản ngân hàng / tiền mặt theo lịch đã thỏa thuận.
+                        {contract.partyABankAccount
+                            ? <>Chuyển khoản ngân hàng vào tài khoản số <strong>{contract.partyABankAccount}</strong>{contract.partyABankName ? ` – ${contract.partyABankName}` : ''}, chủ tài khoản: <strong>{contract.partyAName}</strong>; hoặc hình thức khác do hai bên thỏa thuận bằng văn bản.</>
+                            : 'Chuyển khoản ngân hàng hoặc tiền mặt theo lịch đã thỏa thuận giữa hai bên.'}
                     </p>
                     {contract.paymentTerms && (
                         <p style={{ margin: '4px 0' }}>
                             <strong>{isDeposit ? '4.' : '3.'} Điều khoản thanh toán: </strong>
                             {contract.paymentTerms}
                         </p>
+                    )}
+                    <p style={{ margin: '6px 0 2px' }}>
+                        <strong>{isDeposit ? '5.' : '4.'} Lãi phạt trả chậm: </strong>
+                        Trường hợp Bên B thanh toán chậm so với lịch đã thỏa thuận, Bên B phải chịu lãi phạt trên số tiền chậm trả tính theo lãi suất <strong>0,05%/ngày</strong> kể từ ngày đến hạn đến ngày thanh toán thực tế.
+                    </p>
+                    {isDeposit && (
+                        <div style={{ margin: '10px 0 4px', padding: '10px 14px', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '6px' }}>
+                            <p style={{ margin: '0 0 4px', fontWeight: 700 }}>Điều khoản phạt vi phạm đặt cọc (theo Điều 328 BLDS 2015):</p>
+                            <p style={{ margin: '2px 0' }}>- Nếu <strong>Bên A (Bên nhận đặt cọc)</strong> vi phạm hợp đồng hoặc từ chối giao kết hợp đồng chính thức, Bên A phải hoàn trả cho Bên B số tiền đặt cọc và một khoản tiền tương đương số tiền đặt cọc (tổng cộng trả lại <strong>gấp đôi</strong> số tiền đặt cọc).</p>
+                            <p style={{ margin: '2px 0' }}>- Nếu <strong>Bên B (Bên đặt cọc)</strong> vi phạm hợp đồng hoặc từ chối giao kết hợp đồng chính thức, Bên B mất toàn bộ số tiền đặt cọc đã nộp cho Bên A.</p>
+                        </div>
                     )}
                 </div>
 
@@ -548,7 +561,7 @@ window.onload=function(){setTimeout(function(){window.print();},400);};
                                 <tr style={{ background: '#f0f0f0', fontWeight: 700 }}>
                                     <td colSpan={3} style={{ border: '1px solid #ccc', padding: '8px 10px', fontFamily: FONT, fontWeight: 700 }}>Tổng cộng</td>
                                     <td style={{ border: '1px solid #ccc', padding: '8px 10px', textAlign: 'right', fontFamily: FONT, fontWeight: 700 }}>
-                                        {schedule.reduce((s, m) => s + (m.amount || 0), 0).toLocaleString('vi-VN')}
+                                        {schedule.reduce((s, m) => s + (m.paidAmount ?? m.amount ?? 0), 0).toLocaleString('vi-VN')}
                                     </td>
                                     <td colSpan={2} style={{ border: '1px solid #ccc', padding: '8px 10px', textAlign: 'center', fontFamily: FONT }}>
                                         {schedule.length} đợt

@@ -333,25 +333,14 @@ export const ContractModal: React.FC<ContractModalProps> = ({ contract, initialD
                         {activeTab === 'parties' && (
                             <div className="space-y-6">
                             {canAssign && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
-                                <div>
-                                    <label className={labelClass}>{t('contracts.assigned_to')}</label>
-                                    <Dropdown
-                                        value={(formData as any).assignedToId || ''}
-                                        onChange={val => handleChange('assignedToId' as any, val || null)}
-                                        options={members}
-                                        className="w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>{t('contracts.contract_date')}</label>
-                                    <input
-                                        type="date"
-                                        value={(formData as any).contractDate || ''}
-                                        onChange={e => handleChange('contractDate' as any, e.target.value)}
-                                        className={inputClass}
-                                    />
-                                </div>
+                            <div className="p-4 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)]">
+                                <label className={labelClass}>{t('contracts.assigned_to')}</label>
+                                <Dropdown
+                                    value={(formData as any).assignedToId || ''}
+                                    onChange={val => handleChange('assignedToId' as any, val || null)}
+                                    options={members}
+                                    className="w-full"
+                                />
                             </div>
                             )}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

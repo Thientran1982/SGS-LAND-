@@ -266,6 +266,9 @@ const Contracts: React.FC = () => {
                         <div className="min-w-0">
                             <div className="text-xs text-[var(--text-tertiary)] font-medium truncate">{t('contracts.stat_total')}</div>
                             <div className="text-lg sm:text-xl font-black text-[var(--text-primary)]">{stats.total}</div>
+                            {stats.draftCount > 0 && (
+                                <div className="text-2xs text-[var(--text-muted)] mt-0.5">{stats.draftCount} nháp</div>
+                            )}
                         </div>
                     </div>
                     <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl p-3 sm:p-3.5 flex items-center gap-2 sm:gap-3 shadow-sm">
@@ -310,7 +313,7 @@ const Contracts: React.FC = () => {
                             type="text"
                             placeholder={t('contracts.search_placeholder')}
                             value={search}
-                            onChange={e => setSearch(e.target.value)}
+                            onChange={e => { setSearch(e.target.value); setPage(1); }}
                             className="w-full pl-9 sm:pl-10 pr-10 py-2.5 min-h-[44px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]"
                         />
                         {search && (
@@ -329,7 +332,7 @@ const Contracts: React.FC = () => {
                     <div className="flex gap-2 sm:gap-3">
                         <Dropdown
                             value={typeFilter}
-                            onChange={(val) => setTypeFilter(val as any)}
+                            onChange={(val) => { setTypeFilter(val as any); setPage(1); }}
                             options={[
                                 { value: 'ALL', label: t('contracts.all_types') },
                                 { value: ContractType.DEPOSIT, label: t('contracts.type_DEPOSIT') },
@@ -339,7 +342,7 @@ const Contracts: React.FC = () => {
                         />
                         <Dropdown
                             value={statusFilter}
-                            onChange={(val) => setStatusFilter(val as any)}
+                            onChange={(val) => { setStatusFilter(val as any); setPage(1); }}
                             options={[
                                 { value: 'ALL', label: t('contracts.all_statuses') },
                                 { value: ContractStatus.DRAFT, label: t('contracts.status_DRAFT') },
