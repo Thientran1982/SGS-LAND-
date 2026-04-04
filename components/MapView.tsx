@@ -205,21 +205,25 @@ function pinColorClass(transaction?: string, propertyType?: string): string {
 }
 
 function priceIcon(label: string, approximate: boolean, transaction?: string, active = false, propertyType?: string): L.DivIcon {
-    const { bg, glow } = pinTokens(transaction, propertyType);
-    const border = active ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.92)';
+    const { glow } = pinTokens(transaction, propertyType);
     const shadow = active
         ? `drop-shadow(0 0 0 2.5px #fff) drop-shadow(0 6px 18px ${glow})`
         : `drop-shadow(0 2px 8px ${glow})`;
-    const scale  = active ? 'scale(1.12)' : 'scale(1)';
+    const colorClass  = pinColorClass(transaction, propertyType);
+    const activeClass = active ? ' sgs-pin-active' : '';
     const approx = approximate ? '<span style="opacity:0.72;font-size:10px;margin-right:2px">~</span>' : '';
 
-    // SVG triangle arrow — 100% reliable in all browsers, no CSS border-trick issues.
-    // Outer wrapper uses display:inline-block so its height = bubble + arrow,
-    // and transform:translate(-50%,-100%) centres the pin horizontally and puts
-    // the very tip of the arrow (the SVG's bottom vertex) exactly at the marker latlng.
+    // Uses CSS classes from critical.css (.sgs-pin-outer, .sgs-pin-bubble, .sgs-pin-tail).
+    // Critically, .sgs-pin-bubble has display:inline-block !important which prevents
+    // the block-width-collapse bug that occurs when Leaflet sets iconSize:[0,0]
+    // (making the marker element 0×0 px, which caused display:block bubble divs
+    // to collapse to 0 width and break long labels like "6.5 Tỷ" onto two lines).
     return L.divIcon({
         className: 'custom-map-pin-container',
-        html: `<div style="display:inline-block;filter:${shadow};transform:translate(-50%,-100%) ${scale};transform-origin:bottom center;transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1),filter 0.18s ease;pointer-events:auto;cursor:pointer;"><div style="background:${bg};background-image:linear-gradient(160deg,rgba(255,255,255,0.15)0%,transparent 60%);color:#fff;font-size:12px;font-weight:700;padding:5px 11px;border-radius:10px 10px 0 0;border:2px solid ${border};border-bottom:none;white-space:nowrap;letter-spacing:0.2px;line-height:1.4;font-family:system-ui,-apple-system,sans-serif;">${approx}${label}</div><svg style="display:block;margin:0 auto;" width="20" height="11" viewBox="0 0 20 11" xmlns="http://www.w3.org/2000/svg"><polygon points="0,0 20,0 10,11" fill="${bg}"/></svg></div>`,
+        html: `<div class="sgs-pin-outer${activeClass}" style="filter:${shadow};">` +
+              `<div class="sgs-pin-bubble ${colorClass}${activeClass}">${approx}${label}</div>` +
+              `<div class="sgs-pin-tail ${colorClass}"></div>` +
+              `</div>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
     });
