@@ -22,6 +22,27 @@ const DEFAULT_META = {
   type: 'website',
 };
 
+/** Server-side route → meta mapping (mirrors utils/seo.ts ROUTE_SEO without browser APIs). */
+const STATIC_PAGE_META: Record<string, { title: string; description: string; noIndex?: boolean }> = {
+  '':                      { title: DEFAULT_META.title, description: DEFAULT_META.description },
+  home:                    { title: DEFAULT_META.title, description: DEFAULT_META.description },
+  marketplace:             { title: 'Tìm Kiếm Bất Động Sản | Kho Hàng Realtime - SGS LAND', description: 'Tìm kiếm bất động sản theo vị trí, loại hình, diện tích và mức giá. Kho hàng hàng nghìn bất động sản cập nhật realtime trên toàn quốc.' },
+  'ai-valuation':          { title: 'Định Giá Bất Động Sản Bằng AI | Sai Số ±5% - SGS LAND', description: 'Công nghệ định giá bất động sản AI từ SGS LAND với sai số chỉ ±5–10% — ngang chuẩn thẩm định viên chuyên nghiệp. Hoàn toàn miễn phí.' },
+  'crm-platform':          { title: 'Nền Tảng CRM Bất Động Sản Thế Hệ Mới | SGS LAND', description: 'Hệ thống CRM bất động sản tích hợp AI, đa kênh Zalo/Facebook/Email, tự động hóa quy trình từ lead đến hợp đồng.' },
+  'about-us':              { title: 'Về Chúng Tôi | SGS LAND – Đội Ngũ & Tầm Nhìn', description: 'SGS LAND - Công ty công nghệ bất động sản hàng đầu Việt Nam. Tìm hiểu về tầm nhìn, sứ mệnh và giá trị cốt lõi của chúng tôi.' },
+  news:                    { title: 'Tin Tức Bất Động Sản | Thị Trường BĐS Cập Nhật - SGS LAND', description: 'Cập nhật tin tức bất động sản mới nhất, phân tích thị trường, xu hướng giá và các chính sách pháp luật liên quan đến bất động sản Việt Nam.' },
+  contact:                 { title: 'Liên Hệ Tư Vấn | SGS LAND', description: 'Liên hệ với đội ngũ tư vấn SGS LAND để được hỗ trợ demo, tư vấn gói dịch vụ và tích hợp nền tảng quản lý bất động sản.' },
+  careers:                 { title: 'Tuyển Dụng | Cơ Hội Nghề Nghiệp tại SGS LAND', description: 'Tham gia đội ngũ SGS LAND – nơi công nghệ và bất động sản hội tụ. Khám phá cơ hội việc làm trong lĩnh vực AI, product và business development.' },
+  'help-center':           { title: 'Trung Tâm Hỗ Trợ | SGS LAND Help Center', description: 'Tìm hướng dẫn sử dụng, câu hỏi thường gặp và tài liệu kỹ thuật cho nền tảng quản lý bất động sản SGS LAND.' },
+  developers:              { title: 'API & Tài Liệu Kỹ Thuật | SGS LAND Developers', description: 'Tài liệu API SGS LAND dành cho nhà phát triển. Tích hợp dữ liệu bất động sản, định giá AI và CRM vào ứng dụng của bạn.' },
+  status:                  { title: 'Trạng Thái Hệ Thống | SGS LAND Status', description: 'Theo dõi trạng thái hoạt động realtime của nền tảng SGS LAND – uptime, latency và sự cố hệ thống.' },
+  'privacy-policy':        { title: 'Chính Sách Bảo Mật | SGS LAND', description: 'Chính sách bảo mật dữ liệu của SGS LAND. Tìm hiểu cách chúng tôi thu thập, sử dụng và bảo vệ thông tin của bạn.' },
+  'terms-of-service':      { title: 'Điều Khoản Sử Dụng | SGS LAND', description: 'Điều khoản và điều kiện sử dụng nền tảng SGS LAND. Quyền lợi và trách nhiệm của người dùng và nhà cung cấp dịch vụ.' },
+  'ky-gui-bat-dong-san':   { title: 'Ký Gửi Bất Động Sản | Bán Nhanh, Giá Tốt - SGS LAND', description: 'Ký gửi bất động sản tại SGS LAND — đội ngũ chuyên gia định giá miễn phí, tiếp cận hàng nghìn khách hàng tiềm năng và hỗ trợ pháp lý toàn diện.' },
+  livechat:                { title: 'Chat Trực Tiếp | Hỗ Trợ Khách Hàng 24/7 - SGS LAND', description: 'Kết nối trực tiếp với đội ngũ tư vấn SGS LAND qua Live Chat. Được hỗ trợ 24/7 về bất động sản, định giá AI và các dịch vụ.' },
+  login:                   { title: 'Đăng Nhập | SGS LAND Enterprise', description: 'Đăng nhập vào nền tảng quản lý bất động sản SGS LAND.', noIndex: true },
+};
+
 export interface MetaData {
   title?: string;
   description?: string;
@@ -58,12 +79,12 @@ export function buildListingMeta(listing: any): MetaData {
 
   const parts: string[] = [
     listing.title || `${transaction} bất động sản`,
-    listing.location ? `📍 ${listing.location}` : '',
-    priceStr ? `💰 Giá: ${priceStr}` : '',
-    areaStr ? `📐 Diện tích: ${areaStr}` : '',
-    listing.bedrooms ? `🛏 ${listing.bedrooms} phòng ngủ` : '',
+    listing.location ? `Vị trí: ${listing.location}` : '',
+    priceStr ? `Giá: ${priceStr}` : '',
+    areaStr ? `Diện tích: ${areaStr}` : '',
+    listing.bedrooms ? `${listing.bedrooms} phòng ngủ` : '',
   ].filter(Boolean);
-  const description = parts.join(' — ').slice(0, 300);
+  const description = parts.join(' — ').slice(0, 160);
 
   const images: string[] = Array.isArray(listing.images) ? listing.images : [];
   const image = images[0] || DEFAULT_IMAGE;
@@ -128,12 +149,16 @@ export function buildStaticPageMeta(
   ogImage: string | null | undefined,
   pagePath: string
 ): MetaData {
+  // Derive route key from path (e.g. "/about-us" → "about-us", "/" → "")
+  const routeKey = pagePath.replace(/^\//, '').split('/')[0] || '';
+  const routeMeta = STATIC_PAGE_META[routeKey] ?? STATIC_PAGE_META[''];
   return {
-    title: overrideTitle || DEFAULT_META.title,
-    description: overrideDesc || DEFAULT_META.description,
+    title: overrideTitle || routeMeta.title,
+    description: overrideDesc || routeMeta.description,
     image: ogImage || DEFAULT_IMAGE,
     url: `${APP_URL}${pagePath}`,
     type: 'website',
+    noIndex: routeMeta.noIndex,
   };
 }
 

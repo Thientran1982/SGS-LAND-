@@ -24,7 +24,7 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
   },
   // ROUTES.SEARCH = 'marketplace'
   marketplace: {
-    title: 'Tìm Kiếm Bất Động Sản | Kho Hàng Cập Nhật Realtime - SGS LAND',
+    title: 'Tìm Kiếm Bất Động Sản | Kho Hàng Realtime - SGS LAND',
     description: 'Tìm kiếm bất động sản theo vị trí, loại hình, diện tích và mức giá. Kho hàng hàng nghìn bất động sản được cập nhật realtime trên toàn quốc.',
     path: '/marketplace',
   },
@@ -48,7 +48,7 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
   },
   // ROUTES.NEWS = 'news'
   news: {
-    title: 'Tin Tức Bất Động Sản Mới Nhất | Thị Trường BĐS Hôm Nay - SGS LAND',
+    title: 'Tin Tức Bất Động Sản | Thị Trường BĐS Cập Nhật - SGS LAND',
     description: 'Cập nhật tin tức bất động sản mới nhất, phân tích thị trường, xu hướng giá và các chính sách pháp luật liên quan đến bất động sản Việt Nam.',
     path: '/news',
     noIndex: false,
@@ -149,6 +149,12 @@ export const ROUTE_SEO: Record<string, SEOConfig> = {
     title: 'Chat Trực Tiếp | Hỗ Trợ Khách Hàng 24/7 - SGS LAND',
     description: 'Kết nối trực tiếp với đội ngũ tư vấn SGS LAND qua Live Chat. Được hỗ trợ 24/7 về bất động sản, định giá AI và các dịch vụ.',
     path: '/livechat',
+  },
+  // ROUTES.KY_GUI = 'ky-gui-bat-dong-san'
+  'ky-gui-bat-dong-san': {
+    title: 'Ký Gửi Bất Động Sản | Bán Nhanh, Giá Tốt - SGS LAND',
+    description: 'Ký gửi bất động sản tại SGS LAND — đội ngũ chuyên gia định giá miễn phí, tiếp cận hàng nghìn khách hàng tiềm năng và hỗ trợ pháp lý toàn diện.',
+    path: '/ky-gui-bat-dong-san',
   },
 };
 
