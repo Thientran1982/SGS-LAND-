@@ -44,6 +44,24 @@ const TrendIndicator = ({ value, label }: { value: number; label: string }) => {
     );
 };
 
+/** Client-side locale-aware relative time formatter (replaces server-hardcoded Vietnamese). */
+function useTimeAgo() {
+    const { language } = useTranslation();
+    return React.useCallback((isoOrDate: string) => {
+        const date = new Date(isoOrDate);
+        if (isNaN(date.getTime())) return isoOrDate;
+        const diffMs = Date.now() - date.getTime();
+        const diffMin = Math.floor(diffMs / 60000);
+        const isVN = language === 'vn';
+        if (diffMin < 1) return isVN ? 'vừa xong' : 'just now';
+        if (diffMin < 60) return isVN ? `${diffMin} phút trước` : `${diffMin}m ago`;
+        const diffHours = Math.floor(diffMin / 60);
+        if (diffHours < 24) return isVN ? `${diffHours} giờ trước` : `${diffHours}h ago`;
+        const diffDays = Math.floor(diffHours / 24);
+        return isVN ? `${diffDays} ngày trước` : `${diffDays}d ago`;
+    }, [language]);
+}
+
 const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
     const getIcon = (type: string) => {
         switch(type) {
@@ -54,6 +72,7 @@ const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
         }
     };
     const style = getIcon(activity.type);
+    const timeAgo = useTimeAgo();
 
     return (
         <div className="flex gap-3 py-3 border-b border-[var(--glass-border)] dark:border-slate-800/50 last:border-0 hover:bg-[var(--glass-surface)]/50 dark:hover:bg-slate-800/30 transition-colors rounded-lg px-2 -mx-2">
@@ -62,7 +81,7 @@ const ActivityItem: React.FC<{ activity: any }> = ({ activity }) => {
             </div>
             <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-[var(--text-primary)] dark:text-slate-200 truncate">{activity.content}</p>
-                <p className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-mono mt-0.5">{activity.time}</p>
+                <p className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-mono mt-0.5">{timeAgo(activity.time)}</p>
             </div>
         </div>
     );
@@ -512,8 +531,9 @@ export const Dashboard: React.FC = () => {
 
     const currentUser = (analytics as any)?.user;
     const userName = currentUser?.name ? currentUser.name.split(' ').slice(-1)[0] : '';
-    const scopeLabel: string = (analytics as any)?.scopeLabel || t('dash.scope_company');
-    const isSalesScope = scopeLabel === t('dash.scope_personal');
+    const scopeKey: string = (analytics as any)?.scopeLabel || 'company';
+    const isSalesScope = scopeKey === 'personal';
+    const scopeLabel = isSalesScope ? t('dash.scope_personal') : t('dash.scope_company');
 
     return (
     <>
@@ -592,7 +612,9 @@ export const Dashboard: React.FC = () => {
                                     {formatCompactNumber(analytics.revenue || 0)}
                                 </div>
                                 <div className="text-xs2 text-indigo-200 font-bold uppercase tracking-wider mt-1">
-                                    {t('dash.commission_2_percent')}
+                                    {language === 'vn'
+                                        ? `Hoa hồng ${Math.round((analytics.commissionRate ?? 0.02) * 100)}% trên deal chốt`
+                                        : `${Math.round((analytics.commissionRate ?? 0.02) * 100)}% commission on closed deals`}
                                 </div>
                             </div>
                             <div className="bg-[var(--bg-surface)]/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-xs flex items-center gap-2">

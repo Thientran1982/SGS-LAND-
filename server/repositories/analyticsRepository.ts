@@ -30,7 +30,8 @@ export interface AnalyticsSummary {
   marketPulse: { location: string; area: number; price: number; interest: number }[];
   agentLeaderboard: { name: string; avatar: string | null; deals: number; closeRate: number; slaScore: number; avgResponseMinutes: number | null }[];
   // Scope context for the frontend to display correctly
-  scopeLabel: string;   // e.g. "Toàn công ty" | "Dữ liệu của bạn"
+  scopeLabel: 'personal' | 'company'; // stable i18n key — frontend translates
+  commissionRate: number;              // actual rate from env (e.g. 0.02 = 2%)
 }
 
 const GRADE_PROBABILITY: Record<string, number> = {
@@ -57,17 +58,6 @@ function calcDelta(current: number, previous: number): number {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-function getTimeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return 'vừa xong';
-  if (diffMin < 60) return `${diffMin} phút trước`;
-  const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours} giờ trước`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} ngày trước`;
-}
 
 // Reusable tenant filter expression for use in WHERE clauses
 const TENANT_FILTER = `tenant_id = current_setting('app.current_tenant_id', true)::uuid`;
@@ -114,7 +104,7 @@ export class AnalyticsRepository extends BaseRepository {
       const userLeadFilterNoAlias = isSalesScope && safeUserId
         ? `AND assigned_to = '${safeUserId}'::uuid`
         : '';
-      const scopeLabel = isSalesScope ? 'Dữ liệu của bạn' : 'Toàn công ty';
+      const scopeLabel = isSalesScope ? 'personal' : 'company';
 
       const leadsResult = await client.query(`
         SELECT
@@ -498,13 +488,13 @@ export class AnalyticsRepository extends BaseRepository {
         else if (isAi || row.type === 'EMAIL' || row.type === 'CHAT') type = 'AI';
         else if (row.type === 'MEETING') type = 'DEAL';
 
-        const timeAgo = getTimeAgo(new Date(row.created_at));
         const leadName = row.lead_name || 'Khách hàng';
         return {
           id: row.id,
           type,
           content: `${leadName}: ${(row.content || '').substring(0, 60)}`,
-          time: timeAgo,
+          // Return raw ISO timestamp — frontend formats with locale-aware getTimeAgo()
+          time: new Date(row.created_at).toISOString(),
         };
       });
 
@@ -575,6 +565,7 @@ export class AnalyticsRepository extends BaseRepository {
         marketPulse,
         agentLeaderboard,
         scopeLabel,
+        commissionRate,
       };
     });
   }
