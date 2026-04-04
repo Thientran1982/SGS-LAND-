@@ -1502,7 +1502,7 @@ async function startServer() {
   // SCIM 2.0 provisioning — uses its own Bearer token auth (no JWT required)
   app.use('/scim/v2', express.json({ type: ['application/json', 'application/scim+json'] }), createScimRoutes());
   // Advanced valuation: multi-source, 7-coefficient AVM + market cache
-  app.use('/api/valuation', apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit));
+  app.use('/api/valuation', apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit, optionalAuth, guestValuationRateLimit));
   app.use('/api/connectors', apiRateLimit, createConnectorRoutes(authenticateToken));
   // B2B2C: project management + partner access control
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));

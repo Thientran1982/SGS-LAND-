@@ -1,7 +1,7 @@
 /**
  * Advanced Valuation Routes
  *
- * POST /api/valuation/advanced   — Full multi-source, 7-coefficient valuation
+ * POST /api/valuation/advanced   — Full multi-source, 7-coefficient valuation (guest + auth)
  * GET  /api/valuation/market-index — Cached market price by location
  * POST /api/valuation/market-index/refresh — Force refresh market data
  * GET  /api/valuation/comparables  — Internal comparable listings
@@ -15,14 +15,26 @@ import { marketDataService } from '../services/marketDataService';
 import { listingRepository } from '../repositories/listingRepository';
 import { logger } from '../middleware/logger';
 
-export function createValuationRoutes(authenticateToken: any, aiRateLimit: any): Router {
+export function createValuationRoutes(
+  authenticateToken: any,
+  aiRateLimit: any,
+  optionalAuth: any,
+  guestValuationRateLimit: any,
+): Router {
   const router = Router();
 
   // ──────────────────────────────────────────────────────────────────────────
   // POST /api/valuation/advanced
-  // Full advanced valuation: market cache + internal comps + 7 coefficients
+  // Full multi-source valuation open to guests (3/day) and auth users.
   // ──────────────────────────────────────────────────────────────────────────
-  router.post('/advanced', authenticateToken, aiRateLimit, async (req: Request, res: Response) => {
+  router.post(
+    '/advanced',
+    optionalAuth,
+    (req: Request, res: Response, next: any) => {
+      const limiter = (req as any).user ? aiRateLimit : guestValuationRateLimit;
+      return limiter(req, res, next);
+    },
+    async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       const {
@@ -126,7 +138,7 @@ export function createValuationRoutes(authenticateToken: any, aiRateLimit: any):
       let internalCompsCount = 0;
       let comparables: any[] = [];
 
-      if (!skipInternalComps) {
+      if (!skipInternalComps && user?.tenantId) {
         try {
           const comps = await listingRepository.findComparables(user.tenantId, {
             location: address,
