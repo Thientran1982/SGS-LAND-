@@ -69,7 +69,6 @@ MARKET_CACHE_TTL_HOURS = "6"
 BREVO_FROM_EMAIL = "noreply@sgsland.vn"
 BREVO_FROM_NAME = "SGS LAND"
 EMAIL_WEBHOOK_TOKEN = "sgs-test-2026"
-INITIAL_ADMIN_PASSWORD_HASH = "$2b$12$ADtLg3YgM7bRSU47yAdhSeIo2PiCaCF6ZJ6Zf9lk23Pf.JaWVG84m"
 
 [userenv.development]
 NODE_ENV = "development"
