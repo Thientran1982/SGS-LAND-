@@ -61,6 +61,7 @@ import m039 from './039_leads_thread_status';
 import m040 from './040_ai_feedback';
 import m041 from './041_ai_feedback_dedup';
 import m042 from './042_uploaded_files_table';
+import m043 from './043_cleanup_broken_upload_refs';
 
 dotenv.config();
 
@@ -118,6 +119,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '040_ai_feedback.ts': m040,
   '041_ai_feedback_dedup.ts': m041,
   '042_uploaded_files_table.ts': m042,
+  '043_cleanup_broken_upload_refs.ts': m043,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
