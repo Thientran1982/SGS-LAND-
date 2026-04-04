@@ -160,7 +160,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
         [invited.id, tokenHash, expiresAt]
       );
 
-      const loginUrl = `${resolveBaseUrl(req)}/#/reset-password/${rawToken}`;
+      const loginUrl = `${resolveBaseUrl(req)}/reset-password/${rawToken}`;
       emailService.sendInviteEmail(user.tenantId, email, name, invited.role, loginUrl).catch((err: any) => {
         console.error('[Invite] Failed to send invite email:', err.message);
       });
@@ -251,7 +251,7 @@ export function createUserRoutes(authenticateToken: any, jwtSecret?: string) {
         [target.id, tokenHash, expiresAt]
       );
 
-      const loginUrl = `${resolveBaseUrl(req)}/#/reset-password/${rawToken}`;
+      const loginUrl = `${resolveBaseUrl(req)}/reset-password/${rawToken}`;
       emailService.sendInviteEmail(user.tenantId, target.email!, target.name || target.email!, target.role, loginUrl).catch((err: any) => {
         console.error('[Invite] Failed to resend invite email:', err.message);
       });

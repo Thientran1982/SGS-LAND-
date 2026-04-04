@@ -502,7 +502,7 @@ async function startServer() {
       );
 
       const baseUrl = resolveBaseUrl(req);
-      const resetUrl = `${baseUrl}/#/reset-password/${rawToken}`;
+      const resetUrl = `${baseUrl}/reset-password/${rawToken}`;
 
       const emailResult = await emailService.sendPasswordResetEmail(tenantId, email, resetUrl, user.name);
       if (emailResult.status === 'failed') {
