@@ -177,6 +177,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       if (m.includes('invalid or expired') || m.includes('expired reset token')) return t('auth.error_token_expired');
       if (m.includes('sso login failed') || m.includes('sso error')) return t('auth.error_sso_disabled');
       if (m === 'email_not_verified') return t('auth.verify_email_not_verified');
+      if (m.includes('password must be at least') || m.includes('password too short') || m.includes('password too weak')) return t('auth.error_password_weak');
+      if (m.includes('token and new password') || m.includes('token is required') || m.includes('reset token')) return t('auth.error_token_required');
+      if (m.includes('email is required') || m.includes('email missing')) return t('auth.error_email_required');
+      if (m.includes('failed to') || m.includes('failed:') || m.includes('process request') || m.includes('internal server') || m.includes('something went wrong')) return t('auth.error_generic');
+      // If the message still looks like an English technical error (no Vietnamese characters), fall back to generic
+      if (/^[a-zA-Z0-9\s.,!?'"-]+$/.test(msg) && msg.length < 120) return t('auth.error_generic');
       return msg;
   };
 
