@@ -91,7 +91,10 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 ### File Upload System
 - **Endpoint**: `POST /api/upload` (multipart/form-data, field name: `files`, max 10 files, 10MB each)
-- **Storage**: Tenant-isolated at `uploads/<tenantId>/` with randomized filenames (16 bytes entropy)
+- **Storage Backend** (automatic selection via `server/services/storageService.ts`):
+  - **Production**: Replit Object Storage (`@replit/object-storage`) — requires `REPLIT_OBJECT_STORAGE_BUCKET` env var (set by enabling Object Storage in Repl Tools → Storage)
+  - **Development**: Local disk at `uploads/<tenantId>/` (fallback when env var not set)
+  - URL format stays the same in both modes: `/uploads/{tenantId}/{filename}`
 - **Allowed types**: JPEG, PNG, WebP, GIF, PDF, DOCX, DOC
 - **Serving**: `GET /uploads/<tenantId>/<filename>` — authenticated, tenant-scoped (403 cross-tenant)
 - **Delete**: `DELETE /api/upload/:filename` — authenticated, tenant-scoped, path traversal protected

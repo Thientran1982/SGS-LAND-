@@ -1,12 +1,11 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
 import crypto from 'crypto';
-import { fileTypeFromFile } from 'file-type';
+import { fileTypeFromBuffer } from 'file-type';
 import { DEFAULT_TENANT_ID } from '../constants';
+import { storeFile, getFile, deleteFile } from '../services/storageService';
 
-const UPLOAD_BASE = path.join(process.cwd(), 'uploads');
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_FILES = 10;
 
@@ -56,19 +55,8 @@ const EXT_TO_CONTENT_TYPE: Record<string, string> = {
   '.txt': 'text/plain',
 };
 
-const storage = multer.diskStorage({
-  destination: (req: any, _file, cb) => {
-    const tenantId = req.tenantId || DEFAULT_TENANT_ID;
-    const dir = path.join(UPLOAD_BASE, tenantId);
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueId = crypto.randomBytes(16).toString('hex');
-    const ext = MIME_TO_EXT[file.mimetype] || path.extname(file.originalname).toLowerCase();
-    cb(null, `${Date.now()}-${uniqueId}${ext}`);
-  },
-});
+// Use memory storage so we can forward buffers to any backend (disk or Object Storage)
+const memStorage = multer.memoryStorage();
 
 const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   if (ALL_ALLOWED.includes(file.mimetype)) {
@@ -79,7 +67,7 @@ const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterC
 };
 
 const upload = multer({
-  storage,
+  storage: memStorage,
   fileFilter,
   limits: { fileSize: MAX_FILE_SIZE, files: MAX_FILES },
 });
@@ -111,44 +99,44 @@ export function createUploadRoutes(authenticateToken: any) {
       }
 
       const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
-
-      const accepted: Express.Multer.File[] = [];
+      const uploaded: { filename: string; originalName: string; mimetype: string; size: number; url: string }[] = [];
       const rejected: string[] = [];
 
       for (const f of files) {
-        // text/plain files have no magic bytes — file-type returns undefined.
-        // We trust multer's header-based filter for plain text since there are no bytes to inspect.
-        if (f.mimetype === 'text/plain') {
-          accepted.push(f);
-          continue;
+        const buf = f.buffer;
+        let contentType = f.mimetype;
+
+        // text/plain has no magic bytes — trust multer's header-based filter.
+        if (f.mimetype !== 'text/plain') {
+          const detected = await fileTypeFromBuffer(buf);
+          if (!detected || !ALLOWED_REAL_MIMES.has(detected.mime)) {
+            rejected.push(f.originalname);
+            continue;
+          }
+          contentType = detected.mime;
         }
 
-        const detected = await fileTypeFromFile(f.path);
+        const uniqueId = crypto.randomBytes(16).toString('hex');
+        const ext = MIME_TO_EXT[contentType] || path.extname(f.originalname).toLowerCase();
+        const filename = `${Date.now()}-${uniqueId}${ext}`;
 
-        if (!detected || !ALLOWED_REAL_MIMES.has(detected.mime)) {
-          // Real content does not match any allowed type — delete and reject.
-          fs.unlinkSync(f.path);
-          rejected.push(f.originalname);
-          continue;
-        }
+        const url = await storeFile(tenantId, filename, buf, contentType);
 
-        accepted.push(f);
+        uploaded.push({
+          filename,
+          originalName: f.originalname,
+          mimetype: contentType,
+          size: f.size,
+          url,
+        });
       }
 
-      if (accepted.length === 0) {
+      if (uploaded.length === 0) {
         return res.status(415).json({
           error: 'All files were rejected: file content does not match an allowed type.',
           rejected,
         });
       }
-
-      const uploaded = accepted.map(f => ({
-        filename: f.filename,
-        originalName: f.originalname,
-        mimetype: f.mimetype,
-        size: f.size,
-        url: `/uploads/${tenantId}/${f.filename}`,
-      }));
 
       if (rejected.length > 0) {
         return res.json({ files: uploaded, warnings: [`${rejected.length} file(s) rejected — content did not match declared type: ${rejected.join(', ')}`] });
@@ -161,7 +149,7 @@ export function createUploadRoutes(authenticateToken: any) {
     }
   });
 
-  router.delete('/:filename', authenticateToken, (req: Request, res: Response) => {
+  router.delete('/:filename', authenticateToken, async (req: Request, res: Response) => {
     try {
       const tenantId = (req as any).tenantId || DEFAULT_TENANT_ID;
       const filename = path.basename(String(req.params.filename));
@@ -170,18 +158,7 @@ export function createUploadRoutes(authenticateToken: any) {
         return res.status(400).json({ error: 'Invalid filename' });
       }
 
-      const filePath = path.join(UPLOAD_BASE, tenantId, filename);
-      const resolved = path.resolve(filePath);
-      const expectedDir = path.resolve(path.join(UPLOAD_BASE, tenantId));
-      if (!resolved.startsWith(expectedDir)) {
-        return res.status(403).json({ error: 'Access denied' });
-      }
-
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: 'File not found' });
-      }
-
-      fs.unlinkSync(filePath);
+      await deleteFile(tenantId, filename);
       res.json({ message: 'File deleted' });
     } catch (error) {
       console.error('Delete file error:', error);
@@ -220,7 +197,7 @@ export function createUploadServeRoute(authenticateToken: any) {
   return router;
 }
 
-function serveUploadedFile(req: Request, res: Response, userTenantId: string | null) {
+async function serveUploadedFile(req: Request, res: Response, userTenantId: string | null) {
   try {
     const requestedTenantId = String(req.params.tenantId);
 
@@ -238,24 +215,19 @@ function serveUploadedFile(req: Request, res: Response, userTenantId: string | n
       return res.status(400).json({ error: 'Invalid filename' });
     }
 
-    const filePath = path.join(UPLOAD_BASE, requestedTenantId, filename);
-    const resolved = path.resolve(filePath);
-    const expectedDir = path.resolve(path.join(UPLOAD_BASE, requestedTenantId));
-    if (!resolved.startsWith(expectedDir)) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    if (!fs.existsSync(resolved)) {
+    const buffer = await getFile(requestedTenantId, filename);
+    if (!buffer) {
       return res.status(404).json({ error: 'File not found' });
     }
 
     const ext = path.extname(filename).toLowerCase();
     const contentType = EXT_TO_CONTENT_TYPE[ext] || 'application/octet-stream';
-    res.setHeader('Content-Type', contentType);
-    // Images: public cacheable; documents: private
     const isPublicImage = PUBLIC_IMAGE_EXTS.has(ext);
+
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', isPublicImage ? 'public, max-age=31536000, immutable' : 'private, max-age=86400');
-    res.sendFile(resolved);
+    res.setHeader('Content-Length', buffer.length);
+    res.end(buffer);
   } catch (error) {
     console.error('Serve file error:', error);
     res.status(500).json({ error: 'Failed to serve file' });
