@@ -599,6 +599,7 @@ export const Landing: React.FC = () => {
                             <FooterLink label={t('footer.link_marketplace')} route={ROUTES.SEARCH} />
                             <FooterLink label={t('footer.link_valuation')} route={ROUTES.AI_VALUATION} />
                             <FooterLink label={t('footer.link_crm')} route={ROUTES.CRM_SOLUTION} />
+                            <FooterLink label={t('footer.link_consignment')} route={ROUTES.KY_GUI} />
                         </ul>
                     </div>
 
