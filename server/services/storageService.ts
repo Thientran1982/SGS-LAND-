@@ -1,106 +1,85 @@
 /**
  * storageService.ts
  *
- * Abstraction over file storage backends:
- *   - Replit Object Storage  (production — when REPLIT_OBJECT_STORAGE_BUCKET is set)
- *   - Local disk             (development — fallback)
+ * Stores uploaded files as BYTEA in PostgreSQL (`uploaded_files` table).
+ * This works on every Replit deployment type (Autoscale, Reserved VM) without
+ * any external object storage setup.
  *
- * Public URL format stays the same in both modes: /uploads/{tenantId}/{filename}
- * The serve route reads from whichever backend is active.
+ * Local disk is kept as a read-only fallback: if a file cannot be found in the
+ * DB it is served from `uploads/<tenantId>/<filename>` so dev workflows continue
+ * to work while the DB is being populated.
  */
 
 import fs from 'fs';
 import path from 'path';
+import { pool } from '../db';
 
 const LOCAL_UPLOAD_BASE = path.join(process.cwd(), 'uploads');
 
-// Lazily-initialised Replit Object Storage client
-let replitClient: any = null;
-let replitClientReady = false;
-
-function getReplitClient() {
-    if (replitClientReady) return replitClient;
-    replitClientReady = true;
-
-    if (!process.env.REPLIT_OBJECT_STORAGE_BUCKET) {
-        replitClient = null;
-        return null;
-    }
-
-    try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { Client } = require('@replit/object-storage');
-        replitClient = new Client();
-        console.log('[Storage] Using Replit Object Storage');
-    } catch (e) {
-        console.warn('[Storage] @replit/object-storage not available, falling back to local disk');
-        replitClient = null;
-    }
-    return replitClient;
-}
-
-export const isObjectStorageEnabled = () => !!process.env.REPLIT_OBJECT_STORAGE_BUCKET;
-
-/** Store a file. Returns the relative public URL path. */
+/** Store a file in PostgreSQL. Returns the relative public URL path. */
 export async function storeFile(
     tenantId: string,
     filename: string,
     buffer: Buffer,
     contentType: string,
 ): Promise<string> {
-    const client = getReplitClient();
-    const key = `${tenantId}/${filename}`;
-
-    if (client) {
-        const { ok, error } = await client.uploadFromBuffer(key, buffer, {
-            contentType,
-        });
-        if (!ok) throw new Error(`Object Storage upload failed: ${error}`);
-    } else {
-        // Local disk
-        const dir = path.join(LOCAL_UPLOAD_BASE, tenantId);
-        fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(path.join(dir, filename), buffer);
-    }
-
+    await pool.query(
+        `INSERT INTO uploaded_files (tenant_id, filename, content_type, data, size)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (tenant_id, filename) DO UPDATE
+           SET data = EXCLUDED.data,
+               content_type = EXCLUDED.content_type,
+               size = EXCLUDED.size`,
+        [tenantId, filename, contentType, buffer, buffer.length],
+    );
     return `/uploads/${tenantId}/${filename}`;
 }
 
 /**
  * Retrieve a file as a Buffer.
- * Returns null when the file does not exist.
+ * Checks PostgreSQL first; falls back to local disk (for dev environments
+ * where files were uploaded before the DB migration).
+ * Returns null when the file does not exist in either location.
  */
 export async function getFile(
     tenantId: string,
     filename: string,
 ): Promise<Buffer | null> {
-    const client = getReplitClient();
-    const key = `${tenantId}/${filename}`;
-
-    if (client) {
-        const result = await client.downloadAsBuffer(key);
-        if (!result.ok) return null;
-        return result.value as Buffer;
+    // Primary: PostgreSQL
+    try {
+        const result = await pool.query(
+            'SELECT data FROM uploaded_files WHERE tenant_id = $1 AND filename = $2',
+            [tenantId, filename],
+        );
+        if (result.rows.length > 0) {
+            return result.rows[0].data as Buffer;
+        }
+    } catch (err) {
+        console.warn('[Storage] DB read failed, trying local disk:', err);
     }
 
-    // Local disk
+    // Fallback: local disk (development / pre-migration files)
     const filePath = path.join(LOCAL_UPLOAD_BASE, tenantId, filename);
-    if (!fs.existsSync(filePath)) return null;
-    return fs.readFileSync(filePath);
+    if (fs.existsSync(filePath)) {
+        return fs.readFileSync(filePath);
+    }
+
+    return null;
 }
 
-/** Delete a file. */
+/** Delete a file from PostgreSQL (and local disk if present). */
 export async function deleteFile(
     tenantId: string,
     filename: string,
 ): Promise<void> {
-    const client = getReplitClient();
-    const key = `${tenantId}/${filename}`;
+    await pool.query(
+        'DELETE FROM uploaded_files WHERE tenant_id = $1 AND filename = $2',
+        [tenantId, filename],
+    );
 
-    if (client) {
-        await client.delete(key);
-    } else {
-        const filePath = path.join(LOCAL_UPLOAD_BASE, tenantId, filename);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    // Also remove from local disk if it exists (dev cleanup)
+    const filePath = path.join(LOCAL_UPLOAD_BASE, tenantId, filename);
+    if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch { /* ignore */ }
     }
 }

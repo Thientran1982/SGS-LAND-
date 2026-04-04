@@ -79,4 +79,7 @@ NODE_ENV = "production"
 PORT = "5000"
 ALLOWED_ORIGINS = "https://sgs-land.replit.app"
 APP_URL = "https://sgsland.vn"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-b2bda06e-8535-430b-b2ac-45839c6a59c1"
 # JWT_SECRET must be set via Replit Secrets (not here) — see replit.md for setup instructions
