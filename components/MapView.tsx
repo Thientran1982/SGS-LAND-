@@ -180,16 +180,21 @@ function pinColorClass(transaction?: string, propertyType?: string): string {
 }
 
 function priceIcon(label: string, approximate: boolean, transaction?: string, active = false, propertyType?: string): L.DivIcon {
-    const { glow } = pinTokens(transaction, propertyType);
-    const colorCls = pinColorClass(transaction, propertyType);
-    const activeCls = active ? ' sgs-pin-active' : '';
+    const { bg, glow } = pinTokens(transaction, propertyType);
+    const border = active ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.92)';
     const shadow = active
         ? `drop-shadow(0 0 0 2.5px #fff) drop-shadow(0 6px 18px ${glow})`
         : `drop-shadow(0 2px 8px ${glow})`;
+    const scale  = active ? 'scale(1.12)' : 'scale(1)';
+    const approx = approximate ? '<span style="opacity:0.72;font-size:10px;margin-right:2px">~</span>' : '';
 
+    // SVG triangle arrow — 100% reliable in all browsers, no CSS border-trick issues.
+    // Outer wrapper uses display:inline-block so its height = bubble + arrow,
+    // and transform:translate(-50%,-100%) centres the pin horizontally and puts
+    // the very tip of the arrow (the SVG's bottom vertex) exactly at the marker latlng.
     return L.divIcon({
         className: 'custom-map-pin-container',
-        html: `<div class="sgs-pin-outer${activeCls}" style="filter:${shadow}"><div class="sgs-pin-bubble ${colorCls}${activeCls}">${approximate ? '<span style="opacity:0.72;font-size:10px;margin-right:2px">~</span>' : ''}${label}</div><div class="sgs-pin-tail ${colorCls}"></div></div>`,
+        html: `<div style="display:inline-block;filter:${shadow};transform:translate(-50%,-100%) ${scale};transform-origin:bottom center;transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1),filter 0.18s ease;pointer-events:auto;cursor:pointer;"><div style="background:${bg};background-image:linear-gradient(160deg,rgba(255,255,255,0.15)0%,transparent 60%);color:#fff;font-size:12px;font-weight:700;padding:5px 11px;border-radius:10px 10px 0 0;border:2px solid ${border};border-bottom:none;white-space:nowrap;letter-spacing:0.2px;line-height:1.4;font-family:system-ui,-apple-system,sans-serif;">${approx}${label}</div><svg style="display:block;margin:0 auto;" width="20" height="11" viewBox="0 0 20 11" xmlns="http://www.w3.org/2000/svg"><polygon points="0,0 20,0 10,11" fill="${bg}"/></svg></div>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
     });
@@ -197,15 +202,13 @@ function priceIcon(label: string, approximate: boolean, transaction?: string, ac
 
 function clusterIcon(count: number, dominantTx?: string): L.DivIcon {
     // 'PROJECT_TYPE' is a sentinel: means majority are PROJECT property type
-    const { glow } = dominantTx === 'PROJECT_TYPE'
+    const { bg, glow } = dominantTx === 'PROJECT_TYPE'
         ? pinTokens(undefined, 'PROJECT')
         : pinTokens(dominantTx, undefined);
-    const colorCls = dominantTx === 'PROJECT_TYPE' ? 'sgs-pin-project'
-        : dominantTx?.toUpperCase() === 'RENT' ? 'sgs-pin-rent' : 'sgs-pin-sale';
     const label = count >= 1000 ? `${Math.floor(count / 1000)}k+` : `${count}`;
     return L.divIcon({
         className: 'custom-map-pin-container',
-        html: `<div class="sgs-pin-outer" style="filter:drop-shadow(0 4px 14px ${glow})"><div class="sgs-cluster-bubble sgs-cluster-pulse ${colorCls}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>${label} tin</div><div class="sgs-cluster-tail ${colorCls}"></div></div>`,
+        html: `<div style="display:inline-block;filter:drop-shadow(0 4px 14px ${glow});transform:translate(-50%,-100%);transform-origin:bottom center;pointer-events:auto;cursor:pointer;"><div style="background:${bg};background-image:linear-gradient(135deg,rgba(255,255,255,0.18)0%,transparent 55%);color:#fff;font-size:12.5px;font-weight:800;padding:7px 14px;border-radius:12px 12px 0 0;border:2.5px solid rgba(255,255,255,0.95);border-bottom:none;white-space:nowrap;letter-spacing:0.3px;line-height:1.4;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;gap:6px;" class="sgs-cluster-pulse"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>${label} tin</div><svg style="display:block;margin:0 auto;" width="24" height="13" viewBox="0 0 24 13" xmlns="http://www.w3.org/2000/svg"><polygon points="0,0 24,0 12,13" fill="${bg}"/></svg></div>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
     });
