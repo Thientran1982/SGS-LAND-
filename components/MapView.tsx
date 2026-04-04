@@ -108,10 +108,10 @@ function getDisplayPoint(listing: any, point: [number, number]): [number, number
 
 // ── Custom clustering ────────────────────────────────────────────────────────
 
-// Clustering is fully disabled — every listing is always its own individual pin.
-// Set to -1 so the condition (zoom > CLUSTER_MAX_ZOOM) is always true and the
-// cluster branch is never reached.
-const CLUSTER_MAX_ZOOM = -1;
+// At zoom ≤ CLUSTER_MAX_ZOOM → group nearby listings into cluster badges (e.g. "12 BĐS").
+// At zoom > CLUSTER_MAX_ZOOM → every listing renders as its own individual price pin.
+// Airbnb/Zillow typically cluster at zoom ≤ 14 and show individual pins at 15+.
+const CLUSTER_MAX_ZOOM = 14;
 
 interface PointEntry {
     listing: Listing;
@@ -205,10 +205,12 @@ function clusterIcon(count: number, dominantTx?: string): L.DivIcon {
     const { bg, glow } = dominantTx === 'PROJECT_TYPE'
         ? pinTokens(undefined, 'PROJECT')
         : pinTokens(dominantTx, undefined);
-    const label = count >= 1000 ? `${Math.floor(count / 1000)}k+` : `${count}`;
+    const num = count >= 1000 ? `${Math.floor(count / 1000)}k+` : `${count}`;
+    // Cluster badge: circular pill centred on cluster point (no arrow tail).
+    // translate(-50%,-50%) centres the badge on the cluster coordinate — Airbnb/Zillow style.
     return L.divIcon({
         className: 'custom-map-pin-container',
-        html: `<div style="display:inline-block;filter:drop-shadow(0 4px 14px ${glow});transform:translate(-50%,-100%);transform-origin:bottom center;pointer-events:auto;cursor:pointer;"><div style="background:${bg};background-image:linear-gradient(135deg,rgba(255,255,255,0.18)0%,transparent 55%);color:#fff;font-size:12.5px;font-weight:800;padding:7px 14px;border-radius:12px 12px 0 0;border:2.5px solid rgba(255,255,255,0.95);border-bottom:none;white-space:nowrap;letter-spacing:0.3px;line-height:1.4;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;gap:6px;" class="sgs-cluster-pulse"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>${label} tin</div><svg style="display:block;margin:0 auto;" width="24" height="13" viewBox="0 0 24 13" xmlns="http://www.w3.org/2000/svg"><polygon points="0,0 24,0 12,13" fill="${bg}"/></svg></div>`,
+        html: `<div style="display:inline-block;filter:drop-shadow(0 4px 16px ${glow});transform:translate(-50%,-50%);transform-origin:center;pointer-events:auto;cursor:pointer;"><div class="sgs-cluster-pulse" style="background:${bg};background-image:linear-gradient(135deg,rgba(255,255,255,0.22)0%,transparent 55%);color:#fff;font-size:13px;font-weight:800;padding:9px 16px;border-radius:20px;border:2.5px solid rgba(255,255,255,0.96);white-space:nowrap;letter-spacing:0.2px;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;gap:5px;line-height:1;"><span style="font-size:15px">${num}</span><span style="font-size:10px;font-weight:700;opacity:0.9">BĐS</span></div></div>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
     });
@@ -275,8 +277,11 @@ const MapView: React.FC<MapViewProps> = memo(({
             layerGroup.current = lg;
             mapInst.current    = map;
 
-            // Use stable refs so listeners always call the current callback version
+            // Use stable refs so listeners always call the current callback version.
+            // Both zoomend and moveend can change which listings cluster together
+            // (pixel distances shift when the viewport moves).
             map.on('zoomend', () => renderClustersRef.current());
+            map.on('moveend', () => renderClustersRef.current());
             map.on('click',   () => {
                 deselectPinRef.current();
                 setSelected(null);
@@ -704,7 +709,7 @@ const MapView: React.FC<MapViewProps> = memo(({
                     }}>
                         <div style={{ padding: '13px 14px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <span style={{ fontWeight: 800, fontSize: 13, color: '#0f172a' }}>
-                                {clusterGroup.length} {t('map.listings_here') || 'tin tại đây'}
+                                {clusterGroup.length} {t('map.listings_here') || 'BĐS tại đây'}
                             </span>
                             <button onClick={() => setClusterGroup(null)} style={{
                                 background: '#f1f5f9', border: 'none', borderRadius: '50%',
