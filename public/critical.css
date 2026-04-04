@@ -260,7 +260,7 @@ html, body {
   border-bottom: none !important;
 }
 /* Three pin colors */
-.sgs-pin-sale    { background-color: #0f172a !important; }
+.sgs-pin-sale    { background-color: #4f46e5 !important; }
 .sgs-pin-rent    { background-color: #7c3aed !important; }
 .sgs-pin-project { background-color: #2563eb !important; }
 /* Tail triangles */
@@ -270,7 +270,7 @@ html, body {
   border-right: 7px solid transparent !important;
   margin-top: 0 !important;
 }
-.sgs-pin-tail.sgs-pin-sale    { border-top: 8px solid #0f172a !important; }
+.sgs-pin-tail.sgs-pin-sale    { border-top: 8px solid #4f46e5 !important; }
 .sgs-pin-tail.sgs-pin-rent    { border-top: 8px solid #7c3aed !important; }
 .sgs-pin-tail.sgs-pin-project { border-top: 8px solid #2563eb !important; }
 /* Cluster bubble */
@@ -293,7 +293,7 @@ html, body {
   position: relative !important;
   background-image: linear-gradient(135deg,rgba(255,255,255,0.18) 0%,transparent 55%) !important;
 }
-.sgs-cluster-bubble.sgs-pin-sale    { background-color: #0f172a !important; }
+.sgs-cluster-bubble.sgs-pin-sale    { background-color: #4f46e5 !important; }
 .sgs-cluster-bubble.sgs-pin-rent    { background-color: #7c3aed !important; }
 .sgs-cluster-bubble.sgs-pin-project { background-color: #2563eb !important; }
 .sgs-cluster-tail {
@@ -302,7 +302,7 @@ html, body {
   border-right: 8px solid transparent !important;
   margin-top: 0 !important;
 }
-.sgs-cluster-tail.sgs-pin-sale    { border-top: 9px solid #0f172a !important; }
+.sgs-cluster-tail.sgs-pin-sale    { border-top: 9px solid #4f46e5 !important; }
 .sgs-cluster-tail.sgs-pin-rent    { border-top: 9px solid #7c3aed !important; }
 .sgs-cluster-tail.sgs-pin-project { border-top: 9px solid #2563eb !important; }
 
