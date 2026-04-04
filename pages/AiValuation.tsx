@@ -422,16 +422,23 @@ export const AiValuation: React.FC = () => {
         })();
 
         const baseBillion = totalPrice / 1_000_000_000;
-        const growthPct: number = aiResult.trendGrowthPct ?? 0;
+        // Parse annual growth % from marketTrend text (server does not return trendGrowthPct directly)
+        const trendText = (aiResult.marketTrend || '').toLowerCase();
+        const trendMatch = trendText.match(/tăng[^\d]*(\d+)/) || trendText.match(/(\d+)\s*%[^(]*tăng/) || trendText.match(/(\d+)%/);
+        const rawGrowthPct = trendMatch ? parseInt(trendMatch[1], 10) : 0;
+        // Cap: 0% growth → use 5% minimum so chart is never a flat line; cap at 40% to avoid outliers
+        const growthPct = Math.min(40, rawGrowthPct > 0 ? rawGrowthPct : 5);
         const monthlyGrowth = growthPct / 100 / 12;
         const now = new Date();
         const chartData = Array.from({ length: 12 }, (_, i) => {
             const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
             const monthLabel = `T${d.getMonth() + 1}/${String(d.getFullYear()).slice(2)}`;
-            const monthsFromNow = i - 11;
+            const monthsFromNow = i - 11;  // negative = past months, 0 = current month (i=11)
+            // Compound growth formula: price * (1 + r)^n
+            const factor = Math.pow(1 + monthlyGrowth, monthsFromNow);
             return {
                 month: monthLabel,
-                price: Number((baseBillion * (1 + monthlyGrowth * monthsFromNow)).toFixed(3))
+                price: Number((baseBillion * factor).toFixed(3))
             };
         });
 
@@ -1385,20 +1392,36 @@ export const AiValuation: React.FC = () => {
 
                         {/* Chart Simulation */}
                         <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-sm relative">
-                            <div className="flex justify-between items-center mb-2">
-                                <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest">Xu hướng giá ước tính</h3>
-                                <span className={`text-xs px-3 py-1 rounded-full border font-medium ${valuation.isRealtime === false ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
-                                    {valuation.marketTrend}
-                                </span>
-                            </div>
-                            <p className="text-slate-600 text-xs mb-5 italic">
-                                {valuation.isRealtime === false
-                                    ? 'Mô phỏng xu hướng dựa trên bảng giá khu vực — không phải dữ liệu realtime.'
-                                    : 'Mô phỏng xu hướng 12 tháng — tính từ tỷ lệ tăng trưởng thị trường AI trích xuất.'}
-                            </p>
-                            <div className="h-[300px] w-full relative">
-                                <ResponsiveContainer width="100%" height="100%" minHeight={250} minWidth={250}>
-                                    <AreaChart data={valuation.chartData}>
+                            {(() => {
+                                // Extract short trend label from AI marketTrend text
+                                const raw = valuation.marketTrend || '';
+                                const pctMatch = raw.match(/(\d+)\s*%/);
+                                const pct = pctMatch ? parseInt(pctMatch[1], 10) : null;
+                                const isUp = /tăng/i.test(raw);
+                                const isDown = /giảm/i.test(raw);
+                                const trendLabel = pct
+                                    ? (isDown ? `Giảm ${pct}%/năm` : `Tăng ${pct}%/năm`)
+                                    : (isDown ? 'Xu hướng giảm' : isUp ? 'Xu hướng tăng' : 'Ổn định');
+                                const isFallback = valuation.isRealtime === false;
+                                return (
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div>
+                                            <h3 className="text-slate-400 uppercase text-xs font-bold tracking-widest">Xu hướng giá ước tính</h3>
+                                            <p className="text-slate-600 text-xs mt-0.5 italic">
+                                                {isFallback
+                                                    ? 'Ước tính từ bảng giá khu vực — không phải dữ liệu realtime'
+                                                    : 'Mô phỏng 12 tháng từ tỷ lệ tăng trưởng AI trích xuất'}
+                                            </p>
+                                        </div>
+                                        <span className={`text-xs px-3 py-1 rounded-full border font-bold shrink-0 ${isFallback ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : isDown ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+                                            {trendLabel}
+                                        </span>
+                                    </div>
+                                );
+                            })()}
+                            <div className="h-[300px] w-full relative min-w-0">
+                                <ResponsiveContainer width="100%" height="100%" minHeight={250} minWidth={200}>
+                                    <AreaChart data={valuation.chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
@@ -1406,21 +1429,34 @@ export const AiValuation: React.FC = () => {
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                                        <XAxis dataKey="month" stroke="#64748B" tick={{fill: '#94A3B8'}} />
-                                        <YAxis hide domain={['dataMin - 10', 'dataMax + 10']} />
-                                        <Tooltip 
-                                            contentStyle={{backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: '12px'}}
-                                            itemStyle={{color: '#fff'}}
-                                            formatter={(value: number) => [`${value.toFixed(1)} Tỷ`, 'Giá trung bình']}
+                                        <XAxis dataKey="month" stroke="#64748B" tick={{fill: '#94A3B8', fontSize: 11}} />
+                                        <YAxis
+                                            hide
+                                            domain={[
+                                                (dataMin: number) => Math.max(0, parseFloat((dataMin * 0.94).toFixed(3))),
+                                                (dataMax: number) => parseFloat((dataMax * 1.06).toFixed(3))
+                                            ]}
                                         />
-                                        <Area type="monotone" dataKey="price" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorPrice)" />
+                                        <Tooltip 
+                                            contentStyle={{backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: '12px', fontSize: 13}}
+                                            itemStyle={{color: '#fff'}}
+                                            formatter={(value: number) => {
+                                                const display = value >= 1000
+                                                    ? `${(value / 1000).toFixed(2)} Nghìn tỷ`
+                                                    : value >= 1
+                                                    ? `${value.toFixed(2)} Tỷ`
+                                                    : `${(value * 1000).toFixed(0)} Triệu`;
+                                                return [display + ' VNĐ', 'Giá ước tính'];
+                                            }}
+                                        />
+                                        <Area type="monotone" dataKey="price" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorPrice)" dot={false} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
                         
-                        {/* ── RLHF Feedback Widget ─────────────────────────────────── */}
-                        {valuationId && (
+                        {/* ── RLHF Feedback Widget — chỉ hiển thị khi đã đăng nhập ─── */}
+                        {valuationId && currentUser && (
                             <div className="bg-slate-800/60 border border-slate-700 rounded-[28px] px-7 py-6 flex flex-col gap-4">
                                 {feedbackSent ? (
                                     <div className="flex items-center gap-3 text-emerald-400">
