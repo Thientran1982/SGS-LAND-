@@ -49,8 +49,11 @@ const formatModelName = (model: string) => {
         .trim();
 };
 
+interface SkillDefault { name: string; summary: string; notes: string; }
+
 interface PromptsTabProps {
     prompts: PromptTemplate[];
+    promptDefaults: Record<string, SkillDefault>;
     selectedPrompt: PromptTemplate | null;
     editContent: string;
     isEvalRunning: boolean;
@@ -182,34 +185,64 @@ const AGENT_SKILL_CATALOG: { key: string; agent: string; desc: string }[] = [
 ];
 
 const PromptsTab = memo(({ 
-    prompts, selectedPrompt, editContent, isEvalRunning, testInput, lastEvalRun,
+    prompts, promptDefaults, selectedPrompt, editContent, isEvalRunning, testInput, lastEvalRun,
     onSelect, onEditContent, onInsertVar, onRunSim, onSaveVersion, onCreateOpen, onSetTestInput, t 
 }: PromptsTabProps) => {
     const configuredKeys = new Set((prompts || []).map(p => p.name));
+    const [hoveredKey, setHoveredKey] = useState<string | null>(null);
     return (
     <div className="space-y-4 animate-enter">
         {/* AGENT SKILLS CATALOG */}
         <div className="bg-[var(--bg-surface)] p-4 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
-            <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Catalog Agent Skills — Tên template khớp key để override mặc định</h4>
+            <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Catalog Agent Skills — Tên template khớp key để override mặc định</h4>
+                <span className="text-[10px] text-[var(--text-tertiary)] italic">Hover để xem chi tiết skill</span>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                 {AGENT_SKILL_CATALOG.map(({ key, agent, desc }) => {
                     const configured = configuredKeys.has(key);
+                    const defInfo = promptDefaults[key];
+                    const isHovered = hoveredKey === key;
                     return (
-                        <div
-                            key={key}
-                            onClick={() => !configured && onCreateOpen()}
-                            title={configured ? 'Đã có template — chọn từ danh sách bên dưới' : `Nhấn để tạo template "${key}"`}
-                            className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all select-none ${configured ? 'bg-emerald-50 border-emerald-200' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] hover:border-indigo-200 hover:bg-indigo-50'}`}
-                        >
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                                {configured
-                                    ? <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                                    : <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-tertiary)] opacity-40 shrink-0"></span>
-                                }
-                                <span className={`font-bold truncate ${configured ? 'text-emerald-700' : 'text-[var(--text-secondary)]'}`}>{agent}</span>
+                        <div key={key} className="relative">
+                            <div
+                                onClick={() => !configured && onCreateOpen()}
+                                onMouseEnter={() => setHoveredKey(key)}
+                                onMouseLeave={() => setHoveredKey(null)}
+                                title={configured ? 'Đã có template — chọn từ danh sách bên dưới' : `Nhấn để tạo template "${key}"`}
+                                className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all select-none ${configured ? 'bg-emerald-50 border-emerald-200' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] hover:border-indigo-200 hover:bg-indigo-50'}`}
+                            >
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                    {configured
+                                        ? <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                        : <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-tertiary)] opacity-40 shrink-0"></span>
+                                    }
+                                    <span className={`font-bold truncate ${configured ? 'text-emerald-700' : 'text-[var(--text-secondary)]'}`}>{agent}</span>
+                                    {configured && <span className="ml-auto text-[9px] font-bold text-emerald-600 bg-emerald-100 px-1 rounded">override</span>}
+                                </div>
+                                <code className="text-[10px] text-[var(--text-tertiary)] font-mono block truncate">{key}</code>
+                                <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5 leading-tight hidden sm:block">{desc}</p>
                             </div>
-                            <code className="text-[10px] text-[var(--text-tertiary)] font-mono block truncate">{key}</code>
-                            <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5 leading-tight hidden sm:block">{desc}</p>
+                            {/* Default skill info popover */}
+                            {isHovered && defInfo && (
+                                <div className="absolute z-50 top-full mt-1 left-0 w-72 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl p-3 text-xs pointer-events-none">
+                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${configured ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                                        <span className="font-bold text-[var(--text-primary)]">{defInfo.name}</span>
+                                        <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full ${configured ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{configured ? 'Đã override' : 'Đang dùng mặc định'}</span>
+                                    </div>
+                                    <p className="text-[var(--text-secondary)] leading-relaxed mb-2">{defInfo.summary}</p>
+                                    <div className="bg-[var(--glass-surface)] rounded-lg p-2">
+                                        <span className="text-[9px] font-bold text-indigo-600 uppercase block mb-1">Quy tắc chính</span>
+                                        <p className="text-[var(--text-tertiary)] leading-relaxed">{defInfo.notes}</p>
+                                    </div>
+                                    {!configured && (
+                                        <button onClick={(e) => { e.stopPropagation(); onCreateOpen(); }} className="mt-2 w-full text-center text-[10px] font-bold text-indigo-600 hover:text-indigo-800 py-1 border border-indigo-200 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors pointer-events-auto">
+                                            + Tạo override cho skill này
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -621,6 +654,9 @@ export const AiGovernance: React.FC = () => {
     const [lastEvalRun, setLastEvalRun] = useState<string>('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+    // Prompt defaults (read-only; loaded once for admin skill catalog tooltips)
+    const [promptDefaults, setPromptDefaults] = useState<Record<string, SkillDefault>>({});
+
     // RLHF State
     const [rlhfStats, setRlhfStats] = useState<RlhfStats | null>(null);
     const [rewardSignals, setRewardSignals] = useState<RewardSignal[]>([]);
@@ -667,6 +703,12 @@ export const AiGovernance: React.FC = () => {
 
     useEffect(() => { fetchData(); }, [fetchData]);
     useEffect(() => { if (activeTab === 'RLHF') fetchRlhfData(); }, [activeTab, fetchRlhfData]);
+    useEffect(() => {
+        fetch('/api/ai/prompt-defaults', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
+            .then(r => r.ok ? r.json() : {})
+            .then(d => setPromptDefaults(d))
+            .catch(() => {});
+    }, []);
 
     const handleUpdateConfig = useCallback((key: keyof AiTenantConfig, value: any) => {
         if (!config) return;
@@ -767,6 +809,7 @@ export const AiGovernance: React.FC = () => {
             {activeTab === 'PROMPTS' && (
                 <PromptsTab 
                     prompts={prompts}
+                    promptDefaults={promptDefaults}
                     selectedPrompt={selectedPrompt}
                     editContent={editContent}
                     isEvalRunning={isEvalRunning}

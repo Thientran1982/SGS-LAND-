@@ -221,6 +221,24 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     }
   });
 
+  // Return read-only default skill content so admin can see what's running and decide what to override
+  router.get('/prompt-defaults', authenticateToken, async (_req: Request, res: Response) => {
+    res.json({
+      ROUTER_SYSTEM: { name: 'Router', summary: 'Phân tích ý định người dùng và định tuyến sang agent phù hợp (Inventory / Finance / Legal / Valuation / Sales / Marketing / Contract / Lead).', notes: 'Quy tắc: tự tin → chọn 1 agent. Không chắc → DIRECT_ANSWER. Câu chào/cảm ơn → DIRECT_ANSWER.' },
+      WRITER_PERSONA: { name: 'Writer', summary: 'Tính cách và phong cách của tư vấn viên BĐS trả lời khách.', notes: 'Điều chỉnh: Formal / Casual / Data-driven theo hành vi khách.' },
+      INVENTORY_SYSTEM: { name: 'Inventory', summary: 'Phân tích bộ lọc tìm BĐS: khu vực, loại nhà, mức giá, diện tích, tiện ích lân cận.', notes: 'Kết hợp full-text search + vector similarity từ DB listing.' },
+      FINANCE_SYSTEM: { name: 'Finance', summary: 'Tư vấn vay mua nhà: lãi suất ngân hàng, khả năng trả nợ, so sánh gói vay, cơ cấu vốn.', notes: 'Dữ liệu lãi suất từ Google Search grounding (realtime).' },
+      LEGAL_SYSTEM: { name: 'Legal', summary: 'Giải đáp pháp lý BĐS Việt Nam: sổ hồng/sổ đỏ, sang tên, thuế, quy hoạch, tranh chấp.', notes: 'Không thay thế tư vấn pháp lý chuyên nghiệp — luôn khuyến nghị kiểm tra với luật sư.' },
+      SALES_SYSTEM: { name: 'Sales', summary: 'Chuẩn bị brief xem nhà, xử lý objections, chiến thuật chốt deal theo giai đoạn khách hàng.', notes: 'Phân loại: Awareness / Consideration / Decision → điều chỉnh pitch phù hợp.' },
+      MARKETING_SYSTEM: { name: 'Marketing', summary: 'Soạn nội dung marketing, phân tích ưu đãi, gợi ý chiến dịch kênh digital/offline.', notes: 'Nhắm đúng target: nhà đầu tư / ở thực / tặng / cho thuê.' },
+      CONTRACT_SYSTEM: { name: 'Contract', summary: 'Phân tích điều khoản hợp đồng mua bán/thuê BĐS: rủi ro, thiếu sót, kiến nghị sửa đổi.', notes: 'Highlight red flags: phạt vi phạm, điều kiện hoàn tiền, thời gian bàn giao.' },
+      LEAD_ANALYST_SYSTEM: { name: 'Lead Analyst', summary: 'Phân tích tâm lý & hành vi khách hàng từ lịch sử tương tác để đưa ra chiến lược tiếp cận.', notes: 'Output: Buying Stage, Pain Points, Next Best Action, Urgency Score.' },
+      VALUATION_SYSTEM: { name: 'Valuation Extract', summary: 'STEP 2 — Trích xuất JSON có cấu trúc từ dữ liệu tìm kiếm thô để đưa vào mô hình AVM.', notes: 'Chain-of-Thought bắt buộc: phân tích nguồn dữ liệu, kiểm tra đơn vị, chọn priceMedian có lý do. Ưu tiên: giá giao dịch thực tế > rao bán. Nếu địa chỉ có tên dự án → dùng giá dự án không dùng giá khu vực.' },
+      VALUATION_SEARCH_SYSTEM: { name: 'Valuation Sale', summary: 'STEP 1a — Tìm kiếm giá bán/giao dịch thực tế từ thị trường BĐS với Google Search grounding.', notes: 'Ưu tiên nguồn: Báo cáo CBRE/Savills/JLL → giao dịch thứ cấp thực tế → giá rao bán. Phát hiện tên dự án cụ thể → tìm giá chính dự án đó. 18 tháng gần nhất.' },
+      VALUATION_RENTAL_SYSTEM: { name: 'Valuation Rental', summary: 'STEP 1b — Tìm kiếm giá thuê và tỷ suất Gross Yield thực tế theo loại BĐS.', notes: 'Thuê nguyên căn (không tính từng phòng trọ). Kho/VP: USD/m²/tháng → quy đổi VNĐ. Gross Yield = thuê năm / giá bán × 100%.' },
+    });
+  });
+
   router.post('/simulate', authenticateToken, async (req: Request, res: Response) => {
     try {
       const { systemPrompt, userInput, model } = req.body;

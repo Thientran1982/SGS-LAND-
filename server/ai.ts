@@ -288,17 +288,23 @@ const DEFAULT_VALUATION_SYSTEM =
 `Bạn là chuyên gia định giá bất động sản Việt Nam với 15 năm kinh nghiệm thẩm định.
 Nhiệm vụ: Trích xuất số liệu giá thị trường CHÍNH XÁC từ dữ liệu tìm kiếm để đưa vào mô hình AVM.
 
-Quy tắc trích xuất giá bán (priceMin/priceMedian/priceMax):
+PHƯƠNG PHÁP TỰ SUY LUẬN (Chain-of-Thought — bắt buộc):
+Trước khi điền số liệu, hãy phân tích theo các bước sau và ghi vào field "analysisNotes":
+  1. DATA QUALITY: Dữ liệu tìm kiếm có bao nhiêu nguồn? Là giao dịch thực tế hay giá rao bán?
+  2. PROJECT vs AREA: Địa chỉ có tên dự án cụ thể không? Nếu có → ưu tiên giá dự án hơn giá khu vực.
+  3. UNIT CHECK: Đơn vị giá là VNĐ/m² sàn hay đất? Tỷ/căn hay triệu/m²? Cần quy đổi gì không?
+  4. PRICE SELECTION: Chọn số nào làm priceMedian và tại sao? Có cần điều chỉnh 5-15% listing→transaction?
+  5. CONFIDENCE: Đặt confidence bao nhiêu và lý do?
+
+Quy tắc trích xuất giá bán:
 • ƯU TIÊN: giá giao dịch thực tế / chuyển nhượng thứ cấp > giá rao bán niêm yết > ước tính khu vực.
-• NẾU dữ liệu tìm kiếm có giá từ CHÍNH DỰ ÁN được nêu trong địa chỉ (Vinhomes, Masteri, Ecopark, v.v.)
-  → SỬ DỤNG giá đó (không dùng giá trung bình khu vực — dự án premium luôn cao hơn khu vực).
-• NẾU chỉ có giá rao bán (không có giá giao dịch) → confidence ≤ 90, ghi nhận trong dataRecency.
-• Giá giao dịch thực tế thường thấp hơn giá rao bán 5-15% — điều chỉnh nếu dữ liệu chỉ là listing.
+• NẾU dữ liệu có giá từ CHÍNH DỰ ÁN nêu trong địa chỉ → SỬ DỤNG giá đó (dự án premium > khu vực).
+• NẾU chỉ có giá rao bán → confidence ≤ 90. Giảm priceMedian 5-10% để phản ánh giá giao dịch ước tính.
 
 Quy tắc phân biệt đơn vị:
-• VNĐ/m² ĐẤT (thổ cư) ≠ VNĐ/m² SÀN (xây dựng/thông thủy) — căn hộ tính trên m² thông thủy.
-• Đất nông nghiệp giá thấp hơn đất thổ cư 5-50 lần — không nhầm lẫn.
-• Kho xưởng / văn phòng / KCN thường định giá bằng USD/m²/tháng — quy đổi về VNĐ (× 25,000).
+• VNĐ/m² ĐẤT (thổ cư) ≠ VNĐ/m² SÀN (thông thủy) — căn hộ tính trên m² thông thủy.
+• Đất nông nghiệp giá thấp hơn đất thổ cư 5-50 lần.
+• Kho xưởng / văn phòng / KCN thường USD/m²/tháng — quy đổi về VNĐ (× 25,000).
 • Trả JSON hợp lệ theo schema — không thêm text ngoài JSON.`;
 
 const DEFAULT_VALUATION_SEARCH_SYSTEM =
@@ -2545,9 +2551,13 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                             },
                             required: ["label", "impact", "isPositive"]
                         }
+                    },
+                    analysisNotes: {
+                        type: Type.STRING,
+                        description: `Phân tích suy luận từng bước TRƯỚC KHI điền số (Chain-of-Thought). Ghi ngắn gọn: (1) nguồn dữ liệu và loại (giao dịch/rao bán), (2) dự án cụ thể hay khu vực, (3) đơn vị đã kiểm tra, (4) priceMedian chọn từ số nào và lý do, (5) confidence lý do. Ví dụ: "Tìm thấy 3 nguồn: Savills Q1/2025 + batdongsan.com. Vinhomes CP thứ cấp 185-210 tr/m². Dự án premium → dùng giá dự án. Thông thủy m² OK. Median=195M (giao dịch). Confidence=95."`
                     }
                 },
-                required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors"]
+                required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors", "analysisNotes"]
             };
 
             // Generate unique ID for this valuation call (allows feedback to be tied back)
@@ -2617,6 +2627,11 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
             }
 
             const aiData = JSON.parse(extractText);
+
+            // ── Log Chain-of-Thought reasoning from extraction agent ──────────────
+            if (aiData.analysisNotes) {
+                logger.info(`[Valuation AI] 🧠 Agent reasoning:\n${aiData.analysisNotes}`);
+            }
 
             // ── Statistical price triple → use median as primary ──────────────────
             let priceMin: number    = aiData.priceMin    || 0;
