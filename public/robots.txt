@@ -2,9 +2,9 @@ User-agent: *
 Allow: /
 Allow: /home
 Allow: /marketplace
+Allow: /listing/
 Allow: /ai-valuation
 Allow: /news
-Allow: /login
 Allow: /about-us
 Allow: /contact
 Allow: /careers
@@ -17,6 +17,7 @@ Allow: /terms-of-service
 Allow: /cookie-settings
 Allow: /crm-platform
 
+Disallow: /login
 Disallow: /dashboard
 Disallow: /inventory
 Disallow: /leads

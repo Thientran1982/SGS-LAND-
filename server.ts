@@ -2078,6 +2078,52 @@ async function startServer() {
     });
   });
 
+  // ── Dynamic XML sitemaps (works in both dev and prod) ─────────────────────
+  const APP_SITEMAP_URL = (process.env.APP_URL || 'https://sgsland.vn').replace(/\/$/, '');
+  const TODAY = new Date().toISOString().split('T')[0];
+
+  app.get('/sitemap-listings.xml', async (_req: express.Request, res: express.Response) => {
+    try {
+      const result = await pool.query(
+        `SELECT id, updated_at FROM listings
+         WHERE status = 'ACTIVE'
+         ORDER BY updated_at DESC LIMIT 50000`
+      );
+      const urls = result.rows.map((r: any) => {
+        const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split('T')[0] : TODAY;
+        return `  <url>\n    <loc>${APP_SITEMAP_URL}/listing/${r.id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.80</priority>\n  </url>`;
+      }).join('\n');
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`;
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      res.send(xml);
+    } catch (err) {
+      logger.error('[Sitemap] listings error:', err);
+      res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+    }
+  });
+
+  app.get('/sitemap-news.xml', async (_req: express.Request, res: express.Response) => {
+    try {
+      const result = await pool.query(
+        `SELECT id, updated_at, published_at FROM articles
+         WHERE status = 'PUBLISHED'
+         ORDER BY published_at DESC LIMIT 50000`
+      );
+      const urls = result.rows.map((r: any) => {
+        const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split('T')[0] : TODAY;
+        return `  <url>\n    <loc>${APP_SITEMAP_URL}/news/${r.id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.70</priority>\n  </url>`;
+      }).join('\n');
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`;
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      res.send(xml);
+    } catch (err) {
+      logger.error('[Sitemap] news error:', err);
+      res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+    }
+  });
+
   // Serve public assets (widget.js, QR codes, etc.) in all environments
   app.use(express.static("public"));
 
@@ -2110,8 +2156,8 @@ async function startServer() {
       }
     };
 
-    // /listings/:id → inject listing-specific meta
-    app.get('/listings/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // /listing/:id → inject listing-specific meta (singular, matching ROUTES.LISTING)
+    app.get('/listing/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
         const listing = await listingRepository.findById(DEFAULT_TENANT_ID, String(req.params.id));
         if (!listing) return next();

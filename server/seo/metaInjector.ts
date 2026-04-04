@@ -67,7 +67,7 @@ export function buildListingMeta(listing: any): MetaData {
 
   const images: string[] = Array.isArray(listing.images) ? listing.images : [];
   const image = images[0] || DEFAULT_IMAGE;
-  const url = `${APP_URL}/listings/${listing.id}`;
+  const url = `${APP_URL}/listing/${listing.id}`;
 
   const structuredData: any = {
     '@context': 'https://schema.org',
