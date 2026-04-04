@@ -155,6 +155,13 @@ export const AiValuation: React.FC = () => {
     const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const [history, setHistory] = useState<ValuationHistoryItem[]>([]);
 
+    // Feedback / RLHF states
+    const [valuationId, setValuationId] = useState<string | null>(null);
+    const [feedbackSent, setFeedbackSent] = useState(false);
+    const [feedbackRating, setFeedbackRating] = useState<1 | -1 | null>(null);
+    const [actualPriceInput, setActualPriceInput] = useState('');
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
+
     const notify = (msg: string, type: 'success' | 'error' = 'error') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 4000);
@@ -278,6 +285,11 @@ export const AiValuation: React.FC = () => {
         }
 
         if (intervalRef.current) clearInterval(intervalRef.current);
+        // Reset feedback states for a new valuation
+        setValuationId(null);
+        setFeedbackSent(false);
+        setFeedbackRating(null);
+        setActualPriceInput('');
         setStep('ANALYZING');
         setProgress(0);
         
@@ -360,6 +372,7 @@ export const AiValuation: React.FC = () => {
         
         setTimeout(() => {
             calculateResults(aiResult, areaNum, roadNum);
+            setValuationId(aiResult.interactionId || null);
             setStep('RESULT');
             // Save to history
             const totalPrice: number = aiResult.totalPrice || Math.round((aiResult.pricePerM2 || aiResult.basePrice || 0) * areaNum);
@@ -1317,6 +1330,79 @@ export const AiValuation: React.FC = () => {
                             </div>
                         </div>
                         
+                        {/* ── RLHF Feedback Widget ─────────────────────────────────── */}
+                        {valuationId && (
+                            <div className="bg-slate-800/60 border border-slate-700 rounded-[28px] px-7 py-6 flex flex-col gap-4">
+                                {feedbackSent ? (
+                                    <div className="flex items-center gap-3 text-emerald-400">
+                                        <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                        <span className="text-sm font-medium">Cảm ơn! Phản hồi của bạn giúp AI định giá chính xác hơn.</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-slate-400 text-sm font-medium">Kết quả định giá có chính xác không?</p>
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => setFeedbackRating(1)}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${feedbackRating === 1 ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'border-slate-600 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400'}`}
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
+                                                Chính xác
+                                            </button>
+                                            <button
+                                                onClick={() => setFeedbackRating(-1)}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${feedbackRating === -1 ? 'bg-rose-500/20 border-rose-500 text-rose-400' : 'border-slate-600 text-slate-400 hover:border-rose-500/50 hover:text-rose-400'}`}
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v2a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" /></svg>
+                                                Cần cải thiện
+                                            </button>
+                                        </div>
+                                        {feedbackRating === -1 && (
+                                            <div className="flex items-center gap-3 mt-1">
+                                                <input
+                                                    type="number"
+                                                    placeholder="Giá thực tế bạn biết (tỷ VNĐ)"
+                                                    value={actualPriceInput}
+                                                    onChange={(e) => setActualPriceInput(e.target.value)}
+                                                    className="flex-1 bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500/60"
+                                                    step="0.1"
+                                                    min="0"
+                                                />
+                                            </div>
+                                        )}
+                                        {feedbackRating !== null && (
+                                            <button
+                                                disabled={feedbackLoading}
+                                                onClick={async () => {
+                                                    if (!feedbackRating) return;
+                                                    setFeedbackLoading(true);
+                                                    try {
+                                                        const actualPriceBillion = actualPriceInput ? parseFloat(actualPriceInput) : undefined;
+                                                        const actualPriceVnd = actualPriceBillion && !isNaN(actualPriceBillion) ? actualPriceBillion * 1_000_000_000 : undefined;
+                                                        await aiService.submitFeedback({
+                                                            interactionId: valuationId,
+                                                            intent: 'ESTIMATE_VALUATION',
+                                                            rating: feedbackRating,
+                                                            aiResponse: `${address} — ${valuation?.price ? (valuation.price / 1_000_000_000).toFixed(2) + ' tỷ VNĐ' : ''}`,
+                                                            correction: actualPriceVnd ? String(actualPriceVnd) : undefined,
+                                                        });
+                                                        setFeedbackSent(true);
+                                                    } catch {
+                                                        notify('Không gửi được phản hồi. Vui lòng thử lại.', 'error');
+                                                    } finally {
+                                                        setFeedbackLoading(false);
+                                                    }
+                                                }}
+                                                className="self-start px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+                                            >
+                                                {feedbackLoading ? 'Đang gửi...' : 'Gửi phản hồi'}
+                                            </button>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )}
+
                         <div className="flex justify-center mt-12 gap-4">
                             <button onClick={handleAdjustParams} className="px-8 py-3 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 font-bold transition-colors flex items-center gap-2">
                                 {ICONS.EDIT} Điều Chỉnh Thông Số

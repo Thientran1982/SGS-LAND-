@@ -2050,6 +2050,7 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
         incomeApproach?: import('./valuationEngine').IncomeApproachResult;
         reconciliation?: { compsWeight: number; incomeWeight: number; compsValue: number; incomeValue: number; finalValue: number };
         isRealtime: boolean;
+        interactionId: string;
     }> {
         try {
             // ── STEP 1: Google Search grounding → get RAW market text data ──────────
@@ -2362,10 +2363,18 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                 required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors"]
             };
 
+            // ── RLHF injection: load few-shot examples + negative rules from past feedback ──
+            const rlhf = tenantId
+                ? await buildRlhfContext(tenantId, 'ESTIMATE_VALUATION').catch(() => ({ fewShotSection: '', negativeRulesSection: '' }))
+                : { fewShotSection: '', negativeRulesSection: '' };
+
+            // Generate unique ID for this valuation call (allows feedback to be tied back)
+            const interactionId: string = crypto.randomUUID();
+
             const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | ${(isApartmentType || isOffPlan) ? 'Tầng/căn hộ' : 'Lộ giới: ' + roadWidth + 'm'} | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}
 
 DỮ LIỆU THỊ TRƯỜNG VỪA TRA CỨU (2 nguồn song song — giá bán + giá thuê):
-${marketContext}
+${marketContext}${rlhf.fewShotSection}${rlhf.negativeRulesSection}
 
 TRÍCH XUẤT CHÍNH XÁC:
 
@@ -2672,6 +2681,7 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
             ];
 
             return {
+                interactionId,
                 basePrice: marketBasePrice,
                 pricePerM2: avmResult.pricePerM2,
                 totalPrice: avmResult.totalPrice,
@@ -2723,6 +2733,7 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
                 : 5;
 
             return {
+                interactionId: crypto.randomUUID(),
                 basePrice: regional.price,
                 pricePerM2: avmResult.pricePerM2,
                 totalPrice: avmResult.totalPrice,

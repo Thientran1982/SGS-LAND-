@@ -197,7 +197,9 @@ export function createValuationRoutes(
       });
 
       // ── Response ──────────────────────────────────────────────────────────
+      const interactionId = crypto.randomUUID();
       res.json({
+        interactionId,
         // Core valuation result
         basePrice: avmResult.marketBasePrice,
         pricePerM2: avmResult.pricePerM2,
