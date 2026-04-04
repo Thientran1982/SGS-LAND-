@@ -3,7 +3,7 @@ import { aiGovernanceRepository } from '../repositories/aiGovernanceRepository';
 import { feedbackRepository } from '../repositories/feedbackRepository';
 import { GoogleGenAI } from '@google/genai';
 
-export function createAiGovernanceRoutes(authenticateToken: any) {
+export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: any) {
   const router = Router();
 
   router.get('/safety-logs', authenticateToken, async (req: Request, res: Response) => {
@@ -111,10 +111,12 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
     'DIRECT_ANSWER', 'GREETING', 'UNKNOWN',
   ]);
 
-  router.post('/feedback', authenticateToken, async (req: Request, res: Response) => {
+  // Feedback route: open to guests (optional auth) so anyone can rate a valuation result
+  const feedbackMiddleware = optionalAuth || authenticateToken;
+  router.post('/feedback', feedbackMiddleware, async (req: Request, res: Response) => {
     try {
-      const tenantId = (req as any).user?.tenantId;
-      const userId = (req as any).user?.id;
+      const tenantId: string | undefined = (req as any).user?.tenantId;
+      const userId: string | undefined = (req as any).user?.id;
       const { interactionId, leadId, rating, correction, agentNode, intent, userMessage, aiResponse, model } = req.body;
 
       if (rating !== 1 && rating !== -1) {
@@ -137,7 +139,8 @@ export function createAiGovernanceRoutes(authenticateToken: any) {
         model: typeof model === 'string' ? model.slice(0, 100) : undefined,
       });
 
-      if (safeIntent) {
+      // RLHF reward signal — only meaningful for tenant-scoped (authenticated) feedback
+      if (safeIntent && tenantId) {
         feedbackRepository.computeRewardSignal(tenantId, safeIntent).catch((err) => {
           console.error('[RLHF] Error computing reward signal for', safeIntent, err?.message);
         });

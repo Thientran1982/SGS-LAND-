@@ -1495,7 +1495,7 @@ async function startServer() {
   app.use('/api/templates', apiRateLimit, createTemplateRoutes(authenticateToken));
   app.use('/api/activity', apiRateLimit, createActivityRoutes(authenticateToken));
   app.use('/api/notifications', apiRateLimit, createNotificationRoutes(authenticateToken));
-  app.use('/api/ai/governance', apiRateLimit, createAiGovernanceRoutes(authenticateToken));
+  app.use('/api/ai/governance', apiRateLimit, createAiGovernanceRoutes(authenticateToken, optionalAuth));
   app.use('/api/enterprise', apiRateLimit, createEnterpriseRoutes(authenticateToken, io));
   app.use('/api/upload', apiRateLimit, createUploadRoutes(authenticateToken));
   app.use('/uploads', createUploadServeRoute(authenticateToken));

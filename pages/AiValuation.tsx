@@ -1455,8 +1455,8 @@ export const AiValuation: React.FC = () => {
                             </div>
                         </div>
                         
-                        {/* ── RLHF Feedback Widget — chỉ hiển thị khi đã đăng nhập ─── */}
-                        {valuationId && currentUser && (
+                        {/* ── RLHF Feedback Widget — hiển thị cho mọi người (guest + user) ─── */}
+                        {valuationId && (
                             <div className="bg-slate-800/60 border border-slate-700 rounded-[28px] px-7 py-6 flex flex-col gap-4">
                                 {feedbackSent ? (
                                     <div className="flex items-center gap-3 text-emerald-400">

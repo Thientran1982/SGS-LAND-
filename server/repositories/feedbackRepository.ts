@@ -1,4 +1,5 @@
 import { BaseRepository, PaginatedResult } from './baseRepository';
+import { withTransaction } from '../db';
 import { PoolClient } from 'pg';
 
 export interface FeedbackData {
@@ -42,27 +43,34 @@ class FeedbackRepository extends BaseRepository {
     super('ai_feedback');
   }
 
-  async create(tenantId: string, data: FeedbackData): Promise<any> {
-    return this.withTenant(tenantId, async (client: PoolClient) => {
-      const result = await client.query(
-        `INSERT INTO ai_feedback (tenant_id, interaction_id, lead_id, user_id, rating, correction, agent_node, intent, user_message, ai_response, model, metadata)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-         RETURNING *`,
-        [
-          tenantId,
-          data.interactionId || null,
-          data.leadId || null,
-          data.userId || null,
-          data.rating,
-          data.correction || null,
-          data.agentNode || null,
-          data.intent || null,
-          data.userMessage || null,
-          data.aiResponse || null,
-          data.model || null,
-          JSON.stringify(data.metadata || {}),
-        ]
-      );
+  async create(tenantId: string | null | undefined, data: FeedbackData): Promise<any> {
+    const params = [
+      tenantId || null,
+      data.interactionId || null,
+      data.leadId || null,
+      data.userId || null,
+      data.rating,
+      data.correction || null,
+      data.agentNode || null,
+      data.intent || null,
+      data.userMessage || null,
+      data.aiResponse || null,
+      data.model || null,
+      JSON.stringify(data.metadata || {}),
+    ];
+    const sql = `INSERT INTO ai_feedback (tenant_id, interaction_id, lead_id, user_id, rating, correction, agent_node, intent, user_message, ai_response, model, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       RETURNING *`;
+
+    if (tenantId) {
+      return this.withTenant(tenantId, async (client: PoolClient) => {
+        const result = await client.query(sql, params);
+        return this.rowToEntity(result.rows[0]);
+      });
+    }
+    // Guest (no tenantId) — use plain transaction without RLS
+    return withTransaction(async (client: PoolClient) => {
+      const result = await client.query(sql, params);
       return this.rowToEntity(result.rows[0]);
     });
   }
