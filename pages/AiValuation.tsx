@@ -918,9 +918,9 @@ export const AiValuation: React.FC = () => {
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tình Trạng Pháp Lý <span className="text-rose-400 font-black">*</span></label>
                                     <div className="grid grid-cols-3 gap-3">
                                         {[
-                                            { id: 'PINK_BOOK', label: 'Sổ Hồng', badge: 'Đầy đủ', badgeColor: 'text-emerald-400', icon: '📋' },
-                                            { id: 'CONTRACT', label: 'HĐMB', badge: '-12%', badgeColor: 'text-yellow-400', icon: '📄' },
-                                            { id: 'WAITING', label: 'Vi Bằng', badge: '-20%', badgeColor: 'text-rose-400', icon: '⚠️', title: 'Chưa có sổ / hợp đồng vi bằng — rủi ro pháp lý cao hơn' }
+                                            { id: 'PINK_BOOK', label: 'Sổ Hồng', badge: 'Đầy đủ', badgeColor: 'text-emerald-400' },
+                                            { id: 'CONTRACT', label: 'HĐMB', badge: '-12%', badgeColor: 'text-yellow-400' },
+                                            { id: 'WAITING', label: 'Vi Bằng', badge: '-20%', badgeColor: 'text-rose-400', title: 'Chưa có sổ / hợp đồng vi bằng — rủi ro pháp lý cao hơn' }
                                         ].map(opt => (
                                             <button
                                                 key={opt.id}
@@ -928,7 +928,7 @@ export const AiValuation: React.FC = () => {
                                                 title={opt.title}
                                                 className={`py-2.5 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${legal === opt.id ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
                                             >
-                                                <span>{opt.icon} {opt.label}</span>
+                                                <span>{opt.label}</span>
                                                 <span className={`text-[10px] font-bold ${legal === opt.id ? 'text-white/70' : opt.badgeColor}`}>{opt.badge}</span>
                                             </button>
                                         ))}
@@ -939,15 +939,15 @@ export const AiValuation: React.FC = () => {
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-3">Loại Bất Động Sản</label>
 
                                     {/* Nhóm: Nhà ở */}
-                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">🏘️ Nhà ở</div>
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">Nhà ở</div>
                                     <div className="grid grid-cols-3 gap-2 mb-4">
                                         {[
-                                            { id: 'townhouse_center', label: '🏠 Nhà phố nội đô' },
-                                            { id: 'townhouse_suburb', label: '🏡 Nhà phố ngoại thành' },
-                                            { id: 'villa', label: '🏛️ Biệt thự' },
-                                            { id: 'apartment_center', label: '🏢 Căn hộ trung tâm' },
-                                            { id: 'apartment_suburb', label: '🏗️ Căn hộ ngoại ô' },
-                                            { id: 'penthouse', label: '👑 Penthouse' },
+                                            { id: 'townhouse_center', label: 'Nhà phố nội đô' },
+                                            { id: 'townhouse_suburb', label: 'Nhà phố ngoại thành' },
+                                            { id: 'villa', label: 'Biệt thự' },
+                                            { id: 'apartment_center', label: 'Căn hộ trung tâm' },
+                                            { id: 'apartment_suburb', label: 'Căn hộ ngoại ô' },
+                                            { id: 'penthouse', label: 'Penthouse' },
                                         ].map(opt => (
                                             <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
@@ -957,12 +957,12 @@ export const AiValuation: React.FC = () => {
                                     </div>
 
                                     {/* Nhóm: Thương mại & Công nghiệp */}
-                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">🏪 Thương mại & Công nghiệp</div>
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">Thương mại & Công nghiệp</div>
                                     <div className="grid grid-cols-3 gap-2 mb-4">
                                         {[
-                                            { id: 'shophouse', label: '🛍️ Shophouse' },
-                                            { id: 'office', label: '💼 Văn phòng' },
-                                            { id: 'warehouse', label: '🏭 Nhà xưởng / Kho' },
+                                            { id: 'shophouse', label: 'Shophouse' },
+                                            { id: 'office', label: 'Văn phòng' },
+                                            { id: 'warehouse', label: 'Nhà xưởng / Kho' },
                                         ].map(opt => (
                                             <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
@@ -972,13 +972,13 @@ export const AiValuation: React.FC = () => {
                                     </div>
 
                                     {/* Nhóm: Đất */}
-                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">🌏 Đất</div>
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">Đất</div>
                                     <div className="grid grid-cols-2 gap-2 mb-4">
                                         {[
-                                            { id: 'land_urban', label: '🌆 Đất thổ cư nội đô' },
-                                            { id: 'land_suburban', label: '🌳 Đất thổ cư ngoại thành' },
-                                            { id: 'land_agricultural', label: '🌾 Đất nông nghiệp' },
-                                            { id: 'land_industrial', label: '⚙️ Đất khu công nghiệp' },
+                                            { id: 'land_urban', label: 'Đất thổ cư nội đô' },
+                                            { id: 'land_suburban', label: 'Đất thổ cư ngoại thành' },
+                                            { id: 'land_agricultural', label: 'Đất nông nghiệp' },
+                                            { id: 'land_industrial', label: 'Đất khu công nghiệp' },
                                         ].map(opt => (
                                             <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
@@ -988,10 +988,10 @@ export const AiValuation: React.FC = () => {
                                     </div>
 
                                     {/* Nhóm: Dự án */}
-                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">🚧 Dự án</div>
+                                    <div className="text-xs text-slate-600 font-bold uppercase tracking-widest mb-2">Dự án</div>
                                     <div className="grid grid-cols-1 gap-2">
                                         {[
-                                            { id: 'project', label: '📐 Dự án / Căn hộ off-plan (chưa bàn giao)' },
+                                            { id: 'project', label: 'Dự án / Căn hộ off-plan (chưa bàn giao)' },
                                         ].map(opt => (
                                             <button key={opt.id} onClick={() => { setPropertyType(opt.id); setAutoDetectedType(null); }}
                                                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border text-left leading-tight ${propertyType === opt.id ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-indigo-500/50'}`}>
@@ -1159,7 +1159,7 @@ export const AiValuation: React.FC = () => {
 
                                 {!roadWidth && area && parseFloat(area) > 0 && (
                                     <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-2.5 text-xs text-yellow-400">
-                                        <span className="text-base leading-none shrink-0">💡</span>
+                                        <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
                                         <span>Điền <b>Lộ giới</b> để AI tính chính xác hơn (hẻm 4m / đường 12m…). Nếu bỏ trống, hệ thống dùng 5m mặc định.</span>
                                     </div>
                                 )}
@@ -1168,7 +1168,7 @@ export const AiValuation: React.FC = () => {
                                     disabled={!area || parseFloat(area) <= 0}
                                     className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-lg flex items-center justify-center gap-3"
                                 >
-                                    <span>⚡ Định Giá Ngay</span>
+                                    <span>Định Giá Ngay</span>
                                     <span className={`text-sm font-bold rounded-full px-3 py-0.5 ${accuracy >= 90 ? 'bg-emerald-400/30 text-emerald-100' : accuracy >= 75 ? 'bg-yellow-400/20 text-yellow-100' : 'bg-white/20 text-white/70'}`}>
                                         {accuracy >= 90 ? '✓ ' : ''}{accuracy.toFixed(0)}% dữ liệu
                                     </span>
@@ -1346,10 +1346,10 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-slate-800">
                                         {[
-                                            { label: 'Tiền thuê/tháng', value: `${valuation.incomeApproach.monthlyRent.toFixed(1)} Tr`, hint: 'Ước tính thị trường' },
-                                            { label: 'Thu nhập ròng/năm', value: `${valuation.incomeApproach.noi.toFixed(1)} Tr`, hint: 'Sau khấu trống & chi phí vận hành' },
-                                            { label: 'Tỷ suất cho thuê', value: `${(valuation.incomeApproach.capRate * 100).toFixed(1)}%`, hint: 'Gross yield — VN 2025-26' },
-                                            { label: 'Thời gian hoàn vốn', value: `${valuation.incomeApproach.paybackYears.toFixed(1)} năm`, hint: 'Theo thu nhập gộp' },
+                                            { label: 'Tiền thuê/tháng', value: `${valuation.incomeApproach.monthlyRent.toFixed(1)} Tr`, hint: 'Ước tính theo thị trường' },
+                                            { label: 'Thu nhập ròng/năm', value: `${valuation.incomeApproach.noi.toFixed(1)} Tr`, hint: 'Sau khấu trống 8% & chi phí 20%' },
+                                            { label: 'Tỷ lệ vốn hóa', value: `${(valuation.incomeApproach.capRate * 100).toFixed(1)}%`, hint: 'NOI / Giá trị thị trường (cap rate)' },
+                                            { label: 'Thời gian hoàn vốn', value: `${valuation.incomeApproach.paybackYears.toFixed(1)} năm`, hint: 'Dựa trên thu nhập cho thuê gộp' },
                                         ].map((item, i) => (
                                             <div key={i} className="px-4 py-3 text-center">
                                                 <div className="text-[var(--text-tertiary)] text-xs2 mb-1">{item.label}</div>
