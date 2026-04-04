@@ -346,7 +346,7 @@ async function startServer() {
 
       // Build the verification URL using the canonical base URL helper
       const baseUrl = resolveBaseUrl(req);
-      const verifyUrl = `${baseUrl}/#/verify-email/${rawToken}`;
+      const verifyUrl = `${baseUrl}/verify-email/${rawToken}`;
 
       const verifyResult = await emailService.sendVerificationEmail(tenantId, email, dbUser.name, verifyUrl).catch(err => {
         logger.error(`Failed to send verification email to ${email}: ${err.message}`);
@@ -453,7 +453,7 @@ async function startServer() {
       });
 
       const baseUrl = resolveBaseUrl(req);
-      const verifyUrl = `${baseUrl}/#/verify-email/${rawToken}`;
+      const verifyUrl = `${baseUrl}/verify-email/${rawToken}`;
 
       const result = await emailService.sendVerificationEmail(tenantId, email, user.name, verifyUrl).catch(() =>
         ({ success: false, status: 'failed' as const })
@@ -1019,10 +1019,8 @@ async function startServer() {
     }
   });
 
-  // Redirect /livechat (no hash) → /#/livechat so QR codes & embed links work with hash-router
-  app.get('/livechat', (_req: express.Request, res: express.Response) => {
-    res.redirect('/#/livechat');
-  });
+  // /livechat — served by SPA catch-all (clean URL routing)
+  // No redirect needed; the SPA handles the /livechat path directly.
 
   // Public LiveChat: get messages for a lead session (no auth — rate limited)
   app.get('/api/public/livechat/messages/:leadId', livechatRateLimit, async (req: express.Request, res: express.Response) => {
