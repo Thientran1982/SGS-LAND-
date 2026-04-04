@@ -263,8 +263,11 @@ html, body {
 .sgs-pin-sale    { background-color: #4f46e5 !important; }
 .sgs-pin-rent    { background-color: #7c3aed !important; }
 .sgs-pin-project { background-color: #2563eb !important; }
-/* Tail triangles — larger arrow so pin is clearly a pointer, not a box */
+/* Tail triangles — box-sizing:content-box is critical: Leaflet's .leaflet-container*
+   rule sets box-sizing:border-box globally, which collapses width:0/height:0 borders
+   to nothing, breaking the CSS border-trick triangle. content-box overrides this. */
 .sgs-pin-tail {
+  box-sizing: content-box !important;
   width: 0 !important; height: 0 !important;
   border-left: 10px solid transparent !important;
   border-right: 10px solid transparent !important;
@@ -273,7 +276,35 @@ html, body {
 .sgs-pin-tail.sgs-pin-sale    { border-top: 11px solid #4f46e5 !important; }
 .sgs-pin-tail.sgs-pin-rent    { border-top: 11px solid #7c3aed !important; }
 .sgs-pin-tail.sgs-pin-project { border-top: 11px solid #2563eb !important; }
-/* Cluster bubble */
+/* Cluster outer wrapper — inline-flex so it self-sizes inside the 0×0 Leaflet marker */
+.sgs-cluster-outer {
+  display: inline-flex !important;
+  transform: translate(-50%, -50%) !important;
+  transform-origin: center !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+/* Cluster pill badge (no tail — centred on cluster coordinate) */
+.sgs-cluster-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  padding: 9px 16px !important;
+  border-radius: 20px !important;
+  border: 2.5px solid rgba(255,255,255,0.96) !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.2px !important;
+  line-height: 1 !important;
+  font-family: system-ui,-apple-system,sans-serif !important;
+  background-image: linear-gradient(135deg,rgba(255,255,255,0.22) 0%,transparent 55%) !important;
+}
+.sgs-cluster-pill.sgs-pin-sale    { background-color: #4f46e5 !important; }
+.sgs-cluster-pill.sgs-pin-rent    { background-color: #7c3aed !important; }
+.sgs-cluster-pill.sgs-pin-project { background-color: #2563eb !important; }
+/* Legacy cluster bubble + tail (kept for safety, not used by current clusterIcon) */
 .sgs-cluster-bubble {
   color: #fff !important;
   font-size: 12.5px !important;
@@ -297,6 +328,7 @@ html, body {
 .sgs-cluster-bubble.sgs-pin-rent    { background-color: #7c3aed !important; }
 .sgs-cluster-bubble.sgs-pin-project { background-color: #2563eb !important; }
 .sgs-cluster-tail {
+  box-sizing: content-box !important;
   width: 0 !important; height: 0 !important;
   border-left: 12px solid transparent !important;
   border-right: 12px solid transparent !important;

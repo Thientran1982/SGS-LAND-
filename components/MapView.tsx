@@ -231,16 +231,26 @@ function priceIcon(label: string, approximate: boolean, transaction?: string, ac
 
 function clusterIcon(count: number, dominantTx?: string, language = 'vn'): L.DivIcon {
     // 'PROJECT_TYPE' is a sentinel: means majority are PROJECT property type
-    const { bg, glow } = dominantTx === 'PROJECT_TYPE'
+    const { glow } = dominantTx === 'PROJECT_TYPE'
         ? pinTokens(undefined, 'PROJECT')
         : pinTokens(dominantTx, undefined);
+    const colorClass = dominantTx === 'PROJECT_TYPE'
+        ? pinColorClass(undefined, 'PROJECT')
+        : pinColorClass(dominantTx, undefined);
     const num  = count >= 1000 ? `${Math.floor(count / 1000)}k+` : `${count}`;
     const unit = language === 'vn' ? 'BĐS' : 'listings';
-    // Cluster badge: circular pill centred on cluster point (no arrow tail).
-    // translate(-50%,-50%) centres the badge on the cluster coordinate — Airbnb/Zillow style.
+    // Uses .sgs-cluster-outer (inline-flex, translate -50%/-50%) and
+    // .sgs-cluster-pill (inline-flex pill, self-sizes to content).
+    // inline-flex prevents the 0×0 Leaflet marker width-collapse that made
+    // the old display:flex bubble invisible (only raw text was visible).
     return L.divIcon({
         className: 'custom-map-pin-container',
-        html: `<div style="display:inline-block;filter:drop-shadow(0 4px 16px ${glow});transform:translate(-50%,-50%);transform-origin:center;pointer-events:auto;cursor:pointer;"><div class="sgs-cluster-pulse" style="background:${bg};background-image:linear-gradient(135deg,rgba(255,255,255,0.22)0%,transparent 55%);color:#fff;font-size:13px;font-weight:800;padding:9px 16px;border-radius:20px;border:2.5px solid rgba(255,255,255,0.96);white-space:nowrap;letter-spacing:0.2px;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;gap:5px;line-height:1;"><span style="font-size:15px">${num}</span><span style="font-size:10px;font-weight:700;opacity:0.9">${unit}</span></div></div>`,
+        html: `<div class="sgs-cluster-outer" style="filter:drop-shadow(0 4px 16px ${glow});">` +
+              `<div class="sgs-cluster-pill ${colorClass}">` +
+              `<span style="font-size:15px;font-weight:800;">${num}</span>` +
+              `<span style="font-size:10px;font-weight:700;opacity:0.9;">${unit}</span>` +
+              `</div>` +
+              `</div>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
     });
