@@ -80,7 +80,7 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
 };
 
 // --- GUEST QUOTA ---
-const GUEST_DAILY_LIMIT = 3;
+const GUEST_DAILY_LIMIT = 1;
 const GUEST_LS_KEY = 'sgs_guest_val';
 
 interface GuestValRecord { count: number; date: string }

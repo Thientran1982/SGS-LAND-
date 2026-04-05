@@ -183,12 +183,12 @@ export const livechatRateLimit = rateLimit({
   message: 'Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi một chút.',
 });
 
-// Strict limit for unauthenticated (guest) valuation requests — 5 per hour per IP.
+// Strict limit for unauthenticated (guest) valuation requests — 1 per day per IP.
 // Authenticated users bypass this and use aiRateLimit (20/min by user ID) instead.
 export const guestValuationRateLimit = rateLimit({
   name: 'guest_valuation',
-  windowMs: 60 * 60_000,
-  maxRequests: 5,
+  windowMs: 24 * 60 * 60_000,
+  maxRequests: 1,
   keyFn: (req) => `gv:${req.ip || 'anon'}`,
-  message: 'Bạn đã dùng hết lượt định giá miễn phí. Đăng nhập để tiếp tục không giới hạn.',
+  message: 'Bạn đã dùng hết lượt định giá miễn phí hôm nay. Đăng nhập để tiếp tục không giới hạn.',
 });
