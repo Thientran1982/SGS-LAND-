@@ -2264,7 +2264,7 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
                 : isLandSuburban
                 ? `- Tập trung: giá ĐẤT THỔ CƯ NGOẠI THÀNH (đất nền vùng ven, khu đô thị mới) giao dịch thực tế — KHÔNG tính công trình\n- Phân khúc: đất thổ cư Sổ Hồng huyện ngoại thành, đất nền dự án ven đô — giá 10-80 triệu/m²\n- Đơn vị: VNĐ/m² đất thổ cư; phân biệt rõ đất thổ cư vs đất nông nghiệp (chênh lệch lớn)\n- Nguồn: batdongsan.com.vn/ban-dat, nhadatviet.com, mogi.vn, cafeland.vn/dat-nen, alonhadat.com`
                 : isOffPlan
-                ? `- Tập trung: giá bán sơ cấp (chủ đầu tư) và thứ cấp (chuyển nhượng) của các dự án căn hộ tại "${address}"\n- Ưu tiên: giá thứ cấp thực tế > giá chủ đầu tư công bố\n- Nguồn: batdongsan.com.vn, cafeland.vn, onehousing.vn`
+                ? `- Tập trung: giá bán sơ cấp (chủ đầu tư) và thứ cấp (chuyển nhượng) của DỰ ÁN tại "${address}"\n- Bao gồm tất cả loại sản phẩm: căn hộ, nhà phố liên kề, nhà phố thương mại (shophouse), biệt thự dự án — tùy loại sản phẩm được hỏi\n- CHÚ Ý: Dự án cao cấp (Novaland, Vinhomes, Nam Long, An Gia...) thường cao hơn giá trung bình khu vực 30-100%\n- Ưu tiên: giá thứ cấp thực tế (giao dịch khớp lệnh) > giá rao bán thứ cấp > giá chủ đầu tư công bố\n- Tìm: "[tên dự án] nhà phố chuyển nhượng", "[tên dự án] shophouse giá bao nhiêu", "[tên dự án] bán lại ${currentYear}"\n- Nguồn: batdongsan.com.vn, cafeland.vn, onehousing.vn, cen.vn, cafef.vn, báo cáo Savills/CBRE về dự án`
                 : resolvedPTypeForSearch === 'office'
                 ? `- Tập trung: giá thuê văn phòng (USD/m²/tháng) và giá chuyển nhượng mặt bằng thương mại\n- Phân loại: hạng A/B/C theo tiêu chuẩn CBRE/JLL\n- Nguồn: JLL Vietnam, Savills Vietnam Office Market, CBRE Vietnam ${currentYear}`
                 : isPenthouse
@@ -2292,6 +2292,11 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
                 'ct plaza','richstar','sunrise','the marq','sunwah pearl','diamond island',
                 'd\' capitale','d\' el dorado','goldmark','eurowindow','sky forest','mipec',
                 'imperia','linh dam','times tower','mandarin garden','season avenue','park hill',
+                // ── Vùng ven / Đồng Nai / Bình Dương / Tỉnh lân cận ──────────
+                'aqua city','aquacity','aqua island','swan park','izumi city',
+                'novaworld','novabeach','bien hoa new city','la maison','vinh long new town',
+                'the sol','sun grand city','sun riverside','phu quoc united center',
+                'grand world','regent residences','wyndham','best western phu quoc',
             ];
             const addrLowerCase = address.toLowerCase();
             const detectedProject = knownProjectKeywords.find(kw => addrLowerCase.includes(kw));
@@ -2462,7 +2467,7 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                 : isApartmentType
                 ? `căn hộ chuẩn (Sổ Hồng, 2PN, 60-80m², tầng trung 5-15, nội thất cơ bản) — ĐÂY LÀ GIÁ CĂN HỘ, không phải nhà phố`
                 : isOffPlan
-                ? `căn hộ dự án thứ cấp (Sổ Hồng/hợp đồng mua bán, 60-80m²) — ưu tiên giá chuyển nhượng thực tế`
+                ? `sản phẩm dự án thứ cấp (căn hộ/nhà phố liên kề/shophouse dự án, Sổ Hồng/HĐMB) — ưu tiên giá chuyển nhượng thực tế; nếu là nhà phố dự án thì dùng giá m² đất + công trình`
                 : isLandAgricultural
                 ? `đất nông nghiệp / đất vườn (VNĐ/m² đất nông nghiệp — KHÔNG phải đất thổ cư; giá thấp hơn đất thổ cư 5-50 lần)`
                 : isLandUrban

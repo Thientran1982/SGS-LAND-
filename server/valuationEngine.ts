@@ -1012,6 +1012,14 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     [/celadon\s*city|aeon\s*tân phú|aeon\s*tan phu/i, 'tân phú'],
     [/richstar|novaland\s*tân phú/i, 'tân phú'],
     [/sunwah\s*pearl/i, 'bình thạnh'],
+    // ── Vùng ven / Tỉnh lân cận ──────────────────────────────────────────────
+    [/aqua\s*city|aquacity|aqua\s*island/i, 'nhơn trạch'],
+    [/swan\s*park/i, 'nhơn trạch'],
+    [/izumi\s*city/i, 'biên hòa'],
+    [/waterpoint/i, 'bến lức'],
+    [/la\s*mer|phu quoc\s*marina|premier\s*village/i, 'phú quốc'],
+    [/novaworld\s*phan\s*thiet|novabeach|nova\s*phan\s*thiet/i, 'phan thiết'],
+    [/golden\s*bay\s*cam\s*ranh|cam\s*ranh/i, 'khánh hòa'],
   ];
   let enrichedAddr = addr;
   for (const [regex, district] of PROJECT_DISTRICT_INFER) {
@@ -1036,6 +1044,18 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     streetOverride = 250_000_000;
   if (/landmark\s*81/i.test(enrichedAddr))
     streetOverride = 160_000_000;
+  // ── Premium projects vùng ven / tỉnh lân cận ─────────────────────────────
+  // Source: Batdongsan/Savills/OneHousing Q1/2026 transaction data
+  if (/aqua\s*city|aquacity/i.test(enrichedAddr))
+    streetOverride = 72_000_000;  // Aqua City Novaland nhà phố liên kề: 65-95M/m² Q1/2026
+  if (/swan\s*park/i.test(enrichedAddr))
+    streetOverride = 52_000_000;  // Swan Park Novaland Nhơn Trạch: 45-65M/m²
+  if (/izumi\s*city/i.test(enrichedAddr))
+    streetOverride = 55_000_000;  // Izumi City Nam Long Biên Hòa: 45-65M/m²
+  if (/waterpoint.*bến\s*lức|bến\s*lức.*waterpoint/i.test(enrichedAddr))
+    streetOverride = 45_000_000;  // Waterpoint Nam Long Bến Lức: 35-55M/m²
+  if (/novaworld\s*phan\s*thiet|phan\s*thiet.*novaworld/i.test(enrichedAddr))
+    streetOverride = 40_000_000;  // NovaWorld Phan Thiết biệt thự/nhà phố: 35-55M/m²
 
   // Apply street override if matched
   const getBase = (base: number, region: string, conf: number) => {
