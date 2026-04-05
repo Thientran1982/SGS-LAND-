@@ -33,7 +33,8 @@ function detectPropertyTypeFromText(text: string): string | null {
     // Penthouse (priority over apartment)
     if (/penthouse|ph\s/i.test(t)) return 'penthouse';
     // Apartment — project names + generic keywords
-    if (/căn hộ|chung cư|apartment|vinhome|vinhomes|the sun|masteri|diamond|icon|botanica|river gate|gateway|sky |sunrise|estella|flora|richstar|sky garden|block [a-z]\d|tầng \d{2,}|p\d+\.\d+|m\d+\.\d+|imperia|celadon|akari|westgate|waterpoint|one |eaton|picity|tecco|goldmark|mipec|times city|season avenue|d'capitale/i.test(t))
+    // NOTE: waterpoint, aqua city, swan park, izumi city = townhouse projects → excluded here
+    if (/căn hộ|chung cư|apartment|vinhome|vinhomes|the sun|masteri|diamond|icon|botanica|river gate|gateway|sky |sunrise|estella|flora|richstar|sky garden|block [a-z]\d|tầng \d{2,}|p\d+\.\d+|m\d+\.\d+|imperia|celadon|akari|westgate|one |eaton|picity|tecco|goldmark|mipec|times city|season avenue|d'capitale/i.test(t))
         return 'apartment_center';
     if (/căn hộ ngoại|chung cư ngoại|căn hộ huyện|căn hộ bình dương|căn hộ đồng nai|căn hộ long an/i.test(t))
         return 'apartment_suburb';
@@ -50,8 +51,10 @@ function detectPropertyTypeFromText(text: string): string | null {
     if (/đất kcn|khu công nghiệp|industrial park/i.test(t)) return 'land_industrial';
     if (/đất ngoại thành|đất huyện|đất ngoại ô|đất bình chánh|đất nhà bè|đất hóc môn|đất củ chi/i.test(t)) return 'land_suburban';
     if (/lô đất|đất nền|đất thổ cư|đất mặt tiền|đất sổ|đất ở/i.test(t)) return 'land_urban';
-    // Off-plan project
+    // Off-plan project (priority before townhouse) — includes known project brands
     if (/dự án|off.plan|chưa bàn giao|off plan|căn hộ hình thành|nhà hình thành/i.test(t)) return 'project';
+    // Known townhouse/villa suburban projects — detected BEFORE generic townhouse
+    if (/aqua\s*city|aquacity|aqua\s*island|swan\s*park|izumi\s*city|waterpoint|novaworld|bien\s*hoa\s*new\s*city|la\s*maison|vinh\s*long\s*new\s*town/i.test(t)) return 'townhouse_suburb';
     // Townhouse
     if (/nhà phố ngoại|nhà ngoại thành|nhà huyện|nhà liền kề/i.test(t)) return 'townhouse_suburb';
     if (/nhà phố|nhà mặt tiền|nhà mặt phố|nhà phố nội|townhouse/i.test(t)) return 'townhouse_center';
@@ -138,14 +141,70 @@ function clearHistory(): void {
     try { localStorage.removeItem(HISTORY_LS_KEY); } catch { /* ignore */ }
 }
 
-// --- SIMULATED AI ENGINE ---
-const ANALYSIS_STEPS = [
-    "Hệ thống SGS Định Giá AI™ đang khởi động...",
-    "Phân tích 1.204.592 điểm dữ liệu không gian...",
-    "Đang chạy hồi quy trên các giao dịch tương đương...",
-    "Điều chỉnh theo yếu tố pháp lý & thanh khoản...",
-    "Hoàn thiện khoảng tin cậy định giá..."
-];
+// --- DYNAMIC AGENT STEPS (ghi nhận thông tin người dùng và xử lý theo từng agent) ---
+interface AgentStep { icon: string; title: string; details: string[] }
+
+function buildAgentSteps(
+    addr: string, pType: string, areaM2: string, road: string, legalStatus: string,
+    dir: string, mf: string, furn: string, fl: string, rent: string, age: string
+): AgentStep[] {
+    const ptLabel = PROPERTY_TYPE_LABELS[pType] || pType;
+    const legalLabel = legalStatus === 'PINK_BOOK' ? 'Sổ Hồng' : legalStatus === 'CONTRACT' ? 'HĐMB' : 'Vi Bằng';
+    const shortAddr = addr.length > 48 ? addr.slice(0, 48) + '…' : addr;
+    const extraDetails: string[] = [];
+    if (dir) extraDetails.push(`Hướng cửa: ${dir}`);
+    if (mf && !isNaN(parseFloat(mf))) extraDetails.push(`Mặt tiền: ${mf}m`);
+    if (furn) extraDetails.push(`Nội thất: ${ furn === 'FULL' ? 'Đầy đủ' : furn === 'BASIC' ? 'Cơ bản' : 'Bàn giao thô'}`);
+    if (fl && !isNaN(parseFloat(fl))) extraDetails.push(`Tầng: ${fl}`);
+    if (rent && !isNaN(parseFloat(rent))) extraDetails.push(`Thuê dự kiến: ${rent} tr/tháng`);
+    if (age && !isNaN(parseFloat(age))) extraDetails.push(`Tuổi nhà: ${age} năm`);
+    const avmCoeffs = ['Kd (Lộ giới)', 'Kp (Pháp lý)', 'Ka (Diện tích)',
+        ...(dir ? ['Kdir (Hướng)'] : []),
+        ...(fl ? ['Kfl (Tầng)'] : []),
+        ...(mf ? ['Kmf (Mặt tiền)'] : []),
+        ...(furn ? ['Kfurn'] : []),
+    ];
+    return [
+        {
+            icon: '🔍',
+            title: 'Agent Nhận Diện BĐS',
+            details: [
+                `Địa chỉ: "${shortAddr}"`,
+                `Loại BĐS: ${ptLabel}  ·  Pháp lý: ${legalLabel}`,
+                `Diện tích: ${areaM2 || '—'}m²  ·  Lộ giới: ${road || '—'}m`,
+                ...extraDetails,
+            ],
+        },
+        {
+            icon: '📡',
+            title: 'Agent Dữ Liệu Thị Trường',
+            details: [
+                `Khu vực: "${shortAddr.split(',').slice(-2).join(',').trim() || shortAddr}"`,
+                `Nguồn: batdongsan.com.vn · cafeland.vn · cen.vn`,
+                `Báo cáo: Savills · CBRE · JLL Vietnam Q1/2026`,
+                `Ưu tiên: Giao dịch thực tế > Rao bán > Ước tính`,
+            ],
+        },
+        {
+            icon: '⚙️',
+            title: `Agent AVM — ${avmCoeffs.length} Hệ Số`,
+            details: [
+                avmCoeffs.join('  ×  '),
+                `Phương pháp: So Sánh ${rent ? '60' : '65'}%  +  Thu Nhập ${rent ? '40' : '35'}%`,
+                `Nguồn giá gốc → Blend AI + Cache + Comps nội bộ`,
+            ],
+        },
+        {
+            icon: '✅',
+            title: 'Agent Tổng Hợp & Kiểm Định',
+            details: [
+                `Chuẩn hóa khoảng tin cậy ±5–15%`,
+                `Kiểm định bounds theo bảng khu vực`,
+                `Hoàn thiện kết quả định giá…`,
+            ],
+        },
+    ];
+}
 
 export const AiValuation: React.FC = () => {
     const { t, formatCurrency } = useTranslation();
@@ -235,8 +294,9 @@ export const AiValuation: React.FC = () => {
     const accuracyLabel = accuracy < 80 ? 'Cơ bản' : accuracy < 88 ? 'Khá tốt' : accuracy < 95 ? 'Rất tốt' : 'Chuyên sâu';
     const accuracyColor = accuracy < 80 ? '#eab308' : accuracy < 88 ? '#f97316' : accuracy < 95 ? '#22c55e' : '#10b981';
 
-    // Process State
-    const [analysisLog, setAnalysisLog] = useState<string>('');
+    // Process State — agent-based
+    const [agentStepsList, setAgentStepsList] = useState<AgentStep[]>([]);
+    const [currentAgentIdx, setCurrentAgentIdx] = useState(0);
     const [progress, setProgress] = useState(0);
 
     // Results State
@@ -292,16 +352,22 @@ export const AiValuation: React.FC = () => {
         setActualPriceInput('');
         setStep('ANALYZING');
         setProgress(0);
-        
-        let currentStep = 0;
-        // Start the progress bar simulation
+        setCurrentAgentIdx(0);
+
+        // Build dynamic agent steps from current user inputs
+        const steps = buildAgentSteps(
+            address, propertyType, area, roadWidth, legal,
+            direction, frontageWidth, furnishing, floorLevel, monthlyRent, buildingAge
+        );
+        setAgentStepsList(steps);
+
+        // Advance agent cards every ~900ms while API call is in progress
+        let agentTickCount = 0;
         intervalRef.current = setInterval(() => {
-            if (currentStep < ANALYSIS_STEPS.length) {
-                setAnalysisLog(ANALYSIS_STEPS[currentStep]);
-                setProgress((prev) => Math.min(prev + 15, 90)); // Cap at 90% while waiting for AI
-                currentStep++;
-            }
-        }, 800);
+            agentTickCount++;
+            setCurrentAgentIdx(Math.min(agentTickCount, steps.length - 1));
+            setProgress(prev => Math.min(prev + Math.round(80 / steps.length), 90));
+        }, 900);
 
         // Fetch real-time data from Gemini
         const areaNum = parseFloat(area) || 50;
@@ -368,7 +434,7 @@ export const AiValuation: React.FC = () => {
         
         if (intervalRef.current) clearInterval(intervalRef.current);
         setProgress(100);
-        setAnalysisLog("Hoàn tất phân tích!");
+        setCurrentAgentIdx(999); // mark all agents as done
         
         setTimeout(() => {
             calculateResults(aiResult, areaNum, roadNum);
@@ -1185,21 +1251,84 @@ export const AiValuation: React.FC = () => {
                     </div>
                 )}
 
-                {/* STEP 3: ANALYZING (NEURAL ENGINE FX) */}
+                {/* STEP 3: ANALYZING — Agent Cards (ghi nhận thông số thực từ người dùng) */}
                 {step === 'ANALYZING' && (
-                    <div className="max-w-xl mx-auto text-center pt-10 animate-enter">
-                        <div className="relative w-32 h-32 mx-auto mb-8">
-                            <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
-                            <div className="absolute inset-0 border-4 border-t-emerald-500 border-r-emerald-500 border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-                            <div className="absolute inset-0 flex items-center justify-center font-bold text-emerald-400 text-xl font-mono">
-                                {Math.round(progress)}%
+                    <div className="max-w-xl mx-auto pt-8 animate-enter">
+                        {/* Header + progress bar */}
+                        <div className="text-center mb-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                SGS Định Giá AI™ đang xử lý
                             </div>
+                            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-500 ease-out rounded-full"
+                                    style={{ width: `${progress}%` }}
+                                />
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1.5 font-mono tabular-nums">{Math.round(progress)}% hoàn thành</div>
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2 font-mono min-h-[40px] transition-all">
-                            {analysisLog}
-                        </h2>
-                        <div className="w-full h-1 bg-slate-800 rounded-full mt-8 overflow-hidden">
-                            <div className="h-full bg-emerald-500 transition-all duration-300 ease-out" style={{ width: `${progress}%` }}></div>
+
+                        {/* Agent cards */}
+                        <div className="space-y-3">
+                            {agentStepsList.map((agent, idx) => {
+                                const status: 'done' | 'active' | 'waiting' =
+                                    idx < currentAgentIdx ? 'done' :
+                                    idx === currentAgentIdx ? 'active' : 'waiting';
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={`rounded-2xl border p-4 transition-all duration-500 ${
+                                            status === 'done'
+                                                ? 'bg-emerald-900/20 border-emerald-500/30'
+                                                : status === 'active'
+                                                ? 'bg-slate-800 border-emerald-500/60 shadow-lg shadow-emerald-500/10'
+                                                : 'bg-slate-800/20 border-slate-700/30 opacity-35'
+                                        }`}
+                                    >
+                                        {/* Agent header */}
+                                        <div className="flex items-center gap-3">
+                                            <span className={`text-xl shrink-0 ${status === 'active' ? 'animate-pulse' : ''}`}>
+                                                {agent.icon}
+                                            </span>
+                                            <span className={`font-bold text-sm flex-1 ${
+                                                status === 'done' ? 'text-emerald-400' :
+                                                status === 'active' ? 'text-white' : 'text-slate-500'
+                                            }`}>
+                                                {agent.title}
+                                            </span>
+                                            {status === 'done' && (
+                                                <span className="text-xs text-emerald-400 font-bold flex items-center gap-1 shrink-0">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Ghi nhận
+                                                </span>
+                                            )}
+                                            {status === 'active' && (
+                                                <span className="inline-flex gap-0.5 shrink-0">
+                                                    {[0, 150, 300].map(delay => (
+                                                        <span key={delay} className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+                                                    ))}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {/* Agent details — visible when active or done */}
+                                        {(status === 'active' || status === 'done') && (
+                                            <div className="ml-8 mt-2 space-y-1">
+                                                {agent.details.filter(Boolean).map((d, di) => (
+                                                    <div key={di} className={`text-xs font-mono flex items-start gap-1.5 ${
+                                                        status === 'done' ? 'text-emerald-300/70' : 'text-slate-300'
+                                                    }`}>
+                                                        <span className={`mt-0.5 shrink-0 ${status === 'done' ? 'text-emerald-500' : 'text-emerald-400'}`}>›</span>
+                                                        <span>{d}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
