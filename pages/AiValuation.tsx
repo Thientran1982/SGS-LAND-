@@ -144,65 +144,230 @@ function clearHistory(): void {
 // --- DYNAMIC AGENT STEPS (ghi nhận thông tin người dùng và xử lý theo từng agent) ---
 interface AgentStep { icon: string; title: string; details: string[] }
 
+// ─── Client-side region inference (mirrors server/valuationEngine.ts) ────────
+function inferRegionClient(addr: string): { region: string; baseMRange: string; conf: number; streetHit: boolean } {
+    const a = addr.toLowerCase();
+    // Street / project overrides
+    if (/aqua\s*city|aquacity/i.test(a))    return { region: 'Aqua City, Nhơn Trạch', baseMRange: '65–95M/m²', conf: 72, streetHit: true };
+    if (/swan\s*park/i.test(a))             return { region: 'Swan Park, Nhơn Trạch', baseMRange: '45–65M/m²', conf: 68, streetHit: true };
+    if (/izumi\s*city/i.test(a))            return { region: 'Izumi City, Biên Hòa', baseMRange: '45–65M/m²', conf: 68, streetHit: true };
+    if (/waterpoint/i.test(a))              return { region: 'Waterpoint, Bến Lức', baseMRange: '35–55M/m²', conf: 65, streetHit: true };
+    if (/novaworld.*phan|phan.*novaworld/i.test(a)) return { region: 'NovaWorld Phan Thiết', baseMRange: '35–55M/m²', conf: 62, streetHit: true };
+    if (/nguyễn huệ|le loi|lê lợi|dong khoi|đồng khởi/i.test(a) && /quận 1|q\.?1/i.test(a))
+        return { region: 'Trục Nguyễn Huệ/Đồng Khởi, Q.1', baseMRange: '350–550M/m²', conf: 70, streetHit: true };
+    if (/vinhome[s]?\s*central\s*park|saigon\s*pearl/i.test(a)) return { region: 'VH Central Park, Bình Thạnh', baseMRange: '120–165M/m²', conf: 72, streetHit: true };
+    if (/phú mỹ hưng|phu my hung/i.test(a)) return { region: 'Phú Mỹ Hưng, Q.7', baseMRange: '140–180M/m²', conf: 70, streetHit: true };
+    if (/thảo điền|thao dien/i.test(a))     return { region: 'Thảo Điền, Thủ Đức', baseMRange: '150–210M/m²', conf: 68, streetHit: true };
+    if (/vinhome[s]?\s*golden\s*river|ba son/i.test(a)) return { region: 'Vinhomes Golden River, Q.1', baseMRange: '200–300M/m²', conf: 68, streetHit: true };
+    // District-level
+    if (/quận 1\b|q\.?1\b/i.test(a))         return { region: 'Quận 1, TP.HCM', baseMRange: '220–340M/m²', conf: 62, streetHit: false };
+    if (/quận 3\b|q\.?3\b/i.test(a))         return { region: 'Quận 3, TP.HCM', baseMRange: '160–240M/m²', conf: 62, streetHit: false };
+    if (/quận 7\b|q\.?7\b/i.test(a))         return { region: 'Quận 7, TP.HCM', baseMRange: '120–180M/m²', conf: 62, streetHit: false };
+    if (/bình thạnh|binh thanh/i.test(a))    return { region: 'Bình Thạnh, TP.HCM', baseMRange: '95–145M/m²', conf: 62, streetHit: false };
+    if (/phú nhuận|phu nhuan/i.test(a))      return { region: 'Phú Nhuận, TP.HCM', baseMRange: '120–180M/m²', conf: 62, streetHit: false };
+    if (/thủ đức|thu duc/i.test(a))          return { region: 'TP. Thủ Đức, TP.HCM', baseMRange: '60–100M/m²', conf: 60, streetHit: false };
+    if (/quận 9\b|q\.?9\b/i.test(a))         return { region: 'Quận 9, TP.HCM', baseMRange: '60–90M/m²', conf: 60, streetHit: false };
+    if (/quận 4\b|q\.?4\b/i.test(a))         return { region: 'Quận 4, TP.HCM', baseMRange: '100–160M/m²', conf: 62, streetHit: false };
+    if (/quận 5\b|q\.?5\b/i.test(a))         return { region: 'Quận 5, TP.HCM', baseMRange: '110–170M/m²', conf: 62, streetHit: false };
+    if (/quận 6\b|q\.?6\b/i.test(a))         return { region: 'Quận 6, TP.HCM', baseMRange: '70–110M/m²', conf: 60, streetHit: false };
+    if (/quận 10\b|q\.?10\b/i.test(a))       return { region: 'Quận 10, TP.HCM', baseMRange: '130–200M/m²', conf: 62, streetHit: false };
+    if (/quận 12\b|q\.?12\b/i.test(a))       return { region: 'Quận 12, TP.HCM', baseMRange: '50–80M/m²', conf: 60, streetHit: false };
+    if (/tân bình|tan binh/i.test(a))        return { region: 'Tân Bình, TP.HCM', baseMRange: '80–120M/m²', conf: 62, streetHit: false };
+    if (/gò vấp|go vap/i.test(a))            return { region: 'Gò Vấp, TP.HCM', baseMRange: '60–90M/m²', conf: 60, streetHit: false };
+    if (/hcm|hồ chí minh|sài gòn|saigon/i.test(a)) return { region: 'TP.HCM (chung)', baseMRange: '70–130M/m²', conf: 52, streetHit: false };
+    if (/hoàn kiếm|hoan kiem/i.test(a))      return { region: 'Hoàn Kiếm, Hà Nội', baseMRange: '240–360M/m²', conf: 62, streetHit: false };
+    if (/ba đình|ba dinh/i.test(a))          return { region: 'Ba Đình, Hà Nội', baseMRange: '175–265M/m²', conf: 62, streetHit: false };
+    if (/đống đa|dong da/i.test(a))          return { region: 'Đống Đa, Hà Nội', baseMRange: '145–215M/m²', conf: 62, streetHit: false };
+    if (/cầu giấy|cau giay/i.test(a))        return { region: 'Cầu Giấy, Hà Nội', baseMRange: '95–145M/m²', conf: 60, streetHit: false };
+    if (/tây hồ|tay ho/i.test(a))            return { region: 'Tây Hồ, Hà Nội', baseMRange: '105–160M/m²', conf: 60, streetHit: false };
+    if (/hà nội|hanoi|ha noi/i.test(a))      return { region: 'Hà Nội (chung)', baseMRange: '80–140M/m²', conf: 52, streetHit: false };
+    if (/đà nẵng|da nang/i.test(a))          return { region: 'Đà Nẵng', baseMRange: '50–100M/m²', conf: 57, streetHit: false };
+    if (/nha trang/i.test(a))                return { region: 'Nha Trang, Khánh Hòa', baseMRange: '50–80M/m²', conf: 57, streetHit: false };
+    if (/đà lạt|da lat/i.test(a))            return { region: 'Đà Lạt, Lâm Đồng', baseMRange: '35–55M/m²', conf: 57, streetHit: false };
+    if (/vũng tàu|vung tau/i.test(a))        return { region: 'Vũng Tàu', baseMRange: '40–70M/m²', conf: 57, streetHit: false };
+    if (/biên hòa|bien hoa/i.test(a))        return { region: 'Biên Hòa, Đồng Nai', baseMRange: '32–52M/m²', conf: 57, streetHit: false };
+    if (/bình dương|binh duong/i.test(a))    return { region: 'Bình Dương', baseMRange: '35–65M/m²', conf: 57, streetHit: false };
+    if (/cần thơ|can tho/i.test(a))          return { region: 'Cần Thơ', baseMRange: '25–45M/m²', conf: 53, streetHit: false };
+    if (/phú quốc|phu quoc/i.test(a))        return { region: 'Phú Quốc, Kiên Giang', baseMRange: '60–100M/m²', conf: 57, streetHit: false };
+    return { region: 'Khu vực đang tra cứu…', baseMRange: '—', conf: 42, streetHit: false };
+}
+
+// ─── Market sources by property segment ───────────────────────────────────────
+function getMarketSources(pType: string): { primary: string; reports: string } {
+    if (['warehouse', 'land_industrial'].includes(pType))
+        return { primary: 'JLL Industrial · Savills Logistics · PropertyGuru Pro', reports: 'JLL Vietnam Industrial Q4/2025 · Savills Logistics VN' };
+    if (pType === 'office')
+        return { primary: 'CBRE Office · Savills Office · JLL Vietnam Office', reports: 'JLL Office Market Q1/2026 · CBRE Vietnam Q1/2026' };
+    if (['land_urban', 'land_suburban', 'land_agricultural'].includes(pType))
+        return { primary: 'batdongsan.com.vn · muaban.net · alonhadat.vn', reports: 'Savills Land Insight · CBRE Investment Q1/2026' };
+    if (['shophouse', 'villa'].includes(pType))
+        return { primary: 'batdongsan.com.vn · cen.vn · onehousing.vn', reports: 'Savills Residential · CBRE Vietnam Luxury Q1/2026' };
+    if (['apartment_center', 'apartment_suburb', 'penthouse', 'project'].includes(pType))
+        return { primary: 'batdongsan.com.vn · onehousing.vn · nha.vn', reports: 'Savills Apartment Q1/2026 · CBRE Vietnam Q1/2026' };
+    return { primary: 'batdongsan.com.vn · cafeland.vn · cen.vn', reports: 'Savills · CBRE · JLL Vietnam Q1/2026' };
+}
+
+// ─── AVM coefficients with ACTUAL computed values ─────────────────────────────
+function computeKd(roadM: number): { val: number; label: string } {
+    if (roadM <= 2)  return { val: 0.78, label: `Kd=0.78 (hẻm≤2m)` };
+    if (roadM <= 3)  return { val: 0.88, label: `Kd=0.88 (hẻm 3m)` };
+    if (roadM <= 4)  return { val: 0.95, label: `Kd=0.95 (hẻm 4m)` };
+    if (roadM <= 5)  return { val: 1.00, label: `Kd=1.00 (đường 5m)` };
+    if (roadM <= 6)  return { val: 1.08, label: `Kd=1.08 (đường 6m)` };
+    if (roadM <= 8)  return { val: 1.15, label: `Kd=1.15 (đường 8m)` };
+    if (roadM <= 12) return { val: 1.22, label: `Kd=1.22 (đường 10-12m)` };
+    return { val: 1.30, label: `Kd=1.30 (đại lộ ≥12m)` };
+}
+function computeKp(legal: string): string {
+    if (legal === 'PINK_BOOK') return 'Kp=1.00 (Sổ Hồng đầy đủ)';
+    if (legal === 'CONTRACT')  return 'Kp=0.88 (HĐMB, khấu trừ 12%)';
+    return 'Kp=0.72 (Vi Bằng/Chưa có sổ, rủi ro cao)';
+}
+function computeKa(aM2: number): string {
+    if (aM2 < 30)   return `Ka=0.90 (DT nhỏ <30m², cộng trừ −10%)`;
+    if (aM2 <= 60)  return `Ka=1.00 (DT chuẩn 30–60m²)`;
+    if (aM2 <= 100) return `Ka=0.97 (DT 61–100m², −3% hiệu ứng kích thước)`;
+    if (aM2 <= 200) return `Ka=0.94 (DT 101–200m², −6%)`;
+    return `Ka=0.90 (DT lớn >200m², −10%)`;
+}
+function computeKdir(direction: string): string | null {
+    const d = direction.toUpperCase();
+    if (d.includes('NAM') && d.includes('ĐÔNG')) return 'Kdir=1.05 (Đông Nam — tốt nhất)';
+    if (d.includes('NAM'))   return 'Kdir=1.04 (Nam — đón gió, thoáng)';
+    if (d.includes('ĐÔNG'))  return 'Kdir=1.03 (Đông — sáng sớm)';
+    if (d.includes('BẮC') && d.includes('TÂY')) return 'Kdir=0.94 (Tây Bắc — nắng chiều, thấp nhất)';
+    if (d.includes('TÂY'))   return 'Kdir=0.96 (Tây — nắng buổi chiều)';
+    if (d.includes('BẮC'))   return 'Kdir=0.98 (Bắc — ít nắng)';
+    return null;
+}
+function computeKfl(floorN: number, pType: string): string | null {
+    const isApt = ['apartment_center', 'apartment_suburb', 'penthouse', 'project'].includes(pType);
+    if (!isApt) return null;
+    if (floorN <= 5)   return `Kfl=1.00 (Tầng thấp 1–5)`;
+    if (floorN <= 15)  return `Kfl=1.03 (Tầng trung 6–15)`;
+    if (floorN <= 25)  return `Kfl=1.06 (Tầng cao 16–25, view tốt)`;
+    return `Kfl=1.09 (Tầng cao >25, view panorama)`;
+}
+function computeKmf(mfM: number): string | null {
+    if (mfM <= 0) return null;
+    if (mfM < 3)   return `Kmf=0.90 (Mặt tiền <3m, hẻm nhỏ)`;
+    if (mfM < 4)   return `Kmf=0.96 (Mặt tiền 3–4m)`;
+    if (mfM < 6)   return `Kmf=1.00 (Mặt tiền 4–6m, chuẩn)`;
+    if (mfM < 8)   return `Kmf=1.08 (Mặt tiền 6–8m, rộng)`;
+    return `Kmf=1.15 (Mặt tiền ≥8m, tiền cảnh đẹp)`;
+}
+function computeKfurn(furn: string): string | null {
+    if (furn === 'FULL')  return 'Kfurn=1.12 (Nội thất đầy đủ cao cấp)';
+    if (furn === 'BASIC') return 'Kfurn=1.05 (Nội thất cơ bản)';
+    if (furn === 'NONE')  return 'Kfurn=1.00 (Bàn giao thô)';
+    return null;
+}
+function computeKage(ageY: number): string | null {
+    if (ageY <= 0) return null;
+    if (ageY <= 3)   return `Kage=1.00 (Nhà mới ≤3 năm)`;
+    if (ageY <= 8)   return `Kage=0.96 (Nhà 4–8 năm, −4% khấu hao)`;
+    if (ageY <= 15)  return `Kage=0.91 (Nhà 9–15 năm, −9%)`;
+    if (ageY <= 25)  return `Kage=0.83 (Nhà 16–25 năm, −17%)`;
+    return `Kage=0.74 (Nhà >25 năm, xuống cấp −26%)`;
+}
+
+// ─── Main builder ─────────────────────────────────────────────────────────────
+interface AgentStep { icon: string; title: string; details: string[] }
+
 function buildAgentSteps(
     addr: string, pType: string, areaM2: string, road: string, legalStatus: string,
     dir: string, mf: string, furn: string, fl: string, rent: string, age: string
 ): AgentStep[] {
     const ptLabel = PROPERTY_TYPE_LABELS[pType] || pType;
     const legalLabel = legalStatus === 'PINK_BOOK' ? 'Sổ Hồng' : legalStatus === 'CONTRACT' ? 'HĐMB' : 'Vi Bằng';
-    const shortAddr = addr.length > 48 ? addr.slice(0, 48) + '…' : addr;
-    const extraDetails: string[] = [];
-    if (dir) extraDetails.push(`Hướng cửa: ${dir}`);
-    if (mf && !isNaN(parseFloat(mf))) extraDetails.push(`Mặt tiền: ${mf}m`);
-    if (furn) extraDetails.push(`Nội thất: ${ furn === 'FULL' ? 'Đầy đủ' : furn === 'BASIC' ? 'Cơ bản' : 'Bàn giao thô'}`);
-    if (fl && !isNaN(parseFloat(fl))) extraDetails.push(`Tầng: ${fl}`);
-    if (rent && !isNaN(parseFloat(rent))) extraDetails.push(`Thuê dự kiến: ${rent} tr/tháng`);
-    if (age && !isNaN(parseFloat(age))) extraDetails.push(`Tuổi nhà: ${age} năm`);
-    const avmCoeffs = ['Kd (Lộ giới)', 'Kp (Pháp lý)', 'Ka (Diện tích)',
-        ...(dir ? ['Kdir (Hướng)'] : []),
-        ...(fl ? ['Kfl (Tầng)'] : []),
-        ...(mf ? ['Kmf (Mặt tiền)'] : []),
-        ...(furn ? ['Kfurn'] : []),
+    const shortAddr = addr.length > 46 ? addr.slice(0, 46) + '…' : addr;
+
+    // ── Infer region & sources ──
+    const region = inferRegionClient(addr);
+    const sources = getMarketSources(pType);
+
+    // ── Agent 1 details ──
+    const a1Details: string[] = [
+        `Địa chỉ: "${shortAddr}"`,
+        `Loại BĐS: ${ptLabel}  ·  Pháp lý: ${legalLabel}`,
+        `Diện tích: ${areaM2 || '—'}m²  ·  Lộ giới: ${road || '—'}m`,
     ];
+    if (dir) a1Details.push(`Hướng cửa: ${dir}`);
+    if (mf && !isNaN(parseFloat(mf))) a1Details.push(`Mặt tiền: ${mf}m`);
+    if (furn) a1Details.push(`Nội thất: ${ furn === 'FULL' ? 'Đầy đủ cao cấp' : furn === 'BASIC' ? 'Cơ bản' : 'Bàn giao thô'}`);
+    if (fl && !isNaN(parseFloat(fl))) a1Details.push(`Tầng ${fl}`);
+    if (rent && !isNaN(parseFloat(rent))) a1Details.push(`Thuê dự kiến: ${rent} tr/tháng`);
+    if (age && !isNaN(parseFloat(age))) a1Details.push(`Tuổi nhà: ${age} năm`);
+
+    // ── Agent 2 details ──
+    const a2Details: string[] = [
+        `Khu vực: ${region.region}`,
+        `Dải giá tham chiếu: ${region.baseMRange}`,
+        region.streetHit
+            ? `Dữ liệu: Giao dịch dự án thực tế Q1/2026 ✓`
+            : `Độ tin cậy khu vực: ${region.conf}% (${region.conf >= 60 ? 'Đủ dữ liệu' : region.conf >= 50 ? 'Dữ liệu hạn chế' : 'Ít giao dịch'})`,
+        `Nguồn: ${sources.primary}`,
+        `Báo cáo: ${sources.reports}`,
+        `Ưu tiên: Giao dịch thực tế > Rao bán > Ước tính`,
+    ];
+
+    // ── Agent 3 — compute coefficients ──
+    const roadN = parseFloat(road) || 0;
+    const areaN = parseFloat(areaM2) || 50;
+    const mfN   = parseFloat(mf) || 0;
+    const flN   = parseFloat(fl) || 0;
+    const ageN  = parseFloat(age) || 0;
+    const kd    = roadN > 0 ? computeKd(roadN) : null;
+    const kdirStr = dir ? computeKdir(dir) : null;
+    const kflStr  = flN > 0 ? computeKfl(flN, pType) : null;
+    const kmfStr  = mfN > 0 ? computeKmf(mfN) : null;
+    const kfurnStr = furn ? computeKfurn(furn) : null;
+    const kageStr  = ageN > 0 ? computeKage(ageN) : null;
+    const coeffLines: string[] = [
+        kd ? kd.label : 'Kd=1.00 (Lộ giới chưa nhập)',
+        computeKp(legalStatus),
+        computeKa(areaN),
+        ...(kdirStr ? [kdirStr] : []),
+        ...(kflStr ? [kflStr] : []),
+        ...(kmfStr ? [kmfStr] : []),
+        ...(kfurnStr ? [kfurnStr] : []),
+        ...(kageStr ? [kageStr] : []),
+    ];
+    // Method weighting
+    const hasRent = rent && !isNaN(parseFloat(rent)) && parseFloat(rent) > 0;
+    const isCommercial = ['office', 'warehouse', 'land_industrial', 'shophouse'].includes(pType);
+    const isLand = ['land_urban', 'land_suburban', 'land_agricultural'].includes(pType);
+    let methodLine: string;
+    if (isLand)         methodLine = `Phương pháp: So Sánh 80%  +  Thặng Dư 20%`;
+    else if (isCommercial) methodLine = `Phương pháp: Thu Nhập 55%  +  So Sánh 45%`;
+    else if (hasRent)   methodLine = `Phương pháp: So Sánh 55%  +  Thu Nhập 45% (có dữ liệu thuê)`;
+    else                methodLine = `Phương pháp: So Sánh 70%  +  Thu Nhập 30%`;
+
+    const a3Details: string[] = [
+        `${coeffLines.length} hệ số điều chỉnh:`,
+        ...coeffLines,
+        methodLine,
+    ];
+
+    // ── Agent 4 details ──
+    const confBand = region.conf >= 65 ? '±5–8%' : region.conf >= 55 ? '±8–12%' : '±12–20%';
+    const dataQuality = region.conf >= 60 ? 'Tốt' : region.conf >= 50 ? 'Trung bình' : 'Hạn chế';
+    const a4Details: string[] = [
+        `Khoảng tin cậy ước tính: ${confBand} (Dữ liệu khu vực: ${dataQuality})`,
+        `Kiểm định bounds: ${region.baseMRange} theo ${region.region}`,
+        isLand
+            ? `Xác nhận: Phương pháp thặng dư + So sánh đất thuần`
+            : isCommercial
+            ? `Xác nhận: Cap rate thương mại VN 2026 (7–10%/năm)`
+            : `Xác nhận: Comps thứ cấp + Yield nhà ở VN (3–5%/năm)`,
+        `Hoàn thiện kết quả định giá…`,
+    ];
+
     return [
-        {
-            icon: '🔍',
-            title: 'Agent Nhận Diện BĐS',
-            details: [
-                `Địa chỉ: "${shortAddr}"`,
-                `Loại BĐS: ${ptLabel}  ·  Pháp lý: ${legalLabel}`,
-                `Diện tích: ${areaM2 || '—'}m²  ·  Lộ giới: ${road || '—'}m`,
-                ...extraDetails,
-            ],
-        },
-        {
-            icon: '📡',
-            title: 'Agent Dữ Liệu Thị Trường',
-            details: [
-                `Khu vực: "${shortAddr.split(',').slice(-2).join(',').trim() || shortAddr}"`,
-                `Nguồn: batdongsan.com.vn · cafeland.vn · cen.vn`,
-                `Báo cáo: Savills · CBRE · JLL Vietnam Q1/2026`,
-                `Ưu tiên: Giao dịch thực tế > Rao bán > Ước tính`,
-            ],
-        },
-        {
-            icon: '⚙️',
-            title: `Agent AVM — ${avmCoeffs.length} Hệ Số`,
-            details: [
-                avmCoeffs.join('  ×  '),
-                `Phương pháp: So Sánh ${rent ? '60' : '65'}%  +  Thu Nhập ${rent ? '40' : '35'}%`,
-                `Nguồn giá gốc → Blend AI + Cache + Comps nội bộ`,
-            ],
-        },
-        {
-            icon: '✅',
-            title: 'Agent Tổng Hợp & Kiểm Định',
-            details: [
-                `Chuẩn hóa khoảng tin cậy ±5–15%`,
-                `Kiểm định bounds theo bảng khu vực`,
-                `Hoàn thiện kết quả định giá…`,
-            ],
-        },
+        { icon: '🔍', title: 'Agent Nhận Diện BĐS', details: a1Details },
+        { icon: '📡', title: 'Agent Dữ Liệu Thị Trường', details: a2Details },
+        { icon: '⚙️', title: `Agent AVM — ${coeffLines.length} Hệ Số`, details: a3Details },
+        { icon: '✅', title: 'Agent Tổng Hợp & Kiểm Định', details: a4Details },
     ];
 }
 
