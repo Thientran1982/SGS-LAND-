@@ -179,19 +179,19 @@ const ConfigTab = memo(({ config, onSave, onUpdateConfig, t }: ConfigTabProps) =
     </div>
 ));
 
-const AGENT_SKILL_CATALOG: { key: string; agent: string; desc: string }[] = [
-    { key: 'ROUTER_SYSTEM',       agent: 'Router',          desc: 'Phân tích ý định & định tuyến agent phù hợp' },
-    { key: 'WRITER_PERSONA',      agent: 'Writer',          desc: 'Tính cách & phong cách tư vấn viên trả lời' },
-    { key: 'INVENTORY_SYSTEM',    agent: 'Inventory',       desc: 'Phân tích & tìm kiếm bất động sản' },
-    { key: 'FINANCE_SYSTEM',      agent: 'Finance',         desc: 'Tư vấn tài chính, vay ngân hàng, lãi suất' },
-    { key: 'LEGAL_SYSTEM',        agent: 'Legal',           desc: 'Tư vấn pháp lý, sổ đỏ, thủ tục sang tên' },
-    { key: 'SALES_SYSTEM',        agent: 'Sales',           desc: 'Chuẩn bị brief xem nhà, chốt deal' },
-    { key: 'MARKETING_SYSTEM',    agent: 'Marketing',       desc: 'Phân tích ưu đãi, chiến dịch marketing' },
-    { key: 'CONTRACT_SYSTEM',     agent: 'Contract',        desc: 'Phân tích điều khoản hợp đồng BĐS' },
-    { key: 'LEAD_ANALYST_SYSTEM', agent: 'Lead Analyst',   desc: 'Phân tích tâm lý & hành vi khách hàng' },
-    { key: 'VALUATION_SYSTEM',        agent: 'Valuation Extract', desc: 'STEP 2: Trích xuất JSON giá thị trường → AVM' },
-    { key: 'VALUATION_SEARCH_SYSTEM', agent: 'Valuation Sale',    desc: 'STEP 1a: Tìm kiếm giá bán giao dịch thực tế' },
-    { key: 'VALUATION_RENTAL_SYSTEM', agent: 'Valuation Rental',  desc: 'STEP 1b: Tìm kiếm giá thuê & Gross Yield' },
+const AGENT_SKILL_CATALOG: { key: string; agent: string; descKey: string }[] = [
+    { key: 'ROUTER_SYSTEM',           agent: 'Router',            descKey: 'ai.agent_router_desc' },
+    { key: 'WRITER_PERSONA',          agent: 'Writer',            descKey: 'ai.agent_writer_desc' },
+    { key: 'INVENTORY_SYSTEM',        agent: 'Inventory',         descKey: 'ai.agent_inventory_desc' },
+    { key: 'FINANCE_SYSTEM',          agent: 'Finance',           descKey: 'ai.agent_finance_desc' },
+    { key: 'LEGAL_SYSTEM',            agent: 'Legal',             descKey: 'ai.agent_legal_desc' },
+    { key: 'SALES_SYSTEM',            agent: 'Sales',             descKey: 'ai.agent_sales_desc' },
+    { key: 'MARKETING_SYSTEM',        agent: 'Marketing',         descKey: 'ai.agent_marketing_desc' },
+    { key: 'CONTRACT_SYSTEM',         agent: 'Contract',          descKey: 'ai.agent_contract_desc' },
+    { key: 'LEAD_ANALYST_SYSTEM',     agent: 'Lead Analyst',      descKey: 'ai.agent_lead_analyst_desc' },
+    { key: 'VALUATION_SYSTEM',        agent: 'Valuation Extract', descKey: 'ai.agent_valuation_desc' },
+    { key: 'VALUATION_SEARCH_SYSTEM', agent: 'Valuation Sale',    descKey: 'ai.agent_valuation_search_desc' },
+    { key: 'VALUATION_RENTAL_SYSTEM', agent: 'Valuation Rental',  descKey: 'ai.agent_valuation_rental_desc' },
 ];
 
 const PromptsTab = memo(({ 
@@ -205,11 +205,11 @@ const PromptsTab = memo(({
         {/* AGENT SKILLS CATALOG */}
         <div className="bg-[var(--bg-surface)] p-4 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
             <div className="flex items-center justify-between mb-3">
-                <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Catalog Agent Skills — Tên template khớp key để override mặc định</h4>
-                <span className="text-[10px] text-[var(--text-tertiary)] italic">Hover để xem chi tiết skill</span>
+                <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">{t('ai.catalog_title')}</h4>
+                <span className="text-[10px] text-[var(--text-tertiary)] italic">{t('ai.catalog_hover_hint')}</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-                {AGENT_SKILL_CATALOG.map(({ key, agent, desc }) => {
+                {AGENT_SKILL_CATALOG.map(({ key, agent, descKey }) => {
                     const configured = configuredKeys.has(key);
                     const defInfo = promptDefaults[key];
                     const isHovered = hoveredKey === key;
@@ -219,7 +219,7 @@ const PromptsTab = memo(({
                                 onClick={() => !configured && onCreateOpen()}
                                 onMouseEnter={() => setHoveredKey(key)}
                                 onMouseLeave={() => setHoveredKey(null)}
-                                title={configured ? 'Đã có template — chọn từ danh sách bên dưới' : `Nhấn để tạo template "${key}"`}
+                                title={configured ? t('ai.catalog_configured_hint') : `${t('ai.catalog_create_hint')} "${key}"`}
                                 className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all select-none ${configured ? 'bg-emerald-50 border-emerald-200' : 'bg-[var(--glass-surface)] border-[var(--glass-border)] hover:border-indigo-200 hover:bg-indigo-50'}`}
                             >
                                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -231,7 +231,7 @@ const PromptsTab = memo(({
                                     {configured && <span className="ml-auto text-[9px] font-bold text-emerald-600 bg-emerald-100 px-1 rounded">override</span>}
                                 </div>
                                 <code className="text-[10px] text-[var(--text-tertiary)] font-mono block truncate">{key}</code>
-                                <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5 leading-tight hidden sm:block">{desc}</p>
+                                <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5 leading-tight hidden sm:block">{t(descKey)}</p>
                             </div>
                             {/* Default skill info popover */}
                             {isHovered && defInfo && (
@@ -239,16 +239,16 @@ const PromptsTab = memo(({
                                     <div className="flex items-center gap-1.5 mb-1.5">
                                         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${configured ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
                                         <span className="font-bold text-[var(--text-primary)]">{defInfo.name}</span>
-                                        <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full ${configured ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{configured ? 'Đã override' : 'Đang dùng mặc định'}</span>
+                                        <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full ${configured ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{configured ? t('ai.catalog_override_badge') : t('ai.catalog_default_badge')}</span>
                                     </div>
                                     <p className="text-[var(--text-secondary)] leading-relaxed mb-2">{defInfo.summary}</p>
                                     <div className="bg-[var(--glass-surface)] rounded-lg p-2">
-                                        <span className="text-[9px] font-bold text-indigo-600 uppercase block mb-1">Quy tắc chính</span>
+                                        <span className="text-[9px] font-bold text-indigo-600 uppercase block mb-1">{t('ai.catalog_rules_label')}</span>
                                         <p className="text-[var(--text-tertiary)] leading-relaxed">{defInfo.notes}</p>
                                     </div>
                                     {!configured && (
                                         <button onClick={(e) => { e.stopPropagation(); onCreateOpen(); }} className="mt-2 w-full text-center text-[10px] font-bold text-indigo-600 hover:text-indigo-800 py-1 border border-indigo-200 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors pointer-events-auto">
-                                            + Tạo override cho skill này
+                                            {t('ai.catalog_create_override')}
                                         </button>
                                     )}
                                 </div>
