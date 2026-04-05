@@ -117,7 +117,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     try {
       const tenantId: string | undefined = (req as any).user?.tenantId;
       const userId: string | undefined = (req as any).user?.id;
-      const { interactionId, leadId, rating, correction, agentNode, intent, userMessage, aiResponse, model } = req.body;
+      const { interactionId, leadId, rating, correction, agentNode, intent, userMessage, aiResponse, model, metadata } = req.body;
 
       if (rating !== 1 && rating !== -1) {
         return res.status(400).json({ error: 'rating must be 1 (positive) or -1 (negative)' });
@@ -128,6 +128,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
       const safeUserMessage = typeof userMessage === 'string' ? userMessage.slice(0, 500) : undefined;
       const safeAiResponse = typeof aiResponse === 'string' ? aiResponse.slice(0, 2000) : undefined;
       const safeAgentNode = typeof agentNode === 'string' ? agentNode.slice(0, 50) : undefined;
+      const safeMetadata = metadata && typeof metadata === 'object' && !Array.isArray(metadata) ? metadata : undefined;
 
       const feedback = await feedbackRepository.create(tenantId, {
         interactionId, leadId, userId, rating,
@@ -137,6 +138,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
         userMessage: safeUserMessage,
         aiResponse: safeAiResponse,
         model: typeof model === 'string' ? model.slice(0, 100) : undefined,
+        metadata: safeMetadata,
       });
 
       // RLHF reward signal — only meaningful for tenant-scoped (authenticated) feedback

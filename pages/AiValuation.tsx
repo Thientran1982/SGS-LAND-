@@ -1802,8 +1802,23 @@ export const AiValuation: React.FC = () => {
                                                             interactionId: valuationId,
                                                             intent: 'ESTIMATE_VALUATION',
                                                             rating: feedbackRating,
+                                                            // aiResponse: rich context for RLHF region matching
                                                             aiResponse: `${address} — ${valuation?.price ? (valuation.price / 1_000_000_000).toFixed(2) + ' tỷ VNĐ' : ''}`,
+                                                            userMessage: `${address} | ${propertyType} | ${area}m² | ${roadWidth}m | ${legal}`,
                                                             correction: actualPriceVnd ? String(actualPriceVnd) : undefined,
+                                                            // metadata: structured for RLHF price correction queries
+                                                            metadata: {
+                                                                address,
+                                                                propertyType,
+                                                                area: parseFloat(area) || undefined,
+                                                                roadWidth: parseFloat(roadWidth) || undefined,
+                                                                legal,
+                                                                totalPrice: valuation?.price ?? undefined,
+                                                                pricePerM2: valuation?.pricePerM2 ?? undefined,
+                                                                rangeMin: valuation?.range?.[0] ?? undefined,
+                                                                rangeMax: valuation?.range?.[1] ?? undefined,
+                                                                actualPriceVnd: actualPriceVnd ?? undefined,
+                                                            },
                                                         });
                                                         setFeedbackSent(true);
                                                     } catch {

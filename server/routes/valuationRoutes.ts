@@ -14,6 +14,97 @@ import type { LegalStatus, PropertyType } from '../valuationEngine';
 import { marketDataService } from '../services/marketDataService';
 import { listingRepository } from '../repositories/listingRepository';
 import { logger } from '../middleware/logger';
+import { pool } from '../db';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RLHF price correction: reads historical valuation corrections from ai_feedback
+// and computes a region-level adjustment ratio. Max ±20% cap.
+// Only applied for authenticated (tenantId) requests with ≥3 corrections.
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadRlhfPriceCorrection(
+  tenantId: string,
+  address: string,
+  propertyType: string,
+): Promise<{ factor: number; sampleCount: number }> {
+  try {
+    // Extract region tokens from address (last 2 comma-parts, e.g. "Bình Thạnh, TP.HCM")
+    const addrParts = address.split(',').map(p => p.trim()).filter(Boolean);
+    const regionTokens = addrParts.slice(-2).join(' ').toLowerCase();
+    if (!regionTokens || regionTokens.length < 3) return { factor: 1.0, sampleCount: 0 };
+
+    // Query recent corrections where:
+    // - intent = 'ESTIMATE_VALUATION'
+    // - rating = -1 (user corrected the price)
+    // - correction contains a numeric VNĐ value
+    // - user_message (address) overlaps with current region
+    // - within last 90 days
+    const res = await pool.query(
+      `SELECT correction, ai_response, metadata
+       FROM ai_feedback
+       WHERE tenant_id = $1
+         AND intent = 'ESTIMATE_VALUATION'
+         AND rating = -1
+         AND correction IS NOT NULL
+         AND correction ~ '^[0-9]+$'
+         AND created_at >= NOW() - INTERVAL '90 days'
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [tenantId]
+    );
+
+    if (!res.rows || res.rows.length === 0) return { factor: 1.0, sampleCount: 0 };
+
+    // Parse corrections and filter to same region + property type
+    const ratios: number[] = [];
+    for (const row of res.rows) {
+      try {
+        const meta = row.metadata ? (typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata) : {};
+        // Check region match via metadata.address or ai_response
+        const corrAddr = (meta.address || row.ai_response || '').toLowerCase();
+        const corrPType = meta.propertyType || '';
+
+        // Region overlap: at least one token from current region appears in correction address
+        const tokens = regionTokens.split(/\s+/).filter(t => t.length > 3);
+        const regionMatch = tokens.some(t => corrAddr.includes(t));
+        if (!regionMatch) continue;
+
+        // Property type match (optional — only filter if both known)
+        if (corrPType && propertyType && corrPType !== propertyType) continue;
+
+        // Compute ratio: actualPriceVnd / estimatedPriceVnd
+        const actualVnd  = parseFloat(row.correction);
+        // Estimated price in metadata (preferred) or parse from ai_response "X.XX tỷ VNĐ"
+        let estimatedVnd: number | null = meta.totalPrice ? parseFloat(meta.totalPrice) : null;
+        if (!estimatedVnd) {
+          const m = (row.ai_response || '').match(/([\d.]+)\s*tỷ/);
+          if (m) estimatedVnd = parseFloat(m[1]) * 1_000_000_000;
+        }
+
+        if (actualVnd > 0 && estimatedVnd && estimatedVnd > 0) {
+          const ratio = actualVnd / estimatedVnd;
+          // Sanity: only accept corrections between 0.5–2.0x (50% to 200% of estimate)
+          if (ratio >= 0.5 && ratio <= 2.0) ratios.push(ratio);
+        }
+      } catch { /* skip malformed row */ }
+    }
+
+    if (ratios.length < 3) return { factor: 1.0, sampleCount: ratios.length };
+
+    // Weighted average with recency (more recent = higher weight) — simple mean for now
+    const avg = ratios.reduce((s, r) => s + r, 0) / ratios.length;
+
+    // Blend: 70% engine estimate, 30% correction signal (avoid over-correcting)
+    const blendedFactor = 0.70 + 0.30 * avg;
+
+    // Cap at ±20%
+    const capped = Math.max(0.80, Math.min(1.20, blendedFactor));
+    logger.info(`[Valuation RLHF] Region "${regionTokens}" — ${ratios.length} corrections, avgRatio=${avg.toFixed(3)}, factor=${capped.toFixed(3)}`);
+    return { factor: capped, sampleCount: ratios.length };
+  } catch (err: any) {
+    logger.warn('[Valuation RLHF] Could not load corrections:', err.message);
+    return { factor: 1.0, sampleCount: 0 };
+  }
+}
 
 /**
  * Strip property-type prefix keywords from an address string before market-data lookup.
@@ -259,17 +350,34 @@ export function createValuationRoutes(
         cachedConfidence: undefined,
       });
 
+      // ── Step 4: Apply RLHF price correction (auth users with historical corrections) ──
+      let rlhfFactor = 1.0;
+      let rlhfSamples = 0;
+      if (user?.tenantId) {
+        const rlhf = await loadRlhfPriceCorrection(user.tenantId, address, resolvedPropertyType);
+        rlhfFactor = rlhf.factor;
+        rlhfSamples = rlhf.sampleCount;
+      }
+
+      // Apply RLHF factor to all price fields (only when correction is meaningful)
+      const applyRlhf = (v: number) => rlhfFactor !== 1.0 ? Math.round(v * rlhfFactor) : v;
+      const finalPricePerM2 = applyRlhf(avmResult.pricePerM2);
+      const finalTotalPrice = applyRlhf(avmResult.totalPrice);
+      const finalRangeMin   = applyRlhf(avmResult.rangeMin);
+      const finalRangeMax   = applyRlhf(avmResult.rangeMax);
+      const finalCompsPrice = avmResult.compsPrice ? applyRlhf(avmResult.compsPrice) : undefined;
+
       // ── Response ──────────────────────────────────────────────────────────
       const interactionId = crypto.randomUUID();
       res.json({
         interactionId,
         // Core valuation result
         basePrice: avmResult.marketBasePrice,
-        pricePerM2: avmResult.pricePerM2,
-        totalPrice: avmResult.totalPrice,
-        compsPrice: avmResult.compsPrice,
-        rangeMin: avmResult.rangeMin,
-        rangeMax: avmResult.rangeMax,
+        pricePerM2: finalPricePerM2,
+        totalPrice: finalTotalPrice,
+        compsPrice: finalCompsPrice,
+        rangeMin: finalRangeMin,
+        rangeMax: finalRangeMax,
         confidence: avmResult.confidence,
         marketTrend: avmResult.marketTrend,
         factors: avmResult.factors,
@@ -283,6 +391,8 @@ export function createValuationRoutes(
           marketDataSource,
           cacheAge: cacheEntry ? Math.round((Date.now() - new Date(cacheEntry.fetchedAt).getTime()) / 60000) + 'm' : null,
           cacheExpiresAt: cacheEntry?.expiresAt,
+          rlhfFactor: rlhfFactor !== 1.0 ? rlhfFactor : undefined,
+          rlhfSamples: rlhfSamples > 0 ? rlhfSamples : undefined,
         },
         comparables: {
           count: internalCompsCount,
@@ -291,11 +401,12 @@ export function createValuationRoutes(
         },
         // Human-readable summary
         summary: {
-          estimatedPrice: `${(avmResult.totalPrice / 1_000_000_000).toFixed(2)} tỷ VNĐ`,
-          priceRange: `${(avmResult.rangeMin / 1_000_000_000).toFixed(2)} – ${(avmResult.rangeMax / 1_000_000_000).toFixed(2)} tỷ`,
-          pricePerM2: `${(avmResult.pricePerM2 / 1_000_000).toFixed(0)} triệu/m²`,
+          estimatedPrice: `${(finalTotalPrice / 1_000_000_000).toFixed(2)} tỷ VNĐ`,
+          priceRange: `${(finalRangeMin / 1_000_000_000).toFixed(2)} – ${(finalRangeMax / 1_000_000_000).toFixed(2)} tỷ`,
+          pricePerM2: `${(finalPricePerM2 / 1_000_000).toFixed(0)} triệu/m²`,
           confidenceLabel: avmResult.confidence >= 85 ? 'Rất cao' : avmResult.confidence >= 70 ? 'Cao' : avmResult.confidence >= 55 ? 'Trung bình' : 'Thấp',
           activeCoefficients: Object.keys(avmResult.coefficients).length,
+          rlhfApplied: rlhfFactor !== 1.0,
         },
       });
     } catch (error: any) {

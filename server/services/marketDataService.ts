@@ -296,6 +296,15 @@ class MarketDataService {
   private isRefreshing = false;
   private isSeedRunning = false;
   private redisClient: any | null = null;
+  // Circuit breaker: when Gemini quota is exhausted, skip AI calls until cooldown expires
+  private quotaExhaustedUntil: number = 0;
+  private static readonly QUOTA_COOLDOWN_MS = 15 * 60_000; // 15 minutes
+
+  get isQuotaExhausted(): boolean { return Date.now() < this.quotaExhaustedUntil; }
+  private markQuotaExhausted(): void {
+    this.quotaExhaustedUntil = Date.now() + MarketDataService.QUOTA_COOLDOWN_MS;
+    logger.warn(`[MarketData] Gemini quota exhausted — AI calls paused for 15 min (until ${new Date(this.quotaExhaustedUntil).toISOString()})`);
+  }
 
   private constructor() {}
 
@@ -414,6 +423,12 @@ class MarketDataService {
         })
       );
 
+      // Stop seeding if quota was hit during this batch
+      if (this.isQuotaExhausted) {
+        logger.warn(`[MarketData] Seed aborted — Gemini quota exhausted after ${successCount} locations. Will resume when circuit resets.`);
+        break;
+      }
+
       // Rate-limit: wait between batches
       if (i + SEED_BATCH_SIZE < missing.length) {
         await new Promise(r => setTimeout(r, SEED_BATCH_DELAY));
@@ -479,6 +494,12 @@ class MarketDataService {
   private async fetchAndCache(location: string, key: string, fetchPropertyType: string = 'townhouse_center'): Promise<MarketDataEntry> {
     let entry: MarketDataEntry;
 
+    // Circuit breaker: skip AI call when quota is known to be exhausted
+    if (this.isQuotaExhausted) {
+      logger.debug(`[MarketData] Circuit breaker active — using regional table for "${location}"`);
+      return this.storeEntry(key, this.buildRegionalEntry(location, key));
+    }
+
     try {
       const { aiService } = await import('../ai');
       const result = await aiService.getRealtimeValuation(
@@ -496,7 +517,11 @@ class MarketDataService {
         fetchedAt:      now.toISOString(),
         expiresAt:      new Date(now.getTime() + CACHE_TTL_MS).toISOString(),
       };
-    } catch {
+    } catch (err: any) {
+      const msg = String(err?.message || err);
+      if (msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429')) {
+        this.markQuotaExhausted();
+      }
       entry = this.buildRegionalEntry(location, key);
     }
 
@@ -507,6 +532,11 @@ class MarketDataService {
   private async fetchSeedEntry(location: string, pType: string): Promise<MarketDataEntry> {
     const key = normalizeLocation(location);
     const regional = getRegionalBasePrice(location, pType);
+
+    // Skip AI if quota is exhausted
+    if (this.isQuotaExhausted) {
+      return this.storeEntry(key, this.buildRegionalEntry(location, key));
+    }
 
     try {
       const data = await fetchLightMarketPrice(location, pType);
@@ -545,6 +575,10 @@ class MarketDataService {
 
       return this.storeEntry(key, entry);
     } catch (err: any) {
+      const msg = String(err?.message || err);
+      if (msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429')) {
+        this.markQuotaExhausted();
+      }
       logger.warn(`[MarketData] Seed AI failed "${location}" — using regional table: ${err.message}`);
       return this.storeEntry(key, this.buildRegionalEntry(location, key));
     }

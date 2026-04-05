@@ -117,6 +117,7 @@ class AiApiClient {
         intent?: string;
         userMessage?: string;
         aiResponse?: string;
+        metadata?: Record<string, any>;
     }): Promise<any> {
         return this.fetchApi('/api/ai/governance/feedback', data);
     }
