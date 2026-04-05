@@ -399,6 +399,13 @@ export function getKdir(direction: string): { value: number; label: string; desc
     'BẮC': { value: 0.96, label: 'Hướng Bắc', description: 'Ít nắng, tối và lạnh (-4%)' },
     'TAY': { value: 0.95, label: 'Hướng Tây', description: 'Nắng chiều tây rất nóng (-5%)' },
     'TÂY': { value: 0.95, label: 'Hướng Tây', description: 'Nắng chiều tây rất nóng (-5%)' },
+    // Full Vietnamese compound directions (from form: 'Đông Bắc', 'Tây Nam', etc.)
+    'ĐÔNG BẮC': { value: 0.98, label: 'Hướng Đông Bắc', description: 'Đón nắng sáng, hơi lạnh về mùa đông (-2%)' },
+    'DONG BAC':  { value: 0.98, label: 'Hướng Đông Bắc', description: 'Đón nắng sáng, hơi lạnh về mùa đông (-2%)' },
+    'TÂY NAM':   { value: 0.97, label: 'Hướng Tây Nam', description: 'Nắng chiều, hơi nóng (-3%)' },
+    'TAY NAM':   { value: 0.97, label: 'Hướng Tây Nam', description: 'Nắng chiều, hơi nóng (-3%)' },
+    'TÂY BẮC':  { value: 0.97, label: 'Hướng Tây Bắc', description: 'Chiều nắng tây, nóng (-3%)' },
+    'TAY BAC':   { value: 0.97, label: 'Hướng Tây Bắc', description: 'Chiều nắng tây, nóng (-3%)' },
   };
   return map[d] || null;
 }

@@ -221,7 +221,7 @@ function computeKd(roadM: number): { val: number; label: string } {
 function computeKp(legal: string): string {
     if (legal === 'PINK_BOOK') return 'Kp=1.00 (Sổ Hồng đầy đủ)';
     if (legal === 'CONTRACT')  return 'Kp=0.88 (HĐMB, khấu trừ 12%)';
-    return 'Kp=0.72 (Vi Bằng/Chưa có sổ, rủi ro cao)';
+    return 'Kp=0.80 (Vi Bằng/Chưa có sổ, rủi ro cao, −20%)';
 }
 function computeKa(aM2: number): string {
     if (aM2 < 30)   return `Ka=0.90 (DT nhỏ <30m², cộng trừ −10%)`;
@@ -232,12 +232,16 @@ function computeKa(aM2: number): string {
 }
 function computeKdir(direction: string): string | null {
     const d = direction.toUpperCase();
-    if (d.includes('NAM') && d.includes('ĐÔNG')) return 'Kdir=1.05 (Đông Nam — tốt nhất)';
-    if (d.includes('NAM'))   return 'Kdir=1.04 (Nam — đón gió, thoáng)';
-    if (d.includes('ĐÔNG'))  return 'Kdir=1.03 (Đông — sáng sớm)';
-    if (d.includes('BẮC') && d.includes('TÂY')) return 'Kdir=0.94 (Tây Bắc — nắng chiều, thấp nhất)';
-    if (d.includes('TÂY'))   return 'Kdir=0.96 (Tây — nắng buổi chiều)';
-    if (d.includes('BẮC'))   return 'Kdir=0.98 (Bắc — ít nắng)';
+    // Compound directions must be checked BEFORE single-word checks to avoid partial match
+    if (d.includes('ĐÔNG') && d.includes('NAM'))  return 'Kdir=1.04 (Đông Nam — đón nắng sáng, thoáng gió)';
+    if (d.includes('ĐÔNG') && d.includes('BẮC'))  return 'Kdir=0.98 (Đông Bắc — nắng sáng, hơi lạnh mùa đông)';
+    if (d.includes('TÂY')  && d.includes('NAM'))  return 'Kdir=0.97 (Tây Nam — nắng chiều, hơi nóng)';
+    if (d.includes('TÂY')  && d.includes('BẮC'))  return 'Kdir=0.97 (Tây Bắc — chiều nắng tây, nóng)';
+    // Single directions
+    if (d.includes('NAM'))   return 'Kdir=1.04 (Nam — đón gió, thoáng mát)';
+    if (d.includes('ĐÔNG'))  return 'Kdir=1.00 (Đông — đón nắng sáng, chuẩn tham chiếu)';
+    if (d.includes('TÂY'))   return 'Kdir=0.95 (Tây — nắng chiều tây, nóng)';
+    if (d.includes('BẮC'))   return 'Kdir=0.96 (Bắc — ít nắng, tối và lạnh)';
     return null;
 }
 function computeKfl(floorN: number, pType: string): string | null {
@@ -272,8 +276,6 @@ function computeKage(ageY: number): string | null {
 }
 
 // ─── Main builder ─────────────────────────────────────────────────────────────
-interface AgentStep { icon: string; title: string; details: string[] }
-
 function buildAgentSteps(
     addr: string, pType: string, areaM2: string, road: string, legalStatus: string,
     dir: string, mf: string, furn: string, fl: string, rent: string, age: string
@@ -699,12 +701,22 @@ export const AiValuation: React.FC = () => {
         setArea('');
         setRoadWidth('');
         setPropertyType('townhouse_center');
+        setLegal('PINK_BOOK');
         setAutoDetectedType(null);
         setDirection('');
         setFrontageWidth('');
         setFurnishing('');
         setFloorLevel('');
         setMonthlyRent('');
+        setBuildingAge('');
+        setBedrooms(null);
+        setNgang('');
+        setDai('');
+        setValuation(null);
+        setValuationId(null);
+        setFeedbackSent(false);
+        setFeedbackRating(null);
+        setActualPriceInput('');
         setStep('ADDRESS');
     };
 
@@ -1398,7 +1410,7 @@ export const AiValuation: React.FC = () => {
                                 {!roadWidth && area && parseFloat(area) > 0 && (
                                     <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-2.5 text-xs text-yellow-400">
                                         <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
-                                        <span>Điền <b>Lộ giới</b> để AI tính chính xác hơn (hẻm 4m / đường 12m…). Nếu bỏ trống, hệ thống dùng 5m mặc định.</span>
+                                        <span>Điền <b>Lộ giới</b> để AI tính chính xác hơn (hẻm 4m / đường 12m…). Nếu bỏ trống, hệ thống dùng 3m mặc định.</span>
                                     </div>
                                 )}
                                 <button 
