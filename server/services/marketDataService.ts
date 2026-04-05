@@ -191,7 +191,8 @@ async function getRedisClient(): Promise<any | null> {
 
 async function getAiClient() {
   const { GoogleGenAI } = await import('@google/genai');
-  return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+  const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+  return new GoogleGenAI({ apiKey: apiKey! });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

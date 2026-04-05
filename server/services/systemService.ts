@@ -16,7 +16,7 @@ export const systemService = {
       dbConnected = false;
     }
 
-    const aiConfigured = !!(process.env.GEMINI_API_KEY || process.env.API_KEY);
+    const aiConfigured = !!(process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY);
 
     return {
       status: dbConnected ? 'healthy' : 'critical',

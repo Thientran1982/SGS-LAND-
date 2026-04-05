@@ -41,7 +41,7 @@ const GENAI_CONFIG = {
 let _aiInstance: GoogleGenAI | null = null;
 function getAiClient(): GoogleGenAI {
     if (_aiInstance) return _aiInstance;
-    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
     if (!apiKey) throw new Error("API key not valid. Please pass a valid API key.");
     _aiInstance = new GoogleGenAI({ apiKey });
     return _aiInstance;
@@ -1957,7 +1957,7 @@ ${reconcileLine ? reconcileLine + '\n' : ''}Yếu tố: ${valResult.factors.slic
         lang?: string
     ): Promise<AgentTraceResponse> {
         // Graceful fallback when Gemini API key is not configured
-        if (!process.env.GEMINI_API_KEY && !process.env.API_KEY) {
+        if (!process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY && !process.env.API_KEY) {
             return {
                 agent: 'SGS_AGENT',
                 content: t('ai.msg_system_busy'),

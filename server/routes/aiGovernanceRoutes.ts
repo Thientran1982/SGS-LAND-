@@ -243,7 +243,7 @@ export function createAiGovernanceRoutes(authenticateToken: any, optionalAuth?: 
     try {
       const { systemPrompt, userInput, model } = req.body;
       if (!userInput?.trim()) return res.status(400).json({ error: 'userInput is required' });
-      const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+      const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
       if (!apiKey) return res.status(503).json({ error: 'AI service not configured' });
       const ai = new GoogleGenAI({ apiKey });
       const effectiveModel = model || 'gemini-2.5-flash';
