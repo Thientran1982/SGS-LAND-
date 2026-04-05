@@ -70,11 +70,21 @@ interface PromptsTabProps {
 }
 
 const ICONS = {
-    ADD: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
-    SAVE: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>,
-    VARIABLE: <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>,
-    PLAY: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>,
-    CHECK: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+    ADD:          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
+    SAVE:         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>,
+    VARIABLE:     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>,
+    PLAY:         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>,
+    CHECK:        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
+    CHECK_SM:     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>,
+    WARN:         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
+    X:            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>,
+    RESET:        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
+    CHAT:         <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
+    CHAT_SM:      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
+    STAR:         <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>,
+    THUMBS_UP:    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>,
+    THUMBS_DOWN:  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" /></svg>,
+    BOT:          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" /></svg>,
 };
 
 const PROMPT_VARIABLES = ['{{name}}', '{{role}}', '{{context}}', '{{history}}', '{{market_data}}'];
@@ -406,13 +416,13 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 {[
-                    { label: 'Tổng phản hồi', value: stats?.totalFeedback || 0, icon: '💬', color: 'text-indigo-600' },
-                    { label: 'Tỷ lệ chấp thuận', value: `${stats?.approvalRate || 0}%`, icon: '⭐', color: stats?.approvalRate && stats.approvalRate >= 70 ? 'text-emerald-600' : 'text-amber-500' },
-                    { label: 'Phản hồi tốt', value: stats?.positiveCount || 0, icon: '👍', color: 'text-emerald-600' },
-                    { label: 'Cần cải thiện', value: stats?.negativeCount || 0, icon: '👎', color: 'text-rose-500' },
+                    { label: 'Tổng phản hồi', value: stats?.totalFeedback || 0, icon: ICONS.CHAT, color: 'text-indigo-600' },
+                    { label: 'Tỷ lệ chấp thuận', value: `${stats?.approvalRate || 0}%`, icon: ICONS.STAR, color: stats?.approvalRate && stats.approvalRate >= 70 ? 'text-emerald-600' : 'text-amber-500' },
+                    { label: 'Phản hồi tốt', value: stats?.positiveCount || 0, icon: ICONS.THUMBS_UP, color: 'text-emerald-600' },
+                    { label: 'Cần cải thiện', value: stats?.negativeCount || 0, icon: ICONS.THUMBS_DOWN, color: 'text-rose-500' },
                 ].map(card => (
                     <div key={card.label} className="bg-[var(--bg-surface)] p-3 sm:p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm">
-                        <div className="text-xl sm:text-2xl mb-1 sm:mb-2">{card.icon}</div>
+                        <div className={`mb-1 sm:mb-2 ${card.color}`}>{card.icon}</div>
                         <div className={`text-xl sm:text-2xl font-extrabold ${card.color}`}>{card.value}</div>
                         <div className="text-xs text-[var(--text-tertiary)] mt-1 font-medium leading-tight">{card.label}</div>
                     </div>
@@ -464,7 +474,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                         {isRecomputing ? (
                             <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Đang tính...</>
                         ) : (
-                            <>🔄 Tính lại Reward Signals</>
+                            <>{ICONS.RESET} Tính lại Reward Signals</>
                         )}
                     </button>
                     <div className="text-xs text-[var(--text-tertiary)] text-center">Tự động chạy hàng ngày lúc 2:00 SA</div>
@@ -535,14 +545,14 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                         <div className="border-t border-[var(--glass-border)] p-3 space-y-3 bg-[var(--glass-surface)]/50">
                                             {sig.topExamples?.slice(0, 1).map((ex: any, i: number) => (
                                                 <div key={i} className="bg-emerald-50 border border-emerald-100 rounded-lg p-2">
-                                                    <div className="text-[10px] font-bold text-emerald-700 mb-1">✅ Mẫu tốt</div>
+                                                    <div className="text-[10px] font-bold text-emerald-700 mb-1 flex items-center gap-1">{ICONS.CHECK_SM} Mẫu tốt</div>
                                                     <div className="text-[10px] text-[var(--text-tertiary)]">Khách: {(ex.userMessage || '').slice(0, 80)}</div>
                                                     <div className="text-[10px] text-emerald-700 mt-1">AI: {(ex.aiResponse || '').slice(0, 120)}</div>
                                                 </div>
                                             ))}
                                             {sig.negativePatterns?.slice(0, 1).map((p: any, i: number) => (
                                                 <div key={i} className="bg-rose-50 border border-rose-100 rounded-lg p-2">
-                                                    <div className="text-[10px] font-bold text-rose-700 mb-1">⚠️ Cần tránh</div>
+                                                    <div className="text-[10px] font-bold text-rose-700 mb-1 flex items-center gap-1">{ICONS.WARN} Cần tránh</div>
                                                     <div className="text-[10px] text-[var(--text-tertiary)]">Câu hỏi: {(p.userMessage || '').slice(0, 60)}</div>
                                                     <div className="text-[10px] text-rose-700 mt-1">→ {(p.correction || '').slice(0, 100)}</div>
                                                 </div>
@@ -588,7 +598,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
                                                             {sig.topExamples?.length > 0 && (
                                                                 <div>
-                                                                    <div className="text-xs font-bold text-emerald-700 mb-2">✅ Mẫu trả lời tốt (Few-shot)</div>
+                                                                    <div className="text-xs font-bold text-emerald-700 mb-2 flex items-center gap-1">{ICONS.CHECK_SM} Mẫu trả lời tốt (Few-shot)</div>
                                                                     {sig.topExamples.slice(0, 2).map((ex: any, i: number) => (
                                                                         <div key={i} className="bg-emerald-50 border border-emerald-100 rounded-lg p-2 mb-2">
                                                                             <div className="text-xs text-[var(--text-tertiary)] mb-1">Khách: <span className="text-[var(--text-secondary)]">{(ex.userMessage || '').slice(0, 100)}</span></div>
@@ -599,7 +609,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                                             )}
                                                             {sig.negativePatterns?.length > 0 && (
                                                                 <div>
-                                                                    <div className="text-xs font-bold text-rose-700 mb-2">⚠️ Lỗi cần tránh (Negative Rules)</div>
+                                                                    <div className="text-xs font-bold text-rose-700 mb-2 flex items-center gap-1">{ICONS.WARN} Lỗi cần tránh (Negative Rules)</div>
                                                                     {sig.negativePatterns.slice(0, 2).map((p: any, i: number) => (
                                                                         <div key={i} className="bg-rose-50 border border-rose-100 rounded-lg p-2 mb-2">
                                                                             <div className="text-xs text-[var(--text-tertiary)] mb-1">Câu hỏi: <span className="text-[var(--text-secondary)]">{(p.userMessage || '').slice(0, 80)}</span></div>
@@ -639,15 +649,15 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                 </div>
                                 <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                                     <div>
-                                        <div className="font-bold text-[var(--text-tertiary)] mb-1">💬 Câu hỏi</div>
+                                        <div className="font-bold text-[var(--text-tertiary)] mb-1 flex items-center gap-1">{ICONS.CHAT_SM} Câu hỏi</div>
                                         <div className="text-[var(--text-secondary)]">{(c.userMessage || '').slice(0, 120)}</div>
                                     </div>
                                     <div>
-                                        <div className="font-bold text-rose-500 mb-1">❌ AI đã trả lời sai</div>
+                                        <div className="font-bold text-rose-500 mb-1 flex items-center gap-1">{ICONS.X} AI đã trả lời sai</div>
                                         <div className="text-[var(--text-secondary)] line-through opacity-60">{(c.aiResponse || '').slice(0, 120)}</div>
                                     </div>
                                     <div>
-                                        <div className="font-bold text-emerald-600 mb-1">✅ Sửa đúng</div>
+                                        <div className="font-bold text-emerald-600 mb-1 flex items-center gap-1">{ICONS.CHECK_SM} Sửa đúng</div>
                                         <div className="text-emerald-700">{(c.correction || '').slice(0, 150)}</div>
                                     </div>
                                 </div>
@@ -660,7 +670,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
             {/* Empty state */}
             {!stats?.totalFeedback && (
                 <div className="bg-[var(--bg-surface)] p-12 rounded-[24px] border border-[var(--glass-border)] shadow-sm text-center">
-                    <div className="text-5xl mb-4">🤖</div>
+                    <div className="flex justify-center mb-4 text-[var(--text-tertiary)]">{ICONS.BOT}</div>
                     <div className="font-bold text-[var(--text-primary)] mb-2">Chưa có dữ liệu huấn luyện</div>
                     <div className="text-sm text-[var(--text-tertiary)] max-w-sm mx-auto">
                         Khi người dùng đánh giá câu trả lời AI (👍/👎) trong hộp thư inbox, dữ liệu sẽ tự động xuất hiện ở đây để AI học và cải thiện.
@@ -833,7 +843,7 @@ export const AiGovernance: React.FC = () => {
                     <button onClick={() => setActiveTab('CONFIG')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'CONFIG' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_config')}</button>
                     <button onClick={() => setActiveTab('PROMPTS')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'PROMPTS' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_prompts')}</button>
                     <button onClick={() => setActiveTab('SAFETY')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'SAFETY' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_safety')}</button>
-                    <button onClick={() => setActiveTab('RLHF')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'RLHF' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>🧠 RLHF</button>
+                    <button onClick={() => setActiveTab('RLHF')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'RLHF' ? 'bg-[var(--bg-surface)] shadow text-indigo-600' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}>{t('ai.tab_rlhf')}</button>
                 </div>
             </div>
 
