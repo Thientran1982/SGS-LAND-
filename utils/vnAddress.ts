@@ -57,6 +57,91 @@ const ADMIN_TERMS: Record<string, string> = {
     '\\bthi xa\\b':  'Thị Xã',
 };
 
+// ── Non-HCMC province/city detection ────────────────────────────────────────
+// Plain-Latin (no-diacritics) keywords that identify addresses outside HCMC.
+// If any of these appear in the address, we skip the HCMC bounding box and
+// do NOT append the HCMC city suffix to the geocoding query.
+const NON_HCMC_PROVINCES: string[] = [
+    'dong nai', 'đồng nai',
+    'binh duong', 'bình dương',
+    'long an',
+    'ba ria', 'bà rịa', 'vung tau', 'vũng tàu',
+    'tay ninh', 'tây ninh',
+    'ha noi', 'hà nội', 'hanoi',
+    'da nang', 'đà nẵng', 'danang',
+    'hai phong', 'hải phòng',
+    'can tho', 'cần thơ',
+    'hue', 'huế',
+    'khanh hoa', 'khánh hòa', 'nha trang',
+    'binh thuan', 'bình thuận', 'phan thiet', 'phan thiết',
+    'lam dong', 'lâm đồng', 'da lat', 'đà lạt',
+    'dak lak', 'đắk lắk', 'buon ma thuot', 'buôn mê thuột',
+    'gia lai', 'pleiku',
+    'kon tum',
+    'quang nam', 'quảng nam', 'hoi an', 'hội an',
+    'quang ngai', 'quảng ngãi',
+    'binh dinh', 'bình định', 'quy nhon', 'quy nhơn',
+    'phu yen', 'phú yên',
+    'ninh thuan', 'ninh thuận', 'phan rang',
+    'tien giang', 'tiền giang', 'my tho', 'mỹ tho',
+    'ben tre', 'bến tre',
+    'vinh long', 'vĩnh long',
+    'tra vinh', 'trà vinh',
+    'dong thap', 'đồng tháp', 'cao lanh', 'cao lãnh',
+    'an giang', 'long xuyen', 'long xuyên',
+    'kien giang', 'kiên giang', 'rach gia', 'rạch giá', 'phu quoc', 'phú quốc',
+    'ca mau', 'cà mau',
+    'hau giang', 'hậu giang',
+    'soc trang', 'sóc trăng',
+    'bac lieu', 'bạc liêu',
+    'quang binh', 'quảng bình',
+    'quang tri', 'quảng trị',
+    'thua thien', 'thừa thiên',
+    'nghe an', 'nghệ an', 'vinh city', 'thành phố vinh',
+    'ha tinh', 'hà tĩnh',
+    'thanh hoa', 'thanh hoá', 'thanh hóa',
+    'ninh binh', 'ninh bình',
+    'nam dinh', 'nam định',
+    'thai binh', 'thái bình',
+    'hai duong', 'hải dương',
+    'hung yen', 'hưng yên',
+    'bac ninh', 'bắc ninh',
+    'vinh phuc', 'vĩnh phúc',
+    'ha nam', 'hà nam',
+    'bac giang', 'bắc giang',
+    'thai nguyen', 'thái nguyên',
+    'phu tho', 'phú thọ', 'viet tri', 'việt trì',
+    'yen bai', 'yên bái',
+    'lao cai', 'lào cai', 'sa pa',
+    'tuyen quang', 'tuyên quang',
+    'ha giang', 'hà giang',
+    'cao bang', 'cao bằng',
+    'lang son', 'lạng sơn',
+    'quang ninh', 'quảng ninh', 'ha long', 'hạ long',
+    'bac kan', 'bắc kạn',
+    'dien bien', 'điện biên',
+    'lai chau', 'lai châu',
+    'son la', 'sơn la',
+    'hoa binh', 'hòa bình',
+];
+
+/**
+ * Detect if an address belongs to a non-HCMC province/city.
+ * Returns true when a known out-of-HCMC keyword is found.
+ */
+export function isNonHCMCAddress(address: string): boolean {
+    const lower = address.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    for (const province of NON_HCMC_PROVINCES) {
+        const plain = province.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const escaped = plain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i').test(lower)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Restore diacritics for known HCMC district names and Vietnamese
  * administrative terms in an address string typed without diacritics.
@@ -83,18 +168,26 @@ export function normalizeVNAddress(address: string): string {
 }
 
 // ── Geocode query builder ───────────────────────────────────────────────────
-const CITY_SUFFIXES = [
+const HCMC_SUFFIXES = [
     ', Thành phố Hồ Chí Minh, Việt Nam',
     ', Ho Chi Minh City, Vietnam',
     ', TP. HCM, Việt Nam',
     ', Vietnam',
 ];
 
+const GENERIC_SUFFIXES = [
+    ', Việt Nam',
+    ', Vietnam',
+];
+
 /**
  * Build all geocode query variants for a Vietnamese address.
- * Returns original queries first (Nominatim handles non-diacritical inputs
- * reasonably well), then normalized queries with diacritics restored for
- * district/admin terms.
+ *
+ * For HCMC addresses: appends HCMC city qualifiers so Nominatim finds the
+ * correct district even for short street-only queries.
+ *
+ * For non-HCMC addresses (Đồng Nai, Hà Nội, etc.): only appends ", Vietnam"
+ * so we do NOT force Nominatim to look inside HCMC.
  *
  * Deduplicates if the original and normalized are identical.
  */
@@ -104,10 +197,11 @@ export function buildVNGeoQueries(address: string): string[] {
     const hasChanged = norm.toLowerCase() !== orig.toLowerCase();
 
     const variants = hasChanged ? [orig, norm] : [orig];
+    const suffixes = isNonHCMCAddress(orig) ? GENERIC_SUFFIXES : HCMC_SUFFIXES;
     const queries: string[] = [];
 
     for (const variant of variants) {
-        for (const suffix of CITY_SUFFIXES) {
+        for (const suffix of suffixes) {
             queries.push(`${variant}${suffix}`);
         }
     }

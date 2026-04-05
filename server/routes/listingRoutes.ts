@@ -5,11 +5,43 @@ import { auditRepository } from '../repositories/auditRepository';
 
 // ── Server-side geocoding (Nominatim / OpenStreetMap) ────────────────────────
 // Runs in the background after create/update so the API response is not delayed.
-// Uses HCMC bounding box with bounded=1 so results are always within HCMC.
+// Province-aware: HCMC addresses use bounded viewbox; non-HCMC skip it entirely.
 const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
 
+// Non-HCMC province keywords (plain Latin + with diacritics).
+// When any of these appear in an address we skip the HCMC suffix and bounding box.
+const NON_HCMC_PROVINCES_SRV: string[] = [
+  'dong nai', 'dong nai', 'binh duong', 'long an',
+  'ba ria', 'vung tau', 'tay ninh',
+  'ha noi', 'hanoi', 'da nang', 'danang', 'hai phong',
+  'can tho', 'hue', 'khanh hoa', 'nha trang',
+  'binh thuan', 'phan thiet', 'lam dong', 'da lat',
+  'dak lak', 'buon ma thuot', 'gia lai', 'pleiku', 'kon tum',
+  'quang nam', 'hoi an', 'quang ngai', 'binh dinh', 'quy nhon',
+  'phu yen', 'ninh thuan', 'phan rang',
+  'tien giang', 'my tho', 'ben tre', 'vinh long', 'tra vinh',
+  'dong thap', 'cao lanh', 'an giang', 'long xuyen',
+  'kien giang', 'rach gia', 'phu quoc', 'ca mau', 'hau giang',
+  'soc trang', 'bac lieu',
+  'quang binh', 'quang tri', 'thua thien',
+  'nghe an', 'ha tinh', 'thanh hoa', 'ninh binh', 'nam dinh', 'thai binh',
+  'hai duong', 'hung yen', 'bac ninh', 'vinh phuc', 'ha nam',
+  'bac giang', 'thai nguyen', 'phu tho', 'viet tri',
+  'yen bai', 'lao cai', 'sa pa', 'tuyen quang', 'ha giang',
+  'cao bang', 'lang son', 'quang ninh', 'ha long', 'bac kan',
+  'dien bien', 'lai chau', 'son la', 'hoa binh',
+];
+
+function isNonHCMCSrv(location: string): boolean {
+  const lower = location.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  for (const kw of NON_HCMC_PROVINCES_SRV) {
+    const esc = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`(?<![\\w])${esc}(?![\\w])`, 'i').test(lower)) return true;
+  }
+  return false;
+}
+
 // Vietnamese district name normalisation (no-diacritics → with diacritics)
-// Mirrors utils/vnAddress.ts so the server can geocode no-dấu addresses correctly.
 const HCMC_DISTRICT_MAP: Record<string, string> = {
   'binh thanh': 'Bình Thạnh', 'binh tan': 'Bình Tân', 'binh chanh': 'Bình Chánh',
   'thu duc': 'Thủ Đức', 'tan binh': 'Tân Bình', 'tan phu': 'Tân Phú',
@@ -41,12 +73,10 @@ function buildGeoQueriesSrv(location: string): string[] {
   const orig = location.trim();
   const norm = normalizeVNSrv(orig);
   const variants = norm.toLowerCase() !== orig.toLowerCase() ? [orig, norm] : [orig];
-  const suffixes = [
-    ', Thành phố Hồ Chí Minh, Việt Nam',
-    ', Ho Chi Minh City, Vietnam',
-    ', TP. HCM, Việt Nam',
-    ', Vietnam',
-  ];
+  const nonHCMC = isNonHCMCSrv(orig);
+  const suffixes = nonHCMC
+    ? [', Việt Nam', ', Vietnam']
+    : [', Thành phố Hồ Chí Minh, Việt Nam', ', Ho Chi Minh City, Vietnam', ', TP. HCM, Việt Nam', ', Vietnam'];
   return variants.flatMap(v => suffixes.map(s => `${v}${s}`));
 }
 
@@ -78,15 +108,20 @@ async function fetchNominatim(query: string, bounded: boolean): Promise<{ lat: n
   }
 }
 
-async function geocodeHCMC(location: string): Promise<{ lat: number; lng: number } | null> {
+async function geocodeVN(location: string): Promise<{ lat: number; lng: number } | null> {
   const queries = buildGeoQueriesSrv(location);
-  // Pass 1: try with HCMC bounding box (faster, more precise for local addresses)
-  for (let i = 0; i < queries.length; i++) {
-    if (i > 0) await new Promise(r => setTimeout(r, 1200));
-    const result = await fetchNominatim(queries[i], true);
-    if (result) return result;
+  const nonHCMC = isNonHCMCSrv(location);
+
+  if (!nonHCMC) {
+    // Pass 1: HCMC addresses — try bounded viewbox first (more precise)
+    for (let i = 0; i < queries.length; i++) {
+      if (i > 0) await new Promise(r => setTimeout(r, 1200));
+      const result = await fetchNominatim(queries[i], true);
+      if (result) return result;
+    }
   }
-  // Pass 2: retry without bounding box for non-HCMC addresses (other provinces/cities)
+
+  // Pass 2 (or only pass for non-HCMC): search Vietnam-wide without bounding box
   for (let i = 0; i < Math.min(queries.length, 2); i++) {
     if (i > 0) await new Promise(r => setTimeout(r, 1200));
     const result = await fetchNominatim(queries[i], false);
@@ -99,7 +134,7 @@ async function geocodeHCMC(location: string): Promise<{ lat: number; lng: number
 export function scheduleGeocode(tenantId: string, listingId: string, location: string) {
   (async () => {
     try {
-      const coords = await geocodeHCMC(location);
+      const coords = await geocodeVN(location);
       if (coords) {
         await listingRepository.update(tenantId, listingId, { coordinates: coords });
       }

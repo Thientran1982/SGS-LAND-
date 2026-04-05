@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Listing, PropertyType } from '../types';
 import { NO_IMAGE_URL } from '../utils/constants';
-import { buildVNGeoQueries, getDistrictFallback } from '../utils/vnAddress';
+import { buildVNGeoQueries, getDistrictFallback, isNonHCMCAddress } from '../utils/vnAddress';
 
 const HCMC_CENTER: [number, number] = [10.7769, 106.7009];
 const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
@@ -34,6 +34,29 @@ function pinTokens(transaction?: string, propertyType?: string) {
 const hasRealCoords = (listing: any): boolean =>
     listing.coordinates?.lat != null && listing.coordinates?.lng != null &&
     (listing.coordinates.lat !== 0 || listing.coordinates.lng !== 0);
+
+// HCMC bounding box: lat 10.60–11.20, lng 106.40–107.00
+const HCMC_LAT_MIN = 10.60, HCMC_LAT_MAX = 11.20;
+const HCMC_LNG_MIN = 106.40, HCMC_LNG_MAX = 107.00;
+
+const inHCMCBBox = (lat: number, lng: number): boolean =>
+    lat >= HCMC_LAT_MIN && lat <= HCMC_LAT_MAX &&
+    lng >= HCMC_LNG_MIN && lng <= HCMC_LNG_MAX;
+
+/**
+ * Returns true only when stored coordinates are trustworthy.
+ * If the listing address says non-HCMC (e.g. Đồng Nai) but stored coords
+ * fall inside the HCMC bounding box, the coords were geocoded incorrectly
+ * by the old bounded=1 logic and must be re-geocoded.
+ */
+const hasTrustedCoords = (listing: any): boolean => {
+    if (!hasRealCoords(listing)) return false;
+    const { lat, lng } = listing.coordinates;
+    if (listing.location && isNonHCMCAddress(listing.location) && inHCMCBBox(lat, lng)) {
+        return false; // wrong HCMC coords for an out-of-HCMC address → re-geocode
+    }
+    return true;
+};
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -77,16 +100,19 @@ async function geocodeLocation(
     if (!nominatimReachable) { cache.set(location, null); return null; }
 
     const queries = buildVNGeoQueries(location);
+    const nonHCMC = isNonHCMCAddress(location);
 
-    // Pass 1: try with HCMC bounding box (precise for local addresses)
-    for (let i = 0; i < queries.length; i++) {
-        if (i > 0) await sleep(1100);
-        const coords = await fetchGeo(queries[i], true);
-        if (coords) { cache.set(location, coords); return coords; }
-        if (!nominatimReachable) break;
+    // Pass 1: HCMC addresses only — bounded viewbox for precision
+    if (!nonHCMC) {
+        for (let i = 0; i < queries.length; i++) {
+            if (i > 0) await sleep(1100);
+            const coords = await fetchGeo(queries[i], true);
+            if (coords) { cache.set(location, coords); return coords; }
+            if (!nominatimReachable) break;
+        }
     }
 
-    // Pass 2: retry without bounding box for non-HCMC/other province addresses
+    // Pass 2 (or only pass for non-HCMC): Vietnam-wide search without bounding box
     if (nominatimReachable) {
         for (let i = 0; i < Math.min(queries.length, 2); i++) {
             if (i > 0) await sleep(1100);
@@ -548,7 +574,7 @@ const MapView: React.FC<MapViewProps> = memo(({
             const bounds = L.latLngBounds([]);
 
             for (const listing of listings) {
-                if (hasRealCoords(listing)) {
+                if (hasTrustedCoords(listing)) {
                     const pt: [number, number] = [listing.coordinates!.lat, listing.coordinates!.lng];
                     resolved.push({ listing, point: pt, approximate: false });
                     bounds.extend(pt);
