@@ -224,7 +224,7 @@ export const KnowledgeBase: React.FC = () => {
             {/* ─── Drag & Drop zone — compact strip for managers ─── */}
             {canManage && (
                 <div
-                    className={`flex items-center gap-4 px-5 py-4 border-2 border-dashed rounded-2xl transition-all duration-300 ${
+                    className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 border-2 border-dashed rounded-2xl transition-all duration-300 overflow-hidden ${
                         isDragging
                             ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 scale-[1.005]'
                             : 'border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-indigo-300 hover:bg-[var(--glass-surface)]'

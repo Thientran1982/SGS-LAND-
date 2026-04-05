@@ -272,7 +272,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
             <div className="absolute inset-0 bg-[var(--bg-surface)]/80 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm z-0 rounded-none sm:rounded-t-[24px]"></div>
 
             {/* LEFT: Mobile Menu + Global Search */}
-            <div className="flex items-center gap-3 sm:gap-4 relative z-10 flex-1 min-w-0 mr-2">
+            <div className="flex items-center gap-2 sm:gap-4 relative z-10 flex-1 min-w-0 mr-2">
                 <button
                     onClick={onMenuClick}
                     className="md:hidden group flex items-center justify-center -ml-2 min-h-[44px] min-w-[44px] shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded-xl"
@@ -283,6 +283,13 @@ export const CommandCenter: React.FC<CommandCenterProps> = memo(({
                         {ICONS.MENU}
                     </span>
                 </button>
+
+                {/* Mobile Page Title */}
+                {title && (
+                    <span className="md:hidden flex-1 min-w-0 text-sm font-bold text-[var(--text-primary)] truncate">
+                        {title}
+                    </span>
+                )}
 
                 {/* Global Search Trigger (Desktop) */}
                 <div className="hidden md:flex flex-1 max-w-lg relative z-10">
