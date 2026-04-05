@@ -818,12 +818,12 @@ const StructuredData: React.FC = () => {
     );
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <p className="text-xs text-[var(--text-tertiary)]">{schemas.length} JSON-LD schema(s) được tìm thấy trong document head.</p>
+        <div className="space-y-4 w-full min-w-0">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-xs text-[var(--text-tertiary)] min-w-0 flex-1">{schemas.length} JSON-LD schema(s) được tìm thấy trong document head.</p>
                 <button
                     onClick={readSchemas}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-border)] transition-colors"
+                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-border)] transition-colors"
                     title="Đọc lại JSON-LD từ DOM sau khi lưu meta"
                 >
                     {ICONS.RESET} Làm mới
@@ -831,21 +831,23 @@ const StructuredData: React.FC = () => {
             </div>
 
             {schemas.map((s, idx) => (
-                <div key={idx} className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl overflow-hidden shadow-sm">
-                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
-                        <span className={`text-2xs font-bold px-2.5 py-1 rounded-full border ${typeColor(s.type)}`}>{s.type}</span>
+                <div key={idx} className="w-full min-w-0 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl overflow-hidden shadow-sm">
+                    <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-[var(--glass-border)] bg-[var(--glass-surface-hover)] min-w-0">
+                        <span className={`shrink-0 text-2xs font-bold px-2.5 py-1 rounded-full border ${typeColor(s.type)} max-w-[60%] truncate`}>{s.type}</span>
                         <button
                             onClick={() => handleCopy(s.json, idx)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-2xs font-bold text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-2xs font-bold text-[var(--text-secondary)] hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
                         >
                             {copied === idx ? ICONS.CHECK : ICONS.COPY}
                             {copied === idx ? 'Đã copy' : 'Copy'}
                         </button>
                     </div>
-                    <pre
-                        className="p-4 text-2xs font-mono overflow-x-auto no-scrollbar leading-relaxed bg-slate-900 dark:bg-slate-950 rounded-b-2xl"
-                        dangerouslySetInnerHTML={{ __html: highlightJson(s.json) }}
-                    />
+                    <div className="overflow-x-auto">
+                        <pre
+                            className="p-4 text-2xs font-mono leading-relaxed bg-slate-900 dark:bg-slate-950 rounded-b-2xl min-w-0"
+                            dangerouslySetInnerHTML={{ __html: highlightJson(s.json) }}
+                        />
+                    </div>
                 </div>
             ))}
         </div>
@@ -989,7 +991,7 @@ export const SeoManager: React.FC = () => {
             </div>
 
             {/* ── Tab Content ─────────────────────────────────────────────── */}
-            <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-[20px] shadow-sm p-4 sm:p-6">
+            <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-[20px] shadow-sm p-4 sm:p-6 w-full min-w-0 overflow-x-hidden">
                 {activeTab === 'SERP'   && <SerpPreview selectedKey={serpSelectedKey} onSelect={setSerpSelectedKey} overrides={overrides} />}
                 {activeTab === 'META'   && <MetaEditor overrides={overrides} onOverridesChange={(next) => {
                     setOverrides(next);
