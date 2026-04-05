@@ -215,17 +215,43 @@ async function serveUploadedFile(req: Request, res: Response, userTenantId: stri
       return res.status(400).json({ error: 'Invalid filename' });
     }
 
-    const buffer = await getFile(requestedTenantId, filename);
-    if (!buffer) {
+    const ext = path.extname(filename).toLowerCase();
+    const isPublicImage = PUBLIC_IMAGE_EXTS.has(ext);
+
+    // ── ETag from filename hash (format: <timestamp>-<hash>.<ext>) ────────────
+    // The hash portion of the filename is already a stable content fingerprint.
+    // Using it as ETag avoids computing a digest on the full buffer.
+    const nameWithoutExt = path.basename(filename, ext);
+    const hashPart = nameWithoutExt.includes('-') ? nameWithoutExt.split('-').slice(1).join('-') : nameWithoutExt;
+    const etag = `"${hashPart}"`;
+
+    // ── ETag conditional request — reply 304 immediately (no DB/cache I/O) ───
+    const ifNoneMatch = req.headers['if-none-match'];
+    if (ifNoneMatch && (ifNoneMatch === etag || ifNoneMatch === '*')) {
+      res.setHeader('ETag', etag);
+      res.setHeader('Cache-Control', isPublicImage ? 'public, max-age=31536000, immutable' : 'private, max-age=86400');
+      return res.status(304).end();
+    }
+
+    // ── Fetch from LRU cache → PostgreSQL → disk ──────────────────────────────
+    const fileResult = await getFile(requestedTenantId, filename);
+    if (!fileResult) {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    const ext = path.extname(filename).toLowerCase();
-    const contentType = EXT_TO_CONTENT_TYPE[ext] || 'application/octet-stream';
-    const isPublicImage = PUBLIC_IMAGE_EXTS.has(ext);
+    const { buffer, contentType: dbContentType } = fileResult;
+    const contentType = EXT_TO_CONTENT_TYPE[ext] || dbContentType || 'application/octet-stream';
+
+    // ── Last-Modified from filename timestamp (format: <ms_timestamp>-<hash>.<ext>) ─
+    const tsMatch = filename.match(/^(\d+)-/);
+    const lastModified = tsMatch
+      ? new Date(parseInt(tsMatch[1], 10)).toUTCString()
+      : new Date(0).toUTCString();
 
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', isPublicImage ? 'public, max-age=31536000, immutable' : 'private, max-age=86400');
+    res.setHeader('ETag', etag);
+    res.setHeader('Last-Modified', lastModified);
     res.setHeader('Content-Length', buffer.length);
     res.end(buffer);
   } catch (error) {
