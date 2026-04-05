@@ -50,24 +50,47 @@ function buildGeoQueriesSrv(location: string): string[] {
   return variants.flatMap(v => suffixes.map(s => `${v}${s}`));
 }
 
+const NOMINATIM_UA = 'SGSLand/1.0 (contact@sgsland.vn)';
+
+async function fetchNominatim(query: string, bounded: boolean): Promise<{ lat: number; lng: number } | null> {
+  const q = encodeURIComponent(query);
+  const boundedParam = bounded ? `&viewbox=${HCMC_VIEWBOX}&bounded=1` : '';
+  const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn${boundedParam}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(url, {
+      headers: { 'Accept-Language': 'vi,en', 'User-Agent': NOMINATIM_UA },
+      signal: controller.signal,
+    });
+    const data = (await res.json()) as any[];
+    if (data.length > 0) {
+      return {
+        lat: parseFloat(parseFloat(data[0].lat).toFixed(6)),
+        lng: parseFloat(parseFloat(data[0].lon).toFixed(6)),
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function geocodeHCMC(location: string): Promise<{ lat: number; lng: number } | null> {
   const queries = buildGeoQueriesSrv(location);
+  // Pass 1: try with HCMC bounding box (faster, more precise for local addresses)
   for (let i = 0; i < queries.length; i++) {
     if (i > 0) await new Promise(r => setTimeout(r, 1200));
-    try {
-      const q = encodeURIComponent(queries[i]);
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn&viewbox=${HCMC_VIEWBOX}&bounded=1`,
-        { headers: { 'Accept-Language': 'vi,en', 'User-Agent': 'SGSLand/1.0' } }
-      );
-      const data = (await res.json()) as any[];
-      if (data.length > 0) {
-        return {
-          lat: parseFloat(parseFloat(data[0].lat).toFixed(6)),
-          lng: parseFloat(parseFloat(data[0].lon).toFixed(6)),
-        };
-      }
-    } catch { /* try next */ }
+    const result = await fetchNominatim(queries[i], true);
+    if (result) return result;
+  }
+  // Pass 2: retry without bounding box for non-HCMC addresses (other provinces/cities)
+  for (let i = 0; i < Math.min(queries.length, 2); i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 1200));
+    const result = await fetchNominatim(queries[i], false);
+    if (result) return result;
   }
   return null;
 }

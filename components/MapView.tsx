@@ -12,8 +12,9 @@ const MAX_GEOCODE_REQUESTS = 20;
 const CLUSTER_RADIUS_PX = 60;
 
 // Module-level circuit breaker — set to false the moment Nominatim is unreachable.
-// Avoids 8 × 1.1 s = 8.8 s wasted sleep per listing when the network blocks the API.
+// Resets after 5 minutes to allow recovery without requiring a page reload.
 let nominatimReachable = true;
+let nominatimTrippedAt = 0;
 
 // ── Transaction → design tokens ──────────────────────────────────────────────
 // Priority: PropertyType.PROJECT → blue-600 | TransactionType.RENT → violet-600 | default → indigo-600
@@ -36,34 +37,65 @@ const hasRealCoords = (listing: any): boolean =>
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+const NOMINATIM_UA = 'SGSLand/1.0 (contact@sgsland.vn)';
+const CIRCUIT_RESET_MS = 5 * 60 * 1000; // 5 minutes
+
+async function fetchGeo(query: string, bounded: boolean): Promise<[number, number] | null> {
+    const q = encodeURIComponent(query);
+    const boundedParam = bounded ? `&viewbox=${HCMC_VIEWBOX}&bounded=1` : '';
+    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn${boundedParam}`;
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 8000);
+    try {
+        const res = await fetch(url, {
+            headers: { 'Accept-Language': 'vi,en', 'User-Agent': NOMINATIM_UA },
+            signal: controller.signal,
+        });
+        const data = await res.json();
+        if (data.length > 0) return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+        return null;
+    } catch (_) {
+        // Trip circuit breaker — auto-resets after CIRCUIT_RESET_MS
+        nominatimReachable = false;
+        nominatimTrippedAt = Date.now();
+        return null;
+    } finally {
+        clearTimeout(tid);
+    }
+}
+
 async function geocodeLocation(
     location: string,
     cache: Map<string, [number, number] | null>
 ): Promise<[number, number] | null> {
     if (cache.has(location)) return cache.get(location)!;
-    // Circuit breaker: skip all Nominatim calls if network has already failed
+
+    // Auto-reset circuit breaker after 5 minutes
+    if (!nominatimReachable && Date.now() - nominatimTrippedAt > CIRCUIT_RESET_MS) {
+        nominatimReachable = true;
+    }
     if (!nominatimReachable) { cache.set(location, null); return null; }
 
     const queries = buildVNGeoQueries(location);
+
+    // Pass 1: try with HCMC bounding box (precise for local addresses)
     for (let i = 0; i < queries.length; i++) {
         if (i > 0) await sleep(1100);
-        try {
-            const q = encodeURIComponent(queries[i]);
-            const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=vn&viewbox=${HCMC_VIEWBOX}&bounded=1`;
-            const res = await fetch(url, { headers: { 'Accept-Language': 'vi,en', 'User-Agent': 'SGSLand/1.0' } });
-            const data = await res.json();
-            if (data.length > 0) {
-                const coords: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-                cache.set(location, coords);
-                return coords;
-            }
-        } catch (_) {
-            // Network error (not a "no results" response) — trip the circuit breaker
-            // and stop trying other query variants for this and all future listings.
-            nominatimReachable = false;
-            break;
+        const coords = await fetchGeo(queries[i], true);
+        if (coords) { cache.set(location, coords); return coords; }
+        if (!nominatimReachable) break;
+    }
+
+    // Pass 2: retry without bounding box for non-HCMC/other province addresses
+    if (nominatimReachable) {
+        for (let i = 0; i < Math.min(queries.length, 2); i++) {
+            if (i > 0) await sleep(1100);
+            const coords = await fetchGeo(queries[i], false);
+            if (coords) { cache.set(location, coords); return coords; }
+            if (!nominatimReachable) break;
         }
     }
+
     cache.set(location, null);
     return null;
 }
