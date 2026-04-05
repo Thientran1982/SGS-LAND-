@@ -112,7 +112,7 @@ interface ValuationHistoryItem {
     address: string;
     area: number;
     propertyType: string;
-    legal: 'PINK_BOOK' | 'CONTRACT' | 'WAITING';
+    legal: 'PINK_BOOK' | 'CONTRACT' | 'PENDING' | 'WAITING';
     totalPrice: number;
     pricePerM2: number;
     rangeMin: number;
@@ -220,8 +220,9 @@ function computeKd(roadM: number): { val: number; label: string } {
 }
 function computeKp(legal: string): string {
     if (legal === 'PINK_BOOK') return 'Kp=1.00 (Sổ Hồng đầy đủ)';
+    if (legal === 'PENDING')   return 'Kp=0.92 (Đang làm sổ, −8%)';
     if (legal === 'CONTRACT')  return 'Kp=0.88 (HĐMB, khấu trừ 12%)';
-    return 'Kp=0.80 (Vi Bằng/Chưa có sổ, rủi ro cao, −20%)';
+    return 'Kp=0.80 (Vi Bằng/Giấy tay, rủi ro cao, −20%)';
 }
 function computeKa(aM2: number): string {
     if (aM2 < 30)   return `Ka=0.90 (DT nhỏ <30m², cộng trừ −10%)`;
@@ -281,7 +282,7 @@ function buildAgentSteps(
     dir: string, mf: string, furn: string, fl: string, rent: string, age: string
 ): AgentStep[] {
     const ptLabel = PROPERTY_TYPE_LABELS[pType] || pType;
-    const legalLabel = legalStatus === 'PINK_BOOK' ? 'Sổ Hồng' : legalStatus === 'CONTRACT' ? 'HĐMB' : 'Vi Bằng';
+    const legalLabel = legalStatus === 'PINK_BOOK' ? 'Sổ Hồng' : legalStatus === 'CONTRACT' ? 'HĐMB' : legalStatus === 'PENDING' ? 'Đang làm sổ' : 'Vi Bằng';
     const shortAddr = addr.length > 46 ? addr.slice(0, 46) + '…' : addr;
 
     // ── Infer region & sources ──
@@ -413,13 +414,13 @@ export const AiValuation: React.FC = () => {
     const [address, setAddress] = useState('');
     const [area, setArea] = useState<string>('');
     const [roadWidth, setRoadWidth] = useState<string>('');
-    const [legal, setLegal] = useState<'PINK_BOOK' | 'CONTRACT' | 'WAITING'>('PINK_BOOK');
+    const [legal, setLegal] = useState<'PINK_BOOK' | 'CONTRACT' | 'PENDING' | 'WAITING'>('PINK_BOOK');
     const [propertyType, setPropertyType] = useState<string>('townhouse_center');
     const [autoDetectedType, setAutoDetectedType] = useState<string | null>(null); // null = user hasn't changed
     // Advanced AVM inputs (Kfl, Kdir, Kmf, Kfurn)
     const [direction, setDirection] = useState<string>('');
     const [frontageWidth, setFrontageWidth] = useState<string>('');
-    const [furnishing, setFurnishing] = useState<'FULL' | 'BASIC' | 'NONE' | ''>('');
+    const [furnishing, setFurnishing] = useState<'LUXURY' | 'FULL' | 'BASIC' | 'NONE' | ''>('');
     const [floorLevel, setFloorLevel] = useState<string>('');
     const [monthlyRent, setMonthlyRent] = useState<string>('');
     const [buildingAge, setBuildingAge] = useState<string>('');
@@ -605,7 +606,7 @@ export const AiValuation: React.FC = () => {
                        roadNum >= 6 ? 1.05 : roadNum >= 4 ? 1.00 : roadNum >= 3 ? 0.90 :
                        roadNum >= 2 ? 0.80 : 0.70;
             // Kp: Legal
-            const Kp = legal === 'PINK_BOOK' ? 1.00 : legal === 'CONTRACT' ? 0.88 : 0.80;
+            const Kp = legal === 'PINK_BOOK' ? 1.00 : legal === 'PENDING' ? 0.92 : legal === 'CONTRACT' ? 0.88 : 0.80;
             // Ka: Area
             const Ka = areaNum < 25 ? 0.90 : areaNum < 40 ? 0.95 : areaNum < 60 ? 0.98 :
                        areaNum < 100 ? 1.00 : areaNum < 150 ? 1.03 : areaNum < 250 ? 1.06 : 1.10;
@@ -613,7 +614,7 @@ export const AiValuation: React.FC = () => {
             const adjPerM2 = Math.round(marketBase * Kd * Kp * Ka);
             const total = adjPerM2 * areaNum;
             const margin = 0.25;
-            const legalLabel = legal === 'PINK_BOOK' ? 'Sổ Hồng' : legal === 'CONTRACT' ? 'Hợp đồng mua bán' : 'Vi Bằng';
+            const legalLabel = legal === 'PINK_BOOK' ? 'Sổ Hồng' : legal === 'CONTRACT' ? 'Hợp đồng mua bán' : legal === 'PENDING' ? 'Đang làm sổ' : 'Vi Bằng';
 
             aiResult = {
                 basePrice: marketBase,
@@ -919,7 +920,7 @@ export const AiValuation: React.FC = () => {
                                 </div>
                                 <div className="space-y-2">
                                     {history.map((h) => {
-                                        const legalLabel = h.legal === 'PINK_BOOK' ? 'Sổ Hồng' : h.legal === 'CONTRACT' ? 'HĐMB' : 'Vi Bằng';
+                                        const legalLabel = h.legal === 'PINK_BOOK' ? 'Sổ Hồng' : h.legal === 'CONTRACT' ? 'HĐMB' : h.legal === 'PENDING' ? 'Đang làm sổ' : 'Vi Bằng';
                                         const ptLabel = PROPERTY_TYPE_LABELS[h.propertyType] || h.propertyType;
                                         const dateStr = new Date(h.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                                         return (
@@ -1217,11 +1218,12 @@ export const AiValuation: React.FC = () => {
 
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Tình Trạng Pháp Lý <span className="text-rose-400 font-black">*</span></label>
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-2 gap-2">
                                         {[
-                                            { id: 'PINK_BOOK', label: 'Sổ Hồng', badge: 'Đầy đủ', badgeColor: 'text-emerald-400' },
-                                            { id: 'CONTRACT', label: 'HĐMB', badge: '-12%', badgeColor: 'text-yellow-400' },
-                                            { id: 'WAITING', label: 'Vi Bằng', badge: '-20%', badgeColor: 'text-rose-400', title: 'Chưa có sổ / hợp đồng vi bằng — rủi ro pháp lý cao hơn' }
+                                            { id: 'PINK_BOOK', label: 'Sổ Hồng / Sổ Đỏ', badge: 'Đầy đủ', badgeColor: 'text-emerald-400' },
+                                            { id: 'PENDING',   label: 'Đang làm sổ',      badge: '-8%',     badgeColor: 'text-sky-400',    title: 'Đang trong quá trình cấp sổ — rủi ro thấp' },
+                                            { id: 'CONTRACT',  label: 'HĐ Mua Bán',        badge: '-12%',    badgeColor: 'text-yellow-400' },
+                                            { id: 'WAITING',   label: 'Vi Bằng / Giấy tay', badge: '-20%',   badgeColor: 'text-rose-400',   title: 'Chưa có sổ / vi bằng — rủi ro cao' }
                                         ].map(opt => (
                                             <button
                                                 key={opt.id}
@@ -1339,19 +1341,38 @@ export const AiValuation: React.FC = () => {
 
                                 {/* Hướng nhà */}
                                 <div>
-                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Hướng Nhà <span className="text-slate-600 normal-case font-normal">(không bắt buộc)</span></label>
+                                    <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
+                                        Hướng Cửa Chính
+                                        <span className="text-slate-600 normal-case font-normal"> (không bắt buộc)</span>
+                                    </label>
                                     <div className="grid grid-cols-4 gap-2">
-                                        {['Bắc','Đông Bắc','Đông','Đông Nam','Nam','Tây Nam','Tây','Tây Bắc'].map(d => (
+                                        {[
+                                            { d: 'Bắc' },
+                                            { d: 'Đông Bắc' },
+                                            { d: 'Đông' },
+                                            { d: 'Đông Nam', badge: 'Tốt nhất', badgeColor: 'text-emerald-400' },
+                                            { d: 'Nam',      badge: 'Tốt',      badgeColor: 'text-emerald-500' },
+                                            { d: 'Tây Nam' },
+                                            { d: 'Tây' },
+                                            { d: 'Tây Bắc' },
+                                        ].map(({ d, badge, badgeColor }) => (
                                             <button
                                                 key={d}
                                                 type="button"
                                                 onClick={() => setDirection(prev => prev === d ? '' : d)}
-                                                className={`py-2 rounded-xl text-xs font-bold transition-all border ${direction === d ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                                className={`py-2 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${direction === d ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
                                             >
-                                                {d}
+                                                <span>{d}</span>
+                                                {badge && <span className={`text-[9px] font-bold ${direction === d ? 'text-white/80' : badgeColor}`}>{badge}</span>}
                                             </button>
                                         ))}
                                     </div>
+                                    {direction && (direction === 'Đông Nam' || direction === 'Nam') && (
+                                        <div className="text-emerald-400/80 text-xs mt-1.5 italic">✓ Hướng {direction} thường có giá cao hơn 8–15% so với hướng Tây/Tây Bắc</div>
+                                    )}
+                                    {direction && direction !== 'Đông Nam' && direction !== 'Nam' && (
+                                        <div className="text-slate-500 text-xs mt-1.5 italic">Hướng {direction} — hệ số hướng được điều chỉnh tự động theo AVM</div>
+                                    )}
                                 </div>
 
                                 {/* Mặt tiền / Tầng & Tuổi nhà */}
@@ -1457,18 +1478,29 @@ export const AiValuation: React.FC = () => {
                                             {propertyType === 'office' ? 'Tình Trạng VP' : 'Nội Thất'}
                                             <span className="text-slate-600 normal-case font-normal"> (không bắt buộc)</span>
                                         </label>
-                                        <div className="grid grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-2 gap-2">
                                             {(propertyType === 'office'
-                                                ? [{ id: 'FULL', label: 'Hoàn thiện' }, { id: 'BASIC', label: 'Shell & Core' }, { id: 'NONE', label: 'Thô' }]
-                                                : [{ id: 'FULL', label: 'Đầy đủ' }, { id: 'BASIC', label: 'Cơ bản' }, { id: 'NONE', label: 'Nhà thô' }]
+                                                ? [
+                                                    { id: 'LUXURY', label: 'Cao cấp', badge: '+12%', badgeColor: 'text-purple-400' },
+                                                    { id: 'FULL',   label: 'Hoàn thiện', badge: '+7%', badgeColor: 'text-emerald-400' },
+                                                    { id: 'BASIC',  label: 'Shell & Core', badge: 'Ref', badgeColor: 'text-slate-400' },
+                                                    { id: 'NONE',   label: 'Thô', badge: '-5%', badgeColor: 'text-rose-400' }
+                                                ]
+                                                : [
+                                                    { id: 'LUXURY', label: 'Nội thất cao cấp', badge: '+12%', badgeColor: 'text-purple-400' },
+                                                    { id: 'FULL',   label: 'Nội thất đầy đủ',   badge: '+7%',  badgeColor: 'text-emerald-400' },
+                                                    { id: 'BASIC',  label: 'Nội thất cơ bản',   badge: 'Ref',  badgeColor: 'text-slate-400' },
+                                                    { id: 'NONE',   label: 'Nhà thô',            badge: '-5%',  badgeColor: 'text-rose-400' }
+                                                ]
                                             ).map(opt => (
                                                 <button
                                                     key={opt.id}
                                                     type="button"
                                                     onClick={() => setFurnishing(prev => prev === opt.id ? '' : opt.id as any)}
-                                                    className={`py-3 rounded-xl text-xs font-bold transition-all border ${furnishing === opt.id ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
+                                                    className={`py-2.5 rounded-xl text-xs font-bold transition-all border flex flex-col items-center gap-0.5 ${furnishing === opt.id ? 'bg-emerald-500 text-[var(--text-primary)] border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/50'}`}
                                                 >
-                                                    {opt.label}
+                                                    <span>{opt.label}</span>
+                                                    <span className={`text-[9px] font-bold ${furnishing === opt.id ? 'text-white/80' : opt.badgeColor}`}>{opt.badge}</span>
                                                 </button>
                                             ))}
                                         </div>
@@ -1622,7 +1654,7 @@ export const AiValuation: React.FC = () => {
 
                             {/* ── INPUT SUMMARY CHIPS ── */}
                             {(() => {
-                                const legalChip = legal === 'PINK_BOOK' ? '📄 Sổ Hồng' : legal === 'CONTRACT' ? '📋 HĐ Mua Bán' : '📝 Vi Bằng';
+                                const legalChip = legal === 'PINK_BOOK' ? '📄 Sổ Hồng' : legal === 'CONTRACT' ? '📋 HĐ Mua Bán' : legal === 'PENDING' ? '🕐 Đang làm sổ' : '📝 Vi Bằng';
                                 const dirLabels: Record<string,string> = { N:'Bắc', S:'Nam', E:'Đông', W:'Tây', NE:'Đông Bắc', SE:'Đông Nam', SW:'Tây Nam', NW:'Tây Bắc' };
                                 const roadTypeLabelMap: Record<string,string> = { alley_moto:'Hẻm xe máy', alley_car:'Hẻm xe hơi', minor:'Đường nhỏ', major:'Đường lớn', boulevard:'Đại lộ' };
                                 const chips: string[] = [];

@@ -33,7 +33,7 @@
 
 import { DEFAULT_VACANCY_RATE, DEFAULT_OPEX_RATE, DEFAULT_CAP_RATE } from './constants';
 
-export type LegalStatus = 'PINK_BOOK' | 'CONTRACT' | 'WAITING';
+export type LegalStatus = 'PINK_BOOK' | 'CONTRACT' | 'PENDING' | 'WAITING';
 
 export type PropertyType =
   | 'apartment_center'
@@ -65,7 +65,7 @@ export interface AVMInput {
   floorLevel?: number;           // tầng (1 = trệt; for apartments)
   direction?: string;            // hướng: 'S','SE','E','NE','N','NW','W','SW'
   frontageWidth?: number;        // mặt tiền (m) — width of the property facing the road
-  furnishing?: 'FULL' | 'BASIC' | 'NONE';  // nội thất
+  furnishing?: 'LUXURY' | 'FULL' | 'BASIC' | 'NONE';  // nội thất
 
   buildingAge?: number;              // tuổi công trình (năm) — 0 = mới xây
   bedrooms?: number;                 // số phòng ngủ — 0 = studio, 1, 2 (ref), 3, 4+
@@ -247,11 +247,17 @@ function getKp(legal: LegalStatus): { value: number; label: string; description:
         label: 'Hợp đồng mua bán (HĐMB)',
         description: 'Chờ cấp sổ — rủi ro pháp lý trung bình, giảm 12%'
       };
+    case 'PENDING':
+      return {
+        value: 0.92,
+        label: 'Đang làm sổ / Sổ chờ',
+        description: 'Đang trong quá trình cấp sổ — rủi ro thấp hơn HĐMB, giảm 8%'
+      };
     case 'WAITING':
     default:
       return {
         value: 0.80,
-        label: 'Vi Bằng / Chưa có sổ',
+        label: 'Vi Bằng / Giấy tay',
         description: 'Pháp lý chưa rõ ràng — rủi ro cao, giảm 20%'
       };
   }
@@ -457,13 +463,18 @@ export function getKmf(frontageWidth: number, propertyType?: PropertyType): { va
 // 4d. Hệ số nội thất (Kfurn — Furnishing Coefficient)
 //     Standard reference: BASIC (nội thất cơ bản)
 // ─────────────────────────────────────────────────────────────────────────────
-export function getKfurn(furnishing: 'FULL' | 'BASIC' | 'NONE' | undefined): { value: number; label: string; description: string } | null {
+export function getKfurn(furnishing: 'LUXURY' | 'FULL' | 'BASIC' | 'NONE' | undefined): { value: number; label: string; description: string } | null {
   if (!furnishing) return null;
   switch (furnishing) {
+    case 'LUXURY': return {
+      value: 1.12,
+      label: 'Nội thất cao cấp / luxury',
+      description: 'Nội thất cao cấp, thương hiệu cao cấp — giá trị thêm +12%'
+    };
     case 'FULL': return {
       value: 1.07,
-      label: 'Nội thất cao cấp đầy đủ',
-      description: 'Full nội thất cao cấp — vào ở ngay, giá trị thêm +7%'
+      label: 'Nội thất đầy đủ',
+      description: 'Nội thất đầy đủ — vào ở ngay, giá trị thêm +7%'
     };
     case 'BASIC': return {
       value: 1.00,

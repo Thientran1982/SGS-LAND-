@@ -1,0 +1,127 @@
+## NHIỆM VỤ: SỬA FORM ĐỊNH GIÁ
+
+File cần sửa: [TÊN_FILE_FORM] (file form Agent vừa báo cáo ở trên)
+
+--- PHẦN 1: THÊM CÁC TRƯỜNG CÒN THIẾU ---
+
+Thêm các field sau vào form, theo đúng thứ tự:
+
+// TRƯỜNG 1: Hướng nhà — ảnh hưởng 10-20% giá
+Field: huong_nha
+Label: "Hướng cửa chính *"
+Type: select (bắt buộc)
+Options:
+  bac       → "Bắc"
+  dong_bac  → "Đông Bắc"
+  dong      → "Đông"
+  dong_nam  → "Đông Nam" (thêm badge "Tốt nhất")
+  nam       → "Nam"
+  tay_nam   → "Tây Nam"
+  tay       → "Tây"
+  tay_bac   → "Tây Bắc"
+Helper text: "Hướng Đông Nam/Nam thường có giá cao hơn 8-15%"
+
+// TRƯỜNG 2: Vị trí đường — quan trọng nhất định giá
+Field: vi_tri_duong
+Label: "Vị trí đường *"
+Type: select (bắt buộc)
+Options:
+  mat_tien_lon  → "Mặt tiền đường lớn (trên 8m)"
+  mat_tien_nho  → "Mặt tiền đường nhỏ (4–8m)"
+  hem_xe_hoi    → "Hẻm xe hơi (từ 4m)"
+  hem_xe_may    → "Hẻm xe máy (dưới 4m)"
+
+// TRƯỜNG 3: Chiều rộng mặt tiền (chỉ hiện khi mặt tiền)
+Field: chieu_rong_mat_tien
+Label: "Chiều rộng mặt tiền (m)"
+Type: number, min: 2, max: 50, step: 0.5
+Hiển thị khi: vi_tri_duong === 'mat_tien_lon' hoặc 'mat_tien_nho'
+Ẩn khi: hẻm
+
+// TRƯỜNG 4: Tình trạng nội thất
+Field: noi_that
+Label: "Tình trạng nội thất *"
+Type: select (bắt buộc)
+Options:
+  tho      → "Chưa có nội thất (thô)"
+  co_ban   → "Nội thất cơ bản"
+  day_du   → "Nội thất đầy đủ"
+  cao_cap  → "Nội thất cao cấp"
+
+// TRƯỜNG 5: Năm xây dựng
+Field: nam_xay_dung
+Label: "Năm xây dựng"
+Type: number, min: 1975, max: 2025
+Bắt buộc: không (optional)
+Helper: "Để trống nếu chưa biết"
+
+// TRƯỜNG 6: Tình trạng pháp lý (nếu chưa có)
+Field: phap_ly
+Label: "Tình trạng pháp lý *"
+Type: select (bắt buộc)
+Options:
+  so_do      → "Sổ đỏ / Sổ hồng đầy đủ"
+  dang_lam   → "Đang làm sổ"
+  giay_tay   → "Giấy tay"
+  hop_dong   → "Hợp đồng mua bán"
+
+--- PHẦN 2: VALIDATION (không dùng thư viện ngoài) ---
+
+Thêm hàm validateForm() vào file form. Dùng JavaScript thuần,
+không cài thêm thư viện. Logic:
+
+function validateForm(data) {
+  const errors = {};
+
+  if (!data.dia_chi || data.dia_chi.trim().length < 10)
+    errors.dia_chi = "Vui lòng nhập địa chỉ đầy đủ (tối thiểu phường, quận, TP)";
+
+  if (!data.dien_tich_dat || data.dien_tich_dat < 15 || data.dien_tich_dat > 50000)
+    errors.dien_tich_dat = "Diện tích phải từ 15m² đến 50.000m²";
+
+  if (!data.huong_nha)
+    errors.huong_nha = "Vui lòng chọn hướng cửa chính";
+
+  if (!data.vi_tri_duong)
+    errors.vi_tri_duong = "Vui lòng chọn vị trí đường";
+
+  if (!data.phap_ly)
+    errors.phap_ly = "Vui lòng chọn tình trạng pháp lý";
+
+  if (!data.noi_that)
+    errors.noi_that = "Vui lòng chọn tình trạng nội thất";
+
+  if (data.nam_xay_dung) {
+    const yr = parseInt(data.nam_xay_dung);
+    if (yr < 1975 || yr > 2025)
+      errors.nam_xay_dung = "Năm xây dựng phải từ 1975 đến 2025";
+  }
+
+  return { isValid: Object.keys(errors).length === 0, errors };
+}
+
+Gọi validateForm() khi người dùng submit.
+Hiển thị lỗi ngay dưới mỗi field bị sai (màu đỏ, font nhỏ).
+Disable nút "Định giá" nếu có lỗi.
+
+--- PHẦN 3: LOADING STATE ---
+
+Khi đang gọi API (isLoading = true):
+1. Disable toàn bộ form và nút submit
+2. Hiển thị div loading với 4 bước tuần tự:
+   - Bước 1 (0s):   "Đang phân tích địa chỉ..."
+   - Bước 2 (2s):   "Tìm BĐS tương đồng khu vực..."
+   - Bước 3 (4s):   "AI đang tính toán định giá..."
+   - Bước 4 (6s):   "Hoàn thiện báo cáo..."
+3. Dùng setTimeout để chuyển bước, clearTimeout khi done
+
+--- PHẦN 4: KIỂM TRA SAU KHI SỬA ---
+
+Sau khi sửa xong, chạy app và kiểm tra:
+- Form hiển thị đủ 6 trường mới không?
+- Trường chiều rộng mặt tiền ẩn/hiện đúng khi chọn vị trí đường không?
+- Bấm submit khi thiếu field bắt buộc → có hiện lỗi không?
+- Bấm submit khi đủ field → form có submit được không?
+- Console có lỗi JS nào không?
+
+Báo cáo kết quả kiểm tra trước khi tiếp tục.

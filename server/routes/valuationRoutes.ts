@@ -207,8 +207,8 @@ export function createValuationRoutes(
       if (isNaN(roadWidthNum) || roadWidthNum <= 0) return res.status(400).json({ error: 'roadWidth must be a positive number' });
 
       const legalValue = (legal as string).toUpperCase() as LegalStatus;
-      if (!['PINK_BOOK', 'CONTRACT', 'WAITING'].includes(legalValue)) {
-        return res.status(400).json({ error: 'legal must be PINK_BOOK, CONTRACT, or WAITING' });
+      if (!['PINK_BOOK', 'CONTRACT', 'PENDING', 'WAITING'].includes(legalValue)) {
+        return res.status(400).json({ error: 'legal must be PINK_BOOK, CONTRACT, PENDING, or WAITING' });
       }
 
       // Normalize buildingAge: prefer explicit buildingAge; fall back to computing from yearBuilt
