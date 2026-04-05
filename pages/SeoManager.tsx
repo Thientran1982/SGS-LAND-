@@ -7,6 +7,7 @@ import { useTranslation } from '../services/i18n';
 import { ROUTE_SEO, SEOConfig, getSEOOverrides, saveSEOOverride, clearSEOOverride, updatePageSEO } from '../utils/seo';
 import { copyToClipboard } from '../utils/clipboard';
 import seoApi, { SeoOverride } from '../services/api/seoApi';
+import { Dropdown } from '../components/Dropdown';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const ICONS = {
@@ -18,7 +19,6 @@ const ICONS = {
     RESET:    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
     EXT:      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>,
     SAVE:     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
-    CHEVRON:  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>,
 };
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -975,19 +975,13 @@ export const SeoManager: React.FC = () => {
 
                 {/* Tab Bar — mobile: dropdown, desktop: pill tabs */}
                 {/* Mobile dropdown */}
-                <div className="sm:hidden mt-4 relative w-full">
-                    <select
+                <div className="sm:hidden mt-4">
+                    <Dropdown
                         value={activeTab}
-                        onChange={(e) => setActiveTab(e.target.value as TabId)}
-                        className="w-full appearance-none bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-4 py-2.5 pr-10 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 cursor-pointer"
-                    >
-                        {TABS.map(tab => (
-                            <option key={tab.id} value={tab.id}>{tab.label}</option>
-                        ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--text-tertiary)]">
-                        {ICONS.CHEVRON}
-                    </div>
+                        onChange={(val) => setActiveTab(val as TabId)}
+                        options={TABS.map(tab => ({ value: tab.id, label: tab.label }))}
+                        className="w-full"
+                    />
                 </div>
                 {/* Desktop pill tabs */}
                 <div className="hidden sm:inline-flex gap-1 mt-4 bg-[var(--glass-surface-hover)] p-1 rounded-xl">
