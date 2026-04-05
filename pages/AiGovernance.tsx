@@ -402,26 +402,26 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
     const approvalBg = (rate: number) => rate >= 80 ? 'bg-emerald-500' : rate >= 60 ? 'bg-amber-400' : 'bg-rose-500';
 
     return (
-        <div className="space-y-6 animate-enter">
+        <div className="space-y-6 animate-enter w-full overflow-x-hidden">
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 {[
                     { label: 'Tổng phản hồi', value: stats?.totalFeedback || 0, icon: '💬', color: 'text-indigo-600' },
                     { label: 'Tỷ lệ chấp thuận', value: `${stats?.approvalRate || 0}%`, icon: '⭐', color: stats?.approvalRate && stats.approvalRate >= 70 ? 'text-emerald-600' : 'text-amber-500' },
                     { label: 'Phản hồi tốt', value: stats?.positiveCount || 0, icon: '👍', color: 'text-emerald-600' },
                     { label: 'Cần cải thiện', value: stats?.negativeCount || 0, icon: '👎', color: 'text-rose-500' },
                 ].map(card => (
-                    <div key={card.label} className="bg-[var(--bg-surface)] p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm">
-                        <div className="text-2xl mb-2">{card.icon}</div>
-                        <div className={`text-2xl font-extrabold ${card.color}`}>{card.value}</div>
-                        <div className="text-xs text-[var(--text-tertiary)] mt-1 font-medium">{card.label}</div>
+                    <div key={card.label} className="bg-[var(--bg-surface)] p-3 sm:p-5 rounded-[20px] border border-[var(--glass-border)] shadow-sm">
+                        <div className="text-xl sm:text-2xl mb-1 sm:mb-2">{card.icon}</div>
+                        <div className={`text-xl sm:text-2xl font-extrabold ${card.color}`}>{card.value}</div>
+                        <div className="text-xs text-[var(--text-tertiary)] mt-1 font-medium leading-tight">{card.label}</div>
                     </div>
                 ))}
             </div>
 
             {/* Trend Chart + Recompute */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div className="lg:col-span-2 bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <h3 className="font-bold text-[var(--text-primary)] mb-4 text-sm">Xu hướng phản hồi theo tuần</h3>
                     {trends.length > 0 ? (
                         <ResponsiveContainer width="100%" height={180}>
@@ -473,22 +473,22 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
 
             {/* Intent Breakdown */}
             {(stats?.byIntent || []).length > 0 && (
-                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+                <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <h3 className="font-bold text-[var(--text-primary)] mb-4 text-sm">Hiệu suất theo loại yêu cầu (Intent)</h3>
                     <div className="space-y-3">
                         {(stats?.byIntent || []).map(item => (
-                            <div key={item.intent} className="flex items-center gap-3">
-                                <div className="w-28 shrink-0">
-                                    <span className="text-xs font-bold text-[var(--text-secondary)]">{INTENT_LABELS[item.intent] || item.intent}</span>
+                            <div key={item.intent} className="flex items-center gap-2 min-w-0">
+                                <div className="w-20 sm:w-28 shrink-0 min-w-0">
+                                    <span className="text-xs font-bold text-[var(--text-secondary)] block truncate">{INTENT_LABELS[item.intent] || item.intent}</span>
                                 </div>
-                                <div className="flex-1 bg-[var(--glass-surface-hover)] rounded-full h-2 overflow-hidden">
+                                <div className="flex-1 bg-[var(--glass-surface-hover)] rounded-full h-2 overflow-hidden min-w-0">
                                     <div
                                         className={`h-full rounded-full transition-all ${approvalBg(item.rate)}`}
                                         style={{ width: `${item.rate}%` }}
                                     />
                                 </div>
-                                <div className={`w-12 text-right text-xs font-bold ${approvalColor(item.rate)}`}>{item.rate}%</div>
-                                <div className="w-20 text-right text-xs text-[var(--text-tertiary)]">
+                                <div className={`w-10 sm:w-12 shrink-0 text-right text-xs font-bold ${approvalColor(item.rate)}`}>{item.rate}%</div>
+                                <div className="hidden sm:block w-20 shrink-0 text-right text-xs text-[var(--text-tertiary)]">
                                     <span className="text-emerald-600">+{item.positive}</span> / <span className="text-rose-500">-{item.negative}</span>
                                 </div>
                             </div>
@@ -497,11 +497,65 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                 </div>
             )}
 
-            {/* Reward Signals Table */}
+            {/* Reward Signals — Cards on mobile, table on md+ */}
             {signals.length > 0 && (
-                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+                <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <h3 className="font-bold text-[var(--text-primary)] mb-4 text-sm">Reward Signals đã tích lũy</h3>
-                    <div className="overflow-x-auto no-scrollbar">
+
+                    {/* Mobile card layout */}
+                    <div className="md:hidden space-y-3">
+                        {signals.map(sig => {
+                            const fewShot = Array.isArray(sig.fewShotCache) ? sig.fewShotCache.length : 0;
+                            const negRules = Array.isArray(sig.negativePatterns) ? sig.negativePatterns.length : 0;
+                            const isExpanded = expandedSignal === sig.intent;
+                            return (
+                                <div key={sig.intent} className="border border-[var(--glass-border)] rounded-xl overflow-hidden">
+                                    <button
+                                        className="w-full flex items-center justify-between p-3 bg-[var(--glass-surface)] text-left"
+                                        onClick={() => setExpandedSignal(isExpanded ? null : sig.intent)}
+                                    >
+                                        <span className="font-bold text-xs text-[var(--text-secondary)]">{INTENT_LABELS[sig.intent] || sig.intent}</span>
+                                        <span className="text-[10px] text-[var(--text-tertiary)]">{isExpanded ? '▲' : '▼'}</span>
+                                    </button>
+                                    <div className="p-3 grid grid-cols-3 gap-2 text-xs">
+                                        <div className="text-center">
+                                            <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Tốt / Xấu</div>
+                                            <div><span className="text-emerald-600 font-bold">{sig.positiveCount}</span><span className="text-[var(--text-tertiary)] mx-0.5">/</span><span className="text-rose-500 font-bold">{sig.negativeCount}</span></div>
+                                        </div>
+                                        <div className="text-center">
+                                            <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Few-shot</div>
+                                            <span className={`px-1.5 py-0.5 rounded-full font-bold text-[10px] ${fewShot > 0 ? 'bg-indigo-50 text-indigo-600' : 'text-[var(--text-tertiary)]'}`}>{fewShot > 0 ? `${fewShot} mẫu` : '—'}</span>
+                                        </div>
+                                        <div className="text-center">
+                                            <div className="text-[10px] text-[var(--text-tertiary)] mb-0.5">Neg. Rules</div>
+                                            <span className={`px-1.5 py-0.5 rounded-full font-bold text-[10px] ${negRules > 0 ? 'bg-rose-50 text-rose-600' : 'text-[var(--text-tertiary)]'}`}>{negRules > 0 ? `${negRules}` : '—'}</span>
+                                        </div>
+                                    </div>
+                                    {isExpanded && (sig.topExamples?.length > 0 || sig.negativePatterns?.length > 0) && (
+                                        <div className="border-t border-[var(--glass-border)] p-3 space-y-3 bg-[var(--glass-surface)]/50">
+                                            {sig.topExamples?.slice(0, 1).map((ex: any, i: number) => (
+                                                <div key={i} className="bg-emerald-50 border border-emerald-100 rounded-lg p-2">
+                                                    <div className="text-[10px] font-bold text-emerald-700 mb-1">✅ Mẫu tốt</div>
+                                                    <div className="text-[10px] text-[var(--text-tertiary)]">Khách: {(ex.userMessage || '').slice(0, 80)}</div>
+                                                    <div className="text-[10px] text-emerald-700 mt-1">AI: {(ex.aiResponse || '').slice(0, 120)}</div>
+                                                </div>
+                                            ))}
+                                            {sig.negativePatterns?.slice(0, 1).map((p: any, i: number) => (
+                                                <div key={i} className="bg-rose-50 border border-rose-100 rounded-lg p-2">
+                                                    <div className="text-[10px] font-bold text-rose-700 mb-1">⚠️ Cần tránh</div>
+                                                    <div className="text-[10px] text-[var(--text-tertiary)]">Câu hỏi: {(p.userMessage || '').slice(0, 60)}</div>
+                                                    <div className="text-[10px] text-rose-700 mt-1">→ {(p.correction || '').slice(0, 100)}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Desktop table layout */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="min-w-full text-xs">
                             <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)]">
                                 <tr>
@@ -520,34 +574,13 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
                                     const isExpanded = expandedSignal === sig.intent;
                                     return (
                                         <React.Fragment key={sig.intent}>
-                                            <tr
-                                                className="hover:bg-[var(--glass-surface)] transition-colors cursor-pointer"
-                                                onClick={() => setExpandedSignal(isExpanded ? null : sig.intent)}
-                                            >
+                                            <tr className="hover:bg-[var(--glass-surface)] transition-colors cursor-pointer" onClick={() => setExpandedSignal(isExpanded ? null : sig.intent)}>
                                                 <td className="p-3 font-bold text-[var(--text-secondary)]">{INTENT_LABELS[sig.intent] || sig.intent}</td>
-                                                <td className="p-3 text-center">
-                                                    <span className="text-emerald-600 font-bold">{sig.positiveCount}</span>
-                                                    <span className="text-[var(--text-tertiary)] mx-1">/</span>
-                                                    <span className="text-rose-500 font-bold">{sig.negativeCount}</span>
-                                                </td>
-                                                <td className="p-3 text-center">
-                                                    <span className={`font-bold ${approvalColor(Math.round((sig.avgScore + 1) / 2 * 100))}`}>
-                                                        {typeof sig.avgScore === 'number' ? sig.avgScore.toFixed(2) : '—'}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 text-center">
-                                                    <span className={`px-2 py-0.5 rounded-full font-bold ${fewShot > 0 ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>
-                                                        {fewShot > 0 ? `${fewShot} mẫu` : '—'}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 text-center">
-                                                    <span className={`px-2 py-0.5 rounded-full font-bold ${negRules > 0 ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>
-                                                        {negRules > 0 ? `${negRules} quy tắc` : '—'}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 text-[var(--text-tertiary)] font-mono">
-                                                    {sig.lastComputed ? formatTime(sig.lastComputed) : '—'}
-                                                </td>
+                                                <td className="p-3 text-center"><span className="text-emerald-600 font-bold">{sig.positiveCount}</span><span className="text-[var(--text-tertiary)] mx-1">/</span><span className="text-rose-500 font-bold">{sig.negativeCount}</span></td>
+                                                <td className="p-3 text-center"><span className={`font-bold ${approvalColor(Math.round((sig.avgScore + 1) / 2 * 100))}`}>{typeof sig.avgScore === 'number' ? sig.avgScore.toFixed(2) : '—'}</span></td>
+                                                <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded-full font-bold ${fewShot > 0 ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>{fewShot > 0 ? `${fewShot} mẫu` : '—'}</span></td>
+                                                <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded-full font-bold ${negRules > 0 ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[var(--glass-surface)] text-[var(--text-tertiary)]'}`}>{negRules > 0 ? `${negRules} quy tắc` : '—'}</span></td>
+                                                <td className="p-3 text-[var(--text-tertiary)] font-mono">{sig.lastComputed ? formatTime(sig.lastComputed) : '—'}</td>
                                             </tr>
                                             {isExpanded && (sig.topExamples?.length > 0 || sig.negativePatterns?.length > 0) && (
                                                 <tr>
@@ -590,7 +623,7 @@ const RlhfTab = memo(({ stats, signals, trends, onRecompute, isRecomputing, form
 
             {/* Recent Corrections */}
             {(stats?.recentCorrections || []).length > 0 && (
-                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
+                <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-bold text-[var(--text-primary)] text-sm">Sửa lỗi gần đây từ người dùng</h3>
                         <button onClick={() => setShowCorrections(!showCorrections)} className="text-xs text-indigo-600 font-bold">
@@ -827,14 +860,14 @@ export const AiGovernance: React.FC = () => {
             )}
 
             {activeTab === 'SAFETY' && (
-                <div className="bg-[var(--bg-surface)] p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm animate-enter">
+                <div className="bg-[var(--bg-surface)] p-4 sm:p-6 rounded-[24px] border border-[var(--glass-border)] shadow-sm animate-enter">
                     <h3 className="font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                         {t('ai.tab_safety')}
                         <span className="bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] text-xs2 px-2 py-0.5 rounded-full">
                             {t('ai.events_count', { count: safetyLogs?.length || 0 })}
                         </span>
                     </h3>
-                    <div className="overflow-x-auto no-scrollbar">
+                    <div className="overflow-x-auto">
                         <table className="min-w-full text-xs text-left">
                             <thead className="bg-[var(--glass-surface)] text-[var(--text-tertiary)]">
                                 <tr>
