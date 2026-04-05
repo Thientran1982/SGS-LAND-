@@ -141,6 +141,9 @@ function stripPropertyTypePrefix(address: string): string {
     /^condotel\s+/i,
     /^officetel\s+/i,
     /^villa\s+/i,
+    // Strip "dự án" / "du an" prefix so project names match regex correctly
+    /^dự\s+án\s+/i,
+    /^du\s+an\s+/i,
   ];
   let result = address.trim();
   for (const re of prefixes) {
@@ -284,6 +287,27 @@ export function createValuationRoutes(
           aiConfidence = regional.confidence;
           marketTrend = `Ước tính khu vực ${regional.region}`;
           marketDataSource = 'REGIONAL_TABLE';
+        }
+      }
+
+      // ── Step 1b: Regional override guard ─────────────────────────────────
+      // Cross-check marketBasePrice against the hardcoded regional/project table.
+      // Known premium projects (Izumi, Aqua City, Phú Mỹ Hưng…) have reliable
+      // streetOverride values. If the AI/cache returned a suspiciously low price
+      // (< 55% of our known baseline), replace it with the regional value to avoid
+      // under-valuation caused by Gemini returning generic district prices.
+      {
+        const regionalRef = getRegionalBasePrice(address, resolvedPropertyType);
+        const threshold   = regionalRef.price * 0.55;
+        if (marketBasePrice < threshold) {
+          logger.warn(
+            `[Valuation] marketBasePrice ${(marketBasePrice/1_000_000).toFixed(0)}M < regional floor ` +
+            `${(threshold/1_000_000).toFixed(0)}M for "${address}" (${regionalRef.region}) — ` +
+            `overriding to ${(regionalRef.price/1_000_000).toFixed(0)}M`
+          );
+          marketBasePrice  = regionalRef.price;
+          aiConfidence     = Math.max(aiConfidence, regionalRef.confidence);
+          marketDataSource = 'REGIONAL_OVERRIDE';
         }
       }
 

@@ -1015,7 +1015,7 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     // ── Vùng ven / Tỉnh lân cận ──────────────────────────────────────────────
     [/aqua\s*city|aquacity|aqua\s*island/i, 'nhơn trạch'],
     [/swan\s*park/i, 'nhơn trạch'],
-    [/izumi\s*city/i, 'biên hòa'],
+    [/\bizumi\b/i, 'biên hòa'],
     [/waterpoint/i, 'bến lức'],
     [/la\s*mer|phu quoc\s*marina|premier\s*village/i, 'phú quốc'],
     [/novaworld\s*phan\s*thiet|novabeach|nova\s*phan\s*thiet/i, 'phan thiết'],
@@ -1050,7 +1050,7 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     streetOverride = 72_000_000;  // Aqua City Novaland nhà phố liên kề: 65-95M/m² Q1/2026
   if (/swan\s*park/i.test(enrichedAddr))
     streetOverride = 52_000_000;  // Swan Park Novaland Nhơn Trạch: 45-65M/m²
-  if (/izumi\s*city/i.test(enrichedAddr))
+  if (/\bizumi\b/i.test(enrichedAddr))
     streetOverride = 55_000_000;  // Izumi City Nam Long Biên Hòa: 45-65M/m²
   if (/waterpoint.*bến\s*lức|bến\s*lức.*waterpoint/i.test(enrichedAddr))
     streetOverride = 45_000_000;  // Waterpoint Nam Long Bến Lức: 35-55M/m²

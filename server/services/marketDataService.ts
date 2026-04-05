@@ -517,6 +517,23 @@ class MarketDataService {
         fetchedAt:      now.toISOString(),
         expiresAt:      new Date(now.getTime() + CACHE_TTL_MS).toISOString(),
       };
+
+      // ── Sanity check: AI price must be within ±70% of regional baseline ────
+      // Prevents cached bad values when AI hallucinates or returns generic
+      // district prices for premium project addresses (e.g. Izumi, Aqua City).
+      const regional = getRegionalBasePrice(location, fetchPropertyType);
+      const regionRef  = regional.price;
+      const priceLow   = regionRef * 0.30;
+      const priceHigh  = regionRef * 5.0;
+      const aiPrice    = entry.pricePerM2;
+      if (aiPrice < MIN_PRICE_VND || aiPrice < priceLow || aiPrice > priceHigh) {
+        logger.warn(`[MarketData] AI price ${(aiPrice/1_000_000).toFixed(0)}M implausible for "${location}" (regional=${(regionRef/1_000_000).toFixed(0)}M, range=${(priceLow/1_000_000).toFixed(0)}-${(priceHigh/1_000_000).toFixed(0)}M) — blending`);
+        entry.pricePerM2 = aiPrice > 0
+          ? Math.round(regionRef * 0.60 + aiPrice * 0.40)
+          : regionRef;
+        entry.confidence = Math.round(Math.min(entry.confidence, 65));
+        entry.source = 'BLENDED' as any;
+      }
     } catch (err: any) {
       const msg = String(err?.message || err);
       if (msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429')) {
