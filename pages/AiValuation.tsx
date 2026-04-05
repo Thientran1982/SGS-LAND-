@@ -80,7 +80,7 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
 };
 
 // --- GUEST QUOTA ---
-const GUEST_DAILY_LIMIT = 1;
+const GUEST_DAILY_LIMIT = 3;
 const GUEST_LS_KEY = 'sgs_guest_val';
 
 interface GuestValRecord { count: number; date: string }
@@ -590,16 +590,50 @@ export const AiValuation: React.FC = () => {
             // All users (guest + auth) go through the full multi-source engine:
             // Redis cache → internal DB comparables (auth only) → 7-coefficient AVM
             aiResult = await aiService.getAdvancedValuation(address, areaNum, roadNum, legal, propertyType, advancedParams);
-        } catch (_err) {
-            // Emergency client-side fallback (network completely down)
+        } catch (_err: any) {
+            // If this is a rate-limit (429) or quota error, show clear message and stop.
+            // Do NOT run the offline fallback — it would show wrong prices.
+            const errMsg: string = _err?.message || '';
+            const isRateLimit = errMsg.includes('hết lượt') || errMsg.includes('hết 3 lượt') || errMsg.includes('Too many') || errMsg.includes('rate limit');
+            if (intervalRef.current) clearInterval(intervalRef.current);
+            if (isRateLimit) {
+                setProgress(0);
+                setStep('DETAILS');
+                notify(errMsg || 'Bạn đã dùng hết lượt định giá miễn phí hôm nay. Đăng nhập để tiếp tục.', 'error');
+                return;
+            }
+
+            // Emergency client-side fallback (network completely down or server error)
             // Uses same AVM coefficient logic as server/valuationEngine.ts
             notify(t('ai.error_valuation'), 'error');
             const addr = address.toLowerCase();
+
+            // ── Premium project price overrides (match server/valuationEngine.ts) ──
+            let streetBase: number | null = null;
+            if (/aqua\s*city|aquacity/i.test(addr))          streetBase = 72_000_000;
+            else if (/swan\s*park/i.test(addr))              streetBase = 52_000_000;
+            else if (/\bizumi\b/i.test(addr))                streetBase = 55_000_000;
+            else if (/waterpoint/i.test(addr))               streetBase = 45_000_000;
+            else if (/novaworld/i.test(addr))                streetBase = 40_000_000;
+            else if (/vinhome.*central.*park|saigon.*pearl/i.test(addr)) streetBase = 140_000_000;
+            else if (/phú mỹ hưng|phu my hung/i.test(addr)) streetBase = 160_000_000;
+            else if (/thảo điền|thao dien/i.test(addr))     streetBase = 180_000_000;
+            else if (/vinhome.*golden.*river|ba.*son\b/i.test(addr)) streetBase = 250_000_000;
+
+            // ── Regional base prices ──
             const isQ1 = /quận 1\b|q\.?1\b/.test(addr);
             const isHCM = /hcm|hồ chí minh|sài gòn|saigon|bình thạnh|thủ đức/.test(addr) || /quận [0-9]/.test(addr);
             const isHanoi = /hà nội|hanoi|cầu giấy|hoàn kiếm|đống đa|hai bà trưng|tây hồ/.test(addr);
             const isDanang = /đà nẵng|da nang/.test(addr);
-            const marketBase = isQ1 ? 280_000_000 : isHCM ? 100_000_000 : isHanoi ? 110_000_000 : isDanang ? 75_000_000 : 25_000_000;
+            const isBienHoa = /biên hòa|bien hoa/i.test(addr);
+            const isNhonTrach = /nhơn trạch|nhon trach/i.test(addr);
+            const isDongNai = /đồng nai|dong nai/i.test(addr);
+            const isBinhDuong = /bình dương|binh duong/i.test(addr);
+            const isLongAn = /long an/i.test(addr);
+            const regionalBase = isQ1 ? 280_000_000 : isHCM ? 100_000_000 : isHanoi ? 110_000_000 : isDanang ? 75_000_000
+                : isBienHoa ? 42_000_000 : isNhonTrach ? 30_000_000 : isDongNai ? 35_000_000
+                : isBinhDuong ? 38_000_000 : isLongAn ? 28_000_000 : 25_000_000;
+            const marketBase = streetBase ?? regionalBase;
 
             // Kd: Road Width
             const Kd = roadNum >= 20 ? 1.30 : roadNum >= 12 ? 1.18 : roadNum >= 8 ? 1.10 :
