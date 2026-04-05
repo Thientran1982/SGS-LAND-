@@ -154,7 +154,7 @@ export const KnowledgeBase: React.FC = () => {
 
     return (
         <>
-        <div className="space-y-5 p-4 sm:p-6 pb-20 animate-enter relative max-w-6xl mx-auto">
+        <div className="w-full space-y-5 p-4 sm:p-6 pb-20 animate-enter relative max-w-6xl mx-auto">
 
             {/* ─── Header row: title + search + upload ─── */}
             <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
