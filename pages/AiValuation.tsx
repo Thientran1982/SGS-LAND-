@@ -427,6 +427,30 @@ export const AiValuation: React.FC = () => {
     // Ngang × Dài calculator — auto-computes area & syncs frontageWidth
     const [ngang, setNgang] = useState<string>('');
     const [dai, setDai] = useState<string>('');
+    // vi_tri_duong: road type select → maps to roadWidth number
+    const [roadTypeSelect, setRoadTypeSelect] = useState<string>('');
+    // nam_xay_dung: year built → derives buildingAge automatically
+    const [yearBuilt, setYearBuilt] = useState<string>('');
+    // inline validation
+    const [addressError, setAddressError] = useState<string>('');
+    const [areaError, setAreaError] = useState<string>('');
+
+    const CURRENT_YEAR = new Date().getFullYear();
+
+    const handleRoadTypeSelect = (id: string, width: number) => {
+        setRoadTypeSelect(id);
+        setRoadWidth(String(width));
+    };
+
+    const handleYearBuiltChange = (val: string) => {
+        setYearBuilt(val);
+        const y = parseInt(val);
+        if (!isNaN(y) && y >= 1900 && y <= CURRENT_YEAR) {
+            setBuildingAge(String(CURRENT_YEAR - y));
+        } else {
+            setBuildingAge('');
+        }
+    };
 
     const handleNgangChange = (val: string) => {
         setNgang(val);
@@ -447,7 +471,7 @@ export const AiValuation: React.FC = () => {
     const accuracy = (() => {
         let s = 75.12;
         if (area && parseFloat(area) > 0)         s += 5.22;
-        if (roadWidth && parseFloat(roadWidth) > 0) s += 4.33;
+        if (roadTypeSelect || (roadWidth && parseFloat(roadWidth) > 0)) s += 4.33;
         if (isApartmentOrProject && bedrooms !== null) s += 3.50;
         if (direction)                              s += 2.54;
         if (!isApartment && frontageWidth && parseFloat(frontageWidth) > 0) s += 3.34;
@@ -541,6 +565,15 @@ export const AiValuation: React.FC = () => {
         const roadNum = parseFloat(roadWidth) || 3;
 
         let aiResult: any;
+        // Road type label for AI context (e.g. "Hẻm xe hơi (≥4m)")
+        const roadTypeLabelMap: Record<string, string> = {
+            alley_moto: 'Hẻm xe máy (<4m)',
+            alley_car:  'Hẻm xe hơi (≥4m)',
+            minor:      'Mặt tiền đường nhỏ (4–8m)',
+            major:      'Mặt tiền đường lớn (>8m)',
+            boulevard:  'Đại lộ / Trục chính (≥20m)',
+        };
+        const roadTypeLabel = roadTypeSelect ? roadTypeLabelMap[roadTypeSelect] || '' : '';
         // Collect optional advanced fields
         const advancedParams = {
             ...(direction && { direction }),
@@ -550,6 +583,7 @@ export const AiValuation: React.FC = () => {
             ...(buildingAge && !isNaN(parseFloat(buildingAge)) && { buildingAge: parseFloat(buildingAge) }),
             ...(monthlyRent && !isNaN(parseFloat(monthlyRent)) && { monthlyRent: parseFloat(monthlyRent) }),
             ...(bedrooms !== null && isApartmentOrProject && { bedrooms }),
+            ...(roadTypeLabel && { roadTypeLabel }),
         };
         try {
             // All users (guest + auth) go through the full multi-source engine:
@@ -712,6 +746,10 @@ export const AiValuation: React.FC = () => {
         setBedrooms(null);
         setNgang('');
         setDai('');
+        setRoadTypeSelect('');
+        setYearBuilt('');
+        setAddressError('');
+        setAreaError('');
         setValuation(null);
         setValuationId(null);
         setFeedbackSent(false);
@@ -772,9 +810,13 @@ export const AiValuation: React.FC = () => {
                             Định Giá Bất Động Sản <br/>
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Chính Xác Tới 98%</span>
                         </h1>
-                        <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto">
+                        <p className="text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
                             Nhập địa chỉ — AI phân tích thị trường trực tiếp. Càng nhiều thông tin, độ chính xác càng cao.
                         </p>
+                        <div className="flex items-center justify-center gap-2 mb-8 text-xs text-slate-500 bg-slate-800/40 border border-slate-700/40 rounded-xl px-4 py-2 max-w-xl mx-auto">
+                            <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <span>Nhập đầy đủ: <b className="text-slate-400">số nhà + tên đường + phường/xã + quận/huyện + tỉnh/thành phố</b></span>
+                        </div>
 
                         <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-emerald-500/50 transition-all">
                             <div className="pl-3 md:pl-4 shrink-0 text-slate-400 flex items-center justify-center">{ICONS.SEARCH}</div>
@@ -803,6 +845,12 @@ export const AiValuation: React.FC = () => {
                             )}
                             <button 
                                 onClick={() => {
+                                    const trimmed = address.trim();
+                                    if (trimmed.length < 10) {
+                                        setAddressError('Vui lòng nhập địa chỉ đầy đủ (tối thiểu 10 ký tự, ghi rõ phường/quận/thành phố)');
+                                        return;
+                                    }
+                                    setAddressError('');
                                     const detected = detectPropertyTypeFromText(address);
                                     if (detected) { setPropertyType(detected); setAutoDetectedType(detected); }
                                     setStep('DETAILS');
@@ -813,6 +861,13 @@ export const AiValuation: React.FC = () => {
                                 Định Giá →
                             </button>
                         </div>
+
+                        {addressError && (
+                            <div className="flex items-center gap-2 mt-2 text-xs text-rose-400 max-w-2xl mx-auto px-1">
+                                <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                                {addressError}
+                            </div>
+                        )}
 
                         {/* Quick-search examples */}
                         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -948,7 +1003,7 @@ export const AiValuation: React.FC = () => {
                                 </div>
                                 <div className="mt-2 text-xs text-slate-500">
                                     {accuracy < 98
-                                        ? `Điền thêm ${accuracy < 80 ? (isApartmentOrProject ? 'diện tích, lộ giới, số phòng ngủ' : 'diện tích, lộ giới, ngang × dài') : accuracy < 88 ? (isApartmentOrProject && bedrooms === null ? 'số phòng ngủ, hướng nhà' : 'hướng nhà, mặt tiền') : accuracy < 95 ? 'tuổi nhà, nội thất' : 'thuê dự kiến'} để thu hẹp sai số`
+                                        ? `Điền thêm ${accuracy < 80 ? (isApartmentOrProject ? 'diện tích, vị trí đường, số phòng ngủ' : 'diện tích, vị trí đường, ngang × dài') : accuracy < 88 ? (isApartmentOrProject && bedrooms === null ? 'số phòng ngủ, hướng nhà' : 'hướng nhà, mặt tiền') : accuracy < 95 ? 'năm xây dựng, nội thất' : 'thuê dự kiến'} để thu hẹp sai số`
                                         : '✓ Dữ liệu đầy đủ — AI định giá với sai số ±5%!'}
                                 </div>
                             </div>
@@ -1013,14 +1068,27 @@ export const AiValuation: React.FC = () => {
                                                     <input 
                                                         type="number" 
                                                         value={area}
-                                                        onChange={e => setArea(e.target.value)}
-                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
+                                                        onChange={e => {
+                                                            setArea(e.target.value);
+                                                            const v = parseFloat(e.target.value);
+                                                            if (isNaN(v) || v <= 0) setAreaError('');
+                                                            else if (v < 15) setAreaError('Diện tích tối thiểu 15m²');
+                                                            else if (v > 50000) setAreaError('Diện tích tối đa 50,000m²');
+                                                            else setAreaError('');
+                                                        }}
+                                                        className={`w-full bg-slate-900 border rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all ${areaError ? 'border-rose-500/70' : 'border-slate-700'}`}
                                                         placeholder={areaPlaceholder}
                                                         min="1"
                                                         autoFocus
                                                     />
                                                     <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-[var(--text-tertiary)] text-sm">{ICONS.HOME}</div>
                                                 </div>
+                                                {areaError && (
+                                                    <div className="text-rose-400 text-xs mt-1 flex items-center gap-1">
+                                                        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                                                        {areaError}
+                                                    </div>
+                                                )}
                                                 <div className="flex gap-1.5 mt-2 flex-wrap">
                                                     {areaPresets.map(v => (
                                                         <button key={v} type="button" onClick={() => setArea(String(v))}
@@ -1032,74 +1100,57 @@ export const AiValuation: React.FC = () => {
                                             </div>
                                         );
                                     })()}
-                                    {/* ── Lộ Giới với label & placeholder thông minh theo loại ── */}
+                                    {/* ── Vị Trí Đường (vi_tri_duong) ── */}
                                     {(() => {
-                                        let roadLabel = 'Lộ Giới (m)';
-                                        let roadPlaceholder = '5';
-                                        let roadHint = '';
-                                        let roadPresets: { label: string; val: number }[] = [
-                                            { label: 'Hẻm 3m', val: 3 },
-                                            { label: 'Hẻm 4m', val: 4 },
-                                            { label: 'Hẻm 6m', val: 6 },
-                                            { label: '12m', val: 12 },
-                                        ];
-                                        if (isApartment) {
-                                            roadLabel = 'Đường vào Tòa Nhà (m)';
-                                            roadPlaceholder = '15';
-                                            roadHint = 'vd: đường 20m';
-                                            roadPresets = [
-                                                { label: '8m', val: 8 },
-                                                { label: '12m', val: 12 },
-                                                { label: '20m', val: 20 },
-                                                { label: '30m', val: 30 },
-                                            ];
-                                        } else if (propertyType === 'warehouse') {
-                                            roadLabel = 'Lộ Giới trước Kho (m)';
-                                            roadPlaceholder = '10';
-                                            roadPresets = [
-                                                { label: '8m', val: 8 },
-                                                { label: '12m', val: 12 },
-                                                { label: '20m', val: 20 },
-                                                { label: '30m', val: 30 },
-                                            ];
-                                        } else if (propertyType.startsWith('land_')) {
-                                            roadLabel = 'Lộ Giới đường trước (m)';
-                                            roadPlaceholder = '6';
-                                        } else if (propertyType === 'office') {
-                                            roadLabel = 'Lộ Giới đường (m)';
-                                            roadPlaceholder = '20';
-                                            roadPresets = [
-                                                { label: '12m', val: 12 },
-                                                { label: '20m', val: 20 },
-                                                { label: '30m', val: 30 },
-                                                { label: '40m', val: 40 },
-                                            ];
-                                        }
+                                        const isLargeRoadType = isApartment || propertyType === 'office' || propertyType === 'warehouse';
+                                        const roadOptions = isLargeRoadType
+                                            ? [
+                                                { id: 'internal_small', label: 'Đường nội khu nhỏ', hint: '≤6m',   width: 5  },
+                                                { id: 'internal_large', label: 'Đường nội khu lớn', hint: '8–12m',  width: 10 },
+                                                { id: 'major',          label: 'Đường phố lớn',     hint: '≥12m',  width: 15 },
+                                                { id: 'boulevard',      label: 'Đại lộ / Trục chính',hint: '≥20m', width: 25 },
+                                              ]
+                                            : [
+                                                { id: 'alley_moto', label: 'Hẻm xe máy',           hint: '<4m',   width: 2.5 },
+                                                { id: 'alley_car',  label: 'Hẻm xe hơi',           hint: '≥4m',  width: 4   },
+                                                { id: 'minor',      label: 'Mặt tiền đường nhỏ',   hint: '4–8m',  width: 6   },
+                                                { id: 'major',      label: 'Mặt tiền đường lớn',   hint: '>8m',   width: 10  },
+                                              ];
+                                        const roadLabel = isLargeRoadType
+                                            ? (propertyType === 'warehouse' ? 'Đường trước Kho' : 'Đường vào Tòa Nhà')
+                                            : 'Vị Trí Đường';
                                         return (
                                             <div>
                                                 <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
                                                     {roadLabel} <span className="text-rose-400 font-black">*</span>
-                                                    {roadHint && <span className="text-slate-600 normal-case font-normal ml-1">({roadHint})</span>}
+                                                    <span className="text-slate-600 normal-case font-normal ml-1">— ảnh hưởng đến giá</span>
                                                 </label>
-                                                <div className="relative">
-                                                    <input 
-                                                        type="number" 
-                                                        value={roadWidth}
-                                                        onChange={e => setRoadWidth(e.target.value)}
-                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
-                                                        placeholder={roadPlaceholder}
-                                                        min="1"
-                                                    />
-                                                    <div className="absolute right-4 inset-y-0 flex items-center pointer-events-none text-[var(--text-tertiary)] text-sm">{ICONS.ROAD}</div>
-                                                </div>
-                                                <div className="flex gap-1.5 mt-2 flex-wrap">
-                                                    {roadPresets.map(p => (
-                                                        <button key={p.val} type="button" onClick={() => setRoadWidth(String(p.val))}
-                                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-all ${roadWidth === String(p.val) ? 'bg-sky-500/20 border-sky-500/60 text-sky-400' : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500 hover:text-slate-300'}`}>
-                                                            {p.label}
+                                                <div className="grid grid-cols-2 gap-1.5">
+                                                    {roadOptions.map(opt => (
+                                                        <button
+                                                            key={opt.id}
+                                                            type="button"
+                                                            onClick={() => handleRoadTypeSelect(opt.id, opt.width)}
+                                                            className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                                                                roadTypeSelect === opt.id
+                                                                    ? 'bg-sky-500/20 border-sky-500 text-sky-300'
+                                                                    : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-sky-500/50 hover:text-slate-200'
+                                                            }`}
+                                                        >
+                                                            <span className="truncate pr-1">{opt.label}</span>
+                                                            <span className={`text-[10px] shrink-0 font-bold ${roadTypeSelect === opt.id ? 'text-sky-400' : 'text-slate-600'}`}>{opt.hint}</span>
                                                         </button>
                                                     ))}
                                                 </div>
+                                                {roadTypeSelect ? (
+                                                    <div className="flex items-center gap-1.5 mt-2 text-xs text-sky-400/80">
+                                                        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                        Lộ giới tương đương {roadWidth}m
+                                                        <button type="button" onClick={() => { const v = prompt('Nhập lộ giới chính xác (m):', roadWidth); if (v && !isNaN(parseFloat(v))) setRoadWidth(v); }} className="ml-1 text-sky-500 underline underline-offset-2 hover:text-sky-400">Chỉnh lại</button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-xs text-slate-600 mt-1.5 italic">Chọn loại đường để AI tính hệ số vị trí</div>
+                                                )}
                                             </div>
                                         );
                                     })()}
@@ -1333,13 +1384,30 @@ export const AiValuation: React.FC = () => {
                                             {!isLand && (
                                                 <div>
                                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">
-                                                        {propertyType === 'warehouse' ? 'Tuổi Xưởng (năm)' : 'Tuổi Nhà (năm)'}
-                                                        <span className="text-slate-600 normal-case font-normal"> 0 = mới</span>
+                                                        {propertyType === 'warehouse' ? 'Năm Xây Xưởng' : 'Năm Xây Dựng'}
+                                                        <span className="text-slate-600 normal-case font-normal"> (không bắt buộc)</span>
                                                     </label>
-                                                    <input type="number" value={buildingAge}
-                                                        onChange={e => setBuildingAge(e.target.value)}
-                                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all"
-                                                        placeholder="Tự động" min="0" />
+                                                    <input type="number" value={yearBuilt}
+                                                        onChange={e => handleYearBuiltChange(e.target.value)}
+                                                        className={`w-full bg-slate-900 border rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500 outline-none transition-all ${
+                                                            yearBuilt && (parseInt(yearBuilt) < 1975 || parseInt(yearBuilt) > CURRENT_YEAR)
+                                                                ? 'border-rose-500/70'
+                                                                : 'border-slate-700'
+                                                        }`}
+                                                        placeholder={`VD: ${CURRENT_YEAR - 10}`}
+                                                        min="1975"
+                                                        max={CURRENT_YEAR}
+                                                    />
+                                                    {yearBuilt && parseInt(yearBuilt) >= 1975 && parseInt(yearBuilt) <= CURRENT_YEAR && (
+                                                        <div className="text-slate-500 text-xs mt-1.5 italic">
+                                                            Tuổi công trình: {CURRENT_YEAR - parseInt(yearBuilt)} năm
+                                                        </div>
+                                                    )}
+                                                    {yearBuilt && (parseInt(yearBuilt) < 1975 || parseInt(yearBuilt) > CURRENT_YEAR) && (
+                                                        <div className="text-rose-400 text-xs mt-1.5">
+                                                            Phải từ 1975 đến {CURRENT_YEAR}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -1407,15 +1475,18 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 )}
 
-                                {!roadWidth && area && parseFloat(area) > 0 && (
+                                {!roadTypeSelect && area && parseFloat(area) > 0 && (
                                     <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-2.5 text-xs text-yellow-400">
                                         <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
-                                        <span>Điền <b>Lộ giới</b> để AI tính chính xác hơn (hẻm 4m / đường 12m…). Nếu bỏ trống, hệ thống dùng 3m mặc định.</span>
+                                        <span>Chọn <b>Vị trí đường</b> để AI tính hệ số vị trí chính xác hơn. Nếu bỏ qua, hệ thống dùng hẻm 3m mặc định.</span>
                                     </div>
                                 )}
                                 <button 
                                     onClick={runCalculation}
-                                    disabled={!area || parseFloat(area) <= 0}
+                                    disabled={
+                                        !area || parseFloat(area) <= 0 || !!areaError ||
+                                        !!(yearBuilt && (parseInt(yearBuilt) < 1975 || parseInt(yearBuilt) > CURRENT_YEAR))
+                                    }
                                     className="w-full bg-emerald-500 hover:bg-emerald-400 text-[var(--text-primary)] font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-lg flex items-center justify-center gap-3"
                                 >
                                     <span>Định Giá Ngay</span>
@@ -1548,6 +1619,40 @@ export const AiValuation: React.FC = () => {
                                 </div>
                             </div>
 
+
+                            {/* ── INPUT SUMMARY CHIPS ── */}
+                            {(() => {
+                                const legalChip = legal === 'PINK_BOOK' ? '📄 Sổ Hồng' : legal === 'CONTRACT' ? '📋 HĐ Mua Bán' : '📝 Vi Bằng';
+                                const dirLabels: Record<string,string> = { N:'Bắc', S:'Nam', E:'Đông', W:'Tây', NE:'Đông Bắc', SE:'Đông Nam', SW:'Tây Nam', NW:'Tây Bắc' };
+                                const roadTypeLabelMap: Record<string,string> = { alley_moto:'Hẻm xe máy', alley_car:'Hẻm xe hơi', minor:'Đường nhỏ', major:'Đường lớn', boulevard:'Đại lộ' };
+                                const chips: string[] = [];
+                                chips.push(`🏠 ${PROPERTY_TYPE_LABELS[propertyType] || 'Nhà phố'}`);
+                                chips.push(`📐 ${parseFloat(area) || 0}m²`);
+                                chips.push(legalChip);
+                                if (roadTypeSelect) chips.push(`🛣 ${roadTypeLabelMap[roadTypeSelect] || roadTypeSelect}`);
+                                else if (roadWidth) chips.push(`🛣 Lộ giới ${roadWidth}m`);
+                                if (yearBuilt && parseInt(yearBuilt) >= 1975) chips.push(`🏗 Xây ${yearBuilt} (${CURRENT_YEAR - parseInt(yearBuilt)} tuổi)`);
+                                else if (buildingAge && parseFloat(buildingAge) > 0) chips.push(`🏗 ${parseFloat(buildingAge)} tuổi`);
+                                if (direction) chips.push(`🧭 Hướng ${dirLabels[direction] || direction}`);
+                                if (frontageWidth && parseFloat(frontageWidth) > 0) chips.push(`📏 MT ${frontageWidth}m`);
+                                if (bedrooms !== null && isApartmentOrProject) chips.push(`🛏 ${bedrooms} phòng ngủ`);
+                                if (floorLevel && parseFloat(floorLevel) > 0) chips.push(`🏢 Tầng ${floorLevel}`);
+                                return (
+                                    <div className="flex flex-wrap gap-1.5 mb-6">
+                                        {chips.map((c, i) => (
+                                            <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-slate-900/70 border border-slate-700 text-slate-300 font-medium">{c}</span>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
+
+                            {/* ── FORMULA DISPLAY ── */}
+                            {valuation.formula && (
+                                <div className="mb-6 bg-slate-900/50 rounded-xl border border-slate-700/40 px-4 py-2.5 flex items-center gap-2 overflow-x-auto">
+                                    <svg className="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                    <span className="text-xs text-slate-400 font-mono whitespace-nowrap">{valuation.formula}</span>
+                                </div>
+                            )}
 
                             {/* ── FACTORS BREAKDOWN (XAI) ── */}
                             {valuation.factors.length > 0 && (() => {

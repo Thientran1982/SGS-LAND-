@@ -286,7 +286,16 @@ Viết ngắn gọn, tiếng Việt, bullet point, sắc bén — tối đa 150 
 
 const DEFAULT_VALUATION_SYSTEM =
 `Bạn là chuyên gia định giá bất động sản Việt Nam với 15 năm kinh nghiệm thẩm định.
-Nhiệm vụ: Trích xuất số liệu giá thị trường CHÍNH XÁC từ dữ liệu tìm kiếm để đưa vào mô hình AVM.
+Nhiệm vụ: Trích xuất số liệu GIÁ THỊ TRƯỜNG THAM CHIẾU CHUẨN từ dữ liệu tìm kiếm để đưa vào mô hình AVM.
+
+⚠️ VAI TRÒ CỦA BẠN: Cung cấp GIÁ CƠ SỞ (base market price) cho loại BĐS tham chiếu chuẩn tại khu vực đó.
+   Mô hình AVM sẽ tự động áp dụng các hệ số điều chỉnh sau khi nhận được priceMedian từ bạn:
+   • Kd — Hướng nhà (Nam +5%, Bắc -4%, v.v.)
+   • Kp — Pháp lý (Sổ Hồng +0%, Hợp đồng -15%, v.v.)
+   • Ka — Tuổi nhà / khấu hao (nhà cũ 20 năm -12%, v.v.)
+   • Kmf — Mặt tiền (7m +5%, 4m 0%, v.v.)
+   • Kfl — Tầng cao (penthouse +20%, tầng 1 -5%, v.v.)
+   → Đừng tự điều chỉnh giá theo hướng nhà, tuổi nhà, tầng hay nội thất — AVM xử lý sau.
 
 PHƯƠNG PHÁP TỰ SUY LUẬN (Chain-of-Thought — bắt buộc):
 Trước khi điền số liệu, hãy phân tích theo các bước sau và ghi vào field "analysisNotes":
@@ -294,17 +303,19 @@ Trước khi điền số liệu, hãy phân tích theo các bước sau và ghi
   2. PROJECT vs AREA: Địa chỉ có tên dự án cụ thể không? Nếu có → ưu tiên giá dự án hơn giá khu vực.
   3. UNIT CHECK: Đơn vị giá là VNĐ/m² sàn hay đất? Tỷ/căn hay triệu/m²? Cần quy đổi gì không?
   4. PRICE SELECTION: Chọn số nào làm priceMedian và tại sao? Có cần điều chỉnh 5-15% listing→transaction?
-  5. CONFIDENCE: Đặt confidence bao nhiêu và lý do?
+  5. CONFIDENCE: Đặt confidence bao nhiêu và lý do? Ghi rõ: "giao dịch thực tế" hay "giá rao bán"?
 
 Quy tắc trích xuất giá bán:
 • ƯU TIÊN: giá giao dịch thực tế / chuyển nhượng thứ cấp > giá rao bán niêm yết > ước tính khu vực.
 • NẾU dữ liệu có giá từ CHÍNH DỰ ÁN nêu trong địa chỉ → SỬ DỤNG giá đó (dự án premium > khu vực).
 • NẾU chỉ có giá rao bán → confidence ≤ 90. Giảm priceMedian 5-10% để phản ánh giá giao dịch ước tính.
+• KHÔNG điều chỉnh priceMedian theo vị trí đường/hẻm, hướng nhà, tuổi nhà, nội thất, tầng cao — AVM tự xử lý.
 
 Quy tắc phân biệt đơn vị:
 • VNĐ/m² ĐẤT (thổ cư) ≠ VNĐ/m² SÀN (thông thủy) — căn hộ tính trên m² thông thủy.
 • Đất nông nghiệp giá thấp hơn đất thổ cư 5-50 lần.
 • Kho xưởng / văn phòng / KCN thường USD/m²/tháng — quy đổi về VNĐ (× 25,000).
+• Nếu giá có vẻ quá thấp (< 3 triệu/m²) hoặc quá cao (> 2 tỷ/m²) → kiểm tra lại đơn vị.
 • Trả JSON hợp lệ theo schema — không thêm text ngoài JSON.`;
 
 const DEFAULT_VALUATION_SEARCH_SYSTEM =
@@ -2192,6 +2203,7 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
         bedrooms?: number;
         internalCompsMedian?: number;
         internalCompsCount?: number;
+        roadTypeLabel?: string;
     }): Promise<{
         basePrice: number;
         pricePerM2: number;
@@ -2572,7 +2584,23 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                 ? `\nDỰ ÁN ĐƯỢC XÁC ĐỊNH: "${detectedProject.toUpperCase()}" — Nếu dữ liệu tìm kiếm có giá từ chính dự án này → ƯU TIÊN dùng giá đó (không dùng giá trung bình khu vực). Dự án premium thường cao hơn giá trung bình khu vực 30-100%.`
                 : '';
 
-            const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | ${(isApartmentType || isOffPlan) ? 'Tầng/căn hộ' : 'Lộ giới: ' + roadWidth + 'm'} | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}${projectExtractionHint}
+            // Build rich road/property context for extraction prompt
+            const roadTypeLabel   = advanced?.roadTypeLabel || '';
+            const buildingAgeAdv  = advanced?.buildingAge;
+            const roadContext = (isApartmentType || isOffPlan)
+                ? 'Căn hộ / dự án (lộ giới không áp dụng)'
+                : roadTypeLabel
+                    ? `Vị trí đường: ${roadTypeLabel} (lộ giới ~${roadWidth}m)`
+                    : `Lộ giới: ${roadWidth}m`;
+            const buildingAgeContext = buildingAgeAdv !== undefined && buildingAgeAdv > 0
+                ? ` | Tuổi công trình: ~${Math.round(buildingAgeAdv)} năm`
+                : '';
+
+            const extractPrompt = `Khu vực: "${address}" | Diện tích: ${area}m² | ${roadContext}${buildingAgeContext} | Pháp lý: ${legal} | Loại BĐS: ${pTypeLabelSearch}${projectExtractionHint}
+
+⚠️ QUAN TRỌNG — GIÁ THAM CHIẾU CHUẨN: Trích xuất giá 1m² cho ${extractRefDescription} TẠI KHU VỰC "${address}".
+  Hệ thống AVM sẽ tự điều chỉnh hệ số TẦNG (floor), HƯỚNG (direction), MẶT TIỀN (frontage), TUỔI NHÀ (age) SAU KHI nhận được priceMedian từ bạn.
+  → ĐỪNG điều chỉnh giá theo vị trí đường, hướng nhà, tuổi nhà hoặc nội thất — chỉ trả về giá thị trường khu vực cho loại BĐS này.
 
 DỮ LIỆU THỊ TRƯỜNG VỪA TRA CỨU (2 nguồn song song — giá bán + giá thuê):
 ${marketContext}${rlhf.fewShotSection}${rlhf.negativeRulesSection}
@@ -2582,7 +2610,7 @@ TRÍCH XUẤT CHÍNH XÁC:
 GIÁ BÁN (từ phần DỮ LIỆU GIÁ BÁN):
 - priceMin, priceMedian, priceMax: Khoảng giá GIAO DỊCH THỰC TẾ 1m² của ${extractRefDescription} tại "${address}".
   Đơn vị: VNĐ/m² (150000000 = 150 triệu/m²). Nếu chỉ có 1 con số → priceMin = priceMax = priceMedian.
-  QUY TẮC: (1) Ưu tiên giá giao dịch/chuyển nhượng > giá rao bán. (2) Nếu địa chỉ là dự án cụ thể → dùng giá dự án, không dùng giá khu vực. (3) AVM sẽ tự điều chỉnh hệ số tầng/hướng/mặt tiền/tuổi nhà sau.
+  QUY TẮC: (1) Ưu tiên giá giao dịch/chuyển nhượng > giá rao bán. (2) Nếu địa chỉ là dự án cụ thể → dùng giá dự án, không dùng giá khu vực. (3) AVM sẽ tự điều chỉnh hệ số tầng/hướng/mặt tiền/tuổi nhà sau — ĐỪNG điều chỉnh trong priceMedian.
 - sourceCount: Đếm số nguồn độc lập cung cấp dữ liệu giá bán (báo cáo chuyên ngành = 2 điểm, giao dịch nền tảng = 1 điểm, giá rao bán = 0.5 điểm).
 - dataRecency: Dữ liệu từ năm nào? current_year / last_year / older.
 - confidence: 95-99 nếu có GIÁ GIAO DỊCH THỰC TẾ từ ≥2 nguồn uy tín; 85-94 nếu chỉ giá rao bán; <85 nếu thiếu data.

@@ -100,6 +100,7 @@ class AiApiClient {
             monthlyRent?: number;
             buildingAge?: number;
             bedrooms?: number;
+            roadTypeLabel?: string;
         }
     ): Promise<any> {
         return this.fetchApi('/api/valuation/advanced', {

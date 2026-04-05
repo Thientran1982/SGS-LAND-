@@ -1,0 +1,62 @@
+## PHẦN A: SỬA FORM ĐỊNH GIÁ
+
+Tìm file component chứa form /ai-valuation và thực hiện:
+
+### A1. THÊM CÁC TRƯỜNG CÒN THIẾU
+Thêm các field sau vào form (theo thứ tự này):
+
+1. huong_nha (select, bắt buộc)
+   - Label: "Hướng cửa chính"
+   - Options: Bắc | Đông Bắc | Đông | Đông Nam | Nam | Tây Nam | Tây | Tây Bắc
+   - Helper: "Ảnh hưởng 10-20% giá trị BĐS"
+
+2. vi_tri_duong (select, bắt buộc)
+   - Label: "Vị trí đường"
+   - Options: Mặt tiền đường lớn (>8m) | Mặt tiền đường nhỏ (4-8m) | Hẻm xe hơi (≥4m) | Hẻm xe máy (<4m)
+
+3. chieu_rong_mat_tien (number, bắt buộc nếu mặt tiền)
+   - Label: "Chiều rộng mặt tiền (m)"
+   - Min: 2, Max: 50, step: 0.5
+   - Chỉ hiện khi vi_tri_duong là "Mặt tiền"
+
+4. tinh_trang_noi_that (select, bắt buộc)
+   - Label: "Tình trạng nội thất"
+   - Options: Không có (thô) | Cơ bản | Đầy đủ | Cao cấp
+
+5. nam_xay_dung (number, tùy chọn)
+   - Label: "Năm xây dựng"
+   - Min: 1975, Max: 2025
+   - Helper: "Để trống nếu không biết"
+
+6. tinh_trang_phap_ly (select, bắt buộc - nếu chưa có)
+   - Label: "Tình trạng pháp lý"
+   - Options: Sổ đỏ/hồng đầy đủ | Đang làm sổ | Giấy tay | Hợp đồng mua bán
+
+### A2. VALIDATION - QUAN TRỌNG
+Thêm validation trước khi submit. Dùng thư viện đã có (zod/yup/react-hook-form).
+Nếu chưa có, cài: npm install react-hook-form zod @hookform/resolvers
+
+Quy tắc validate bắt buộc:
+- dia_chi: không rỗng, tối thiểu 10 ký tự, phải chứa số nhà
+- dien_tich: số dương, min 15, max 50000
+- so_tang: số nguyên dương, min 1, max 100
+- nam_xay_dung: nếu có, phải từ 1975 đến năm hiện tại
+- gia_tham_khao: nếu có, min 100 triệu, max 500 tỷ
+
+Hiển thị lỗi ngay dưới mỗi field, không chờ submit.
+Disable nút "Định giá" nếu form chưa hợp lệ.
+
+### A3. LOADING STATE
+Khi đang gọi AI (isLoading = true):
+- Disable toàn bộ form
+- Hiển thị progress steps:
+  "Đang phân tích vị trí..." → "Tìm BĐS tương đồng..." → 
+  "Tính toán định giá..." → "Hoàn thành"
+- Mỗi step hiện sau 2 giây
+- Nút submit đổi thành spinner + "Đang phân tích..."
+
+### A4. AUTOCOMPLETE ĐỊA CHỈ
+Ưu tiên dùng thư viện đã có trong project.
+Nếu không có → thêm note TODO: "Tích hợp Goong Maps API"
+và thêm helper text: "Nhập đầy đủ: số nhà, tên đường, phường, quận, thành phố"
+Validate format: phải có ít nhất phường/quận + thành phố.

@@ -186,8 +186,10 @@ export function createValuationRoutes(
         frontageWidth,
         furnishing,
         buildingAge,
+        yearBuilt,
         bedrooms,
         monthlyRent: monthlyRentInput,
+        roadTypeLabel,
         // Override flags
         skipCache = false,
         skipInternalComps = false,
@@ -209,6 +211,18 @@ export function createValuationRoutes(
         return res.status(400).json({ error: 'legal must be PINK_BOOK, CONTRACT, or WAITING' });
       }
 
+      // Normalize buildingAge: prefer explicit buildingAge; fall back to computing from yearBuilt
+      const CURRENT_YEAR_SERVER = new Date().getFullYear();
+      let resolvedBuildingAge: number | undefined;
+      if (buildingAge !== undefined && !isNaN(Number(buildingAge)) && Number(buildingAge) >= 0) {
+        resolvedBuildingAge = Number(buildingAge);
+      } else if (yearBuilt !== undefined && !isNaN(Number(yearBuilt))) {
+        const yb = Number(yearBuilt);
+        if (yb >= 1900 && yb <= CURRENT_YEAR_SERVER) {
+          resolvedBuildingAge = CURRENT_YEAR_SERVER - yb;
+        }
+      }
+
       // ── Step 1: Get market base price (AI via cache) ──────────────────────
       let marketBasePrice: number;
       let aiConfidence: number;
@@ -218,6 +232,8 @@ export function createValuationRoutes(
       let marketDataSource: string;
 
       resolvedPropertyType = (propertyType || 'townhouse_center') as PropertyType;
+
+      logger.info(`[Valuation] Request: "${address}" | ${areaNum}m² | ${resolvedPropertyType} | road=${roadWidthNum}m${roadTypeLabel ? ' (' + roadTypeLabel + ')' : ''} | legal=${legalValue}${resolvedBuildingAge !== undefined ? ' | age=' + resolvedBuildingAge + 'yr' : ''}${direction ? ' | dir=' + direction : ''}${frontageWidth ? ' | mtien=' + frontageWidth + 'm' : ''}${bedrooms !== undefined ? ' | ' + bedrooms + 'PN' : ''}`);
 
       // Strip property-type prefix keywords (e.g. "căn hộ", "nhà phố") from the address
       // so the cache key is location-only, preventing the AI from returning type-specific
@@ -273,7 +289,15 @@ export function createValuationRoutes(
         try {
           const { aiService } = await import('../ai');
           const aiResult = await aiService.getRealtimeValuation(
-            address, areaNum, roadWidthNum, legal, propertyType
+            address, areaNum, roadWidthNum, legal, propertyType,
+            undefined,
+            {
+              buildingAge: resolvedBuildingAge,
+              roadTypeLabel: roadTypeLabel || undefined,
+              direction: direction || undefined,
+              floorLevel: floorLevel !== undefined ? Number(floorLevel) : undefined,
+              bedrooms: bedrooms !== undefined ? Number(bedrooms) : undefined,
+            }
           );
           marketBasePrice = aiResult.basePrice;
           aiConfidence = aiResult.confidence;
@@ -363,7 +387,7 @@ export function createValuationRoutes(
         direction: direction || undefined,
         frontageWidth: frontageWidth !== undefined ? Number(frontageWidth) : undefined,
         furnishing: furnishing || undefined,
-        buildingAge: buildingAge !== undefined ? Number(buildingAge) : undefined,
+        buildingAge: resolvedBuildingAge,
         bedrooms: bedrooms !== undefined ? Number(bedrooms) : undefined,
         // Multi-source blending — internal comps only (cache not double-counted)
         internalCompsMedian,
@@ -431,6 +455,18 @@ export function createValuationRoutes(
           confidenceLabel: avmResult.confidence >= 85 ? 'Rất cao' : avmResult.confidence >= 70 ? 'Cao' : avmResult.confidence >= 55 ? 'Trung bình' : 'Thấp',
           activeCoefficients: Object.keys(avmResult.coefficients).length,
           rlhfApplied: rlhfFactor !== 1.0,
+        },
+        // Echo back key inputs for display in result UI
+        inputEcho: {
+          area: areaNum,
+          roadWidth: roadWidthNum,
+          roadTypeLabel: roadTypeLabel || undefined,
+          legal: legalValue,
+          propertyType: resolvedPropertyType,
+          buildingAge: resolvedBuildingAge,
+          direction: direction || undefined,
+          frontageWidth: frontageWidth !== undefined ? Number(frontageWidth) : undefined,
+          bedrooms: bedrooms !== undefined ? Number(bedrooms) : undefined,
         },
       });
     } catch (error: any) {
