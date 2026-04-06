@@ -166,6 +166,138 @@ export class LeadRepository extends BaseRepository {
     });
   }
 
+  async findLeadsCursor(
+    tenantId: string,
+    params: {
+      pageSize: number;
+      cursor?: string;
+      filters?: Record<string, any>;
+      userId?: string;
+      userRole?: string;
+    }
+  ): Promise<{
+    data: any[];
+    nextCursor: string | null;
+    hasNext: boolean;
+    total: number;
+    stats: { total: number; newCount: number; wonCount: number; lostCount: number; avgScore: number; winRate: number };
+  }> {
+    return this.withTenant(tenantId, async (client) => {
+      const baseConditions: string[] = [];
+      const baseValues: any[] = [];
+      let paramIndex = 1;
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(params.userRole || '') && params.userId) {
+        baseConditions.push(`l.assigned_to = $${paramIndex++}`);
+        baseValues.push(params.userId);
+      }
+
+      const f = params.filters || {};
+      if (f.stage)                { baseConditions.push(`l.stage = $${paramIndex++}`);                                                                                  baseValues.push(f.stage); }
+      if (f.stage_in?.length)     { const ph = f.stage_in.map((_: any, i: number) => `$${paramIndex + i}`).join(', '); baseConditions.push(`l.stage IN (${ph})`);       baseValues.push(...f.stage_in); paramIndex += f.stage_in.length; }
+      if (f.source)               { baseConditions.push(`l.source = $${paramIndex++}`);                                                                                 baseValues.push(f.source); }
+      if (f.search)               { baseConditions.push(`(l.name ILIKE $${paramIndex} OR l.phone ILIKE $${paramIndex} OR l.email ILIKE $${paramIndex})`);               baseValues.push(`%${f.search}%`); paramIndex++; }
+      if (f.slaBreached !== undefined) { baseConditions.push(`l.sla_breached = $${paramIndex++}`);                                                                      baseValues.push(f.slaBreached); }
+
+      const statsWhere = baseConditions.length > 0 ? `WHERE ${baseConditions.join(' AND ')}` : '';
+
+      let cursorTs: string | null = null;
+      let cursorId: string | null = null;
+      if (params.cursor) {
+        try {
+          const decoded = JSON.parse(Buffer.from(params.cursor, 'base64').toString('utf8')) as { ts: string; id: string };
+          cursorTs = decoded.ts;
+          cursorId = decoded.id;
+        } catch { /* invalid cursor → first page */ }
+      }
+
+      const dataConditions = [...baseConditions];
+      const dataValues = [...baseValues];
+      if (cursorTs && cursorId) {
+        dataConditions.push(
+          `(l.updated_at < $${paramIndex}::timestamptz OR ` +
+          `(l.updated_at = $${paramIndex}::timestamptz AND l.id::text < $${paramIndex + 1}))`
+        );
+        dataValues.push(cursorTs, cursorId);
+        paramIndex += 2;
+      }
+      const dataWhere = dataConditions.length > 0 ? `WHERE ${dataConditions.join(' AND ')}` : '';
+
+      const limit = params.pageSize + 1;
+      const isRestricted = RESTRICTED.includes(params.userRole || '') && !!params.userId;
+
+      const [statsResult, dataResult] = await Promise.all([
+        client.query(
+          `SELECT
+             COUNT(*)::int                                                                          AS total,
+             COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::int                AS new_count,
+             COUNT(*) FILTER (WHERE stage = 'WON')::int                                           AS won_count,
+             COUNT(*) FILTER (WHERE stage = 'LOST')::int                                          AS lost_count,
+             COALESCE(ROUND(AVG((score->>'score')::numeric)), 0)::int                             AS avg_score
+           FROM leads
+           WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+             ${isRestricted ? 'AND assigned_to = $1' : ''}`,
+          isRestricted ? [params.userId] : []
+        ),
+        client.query(
+          `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar,
+                  c.contract_id, c.payment_schedule as contract_payment_schedule,
+                  c.contract_status, c.contract_type, c.contract_value
+           FROM leads l
+           LEFT JOIN users u ON l.assigned_to = u.id
+           LEFT JOIN LATERAL (
+             SELECT id as contract_id, payment_schedule, status as contract_status,
+                    type as contract_type, value as contract_value
+             FROM contracts
+             WHERE lead_id = l.id
+               AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+             ORDER BY created_at DESC
+             LIMIT 1
+           ) c ON TRUE
+           ${dataWhere}
+           ORDER BY l.updated_at DESC, l.id DESC
+           LIMIT $${paramIndex}`,
+          [...dataValues, limit]
+        ),
+      ]);
+
+      const sr = statsResult.rows[0];
+      const wonCount = sr.won_count || 0;
+      const lostCount = sr.lost_count || 0;
+      const decidedCount = wonCount + lostCount;
+      const stats = {
+        total:    sr.total    || 0,
+        newCount: sr.new_count|| 0,
+        wonCount,
+        lostCount,
+        avgScore: sr.avg_score|| 0,
+        winRate:  decidedCount > 0 ? Math.round((wonCount / decidedCount) * 100) : 0,
+      };
+
+      const rows    = dataResult.rows;
+      const hasNext = rows.length > params.pageSize;
+      const pageRows = hasNext ? rows.slice(0, params.pageSize) : rows;
+
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int as total FROM leads l ${statsWhere}`,
+        baseValues
+      );
+      const total = countResult.rows[0].total;
+
+      let nextCursor: string | null = null;
+      if (hasNext && pageRows.length > 0) {
+        const last = pageRows[pageRows.length - 1];
+        nextCursor = Buffer.from(JSON.stringify({
+          ts: last.updated_at instanceof Date ? last.updated_at.toISOString() : String(last.updated_at),
+          id: last.id,
+        })).toString('base64');
+      }
+
+      return { data: this.rowsToEntities(pageRows), nextCursor, hasNext, total, stats };
+    });
+  }
+
   async findByIdWithAccess(
     tenantId: string,
     id: string,

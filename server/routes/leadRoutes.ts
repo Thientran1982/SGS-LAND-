@@ -29,6 +29,7 @@ export function createLeadRoutes(authenticateToken: any) {
       }
       const tenantId = user.tenantId;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const viewMode = (req.query.viewMode as string || '').toLowerCase();
       // Allow up to 500 for Kanban board view (client sends 500); default cap is 200
       const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 500));
 
@@ -45,6 +46,19 @@ export function createLeadRoutes(authenticateToken: any) {
       const scoreLte = parseFloat(req.query.score_lte as string);
       if (req.query.score_gte && !isNaN(scoreGte)) filters.score_gte = scoreGte;
       if (req.query.score_lte && !isNaN(scoreLte)) filters.score_lte = scoreLte;
+
+      // Cursor-based mode (LIST view); offset-based for BOARD/export
+      if (req.query.cursor !== undefined && viewMode !== 'board') {
+        const cursor = (req.query.cursor as string) || undefined;
+        const result = await leadRepository.findLeadsCursor(tenantId, {
+          pageSize,
+          cursor: cursor || undefined,
+          filters,
+          userId: user.id,
+          userRole: user.role,
+        });
+        return res.json(result);
+      }
 
       const result = await leadRepository.findLeads(
         tenantId,

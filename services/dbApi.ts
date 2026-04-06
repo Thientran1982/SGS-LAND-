@@ -216,6 +216,34 @@ class DatabaseApiClient {
     return result;
   }
 
+  // ── Cursor-based getLeads — used by Leads page (LIST view) ─────────────────
+  async getLeadsCursor(pageSize = 20, cursor: string | undefined, filters?: any): Promise<{
+    data: any[];
+    nextCursor: string | null;
+    hasNext: boolean;
+    total: number;
+    stats: any;
+  }> {
+    const params: any = {};
+    if (filters?.stage && filters.stage !== 'ALL') params.stage = filters.stage;
+    if (filters?.source && filters.source !== 'ALL') params.source = filters.source;
+    if (filters?.search) params.search = filters.search;
+    if (filters?.sort) params.sort = filters.sort;
+    if (filters?.order) params.order = filters.order;
+    try {
+      const result = await leadApi.getLeadsCursor(pageSize, cursor, params);
+      return {
+        data:       result.data       ?? [],
+        nextCursor: result.nextCursor ?? null,
+        hasNext:    result.hasNext    ?? false,
+        total:      result.total      ?? 0,
+        stats:      result.stats      ?? {},
+      };
+    } catch {
+      return { data: [], nextCursor: null, hasNext: false, total: 0, stats: {} };
+    }
+  }
+
   // ── Cursor-based getListings — used by Inventory page ───────────────────────
   async getListingsCursor(pageSize = 20, cursor: string | undefined, filters?: any): Promise<{
     data: any[];
@@ -307,6 +335,41 @@ class DatabaseApiClient {
       } catch {
         return null;
       }
+    }
+  }
+
+  async getPublicListingsCursor(pageSize = 20, cursor: string | undefined, filters?: any): Promise<{
+    data: any[];
+    nextCursor: string | null;
+    hasNext: boolean;
+    total: number;
+  }> {
+    try {
+      const params: any = { cursor: cursor ?? '', pageSize };
+      if (filters?.type && filters.type !== 'ALL') params.type = filters.type;
+      if (filters?.transaction && filters.transaction !== 'ALL') params.transaction = filters.transaction;
+      if (filters?.search) params.search = filters.search;
+      if (filters?.priceMin) params.priceMin = filters.priceMin;
+      if (filters?.priceMax) params.priceMax = filters.priceMax;
+      if (filters?.location && filters.location !== 'ALL') params.location = filters.location;
+      if (filters?.isVerified) params.isVerified = 'true';
+      const result = await api.get<any>('/api/public/listings', params);
+      return {
+        data:       result.data       ?? [],
+        nextCursor: result.nextCursor ?? null,
+        hasNext:    result.hasNext    ?? false,
+        total:      result.total      ?? 0,
+      };
+    } catch {
+      return { data: [], nextCursor: null, hasNext: false, total: 0 };
+    }
+  }
+
+  async getPublicListingsLocations(): Promise<string[]> {
+    try {
+      return await api.get<string[]>('/api/public/listings/locations');
+    } catch {
+      return [];
     }
   }
 

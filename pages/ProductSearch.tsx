@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useRef, memo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, memo } from 'react';
 import { NO_IMAGE_URL } from '../utils/constants';
 import { db } from '../services/dbApi';
 import { Listing, PropertyType, TransactionType, ListingStatus, User } from '../types';
@@ -89,73 +89,43 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
     }, [ref, trigger]);
 };
 
-// --- PAGINATION COMPONENT ---
-const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPageChange, t }: any) => {
-    const start = totalItems > 0 ? (page - 1) * pageSize + 1 : 0;
-    const end = Math.min(page * pageSize, totalItems);
+type ViewMode = 'GRID' | 'LIST' | 'BOARD' | 'MAP';
 
+const CursorPaginationControl = memo(({ totalItems, hasPrev, hasNext, onPrev, onNext, t }: {
+    totalItems: number; hasPrev: boolean; hasNext: boolean;
+    onPrev: () => void; onNext: () => void; t: any;
+}) => {
+    const btnCls = "w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all";
     return (
-        <>
-            {/* Mobile: slim icon-only bar */}
-            <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
-                <button
-                    onClick={() => onPageChange(page - 1)}
-                    disabled={page === 1}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                >
+        <div className="flex items-center justify-between px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-4">
+            <span className="text-xs font-bold text-[var(--text-primary)]">
+                {totalItems.toLocaleString('vi-VN')} {t('pagination.results')}
+            </span>
+            <div className="flex items-center gap-2">
+                <button onClick={onPrev} disabled={!hasPrev} className={btnCls}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <span className="text-xs font-bold text-[var(--text-primary)] min-w-[56px] text-center">{page} / {totalPages}</span>
-                <button
-                    onClick={() => onPageChange(page + 1)}
-                    disabled={page === totalPages || totalPages === 0}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                >
+                <button onClick={onNext} disabled={!hasNext} className={btnCls}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
-
-            {/* Desktop: full bar */}
-            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
-                <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
-                    <span>{t('pagination.showing')}</span>
-                    <span className="font-bold text-[var(--text-primary)]">{start}-{end}</span>
-                    <span>{t('pagination.of')}</span>
-                    <span className="font-bold text-[var(--text-primary)]">{totalItems}</span>
-                    <span>{t('pagination.results')}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <button
-                        onClick={() => onPageChange(page - 1)}
-                        disabled={page === 1}
-                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
-                    >
-                        {t('pagination.prev')}
-                    </button>
-                    <div className="flex items-center gap-1 px-1">
-                        <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages}</span>
-                    </div>
-                    <button
-                        onClick={() => onPageChange(page + 1)}
-                        disabled={page === totalPages || totalPages === 0}
-                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
-                    >
-                        {t('pagination.next')}
-                    </button>
-                </div>
-            </div>
-        </>
+        </div>
     );
 });
-
-type ViewMode = 'GRID' | 'LIST' | 'BOARD' | 'MAP';
 
 export const ProductSearch: React.FC = () => {
     const { t, formatCurrency, language, formatCompactNumber } = useTranslation();
     const [listings, setListings] = useState<Listing[]>([]);
+    const [boardListings, setBoardListings] = useState<Listing[]>([]);
     const [loading, setLoading] = useState(true);
-    const [page, setPage] = useState(1);
-    const [pageSize] = useState(20);
+    const [boardLoading, setBoardLoading] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+    const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+    // Cursor-based pagination state
+    const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [hasNext, setHasNext] = useState(false);
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const [fetchError, setFetchError] = useState(false);
@@ -200,66 +170,122 @@ export const ProductSearch: React.FC = () => {
         return () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); };
     }, []);
 
+    // One-time init: user, favorites, available locations
     useEffect(() => {
-        const load = async () => {
-            setLoading(true);
-            setFetchError(false);
-            try {
-                const user = await db.getCurrentUser();
-                setCurrentUser(user);
-                const res = await db.getPublicListings(1, 2000);
-                setListings(res.data.filter(l => l.status === ListingStatus.AVAILABLE || l.status === ListingStatus.OPENING || l.status === ListingStatus.BOOKING));
-                if (user) {
-                    const favs = await db.getFavorites(1, 1000);
-                    setFavorites(new Set(favs.data.map((f: any) => f.id)));
-                } else {
-                    try {
-                        const stored = JSON.parse(localStorage.getItem('sgs_favorites') || '[]');
-                        setFavorites(new Set(stored));
-                    } catch {}
-                }
-            } catch {
-                setFetchError(true);
-            } finally {
-                setLoading(false);
+        const init = async () => {
+            const [user, locs] = await Promise.all([
+                db.getCurrentUser().catch(() => null),
+                db.getPublicListingsLocations().catch(() => []),
+            ]);
+            setCurrentUser(user);
+            setAvailableLocations(locs);
+            if (user) {
+                db.getFavorites(1, 1000).then(res => setFavorites(new Set(res.data.map((f: any) => f.id)))).catch(() => {});
+            } else {
+                try { setFavorites(new Set(JSON.parse(localStorage.getItem('sgs_favorites') || '[]'))); } catch {}
             }
         };
-        load();
+        init();
+    }, []);
+
+    // Cursor-based fetch for GRID/LIST views
+    const fetchListingsPage = useCallback(async (cursor: string | undefined) => {
+        setLoading(true);
+        setFetchError(false);
+        try {
+            const filters: any = {};
+            if (selectedType !== 'ALL') filters.type = selectedType;
+            if (selectedTransaction !== 'ALL') filters.transaction = selectedTransaction;
+            if (selectedLocation !== 'ALL') filters.location = selectedLocation;
+            if (debouncedQuery) filters.search = debouncedQuery;
+            if (showVerifiedOnly) filters.isVerified = true;
+            if (priceFilter === 'UNDER_2') { filters.priceMax = 2_000_000_000; }
+            else if (priceFilter === '2_5') { filters.priceMin = 2_000_000_000; filters.priceMax = 5_000_000_000; }
+            else if (priceFilter === '5_10') { filters.priceMin = 5_000_000_000; filters.priceMax = 10_000_000_000; }
+            else if (priceFilter === 'OVER_10') { filters.priceMin = 10_000_000_000; }
+            const res = await db.getPublicListingsCursor(20, cursor, filters);
+            setListings(res.data);
+            setNextCursor(res.nextCursor);
+            setHasNext(res.hasNext);
+            setTotalItems(res.total);
+        } catch {
+            setFetchError(true);
+        } finally {
+            setLoading(false);
+        }
+    }, [selectedType, selectedTransaction, selectedLocation, debouncedQuery, showVerifiedOnly, priceFilter]);
+
+    // Board/MAP fetch — offset-based, full filter set, up to 500
+    const fetchBoardListings = useCallback(async () => {
+        setBoardLoading(true);
+        try {
+            const filters: any = {};
+            if (selectedType !== 'ALL') filters.type = selectedType;
+            if (selectedTransaction !== 'ALL') filters.transaction = selectedTransaction;
+            if (selectedLocation !== 'ALL') filters.location = selectedLocation;
+            if (debouncedQuery) filters.search = debouncedQuery;
+            if (showVerifiedOnly) filters.isVerified = true;
+            if (priceFilter === 'UNDER_2') { filters.priceMax = 2_000_000_000; }
+            else if (priceFilter === '2_5') { filters.priceMin = 2_000_000_000; filters.priceMax = 5_000_000_000; }
+            else if (priceFilter === '5_10') { filters.priceMin = 5_000_000_000; filters.priceMax = 10_000_000_000; }
+            else if (priceFilter === 'OVER_10') { filters.priceMin = 10_000_000_000; }
+            const res = await db.getPublicListings(1, 500, filters);
+            setBoardListings(res.data);
+        } catch {
+            setBoardListings([]);
+        } finally {
+            setBoardLoading(false);
+        }
+    }, [selectedType, selectedTransaction, selectedLocation, debouncedQuery, showVerifiedOnly, priceFilter]);
+
+    // Trigger fetches based on viewMode
+    useEffect(() => {
+        if (viewMode === 'GRID' || viewMode === 'LIST') {
+            fetchListingsPage(currentCursor);
+        } else {
+            fetchBoardListings();
+        }
+    }, [viewMode, currentCursor, fetchListingsPage, fetchBoardListings]);
+
+    // Reset cursor when filters change
+    useEffect(() => {
+        setCursorStack([]);
+        setCurrentCursor(undefined);
+        setNextCursor(null);
+        setHasNext(false);
+    }, [debouncedQuery, selectedType, selectedTransaction, selectedLocation, priceFilter, showVerifiedOnly]);
+
+    // Cursor navigation handlers
+    const handleCursorNext = useCallback(() => {
+        if (!nextCursor) return;
+        setCursorStack(prev => [...prev, currentCursor ?? '']);
+        setCurrentCursor(nextCursor);
+    }, [nextCursor, currentCursor]);
+
+    const handleCursorPrev = useCallback(() => {
+        setCursorStack(prev => {
+            const stack = [...prev];
+            const prevCursor = stack.pop();
+            setCurrentCursor(prevCursor === '' ? undefined : prevCursor);
+            return stack;
+        });
     }, []);
 
     const handleHome = () => window.location.hash = `#/${ROUTES.LANDING}`;
     const handleLogin = () => window.location.hash = currentUser ? `#/${ROUTES.DASHBOARD}` : `#/${ROUTES.LOGIN}`;
     const handleNavigate = (id: string) => window.location.hash = `#/${ROUTES.LISTING}/${id}`;
 
+    // GRID/LIST: current page from server, apply client-side favorites filter
+    const visibleListings = useMemo(() => {
+        if (!showFavoritesOnly) return listings;
+        return listings.filter(l => favorites.has(l.id));
+    }, [listings, showFavoritesOnly, favorites]);
+
+    // BOARD/MAP: from boardListings (full fetch), apply favorites filter
     const filteredListings = useMemo(() => {
-        return listings.filter(l => {
-            const typeStr = t(`property.${l.type.toUpperCase()}`) || '';
-            const matchesQuery = smartMatch((l.title || '') + ' ' + (l.location || '') + ' ' + (l.code || '') + ' ' + typeStr, debouncedQuery);
-            const matchesType = selectedType === 'ALL' || l.type === selectedType;
-            const matchesTrans = selectedTransaction === 'ALL' || l.transaction === selectedTransaction;
-            const matchesLoc = selectedLocation === 'ALL' || (l.location || '').includes(selectedLocation);
-            
-            let matchesPrice = true;
-            if (priceFilter === 'UNDER_2') matchesPrice = l.price < 2_000_000_000;
-            else if (priceFilter === '2_5') matchesPrice = l.price >= 2_000_000_000 && l.price <= 5_000_000_000;
-            else if (priceFilter === '5_10') matchesPrice = l.price >= 5_000_000_000 && l.price <= 10_000_000_000;
-            else if (priceFilter === 'OVER_10') matchesPrice = l.price > 10_000_000_000;
-
-            const matchesFav = showFavoritesOnly ? favorites.has(l.id) : true;
-            const matchesVerified = showVerifiedOnly ? l.isVerified : true;
-
-            return matchesQuery && matchesType && matchesTrans && matchesLoc && matchesPrice && matchesFav && matchesVerified;
-        });
-    }, [listings, debouncedQuery, selectedType, selectedTransaction, selectedLocation, priceFilter, showFavoritesOnly, showVerifiedOnly, favorites, t]);
-
-    const paginatedListings = useMemo(() => {
-        const start = (page - 1) * pageSize;
-        return filteredListings.slice(start, start + pageSize);
-    }, [filteredListings, page, pageSize]);
-
-    const totalPages = Math.ceil(filteredListings.length / pageSize);
-
-    useEffect(() => { setPage(1); }, [debouncedQuery, selectedType, selectedTransaction, selectedLocation, priceFilter, showFavoritesOnly, showVerifiedOnly]);
+        if (!showFavoritesOnly) return boardListings;
+        return boardListings.filter(l => favorites.has(l.id));
+    }, [boardListings, showFavoritesOnly, favorites]);
 
     const handleToggleFavorite = async (id: string) => {
         const isFav = favorites.has(id);
@@ -287,10 +313,7 @@ export const ProductSearch: React.FC = () => {
         }
     };
 
-    const uniqueLocations = useMemo(() => {
-        const locs = new Set(listings.map(l => l.location?.split(',').pop()?.trim() || '').filter(Boolean));
-        return Array.from(locs).sort();
-    }, [listings]);
+    const uniqueLocations = useMemo(() => availableLocations, [availableLocations]);
 
     const typeOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_types') }, ...Object.values(PropertyType).map(tKey => ({ value: tKey, label: t(`property.${tKey.toUpperCase()}`) }))], [t]);
     const transactionOptions = useMemo(() => [{ value: 'ALL', label: t('inventory.all_transactions') }, ...Object.values(TransactionType).map(tr => ({ value: tr, label: t(`transaction.${tr}`) }))], [t]);
@@ -505,7 +528,7 @@ export const ProductSearch: React.FC = () => {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 max-w-[1920px] mx-auto">
-                                {paginatedListings.map((item, index) => (
+                                {visibleListings.map((item, index) => (
                                     <motion.div 
                                         key={item.id} 
                                         className="min-h-full"
@@ -525,7 +548,7 @@ export const ProductSearch: React.FC = () => {
                                         />
                                     </motion.div>
                                 ))}
-                                {paginatedListings.length === 0 && <EmptyState t={t} onClear={clearFilters} />}
+                                {visibleListings.length === 0 && <EmptyState t={t} onClear={clearFilters} />}
                             </div>
                         )
                     )}
@@ -569,7 +592,7 @@ export const ProductSearch: React.FC = () => {
                                                     <td className="px-4 py-4 text-right"><div className="h-7 bg-slate-100 rounded-lg w-20 ml-auto" /></td>
                                                 </tr>
                                             ))}
-                                            {!loading && paginatedListings.map(item => {
+                                            {!loading && visibleListings.map(item => {
                                                 const isFav = favorites.has(item.id);
                                                 return (
                                                     <tr key={item.id} onClick={() => handleNavigate(item.id)} className="hover:bg-[var(--glass-surface)] cursor-pointer group transition-colors">
@@ -617,7 +640,7 @@ export const ProductSearch: React.FC = () => {
                                                     </tr>
                                                 );
                                             })}
-                                            {paginatedListings.length === 0 && !loading && (
+                                            {visibleListings.length === 0 && !loading && (
                                                 <tr><td colSpan={8} className="p-12 text-center text-slate-400 italic">{t('common.no_results')}</td></tr>
                                             )}
                                         </tbody>
@@ -637,7 +660,7 @@ export const ProductSearch: React.FC = () => {
                                         </div>
                                     </div>
                                 ))}
-                                {!loading && paginatedListings.map((item, index) => {
+                                {!loading && visibleListings.map((item, index) => {
                                     const isFav = favorites.has(item.id);
                                     return (
                                         <motion.div 
@@ -683,7 +706,7 @@ export const ProductSearch: React.FC = () => {
                                         </motion.div>
                                     );
                                 })}
-                                {!loading && paginatedListings.length === 0 && <EmptyState t={t} onClear={clearFilters} />}
+                                {!loading && visibleListings.length === 0 && <EmptyState t={t} onClear={clearFilters} />}
                             </div>
                         </>
                     )}
@@ -766,15 +789,15 @@ export const ProductSearch: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Pagination — BOARD renders all filtered items so pagination doesn't apply */}
-                    {(viewMode === 'GRID' || viewMode === 'LIST') && !loading && filteredListings.length > 0 && (
+                    {/* Pagination — BOARD/MAP renders all filtered items so cursor pagination only applies to GRID/LIST */}
+                    {(viewMode === 'GRID' || viewMode === 'LIST') && !loading && (
                         <div className="mt-6">
-                            <PaginationControl
-                                page={page}
-                                totalPages={totalPages}
-                                totalItems={filteredListings.length}
-                                pageSize={pageSize}
-                                onPageChange={setPage}
+                            <CursorPaginationControl
+                                totalItems={totalItems}
+                                hasPrev={cursorStack.length > 0}
+                                hasNext={hasNext}
+                                onPrev={handleCursorPrev}
+                                onNext={handleCursorNext}
                                 t={t}
                             />
                         </div>

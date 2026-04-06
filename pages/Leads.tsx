@@ -127,73 +127,48 @@ const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any)
 };
 
 // --- PAGINATION COMPONENT ---
-const PaginationControl = memo(({ page, totalPages, totalItems, pageSize, onPageChange, onPageSizeChange, t }: any) => {
-    const start = (page - 1) * pageSize + 1;
-    const end = Math.min(page * pageSize, totalItems);
-
+const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, onPrev, onNext, onPageSizeChange, t }: {
+    totalItems: number; pageSize: number; hasPrev: boolean; hasNext: boolean;
+    onPrev: () => void; onNext: () => void; onPageSizeChange: (s: number) => void; t: any;
+}) => {
     const pageSizeOptions = [
         { value: 15, label: '15' },
         { value: 25, label: '25' },
         { value: 50, label: '50' },
-        { value: 100, label: '100' }
+        { value: 100, label: '100' },
     ];
-
+    const btnCls = "w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all";
     return (
         <>
-            {/* Mobile: slim icon-only bar */}
+            {/* Mobile */}
             <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
-                <button
-                    onClick={() => onPageChange(page - 1)}
-                    disabled={page === 1}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                >
+                <button onClick={onPrev} disabled={!hasPrev} className={btnCls}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <span className="text-xs font-bold text-[var(--text-primary)] min-w-[56px] text-center">{page} / {totalPages || 1}</span>
-                <button
-                    onClick={() => onPageChange(page + 1)}
-                    disabled={page === totalPages || totalPages === 0}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                >
+                <span className="text-xs font-bold text-[var(--text-primary)] min-w-[56px] text-center">
+                    {totalItems.toLocaleString('vi-VN')} {t('pagination.results')}
+                </span>
+                <button onClick={onNext} disabled={!hasNext} className={btnCls}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
-
-            {/* Desktop: full bar */}
+            {/* Desktop */}
             <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
                 <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
-                    <span>{t('pagination.showing')}</span>
-                    <span className="font-bold text-[var(--text-primary)]">{totalItems > 0 ? start : 0}-{end}</span>
-                    <span>{t('pagination.of')}</span>
-                    <span className="font-bold text-[var(--text-primary)]">{totalItems}</span>
+                    <span className="font-bold text-[var(--text-primary)]">{totalItems.toLocaleString('vi-VN')}</span>
                     <span>{t('pagination.results')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <div className="min-w-[60px] mr-1">
-                        <Dropdown
-                            value={pageSize}
-                            onChange={(v) => onPageSizeChange(Number(v))}
-                            options={pageSizeOptions}
-                            className="text-xs"
-                            placement="top"
-                        />
+                        <Dropdown value={pageSize} onChange={(v) => onPageSizeChange(Number(v))} options={pageSizeOptions} className="text-xs" placement="top" />
                     </div>
-                    <button
-                        onClick={() => onPageChange(page - 1)}
-                        disabled={page === 1}
-                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
-                    >
+                    <button onClick={onPrev} disabled={!hasPrev} className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         {t('pagination.prev')}
                     </button>
-                    <div className="flex items-center gap-1 px-1">
-                        <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{page} / {totalPages || 1}</span>
-                    </div>
-                    <button
-                        onClick={() => onPageChange(page + 1)}
-                        disabled={page === totalPages || totalPages === 0}
-                        className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center"
-                    >
+                    <button onClick={onNext} disabled={!hasNext} className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1">
                         {t('pagination.next')}
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                     </button>
                 </div>
             </div>
@@ -576,11 +551,14 @@ export const Leads: React.FC = () => {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
-    const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [totalItems, setTotalItems] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
     const [serverStats, setServerStats] = useState({ total: 0, newCount: 0, wonCount: 0, lostCount: 0, avgScore: 0, winRate: 0 });
+    // Cursor-based pagination state
+    const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [hasNext, setHasNext] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
     
     // Refs for drag-to-scroll
@@ -615,11 +593,14 @@ export const Leads: React.FC = () => {
         return () => clearTimeout(handler);
     }, [search]);
 
-    // Reset page to 1 AND clear stale selections when filters change
+    // Reset cursor to first page AND clear stale selections when filters change
     useEffect(() => {
-        setPage(1);
+        setCursorStack([]);
+        setCurrentCursor(undefined);
+        setNextCursor(null);
+        setHasNext(false);
         setSelectedLeads(new Set());
-    }, [debouncedSearch, stageFilter, sourceFilter]);
+    }, [debouncedSearch, stageFilter, sourceFilter, pageSize]);
     
     // UI State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -727,28 +708,36 @@ export const Leads: React.FC = () => {
         setTimeout(() => setToast(null), 3000);
     }, []);
 
-    const fetchLeads = useCallback(async (forcePage?: number) => {
+    const fetchLeads = useCallback(async () => {
         setLoading(true);
         try {
             const filters: Record<string, any> = { sort: 'updated_at', order: 'desc' };
             if (debouncedSearch) filters.search = debouncedSearch;
             if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
             if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
-            // Board view: fetch all leads (up to 500) so all kanban columns are populated
-            const effectivePageSize = viewMode === 'BOARD' ? 500 : pageSize;
-            const effectivePage    = viewMode === 'BOARD' ? 1   : (forcePage ?? page);
-            const res = await db.getLeads(effectivePage, effectivePageSize, filters);
-            setLeads(res.data || []);
-            setTotalPages(res.totalPages);
-            setTotalItems(res.total);
-            if (res.stats) setServerStats(res.stats);
+
+            if (viewMode === 'BOARD') {
+                // Board: offset-based, fetch up to 500 for full Kanban
+                const res = await db.getLeads(1, 500, filters);
+                setLeads(res.data || []);
+                setTotalItems(res.total ?? 0);
+                if (res.stats) setServerStats(res.stats);
+            } else {
+                // LIST: cursor-based
+                const res = await db.getLeadsCursor(pageSize, currentCursor, filters);
+                setLeads(res.data || []);
+                setNextCursor(res.nextCursor);
+                setHasNext(res.hasNext);
+                setTotalItems(res.total ?? 0);
+                if (res.stats) setServerStats(res.stats);
+            }
         } catch {
             notify(t('common.error'), 'error');
             setLeads([]);
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, viewMode, debouncedSearch, stageFilter, sourceFilter, notify, t]);
+    }, [currentCursor, pageSize, viewMode, debouncedSearch, stageFilter, sourceFilter, notify, t]);
 
     useEffect(() => {
         fetchLeads();
@@ -782,17 +771,21 @@ export const Leads: React.FC = () => {
         };
     }, [socket, fetchLeads, notify, t]);
 
-    // Handle Page Change
-    const handlePageChange = (newPage: number) => {
-        if (newPage >= 1 && newPage <= Math.max(1, totalPages)) {
-            setPage(newPage);
-        }
-    };
+    // Cursor navigation handlers
+    const handleCursorNext = useCallback(() => {
+        if (!nextCursor) return;
+        setCursorStack(prev => [...prev, currentCursor ?? '']);
+        setCurrentCursor(nextCursor);
+    }, [nextCursor, currentCursor]);
 
-    const handlePageSizeChange = (newSize: number) => {
-        setPageSize(newSize);
-        setPage(1); // Reset to first page
-    };
+    const handleCursorPrev = useCallback(() => {
+        setCursorStack(prev => {
+            const stack = [...prev];
+            const prevCursor = stack.pop();
+            setCurrentCursor(prevCursor === '' ? undefined : prevCursor);
+            return stack;
+        });
+    }, []);
 
     const handleSelectAll = () => {
         if (selectedLeads.size === leads.length) setSelectedLeads(new Set());
@@ -1575,20 +1568,21 @@ export const Leads: React.FC = () => {
 
                 {/* Pagination Footer - only shown in LIST view */}
                 {viewMode === 'LIST' && (
-                    <PaginationControl
-                        page={page}
-                        totalPages={totalPages}
+                    <CursorPaginationControl
                         totalItems={totalItems}
                         pageSize={pageSize}
-                        onPageChange={handlePageChange}
-                        onPageSizeChange={handlePageSizeChange}
+                        hasPrev={cursorStack.length > 0}
+                        hasNext={hasNext}
+                        onPrev={handleCursorPrev}
+                        onNext={handleCursorNext}
+                        onPageSizeChange={(s) => setPageSize(s)}
                         t={t}
                     />
                 )}
             </div>
 
             {/* Modals */}
-            {isCreateModalOpen && <CreateLeadModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => { setIsCreateModalOpen(false); setPage(1); fetchLeads(1); notify(t('common.success'), 'success'); }} />}
+            {isCreateModalOpen && <CreateLeadModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => { setIsCreateModalOpen(false); setCursorStack([]); setCurrentCursor(undefined); fetchLeads(); notify(t('common.success'), 'success'); }} />}
             
             {proposalLead && (
                 <FlashProposalModal 

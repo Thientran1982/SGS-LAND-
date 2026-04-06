@@ -927,10 +927,22 @@ async function startServer() {
       if (req.query.priceMin) filters.price_gte = parseFloat(req.query.priceMin as string);
       if (req.query.priceMax) filters.price_lte = parseFloat(req.query.priceMax as string);
       if (req.query.search) filters.search = req.query.search as string;
-      const result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
+      if (req.query.location) filters.location_contains = req.query.location as string;
+      if (req.query.isVerified === 'true') filters.isVerified = true;
+      let result: any;
+      if (req.query.cursor !== undefined) {
+        const cursor = (req.query.cursor as string) || undefined;
+        result = await listingRepository.findListingsCursor(PUBLIC_TENANT, {
+          pageSize,
+          cursor: cursor || undefined,
+          filters,
+        });
+      } else {
+        result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
+      }
       res.json(result);
-      // Log visitor in background (only page 1, to avoid spamming on pagination)
-      if (page === 1) {
+      // Log visitor in background (only page 1/cursor-first, to avoid spamming on pagination)
+      if (page === 1 || !req.query.cursor) {
         const ip = getClientIp(req);
         lookupIp(ip).then(geo => visitorRepository.log({
           tenantId: PUBLIC_TENANT,
@@ -950,6 +962,24 @@ async function startServer() {
     } catch (error) {
       console.error('Error fetching public listings:', error);
       res.status(500).json({ error: 'Failed to fetch listings' });
+    }
+  });
+
+  app.get('/api/public/listings/locations', apiRateLimit, async (req: express.Request, res: express.Response) => {
+    try {
+      const pool = (listingRepository as any).pool as import('pg').Pool;
+      const result = await pool.query(
+        `SELECT DISTINCT TRIM(SPLIT_PART(location, ',', -1)) AS loc
+           FROM listings
+           WHERE tenant_id = $1
+             AND status IN ('AVAILABLE','OPENING','BOOKING')
+             AND location IS NOT NULL AND location <> ''
+           ORDER BY 1`,
+        [PUBLIC_TENANT]
+      );
+      res.json(result.rows.map((r: any) => r.loc).filter(Boolean));
+    } catch {
+      res.json([]);
     }
   });
 

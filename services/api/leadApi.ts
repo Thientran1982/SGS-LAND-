@@ -4,6 +4,9 @@ export const leadApi = {
   getLeads: (page = 1, pageSize = 20, filters?: Record<string, any>): Promise<PaginatedResponse<any>> =>
     api.get('/api/leads', { page, pageSize, ...filters }),
 
+  getLeadsCursor: (pageSize = 20, cursor: string | undefined, filters?: Record<string, any>): Promise<any> =>
+    api.get('/api/leads', { cursor: cursor ?? '', pageSize, ...filters }),
+
   getLeadById: (id: string): Promise<any> =>
     api.get(`/api/leads/${id}`),
 
