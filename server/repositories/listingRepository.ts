@@ -354,41 +354,42 @@ export class ListingRepository extends BaseRepository {
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-      const countResult = await client.query(
-        `SELECT COUNT(*)::int as total FROM listings l ${whereClause}`,
-        values
-      );
-      const total = countResult.rows[0].total;
+      // ── Run count+stats and paged data IN PARALLEL (3 sequential → 2 parallel) ──
+      const offset = (pagination.page - 1) * pagination.pageSize;
+      const [csResult, result] = await Promise.all([
+        // Query A: total count + per-status breakdown (single scan)
+        client.query(
+          `SELECT
+             COUNT(*)::int                                         AS total,
+             COUNT(*) FILTER (WHERE l.status = 'AVAILABLE')::int  AS available_count,
+             COUNT(*) FILTER (WHERE l.status = 'HOLD')::int       AS hold_count,
+             COUNT(*) FILTER (WHERE l.status = 'SOLD')::int       AS sold_count,
+             COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
+             COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
+             COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
+             COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count
+           FROM listings l ${whereClause}`,
+          values
+        ),
+        // Query B: paginated rows + user join (index seek on tenant_id + created_at)
+        client.query(
+          `SELECT sub.*,
+                  u.name   AS assigned_to_name,
+                  u.email  AS assigned_to_email,
+                  u.avatar AS assigned_to_avatar,
+                  u.role   AS assigned_to_role
+           FROM (
+             SELECT * FROM listings l ${whereClause}
+             ORDER BY l.created_at DESC
+             LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+           ) AS sub
+           LEFT JOIN users u ON u.id = sub.assigned_to`,
+          [...values, pagination.pageSize, offset]
+        ),
+      ]);
 
-      const statsResult = await client.query(
-        `SELECT
-          COUNT(*) FILTER (WHERE l.status = 'AVAILABLE')::int AS available_count,
-          COUNT(*) FILTER (WHERE l.status = 'HOLD')::int       AS hold_count,
-          COUNT(*) FILTER (WHERE l.status = 'SOLD')::int       AS sold_count,
-          COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
-          COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
-          COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
-          COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count,
-          COUNT(*)::int                                         AS total_count
-         FROM listings l ${whereClause}`,
-        values
-      );
-      const sr = statsResult.rows[0];
-
-      const result = await client.query(
-        `SELECT sub.*,
-                u.name   AS assigned_to_name,
-                u.email  AS assigned_to_email,
-                u.avatar AS assigned_to_avatar,
-                u.role   AS assigned_to_role
-         FROM (
-           SELECT * FROM listings l ${whereClause}
-           ORDER BY l.created_at DESC
-           LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-         ) AS sub
-         LEFT JOIN users u ON u.id = sub.assigned_to`,
-        [...values, pagination.pageSize, (pagination.page - 1) * pagination.pageSize]
-      );
+      const cs  = csResult.rows[0];
+      const total = cs?.total ?? 0;
 
       return {
         data: this.rowsToEntities(result.rows),
@@ -397,14 +398,14 @@ export class ListingRepository extends BaseRepository {
         pageSize: pagination.pageSize,
         totalPages: Math.ceil(total / pagination.pageSize),
         stats: {
-          availableCount: sr.available_count,
-          holdCount:      sr.hold_count,
-          soldCount:      sr.sold_count,
-          rentedCount:    sr.rented_count,
-          bookingCount:   sr.booking_count,
-          openingCount:   sr.opening_count,
-          inactiveCount:  sr.inactive_count,
-          totalCount:     sr.total_count,
+          availableCount: cs?.available_count ?? 0,
+          holdCount:      cs?.hold_count      ?? 0,
+          soldCount:      cs?.sold_count      ?? 0,
+          rentedCount:    cs?.rented_count    ?? 0,
+          bookingCount:   cs?.booking_count   ?? 0,
+          openingCount:   cs?.opening_count   ?? 0,
+          inactiveCount:  cs?.inactive_count  ?? 0,
+          totalCount:     total,
         },
       };
     });

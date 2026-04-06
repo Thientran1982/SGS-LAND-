@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { NO_IMAGE_URL } from '../utils/constants';
+import LazyImage from '../components/LazyImage';
 import { db } from '../services/dbApi';
 import { Listing, ListingStatus, PropertyType, TransactionType, UserRole } from '../types';
 import { useTranslation } from '../services/i18n';
@@ -229,13 +230,10 @@ const InventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick, t, fo
             {/* Sticky Code & Image */}
             <td className="px-4 py-3 sticky left-0 z-10 bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50 border-r border-slate-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors min-w-[200px] max-w-[250px]">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[var(--glass-surface-hover)] dark:bg-slate-800 overflow-hidden shrink-0 border border-[var(--glass-border)] relative">
-                        <img 
-                            src={item.images?.[0] || NO_IMAGE_URL}
-                            className="w-full h-full object-cover"
-                            alt=""
-                            loading="lazy"
-                            onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }}
+                    <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-[var(--glass-border)] relative">
+                        <LazyImage
+                            src={item.images?.[0]}
+                            wrapperClassName="w-full h-full bg-[var(--glass-surface-hover)] dark:bg-slate-800"
                         />
                         {item.isVerified && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-bl-md z-10" />}
                     </div>
@@ -401,13 +399,10 @@ const CompactInventoryRow = memo(({ item, onEdit, onDelete, onDuplicate, onClick
             onClick={() => onClick && onClick(item)}
             className="flex md:hidden items-center gap-3 p-3 border-b border-[var(--glass-border)] dark:border-slate-800/50 active:bg-[var(--glass-surface)] dark:active:bg-slate-800 transition-colors cursor-pointer"
         >
-            <div className="w-14 h-14 rounded-xl bg-[var(--glass-surface-hover)] dark:bg-slate-800 overflow-hidden shrink-0 border border-[var(--glass-border)] dark:border-slate-700 relative">
-                <img
-                    src={item.images?.[0] || NO_IMAGE_URL}
-                    className="w-full h-full object-cover"
-                    alt=""
-                    loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }}
+            <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-[var(--glass-border)] dark:border-slate-700 relative">
+                <LazyImage
+                    src={item.images?.[0]}
+                    wrapperClassName="w-full h-full bg-[var(--glass-surface-hover)] dark:bg-slate-800"
                 />
                 <div className="absolute top-0 left-0 px-1 bg-black/40 text-3xs text-white font-mono">{item.code}</div>
             </div>
@@ -513,8 +508,11 @@ const InventoryKanbanCard = memo(({ item, onClick, onEdit, onDelete, onDuplicate
             className="bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--glass-border)] shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 mb-3 group flex flex-col gap-2 relative"
         >
             <div className="flex gap-3 items-start">
-                <div className="w-12 h-12 rounded-lg bg-[var(--glass-surface-hover)] overflow-hidden shrink-0">
-                    <img src={item.images?.[0] || NO_IMAGE_URL} className="w-full h-full object-cover" alt="" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = NO_IMAGE_URL; }} />
+                <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
+                    <LazyImage
+                        src={item.images?.[0]}
+                        wrapperClassName="w-full h-full bg-[var(--glass-surface-hover)]"
+                    />
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 mb-1">
