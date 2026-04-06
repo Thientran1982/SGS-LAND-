@@ -314,6 +314,128 @@ class FeedbackRepository extends BaseRepository {
       this.computeRewardSignal(tenantId, intent).catch(() => {})
     ));
   }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // AGENT SELF-LEARNING: Observation logging & aggregation
+  // ──────────────────────────────────────────────────────────────────────────
+
+  async logObservation(
+    tenantId: string,
+    agentNode: string,
+    intent: string | undefined,
+    observationType: string,
+    observationData: Record<string, any>,
+    sessionId?: string
+  ): Promise<void> {
+    try {
+      await withTransaction(async (client: PoolClient) => {
+        await client.query(
+          `INSERT INTO agent_observations (tenant_id, agent_node, intent, observation_type, observation_data, session_id)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [
+            tenantId,
+            agentNode,
+            intent || null,
+            observationType,
+            JSON.stringify(observationData),
+            sessionId || null,
+          ]
+        );
+      });
+    } catch {
+      // Non-blocking — silent fail is OK for observation logging
+    }
+  }
+
+  async getObservationInsights(tenantId: string, agentNode: string, days: number = 7): Promise<string> {
+    try {
+      return await this.withTenant(tenantId, async (client: PoolClient) => {
+        const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+
+        // Aggregated stats from last N days for this agent
+        const result = await client.query(
+          `SELECT
+             observation_type,
+             COUNT(*)::int as count,
+             jsonb_agg(observation_data ORDER BY created_at DESC) FILTER (WHERE created_at >= $2) as samples
+           FROM agent_observations
+           WHERE tenant_id = $1 AND agent_node = $3 AND created_at >= $2
+           GROUP BY observation_type
+           ORDER BY count DESC
+           LIMIT 8`,
+          [tenantId, cutoff, agentNode]
+        );
+
+        if (!result.rows.length) return '';
+
+        const lines: string[] = [];
+        for (const row of result.rows) {
+          const samples = (row.samples || []).slice(0, 3);
+          const typeSummary = samples.map((s: any) => {
+            const keys = Object.keys(s).slice(0, 4);
+            return keys.map(k => `${k}:${JSON.stringify(s[k])}`).join(',');
+          }).join(' | ');
+          lines.push(`${row.observation_type}(${row.count}lần): ${typeSummary}`);
+        }
+
+        return lines.length
+          ? `\n[LỊCH SỬ HOẠT ĐỘNG AGENT ${agentNode} (${days} ngày)]:\n${lines.join('\n')}`
+          : '';
+      });
+    } catch {
+      return '';
+    }
+  }
+
+  async logSystemChange(
+    tenantId: string | null,
+    changeType: string,
+    changeScope: string,
+    description: string,
+    oldValue?: string,
+    newValue?: string,
+    changedBy?: string
+  ): Promise<void> {
+    try {
+      await withTransaction(async (client: PoolClient) => {
+        await client.query(
+          `INSERT INTO agent_system_change_log (tenant_id, change_type, change_scope, description, old_value, new_value, changed_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [tenantId || null, changeType, changeScope, description, oldValue || null, newValue || null, changedBy || null]
+        );
+      });
+    } catch {
+      // Silent fail
+    }
+  }
+
+  async getRecentSystemChanges(tenantId: string, hours: number = 24): Promise<Array<{
+    changeType: string;
+    changeScope: string;
+    description: string;
+    changedAt: string;
+  }>> {
+    try {
+      return await this.withTenant(tenantId, async (client: PoolClient) => {
+        const cutoff = new Date(Date.now() - hours * 3600000).toISOString();
+        const result = await client.query(
+          `SELECT change_type, change_scope, description, created_at
+           FROM agent_system_change_log
+           WHERE (tenant_id = $1 OR tenant_id IS NULL) AND created_at >= $2
+           ORDER BY created_at DESC LIMIT 20`,
+          [tenantId, cutoff]
+        );
+        return result.rows.map(r => ({
+          changeType: r.change_type,
+          changeScope: r.change_scope,
+          description: r.description,
+          changedAt: r.created_at,
+        }));
+      });
+    } catch {
+      return [];
+    }
+  }
 }
 
 export const feedbackRepository = new FeedbackRepository();

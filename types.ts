@@ -705,7 +705,9 @@ export type AgentArtifact =
     | { type: 'BOOKING_DRAFT'; title: string; data: BookingDraftData }
     | { type: 'MARKET_CHART'; title: string; data: MarketChartData }
     | { type: 'MARKETING_COPY'; title: string; data: MarketingCopyData }
-    | { type: 'VALUATION_REPORT'; title: string; data: ValuationData };
+    | { type: 'VALUATION_REPORT'; title: string; data: ValuationData }
+    | { type: 'LEAD_BRIEF'; title: string; data: LeadBriefData }
+    | { type: 'ESCALATION_HANDOVER'; title: string; data: EscalationHandoverData };
 
 export interface LoanScheduleData {
     monthlyPayment: number;
@@ -736,6 +738,32 @@ export interface ValuationData {
     estimatedPrice: number;
     confidence: number;
     comparables: string[];
+}
+
+export interface LeadBriefData {
+    leadName: string;
+    stage: 'Awareness' | 'Consideration' | 'Decision' | string;
+    readiness: number;
+    communicationStyle: 'Formal' | 'Casual' | 'Data-driven' | string;
+    recommendedAction: string;
+    analysisSnippet: string;
+    urgencySignals: string[];
+    hesitationSignals: string[];
+}
+
+export interface EscalationHandoverData {
+    leadName: string;
+    stage: string;
+    score: number;
+    grade: string;
+    budgetMax: number;
+    regions: string;
+    propertyTypes: string;
+    lastIntent: string;
+    urgency: string;
+    recentMessages: string;
+    escalatedAt: string;
+    triggerMessage: string;
 }
 
 export interface InteractionMetadata {
