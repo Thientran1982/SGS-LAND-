@@ -1,0 +1,1638 @@
+
+import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { db } from '../services/dbApi';
+import { Lead, LeadStage, LEAD_SOURCES } from '../types';
+import { useTranslation } from '../services/i18n';
+import { CreateLeadModal } from '../components/CreateLeadModal';
+import { FlashProposalModal } from '../components/FlashProposalModal';
+import { LeadDetail } from '../components/LeadDetail';
+import { Dropdown } from '../components/Dropdown';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { useSocket } from '../services/websocket';
+import { aiService } from '../services/aiService';
+
+// -----------------------------------------------------------------------------
+//  CONSTANTS & STYLES
+// -----------------------------------------------------------------------------
+
+type RowDensity = 'compact' | 'normal' | 'relaxed';
+type ViewMode = 'LIST' | 'BOARD';
+
+const DENSITY_STYLES = {
+    compact: 'py-2 text-xs',
+    normal: 'py-4 text-sm',
+    relaxed: 'py-6 text-sm'
+};
+
+const STAGE_CONFIG: Record<LeadStage, { color: string, bg: string, border: string }> = {
+    [LeadStage.NEW]: { color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
+    [LeadStage.CONTACTED]: { color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+    [LeadStage.QUALIFIED]: { color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200' },
+    [LeadStage.PROPOSAL]: { color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
+    [LeadStage.NEGOTIATION]: { color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200' },
+    [LeadStage.WON]: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+    [LeadStage.LOST]: { color: 'text-[var(--text-tertiary)]', bg: 'bg-[var(--glass-surface-hover)]', border: 'border-[var(--glass-border)]' },
+    [LeadStage.MANUAL]: { color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200' },
+};
+
+// Added pointer-events-none to icons to prevent them from becoming the event target
+const ICONS = {
+    SEARCH: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+    ADD: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
+    EDIT: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>,
+    TRASH: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
+    PROPOSAL: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+    DUPLICATE: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 00-2-2v-2" /></svg>,
+    FB: <svg className="w-3 h-3 pointer-events-none" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>,
+    ZALO: <svg className="w-3 h-3 pointer-events-none" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S16.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm-1 4v4h-4v2h4v4h2v-4h4v-2h-4V6h-2z" fillRule="evenodd" /></svg>,
+    GLOBE: <svg className="w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    VIEW_LIST: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
+    VIEW_BOARD: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v12a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>,
+    X: <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+    USER: <svg className="w-3 h-3 pointer-events-none shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+};
+
+const getSourceIcon = (source: string) => {
+    switch(source) {
+        case 'Facebook': return ICONS.FB;
+        case 'Zalo': return ICONS.ZALO;
+        default: return ICONS.GLOBE;
+    }
+};
+
+// --- HOOK: DRAGGABLE SCROLL (Desktop) ---
+// Enhanced to accept a dependency trigger (like viewMode) to re-bind listeners
+const useDraggableScroll = (ref: React.RefObject<HTMLDivElement>, trigger?: any) => {
+    useEffect(() => {
+        const node = ref.current;
+        if (!node) return;
+
+        let isDown = false;
+        let startX = 0;
+        let scrollLeft = 0;
+
+        const onMouseDown = (e: MouseEvent) => {
+            // Only allow dragging if not clicking an interactive element
+            if ((e.target as HTMLElement).closest('button, a, input, [role="button"]')) return;
+            
+            isDown = true;
+            node.classList.add('cursor-grabbing');
+            node.classList.remove('cursor-grab');
+            node.classList.remove('snap-x'); // Temporarily disable snap for smooth drag
+            startX = e.pageX - node.offsetLeft;
+            scrollLeft = node.scrollLeft;
+        };
+
+        const onMouseLeave = () => {
+            if (!isDown) return;
+            isDown = false;
+            node.classList.remove('cursor-grabbing');
+            node.classList.add('cursor-grab');
+            node.classList.add('snap-x');
+        };
+
+        const onMouseUp = () => {
+            if (!isDown) return;
+            isDown = false;
+            node.classList.remove('cursor-grabbing');
+            node.classList.add('cursor-grab');
+            node.classList.add('snap-x');
+        };
+
+        const onMouseMove = (e: MouseEvent) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - node.offsetLeft;
+            const walk = (x - startX) * 2; // Increased scroll speed multiplier for better feel
+            node.scrollLeft = scrollLeft - walk;
+        };
+
+        node.addEventListener('mousedown', onMouseDown);
+        node.addEventListener('mouseleave', onMouseLeave);
+        node.addEventListener('mouseup', onMouseUp);
+        node.addEventListener('mousemove', onMouseMove);
+
+        // Initial State
+        node.classList.add('cursor-grab');
+
+        return () => {
+            node.removeEventListener('mousedown', onMouseDown);
+            node.removeEventListener('mouseleave', onMouseLeave);
+            node.removeEventListener('mouseup', onMouseUp);
+            node.removeEventListener('mousemove', onMouseMove);
+            node.classList.remove('cursor-grab', 'cursor-grabbing');
+        };
+    }, [ref, trigger]); // Re-run when trigger (viewMode) changes
+};
+
+// --- PAGINATION COMPONENT ---
+const CursorPaginationControl = memo(({ totalItems, pageSize, hasPrev, hasNext, onPrev, onNext, onPageSizeChange, t }: {
+    totalItems: number; pageSize: number; hasPrev: boolean; hasNext: boolean;
+    onPrev: () => void; onNext: () => void; onPageSizeChange: (s: number) => void; t: any;
+}) => {
+    const pageSizeOptions = [
+        { value: 15, label: '15' },
+        { value: 25, label: '25' },
+        { value: 50, label: '50' },
+        { value: 100, label: '100' },
+    ];
+    const btnCls = "w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-all";
+    return (
+        <>
+            {/* Mobile */}
+            <div className="flex sm:hidden items-center w-fit mx-auto gap-3 px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm">
+                <button onClick={onPrev} disabled={!hasPrev} className={btnCls}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <span className="text-xs font-bold text-[var(--text-primary)] min-w-[56px] text-center">
+                    {totalItems.toLocaleString('vi-VN')} {t('pagination.results')}
+                </span>
+                <button onClick={onNext} disabled={!hasNext} className={btnCls}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+            </div>
+            {/* Desktop */}
+            <div className="hidden sm:flex flex-row justify-between items-center px-4 py-1.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] shadow-sm gap-2">
+                <div className="flex text-xs text-[var(--text-tertiary)] font-medium items-center gap-1">
+                    <span className="font-bold text-[var(--text-primary)]">{totalItems.toLocaleString('vi-VN')}</span>
+                    <span>{t('pagination.results')}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="min-w-[60px] mr-1">
+                        <Dropdown value={pageSize} onChange={(v) => onPageSizeChange(Number(v))} options={pageSizeOptions} className="text-xs" placement="top" />
+                    </div>
+                    <button onClick={onPrev} disabled={!hasPrev} className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                        {t('pagination.prev')}
+                    </button>
+                    <button onClick={onNext} disabled={!hasNext} className="px-3 py-1 rounded-lg border border-[var(--glass-border)] bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold hover:bg-[var(--glass-surface)] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1">
+                        {t('pagination.next')}
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                </div>
+            </div>
+        </>
+    );
+});
+
+// --- TABLE ROW ---
+const LeadRow = memo(({ lead, isSelected, onSelect, onClick, onProposal, onDuplicate, onDelete, canDelete, t, visibleColumns, density, formatDate, users }: any) => {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const btnRef = useRef<HTMLButtonElement>(null);
+    const menuDivRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const close = (e: MouseEvent) => {
+            const t = e.target as Node;
+            if (!btnRef.current?.contains(t) && !menuDivRef.current?.contains(t)) setMenuOpen(false);
+        };
+        const onScroll = () => setMenuOpen(false);
+        document.addEventListener('mousedown', close);
+        window.addEventListener('scroll', onScroll, true);
+        return () => { document.removeEventListener('mousedown', close); window.removeEventListener('scroll', onScroll, true); };
+    }, [menuOpen]);
+
+    const openMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (btnRef.current) {
+            const r = btnRef.current.getBoundingClientRect();
+            const estimatedHeight = 200;
+            const spaceBelow = window.innerHeight - r.bottom;
+            const top = spaceBelow < estimatedHeight + 8 ? Math.max(8, r.top - estimatedHeight - 4) : r.bottom + 4;
+            setMenuPos({ top, right: window.innerWidth - r.right });
+        }
+        setMenuOpen(v => !v);
+    };
+
+    const stickyClass = isSelected 
+        ? 'bg-indigo-50 dark:bg-slate-800' 
+        : 'bg-[var(--bg-surface)] dark:bg-slate-900 group-hover:bg-[var(--glass-surface)] dark:group-hover:bg-slate-800/50';
+
+    const paddingY = DENSITY_STYLES[density as RowDensity] || DENSITY_STYLES.normal;
+    const scoreValue = lead.score?.score || 0;
+    const scoreGrade = lead.score?.grade || 'C';
+    const stageStyle = STAGE_CONFIG[lead.stage as LeadStage] || STAGE_CONFIG[LeadStage.NEW];
+
+    return (
+        <tr 
+            onClick={() => onClick(lead)}
+            className={`group border-b border-slate-50 dark:border-slate-800/50 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : 'hover:bg-[var(--glass-surface)] dark:hover:bg-slate-800/50'}`}
+            tabIndex={0}
+        >
+            {/* Sticky Checkbox (Left 0) */}
+            <td 
+                className={`px-4 ${paddingY} w-[50px] min-w-[50px] max-w-[50px] sticky left-0 z-10 transition-colors border-r border-slate-50/50 box-border ${stickyClass}`}
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-center h-full w-full">
+                    <button 
+                        onClick={() => onSelect(lead.id)}
+                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-[var(--bg-surface)] dark:bg-slate-800 dark:border-slate-600 hover:border-indigo-400'}`}
+                    >
+                        {isSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                    </button>
+                </div>
+            </td>
+            
+            {/* Sticky Name (Left 50px) */}
+            <td className={`px-4 ${paddingY} sticky left-[50px] z-10 transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] ${stickyClass} min-w-[220px]`}>
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[var(--glass-surface-hover)] dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-[var(--text-tertiary)] dark:text-slate-400 border border-[var(--glass-border)] dark:border-slate-700 shrink-0">
+                        {lead.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <div className="font-bold text-[var(--text-primary)] dark:text-slate-200 text-sm whitespace-nowrap">{lead.name}</div>
+                        {lead.tags && lead.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {lead.tags.slice(0, 3).map((tag: string) => (
+                                    <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800 whitespace-nowrap">
+                                        {tag}
+                                    </span>
+                                ))}
+                                {lead.tags.length > 3 && (
+                                    <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                        +{lead.tags.length - 3}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </td>
+
+            {/* Dynamic Columns */}
+            {visibleColumns.has('phone') && (
+                <td className={`px-4 ${paddingY} text-xs text-[var(--text-secondary)] dark:text-slate-400 font-mono`}>
+                    {lead.phone}
+                </td>
+            )}
+
+            {visibleColumns.has('email') && (
+                <td className={`px-4 ${paddingY} text-xs text-[var(--text-secondary)] dark:text-slate-400`}>
+                    {lead.email || '--'}
+                </td>
+            )}
+
+            {visibleColumns.has('address') && (
+                <td className={`px-4 ${paddingY} text-xs text-[var(--text-secondary)] dark:text-slate-400 max-w-[200px] truncate`} title={lead.address}>
+                    {lead.address || '--'}
+                </td>
+            )}
+
+            {visibleColumns.has('stage') && (
+                <td className={`px-4 ${paddingY}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs2 font-bold border uppercase tracking-wider whitespace-nowrap ${stageStyle.bg} ${stageStyle.color} ${stageStyle.border}`}>
+                        {t(`stage.${lead.stage}`)}
+                    </span>
+                </td>
+            )}
+            
+            {visibleColumns.has('source') && (
+                <td className={`px-4 ${paddingY}`}>
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] dark:text-slate-300">
+                        <span className="text-[var(--text-secondary)]">
+                            {getSourceIcon(lead.source)}
+                        </span>
+                        {t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source}
+                    </div>
+                </td>
+            )}
+
+            {visibleColumns.has('score') && (
+                <td className={`px-4 ${paddingY}`}>
+                    <div className="flex items-center gap-2" title={`Grade: ${scoreGrade}`}>
+                        <div className="w-16 h-1.5 bg-[var(--glass-surface-hover)] dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div 
+                                className={`h-full rounded-full ${scoreValue >= 70 ? 'bg-emerald-500' : scoreValue >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} 
+                                style={{ width: `${scoreValue}%` }}
+                            />
+                        </div>
+                        <span className="text-xs2 font-bold text-[var(--text-secondary)] dark:text-slate-300 min-w-[20px]">{scoreValue}</span>
+                    </div>
+                </td>
+            )}
+
+            {visibleColumns.has('owner') && (
+                <td className={`px-4 ${paddingY} text-xs text-[var(--text-tertiary)] dark:text-slate-400 whitespace-nowrap`}>
+                    <div className="flex items-center gap-1.5">
+                        {ICONS.USER}
+                        {lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || t('inbox.unassigned')}
+                    </div>
+                </td>
+            )}
+
+            {visibleColumns.has('createdAt') && (
+                <td className={`px-4 ${paddingY} text-xs text-[var(--text-tertiary)] dark:text-slate-400 whitespace-nowrap font-mono`}>
+                    {formatDate(lead.createdAt)}
+                </td>
+            )}
+
+            {visibleColumns.has('paymentProgress') && (() => {
+                const schedule: any[] = lead.contractPaymentSchedule || [];
+                if (!schedule.length) {
+                    return <td className={`px-4 ${paddingY} text-center text-[var(--text-tertiary)] text-xs`}>—</td>;
+                }
+                const now = new Date();
+                const totalPaidAmt = schedule.filter((i: any) => i.status === 'PAID').reduce((s: number, i: any) => s + (i.paidAmount ?? i.amount ?? 0), 0);
+                const totalScheduledAmt = schedule.reduce((s: number, i: any) => s + (i.amount || 0), 0);
+                const denominator = Number(lead.contractValue) || totalScheduledAmt;
+                const pct = denominator > 0 ? Math.min(100, Math.round((totalPaidAmt / denominator) * 100)) : Math.round((schedule.filter((i: any) => i.status === 'PAID').length / schedule.length) * 100);
+                const overdueCount = schedule.filter((i: any) => i.status === 'OVERDUE' || (i.status === 'PENDING' && i.dueDate && new Date(i.dueDate) < now)).length;
+                const barColor = overdueCount > 0 ? 'bg-rose-500' : pct === 100 ? 'bg-emerald-500' : 'bg-indigo-500';
+                return (
+                    <td className={`px-4 ${paddingY}`}>
+                        <div className="flex flex-col gap-1 min-w-[90px]">
+                            <div className="flex items-center gap-1.5">
+                                <div className="flex-1 h-1.5 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="text-xs font-bold text-[var(--text-secondary)] tabular-nums">{pct}%</span>
+                            </div>
+                            {overdueCount > 0 && (
+                                <span className="text-[10px] text-rose-500 font-semibold">{t('leads.overdue_count', { count: overdueCount })}</span>
+                            )}
+                        </div>
+                    </td>
+                );
+            })()}
+
+            {/* Sticky Actions (Right) — dropdown */}
+            <td className={`px-3 ${paddingY} text-right sticky right-0 z-10 transition-colors shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] ${stickyClass}`} onClick={e => e.stopPropagation()}>
+                <div data-menu-root="1" className="flex justify-end">
+                    <button
+                        ref={btnRef}
+                        onClick={openMenu}
+                        className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] rounded-lg transition-colors"
+                        title={t('common.actions')}
+                    >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                    </button>
+                </div>
+                {menuOpen && createPortal(
+                    <div
+                        ref={menuDivRef}
+                        style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+                        className="w-48 bg-[var(--bg-surface)] rounded-2xl shadow-xl border border-[var(--glass-border)] py-1.5 animate-enter"
+                    >
+                        <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onClick(lead); }}
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            {ICONS.EDIT} <span>{t('common.edit')}</span>
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onProposal(lead); }}
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            {ICONS.PROPOSAL} <span>{t('leads.create_proposal')}</span>
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDuplicate(lead.id); }}
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-[var(--text-secondary)] hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                            {ICONS.DUPLICATE} <span>{t('common.duplicate')}</span>
+                        </button>
+                        {canDelete && <>
+                        <div className="my-1 mx-3 border-t border-[var(--glass-border)]" />
+                        <button onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(lead); }}
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors">
+                            {ICONS.TRASH} <span>{t('common.delete')}</span>
+                        </button>
+                        </>}
+                    </div>,
+                    document.body
+                )}
+            </td>
+        </tr>
+    );
+});
+
+// --- KANBAN BOARD CARD ---
+const KanbanCard = memo(({ lead, onClick, onDelete, onProposal, canDelete, t, formatDate, users }: {
+    lead: Lead;
+    onClick: (l: Lead) => void;
+    onDelete: (l: Lead) => void;
+    onProposal: (l: Lead) => void;
+    canDelete?: boolean;
+    t: any;
+    formatDate: any;
+    users: any[];
+}) => {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+    const menuRef = useRef<HTMLDivElement>(null);
+    const btnRef  = useRef<HTMLButtonElement>(null);
+
+    const openMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+        const estimatedHeight = 160;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const top = spaceBelow < estimatedHeight + 8 ? Math.max(8, rect.top - estimatedHeight - 4) : rect.bottom + 4;
+        setMenuPos({ top, right: window.innerWidth - rect.right });
+        setMenuOpen(v => !v);
+    };
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handler = (e: MouseEvent) => {
+            if (!menuRef.current?.contains(e.target as Node) && !btnRef.current?.contains(e.target as Node)) {
+                setMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [menuOpen]);
+
+    return (
+        <div
+            className="bg-[var(--bg-surface)] px-3 pt-3 pb-3 rounded-xl border border-[var(--glass-border)] shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 mb-3 group relative"
+            onClick={() => onClick(lead)}
+            role="button"
+        >
+            {/* Header row: name + score + 3-dot */}
+            <div className="flex justify-between items-start mb-2.5 gap-1">
+                <h4 className="font-bold text-[var(--text-primary)] text-sm group-hover:text-indigo-600 transition-colors truncate flex-1 leading-snug">{lead.name}</h4>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="text-xs2 font-bold text-[var(--text-secondary)] bg-[var(--glass-surface)] px-1.5 py-0.5 rounded">{lead.score?.score || 0}</div>
+                    {/* 3-dot action button — always visible on mobile (no hover), hidden until hover on desktop */}
+                    <button
+                        ref={btnRef}
+                        onClick={openMenu}
+                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] active:bg-[var(--glass-surface-hover)] transition-all"
+                        title={t('common.actions')}
+                    >
+                        <svg className="w-3.5 h-3.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            {/* Phone + Source */}
+            <div className="flex items-center justify-between mb-2.5">
+                <span className="text-xs text-[var(--text-tertiary)] font-mono truncate flex-1 mr-2">{lead.phone}</span>
+                <span className="inline-flex items-center gap-1 text-xs2 font-bold px-1.5 py-0.5 rounded bg-[var(--glass-surface-hover)] text-[var(--text-tertiary)] shrink-0">
+                    {getSourceIcon(lead.source)}
+                    {t(`source.${lead.source}`) !== `source.${lead.source}` ? t(`source.${lead.source}`) : lead.source}
+                </span>
+            </div>
+
+            {/* Tags */}
+            {lead.tags && lead.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2.5">
+                    {lead.tags.slice(0, 4).map((tag: string) => (
+                        <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 whitespace-nowrap">
+                            {tag}
+                        </span>
+                    ))}
+                    {lead.tags.length > 4 && (
+                        <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-slate-500">
+                            +{lead.tags.length - 4}
+                        </span>
+                    )}
+                </div>
+            )}
+
+            {/* Footer: date + assignee */}
+            <div className="flex justify-between items-center text-xs2 text-[var(--text-secondary)] mt-2.5 pt-2.5 border-t border-[var(--glass-border)]">
+                <span>{formatDate(lead.createdAt)}</span>
+                <span className="font-medium text-[var(--text-tertiary)] flex items-center gap-1">
+                    {ICONS.USER}
+                    {lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || t('inbox.unassigned')}
+                </span>
+            </div>
+
+            {/* Dropdown menu — rendered via portal to escape overflow:hidden ancestors */}
+            {menuOpen && createPortal(
+                <div
+                    ref={menuRef}
+                    onClick={e => e.stopPropagation()}
+                    style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 9999 }}
+                    className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-xl shadow-xl py-1 min-w-[160px]"
+                >
+                    <button
+                        onClick={() => { setMenuOpen(false); onClick(lead); }}
+                        className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
+                    >
+                        <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        {t('common.edit')}
+                    </button>
+                    <button
+                        onClick={() => { setMenuOpen(false); onProposal(lead); }}
+                        className="w-full text-left px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--glass-surface)] flex items-center gap-2"
+                    >
+                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        {t('leads.create_proposal')}
+                    </button>
+                    {canDelete && <>
+                    <div className="border-t border-[var(--glass-border)] my-1" />
+                    <button
+                        onClick={() => { setMenuOpen(false); onDelete(lead); }}
+                        className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        {t('common.delete')}
+                    </button>
+                    </>}
+                </div>,
+                document.body
+            )}
+        </div>
+    );
+});
+
+// -----------------------------------------------------------------------------
+// MAIN COMPONENT
+// -----------------------------------------------------------------------------
+
+export const Leads: React.FC = () => {
+    const { t, formatDate, language } = useTranslation();
+    const { socket } = useSocket();
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+    const [loading, setLoading] = useState(true);
+    const [pageSize, setPageSize] = useState(20);
+    const [totalItems, setTotalItems] = useState(0);
+    const [serverStats, setServerStats] = useState({ total: 0, newCount: 0, wonCount: 0, lostCount: 0, avgScore: 0, winRate: 0 });
+    // Cursor-based pagination state
+    const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [hasNext, setHasNext] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(null);
+    
+    // Refs for drag-to-scroll
+    const boardRef = useRef<HTMLDivElement>(null);
+    const tableRef = useRef<HTMLDivElement>(null);
+    const filtersRef = useRef<HTMLDivElement>(null);
+    const metricsRef = useRef<HTMLDivElement>(null);
+    
+    // View State
+    const [viewMode, setViewMode] = useState<ViewMode>(() => {
+        try { return (localStorage.getItem('sgs_leads_view') as ViewMode) || 'LIST'; } catch { return 'LIST'; }
+    });
+
+    // Hook: Draggable Scroll for Desktop - Added viewMode dependency to ensure listeners attach on view switch
+    useDraggableScroll(boardRef, viewMode);
+    // Apply draggable scroll to filters container as well to match user request for swiping
+    useDraggableScroll(filtersRef, null);
+    useDraggableScroll(tableRef, viewMode);
+    useDraggableScroll(metricsRef, null);
+
+    // Filters
+    const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [stageFilter, setStageFilter] = useState('ALL');
+    const [sourceFilter, setSourceFilter] = useState('ALL');
+
+    // Debounce search
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [search]);
+
+    // Reset cursor to first page AND clear stale selections when filters change
+    useEffect(() => {
+        setCursorStack([]);
+        setCurrentCursor(undefined);
+        setNextCursor(null);
+        setHasNext(false);
+        setSelectedLeads(new Set());
+    }, [debouncedSearch, stageFilter, sourceFilter, pageSize]);
+    
+    // UI State
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [editingLead, setEditingLead] = useState<Lead | null>(null);
+    const [proposalLead, setProposalLead] = useState<Lead | null>(null);
+    const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+    const [bulkDeletePending, setBulkDeletePending] = useState(false);
+    const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
+    const [listings, setListings] = useState<any[]>([]);
+    const [users, setUsers] = useState<{value: string, label: string}[]>([]);
+    const [showColumnSettings, setShowColumnSettings] = useState(false);
+    const colSettingsBtnRef = useRef<HTMLButtonElement>(null);
+    const colSettingsPanelRef = useRef<HTMLDivElement>(null);
+
+    // Deep-link: open lead from notification (e.g. /#/leads?leadId=xxx)
+    const openLeadFromHash = useCallback((hash: string) => {
+        // Support both legacy hash URL (#/leads?leadId=xxx) and clean URL (/leads?leadId=xxx).
+        // After App.tsx converts hash → pathname, ?leadId= moves to window.location.search.
+        const leadIdFromSearch = new URLSearchParams(window.location.search).get('leadId');
+        const match = hash.match(/[?&]leadId=([a-f0-9-]+)/i);
+        const leadId = leadIdFromSearch || match?.[1];
+        if (!leadId) return;
+        db.getLeadById(leadId).then(lead => {
+            if (lead) {
+                setEditingLead(lead);
+                setIsDetailOpen(true);
+            } else {
+                setToast({ msg: t('leads.notif_lead_no_access'), type: 'error' });
+                setTimeout(() => setToast(null), 4000);
+            }
+        }).catch(() => {
+            setToast({ msg: t('leads.notif_lead_no_access'), type: 'error' });
+            setTimeout(() => setToast(null), 4000);
+        });
+    }, [t]);
+
+    useEffect(() => {
+        openLeadFromHash(window.location.hash);
+        const onHashChange = () => openLeadFromHash(window.location.hash);
+        // Handle notification click: Navigation dispatches 'sgs:open-lead' after switching
+        // to this page. The page is kept alive (display:none) so it won't remount; we need
+        // a custom event to open the correct lead when the user is already on this page.
+        const onOpenLead = (e: Event) => {
+            const { leadId } = (e as CustomEvent<{ leadId: string }>).detail;
+            if (!leadId) return;
+            db.getLeadById(leadId).then(lead => {
+                if (lead) {
+                    setEditingLead(lead);
+                    setIsDetailOpen(true);
+                } else {
+                    setToast({ msg: t('leads.notif_lead_no_access'), type: 'error' });
+                    setTimeout(() => setToast(null), 4000);
+                }
+            }).catch(() => {
+                setToast({ msg: t('leads.notif_lead_no_access'), type: 'error' });
+                setTimeout(() => setToast(null), 4000);
+            });
+        };
+        window.addEventListener('hashchange', onHashChange);
+        window.addEventListener('sgs:open-lead', onOpenLead);
+        return () => {
+            window.removeEventListener('hashchange', onHashChange);
+            window.removeEventListener('sgs:open-lead', onOpenLead);
+        };
+    }, [openLeadFromHash, t]);
+
+    // --- VIEW SETTINGS STATE (PERSISTED) ---
+    const [density, setDensity] = useState<RowDensity>(() => {
+        try { return (localStorage.getItem('sgs_leads_density') as RowDensity) || 'compact'; } catch { return 'compact'; }
+    });
+
+    const [visibleColumns, setVisibleColumns] = useState<Set<string>>(() => {
+        try {
+            const saved = localStorage.getItem('sgs_leads_columns');
+            if (saved) {
+                const cols = new Set<string>(JSON.parse(saved));
+                cols.add('paymentProgress');
+                return cols;
+            }
+        } catch {}
+        return new Set(['phone', 'stage', 'source', 'score', 'owner', 'paymentProgress']);
+    });
+
+    // Persistence Effects
+    useEffect(() => { localStorage.setItem('sgs_leads_density', density); }, [density]);
+    useEffect(() => { localStorage.setItem('sgs_leads_columns', JSON.stringify(Array.from(visibleColumns))); }, [visibleColumns]);
+    useEffect(() => { localStorage.setItem('sgs_leads_view', viewMode); }, [viewMode]);
+
+    // Close column settings panel on outside click
+    useEffect(() => {
+        if (!showColumnSettings) return;
+        const close = (e: MouseEvent) => {
+            const t = e.target as Node;
+            if (!colSettingsBtnRef.current?.contains(t) && !colSettingsPanelRef.current?.contains(t)) {
+                setShowColumnSettings(false);
+            }
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, [showColumnSettings]);
+
+    const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    }, []);
+
+    const fetchLeads = useCallback(async () => {
+        setLoading(true);
+        try {
+            const filters: Record<string, any> = { sort: 'updated_at', order: 'desc' };
+            if (debouncedSearch) filters.search = debouncedSearch;
+            if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
+            if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
+
+            if (viewMode === 'BOARD') {
+                // Board: offset-based, fetch up to 500 for full Kanban
+                const res = await db.getLeads(1, 500, filters);
+                setLeads(res.data || []);
+                setTotalItems(res.total ?? 0);
+                if (res.stats) setServerStats(res.stats);
+            } else {
+                // LIST: cursor-based
+                const res = await db.getLeadsCursor(pageSize, currentCursor, filters);
+                setLeads(res.data || []);
+                setNextCursor(res.nextCursor);
+                setHasNext(res.hasNext);
+                setTotalItems(res.total ?? 0);
+                if (res.stats) setServerStats(res.stats);
+            }
+        } catch {
+            notify(t('common.error'), 'error');
+            setLeads([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [currentCursor, pageSize, viewMode, debouncedSearch, stageFilter, sourceFilter, notify, t]);
+
+    useEffect(() => {
+        fetchLeads();
+        db.getCurrentUser().then(setCurrentUser);
+        db.getListings(1, 200, { status: 'AVAILABLE' }).then(res => setListings(res.data));
+        db.getMembers().then(res => {
+            setUsers([
+                { value: '', label: t('inbox.unassigned') },
+                ...res.data.map((u: any) => ({ value: u.id, label: u.name }))
+            ]);
+        });
+    }, [fetchLeads, t]);
+
+    // WebSocket Integration for Real-time Collaboration
+    useEffect(() => {
+        const handleLeadChange = (data?: any) => {
+            fetchLeads();
+            if (data && data.name) {
+                notify(t('common.success') + `: ${data.name}`, 'success');
+            }
+        };
+
+        socket?.on("lead_created", handleLeadChange);
+        socket?.on("lead_updated", handleLeadChange);
+        socket?.on("lead_scored", handleLeadChange);
+
+        return () => {
+            socket?.off("lead_created", handleLeadChange);
+            socket?.off("lead_updated", handleLeadChange);
+            socket?.off("lead_scored", handleLeadChange);
+        };
+    }, [socket, fetchLeads, notify, t]);
+
+    // Cursor navigation handlers
+    const handleCursorNext = useCallback(() => {
+        if (!nextCursor) return;
+        setCursorStack(prev => [...prev, currentCursor ?? '']);
+        setCurrentCursor(nextCursor);
+    }, [nextCursor, currentCursor]);
+
+    const handleCursorPrev = useCallback(() => {
+        setCursorStack(prev => {
+            const stack = [...prev];
+            const prevCursor = stack.pop();
+            setCurrentCursor(prevCursor === '' ? undefined : prevCursor);
+            return stack;
+        });
+    }, []);
+
+    const handleSelectAll = () => {
+        if (selectedLeads.size === leads.length) setSelectedLeads(new Set());
+        else setSelectedLeads(new Set(leads.map(l => l.id)));
+    };
+
+    const handleSelectOne = (id: string) => {
+        const newSet = new Set(selectedLeads);
+        if (newSet.has(id)) newSet.delete(id);
+        else newSet.add(id);
+        setSelectedLeads(newSet);
+    };
+
+    const handleDeleteClick = useCallback((lead: Lead) => {
+        setLeadToDelete(lead);
+    }, []);
+
+    const confirmBulkDelete = useCallback(async () => {
+        try {
+            await Promise.all(Array.from(selectedLeads).map(id => db.deleteLead(id)));
+            notify(t('common.success'), 'success');
+            setSelectedLeads(new Set());
+            fetchLeads();
+        } catch {
+            notify(t('common.error'), 'error');
+        } finally {
+            setBulkDeletePending(false);
+        }
+    }, [selectedLeads, notify, t, fetchLeads]);
+
+    const confirmDelete = useCallback(async () => {
+        if (!leadToDelete) return;
+        try {
+            await db.deleteLead(leadToDelete.id);
+            notify(t('leads.delete_success'), 'success');
+            
+            // Remove from selected leads if it was selected
+            setSelectedLeads(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(leadToDelete.id);
+                return newSet;
+            });
+            
+            // Refresh explicitly to update UI
+            fetchLeads();
+        } catch (e) {
+            notify(t('common.error'), 'error');
+        } finally {
+            setLeadToDelete(null);
+        }
+    }, [leadToDelete, notify, t, fetchLeads]);
+
+    const handleDuplicate = async (id: string) => {
+        try {
+            await db.duplicateLead(id);
+            notify(t('leads.duplicate_success'), 'success');
+            fetchLeads();
+        } catch (e) {
+            notify(t('common.error'), 'error');
+        }
+    };
+
+    const handleEdit = (lead: Lead) => {
+        setEditingLead(lead);
+        setIsDetailOpen(true);
+    };
+
+    const handleUpdateLead = async (updatedLead: Lead) => {
+        try {
+            await db.updateLead(updatedLead.id, updatedLead);
+            notify(t('common.success'), 'success');
+            setIsDetailOpen(false);
+            setEditingLead(null);
+            socket?.emit("lead_updated", updatedLead);
+            fetchLeads();
+        } catch (e: any) {
+            notify(e.message || t('common.error'), 'error');
+        }
+    };
+
+    const stageOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_stages') }, ...Object.values(LeadStage).map(s => ({ value: s, label: t(`stage.${s}`) }))], [t]);
+    const sourceOptions = useMemo(() => [{ value: 'ALL', label: t('leads.all_sources') }, ...LEAD_SOURCES.map(s => ({ value: s, label: t(`source.${s}`) !== `source.${s}` ? t(`source.${s}`) : s }))], [t]);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleExportExcel = async () => {
+        try {
+            setLoading(true);
+            const filters: Record<string, any> = { sort: 'updated_at', order: 'desc' };
+            if (debouncedSearch) filters.search = debouncedSearch;
+            if (stageFilter && stageFilter !== 'ALL') filters.stage = stageFilter;
+            if (sourceFilter && sourceFilter !== 'ALL') filters.source = sourceFilter;
+
+            // Paginate through all pages (server caps at 200/page)
+            const EXPORT_PAGE_SIZE = 200;
+            let allLeads: any[] = [];
+            let exportPage = 1;
+            let totalPages = 1;
+            do {
+                const res = await db.getLeads(exportPage, EXPORT_PAGE_SIZE, filters);
+                allLeads = allLeads.concat(res.data || []);
+                totalPages = res.totalPages || 1;
+                exportPage++;
+            } while (exportPage <= totalPages);
+
+            const ExcelJS = (await import('exceljs')).default;
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Leads');
+
+            worksheet.columns = [
+                { header: 'Tên khách hàng', key: 'name', width: 25 },
+                { header: 'Số điện thoại', key: 'phone', width: 20, style: { numFmt: '@' } },
+                { header: 'Email', key: 'email', width: 30 },
+                { header: 'Địa chỉ', key: 'address', width: 30 },
+                { header: 'Nguồn', key: 'source', width: 15 },
+                { header: 'Trạng thái', key: 'stage', width: 15 },
+                { header: 'Tags', key: 'tags', width: 20 },
+                { header: 'Ghi chú', key: 'notes', width: 30 },
+                { header: 'Điểm số', key: 'score', width: 10 },
+                { header: 'Người phụ trách', key: 'assignedTo', width: 20 },
+                { header: 'Ngày tạo', key: 'createdAt', width: 15 },
+            ];
+
+            allLeads.forEach(lead => {
+                const row = worksheet.addRow({
+                    name: lead.name,
+                    phone: lead.phone,
+                    email: lead.email || '',
+                    address: lead.address || '',
+                    source: lead.source,
+                    stage: t(`stage.${lead.stage}`),
+                    tags: Array.isArray(lead.tags) ? lead.tags.join(', ') : (lead.tags || ''),
+                    notes: lead.notes || '',
+                    score: lead.score?.score || 0,
+                    assignedTo: lead.assignedToName || users.find(u => u.value === lead.assignedTo)?.label || lead.assignedTo || '',
+                    createdAt: lead.createdAt ? formatDate(lead.createdAt) : '',
+                });
+                // Force phone cell to text so Excel doesn't strip leading zeros
+                const phoneCell = row.getCell('phone');
+                phoneCell.numFmt = '@';
+                phoneCell.value = String(lead.phone || '');
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'DanhSachKhachHang.xlsx';
+            a.click();
+            URL.revokeObjectURL(url);
+            notify(t('leads.export_success_count', { count: allLeads.length }), 'success');
+        } catch {
+            notify(t('common.error'), 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        // Clear input early so the same file can be re-selected if needed
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        const normalizeVNPhone = (raw: string): string => {
+            // Strip all non-digit chars (spaces, dashes, parens, +)
+            let p = raw.replace(/[^0-9]/g, '');
+            // Convert +84 / 84 country-code prefix → leading 0
+            if (p.startsWith('84') && p.length === 11) p = '0' + p.slice(2);
+            // Handle 9-digit numbers (leading 0 dropped)
+            if (!p.startsWith('0') && p.length === 9) p = '0' + p;
+            return p;
+        };
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const arrayBuffer = evt.target?.result;
+            if (!arrayBuffer) return;
+
+            setLoading(true);
+            try {
+                const ExcelJS = (await import('exceljs')).default;
+                const wb = new ExcelJS.Workbook();
+                await wb.xlsx.load(arrayBuffer as ArrayBuffer);
+                const ws = wb.worksheets[0];
+
+                const headers: string[] = [];
+                const data: Record<string, string>[] = [];
+                ws.eachRow((row, rowNumber) => {
+                    if (rowNumber === 1) {
+                        row.eachCell((cell) => { headers.push(String(cell.value ?? '')); });
+                    } else {
+                        const rowData: Record<string, string> = {};
+                        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                            rowData[headers[colNumber - 1]] = String(cell.value ?? '');
+                        });
+                        data.push(rowData);
+                    }
+                });
+
+                const MAX_IMPORT_ROWS = 1000;
+                if (data.length > MAX_IMPORT_ROWS) {
+                    notify(t('leads.import_too_many_rows', { max: MAX_IMPORT_ROWS }), 'error');
+                    return;
+                }
+
+                let successCount = 0;
+                let skipCount = 0;
+                let errorCount = 0;
+
+                for (const row of data as any[]) {
+                    const rawPhone = row['Số điện thoại'] ? String(row['Số điện thoại']) : '';
+                    const phone = normalizeVNPhone(rawPhone);
+
+                    if (!phone) {
+                        skipCount++;
+                        continue;
+                    }
+
+                    const newLead: Partial<Lead> = {
+                        name: row['Tên khách hàng'] || t('leads.new_customer'),
+                        phone,
+                        email: row['Email'] || '',
+                        address: row['Địa chỉ'] || '',
+                        source: row['Nguồn'] || 'Other',
+                        stage: LeadStage.NEW,
+                        tags: row['Tags'] ? row['Tags'].split(',').map((tag: string) => tag.trim()).filter(Boolean) : [],
+                        notes: row['Ghi chú'] || '',
+                    };
+
+                    try {
+                        await db.createLead(newLead);
+                        successCount++;
+                    } catch (err: any) {
+                        if (err?.status === 409 || err?.message?.includes('DUPLICATE')) {
+                            skipCount++;
+                        } else {
+                            errorCount++;
+                        }
+                    }
+                }
+
+                if (successCount > 0) fetchLeads();
+                const msg = t('leads.import_result', { success: successCount, skip: skipCount }) + (errorCount > 0 ? t('leads.import_result_errors', { error: errorCount }) : '');
+                notify(msg, successCount > 0 ? 'success' : 'error');
+            } finally {
+                setLoading(false);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    const handleSimulateInbound = async () => {
+        setLoading(true);
+        try {
+            const sources = ['Facebook', 'Zalo', 'Website'];
+            const randomSource = sources[Math.floor(Math.random() * sources.length)];
+            const randomBudget = Math.floor(Math.random() * 5000) * 1000000 + 1000000000; // 1B - 6B
+            
+            const newLead = {
+                name: `${t('leads.customer_from')} ${randomSource} ${Math.floor(Math.random() * 1000)}`,
+                phone: `090${Math.floor(1000000 + Math.random() * 9000000)}`,
+                email: `khachhang${Math.floor(Math.random() * 1000)}@gmail.com`,
+                source: randomSource,
+                stage: LeadStage.NEW,
+                notes: `${t('leads.interested_budget')} ${randomBudget.toLocaleString('vi-VN')} VND`
+            };
+            
+            const createdLead = await db.createLead(newLead);
+            notify(t('leads.new_lead_received', { source: randomSource }), 'success');
+            socket?.emit("lead_created", createdLead);
+            aiService.scoreLead(createdLead, undefined, undefined, language).catch(() => {});
+            fetchLeads();
+        } catch (e) {
+            notify(t('common.error'), 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Group leads for Board View
+    const groupedLeads = useMemo(() => {
+        const groups: Record<string, Lead[]> = {};
+        Object.values(LeadStage).forEach(stage => groups[stage] = []);
+        leads.forEach(lead => {
+            if (groups[lead.stage]) groups[lead.stage].push(lead);
+        });
+        return groups;
+    }, [leads]);
+
+    // Calculate Metrics
+    const metrics = serverStats;
+    const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
+    const isScopedView = currentUser && RESTRICTED_ROLES.includes(currentUser.role);
+    const canDelete = currentUser && ['ADMIN', 'PARTNER_ADMIN'].includes(currentUser.role);
+
+    return (
+        <>
+        <div className="h-full flex flex-col relative">
+
+            {/* Header & Controls */}
+            <div className="sticky top-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm px-3 py-2 md:px-5 md:py-2.5 transition-all flex-none">
+                <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                        <div className="relative flex-1 md:w-64 group">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[var(--text-secondary)] group-focus-within:text-indigo-500 transition-colors">
+                                {ICONS.SEARCH}
+                            </div>
+                            <input 
+                                value={search} 
+                                onChange={e => setSearch(e.target.value)} 
+                                className="w-full pl-10 pr-10 py-2 min-h-[40px] bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-[var(--bg-surface)] transition-all outline-none placeholder:text-[var(--text-muted)]" 
+                                placeholder={t('leads.search_placeholder')} 
+                            />
+                            {search && (
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+                                    <button 
+                                        onClick={() => setSearch('')}
+                                        className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors p-1.5 rounded-full hover:bg-slate-200 flex items-center justify-center"
+                                        title={t('common.clear_search')}
+                                    >
+                                        {ICONS.X}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <button onClick={() => setIsCreateModalOpen(true)} className="md:hidden shrink-0 w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg active:scale-95">{ICONS.ADD}</button>
+                    </div>
+
+                    <div 
+                        ref={filtersRef}
+                        className="flex gap-2 overflow-x-auto pb-2 px-1 -mx-1 no-scrollbar items-center scroll-smooth cursor-grab active:cursor-grabbing"
+                    >
+                        <div className="min-w-[140px] shrink-0"><Dropdown value={stageFilter} onChange={(val) => setStageFilter(val as string)} options={stageOptions} className="text-xs" /></div>
+                        <div className="min-w-[140px] shrink-0"><Dropdown value={sourceFilter} onChange={(val) => setSourceFilter(val as string)} options={sourceOptions} className="text-xs" /></div>
+                        
+                        {/* View Switcher */}
+                        <div className="flex bg-[var(--glass-surface-hover)] p-1 rounded-xl shrink-0">
+                            <button 
+                                onClick={() => setViewMode('LIST')} 
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'LIST' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
+                                title={t('leads.view_list')}
+                            >
+                                {ICONS.VIEW_LIST}
+                            </button>
+                            <button 
+                                onClick={() => setViewMode('BOARD')} 
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'BOARD' ? 'bg-[var(--bg-surface)] text-indigo-600 shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'}`}
+                                title={t('leads.view_board')}
+                            >
+                                {ICONS.VIEW_BOARD}
+                            </button>
+                        </div>
+
+                        {/* Active filter chip */}
+                        {(stageFilter !== 'ALL' || sourceFilter !== 'ALL') && (
+                            <button
+                                onClick={() => { setStageFilter('ALL'); setSourceFilter('ALL'); }}
+                                className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-orange-50 border border-orange-200 text-orange-700 font-bold rounded-xl text-xs transition-all whitespace-nowrap hover:bg-orange-100 active:scale-95"
+                                title={t('leads.reset_filters')}
+                            >
+                                <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse shrink-0" />
+                                {t('leads.reset_filters')}
+                                <span className="ml-0.5 opacity-70">×</span>
+                            </button>
+                        )}
+
+                        {/* Column settings button (LIST only) */}
+                        {viewMode === 'LIST' && (
+                            <div className="relative shrink-0 hidden md:block">
+                                <button
+                                    ref={colSettingsBtnRef}
+                                    onClick={() => setShowColumnSettings(v => !v)}
+                                    className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-bold transition-all ${showColumnSettings ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-[var(--bg-surface)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-surface)]'}`}
+                                    title={t('leads.col_settings_title')}
+                                >
+                                    <svg className="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                                </button>
+                                {showColumnSettings && createPortal(
+                                    <div
+                                        ref={colSettingsPanelRef}
+                                        style={{
+                                            position: 'fixed',
+                                            top: (colSettingsBtnRef.current?.getBoundingClientRect().bottom ?? 0) + 6,
+                                            right: window.innerWidth - (colSettingsBtnRef.current?.getBoundingClientRect().right ?? 0),
+                                            zIndex: 9999,
+                                        }}
+                                        className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-2xl p-4 w-64"
+                                    >
+                                        <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider mb-3">{t('leads.col_visible_title')}</p>
+                                        <div className="space-y-1.5 mb-4">
+                                            {[
+                                                { key: 'phone', label: t('leads.col_phone') },
+                                                { key: 'email', label: t('leads.col_email') },
+                                                { key: 'address', label: t('leads.col_address') },
+                                                { key: 'stage', label: t('leads.stage') },
+                                                { key: 'source', label: t('leads.source') },
+                                                { key: 'score', label: t('leads.score') },
+                                                { key: 'owner', label: t('common.owner') },
+                                                { key: 'createdAt', label: t('leads.col_created') },
+                                                { key: 'paymentProgress', label: t('leads.col_payment_progress') },
+                                            ].map(col => (
+                                                <label key={col.key} className="flex items-center gap-2 cursor-pointer py-1 px-2 rounded-lg hover:bg-[var(--glass-surface)] transition-colors group">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={visibleColumns.has(col.key)}
+                                                        onChange={() => {
+                                                            setVisibleColumns(prev => {
+                                                                const next = new Set(prev);
+                                                                if (next.has(col.key)) next.delete(col.key);
+                                                                else next.add(col.key);
+                                                                return next;
+                                                            });
+                                                        }}
+                                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                    />
+                                                    <span className="text-xs font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{col.label}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <div className="border-t border-[var(--glass-border)] pt-3">
+                                            <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider mb-2">{t('leads.density_title')}</p>
+                                            <div className="flex gap-2">
+                                                {(['compact', 'normal', 'relaxed'] as RowDensity[]).map(d => (
+                                                    <button
+                                                        key={d}
+                                                        onClick={() => setDensity(d)}
+                                                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${density === d ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:bg-[var(--glass-surface-hover)]'}`}
+                                                    >
+                                                        {d === 'compact' ? t('leads.density_compact') : d === 'normal' ? t('leads.density_normal') : t('leads.density_relaxed')}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>,
+                                    document.body
+                                )}
+                            </div>
+                        )}
+
+                        <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
+
+                        {selectedLeads.size > 0 && canDelete && (
+                            <button 
+                                onClick={() => setBulkDeletePending(true)}
+                                className="hidden md:flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-200 text-rose-700 font-bold rounded-xl text-xs shadow-sm hover:bg-rose-100 transition-all whitespace-nowrap active:scale-95 shrink-0"
+                            >
+                                {ICONS.TRASH} {t('common.delete')} ({selectedLeads.size})
+                            </button>
+                        )}
+                        
+                        <input 
+                            type="file" 
+                            accept=".xlsx, .xls" 
+                            ref={fileInputRef} 
+                            onChange={handleImportExcel} 
+                            className="hidden" 
+                        />
+                        <button 
+                            onClick={() => fileInputRef.current?.click()} 
+                            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
+                            title={t('leads.import_excel')}
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                            <span className="hidden sm:inline">{t('leads.import_excel')}</span>
+                        </button>
+                        <button 
+                            onClick={handleExportExcel} 
+                            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] border border-[var(--glass-border)] text-[var(--text-secondary)] font-bold rounded-xl text-xs shadow-sm hover:bg-[var(--glass-surface)] transition-all whitespace-nowrap active:scale-95 shrink-0"
+                            title={t('leads.export_excel')}
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            <span className="hidden sm:inline">{t('leads.export_excel')}</span>
+                        </button>
+
+                        <button onClick={() => setIsCreateModalOpen(true)} className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all whitespace-nowrap active:scale-95 shrink-0">
+                            {ICONS.ADD} {t('common.add_new')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Metrics Bar — compact */}
+            <div ref={metricsRef} className="px-3 md:px-5 py-1.5 flex gap-1 md:gap-0 items-center border-b border-[var(--glass-border)] bg-[var(--glass-surface)]/60 flex-none overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing divide-x divide-[var(--glass-border)]">
+                {/* Scope badge — shown when the user sees their own data only */}
+                {isScopedView && (
+                    <div className="flex items-center pr-2.5 md:pr-3 shrink-0">
+                        <span className="text-xs2 font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1 whitespace-nowrap">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            {t('leads.scope_mine')}
+                        </span>
+                    </div>
+                )}
+                <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0 first:pl-0">
+                    <div className="p-1 bg-blue-50 text-blue-500 rounded-md shrink-0">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    </div>
+                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.total_leads')}</span>
+                    <span className="text-sm font-black text-[var(--text-primary)]">{metrics.total}</span>
+                </div>
+                <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
+                    <div className="p-1 bg-indigo-50 text-indigo-500 rounded-md shrink-0">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    </div>
+                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.new_leads_tooltip')}>{t('leads.new_leads')}</span>
+                    <span className="text-sm font-black text-indigo-600" title={t('leads.new_leads_tooltip')}>{metrics.newCount}</span>
+                </div>
+                <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
+                    <div className="p-1 bg-emerald-50 text-emerald-500 rounded-md shrink-0">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap" title={t('leads.win_rate_tooltip')}>{t('leads.win_rate')}</span>
+                    <span className="text-sm font-black text-emerald-600" title={`${metrics.wonCount} / ${metrics.wonCount + metrics.lostCount}`}>{metrics.winRate}%</span>
+                </div>
+                <div className="flex items-center gap-2 px-2.5 md:px-3 shrink-0">
+                    <div className="p-1 bg-amber-50 text-amber-500 rounded-md shrink-0">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                    </div>
+                    <span className="text-xs3 text-[var(--text-tertiary)] whitespace-nowrap">{t('leads.avg_score')}</span>
+                    <span className="text-sm font-black text-amber-600">{metrics.avgScore}</span>
+                    <div className="hidden md:flex w-14 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${metrics.avgScore}%` }} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 overflow-hidden bg-[var(--bg-surface)] min-h-0 relative flex flex-col">
+                
+                {/* Scrollable Container */}
+                <div className="flex-1 overflow-auto p-2 md:p-3 no-scrollbar min-h-0">
+                    {/* VIEW MODE: LIST (TABLE) - Desktop Only */}
+                    {viewMode === 'LIST' && (
+                        <div className="hidden md:flex flex-col bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden h-full">
+                            <div ref={tableRef} className="overflow-auto no-scrollbar flex-1 min-w-0 min-h-0 w-full cursor-grab active:cursor-grabbing">
+                                <table className="w-full text-left border-collapse relative">
+                                    <thead className="bg-[var(--glass-surface)] border-b border-[var(--glass-border)] sticky top-0 z-20 shadow-sm">
+                                        <tr>
+                                            <th className={`px-4 py-3 w-[50px] border-r border-[var(--glass-border)] sticky left-0 bg-[var(--glass-surface)] z-30`}>
+                                                <div className="flex items-center justify-center">
+                                                    <input type="checkbox" checked={selectedLeads.size === leads.length && leads.length > 0} onChange={handleSelectAll} className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                                                </div>
+                                            </th>
+                                            <th className={`px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)] sticky left-[50px] z-30`}>{t('leads.name')}</th>
+                                            {visibleColumns.has('phone') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_phone')}</th>}
+                                            {visibleColumns.has('email') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_email')}</th>}
+                                            {visibleColumns.has('address') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_address')}</th>}
+                                            {visibleColumns.has('stage') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.stage')}</th>}
+                                            {visibleColumns.has('source') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.source')}</th>}
+                                            {visibleColumns.has('score') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.score')}</th>}
+                                            {visibleColumns.has('owner') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('common.owner')}</th>}
+                                            {visibleColumns.has('createdAt') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_created')}</th>}
+                                            {visibleColumns.has('paymentProgress') && <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider bg-[var(--glass-surface)]">{t('leads.col_payment_progress')}</th>}
+                                            <th className="px-4 py-3 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider text-right sticky right-0 bg-[var(--glass-surface)] z-30">{t('common.actions')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {loading ? (
+                                            /* Skeleton rows while loading */
+                                            Array.from({ length: 8 }).map((_, i) => (
+                                                <tr key={i} className="border-b border-slate-50">
+                                                    <td className="px-4 py-3 w-[50px] sticky left-0 bg-[var(--bg-surface)]"><div className="w-4 h-4 rounded bg-slate-100 animate-pulse mx-auto" /></td>
+                                                    <td className="px-4 py-3 sticky left-[50px] bg-[var(--bg-surface)] min-w-[220px]">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse shrink-0" />
+                                                            <div className="space-y-1.5 flex-1">
+                                                                <div className="h-3 bg-slate-100 animate-pulse rounded-full w-3/4" />
+                                                                <div className="h-2.5 bg-slate-100 animate-pulse rounded-full w-1/2" />
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    {visibleColumns.has('phone') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-24" /></td>}
+                                                    {visibleColumns.has('email') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-32" /></td>}
+                                                    {visibleColumns.has('address') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-28" /></td>}
+                                                    {visibleColumns.has('stage') && <td className="px-4 py-3"><div className="h-5 bg-slate-100 animate-pulse rounded-full w-20" /></td>}
+                                                    {visibleColumns.has('source') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-16" /></td>}
+                                                    {visibleColumns.has('score') && <td className="px-4 py-3"><div className="h-2 bg-slate-100 animate-pulse rounded-full w-20" /></td>}
+                                                    {visibleColumns.has('owner') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-20" /></td>}
+                                                    {visibleColumns.has('createdAt') && <td className="px-4 py-3"><div className="h-3 bg-slate-100 animate-pulse rounded-full w-16" /></td>}
+                                                    <td className="px-4 py-3 sticky right-0 bg-[var(--bg-surface)]"><div className="w-6 h-6 rounded-lg bg-slate-100 animate-pulse ml-auto" /></td>
+                                                </tr>
+                                            ))
+                                        ) : leads?.length > 0 ? (
+                                            leads.map(lead => (
+                                                <LeadRow
+                                                    key={lead.id}
+                                                    lead={lead}
+                                                    isSelected={selectedLeads.has(lead.id)}
+                                                    onSelect={handleSelectOne}
+                                                    onClick={handleEdit}
+                                                    onProposal={() => setProposalLead(lead)}
+                                                    onDuplicate={handleDuplicate}
+                                                    onDelete={handleDeleteClick}
+                                                    canDelete={canDelete}
+                                                    t={t}
+                                                    visibleColumns={visibleColumns}
+                                                    density={density}
+                                                    formatDate={formatDate}
+                                                    users={users}
+                                                />
+                                            ))
+                                        ) : (
+                                            /* Empty state */
+                                            <tr>
+                                                <td colSpan={12} className="py-20 text-center">
+                                                    <div className="flex flex-col items-center gap-4">
+                                                        {debouncedSearch || stageFilter !== 'ALL' || sourceFilter !== 'ALL' ? (
+                                                            <>
+                                                                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-[var(--text-primary)] text-sm">{t('common.no_results')}</p>
+                                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint')}</p>
+                                                                </div>
+                                                                <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                                                    {t('leads.reset_filters')}
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-[var(--text-primary)] text-sm">{t('leads.empty_title')}</p>
+                                                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_hint')}</p>
+                                                                </div>
+                                                                <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                                                    {ICONS.ADD} {t('common.add_new')}
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* VIEW MODE: BOARD (KANBAN) - Show on Mobile and Desktop */}
+                    {viewMode === 'BOARD' && (
+                        <div ref={boardRef} className="flex h-full overflow-x-auto gap-4 px-4 pb-4 no-scrollbar snap-x snap-mandatory overscroll-x-contain cursor-grab active:cursor-grabbing scroll-px-4">
+                            {Object.values(LeadStage).map(stage => {
+                                const style = STAGE_CONFIG[stage];
+                                return (
+                                    <div key={stage} className="min-w-[85vw] md:min-w-[320px] w-[85vw] md:w-[320px] flex-shrink-0 flex flex-col h-full bg-[var(--glass-surface)] rounded-2xl border border-[var(--glass-border)] snap-center">
+                                        <div className={`p-3 border-b border-[var(--glass-border)] flex justify-between items-center rounded-t-2xl ${style.bg}`}>
+                                            <h3 className={`text-xs font-bold uppercase tracking-wider ${style.color}`}>{t(`stage.${stage}`)}</h3>
+                                            <span className="text-xs2 font-bold bg-[var(--bg-surface)] px-2 py-0.5 rounded-full text-[var(--text-tertiary)] shadow-sm border border-[var(--glass-border)]">{groupedLeads[stage]?.length || 0}</span>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto p-2 no-scrollbar min-h-0">
+                                            {groupedLeads[stage]?.map(lead => (
+                                                <KanbanCard key={lead.id} lead={lead} onClick={handleEdit} onDelete={handleDeleteClick} onProposal={(l) => setProposalLead(l)} canDelete={canDelete} t={t} formatDate={formatDate} users={users} />
+                                            ))}
+                                            {(!groupedLeads[stage] || groupedLeads[stage].length === 0) && !loading && (
+                                                <div className="flex flex-col items-center justify-center h-28 gap-2 text-center">
+                                                    <div className={`w-9 h-9 rounded-xl ${style.bg} flex items-center justify-center`}>
+                                                        <svg className={`w-5 h-5 ${style.color} opacity-50`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                                                    </div>
+                                                    <p className="text-xs text-[var(--text-tertiary)]">{t('leads.kanban_empty')}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Mobile Cards (Only for LIST view on Mobile) */}
+                    {viewMode === 'LIST' && (
+                        <div className="md:hidden space-y-3 pb-6 px-2">
+                            {leads?.map(lead => (
+                                <div 
+                                    key={lead.id} 
+                                    className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--glass-border)] shadow-sm active:scale-[0.98] transition-all hover:border-indigo-100" 
+                                    onClick={() => handleEdit(lead)}
+                                >
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-[var(--glass-surface)] flex items-center justify-center text-sm font-bold text-[var(--text-tertiary)] border border-[var(--glass-border)]">
+                                                {lead.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-[var(--text-primary)] text-sm">{lead.name}</div>
+                                                <div className="text-xs2 text-[var(--text-secondary)] font-medium flex items-center gap-1">
+                                                    {getSourceIcon(lead.source)}
+                                                    {lead.source} • {formatDate(lead.createdAt)}
+                                                </div>
+                                                {lead.tags && lead.tags.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {lead.tags.slice(0, 3).map((tag: string) => (
+                                                            <span key={tag} className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                                                {tag}
+                                                            </span>
+                                                        ))}
+                                                        {lead.tags.length > 3 && (
+                                                            <span className="px-1.5 py-0.5 text-2xs font-bold rounded-full bg-slate-100 text-slate-500">+{lead.tags.length - 3}</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className={`text-2xs px-2 py-0.5 rounded-full font-bold uppercase border ${STAGE_CONFIG[lead.stage].bg} ${STAGE_CONFIG[lead.stage].color} ${STAGE_CONFIG[lead.stage].border}`}>
+                                            {t(`stage.${lead.stage}`)}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 mb-3 py-2.5 border-t border-b border-[var(--glass-border)]">
+                                        <div>
+                                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-0.5">{t('leads.col_phone')}</div>
+                                            <div className="text-xs font-bold text-[var(--text-primary)] font-mono">{lead.phone}</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-2xs font-bold text-[var(--text-tertiary)] uppercase mb-0.5">{t('leads.score')}</div>
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <div className="w-12 h-1.5 bg-[var(--glass-surface-hover)] rounded-full overflow-hidden">
+                                                    <div className={`h-full rounded-full ${lead.score?.score >= 70 ? 'bg-emerald-500' : lead.score?.score >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${lead.score?.score || 0}%` }} />
+                                                </div>
+                                                <span className="text-xs font-bold text-[var(--text-primary)]">{lead.score?.score || 0}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setProposalLead(lead); }} 
+                                            className="flex-1 min-h-[40px] py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 active:bg-indigo-100 transition-colors"
+                                        >
+                                            {ICONS.PROPOSAL} {t('leads.create_proposal')}
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteClick(lead); }} 
+                                            className="w-10 h-10 flex items-center justify-center text-rose-400 bg-rose-50 rounded-xl active:bg-rose-100 transition-colors shrink-0"
+                                        >
+                                            {ICONS.TRASH}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {leads?.length === 0 && !loading && (
+                                <div className="flex flex-col items-center gap-4 py-16 px-4 text-center bg-[var(--glass-surface)] rounded-2xl border border-dashed border-[var(--glass-border)]">
+                                    {debouncedSearch || stageFilter !== 'ALL' || sourceFilter !== 'ALL' ? (
+                                        <>
+                                            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-sm text-[var(--text-primary)]">{t('common.no_results')}</p>
+                                                <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_filter_hint')}</p>
+                                            </div>
+                                            <button onClick={() => { setSearch(''); setStageFilter('ALL'); setSourceFilter('ALL'); }} className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors">
+                                                {t('leads.reset_filters')}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400">
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-sm text-[var(--text-primary)]">{t('leads.empty_title')}</p>
+                                                <p className="text-xs text-[var(--text-tertiary)] mt-1">{t('leads.empty_hint')}</p>
+                                            </div>
+                                            <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-slate-700 transition-colors flex items-center gap-2">
+                                                {ICONS.ADD} {t('common.add_new')}
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Pagination Footer - only shown in LIST view */}
+                {viewMode === 'LIST' && (
+                    <CursorPaginationControl
+                        totalItems={totalItems}
+                        pageSize={pageSize}
+                        hasPrev={cursorStack.length > 0}
+                        hasNext={hasNext}
+                        onPrev={handleCursorPrev}
+                        onNext={handleCursorNext}
+                        onPageSizeChange={(s) => setPageSize(s)}
+                        t={t}
+                    />
+                )}
+            </div>
+
+            {/* Modals */}
+            {isCreateModalOpen && <CreateLeadModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => { setIsCreateModalOpen(false); setCursorStack([]); setCurrentCursor(undefined); fetchLeads(); notify(t('common.success'), 'success'); }} />}
+            
+            {proposalLead && (
+                <FlashProposalModal 
+                    lead={proposalLead} 
+                    listings={listings} 
+                    onClose={() => setProposalLead(null)} 
+                    onSuccess={() => { setProposalLead(null); notify(t('proposal.btn_create') + ' ' + t('common.success'), 'success'); }} 
+                />
+            )}
+
+            {isDetailOpen && editingLead && (
+                <LeadDetail 
+                    lead={editingLead} 
+                    onClose={() => { setIsDetailOpen(false); setEditingLead(null); }} 
+                    onUpdate={handleUpdateLead} 
+                    isModal={true} 
+                />
+            )}
+
+            <ConfirmModal 
+                isOpen={!!leadToDelete}
+                title={t('common.delete')}
+                message={t('leads.delete_confirm_msg', { name: leadToDelete?.name || '' })}
+                confirmLabel={t('common.delete')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={confirmDelete}
+                onCancel={() => setLeadToDelete(null)}
+                variant="danger"
+            />
+            <ConfirmModal
+                isOpen={bulkDeletePending}
+                title={t('common.delete')}
+                message={t('leads.bulk_delete_confirm', { count: selectedLeads.size })}
+                confirmLabel={t('common.delete')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={confirmBulkDelete}
+                onCancel={() => setBulkDeletePending(false)}
+                variant="danger"
+            />
+        </div>
+        {createPortal(
+            toast ? (
+                <div className={`fixed bottom-6 right-6 z-[100] px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-enter border ${toast.type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-white' : 'bg-rose-900/90 border-rose-500 text-white'}`}>
+                    <span className="font-bold text-sm">{toast.msg || (toast.type === 'success' ? t('common.success') : t('common.error'))}</span>
+                </div>
+            ) : null,
+            document.body
+        )}
+        </>
+    );
+};
+
+export default Leads;

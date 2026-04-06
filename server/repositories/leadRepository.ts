@@ -1,0 +1,507 @@
+import { PoolClient } from 'pg';
+import { BaseRepository, PaginatedResult, PaginationParams } from './baseRepository';
+
+export interface LeadFilters {
+  stage?: string;
+  stage_in?: string[];
+  assignedTo?: string;
+  source?: string;
+  search?: string;
+  tags?: string[];
+  slaBreached?: boolean;
+  score_gte?: number;
+  score_lte?: number;
+  createdAt_gte?: string;
+  createdAt_lte?: string;
+  sort?: string;
+  order?: 'asc' | 'desc';
+}
+
+export class LeadRepository extends BaseRepository {
+  constructor() {
+    super('leads');
+  }
+
+  async findLeads(
+    tenantId: string,
+    pagination: PaginationParams,
+    filters?: LeadFilters,
+    userId?: string,
+    userRole?: string
+  ): Promise<PaginatedResult<any>> {
+    return this.withTenant(tenantId, async (client) => {
+      const conditions: string[] = [];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
+        conditions.push(`l.assigned_to = $${paramIndex++}`);
+        values.push(userId);
+      }
+
+      if (filters?.stage) {
+        conditions.push(`l.stage = $${paramIndex++}`);
+        values.push(filters.stage);
+      }
+      if (filters?.stage_in && filters.stage_in.length > 0) {
+        const placeholders = filters.stage_in.map((_, i) => `$${paramIndex + i}`).join(', ');
+        conditions.push(`l.stage IN (${placeholders})`);
+        values.push(...filters.stage_in);
+        paramIndex += filters.stage_in.length;
+      }
+      if (filters?.assignedTo) {
+        conditions.push(`l.assigned_to = $${paramIndex++}`);
+        values.push(filters.assignedTo);
+      }
+      if (filters?.source) {
+        conditions.push(`l.source = $${paramIndex++}`);
+        values.push(filters.source);
+      }
+      if (filters?.slaBreached !== undefined) {
+        conditions.push(`l.sla_breached = $${paramIndex++}`);
+        values.push(filters.slaBreached);
+      }
+      if (filters?.search) {
+        conditions.push(`(l.name ILIKE $${paramIndex} OR l.phone ILIKE $${paramIndex} OR l.email ILIKE $${paramIndex})`);
+        values.push(`%${filters.search}%`);
+        paramIndex++;
+      }
+      if (filters?.createdAt_gte) {
+        conditions.push(`l.created_at >= $${paramIndex++}`);
+        values.push(filters.createdAt_gte);
+      }
+      if (filters?.createdAt_lte) {
+        conditions.push(`l.created_at <= $${paramIndex++}`);
+        values.push(filters.createdAt_lte);
+      }
+      if (filters?.score_gte !== undefined) {
+        conditions.push(`(l.score->>'score')::numeric >= $${paramIndex++}`);
+        values.push(filters.score_gte);
+      }
+      if (filters?.score_lte !== undefined) {
+        conditions.push(`(l.score->>'score')::numeric <= $${paramIndex++}`);
+        values.push(filters.score_lte);
+      }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int as total FROM leads l ${whereClause}`,
+        values
+      );
+      const total = countResult.rows[0].total;
+
+      const RESTRICTED_ROLES = ['SALES', 'MARKETING', 'VIEWER'];
+      const isRestricted = RESTRICTED_ROLES.includes(userRole || '') && !!userId;
+      const statsResult = await client.query(
+        `SELECT
+          COUNT(*)::int                                                                           AS total,
+          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::int                 AS new_count,
+          COUNT(*) FILTER (WHERE stage = 'WON')::int                                            AS won_count,
+          COUNT(*) FILTER (WHERE stage = 'LOST')::int                                           AS lost_count,
+          COALESCE(ROUND(AVG((score->>'score')::numeric)), 0)::int                              AS avg_score
+         FROM leads
+         WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           ${isRestricted ? 'AND assigned_to = $1' : ''}`,
+        isRestricted ? [userId] : []
+      );
+      const sr = statsResult.rows[0];
+      const globalTotal = sr.total || 0;
+      const wonCount = sr.won_count || 0;
+      const lostCount = sr.lost_count || 0;
+      const decidedCount = wonCount + lostCount;
+      const stats = {
+        total:    globalTotal,
+        newCount: sr.new_count || 0,
+        wonCount,
+        lostCount,
+        avgScore: sr.avg_score || 0,
+        winRate:  decidedCount > 0 ? Math.round((wonCount / decidedCount) * 100) : 0,
+      };
+
+      const page = pagination.page;
+      const pageSize = pagination.pageSize;
+      const offset = (page - 1) * pageSize;
+
+      const sortField = filters?.sort || 'updated_at';
+      const sortDir = (filters?.order || 'desc').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+      const orderBy = sortField === 'score'
+        ? `(l.score->>'score')::numeric ${sortDir} NULLS LAST`
+        : sortField === 'name'
+          ? `l.name ${sortDir}`
+          : sortField === 'created_at'
+            ? `l.created_at ${sortDir}`
+            : `l.updated_at ${sortDir}`;
+
+      const result = await client.query(
+        `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar,
+                c.contract_id, c.payment_schedule as contract_payment_schedule,
+                c.contract_status, c.contract_type, c.contract_value
+         FROM leads l
+         LEFT JOIN users u ON l.assigned_to = u.id
+         LEFT JOIN LATERAL (
+           SELECT id as contract_id, payment_schedule, status as contract_status,
+                  type as contract_type, value as contract_value
+           FROM contracts
+           WHERE lead_id = l.id
+             AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) c ON TRUE
+         ${whereClause}
+         ORDER BY ${orderBy}
+         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+        [...values, pageSize, offset]
+      );
+
+      return {
+        data: this.rowsToEntities(result.rows),
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+        stats,
+      };
+    });
+  }
+
+  async findLeadsCursor(
+    tenantId: string,
+    params: {
+      pageSize: number;
+      cursor?: string;
+      filters?: Record<string, any>;
+      userId?: string;
+      userRole?: string;
+    }
+  ): Promise<{
+    data: any[];
+    nextCursor: string | null;
+    hasNext: boolean;
+    total: number;
+    stats: { total: number; newCount: number; wonCount: number; lostCount: number; avgScore: number; winRate: number };
+  }> {
+    return this.withTenant(tenantId, async (client) => {
+      const baseConditions: string[] = [];
+      const baseValues: any[] = [];
+      let paramIndex = 1;
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(params.userRole || '') && params.userId) {
+        baseConditions.push(`l.assigned_to = $${paramIndex++}`);
+        baseValues.push(params.userId);
+      }
+
+      const f = params.filters || {};
+      if (f.stage)                { baseConditions.push(`l.stage = $${paramIndex++}`);                                                                                  baseValues.push(f.stage); }
+      if (f.stage_in?.length)     { const ph = f.stage_in.map((_: any, i: number) => `$${paramIndex + i}`).join(', '); baseConditions.push(`l.stage IN (${ph})`);       baseValues.push(...f.stage_in); paramIndex += f.stage_in.length; }
+      if (f.source)               { baseConditions.push(`l.source = $${paramIndex++}`);                                                                                 baseValues.push(f.source); }
+      if (f.search)               { baseConditions.push(`(l.name ILIKE $${paramIndex} OR l.phone ILIKE $${paramIndex} OR l.email ILIKE $${paramIndex})`);               baseValues.push(`%${f.search}%`); paramIndex++; }
+      if (f.slaBreached !== undefined) { baseConditions.push(`l.sla_breached = $${paramIndex++}`);                                                                      baseValues.push(f.slaBreached); }
+
+      const statsWhere = baseConditions.length > 0 ? `WHERE ${baseConditions.join(' AND ')}` : '';
+
+      let cursorTs: string | null = null;
+      let cursorId: string | null = null;
+      if (params.cursor) {
+        try {
+          const decoded = JSON.parse(Buffer.from(params.cursor, 'base64').toString('utf8')) as { ts: string; id: string };
+          cursorTs = decoded.ts;
+          cursorId = decoded.id;
+        } catch { /* invalid cursor → first page */ }
+      }
+
+      const dataConditions = [...baseConditions];
+      const dataValues = [...baseValues];
+      if (cursorTs && cursorId) {
+        dataConditions.push(
+          `(l.updated_at < $${paramIndex}::timestamptz OR ` +
+          `(l.updated_at = $${paramIndex}::timestamptz AND l.id::text < $${paramIndex + 1}))`
+        );
+        dataValues.push(cursorTs, cursorId);
+        paramIndex += 2;
+      }
+      const dataWhere = dataConditions.length > 0 ? `WHERE ${dataConditions.join(' AND ')}` : '';
+
+      const limit = params.pageSize + 1;
+      const isRestricted = RESTRICTED.includes(params.userRole || '') && !!params.userId;
+
+      const [statsResult, dataResult] = await Promise.all([
+        client.query(
+          `SELECT
+             COUNT(*)::int                                                                          AS total,
+             COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::int                AS new_count,
+             COUNT(*) FILTER (WHERE stage = 'WON')::int                                           AS won_count,
+             COUNT(*) FILTER (WHERE stage = 'LOST')::int                                          AS lost_count,
+             COALESCE(ROUND(AVG((score->>'score')::numeric)), 0)::int                             AS avg_score
+           FROM leads
+           WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+             ${isRestricted ? 'AND assigned_to = $1' : ''}`,
+          isRestricted ? [params.userId] : []
+        ),
+        client.query(
+          `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar,
+                  c.contract_id, c.payment_schedule as contract_payment_schedule,
+                  c.contract_status, c.contract_type, c.contract_value
+           FROM leads l
+           LEFT JOIN users u ON l.assigned_to = u.id
+           LEFT JOIN LATERAL (
+             SELECT id as contract_id, payment_schedule, status as contract_status,
+                    type as contract_type, value as contract_value
+             FROM contracts
+             WHERE lead_id = l.id
+               AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+             ORDER BY created_at DESC
+             LIMIT 1
+           ) c ON TRUE
+           ${dataWhere}
+           ORDER BY l.updated_at DESC, l.id DESC
+           LIMIT $${paramIndex}`,
+          [...dataValues, limit]
+        ),
+      ]);
+
+      const sr = statsResult.rows[0];
+      const wonCount = sr.won_count || 0;
+      const lostCount = sr.lost_count || 0;
+      const decidedCount = wonCount + lostCount;
+      const stats = {
+        total:    sr.total    || 0,
+        newCount: sr.new_count|| 0,
+        wonCount,
+        lostCount,
+        avgScore: sr.avg_score|| 0,
+        winRate:  decidedCount > 0 ? Math.round((wonCount / decidedCount) * 100) : 0,
+      };
+
+      const rows    = dataResult.rows;
+      const hasNext = rows.length > params.pageSize;
+      const pageRows = hasNext ? rows.slice(0, params.pageSize) : rows;
+
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int as total FROM leads l ${statsWhere}`,
+        baseValues
+      );
+      const total = countResult.rows[0].total;
+
+      let nextCursor: string | null = null;
+      if (hasNext && pageRows.length > 0) {
+        const last = pageRows[pageRows.length - 1];
+        nextCursor = Buffer.from(JSON.stringify({
+          ts: last.updated_at instanceof Date ? last.updated_at.toISOString() : String(last.updated_at),
+          id: last.id,
+        })).toString('base64');
+      }
+
+      return { data: this.rowsToEntities(pageRows), nextCursor, hasNext, total, stats };
+    });
+  }
+
+  async findByIdWithAccess(
+    tenantId: string,
+    id: string,
+    userId?: string,
+    userRole?: string
+  ): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar,
+                c.contract_id, c.payment_schedule as contract_payment_schedule,
+                c.contract_status, c.contract_type, c.contract_value
+         FROM leads l
+         LEFT JOIN users u ON l.assigned_to = u.id
+         LEFT JOIN LATERAL (
+           SELECT id as contract_id, payment_schedule, status as contract_status,
+                  type as contract_type, value as contract_value
+           FROM contracts
+           WHERE lead_id = l.id
+             AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) c ON TRUE
+         WHERE l.id = $1 AND l.tenant_id = current_setting('app.current_tenant_id', true)::uuid`,
+        [id]
+      );
+      if (!result.rows[0]) return null;
+
+      const lead = this.rowToEntity<any>(result.rows[0]);
+
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId && lead.assignedTo !== userId) {
+        return null;
+      }
+
+      return lead;
+    });
+  }
+
+  async checkDuplicatePhone(tenantId: string, phone: string, excludeId?: string): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const normalizedPhone = phone.replace(/[\s\-()]/g, '');
+      let query = `SELECT * FROM leads WHERE REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', '') = $1`;
+      const values: any[] = [normalizedPhone];
+
+      if (excludeId) {
+        query += ` AND id != $2`;
+        values.push(excludeId);
+      }
+
+      query += ` LIMIT 1`;
+      const result = await client.query(query, values);
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
+
+  async checkDuplicateEmail(tenantId: string, email: string, excludeId?: string): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const normalizedEmail = email.trim().toLowerCase();
+      let query = `SELECT * FROM leads WHERE LOWER(TRIM(email)) = $1`;
+      const values: any[] = [normalizedEmail];
+
+      if (excludeId) {
+        query += ` AND id != $2`;
+        values.push(excludeId);
+      }
+
+      query += ` LIMIT 1`;
+      const result = await client.query(query, values);
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
+
+  async create(tenantId: string, data: {
+    name: string;
+    phone: string;
+    email?: string;
+    address?: string;
+    source?: string;
+    stage?: string;
+    assignedTo?: string;
+    tags?: string[];
+    notes?: string;
+    score?: any;
+    socialIds?: any;
+    optOutChannels?: string[];
+    attributes?: any;
+    preferences?: any;
+  }): Promise<any> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `INSERT INTO leads (
+          tenant_id, name, phone, email, address, source, stage, assigned_to,
+          tags, notes, score, social_ids, opt_out_channels, attributes, preferences
+        ) VALUES (
+          current_setting('app.current_tenant_id', true)::uuid,
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+        ) RETURNING *`,
+        [
+          data.name, data.phone, data.email || null, data.address || null,
+          data.source || 'DIRECT', data.stage || 'NEW', data.assignedTo || null,
+          JSON.stringify(data.tags || []), data.notes || null,
+          data.score ? JSON.stringify(data.score) : null,
+          data.socialIds ? JSON.stringify(data.socialIds) : null,
+          JSON.stringify(data.optOutChannels || []),
+          data.attributes ? JSON.stringify(data.attributes) : null,
+          data.preferences ? JSON.stringify(data.preferences) : null,
+        ]
+      );
+      return this.rowToEntity(result.rows[0]);
+    });
+  }
+
+  async update(tenantId: string, id: string, data: Record<string, any>, userId?: string, userRole?: string): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const RESTRICTED = ['SALES', 'MARKETING', 'VIEWER'];
+      if (RESTRICTED.includes(userRole || '') && userId) {
+        const check = await client.query(`SELECT assigned_to FROM leads WHERE id = $1 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid`, [id]);
+        if (!check.rows[0] || check.rows[0].assigned_to !== userId) return null;
+      }
+
+      const updates: string[] = ['updated_at = CURRENT_TIMESTAMP'];
+      // Stamp the exact close timestamp when a deal is won — used for accurate revenue date attribution
+      if (data.stage === 'WON') {
+        updates.push('won_at = CURRENT_TIMESTAMP');
+      }
+      const values: any[] = [];
+      let paramIndex = 2;
+
+      const fieldMap: Record<string, string> = {
+        name: 'name', phone: 'phone', email: 'email', address: 'address',
+        source: 'source', stage: 'stage', assignedTo: 'assigned_to',
+        notes: 'notes', slaBreached: 'sla_breached',
+      };
+      const jsonFields = ['tags', 'score', 'socialIds', 'optOutChannels', 'attributes', 'preferences'];
+
+      for (const [key, col] of Object.entries(fieldMap)) {
+        if (key === 'assignedTo' && userRole === 'SALES') continue;
+        if (data[key] !== undefined) {
+          updates.push(`${col} = $${paramIndex++}`);
+          values.push(data[key]);
+        }
+      }
+      for (const key of jsonFields) {
+        if (data[key] !== undefined) {
+          updates.push(`${this.camelToSnake(key)} = $${paramIndex++}`);
+          values.push(JSON.stringify(data[key]));
+        }
+      }
+
+      if (updates.length <= 1) return this.findById(tenantId, id);
+
+      const result = await client.query(
+        `UPDATE leads SET ${updates.join(', ')} WHERE id = $1 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid RETURNING *`,
+        [id, ...values]
+      );
+
+      if (!result.rows[0]) return null;
+
+      if (data.stage === 'LOST') {
+        await client.query(
+          `UPDATE proposals SET status = 'REJECTED' WHERE lead_id = $1 AND status IN ('PENDING_APPROVAL', 'DRAFT')`,
+          [id]
+        );
+      }
+
+      return this.rowToEntity(result.rows[0]);
+    });
+  }
+
+  async mergePreferences(tenantId: string, id: string, patch: Record<string, any>): Promise<void> {
+    return this.withTenant(tenantId, async (client) => {
+      await client.query(
+        `UPDATE leads SET preferences = COALESCE(preferences, '{}'::jsonb) || $2::jsonb, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = current_setting('app.current_tenant_id', true)::uuid`,
+        [id, JSON.stringify(patch)]
+      );
+    });
+  }
+
+  /**
+   * Find a lead by a specific social channel ID (zalo, facebook, telegram, ...).
+   * e.g. findBySocialId(tenantId, 'zalo', '123456789')
+   */
+  async findBySocialId(tenantId: string, channel: 'zalo' | 'facebook' | 'telegram', socialId: string): Promise<any | null> {
+    const ALLOWED_CHANNELS = ['zalo', 'facebook', 'telegram'] as const;
+    if (!(ALLOWED_CHANNELS as readonly string[]).includes(channel)) {
+      throw new Error(`Invalid channel: ${channel}`);
+    }
+    return this.withTenant(tenantId, async (client) => {
+      // Use CASE to avoid dynamic key interpolation in JSONB operator
+      const result = await client.query(
+        `SELECT * FROM leads
+         WHERE CASE $1::text
+           WHEN 'zalo'     THEN social_ids->>'zalo'     = $2
+           WHEN 'facebook' THEN social_ids->>'facebook' = $2
+           WHEN 'telegram' THEN social_ids->>'telegram' = $2
+           ELSE false
+         END
+         LIMIT 1`,
+        [channel, socialId]
+      );
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
+
+}
+
+export const leadRepository = new LeadRepository();

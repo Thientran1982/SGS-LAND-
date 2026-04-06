@@ -1,0 +1,634 @@
+Bạn là một fullstack developer chuyên nghiệp. Nhiệm vụ là MỞ RỘNG nền tảng 
+SGS Land (bất động sản) bằng cách tích hợp thêm module 
+"Quản lý Công việc & Giao việc Nhân viên".
+
+Ưu tiên tuyệt đối: tính năng đầy đủ, logic chính xác, dữ liệu thực tế.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TECH STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Frontend : React + Vite + TypeScript
+- Styling  : Tailwind CSS + shadcn/ui (mặc định, không tuỳ chỉnh màu)
+- Backend  : Node.js + Express
+- Database : SQLite (better-sqlite3)
+- State    : Zustand
+- Charts   : Recharts
+- DnD      : @dnd-kit/core
+- Forms    : React Hook Form + Zod
+- Date     : date-fns
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATABASE SCHEMA — CHI TIẾT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+-- Bảng 1: Phòng ban
+CREATE TABLE departments (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        TEXT NOT NULL,  
+  description TEXT,
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng 2: Nhân viên
+CREATE TABLE users (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  full_name     TEXT NOT NULL,
+  email         TEXT UNIQUE NOT NULL,
+  phone         TEXT,
+  role          TEXT CHECK(role IN ('admin','manager','employee')) DEFAULT 'employee',
+  department_id INTEGER REFERENCES departments(id),
+  position      TEXT,           -- chức danh: "Trưởng phòng KD", "Chuyên viên PL"...
+  is_active     INTEGER DEFAULT 1,
+  created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng 3: Dự án BĐS
+CREATE TABLE projects (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  name          TEXT NOT NULL,
+  code          TEXT UNIQUE,    -- mã dự án: SGS-HCM-01
+  description   TEXT,
+  property_type TEXT CHECK(property_type IN 
+                  ('apartment','villa','shophouse','land','office','resort')),
+  location      TEXT,           -- địa chỉ / khu vực
+  status        TEXT CHECK(status IN 
+                  ('planning','active','on_hold','completed','cancelled'))
+                DEFAULT 'planning',
+  manager_id    INTEGER REFERENCES users(id),
+  start_date    DATE,
+  end_date      DATE,
+  created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng 4: Công việc (Task)
+CREATE TABLE tasks (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  title            TEXT NOT NULL,
+  description      TEXT,
+  project_id       INTEGER REFERENCES projects(id),
+  department_id    INTEGER REFERENCES departments(id),
+  category         TEXT CHECK(category IN (
+                     'sales',        -- bán hàng
+                     'legal',        -- pháp lý
+                     'marketing',    -- marketing
+                     'site_visit',   -- khảo sát thực địa
+                     'customer_care',-- chăm sóc khách hàng
+                     'finance',      -- tài chính / thanh toán
+                     'construction', -- xây dựng / kỹ thuật
+                     'admin',        -- hành chính
+                     'other'
+                   )),
+  status           TEXT CHECK(status IN (
+                     'todo',         -- chờ làm
+                     'in_progress',  -- đang thực hiện
+                     'review',       -- chờ duyệt
+                     'done',         -- hoàn thành
+                     'cancelled'     -- đã huỷ
+                   )) DEFAULT 'todo',
+  priority         TEXT CHECK(priority IN ('low','medium','high','urgent')) 
+                   DEFAULT 'medium',
+  deadline         DATE,
+  estimated_hours  REAL,            -- giờ công ước tính
+  actual_hours     REAL,            -- giờ công thực tế (cập nhật khi done)
+  completion_note  TEXT,            -- ghi chú khi đánh dấu hoàn thành
+  created_by       INTEGER REFERENCES users(id),
+  created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng 5: Phân công công việc
+CREATE TABLE task_assignments (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_id     INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  user_id     INTEGER NOT NULL REFERENCES users(id),
+  assigned_by INTEGER REFERENCES users(id),
+  assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  due_note    TEXT,                 -- ghi chú khi giao
+  is_primary  INTEGER DEFAULT 0,   -- 1 = người chịu trách nhiệm chính
+  UNIQUE(task_id, user_id)
+);
+
+-- Bảng 6: Bình luận / trao đổi trong task
+CREATE TABLE task_comments (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_id    INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  user_id    INTEGER NOT NULL REFERENCES users(id),
+  content    TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng 7: Lịch sử thay đổi
+CREATE TABLE activity_logs (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_id    INTEGER REFERENCES tasks(id) ON DELETE CASCADE,
+  user_id    INTEGER REFERENCES users(id),
+  action     TEXT NOT NULL,   -- 'created','status_changed','assigned',
+                              -- 'unassigned','commented','updated','deleted'
+  old_value  TEXT,            -- JSON string giá trị cũ
+  new_value  TEXT,            -- JSON string giá trị mới
+  detail     TEXT,            -- mô tả ngắn dạng text
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng 8: Nhắc việc / deadline reminder
+CREATE TABLE task_reminders (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_id      INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  remind_date  DATE NOT NULL,
+  remind_note  TEXT,
+  is_sent      INTEGER DEFAULT 0,
+  created_by   INTEGER REFERENCES users(id),
+  created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Trigger: tự động cập nhật updated_at khi task thay đổi
+CREATE TRIGGER update_task_timestamp
+AFTER UPDATE ON tasks
+BEGIN
+  UPDATE tasks SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+END;
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SEED DATA — THỰC TẾ BĐS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Departments (6):
+  1. Kinh doanh
+  2. Pháp lý & Hợp đồng
+  3. Marketing & Truyền thông
+  4. Kỹ thuật & Thẩm định
+  5. Chăm sóc Khách hàng
+  6. Ban Giám đốc
+
+Users (10 nhân viên):
+  - 1 admin (BGĐ)
+  - 2 manager (Trưởng phòng KD, Trưởng phòng Pháp lý)
+  - 7 employee phân bổ đều các phòng
+  - Mỗi người có: họ tên, email, sđt, chức danh rõ ràng
+
+Projects (5 dự án BĐS):
+  - SGS Riverside Tower   | apartment | Quận 7, HCM     | active
+  - SGS Green Villa       | villa     | Nhơn Trạch, ĐN  | active
+  - SGS Central Shophouse | shophouse | Quận 1, HCM     | planning
+  - SGS Highland Resort   | resort    | Đà Lạt, LĐ      | on_hold
+  - SGS Office Hub        | office    | Bình Dương       | completed
+
+Tasks (20 tasks thực tế, phân bổ đều dự án + category):
+  Ví dụ tasks có trong seed:
+  - [sales]         "Gặp gỡ khách hàng quan tâm căn hộ tầng 15-20 tại Riverside Tower"
+  - [legal]         "Soạn thảo hợp đồng đặt cọc lô shophouse S-05"
+  - [legal]         "Xác minh pháp lý quyền sử dụng đất dự án Green Villa"
+  - [marketing]     "Chạy chiến dịch quảng cáo Facebook tháng này cho Riverside Tower"
+  - [site_visit]    "Khảo sát thực địa và đo đạc lô đất B12 dự án Green Villa"
+  - [customer_care] "Hỗ trợ khách hàng Nguyễn Văn A hoàn tất thủ tục vay ngân hàng"
+  - [finance]       "Đối soát bảng thanh toán đợt 3 dự án Shophouse Central"
+  - [admin]         "Chuẩn bị hồ sơ trình Sở xây dựng xin phép bán hàng"
+  - [construction]  "Nghiệm thu tiến độ thi công tầng 12-15 Riverside Tower"
+  - [marketing]     "Thiết kế brochure và bảng giá mới cho Highland Resort"
+  ... (thêm đủ 20)
+  
+  Mỗi task seed có: deadline hợp lý, priority, assignee, status đa dạng
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKEND — BUSINESS LOGIC CHI TIẾT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+=== TASK LOGIC ===
+
+1. TẠO TASK (POST /api/tasks)
+   Validate:
+   - title: bắt buộc, 5-200 ký tự
+   - deadline: không được là ngày trong quá khứ
+   - project_id: phải tồn tại nếu có
+   - estimated_hours: số dương nếu có
+   Sau khi tạo: ghi activity_log action='created'
+
+2. CẬP NHẬT STATUS (PATCH /api/tasks/:id/status)
+   Logic chuyển trạng thái hợp lệ:
+     todo        → in_progress, cancelled
+     in_progress → review, todo, cancelled
+     review      → done, in_progress
+     done        → (không cho quay lại, chỉ admin mới đổi)
+     cancelled   → todo (reopen, chỉ admin/manager)
+   Khi chuyển sang done:
+   - Lưu actual_hours nếu được cung cấp
+   - Lưu completion_note nếu có
+   - Ghi activity_log
+   Khi chuyển sang cancelled:
+   - Bắt buộc có lý do (ghi vào completion_note)
+
+3. GIAO VIỆC (POST /api/tasks/:id/assign)
+   Body: { user_ids: number[], due_note?: string, primary_user_id?: number }
+   Logic:
+   - Mỗi task có thể giao cho nhiều người
+   - Nhưng chỉ có 1 người chịu trách nhiệm chính (is_primary=1)
+   - Nếu task đang ở status 'todo' → tự động chuyển 'in_progress'
+   - Không được giao cho user is_active=0
+   - Ghi activity_log cho từng người được giao
+   - Trả về danh sách assignees đầy đủ sau khi giao
+
+4. HỦY GIAO VIỆC (DELETE /api/tasks/:id/assign/:userId)
+   Logic:
+   - Nếu huỷ người is_primary, yêu cầu chỉ định người primary mới
+     hoặc task không còn ai → trả về lỗi 400 với message rõ ràng
+   - Ghi activity_log action='unassigned'
+
+5. TÍNH TRẠNG THÁI QUÁ HẠN:
+   Mọi API trả về task đều tính thêm field:
+   - is_overdue: boolean  (deadline < hôm nay AND status != 'done'/'cancelled')
+   - days_until_deadline: number (âm = quá hạn, 0 = hôm nay, dương = còn hạn)
+   - urgency_level: 'overdue' | 'critical' | 'warning' | 'normal'
+     + overdue  : quá hạn
+     + critical : còn ≤ 1 ngày
+     + warning  : còn ≤ 3 ngày
+     + normal   : còn > 3 ngày
+
+=== PROJECT LOGIC ===
+
+6. TỔNG HỢP TIẾN ĐỘ DỰ ÁN:
+   Mỗi project response kèm:
+   - total_tasks, todo_count, in_progress_count, done_count, overdue_count
+   - completion_rate: (done / total) * 100
+   - on_schedule: true nếu không có task quá hạn
+
+=== USER WORKLOAD LOGIC ===
+
+7. WORKLOAD NHÂN VIÊN:
+   GET /api/users/:id/workload
+   Trả về:
+   - active_tasks: số tasks đang in_progress
+   - overdue_tasks: số tasks quá hạn chưa xong
+   - completed_this_week: số tasks done trong 7 ngày qua
+   - completed_this_month: số tasks done trong 30 ngày qua
+   - avg_completion_days: trung bình số ngày hoàn thành task
+   - workload_score: tính theo công thức:
+       (active_tasks * 1) + (overdue_tasks * 2) + 
+       (urgent_tasks * 1.5) → dùng để sort "bận nhất"
+
+=== DASHBOARD STATS ===
+
+8. GET /api/dashboard/stats
+   Trả về JSON:
+   {
+     overview: {
+       total_tasks, todo, in_progress, review, done, cancelled,
+       overdue_count, due_today_count, due_this_week_count
+     },
+     completion_rate_today: số tasks done hôm nay,
+     completion_rate_week:  số tasks done tuần này,
+     by_priority: { urgent, high, medium, low },
+     by_category: { sales, legal, marketing, ... },
+     by_project:  [{ project_id, name, total, done, overdue }],
+     top_overdue_tasks: [5 tasks quá hạn lâu nhất, kèm assignees],
+     upcoming_deadlines: [10 tasks sắp đến hạn trong 7 ngày],
+     workload_by_user: [
+       { user_id, name, department, active_tasks, overdue_tasks, workload_score }
+       -- sort theo workload_score giảm dần
+     ]
+   }
+
+=== SEARCH & FILTER LOGIC ===
+
+9. GET /api/tasks — Query parameters đầy đủ:
+   ?status=        (có thể nhiều: ?status=todo,in_progress)
+   ?priority=      (có thể nhiều)
+   ?project_id=
+   ?department_id=
+   ?category=
+   ?assignee_id=   (lọc task có người này trong assignees)
+   ?created_by=
+   ?is_overdue=true/false
+   ?deadline_from= (YYYY-MM-DD)
+   ?deadline_to=
+   ?search=        (tìm trong title + description)
+   ?sort_by=       (deadline|priority|created_at|updated_at)
+   ?sort_dir=      (asc|desc)
+   ?page=          (default 1)
+   ?limit=         (default 20, max 100)
+
+   Response:
+   {
+     data: Task[],
+     pagination: { page, limit, total, total_pages },
+     filters_applied: { ... }  -- echo lại filter đang dùng
+   }
+
+=== REPORT LOGIC ===
+
+10. GET /api/reports/summary
+    Bảng tổng hợp nhân viên:
+    - Group by user
+    - Mỗi row: tên, phòng ban, todo, in_progress, done, 
+      overdue, total_assigned, completion_rate, avg_days
+    - Sort: overdue giảm dần (người có task trễ nhiều lên trên)
+
+11. GET /api/reports/export/csv
+    Tạo và trả về file CSV với headers:
+    ID, Tiêu đề, Dự án, Danh mục, Ưu tiên, Trạng thái,
+    Người thực hiện, Người giao, Deadline, 
+    Ngày hoàn thành, Giờ ước tính, Giờ thực tế, Ghi chú
+    Content-Type: text/csv; charset=utf-8
+    Filename: sgs-tasks-export-{YYYYMMDD}.csv
+
+=== ERROR HANDLING ===
+
+12. Mọi route đều có:
+    - Try/catch với error middleware tập trung
+    - Validate input bằng Zod trước khi xử lý
+    - HTTP status code chuẩn:
+      200 OK | 201 Created | 400 Bad Request | 
+      404 Not Found | 409 Conflict | 422 Unprocessable | 500 Server Error
+    - Response lỗi chuẩn: { error: true, code: string, message: string, details?: any }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FRONTEND — TÍNH NĂNG THEO TỪNG TRANG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+=== TRANG DASHBOARD (/dashboard) ===
+
+Hiển thị:
+  - 5 KPI Cards: Tổng / Đang làm / Hoàn thành / Quá hạn / Chờ duyệt
+  - Biểu đồ đường: tasks tạo mới và hoàn thành theo ngày (30 ngày)
+  - Biểu đồ cột: tasks theo từng dự án (phân chia theo status)
+  - Biểu đồ tròn: phân bổ theo category
+  - Bảng workload nhân viên: 
+    tên | phòng ban | đang làm | quá hạn | workload score | 
+    hiển thị progress bar cho workload
+  - Panel "Cần xử lý ngay": 
+    list tasks urgent + overdue, sort theo mức độ nghiêm trọng
+
+Logic FE:
+  - Auto-refresh mỗi 5 phút
+  - Click KPI card → navigate đến /tasks với filter tương ứng
+  - Click tên nhân viên trong workload → navigate đến /employees/:id
+
+=== TRANG KANBAN (/kanban) ===
+
+Cấu trúc:
+  - 5 cột: Chờ làm | Đang làm | Chờ duyệt | Hoàn thành | Đã huỷ
+  - Header mỗi cột: tên + số lượng card + nút "+" thêm task nhanh
+  
+Kéo thả:
+  - Dùng @dnd-kit/core
+  - Khi thả vào cột khác:
+    → Validate transition hợp lệ (theo logic backend mục 2)
+    → Nếu không hợp lệ: card trả về vị trí cũ + hiện toast lỗi
+    → Nếu hợp lệ: call PATCH /api/tasks/:id/status + cập nhật UI
+  - Kéo thả sắp xếp trong cùng cột (reorder)
+
+Mỗi Task Card hiển thị đầy đủ:
+  - Tiêu đề (truncate nếu dài)
+  - Category tag
+  - Project badge
+  - Priority badge: URGENT / CAO / TRUNG BÌNH / THẤP
+  - Deadline: hiển thị relative ("Còn 2 ngày" / "Quá hạn 3 ngày")
+  - Avatar stack: người được giao (tối đa hiện 3, còn lại "+N")
+  - Số comments (icon + số)
+  - Icon cảnh báo nếu quá hạn
+
+Filter bar phía trên:
+  - Dropdown: Dự án / Phòng ban / Người thực hiện / Ưu tiên
+  - Ô tìm kiếm nhanh theo tên task
+
+=== TRANG DANH SÁCH TASKS (/tasks) ===
+
+Table với đầy đủ cột:
+  STT | Tiêu đề | Dự án | Danh mục | Ưu tiên | 
+  Người thực hiện | Deadline | Trạng thái | Thao tác
+
+Tính năng:
+  - Sort click header cột
+  - Pagination (20/trang)
+  - Multi-filter: Status + Priority + Project + Phòng ban + 
+    Assignee + Khoảng deadline (date range picker)
+  - Search realtime theo tiêu đề/mô tả (debounce 300ms)
+  - Filter state lưu vào URL query params (shareable link)
+  
+  - Bulk actions: tick chọn nhiều task →
+    [Đổi trạng thái] [Giao cho...] [Xóa] [Export CSV lựa chọn]
+
+  - Modal tạo task (đầy đủ fields):
+    Tiêu đề* / Mô tả / Dự án / Phòng ban / Danh mục* /
+    Ưu tiên* / Deadline / Giờ ước tính /
+    Giao cho (multi-select + search tên nhân viên)
+
+  - Inline edit: click trực tiếp lên Priority hoặc Status 
+    trong bảng → dropdown thay đổi ngay không cần mở modal
+
+=== TRANG CHI TIẾT TASK (/tasks/:id) ===
+
+Layout 2 cột:
+
+Cột trái (70%):
+  - Tiêu đề (click để edit inline)
+  - Mô tả (click để edit inline, auto-save)
+  - Metadata: Dự án / Phòng ban / Danh mục / Deadline / 
+    Ước tính / Tạo bởi / Ngày tạo
+
+  - Section THAY ĐỔI TRẠNG THÁI:
+    Nút chuyển status theo đúng workflow hợp lệ
+    Khi chuyển sang "Hoàn thành": 
+      popup yêu cầu nhập giờ thực tế + ghi chú hoàn thành
+    Khi chuyển sang "Huỷ": popup yêu cầu nhập lý do
+
+  - Section GIAO VIỆC:
+    Search và chọn nhân viên (hiện: tên + phòng ban + workload score)
+    Đánh dấu ai là người chịu trách nhiệm chính
+    Ô ghi chú khi giao
+    Danh sách đang giao: avatar / tên / is_primary / ngày giao / 
+      workload hiện tại / nút Hủy giao
+    Validate: cảnh báo nếu nhân viên đang có > 5 task active
+
+  - Section BÌNH LUẬN:
+    Thread comments (avatar + tên + thời gian tương đối + nội dung)
+    Form thêm comment (textarea + nút gửi)
+    Edit/xóa comment của chính mình
+
+Cột phải (30%):
+  - Timeline hoạt động: 
+    Mỗi entry: icon action + mô tả + người thực hiện + thời gian
+    Entries: tạo task / đổi status / giao việc / 
+             hủy giao / comment / cập nhật thông tin
+  - Hiển thị tối đa 20 entries, nút "Xem thêm"
+
+=== TRANG NHÂN VIÊN (/employees) ===
+
+Danh sách dạng grid card (3-4 cột):
+  Mỗi card: tên / chức danh / phòng ban / 
+  Workload: số task active / overdue
+  Status: đang làm bao nhiêu task
+
+Filter: Phòng ban / Role / Chỉ xem đang hoạt động
+
+Click vào nhân viên → mở Slide-over panel bên phải:
+  - Thông tin: tên, email, điện thoại, phòng ban, chức danh
+  - Thống kê workload:
+    Đang làm | Hoàn thành tháng này | Quá hạn | Trung bình ngày/task
+  - Danh sách tasks đang giao:
+    Có filter: Status / Priority / Dự án
+    Mỗi task: tiêu đề / deadline / priority / status
+    Click task → navigate đến /tasks/:id
+  - Biểu đồ mini: số tasks done theo tuần (6 tuần gần nhất)
+
+=== TRANG DỰ ÁN (/projects) ===
+
+Danh sách card (3 cột):
+  Mỗi card: mã dự án / tên / loại BĐS / địa điểm / 
+  Trưởng dự án / Status / Progress bar (% done) /
+  Số tasks tổng | done | overdue
+
+Click vào dự án → trang chi tiết:
+  - Thông tin dự án đầy đủ
+  - Kanban mini chỉ hiện tasks của dự án này
+  - Danh sách thành viên có giao task trong dự án
+  - Nút "Tạo task cho dự án này" (pre-fill project)
+
+=== TRANG BÁO CÁO (/reports) ===
+
+Tab 1 — THEO NHÂN VIÊN:
+  Bảng: Tên | Phòng ban | Chờ làm | Đang làm | Hoàn thành | 
+        Quá hạn | Tổng | Tỉ lệ HT% | TB ngày/task
+  Logic highlight: hàng có overdue > 0 → nền khác biệt
+  Sort mặc định: overdue giảm dần
+
+Tab 2 — THEO DỰ ÁN:
+  Bảng: Tên DA | Loại | Tổng tasks | Hoàn thành | Đang làm | 
+        Chờ làm | Quá hạn | Tiến độ%
+  Progress bar trực quan cho từng dự án
+
+Tab 3 — THEO THỜI GIAN:
+  Date range picker: chọn khoảng thời gian
+  Biểu đồ cột nhóm: tasks tạo mới vs hoàn thành (theo tuần)
+  Biểu đồ đường: tích lũy tasks done theo ngày
+
+Nút Export:
+  - Export CSV toàn bộ hoặc theo filter hiện tại
+  - In báo cáo (CSS print-friendly, ẩn sidebar/header)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LAYOUT CHUNG & UX LOGIC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Sidebar navigation:
+  - Dashboard / Kanban / Danh sách Tasks / Dự án / Nhân viên / Báo cáo
+  - Badge đỏ trên "Danh sách Tasks" = số tasks quá hạn (fetch lúc load)
+  - User info ở dưới (tên + phòng ban + role)
+
+Header:
+  - Breadcrumb động theo trang
+  - Notification bell: 
+    → Fetch /api/dashboard/stats lúc load
+    → Hiển thị số tasks quá hạn + tasks assigned cho current user
+    → Dropdown list 5 thông báo gần nhất
+
+Toast notifications:
+  - Thành công: tạo / cập nhật / xóa / giao việc
+  - Lỗi: validation fail / transition không hợp lệ / network error
+  - Cảnh báo: nhân viên workload cao khi được giao thêm
+
+Confirm dialog:
+  - Xóa task (không thể khôi phục)
+  - Hủy giao việc người chịu trách nhiệm chính
+  - Đổi status sang Cancelled (yêu cầu nhập lý do)
+
+Loading states:
+  - Skeleton loader đúng hình dạng content
+  - Optimistic update cho Kanban kéo thả (cập nhật UI ngay, 
+    rollback nếu API lỗi)
+
+Empty states:
+  - Mỗi trang có empty state riêng với icon + message + 
+    nút hành động (vd: "Chưa có task nào → Tạo task đầu tiên")
+
+URL state:
+  - Filter và sort lưu vào URL query params
+  - Pagination cũng lưu vào URL
+  - Cho phép copy link để share bộ filter
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CẤU TRÚC THƯ MỤC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/
+├── client/src/
+│   ├── components/
+│   │   ├── layout/       Sidebar, Header, Layout, Breadcrumb
+│   │   ├── tasks/        TaskCard, TaskForm, TaskDetail, 
+│   │   │                 StatusBadge, PriorityBadge, DeadlineTag
+│   │   ├── kanban/       KanbanBoard, KanbanColumn, DraggableCard
+│   │   ├── employees/    EmployeeCard, WorkloadBar, SlideOver
+│   │   ├── projects/     ProjectCard, ProjectDetail
+│   │   ├── charts/       LineChart, BarChart, PieChart, StatsCard
+│   │   └── common/       ConfirmDialog, EmptyState, LoadingSkeleton,
+│   │                     AvatarStack, FilterBar, Pagination
+│   ├── pages/
+│   │   ├── Dashboard.tsx
+│   │   ├── Kanban.tsx
+│   │   ├── Tasks.tsx
+│   │   ├── TaskDetail.tsx
+│   │   ├── Projects.tsx
+│   │   ├── ProjectDetail.tsx
+│   │   ├── Employees.tsx
+│   │   └── Reports.tsx
+│   ├── store/
+│   │   ├── taskStore.ts      CRUD + optimistic updates
+│   │   ├── userStore.ts
+│   │   └── projectStore.ts
+│   ├── hooks/
+│   │   ├── useTasks.ts       fetch + filter + pagination
+│   │   ├── useUsers.ts
+│   │   ├── useDashboard.ts   auto-refresh
+│   │   └── useDebounce.ts
+│   ├── types/
+│   │   └── index.ts          Task, User, Project, Department,
+│   │                         TaskAssignment, ActivityLog, 
+│   │                         WorkloadStats, DashboardStats
+│   └── lib/
+│       ├── api.ts            axios instance + interceptors
+│       ├── taskLogic.ts      isValidTransition(), calcUrgency()
+│       └── utils.ts          formatDate(), formatRelative(), 
+│                             calcWorkloadScore()
+├── server/
+│   ├── routes/
+│   │   ├── tasks.ts
+│   │   ├── users.ts
+│   │   ├── projects.ts
+│   │   ├── departments.ts
+│   │   ├── dashboard.ts
+│   │   └── reports.ts
+│   ├── middleware/
+│   │   ├── errorHandler.ts
+│   │   └── validate.ts       Zod middleware
+│   ├── db/
+│   │   ├── schema.ts
+│   │   ├── seed.ts
+│   │   └── database.ts       better-sqlite3 singleton
+│   └── index.ts
+└── package.json
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YÊU CẦU KỸ THUẬT CUỐI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 1 lệnh khởi động: npm run dev
+- Frontend: port 5173 | Backend: port 3001
+- Vite proxy: /api → http://localhost:3001
+- DB tự khởi tạo + seed nếu chưa có khi server start
+- TypeScript strict mode: không dùng any
+- Zod schema validate cả input lẫn response type
+- Tất cả date/time dùng ISO 8601, timezone UTC
+
+Thứ tự thực hiện:
+  1. Setup monorepo + cài đặt dependencies
+  2. DB schema + seed data
+  3. Toàn bộ REST API + middleware + error handling
+  4. Shared TypeScript types (dùng chung FE + BE)
+  5. API client (axios) + Zustand stores
+  6. Layout: Sidebar + Header
+  7. Dashboard
+  8. Kanban Board (với kéo thả)
+  9. Danh sách Tasks (table + filter + bulk action)
+  10. Chi tiết Task (giao việc + comment + timeline)
+  11. Nhân viên (workload + slide-over)
+  12. Dự án
+  13. Báo cáo + Export CSV
+  14. Kiểm tra toàn bộ luồng nghiệp vụ

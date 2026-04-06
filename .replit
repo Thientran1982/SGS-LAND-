@@ -1,0 +1,86 @@
+modules = ["nodejs-20", "web", "postgresql-16"]
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "typecheck"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "typecheck"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 23636
+externalPort = 3000
+
+[[ports]]
+localPort = 23637
+externalPort = 3002
+
+[deployment]
+deploymentTarget = "vm"
+run = ["node", "server.js"]
+build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.shared]
+COMMISSION_RATE = "0.02"
+MARKET_CACHE_TTL_HOURS = "6"
+BREVO_FROM_EMAIL = "noreply@sgsland.vn"
+BREVO_FROM_NAME = "SGS LAND"
+EMAIL_WEBHOOK_TOKEN = "sgs-test-2026"
+INITIAL_ADMIN_PASSWORD_HASH = "$2b$12$rMWDtnPG8BdssWxA1kTgC.z563nD/musE8Hs1qeMck20jLYa4z0Ue"
+
+[userenv.development]
+NODE_ENV = "development"
+PORT = "5000"
+
+[userenv.production]
+NODE_ENV = "production"
+PORT = "5000"
+ALLOWED_ORIGINS = "https://sgs-land.replit.app"
+APP_URL = "https://sgsland.vn"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-b2bda06e-8535-430b-b2ac-45839c6a59c1"
+# JWT_SECRET must be set via Replit Secrets (not here) — see replit.md for setup instructions

@@ -1,0 +1,132 @@
+// ================================================================
+// CÔNG THỨC ĐỊNH GIÁ BẤT ĐỘNG SẢN — CHÍNH XÁC
+// ================================================================
+
+export interface Property {
+  area: number;           // m²
+  type: PropertyType;
+  location: string;
+  condition: 'new' | 'good' | 'average' | 'poor';
+  legal: 'redbook' | 'pinkbook' | 'other';
+  frontage: boolean;
+}
+
+export interface Comp {
+  price: number;          // triệu VNĐ
+  area: number;           // m²
+  transactionDate: Date;
+  locationAdj: number;    // % điều chỉnh (-10 → +15)
+  conditionAdj: number;   // % (-8 → +8)
+  legalAdj: number;       // % (-5 → +5)
+  floorAdj: number;       // % (-5 → +5)
+}
+
+export interface IncomeInputs {
+  monthlyRent: number;    // triệu VNĐ/tháng
+  vacancyRate: number;    // % (0-1), default 0.08
+  opexRate: number;       // % of gross income, default 0.20
+  capRate: number;        // %, default by type
+}
+
+// ── 1. ĐIỀU CHỈNH THỜI GIAN ────────────────────────────────────
+function timeAdjustment(transactionDate: Date, annualRate = 0.06): number {
+  const monthsDiff = (Date.now() - transactionDate.getTime()) 
+                     / (1000 * 60 * 60 * 24 * 30.44);
+  return (annualRate / 12) * monthsDiff; // % tăng từ thời điểm GD
+}
+
+// ── 2. HỆ SỐ ĐIỀU CHỈNH TỔNG HỢP ─────────────────────────────
+function adjustmentFactor(comp: Comp): number {
+  const timeAdj = timeAdjustment(comp.transactionDate);
+  return (1 + comp.locationAdj / 100)
+       * (1 + comp.conditionAdj / 100)
+       * (1 + comp.legalAdj / 100)
+       * (1 + comp.floorAdj / 100)
+       * (1 + timeAdj);
+}
+
+// ── 3. GIÁ ĐIỀU CHỈNH MỖI COMP ─────────────────────────────────
+function adjustedPricePerM2(comp: Comp): number {
+  const rawPricePerM2 = comp.price / comp.area; // triệu/m²
+  return rawPricePerM2 * adjustmentFactor(comp);
+}
+
+// ── 4. PHƯƠNG PHÁP COMPS ────────────────────────────────────────
+export function compsValuation(comps: Comp[], targetArea: number): {
+  adjustedPrices: number[];
+  medianPricePerM2: number;
+  totalValue: number;
+} {
+  const adjustedPrices = comps.map(adjustedPricePerM2);
+  
+  // Dùng MEDIAN thay MEAN để loại outlier
+  const sorted = [...adjustedPrices].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const medianPricePerM2 = sorted.length % 2 !== 0
+    ? sorted[mid]
+    : (sorted[mid - 1] + sorted[mid]) / 2;
+
+  return {
+    adjustedPrices,
+    medianPricePerM2,
+    totalValue: medianPricePerM2 * targetArea,  // triệu VNĐ
+  };
+}
+
+// ── 5. PHƯƠNG PHÁP THU NHẬP ─────────────────────────────────────
+export function incomeValuation(inputs: IncomeInputs): {
+  grossIncome: number;
+  effectiveIncome: number;
+  noi: number;
+  capitalValue: number;
+  gry: number;
+} {
+  const grossIncome = inputs.monthlyRent * 12;               // triệu/năm
+  const effectiveIncome = grossIncome * (1 - inputs.vacancyRate);
+  const opex = grossIncome * inputs.opexRate;
+  const noi = effectiveIncome - opex;
+  const capitalValue = noi / inputs.capRate;                 // triệu VNĐ
+
+  return {
+    grossIncome,
+    effectiveIncome,
+    noi,
+    capitalValue,
+    gry: (grossIncome / capitalValue) * 100,  // %
+  };
+}
+
+// ── 6. TỔNG HỢP GIÁ TRỊ CUỐI ──────────────────────────────────
+export function reconcileValue(
+  compsValue: number,
+  incomeValue: number,
+  compsWeight: number,   // 0-1
+): {
+  finalValue: number;
+  lowerBound: number;
+  upperBound: number;
+  paybackYears: number;
+  noi: number;
+} {
+  const incomeWeight = 1 - compsWeight;
+  const finalValue = compsValue * compsWeight + incomeValue * incomeWeight;
+  return {
+    finalValue,
+    lowerBound: finalValue * 0.90,
+    upperBound: finalValue * 1.10,
+    paybackYears: finalValue / (/* noi từ incomeValuation */ 0), // truyền noi vào
+    noi: 0,
+  };
+}
+
+// ── 7. CAP RATE MẶC ĐỊNH THEO LOẠI BĐS VN ─────────────────────
+export const DEFAULT_CAP_RATES: Record<string, number> = {
+  'apartment_center': 0.045,   // Căn hộ trung tâm HCM/HN
+  'apartment_suburb': 0.055,
+  'townhouse_center': 0.050,
+  'townhouse_suburb': 0.065,
+  'villa':            0.060,
+  'shophouse':        0.055,
+  'land_urban':       0.040,
+  'land_suburban':    0.070,
+};
