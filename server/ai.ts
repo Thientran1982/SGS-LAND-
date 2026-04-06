@@ -2322,16 +2322,12 @@ ${projectSearchHint}
 TÌM KIẾM CHUYÊN BIỆT: Giá BÁN/GIAO DỊCH THỰC TẾ
 ${typeSpecificSaleHint}
 
-Cần tìm (ưu tiên theo thứ tự):
-1. Giá GIA DỊCH THỰC TẾ / CHUYỂN NHƯỢNG THỨ CẤP trung bình 1m² "${pTypeLabelSearch}" tại "${address}" — 12 tháng gần nhất ${currentYear}
-   (Giao dịch thực tế = giá khớp lệnh mua bán, không phải giá rao bán. Thường thấp hơn giá rao bán 5-15%)
-2. Khoảng giá (thấp nhất – cao nhất) từ các giao dịch thực tế hoặc rao bán
-3. Số lượng giao dịch / nguồn độc lập tìm thấy
-4. Độ mới của dữ liệu (tháng năm cụ thể nếu có)
-5. Xu hướng giá % tăng/giảm so với 12 tháng trước
-6. Yếu tố quy hoạch/hạ tầng/tiện ích ảnh hưởng đến giá
+Cần tìm:
+1. Giá GIAO DỊCH THỰC TẾ / CHUYỂN NHƯỢNG THỨ CẤP trung bình 1m² tại "${address}" — 12 tháng gần nhất (thường thấp hơn giá rao bán 5-15%)
+2. Khoảng giá (thấp – cao) và xu hướng %/năm tăng/giảm so với năm trước
+3. Yếu tố quy hoạch/hạ tầng/tiện ích ảnh hưởng đến giá
 
-ƯU TIÊN: báo cáo CBRE/Savills/JLL > giao dịch thực tế nền tảng > giá rao bán > ước tính khu vực.`;
+ƯU TIÊN: CBRE/Savills/JLL > giao dịch thực tế > giá rao bán > ước tính khu vực.`;
 
             // Rental search: tailored by type — land has no conventional rent, use yield estimate instead
             const rentalSearchPrompt = isLandAgricultural
@@ -2528,7 +2524,7 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                     },
                     confidence: {
                         type: Type.NUMBER,
-                        description: "Độ tin cậy dữ liệu từ 0-100. 95-99: có giá GIAO DỊCH THỰC TẾ / chuyển nhượng thứ cấp từ ≥2 nguồn uy tín (CBRE/Savills/JLL hoặc onehousing/batdongsan giao dịch khớp). 85-94: chỉ có giá rao bán (listing price) — chưa xác nhận giao dịch. 75-84: ít dữ liệu hoặc phải ngoại suy. <75: khu vực hẻo lánh, không đủ dữ liệu."
+                        description: "Độ tin cậy 0-100: 95-99=giao dịch thực tế từ ≥2 nguồn uy tín (CBRE/Savills/JLL/onehousing); 85-94=chỉ giá rao bán; 75-84=ít dữ liệu/ngoại suy; <75=thiếu dữ liệu."
                     },
                     marketTrend: {
                         type: Type.STRING,
@@ -2541,15 +2537,15 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                     // ── Rental: statistical triple ────────────────────────────────────
                     rentMin: {
                         type: Type.NUMBER,
-                        description: `Giá thuê THẤP NHẤT thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}". ĐƠN VỊ BẮT BUỘC: triệu VNĐ/tháng. Nếu dữ liệu là USD/m²/tháng → quy đổi: USD × 25,000 VNĐ × ${area}m² ÷ 1,000,000 = số triệu. Ví dụ: 3 USD/m²/th × 25,000 × ${area}m² ÷ 1M = ${(area * 3 * 25000 / 1000000).toFixed(0)} triệu/tháng.`
+                        description: `Giá thuê THẤP NHẤT (triệu VNĐ/tháng, toàn bộ ${area}m²). USD/m²/th → ×25,000×${area}÷1,000,000.`
                     },
                     rentMedian: {
                         type: Type.NUMBER,
-                        description: `Giá thuê TRUNG BÌNH thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}" — SỐ LIỆU THU NHẬP CHÍNH. ĐƠN VỊ: triệu VNĐ/tháng. Nếu dữ liệu USD/m²/th → USD × 25,000 × ${area} ÷ 1,000,000. Ví dụ kho: 4 USD/m²/th × 25,000 × ${area} ÷ 1M = ${(area * 4 * 25000 / 1000000).toFixed(0)} tr/th. Ví dụ văn phòng: USD 12/m²/th × 25,000 × ${area} ÷ 1M = ${(area * 12 * 25000 / 1000000).toFixed(0)} tr/th.`
+                        description: `Giá thuê TRUNG BÌNH (triệu VNĐ/tháng, toàn bộ ${area}m²) — CHÍNH. USD/m²/th → ×25,000×${area}÷1M. VD kho 4 USD=${(area*4*25000/1000000).toFixed(0)}tr, VP 12 USD=${(area*12*25000/1000000).toFixed(0)}tr.`
                     },
                     rentMax: {
                         type: Type.NUMBER,
-                        description: `Giá thuê CAO NHẤT thực tế (TRIỆU VNĐ/tháng) cho ${area}m² tại "${address}". ĐƠN VỊ: triệu VNĐ/tháng. Nếu dữ liệu USD → USD × 25,000 × ${area}m² ÷ 1,000,000. Ví dụ: 30 = 30 triệu/tháng.`
+                        description: `Giá thuê CAO NHẤT (triệu VNĐ/tháng, toàn bộ ${area}m²). USD → ×25,000×${area}÷1M.`
                     },
                     propertyTypeEstimate: {
                         type: Type.STRING,
@@ -2571,7 +2567,7 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                     },
                     analysisNotes: {
                         type: Type.STRING,
-                        description: `Phân tích suy luận từng bước TRƯỚC KHI điền số (Chain-of-Thought). Ghi ngắn gọn: (1) nguồn dữ liệu và loại (giao dịch/rao bán), (2) dự án cụ thể hay khu vực, (3) đơn vị đã kiểm tra, (4) priceMedian chọn từ số nào và lý do, (5) confidence lý do. Ví dụ: "Tìm thấy 3 nguồn: Savills Q1/2025 + batdongsan.com. Vinhomes CP thứ cấp 185-210 tr/m². Dự án premium → dùng giá dự án. Thông thủy m² OK. Median=195M (giao dịch). Confidence=95."`
+                        description: `CoT trước khi điền số: (1) nguồn & loại dữ liệu, (2) dự án hay khu vực, (3) đơn vị, (4) priceMedian = số nào & lý do, (5) confidence & lý do. VD: "Savills Q1/2025+batdongsan: 185-210tr/m². Premium → median=195M (giao dịch). Conf=95."`
                     }
                 },
                 required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors", "analysisNotes"]
@@ -2617,19 +2613,10 @@ GIÁ BÁN (từ phần DỮ LIỆU GIÁ BÁN):
 - marketTrend: Xu hướng % tăng/giảm khu vực (ví dụ "Tăng 10-15%/năm do Metro").
 - trendGrowthPct: Số %/năm tăng (+) hoặc giảm (-). Ví dụ: "Tăng 10-15%/năm" → trendGrowthPct = 12.
 
-GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
-- rentMin, rentMedian, rentMax: Khoảng giá thuê thực tế (triệu VNĐ/tháng) cho diện tích ${area}m² tại "${address}".
-  Ví dụ: 18 = 18 triệu/tháng. Nếu chỉ 1 con số → cả 3 bằng nhau.${(isIndustrialOrWarehouse || resolvedPTypeForSearch === 'office') ? `
-  QUAN TRỌNG — Quy đổi đơn vị USD/m²/tháng (phổ biến với kho xưởng, văn phòng, KCN):
-    Công thức: giá (USD/m²/th) × 25,000 VNĐ/USD × ${area} m² ÷ 1,000,000 = triệu VNĐ/tháng
-    Ví dụ kho: 3 USD/m²/th × 25,000 × ${area} ÷ 1,000,000 = ${(area * 3 * 25000 / 1000000).toFixed(1)} tr/th
-    Ví dụ VP hạng B: 12 USD/m²/th × 25,000 × ${area} ÷ 1,000,000 = ${(area * 12 * 25000 / 1000000).toFixed(1)} tr/th` : isLandType ? `
-  Đất nông nghiệp/đất KCN thuê theo năm: quy đổi về triệu VNĐ/tháng cho toàn bộ ${area}m².
-  Ví dụ: đất nông nghiệp thuê 5 triệu/sào/năm, 1 sào = 360m² → ${area}m² × 5/(360×12) = ${(area * 5 / (360 * 12)).toFixed(2)} tr/th.` : `
-  Đơn vị: triệu VNĐ/tháng — KHÔNG dùng USD hoặc VNĐ thô. Ví dụ: 15 = 15 triệu/tháng.`}
-
+GIÁ THUÊ (từ DỮ LIỆU GIÁ THUÊ):
+- rentMin/rentMedian/rentMax: Giá thuê thực tế (triệu VNĐ/tháng) cho ${area}m². Nếu chỉ 1 con số → cả 3 bằng nhau. Quy đổi USD/đất: xem mô tả field trong schema.
 - propertyTypeEstimate: Loại BĐS phù hợp nhất.
-- locationFactors: 2-3 yếu tố VĨ MÔ KHU VỰC (KHÔNG lặp pháp lý/lộ giới/diện tích).`;
+- locationFactors: 2-3 yếu tố vĩ mô khu vực (không lặp pháp lý/lộ giới/diện tích).`;
 
             // Use Flash for extraction — Pro hits 503 under load; Flash is fast + reliable for structured JSON
             let extractText: string = '{}';
@@ -2854,26 +2841,27 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
 
                     const verifyText = verifyRes.text || '';
 
-                    // Extract single verification price from free-form text
-                    const verifyExtractRes = await getAiClient().models.generateContent({
-                        model: GENAI_CONFIG.MODELS.WRITER,
-                        contents: `Dữ liệu xác minh:\n${verifyText}\n\nTrích xuất một con số duy nhất: giá trung bình 1m² ${extractRefDescription} (VNĐ/m²). Nếu dữ liệu nói "X triệu/m²" thì trả X*1000000. Nếu không tìm thấy giá nào rõ ràng, trả 0.`,
-                        config: {
-                            systemInstruction: 'Trả về CHỈ một số nguyên (VNĐ/m²). Không thêm text. Ví dụ: 120000000',
-                            responseMimeType: 'application/json',
-                            responseSchema: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    verifyPrice: { type: Type.NUMBER, description: 'Giá xác minh VNĐ/m². 0 nếu không tìm thấy.' }
-                                },
-                                required: ['verifyPrice']
+                    // Extract price from verification text using regex — no AI call needed
+                    // Matches: "120 triệu/m²", "1.2 tỷ/m²", "120,000,000 VNĐ/m²"
+                    let verifyPrice = 0;
+                    const verifyPatterns: RegExp[] = [
+                        /(\d+(?:[,.]\d+)?)\s*tỷ\/m/i,
+                        /(\d+(?:[,.]\d+)?)\s*(?:tr|triệu)\/m/i,
+                        /([\d.,]+)\s*(?:VNĐ|đồng|đ)\/m/i,
+                    ];
+                    for (const vp of verifyPatterns) {
+                        const vm = verifyText.match(vp);
+                        if (vm) {
+                            const raw = parseFloat(vm[1].replace(/,/g, '.'));
+                            if (!isNaN(raw) && raw > 0) {
+                                verifyPrice = /tỷ/i.test(vm[0]) ? raw * 1_000_000_000
+                                           : /tr|triệu/i.test(vm[0]) ? raw * 1_000_000
+                                           : raw;
+                                verifyPrice = autoCorrectPrice(verifyPrice);
+                                break;
                             }
                         }
-                    });
-
-                    const verifyData = JSON.parse(verifyExtractRes.text || '{"verifyPrice":0}');
-                    let verifyPrice: number = verifyData.verifyPrice || 0;
-                    verifyPrice = autoCorrectPrice(verifyPrice);
+                    }
 
                     if (verifyPrice > 0 && marketBasePrice > 0) {
                         const divergePct = Math.abs(verifyPrice - marketBasePrice) / marketBasePrice;
