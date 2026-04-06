@@ -67,9 +67,13 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `billingRoutes.ts` — `/api/billing/*` (subscription, upgrade, usage, invoices)
 - `sessionRoutes.ts` — `/api/sessions/*` (list, revoke)
 - `aiGovernanceRoutes.ts` — `/api/ai/governance/*` (safety-logs, prompt-templates, config, feedback CRUD, feedback/stats, feedback/rewards, feedback/recompute)
+- `valuationRoutes.ts` — `/api/valuation/*` (AVM valuation form endpoint, market data, price calibration history)
 - `taskRoutes.ts` — `/api/tasks/*` (CRUD, status transitions, assign/unassign, comments, activity)
 - `departmentRoutes.ts` — `/api/departments/*` (list, user workload stats)
 - `taskReportRoutes.ts` — `/api/dashboard/task-stats`, `/api/reports/task-summary`, `/api/reports/task-export/csv`, `/api/reports/task-by-project`
+- `activityRoutes.ts` — `/api/activity/*` (recent activity feed)
+- `connectorRoutes.ts` — `/api/connectors/*` (third-party connector status)
+- `scimRoutes.ts` — `/api/scim/*` (SCIM 2.0 provisioning, protected by scimAuth middleware)
 
 ### Frontend API Client (`services/api/`)
 - `apiClient.ts` — Base HTTP client with JWT cookie auth, error handling
@@ -88,6 +92,13 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `emailService.ts` — Nodemailer-based email sending with per-tenant SMTP config from enterprise_config. Falls back to console logging when SMTP not configured. Provides: sendEmail, sendPasswordResetEmail, sendWelcomeEmail, sendSequenceEmail, testSmtpConnection.
 - `systemService.ts` — Server-side health check service. Checks DB connectivity and AI key config. Used by `GET /api/health`.
 - `geoService.ts` — IP geolocation via ip-api.com (free, no key). 24h in-memory cache per IP. Returns country/region/city/lat/lon/isp. Skips private/local IPs. Helper `getClientIp()` handles X-Forwarded-For proxy headers.
+- `marketDataService.ts` — AVM market data engine. Fetches real-time price/m² from Gemini Search (grounding) for any Vietnamese address. 6h in-memory LRU cache (300 entries) + optional Upstash Redis (24h). Normalizes location strings. Background seed loop at startup (`SEED_LOCATIONS` list). Sanity bounds: 5M–1B VNĐ/m². Returns `MarketDataEntry` {pricePerM2, confidence, source, marketTrend}. Used exclusively by VALUATION_AGENT and AiValuation page.
+- `priceCalibrationService.ts` — Self-learning AVM calibration. Singleton. Reads `market_price_history` (migration 046). `recordObservation()` writes source-tagged price samples (ai_search, internal_comps, transaction). `calibrateLocation()` Bayesian-blends sources: txn×50% + ai×35% + comps×15% (if txn exists), or ai×70% + comps×30% (no txn). 90-day window. `calibrateAll()` iterates all location keys. `getCalibratedPrice()` returns blended price + confidence (max 14-day age). Confidence = min(95, 50 + samples×2 + txn_bonus).
+- `brevoService.ts` — Brevo transactional email API (primary). Falls back to emailService on error.
+- `facebookService.ts` — Facebook webhook processing: message parsing, page access token management.
+- `zaloService.ts` — Zalo OA webhook processing: message parsing, signature verification.
+- `storageService.ts` — Storage backend selector: Replit Object Storage (prod) vs local disk (dev).
+- `textExtractor.ts` — PDF (pdf-parse) + DOCX (mammoth) text extraction for Knowledge Base.
 
 ### File Upload System
 - **Endpoint**: `POST /api/upload` (multipart/form-data, field name: `files`, max 10 files, 10MB each)
@@ -103,7 +114,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **Client validation**: 10MB file size limit, MIME type filtering on all upload forms
 - **Used by**: ListingForm (property images, max 10, drag-to-reorder), KnowledgeBase (document upload with text extraction), Profile (avatar upload)
 
-### Database Tables (32 total)
+### Database Tables (34 total)
 **Core CRM**: users, leads, listings, proposals, contracts, interactions, tasks, favorites
 **Organization**: tenants, teams, team_members
 **Automation**: sequences, routing_rules, templates
@@ -111,9 +122,11 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 **Analytics**: audit_logs, campaign_costs
 **Configuration**: enterprise_config, scoring_configs
 **Billing**: subscriptions, usage_tracking
-**AI Governance**: ai_safety_logs, prompt_templates
+**AI Governance**: ai_safety_logs, prompt_templates, ai_feedback, ai_reward_signals
 **Security**: user_sessions, password_reset_tokens
 **Task Management (migration 020)**: departments, wf_tasks, task_assignments, task_comments, task_activity_logs, task_reminders
+**Market/Valuation (migration 046)**: market_price_history
+**Agent Self-Learning (migration 047)**: agent_observations, agent_system_change_log
 
 ## Security
 
@@ -192,7 +205,7 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **RouterPlan**: typed interface (was `any`), ROUTER_SCHEMA all 13 descriptions Vietnamese
 - **Safety log**: `pipelineMultiplier` for accurate multi-node cost tracking
 - **Valuation prompts**: trimmed indentation, `systemInstruction` separated from contents
-- **3-tier model strategy**: ROUTER=gemini-2.0-flash-lite (cheapest), EXTRACTOR=gemini-2.0-flash (JSON tasks), WRITER=gemini-2.5-flash (governance override)
+- **Unified model strategy**: All 3 tiers (ROUTER, EXTRACTOR, WRITER) now use `gemini-2.5-flash`. Model costs table includes Gemini 3.x preview entries. `ensureSafeModel()` auto-upgrades 2.0/1.5 legacy config entries to 2.5-flash.
 - **Prompt templates**: DB-backed via `getPromptTemplate()` with 5-min cache; keys: `ROUTER_SYSTEM`, `WRITER_PERSONA`; falls back to hardcoded defaults
 - **Internal DB comps**: VALUATION_AGENT queries internal listing DB for comparable properties → feeds `internalCompsMedian`/`internalCompsCount` to multi-source blending
 - **Per-node cost tracking**: `modelUsed`, `tokensEstimate`, `costEstimate` in each trace step
@@ -218,6 +231,58 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - **VALUATION address guard**: `VALUATION_AGENT` validates address with regex before running AVM. If address is missing/too generic, injects `[VALUATION_NEEDS_ADDRESS]` flag → WRITER detects flag and asks client for specific address (number, street, ward, district, city) instead of fabricating results.
 - **ESCALATION_NODE handover artifact**: Builds structured `ESCALATION_HANDOVER` artifact with lead stage/score/grade, budget/regions/propertyTypes from preferences, urgency level (HIGH/MEDIUM/LOW via keyword detection), recent 5 messages, and trigger message. Gives human agent full context to take over seamlessly.
 - **LEAD_BRIEF artifact**: LEAD_ANALYST parses analysis text to create structured `LEAD_BRIEF` artifact — buying stage (Awareness/Consideration/Decision), readiness % (from text), communication style (Formal/Casual/Data-driven), urgency signals, hesitation signals, recommended action. Gives Sales a coaching card at a glance.
+
+### AI Pipeline — Full 9-Node Map (`server/ai.ts`)
+
+```
+ROUTER
+  ├─→ INVENTORY_AGENT  → WRITER
+  ├─→ FINANCE_AGENT    → WRITER
+  ├─→ LEGAL_AGENT      → WRITER
+  ├─→ SALES_AGENT      → WRITER
+  ├─→ MARKETING_AGENT  → WRITER
+  ├─→ CONTRACT_AGENT   → WRITER
+  ├─→ LEAD_ANALYST     → WRITER
+  ├─→ VALUATION_AGENT  → WRITER
+  ├─→ ESCALATION_NODE  → END
+  └─→ WRITER (DIRECT_ANSWER / low-confidence fallback)
+```
+
+**Node details:**
+| Node | Model | Intent | Output |
+|---|---|---|---|
+| ROUTER | gemini-2.5-flash | All | RouterPlan JSON (next_step, extraction, confidence) |
+| INVENTORY_AGENT | gemini-2.5-flash | SEARCH_INVENTORY | Ranked top-3 property analysis + RLHF |
+| FINANCE_AGENT | gemini-2.5-flash | CALCULATE_LOAN | Loan scenario analysis + amortization + RLHF |
+| LEGAL_AGENT | gemini-2.5-flash | EXPLAIN_LEGAL | Legal term explanation (PINK_BOOK/HDMB/VI_BANG) + RLHF |
+| SALES_AGENT | gemini-2.5-flash | DRAFT_BOOKING | Showroom visit scheduling + visitor profile + RLHF |
+| MARKETING_AGENT | gemini-2.5-flash | EXPLAIN_MARKETING | Campaign matching + incentive highlights + RLHF |
+| CONTRACT_AGENT | gemini-2.5-flash | DRAFT_CONTRACT | Contract clause analysis by scenario + RLHF |
+| LEAD_ANALYST | gemini-2.5-flash | ANALYZE_LEAD | 6-point lead analysis → LEAD_BRIEF artifact + RLHF |
+| VALUATION_AGENT | gemini-2.5-flash | ESTIMATE_VALUATION | AVM 8-coeff + internal comps + market data (no RLHF — deterministic) |
+| ESCALATION_NODE | — | ESCALATE_TO_HUMAN | EscalationHandoverData artifact (urgency/stage/history) |
+| WRITER | gemini-2.5-flash (governance) | All | Final Vietnamese customer response OR internal coaching brief |
+
+**Memory Layers:**
+1. **Conversation history** — 12 turns (WRITER) / 6 turns (ROUTER) passed as `history[]`
+2. **Conversation Memory Digest** — when history >12 msgs, older topics (giá cả/pháp lý/tài chính) extracted → `[TRÍ NHỚ HỘI THOẠI]` in systemContext
+3. **Intent History** — last 10 intents stored in `lead.preferences._intentHistory` → behavioral patterns detected (e.g., "EXPLAIN_LEGAL(3×)")
+4. **Lead Analysis Persistence** — LEAD_ANALYST saves `_lastAnalysisSummary` (200 chars) + `_lastAnalysisDate` to lead.preferences → available cross-session
+5. **RLHF few-shot** — top-rated examples per intent injected as `[MẪU TRẢ LỜI ĐƯỢC ĐÁNH GIÁ TỐT]`
+6. **Agent Observations** — `agent_observations` table stores per-node operational data → `getObservationInsights()` summarizes patterns for next run
+
+**System Instructions (per-node, DB-backed with hardcoded fallback):**
+- `getInventoryInstruction()`, `getFinanceInstruction()`, `getLegalInstruction()`, `getSalesInstruction()`, `getMarketingInstruction()`, `getContractInstruction()` — 6 specialist system instructions
+- `getAgentSystemInstruction()` — WRITER persona (tenant brandName injected)
+- All fetched via `getPromptTemplate(tenantId, key)` → DB `prompt_templates` table → 5-min cache
+
+**Prompt optimization pass (April 2026):**
+- ROUTER number parsing compressed ~50% (9 verbose bullets → 4 compact pipe-separated lines)
+- INVENTORY specialist: removed redundant persona preamble (handled by systemInstruction)
+- FINANCE specialist: step 2 ternary chain replaced with direct `loanScenario ===` comparisons; step 4 adds concrete warning amount (+25% calculation)
+- CONTRACT specialist: steps 3-5 tightened with scenario-specific conditionals and explicit tax numbers (TNCN 2%, trước bạ 0.5%)
+- WRITER ANALYZE_LEAD: **logic fix** — was incorrectly labeled "tin nhắn khách thấy" (customer-facing); corrected to "COACHING BRIEF NỘI BỘ CHO SALES" (internal output with ⚠️ marker)
+- LEAD_ANALYST: analysis prompt condensed from ~180 → ~80 words, same 6-point structure
 
 ## Entry Points
 
