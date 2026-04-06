@@ -14,6 +14,7 @@ export const ROUTES = {
     CONTACT: 'contact',
     CAREERS: 'careers',
     HELP_CENTER: 'help-center',
+    USER_GUIDE: 'huong-dan-su-dung',
     API_DOCS: 'developers',
     STATUS_PUBLIC: 'status',
     LIVE_CHAT: 'livechat',

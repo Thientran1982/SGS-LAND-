@@ -45,6 +45,7 @@ const News = lazyLoad(() => import('./pages/News'), 'News');
 const Contact = lazyLoad(() => import('./pages/Contact'), 'Contact'); 
 const Careers = lazyLoad(() => import('./pages/Careers'), 'Careers'); 
 const HelpCenter = lazyLoad(() => import('./pages/HelpCenter'), 'HelpCenter'); 
+const UserGuide  = lazyLoad(() => import('./pages/UserGuide'), 'UserGuide');
 const ApiDocs = lazyLoad(() => import('./pages/ApiDocs'), 'ApiDocs'); 
 const PublicStatus = lazyLoad(() => import('./pages/PublicStatus'), 'PublicStatus');
 const LiveChat = lazyLoad(() => import('./pages/LiveChat'), 'LiveChat');
@@ -160,6 +161,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.CONTACT]: Contact,
     [ROUTES.CAREERS]: Careers,
     [ROUTES.HELP_CENTER]: HelpCenter,
+    [ROUTES.USER_GUIDE]: UserGuide,
     [ROUTES.API_DOCS]: ApiDocs,
     [ROUTES.STATUS_PUBLIC]: PublicStatus,
     [ROUTES.LIVE_CHAT]: LiveChat,
@@ -216,6 +218,7 @@ const PUBLIC_ROUTES = new Set([
     ROUTES.CONTACT,
     ROUTES.CAREERS,
     ROUTES.HELP_CENTER,
+    ROUTES.USER_GUIDE,
     ROUTES.API_DOCS,
     ROUTES.STATUS_PUBLIC,
     ROUTES.LIVE_CHAT,
