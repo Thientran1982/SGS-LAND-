@@ -171,7 +171,8 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       if (!title) return res.status(400).json({ error: 'Title is required' });
       const article = await articleRepository.create(user.tenantId, {
         title, content, excerpt, category, tags,
-        author: author || user.name, coverImage: coverImage || image, image, images, featured, status, slug,
+        author: author || user.name, coverImage: coverImage || image, image, images, featured,
+        status: status || 'PUBLISHED', slug,
       });
       res.status(201).json(article);
     } catch (error) {
