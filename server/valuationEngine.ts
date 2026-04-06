@@ -1074,6 +1074,26 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     streetOverride = 45_000_000;  // Waterpoint Nam Long Bến Lức: 35-55M/m²
   if (/novaworld\s*phan\s*thiet|phan\s*thiet.*novaworld/i.test(enrichedAddr))
     streetOverride = 40_000_000;  // NovaWorld Phan Thiết biệt thự/nhà phố: 35-55M/m²
+  // ── Bình Dương premium projects (Q1/2026 — Batdongsan/OneHousing) ─────────
+  if (/midori\s*park/i.test(enrichedAddr))
+    streetOverride = 65_000_000;  // Midori Park Thuận An: 58-72M/m² (căn hộ cao cấp)
+  if (/opal\s*boulevard|opal.*boulevard/i.test(enrichedAddr))
+    streetOverride = 62_000_000;  // Opal Boulevard Thuận An: 55-70M/m²
+  if (/id\s*junction/i.test(enrichedAddr))
+    streetOverride = 55_000_000;  // ID Junction Dĩ An: 48-62M/m²
+  if (/bcons\s*(city|blu|garden)/i.test(enrichedAddr))
+    streetOverride = 42_000_000;  // Bcons City/Blu/Garden Dĩ An: 38-48M/m²
+  if (/phúc\s*đạt|phuc\s*dat|tecco/i.test(enrichedAddr) && /bình\s*dương|binh\s*duong/i.test(enrichedAddr))
+    streetOverride = 35_000_000;  // Tecco / Phúc Đạt Bình Dương: 30-40M/m²
+  // ── Đồng Nai premium projects (Q1/2026) ──────────────────────────────────
+  if (/century\s*city/i.test(enrichedAddr))
+    streetOverride = 45_000_000;  // Century City Long Thành: 38-55M/m²
+  if (/airport\s*city.*long\s*thành|long\s*thành.*airport/i.test(enrichedAddr))
+    streetOverride = 40_000_000;  // Airport City Long Thành: 35-48M/m²
+  if (/supermoon|super\s*moon/i.test(enrichedAddr))
+    streetOverride = 38_000_000;  // Supermoon Long Thành: 32-45M/m²
+  if (/saigon\s*village|long\s*thành.*village/i.test(enrichedAddr))
+    streetOverride = 35_000_000;  // Saigon Village Long Thành: 28-42M/m²
 
   // Apply street override if matched
   const getBase = (base: number, region: string, conf: number) => {
@@ -1162,22 +1182,40 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/bà rịa.?vũng tàu|br.?vt/i.test(enrichedAddr))      return getBase(40_000_000,  'Bà Rịa-Vũng Tàu', 52);
 
   // ── Đồng Nai ──────────────────────────────────────────────────────────────
-  if (/biên hòa|bien hoa/i.test(enrichedAddr))             return getBase(42_000_000,  'Biên Hòa, Đồng Nai', 57);
-  if (/long thành|long thanh.*dong nai/i.test(enrichedAddr)) return getBase(35_000_000, 'Long Thành, Đồng Nai', 55);
-  if (/nhơn trạch|nhon trach/i.test(enrichedAddr))         return getBase(30_000_000,  'Nhơn Trạch, Đồng Nai', 53);
-  if (/đồng nai|dong nai/i.test(enrichedAddr))             return getBase(35_000_000,  'Đồng Nai', 53);
+  // Source: Batdongsan/CBRE/Savills/OneHousing Vietnam Q1/2026
+  if (/biên hòa|bien hoa/i.test(enrichedAddr))               return getBase(42_000_000,  'Biên Hòa, Đồng Nai', 57);
+  if (/long thành|long thanh/i.test(enrichedAddr))            return getBase(35_000_000,  'Long Thành, Đồng Nai', 55);
+  if (/nhơn trạch|nhon trach/i.test(enrichedAddr))            return getBase(30_000_000,  'Nhơn Trạch, Đồng Nai', 55);
+  if (/trảng bom|trang bom/i.test(enrichedAddr))              return getBase(22_000_000,  'Trảng Bom, Đồng Nai', 50);
+  if (/vĩnh cửu|vinh cuu/i.test(enrichedAddr))               return getBase(20_000_000,  'Vĩnh Cửu, Đồng Nai', 49);
+  if (/thống nhất|thong nhat.*dong nai/i.test(enrichedAddr))  return getBase(18_000_000,  'Thống Nhất, Đồng Nai', 48);
+  if (/định quán|dinh quan/i.test(enrichedAddr))              return getBase(15_000_000,  'Định Quán, Đồng Nai', 46);
+  if (/xuân lộc|xuan loc/i.test(enrichedAddr))               return getBase(14_000_000,  'Xuân Lộc, Đồng Nai', 46);
+  if (/cẩm mỹ|cam my/i.test(enrichedAddr))                   return getBase(16_000_000,  'Cẩm Mỹ, Đồng Nai', 47);
+  if (/đồng nai|dong nai/i.test(enrichedAddr))               return getBase(35_000_000,  'Đồng Nai', 55);
 
   // ── Bình Dương ────────────────────────────────────────────────────────────
-  if (/thuận an|thuan an/i.test(enrichedAddr))             return getBase(55_000_000,  'Thuận An, Bình Dương', 58);
-  if (/dĩ an|di an/i.test(enrichedAddr))                   return getBase(50_000_000,  'Dĩ An, Bình Dương', 57);
-  if (/thủ dầu một|thu dau mot/i.test(enrichedAddr))       return getBase(45_000_000,  'Thủ Dầu Một, Bình Dương', 57);
-  if (/bến cát|ben cat/i.test(enrichedAddr))               return getBase(30_000_000,  'Bến Cát, Bình Dương', 52);
-  if (/bình dương|binh duong/i.test(enrichedAddr))         return getBase(45_000_000,  'Bình Dương', 57);
+  // Source: Batdongsan/CBRE/Savills Vietnam Q1/2026
+  if (/thuận an|thuan an/i.test(enrichedAddr))               return getBase(55_000_000,  'Thuận An, Bình Dương', 58);
+  if (/dĩ an|di an/i.test(enrichedAddr))                     return getBase(50_000_000,  'Dĩ An, Bình Dương', 57);
+  if (/thủ dầu một|thu dau mot/i.test(enrichedAddr))         return getBase(45_000_000,  'Thủ Dầu Một, Bình Dương', 57);
+  if (/tân uyên|tan uyen/i.test(enrichedAddr))               return getBase(32_000_000,  'Tân Uyên, Bình Dương', 53);
+  if (/bến cát|ben cat/i.test(enrichedAddr))                 return getBase(28_000_000,  'Bến Cát, Bình Dương', 52);
+  if (/bàu bàng|bau bang/i.test(enrichedAddr))               return getBase(20_000_000,  'Bàu Bàng, Bình Dương', 49);
+  if (/phú giáo|phu giao/i.test(enrichedAddr))               return getBase(15_000_000,  'Phú Giáo, Bình Dương', 46);
+  if (/dầu tiếng|dau tieng/i.test(enrichedAddr))             return getBase(12_000_000,  'Dầu Tiếng, Bình Dương', 45);
+  if (/bình dương|binh duong/i.test(enrichedAddr))           return getBase(38_000_000,  'Bình Dương', 55);
 
   // ── Long An ───────────────────────────────────────────────────────────────
-  if (/tân an|tan an.*long an/i.test(enrichedAddr))        return getBase(30_000_000,  'Tân An, Long An', 52);
-  if (/cần đước|can duoc/i.test(enrichedAddr))             return getBase(22_000_000,  'Cần Đước, Long An', 48);
-  if (/long an/i.test(enrichedAddr))                       return getBase(28_000_000,  'Long An', 52);
+  // Source: Batdongsan/CBRE Vietnam Q1/2026
+  if (/tân an|tan an.*long an/i.test(enrichedAddr))          return getBase(30_000_000,  'Tân An, Long An', 52);
+  if (/bến lức|ben luc/i.test(enrichedAddr))                 return getBase(30_000_000,  'Bến Lức, Long An', 52);
+  if (/đức hòa|duc hoa/i.test(enrichedAddr))                 return getBase(25_000_000,  'Đức Hòa, Long An', 50);
+  if (/cần giuộc|can giuoc/i.test(enrichedAddr))             return getBase(25_000_000,  'Cần Giuộc, Long An', 50);
+  if (/cần đước|can duoc/i.test(enrichedAddr))               return getBase(22_000_000,  'Cần Đước, Long An', 48);
+  if (/thủ thừa|thu thua/i.test(enrichedAddr))               return getBase(18_000_000,  'Thủ Thừa, Long An', 47);
+  if (/mộc hóa|moc hoa/i.test(enrichedAddr))                 return getBase(12_000_000,  'Mộc Hóa, Long An', 44);
+  if (/long an/i.test(enrichedAddr))                         return getBase(28_000_000,  'Long An', 52);
 
   // ── Tây Ninh ──────────────────────────────────────────────────────────────
   if (/tây ninh|tay ninh/i.test(enrichedAddr))             return getBase(18_000_000,  'Tây Ninh', 48);
