@@ -31,6 +31,11 @@ export const LISTING_ICONS = {
 };
 
 
+function toThumbnailUrl(src: string, width = 800): string {
+    if (src.startsWith('/uploads/')) return `${src}?w=${width}`;
+    return src;
+}
+
 const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFavorite, t, bookingCount, viewCount, onClick, type, transaction }: { images?: string[], title: string, isVerified: boolean, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void, t: any, bookingCount?: number, viewCount?: number, onClick?: () => void, type: PropertyType, transaction?: TransactionType }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [imgError, setImgError] = useState(false);
@@ -98,7 +103,7 @@ const ImageCarousel = memo(({ images, title, isVerified, isFavorite, onToggleFav
             {hasImages ? (
                 <>
                     <img
-                        src={images![currentIndex]}
+                        src={toThumbnailUrl(images![currentIndex])}
                         alt={title}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         loading="lazy"
