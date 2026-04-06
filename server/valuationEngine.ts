@@ -1027,9 +1027,9 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     // ── TP.HCM — Quận 7 ───────────────────────────────────────────────────────
     [/phú mỹ hưng|phu my hung|midtown|scenic\s*valley|riviera\s*point|sunrise\s*city|crescent|star\s*hill|happy\s*valley|nam viên|nam vien|eco\s*green\s*saigon|q7\s*saigon|southgate|hung\s*gia/i, 'quận 7'],
     // ── TP.HCM — Quận 1 ───────────────────────────────────────────────────────
-    [/vinhome[s]?\s*golden\s*river|vinhome[s]?\s*bason|ba son|the\s*marq|the\s*grand\s*manhattan|d1mension|city\s*garden.*quận\s*1|nguyễn huệ.*tower/i, 'quận 1'],
+    [/vinhome[s]?\s*golden\s*river|vinhome[s]?\s*bason|ba son|the\s*marq|the\s*grand\s*manhattan|d1mension|city\s*garden.*quận\s*1|nguyễn huệ.*tower|one\s*central\s*saigon|lancaster\s*legacy|the\s*one.*quận\s*1|icon\s*56/i, 'quận 1'],
     // ── TP.HCM — Quận 2 (nay thuộc Thủ Đức) ─────────────────────────────────
-    [/gateway\s*thảo\s*điền|d'lusso|de\s*la\s*sol.*thảo\s*điền/i, 'thủ đức'],
+    [/gateway\s*thảo\s*điền|d'lusso|de\s*la\s*sol.*thảo\s*điền|lumière\s*riverside|lumiere\s*riverside|the\s*river\s*thu\s*thiem|the\s*river.*thủ\s*thiêm/i, 'thủ đức'],
     // ── TP.HCM — Quận 4 ───────────────────────────────────────────────────────
     [/river\s*gate|the\s*tresor|millennium.*quận\s*4|everrich\s*infinity/i, 'quận 4'],
     // ── TP.HCM — Quận 6 ───────────────────────────────────────────────────────
@@ -1040,10 +1040,14 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     [/vinhome[s]?\s*grand\s*park|masteri\s*center\s*point|gia\s*hòa.*quận\s*9|the\s*peak.*thủ\s*đức|flora\s*novia|lovera\s*vista/i, 'thủ đức'],
     // ── TP.HCM — Quận 10 ──────────────────────────────────────────────────────
     [/kingdom\s*101|terra\s*royal|sài\s*gòn\s*mia.*quận\s*10/i, 'quận 10'],
+    // ── TP.HCM — Quận 3 ───────────────────────────────────────────────────────
+    [/the\s*one.*quận\s*3|la\s*astoria|estella\s*heights.*quận\s*3|y\s*phụng|võ\s*văn\s*tần.*quận\s*3/i, 'quận 3'],
+    // ── TP.HCM — Quận 5 ───────────────────────────────────────────────────────
+    [/richstar.*quận\s*5|zen\s*residence|nguyễn\s*văn\s*cừ.*quận\s*5/i, 'quận 5'],
     // ── TP.HCM — Quận 11 ──────────────────────────────────────────────────────
     [/one\s*verandah.*quận\s*11|charmington.*sadora/i, 'quận 11'],
     // ── TP.HCM — Quận 12 ──────────────────────────────────────────────────────
-    [/paris\s*hoàng\s*anh|icapital|the\s*art/i, 'quận 12'],
+    [/paris\s*hoàng\s*anh|icapital|the\s*art|sunshine\s*city.*quận\s*12|green\s*star.*quận\s*12/i, 'quận 12'],
     // ── TP.HCM — Bình Tân ─────────────────────────────────────────────────────
     [/akari\s*city|moonlight.*bình\s*tân|aio\s*city|the\s*light\s*city|tanibuilding/i, 'bình tân'],
     // ── TP.HCM — Tân Bình ─────────────────────────────────────────────────────

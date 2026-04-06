@@ -193,14 +193,33 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 
 **History**: Local `localStorage` persists last 10 valuations per session.
 
-### Chat → Valuation — ROUTER Schema (9 extracted fields)
+### Chat → Valuation — ROUTER Schema (10 extracted fields)
 `valuation_address`, `valuation_area`, `valuation_legal` (PINK_BOOK/HDMB/VI_BANG/UNKNOWN), `valuation_road_width`, `valuation_direction`, `valuation_floor`, `valuation_frontage`, `valuation_furnishing` (LUXURY/FULL/BASIC/NONE), `valuation_building_age`, `valuation_bedrooms` (studio=0, 1PN, 2PN, 3PN, 4PN+)
 
+**`valuation_address` extraction rules (ROUTER prompt)**:
+- Full address: "Hẻm 10 Đường Nguyễn Văn Cừ, P.An Bình, Q.5, TP.HCM"
+- Project name: "Vinhomes Grand Park, Thủ Đức, TP.HCM"
+- Area name only: "Phú Mỹ Hưng, Q.7, TP.HCM" or "Bình Thạnh, TP.HCM"
+- Abbreviations: Q.=quận, P.=phường, H.=huyện, TP.=thành phố, TX.=thị xã
+
+**Address guard (`addressLooksReal`) — expanded logic**:
+Accepts address if ANY of:
+1. Contains a digit (street number, alley number, road width, year)
+2. Has Vietnamese admin keywords: đường/phường/quận/huyện/tỉnh/thành phố/tp./q./p./h./hcm/hn
+3. Is a major Vietnamese city: Hà Nội, Sài Gòn, TP.HCM, Đà Nẵng, Hải Phòng, Cần Thơ
+4. Is a tourist/resort city: Đà Lạt, Nha Trang, Vũng Tàu, Hội An, Phú Quốc, Mũi Né, Huế, Quy Nhơn, Phan Thiết, Hạ Long, Sầm Sơn
+5. Is a satellite province: Bình Dương, Đồng Nai, Long An, Bà Rịa, Tây Ninh, Bình Phước, Lâm Đồng, Khánh Hòa, Bình Thuận, Hưng Yên, Bắc Ninh, Vĩnh Phúc, Quảng Ninh
+6. Contains a known project: Vinhomes, Masteri, Landmark, Celadon, Ecopark, Aqua City, Waterpoint, Ocean Park, Times City, Royal City, Grand Park, Smart City, Central Park, Golden River, Saigon Pearl, Phú Mỹ Hưng, Thảo Điền, Midtown, Biên Hòa, Thuận An, Dĩ An, etc.
+
 **Fixes applied (April 2026)**:
-- Added `valuation_bedrooms` to ROUTER_SCHEMA + TypeScript interface → chat users can now trigger Kbr coefficient
-- Added `LUXURY` to `valuation_furnishing` enum → chat users can now trigger LUXURY nội thất (+12%)
-- `furnishing` type updated in `getRealtimeValuation()` signature to include `LUXURY`
+- Added `valuation_bedrooms` to ROUTER_SCHEMA + TypeScript interface → Kbr coefficient triggered from chat
+- Added `LUXURY` to `valuation_furnishing` enum + `getRealtimeValuation()` type → Kfurn LUXURY (+12%) from chat
 - `bedrooms` now passed through both primary and fallback `applyAVM()` calls in VALUATION_AGENT
+- ROUTER extraction hint expanded: explicit address construction rules for hẻm/tên đường/phường/quận/dự án
+- `addressLooksReal` guard expanded: now accepts project names + tourist cities + satellite provinces
+- `PROJECT_DISTRICT_INFER` extended: One Central Saigon, Lancaster Legacy, Lumière Riverside, The River Thủ Thiêm, Q3 projects, Q5 projects, Q12 additions (Icon 56, La Astoria, Zen Residence, Green Star, Sunshine City Q12)
+
+### Additional Services
 - `brevoService.ts` — Brevo transactional email API (primary). Falls back to emailService on error.
 - `facebookService.ts` — Facebook webhook processing: message parsing, page access token management.
 - `zaloService.ts` — Zalo OA webhook processing: message parsing, signature verification.

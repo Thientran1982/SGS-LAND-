@@ -883,7 +883,15 @@ QUY TẮC TRÍCH XUẤT SỐ TIẾNG VIỆT:
 Ngân sách: "2 tỷ/hai tỷ/2 tỉ"→2000000000 | "1.5 tỷ/một rưỡi/1,5 tỷ"→1500000000 | "500 triệu/0.5 tỷ"→500000000
 Diện tích: "trên 80m²/ít nhất 100m/khoảng 70m"→area_min: 80/100/70
 Vay: "lãi suất 7%/7 phần trăm"→loan_rate:7 | "vay 20 năm/hai mươi năm"→loan_years:20
-Định giá — lộ giới: "đường 8m/hẻm 4m"→valuation_road_width:8/4 | hướng: "hướng nam/đông nam"→valuation_direction | tầng: "tầng 5/lầu 3"→valuation_floor:5/4 (lầu N=tầng N+1) | mặt tiền: "ngang 5m/rộng 6m"→valuation_frontage | nội thất: "nội thất cao cấp/luxury"→LUXURY | "full/đầy đủ"→FULL | "cơ bản/một phần"→BASIC | "thô/không nội thất"→NONE | tuổi nhà: "xây 2015"→10 | "mới xây"→1 | "cũ 15 năm"→15 | "nhà cũ"→20 | PN: "studio"→0 | "1PN/1 phòng ngủ"→1 | "2PN/2 phòng"→2 | "3PN"→3 | "4PN trở lên"→4→valuation_bedrooms
+Định giá:
+• valuation_address: Ghép ĐẦY ĐỦ thông tin vị trí từ tin nhắn → "Hẻm 10 Đường Nguyễn Văn Cừ, P.An Bình, Q.5, TP.HCM" | Tên dự án đủ: "Vinhomes Grand Park, Thủ Đức, TP.HCM" | Khu vực: "Phú Mỹ Hưng, Q.7, TP.HCM" | Nếu chỉ có quận/tỉnh: "Bình Thạnh, TP.HCM" | Viết tắt được dùng: Q.=quận, P.=phường, H.=huyện, TP.=thành phố, TX.=thị xã
+• valuation_road_width: "đường 8m/hẻm 4m/hẻm xe hơi/đường lớn"→8/4/4/12 | Nếu không đề cập → bỏ trống
+• valuation_direction: "hướng nam/đông nam/tây bắc"→giữ nguyên tiếng Việt
+• valuation_floor: "tầng 5/lầu 3"→5/4 (lầu N=tầng N+1) | "tầng trệt/trệt"→1
+• valuation_frontage: "ngang 5m/rộng 6m/mặt tiền 4m"→5/6/4
+• valuation_furnishing: "nội thất cao cấp/luxury/full option"→LUXURY | "full/đầy đủ/nội thất đầy đủ"→FULL | "cơ bản/một phần/bán nội thất"→BASIC | "thô/không nội thất/bàn giao thô"→NONE
+• valuation_building_age: "xây 2015"→10 | "mới xây/xây mới"→1 | "cũ 15 năm"→15 | "nhà cũ"→20 | "nhà cũ kỹ"→30
+• valuation_bedrooms: "studio"→0 | "1PN/1 phòng ngủ"→1 | "2PN/2 phòng"→2 | "3PN"→3 | "4PN trở lên"→4
 
 BẢNG PHÂN LOẠI Ý ĐỊNH (10 loại — chọn 1):
 1. EXPLAIN_LEGAL — Hỏi: sổ hồng, sổ đỏ, pháp lý, giấy tờ, vi bằng, HĐMB, sang tên, thế chấp, quy hoạch
@@ -1912,7 +1920,18 @@ YÊU CẦU VIẾT PHẢN HỒI:
 
             // ── Address guard: nếu không có địa chỉ thực sự → báo WRITER hỏi lại ──
             const rawAddress = ext.valuation_address?.trim() || ext.location_keyword?.trim() || '';
-            const addressLooksReal = rawAddress.length > 5 && /\d|đường|phường|quận|huyện|tỉnh|thành|tp\.|q\.|p\.|hcm|hn|hà nội|sài gòn/i.test(rawAddress);
+            // Nhận diện địa chỉ hợp lệ: số nhà/đường, từ khóa hành chính, tên thành phố, tên dự án, tỉnh vệ tinh
+            const addressLooksReal = rawAddress.length > 5 && (
+              /\d/.test(rawAddress) ||
+              /đường|phường|quận|huyện|tỉnh|thành phố|tp\.|q\.|p\.|h\.|hcm|hn/i.test(rawAddress) ||
+              // 5 TP trực thuộc TW + resort / tỉnh du lịch
+              /hà nội|sài gòn|sai gon|hồ chí minh|ho chi minh|đà nẵng|da nang|hải phòng|hai phong|cần thơ|can tho/i.test(rawAddress) ||
+              /đà lạt|da lat|nha trang|vũng tàu|vung tau|hội an|hoi an|phú quốc|phu quoc|mũi né|mui ne|huế|hue\b|quy nhơn|quy nhon|phan thiết|phan thiet|hạ long|ha long|sầm sơn|sam son/i.test(rawAddress) ||
+              // Tỉnh vệ tinh HCM / Hà Nội
+              /bình dương|binh duong|đồng nai|dong nai|long an|bà rịa|vũng tàu|tây ninh|tay ninh|bình phước|binh phuoc|lâm đồng|lam dong|khánh hòa|khanh hoa|bình thuận|binh thuan|hưng yên|hung yen|bắc ninh|bac ninh|vĩnh phúc|vinh phuc|quảng ninh|quang ninh/i.test(rawAddress) ||
+              // Khu vực nổi tiếng / dự án lớn (không có số, không có "đường/quận")
+              /vinhomes?|masteri|landmark|celadon|ecopark|aqua.?city|waterpoint|ocean.?park|times.?city|royal.?city|grand.?park|smart.?city|central.?park|golden.?river|saigon.?pearl|phú.?mỹ.?hưng|phu.?my.?hung|thảo.?điền|thao.?dien|midtown|biên.?hòa|bien.?hoa|thuận.?an|thuan.?an|dĩ.?an|di.?an/i.test(rawAddress)
+            );
             if (!addressLooksReal) {
                 // Inject flag vào context để WRITER biết hỏi địa chỉ thay vì bịa kết quả
                 return {
