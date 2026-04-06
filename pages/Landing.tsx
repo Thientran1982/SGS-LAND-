@@ -616,6 +616,7 @@ export const Landing: React.FC = () => {
                         <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_legal')}</h4>
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
                             <FooterLink label={t('footer.link_help')} route={ROUTES.HELP_CENTER} />
+                            <FooterLink label={t('footer.link_user_guide')} route={ROUTES.USER_GUIDE} />
                             <FooterLink label={t('footer.link_api')} route={ROUTES.API_DOCS} />
                             <FooterLink label={t('footer.system_status')} route={ROUTES.STATUS_PUBLIC} />
                         </ul>

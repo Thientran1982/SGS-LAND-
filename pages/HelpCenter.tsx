@@ -159,8 +159,29 @@ export const HelpCenter: React.FC = () => {
                 </div>
             </section>
 
+            {/* User Guide Banner */}
+            <div className="bg-gradient-to-r from-emerald-900/60 to-slate-900 border-b border-emerald-800/40">
+                <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                            <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-white">Mới dùng SGS LAND lần đầu?</p>
+                            <p className="text-xs text-slate-400">Xem hướng dẫn chi tiết 12 tính năng — từ định giá AI đến quản lý lead và hợp đồng.</p>
+                        </div>
+                    </div>
+                    <a
+                        href={`/#/huong-dan-su-dung`}
+                        className="shrink-0 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
+                    >
+                        Xem hướng dẫn →
+                    </a>
+                </div>
+            </div>
+
             {/* Categories */}
-            <div className="max-w-5xl mx-auto px-6 -mt-7 relative z-20">
+            <div className="max-w-5xl mx-auto px-6 pt-8 relative z-20">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                     {CATEGORIES.map(cat => (
                         <button
