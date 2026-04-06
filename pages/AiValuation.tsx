@@ -924,31 +924,9 @@ export const AiValuation: React.FC = () => {
                             Nhập địa chỉ — AI phân tích dữ liệu thị trường thực tế. Càng điền đầy đủ, sai số càng nhỏ.
                         </p>
 
-                        {/* Social proof strip */}
-                        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 mb-8 text-xs text-slate-500">
-                            <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-white text-sm">50,000+</span>
-                                <span>BĐS đã định giá</span>
-                            </div>
-                            <span className="text-slate-700 hidden md:inline">|</span>
-                            <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-emerald-400 text-sm">7 hệ số</span>
-                                <span>điều chỉnh AVM</span>
-                            </div>
-                            <span className="text-slate-700 hidden md:inline">|</span>
-                            <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-white text-sm">Q1/2026</span>
-                                <span>dữ liệu mới nhất</span>
-                            </div>
-                            <span className="text-slate-700 hidden md:inline">|</span>
-                            <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-cyan-400 text-sm">Savills · CBRE · JLL</span>
-                                <span>nguồn tham chiếu</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-center gap-2 mb-8 text-xs text-slate-300 bg-slate-800/60 border border-slate-600/60 rounded-xl px-4 py-2.5 max-w-xl mx-auto">
-                            <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            <span>Nhập đầy đủ: <b className="text-white">số nhà + tên đường + phường/xã + quận/huyện + tỉnh/thành phố</b></span>
+                        <div className="inline-flex items-center gap-1.5 mb-8 text-[11px] text-slate-400 bg-slate-800/50 border border-slate-700/50 rounded-full px-3 py-1">
+                            <svg className="w-3 h-3 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <span>Nhập đủ: số nhà · đường · phường · quận · tỉnh/TP</span>
                         </div>
 
                         <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-emerald-500/50 transition-all">
