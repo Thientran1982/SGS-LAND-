@@ -1032,9 +1032,9 @@ export const AiValuation: React.FC = () => {
                         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                             {[
                                 'Căn hộ Vinhomes Grand Park TP.Thủ Đức',
-                                'Nhà phố Thảo Điền, TP.Thủ Đức',
+                                'Nhà phố dự án Aqua City, Biên Hòa, Đồng Nai',
                                 'Biệt thự Sala Đại Quang Minh, TP.Thủ Đức',
-                                'Nhà phố Cầu Giấy, Hà Nội',
+                                'Đất nền Long Thành, Đồng Nai',
                             ].map(ex => (
                                 <button
                                     key={ex}
