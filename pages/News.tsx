@@ -143,7 +143,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                 <div className="flex items-center justify-between border-t border-b border-[var(--glass-border)] py-6 mb-10">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
-                            {article.author.charAt(0)}
+                            {(article.author || 'S').charAt(0)}
                         </div>
                         <div>
                             <div className="text-sm font-bold text-[var(--text-primary)]">{article.author}</div>
@@ -166,7 +166,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
             {/* Featured Image */}
             <div className="max-w-5xl mx-auto px-4 md:px-6 mb-12">
                 <div className="aspect-video rounded-[32px] overflow-hidden shadow-2xl relative">
-                    <img src={article.image} className="w-full h-full object-cover" alt={article.title} />
+                    <img src={article.image} className="w-full h-full object-cover" alt={article.title} onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80&fit=crop'; }} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
                 </div>
             </div>
@@ -187,7 +187,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {article.images?.map((url, index) => (
                                 <div key={`img-${index}`} className="aspect-video rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow cursor-pointer isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
-                                    <img src={url} alt={`Gallery ${index}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                                    <img src={url} alt={`Gallery ${index}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=900&q=80&fit=crop'; }} />
                                 </div>
                             ))}
                             {article.videos?.map((url, index) => (
@@ -202,7 +202,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                 {/* Tags */}
                 <div className="mt-12 pt-8 border-t border-[var(--glass-border)]">
                     <div className="flex flex-wrap gap-2">
-                        {article.tags.map(tag => (
+                        {(article.tags ?? []).map(tag => (
                             <span key={tag} className="px-3 py-1.5 bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] rounded-lg text-xs font-bold hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition-colors">
                                 #{tag}
                             </span>
@@ -299,7 +299,7 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
             if (type === 'image') {
                 const newImages = [...(prev.images || [])];
                 newImages.splice(index, 1);
-                return { ...prev, images: newImages, image: newImages.length > 0 ? newImages[0] : prev.image };
+                return { ...prev, images: newImages, image: newImages[0] || '' };
             } else {
                 const newVideos = [...(prev.videos || [])];
                 newVideos.splice(index, 1);
@@ -514,15 +514,28 @@ export const News: React.FC = () => {
         }
     };
 
+    const normalizeCreated = (a: any): Article => ({
+        ...a,
+        date: a.date || (a.publishedAt
+            ? new Date(a.publishedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: 'short', year: 'numeric' })
+            : new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: 'short', year: 'numeric' })),
+        readTime: a.readTime || `${Math.max(1, Math.ceil(((a.content || '').split(/\s+/).length) / 200))} phút`,
+        tags: Array.isArray(a.tags) ? a.tags : [],
+        images: Array.isArray(a.images) ? a.images : [],
+        videos: Array.isArray(a.videos) ? a.videos : [],
+        author: a.author || 'SGS Land',
+        image: a.image || '',
+    });
+
     const handleSaveArticle = async (articleData: Partial<Article>) => {
         try {
             if (editingArticle) {
                 const updated = await db.updateArticle(editingArticle.id, articleData);
-                setArticles(articles.map(a => a.id === updated.id ? updated : a));
+                setArticles(prev => prev.map(a => a.id === updated.id ? normalizeCreated(updated) : a));
                 setEditingArticle(null);
             } else {
                 const created = await db.createArticle(articleData as Omit<Article, 'id'>);
-                setArticles([created, ...articles]);
+                setArticles(prev => [normalizeCreated(created), ...prev]);
                 setIsCreating(false);
             }
         } catch (error) {
@@ -670,7 +683,7 @@ export const News: React.FC = () => {
                         onClick={() => setSelectedArticleId(featured.id)}
                         className="mb-16 group cursor-pointer relative rounded-3xl md:rounded-[40px] overflow-hidden shadow-2xl min-h-[420px] md:min-h-0 md:aspect-[21/9] flex flex-col justify-end transform transition-transform hover:scale-[1.01] isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
                     >
-                        <img src={featured.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt={featured.title} />
+                        <img src={featured.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt={featured.title} onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80&fit=crop'; }} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
                         <div className="absolute top-6 left-6 md:top-10 md:left-10 z-10">
                              <span className="inline-block px-4 py-1.5 rounded-xl bg-[var(--bg-surface)]/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold uppercase tracking-wider shadow-lg">
@@ -705,7 +718,7 @@ export const News: React.FC = () => {
                             className="bg-[var(--bg-surface)] rounded-2xl md:rounded-[32px] border border-[var(--glass-border)] overflow-hidden hover:shadow-2xl transition-all duration-300 group cursor-pointer hover:-translate-y-2 flex flex-col h-full isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
                         >
                             <div className="aspect-[4/3] overflow-hidden relative isolate transform-gpu [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
-                                <img src={article.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={article.title} />
+                                <img src={article.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={article.title} onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80&fit=crop'; }} />
                                 <div className="absolute top-4 left-4">
                                     <span className="px-3 py-1 bg-[var(--bg-surface)]/90 backdrop-blur-sm text-[var(--text-primary)] text-xs2 font-bold rounded-lg shadow-sm">
                                         {article.category}
