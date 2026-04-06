@@ -240,6 +240,77 @@ export const HCMC_DISTRICT_CENTERS: Record<string, [number, number]> = {
     'thu duc':    [10.8485, 106.7622],
 };
 
+// ── Non-HCMC province / major district centres ───────────────────────────────
+// Used as fallback when Nominatim is unavailable and the address is outside HCMC.
+// Keys are lower-case plain-Latin (no diacritics), longest-match first.
+export const NON_HCMC_PLACE_CENTERS: { key: string; coords: [number, number]; label: string }[] = [
+    // Đồng Nai districts (most-specific first)
+    { key: 'nhon trach',   coords: [10.7116, 106.9165], label: 'Nhơn Trạch, Đồng Nai' },
+    { key: 'long thanh',   coords: [10.7851, 106.9565], label: 'Long Thành, Đồng Nai' },
+    { key: 'bien hoa',     coords: [10.9575, 106.8432], label: 'Biên Hòa, Đồng Nai' },
+    { key: 'trang bom',    coords: [10.9523, 107.0118], label: 'Trảng Bom, Đồng Nai' },
+    { key: 'xuan loc',     coords: [10.9396, 107.2352], label: 'Xuân Lộc, Đồng Nai' },
+    { key: 'dinh quan',    coords: [11.1665, 107.3715], label: 'Định Quán, Đồng Nai' },
+    { key: 'dong nai',     coords: [10.9455, 106.8243], label: 'Đồng Nai' },
+    // Bình Dương
+    { key: 'thu dau mot',  coords: [10.9805, 106.6475], label: 'Thủ Dầu Một, Bình Dương' },
+    { key: 'di an',        coords: [10.8985, 106.7755], label: 'Dĩ An, Bình Dương' },
+    { key: 'thuan an',     coords: [10.8765, 106.7216], label: 'Thuận An, Bình Dương' },
+    { key: 'ben cat',      coords: [11.0760, 106.5959], label: 'Bến Cát, Bình Dương' },
+    { key: 'binh duong',   coords: [11.1601, 106.6624], label: 'Bình Dương' },
+    // Long An
+    { key: 'ben luc',      coords: [10.6410, 106.4860], label: 'Bến Lức, Long An' },
+    { key: 'can giuoc',    coords: [10.5700, 106.5830], label: 'Cần Giuộc, Long An' },
+    { key: 'duc hoa',      coords: [10.7355, 106.4041], label: 'Đức Hòa, Long An' },
+    { key: 'long an',      coords: [10.5388, 106.4103], label: 'Long An' },
+    // Vũng Tàu / Bà Rịa
+    { key: 'vung tau',     coords: [10.4113, 107.1361], label: 'Vũng Tàu' },
+    { key: 'ba ria',       coords: [10.4990, 107.1673], label: 'Bà Rịa' },
+    // Tây Ninh
+    { key: 'tay ninh',     coords: [11.3101, 106.0985], label: 'Tây Ninh' },
+    // Hà Nội
+    { key: 'ha noi',       coords: [21.0285, 105.8542], label: 'Hà Nội' },
+    { key: 'hanoi',        coords: [21.0285, 105.8542], label: 'Hà Nội' },
+    // Đà Nẵng
+    { key: 'da nang',      coords: [16.0471, 108.2068], label: 'Đà Nẵng' },
+    { key: 'danang',       coords: [16.0471, 108.2068], label: 'Đà Nẵng' },
+    // Nha Trang / Khánh Hòa
+    { key: 'nha trang',    coords: [12.2388, 109.1967], label: 'Nha Trang' },
+    { key: 'khanh hoa',    coords: [12.2388, 109.1967], label: 'Khánh Hòa' },
+    // Đà Lạt / Lâm Đồng
+    { key: 'da lat',       coords: [11.9404, 108.4583], label: 'Đà Lạt' },
+    { key: 'lam dong',     coords: [11.9404, 108.4583], label: 'Lâm Đồng' },
+    // Bình Thuận / Phan Thiết
+    { key: 'phan thiet',   coords: [10.9289, 108.1021], label: 'Phan Thiết' },
+    { key: 'binh thuan',   coords: [11.1655, 108.0073], label: 'Bình Thuận' },
+    // Cần Thơ
+    { key: 'can tho',      coords: [10.0452, 105.7469], label: 'Cần Thơ' },
+    // Phú Quốc
+    { key: 'phu quoc',     coords: [10.2899, 103.9840], label: 'Phú Quốc' },
+    // Hội An
+    { key: 'hoi an',       coords: [15.8801, 108.3380], label: 'Hội An' },
+    // Hải Phòng
+    { key: 'hai phong',    coords: [20.8449, 106.6881], label: 'Hải Phòng' },
+];
+
+/**
+ * Scan an address for a known non-HCMC province / district name and return
+ * its approximate centre coordinates.  Returns null when nothing matches.
+ * Longer keys are tried first so "nhon trach" wins over "dong nai".
+ */
+export function getProvinceFallback(address: string): { coords: [number, number]; label: string } | null {
+    const lower = address.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    // NON_HCMC_PLACE_CENTERS already ordered longest-specific-first
+    for (const entry of NON_HCMC_PLACE_CENTERS) {
+        const escaped = entry.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i').test(lower)) {
+            return { coords: entry.coords, label: entry.label };
+        }
+    }
+    return null;
+}
+
 /**
  * Scan an address string for a known HCMC district name (with or without
  * diacritics) and return its centre coordinates.
