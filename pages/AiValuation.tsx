@@ -452,6 +452,12 @@ export const AiValuation: React.FC = () => {
     // inline validation
     const [addressError, setAddressError] = useState<string>('');
     const [areaError, setAreaError] = useState<string>('');
+    // Typewriter placeholder animation
+    const [typedPlaceholder, setTypedPlaceholder] = useState<string>('');
+    const twIndexRef = React.useRef(0);
+    const twCharRef  = React.useRef(0);
+    const twEraseRef = React.useRef(false);
+    const twTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const CURRENT_YEAR = new Date().getFullYear();
 
@@ -543,6 +549,53 @@ export const AiValuation: React.FC = () => {
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
+    }, []);
+
+    // --- TYPEWRITER PLACEHOLDER ANIMATION ---
+    useEffect(() => {
+        const MESSAGES = [
+            'Nhập địa chỉ + đường + phường + tỉnh/thành phố',
+            'Nhập loại BĐS + phường/xã + dự án + tên đường + tỉnh/thành phố',
+            'Nhập loại BĐS + địa chỉ + tên đường + phường/xã + tỉnh/thành phố',
+        ];
+        const TYPE_SPEED  = 42;   // ms per char typing
+        const ERASE_SPEED = 18;   // ms per char erasing
+        const HOLD_MS     = 2200; // pause at full message
+
+        const tick = () => {
+            const msg   = MESSAGES[twIndexRef.current];
+            const erase = twEraseRef.current;
+
+            if (!erase) {
+                // Typing forward
+                twCharRef.current = Math.min(twCharRef.current + 1, msg.length);
+                setTypedPlaceholder(msg.slice(0, twCharRef.current));
+                if (twCharRef.current === msg.length) {
+                    // Hold then start erasing
+                    twTimerRef.current = setTimeout(() => {
+                        twEraseRef.current = true;
+                        twTimerRef.current = setTimeout(tick, ERASE_SPEED);
+                    }, HOLD_MS);
+                    return;
+                }
+            } else {
+                // Erasing backward
+                twCharRef.current = Math.max(twCharRef.current - 1, 0);
+                setTypedPlaceholder(msg.slice(0, twCharRef.current));
+                if (twCharRef.current === 0) {
+                    // Move to next message
+                    twEraseRef.current = false;
+                    twIndexRef.current = (twIndexRef.current + 1) % MESSAGES.length;
+                    twTimerRef.current = setTimeout(tick, TYPE_SPEED * 4);
+                    return;
+                }
+            }
+
+            twTimerRef.current = setTimeout(tick, erase ? ERASE_SPEED : TYPE_SPEED);
+        };
+
+        twTimerRef.current = setTimeout(tick, 600);
+        return () => { if (twTimerRef.current) clearTimeout(twTimerRef.current); };
     }, []);
 
     // --- LOGIC: SIMULATE AVM CALCULATION ---
@@ -924,18 +977,13 @@ export const AiValuation: React.FC = () => {
                             Nhập địa chỉ — AI phân tích dữ liệu thị trường thực tế. Càng điền đầy đủ, sai số càng nhỏ.
                         </p>
 
-                        <div className="inline-flex items-center gap-1.5 mb-8 text-[11px] text-slate-400 bg-slate-800/50 border border-slate-700/50 rounded-full px-3 py-1">
-                            <svg className="w-3 h-3 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            <span>Nhập đủ: số nhà · đường · phường · quận · tỉnh/TP</span>
-                        </div>
-
-                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-emerald-500/50 transition-all">
+                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-emerald-500/50 transition-all mt-3">
                             <div className="pl-3 md:pl-4 shrink-0 text-slate-400 flex items-center justify-center">{ICONS.SEARCH}</div>
                             <input 
                                 value={address}
                                 onChange={(e) => { setAddress(e.target.value); setAutoDetectedType(null); }}
                                 className="flex-1 min-w-0 bg-transparent border-none outline-none text-white placeholder:text-slate-500 text-base md:text-lg h-14"
-                                placeholder="Địa chỉ hoặc tên dự án BĐS..."
+                                placeholder={typedPlaceholder}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && address) {
                                         const detected = detectPropertyTypeFromText(address);
