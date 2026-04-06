@@ -45,6 +45,7 @@ import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
 import { marketDataService } from "./server/services/marketDataService";
+import { priceCalibrationService } from "./server/services/priceCalibrationService";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
@@ -901,6 +902,11 @@ async function startServer() {
     if (!migrationOk) {
       logger.warn('[migrations] Skipped due to DB connectivity issue. Schema may be out of date until restart.');
     }
+
+    // ── Init self-learning price calibration engine ──────────────────────────
+    // Must run AFTER migrations so market_price_history & avm_calibration tables exist
+    priceCalibrationService.init(pool);
+    logger.info('[PriceCalibration] Self-learning calibration engine initialized');
   } else {
     console.warn("DATABASE_URL not set. Skipping database migrations.");
   }
@@ -1477,6 +1483,58 @@ async function startServer() {
       console.error('[SEO] DELETE override error:', err);
       res.status(500).json({ error: 'Failed to delete SEO override' });
     }
+  });
+
+  // ── Price Self-Learning: Admin API ────────────────────────────────────────
+  // GET  /api/admin/price-history?location=...&days=90  → lịch sử giá theo địa điểm
+  // GET  /api/admin/price-calibration                   → danh sách calibrated entries
+  // POST /api/admin/price-calibration/recalibrate       → chạy hiệu chỉnh thủ công
+
+  app.get('/api/admin/price-history', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    const user = (req as any).user;
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+      return res.status(403).json({ error: 'Chỉ ADMIN mới có thể xem lịch sử giá' }) as any;
+    }
+    const locationKey = (req.query.location as string || '').slice(0, 120);
+    const days = Math.min(365, parseInt(req.query.days as string || '90', 10));
+    if (!locationKey) return res.status(400).json({ error: 'Cần truyền location' }) as any;
+    const history = await priceCalibrationService.getPriceHistory(locationKey, days);
+    res.json({ locationKey, days, history });
+  });
+
+  app.get('/api/admin/price-calibration', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    const user = (req as any).user;
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+      return res.status(403).json({ error: 'Chỉ ADMIN mới có thể xem calibration' }) as any;
+    }
+    try {
+      const limit = Math.min(200, parseInt(req.query.limit as string || '50', 10));
+      const { rows } = await pool.query(
+        `SELECT location_key, location_display, calibrated_price_per_m2,
+                sample_count, avg_ai_price, avg_comps_price, avg_transaction_price,
+                ai_weight, comps_weight, txn_weight,
+                confidence_score, trend_text, last_calibrated_at
+         FROM avm_calibration
+         ORDER BY last_calibrated_at DESC
+         LIMIT $1`,
+        [limit],
+      );
+      res.json({ total: rows.length, calibrations: rows });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/admin/price-calibration/recalibrate', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    const user = (req as any).user;
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+      return res.status(403).json({ error: 'Chỉ ADMIN mới có thể chạy hiệu chỉnh' }) as any;
+    }
+    // Run in background — returns immediately
+    priceCalibrationService.calibrateAll().catch((e: any) =>
+      console.error('[Calibration] Manual recalibrate error:', e.message)
+    );
+    res.json({ message: 'Đang chạy hiệu chỉnh giá trong nền — kiểm tra log để theo dõi.' });
   });
 
   app.use('/api/leads', apiRateLimit, createLeadRoutes(authenticateToken));

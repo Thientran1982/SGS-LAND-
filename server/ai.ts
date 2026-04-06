@@ -2703,8 +2703,35 @@ GIÁ THUÊ (từ phần DỮ LIỆU GIÁ THUÊ):
             const { getRegionalBasePrice, estimateFallbackRent: getFallbackRent } = await import('./valuationEngine');
             const resolvedPropertyType = (propertyType || aiData.propertyTypeEstimate || 'townhouse_center') as import('./valuationEngine').PropertyType;
             const regional = getRegionalBasePrice(address, resolvedPropertyType);
-            const regionRef = regional.price;
-            const regionConf = regional.confidence;
+            let regionRef  = regional.price;
+            let regionConf = regional.confidence;
+
+            // ── Override with self-learned calibrated price when available ────────
+            // Calibrated prices come from aggregated history: AI fetches + sold txns.
+            // Transaction-backed calibrations are highest-trust and override more.
+            try {
+              const { priceCalibrationService: calSvc } = await import('./services/priceCalibrationService');
+              const normalizedAddrKey = address
+                .toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9\s]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .slice(0, 80);
+              const calibrated = await calSvc.getCalibratedPrice(normalizedAddrKey, 14);
+              if (calibrated && calibrated.sampleCount >= 2) {
+                if (calibrated.hasTxn) {
+                  // Has actual sold transactions — highest accuracy, 70% weight
+                  regionRef  = Math.round(calibrated.pricePerM2 * 0.70 + regional.price * 0.30);
+                  regionConf = Math.min(95, Math.max(regional.confidence, calibrated.confidence));
+                } else {
+                  // AI-only history — moderate trust, 50/50 blend
+                  regionRef  = Math.round(calibrated.pricePerM2 * 0.50 + regional.price * 0.50);
+                  regionConf = Math.round((regional.confidence + calibrated.confidence) / 2);
+                }
+                logger.debug(`[Valuation AI] Calibrated "${normalizedAddrKey}" → ${(calibrated.pricePerM2/1e6).toFixed(0)}M (${calibrated.sampleCount} mẫu, txn=${calibrated.hasTxn}) → regionRef=${(regionRef/1e6).toFixed(0)}M`);
+              }
+            } catch { /* calibration read failed — use static regional */ }
 
             const addrLower = address.toLowerCase();
             const isPrimeDist = /quận 1\b|q\.?1\b|hoàn kiếm|ba đình|ba dinh|district 1/i.test(addrLower);

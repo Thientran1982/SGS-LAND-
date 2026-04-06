@@ -64,6 +64,7 @@ import m042 from './042_uploaded_files_table';
 import m043 from './043_cleanup_broken_upload_refs';
 import m044 from './044_guest_feedback';
 import m045 from './045_feedback_fk_fix';
+import m046 from './046_market_price_history';
 
 dotenv.config();
 
@@ -124,6 +125,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '043_cleanup_broken_upload_refs.ts': m043,
   '044_guest_feedback.ts': m044,
   '045_feedback_fk_fix.ts': m045,
+  '046_market_price_history.ts': m046,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

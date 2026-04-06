@@ -2,6 +2,7 @@ import { validateUUIDParam } from '../middleware/validation';
 import { Router, Request, Response } from 'express';
 import { listingRepository } from '../repositories/listingRepository';
 import { auditRepository } from '../repositories/auditRepository';
+import { priceCalibrationService } from '../services/priceCalibrationService';
 
 // ── Server-side geocoding (Nominatim / OpenStreetMap) ────────────────────────
 // Runs in the background after create/update so the API response is not delayed.
@@ -366,6 +367,34 @@ export function createListingRoutes(authenticateToken: any) {
       const { assignedTo: _stripped, ...safeBody } = req.body;
       const listing = await listingRepository.update(user.tenantId, String(req.params.id), safeBody);
       if (!listing) return res.status(404).json({ error: 'Listing not found' });
+
+      // ── Self-learning: record ground-truth price when listing is sold ─────
+      // A sold transaction is the most accurate price signal — weight 50% in calibration.
+      if (listing.status === 'SOLD' && listing.price && listing.area) {
+        const pricePerM2 = Math.round((listing.price as number) / (listing.area as number));
+        if (pricePerM2 > 1_000_000 && listing.location) {
+          const { getRegionalBasePrice } = await import('../valuationEngine');
+          const regional = getRegionalBasePrice(listing.location as string, listing.propertyType as string);
+          const normalizedKey = (listing.location as string)
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 80);
+          setImmediate(() =>
+            priceCalibrationService.recordTransaction({
+              locationKey:     normalizedKey,
+              locationDisplay: listing.location as string,
+              pricePerM2,
+              propertyType:    (listing.propertyType as string) || 'townhouse_center',
+              confidence:      regional.confidence,
+              listingId:       parseInt(req.params.id, 10),
+              tenantId:        user.tenantId,
+            }).catch(() => {})
+          );
+        }
+      }
 
       await auditRepository.log(user.tenantId, {
         actorId: user.id,

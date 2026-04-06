@@ -17,6 +17,7 @@
 import { Server as SocketServer } from 'socket.io';
 import { logger } from '../middleware/logger';
 import { getRegionalBasePrice } from '../valuationEngine';
+import { priceCalibrationService } from './priceCalibrationService';
 
 const CACHE_TTL_MS      = parseInt(process.env.MARKET_CACHE_TTL_HOURS || '6') * 3_600_000;
 const SEED_TTL_MS       = 24 * 3_600_000;    // seed data valid for 24h
@@ -759,6 +760,29 @@ class MarketDataService {
       `[MarketData] Stored "${entry.location}" → ${(entry.pricePerM2 / 1_000_000).toFixed(0)} tr/m² `
       + `(conf: ${entry.confidence}%, src: ${entry.source})`
     );
+
+    // ── Persist to market_price_history for self-learning ─────────────────
+    // Only record AI, SEED, BLENDED prices — not the static regional table fallback
+    if (entry.source !== 'REGIONAL_TABLE') {
+      const sourceMap: Record<string, 'ai_search' | 'internal_comps' | 'blended' | 'manual'> = {
+        AI: 'ai_search', SEED: 'ai_search', BLENDED: 'blended',
+      };
+      setImmediate(() =>
+        priceCalibrationService.recordObservation({
+          locationKey:     key,
+          locationDisplay: entry.location,
+          pricePerM2:      entry.pricePerM2,
+          priceMin:        entry.priceMin,
+          priceMax:        entry.priceMax,
+          propertyType:    'townhouse_center',
+          source:          sourceMap[entry.source] ?? 'ai_search',
+          confidence:      entry.confidence,
+          trendText:       entry.marketTrend?.slice(0, 100),
+          sourceCount:     entry.sourceCount,
+          dataRecency:     entry.dataRecency,
+        }).catch(() => {})
+      );
+    }
 
     this.broadcastUpdate(entry);
     return entry;
