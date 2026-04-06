@@ -1785,11 +1785,21 @@ export const AiValuation: React.FC = () => {
                                             : 'Giá trị thị trường ước tính'}
                                     </h3>
                                     <div className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-slate-400 tracking-tight">
-                                        {formatSmartPrice(valuation.price, t)} <span className="text-2xl text-emerald-500">VNĐ</span>
+                                        <span className={!currentUser ? 'blur-sm select-none pointer-events-none' : ''}>{formatSmartPrice(valuation.price, t)}</span>{' '}
+                                        <span className="text-2xl text-emerald-500">VNĐ</span>
                                     </div>
                                     <div className="text-slate-400 text-sm mt-2 font-medium">
-                                        Biên độ: {formatVND(valuation.range[0])} — {formatVND(valuation.range[1])}
+                                        Biên độ:{' '}
+                                        <span className={!currentUser ? 'blur-sm select-none pointer-events-none' : ''}>{formatVND(valuation.range[0])}</span>
+                                        {' '}—{' '}
+                                        <span className={!currentUser ? 'blur-sm select-none pointer-events-none' : ''}>{formatVND(valuation.range[1])}</span>
                                     </div>
+                                    {!currentUser && (
+                                        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                            <a href="/#/auth/login" className="hover:text-emerald-200 transition-colors">Đăng nhập để xem số liệu đầy đủ →</a>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex gap-3 flex-wrap justify-end">
                                     <div className="bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-600 backdrop-blur-sm text-center min-w-[100px]">
@@ -1800,7 +1810,7 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                     <div className="bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-600 backdrop-blur-sm text-center min-w-[100px]">
                                         <div className="text-xs2 text-[var(--text-tertiary)] uppercase font-bold mb-1">Đơn giá / m²</div>
-                                        <div className="text-xl font-bold text-white">
+                                        <div className={`text-xl font-bold text-white ${!currentUser ? 'blur-sm select-none pointer-events-none' : ''}`}>
                                             {valuation.pricePerM2 >= 1_000_000_000
                                                 ? `${(valuation.pricePerM2 / 1_000_000_000).toFixed(1)} Tỷ/m²`
                                                 : `${(valuation.pricePerM2 / 1_000_000).toFixed(0)} Tr/m²`}
@@ -1824,8 +1834,8 @@ export const AiValuation: React.FC = () => {
                                 return (
                                     <div className="mb-2">
                                         <div className="flex justify-between text-xs text-slate-400 font-medium mb-1.5">
-                                            <span>Thấp nhất<br /><span className="text-white font-bold">{formatVND(min)}</span></span>
-                                            <span className="text-right">Cao nhất<br /><span className="text-white font-bold">{formatVND(max)}</span></span>
+                                            <span>Thấp nhất<br /><span className={`text-white font-bold ${!currentUser ? 'blur-sm select-none pointer-events-none' : ''}`}>{formatVND(min)}</span></span>
+                                            <span className="text-right">Cao nhất<br /><span className={`text-white font-bold ${!currentUser ? 'blur-sm select-none pointer-events-none' : ''}`}>{formatVND(max)}</span></span>
                                         </div>
                                         <div className="relative h-2 rounded-full overflow-visible" style={{ background: 'linear-gradient(to right, #639922, #EF9F27, #E24B4A)' }}>
                                             <div
@@ -1983,7 +1993,11 @@ export const AiValuation: React.FC = () => {
                                                     {rows.map((row, i) => (
                                                         <tr key={i} className="hover:bg-slate-700/20">
                                                             <td className="px-6 py-3 font-medium text-slate-200">{row.label}</td>
-                                                            <td className="px-4 py-3 text-slate-400 text-xs">{row.detail}</td>
+                                                            <td className="px-4 py-3 text-slate-400 text-xs">
+                                                                {row.isBase && !currentUser
+                                                                    ? <span className="blur-sm select-none pointer-events-none">{row.detail}</span>
+                                                                    : row.detail}
+                                                            </td>
                                                             <td className="px-4 py-3 text-right">
                                                                 <span className={`font-bold text-xs ${row.isBase ? 'text-[#9CA3AF]' : row.isPos ? 'text-[#3B6D11]' : 'text-[#A32D2D]'}`}>
                                                                     {row.adj}
@@ -2044,7 +2058,8 @@ export const AiValuation: React.FC = () => {
                                             <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Phương pháp So sánh thị trường</span>
                                         </div>
                                         <div className="text-2xl font-black text-white mb-1">
-                                            {formatSmartPrice(valuation.compsPrice || valuation.price, t)} <span className="text-sm text-emerald-400">VNĐ</span>
+                                            <span className={!currentUser ? 'blur-sm select-none pointer-events-none' : ''}>{formatSmartPrice(valuation.compsPrice || valuation.price, t)}</span>{' '}
+                                            <span className="text-sm text-emerald-400">VNĐ</span>
                                         </div>
                                         {valuation.reconciliation && (
                                             <div className="mt-3 text-xs bg-emerald-500/10 rounded-lg px-3 py-1.5 inline-block">
@@ -2060,7 +2075,8 @@ export const AiValuation: React.FC = () => {
                                             <span className="text-indigo-400 text-xs font-bold uppercase tracking-widest">Phương pháp Thu nhập & Vốn hóa</span>
                                         </div>
                                         <div className="text-2xl font-black text-white mb-1">
-                                            {formatSmartPrice(valuation.incomeApproach.capitalValue, t)} <span className="text-sm text-indigo-400">VNĐ</span>
+                                            <span className={!currentUser ? 'blur-sm select-none pointer-events-none' : ''}>{formatSmartPrice(valuation.incomeApproach.capitalValue, t)}</span>{' '}
+                                            <span className="text-sm text-indigo-400">VNĐ</span>
                                         </div>
                                         {valuation.reconciliation && (
                                             <div className="mt-3 text-xs bg-indigo-500/10 rounded-lg px-3 py-1.5 inline-block">
