@@ -872,6 +872,43 @@ export const AiValuation: React.FC = () => {
                 {/* BACKGROUND FX */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
+                {/* STEP INDICATOR */}
+                {step !== 'RESULT' && (
+                    <div className="flex items-center justify-center gap-2 mb-10">
+                        {[
+                            { key: 'ADDRESS',   label: 'Địa chỉ',  num: 1 },
+                            { key: 'DETAILS',   label: 'Chi tiết', num: 2 },
+                            { key: 'ANALYZING', label: 'Phân tích',num: 3 },
+                        ].map(({ key, label, num }, i, arr) => {
+                            const stepOrder: Record<string, number> = { ADDRESS: 1, DETAILS: 2, ANALYZING: 3, RESULT: 4 };
+                            const currentNum = stepOrder[step] ?? 1;
+                            const isDone    = currentNum > num;
+                            const isActive  = currentNum === num;
+                            return (
+                                <React.Fragment key={key}>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all duration-300 ${
+                                            isDone    ? 'bg-emerald-500 border-emerald-500 text-white' :
+                                            isActive  ? 'bg-slate-800 border-emerald-500 text-emerald-400' :
+                                                        'bg-slate-800/50 border-slate-700 text-slate-600'
+                                        }`}>
+                                            {isDone ? (
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            ) : num}
+                                        </div>
+                                        <span className={`text-[10px] font-bold transition-colors ${isActive ? 'text-emerald-400' : isDone ? 'text-emerald-600' : 'text-slate-600'}`}>{label}</span>
+                                    </div>
+                                    {i < arr.length - 1 && (
+                                        <div className={`w-12 md:w-20 h-0.5 mb-4 rounded-full transition-all duration-300 ${isDone ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
+                    </div>
+                )}
+
                 {/* STEP 1: ADDRESS INPUT */}
                 {step === 'ADDRESS' && (
                     <div className="text-center animate-enter">
@@ -881,14 +918,37 @@ export const AiValuation: React.FC = () => {
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
                             Định Giá Bất Động Sản <br/>
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Chính Xác Tới 98%</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Bằng AI — Sai Số ±5–12%</span>
                         </h1>
-                        <p className="text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
-                            Nhập địa chỉ — AI phân tích thị trường trực tiếp. Càng nhiều thông tin, độ chính xác càng cao.
+                        <p className="text-xl text-slate-400 mb-5 max-w-2xl mx-auto">
+                            Nhập địa chỉ — AI phân tích dữ liệu thị trường thực tế. Càng điền đầy đủ, sai số càng nhỏ.
                         </p>
-                        <div className="flex items-center justify-center gap-2 mb-8 text-xs text-slate-500 bg-slate-800/40 border border-slate-700/40 rounded-xl px-4 py-2 max-w-xl mx-auto">
-                            <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            <span>Nhập đầy đủ: <b className="text-slate-400">số nhà + tên đường + phường/xã + quận/huyện + tỉnh/thành phố</b></span>
+
+                        {/* Social proof strip */}
+                        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 mb-8 text-xs text-slate-500">
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-white text-sm">50,000+</span>
+                                <span>BĐS đã định giá</span>
+                            </div>
+                            <span className="text-slate-700 hidden md:inline">|</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-emerald-400 text-sm">7 hệ số</span>
+                                <span>điều chỉnh AVM</span>
+                            </div>
+                            <span className="text-slate-700 hidden md:inline">|</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-white text-sm">Q1/2026</span>
+                                <span>dữ liệu mới nhất</span>
+                            </div>
+                            <span className="text-slate-700 hidden md:inline">|</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-cyan-400 text-sm">Savills · CBRE · JLL</span>
+                                <span>nguồn tham chiếu</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-center gap-2 mb-8 text-xs text-slate-300 bg-slate-800/60 border border-slate-600/60 rounded-xl px-4 py-2.5 max-w-xl mx-auto">
+                            <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <span>Nhập đầy đủ: <b className="text-white">số nhà + tên đường + phường/xã + quận/huyện + tỉnh/thành phố</b></span>
                         </div>
 
                         <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 p-2 rounded-2xl max-w-2xl mx-auto flex items-center gap-1 md:gap-2 shadow-2xl relative z-20 group focus-within:ring-2 focus-within:ring-emerald-500/50 transition-all">
@@ -945,10 +1005,10 @@ export const AiValuation: React.FC = () => {
                         {/* Quick-search examples */}
                         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                             {[
-                                'Căn hộ Vinhomes Grand Park Q9',
-                                'Nhà phố Thảo Điền Q2',
-                                'Biệt thự Sala Đại Quang Minh',
-                                'Đất thổ cư Bình Chánh',
+                                'Căn hộ Vinhomes Grand Park TP.Thủ Đức',
+                                'Nhà phố Thảo Điền, TP.Thủ Đức',
+                                'Biệt thự Sala Đại Quang Minh, TP.Thủ Đức',
+                                'Nhà phố Cầu Giấy, Hà Nội',
                             ].map(ex => (
                                 <button
                                     key={ex}
@@ -1054,7 +1114,7 @@ export const AiValuation: React.FC = () => {
                                         <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-0.5">Độ đầy đủ thông tin</div>
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-3xl font-black tabular-nums transition-all duration-500" style={{ color: accuracyColor }}>
-                                                {accuracy.toFixed(2)}%
+                                                {accuracy.toFixed(1)}%
                                             </span>
                                             <span className="text-xs font-bold px-2 py-0.5 rounded-full border transition-all duration-300"
                                                 style={{ color: accuracyColor, borderColor: accuracyColor + '40', background: accuracyColor + '18' }}>
@@ -1104,7 +1164,7 @@ export const AiValuation: React.FC = () => {
                                 </div>
 
                                 {/* Inputs */}
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                     {/* ── Diện Tích với placeholder thông minh theo loại ── */}
                                     {(() => {
                                         const isLandType = propertyType.startsWith('land_');
@@ -1453,7 +1513,7 @@ export const AiValuation: React.FC = () => {
                                     const showFrontage = !isApartment && !isLand && propertyType !== 'warehouse';
                                     const showFloor    = isApartment || propertyType === 'project';
                                     return (
-                                        <div className="grid grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                             {showFrontage && (
                                                 <div>
                                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-2">Mặt Tiền (m)</label>
@@ -2304,37 +2364,58 @@ export const AiValuation: React.FC = () => {
             document.body
         )}
         {showGuestGate && createPortal(
-            <div className="fixed inset-0 z-[300] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowGuestGate(false)}>
+            <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowGuestGate(false)}>
                 <div
                     className="max-w-sm w-full bg-slate-800 border border-slate-700 rounded-2xl p-7 flex flex-col items-center gap-5 text-center shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center">
-                        <svg className="w-8 h-8 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    {/* Icon */}
+                    <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                        <svg className="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                     </div>
+
                     <div>
-                        <h2 className="text-lg font-bold text-white">Đã dùng hết {GUEST_DAILY_LIMIT} lượt miễn phí hôm nay</h2>
-                        <p className="text-sm text-slate-400 mt-2 leading-relaxed">
-                            Đăng nhập để định giá không giới hạn và truy cập đầy đủ tính năng SGS Land CRM bất động sản.
+                        <h2 className="text-lg font-bold text-white">Bạn đã dùng {GUEST_DAILY_LIMIT} lượt miễn phí hôm nay</h2>
+                        <p className="text-sm text-slate-400 mt-1.5 leading-relaxed">
+                            Tạo tài khoản miễn phí để định giá không giới hạn và truy cập đầy đủ tính năng.
                         </p>
                     </div>
+
+                    {/* Benefits list */}
+                    <ul className="w-full text-left space-y-2">
+                        {[
+                            'Định giá không giới hạn mỗi ngày',
+                            'Lưu lịch sử định giá vĩnh viễn',
+                            'So sánh comps từ DB nội bộ',
+                            'Xuất báo cáo định giá PDF',
+                            'Truy cập SGS CRM bất động sản',
+                        ].map(b => (
+                            <li key={b} className="flex items-center gap-2 text-xs text-slate-300">
+                                <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
+                                {b}
+                            </li>
+                        ))}
+                    </ul>
+
                     <div className="flex flex-col gap-2.5 w-full">
                         <button
                             onClick={() => { window.location.hash = `#/${ROUTES.LOGIN}`; }}
-                            className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 active:scale-95 transition-all"
+                            className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 active:scale-95 transition-all shadow-lg shadow-emerald-500/20"
                         >
-                            Đăng nhập / Đăng ký miễn phí
+                            Đăng nhập / Đăng ký miễn phí →
                         </button>
                         <button
                             onClick={() => setShowGuestGate(false)}
-                            className="w-full py-2.5 bg-slate-700/60 text-slate-400 text-sm rounded-xl hover:bg-slate-700 transition-colors"
+                            className="w-full py-2.5 bg-slate-700/50 text-slate-400 text-sm rounded-xl hover:bg-slate-700 transition-colors"
                         >
-                            Đóng
+                            Đóng — thử lại ngày mai
                         </button>
                     </div>
-                    <p className="text-xs text-slate-600">Lượt định giá miễn phí reset mỗi ngày lúc 00:00</p>
+                    <p className="text-xs text-slate-600">Lượt định giá khách reset mỗi ngày lúc 00:00</p>
                 </div>
             </div>,
             document.body
