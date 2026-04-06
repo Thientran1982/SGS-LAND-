@@ -596,6 +596,41 @@ export const Dashboard: React.FC = () => {
                 </div>
             </div>
 
+            {/* Getting Started Banner — shown until dismissed or user has 5+ leads */}
+            {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
+                <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-900/40 to-slate-800/60 border border-emerald-800/40">
+                    <div className="flex items-center gap-3">
+                        <span className="text-xl shrink-0">🚀</span>
+                        <div>
+                            <p className="text-sm font-bold text-white">
+                                {language === 'vn' ? 'Bắt đầu với SGS LAND' : 'Getting started with SGS LAND'}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                                {language === 'vn'
+                                    ? 'Xem hướng dẫn sử dụng 12 tính năng — hoàn thành trong 15 phút.'
+                                    : 'Read the full feature guide — complete in 15 minutes.'}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <a
+                            href="/#/huong-dan-su-dung"
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
+                        >
+                            {language === 'vn' ? 'Xem hướng dẫn' : 'View guide'} →
+                        </a>
+                        <button
+                            onClick={(e) => { localStorage.setItem('sgs_guide_dismissed', '1'); (e.currentTarget.closest('[data-guide-banner]') as HTMLElement | null)?.remove(); }}
+                            data-guide-banner
+                            className="text-slate-600 hover:text-slate-400 transition-colors p-1"
+                            title="Ẩn"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* MAIN GRID LAYOUT */}
             <div ref={dashboardRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
