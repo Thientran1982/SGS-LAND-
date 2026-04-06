@@ -15,7 +15,9 @@ let sharp: typeof import('sharp') | null = null;
   }
 })();
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;   // 10 MB for images
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024;  // 100 MB for videos
+const MAX_FILE_SIZE = MAX_VIDEO_SIZE;       // multer uses the highest limit; per-file check below
 const MAX_FILES = 10;
 
 const IMAGE_MAX_DIM = 1920;
@@ -24,16 +26,23 @@ const THUMB_WEBP_QUALITY = 78;
 
 const ALLOWED_MIMES: Record<string, string[]> = {
   image: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  video: ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/avi'],
   document: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'],
 };
 
-const ALL_ALLOWED = [...ALLOWED_MIMES.image, ...ALLOWED_MIMES.document];
+const ALL_ALLOWED = [...ALLOWED_MIMES.image, ...ALLOWED_MIMES.video, ...ALLOWED_MIMES.document];
 
 const ALLOWED_REAL_MIMES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/gif',
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
+  'video/quicktime',
+  'video/x-msvideo',
+  'video/avi',
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/x-cfb',
@@ -44,6 +53,12 @@ const MIME_TO_EXT: Record<string, string> = {
   'image/png': '.png',
   'image/webp': '.webp',
   'image/gif': '.gif',
+  'video/mp4': '.mp4',
+  'video/webm': '.webm',
+  'video/ogg': '.ogv',
+  'video/quicktime': '.mov',
+  'video/x-msvideo': '.avi',
+  'video/avi': '.avi',
   'application/pdf': '.pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
   'application/msword': '.doc',
@@ -59,13 +74,18 @@ const EXT_TO_CONTENT_TYPE: Record<string, string> = {
   '.png': 'image/png',
   '.webp': 'image/webp',
   '.gif': 'image/gif',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.ogv': 'video/ogg',
+  '.mov': 'video/quicktime',
+  '.avi': 'video/x-msvideo',
   '.pdf': 'application/pdf',
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   '.doc': 'application/msword',
   '.txt': 'text/plain',
 };
 
-const PUBLIC_IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
+const PUBLIC_MEDIA_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.mp4', '.webm', '.ogv', '.mov']);
 
 // ─── Resize cache (key = "tenantId/filename?w=N") ────────────────────────────
 const RESIZE_CACHE_MAX_BYTES = 60 * 1024 * 1024; // 60 MB for thumbnails
@@ -118,7 +138,7 @@ const upload = multer({
 function handleMulterError(err: any, _req: Request, res: Response, next: NextFunction) {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(413).json({ error: 'File too large (max 10MB)' });
+      return res.status(413).json({ error: 'File too large (max 10MB cho ảnh, 100MB cho video)' });
     }
     if (err.code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({ error: 'Too many files (max 10)' });
@@ -177,6 +197,12 @@ export function createUploadRoutes(authenticateToken: any) {
             continue;
           }
           contentType = detected.mime;
+        }
+
+        // Enforce per-type size limits
+        if (ALLOWED_MIMES.image.includes(contentType) && buf.length > MAX_IMAGE_SIZE) {
+          rejected.push(`${f.originalname} (vượt giới hạn 10MB cho ảnh)`);
+          continue;
         }
 
         const uniqueId = crypto.randomBytes(16).toString('hex');
@@ -245,7 +271,7 @@ export function createUploadServeRoute(authenticateToken: any) {
 
   router.get('/:tenantId/:filename', (req: Request, res: Response, next: NextFunction) => {
     const ext = path.extname(String(req.params.filename)).toLowerCase();
-    if (PUBLIC_IMAGE_EXTS.has(ext)) {
+    if (PUBLIC_MEDIA_EXTS.has(ext)) {
       return next('route');
     }
     authenticateToken(req, res, next);
@@ -278,11 +304,12 @@ async function serveUploadedFile(req: Request, res: Response, userTenantId: stri
     }
 
     const ext = path.extname(filename).toLowerCase();
-    const isPublicImage = PUBLIC_IMAGE_EXTS.has(ext);
+    const isPublicMedia = PUBLIC_MEDIA_EXTS.has(ext);
+    const isImage = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext);
 
     // Parse optional width param for responsive thumbnails (?w=400, ?w=800, etc.)
     const wParam = parseInt(String(req.query.w || ''), 10);
-    const wantResize = isPublicImage && sharp && wParam > 0 && wParam <= 2400;
+    const wantResize = isImage && sharp && wParam > 0 && wParam <= 2400;
 
     const nameWithoutExt = path.basename(filename, ext);
     const hashPart = nameWithoutExt.includes('-') ? nameWithoutExt.split('-').slice(1).join('-') : nameWithoutExt;
@@ -291,7 +318,7 @@ async function serveUploadedFile(req: Request, res: Response, userTenantId: stri
     const ifNoneMatch = req.headers['if-none-match'];
     if (ifNoneMatch && (ifNoneMatch === etag || ifNoneMatch === '*')) {
       res.setHeader('ETag', etag);
-      res.setHeader('Cache-Control', isPublicImage ? 'public, max-age=31536000, immutable' : 'private, max-age=86400');
+      res.setHeader('Cache-Control', isPublicMedia ? 'public, max-age=31536000, immutable' : 'private, max-age=86400');
       return res.status(304).end();
     }
 
@@ -344,7 +371,7 @@ async function serveUploadedFile(req: Request, res: Response, userTenantId: stri
     }
 
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', isPublicImage ? 'public, max-age=31536000, immutable' : 'private, max-age=86400');
+    res.setHeader('Cache-Control', isPublicMedia ? 'public, max-age=31536000, immutable' : 'private, max-age=86400');
     res.setHeader('ETag', etag);
     res.setHeader('Last-Modified', lastModified);
     res.setHeader('Content-Length', buffer.length);
