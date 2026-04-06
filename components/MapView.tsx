@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Listing, PropertyType } from '../types';
 import { NO_IMAGE_URL } from '../utils/constants';
-import { buildVNGeoQueries, getDistrictFallback, isNonHCMCAddress } from '../utils/vnAddress';
+import { buildVNGeoQueries, getDistrictFallback, getProvinceFallback, isNonHCMCAddress } from '../utils/vnAddress';
 
 const HCMC_CENTER: [number, number] = [10.7769, 106.7009];
 const HCMC_VIEWBOX = '106.40,10.60,107.00,11.20';
@@ -140,16 +140,26 @@ function hashId(id: string): number {
 
 function getFallbackPoint(listing: any): [number, number] {
     if (listing.location) {
+        // 1. Try HCMC district centres first
         const d = getDistrictFallback(listing.location);
         if (d) {
             const [baseLat, baseLng] = d.coords;
             const h = hashId(String(listing.id ?? listing.location));
-            // Two independent sub-hashes mapped to [-0.0005, +0.0005] ≈ ±55 m
-            const dLat = ((h & 0xFFFF)       / 0xFFFF - 0.5) * 0.001;
+            const dLat = ((h & 0xFFFF)         / 0xFFFF - 0.5) * 0.001;
+            const dLng = (((h >>> 16) & 0xFFFF) / 0xFFFF - 0.5) * 0.001;
+            return [baseLat + dLat, baseLng + dLng];
+        }
+        // 2. Try non-HCMC province / district centres (Đồng Nai, Bình Dương, …)
+        const p = getProvinceFallback(listing.location);
+        if (p) {
+            const [baseLat, baseLng] = p.coords;
+            const h = hashId(String(listing.id ?? listing.location));
+            const dLat = ((h & 0xFFFF)         / 0xFFFF - 0.5) * 0.001;
             const dLng = (((h >>> 16) & 0xFFFF) / 0xFFFF - 0.5) * 0.001;
             return [baseLat + dLat, baseLng + dLng];
         }
     }
+    // 3. Last resort: HCMC city centre (only for truly unrecognised addresses)
     return HCMC_CENTER;
 }
 
