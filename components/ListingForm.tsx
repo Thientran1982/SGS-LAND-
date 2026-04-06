@@ -7,6 +7,7 @@ import { Dropdown } from './Dropdown';
 import { VN_PHONE_REGEX } from '../types'; // Reuse regex from types/constants if available, or define locally
 import { useTranslation } from '../services/i18n';
 import { buildVNGeoQueries } from '../utils/vnAddress';
+import { compressImages } from '../utils/imageCompressor';
 
 interface ListingFormProps {
     isOpen: boolean;
@@ -204,7 +205,8 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
 
         setIsUploading(true);
         try {
-            const result = await db.uploadFiles(imageFiles);
+            const compressed = await compressImages(imageFiles);
+            const result = await db.uploadFiles(compressed);
             const urls = result.files.map(f => f.url);
             setImages(prev => [...prev, ...urls]);
         } catch (err: any) {
