@@ -183,12 +183,21 @@ export const livechatRateLimit = rateLimit({
   message: 'Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi một chút.',
 });
 
-// Guest valuation requests: 3/day per IP (free tier).
-// Authenticated users bypass this and use aiRateLimit (20/min by user ID) instead.
+// Guest valuation requests: 1/day per IP (free tier).
+// Authenticated users use userValuationRateLimit (3/day per user ID) instead.
 export const guestValuationRateLimit = rateLimit({
   name: 'guest_valuation',
   windowMs: 24 * 60 * 60_000,
-  maxRequests: 3,
+  maxRequests: 1,
   keyFn: (req) => `gv:${req.ip || 'anon'}`,
-  message: 'Bạn đã dùng hết 3 lượt định giá miễn phí hôm nay. Đăng nhập để tiếp tục không giới hạn.',
+  message: 'Bạn đã dùng hết 1 lượt định giá miễn phí hôm nay. Đăng nhập để tiếp tục.',
+});
+
+// Authenticated user valuation requests: 3/day per user ID.
+export const userValuationRateLimit = rateLimit({
+  name: 'user_valuation',
+  windowMs: 24 * 60 * 60_000,
+  maxRequests: 3,
+  keyFn: (req) => `uv:${(req as any).user?.id || (req as any).user?.tenantId || req.ip || 'user'}`,
+  message: 'Bạn đã dùng hết 3 lượt định giá hôm nay. Vui lòng thử lại vào ngày mai.',
 });

@@ -157,18 +157,22 @@ export function createValuationRoutes(
   aiRateLimit: any,
   optionalAuth: any,
   guestValuationRateLimit: any,
+  userValuationRateLimit?: any,
 ): Router {
   const router = Router();
 
   // ──────────────────────────────────────────────────────────────────────────
   // POST /api/valuation/advanced
-  // Full multi-source valuation open to guests (3/day) and auth users.
+  // Guests: 1/day per IP | Auth users: 3/day per user ID
   // ──────────────────────────────────────────────────────────────────────────
   router.post(
     '/advanced',
     optionalAuth,
     (req: Request, res: Response, next: any) => {
-      const limiter = (req as any).user ? aiRateLimit : guestValuationRateLimit;
+      // Auth users → userValuationRateLimit (3/day); guests → guestValuationRateLimit (1/day)
+      const limiter = (req as any).user
+        ? (userValuationRateLimit || aiRateLimit)
+        : guestValuationRateLimit;
       return limiter(req, res, next);
     },
     async (req: Request, res: Response) => {

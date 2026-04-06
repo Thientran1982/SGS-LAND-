@@ -80,7 +80,7 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
 };
 
 // --- GUEST QUOTA ---
-const GUEST_DAILY_LIMIT = 3;
+const GUEST_DAILY_LIMIT = 1;
 const GUEST_LS_KEY = 'sgs_guest_val';
 
 interface GuestValRecord { count: number; date: string }
@@ -594,7 +594,7 @@ export const AiValuation: React.FC = () => {
             // If this is a rate-limit (429) or quota error, show clear message and stop.
             // Do NOT run the offline fallback — it would show wrong prices.
             const errMsg: string = _err?.message || '';
-            const isRateLimit = errMsg.includes('hết lượt') || errMsg.includes('hết 3 lượt') || errMsg.includes('Too many') || errMsg.includes('rate limit');
+            const isRateLimit = errMsg.includes('hết lượt') || errMsg.includes('hết 1 lượt') || errMsg.includes('hết 3 lượt') || errMsg.includes('Too many') || errMsg.includes('rate limit') || errMsg.includes('429');
             if (intervalRef.current) clearInterval(intervalRef.current);
             if (isRateLimit) {
                 setProgress(0);
