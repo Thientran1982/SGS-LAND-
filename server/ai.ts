@@ -489,8 +489,9 @@ type RouterPlan = {
         valuation_direction?: string;
         valuation_floor?: number;
         valuation_frontage?: number;
-        valuation_furnishing?: 'FULL' | 'BASIC' | 'NONE';
+        valuation_furnishing?: 'LUXURY' | 'FULL' | 'BASIC' | 'NONE';
         valuation_building_age?: number;
+        valuation_bedrooms?: number;
     };
     confidence: number;
 };
@@ -523,8 +524,9 @@ const ROUTER_SCHEMA: Schema = {
                 valuation_direction: { type: Type.STRING, description: "Hướng nhà: Đông, Tây, Nam, Bắc, Đông Nam, Tây Bắc, v.v." },
                 valuation_floor: { type: Type.NUMBER, description: "Vị trí tầng (cho căn hộ). VD: 'tầng 10' → 10, 'tầng trệt' → 1, 'tầng cao nhất/penthouse' → 30" },
                 valuation_frontage: { type: Type.NUMBER, description: "Chiều rộng mặt tiền nhà/lô đất (mét). VD: 'mặt tiền 5m' → 5, 'ngang 4m' → 4, 'mặt ngang 6 mét' → 6" },
-                valuation_furnishing: { type: Type.STRING, enum: ['FULL', 'BASIC', 'NONE'], description: "Tình trạng nội thất. FULL=full nội thất/đầy đủ, BASIC=nội thất cơ bản/một phần, NONE=không nội thất/bàn giao thô" },
-                valuation_building_age: { type: Type.NUMBER, description: "Tuổi công trình (năm). VD: 'nhà xây 2010' → 15 (năm 2025), 'mới xây/2024' → 1, 'xây 5 năm' → 5, 'cũ 20 năm' → 20" }
+                valuation_furnishing: { type: Type.STRING, enum: ['LUXURY', 'FULL', 'BASIC', 'NONE'], description: "Tình trạng nội thất. LUXURY=nội thất cao cấp/luxury, FULL=full nội thất/đầy đủ, BASIC=nội thất cơ bản/một phần, NONE=không nội thất/bàn giao thô" },
+                valuation_building_age: { type: Type.NUMBER, description: "Tuổi công trình (năm). VD: 'nhà xây 2010' → 15 (năm 2025), 'mới xây/2024' → 1, 'xây 5 năm' → 5, 'cũ 20 năm' → 20" },
+                valuation_bedrooms: { type: Type.NUMBER, description: "Số phòng ngủ (chỉ cho căn hộ/penthouse). VD: 'studio/1 phòng' → 0/1, '2PN/2 phòng ngủ' → 2, '3PN' → 3, '4 phòng ngủ trở lên' → 4" }
             }
         },
         confidence: { type: Type.NUMBER, description: "Độ tin cậy phân loại từ 0 đến 1 (ví dụ: 0.85 = 85%)" }
@@ -881,7 +883,7 @@ QUY TẮC TRÍCH XUẤT SỐ TIẾNG VIỆT:
 Ngân sách: "2 tỷ/hai tỷ/2 tỉ"→2000000000 | "1.5 tỷ/một rưỡi/1,5 tỷ"→1500000000 | "500 triệu/0.5 tỷ"→500000000
 Diện tích: "trên 80m²/ít nhất 100m/khoảng 70m"→area_min: 80/100/70
 Vay: "lãi suất 7%/7 phần trăm"→loan_rate:7 | "vay 20 năm/hai mươi năm"→loan_years:20
-Định giá — lộ giới: "đường 8m/hẻm 4m"→valuation_road_width:8/4 | hướng: "hướng nam/đông nam"→valuation_direction | tầng: "tầng 5/lầu 3"→valuation_floor:5/4 (lầu N=tầng N+1) | mặt tiền: "ngang 5m/rộng 6m"→valuation_frontage | nội thất: "full/đầy đủ"→FULL | "cơ bản/một phần"→BASIC | "thô/không nội thất"→NONE | tuổi nhà: "xây 2015"→10 | "mới xây"→1 | "cũ 15 năm"→15 | "nhà cũ"→20
+Định giá — lộ giới: "đường 8m/hẻm 4m"→valuation_road_width:8/4 | hướng: "hướng nam/đông nam"→valuation_direction | tầng: "tầng 5/lầu 3"→valuation_floor:5/4 (lầu N=tầng N+1) | mặt tiền: "ngang 5m/rộng 6m"→valuation_frontage | nội thất: "nội thất cao cấp/luxury"→LUXURY | "full/đầy đủ"→FULL | "cơ bản/một phần"→BASIC | "thô/không nội thất"→NONE | tuổi nhà: "xây 2015"→10 | "mới xây"→1 | "cũ 15 năm"→15 | "nhà cũ"→20 | PN: "studio"→0 | "1PN/1 phòng ngủ"→1 | "2PN/2 phòng"→2 | "3PN"→3 | "4PN trở lên"→4→valuation_bedrooms
 
 BẢNG PHÂN LOẠI Ý ĐỊNH (10 loại — chọn 1):
 1. EXPLAIN_LEGAL — Hỏi: sổ hồng, sổ đỏ, pháp lý, giấy tờ, vi bằng, HĐMB, sang tên, thế chấp, quy hoạch
@@ -1923,8 +1925,9 @@ YÊU CẦU VIẾT PHẢN HỒI:
             const direction = ext.valuation_direction;
             const floorLevel = ext.valuation_floor;
             const frontageWidth = ext.valuation_frontage;
-            const furnishing = ext.valuation_furnishing as 'FULL' | 'BASIC' | 'NONE' | undefined;
+            const furnishing = ext.valuation_furnishing as 'LUXURY' | 'FULL' | 'BASIC' | 'NONE' | undefined;
             const buildingAge = ext.valuation_building_age;
+            const bedrooms = ext.valuation_bedrooms;
             const legalToEngine: Record<string, LegalStatus> = {
                 PINK_BOOK: 'PINK_BOOK', HDMB: 'CONTRACT', VI_BANG: 'WAITING', UNKNOWN: 'WAITING'
             };
@@ -2024,6 +2027,7 @@ YÊU CẦU VIẾT PHẢN HỒI:
                                 frontageWidth,
                                 furnishing,
                                 buildingAge,
+                                bedrooms,
                                 internalCompsMedian,
                                 internalCompsCount,
                             });
@@ -2056,6 +2060,7 @@ YÊU CẦU VIẾT PHẢN HỒI:
                                 frontageWidth,
                                 furnishing,
                                 buildingAge,
+                                bedrooms,
                                 internalCompsMedian,
                                 internalCompsCount,
                             });
@@ -2439,7 +2444,7 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
         floorLevel?: number;
         direction?: string;
         frontageWidth?: number;
-        furnishing?: 'FULL' | 'BASIC' | 'NONE';
+        furnishing?: 'LUXURY' | 'FULL' | 'BASIC' | 'NONE';
         monthlyRent?: number;
         buildingAge?: number;
         bedrooms?: number;

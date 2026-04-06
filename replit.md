@@ -94,6 +94,113 @@ Single unified server (`server.ts`) runs both the Express API and the Vite dev s
 - `geoService.ts` — IP geolocation via ip-api.com (free, no key). 24h in-memory cache per IP. Returns country/region/city/lat/lon/isp. Skips private/local IPs. Helper `getClientIp()` handles X-Forwarded-For proxy headers.
 - `marketDataService.ts` — AVM market data engine. Fetches real-time price/m² from Gemini Search (grounding) for any Vietnamese address. 6h in-memory LRU cache (300 entries) + optional Upstash Redis (24h). Normalizes location strings. Background seed loop at startup (`SEED_LOCATIONS` list). Sanity bounds: 5M–1B VNĐ/m². Returns `MarketDataEntry` {pricePerM2, confidence, source, marketTrend}. Used exclusively by VALUATION_AGENT and AiValuation page.
 - `priceCalibrationService.ts` — Self-learning AVM calibration. Singleton. Reads `market_price_history` (migration 046). `recordObservation()` writes source-tagged price samples (ai_search, internal_comps, transaction). `calibrateLocation()` Bayesian-blends sources: txn×50% + ai×35% + comps×15% (if txn exists), or ai×70% + comps×30% (no txn). 90-day window. `calibrateAll()` iterates all location keys. `getCalibratedPrice()` returns blended price + confidence (max 14-day age). Confidence = min(95, 50 + samples×2 + txn_bonus).
+
+### Valuation Engine (`server/valuationEngine.ts` — 1,647 lines)
+
+**Types:**
+- `LegalStatus`: `'PINK_BOOK' | 'CONTRACT' | 'PENDING' | 'WAITING'`
+- `PropertyType` (14 values): `apartment_center`, `apartment_suburb`, `townhouse_center`, `townhouse_suburb`, `villa`, `shophouse`, `land_urban`, `land_suburban`, `penthouse`, `office`, `warehouse`, `land_agricultural`, `land_industrial`, `project`
+
+**AVMInput interface** (all fields):
+| Field | Type | Description |
+|---|---|---|
+| `marketBasePrice` | number | Raw price/m² reference (VNĐ) |
+| `area` | number | Property area (m²) |
+| `roadWidth` | number | Road/alley width (m) |
+| `legal` | LegalStatus | Legal status |
+| `confidence` | number | Market data confidence (0-100) |
+| `marketTrend` | string | tăng/giảm/ổn định |
+| `propertyType` | PropertyType? | Optional |
+| `monthlyRent` | number? | Override monthly rent (triệu) |
+| `direction` | string? | Hướng nhà |
+| `floorLevel` | number? | Tầng |
+| `frontageWidth` | number? | Mặt tiền (m) |
+| `furnishing` | 'LUXURY'\|'FULL'\|'BASIC'\|'NONE'? | Nội thất |
+| `buildingAge` | number? | Tuổi nhà (năm) |
+| `bedrooms` | number? | Số phòng ngủ (căn hộ) |
+| `internalCompsMedian` | number? | Internal comps blending |
+| `internalCompsCount` | number? | Count for weight calc |
+| `cachedMarketPrice` | number? | Pre-calibrated price |
+| `cachedConfidence` | number? | Pre-calibrated confidence |
+
+**9 AVM Coefficients** (all via `applyAVM()`):
+| Coeff | Function | Range | Notes |
+|---|---|---|---|
+| Kd | `getKd(roadWidth)` | 0.78–1.30 | Hẻm≤2m→0.78, đại lộ≥12m→1.30. Capped at 1.10 for apartments |
+| Kp | `getKp(legal)` | 0.80–1.00 | PINK_BOOK=1.00, CONTRACT=0.88, PENDING=0.92, WAITING=0.80 |
+| Ka | `getKa(area, pType)` | 0.90–1.10 | Area sweet-spot 60-120m²=1.00; land: inverse scale |
+| Kfl | `getKfl(floor, pType)` | 0.95–1.20 | Penthouse +20%, floor 1 -5%; apartments only |
+| Kdir | `getKdir(direction)` | 0.96–1.08 | Nam +8%, Đông Nam +6%, Bắc -4% |
+| Kmf | `getKmf(frontage, pType)` | 0.85–1.15 | Mặt tiền 5m=1.00 ref; skipped for apartments/land |
+| Kfurn | `getKfurn(furnishing)` | 0.90–1.12 | LUXURY +12%, FULL +5%, BASIC -2%, NONE -10% |
+| Kage | `getKage(age, pType)` | 0.70–1.05 | Mới xây 1yr +5%, 20yr -12%, 50yr+ -30% |
+| Kbr | `getKbr(bedrooms, pType)` | 0.90–1.10 | Studio -10%, 2PN ref=1.00, 3PN +4%, 4PN+ +10%; apartments only |
+
+**Multi-source price blending** (`computeBlendedBasePrice()`):
+- Weights: AI search 60% + internal comps 25% + cached market 15% (adjusts by data quality)
+- Agreement bonus: confidence boosted by up to +12 pts when sources agree within 15%
+
+**Income approach** (`applyIncomeApproach()`):
+- Residential types: uses `FALLBACK_RENT_PER_M2` table (actual VN rent rates/m²/month)
+- Commercial types: `capitalValue = grossIncome / grossYieldCap` (VN gross yield convention, NOT NOI-based)
+- Reconciliation weights: per-type `RECONCILE_WEIGHTS` table (comps vs income blend)
+
+**Reconciliation:**
+- Final price = (comps_price × W_comps + income_price × W_income) per `RECONCILE_WEIGHTS`
+- `confidenceInterval` = ±getConfidenceMargin(confidence)% applied to totalPrice
+
+**Regional price table** (`getRegionalBasePrice()`):
+- Street-level matches: ~20 premium addresses (Nguyễn Huệ, Phú Mỹ Hưng, Thảo Điền, etc.) 350M–550M/m²
+- District-level: all HCMC districts, Hà Nội districts, Đà Nẵng, Nha Trang, etc.
+- Project-name matching: 100+ major projects mapped to district via regex table
+
+**PROPERTY_TYPE_PRICE_MULT** (14 multipliers vs townhouse_center reference):
+`apartment_center`=0.75, `villa`=1.50, `shophouse`=1.80, `penthouse`=1.60, `office`=0.90, `warehouse`=0.35, `land_urban`=0.60, `land_agricultural`=0.08, `project`=0.68, etc.
+
+**RLHF Price Correction** (in `valuationRoutes.ts` — `loadRlhfPriceCorrection()`):
+- Reads `ai_feedback` where `intent='ESTIMATE_VALUATION'` + `rating=-1` + numeric correction
+- Extracts region tokens from address (last 2 comma-parts), matches past corrections
+- Computes median ratio: actualPrice/estimatedPrice per region+pType
+- Applies factor capped at ±20% (`MAX_RLHF_FACTOR = 0.20`)
+- Requires ≥3 matching samples; auth-only (guest requests skip)
+
+### AiValuation Page (`pages/AiValuation.tsx`) — Form Fields
+
+**Step 1 — ADDRESS**: Free-text address input with real-time regional lookup
+
+**Step 2 — DETAILS** (15 form fields):
+| Field | State | Type | Notes |
+|---|---|---|---|
+| Địa chỉ | `address` | text | Auto-detects property type via `detectPropertyTypeFromText()` |
+| Loại BĐS | `propertyType` | select (14 options) | Auto-detected or manual override |
+| Diện tích | `area` | number | Auto-computed from ngang × dài if both entered |
+| Chiều ngang | `ngang` | number | Sets `frontageWidth` + triggers area calc |
+| Chiều dài | `dai` | number | Triggers area calc with ngang |
+| Loại đường | `roadTypeSelect` | select (5 options) | Sets `roadWidth` (alley_moto/alley_car/minor/major/boulevard) |
+| Lộ giới | `roadWidth` | number | Manual override of road type |
+| Pháp lý | `legal` | select (4 options) | PINK_BOOK/CONTRACT/PENDING/WAITING |
+| Hướng nhà | `direction` | select | Optional |
+| Nội thất | `furnishing` | select (4 options) | LUXURY/FULL/BASIC/NONE |
+| Tầng | `floorLevel` | number | Apartment only |
+| Số phòng ngủ | `bedrooms` | select (0–4+) | Apartment/penthouse only |
+| Năm xây dựng | `yearBuilt` | number | Auto-converts to buildingAge |
+| Tuổi nhà | `buildingAge` | number | Manual override |
+| Giá thuê/tháng | `monthlyRent` | number (triệu) | Override auto-estimate |
+
+**Guest limit**: `GUEST_DAILY_LIMIT = 1` valuation/day (localStorage counter). Beyond limit: login gate modal.
+
+**Result display**: totalPrice, rangeMin–rangeMax, pricePerM2, confidence%, marketTrend, 5-year forecast chart (compound growth), coefficient breakdown (Kd/Kp/Ka + optional Kfl/Kdir/Kmf/Kfurn/Kage/Kbr), income approach table (if active), reconciliation label, RLHF thumbs up/down + actual price correction input.
+
+**History**: Local `localStorage` persists last 10 valuations per session.
+
+### Chat → Valuation — ROUTER Schema (9 extracted fields)
+`valuation_address`, `valuation_area`, `valuation_legal` (PINK_BOOK/HDMB/VI_BANG/UNKNOWN), `valuation_road_width`, `valuation_direction`, `valuation_floor`, `valuation_frontage`, `valuation_furnishing` (LUXURY/FULL/BASIC/NONE), `valuation_building_age`, `valuation_bedrooms` (studio=0, 1PN, 2PN, 3PN, 4PN+)
+
+**Fixes applied (April 2026)**:
+- Added `valuation_bedrooms` to ROUTER_SCHEMA + TypeScript interface → chat users can now trigger Kbr coefficient
+- Added `LUXURY` to `valuation_furnishing` enum → chat users can now trigger LUXURY nội thất (+12%)
+- `furnishing` type updated in `getRealtimeValuation()` signature to include `LUXURY`
+- `bedrooms` now passed through both primary and fallback `applyAVM()` calls in VALUATION_AGENT
 - `brevoService.ts` — Brevo transactional email API (primary). Falls back to emailService on error.
 - `facebookService.ts` — Facebook webhook processing: message parsing, page access token management.
 - `zaloService.ts` — Zalo OA webhook processing: message parsing, signature verification.
