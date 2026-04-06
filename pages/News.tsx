@@ -9,6 +9,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { copyToClipboard } from '../utils/clipboard';
 import { useTranslation } from '../services/i18n';
 import { injectArticleSEO, clearDynamicSEO } from '../utils/seo';
+import { compressImages } from '../utils/imageCompressor';
 
 const sanitizeHtml = (html: string): string => DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'span', 'div', 'figure', 'figcaption', 'footer'],
@@ -262,8 +263,9 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
         e.target.value = '';
 
         try {
+            const compressed = await compressImages(imageFiles);
             const fd = new FormData();
-            imageFiles.forEach(f => fd.append('files', f));
+            compressed.forEach(f => fd.append('files', f));
 
             const res = await fetch('/api/upload', {
                 method: 'POST',
