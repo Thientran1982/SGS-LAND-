@@ -1,6 +1,11 @@
 import { api, PaginatedResponse } from './apiClient';
 
 export const listingApi = {
+  // Cursor-based: pass cursor='' or cursor=<token> — server auto-detects cursorMode
+  getListingsCursor: (pageSize = 20, cursor?: string, filters?: Record<string, any>): Promise<any> =>
+    api.get('/api/listings', { pageSize, cursor: cursor ?? '', ...filters }),
+
+  // Offset-based (Kanban/Board/legacy)
   getListings: (page = 1, pageSize = 20, filters?: Record<string, any>): Promise<PaginatedResponse<any>> =>
     api.get('/api/listings', { page, pageSize, ...filters }),
 

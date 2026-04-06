@@ -163,38 +163,58 @@ export function createListingRoutes(authenticateToken: any) {
   const router = Router();
 
   // ── GET /api/listings ────────────────────────────────────────────────────────
+  // Supports two pagination modes:
+  //   Cursor-based (default for Inventory): pass ?cursor=<token> — O(1) at any depth
+  //   Offset-based (Kanban/Board/legacy callers): pass ?page=N — unchanged behaviour
   router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
-      const user = (req as any).user;
-      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const user     = (req as any).user;
       const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize as string) || 20, 200));
 
       const filters: any = {};
-      // 'ALL' means "no filter" — ignore it so it doesn't become a literal SQL condition
       if (req.query.type && req.query.type !== 'ALL') filters.type = req.query.type;
       if (req.query.types) filters.type_in = (req.query.types as string).split(',');
       if (req.query.status && req.query.status !== 'ALL') filters.status = req.query.status;
       if (req.query.transaction && req.query.transaction !== 'ALL') filters.transaction = req.query.transaction;
       const priceMin = parseFloat(req.query.priceMin as string);
       const priceMax = parseFloat(req.query.priceMax as string);
-      const areaMin = parseFloat(req.query.areaMin as string);
-      const areaMax = parseFloat(req.query.areaMax as string);
+      const areaMin  = parseFloat(req.query.areaMin as string);
+      const areaMax  = parseFloat(req.query.areaMax as string);
       if (req.query.priceMin && !isNaN(priceMin)) filters.price_gte = priceMin;
       if (req.query.priceMax && !isNaN(priceMax)) filters.price_lte = priceMax;
-      if (req.query.areaMin && !isNaN(areaMin)) filters.area_gte = areaMin;
-      if (req.query.areaMax && !isNaN(areaMax)) filters.area_lte = areaMax;
-      if (req.query.search) filters.search = req.query.search;
+      if (req.query.areaMin  && !isNaN(areaMin))  filters.area_gte  = areaMin;
+      if (req.query.areaMax  && !isNaN(areaMax))  filters.area_lte  = areaMax;
+      if (req.query.search)      filters.search      = req.query.search;
       if (req.query.projectCode) filters.projectCode = req.query.projectCode;
       if (req.query.noProjectCode === 'true') filters.noProjectCode = true;
-      if (req.query.isVerified) filters.isVerified = req.query.isVerified === 'true';
+      if (req.query.isVerified)  filters.isVerified  = req.query.isVerified === 'true';
 
-      // PARTNER roles: read-only access to non-project listings (sensitive fields redacted)
-      if (user.role === 'PARTNER_ADMIN' || user.role === 'PARTNER_AGENT') {
-        const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
-        return res.json({ ...result, data: result.data.map(redactSensitiveFields) });
+      const isPartner = user.role === 'PARTNER_ADMIN' || user.role === 'PARTNER_AGENT';
+
+      // ── Cursor-based mode ──────────────────────────────────────────────────
+      if (req.query.cursor !== undefined || req.query.cursorMode === 'true') {
+        const cursor = (req.query.cursor as string) || undefined;
+        const result = await listingRepository.findListingsCursor(user.tenantId, {
+          pageSize,
+          cursor,
+          filters,
+          userId:   user.id,
+          userRole: user.role,
+        });
+        if (isPartner) {
+          return res.json({ ...result, data: result.data.map(redactSensitiveFields) });
+        }
+        return res.json(result);
       }
 
-      const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
+      // ── Offset-based mode (Kanban/Board/legacy) ────────────────────────────
+      const page   = Math.max(1, parseInt(req.query.page as string) || 1);
+      const result = await listingRepository.findListings(
+        user.tenantId, { page, pageSize }, filters, user.id, user.role
+      );
+      if (isPartner) {
+        return res.json({ ...result, data: result.data.map(redactSensitiveFields) });
+      }
       res.json(result);
     } catch (error) {
       console.error('Error fetching listings:', error);

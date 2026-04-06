@@ -869,6 +869,29 @@ Common multi-filter queries now have dedicated indexes:
 5. Used in all 3 thumbnail sizes in Inventory.tsx (table row 40px, mobile card 56px, grid card 48px)
 6. Shimmer animation registered in `tailwind.config.js` as `animate-shimmer` keyframe
 
+### Cursor-Based Pagination (Inventory page)
+
+**Problem**: OFFSET-based pagination at page 1000 with pageSize=12 means PostgreSQL must skip 12,000 rows — O(N) cost that grows linearly with page depth.
+
+**Fix**: Cursor-based (keyset) pagination using `(created_at, id)` as composite cursor. Index `idx_listings_tenant_cursor` (migration 048) supports this with O(log N) seek.
+
+**Architecture**:
+- Cursor = `base64(JSON.stringify({ ts: ISO timestamp, id: uuid }))` — opaque token
+- DB query: `WHERE (created_at < cursor_ts) OR (created_at = cursor_ts AND id::text < cursor_id)` — direct index seek, no row-skipping
+- Stats/total query runs WITHOUT cursor condition → always shows correct totals for all filters
+- Both queries run in parallel via `Promise.all`
+
+**Frontend state** (`Inventory.tsx`):
+- `cursorStack: string[]` — stack of previous cursors for backward navigation
+- `currentCursor: string | undefined` — cursor for current page (undefined = first page)
+- `nextCursor: string | null` — returned by server for "next" navigation
+- `hasNext: boolean` — server signals whether more pages exist
+- **Next**: push `currentCursor` onto stack, set `currentCursor = nextCursor`
+- **Prev**: pop from stack, set `currentCursor = popped`
+- Filter change → clear stack + reset cursor to first page
+
+**Backward compatibility**: `GET /api/listings` without `cursor` param falls back to offset-based (Kanban/Board/MAP views still use offset with `page=N`).
+
 ### Architecture Note — Self-Learning Internal Comps (Migration 046 + gap fixes)
 
 Both `valuationRoutes.ts` and VALUATION_AGENT in `ai.ts` now write `internal_comps` observations to `market_price_history` via `priceCalibrationService.recordObservation()` when ≥2 comparable listings are found. Previously this `source: 'internal_comps'` channel was always empty despite being weighted 15% in the Bayesian blender.

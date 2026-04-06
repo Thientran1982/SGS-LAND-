@@ -411,6 +411,152 @@ export class ListingRepository extends BaseRepository {
     });
   }
 
+  // ── Cursor-based pagination ──────────────────────────────────────────────────
+  // Cursor encodes { ts: ISO timestamp, id: uuid } as base64 JSON.
+  // No OFFSET — the WHERE clause jumps directly to the correct position.
+  // Stats query uses only filter conditions (no cursor) → always shows correct totals.
+  async findListingsCursor(
+    tenantId: string,
+    params: {
+      pageSize: number;
+      cursor?: string;
+      filters?: ListingFilters;
+      userId?: string;
+      userRole?: string;
+    }
+  ): Promise<{
+    data: any[];
+    nextCursor: string | null;
+    hasNext: boolean;
+    total: number;
+    stats: {
+      availableCount: number; holdCount: number; soldCount: number;
+      rentedCount: number; bookingCount: number; openingCount: number;
+      inactiveCount: number; totalCount: number;
+    };
+  }> {
+    return this.withTenant(tenantId, async (client) => {
+      // ── Phase 1: build base conditions (RBAC + filters) ───────────────────
+      const baseConditions: string[] = [];
+      const baseValues: any[] = [];
+      let paramIndex = 1;
+
+      const RESTRICTED        = ['SALES', 'MARKETING', 'VIEWER'];
+      const PARTNER_RESTRICTED = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
+      const isProjectQuery     = !!params.filters?.projectCode;
+      const isInventoryContext = !!params.filters?.noProjectCode;
+      const isAvailableOnly    = !isInventoryContext && params.filters?.status === 'AVAILABLE';
+
+      if (PARTNER_RESTRICTED.includes(params.userRole || '') && params.userId && isProjectQuery) {
+        baseConditions.push(`l.assigned_to = $${paramIndex++}`);
+        baseValues.push(params.userId);
+      } else if (RESTRICTED.includes(params.userRole || '') && params.userId && !isAvailableOnly && !isProjectQuery) {
+        baseConditions.push(`(l.created_by = $${paramIndex} OR l.assigned_to = $${paramIndex})`);
+        baseValues.push(params.userId);
+        paramIndex++;
+      }
+
+      const { conditions: fc, values: fv, nextIndex } = this.buildFilterConditions(params.filters, paramIndex);
+      baseConditions.push(...fc);
+      baseValues.push(...fv);
+      paramIndex = nextIndex;
+
+      // ── Phase 2: decode cursor → extra keyset condition for data query only ──
+      let cursorTs: string | null = null;
+      let cursorId: string | null = null;
+      if (params.cursor) {
+        try {
+          const decoded = JSON.parse(
+            Buffer.from(params.cursor, 'base64').toString('utf8')
+          ) as { ts: string; id: string };
+          cursorTs = decoded.ts;
+          cursorId = decoded.id;
+        } catch { /* invalid cursor → treat as first page */ }
+      }
+
+      // Stats/count WHERE uses only base conditions (correct totals across all pages)
+      const statsWhere = baseConditions.length > 0 ? `WHERE ${baseConditions.join(' AND ')}` : '';
+
+      // Data WHERE adds the keyset condition
+      const dataConditions = [...baseConditions];
+      const dataValues     = [...baseValues];
+      if (cursorTs && cursorId) {
+        dataConditions.push(
+          `(l.created_at < $${paramIndex}::timestamptz OR ` +
+          `(l.created_at = $${paramIndex}::timestamptz AND l.id::text < $${paramIndex + 1}))`
+        );
+        dataValues.push(cursorTs, cursorId);
+        paramIndex += 2;
+      }
+      const dataWhere = dataConditions.length > 0 ? `WHERE ${dataConditions.join(' AND ')}` : '';
+
+      // ── Phase 3: run stats and data queries in parallel ────────────────────
+      const limit = params.pageSize + 1; // one extra to detect hasNext
+
+      const [csResult, dataResult] = await Promise.all([
+        client.query(
+          `SELECT
+             COUNT(*)::int                                         AS total,
+             COUNT(*) FILTER (WHERE l.status = 'AVAILABLE')::int  AS available_count,
+             COUNT(*) FILTER (WHERE l.status = 'HOLD')::int       AS hold_count,
+             COUNT(*) FILTER (WHERE l.status = 'SOLD')::int       AS sold_count,
+             COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
+             COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
+             COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
+             COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count
+           FROM listings l ${statsWhere}`,
+          baseValues
+        ),
+        client.query(
+          `SELECT sub.*,
+                  u.name   AS assigned_to_name,
+                  u.email  AS assigned_to_email,
+                  u.avatar AS assigned_to_avatar,
+                  u.role   AS assigned_to_role
+           FROM (
+             SELECT * FROM listings l ${dataWhere}
+             ORDER BY l.created_at DESC, l.id DESC
+             LIMIT $${paramIndex}
+           ) sub
+           LEFT JOIN users u ON u.id = sub.assigned_to`,
+          [...dataValues, limit]
+        ),
+      ]);
+
+      const cs       = csResult.rows[0];
+      const rows     = dataResult.rows;
+      const hasNext  = rows.length > params.pageSize;
+      const pageRows = hasNext ? rows.slice(0, params.pageSize) : rows;
+
+      // Build next cursor from the last row of the current page
+      let nextCursor: string | null = null;
+      if (hasNext && pageRows.length > 0) {
+        const last = pageRows[pageRows.length - 1];
+        nextCursor = Buffer.from(JSON.stringify({
+          ts: last.created_at instanceof Date ? last.created_at.toISOString() : String(last.created_at),
+          id: last.id,
+        })).toString('base64');
+      }
+
+      return {
+        data: this.rowsToEntities(pageRows),
+        nextCursor,
+        hasNext,
+        total: cs?.total ?? 0,
+        stats: {
+          availableCount: cs?.available_count ?? 0,
+          holdCount:      cs?.hold_count      ?? 0,
+          soldCount:      cs?.sold_count      ?? 0,
+          rentedCount:    cs?.rented_count    ?? 0,
+          bookingCount:   cs?.booking_count   ?? 0,
+          openingCount:   cs?.opening_count   ?? 0,
+          inactiveCount:  cs?.inactive_count  ?? 0,
+          totalCount:     cs?.total           ?? 0,
+        },
+      };
+    });
+  }
+
   async create(tenantId: string, data: Record<string, any>): Promise<any> {
     return this.withTenant(tenantId, async (client) => {
       const result = await client.query(

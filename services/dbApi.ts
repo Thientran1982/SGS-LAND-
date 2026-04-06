@@ -216,6 +216,39 @@ class DatabaseApiClient {
     return result;
   }
 
+  // ── Cursor-based getListings — used by Inventory page ───────────────────────
+  async getListingsCursor(pageSize = 20, cursor: string | undefined, filters?: any): Promise<{
+    data: any[];
+    nextCursor: string | null;
+    hasNext: boolean;
+    total: number;
+    stats: any;
+  }> {
+    const params: any = {};
+    if (filters?.type && filters.type !== 'ALL') params.type = filters.type;
+    if (filters?.status && filters.status !== 'ALL') params.status = filters.status;
+    if (filters?.transaction && filters.transaction !== 'ALL') params.transaction = filters.transaction;
+    if (filters?.search) params.search = filters.search;
+    if (filters?.priceMin) params.priceMin = filters.priceMin;
+    if (filters?.priceMax) params.priceMax = filters.priceMax;
+    if (filters?.projectCode) params.projectCode = filters.projectCode;
+    if (filters?.noProjectCode) params.noProjectCode = true;
+
+    try {
+      const result = await listingApi.getListingsCursor(pageSize, cursor, params);
+      return {
+        data:       result.data       ?? [],
+        nextCursor: result.nextCursor ?? null,
+        hasNext:    result.hasNext    ?? false,
+        total:      result.total      ?? 0,
+        stats:      result.stats      ?? {},
+      };
+    } catch (error) {
+      console.error('getListingsCursor error:', error);
+      return { data: [], nextCursor: null, hasNext: false, total: 0, stats: {} };
+    }
+  }
+
   async getListings(page = 1, pageSize = 20, filters?: any) {
     const params: any = {};
     if (filters?.type && filters.type !== 'ALL') params.type = filters.type;
