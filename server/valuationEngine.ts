@@ -1018,26 +1018,85 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   // ── District inference from well-known projects/streets ──────────────────
   // Ensures addresses like "Vinhome Central Park" match the correct district
   // even without explicit district name in the input.
+  // Source: Batdongsan/OneHousing/CBRE/Savills Vietnam Q1/2026
   const PROJECT_DISTRICT_INFER: [RegExp, string][] = [
-    [/vinhome[s]?\s*central\s*park|saigon\s*pearl|landmark\s*81|pearl\s*plaza|city\s*garden|nguyễn hữu cảnh|nguyen huu canh|ung văn khiêm|ung van khiem|xô viết nghệ tĩnh|xo viet nghe tinh|điện biên phủ.*bình thạnh/i, 'bình thạnh'],
-    [/masteri\s*thảo\s*điền|masteri\s*thao\s*dien|sala|thảo điền|thao dien|an phú|an phu|feliz|estella|the vista|xa lộ hà nội|xa lo ha noi/i, 'thủ đức'],
-    [/phú mỹ hưng|phu my hung|midtown|scenic\s*valley|riviera\s*point|sunrise|crescent|star\s*hill|happy\s*valley|nam viên|nam vien/i, 'quận 7'],
-    [/vinhome[s]?\s*grand\s*park|vinhome[s]?\s*q9|vinhome[s]?\s*quận 9|the\s*rainbow/i, 'quận 9'],
-    [/vinhome[s]?\s*golden\s*river|vinhome[s]?\s*bason|ba son|sài gòn.*quận 1|the\s*marq/i, 'quận 1'],
-    [/vinhome[s]?\s*ocean\s*park|ocean\s*park/i, 'gia lâm'],
-    [/vinhome[s]?\s*smart\s*city|smart\s*city/i, 'nam từ liêm'],
-    [/ecopark/i, 'hưng yên'],
-    [/celadon\s*city|aeon\s*tân phú|aeon\s*tan phu/i, 'tân phú'],
-    [/richstar|novaland\s*tân phú/i, 'tân phú'],
-    [/sunwah\s*pearl/i, 'bình thạnh'],
-    // ── Vùng ven / Tỉnh lân cận ──────────────────────────────────────────────
+    // ── TP.HCM — Bình Thạnh ──────────────────────────────────────────────────
+    [/vinhome[s]?\s*central\s*park|saigon\s*pearl|landmark\s*81|pearl\s*plaza|city\s*garden|nguyễn hữu cảnh|nguyen huu canh|ung văn khiêm|ung van khiem|xô viết nghệ tĩnh|xo viet nghe tinh|điện biên phủ.*bình thạnh|sunwah\s*pearl|raemian|galaxy.*bình\s*thạnh/i, 'bình thạnh'],
+    // ── TP.HCM — Thủ Đức (bao gồm cả Q2, Q9 cũ) ─────────────────────────────
+    [/masteri\s*thảo\s*điền|masteri\s*thao\s*dien|sala\s*đại\s*quang\s*minh|sala\s*dai\s*quang\s*minh|thảo điền|thao dien|an phú|an phu|feliz\s*en\s*vista|estella|the vista|xa lộ hà nội|xa lo ha noi|empire\s*city|the\s*metropole.*thủ\s*thiêm|global\s*city.*thủ\s*đức|masteri\s*center\s*point|fiato|the\s*origami|vinhome[s]?\s*grand\s*park|vinhome[s]?\s*q9|the\s*rainbow|gem\s*riverside.*thủ\s*đức/i, 'thủ đức'],
+    // ── TP.HCM — Quận 7 ───────────────────────────────────────────────────────
+    [/phú mỹ hưng|phu my hung|midtown|scenic\s*valley|riviera\s*point|sunrise\s*city|crescent|star\s*hill|happy\s*valley|nam viên|nam vien|eco\s*green\s*saigon|q7\s*saigon|southgate|hung\s*gia/i, 'quận 7'],
+    // ── TP.HCM — Quận 1 ───────────────────────────────────────────────────────
+    [/vinhome[s]?\s*golden\s*river|vinhome[s]?\s*bason|ba son|the\s*marq|the\s*grand\s*manhattan|d1mension|city\s*garden.*quận\s*1|nguyễn huệ.*tower/i, 'quận 1'],
+    // ── TP.HCM — Quận 2 (nay thuộc Thủ Đức) ─────────────────────────────────
+    [/gateway\s*thảo\s*điền|d'lusso|de\s*la\s*sol.*thảo\s*điền/i, 'thủ đức'],
+    // ── TP.HCM — Quận 4 ───────────────────────────────────────────────────────
+    [/river\s*gate|the\s*tresor|millennium.*quận\s*4|everrich\s*infinity/i, 'quận 4'],
+    // ── TP.HCM — Quận 6 ───────────────────────────────────────────────────────
+    [/d.?homme|charmington.*quận\s*6|saigon\s*west\s*residences/i, 'quận 6'],
+    // ── TP.HCM — Quận 8 ───────────────────────────────────────────────────────
+    [/topaz\s*city|saigon\s*south\s*plaza.*quận\s*8|gem\s*riverside.*quận\s*8/i, 'quận 8'],
+    // ── TP.HCM — Quận 9 (nay thuộc Thủ Đức) ─────────────────────────────────
+    [/vinhome[s]?\s*grand\s*park|masteri\s*center\s*point|gia\s*hòa.*quận\s*9|the\s*peak.*thủ\s*đức|flora\s*novia|lovera\s*vista/i, 'thủ đức'],
+    // ── TP.HCM — Quận 10 ──────────────────────────────────────────────────────
+    [/kingdom\s*101|terra\s*royal|sài\s*gòn\s*mia.*quận\s*10/i, 'quận 10'],
+    // ── TP.HCM — Quận 11 ──────────────────────────────────────────────────────
+    [/one\s*verandah.*quận\s*11|charmington.*sadora/i, 'quận 11'],
+    // ── TP.HCM — Quận 12 ──────────────────────────────────────────────────────
+    [/paris\s*hoàng\s*anh|icapital|the\s*art/i, 'quận 12'],
+    // ── TP.HCM — Bình Tân ─────────────────────────────────────────────────────
+    [/akari\s*city|moonlight.*bình\s*tân|aio\s*city|the\s*light\s*city|tanibuilding/i, 'bình tân'],
+    // ── TP.HCM — Tân Bình ─────────────────────────────────────────────────────
+    [/park\s*hill.*tân\s*bình|charmington.*tan\s*binh|the\s*botanica/i, 'tân bình'],
+    // ── TP.HCM — Tân Phú ──────────────────────────────────────────────────────
+    [/celadon\s*city|aeon\s*tân phú|aeon\s*tan phu|richstar|novaland\s*tân phú/i, 'tân phú'],
+    // ── TP.HCM — Gò Vấp ──────────────────────────────────────────────────────
+    [/avida\s*go\s*vap|saigon\s*home.*gò\s*vấp|topaz\s*home/i, 'gò vấp'],
+    // ── TP.HCM — Nhà Bè ──────────────────────────────────────────────────────
+    [/saigon\s*south\s*residences|camellia\s*garden|kdc\s*himlam\s*kênh\s*tẻ/i, 'nhà bè'],
+    // ── TP.HCM — Bình Chánh ──────────────────────────────────────────────────
+    [/saigon\s*mia|westgate|flora\s*anh\s*đào|lovera\s*village|nam\s*long.*bình\s*chánh/i, 'bình chánh'],
+    // ── TP.HCM — Hóc Môn / Củ Chi ───────────────────────────────────────────
+    [/ecorivers\s*hậu\s*giang|hậu\s*giang.*resort|vinhome[s]?\s*củ\s*chi/i, 'củ chi'],
+    // ── Hà Nội — Tây Hồ ──────────────────────────────────────────────────────
+    [/the\s*westlake|sun\s*grand.*tây\s*hồ|ciputra|starlake.*tây\s*hồ|summit\s*building.*tây\s*hồ/i, 'tây hồ'],
+    // ── Hà Nội — Cầu Giấy ───────────────────────────────────────────────────
+    [/vinhome[s]?\s*skylake|keangnam|sunshine\s*center|goldmark\s*city.*cầu\s*giấy/i, 'cầu giấy'],
+    // ── Hà Nội — Thanh Xuân ──────────────────────────────────────────────────
+    [/vinhome[s]?\s*royal\s*city|hapro.*thanh\s*xuân|seasons\s*avenue/i, 'thanh xuân'],
+    // ── Hà Nội — Hai Bà Trưng ────────────────────────────────────────────────
+    [/vinhome[s]?\s*times\s*city|the\s*manor.*hà\s*nội|chung\s*cư\s*times\s*city/i, 'hai bà trưng'],
+    // ── Hà Nội — Nam Từ Liêm / Bắc Từ Liêm ──────────────────────────────────
+    [/vinhome[s]?\s*smart\s*city|smart\s*city|masteri\s*west\s*heights|mipec\s*riverside|imperia\s*smart\s*city|sunshine\s*garden.*từ\s*liêm/i, 'nam từ liêm'],
+    // ── Hà Nội — Hà Đông ─────────────────────────────────────────────────────
+    [/park\s*city.*hà\s*đông|goldsilk\s*complex|anland.*hà\s*đông|le\s*grand\s*jardin.*hà\s*đông|ct8\s*mường\s*thanh/i, 'hà đông'],
+    // ── Hà Nội — Gia Lâm ─────────────────────────────────────────────────────
+    [/vinhome[s]?\s*ocean\s*park|ocean\s*park|ecopark.*gia\s*lâm/i, 'gia lâm'],
+    // ── Hà Nội — Đông Anh ────────────────────────────────────────────────────
+    [/eurowindow\s*river\s*park|vinhome[s]?\s*cổ\s*loa|sunshine\s*wonder.*đông\s*anh/i, 'đông anh'],
+    // ── Hà Nội — Long Biên ───────────────────────────────────────────────────
+    [/vinhome[s]?\s*riverside|the\s*manor\s*central\s*park|long\s*biên.*garden/i, 'long biên'],
+    // ── Hà Nội — Hoàng Mai ───────────────────────────────────────────────────
+    [/linh\s*đàm|helios.*linh\s*đàm|ct1\s*linh\s*đàm|hei\s*tower.*giải\s*phóng/i, 'hoàng mai'],
+    // ── Hà Nội — Thạch Thất / Hòa Lạc ──────────────────────────────────────
+    [/the\s*zen.*hòa\s*lạc|wyndham\s*hòa\s*lạc|vinhome[s]?\s*hòa\s*lạc/i, 'thạch thất'],
+    // ── Hưng Yên (vệ tinh Hà Nội) ────────────────────────────────────────────
+    [/ecopark|vinhome[s]?\s*ocean\s*park\s*2|ocean\s*park\s*2|ocean\s*park\s*3/i, 'hưng yên'],
+    // ── Vùng ven / Tỉnh lân cận HCM ─────────────────────────────────────────
     [/aqua\s*city|aquacity|aqua\s*island/i, 'nhơn trạch'],
     [/swan\s*park/i, 'nhơn trạch'],
     [/\bizumi\b/i, 'biên hòa'],
     [/waterpoint/i, 'bến lức'],
-    [/la\s*mer|phu quoc\s*marina|premier\s*village/i, 'phú quốc'],
-    [/novaworld\s*phan\s*thiet|novabeach|nova\s*phan\s*thiet/i, 'phan thiết'],
-    [/golden\s*bay\s*cam\s*ranh|cam\s*ranh/i, 'khánh hòa'],
+    // ── Resort / Nghỉ dưỡng ──────────────────────────────────────────────────
+    [/la\s*mer|phu quoc\s*marina|premier\s*village.*phú\s*quốc|vinpearl.*phú\s*quốc|sun\s*grand.*phú\s*quốc/i, 'phú quốc'],
+    [/novaworld\s*phan\s*thiet|novabeach|nova\s*phan\s*thiet|the\s*regal/i, 'phan thiết'],
+    [/golden\s*bay\s*cam\s*ranh|cam\s*ranh\s*bay|vinpearl.*cam\s*ranh|mia\s*resort/i, 'khánh hòa'],
+    [/ana\s*marina|sheraton.*nha\s*trang|vinpearl.*nha\s*trang|panorama.*nha\s*trang/i, 'nha trang'],
+    [/novaworld\s*hồ\s*tràm|soul\s*hồ\s*tràm|the\s*grand\s*ho\s*tram/i, 'xuyên mộc'],
+    [/the\s*long\s*beach.*vũng\s*tàu|aria\s*vũng\s*tàu|imperial\s*vũng\s*tàu/i, 'vũng tàu'],
+    [/ana\s*resort.*đà\s*lạt|gaia.*đà\s*lạt|flamingo.*cat\s*ba|vinpearl.*đà\s*lạt/i, 'đà lạt'],
+    [/da\s*nang\s*beach.*resort|fusion.*đà\s*nẵng|naman\s*retreat|hyatt\s*đà\s*nẵng/i, 'đà nẵng'],
+    [/ba\s*na\s*hills|bà\s*nà\s*hills/i, 'đà nẵng'],
   ];
   let enrichedAddr = addr;
   for (const [regex, district] of PROJECT_DISTRICT_INFER) {
@@ -1048,52 +1107,192 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   }
 
   // ── Street/corridor-level premium overrides (highest precision) ───────────
-  // These trump the district-level table when matched
+  // These trump the district-level table when matched.
+  // Source: Batdongsan/OneHousing/CBRE/Savills Vietnam Q1/2026
   let streetOverride: number | null = null;
+
+  // ══ TP.HCM — Trung tâm Quận 1 ════════════════════════════════════════════
   if (/nguyễn huệ|le loi|lê lợi|dong khoi|đồng khởi/i.test(enrichedAddr) && /quận 1|q\.?1/i.test(enrichedAddr))
-    streetOverride = 450_000_000;
-  if (/vinhome[s]?\s*central\s*park|saigon\s*pearl/i.test(enrichedAddr))
-    streetOverride = 140_000_000;
-  if (/phú mỹ hưng|phu my hung/i.test(enrichedAddr))
-    streetOverride = 160_000_000;
-  if (/thảo điền|thao dien/i.test(enrichedAddr))
-    streetOverride = 180_000_000;
+    streetOverride = 450_000_000;  // Phố đi bộ Nguyễn Huệ / Đồng Khởi: 350-600M/m²
+  if (/tôn đức thắng|ton duc thang/i.test(enrichedAddr) && /quận 1/i.test(enrichedAddr))
+    streetOverride = 320_000_000;  // Tôn Đức Thắng Q1 ven sông: 280-380M/m²
   if (/vinhome[s]?\s*golden\s*river|vinhome[s]?\s*bason|ba son/i.test(enrichedAddr))
-    streetOverride = 250_000_000;
+    streetOverride = 250_000_000;  // Vinhomes Golden River / Ba Son Q1: 200-350M/m²
+  if (/the\s*marq/i.test(enrichedAddr))
+    streetOverride = 200_000_000;  // The Marq Q1: 180-240M/m²
+  if (/the\s*grand\s*manhattan/i.test(enrichedAddr))
+    streetOverride = 170_000_000;  // The Grand Manhattan Q1: 150-200M/m²
+
+  // ══ TP.HCM — Bình Thạnh / Vinhomes Central Park ═══════════════════════════
+  if (/vinhome[s]?\s*central\s*park|saigon\s*pearl/i.test(enrichedAddr))
+    streetOverride = 140_000_000;  // Vinhomes Central Park / Saigon Pearl: 120-180M/m²
   if (/landmark\s*81/i.test(enrichedAddr))
-    streetOverride = 160_000_000;
-  // ── Premium projects vùng ven / tỉnh lân cận ─────────────────────────────
+    streetOverride = 160_000_000;  // Landmark 81 Bình Thạnh: 140-200M/m²
+  if (/sunwah\s*pearl/i.test(enrichedAddr))
+    streetOverride = 110_000_000;  // Sunwah Pearl Bình Thạnh: 90-130M/m²
+
+  // ══ TP.HCM — Thủ Đức (Q2 cũ) — Thảo Điền / Thủ Thiêm ═══════════════════
+  if (/thảo điền|thao dien/i.test(enrichedAddr))
+    streetOverride = 180_000_000;  // Thảo Điền (biệt thự, nhà phố): 150-220M/m²
+  if (/the\s*metropole.*thủ\s*thiêm|metropole\s*thu\s*thiem/i.test(enrichedAddr))
+    streetOverride = 200_000_000;  // The Metropole Thủ Thiêm: 175-250M/m²
+  if (/empire\s*city/i.test(enrichedAddr))
+    streetOverride = 180_000_000;  // Empire City Thủ Thiêm: 160-220M/m²
+  if (/masteri\s*thảo\s*điền|masteri\s*thao\s*dien/i.test(enrichedAddr))
+    streetOverride = 145_000_000;  // Masteri Thảo Điền: 120-175M/m²
+  if (/sala\s*đại\s*quang\s*minh|sala.*thủ\s*đức/i.test(enrichedAddr))
+    streetOverride = 120_000_000;  // Sala Đại Quang Minh: 100-145M/m²
+
+  // ══ TP.HCM — Quận 7 / Phú Mỹ Hưng ═══════════════════════════════════════
+  if (/phú mỹ hưng|phu my hung/i.test(enrichedAddr))
+    streetOverride = 160_000_000;  // Phú Mỹ Hưng: 130-220M/m²
+  if (/midtown.*phú\s*mỹ\s*hưng|midtown.*q7/i.test(enrichedAddr))
+    streetOverride = 145_000_000;  // Midtown Phú Mỹ Hưng: 120-175M/m²
+  if (/eco\s*green\s*saigon/i.test(enrichedAddr))
+    streetOverride = 95_000_000;   // Eco Green Saigon Q7: 80-115M/m²
+  if (/sunrise\s*city/i.test(enrichedAddr))
+    streetOverride = 100_000_000;  // Sunrise City Q7: 85-120M/m²
+  if (/nguyễn\s*văn\s*linh/i.test(enrichedAddr) && /quận\s*7|q\.?7/i.test(enrichedAddr))
+    streetOverride = 130_000_000;  // Nguyễn Văn Linh Q7 (mặt tiền): 110-160M/m²
+
+  // ══ TP.HCM — Quận 9 / Thủ Đức mới (Grand Park) ═══════════════════════════
+  if (/vinhome[s]?\s*grand\s*park/i.test(enrichedAddr))
+    streetOverride = 90_000_000;   // Vinhomes Grand Park Q9: 75-110M/m²
+  if (/the\s*origami|fiato|masteri\s*center\s*point/i.test(enrichedAddr))
+    streetOverride = 75_000_000;   // Các căn hộ trong Vinhomes Grand Park: 65-90M/m²
+
+  // ══ TP.HCM — Bình Tân ════════════════════════════════════════════════════
+  if (/akari\s*city/i.test(enrichedAddr))
+    streetOverride = 62_000_000;   // Akari City Nam Long Bình Tân: 55-72M/m²
+  if (/aio\s*city/i.test(enrichedAddr))
+    streetOverride = 58_000_000;   // AIO City Bình Tân: 50-68M/m²
+
+  // ══ TP.HCM — Quận 10 ════════════════════════════════════════════════════
+  if (/kingdom\s*101/i.test(enrichedAddr))
+    streetOverride = 130_000_000;  // Kingdom 101 Q10: 110-150M/m²
+
+  // ══ TP.HCM — Nhà Bè ══════════════════════════════════════════════════════
+  if (/saigon\s*south\s*residences/i.test(enrichedAddr))
+    streetOverride = 72_000_000;   // Saigon South Residences Nhà Bè: 60-88M/m²
+  if (/huỳnh\s*tấn\s*phát/i.test(enrichedAddr) && /nhà\s*bè/i.test(enrichedAddr))
+    streetOverride = 55_000_000;   // Huỳnh Tấn Phát mặt tiền Nhà Bè: 45-68M/m²
+
+  // ══ TP.HCM — Bình Chánh ══════════════════════════════════════════════════
+  if (/saigon\s*mia/i.test(enrichedAddr))
+    streetOverride = 60_000_000;   // Saigon Mia Nam Long Bình Chánh: 50-72M/m²
+  if (/westgate.*bình\s*chánh|bình\s*chánh.*westgate/i.test(enrichedAddr))
+    streetOverride = 48_000_000;   // Westgate An Gia Bình Chánh: 40-58M/m²
+
+  // ══ Hà Nội — Trung tâm ═══════════════════════════════════════════════════
+  if (/hàng\s*đào|hàng\s*ngang|hàng\s*bông|hoàn\s*kiếm/i.test(enrichedAddr))
+    streetOverride = 380_000_000;  // Phố cổ Hà Nội: 300-500M/m²
+  if (/kim\s*mã|nguyễn\s*chí\s*thanh/i.test(enrichedAddr) && /ba\s*đình/i.test(enrichedAddr))
+    streetOverride = 200_000_000;  // Kim Mã / Nguyễn Chí Thanh Ba Đình: 170-250M/m²
+  if (/vinhome[s]?\s*royal\s*city/i.test(enrichedAddr))
+    streetOverride = 100_000_000;  // Vinhomes Royal City Thanh Xuân: 85-120M/m²
+  if (/vinhome[s]?\s*times\s*city/i.test(enrichedAddr))
+    streetOverride = 95_000_000;   // Vinhomes Times City Hai Bà Trưng: 80-115M/m²
+  if (/vinhome[s]?\s*skylake/i.test(enrichedAddr))
+    streetOverride = 110_000_000;  // Vinhomes Skylake Cầu Giấy: 95-130M/m²
+  if (/vinhome[s]?\s*smart\s*city|masteri\s*west\s*heights/i.test(enrichedAddr))
+    streetOverride = 90_000_000;   // Vinhomes Smart City / Masteri West Heights: 75-110M/m²
+  if (/the\s*westlake|starlake.*tây\s*hồ|ciputra/i.test(enrichedAddr))
+    streetOverride = 120_000_000;  // The Westlake / Ciputra Tây Hồ: 100-160M/m²
+  if (/vinhome[s]?\s*ocean\s*park\b/i.test(enrichedAddr) && !/ocean\s*park\s*[23]/i.test(enrichedAddr))
+    streetOverride = 70_000_000;   // Vinhomes Ocean Park 1 Gia Lâm: 58-85M/m²
+  if (/ocean\s*park\s*2|ocean\s*park\s*3/i.test(enrichedAddr))
+    streetOverride = 52_000_000;   // Vinhomes Ocean Park 2 & 3 Hưng Yên: 42-65M/m²
+  if (/ecopark/i.test(enrichedAddr))
+    streetOverride = 45_000_000;   // Ecopark Hưng Yên: 38-58M/m²
+  if (/park\s*city.*hà\s*đông/i.test(enrichedAddr))
+    streetOverride = 68_000_000;   // Park City Hà Đông: 55-82M/m²
+  if (/lê\s*văn\s*lương/i.test(enrichedAddr) && /hà\s*đông|nam\s*từ\s*liêm/i.test(enrichedAddr))
+    streetOverride = 75_000_000;   // Lê Văn Lương mặt tiền: 65-90M/m²
+  if (/trần\s*duy\s*hưng|tran\s*duy\s*hung/i.test(enrichedAddr))
+    streetOverride = 110_000_000;  // Trần Duy Hưng Cầu Giấy: 95-130M/m²
+
+  // ══ Đà Nẵng — Bãi biển / Trung tâm ══════════════════════════════════════
+  if (/võ\s*nguyên\s*giáp|vo\s*nguyen\s*giap|my\s*khe\s*beach|biển\s*mỹ\s*khê/i.test(enrichedAddr))
+    streetOverride = 120_000_000;  // Đường biển Võ Nguyên Giáp / Mỹ Khê: 100-160M/m²
+  if (/trần\s*hưng\s*đạo.*đà\s*nẵng|tran\s*hung\s*dao.*da\s*nang/i.test(enrichedAddr))
+    streetOverride = 95_000_000;   // Trần Hưng Đạo Đà Nẵng: 80-115M/m²
+  if (/nguyễn\s*văn\s*linh.*đà\s*nẵng/i.test(enrichedAddr))
+    streetOverride = 75_000_000;   // Nguyễn Văn Linh Đà Nẵng: 60-95M/m²
+  if (/ba\s*na\s*hills|bà\s*nà\s*hills/i.test(enrichedAddr))
+    streetOverride = 80_000_000;   // Khu vực Bà Nà Hills: 65-100M/m²
+  if (/naman\s*retreat|aria\s*đà\s*nẵng/i.test(enrichedAddr))
+    streetOverride = 95_000_000;   // Resort cao cấp Đà Nẵng: 80-120M/m²
+
+  // ══ Nha Trang — Đường biển / Dự án ═══════════════════════════════════════
+  if (/trần\s*phú.*nha\s*trang|nha\s*trang.*trần\s*phú/i.test(enrichedAddr))
+    streetOverride = 90_000_000;   // Trần Phú mặt biển Nha Trang: 75-120M/m²
+  if (/vinpearl.*nha\s*trang|panorama.*nha\s*trang/i.test(enrichedAddr))
+    streetOverride = 80_000_000;   // Vinpearl / Panorama Nha Trang: 65-100M/m²
+  if (/ana\s*marina|the\s*anam|mia\s*resort.*cam\s*ranh/i.test(enrichedAddr))
+    streetOverride = 55_000_000;   // Resort Cam Ranh cao cấp: 45-70M/m²
+
+  // ══ Đà Lạt ════════════════════════════════════════════════════════════════
+  if (/hồ\s*xuân\s*hương|ho\s*xuan\s*huong|trung\s*tâm.*đà\s*lạt/i.test(enrichedAddr))
+    streetOverride = 65_000_000;   // Quanh hồ Xuân Hương / trung tâm Đà Lạt: 55-80M/m²
+  if (/vinhome[s]?\s*đà\s*lạt|langbiang\s*town|lâm\s*viên/i.test(enrichedAddr))
+    streetOverride = 55_000_000;   // Vinhomes / Langbiang Town Đà Lạt: 45-70M/m²
+
+  // ══ Phú Quốc ══════════════════════════════════════════════════════════════
+  if (/sun\s*grand.*phú\s*quốc|sun\s*world.*phú\s*quốc/i.test(enrichedAddr))
+    streetOverride = 130_000_000;  // Sun Grand City Phú Quốc: 110-170M/m²
+  if (/premier\s*village.*phú\s*quốc|vinpearl.*phú\s*quốc/i.test(enrichedAddr))
+    streetOverride = 120_000_000;  // Premier Village / Vinpearl Phú Quốc: 100-160M/m²
+  if (/trần\s*hưng\s*đạo.*phú\s*quốc/i.test(enrichedAddr))
+    streetOverride = 95_000_000;   // Đường Trần Hưng Đạo Phú Quốc: 80-120M/m²
+  if (/phu quoc\s*marina|marina\s*phú\s*quốc/i.test(enrichedAddr))
+    streetOverride = 110_000_000;  // Marina Phú Quốc: 90-140M/m²
+
+  // ══ Premium projects vùng ven HCM ════════════════════════════════════════
   // Source: Batdongsan/Savills/OneHousing Q1/2026 transaction data
   if (/aqua\s*city|aquacity/i.test(enrichedAddr))
-    streetOverride = 72_000_000;  // Aqua City Novaland nhà phố liên kề: 65-95M/m² Q1/2026
+    streetOverride = 72_000_000;   // Aqua City Novaland Nhơn Trạch: 65-95M/m²
   if (/swan\s*park/i.test(enrichedAddr))
-    streetOverride = 52_000_000;  // Swan Park Novaland Nhơn Trạch: 45-65M/m²
+    streetOverride = 52_000_000;   // Swan Park Novaland Nhơn Trạch: 45-65M/m²
   if (/\bizumi\b/i.test(enrichedAddr))
-    streetOverride = 55_000_000;  // Izumi City Nam Long Biên Hòa: 45-65M/m²
+    streetOverride = 55_000_000;   // Izumi City Nam Long Biên Hòa: 45-65M/m²
   if (/waterpoint.*bến\s*lức|bến\s*lức.*waterpoint/i.test(enrichedAddr))
-    streetOverride = 45_000_000;  // Waterpoint Nam Long Bến Lức: 35-55M/m²
+    streetOverride = 45_000_000;   // Waterpoint Nam Long Bến Lức: 35-55M/m²
   if (/novaworld\s*phan\s*thiet|phan\s*thiet.*novaworld/i.test(enrichedAddr))
-    streetOverride = 40_000_000;  // NovaWorld Phan Thiết biệt thự/nhà phố: 35-55M/m²
-  // ── Bình Dương premium projects (Q1/2026 — Batdongsan/OneHousing) ─────────
+    streetOverride = 40_000_000;   // NovaWorld Phan Thiết biệt thự/nhà phố: 35-55M/m²
+  if (/novaworld\s*hồ\s*tràm|soul\s*hồ\s*tràm|grand\s*ho\s*tram/i.test(enrichedAddr))
+    streetOverride = 48_000_000;   // NovaWorld / Soul Hồ Tràm: 38-60M/m²
+
+  // ══ Bình Dương premium projects ══════════════════════════════════════════
   if (/midori\s*park/i.test(enrichedAddr))
-    streetOverride = 65_000_000;  // Midori Park Thuận An: 58-72M/m² (căn hộ cao cấp)
-  if (/opal\s*boulevard|opal.*boulevard/i.test(enrichedAddr))
-    streetOverride = 62_000_000;  // Opal Boulevard Thuận An: 55-70M/m²
+    streetOverride = 65_000_000;   // Midori Park Thuận An: 58-72M/m²
+  if (/opal\s*boulevard/i.test(enrichedAddr))
+    streetOverride = 62_000_000;   // Opal Boulevard Thuận An: 55-70M/m²
   if (/id\s*junction/i.test(enrichedAddr))
-    streetOverride = 55_000_000;  // ID Junction Dĩ An: 48-62M/m²
-  if (/bcons\s*(city|blu|garden)/i.test(enrichedAddr))
-    streetOverride = 42_000_000;  // Bcons City/Blu/Garden Dĩ An: 38-48M/m²
+    streetOverride = 55_000_000;   // ID Junction Dĩ An: 48-62M/m²
+  if (/bcons\s*(city|blu|garden|miền\s*đông)/i.test(enrichedAddr))
+    streetOverride = 42_000_000;   // Bcons City/Blu/Garden Dĩ An: 38-48M/m²
   if (/phúc\s*đạt|phuc\s*dat|tecco/i.test(enrichedAddr) && /bình\s*dương|binh\s*duong/i.test(enrichedAddr))
-    streetOverride = 35_000_000;  // Tecco / Phúc Đạt Bình Dương: 30-40M/m²
-  // ── Đồng Nai premium projects (Q1/2026) ──────────────────────────────────
+    streetOverride = 35_000_000;   // Tecco / Phúc Đạt Bình Dương: 30-40M/m²
+  if (/the\s*emerald.*bình\s*dương|emerald\s*golf\s*view/i.test(enrichedAddr))
+    streetOverride = 40_000_000;   // The Emerald / Emerald Golf View Bình Dương: 35-48M/m²
+  if (/himlam.*bình\s*dương|him\s*lam.*bình\s*dương/i.test(enrichedAddr))
+    streetOverride = 50_000_000;   // HimLam Bình Dương: 42-60M/m²
+
+  // ══ Đồng Nai premium projects ════════════════════════════════════════════
   if (/century\s*city/i.test(enrichedAddr))
-    streetOverride = 45_000_000;  // Century City Long Thành: 38-55M/m²
+    streetOverride = 45_000_000;   // Century City Long Thành: 38-55M/m²
   if (/airport\s*city.*long\s*thành|long\s*thành.*airport/i.test(enrichedAddr))
-    streetOverride = 40_000_000;  // Airport City Long Thành: 35-48M/m²
+    streetOverride = 40_000_000;   // Airport City Long Thành: 35-48M/m²
   if (/supermoon|super\s*moon/i.test(enrichedAddr))
-    streetOverride = 38_000_000;  // Supermoon Long Thành: 32-45M/m²
-  if (/saigon\s*village|long\s*thành.*village/i.test(enrichedAddr))
-    streetOverride = 35_000_000;  // Saigon Village Long Thành: 28-42M/m²
+    streetOverride = 38_000_000;   // Supermoon Long Thành: 32-45M/m²
+  if (/saigon\s*village.*long\s*thành|long\s*thành.*saigon\s*village/i.test(enrichedAddr))
+    streetOverride = 35_000_000;   // Saigon Village Long Thành: 28-42M/m²
+
+  // ══ Bà Rịa – Vũng Tàu premium ════════════════════════════════════════════
+  if (/aria\s*vũng\s*tàu|the\s*long\s*beach.*vũng\s*tàu|imperial.*vũng\s*tàu/i.test(enrichedAddr))
+    streetOverride = 70_000_000;   // Resort cao cấp Vũng Tàu: 60-90M/m²
+  if (/front\s*beach|bãi\s*trước.*vũng\s*tàu/i.test(enrichedAddr))
+    streetOverride = 80_000_000;   // Bãi Trước / Front Beach mặt biển Vũng Tàu: 65-100M/m²
 
   // Apply street override if matched
   const getBase = (base: number, region: string, conf: number) => {
@@ -1102,46 +1301,70 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     return { price: Math.round(refPrice * mult), region, confidence: conf };
   };
 
-  // ── TP.HCM ────────────────────────────────────────────────────────────────
-  if (/quận 1\b|q\.?1\b|district 1/i.test(enrichedAddr)) return getBase(280_000_000, 'Quận 1, TP.HCM', 62);
-  if (/quận 3\b|q\.?3\b/i.test(enrichedAddr))             return getBase(200_000_000, 'Quận 3, TP.HCM', 62);
-  if (/quận 4\b|q\.?4\b/i.test(enrichedAddr))             return getBase(130_000_000, 'Quận 4, TP.HCM', 62);
-  if (/quận 5\b|q\.?5\b/i.test(enrichedAddr))             return getBase(140_000_000, 'Quận 5, TP.HCM', 62);
-  if (/quận 6\b|q\.?6\b/i.test(enrichedAddr))             return getBase(90_000_000,  'Quận 6, TP.HCM', 60);
-  if (/quận 7\b|q\.?7\b/i.test(enrichedAddr))             return getBase(150_000_000, 'Quận 7, TP.HCM', 62);
-  if (/quận 8\b|q\.?8\b/i.test(enrichedAddr))             return getBase(80_000_000,  'Quận 8, TP.HCM', 60);
-  if (/quận 9\b|q\.?9\b/i.test(enrichedAddr))             return getBase(75_000_000,  'Quận 9, TP.HCM', 60);
-  if (/quận 10\b|q\.?10\b/i.test(enrichedAddr))           return getBase(165_000_000, 'Quận 10, TP.HCM', 62);
-  if (/quận 11\b|q\.?11\b/i.test(enrichedAddr))           return getBase(110_000_000, 'Quận 11, TP.HCM', 60);
-  if (/quận 12\b|q\.?12\b/i.test(enrichedAddr))           return getBase(65_000_000,  'Quận 12, TP.HCM', 60);
-  if (/bình chánh|binh chanh/i.test(enrichedAddr))        return getBase(35_000_000,  'Bình Chánh, TP.HCM', 55);
-  if (/nhà bè|nha be/i.test(enrichedAddr))                return getBase(45_000_000,  'Nhà Bè, TP.HCM', 55);
-  if (/hóc môn|hoc mon/i.test(enrichedAddr))              return getBase(40_000_000,  'Hóc Môn, TP.HCM', 55);
-  if (/củ chi|cu chi/i.test(enrichedAddr))                return getBase(25_000_000,  'Củ Chi, TP.HCM', 52);
-  if (/cần giờ|can gio/i.test(enrichedAddr))              return getBase(20_000_000,  'Cần Giờ, TP.HCM', 50);
-  if (/bình thạnh|binh thanh/i.test(enrichedAddr))        return getBase(120_000_000, 'Bình Thạnh, TP.HCM', 62);
-  if (/phú nhuận|phu nhuan/i.test(enrichedAddr))          return getBase(150_000_000, 'Phú Nhuận, TP.HCM', 62);
-  if (/tân bình|tan binh/i.test(enrichedAddr))            return getBase(100_000_000, 'Tân Bình, TP.HCM', 62);
-  if (/tân phú|tan phu/i.test(enrichedAddr))              return getBase(80_000_000,  'Tân Phú, TP.HCM', 60);
-  if (/gò vấp|go vap/i.test(enrichedAddr))                return getBase(75_000_000,  'Gò Vấp, TP.HCM', 60);
-  if (/thủ đức|thu duc/i.test(enrichedAddr))              return getBase(78_000_000,  'Thủ Đức, TP.HCM', 60);
+  // ── TP.HCM ─────────────────────────────────────────────────────────────────
+  // Source: Batdongsan/CBRE/Savills/OneHousing Vietnam Q1/2026
+  // Ref: Townhouse Sổ Hồng, đường 4m, 50-80m²
+  if (/quận 1\b|q\.?1\b|district 1/i.test(enrichedAddr))  return getBase(280_000_000, 'Quận 1, TP.HCM', 62);
+  if (/quận 2\b|q\.?2\b/i.test(enrichedAddr))              return getBase(160_000_000, 'Quận 2 (Thủ Đức), TP.HCM', 62);
+  if (/quận 3\b|q\.?3\b/i.test(enrichedAddr))              return getBase(200_000_000, 'Quận 3, TP.HCM', 62);
+  if (/quận 4\b|q\.?4\b/i.test(enrichedAddr))              return getBase(130_000_000, 'Quận 4, TP.HCM', 62);
+  if (/quận 5\b|q\.?5\b/i.test(enrichedAddr))              return getBase(140_000_000, 'Quận 5, TP.HCM', 62);
+  if (/quận 6\b|q\.?6\b/i.test(enrichedAddr))              return getBase(90_000_000,  'Quận 6, TP.HCM', 60);
+  if (/quận 7\b|q\.?7\b/i.test(enrichedAddr))              return getBase(150_000_000, 'Quận 7, TP.HCM', 62);
+  if (/quận 8\b|q\.?8\b/i.test(enrichedAddr))              return getBase(80_000_000,  'Quận 8, TP.HCM', 60);
+  if (/quận 9\b|q\.?9\b/i.test(enrichedAddr))              return getBase(75_000_000,  'Quận 9 (Thủ Đức), TP.HCM', 60);
+  if (/quận 10\b|q\.?10\b/i.test(enrichedAddr))            return getBase(165_000_000, 'Quận 10, TP.HCM', 62);
+  if (/quận 11\b|q\.?11\b/i.test(enrichedAddr))            return getBase(110_000_000, 'Quận 11, TP.HCM', 60);
+  if (/quận 12\b|q\.?12\b/i.test(enrichedAddr))            return getBase(65_000_000,  'Quận 12, TP.HCM', 60);
+  if (/bình thạnh|binh thanh/i.test(enrichedAddr))          return getBase(120_000_000, 'Bình Thạnh, TP.HCM', 62);
+  if (/phú nhuận|phu nhuan/i.test(enrichedAddr))            return getBase(150_000_000, 'Phú Nhuận, TP.HCM', 62);
+  if (/tân bình|tan binh/i.test(enrichedAddr))              return getBase(100_000_000, 'Tân Bình, TP.HCM', 62);
+  if (/tân phú|tan phu/i.test(enrichedAddr))                return getBase(80_000_000,  'Tân Phú, TP.HCM', 60);
+  if (/gò vấp|go vap/i.test(enrichedAddr))                  return getBase(75_000_000,  'Gò Vấp, TP.HCM', 60);
+  if (/bình tân|binh tan/i.test(enrichedAddr))               return getBase(60_000_000,  'Bình Tân, TP.HCM', 58);
+  if (/thủ đức|thu duc/i.test(enrichedAddr))                return getBase(78_000_000,  'Thủ Đức, TP.HCM', 60);
+  if (/bình chánh|binh chanh/i.test(enrichedAddr))          return getBase(35_000_000,  'Bình Chánh, TP.HCM', 55);
+  if (/nhà bè|nha be/i.test(enrichedAddr))                  return getBase(45_000_000,  'Nhà Bè, TP.HCM', 55);
+  if (/hóc môn|hoc mon/i.test(enrichedAddr))                return getBase(40_000_000,  'Hóc Môn, TP.HCM', 55);
+  if (/củ chi|cu chi/i.test(enrichedAddr))                  return getBase(25_000_000,  'Củ Chi, TP.HCM', 52);
+  if (/cần giờ|can gio/i.test(enrichedAddr))                return getBase(20_000_000,  'Cần Giờ, TP.HCM', 50);
   if (/hcm|hồ chí minh|ho chi minh|sài gòn|saigon/i.test(enrichedAddr)) return getBase(100_000_000, 'TP.HCM (trung bình)', 55);
 
-  // ── Hà Nội ───────────────────────────────────────────────────────────────
-  if (/hoàn kiếm|hoan kiem/i.test(enrichedAddr))           return getBase(300_000_000, 'Hoàn Kiếm, Hà Nội', 62);
-  if (/ba đình|ba dinh/i.test(enrichedAddr))               return getBase(220_000_000, 'Ba Đình, Hà Nội', 62);
-  if (/đống đa|dong da/i.test(enrichedAddr))               return getBase(180_000_000, 'Đống Đa, Hà Nội', 62);
-  if (/hai bà trưng|hai ba trung/i.test(enrichedAddr))     return getBase(170_000_000, 'Hai Bà Trưng, Hà Nội', 62);
-  if (/cầu giấy|cau giay/i.test(enrichedAddr))             return getBase(120_000_000, 'Cầu Giấy, Hà Nội', 60);
-  if (/tây hồ|tay ho/i.test(enrichedAddr))                 return getBase(130_000_000, 'Tây Hồ, Hà Nội', 60);
-  if (/thanh xuân|thanh xuan/i.test(enrichedAddr))         return getBase(100_000_000, 'Thanh Xuân, Hà Nội', 60);
-  if (/hoàng mai|hoang mai/i.test(enrichedAddr))           return getBase(75_000_000,  'Hoàng Mai, Hà Nội', 58);
-  if (/nam từ liêm|nam tu liem|bắc từ liêm|bac tu liem/i.test(enrichedAddr)) return getBase(85_000_000, 'Từ Liêm, Hà Nội', 58);
-  if (/long biên|long bien/i.test(enrichedAddr))           return getBase(80_000_000,  'Long Biên, Hà Nội', 58);
-  if (/hà đông|ha dong/i.test(enrichedAddr))               return getBase(70_000_000,  'Hà Đông, Hà Nội', 57);
-  if (/gia lâm|gia lam/i.test(enrichedAddr))               return getBase(65_000_000,  'Gia Lâm, Hà Nội', 55);
-  if (/đông anh|dong anh/i.test(enrichedAddr))             return getBase(60_000_000,  'Đông Anh, Hà Nội', 55);
-  if (/hà nội|hanoi|ha noi/i.test(enrichedAddr))           return getBase(110_000_000, 'Hà Nội (trung bình)', 52);
+  // ── Hà Nội ─────────────────────────────────────────────────────────────────
+  // Source: Batdongsan/CBRE/Savills/OneHousing Vietnam Q1/2026
+  // ── Quận nội thành lõi ─────────────────────────────────────────────────────
+  if (/hoàn kiếm|hoan kiem/i.test(enrichedAddr))              return getBase(300_000_000, 'Hoàn Kiếm, Hà Nội', 62);
+  if (/ba đình|ba dinh/i.test(enrichedAddr))                  return getBase(220_000_000, 'Ba Đình, Hà Nội', 62);
+  if (/đống đa|dong da/i.test(enrichedAddr))                  return getBase(180_000_000, 'Đống Đa, Hà Nội', 62);
+  if (/hai bà trưng|hai ba trung/i.test(enrichedAddr))        return getBase(170_000_000, 'Hai Bà Trưng, Hà Nội', 62);
+  // ── Quận nội thành mở rộng ────────────────────────────────────────────────
+  if (/cầu giấy|cau giay/i.test(enrichedAddr))                return getBase(120_000_000, 'Cầu Giấy, Hà Nội', 60);
+  if (/tây hồ|tay ho/i.test(enrichedAddr))                   return getBase(130_000_000, 'Tây Hồ, Hà Nội', 60);
+  if (/thanh xuân|thanh xuan/i.test(enrichedAddr))            return getBase(100_000_000, 'Thanh Xuân, Hà Nội', 60);
+  if (/hoàng mai|hoang mai/i.test(enrichedAddr))              return getBase(75_000_000,  'Hoàng Mai, Hà Nội', 58);
+  if (/nam từ liêm|nam tu liem/i.test(enrichedAddr))          return getBase(90_000_000,  'Nam Từ Liêm, Hà Nội', 58);
+  if (/bắc từ liêm|bac tu liem/i.test(enrichedAddr))         return getBase(78_000_000,  'Bắc Từ Liêm, Hà Nội', 57);
+  if (/long biên|long bien/i.test(enrichedAddr))              return getBase(80_000_000,  'Long Biên, Hà Nội', 58);
+  if (/tây hồ tây|starlake/i.test(enrichedAddr))              return getBase(110_000_000, 'Tây Hồ Tây, Hà Nội', 58);
+  // ── Huyện/thành phố ngoại thành ──────────────────────────────────────────
+  if (/hà đông|ha dong/i.test(enrichedAddr))                  return getBase(72_000_000,  'Hà Đông, Hà Nội', 57);
+  if (/gia lâm|gia lam/i.test(enrichedAddr))                  return getBase(65_000_000,  'Gia Lâm, Hà Nội', 55);
+  if (/đông anh|dong anh/i.test(enrichedAddr))                return getBase(62_000_000,  'Đông Anh, Hà Nội', 55);
+  if (/thanh trì|thanh tri/i.test(enrichedAddr))              return getBase(55_000_000,  'Thanh Trì, Hà Nội', 54);
+  if (/hoài đức|hoai duc/i.test(enrichedAddr))                return getBase(58_000_000,  'Hoài Đức, Hà Nội', 54);
+  if (/đan phượng|dan phuong/i.test(enrichedAddr))            return getBase(42_000_000,  'Đan Phượng, Hà Nội', 52);
+  if (/thạch thất|thach that/i.test(enrichedAddr))            return getBase(32_000_000,  'Thạch Thất, Hà Nội', 50);
+  if (/quốc oai|quoc oai/i.test(enrichedAddr))                return getBase(28_000_000,  'Quốc Oai, Hà Nội', 49);
+  if (/chương mỹ|chuong my/i.test(enrichedAddr))              return getBase(28_000_000,  'Chương Mỹ, Hà Nội', 49);
+  if (/mỹ đức|my duc/i.test(enrichedAddr) && /hà\s*nội/i.test(enrichedAddr)) return getBase(22_000_000, 'Mỹ Đức, Hà Nội', 47);
+  if (/ứng hòa|ung hoa/i.test(enrichedAddr))                  return getBase(20_000_000,  'Ứng Hòa, Hà Nội', 47);
+  if (/phú xuyên|phu xuyen/i.test(enrichedAddr))              return getBase(22_000_000,  'Phú Xuyên, Hà Nội', 47);
+  if (/thường tín|thuong tin/i.test(enrichedAddr))             return getBase(35_000_000,  'Thường Tín, Hà Nội', 50);
+  if (/mê linh|me linh/i.test(enrichedAddr))                  return getBase(38_000_000,  'Mê Linh, Hà Nội', 52);
+  if (/sóc sơn|soc son/i.test(enrichedAddr) && /hà\s*nội/i.test(enrichedAddr)) return getBase(30_000_000, 'Sóc Sơn, Hà Nội', 50);
+  if (/ba vì|ba vi/i.test(enrichedAddr))                      return getBase(18_000_000,  'Ba Vì, Hà Nội', 46);
+  if (/hòa lạc|hoa lac/i.test(enrichedAddr))                  return getBase(32_000_000,  'Hòa Lạc, Hà Nội', 50);
+  if (/hà nội|hanoi|ha noi/i.test(enrichedAddr))              return getBase(110_000_000, 'Hà Nội (trung bình)', 52);
 
   // ── Đà Nẵng (TP trực thuộc TW) ───────────────────────────────────────────
   if (/hải châu|hai chau/i.test(enrichedAddr))             return getBase(90_000_000,  'Hải Châu, Đà Nẵng', 60);
@@ -1164,22 +1387,40 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/bình thuỷ|binh thuy/i.test(enrichedAddr))           return getBase(28_000_000,  'Bình Thuỷ, Cần Thơ', 53);
   if (/cần thơ|can tho/i.test(enrichedAddr))               return getBase(35_000_000,  'Cần Thơ', 53);
 
-  // ── Khánh Hòa (Nha Trang) ────────────────────────────────────────────────
-  if (/nha trang/i.test(enrichedAddr))                     return getBase(65_000_000,  'Nha Trang', 57);
-  if (/cam ranh/i.test(enrichedAddr))                      return getBase(25_000_000,  'Cam Ranh, Khánh Hòa', 50);
-  if (/ninh hòa|ninh hoa/i.test(enrichedAddr))             return getBase(15_000_000,  'Ninh Hòa, Khánh Hòa', 48);
-  if (/khánh hòa|khanh hoa/i.test(enrichedAddr))           return getBase(55_000_000,  'Khánh Hòa', 53);
+  // ── Khánh Hòa (Nha Trang) ─────────────────────────────────────────────────
+  // Source: Batdongsan/CBRE Vietnam Q1/2026
+  if (/nha trang/i.test(enrichedAddr))                         return getBase(65_000_000,  'Nha Trang', 57);
+  if (/vạn ninh|van ninh/i.test(enrichedAddr))                 return getBase(20_000_000,  'Vạn Ninh, Khánh Hòa', 48);
+  if (/ninh hòa|ninh hoa/i.test(enrichedAddr))                 return getBase(15_000_000,  'Ninh Hòa, Khánh Hòa', 48);
+  if (/diên khánh|dien khanh/i.test(enrichedAddr))             return getBase(18_000_000,  'Diên Khánh, Khánh Hòa', 48);
+  if (/khánh vĩnh|khanh vinh/i.test(enrichedAddr))             return getBase(10_000_000,  'Khánh Vĩnh, Khánh Hòa', 44);
+  if (/khánh sơn|khanh son/i.test(enrichedAddr))               return getBase(9_000_000,   'Khánh Sơn, Khánh Hòa', 43);
+  if (/cam ranh/i.test(enrichedAddr))                          return getBase(25_000_000,  'Cam Ranh, Khánh Hòa', 50);
+  if (/cam lâm|cam lam/i.test(enrichedAddr))                   return getBase(22_000_000,  'Cam Lâm, Khánh Hòa', 49);
+  if (/khánh hòa|khanh hoa/i.test(enrichedAddr))               return getBase(55_000_000,  'Khánh Hòa', 53);
 
-  // ── Lâm Đồng (Đà Lạt) ────────────────────────────────────────────────────
-  if (/đà lạt|da lat/i.test(enrichedAddr))                 return getBase(45_000_000,  'Đà Lạt', 57);
-  if (/bảo lộc|bao loc/i.test(enrichedAddr))               return getBase(20_000_000,  'Bảo Lộc, Lâm Đồng', 50);
-  if (/lâm đồng|lam dong/i.test(enrichedAddr))             return getBase(35_000_000,  'Lâm Đồng', 52);
+  // ── Lâm Đồng (Đà Lạt / Bảo Lộc) ─────────────────────────────────────────
+  // Source: Batdongsan/CBRE Vietnam Q1/2026
+  if (/đà lạt|da lat/i.test(enrichedAddr))                     return getBase(45_000_000,  'Đà Lạt', 57);
+  if (/bảo lộc|bao loc/i.test(enrichedAddr))                   return getBase(22_000_000,  'Bảo Lộc, Lâm Đồng', 52);
+  if (/đức trọng|duc trong/i.test(enrichedAddr))                return getBase(18_000_000,  'Đức Trọng, Lâm Đồng', 49);
+  if (/đơn dương|don duong/i.test(enrichedAddr))                return getBase(15_000_000,  'Đơn Dương, Lâm Đồng', 47);
+  if (/lâm hà|lam ha/i.test(enrichedAddr))                     return getBase(14_000_000,  'Lâm Hà, Lâm Đồng', 46);
+  if (/di linh/i.test(enrichedAddr))                           return getBase(12_000_000,  'Di Linh, Lâm Đồng', 45);
+  if (/bảo lâm.*lâm\s*đồng|bảo lâm.*lam\s*dong/i.test(enrichedAddr)) return getBase(11_000_000, 'Bảo Lâm, Lâm Đồng', 44);
+  if (/lâm đồng|lam dong/i.test(enrichedAddr))                 return getBase(35_000_000,  'Lâm Đồng', 52);
 
-  // ── Bà Rịa – Vũng Tàu ────────────────────────────────────────────────────
-  if (/vũng tàu|vung tau/i.test(enrichedAddr))             return getBase(55_000_000,  'Vũng Tàu', 57);
-  if (/phú mỹ.*brvt|phu my.*brvt/i.test(enrichedAddr))    return getBase(35_000_000,  'Phú Mỹ, BR-VT', 53);
-  if (/bà rịa|ba ria/i.test(enrichedAddr))                 return getBase(30_000_000,  'Bà Rịa', 52);
-  if (/bà rịa.?vũng tàu|br.?vt/i.test(enrichedAddr))      return getBase(40_000_000,  'Bà Rịa-Vũng Tàu', 52);
+  // ── Bà Rịa – Vũng Tàu ─────────────────────────────────────────────────────
+  // Source: Batdongsan/CBRE/Savills Vietnam Q1/2026
+  if (/vũng tàu|vung tau/i.test(enrichedAddr))                return getBase(55_000_000,  'Vũng Tàu', 57);
+  if (/phú mỹ/i.test(enrichedAddr) && /brvt|bà\s*rịa|vũng\s*tàu/i.test(enrichedAddr)) return getBase(35_000_000, 'Phú Mỹ, BR-VT', 53);
+  if (/bà rịa\b|ba ria\b/i.test(enrichedAddr))               return getBase(30_000_000,  'Bà Rịa', 52);
+  if (/xuyên mộc|xuyen moc/i.test(enrichedAddr))              return getBase(25_000_000,  'Xuyên Mộc, BR-VT', 50);
+  if (/châu đức|chau duc/i.test(enrichedAddr))                return getBase(22_000_000,  'Châu Đức, BR-VT', 49);
+  if (/đất đỏ|dat do/i.test(enrichedAddr) && /brvt|bà\s*rịa|vũng\s*tàu/i.test(enrichedAddr)) return getBase(20_000_000, 'Đất Đỏ, BR-VT', 48);
+  if (/long điền|long dien/i.test(enrichedAddr))              return getBase(25_000_000,  'Long Điền, BR-VT', 50);
+  if (/côn đảo|con dao/i.test(enrichedAddr))                  return getBase(65_000_000,  'Côn Đảo, BR-VT', 52);
+  if (/bà rịa.?vũng tàu|br.?vt/i.test(enrichedAddr))         return getBase(40_000_000,  'Bà Rịa-Vũng Tàu', 52);
 
   // ── Đồng Nai ──────────────────────────────────────────────────────────────
   // Source: Batdongsan/CBRE/Savills/OneHousing Vietnam Q1/2026
