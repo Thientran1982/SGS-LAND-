@@ -12,9 +12,14 @@ import { Router, Request, Response } from 'express';
 import { applyAVM, getRegionalBasePrice, estimateFallbackRent, PROPERTY_TYPE_PRICE_MULT } from '../valuationEngine';
 import type { LegalStatus, PropertyType } from '../valuationEngine';
 import { marketDataService } from '../services/marketDataService';
+import { priceCalibrationService } from '../services/priceCalibrationService';
 import { listingRepository } from '../repositories/listingRepository';
 import { logger } from '../middleware/logger';
 import { pool } from '../db';
+
+function normalizeAddrKey(addr: string): string {
+  return addr.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RLHF price correction: reads historical valuation corrections from ai_feedback
@@ -371,6 +376,19 @@ export function createValuationRoutes(
             internalCompsCount = comps.count;
             comparables = comps.samples;
             logger.info(`[Valuation] Internal comps: ${comps.count} listings, median=${(comps.medianPricePerM2 / 1_000_000).toFixed(0)} tr/m²`);
+            // Feed internal comps signal into self-learning calibration
+            const compsKey = normalizeAddrKey(addressClean);
+            setImmediate(() =>
+              priceCalibrationService.recordObservation({
+                locationKey:     compsKey,
+                locationDisplay: addressClean,
+                pricePerM2:      comps.medianPricePerM2,
+                propertyType:    resolvedPropertyType,
+                source:          'internal_comps',
+                confidence:      Math.min(85, 50 + comps.count * 5),
+                tenantId:        user?.tenantId,
+              }).catch(() => {})
+            );
           }
         } catch (compsErr: any) {
           logger.warn('[Valuation] Could not fetch internal comps:', compsErr.message);

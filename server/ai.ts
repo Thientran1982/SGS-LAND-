@@ -2014,6 +2014,27 @@ YÊU CẦU VIẾT PHẢN HỒI:
                     }
                 } catch { /* internal comps are optional — silent fallback */ }
 
+                // Feed internal comps into self-learning calibration (closes the comps write-back gap)
+                if (internalCompsMedian && internalCompsCount >= 2) {
+                    const compsLocationKey = address.toLowerCase()
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+                    setImmediate(async () => {
+                        try {
+                            const { priceCalibrationService: calSvc } = await import('./services/priceCalibrationService');
+                            await calSvc.recordObservation({
+                                locationKey:     compsLocationKey,
+                                locationDisplay: address,
+                                pricePerM2:      internalCompsMedian!,
+                                propertyType:    resolvedPTypeFromExt || 'townhouse_center',
+                                source:          'internal_comps',
+                                confidence:      Math.min(85, 50 + internalCompsCount * 5),
+                                tenantId:        state.tenantId,
+                            });
+                        } catch { /* silent — calibration is non-critical */ }
+                    });
+                }
+
                 const cacheKey = `${state.tenantId}|${address}|${area}|${roadWidth}|${legal}|${direction || ''}|${floorLevel || ''}|${frontageWidth || ''}|${furnishing || ''}|${buildingAge || ''}|${resolvedPTypeFromExt}`;
                 const cached = valuationCache.get(cacheKey);
                 const valResult = (cached && Date.now() < cached.expiresAt)
