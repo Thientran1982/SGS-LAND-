@@ -667,12 +667,20 @@ export const AiValuation: React.FC = () => {
             // If this is a rate-limit (429) or quota error, show clear message and stop.
             // Do NOT run the offline fallback — it would show wrong prices.
             const errMsg: string = _err?.message || '';
-            const isRateLimit = errMsg.includes('hết lượt') || errMsg.includes('hết 1 lượt') || errMsg.includes('hết 3 lượt') || errMsg.includes('Too many') || errMsg.includes('rate limit') || errMsg.includes('429');
+            const isRateLimit = errMsg.includes('hết lượt') || errMsg.includes('hết 1 lượt') || errMsg.includes('hết 3 lượt') || errMsg.includes('Too many') || errMsg.includes('rate limit') || errMsg.includes('429') || errMsg.includes('Hệ thống AI đang bận');
             if (intervalRef.current) clearInterval(intervalRef.current);
             if (isRateLimit) {
                 setProgress(0);
                 setStep('DETAILS');
-                notify(errMsg || 'Bạn đã dùng hết lượt định giá miễn phí hôm nay. Đăng nhập để tiếp tục.', 'error');
+                if (!currentUser) {
+                    // Sync client counter with server reality so badge shows "Hết lượt"
+                    const exhausted: GuestValRecord = { count: GUEST_DAILY_LIMIT, date: todayStr() };
+                    writeGuestVal(exhausted);
+                    setGuestUsed(GUEST_DAILY_LIMIT);
+                    setShowGuestGate(true);
+                } else {
+                    notify(errMsg || 'Bạn đã dùng hết lượt định giá hôm nay. Vui lòng thử lại vào ngày mai.', 'error');
+                }
                 return;
             }
 

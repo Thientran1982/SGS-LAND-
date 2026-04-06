@@ -3825,6 +3825,200 @@ var init_feedback_fk_fix = __esm({
   }
 });
 
+// server/migrations/046_market_price_history.ts
+var migration46, market_price_history_default;
+var init_market_price_history = __esm({
+  "server/migrations/046_market_price_history.ts"() {
+    migration46 = {
+      description: "Add market_price_history and avm_calibration tables for self-learning price engine",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS market_price_history (
+        id              SERIAL PRIMARY KEY,
+        location_key    VARCHAR(120) NOT NULL,
+        location_display VARCHAR(255) NOT NULL,
+        price_per_m2    BIGINT NOT NULL,
+        price_min       BIGINT,
+        price_max       BIGINT,
+        property_type   VARCHAR(50) DEFAULT 'townhouse_center',
+        source          VARCHAR(30) NOT NULL CHECK (source IN (
+                          'ai_search','internal_comps','manual','transaction','regional_table','blended'
+                        )),
+        confidence      SMALLINT DEFAULT 50,
+        trend_text      VARCHAR(100),
+        source_count    SMALLINT DEFAULT 1,
+        data_recency    VARCHAR(20) DEFAULT 'current_year',
+        listing_id      INTEGER,
+        tenant_id       VARCHAR(36),
+        recorded_at     TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_mph_location_key  ON market_price_history (location_key)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_mph_recorded_at   ON market_price_history (recorded_at DESC)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_mph_source        ON market_price_history (source)`);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS avm_calibration (
+        id                      SERIAL PRIMARY KEY,
+        location_key            VARCHAR(120) NOT NULL UNIQUE,
+        location_display        VARCHAR(255) NOT NULL,
+        calibrated_price_per_m2 BIGINT NOT NULL,
+        property_type           VARCHAR(50) DEFAULT 'townhouse_center',
+        sample_count            INTEGER DEFAULT 0,
+        avg_ai_price            BIGINT,
+        avg_comps_price         BIGINT,
+        avg_transaction_price   BIGINT,
+        ai_weight               REAL DEFAULT 0.60,
+        comps_weight            REAL DEFAULT 0.30,
+        txn_weight              REAL DEFAULT 0.10,
+        confidence_score        SMALLINT DEFAULT 50,
+        trend_pct               REAL DEFAULT 0,
+        trend_text              VARCHAR(100),
+        last_calibrated_at      TIMESTAMPTZ DEFAULT NOW(),
+        calibration_window_days SMALLINT DEFAULT 90,
+        notes                   TEXT
+      )
+    `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_avm_cal_location ON avm_calibration (location_key)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_avm_cal_updated  ON avm_calibration (last_calibrated_at DESC)`);
+      },
+      async down(client) {
+        await client.query(`DROP TABLE IF EXISTS market_price_history CASCADE`);
+        await client.query(`DROP TABLE IF EXISTS avm_calibration CASCADE`);
+      }
+    };
+    market_price_history_default = migration46;
+  }
+});
+
+// server/migrations/047_agent_observations.ts
+var migration47, agent_observations_default;
+var init_agent_observations = __esm({
+  "server/migrations/047_agent_observations.ts"() {
+    migration47 = {
+      description: "Add agent_observations table for agent self-learning and system change tracking",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS agent_observations (
+        id               SERIAL PRIMARY KEY,
+        tenant_id        VARCHAR(36) NOT NULL,
+        agent_node       VARCHAR(50) NOT NULL,
+        intent           VARCHAR(60),
+        observation_type VARCHAR(40) NOT NULL,
+        observation_data JSONB NOT NULL DEFAULT '{}',
+        session_id       VARCHAR(64),
+        created_at       TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_ao_tenant_node   ON agent_observations (tenant_id, agent_node)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_ao_intent        ON agent_observations (tenant_id, intent)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_ao_created       ON agent_observations (created_at DESC)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_ao_obs_type      ON agent_observations (observation_type)`);
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS agent_system_change_log (
+        id            SERIAL PRIMARY KEY,
+        tenant_id     VARCHAR(36),
+        change_type   VARCHAR(50) NOT NULL,
+        change_scope  VARCHAR(100),
+        description   TEXT NOT NULL,
+        old_value     TEXT,
+        new_value     TEXT,
+        changed_by    VARCHAR(100),
+        created_at    TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_ascl_tenant      ON agent_system_change_log (tenant_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_ascl_type        ON agent_system_change_log (change_type)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_ascl_created     ON agent_system_change_log (created_at DESC)`);
+      },
+      async down(client) {
+        await client.query(`DROP TABLE IF EXISTS agent_observations CASCADE`);
+        await client.query(`DROP TABLE IF EXISTS agent_system_change_log CASCADE`);
+      }
+    };
+    agent_observations_default = migration47;
+  }
+});
+
+// server/migrations/048_performance_indexes.ts
+var migration48, performance_indexes_default2;
+var init_performance_indexes2 = __esm({
+  "server/migrations/048_performance_indexes.ts"() {
+    migration48 = {
+      description: "pg_trgm extension + compound/trigram indexes for listings at 100k+ scale",
+      async up(client) {
+        await client.query(`CREATE EXTENSION IF NOT EXISTS pg_trgm`);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listings_title_trgm
+      ON listings USING gin(title gin_trgm_ops)
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listings_location_trgm
+      ON listings USING gin(location gin_trgm_ops)
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listings_code_trgm
+      ON listings USING gin(code gin_trgm_ops)
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listings_tenant_status_type
+      ON listings(tenant_id, status, type)
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listings_tenant_price
+      ON listings(tenant_id, price)
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listings_tenant_bedrooms
+      ON listings(tenant_id, bedrooms)
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listings_tenant_area
+      ON listings(tenant_id, area)
+    `);
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_listings_tenant_cursor
+      ON listings(tenant_id, created_at DESC, id DESC)
+    `);
+      },
+      async down(client) {
+        for (const idx of [
+          "idx_listings_title_trgm",
+          "idx_listings_location_trgm",
+          "idx_listings_code_trgm",
+          "idx_listings_tenant_status_type",
+          "idx_listings_tenant_price",
+          "idx_listings_tenant_bedrooms",
+          "idx_listings_tenant_area",
+          "idx_listings_tenant_cursor"
+        ]) {
+          await client.query(`DROP INDEX IF EXISTS ${idx}`);
+        }
+      }
+    };
+    performance_indexes_default2 = migration48;
+  }
+});
+
+// server/migrations/049_leads_cursor_index.ts
+var migration49, leads_cursor_index_default;
+var init_leads_cursor_index = __esm({
+  "server/migrations/049_leads_cursor_index.ts"() {
+    migration49 = {
+      description: "Add composite cursor index on leads(tenant_id, updated_at DESC, id DESC) for O(log N) keyset pagination",
+      async up(client) {
+        await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_leads_cursor
+        ON leads(tenant_id, updated_at DESC, id DESC);
+    `);
+      },
+      async down(client) {
+        await client.query(`DROP INDEX IF EXISTS idx_leads_cursor;`);
+      }
+    };
+    leads_cursor_index_default = migration49;
+  }
+});
+
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -3877,15 +4071,15 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file2 of pending) {
-      const migration46 = MIGRATION_REGISTRY[file2];
-      if (!migration46 || typeof migration46.up !== "function") {
+      const migration50 = MIGRATION_REGISTRY[file2];
+      if (!migration50 || typeof migration50.up !== "function") {
         throw new Error(`[migrations] Invalid migration module for ${file2} \u2014 missing up() function`);
       }
-      console.log(`[migrations] Applying ${file2}: ${migration46.description || ""}`);
-      await migration46.up(client);
+      console.log(`[migrations] Applying ${file2}: ${migration50.description || ""}`);
+      await migration50.up(client);
       await client.query(
         "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
-        [file2, migration46.description || null]
+        [file2, migration50.description || null]
       );
       console.log(`[migrations] \u2713 ${file2}`);
     }
@@ -3920,15 +4114,15 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const migration46 = MIGRATION_REGISTRY[lastVersion];
-    if (!migration46) {
+    const migration50 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration50) {
       throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
     }
-    if (!migration46.down) {
+    if (!migration50.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
     console.log(`[migrations] Rolling back ${lastVersion}...`);
-    await migration46.down(client);
+    await migration50.down(client);
     await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
     await client.query("COMMIT");
     console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
@@ -3988,6 +4182,10 @@ var init_runner = __esm({
     init_cleanup_broken_upload_refs();
     init_guest_feedback();
     init_feedback_fk_fix();
+    init_market_price_history();
+    init_agent_observations();
+    init_performance_indexes2();
+    init_leads_cursor_index();
     dotenv.config();
     MIGRATION_REGISTRY = {
       "001_baseline_schema.ts": baseline_schema_default,
@@ -4034,7 +4232,11 @@ var init_runner = __esm({
       "042_uploaded_files_table.ts": uploaded_files_table_default,
       "043_cleanup_broken_upload_refs.ts": cleanup_broken_upload_refs_default,
       "044_guest_feedback.ts": guest_feedback_default,
-      "045_feedback_fk_fix.ts": feedback_fk_fix_default
+      "045_feedback_fk_fix.ts": feedback_fk_fix_default,
+      "046_market_price_history.ts": market_price_history_default,
+      "047_agent_observations.ts": agent_observations_default,
+      "048_performance_indexes.ts": performance_indexes_default2,
+      "049_leads_cursor_index.ts": leads_cursor_index_default
     };
     MIGRATION_ADVISORY_LOCK_KEY = 74839230;
   }
@@ -14504,6 +14706,128 @@ var init_leadRepository = __esm({
           };
         });
       }
+      async findLeadsCursor(tenantId, params) {
+        return this.withTenant(tenantId, async (client) => {
+          const baseConditions = [];
+          const baseValues = [];
+          let paramIndex = 1;
+          const RESTRICTED = ["SALES", "MARKETING", "VIEWER"];
+          if (RESTRICTED.includes(params.userRole || "") && params.userId) {
+            baseConditions.push(`l.assigned_to = $${paramIndex++}`);
+            baseValues.push(params.userId);
+          }
+          const f = params.filters || {};
+          if (f.stage) {
+            baseConditions.push(`l.stage = $${paramIndex++}`);
+            baseValues.push(f.stage);
+          }
+          if (f.stage_in?.length) {
+            const ph = f.stage_in.map((_, i) => `$${paramIndex + i}`).join(", ");
+            baseConditions.push(`l.stage IN (${ph})`);
+            baseValues.push(...f.stage_in);
+            paramIndex += f.stage_in.length;
+          }
+          if (f.source) {
+            baseConditions.push(`l.source = $${paramIndex++}`);
+            baseValues.push(f.source);
+          }
+          if (f.search) {
+            baseConditions.push(`(l.name ILIKE $${paramIndex} OR l.phone ILIKE $${paramIndex} OR l.email ILIKE $${paramIndex})`);
+            baseValues.push(`%${f.search}%`);
+            paramIndex++;
+          }
+          if (f.slaBreached !== void 0) {
+            baseConditions.push(`l.sla_breached = $${paramIndex++}`);
+            baseValues.push(f.slaBreached);
+          }
+          const statsWhere = baseConditions.length > 0 ? `WHERE ${baseConditions.join(" AND ")}` : "";
+          let cursorTs = null;
+          let cursorId = null;
+          if (params.cursor) {
+            try {
+              const decoded = JSON.parse(Buffer.from(params.cursor, "base64").toString("utf8"));
+              cursorTs = decoded.ts;
+              cursorId = decoded.id;
+            } catch {
+            }
+          }
+          const dataConditions = [...baseConditions];
+          const dataValues = [...baseValues];
+          if (cursorTs && cursorId) {
+            dataConditions.push(
+              `(l.updated_at < $${paramIndex}::timestamptz OR (l.updated_at = $${paramIndex}::timestamptz AND l.id::text < $${paramIndex + 1}))`
+            );
+            dataValues.push(cursorTs, cursorId);
+            paramIndex += 2;
+          }
+          const dataWhere = dataConditions.length > 0 ? `WHERE ${dataConditions.join(" AND ")}` : "";
+          const limit = params.pageSize + 1;
+          const isRestricted = RESTRICTED.includes(params.userRole || "") && !!params.userId;
+          const [statsResult, dataResult] = await Promise.all([
+            client.query(
+              `SELECT
+             COUNT(*)::int                                                                          AS total,
+             COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::int                AS new_count,
+             COUNT(*) FILTER (WHERE stage = 'WON')::int                                           AS won_count,
+             COUNT(*) FILTER (WHERE stage = 'LOST')::int                                          AS lost_count,
+             COALESCE(ROUND(AVG((score->>'score')::numeric)), 0)::int                             AS avg_score
+           FROM leads
+           WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+             ${isRestricted ? "AND assigned_to = $1" : ""}`,
+              isRestricted ? [params.userId] : []
+            ),
+            client.query(
+              `SELECT l.*, u.name as assigned_to_name, u.avatar as assigned_to_avatar,
+                  c.contract_id, c.payment_schedule as contract_payment_schedule,
+                  c.contract_status, c.contract_type, c.contract_value
+           FROM leads l
+           LEFT JOIN users u ON l.assigned_to = u.id
+           LEFT JOIN LATERAL (
+             SELECT id as contract_id, payment_schedule, status as contract_status,
+                    type as contract_type, value as contract_value
+             FROM contracts
+             WHERE lead_id = l.id
+               AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+             ORDER BY created_at DESC
+             LIMIT 1
+           ) c ON TRUE
+           ${dataWhere}
+           ORDER BY l.updated_at DESC, l.id DESC
+           LIMIT $${paramIndex}`,
+              [...dataValues, limit]
+            )
+          ]);
+          const sr = statsResult.rows[0];
+          const wonCount = sr.won_count || 0;
+          const lostCount = sr.lost_count || 0;
+          const decidedCount = wonCount + lostCount;
+          const stats = {
+            total: sr.total || 0,
+            newCount: sr.new_count || 0,
+            wonCount,
+            lostCount,
+            avgScore: sr.avg_score || 0,
+            winRate: decidedCount > 0 ? Math.round(wonCount / decidedCount * 100) : 0
+          };
+          const rows = dataResult.rows;
+          const hasNext = rows.length > params.pageSize;
+          const pageRows = hasNext ? rows.slice(0, params.pageSize) : rows;
+          const countResult = await client.query(
+            `SELECT COUNT(*)::int as total FROM leads l ${statsWhere}`,
+            baseValues
+          );
+          const total = countResult.rows[0].total;
+          let nextCursor = null;
+          if (hasNext && pageRows.length > 0) {
+            const last = pageRows[pageRows.length - 1];
+            nextCursor = Buffer.from(JSON.stringify({
+              ts: last.updated_at instanceof Date ? last.updated_at.toISOString() : String(last.updated_at),
+              id: last.id
+            })).toString("base64");
+          }
+          return { data: this.rowsToEntities(pageRows), nextCursor, hasNext, total, stats };
+        });
+      }
       async findByIdWithAccess(tenantId, id, userId, userRole) {
         return this.withTenant(tenantId, async (client) => {
           const result = await client.query(
@@ -14947,6 +15271,10 @@ var init_listingRepository = __esm({
           values.push(`%${filters.search}%`);
           paramIndex++;
         }
+        if (filters?.location_contains) {
+          conditions.push(`location ILIKE $${paramIndex++}`);
+          values.push(`%${filters.location_contains}%`);
+        }
         return { conditions, values, nextIndex: paramIndex };
       }
       /** Compute stats row from a raw result. */
@@ -15181,39 +15509,40 @@ var init_listingRepository = __esm({
           values.push(...filterValues);
           paramIndex = nextIndex;
           const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-          const countResult = await client.query(
-            `SELECT COUNT(*)::int as total FROM listings l ${whereClause}`,
-            values
-          );
-          const total = countResult.rows[0].total;
-          const statsResult = await client.query(
-            `SELECT
-          COUNT(*) FILTER (WHERE l.status = 'AVAILABLE')::int AS available_count,
-          COUNT(*) FILTER (WHERE l.status = 'HOLD')::int       AS hold_count,
-          COUNT(*) FILTER (WHERE l.status = 'SOLD')::int       AS sold_count,
-          COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
-          COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
-          COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
-          COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count,
-          COUNT(*)::int                                         AS total_count
-         FROM listings l ${whereClause}`,
-            values
-          );
-          const sr = statsResult.rows[0];
-          const result = await client.query(
-            `SELECT sub.*,
-                u.name   AS assigned_to_name,
-                u.email  AS assigned_to_email,
-                u.avatar AS assigned_to_avatar,
-                u.role   AS assigned_to_role
-         FROM (
-           SELECT * FROM listings l ${whereClause}
-           ORDER BY l.created_at DESC
-           LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-         ) AS sub
-         LEFT JOIN users u ON u.id = sub.assigned_to`,
-            [...values, pagination.pageSize, (pagination.page - 1) * pagination.pageSize]
-          );
+          const offset = (pagination.page - 1) * pagination.pageSize;
+          const [csResult, result] = await Promise.all([
+            // Query A: total count + per-status breakdown (single scan)
+            client.query(
+              `SELECT
+             COUNT(*)::int                                         AS total,
+             COUNT(*) FILTER (WHERE l.status = 'AVAILABLE')::int  AS available_count,
+             COUNT(*) FILTER (WHERE l.status = 'HOLD')::int       AS hold_count,
+             COUNT(*) FILTER (WHERE l.status = 'SOLD')::int       AS sold_count,
+             COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
+             COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
+             COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
+             COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count
+           FROM listings l ${whereClause}`,
+              values
+            ),
+            // Query B: paginated rows + user join (index seek on tenant_id + created_at)
+            client.query(
+              `SELECT sub.*,
+                  u.name   AS assigned_to_name,
+                  u.email  AS assigned_to_email,
+                  u.avatar AS assigned_to_avatar,
+                  u.role   AS assigned_to_role
+           FROM (
+             SELECT * FROM listings l ${whereClause}
+             ORDER BY l.created_at DESC
+             LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+           ) AS sub
+           LEFT JOIN users u ON u.id = sub.assigned_to`,
+              [...values, pagination.pageSize, offset]
+            )
+          ]);
+          const cs = csResult.rows[0];
+          const total = cs?.total ?? 0;
           return {
             data: this.rowsToEntities(result.rows),
             total,
@@ -15221,14 +15550,123 @@ var init_listingRepository = __esm({
             pageSize: pagination.pageSize,
             totalPages: Math.ceil(total / pagination.pageSize),
             stats: {
-              availableCount: sr.available_count,
-              holdCount: sr.hold_count,
-              soldCount: sr.sold_count,
-              rentedCount: sr.rented_count,
-              bookingCount: sr.booking_count,
-              openingCount: sr.opening_count,
-              inactiveCount: sr.inactive_count,
-              totalCount: sr.total_count
+              availableCount: cs?.available_count ?? 0,
+              holdCount: cs?.hold_count ?? 0,
+              soldCount: cs?.sold_count ?? 0,
+              rentedCount: cs?.rented_count ?? 0,
+              bookingCount: cs?.booking_count ?? 0,
+              openingCount: cs?.opening_count ?? 0,
+              inactiveCount: cs?.inactive_count ?? 0,
+              totalCount: total
+            }
+          };
+        });
+      }
+      // ── Cursor-based pagination ──────────────────────────────────────────────────
+      // Cursor encodes { ts: ISO timestamp, id: uuid } as base64 JSON.
+      // No OFFSET — the WHERE clause jumps directly to the correct position.
+      // Stats query uses only filter conditions (no cursor) → always shows correct totals.
+      async findListingsCursor(tenantId, params) {
+        return this.withTenant(tenantId, async (client) => {
+          const baseConditions = [];
+          const baseValues = [];
+          let paramIndex = 1;
+          const RESTRICTED = ["SALES", "MARKETING", "VIEWER"];
+          const PARTNER_RESTRICTED = ["PARTNER_ADMIN", "PARTNER_AGENT"];
+          const isProjectQuery = !!params.filters?.projectCode;
+          const isInventoryContext = !!params.filters?.noProjectCode;
+          const isAvailableOnly = !isInventoryContext && params.filters?.status === "AVAILABLE";
+          if (PARTNER_RESTRICTED.includes(params.userRole || "") && params.userId && isProjectQuery) {
+            baseConditions.push(`l.assigned_to = $${paramIndex++}`);
+            baseValues.push(params.userId);
+          } else if (RESTRICTED.includes(params.userRole || "") && params.userId && !isAvailableOnly && !isProjectQuery) {
+            baseConditions.push(`(l.created_by = $${paramIndex} OR l.assigned_to = $${paramIndex})`);
+            baseValues.push(params.userId);
+            paramIndex++;
+          }
+          const { conditions: fc, values: fv, nextIndex } = this.buildFilterConditions(params.filters, paramIndex);
+          baseConditions.push(...fc);
+          baseValues.push(...fv);
+          paramIndex = nextIndex;
+          let cursorTs = null;
+          let cursorId = null;
+          if (params.cursor) {
+            try {
+              const decoded = JSON.parse(
+                Buffer.from(params.cursor, "base64").toString("utf8")
+              );
+              cursorTs = decoded.ts;
+              cursorId = decoded.id;
+            } catch {
+            }
+          }
+          const statsWhere = baseConditions.length > 0 ? `WHERE ${baseConditions.join(" AND ")}` : "";
+          const dataConditions = [...baseConditions];
+          const dataValues = [...baseValues];
+          if (cursorTs && cursorId) {
+            dataConditions.push(
+              `(l.created_at < $${paramIndex}::timestamptz OR (l.created_at = $${paramIndex}::timestamptz AND l.id::text < $${paramIndex + 1}))`
+            );
+            dataValues.push(cursorTs, cursorId);
+            paramIndex += 2;
+          }
+          const dataWhere = dataConditions.length > 0 ? `WHERE ${dataConditions.join(" AND ")}` : "";
+          const limit = params.pageSize + 1;
+          const [csResult, dataResult] = await Promise.all([
+            client.query(
+              `SELECT
+             COUNT(*)::int                                         AS total,
+             COUNT(*) FILTER (WHERE l.status = 'AVAILABLE')::int  AS available_count,
+             COUNT(*) FILTER (WHERE l.status = 'HOLD')::int       AS hold_count,
+             COUNT(*) FILTER (WHERE l.status = 'SOLD')::int       AS sold_count,
+             COUNT(*) FILTER (WHERE l.status = 'RENTED')::int     AS rented_count,
+             COUNT(*) FILTER (WHERE l.status = 'BOOKING')::int    AS booking_count,
+             COUNT(*) FILTER (WHERE l.status = 'OPENING')::int    AS opening_count,
+             COUNT(*) FILTER (WHERE l.status = 'INACTIVE')::int   AS inactive_count
+           FROM listings l ${statsWhere}`,
+              baseValues
+            ),
+            client.query(
+              `SELECT sub.*,
+                  u.name   AS assigned_to_name,
+                  u.email  AS assigned_to_email,
+                  u.avatar AS assigned_to_avatar,
+                  u.role   AS assigned_to_role
+           FROM (
+             SELECT * FROM listings l ${dataWhere}
+             ORDER BY l.created_at DESC, l.id DESC
+             LIMIT $${paramIndex}
+           ) sub
+           LEFT JOIN users u ON u.id = sub.assigned_to`,
+              [...dataValues, limit]
+            )
+          ]);
+          const cs = csResult.rows[0];
+          const rows = dataResult.rows;
+          const hasNext = rows.length > params.pageSize;
+          const pageRows = hasNext ? rows.slice(0, params.pageSize) : rows;
+          let nextCursor = null;
+          if (hasNext && pageRows.length > 0) {
+            const last = pageRows[pageRows.length - 1];
+            nextCursor = Buffer.from(JSON.stringify({
+              ts: last.created_at instanceof Date ? last.created_at.toISOString() : String(last.created_at),
+              id: last.id
+            })).toString("base64");
+          }
+          return {
+            data: this.rowsToEntities(pageRows),
+            nextCursor,
+            hasNext,
+            total: cs?.total ?? 0,
+            stats: {
+              availableCount: cs?.available_count ?? 0,
+              holdCount: cs?.hold_count ?? 0,
+              soldCount: cs?.sold_count ?? 0,
+              rentedCount: cs?.rented_count ?? 0,
+              bookingCount: cs?.booking_count ?? 0,
+              openingCount: cs?.opening_count ?? 0,
+              inactiveCount: cs?.inactive_count ?? 0,
+              totalCount: cs?.total ?? 0
             }
           };
         });
@@ -16143,25 +16581,87 @@ function applyAVM(input) {
 function getRegionalBasePrice(address, pType) {
   const addr = address.toLowerCase();
   const PROJECT_DISTRICT_INFER = [
-    [/vinhome[s]?\s*central\s*park|saigon\s*pearl|landmark\s*81|pearl\s*plaza|city\s*garden|nguyễn hữu cảnh|nguyen huu canh|ung văn khiêm|ung van khiem|xô viết nghệ tĩnh|xo viet nghe tinh|điện biên phủ.*bình thạnh/i, "b\xECnh th\u1EA1nh"],
-    [/masteri\s*thảo\s*điền|masteri\s*thao\s*dien|sala|thảo điền|thao dien|an phú|an phu|feliz|estella|the vista|xa lộ hà nội|xa lo ha noi/i, "th\u1EE7 \u0111\u1EE9c"],
-    [/phú mỹ hưng|phu my hung|midtown|scenic\s*valley|riviera\s*point|sunrise|crescent|star\s*hill|happy\s*valley|nam viên|nam vien/i, "qu\u1EADn 7"],
-    [/vinhome[s]?\s*grand\s*park|vinhome[s]?\s*q9|vinhome[s]?\s*quận 9|the\s*rainbow/i, "qu\u1EADn 9"],
-    [/vinhome[s]?\s*golden\s*river|vinhome[s]?\s*bason|ba son|sài gòn.*quận 1|the\s*marq/i, "qu\u1EADn 1"],
-    [/vinhome[s]?\s*ocean\s*park|ocean\s*park/i, "gia l\xE2m"],
-    [/vinhome[s]?\s*smart\s*city|smart\s*city/i, "nam t\u1EEB li\xEAm"],
-    [/ecopark/i, "h\u01B0ng y\xEAn"],
-    [/celadon\s*city|aeon\s*tân phú|aeon\s*tan phu/i, "t\xE2n ph\xFA"],
-    [/richstar|novaland\s*tân phú/i, "t\xE2n ph\xFA"],
-    [/sunwah\s*pearl/i, "b\xECnh th\u1EA1nh"],
-    // ── Vùng ven / Tỉnh lân cận ──────────────────────────────────────────────
+    // ── TP.HCM — Bình Thạnh ──────────────────────────────────────────────────
+    [/vinhome[s]?\s*central\s*park|saigon\s*pearl|landmark\s*81|pearl\s*plaza|city\s*garden|nguyễn hữu cảnh|nguyen huu canh|ung văn khiêm|ung van khiem|xô viết nghệ tĩnh|xo viet nghe tinh|điện biên phủ.*bình thạnh|sunwah\s*pearl|raemian|galaxy.*bình\s*thạnh/i, "b\xECnh th\u1EA1nh"],
+    // ── TP.HCM — Thủ Đức (bao gồm cả Q2, Q9 cũ) ─────────────────────────────
+    [/masteri\s*thảo\s*điền|masteri\s*thao\s*dien|sala\s*đại\s*quang\s*minh|sala\s*dai\s*quang\s*minh|thảo điền|thao dien|an phú|an phu|feliz\s*en\s*vista|estella|the vista|xa lộ hà nội|xa lo ha noi|empire\s*city|the\s*metropole.*thủ\s*thiêm|global\s*city.*thủ\s*đức|masteri\s*center\s*point|fiato|the\s*origami|vinhome[s]?\s*grand\s*park|vinhome[s]?\s*q9|the\s*rainbow|gem\s*riverside.*thủ\s*đức/i, "th\u1EE7 \u0111\u1EE9c"],
+    // ── TP.HCM — Quận 7 ───────────────────────────────────────────────────────
+    [/phú mỹ hưng|phu my hung|midtown|scenic\s*valley|riviera\s*point|sunrise\s*city|crescent|star\s*hill|happy\s*valley|nam viên|nam vien|eco\s*green\s*saigon|q7\s*saigon|southgate|hung\s*gia/i, "qu\u1EADn 7"],
+    // ── TP.HCM — Quận 1 ───────────────────────────────────────────────────────
+    [/vinhome[s]?\s*golden\s*river|vinhome[s]?\s*bason|ba son|the\s*marq|the\s*grand\s*manhattan|d1mension|city\s*garden.*quận\s*1|nguyễn huệ.*tower|one\s*central\s*saigon|lancaster\s*legacy|the\s*one.*quận\s*1|icon\s*56/i, "qu\u1EADn 1"],
+    // ── TP.HCM — Quận 2 (nay thuộc Thủ Đức) ─────────────────────────────────
+    [/gateway\s*thảo\s*điền|d'lusso|de\s*la\s*sol.*thảo\s*điền|lumière\s*riverside|lumiere\s*riverside|the\s*river\s*thu\s*thiem|the\s*river.*thủ\s*thiêm/i, "th\u1EE7 \u0111\u1EE9c"],
+    // ── TP.HCM — Quận 4 ───────────────────────────────────────────────────────
+    [/river\s*gate|the\s*tresor|millennium.*quận\s*4|everrich\s*infinity/i, "qu\u1EADn 4"],
+    // ── TP.HCM — Quận 6 ───────────────────────────────────────────────────────
+    [/d.?homme|charmington.*quận\s*6|saigon\s*west\s*residences/i, "qu\u1EADn 6"],
+    // ── TP.HCM — Quận 8 ───────────────────────────────────────────────────────
+    [/topaz\s*city|saigon\s*south\s*plaza.*quận\s*8|gem\s*riverside.*quận\s*8/i, "qu\u1EADn 8"],
+    // ── TP.HCM — Quận 9 (nay thuộc Thủ Đức) ─────────────────────────────────
+    [/vinhome[s]?\s*grand\s*park|masteri\s*center\s*point|gia\s*hòa.*quận\s*9|the\s*peak.*thủ\s*đức|flora\s*novia|lovera\s*vista/i, "th\u1EE7 \u0111\u1EE9c"],
+    // ── TP.HCM — Quận 10 ──────────────────────────────────────────────────────
+    [/kingdom\s*101|terra\s*royal|sài\s*gòn\s*mia.*quận\s*10/i, "qu\u1EADn 10"],
+    // ── TP.HCM — Quận 3 ───────────────────────────────────────────────────────
+    [/the\s*one.*quận\s*3|la\s*astoria|estella\s*heights.*quận\s*3|y\s*phụng|võ\s*văn\s*tần.*quận\s*3/i, "qu\u1EADn 3"],
+    // ── TP.HCM — Quận 5 ───────────────────────────────────────────────────────
+    [/richstar.*quận\s*5|zen\s*residence|nguyễn\s*văn\s*cừ.*quận\s*5/i, "qu\u1EADn 5"],
+    // ── TP.HCM — Quận 11 ──────────────────────────────────────────────────────
+    [/one\s*verandah.*quận\s*11|charmington.*sadora/i, "qu\u1EADn 11"],
+    // ── TP.HCM — Quận 12 ──────────────────────────────────────────────────────
+    [/paris\s*hoàng\s*anh|icapital|the\s*art|sunshine\s*city.*quận\s*12|green\s*star.*quận\s*12/i, "qu\u1EADn 12"],
+    // ── TP.HCM — Bình Tân ─────────────────────────────────────────────────────
+    [/akari\s*city|moonlight.*bình\s*tân|aio\s*city|the\s*light\s*city|tanibuilding/i, "b\xECnh t\xE2n"],
+    // ── TP.HCM — Tân Bình ─────────────────────────────────────────────────────
+    [/park\s*hill.*tân\s*bình|charmington.*tan\s*binh|the\s*botanica/i, "t\xE2n b\xECnh"],
+    // ── TP.HCM — Tân Phú ──────────────────────────────────────────────────────
+    [/celadon\s*city|aeon\s*tân phú|aeon\s*tan phu|richstar|novaland\s*tân phú/i, "t\xE2n ph\xFA"],
+    // ── TP.HCM — Gò Vấp ──────────────────────────────────────────────────────
+    [/avida\s*go\s*vap|saigon\s*home.*gò\s*vấp|topaz\s*home/i, "g\xF2 v\u1EA5p"],
+    // ── TP.HCM — Nhà Bè ──────────────────────────────────────────────────────
+    [/saigon\s*south\s*residences|camellia\s*garden|kdc\s*himlam\s*kênh\s*tẻ/i, "nh\xE0 b\xE8"],
+    // ── TP.HCM — Bình Chánh ──────────────────────────────────────────────────
+    [/saigon\s*mia|westgate|flora\s*anh\s*đào|lovera\s*village|nam\s*long.*bình\s*chánh/i, "b\xECnh ch\xE1nh"],
+    // ── TP.HCM — Hóc Môn / Củ Chi ───────────────────────────────────────────
+    [/ecorivers\s*hậu\s*giang|hậu\s*giang.*resort|vinhome[s]?\s*củ\s*chi/i, "c\u1EE7 chi"],
+    // ── Hà Nội — Tây Hồ ──────────────────────────────────────────────────────
+    [/the\s*westlake|sun\s*grand.*tây\s*hồ|ciputra|starlake.*tây\s*hồ|summit\s*building.*tây\s*hồ/i, "t\xE2y h\u1ED3"],
+    // ── Hà Nội — Cầu Giấy ───────────────────────────────────────────────────
+    [/vinhome[s]?\s*skylake|keangnam|sunshine\s*center|goldmark\s*city.*cầu\s*giấy/i, "c\u1EA7u gi\u1EA5y"],
+    // ── Hà Nội — Thanh Xuân ──────────────────────────────────────────────────
+    [/vinhome[s]?\s*royal\s*city|hapro.*thanh\s*xuân|seasons\s*avenue/i, "thanh xu\xE2n"],
+    // ── Hà Nội — Hai Bà Trưng ────────────────────────────────────────────────
+    [/vinhome[s]?\s*times\s*city|the\s*manor.*hà\s*nội|chung\s*cư\s*times\s*city/i, "hai b\xE0 tr\u01B0ng"],
+    // ── Hà Nội — Nam Từ Liêm / Bắc Từ Liêm ──────────────────────────────────
+    [/vinhome[s]?\s*smart\s*city|smart\s*city|masteri\s*west\s*heights|mipec\s*riverside|imperia\s*smart\s*city|sunshine\s*garden.*từ\s*liêm/i, "nam t\u1EEB li\xEAm"],
+    // ── Hà Nội — Hà Đông ─────────────────────────────────────────────────────
+    [/park\s*city.*hà\s*đông|goldsilk\s*complex|anland.*hà\s*đông|le\s*grand\s*jardin.*hà\s*đông|ct8\s*mường\s*thanh/i, "h\xE0 \u0111\xF4ng"],
+    // ── Hà Nội — Gia Lâm ─────────────────────────────────────────────────────
+    [/vinhome[s]?\s*ocean\s*park|ocean\s*park|ecopark.*gia\s*lâm/i, "gia l\xE2m"],
+    // ── Hà Nội — Đông Anh ────────────────────────────────────────────────────
+    [/eurowindow\s*river\s*park|vinhome[s]?\s*cổ\s*loa|sunshine\s*wonder.*đông\s*anh/i, "\u0111\xF4ng anh"],
+    // ── Hà Nội — Long Biên ───────────────────────────────────────────────────
+    [/vinhome[s]?\s*riverside|the\s*manor\s*central\s*park|long\s*biên.*garden/i, "long bi\xEAn"],
+    // ── Hà Nội — Hoàng Mai ───────────────────────────────────────────────────
+    [/linh\s*đàm|helios.*linh\s*đàm|ct1\s*linh\s*đàm|hei\s*tower.*giải\s*phóng/i, "ho\xE0ng mai"],
+    // ── Hà Nội — Thạch Thất / Hòa Lạc ──────────────────────────────────────
+    [/the\s*zen.*hòa\s*lạc|wyndham\s*hòa\s*lạc|vinhome[s]?\s*hòa\s*lạc/i, "th\u1EA1ch th\u1EA5t"],
+    // ── Hưng Yên (vệ tinh Hà Nội) ────────────────────────────────────────────
+    [/ecopark|vinhome[s]?\s*ocean\s*park\s*2|ocean\s*park\s*2|ocean\s*park\s*3/i, "h\u01B0ng y\xEAn"],
+    // ── Vùng ven / Tỉnh lân cận HCM ─────────────────────────────────────────
     [/aqua\s*city|aquacity|aqua\s*island/i, "nh\u01A1n tr\u1EA1ch"],
     [/swan\s*park/i, "nh\u01A1n tr\u1EA1ch"],
     [/\bizumi\b/i, "bi\xEAn h\xF2a"],
     [/waterpoint/i, "b\u1EBFn l\u1EE9c"],
-    [/la\s*mer|phu quoc\s*marina|premier\s*village/i, "ph\xFA qu\u1ED1c"],
-    [/novaworld\s*phan\s*thiet|novabeach|nova\s*phan\s*thiet/i, "phan thi\u1EBFt"],
-    [/golden\s*bay\s*cam\s*ranh|cam\s*ranh/i, "kh\xE1nh h\xF2a"]
+    // ── Resort / Nghỉ dưỡng ──────────────────────────────────────────────────
+    [/la\s*mer|phu quoc\s*marina|premier\s*village.*phú\s*quốc|vinpearl.*phú\s*quốc|sun\s*grand.*phú\s*quốc/i, "ph\xFA qu\u1ED1c"],
+    [/novaworld\s*phan\s*thiet|novabeach|nova\s*phan\s*thiet|the\s*regal/i, "phan thi\u1EBFt"],
+    [/golden\s*bay\s*cam\s*ranh|cam\s*ranh\s*bay|vinpearl.*cam\s*ranh|mia\s*resort/i, "kh\xE1nh h\xF2a"],
+    [/ana\s*marina|sheraton.*nha\s*trang|vinpearl.*nha\s*trang|panorama.*nha\s*trang/i, "nha trang"],
+    [/novaworld\s*hồ\s*tràm|soul\s*hồ\s*tràm|the\s*grand\s*ho\s*tram/i, "xuy\xEAn m\u1ED9c"],
+    [/the\s*long\s*beach.*vũng\s*tàu|aria\s*vũng\s*tàu|imperial\s*vũng\s*tàu/i, "v\u0169ng t\xE0u"],
+    [/ana\s*resort.*đà\s*lạt|gaia.*đà\s*lạt|flamingo.*cat\s*ba|vinpearl.*đà\s*lạt/i, "\u0111\xE0 l\u1EA1t"],
+    [/da\s*nang\s*beach.*resort|fusion.*đà\s*nẵng|naman\s*retreat|hyatt\s*đà\s*nẵng/i, "\u0111\xE0 n\u1EB5ng"],
+    [/ba\s*na\s*hills|bà\s*nà\s*hills/i, "\u0111\xE0 n\u1EB5ng"]
   ];
   let enrichedAddr = addr;
   for (const [regex, district] of PROJECT_DISTRICT_INFER) {
@@ -16173,16 +16673,112 @@ function getRegionalBasePrice(address, pType) {
   let streetOverride = null;
   if (/nguyễn huệ|le loi|lê lợi|dong khoi|đồng khởi/i.test(enrichedAddr) && /quận 1|q\.?1/i.test(enrichedAddr))
     streetOverride = 45e7;
-  if (/vinhome[s]?\s*central\s*park|saigon\s*pearl/i.test(enrichedAddr))
-    streetOverride = 14e7;
-  if (/phú mỹ hưng|phu my hung/i.test(enrichedAddr))
-    streetOverride = 16e7;
-  if (/thảo điền|thao dien/i.test(enrichedAddr))
-    streetOverride = 18e7;
+  if (/tôn đức thắng|ton duc thang/i.test(enrichedAddr) && /quận 1/i.test(enrichedAddr))
+    streetOverride = 32e7;
   if (/vinhome[s]?\s*golden\s*river|vinhome[s]?\s*bason|ba son/i.test(enrichedAddr))
     streetOverride = 25e7;
+  if (/the\s*marq/i.test(enrichedAddr))
+    streetOverride = 2e8;
+  if (/the\s*grand\s*manhattan/i.test(enrichedAddr))
+    streetOverride = 17e7;
+  if (/vinhome[s]?\s*central\s*park|saigon\s*pearl/i.test(enrichedAddr))
+    streetOverride = 14e7;
   if (/landmark\s*81/i.test(enrichedAddr))
     streetOverride = 16e7;
+  if (/sunwah\s*pearl/i.test(enrichedAddr))
+    streetOverride = 11e7;
+  if (/thảo điền|thao dien/i.test(enrichedAddr))
+    streetOverride = 18e7;
+  if (/the\s*metropole.*thủ\s*thiêm|metropole\s*thu\s*thiem/i.test(enrichedAddr))
+    streetOverride = 2e8;
+  if (/empire\s*city/i.test(enrichedAddr))
+    streetOverride = 18e7;
+  if (/masteri\s*thảo\s*điền|masteri\s*thao\s*dien/i.test(enrichedAddr))
+    streetOverride = 145e6;
+  if (/sala\s*đại\s*quang\s*minh|sala.*thủ\s*đức/i.test(enrichedAddr))
+    streetOverride = 12e7;
+  if (/phú mỹ hưng|phu my hung/i.test(enrichedAddr))
+    streetOverride = 16e7;
+  if (/midtown.*phú\s*mỹ\s*hưng|midtown.*q7/i.test(enrichedAddr))
+    streetOverride = 145e6;
+  if (/eco\s*green\s*saigon/i.test(enrichedAddr))
+    streetOverride = 95e6;
+  if (/sunrise\s*city/i.test(enrichedAddr))
+    streetOverride = 1e8;
+  if (/nguyễn\s*văn\s*linh/i.test(enrichedAddr) && /quận\s*7|q\.?7/i.test(enrichedAddr))
+    streetOverride = 13e7;
+  if (/vinhome[s]?\s*grand\s*park/i.test(enrichedAddr))
+    streetOverride = 9e7;
+  if (/the\s*origami|fiato|masteri\s*center\s*point/i.test(enrichedAddr))
+    streetOverride = 75e6;
+  if (/akari\s*city/i.test(enrichedAddr))
+    streetOverride = 62e6;
+  if (/aio\s*city/i.test(enrichedAddr))
+    streetOverride = 58e6;
+  if (/kingdom\s*101/i.test(enrichedAddr))
+    streetOverride = 13e7;
+  if (/saigon\s*south\s*residences/i.test(enrichedAddr))
+    streetOverride = 72e6;
+  if (/huỳnh\s*tấn\s*phát/i.test(enrichedAddr) && /nhà\s*bè/i.test(enrichedAddr))
+    streetOverride = 55e6;
+  if (/saigon\s*mia/i.test(enrichedAddr))
+    streetOverride = 6e7;
+  if (/westgate.*bình\s*chánh|bình\s*chánh.*westgate/i.test(enrichedAddr))
+    streetOverride = 48e6;
+  if (/hàng\s*đào|hàng\s*ngang|hàng\s*bông|hoàn\s*kiếm/i.test(enrichedAddr))
+    streetOverride = 38e7;
+  if (/kim\s*mã|nguyễn\s*chí\s*thanh/i.test(enrichedAddr) && /ba\s*đình/i.test(enrichedAddr))
+    streetOverride = 2e8;
+  if (/vinhome[s]?\s*royal\s*city/i.test(enrichedAddr))
+    streetOverride = 1e8;
+  if (/vinhome[s]?\s*times\s*city/i.test(enrichedAddr))
+    streetOverride = 95e6;
+  if (/vinhome[s]?\s*skylake/i.test(enrichedAddr))
+    streetOverride = 11e7;
+  if (/vinhome[s]?\s*smart\s*city|masteri\s*west\s*heights/i.test(enrichedAddr))
+    streetOverride = 9e7;
+  if (/the\s*westlake|starlake.*tây\s*hồ|ciputra/i.test(enrichedAddr))
+    streetOverride = 12e7;
+  if (/vinhome[s]?\s*ocean\s*park\b/i.test(enrichedAddr) && !/ocean\s*park\s*[23]/i.test(enrichedAddr))
+    streetOverride = 7e7;
+  if (/ocean\s*park\s*2|ocean\s*park\s*3/i.test(enrichedAddr))
+    streetOverride = 52e6;
+  if (/ecopark/i.test(enrichedAddr))
+    streetOverride = 45e6;
+  if (/park\s*city.*hà\s*đông/i.test(enrichedAddr))
+    streetOverride = 68e6;
+  if (/lê\s*văn\s*lương/i.test(enrichedAddr) && /hà\s*đông|nam\s*từ\s*liêm/i.test(enrichedAddr))
+    streetOverride = 75e6;
+  if (/trần\s*duy\s*hưng|tran\s*duy\s*hung/i.test(enrichedAddr))
+    streetOverride = 11e7;
+  if (/võ\s*nguyên\s*giáp|vo\s*nguyen\s*giap|my\s*khe\s*beach|biển\s*mỹ\s*khê/i.test(enrichedAddr))
+    streetOverride = 12e7;
+  if (/trần\s*hưng\s*đạo.*đà\s*nẵng|tran\s*hung\s*dao.*da\s*nang/i.test(enrichedAddr))
+    streetOverride = 95e6;
+  if (/nguyễn\s*văn\s*linh.*đà\s*nẵng/i.test(enrichedAddr))
+    streetOverride = 75e6;
+  if (/ba\s*na\s*hills|bà\s*nà\s*hills/i.test(enrichedAddr))
+    streetOverride = 8e7;
+  if (/naman\s*retreat|aria\s*đà\s*nẵng/i.test(enrichedAddr))
+    streetOverride = 95e6;
+  if (/trần\s*phú.*nha\s*trang|nha\s*trang.*trần\s*phú/i.test(enrichedAddr))
+    streetOverride = 9e7;
+  if (/vinpearl.*nha\s*trang|panorama.*nha\s*trang/i.test(enrichedAddr))
+    streetOverride = 8e7;
+  if (/ana\s*marina|the\s*anam|mia\s*resort.*cam\s*ranh/i.test(enrichedAddr))
+    streetOverride = 55e6;
+  if (/hồ\s*xuân\s*hương|ho\s*xuan\s*huong|trung\s*tâm.*đà\s*lạt/i.test(enrichedAddr))
+    streetOverride = 65e6;
+  if (/vinhome[s]?\s*đà\s*lạt|langbiang\s*town|lâm\s*viên/i.test(enrichedAddr))
+    streetOverride = 55e6;
+  if (/sun\s*grand.*phú\s*quốc|sun\s*world.*phú\s*quốc/i.test(enrichedAddr))
+    streetOverride = 13e7;
+  if (/premier\s*village.*phú\s*quốc|vinpearl.*phú\s*quốc/i.test(enrichedAddr))
+    streetOverride = 12e7;
+  if (/trần\s*hưng\s*đạo.*phú\s*quốc/i.test(enrichedAddr))
+    streetOverride = 95e6;
+  if (/phu quoc\s*marina|marina\s*phú\s*quốc/i.test(enrichedAddr))
+    streetOverride = 11e7;
   if (/aqua\s*city|aquacity/i.test(enrichedAddr))
     streetOverride = 72e6;
   if (/swan\s*park/i.test(enrichedAddr))
@@ -16193,33 +16789,63 @@ function getRegionalBasePrice(address, pType) {
     streetOverride = 45e6;
   if (/novaworld\s*phan\s*thiet|phan\s*thiet.*novaworld/i.test(enrichedAddr))
     streetOverride = 4e7;
+  if (/novaworld\s*hồ\s*tràm|soul\s*hồ\s*tràm|grand\s*ho\s*tram/i.test(enrichedAddr))
+    streetOverride = 48e6;
+  if (/midori\s*park/i.test(enrichedAddr))
+    streetOverride = 65e6;
+  if (/opal\s*boulevard/i.test(enrichedAddr))
+    streetOverride = 62e6;
+  if (/id\s*junction/i.test(enrichedAddr))
+    streetOverride = 55e6;
+  if (/bcons\s*(city|blu|garden|miền\s*đông)/i.test(enrichedAddr))
+    streetOverride = 42e6;
+  if (/phúc\s*đạt|phuc\s*dat|tecco/i.test(enrichedAddr) && /bình\s*dương|binh\s*duong/i.test(enrichedAddr))
+    streetOverride = 35e6;
+  if (/the\s*emerald.*bình\s*dương|emerald\s*golf\s*view/i.test(enrichedAddr))
+    streetOverride = 4e7;
+  if (/himlam.*bình\s*dương|him\s*lam.*bình\s*dương/i.test(enrichedAddr))
+    streetOverride = 5e7;
+  if (/century\s*city/i.test(enrichedAddr))
+    streetOverride = 45e6;
+  if (/airport\s*city.*long\s*thành|long\s*thành.*airport/i.test(enrichedAddr))
+    streetOverride = 4e7;
+  if (/supermoon|super\s*moon/i.test(enrichedAddr))
+    streetOverride = 38e6;
+  if (/saigon\s*village.*long\s*thành|long\s*thành.*saigon\s*village/i.test(enrichedAddr))
+    streetOverride = 35e6;
+  if (/aria\s*vũng\s*tàu|the\s*long\s*beach.*vũng\s*tàu|imperial.*vũng\s*tàu/i.test(enrichedAddr))
+    streetOverride = 7e7;
+  if (/front\s*beach|bãi\s*trước.*vũng\s*tàu/i.test(enrichedAddr))
+    streetOverride = 8e7;
   const getBase = (base, region, conf) => {
     const refPrice = streetOverride ?? base;
     const mult = PROPERTY_TYPE_PRICE_MULT[pType || "townhouse_center"] ?? 1;
     return { price: Math.round(refPrice * mult), region, confidence: conf };
   };
   if (/quận 1\b|q\.?1\b|district 1/i.test(enrichedAddr)) return getBase(28e7, "Qu\u1EADn 1, TP.HCM", 62);
+  if (/quận 2\b|q\.?2\b/i.test(enrichedAddr)) return getBase(16e7, "Qu\u1EADn 2 (Th\u1EE7 \u0110\u1EE9c), TP.HCM", 62);
   if (/quận 3\b|q\.?3\b/i.test(enrichedAddr)) return getBase(2e8, "Qu\u1EADn 3, TP.HCM", 62);
   if (/quận 4\b|q\.?4\b/i.test(enrichedAddr)) return getBase(13e7, "Qu\u1EADn 4, TP.HCM", 62);
   if (/quận 5\b|q\.?5\b/i.test(enrichedAddr)) return getBase(14e7, "Qu\u1EADn 5, TP.HCM", 62);
   if (/quận 6\b|q\.?6\b/i.test(enrichedAddr)) return getBase(9e7, "Qu\u1EADn 6, TP.HCM", 60);
   if (/quận 7\b|q\.?7\b/i.test(enrichedAddr)) return getBase(15e7, "Qu\u1EADn 7, TP.HCM", 62);
   if (/quận 8\b|q\.?8\b/i.test(enrichedAddr)) return getBase(8e7, "Qu\u1EADn 8, TP.HCM", 60);
-  if (/quận 9\b|q\.?9\b/i.test(enrichedAddr)) return getBase(75e6, "Qu\u1EADn 9, TP.HCM", 60);
+  if (/quận 9\b|q\.?9\b/i.test(enrichedAddr)) return getBase(75e6, "Qu\u1EADn 9 (Th\u1EE7 \u0110\u1EE9c), TP.HCM", 60);
   if (/quận 10\b|q\.?10\b/i.test(enrichedAddr)) return getBase(165e6, "Qu\u1EADn 10, TP.HCM", 62);
   if (/quận 11\b|q\.?11\b/i.test(enrichedAddr)) return getBase(11e7, "Qu\u1EADn 11, TP.HCM", 60);
   if (/quận 12\b|q\.?12\b/i.test(enrichedAddr)) return getBase(65e6, "Qu\u1EADn 12, TP.HCM", 60);
-  if (/bình chánh|binh chanh/i.test(enrichedAddr)) return getBase(35e6, "B\xECnh Ch\xE1nh, TP.HCM", 55);
-  if (/nhà bè|nha be/i.test(enrichedAddr)) return getBase(45e6, "Nh\xE0 B\xE8, TP.HCM", 55);
-  if (/hóc môn|hoc mon/i.test(enrichedAddr)) return getBase(4e7, "H\xF3c M\xF4n, TP.HCM", 55);
-  if (/củ chi|cu chi/i.test(enrichedAddr)) return getBase(25e6, "C\u1EE7 Chi, TP.HCM", 52);
-  if (/cần giờ|can gio/i.test(enrichedAddr)) return getBase(2e7, "C\u1EA7n Gi\u1EDD, TP.HCM", 50);
   if (/bình thạnh|binh thanh/i.test(enrichedAddr)) return getBase(12e7, "B\xECnh Th\u1EA1nh, TP.HCM", 62);
   if (/phú nhuận|phu nhuan/i.test(enrichedAddr)) return getBase(15e7, "Ph\xFA Nhu\u1EADn, TP.HCM", 62);
   if (/tân bình|tan binh/i.test(enrichedAddr)) return getBase(1e8, "T\xE2n B\xECnh, TP.HCM", 62);
   if (/tân phú|tan phu/i.test(enrichedAddr)) return getBase(8e7, "T\xE2n Ph\xFA, TP.HCM", 60);
   if (/gò vấp|go vap/i.test(enrichedAddr)) return getBase(75e6, "G\xF2 V\u1EA5p, TP.HCM", 60);
+  if (/bình tân|binh tan/i.test(enrichedAddr)) return getBase(6e7, "B\xECnh T\xE2n, TP.HCM", 58);
   if (/thủ đức|thu duc/i.test(enrichedAddr)) return getBase(78e6, "Th\u1EE7 \u0110\u1EE9c, TP.HCM", 60);
+  if (/bình chánh|binh chanh/i.test(enrichedAddr)) return getBase(35e6, "B\xECnh Ch\xE1nh, TP.HCM", 55);
+  if (/nhà bè|nha be/i.test(enrichedAddr)) return getBase(45e6, "Nh\xE0 B\xE8, TP.HCM", 55);
+  if (/hóc môn|hoc mon/i.test(enrichedAddr)) return getBase(4e7, "H\xF3c M\xF4n, TP.HCM", 55);
+  if (/củ chi|cu chi/i.test(enrichedAddr)) return getBase(25e6, "C\u1EE7 Chi, TP.HCM", 52);
+  if (/cần giờ|can gio/i.test(enrichedAddr)) return getBase(2e7, "C\u1EA7n Gi\u1EDD, TP.HCM", 50);
   if (/hcm|hồ chí minh|ho chi minh|sài gòn|saigon/i.test(enrichedAddr)) return getBase(1e8, "TP.HCM (trung b\xECnh)", 55);
   if (/hoàn kiếm|hoan kiem/i.test(enrichedAddr)) return getBase(3e8, "Ho\xE0n Ki\u1EBFm, H\xE0 N\u1ED9i", 62);
   if (/ba đình|ba dinh/i.test(enrichedAddr)) return getBase(22e7, "Ba \u0110\xECnh, H\xE0 N\u1ED9i", 62);
@@ -16229,11 +16855,27 @@ function getRegionalBasePrice(address, pType) {
   if (/tây hồ|tay ho/i.test(enrichedAddr)) return getBase(13e7, "T\xE2y H\u1ED3, H\xE0 N\u1ED9i", 60);
   if (/thanh xuân|thanh xuan/i.test(enrichedAddr)) return getBase(1e8, "Thanh Xu\xE2n, H\xE0 N\u1ED9i", 60);
   if (/hoàng mai|hoang mai/i.test(enrichedAddr)) return getBase(75e6, "Ho\xE0ng Mai, H\xE0 N\u1ED9i", 58);
-  if (/nam từ liêm|nam tu liem|bắc từ liêm|bac tu liem/i.test(enrichedAddr)) return getBase(85e6, "T\u1EEB Li\xEAm, H\xE0 N\u1ED9i", 58);
+  if (/nam từ liêm|nam tu liem/i.test(enrichedAddr)) return getBase(9e7, "Nam T\u1EEB Li\xEAm, H\xE0 N\u1ED9i", 58);
+  if (/bắc từ liêm|bac tu liem/i.test(enrichedAddr)) return getBase(78e6, "B\u1EAFc T\u1EEB Li\xEAm, H\xE0 N\u1ED9i", 57);
   if (/long biên|long bien/i.test(enrichedAddr)) return getBase(8e7, "Long Bi\xEAn, H\xE0 N\u1ED9i", 58);
-  if (/hà đông|ha dong/i.test(enrichedAddr)) return getBase(7e7, "H\xE0 \u0110\xF4ng, H\xE0 N\u1ED9i", 57);
+  if (/tây hồ tây|starlake/i.test(enrichedAddr)) return getBase(11e7, "T\xE2y H\u1ED3 T\xE2y, H\xE0 N\u1ED9i", 58);
+  if (/hà đông|ha dong/i.test(enrichedAddr)) return getBase(72e6, "H\xE0 \u0110\xF4ng, H\xE0 N\u1ED9i", 57);
   if (/gia lâm|gia lam/i.test(enrichedAddr)) return getBase(65e6, "Gia L\xE2m, H\xE0 N\u1ED9i", 55);
-  if (/đông anh|dong anh/i.test(enrichedAddr)) return getBase(6e7, "\u0110\xF4ng Anh, H\xE0 N\u1ED9i", 55);
+  if (/đông anh|dong anh/i.test(enrichedAddr)) return getBase(62e6, "\u0110\xF4ng Anh, H\xE0 N\u1ED9i", 55);
+  if (/thanh trì|thanh tri/i.test(enrichedAddr)) return getBase(55e6, "Thanh Tr\xEC, H\xE0 N\u1ED9i", 54);
+  if (/hoài đức|hoai duc/i.test(enrichedAddr)) return getBase(58e6, "Ho\xE0i \u0110\u1EE9c, H\xE0 N\u1ED9i", 54);
+  if (/đan phượng|dan phuong/i.test(enrichedAddr)) return getBase(42e6, "\u0110an Ph\u01B0\u1EE3ng, H\xE0 N\u1ED9i", 52);
+  if (/thạch thất|thach that/i.test(enrichedAddr)) return getBase(32e6, "Th\u1EA1ch Th\u1EA5t, H\xE0 N\u1ED9i", 50);
+  if (/quốc oai|quoc oai/i.test(enrichedAddr)) return getBase(28e6, "Qu\u1ED1c Oai, H\xE0 N\u1ED9i", 49);
+  if (/chương mỹ|chuong my/i.test(enrichedAddr)) return getBase(28e6, "Ch\u01B0\u01A1ng M\u1EF9, H\xE0 N\u1ED9i", 49);
+  if (/mỹ đức|my duc/i.test(enrichedAddr) && /hà\s*nội/i.test(enrichedAddr)) return getBase(22e6, "M\u1EF9 \u0110\u1EE9c, H\xE0 N\u1ED9i", 47);
+  if (/ứng hòa|ung hoa/i.test(enrichedAddr)) return getBase(2e7, "\u1EE8ng H\xF2a, H\xE0 N\u1ED9i", 47);
+  if (/phú xuyên|phu xuyen/i.test(enrichedAddr)) return getBase(22e6, "Ph\xFA Xuy\xEAn, H\xE0 N\u1ED9i", 47);
+  if (/thường tín|thuong tin/i.test(enrichedAddr)) return getBase(35e6, "Th\u01B0\u1EDDng T\xEDn, H\xE0 N\u1ED9i", 50);
+  if (/mê linh|me linh/i.test(enrichedAddr)) return getBase(38e6, "M\xEA Linh, H\xE0 N\u1ED9i", 52);
+  if (/sóc sơn|soc son/i.test(enrichedAddr) && /hà\s*nội/i.test(enrichedAddr)) return getBase(3e7, "S\xF3c S\u01A1n, H\xE0 N\u1ED9i", 50);
+  if (/ba vì|ba vi/i.test(enrichedAddr)) return getBase(18e6, "Ba V\xEC, H\xE0 N\u1ED9i", 46);
+  if (/hòa lạc|hoa lac/i.test(enrichedAddr)) return getBase(32e6, "H\xF2a L\u1EA1c, H\xE0 N\u1ED9i", 50);
   if (/hà nội|hanoi|ha noi/i.test(enrichedAddr)) return getBase(11e7, "H\xE0 N\u1ED9i (trung b\xECnh)", 52);
   if (/hải châu|hai chau/i.test(enrichedAddr)) return getBase(9e7, "H\u1EA3i Ch\xE2u, \u0110\xE0 N\u1EB5ng", 60);
   if (/thanh khê|thanh khe/i.test(enrichedAddr)) return getBase(7e7, "Thanh Kh\xEA, \u0110\xE0 N\u1EB5ng", 58);
@@ -16251,27 +16893,57 @@ function getRegionalBasePrice(address, pType) {
   if (/bình thuỷ|binh thuy/i.test(enrichedAddr)) return getBase(28e6, "B\xECnh Thu\u1EF7, C\u1EA7n Th\u01A1", 53);
   if (/cần thơ|can tho/i.test(enrichedAddr)) return getBase(35e6, "C\u1EA7n Th\u01A1", 53);
   if (/nha trang/i.test(enrichedAddr)) return getBase(65e6, "Nha Trang", 57);
-  if (/cam ranh/i.test(enrichedAddr)) return getBase(25e6, "Cam Ranh, Kh\xE1nh H\xF2a", 50);
+  if (/vạn ninh|van ninh/i.test(enrichedAddr)) return getBase(2e7, "V\u1EA1n Ninh, Kh\xE1nh H\xF2a", 48);
   if (/ninh hòa|ninh hoa/i.test(enrichedAddr)) return getBase(15e6, "Ninh H\xF2a, Kh\xE1nh H\xF2a", 48);
+  if (/diên khánh|dien khanh/i.test(enrichedAddr)) return getBase(18e6, "Di\xEAn Kh\xE1nh, Kh\xE1nh H\xF2a", 48);
+  if (/khánh vĩnh|khanh vinh/i.test(enrichedAddr)) return getBase(1e7, "Kh\xE1nh V\u0129nh, Kh\xE1nh H\xF2a", 44);
+  if (/khánh sơn|khanh son/i.test(enrichedAddr)) return getBase(9e6, "Kh\xE1nh S\u01A1n, Kh\xE1nh H\xF2a", 43);
+  if (/cam ranh/i.test(enrichedAddr)) return getBase(25e6, "Cam Ranh, Kh\xE1nh H\xF2a", 50);
+  if (/cam lâm|cam lam/i.test(enrichedAddr)) return getBase(22e6, "Cam L\xE2m, Kh\xE1nh H\xF2a", 49);
   if (/khánh hòa|khanh hoa/i.test(enrichedAddr)) return getBase(55e6, "Kh\xE1nh H\xF2a", 53);
   if (/đà lạt|da lat/i.test(enrichedAddr)) return getBase(45e6, "\u0110\xE0 L\u1EA1t", 57);
-  if (/bảo lộc|bao loc/i.test(enrichedAddr)) return getBase(2e7, "B\u1EA3o L\u1ED9c, L\xE2m \u0110\u1ED3ng", 50);
+  if (/bảo lộc|bao loc/i.test(enrichedAddr)) return getBase(22e6, "B\u1EA3o L\u1ED9c, L\xE2m \u0110\u1ED3ng", 52);
+  if (/đức trọng|duc trong/i.test(enrichedAddr)) return getBase(18e6, "\u0110\u1EE9c Tr\u1ECDng, L\xE2m \u0110\u1ED3ng", 49);
+  if (/đơn dương|don duong/i.test(enrichedAddr)) return getBase(15e6, "\u0110\u01A1n D\u01B0\u01A1ng, L\xE2m \u0110\u1ED3ng", 47);
+  if (/lâm hà|lam ha/i.test(enrichedAddr)) return getBase(14e6, "L\xE2m H\xE0, L\xE2m \u0110\u1ED3ng", 46);
+  if (/di linh/i.test(enrichedAddr)) return getBase(12e6, "Di Linh, L\xE2m \u0110\u1ED3ng", 45);
+  if (/bảo lâm.*lâm\s*đồng|bảo lâm.*lam\s*dong/i.test(enrichedAddr)) return getBase(11e6, "B\u1EA3o L\xE2m, L\xE2m \u0110\u1ED3ng", 44);
   if (/lâm đồng|lam dong/i.test(enrichedAddr)) return getBase(35e6, "L\xE2m \u0110\u1ED3ng", 52);
   if (/vũng tàu|vung tau/i.test(enrichedAddr)) return getBase(55e6, "V\u0169ng T\xE0u", 57);
-  if (/phú mỹ.*brvt|phu my.*brvt/i.test(enrichedAddr)) return getBase(35e6, "Ph\xFA M\u1EF9, BR-VT", 53);
-  if (/bà rịa|ba ria/i.test(enrichedAddr)) return getBase(3e7, "B\xE0 R\u1ECBa", 52);
+  if (/phú mỹ/i.test(enrichedAddr) && /brvt|bà\s*rịa|vũng\s*tàu/i.test(enrichedAddr)) return getBase(35e6, "Ph\xFA M\u1EF9, BR-VT", 53);
+  if (/bà rịa\b|ba ria\b/i.test(enrichedAddr)) return getBase(3e7, "B\xE0 R\u1ECBa", 52);
+  if (/xuyên mộc|xuyen moc/i.test(enrichedAddr)) return getBase(25e6, "Xuy\xEAn M\u1ED9c, BR-VT", 50);
+  if (/châu đức|chau duc/i.test(enrichedAddr)) return getBase(22e6, "Ch\xE2u \u0110\u1EE9c, BR-VT", 49);
+  if (/đất đỏ|dat do/i.test(enrichedAddr) && /brvt|bà\s*rịa|vũng\s*tàu/i.test(enrichedAddr)) return getBase(2e7, "\u0110\u1EA5t \u0110\u1ECF, BR-VT", 48);
+  if (/long điền|long dien/i.test(enrichedAddr)) return getBase(25e6, "Long \u0110i\u1EC1n, BR-VT", 50);
+  if (/côn đảo|con dao/i.test(enrichedAddr)) return getBase(65e6, "C\xF4n \u0110\u1EA3o, BR-VT", 52);
   if (/bà rịa.?vũng tàu|br.?vt/i.test(enrichedAddr)) return getBase(4e7, "B\xE0 R\u1ECBa-V\u0169ng T\xE0u", 52);
   if (/biên hòa|bien hoa/i.test(enrichedAddr)) return getBase(42e6, "Bi\xEAn H\xF2a, \u0110\u1ED3ng Nai", 57);
-  if (/long thành|long thanh.*dong nai/i.test(enrichedAddr)) return getBase(35e6, "Long Th\xE0nh, \u0110\u1ED3ng Nai", 55);
-  if (/nhơn trạch|nhon trach/i.test(enrichedAddr)) return getBase(3e7, "Nh\u01A1n Tr\u1EA1ch, \u0110\u1ED3ng Nai", 53);
-  if (/đồng nai|dong nai/i.test(enrichedAddr)) return getBase(35e6, "\u0110\u1ED3ng Nai", 53);
+  if (/long thành|long thanh/i.test(enrichedAddr)) return getBase(35e6, "Long Th\xE0nh, \u0110\u1ED3ng Nai", 55);
+  if (/nhơn trạch|nhon trach/i.test(enrichedAddr)) return getBase(3e7, "Nh\u01A1n Tr\u1EA1ch, \u0110\u1ED3ng Nai", 55);
+  if (/trảng bom|trang bom/i.test(enrichedAddr)) return getBase(22e6, "Tr\u1EA3ng Bom, \u0110\u1ED3ng Nai", 50);
+  if (/vĩnh cửu|vinh cuu/i.test(enrichedAddr)) return getBase(2e7, "V\u0129nh C\u1EEDu, \u0110\u1ED3ng Nai", 49);
+  if (/thống nhất|thong nhat.*dong nai/i.test(enrichedAddr)) return getBase(18e6, "Th\u1ED1ng Nh\u1EA5t, \u0110\u1ED3ng Nai", 48);
+  if (/định quán|dinh quan/i.test(enrichedAddr)) return getBase(15e6, "\u0110\u1ECBnh Qu\xE1n, \u0110\u1ED3ng Nai", 46);
+  if (/xuân lộc|xuan loc/i.test(enrichedAddr)) return getBase(14e6, "Xu\xE2n L\u1ED9c, \u0110\u1ED3ng Nai", 46);
+  if (/cẩm mỹ|cam my/i.test(enrichedAddr)) return getBase(16e6, "C\u1EA9m M\u1EF9, \u0110\u1ED3ng Nai", 47);
+  if (/đồng nai|dong nai/i.test(enrichedAddr)) return getBase(35e6, "\u0110\u1ED3ng Nai", 55);
   if (/thuận an|thuan an/i.test(enrichedAddr)) return getBase(55e6, "Thu\u1EADn An, B\xECnh D\u01B0\u01A1ng", 58);
   if (/dĩ an|di an/i.test(enrichedAddr)) return getBase(5e7, "D\u0129 An, B\xECnh D\u01B0\u01A1ng", 57);
   if (/thủ dầu một|thu dau mot/i.test(enrichedAddr)) return getBase(45e6, "Th\u1EE7 D\u1EA7u M\u1ED9t, B\xECnh D\u01B0\u01A1ng", 57);
-  if (/bến cát|ben cat/i.test(enrichedAddr)) return getBase(3e7, "B\u1EBFn C\xE1t, B\xECnh D\u01B0\u01A1ng", 52);
-  if (/bình dương|binh duong/i.test(enrichedAddr)) return getBase(45e6, "B\xECnh D\u01B0\u01A1ng", 57);
+  if (/tân uyên|tan uyen/i.test(enrichedAddr)) return getBase(32e6, "T\xE2n Uy\xEAn, B\xECnh D\u01B0\u01A1ng", 53);
+  if (/bến cát|ben cat/i.test(enrichedAddr)) return getBase(28e6, "B\u1EBFn C\xE1t, B\xECnh D\u01B0\u01A1ng", 52);
+  if (/bàu bàng|bau bang/i.test(enrichedAddr)) return getBase(2e7, "B\xE0u B\xE0ng, B\xECnh D\u01B0\u01A1ng", 49);
+  if (/phú giáo|phu giao/i.test(enrichedAddr)) return getBase(15e6, "Ph\xFA Gi\xE1o, B\xECnh D\u01B0\u01A1ng", 46);
+  if (/dầu tiếng|dau tieng/i.test(enrichedAddr)) return getBase(12e6, "D\u1EA7u Ti\u1EBFng, B\xECnh D\u01B0\u01A1ng", 45);
+  if (/bình dương|binh duong/i.test(enrichedAddr)) return getBase(38e6, "B\xECnh D\u01B0\u01A1ng", 55);
   if (/tân an|tan an.*long an/i.test(enrichedAddr)) return getBase(3e7, "T\xE2n An, Long An", 52);
+  if (/bến lức|ben luc/i.test(enrichedAddr)) return getBase(3e7, "B\u1EBFn L\u1EE9c, Long An", 52);
+  if (/đức hòa|duc hoa/i.test(enrichedAddr)) return getBase(25e6, "\u0110\u1EE9c H\xF2a, Long An", 50);
+  if (/cần giuộc|can giuoc/i.test(enrichedAddr)) return getBase(25e6, "C\u1EA7n Giu\u1ED9c, Long An", 50);
   if (/cần đước|can duoc/i.test(enrichedAddr)) return getBase(22e6, "C\u1EA7n \u0110\u01B0\u1EDBc, Long An", 48);
+  if (/thủ thừa|thu thua/i.test(enrichedAddr)) return getBase(18e6, "Th\u1EE7 Th\u1EEBa, Long An", 47);
+  if (/mộc hóa|moc hoa/i.test(enrichedAddr)) return getBase(12e6, "M\u1ED9c H\xF3a, Long An", 44);
   if (/long an/i.test(enrichedAddr)) return getBase(28e6, "Long An", 52);
   if (/tây ninh|tay ninh/i.test(enrichedAddr)) return getBase(18e6, "T\xE2y Ninh", 48);
   if (/đồng xoài|dong xoai/i.test(enrichedAddr)) return getBase(16e6, "\u0110\u1ED3ng Xo\xE0i, B\xECnh Ph\u01B0\u1EDBc", 47);
@@ -17094,8 +17766,360 @@ var init_feedbackRepository = __esm({
           })
         ));
       }
+      // ──────────────────────────────────────────────────────────────────────────
+      // AGENT SELF-LEARNING: Observation logging & aggregation
+      // ──────────────────────────────────────────────────────────────────────────
+      async logObservation(tenantId, agentNode, intent, observationType, observationData, sessionId) {
+        try {
+          await withTransaction(async (client) => {
+            await client.query(
+              `INSERT INTO agent_observations (tenant_id, agent_node, intent, observation_type, observation_data, session_id)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+              [
+                tenantId,
+                agentNode,
+                intent || null,
+                observationType,
+                JSON.stringify(observationData),
+                sessionId || null
+              ]
+            );
+          });
+        } catch {
+        }
+      }
+      async getObservationInsights(tenantId, agentNode, days = 7) {
+        try {
+          return await this.withTenant(tenantId, async (client) => {
+            const cutoff = new Date(Date.now() - days * 864e5).toISOString();
+            const result = await client.query(
+              `SELECT
+             observation_type,
+             COUNT(*)::int as count,
+             jsonb_agg(observation_data ORDER BY created_at DESC) FILTER (WHERE created_at >= $2) as samples
+           FROM agent_observations
+           WHERE tenant_id = $1 AND agent_node = $3 AND created_at >= $2
+           GROUP BY observation_type
+           ORDER BY count DESC
+           LIMIT 8`,
+              [tenantId, cutoff, agentNode]
+            );
+            if (!result.rows.length) return "";
+            const lines = [];
+            for (const row of result.rows) {
+              const samples = (row.samples || []).slice(0, 3);
+              const typeSummary = samples.map((s2) => {
+                const keys = Object.keys(s2).slice(0, 4);
+                return keys.map((k) => `${k}:${JSON.stringify(s2[k])}`).join(",");
+              }).join(" | ");
+              lines.push(`${row.observation_type}(${row.count}l\u1EA7n): ${typeSummary}`);
+            }
+            return lines.length ? `
+[L\u1ECACH S\u1EEC HO\u1EA0T \u0110\u1ED8NG AGENT ${agentNode} (${days} ng\xE0y)]:
+${lines.join("\n")}` : "";
+          });
+        } catch {
+          return "";
+        }
+      }
+      async logSystemChange(tenantId, changeType, changeScope, description, oldValue, newValue, changedBy) {
+        try {
+          await withTransaction(async (client) => {
+            await client.query(
+              `INSERT INTO agent_system_change_log (tenant_id, change_type, change_scope, description, old_value, new_value, changed_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+              [tenantId || null, changeType, changeScope, description, oldValue || null, newValue || null, changedBy || null]
+            );
+          });
+        } catch {
+        }
+      }
+      async getRecentSystemChanges(tenantId, hours = 24) {
+        try {
+          return await this.withTenant(tenantId, async (client) => {
+            const cutoff = new Date(Date.now() - hours * 36e5).toISOString();
+            const result = await client.query(
+              `SELECT change_type, change_scope, description, created_at
+           FROM agent_system_change_log
+           WHERE (tenant_id = $1 OR tenant_id IS NULL) AND created_at >= $2
+           ORDER BY created_at DESC LIMIT 20`,
+              [tenantId, cutoff]
+            );
+            return result.rows.map((r) => ({
+              changeType: r.change_type,
+              changeScope: r.change_scope,
+              description: r.description,
+              changedAt: r.created_at
+            }));
+          });
+        } catch {
+          return [];
+        }
+      }
     };
     feedbackRepository = new FeedbackRepository();
+  }
+});
+
+// server/services/priceCalibrationService.ts
+var priceCalibrationService_exports = {};
+__export(priceCalibrationService_exports, {
+  PriceCalibrationService: () => PriceCalibrationService,
+  priceCalibrationService: () => priceCalibrationService
+});
+var CALIBRATION_WINDOW_DAYS, TRANSACTION_WEIGHT, AI_WEIGHT_WITH_TXN, COMPS_WEIGHT, AI_WEIGHT_NO_TXN, COMPS_WEIGHT_NO_TXN, PriceCalibrationService, priceCalibrationService;
+var init_priceCalibrationService = __esm({
+  "server/services/priceCalibrationService.ts"() {
+    init_logger();
+    CALIBRATION_WINDOW_DAYS = 90;
+    TRANSACTION_WEIGHT = 0.5;
+    AI_WEIGHT_WITH_TXN = 0.35;
+    COMPS_WEIGHT = 0.15;
+    AI_WEIGHT_NO_TXN = 0.7;
+    COMPS_WEIGHT_NO_TXN = 0.3;
+    PriceCalibrationService = class _PriceCalibrationService {
+      constructor() {
+        this.pool = null;
+        this.calibrationTimer = null;
+        this.isRunning = false;
+      }
+      static getInstance() {
+        if (!_PriceCalibrationService.instance) {
+          _PriceCalibrationService.instance = new _PriceCalibrationService();
+        }
+        return _PriceCalibrationService.instance;
+      }
+      /** Inject the PG pool from server startup */
+      init(pool3) {
+        this.pool = pool3;
+        setTimeout(() => this.calibrateAll().catch((e) => logger.error("[Calibration] startup error:", e.message)), 3e4);
+        this.calibrationTimer = setInterval(
+          () => this.calibrateAll().catch((e) => logger.error("[Calibration] scheduled error:", e.message)),
+          6 * 60 * 60 * 1e3
+        );
+      }
+      stop() {
+        if (this.calibrationTimer) {
+          clearInterval(this.calibrationTimer);
+          this.calibrationTimer = null;
+        }
+      }
+      // ── Record a price observation ─────────────────────────────────────────────
+      async recordObservation(opts) {
+        if (!this.pool) return;
+        if (!opts.pricePerM2 || opts.pricePerM2 < 1e6) return;
+        try {
+          await this.pool.query(
+            `INSERT INTO market_price_history
+           (location_key, location_display, price_per_m2, price_min, price_max,
+            property_type, source, confidence, trend_text, source_count,
+            data_recency, listing_id, tenant_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+            [
+              opts.locationKey.slice(0, 120),
+              opts.locationDisplay.slice(0, 255),
+              Math.round(opts.pricePerM2),
+              opts.priceMin ? Math.round(opts.priceMin) : null,
+              opts.priceMax ? Math.round(opts.priceMax) : null,
+              opts.propertyType || "townhouse_center",
+              opts.source,
+              Math.round(Math.min(100, Math.max(0, opts.confidence ?? 60))),
+              opts.trendText?.slice(0, 100) ?? null,
+              opts.sourceCount ?? 1,
+              opts.dataRecency ?? "current_year",
+              opts.listingId ?? null,
+              opts.tenantId ?? null
+            ]
+          );
+        } catch (err4) {
+          logger.warn(`[Calibration] recordObservation failed: ${err4.message}`);
+        }
+      }
+      /** Called when a listing status changes to SOLD — records ground-truth price */
+      async recordTransaction(opts) {
+        await this.recordObservation({ ...opts, source: "transaction" });
+        setImmediate(() => this.calibrateLocation(opts.locationKey).catch(() => {
+        }));
+      }
+      // ── Calibration logic ──────────────────────────────────────────────────────
+      /** Re-calibrate all locations that have new history entries */
+      async calibrateAll() {
+        if (!this.pool || this.isRunning) return;
+        this.isRunning = true;
+        const t0 = Date.now();
+        try {
+          const { rows } = await this.pool.query(
+            `SELECT DISTINCT location_key FROM market_price_history
+         WHERE recorded_at > NOW() - INTERVAL '${CALIBRATION_WINDOW_DAYS} days'`
+          );
+          if (rows.length === 0) {
+            logger.info("[Calibration] No new history \u2014 nothing to calibrate");
+            return;
+          }
+          let updated = 0;
+          for (const { location_key } of rows) {
+            const ok4 = await this.calibrateLocation(location_key);
+            if (ok4) updated++;
+          }
+          logger.info(`[Calibration] calibrateAll done \u2014 ${updated}/${rows.length} updated in ${Date.now() - t0}ms`);
+        } catch (err4) {
+          logger.error("[Calibration] calibrateAll error:", err4.message);
+        } finally {
+          this.isRunning = false;
+        }
+      }
+      /** Re-calibrate a single location */
+      async calibrateLocation(locationKey) {
+        if (!this.pool) return false;
+        try {
+          const { rows } = await this.pool.query(
+            `SELECT
+           source,
+           ROUND(AVG(price_per_m2)) AS avg_price,
+           COUNT(*)::text            AS cnt,
+           MAX(location_display)     AS location_display,
+           MAX(property_type)        AS property_type,
+           MAX(trend_text)           AS avg_trend_text
+         FROM market_price_history
+         WHERE location_key = $1
+           AND recorded_at  > NOW() - INTERVAL '${CALIBRATION_WINDOW_DAYS} days'
+           AND price_per_m2 > 1000000
+         GROUP BY source`,
+            [locationKey]
+          );
+          if (rows.length === 0) return false;
+          const bySource = {};
+          let locationDisplay = locationKey;
+          let propertyType = "townhouse_center";
+          let trendText = null;
+          for (const r of rows) {
+            bySource[r.source] = { avg: parseInt(r.avg_price, 10), cnt: parseInt(r.cnt, 10) };
+            locationDisplay = r.location_display || locationDisplay;
+            propertyType = r.property_type || propertyType;
+            trendText = trendText || r.avg_trend_text || null;
+          }
+          const aiPrice = bySource["ai_search"]?.avg ?? bySource["blended"]?.avg ?? 0;
+          const compsPrice = bySource["internal_comps"]?.avg ?? 0;
+          const txnPrice = bySource["transaction"]?.avg ?? 0;
+          let calibrated;
+          let aiW = 0, compsW = 0, txnW = 0;
+          if (txnPrice > 0) {
+            txnW = TRANSACTION_WEIGHT;
+            aiW = aiPrice > 0 ? AI_WEIGHT_WITH_TXN : TRANSACTION_WEIGHT + AI_WEIGHT_WITH_TXN;
+            compsW = compsPrice > 0 ? COMPS_WEIGHT : 0;
+            const useAi = aiPrice > 0 ? aiPrice : txnPrice;
+            const useComps = compsPrice > 0 ? compsPrice : txnPrice;
+            calibrated = Math.round(txnPrice * txnW + useAi * aiW + useComps * compsW);
+          } else if (aiPrice > 0 && compsPrice > 0) {
+            aiW = AI_WEIGHT_NO_TXN;
+            compsW = COMPS_WEIGHT_NO_TXN;
+            calibrated = Math.round(aiPrice * aiW + compsPrice * compsW);
+          } else {
+            calibrated = aiPrice || compsPrice;
+          }
+          if (!calibrated || calibrated < 1e6) return false;
+          const totalSamples = Object.values(bySource).reduce((s2, v) => s2 + v.cnt, 0);
+          const avgConfidence = Math.min(95, 50 + Math.min(totalSamples, 20) * 2 + (txnPrice > 0 ? 10 : 0));
+          await this.pool.query(
+            `INSERT INTO avm_calibration
+           (location_key, location_display, calibrated_price_per_m2, property_type,
+            sample_count, avg_ai_price, avg_comps_price, avg_transaction_price,
+            ai_weight, comps_weight, txn_weight,
+            confidence_score, trend_text, last_calibrated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW())
+         ON CONFLICT (location_key) DO UPDATE SET
+           calibrated_price_per_m2 = EXCLUDED.calibrated_price_per_m2,
+           location_display        = EXCLUDED.location_display,
+           property_type           = EXCLUDED.property_type,
+           sample_count            = EXCLUDED.sample_count,
+           avg_ai_price            = EXCLUDED.avg_ai_price,
+           avg_comps_price         = EXCLUDED.avg_comps_price,
+           avg_transaction_price   = EXCLUDED.avg_transaction_price,
+           ai_weight               = EXCLUDED.ai_weight,
+           comps_weight            = EXCLUDED.comps_weight,
+           txn_weight              = EXCLUDED.txn_weight,
+           confidence_score        = EXCLUDED.confidence_score,
+           trend_text              = EXCLUDED.trend_text,
+           last_calibrated_at      = NOW()`,
+            [
+              locationKey,
+              locationDisplay,
+              calibrated,
+              propertyType,
+              totalSamples,
+              aiPrice || null,
+              compsPrice || null,
+              txnPrice || null,
+              aiW,
+              compsW,
+              txnW,
+              avgConfidence,
+              trendText
+            ]
+          );
+          logger.debug(`[Calibration] ${locationKey} \u2192 ${(calibrated / 1e6).toFixed(0)}M/m\xB2 (${totalSamples} samples, txn=${txnPrice ? (txnPrice / 1e6).toFixed(0) + "M" : "none"})`);
+          return true;
+        } catch (err4) {
+          logger.warn(`[Calibration] calibrateLocation failed for "${locationKey}": ${err4.message}`);
+          return false;
+        }
+      }
+      // ── Query calibrated price ─────────────────────────────────────────────────
+      /**
+       * Returns the calibrated price for a location if one exists and is fresh.
+       * Returns null if no calibration is available (fall through to static table).
+       */
+      async getCalibratedPrice(locationKey, maxAgeDays = 14) {
+        if (!this.pool) return null;
+        try {
+          const { rows } = await this.pool.query(
+            `SELECT calibrated_price_per_m2, confidence_score, trend_text,
+                sample_count, avg_transaction_price, last_calibrated_at
+         FROM avm_calibration
+         WHERE location_key = $1
+           AND last_calibrated_at > NOW() - INTERVAL '${maxAgeDays} days'
+         LIMIT 1`,
+            [locationKey]
+          );
+          if (rows.length === 0) return null;
+          const r = rows[0];
+          return {
+            pricePerM2: parseInt(r.calibrated_price_per_m2, 10),
+            confidence: parseInt(r.confidence_score, 10),
+            trendText: r.trend_text,
+            sampleCount: parseInt(r.sample_count, 10),
+            hasTxn: !!r.avg_transaction_price,
+            lastCalibrated: r.last_calibrated_at
+          };
+        } catch {
+          return null;
+        }
+      }
+      // ── Admin: price history for a location ───────────────────────────────────
+      async getPriceHistory(locationKey, days = 90) {
+        if (!this.pool) return [];
+        try {
+          const { rows } = await this.pool.query(
+            `SELECT recorded_at, price_per_m2, source, confidence
+         FROM market_price_history
+         WHERE location_key = $1
+           AND recorded_at > NOW() - INTERVAL '${days} days'
+         ORDER BY recorded_at DESC
+         LIMIT 200`,
+            [locationKey]
+          );
+          return rows.map((r) => ({
+            recordedAt: r.recorded_at,
+            pricePerM2: parseInt(r.price_per_m2, 10),
+            source: r.source,
+            confidence: parseInt(r.confidence, 10)
+          }));
+        } catch {
+          return [];
+        }
+      }
+    };
+    priceCalibrationService = PriceCalibrationService.getInstance();
   }
 });
 
@@ -22394,6 +23418,7 @@ var init_marketDataService = __esm({
   "server/services/marketDataService.ts"() {
     init_logger();
     init_valuationEngine();
+    init_priceCalibrationService();
     CACHE_TTL_MS = parseInt(process.env.MARKET_CACHE_TTL_HOURS || "6") * 36e5;
     SEED_TTL_MS = 24 * 36e5;
     REDIS_TTL_SECS = 86400;
@@ -22404,45 +23429,133 @@ var init_marketDataService = __esm({
     MAX_PRICE_VND = 1e9;
     REDIS_KEY_PREFIX = "sgsland:market:v2:";
     SEED_LOCATIONS = [
-      // 5 Thành phố trực thuộc Trung ương
+      // ══ 5 Thành phố trực thuộc Trung ương ════════════════════════════════════
       { location: "Qu\u1EADn Ho\xE0n Ki\u1EBFm, H\xE0 N\u1ED9i", pType: "townhouse_center" },
       { location: "Qu\u1EADn 1, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
       { location: "Qu\u1EADn H\u1EA3i Ch\xE2u, \u0110\xE0 N\u1EB5ng", pType: "townhouse_center" },
       { location: "Qu\u1EADn H\u1ED3ng B\xE0ng, H\u1EA3i Ph\xF2ng", pType: "townhouse_center" },
       { location: "Qu\u1EADn Ninh Ki\u1EC1u, C\u1EA7n Th\u01A1", pType: "townhouse_center" },
-      // Hà Nội — quận trung tâm + ngoại thành lớn
+      // ══ Hà Nội — tất cả quận nội thành ══════════════════════════════════════
       { location: "Qu\u1EADn Ba \u0110\xECnh, H\xE0 N\u1ED9i", pType: "townhouse_center" },
       { location: "Qu\u1EADn \u0110\u1ED1ng \u0110a, H\xE0 N\u1ED9i", pType: "townhouse_center" },
+      { location: "Qu\u1EADn Hai B\xE0 Tr\u01B0ng, H\xE0 N\u1ED9i", pType: "townhouse_center" },
       { location: "Qu\u1EADn C\u1EA7u Gi\u1EA5y, H\xE0 N\u1ED9i", pType: "townhouse_center" },
       { location: "Qu\u1EADn T\xE2y H\u1ED3, H\xE0 N\u1ED9i", pType: "townhouse_center" },
-      { location: "Qu\u1EADn H\xE0 \u0110\xF4ng, H\xE0 N\u1ED9i", pType: "townhouse_center" },
-      { location: "Huy\u1EC7n \u0110\xF4ng Anh, H\xE0 N\u1ED9i", pType: "townhouse_suburb" },
+      { location: "Qu\u1EADn Thanh Xu\xE2n, H\xE0 N\u1ED9i", pType: "townhouse_center" },
+      { location: "Qu\u1EADn Ho\xE0ng Mai, H\xE0 N\u1ED9i", pType: "townhouse_center" },
+      { location: "Qu\u1EADn Nam T\u1EEB Li\xEAm, H\xE0 N\u1ED9i", pType: "townhouse_center" },
+      { location: "Qu\u1EADn B\u1EAFc T\u1EEB Li\xEAm, H\xE0 N\u1ED9i", pType: "townhouse_center" },
       { location: "Qu\u1EADn Long Bi\xEAn, H\xE0 N\u1ED9i", pType: "townhouse_center" },
-      // TP.HCM — quận trung tâm + ngoại thành lớn
+      // Hà Nội — huyện/thị xã ngoại thành
+      { location: "Qu\u1EADn H\xE0 \u0110\xF4ng, H\xE0 N\u1ED9i", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n Gia L\xE2m, H\xE0 N\u1ED9i", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n \u0110\xF4ng Anh, H\xE0 N\u1ED9i", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Thanh Tr\xEC, H\xE0 N\u1ED9i", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Ho\xE0i \u0110\u1EE9c, H\xE0 N\u1ED9i", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n M\xEA Linh, H\xE0 N\u1ED9i", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n \u0110an Ph\u01B0\u1EE3ng, H\xE0 N\u1ED9i", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Th\u1EA1ch Th\u1EA5t - H\xF2a L\u1EA1c, H\xE0 N\u1ED9i", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n S\xF3c S\u01A1n, H\xE0 N\u1ED9i", pType: "townhouse_suburb" },
+      // ══ TP.HCM — tất cả quận/huyện ═══════════════════════════════════════════
       { location: "Qu\u1EADn 3, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn 4, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn 5 Ch\u1EE3 L\u1EDBn, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn 6, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
       { location: "Qu\u1EADn 7 Ph\xFA M\u1EF9 H\u01B0ng, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn 8, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn 10, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn 11, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn 12, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_suburb" },
       { location: "Qu\u1EADn B\xECnh Th\u1EA1nh, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn Ph\xFA Nhu\u1EADn, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn T\xE2n B\xECnh, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn T\xE2n Ph\xFA, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn G\xF2 V\u1EA5p, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Qu\u1EADn B\xECnh T\xE2n, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      // TP.HCM — Thủ Đức (Q2+Q9 cũ)
+      { location: "Th\u1EA3o \u0110i\u1EC1n, Th\u1EE7 \u0110\u1EE9c, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Th\u1EE7 Thi\xEAm, Th\u1EE7 \u0110\u1EE9c, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      { location: "Vinhomes Grand Park, Th\u1EE7 \u0110\u1EE9c, TP. H\u1ED3 Ch\xED Minh", pType: "apartment_suburb" },
       { location: "Qu\u1EADn Th\u1EE7 \u0110\u1EE9c, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_center" },
+      // TP.HCM — huyện ngoại thành
       { location: "Huy\u1EC7n B\xECnh Ch\xE1nh, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_suburb" },
-      // Đà Nẵng — quận
+      { location: "Huy\u1EC7n Nh\xE0 B\xE8, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n H\xF3c M\xF4n, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n C\u1EE7 Chi, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n C\u1EA7n Gi\u1EDD, TP. H\u1ED3 Ch\xED Minh", pType: "townhouse_suburb" },
+      // ══ Đà Nẵng — tất cả quận ════════════════════════════════════════════════
       { location: "Qu\u1EADn S\u01A1n Tr\xE0, \u0110\xE0 N\u1EB5ng", pType: "townhouse_center" },
       { location: "Qu\u1EADn Ng\u0169 H\xE0nh S\u01A1n, \u0110\xE0 N\u1EB5ng", pType: "townhouse_center" },
       { location: "Qu\u1EADn Li\xEAn Chi\u1EC3u, \u0110\xE0 N\u1EB5ng", pType: "townhouse_center" },
-      // Miền Nam — tỉnh vệ tinh HCM
+      { location: "Qu\u1EADn Thanh Kh\xEA, \u0110\xE0 N\u1EB5ng", pType: "townhouse_center" },
+      { location: "Qu\u1EADn C\u1EA9m L\u1EC7, \u0110\xE0 N\u1EB5ng", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n H\xF2a Vang, \u0110\xE0 N\u1EB5ng", pType: "townhouse_suburb" },
+      { location: "\u0110\u01B0\u1EDDng V\xF5 Nguy\xEAn Gi\xE1p - Bi\u1EC3n M\u1EF9 Kh\xEA, \u0110\xE0 N\u1EB5ng", pType: "townhouse_center" },
+      // ══ Hải Phòng — quận ══════════════════════════════════════════════════════
+      { location: "Qu\u1EADn Ng\xF4 Quy\u1EC1n, H\u1EA3i Ph\xF2ng", pType: "townhouse_center" },
+      { location: "Qu\u1EADn L\xEA Ch\xE2n, H\u1EA3i Ph\xF2ng", pType: "townhouse_center" },
+      { location: "Qu\u1EADn H\u1EA3i An, H\u1EA3i Ph\xF2ng", pType: "townhouse_center" },
+      { location: "Qu\u1EADn D\u01B0\u01A1ng Kinh, H\u1EA3i Ph\xF2ng", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n An D\u01B0\u01A1ng, H\u1EA3i Ph\xF2ng", pType: "townhouse_suburb" },
+      { location: "Th\xE0nh ph\u1ED1 \u0110\u1ED3 S\u01A1n, H\u1EA3i Ph\xF2ng", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n Thu\u1EF7 Nguy\xEAn, H\u1EA3i Ph\xF2ng", pType: "townhouse_suburb" },
+      // ══ Cần Thơ — quận ════════════════════════════════════════════════════════
+      { location: "Qu\u1EADn B\xECnh Thu\u1EF7, C\u1EA7n Th\u01A1", pType: "townhouse_center" },
+      { location: "Qu\u1EADn C\xE1i R\u0103ng, C\u1EA7n Th\u01A1", pType: "townhouse_center" },
+      { location: "Qu\u1EADn \xD4 M\xF4n, C\u1EA7n Th\u01A1", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n Phong \u0110i\u1EC1n, C\u1EA7n Th\u01A1", pType: "townhouse_suburb" },
+      // ══ Miền Nam — tỉnh vệ tinh HCM ═════════════════════════════════════════
+      // Bình Dương
       { location: "Th\xE0nh ph\u1ED1 Thu\u1EADn An, B\xECnh D\u01B0\u01A1ng", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 D\u0129 An, B\xECnh D\u01B0\u01A1ng", pType: "townhouse_center" },
+      { location: "Th\xE0nh ph\u1ED1 Th\u1EE7 D\u1EA7u M\u1ED9t, B\xECnh D\u01B0\u01A1ng", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 T\xE2n Uy\xEAn, B\xECnh D\u01B0\u01A1ng", pType: "townhouse_suburb" },
+      { location: "Th\u1ECB x\xE3 B\u1EBFn C\xE1t, B\xECnh D\u01B0\u01A1ng", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n B\xE0u B\xE0ng, B\xECnh D\u01B0\u01A1ng", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Ph\xFA Gi\xE1o, B\xECnh D\u01B0\u01A1ng", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n D\u1EA7u Ti\u1EBFng, B\xECnh D\u01B0\u01A1ng", pType: "townhouse_suburb" },
+      // Đồng Nai
       { location: "Th\xE0nh ph\u1ED1 Bi\xEAn H\xF2a, \u0110\u1ED3ng Nai", pType: "townhouse_center" },
       { location: "Huy\u1EC7n Long Th\xE0nh, \u0110\u1ED3ng Nai", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Nh\u01A1n Tr\u1EA1ch, \u0110\u1ED3ng Nai", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Tr\u1EA3ng Bom, \u0110\u1ED3ng Nai", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n V\u0129nh C\u1EEDu, \u0110\u1ED3ng Nai", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n \u0110\u1ECBnh Qu\xE1n, \u0110\u1ED3ng Nai", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Th\u1ED1ng Nh\u1EA5t, \u0110\u1ED3ng Nai", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Xu\xE2n L\u1ED9c, \u0110\u1ED3ng Nai", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n C\u1EA9m M\u1EF9, \u0110\u1ED3ng Nai", pType: "townhouse_suburb" },
+      // Bà Rịa - Vũng Tàu
       { location: "Th\xE0nh ph\u1ED1 V\u0169ng T\xE0u, B\xE0 R\u1ECBa - V\u0169ng T\xE0u", pType: "townhouse_center" },
+      { location: "Th\xE0nh ph\u1ED1 B\xE0 R\u1ECBa, B\xE0 R\u1ECBa - V\u0169ng T\xE0u", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 Ph\xFA M\u1EF9, B\xE0 R\u1ECBa - V\u0169ng T\xE0u", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n Xuy\xEAn M\u1ED9c, B\xE0 R\u1ECBa - V\u0169ng T\xE0u", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Ch\xE2u \u0110\u1EE9c, B\xE0 R\u1ECBa - V\u0169ng T\xE0u", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Long \u0110i\u1EC1n, B\xE0 R\u1ECBa - V\u0169ng T\xE0u", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n \u0110\u1EA5t \u0110\u1ECF, B\xE0 R\u1ECBa - V\u0169ng T\xE0u", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n C\xF4n \u0110\u1EA3o, B\xE0 R\u1ECBa - V\u0169ng T\xE0u", pType: "townhouse_center" },
+      // Long An
       { location: "Th\xE0nh ph\u1ED1 T\xE2n An, Long An", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n B\u1EBFn L\u1EE9c, Long An", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n \u0110\u1EE9c H\xF2a, Long An", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n C\u1EA7n Giu\u1ED9c, Long An", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n C\u1EA7n \u0110\u01B0\u1EDBc, Long An", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n Th\u1EE7 Th\u1EEBa, Long An", pType: "townhouse_suburb" },
+      // Tây Ninh
       { location: "Th\xE0nh ph\u1ED1 T\xE2y Ninh, T\xE2y Ninh", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n Tr\u1EA3ng B\xE0ng, T\xE2y Ninh", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n B\u1EBFn C\u1EA7u, T\xE2y Ninh", pType: "townhouse_suburb" },
+      // Bình Phước
       { location: "Th\xE0nh ph\u1ED1 \u0110\u1ED3ng Xo\xE0i, B\xECnh Ph\u01B0\u1EDBc", pType: "townhouse_center" },
-      // Đồng bằng sông Cửu Long
+      { location: "Th\u1ECB x\xE3 Ch\u01A1n Th\xE0nh, B\xECnh Ph\u01B0\u1EDBc", pType: "townhouse_suburb" },
+      { location: "Th\u1ECB x\xE3 B\xECnh Long, B\xECnh Ph\u01B0\u1EDBc", pType: "townhouse_center" },
+      // ══ Đồng bằng sông Cửu Long ══════════════════════════════════════════════
       { location: "Th\xE0nh ph\u1ED1 M\u1EF9 Tho, Ti\u1EC1n Giang", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 G\xF2 C\xF4ng, Ti\u1EC1n Giang", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 B\u1EBFn Tre, B\u1EBFn Tre", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Tr\xE0 Vinh, Tr\xE0 Vinh", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 V\u0129nh Long, V\u0129nh Long", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Cao L\xE3nh, \u0110\u1ED3ng Th\xE1p", pType: "townhouse_center" },
+      { location: "Th\xE0nh ph\u1ED1 Sa \u0110\xE9c, \u0110\u1ED3ng Th\xE1p", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Long Xuy\xEAn, An Giang", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Ch\xE2u \u0110\u1ED1c, An Giang", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Ph\xFA Qu\u1ED1c, Ki\xEAn Giang", pType: "townhouse_center" },
@@ -22451,38 +23564,60 @@ var init_marketDataService = __esm({
       { location: "Th\xE0nh ph\u1ED1 S\xF3c Tr\u0103ng, S\xF3c Tr\u0103ng", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 B\u1EA1c Li\xEAu, B\u1EA1c Li\xEAu", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 C\xE0 Mau, C\xE0 Mau", pType: "townhouse_center" },
-      // Miền Trung
+      // ══ Miền Trung — Thừa Thiên Huế / Quảng Nam ══════════════════════════════
       { location: "Th\xE0nh ph\u1ED1 Hu\u1EBF, Th\u1EEBa Thi\xEAn Hu\u1EBF", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n Ph\xFA Vang, Th\u1EEBa Thi\xEAn Hu\u1EBF", pType: "townhouse_suburb" },
+      { location: "Th\u1ECB x\xE3 H\u01B0\u01A1ng Th\u1EE7y, Th\u1EEBa Thi\xEAn Hu\u1EBF", pType: "townhouse_suburb" },
       { location: "Th\xE0nh ph\u1ED1 H\u1ED9i An, Qu\u1EA3ng Nam", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Tam K\u1EF3, Qu\u1EA3ng Nam", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 \u0110i\u1EC7n B\xE0n, Qu\u1EA3ng Nam", pType: "townhouse_suburb" },
       { location: "Th\xE0nh ph\u1ED1 Qu\u1EA3ng Ng\xE3i, Qu\u1EA3ng Ng\xE3i", pType: "townhouse_center" },
+      // ══ Miền Trung — Bình Định / Phú Yên / Khánh Hòa ═════════════════════════
       { location: "Th\xE0nh ph\u1ED1 Quy Nh\u01A1n, B\xECnh \u0110\u1ECBnh", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 An Nh\u01A1n, B\xECnh \u0110\u1ECBnh", pType: "townhouse_suburb" },
       { location: "Th\xE0nh ph\u1ED1 Tuy H\xF2a, Ph\xFA Y\xEAn", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Nha Trang, Kh\xE1nh H\xF2a", pType: "townhouse_center" },
+      { location: "\u0110\u01B0\u1EDDng Tr\u1EA7n Ph\xFA m\u1EB7t bi\u1EC3n, Nha Trang, Kh\xE1nh H\xF2a", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Cam Ranh, Kh\xE1nh H\xF2a", pType: "townhouse_center" },
-      { location: "Th\xE0nh ph\u1ED1 Phan Rang, Ninh Thu\u1EADn", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n Cam L\xE2m, Kh\xE1nh H\xF2a", pType: "townhouse_suburb" },
+      { location: "Th\u1ECB x\xE3 Ninh H\xF2a, Kh\xE1nh H\xF2a", pType: "townhouse_suburb" },
+      { location: "Huy\u1EC7n V\u1EA1n Ninh, Kh\xE1nh H\xF2a", pType: "townhouse_suburb" },
+      { location: "Th\xE0nh ph\u1ED1 Phan Rang - Th\xE1p Ch\xE0m, Ninh Thu\u1EADn", pType: "townhouse_center" },
+      // ══ Miền Trung — Bình Thuận ═══════════════════════════════════════════════
       { location: "Th\xE0nh ph\u1ED1 Phan Thi\u1EBFt, B\xECnh Thu\u1EADn", pType: "townhouse_center" },
       { location: "M\u0169i N\xE9, Phan Thi\u1EBFt, B\xECnh Thu\u1EADn", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 La Gi, B\xECnh Thu\u1EADn", pType: "townhouse_suburb" },
+      // ══ Miền Trung — Quảng Bình / Quảng Trị ══════════════════════════════════
       { location: "Th\xE0nh ph\u1ED1 \u0110\u1ED3ng H\u1EDBi, Qu\u1EA3ng B\xECnh", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 \u0110\xF4ng H\xE0, Qu\u1EA3ng Tr\u1ECB", pType: "townhouse_center" },
+      // ══ Miền Bắc — Thanh Hóa / Nghệ An / Hà Tĩnh ════════════════════════════
       { location: "Th\xE0nh ph\u1ED1 Thanh H\xF3a, Thanh H\xF3a", pType: "townhouse_center" },
       { location: "Th\u1ECB x\xE3 S\u1EA7m S\u01A1n, Thanh H\xF3a", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 Nghi S\u01A1n, Thanh H\xF3a", pType: "townhouse_suburb" },
       { location: "Th\xE0nh ph\u1ED1 Vinh, Ngh\u1EC7 An", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 C\u1EEDa L\xF2, Ngh\u1EC7 An", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 H\xE0 T\u0129nh, H\xE0 T\u0129nh", pType: "townhouse_center" },
-      // Quảng Ninh
+      { location: "Th\u1ECB x\xE3 K\u1EF3 Anh, H\xE0 T\u0129nh", pType: "townhouse_suburb" },
+      // ══ Quảng Ninh ════════════════════════════════════════════════════════════
       { location: "Th\xE0nh ph\u1ED1 H\u1EA1 Long, Qu\u1EA3ng Ninh", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 M\xF3ng C\xE1i, Qu\u1EA3ng Ninh", pType: "townhouse_center" },
-      // Các tỉnh phía Bắc (vệ tinh Hà Nội)
+      { location: "Th\xE0nh ph\u1ED1 U\xF4ng B\xED, Qu\u1EA3ng Ninh", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 \u0110\xF4ng Tri\u1EC1u, Qu\u1EA3ng Ninh", pType: "townhouse_suburb" },
+      { location: "Th\xE0nh ph\u1ED1 C\u1EA9m Ph\u1EA3, Qu\u1EA3ng Ninh", pType: "townhouse_center" },
+      // ══ Các tỉnh phía Bắc (vệ tinh Hà Nội) ══════════════════════════════════
       { location: "Th\xE0nh ph\u1ED1 B\u1EAFc Ninh, B\u1EAFc Ninh", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 T\u1EEB S\u01A1n, B\u1EAFc Ninh", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 B\u1EAFc Giang, B\u1EAFc Giang", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 V\u0129nh Y\xEAn, V\u0129nh Ph\xFAc", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 Ph\xFAc Y\xEAn, V\u0129nh Ph\xFAc", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 H\u1EA3i D\u01B0\u01A1ng, H\u1EA3i D\u01B0\u01A1ng", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 H\u01B0ng Y\xEAn, H\u01B0ng Y\xEAn", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 M\u1EF9 H\xE0o, H\u01B0ng Y\xEAn", pType: "townhouse_suburb" },
       { location: "Th\xE0nh ph\u1ED1 Th\xE1i B\xECnh, Th\xE1i B\xECnh", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Ph\u1EE7 L\xFD, H\xE0 Nam", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Nam \u0110\u1ECBnh, Nam \u0110\u1ECBnh", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Ninh B\xECnh, Ninh B\xECnh", pType: "townhouse_center" },
-      // Trung du & Miền núi phía Bắc
+      // ══ Trung du & Miền núi phía Bắc ════════════════════════════════════════
       { location: "Th\xE0nh ph\u1ED1 Th\xE1i Nguy\xEAn, Th\xE1i Nguy\xEAn", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Vi\u1EC7t Tr\xEC, Ph\xFA Th\u1ECD", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Y\xEAn B\xE1i, Y\xEAn B\xE1i", pType: "townhouse_center" },
@@ -22495,11 +23630,16 @@ var init_marketDataService = __esm({
       { location: "Th\xE0nh ph\u1ED1 S\u01A1n La, S\u01A1n La", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 \u0110i\u1EC7n Bi\xEAn Ph\u1EE7, \u0110i\u1EC7n Bi\xEAn", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 H\xE0 Giang, H\xE0 Giang", pType: "townhouse_center" },
-      // Tây Nguyên
+      { location: "Th\xE0nh ph\u1ED1 Lai Ch\xE2u, Lai Ch\xE2u", pType: "townhouse_center" },
+      { location: "Th\xE0nh ph\u1ED1 B\u1EAFc K\u1EA1n, B\u1EAFc K\u1EA1n", pType: "townhouse_center" },
+      // ══ Tây Nguyên ═══════════════════════════════════════════════════════════
       { location: "Th\xE0nh ph\u1ED1 \u0110\xE0 L\u1EA1t, L\xE2m \u0110\u1ED3ng", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 B\u1EA3o L\u1ED9c, L\xE2m \u0110\u1ED3ng", pType: "townhouse_center" },
+      { location: "Huy\u1EC7n \u0110\u1EE9c Tr\u1ECDng, L\xE2m \u0110\u1ED3ng", pType: "townhouse_suburb" },
       { location: "Th\xE0nh ph\u1ED1 Bu\xF4n Ma Thu\u1ED9t, \u0110\u1EAFk L\u1EAFk", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 Bu\xF4n H\u1ED3, \u0110\u1EAFk L\u1EAFk", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Pleiku, Gia Lai", pType: "townhouse_center" },
+      { location: "Th\u1ECB x\xE3 An Kh\xEA, Gia Lai", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Kon Tum, Kon Tum", pType: "townhouse_center" },
       { location: "Th\xE0nh ph\u1ED1 Gia Ngh\u0129a, \u0110\u1EAFk N\xF4ng", pType: "townhouse_center" }
     ];
@@ -22803,6 +23943,29 @@ var init_marketDataService = __esm({
         logger.info(
           `[MarketData] Stored "${entry.location}" \u2192 ${(entry.pricePerM2 / 1e6).toFixed(0)} tr/m\xB2 (conf: ${entry.confidence}%, src: ${entry.source})`
         );
+        if (entry.source !== "REGIONAL_TABLE") {
+          const sourceMap = {
+            AI: "ai_search",
+            SEED: "ai_search",
+            BLENDED: "blended"
+          };
+          setImmediate(
+            () => priceCalibrationService.recordObservation({
+              locationKey: key,
+              locationDisplay: entry.location,
+              pricePerM2: entry.pricePerM2,
+              priceMin: entry.priceMin,
+              priceMax: entry.priceMax,
+              propertyType: "townhouse_center",
+              source: sourceMap[entry.source] ?? "ai_search",
+              confidence: entry.confidence,
+              trendText: entry.marketTrend?.slice(0, 100),
+              sourceCount: entry.sourceCount,
+              dataRecency: entry.dataRecency
+            }).catch(() => {
+            })
+          );
+        }
         this.broadcastUpdate(entry);
         return entry;
       }
@@ -22898,6 +24061,10 @@ ${negLines}`;
   } catch {
     return { fewShotSection: "", negativeRulesSection: "" };
   }
+}
+function sanitizePromptInput(str, maxLen = 300) {
+  if (!str) return "";
+  return str.slice(0, maxLen).replace(/[`\\]/g, "").replace(/\n{3,}/g, "\n\n").replace(/\b(?:ignore|system\s+prompt|instruction|override|jailbreak|forget\s+everything)\b/gi, "[x]").trim();
 }
 async function flushSpendBuffer() {
   if (spendBuffer.size === 0) return;
@@ -23250,8 +24417,9 @@ Nguy\xEAn t\u1EAFc:
             valuation_direction: { type: Type.STRING, description: "H\u01B0\u1EDBng nh\xE0: \u0110\xF4ng, T\xE2y, Nam, B\u1EAFc, \u0110\xF4ng Nam, T\xE2y B\u1EAFc, v.v." },
             valuation_floor: { type: Type.NUMBER, description: "V\u1ECB tr\xED t\u1EA7ng (cho c\u0103n h\u1ED9). VD: 't\u1EA7ng 10' \u2192 10, 't\u1EA7ng tr\u1EC7t' \u2192 1, 't\u1EA7ng cao nh\u1EA5t/penthouse' \u2192 30" },
             valuation_frontage: { type: Type.NUMBER, description: "Chi\u1EC1u r\u1ED9ng m\u1EB7t ti\u1EC1n nh\xE0/l\xF4 \u0111\u1EA5t (m\xE9t). VD: 'm\u1EB7t ti\u1EC1n 5m' \u2192 5, 'ngang 4m' \u2192 4, 'm\u1EB7t ngang 6 m\xE9t' \u2192 6" },
-            valuation_furnishing: { type: Type.STRING, enum: ["FULL", "BASIC", "NONE"], description: "T\xECnh tr\u1EA1ng n\u1ED9i th\u1EA5t. FULL=full n\u1ED9i th\u1EA5t/\u0111\u1EA7y \u0111\u1EE7, BASIC=n\u1ED9i th\u1EA5t c\u01A1 b\u1EA3n/m\u1ED9t ph\u1EA7n, NONE=kh\xF4ng n\u1ED9i th\u1EA5t/b\xE0n giao th\xF4" },
-            valuation_building_age: { type: Type.NUMBER, description: "Tu\u1ED5i c\xF4ng tr\xECnh (n\u0103m). VD: 'nh\xE0 x\xE2y 2010' \u2192 15 (n\u0103m 2025), 'm\u1EDBi x\xE2y/2024' \u2192 1, 'x\xE2y 5 n\u0103m' \u2192 5, 'c\u0169 20 n\u0103m' \u2192 20" }
+            valuation_furnishing: { type: Type.STRING, enum: ["LUXURY", "FULL", "BASIC", "NONE"], description: "T\xECnh tr\u1EA1ng n\u1ED9i th\u1EA5t. LUXURY=n\u1ED9i th\u1EA5t cao c\u1EA5p/luxury, FULL=full n\u1ED9i th\u1EA5t/\u0111\u1EA7y \u0111\u1EE7, BASIC=n\u1ED9i th\u1EA5t c\u01A1 b\u1EA3n/m\u1ED9t ph\u1EA7n, NONE=kh\xF4ng n\u1ED9i th\u1EA5t/b\xE0n giao th\xF4" },
+            valuation_building_age: { type: Type.NUMBER, description: "Tu\u1ED5i c\xF4ng tr\xECnh (n\u0103m). VD: 'nh\xE0 x\xE2y 2010' \u2192 15 (n\u0103m 2025), 'm\u1EDBi x\xE2y/2024' \u2192 1, 'x\xE2y 5 n\u0103m' \u2192 5, 'c\u0169 20 n\u0103m' \u2192 20" },
+            valuation_bedrooms: { type: Type.NUMBER, description: "S\u1ED1 ph\xF2ng ng\u1EE7 (ch\u1EC9 cho c\u0103n h\u1ED9/penthouse). VD: 'studio/1 ph\xF2ng' \u2192 0/1, '2PN/2 ph\xF2ng ng\u1EE7' \u2192 2, '3PN' \u2192 3, '4 ph\xF2ng ng\u1EE7 tr\u1EDF l\xEAn' \u2192 4" }
           }
         },
         confidence: { type: Type.NUMBER, description: "\u0110\u1ED9 tin c\u1EADy ph\xE2n lo\u1EA1i t\u1EEB 0 \u0111\u1EBFn 1 (v\xED d\u1EE5: 0.85 = 85%)" }
@@ -23537,20 +24705,19 @@ TIN NH\u1EAEN HI\u1EC6N T\u1EA0I: "${state.userMessage}"
 
 TH\xD4NG TIN KH\xC1CH: ${state.systemContext}
 
-QUY T\u1EAEC NH\u1EACN D\u1EA0NG S\u1ED0 TI\u1EBENG VI\u1EC6T \u2014 b\u1EAFt bu\u1ED9c:
-- "2 t\u1EF7" / "hai t\u1EF7" / "2 t\u1EC9" / "HAI T\u1EF6" \u2192 budget_max: 2000000000
-- "1.5 t\u1EF7" / "m\u1ED9t r\u01B0\u1EE1i" / "r\u01B0\u1EE1i t\u1EF7" / "1 t\u1EF7 r\u01B0\u1EE1i" / "1,5 t\u1EF7" \u2192 1500000000
-- "500 tri\u1EC7u" / "n\u0103m tr\u0103m tri\u1EC7u" / "0.5 t\u1EF7" \u2192 500000000
-- "3.2 t\u1EF7" / "ba t\u1EF7 hai" / "3,2 t\u1EF7" \u2192 3200000000
-- "tr\xEAn 80m\xB2" / "\xEDt nh\u1EA5t 100m" / "t\u1ED1i thi\u1EC3u 90 m\xE9t" / "kho\u1EA3ng 70m" \u2192 area_min: 80/100/90/70
-- "l\xE3i su\u1EA5t 7%" / "7 ph\u1EA7n tr\u0103m" / "l\xE3i 7 ph\u1EA7n" \u2192 loan_rate: 7
-- "vay 20 n\u0103m" / "20 n\u0103m" / "hai m\u01B0\u01A1i n\u0103m" \u2192 loan_years: 20
-- "l\u1ED9 gi\u1EDBi 12m" / "m\u1EB7t ti\u1EC1n \u0111\u01B0\u1EDDng 8m" / "h\u1EBBm 4m" / "ng\xF5 3m" \u2192 valuation_road_width: 12/8/4/3
-- "h\u01B0\u1EDBng nam" / "h\u01B0\u1EDBng \u0111\xF4ng nam" / "h\u01B0\u1EDBng b\u1EAFc" \u2192 valuation_direction
-- "t\u1EA7ng 5" / "t\u1EA7ng 15" / "t\u1EA7ng tr\u1EC7t" / "l\u1EA7u 3" \u2192 valuation_floor: 5/15/1/4 (l\u1EA7u N = t\u1EA7ng N+1)
-- "m\u1EB7t ti\u1EC1n 5m" / "ngang 4 m\xE9t" / "r\u1ED9ng 6m" / "m\u1EB7t ngang 7m" \u2192 valuation_frontage: 5/4/6/7
-- "full n\u1ED9i th\u1EA5t" / "\u0111\u1EA7y \u0111\u1EE7 n\u1ED9i th\u1EA5t" \u2192 valuation_furnishing: FULL | "n\u1ED9i th\u1EA5t c\u01A1 b\u1EA3n" / "m\u1ED9t ph\u1EA7n" \u2192 BASIC | "b\xE0n giao th\xF4" / "kh\xF4ng n\u1ED9i th\u1EA5t" \u2192 NONE
-- "nh\xE0 x\xE2y n\u0103m 2015" \u2192 valuation_building_age: 10 (n\u0103m 2025) | "m\u1EDBi x\xE2y" / "x\xE2y 2024" \u2192 1 | "c\u0169 15 n\u0103m" \u2192 15 | "nh\xE0 c\u0169" (kh\xF4ng r\xF5) \u2192 20
+QUY T\u1EAEC TR\xCDCH XU\u1EA4T S\u1ED0 TI\u1EBENG VI\u1EC6T:
+Ng\xE2n s\xE1ch: "2 t\u1EF7/hai t\u1EF7/2 t\u1EC9"\u21922000000000 | "1.5 t\u1EF7/m\u1ED9t r\u01B0\u1EE1i/1,5 t\u1EF7"\u21921500000000 | "500 tri\u1EC7u/0.5 t\u1EF7"\u2192500000000
+Di\u1EC7n t\xEDch: "tr\xEAn 80m\xB2/\xEDt nh\u1EA5t 100m/kho\u1EA3ng 70m"\u2192area_min: 80/100/70
+Vay: "l\xE3i su\u1EA5t 7%/7 ph\u1EA7n tr\u0103m"\u2192loan_rate:7 | "vay 20 n\u0103m/hai m\u01B0\u01A1i n\u0103m"\u2192loan_years:20
+\u0110\u1ECBnh gi\xE1:
+\u2022 valuation_address: Gh\xE9p \u0110\u1EA6Y \u0110\u1EE6 th\xF4ng tin v\u1ECB tr\xED t\u1EEB tin nh\u1EAFn \u2192 "H\u1EBBm 10 \u0110\u01B0\u1EDDng Nguy\u1EC5n V\u0103n C\u1EEB, P.An B\xECnh, Q.5, TP.HCM" | T\xEAn d\u1EF1 \xE1n \u0111\u1EE7: "Vinhomes Grand Park, Th\u1EE7 \u0110\u1EE9c, TP.HCM" | Khu v\u1EF1c: "Ph\xFA M\u1EF9 H\u01B0ng, Q.7, TP.HCM" | N\u1EBFu ch\u1EC9 c\xF3 qu\u1EADn/t\u1EC9nh: "B\xECnh Th\u1EA1nh, TP.HCM" | Vi\u1EBFt t\u1EAFt \u0111\u01B0\u1EE3c d\xF9ng: Q.=qu\u1EADn, P.=ph\u01B0\u1EDDng, H.=huy\u1EC7n, TP.=th\xE0nh ph\u1ED1, TX.=th\u1ECB x\xE3
+\u2022 valuation_road_width: "\u0111\u01B0\u1EDDng 8m/h\u1EBBm 4m/h\u1EBBm xe h\u01A1i/\u0111\u01B0\u1EDDng l\u1EDBn"\u21928/4/4/12 | N\u1EBFu kh\xF4ng \u0111\u1EC1 c\u1EADp \u2192 b\u1ECF tr\u1ED1ng
+\u2022 valuation_direction: "h\u01B0\u1EDBng nam/\u0111\xF4ng nam/t\xE2y b\u1EAFc"\u2192gi\u1EEF nguy\xEAn ti\u1EBFng Vi\u1EC7t
+\u2022 valuation_floor: "t\u1EA7ng 5/l\u1EA7u 3"\u21925/4 (l\u1EA7u N=t\u1EA7ng N+1) | "t\u1EA7ng tr\u1EC7t/tr\u1EC7t"\u21921
+\u2022 valuation_frontage: "ngang 5m/r\u1ED9ng 6m/m\u1EB7t ti\u1EC1n 4m"\u21925/6/4
+\u2022 valuation_furnishing: "n\u1ED9i th\u1EA5t cao c\u1EA5p/luxury/full option"\u2192LUXURY | "full/\u0111\u1EA7y \u0111\u1EE7/n\u1ED9i th\u1EA5t \u0111\u1EA7y \u0111\u1EE7"\u2192FULL | "c\u01A1 b\u1EA3n/m\u1ED9t ph\u1EA7n/b\xE1n n\u1ED9i th\u1EA5t"\u2192BASIC | "th\xF4/kh\xF4ng n\u1ED9i th\u1EA5t/b\xE0n giao th\xF4"\u2192NONE
+\u2022 valuation_building_age: "x\xE2y 2015"\u219210 | "m\u1EDBi x\xE2y/x\xE2y m\u1EDBi"\u21921 | "c\u0169 15 n\u0103m"\u219215 | "nh\xE0 c\u0169"\u219220 | "nh\xE0 c\u0169 k\u1EF9"\u219230
+\u2022 valuation_bedrooms: "studio"\u21920 | "1PN/1 ph\xF2ng ng\u1EE7"\u21921 | "2PN/2 ph\xF2ng"\u21922 | "3PN"\u21923 | "4PN tr\u1EDF l\xEAn"\u21924
 
 B\u1EA2NG PH\xC2N LO\u1EA0I \xDD \u0110\u1ECANH (10 lo\u1EA1i \u2014 ch\u1ECDn 1):
 1. EXPLAIN_LEGAL \u2014 H\u1ECFi: s\u1ED5 h\u1ED3ng, s\u1ED5 \u0111\u1ECF, ph\xE1p l\xFD, gi\u1EA5y t\u1EDD, vi b\u1EB1ng, H\u0110MB, sang t\xEAn, th\u1EBF ch\u1EA5p, quy ho\u1EA1ch
@@ -23603,6 +24770,14 @@ QUY T\u1EAEC \u01AFU TI\xCAN khi tin nh\u1EAFn h\u1ED7n h\u1EE3p:
           plan.confidence = rawConf > 1 ? Math.max(0, Math.min(1, rawConf / 100)) : Math.max(0, Math.min(1, rawConf));
           const confPct = Math.round(plan.confidence * 100);
           this.updateTrace(state.trace, `\u2192 ${plan.next_step} (conf: ${confPct}%)${entityStr}`, GENAI_CONFIG.MODELS.ROUTER);
+          let routerSystemContextAddition = "";
+          if (plan.confidence < 0.6) {
+            const originalIntent = plan.next_step;
+            plan.next_step = "DIRECT_ANSWER";
+            routerSystemContextAddition = `
+[ROUTER_LOW_CONFIDENCE]: Confidence=${confPct}% \u2014 AI kh\xF4ng ch\u1EAFc ch\u1EAFn (intent d\u1EF1 \u0111o\xE1n: "${originalIntent}"). WRITER ph\u1EA3i: (1) tr\u1EA3 l\u1EDDi ng\u1EAFn g\u1ECDn n\u1EBFu c\xF3 th\u1EC3, (2) h\u1ECFi 1 c\xE2u l\xE0m r\xF5 t\u1EF1 nhi\xEAn \u0111\u1EC3 x\xE1c \u0111\u1ECBnh kh\xE1ch c\u1EA7n g\xEC. Kh\xF4ng \u0111\u01B0\u1EE3c \u0111o\xE1n m\xF9.`;
+            this.updateTrace(state.trace, `\u26A0\uFE0F Low confidence ${confPct}% \u2192 fallback DIRECT_ANSWER + clarification`, GENAI_CONFIG.MODELS.ROUTER);
+          }
           if (state.lead?.id) {
             try {
               const currentPrefs = state.lead.preferences || {};
@@ -23643,7 +24818,20 @@ QUY T\u1EAEC \u01AFU TI\xCAN khi tin nh\u1EAFn h\u1ED7n h\u1EE3p:
             } catch {
             }
           }
-          return { plan };
+          feedbackRepository.logObservation(state.tenantId, "ROUTER", plan.next_step, "INTENT_CLASSIFIED", {
+            intent: plan.next_step,
+            confidence: confPct,
+            lowConfidence: plan.confidence < 0.6,
+            budgetDetected: !!ext.budget_max,
+            locationDetected: !!ext.location_keyword,
+            propertyTypeDetected: !!ext.property_type,
+            msgLength: state.userMessage.length
+          }).catch(() => {
+          });
+          return {
+            plan,
+            systemContext: routerSystemContextAddition ? state.systemContext + routerSystemContextAddition : state.systemContext
+          };
         });
         graph.addNode("INVENTORY_AGENT", async (state) => {
           state.trace.push({ id: "INVENTORY", node: "INVENTORY_AGENT", status: "RUNNING", timestamp: Date.now() });
@@ -23657,35 +24845,39 @@ QUY T\u1EAEC \u01AFU TI\xCAN khi tin nh\u1EAFn h\u1ED7n h\u1EE3p:
           const isUrgent = /gấp|tháng này|tuần này|tháng sau|sắp hết hàng|cần ngay|khẩn/.test(msg);
           const budgetTier = !budgetMax ? "Ch\u01B0a r\xF5" : budgetMax < 3e9 ? "D\u01B0\u1EDBi 3 T\u1EF7" : budgetMax < 7e9 ? "3\u20137 T\u1EF7" : budgetMax < 15e9 ? "7\u201315 T\u1EF7" : "Tr\xEAn 15 T\u1EF7";
           const buyerProfile = isInvestor ? "\u0110\u1EA6U_T\u01AF" : isFirstBuyer ? "\u1EDE_TH\u1EF0C_L\u1EA6N_\u0110\u1EA6U" : "CH\u01AFA_R\xD5";
-          const inventoryAnalysisPrompt = `B\u1EA1n l\xE0 chuy\xEAn gia t\u01B0 v\u1EA5n B\u0110S Vi\u1EC7t Nam. D\u01B0\u1EDBi \u0111\xE2y l\xE0 k\u1EBFt qu\u1EA3 t\xECm ki\u1EBFm kho h\xE0ng th\xF4:
-
+          const inventoryAnalysisPrompt = `K\u1EBET QU\u1EA2 T\xCCM KI\u1EBEM KHO H\xC0NG:
 ${searchRes}
 
-H\u1ED2 S\u01A0 Y\xCAU C\u1EA6U:
-- Ng\xE2n s\xE1ch: ${budgetTier}
-- Khu v\u1EF1c: ${extraction.location_keyword || "Ch\u01B0a r\xF5"}
-- Lo\u1EA1i B\u0110S: ${extraction.property_type || "Ch\u01B0a r\xF5"}
-- Di\u1EC7n t\xEDch t\u1ED1i thi\u1EC3u: ${extraction.area_min ? extraction.area_min + "m\xB2" : "Ch\u01B0a r\xF5"}
-- M\u1EE5c \u0111\xEDch: ${isInvestor ? "\u0110\u1EA6U T\u01AF (sinh l\u1EDDi/cho thu\xEA)" : isFirstBuyer ? "\u1EDE TH\u1EF0C (l\u1EA7n \u0111\u1EA7u mua)" : "Ch\u01B0a r\xF5 \u2014 c\xF3 th\u1EC3 \u1EDF th\u1EF1c ho\u1EB7c \u0111\u1EA7u t\u01B0"}
-- M\u1EE9c \u0111\u1ED9 kh\u1EA9n c\u1EA5p: ${isUrgent ? "G\u1EA4P \u2014 c\u1EA7n quy\u1EBFt \u0111\u1ECBnh s\u1EDBm" : "B\xECnh th\u01B0\u1EDDng"}
+H\u1ED2 S\u01A0: Ng\xE2n s\xE1ch ${budgetTier} | Khu v\u1EF1c: ${extraction.location_keyword || "Ch\u01B0a r\xF5"} | Lo\u1EA1i: ${extraction.property_type || "Ch\u01B0a r\xF5"} | Di\u1EC7n t\xEDch: ${extraction.area_min ? ">=" + extraction.area_min + "m\xB2" : "Ch\u01B0a r\xF5"} | M\u1EE5c \u0111\xEDch: ${isInvestor ? "\u0110\u1EA6U T\u01AF" : isFirstBuyer ? "\u1EDE TH\u1EF0C L\u1EA6N \u0110\u1EA6U" : "Ch\u01B0a r\xF5"} | Kh\u1EA9n c\u1EA5p: ${isUrgent ? "C\xD3" : "Kh\xF4ng"}
 
-NHI\u1EC6M V\u1EE4: Ph\xE2n t\xEDch top 3 B\u0110S ph\xF9 h\u1EE3p nh\u1EA5t, vi\u1EBFt ng\u1EAFn g\u1ECDn d\u1EA1ng structured data cho t\u01B0 v\u1EA5n vi\xEAn:
-1. X\u1EBFp h\u1EA1ng theo m\u1EE9c \u0111\u1ED9 ph\xF9 h\u1EE3p v\u1EDBi h\u1ED3 s\u01A1 (l\xFD do ng\u1EAFn g\u1ECDn)
-2. M\u1ED7i B\u0110S: \u0111i\u1EC3m KH\xC1C BI\u1EC6T n\u1ED5i b\u1EADt so v\u1EDBi c\xE1c B\u0110S c\xF2n l\u1EA1i (kh\xF4ng ch\u1EC9 li\u1EC7t k\xEA th\xF4ng s\u1ED1)
-3. N\u1EBFu m\u1EE5c \u0111\xEDch \u0110\u1EA6U T\u01AF: \u01B0\u1EDBc t\xEDnh t\u1EF7 su\u1EA5t cho thu\xEA (gi\xE1 thu\xEA th\u1ECB tr\u01B0\u1EDDng / gi\xE1 b\xE1n \xD7 100%)
-4. 1 \u0111i\u1EC3m m\u1EA1nh \u0111\u1EB7c bi\u1EC7t + 1 r\u1EE7i ro ti\u1EC1m \u1EA9n cho m\u1ED7i B\u0110S
-5. \u0110\u1EC1 xu\u1EA5t B\u0110S ph\xF9 h\u1EE3p nh\u1EA5t v\u1EDBi h\u1ED3 s\u01A1 n\xE0y \u2014 gi\u1EA3i th\xEDch 1 c\xE2u ng\u1EAFn
-
-Vi\u1EBFt ti\u1EBFng Vi\u1EC7t, bullet point, t\u1ED1i \u0111a 200 t\u1EEB.`;
+PH\xC2N T\xCDCH TOP 3 B\u0110S PH\xD9 H\u1EE2P NH\u1EA4T (bullet point, max 200 t\u1EEB):
+1. X\u1EBFp h\u1EA1ng + l\xFD do ng\u1EAFn g\u1ECDn (kh\u1EDBp h\u1ED3 s\u01A1 \u1EDF \u0111i\u1EC3m n\xE0o)
+2. \u0110i\u1EC3m KH\xC1C BI\u1EC6T n\u1ED5i b\u1EADt m\u1ED7i B\u0110S (kh\xF4ng ch\u1EC9 li\u1EC7t k\xEA th\xF4ng s\u1ED1)
+3. ${isInvestor ? "\u01AF\u1EDBc t\xEDnh t\u1EF7 su\u1EA5t cho thu\xEA (%)" : "1 \u0111i\u1EC3m m\u1EA1nh + 1 r\u1EE7i ro ti\u1EC1m \u1EA9n m\u1ED7i c\u0103n"}
+4. Khuy\u1EBFn ngh\u1ECB c\u0103n PH\xD9 NH\u1EA4T \u2014 l\xFD do 1 c\xE2u`;
+          const invRlhf = await buildRlhfContext(state.tenantId, "SEARCH_INVENTORY").catch(() => ({ fewShotSection: "", negativeRulesSection: "" }));
+          const invObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, "INVENTORY_AGENT").catch(() => "");
           const inventorySystemInstruction = await getInventoryInstruction(state.tenantId);
           const inventoryAI = await getAiClient2().models.generateContent({
             model: GENAI_CONFIG.MODELS.EXTRACTOR,
-            contents: inventoryAnalysisPrompt,
+            contents: inventoryAnalysisPrompt + invRlhf.fewShotSection + invRlhf.negativeRulesSection + invObsInsights,
             config: { systemInstruction: inventorySystemInstruction }
           });
           const inventoryAnalysisText = inventoryAI.text || "";
           const firstLine = searchRes.split("\n")[0];
           this.updateTrace(state.trace, firstLine || "Kho h\xE0ng \u0111\xE3 \u0111\u01B0\u1EE3c tra c\u1EE9u.", GENAI_CONFIG.MODELS.EXTRACTOR);
+          const resultCountMatch = searchRes.match(/Tìm thấy (\d+) sản phẩm/);
+          feedbackRepository.logObservation(state.tenantId, "INVENTORY_AGENT", "SEARCH_INVENTORY", "QUERY_RESULT", {
+            resultCount: resultCountMatch ? parseInt(resultCountMatch[1]) : 0,
+            hasResults: !searchRes.startsWith("Hi\u1EC7n t\u1EA1i kho h\xE0ng"),
+            budgetTier,
+            buyerProfile,
+            isUrgent,
+            location: extraction.location_keyword || null,
+            propertyType: extraction.property_type || null,
+            areaMin: extraction.area_min || null
+          }).catch(() => {
+          });
           return {
             systemContext: state.systemContext + `
 
@@ -23753,22 +24945,31 @@ K\u1ECACH B\u1EA2N KH\xC1CH: ${loanScenario}
 H\u1ED2 S\u01A0 KH\xC1CH: ${state.lead ? `T\xEAn: ${state.lead.name} | Ng\xE2n s\xE1ch: ${state.lead.preferences?.budgetMax ? (state.lead.preferences.budgetMax / 1e9).toFixed(2) + " T\u1EF7" : "Ch\u01B0a r\xF5"} | Giai \u0111o\u1EA1n: ${state.lead.stage || "Ch\u01B0a r\xF5"}` : "Ch\u01B0a c\xF3 h\u1ED3 s\u01A1"}
 TIN NH\u1EAEN KH\xC1CH: "${state.userMessage}"
 
-NHI\u1EC6M V\u1EE4: Ph\xE2n t\xEDch t\xE0i ch\xEDnh theo k\u1ECBch b\u1EA3n ${loanScenario} cho t\u01B0 v\u1EA5n vi\xEAn:
-1. \u0110\xE1nh gi\xE1 kh\u1EA3 n\u0103ng: thu nh\u1EADp t\u1ED1i thi\u1EC3u c\u1EA7n c\xF3 (tr\u1EA3/th\xE1ng \u2264 40% thu nh\u1EADp) = bao nhi\xEAu tri\u1EC7u/th\xE1ng?
-2. ${isCompareScenario ? "So s\xE1nh k\u1EF3 h\u1EA1n: k\u1EF3 h\u1EA1n n\xE0o t\u1ED1i \u01B0u h\u01A1n trong tr\u01B0\u1EDDng h\u1EE3p n\xE0y \u2014 gi\u1EA3i th\xEDch b\u1EB1ng s\u1ED1" : isInvestorLoan ? "Ph\xE2n t\xEDch d\xF2ng ti\u1EC1n \u0111\u1EA7u t\u01B0: n\u1EBFu cho thu\xEA X tri\u1EC7u/th\xE1ng, bao l\xE2u ho\xE0 v\u1ED1n? T\u1EF7 su\u1EA5t l\u1EE3i nhu\u1EADn th\u1EF1c?" : isAffordabilityQ ? "\u0110\xE1nh gi\xE1 th\u1EB3ng th\u1EAFn: c\xF3 vay \u0111\u01B0\u1EE3c kh\xF4ng, \u0111i\u1EC1u ki\u1EC7n g\xEC c\u1EA7n chu\u1EA9n b\u1ECB?" : "R\u1EE7i ro t\xE0i ch\xEDnh ch\xEDnh c\u1EA7n c\u1EA3nh b\xE1o kh\xE1ch"}
-3. Ng\xE2n h\xE0ng cho vay 70-80% gi\xE1 tr\u1ECB B\u0110S \u2014 c\u1EA7n v\u1ED1n t\u1EF1 c\xF3 bao nhi\xEAu? G\u1EE3i \xFD ti\u1EBFt ki\u1EC7m n\u1EBFu ch\u01B0a \u0111\u1EE7
-4. ${isRefinance ? "\u0110i\u1EC1u ki\u1EC7n v\xE0 chi ph\xED t\xE1i c\u01A1 c\u1EA5u \u2014 c\xF3 th\u1EF1c s\u1EF1 ti\u1EBFt ki\u1EC7m kh\xF4ng?" : "T\u1ED1i \u01B0u ho\xE1: n\xEAn ch\u1ECDn k\u1EF3 h\u1EA1n n\xE0o, ng\xE2n h\xE0ng n\xE0o th\u01B0\u1EDDng c\xF3 l\xE3i su\u1EA5t t\u1ED1t nh\u1EA5t?"}
-5. C\u1EA3nh b\xE1o: l\xE3i su\u1EA5t th\u1EA3 n\u1ED5i sau \u01B0u \u0111\xE3i \u2014 k\u1ECBch b\u1EA3n x\u1EA5u nh\u1EA5t tr\u1EA3 bao nhi\xEAu?
-
-Vi\u1EBFt ti\u1EBFng Vi\u1EC7t, bullet point, s\u1EAFc b\xE9n, t\u1ED1i \u0111a 180 t\u1EEB. D\xF9ng s\u1ED1 c\u1EE5 th\u1EC3 \u2014 kh\xF4ng n\xF3i chung chung.`;
+PH\xC2N T\xCDCH T\xC0I CH\xCDNH \u2014 K\u1ECACH B\u1EA2N: ${loanScenario} (bullet point, max 180 t\u1EEB, d\xF9ng s\u1ED1 c\u1EE5 th\u1EC3):
+1. Thu nh\u1EADp t\u1ED1i thi\u1EC3u c\u1EA7n c\xF3 (quy t\u1EAFc 40%): ${monthlyFmt} \xF7 40% = bao nhi\xEAu tri\u1EC7u/th\xE1ng?
+2. ${loanScenario === "SO_S\xC1NH_K\u1EF2_H\u1EA0N" ? "So s\xE1nh 2 k\u1EF3 h\u1EA1n b\u1EB1ng s\u1ED1: tr\u1EA3/th\xE1ng & t\u1ED5ng l\xE3i ch\xEAnh nhau bao nhi\xEAu \u2014 k\u1EF3 h\u1EA1n n\xE0o t\u1ED1i \u01B0u?" : loanScenario === "\u0110\u1EA6U_T\u01AF" ? "D\xF2ng ti\u1EC1n \u0111\u1EA7u t\u01B0: n\u1EBFu cho thu\xEA X tri\u1EC7u/th\xE1ng \u2192 bao l\xE2u ho\xE0 v\u1ED1n? T\u1EF7 su\u1EA5t th\u1EF1c sau tr\u1EA3 n\u1EE3?" : loanScenario === "\u0110\xC1NH_GI\xC1_KH\u1EA2_N\u0102NG" ? "Th\u1EB3ng th\u1EAFn: c\xF3 vay \u0111\u01B0\u1EE3c kh\xF4ng? \u0110i\u1EC1u ki\u1EC7n h\u1ED3 s\u01A1 & v\u1ED1n t\u1EF1 c\xF3 t\u1ED1i thi\u1EC3u c\u1EA7n chu\u1EA9n b\u1ECB" : loanScenario === "T\xC1I_C\u01A0_C\u1EA4U" ? "Chi ph\xED & \u0111i\u1EC1u ki\u1EC7n t\xE1i c\u01A1 c\u1EA5u \u2014 c\xF3 th\u1EF1c s\u1EF1 ti\u1EBFt ki\u1EC7m so v\u1EDBi gi\u1EEF nguy\xEAn?" : "R\u1EE7i ro & t\u1ED1i \u01B0u: k\u1EF3 h\u1EA1n n\xE0o n\xEAn ch\u1ECDn, ng\xE2n h\xE0ng n\xE0o th\u01B0\u1EDDng l\xE3i t\u1ED1t nh\u1EA5t?"}
+3. V\u1ED1n t\u1EF1 c\xF3 c\u1EA7n c\xF3 (NH cho vay 70-80% B\u0110S): t\u1ED1i thi\u1EC3u bao nhi\xEAu? G\u1EE3i \xFD n\u1EBFu ch\u01B0a \u0111\u1EE7
+4. C\u1EA3nh b\xE1o l\xE3i su\u1EA5t th\u1EA3 n\u1ED5i sau \u01B0u \u0111\xE3i: k\u1ECBch b\u1EA3n x\u1EA5u nh\u1EA5t tr\u1EA3 ${Math.round(loanData.monthly * 1.25).toLocaleString("vi-VN")} VN\u0110/th\xE1ng (+25%)
+5. 1 g\u1EE3i \xFD t\u1ED1i \u01B0u ho\xE1 c\u1EE5 th\u1EC3 ph\xF9 h\u1EE3p k\u1ECBch b\u1EA3n n\xE0y`;
+          const finRlhf = await buildRlhfContext(state.tenantId, "CALCULATE_LOAN").catch(() => ({ fewShotSection: "", negativeRulesSection: "" }));
+          const finObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, "FINANCE_AGENT").catch(() => "");
           const financeSystemInstruction = await getFinanceInstruction(state.tenantId);
           const financeAI = await getAiClient2().models.generateContent({
             model: GENAI_CONFIG.MODELS.EXTRACTOR,
-            contents: financeAdvisoryPrompt,
+            contents: financeAdvisoryPrompt + finRlhf.fewShotSection + finRlhf.negativeRulesSection + finObsInsights,
             config: { systemInstruction: financeSystemInstruction }
           });
           const financeAdvisoryText = financeAI.text || "";
           this.updateTrace(state.trace, `Vay ${(principal / 1e9).toFixed(2)} T\u1EF7 | ${rate}%/${years}n\u0103m \u2192 ${monthlyFmt}\u0111/th\xE1ng | ${loanScenario}`, GENAI_CONFIG.MODELS.EXTRACTOR);
+          feedbackRepository.logObservation(state.tenantId, "FINANCE_AGENT", "CALCULATE_LOAN", "LOAN_CALC", {
+            scenario: loanScenario,
+            principalBillion: parseFloat((principal / 1e9).toFixed(2)),
+            rate,
+            years,
+            isDefaultAmount,
+            hasAltScenario: !!altContext
+          }).catch(() => {
+          });
           return {
             systemContext: state.systemContext + `
 [LOAN CALCULATION]${defaultNote}:
@@ -23807,15 +25008,25 @@ NHI\u1EC6M V\u1EE4: Ph\xE2n t\xEDch ph\xE1p l\xFD theo g\xF3c \u0111\u1ED9 ${leg
 5. Khi n\xE0o c\u1EA7n thu\xEA lu\u1EADt s\u01B0 / \u0111\u1EBFn v\u0103n ph\xF2ng c\xF4ng ch\u1EE9ng b\u1EAFt bu\u1ED9c?
 
 Vi\u1EBFt ti\u1EBFng Vi\u1EC7t, bullet point, t\u1ED1i \u0111a 180 t\u1EEB. Tuy\u1EC7t \u0111\u1ED1i kh\xF4ng tr\xEDch d\u1EABn \u0111i\u1EC1u kho\u1EA3n lu\u1EADt kh\xF4 khan \u2014 d\xF9ng ng\xF4n ng\u1EEF th\u1EF1c t\u1EBF.`;
+          const legalRlhf = await buildRlhfContext(state.tenantId, "EXPLAIN_LEGAL").catch(() => ({ fewShotSection: "", negativeRulesSection: "" }));
+          const legalObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, "LEGAL_AGENT").catch(() => "");
           const legalSystemInstruction = await getLegalInstruction(state.tenantId);
           const legalAI = await getAiClient2().models.generateContent({
             model: GENAI_CONFIG.MODELS.EXTRACTOR,
-            contents: legalAnalysisPrompt,
+            contents: legalAnalysisPrompt + legalRlhf.fewShotSection + legalRlhf.negativeRulesSection + legalObsInsights,
             config: { systemInstruction: legalSystemInstruction }
           });
           const legalAnalysisText = legalAI.text || "";
           const legalSnippet = legalInfo.slice(0, 80) + (legalInfo.length > 80 ? "..." : "");
           this.updateTrace(state.trace, `Ph\xE1p l\xFD [${term}] | ${legalScenario}: ${legalSnippet}`, GENAI_CONFIG.MODELS.EXTRACTOR);
+          feedbackRepository.logObservation(state.tenantId, "LEGAL_AGENT", "EXPLAIN_LEGAL", "LEGAL_QUERY", {
+            term,
+            scenario: legalScenario,
+            isDispute,
+            isBuyer,
+            isSeller
+          }).catch(() => {
+          });
           return {
             systemContext: state.systemContext + `
 [LEGAL KNOWLEDGE]: ${legalInfo}
@@ -23873,14 +25084,26 @@ NHI\u1EC6M V\u1EE4: Vi\u1EBFt ghi ch\xFA c\xE1 nh\xE2n ho\xE1 cho t\u01B0 v\u1EA
 5. B\u01B0\u1EDBc ti\u1EBFp theo sau bu\u1ED5i xem: follow-up trong bao l\xE2u, c\xE1ch n\xE0o?
 
 Vi\u1EBFt ti\u1EBFng Vi\u1EC7t, bullet point, th\u1EF1c t\u1EBF, t\u1ED1i \u0111a 150 t\u1EEB. \u0110\xE2y l\xE0 ghi ch\xFA N\u1ED8I B\u1ED8 cho Sales \u2014 kh\xF4ng ph\u1EA3i tin nh\u1EAFn tr\u1EA3 l\u1EDDi kh\xE1ch.`;
+          const salesRlhf = await buildRlhfContext(state.tenantId, "DRAFT_BOOKING").catch(() => ({ fewShotSection: "", negativeRulesSection: "" }));
+          const salesObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, "SALES_AGENT").catch(() => "");
           const salesSystemInstruction = await getSalesInstruction(state.tenantId);
           const bookingAI = await getAiClient2().models.generateContent({
             model: GENAI_CONFIG.MODELS.EXTRACTOR,
-            contents: bookingPersonalizerPrompt,
+            contents: bookingPersonalizerPrompt + salesRlhf.fewShotSection + salesRlhf.negativeRulesSection + salesObsInsights,
             config: { systemInstruction: salesSystemInstruction }
           });
           const bookingBriefText = bookingAI.text || "";
           this.updateTrace(state.trace, `L\u1ECBch xem nh\xE0: ${timeFmt} t\u1EA1i ${location} | ${visitorProfile}`, GENAI_CONFIG.MODELS.EXTRACTOR);
+          feedbackRepository.logObservation(state.tenantId, "SALES_AGENT", "DRAFT_BOOKING", "BOOKING_REQUEST", {
+            visitorProfile,
+            isUrgentVisit,
+            isWeekend,
+            isGroupVisit,
+            isReturnVisit,
+            preferredHour,
+            proposedDay: proposed.toISOString().slice(0, 10)
+          }).catch(() => {
+          });
           return {
             artifact,
             suggestedAction: "BOOK_VIEWING",
@@ -23918,10 +25141,12 @@ NHI\u1EC6M V\u1EE4: Match \u01B0u \u0111\xE3i ph\xF9 h\u1EE3p nh\u1EA5t v\u1EDBi
 5. C\u1EA3nh b\xE1o: \u01B0u \u0111\xE3i n\xE0o S\u1EAEP H\u1EBET H\u1EA0N ho\u1EB7c S\u1EAEP H\u1EBET SU\u1EA4T?
 
 Vi\u1EBFt ti\u1EBFng Vi\u1EC7t, bullet point, th\u1EF1c t\u1EBF, t\u1ED1i \u0111a 160 t\u1EEB.`;
+          const mktRlhf = await buildRlhfContext(state.tenantId, "EXPLAIN_MARKETING").catch(() => ({ fewShotSection: "", negativeRulesSection: "" }));
+          const mktObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, "MARKETING_AGENT").catch(() => "");
           const marketingSystemInstruction = await getMarketingInstruction(state.tenantId);
           const marketingAI = await getAiClient2().models.generateContent({
             model: GENAI_CONFIG.MODELS.EXTRACTOR,
-            contents: marketingAnalysisPrompt,
+            contents: marketingAnalysisPrompt + mktRlhf.fewShotSection + mktRlhf.negativeRulesSection + mktObsInsights,
             config: { systemInstruction: marketingSystemInstruction }
           });
           const marketingAnalysisText = marketingAI.text || "";
@@ -23931,6 +25156,14 @@ Vi\u1EBFt ti\u1EBFng Vi\u1EC7t, bullet point, th\u1EF1c t\u1EBF, t\u1ED1i \u0111
             campaignCount > 0 ? `Marketing: ${campaignCount} \u01B0u \u0111\xE3i | Ph\xE2n kh\xFAc: ${budgetLabel}` : `Marketing: ${marketingInfo.slice(0, 80)}`,
             GENAI_CONFIG.MODELS.EXTRACTOR
           );
+          feedbackRepository.logObservation(state.tenantId, "MARKETING_AGENT", "EXPLAIN_MARKETING", "CAMPAIGN_MATCH", {
+            budgetLabel,
+            isInvestorMkt,
+            isUrgentMkt,
+            campaignCount,
+            budgetMax: budgetMax || null
+          }).catch(() => {
+          });
           return {
             systemContext: state.systemContext + `
 [MARKETING KNOWLEDGE]: ${marketingInfo}
@@ -23957,23 +25190,31 @@ LO\u1EA0I H\u1EE2P \u0110\u1ED2NG: ${contractType}
 K\u1ECACH B\u1EA2N: ${contractScenario} \u2014 ${scenarioFocus}
 TIN NH\u1EAEN KH\xC1CH: "${state.userMessage}"
 
-NHI\u1EC6M V\u1EE4: Ph\xE2n t\xEDch h\u1EE3p \u0111\u1ED3ng theo k\u1ECBch b\u1EA3n ${contractScenario}:
-1. \u0110i\u1EC1u kho\u1EA3n QUAN TR\u1ECCNG NH\u1EA4T c\u1EA7n \u0111\u1ECDc k\u1EF9 tr\u01B0\u1EDBc khi k\xFD (3-4 \u0111i\u1EC1u c\u1EE5 th\u1EC3)
-2. \u0110i\u1EC1u kho\u1EA3n R\u1EE6I RO th\u01B0\u1EDDng g\u1EB7p trong lo\u1EA1i H\u0110 n\xE0y \u2014 d\u1EA5u hi\u1EC7u nh\u1EADn bi\u1EBFt
-3. ${isDeposit ? "M\u1EE9c c\u1ECDc ph\u1ED5 bi\u1EBFn (5-10%), quy tr\xECnh & th\u1EDDi h\u1EA1n ho\xE0n c\u1ECDc khi m\u1ED9t b\xEAn vi ph\u1EA1m" : isLease ? "\u0110i\u1EC1u kho\u1EA3n t\u0103ng gi\xE1 thu\xEA, gia h\u1EA1n, b\u1ED3i th\u01B0\u1EDDng khi ch\u1EA5m d\u1EE9t tr\u01B0\u1EDBc h\u1EA1n" : "L\u1ECBch thanh to\xE1n/ti\u1EBFn \u0111\u1ED9 ti\xEAu chu\u1EA9n \u2014 th\xF4ng th\u01B0\u1EDDng chia l\xE0m m\u1EA5y \u0111\u1EE3t"}
-4. Quy\u1EC1n c\u1EE7a b\xEAn ${isLease ? "thu\xEA" : isDeposit ? "\u0111\u1EB7t c\u1ECDc" : "mua"} khi b\xEAn kia vi ph\u1EA1m
-5. Th\u1EE7 t\u1EE5c c\xF4ng ch\u1EE9ng b\u1EAFt bu\u1ED9c, thu\u1EBF ph\xED, th\u1EDDi gian sang t\xEAn (n\u1EBFu \xE1p d\u1EE5ng)
-
-Vi\u1EBFt ti\u1EBFng Vi\u1EC7t, bullet point, th\u1EF1c t\u1EBF, t\u1ED1i \u0111a 200 t\u1EEB. Kh\xF4ng tr\xEDch d\u1EABn \u0111i\u1EC1u lu\u1EADt \u2014 d\xF9ng ng\xF4n ng\u1EEF th\u1EF1c t\u1EBF.`;
+PH\xC2N T\xCDCH H\u1EE2P \u0110\u1ED2NG ${contractType} \u2014 K\u1ECACH B\u1EA2N ${contractScenario} (bullet point, max 200 t\u1EEB, ng\xF4n ng\u1EEF th\u1EF1c t\u1EBF):
+1. 3-4 \u0111i\u1EC1u kho\u1EA3n QUAN TR\u1ECCNG NH\u1EA4T c\u1EA7n \u0111\u1ECDc k\u1EF9 tr\u01B0\u1EDBc k\xFD
+2. \u0110i\u1EC1u kho\u1EA3n R\u1EE6I RO th\u01B0\u1EDDng g\u1EB7p \u2014 d\u1EA5u hi\u1EC7u nh\u1EADn bi\u1EBFt s\u1EDBm
+3. ${isDeposit ? "M\u1EE9c c\u1ECDc ph\u1ED5 bi\u1EBFn 5-10%, quy tr\xECnh & th\u1EDDi h\u1EA1n ho\xE0n c\u1ECDc khi vi ph\u1EA1m" : isLease ? "\u0110i\u1EC1u kho\u1EA3n t\u0103ng gi\xE1 thu\xEA h\xE0ng n\u0103m, gia h\u1EA1n, b\u1ED3i th\u01B0\u1EDDng ch\u1EA5m d\u1EE9t s\u1EDBm" : "L\u1ECBch thanh to\xE1n ti\xEAu chu\u1EA9n: th\u01B0\u1EDDng chia 5-7 \u0111\u1EE3t, \u0111\u1EE3t cu\u1ED1i khi nh\u1EADn S\u1ED5 H\u1ED3ng"}
+4. Quy\u1EC1n c\u1EE7a b\xEAn ${isLease ? "thu\xEA" : isDeposit ? "\u0111\u1EB7t c\u1ECDc" : "mua"} khi \u0111\u1ED1i ph\u01B0\u01A1ng vi ph\u1EA1m \u2014 c\xE1ch x\u1EED l\xFD th\u1EF1c t\u1EBF
+5. ${isRisk ? "TOP 3 \u0111i\u1EC1u kho\u1EA3n b\u1EA5t l\u1EE3i th\u01B0\u1EDDng b\u1ECB che gi\u1EA5u trong lo\u1EA1i H\u0110 n\xE0y" : "C\xF4ng ch\u1EE9ng/thu\u1EBF ph\xED th\u1EF1c t\u1EBF c\u1EA7n chu\u1EA9n b\u1ECB (thu\u1EBF TNCN 2%, l\u1EC7 ph\xED tr\u01B0\u1EDBc b\u1EA1 0.5%)"}`;
+          const contractRlhf = await buildRlhfContext(state.tenantId, "DRAFT_CONTRACT").catch(() => ({ fewShotSection: "", negativeRulesSection: "" }));
+          const contractObsInsights = await feedbackRepository.getObservationInsights(state.tenantId, "CONTRACT_AGENT").catch(() => "");
           const contractSystemInstruction = await getContractInstruction(state.tenantId);
           const contractAI = await getAiClient2().models.generateContent({
             model: GENAI_CONFIG.MODELS.EXTRACTOR,
-            contents: contractAnalysisPrompt,
+            contents: contractAnalysisPrompt + contractRlhf.fewShotSection + contractRlhf.negativeRulesSection + contractObsInsights,
             config: { systemInstruction: contractSystemInstruction }
           });
           const contractAnalysisText = contractAI.text || "";
           const contractSnippet = contractInfo.slice(0, 80) + (contractInfo.length > 80 ? "..." : "");
           this.updateTrace(state.trace, `H\u1EE3p \u0111\u1ED3ng [${contractType}] | ${contractScenario}: ${contractSnippet}`, GENAI_CONFIG.MODELS.EXTRACTOR);
+          feedbackRepository.logObservation(state.tenantId, "CONTRACT_AGENT", "DRAFT_CONTRACT", "CONTRACT_QUERY", {
+            contractType,
+            contractScenario,
+            isRisk,
+            isLease,
+            isDeposit
+          }).catch(() => {
+          });
           return {
             systemContext: state.systemContext + `
 [CONTRACT KNOWLEDGE]: ${contractInfo}
@@ -23997,23 +25238,19 @@ ${contractAnalysisText}`
           ].join("\n") : "Kh\xF4ng c\xF3 h\u1ED3 s\u01A1 kh\xE1ch h\xE0ng c\u1EE5 th\u1EC3.";
           const routerIntent = state.plan?.next_step || "UNKNOWN";
           const historyBlock = state.history.slice(-12).map((h) => `[${h.direction === "INBOUND" ? "Kh\xE1ch" : "Sale"}]: ${h.content}`).join("\n");
-          const analysisPrompt = `H\u1ED2 S\u01A0 KH\xC1CH H\xC0NG:
-${leadProfile}
-
-\xDD \u0110\u1ECANH HI\u1EC6N T\u1EA0I (AI Router): ${routerIntent}
-
-L\u1ECACH S\u1EEC T\u01AF\u01A0NG T\xC1C (12 tin nh\u1EAFn cu\u1ED1i):
+          const analysisPrompt = `H\u1ED2 S\u01A0: ${leadProfile}
+INTENT HI\u1EC6N T\u1EA0I: ${routerIntent}
+L\u1ECACH S\u1EEC (12 tin cu\u1ED1i):
 ${historyBlock || "(Ch\u01B0a c\xF3)"}
+TIN NH\u1EAEN: "${state.userMessage}"
 
-TIN NH\u1EAEN HI\u1EC6N T\u1EA0I: "${state.userMessage}"
-
-NHI\u1EC6M V\u1EE4 PH\xC2N T\xCDCH (ng\u1EAFn g\u1ECDn, s\u1EAFc b\xE9n, bullet point):
-1. \u1EA8n \xFD th\u1EF1c s\u1EF1 \u0111\u1EB1ng sau tin nh\u1EAFn n\xE0y \u2014 kh\xE1ch \u0111ang lo l\u1EAFng \u0111i\u1EC1u g\xEC, mu\u1ED1n g\xEC th\u1EADt s\u1EF1?
-2. Giai \u0111o\u1EA1n h\xE0nh tr\xECnh mua: Awareness / Consideration / Decision \u2014 t\u1EA1i sao?
-3. M\u1EE9c \u0111\u1ED9 s\u1EB5n s\xE0ng mua: X% \u2014 d\u1EA5u hi\u1EC7u n\xE0o trong h\u1ED9i tho\u1EA1i cho th\u1EA5y \u0111i\u1EC1u n\xE0y?
-4. \u0110i\u1EC3m r\u1EE7i ro c\u1EA7n l\u01B0u \xFD: t\xE0i ch\xEDnh, ph\xE1p l\xFD, so s\xE1nh competitor, \xE1p l\u1EF1c gia \u0111\xECnh?
-5. Phong c\xE1ch t\u01B0 v\u1EA5n ph\xF9 h\u1EE3p: Formal / Casual / Data-driven \u2014 d\u1EF1a tr\xEAn gi\u1ECDng v\u0103n v\xE0 ng\xE0nh ngh\u1EC1?
-6. Khuy\u1EBFn ngh\u1ECB h\xE0nh \u0111\u1ED9ng NGAY cho Sales (1 h\xE0nh \u0111\u1ED9ng c\u1EE5 th\u1EC3, c\xF3 th\u1EC3 th\u1EF1c hi\u1EC7n ngay h\xF4m nay)`;
+PH\xC2N T\xCDCH LEAD (bullet point, s\u1EAFc b\xE9n):
+1. \u1EA8n \xFD th\u1EF1c s\u1EF1 \u2014 kh\xE1ch lo \u0111i\u1EC1u g\xEC, mu\u1ED1n g\xEC th\u1EADt s\u1EF1?
+2. Giai \u0111o\u1EA1n mua: Awareness / Consideration / Decision \u2014 d\u1EA5u hi\u1EC7u c\u1EE5 th\u1EC3?
+3. M\u1EE9c s\u1EB5n s\xE0ng mua: X% \u2014 b\u1EB1ng ch\u1EE9ng t\u1EEB h\u1ED9i tho\u1EA1i?
+4. R\u1EE7i ro: t\xE0i ch\xEDnh / ph\xE1p l\xFD / so s\xE1nh competitor / \xE1p l\u1EF1c gia \u0111\xECnh?
+5. Phong c\xE1ch t\u01B0 v\u1EA5n: Formal / Casual / Data-driven \u2014 v\xEC sao?
+6. H\xC0NH \u0110\u1ED8NG NGAY cho Sales (1 vi\u1EC7c c\u1EE5 th\u1EC3 l\xE0m h\xF4m nay)`;
           const leadRlhf = await buildRlhfContext(state.tenantId, "ANALYZE_LEAD").catch(() => ({ fewShotSection: "", negativeRulesSection: "" }));
           const enrichedAnalysisPrompt = analysisPrompt + leadRlhf.fewShotSection + leadRlhf.negativeRulesSection;
           const leadAnalystSystemInstruction = await getLeadAnalystInstruction(state.tenantId);
@@ -24040,7 +25277,40 @@ NHI\u1EC6M V\u1EE4 PH\xC2N T\xCDCH (ng\u1EAFn g\u1ECDn, s\u1EAFc b\xE9n, bullet 
             } catch {
             }
           }
-          return { leadAnalysis: analysisText };
+          const readinessMatch = analysisText.match(/(\d{1,3})\s*%/);
+          const readiness = readinessMatch ? Math.min(100, parseInt(readinessMatch[1])) : 50;
+          const buyingStage = /\bDecision\b/i.test(analysisText) ? "Decision" : /\bConsideration\b/i.test(analysisText) ? "Consideration" : "Awareness";
+          const styleMatch = analysisText.match(/\b(Formal|Casual|Data-driven)\b/i);
+          const commStyle = styleMatch ? styleMatch[1] : "Casual";
+          const urgencySignals = analysisText.split("\n").filter((l) => /gấp|khẩn|quyết định|sắp|tuần này|tháng này|ký ngay/i.test(l)).map((l) => l.replace(/^[\d\.\-\*\•\s]+/, "").slice(0, 100)).slice(0, 3);
+          const hesitationSignals = analysisText.split("\n").filter((l) => /chần chừ|chưa chắc|so sánh|cân nhắc|chưa quyết|lo ngại|ngại/i.test(l)).map((l) => l.replace(/^[\d\.\-\*\•\s]+/, "").slice(0, 100)).slice(0, 3);
+          const actionLines = analysisText.split("\n").filter((l) => /khuyến nghị|hành động|ngay hôm|liên hệ|follow|gọi|nhắn/i.test(l)).map((l) => l.replace(/^[\d\.\-\*\•\s]+/, "").slice(0, 200));
+          const recommendedAction = actionLines[0] || "Li\xEAn h\u1EC7 follow-up c\xE1 nh\xE2n ho\xE1 trong 24h";
+          const leadBriefArtifact = {
+            type: "LEAD_BRIEF",
+            title: `Brief: ${state.lead?.name || "Kh\xE1ch h\xE0ng"}`,
+            data: {
+              leadName: state.lead?.name || "Kh\xE1ch h\xE0ng",
+              stage: buyingStage,
+              readiness,
+              communicationStyle: commStyle,
+              recommendedAction,
+              analysisSnippet: analysisText.slice(0, 400),
+              urgencySignals,
+              hesitationSignals
+            }
+          };
+          feedbackRepository.logObservation(state.tenantId, "LEAD_ANALYST", "ANALYZE_LEAD", "LEAD_PROFILE", {
+            buyingStage,
+            readiness,
+            commStyle,
+            hasUrgency: urgencySignals.length > 0,
+            hasHesitation: hesitationSignals.length > 0,
+            leadScore: lead?.score?.score || null,
+            leadStage: lead?.stage || null
+          }).catch(() => {
+          });
+          return { leadAnalysis: analysisText, artifact: leadBriefArtifact };
         });
         graph.addNode("WRITER", async (state) => {
           state.trace.push({ id: "WRITER", node: "WRITER", status: "RUNNING", timestamp: Date.now() });
@@ -24072,7 +25342,21 @@ ${conversationHistory || "(Ch\u01B0a c\xF3 l\u1ECBch s\u1EED)"}`;
           const writerPrompt = (() => {
             switch (currentIntent) {
               // ── 1. ĐỊNH GIÁ ──────────────────────────────────────────────────────
-              case "ESTIMATE_VALUATION":
+              case "ESTIMATE_VALUATION": {
+                if (state.systemContext.includes("[VALUATION_NEEDS_ADDRESS]")) {
+                  return `NHI\u1EC6M V\u1EE4: H\u1ECEI L\u1EA0I \u0110\u1ECAA CH\u1EC8 \u2014 Kh\xE1ch h\u1ECFi \u0111\u1ECBnh gi\xE1 nh\u01B0ng ch\u01B0a cung c\u1EA5p \u0111\u1ECBa ch\u1EC9 c\u1EE5 th\u1EC3
+
+${_hist}
+
+${_msg}
+
+Y\xCAU C\u1EA6U VI\u1EBET PH\u1EA2N H\u1ED2I (40-70 t\u1EEB):
+- ${langInstruction}
+- X\xE1c nh\u1EADn ngay em hi\u1EC3u kh\xE1ch mu\u1ED1n \u0111\u1ECBnh gi\xE1 B\u0110S
+- H\u1ECFi r\xF5: \u0111\u1ECBa ch\u1EC9 c\u1EE5 th\u1EC3 (s\u1ED1 nh\xE0, \u0111\u01B0\u1EDDng, ph\u01B0\u1EDDng/x\xE3, qu\u1EADn/huy\u1EC7n, t\u1EC9nh/th\xE0nh ph\u1ED1)
+- C\xF3 th\u1EC3 h\u1ECFi th\xEAm di\u1EC7n t\xEDch v\xE0 lo\u1EA1i B\u0110S n\u1EBFu t\u1EF1 nhi\xEAn
+- Gi\u1ECDng nhi\u1EC7t t\xECnh, ng\u1EAFn g\u1ECDn \u2014 kh\xF4ng li\u1EC7t k\xEA y\xEAu c\u1EA7u d\xE0i d\xF2ng`;
+                }
                 return `NHI\u1EC6M V\u1EE4: \u0110\u1ECANH GI\xC1 B\u1EA4T \u0110\u1ED8NG S\u1EA2N \u2014 Vi\u1EBFt b\xE1o c\xE1o \u0111\u1ECBnh gi\xE1 chuy\xEAn nghi\u1EC7p, d\u1EC5 hi\u1EC3u
 
 K\u1EBET QU\u1EA2 \u0110\u1ECANH GI\xC1 AI (d\xF9ng ch\xEDnh x\xE1c, kh\xF4ng t\u1EF1 t\xEDnh l\u1EA1i):
@@ -24091,6 +25375,7 @@ Y\xCAU C\u1EA6U \u2014 Vi\u1EBFt b\xE1o c\xE1o \u0111\u1ECBnh gi\xE1 (150-250 t\
 
 NG\xD4N NG\u1EEE & X\u01AFNG H\xD4: ${langInstruction}
 QUAN TR\u1ECCNG: D\xF9ng s\u1ED1 li\u1EC7u CH\xCDNH X\xC1C t\u1EEB [\u0110\u1ECANH GI\xC1 B\u1EA4T \u0110\u1ED8NG S\u1EA2N] \u2014 kh\xF4ng b\u1ECBa \u0111\u1EB7t. Gi\xE1: "X,XX T\u1EF7 VN\u0110" | \u0110\u01A1n gi\xE1: "XX Tri\u1EC7u/m\xB2"`;
+              }
               // ── 2. TÌM BĐS ───────────────────────────────────────────────────────
               case "SEARCH_INVENTORY":
                 return `NHI\u1EC6M V\u1EE4: T\u01AF V\u1EA4N T\xCCM B\u0110S \u2014 Gi\u1EDBi thi\u1EC7u kho h\xE0ng ph\xF9 h\u1EE3p, c\xE1 nh\xE2n ho\xE1 theo h\u1ED3 s\u01A1 kh\xE1ch
@@ -24214,26 +25499,28 @@ Y\xCAU C\u1EA6U VI\u1EBET PH\u1EA2N H\u1ED2I (150-220 t\u1EEB):
 - N\u1EBFu k\u1ECBch b\u1EA3n CHO_THU\xCA: nh\u1EA5n m\u1EA1nh \u0111i\u1EC1u kho\u1EA3n t\u0103ng gi\xE1 thu\xEA, gia h\u1EA1n, b\u1ED3i th\u01B0\u1EDDng ch\u1EA5m d\u1EE9t s\u1EDBm
 - K\u1EBFt th\xFAc: "Anh/ch\u1ECB c\xF3 mu\u1ED1n em xem qua m\u1ED9t s\u1ED1 \u0111i\u1EC1u kho\u1EA3n c\u1EE5 th\u1EC3 trong h\u1EE3p \u0111\u1ED3ng kh\xF4ng \u1EA1?"
 - KH\xD4NG d\xF9ng: "ph\xE1p nh\xE2n", "b\xEAn nh\u1EADn chuy\u1EC3n nh\u01B0\u1EE3ng", "\u0111i\u1EC1u X kho\u1EA3n Y" \u2014 d\xF9ng ng\xF4n ng\u1EEF th\xF4ng th\u01B0\u1EDDng`;
-              // ── 8. PHÂN TÍCH KHÁCH HÀNG (COACHING) ───────────────────────────────
+              // ── 8. PHÂN TÍCH KHÁCH HÀNG → COACHING NỘI BỘ CHO SALES ─────────────
+              // ANALYZE_LEAD là yêu cầu nội bộ từ Sales agent — output là coaching brief
+              // KHÔNG phải tin nhắn gửi đến khách hàng
               case "ANALYZE_LEAD":
-                return `NHI\u1EC6M V\u1EE4: TR\u1EA2 L\u1EDCI KH\xC1CH + COACHING SALES \u2014 V\u1EEBa tr\u1EA3 l\u1EDDi t\u1EF1 nhi\xEAn, v\u1EEBa d\xF9ng insight ph\xE2n t\xEDch \u0111\u1EC3 t\u01B0 v\u1EA5n \u0111\xFAng giai \u0111o\u1EA1n
+                return `NHI\u1EC6M V\u1EE4: COACHING BRIEF N\u1ED8I B\u1ED8 CHO SALES \u2014 Ph\xE2n t\xEDch lead v\xE0 \u0111\u01B0a ra h\u01B0\u1EDBng d\u1EABn h\xE0nh \u0111\u1ED9ng c\u1EE5 th\u1EC3
 
 ${_ctx}
 
 ${_hist}
 
-${_msg}
+C\xC2U H\u1ECEI C\u1EE6A SALES: "${state.userMessage}"
 
-Y\xCAU C\u1EA6U VI\u1EBET PH\u1EA2N H\u1ED2I (100-160 t\u1EEB):
-- ${langInstruction}
-- Tr\u1EA3 l\u1EDDi TIN NH\u1EAEN KH\xC1CH tr\u1EF1c ti\u1EBFp v\xE0 t\u1EF1 nhi\xEAn \u2014 \u0111\xE2y l\xE0 tin nh\u1EAFn kh\xE1ch th\u1EA5y
-- T\xEDch h\u1EE3p ng\u1EA7m insight t\u1EEB [LEAD ANALYSIS]: \u0111i\u1EC1u ch\u1EC9nh t\xF4ng gi\u1ECDng v\xE0 n\u1ED9i dung theo giai \u0111o\u1EA1n
-  \u2022 Awareness \u2192 gi\xE1o d\u1EE5c, cung c\u1EA5p th\xF4ng tin t\u1ED5ng quan
-  \u2022 Consideration \u2192 so s\xE1nh c\u1EE5 th\u1EC3, n\xEAu \u0111i\u1EC3m kh\xE1c bi\u1EC7t r\xF5
-  \u2022 Decision \u2192 t\u1EADp trung v\xE0o closing, lo\u1EA1i b\u1ECF tr\u1EDF ng\u1EA1i cu\u1ED1i c\xF9ng
-- \u0110i\u1EC1u ch\u1EC9nh phong c\xE1ch: Formal (doanh nh\xE2n/nh\xE0 \u0111\u1EA7u t\u01B0) | Casual (tr\u1EBB/l\u1EA7n \u0111\u1EA7u) | Data-driven (IT/t\xE0i ch\xEDnh)
-- K\u1EBFt th\xFAc b\u1EB1ng h\xE0nh \u0111\u1ED9ng ph\xF9 h\u1EE3p giai \u0111o\u1EA1n (kh\xF4ng ch\u1EC9 "Anh/ch\u1ECB c\u1EA7n g\xEC th\xEAm?")
-- KH\xD4NG \u0111\u1EC1 c\u1EADp \u0111\u1EBFn AI, h\u1EC7 th\u1ED1ng ph\xE2n t\xEDch, hay "theo d\u1EEF li\u1EC7u"`;
+Y\xCAU C\u1EA6U VI\u1EBET COACHING BRIEF (100-160 t\u1EEB, ng\xF4n ng\u1EEF ${state.lang === "en" ? "ti\u1EBFng Anh" : "ti\u1EBFng Vi\u1EC7t"}):
+\u26A0\uFE0F \u0110\xC2Y L\xC0 GHI CH\xDA N\u1ED8I B\u1ED8 \u2014 kh\xF4ng ph\u1EA3i tin nh\u1EAFn g\u1EEDi kh\xE1ch, kh\xF4ng d\xF9ng "em/anh/ch\u1ECB"
+- T\xF3m t\u1EAFt k\u1EBFt qu\u1EA3 ph\xE2n t\xEDch t\u1EEB [LEAD ANALYSIS] ng\u1EAFn g\u1ECDn (2-3 d\xF2ng)
+- Giai \u0111o\u1EA1n hi\u1EC7n t\u1EA1i + m\u1EE9c s\u1EB5n s\xE0ng mua: n\xEAu d\u1EA5u hi\u1EC7u c\u1EE5 th\u1EC3
+  \u2022 Awareness \u2192 t\u01B0 v\u1EA5n t\u1ED5ng quan, kh\xF4ng push closing
+  \u2022 Consideration \u2192 d\xF9ng s\u1ED1 li\u1EC7u, so s\xE1nh, demo c\u1EE5 th\u1EC3
+  \u2022 Decision \u2192 x\u1EED l\xFD tr\u1EDF ng\u1EA1i cu\u1ED1i, \u0111\u1EC1 xu\u1EA5t closing ngay
+- Phong c\xE1ch t\u01B0 v\u1EA5n ph\xF9 h\u1EE3p: Formal / Casual / Data-driven
+- 1 H\xC0NH \u0110\u1ED8NG C\u1EE4 TH\u1EC2 n\xEAn l\xE0m ngay h\xF4m nay (g\u1ECDi \u0111i\u1EC7n/nh\u1EAFn tin/g\u1EEDi t\xE0i li\u1EC7u/\u0111\u1EB7t l\u1ECBch)
+- C\u1EA3nh b\xE1o r\u1EE7i ro m\u1EA5t lead n\u1EBFu c\xF3 (tr\u1EDF ng\u1EA1i t\xE0i ch\xEDnh/ph\xE1p l\xFD/c\u1EA1nh tranh)`;
               // ── 9. DIRECT / ESCALATE / DEFAULT ───────────────────────────────────
               default:
                 return `${intentHint ? intentHint + "\n\n" : ""}${_ctx}
@@ -24268,7 +25555,17 @@ Y\xCAU C\u1EA6U VI\u1EBET PH\u1EA2N H\u1ED2I:
         graph.addNode("VALUATION_AGENT", async (state) => {
           state.trace.push({ id: "VALUATION", node: "VALUATION_AGENT", status: "RUNNING", timestamp: Date.now() });
           const ext = state.plan?.extraction || {};
-          const address = ext.valuation_address || ext.location_keyword || state.userMessage.slice(0, 100);
+          const rawAddress = ext.valuation_address?.trim() || ext.location_keyword?.trim() || "";
+          const addressLooksReal = rawAddress.length > 5 && (/\d/.test(rawAddress) || /đường|phường|quận|huyện|tỉnh|thành phố|tp\.|q\.|p\.|h\.|hcm|hn/i.test(rawAddress) || // 5 TP trực thuộc TW + resort / tỉnh du lịch
+          /hà nội|sài gòn|sai gon|hồ chí minh|ho chi minh|đà nẵng|da nang|hải phòng|hai phong|cần thơ|can tho/i.test(rawAddress) || /đà lạt|da lat|nha trang|vũng tàu|vung tau|hội an|hoi an|phú quốc|phu quoc|mũi né|mui ne|huế|hue\b|quy nhơn|quy nhon|phan thiết|phan thiet|hạ long|ha long|sầm sơn|sam son/i.test(rawAddress) || // Tỉnh vệ tinh HCM / Hà Nội
+          /bình dương|binh duong|đồng nai|dong nai|long an|bà rịa|vũng tàu|tây ninh|tay ninh|bình phước|binh phuoc|lâm đồng|lam dong|khánh hòa|khanh hoa|bình thuận|binh thuan|hưng yên|hung yen|bắc ninh|bac ninh|vĩnh phúc|vinh phuc|quảng ninh|quang ninh/i.test(rawAddress) || // Khu vực nổi tiếng / dự án lớn (không có số, không có "đường/quận")
+          /vinhomes?|masteri|landmark|celadon|ecopark|aqua.?city|waterpoint|ocean.?park|times.?city|royal.?city|grand.?park|smart.?city|central.?park|golden.?river|saigon.?pearl|phú.?mỹ.?hưng|phu.?my.?hung|thảo.?điền|thao.?dien|midtown|biên.?hòa|bien.?hoa|thuận.?an|thuan.?an|dĩ.?an|di.?an/i.test(rawAddress));
+          if (!addressLooksReal) {
+            return {
+              systemContext: state.systemContext + "\n[VALUATION_NEEDS_ADDRESS]: Kh\xF4ng t\xECm th\u1EA5y \u0111\u1ECBa ch\u1EC9 B\u0110S c\u1EE5 th\u1EC3 trong c\xE2u h\u1ECFi c\u1EE7a kh\xE1ch. Y\xEAu c\u1EA7u WRITER h\u1ECFi \u0111\u1ECBa ch\u1EC9 tr\u01B0\u1EDBc khi \u0111\u1ECBnh gi\xE1."
+            };
+          }
+          const address = rawAddress;
           const area = ext.valuation_area || ext.area_min || 80;
           const roadWidth = ext.valuation_road_width || 4;
           const direction = ext.valuation_direction;
@@ -24276,6 +25573,7 @@ Y\xCAU C\u1EA6U VI\u1EBET PH\u1EA2N H\u1ED2I:
           const frontageWidth = ext.valuation_frontage;
           const furnishing = ext.valuation_furnishing;
           const buildingAge = ext.valuation_building_age;
+          const bedrooms = ext.valuation_bedrooms;
           const legalToEngine = {
             PINK_BOOK: "PINK_BOOK",
             HDMB: "CONTRACT",
@@ -24364,6 +25662,24 @@ Y\xCAU C\u1EA6U VI\u1EBET PH\u1EA2N H\u1ED2I:
               }
             } catch {
             }
+            if (internalCompsMedian && internalCompsCount >= 2) {
+              const compsLocationKey = address.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+              setImmediate(async () => {
+                try {
+                  const { priceCalibrationService: calSvc } = await Promise.resolve().then(() => (init_priceCalibrationService(), priceCalibrationService_exports));
+                  await calSvc.recordObservation({
+                    locationKey: compsLocationKey,
+                    locationDisplay: address,
+                    pricePerM2: internalCompsMedian,
+                    propertyType: resolvedPTypeFromExt || "townhouse_center",
+                    source: "internal_comps",
+                    confidence: Math.min(85, 50 + internalCompsCount * 5),
+                    tenantId: state.tenantId
+                  });
+                } catch {
+                }
+              });
+            }
             const cacheKey2 = `${state.tenantId}|${address}|${area}|${roadWidth}|${legal}|${direction || ""}|${floorLevel || ""}|${frontageWidth || ""}|${furnishing || ""}|${buildingAge || ""}|${resolvedPTypeFromExt}`;
             const cached2 = valuationCache.get(cacheKey2);
             const valResult = cached2 && Date.now() < cached2.expiresAt ? cached2.result : await (async () => {
@@ -24389,6 +25705,7 @@ Y\xCAU C\u1EA6U VI\u1EBET PH\u1EA2N H\u1ED2I:
                   frontageWidth,
                   furnishing,
                   buildingAge,
+                  bedrooms,
                   internalCompsMedian,
                   internalCompsCount
                 });
@@ -24420,6 +25737,7 @@ Y\xCAU C\u1EA6U VI\u1EBET PH\u1EA2N H\u1ED2I:
                   frontageWidth,
                   furnishing,
                   buildingAge,
+                  bedrooms,
                   internalCompsMedian,
                   internalCompsCount
                 });
@@ -24458,10 +25776,55 @@ ${reconcileLine ? reconcileLine + "\n" : ""}Y\u1EBFu t\u1ED1: ${valResult.factor
         });
         graph.addNode("ESCALATION_NODE", async (state) => {
           state.trace.push({ id: "ESCALATION", node: "ESCALATION_NODE", status: "RUNNING", timestamp: Date.now() });
-          this.updateTrace(state.trace, "Chuy\u1EC3n ti\u1EBFp \u0111\u1EBFn nh\xE2n vi\xEAn t\u01B0 v\u1EA5n.");
+          const last5 = state.history.slice(-5).map((h) => ({
+            direction: h.direction,
+            content: h.content.slice(0, 300),
+            timestamp: h.timestamp || (/* @__PURE__ */ new Date()).toISOString()
+          }));
+          const recentText = last5.map((m) => m.content).join(" ");
+          const urgencyLevel = /tức giận|bức xúc|khiếu nại|phàn nàn|tệ|kém|cút|sai sót|hoàn tiền|mất tiền/i.test(recentText) ? "HIGH" : /gấp|ngay|hôm nay|nhanh|sớm|cần gặp/i.test(recentText) ? "MEDIUM" : "LOW";
+          const topicSummary = (() => {
+            const intents = /* @__PURE__ */ new Set();
+            state.history.slice(-10).forEach((h) => {
+              if (/tài chính|vay|lãi suất/i.test(h.content)) intents.add("T\xE0i ch\xEDnh");
+              if (/pháp lý|sổ đỏ|sổ hồng|hợp đồng/i.test(h.content)) intents.add("Ph\xE1p l\xFD");
+              if (/xem nhà|lịch|đặt cọc/i.test(h.content)) intents.add("\u0110\u1EB7t l\u1ECBch");
+              if (/giá|định giá|bán được/i.test(h.content)) intents.add("\u0110\u1ECBnh gi\xE1");
+              if (/phàn nàn|tức|bức xúc/i.test(h.content)) intents.add("Khi\u1EBFu n\u1EA1i");
+            });
+            return Array.from(intents).join(", ") || "T\u01B0 v\u1EA5n chung";
+          })();
+          const prefs = state.lead?.preferences || {};
+          const handoverArtifact = {
+            type: "ESCALATION_HANDOVER",
+            title: `Chuy\u1EC3n ti\u1EBFp: ${state.lead?.name || "Kh\xE1ch"}`,
+            data: {
+              leadName: state.lead?.name || "Kh\xE1ch h\xE0ng",
+              stage: state.lead?.stage || "new",
+              score: state.lead?.score?.score || 0,
+              grade: state.lead?.score?.grade || "D",
+              budgetMax: prefs.budget_max || 0,
+              regions: prefs.preferred_regions || "",
+              propertyTypes: prefs.property_types || "",
+              lastIntent: state.plan?.next_step || "ESCALATE_TO_HUMAN",
+              urgency: urgencyLevel,
+              recentMessages: last5.map((m) => `[${m.direction}] ${m.content}`).join("\n---\n"),
+              escalatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+              triggerMessage: state.userMessage.slice(0, 300)
+            }
+          };
+          this.updateTrace(state.trace, `Chuy\u1EC3n ti\u1EBFp [${urgencyLevel}] \u2192 ${topicSummary}`);
+          feedbackRepository.logObservation(state.tenantId, "ESCALATION_NODE", "ESCALATE_TO_HUMAN", "ESCALATION_EVENT", {
+            urgencyLevel,
+            topicSummary,
+            leadStage: state.lead?.stage || null,
+            leadScore: state.lead?.score?.score || null
+          }).catch(() => {
+          });
           return {
             finalResponse: state.t("ai.escalate_to_human"),
-            escalated: true
+            escalated: true,
+            artifact: handoverArtifact
           };
         });
         graph.setEntryPoint("ROUTER");
@@ -24693,6 +26056,7 @@ PH\xC2N T\xCDCH (chuy\xEAn nghi\u1EC7p, s\xFAc t\xEDch):
       }
       async getRealtimeValuation(address, area, roadWidth, legal, propertyType, tenantId, advanced) {
         try {
+          address = sanitizePromptInput(address, 300);
           const currentYear = (/* @__PURE__ */ new Date()).getFullYear();
           const currentMonth = (/* @__PURE__ */ new Date()).toLocaleString("vi-VN", { month: "long", timeZone: "Asia/Ho_Chi_Minh" });
           const resolvedPTypeForSearch = propertyType || "townhouse_center";
@@ -24848,16 +26212,12 @@ ${projectSearchHint}
 T\xCCM KI\u1EBEM CHUY\xCAN BI\u1EC6T: Gi\xE1 B\xC1N/GIAO D\u1ECACH TH\u1EF0C T\u1EBE
 ${typeSpecificSaleHint}
 
-C\u1EA7n t\xECm (\u01B0u ti\xEAn theo th\u1EE9 t\u1EF1):
-1. Gi\xE1 GIA D\u1ECACH TH\u1EF0C T\u1EBE / CHUY\u1EC2N NH\u01AF\u1EE2NG TH\u1EE8 C\u1EA4P trung b\xECnh 1m\xB2 "${pTypeLabelSearch}" t\u1EA1i "${address}" \u2014 12 th\xE1ng g\u1EA7n nh\u1EA5t ${currentYear}
-   (Giao d\u1ECBch th\u1EF1c t\u1EBF = gi\xE1 kh\u1EDBp l\u1EC7nh mua b\xE1n, kh\xF4ng ph\u1EA3i gi\xE1 rao b\xE1n. Th\u01B0\u1EDDng th\u1EA5p h\u01A1n gi\xE1 rao b\xE1n 5-15%)
-2. Kho\u1EA3ng gi\xE1 (th\u1EA5p nh\u1EA5t \u2013 cao nh\u1EA5t) t\u1EEB c\xE1c giao d\u1ECBch th\u1EF1c t\u1EBF ho\u1EB7c rao b\xE1n
-3. S\u1ED1 l\u01B0\u1EE3ng giao d\u1ECBch / ngu\u1ED3n \u0111\u1ED9c l\u1EADp t\xECm th\u1EA5y
-4. \u0110\u1ED9 m\u1EDBi c\u1EE7a d\u1EEF li\u1EC7u (th\xE1ng n\u0103m c\u1EE5 th\u1EC3 n\u1EBFu c\xF3)
-5. Xu h\u01B0\u1EDBng gi\xE1 % t\u0103ng/gi\u1EA3m so v\u1EDBi 12 th\xE1ng tr\u01B0\u1EDBc
-6. Y\u1EBFu t\u1ED1 quy ho\u1EA1ch/h\u1EA1 t\u1EA7ng/ti\u1EC7n \xEDch \u1EA3nh h\u01B0\u1EDFng \u0111\u1EBFn gi\xE1
+C\u1EA7n t\xECm:
+1. Gi\xE1 GIAO D\u1ECACH TH\u1EF0C T\u1EBE / CHUY\u1EC2N NH\u01AF\u1EE2NG TH\u1EE8 C\u1EA4P trung b\xECnh 1m\xB2 t\u1EA1i "${address}" \u2014 12 th\xE1ng g\u1EA7n nh\u1EA5t (th\u01B0\u1EDDng th\u1EA5p h\u01A1n gi\xE1 rao b\xE1n 5-15%)
+2. Kho\u1EA3ng gi\xE1 (th\u1EA5p \u2013 cao) v\xE0 xu h\u01B0\u1EDBng %/n\u0103m t\u0103ng/gi\u1EA3m so v\u1EDBi n\u0103m tr\u01B0\u1EDBc
+3. Y\u1EBFu t\u1ED1 quy ho\u1EA1ch/h\u1EA1 t\u1EA7ng/ti\u1EC7n \xEDch \u1EA3nh h\u01B0\u1EDFng \u0111\u1EBFn gi\xE1
 
-\u01AFU TI\xCAN: b\xE1o c\xE1o CBRE/Savills/JLL > giao d\u1ECBch th\u1EF1c t\u1EBF n\u1EC1n t\u1EA3ng > gi\xE1 rao b\xE1n > \u01B0\u1EDBc t\xEDnh khu v\u1EF1c.`;
+\u01AFU TI\xCAN: CBRE/Savills/JLL > giao d\u1ECBch th\u1EF1c t\u1EBF > gi\xE1 rao b\xE1n > \u01B0\u1EDBc t\xEDnh khu v\u1EF1c.`;
           const rentalSearchPrompt = isLandAgricultural ? `\u0110\u1ECBa ch\u1EC9: "${address}" | ${currentMonth} ${currentYear} | Lo\u1EA1i: \u0110\u1EA5t n\xF4ng nghi\u1EC7p / \u0110\u1EA5t v\u01B0\u1EDDn
 T\xECm t\u1EF7 su\u1EA5t sinh l\u1EDDi \u0111\u1EA7u t\u01B0 \u0111\u1EA5t n\xF4ng nghi\u1EC7p t\u1EA1i khu v\u1EF1c "${address}":
 1. M\u1EE9c t\u0103ng gi\xE1 tr\u1ECB \u0111\u1EA5t n\xF4ng nghi\u1EC7p %/n\u0103m g\u1EA7n nh\u1EA5t (capital gain \u2014 k\u1EF3 v\u1ECDng chuy\u1EC3n \u0111\u1ED5i m\u1EE5c \u0111\xEDch s\u1EED d\u1EE5ng)
@@ -24950,7 +26310,11 @@ L\u01B0u \xFD: thu\xEA nguy\xEAn c\u0103n l\xE0m nh\xE0 \u1EDF ho\u1EB7c kinh do
               contents: saleSearchPrompt,
               config: {
                 systemInstruction: valSearchInstruction,
-                tools: [{ googleSearch: {} }]
+                tools: [{ googleSearch: {} }],
+                temperature: 0.3,
+                // moderate — allows diverse search synthesis
+                maxOutputTokens: 2048
+                // cap search summary size
               }
             }),
             getAiClient2().models.generateContent({
@@ -24958,7 +26322,9 @@ L\u01B0u \xFD: thu\xEA nguy\xEAn c\u0103n l\xE0m nh\xE0 \u1EDF ho\u1EB7c kinh do
               contents: rentalSearchPrompt,
               config: {
                 systemInstruction: valRentalInstruction,
-                tools: [{ googleSearch: {} }]
+                tools: [{ googleSearch: {} }],
+                temperature: 0.3,
+                maxOutputTokens: 1536
               }
             })
           ]);
@@ -24997,7 +26363,7 @@ ${rentalContext}`;
               },
               confidence: {
                 type: Type.NUMBER,
-                description: "\u0110\u1ED9 tin c\u1EADy d\u1EEF li\u1EC7u t\u1EEB 0-100. 95-99: c\xF3 gi\xE1 GIAO D\u1ECACH TH\u1EF0C T\u1EBE / chuy\u1EC3n nh\u01B0\u1EE3ng th\u1EE9 c\u1EA5p t\u1EEB \u22652 ngu\u1ED3n uy t\xEDn (CBRE/Savills/JLL ho\u1EB7c onehousing/batdongsan giao d\u1ECBch kh\u1EDBp). 85-94: ch\u1EC9 c\xF3 gi\xE1 rao b\xE1n (listing price) \u2014 ch\u01B0a x\xE1c nh\u1EADn giao d\u1ECBch. 75-84: \xEDt d\u1EEF li\u1EC7u ho\u1EB7c ph\u1EA3i ngo\u1EA1i suy. <75: khu v\u1EF1c h\u1EBBo l\xE1nh, kh\xF4ng \u0111\u1EE7 d\u1EEF li\u1EC7u."
+                description: "\u0110\u1ED9 tin c\u1EADy 0-100: 95-99=giao d\u1ECBch th\u1EF1c t\u1EBF t\u1EEB \u22652 ngu\u1ED3n uy t\xEDn (CBRE/Savills/JLL/onehousing); 85-94=ch\u1EC9 gi\xE1 rao b\xE1n; 75-84=\xEDt d\u1EEF li\u1EC7u/ngo\u1EA1i suy; <75=thi\u1EBFu d\u1EEF li\u1EC7u."
               },
               marketTrend: {
                 type: Type.STRING,
@@ -25010,15 +26376,15 @@ ${rentalContext}`;
               // ── Rental: statistical triple ────────────────────────────────────
               rentMin: {
                 type: Type.NUMBER,
-                description: `Gi\xE1 thu\xEA TH\u1EA4P NH\u1EA4T th\u1EF1c t\u1EBF (TRI\u1EC6U VN\u0110/th\xE1ng) cho ${area}m\xB2 t\u1EA1i "${address}". \u0110\u01A0N V\u1ECA B\u1EAET BU\u1ED8C: tri\u1EC7u VN\u0110/th\xE1ng. N\u1EBFu d\u1EEF li\u1EC7u l\xE0 USD/m\xB2/th\xE1ng \u2192 quy \u0111\u1ED5i: USD \xD7 25,000 VN\u0110 \xD7 ${area}m\xB2 \xF7 1,000,000 = s\u1ED1 tri\u1EC7u. V\xED d\u1EE5: 3 USD/m\xB2/th \xD7 25,000 \xD7 ${area}m\xB2 \xF7 1M = ${(area * 3 * 25e3 / 1e6).toFixed(0)} tri\u1EC7u/th\xE1ng.`
+                description: `Gi\xE1 thu\xEA TH\u1EA4P NH\u1EA4T (tri\u1EC7u VN\u0110/th\xE1ng, to\xE0n b\u1ED9 ${area}m\xB2). USD/m\xB2/th \u2192 \xD725,000\xD7${area}\xF71,000,000.`
               },
               rentMedian: {
                 type: Type.NUMBER,
-                description: `Gi\xE1 thu\xEA TRUNG B\xCCNH th\u1EF1c t\u1EBF (TRI\u1EC6U VN\u0110/th\xE1ng) cho ${area}m\xB2 t\u1EA1i "${address}" \u2014 S\u1ED0 LI\u1EC6U THU NH\u1EACP CH\xCDNH. \u0110\u01A0N V\u1ECA: tri\u1EC7u VN\u0110/th\xE1ng. N\u1EBFu d\u1EEF li\u1EC7u USD/m\xB2/th \u2192 USD \xD7 25,000 \xD7 ${area} \xF7 1,000,000. V\xED d\u1EE5 kho: 4 USD/m\xB2/th \xD7 25,000 \xD7 ${area} \xF7 1M = ${(area * 4 * 25e3 / 1e6).toFixed(0)} tr/th. V\xED d\u1EE5 v\u0103n ph\xF2ng: USD 12/m\xB2/th \xD7 25,000 \xD7 ${area} \xF7 1M = ${(area * 12 * 25e3 / 1e6).toFixed(0)} tr/th.`
+                description: `Gi\xE1 thu\xEA TRUNG B\xCCNH (tri\u1EC7u VN\u0110/th\xE1ng, to\xE0n b\u1ED9 ${area}m\xB2) \u2014 CH\xCDNH. USD/m\xB2/th \u2192 \xD725,000\xD7${area}\xF71M. VD kho 4 USD=${(area * 4 * 25e3 / 1e6).toFixed(0)}tr, VP 12 USD=${(area * 12 * 25e3 / 1e6).toFixed(0)}tr.`
               },
               rentMax: {
                 type: Type.NUMBER,
-                description: `Gi\xE1 thu\xEA CAO NH\u1EA4T th\u1EF1c t\u1EBF (TRI\u1EC6U VN\u0110/th\xE1ng) cho ${area}m\xB2 t\u1EA1i "${address}". \u0110\u01A0N V\u1ECA: tri\u1EC7u VN\u0110/th\xE1ng. N\u1EBFu d\u1EEF li\u1EC7u USD \u2192 USD \xD7 25,000 \xD7 ${area}m\xB2 \xF7 1,000,000. V\xED d\u1EE5: 30 = 30 tri\u1EC7u/th\xE1ng.`
+                description: `Gi\xE1 thu\xEA CAO NH\u1EA4T (tri\u1EC7u VN\u0110/th\xE1ng, to\xE0n b\u1ED9 ${area}m\xB2). USD \u2192 \xD725,000\xD7${area}\xF71M.`
               },
               propertyTypeEstimate: {
                 type: Type.STRING,
@@ -25040,7 +26406,7 @@ ${rentalContext}`;
               },
               analysisNotes: {
                 type: Type.STRING,
-                description: `Ph\xE2n t\xEDch suy lu\u1EADn t\u1EEBng b\u01B0\u1EDBc TR\u01AF\u1EDAC KHI \u0111i\u1EC1n s\u1ED1 (Chain-of-Thought). Ghi ng\u1EAFn g\u1ECDn: (1) ngu\u1ED3n d\u1EEF li\u1EC7u v\xE0 lo\u1EA1i (giao d\u1ECBch/rao b\xE1n), (2) d\u1EF1 \xE1n c\u1EE5 th\u1EC3 hay khu v\u1EF1c, (3) \u0111\u01A1n v\u1ECB \u0111\xE3 ki\u1EC3m tra, (4) priceMedian ch\u1ECDn t\u1EEB s\u1ED1 n\xE0o v\xE0 l\xFD do, (5) confidence l\xFD do. V\xED d\u1EE5: "T\xECm th\u1EA5y 3 ngu\u1ED3n: Savills Q1/2025 + batdongsan.com. Vinhomes CP th\u1EE9 c\u1EA5p 185-210 tr/m\xB2. D\u1EF1 \xE1n premium \u2192 d\xF9ng gi\xE1 d\u1EF1 \xE1n. Th\xF4ng th\u1EE7y m\xB2 OK. Median=195M (giao d\u1ECBch). Confidence=95."`
+                description: `CoT tr\u01B0\u1EDBc khi \u0111i\u1EC1n s\u1ED1: (1) ngu\u1ED3n & lo\u1EA1i d\u1EEF li\u1EC7u, (2) d\u1EF1 \xE1n hay khu v\u1EF1c, (3) \u0111\u01A1n v\u1ECB, (4) priceMedian = s\u1ED1 n\xE0o & l\xFD do, (5) confidence & l\xFD do. VD: "Savills Q1/2025+batdongsan: 185-210tr/m\xB2. Premium \u2192 median=195M (giao d\u1ECBch). Conf=95."`
               }
             },
             required: ["priceMin", "priceMedian", "priceMax", "sourceCount", "dataRecency", "confidence", "marketTrend", "trendGrowthPct", "rentMin", "rentMedian", "rentMax", "propertyTypeEstimate", "locationFactors", "analysisNotes"]
@@ -25073,19 +26439,10 @@ GI\xC1 B\xC1N (t\u1EEB ph\u1EA7n D\u1EEE LI\u1EC6U GI\xC1 B\xC1N):
 - marketTrend: Xu h\u01B0\u1EDBng % t\u0103ng/gi\u1EA3m khu v\u1EF1c (v\xED d\u1EE5 "T\u0103ng 10-15%/n\u0103m do Metro").
 - trendGrowthPct: S\u1ED1 %/n\u0103m t\u0103ng (+) ho\u1EB7c gi\u1EA3m (-). V\xED d\u1EE5: "T\u0103ng 10-15%/n\u0103m" \u2192 trendGrowthPct = 12.
 
-GI\xC1 THU\xCA (t\u1EEB ph\u1EA7n D\u1EEE LI\u1EC6U GI\xC1 THU\xCA):
-- rentMin, rentMedian, rentMax: Kho\u1EA3ng gi\xE1 thu\xEA th\u1EF1c t\u1EBF (tri\u1EC7u VN\u0110/th\xE1ng) cho di\u1EC7n t\xEDch ${area}m\xB2 t\u1EA1i "${address}".
-  V\xED d\u1EE5: 18 = 18 tri\u1EC7u/th\xE1ng. N\u1EBFu ch\u1EC9 1 con s\u1ED1 \u2192 c\u1EA3 3 b\u1EB1ng nhau.${isIndustrialOrWarehouse || resolvedPTypeForSearch === "office" ? `
-  QUAN TR\u1ECCNG \u2014 Quy \u0111\u1ED5i \u0111\u01A1n v\u1ECB USD/m\xB2/th\xE1ng (ph\u1ED5 bi\u1EBFn v\u1EDBi kho x\u01B0\u1EDFng, v\u0103n ph\xF2ng, KCN):
-    C\xF4ng th\u1EE9c: gi\xE1 (USD/m\xB2/th) \xD7 25,000 VN\u0110/USD \xD7 ${area} m\xB2 \xF7 1,000,000 = tri\u1EC7u VN\u0110/th\xE1ng
-    V\xED d\u1EE5 kho: 3 USD/m\xB2/th \xD7 25,000 \xD7 ${area} \xF7 1,000,000 = ${(area * 3 * 25e3 / 1e6).toFixed(1)} tr/th
-    V\xED d\u1EE5 VP h\u1EA1ng B: 12 USD/m\xB2/th \xD7 25,000 \xD7 ${area} \xF7 1,000,000 = ${(area * 12 * 25e3 / 1e6).toFixed(1)} tr/th` : isLandType ? `
-  \u0110\u1EA5t n\xF4ng nghi\u1EC7p/\u0111\u1EA5t KCN thu\xEA theo n\u0103m: quy \u0111\u1ED5i v\u1EC1 tri\u1EC7u VN\u0110/th\xE1ng cho to\xE0n b\u1ED9 ${area}m\xB2.
-  V\xED d\u1EE5: \u0111\u1EA5t n\xF4ng nghi\u1EC7p thu\xEA 5 tri\u1EC7u/s\xE0o/n\u0103m, 1 s\xE0o = 360m\xB2 \u2192 ${area}m\xB2 \xD7 5/(360\xD712) = ${(area * 5 / (360 * 12)).toFixed(2)} tr/th.` : `
-  \u0110\u01A1n v\u1ECB: tri\u1EC7u VN\u0110/th\xE1ng \u2014 KH\xD4NG d\xF9ng USD ho\u1EB7c VN\u0110 th\xF4. V\xED d\u1EE5: 15 = 15 tri\u1EC7u/th\xE1ng.`}
-
+GI\xC1 THU\xCA (t\u1EEB D\u1EEE LI\u1EC6U GI\xC1 THU\xCA):
+- rentMin/rentMedian/rentMax: Gi\xE1 thu\xEA th\u1EF1c t\u1EBF (tri\u1EC7u VN\u0110/th\xE1ng) cho ${area}m\xB2. N\u1EBFu ch\u1EC9 1 con s\u1ED1 \u2192 c\u1EA3 3 b\u1EB1ng nhau. Quy \u0111\u1ED5i USD/\u0111\u1EA5t: xem m\xF4 t\u1EA3 field trong schema.
 - propertyTypeEstimate: Lo\u1EA1i B\u0110S ph\xF9 h\u1EE3p nh\u1EA5t.
-- locationFactors: 2-3 y\u1EBFu t\u1ED1 V\u0128 M\xD4 KHU V\u1EF0C (KH\xD4NG l\u1EB7p ph\xE1p l\xFD/l\u1ED9 gi\u1EDBi/di\u1EC7n t\xEDch).`;
+- locationFactors: 2-3 y\u1EBFu t\u1ED1 v\u0129 m\xF4 khu v\u1EF1c (kh\xF4ng l\u1EB7p ph\xE1p l\xFD/l\u1ED9 gi\u1EDBi/di\u1EC7n t\xEDch).`;
           let extractText = "{}";
           {
             let extractAttempts = 0;
@@ -25097,7 +26454,12 @@ GI\xC1 THU\xCA (t\u1EEB ph\u1EA7n D\u1EEE LI\u1EC6U GI\xC1 THU\xCA):
                   config: {
                     systemInstruction: valuationSystemInstruction,
                     responseMimeType: "application/json",
-                    responseSchema: extractSchema
+                    responseSchema: extractSchema,
+                    temperature: 0.1,
+                    // very low — deterministic JSON, no hallucination
+                    topP: 0.8,
+                    maxOutputTokens: 1024
+                    // schema output is bounded
                   }
                 });
                 extractText = resp.text || "{}";
@@ -25134,8 +26496,24 @@ ${aiData.analysisNotes}`);
           const { getRegionalBasePrice: getRegionalBasePrice2, estimateFallbackRent: getFallbackRent } = await Promise.resolve().then(() => (init_valuationEngine(), valuationEngine_exports));
           const resolvedPropertyType = propertyType || aiData.propertyTypeEstimate || "townhouse_center";
           const regional = getRegionalBasePrice2(address, resolvedPropertyType);
-          const regionRef = regional.price;
-          const regionConf = regional.confidence;
+          let regionRef = regional.price;
+          let regionConf = regional.confidence;
+          try {
+            const { priceCalibrationService: calSvc } = await Promise.resolve().then(() => (init_priceCalibrationService(), priceCalibrationService_exports));
+            const normalizedAddrKey = address.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+            const calibrated = await calSvc.getCalibratedPrice(normalizedAddrKey, 14);
+            if (calibrated && calibrated.sampleCount >= 2) {
+              if (calibrated.hasTxn) {
+                regionRef = Math.round(calibrated.pricePerM2 * 0.7 + regional.price * 0.3);
+                regionConf = Math.min(95, Math.max(regional.confidence, calibrated.confidence));
+              } else {
+                regionRef = Math.round(calibrated.pricePerM2 * 0.5 + regional.price * 0.5);
+                regionConf = Math.round((regional.confidence + calibrated.confidence) / 2);
+              }
+              logger.debug(`[Valuation AI] Calibrated "${normalizedAddrKey}" \u2192 ${(calibrated.pricePerM2 / 1e6).toFixed(0)}M (${calibrated.sampleCount} m\u1EABu, txn=${calibrated.hasTxn}) \u2192 regionRef=${(regionRef / 1e6).toFixed(0)}M`);
+            }
+          } catch {
+          }
           const addrLower = address.toLowerCase();
           const isPrimeDist = /quận 1\b|q\.?1\b|hoàn kiếm|ba đình|ba dinh|district 1/i.test(addrLower);
           const priceLow = regionRef * 0.35;
@@ -25225,31 +26603,29 @@ C\u1EA7n x\xE1c nh\u1EADn: Gi\xE1 giao d\u1ECBch th\u1EF1c t\u1EBF 1m\xB2 c\u1EE
                 contents: verifyPrompt,
                 config: {
                   systemInstruction: valSearchInstruction,
-                  tools: [{ googleSearch: {} }]
+                  tools: [{ googleSearch: {} }],
+                  temperature: 0.3,
+                  maxOutputTokens: 1024
                 }
               });
               const verifyText = verifyRes.text || "";
-              const verifyExtractRes = await getAiClient2().models.generateContent({
-                model: GENAI_CONFIG.MODELS.WRITER,
-                contents: `D\u1EEF li\u1EC7u x\xE1c minh:
-${verifyText}
-
-Tr\xEDch xu\u1EA5t m\u1ED9t con s\u1ED1 duy nh\u1EA5t: gi\xE1 trung b\xECnh 1m\xB2 ${extractRefDescription} (VN\u0110/m\xB2). N\u1EBFu d\u1EEF li\u1EC7u n\xF3i "X tri\u1EC7u/m\xB2" th\xEC tr\u1EA3 X*1000000. N\u1EBFu kh\xF4ng t\xECm th\u1EA5y gi\xE1 n\xE0o r\xF5 r\xE0ng, tr\u1EA3 0.`,
-                config: {
-                  systemInstruction: "Tr\u1EA3 v\u1EC1 CH\u1EC8 m\u1ED9t s\u1ED1 nguy\xEAn (VN\u0110/m\xB2). Kh\xF4ng th\xEAm text. V\xED d\u1EE5: 120000000",
-                  responseMimeType: "application/json",
-                  responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                      verifyPrice: { type: Type.NUMBER, description: "Gi\xE1 x\xE1c minh VN\u0110/m\xB2. 0 n\u1EBFu kh\xF4ng t\xECm th\u1EA5y." }
-                    },
-                    required: ["verifyPrice"]
+              let verifyPrice = 0;
+              const verifyPatterns = [
+                /(\d+(?:[,.]\d+)?)\s*tỷ\/m/i,
+                /(\d+(?:[,.]\d+)?)\s*(?:tr|triệu)\/m/i,
+                /([\d.,]+)\s*(?:VNĐ|đồng|đ)\/m/i
+              ];
+              for (const vp of verifyPatterns) {
+                const vm = verifyText.match(vp);
+                if (vm) {
+                  const raw = parseFloat(vm[1].replace(/,/g, "."));
+                  if (!isNaN(raw) && raw > 0) {
+                    verifyPrice = /tỷ/i.test(vm[0]) ? raw * 1e9 : /tr|triệu/i.test(vm[0]) ? raw * 1e6 : raw;
+                    verifyPrice = autoCorrectPrice(verifyPrice);
+                    break;
                   }
                 }
-              });
-              const verifyData = JSON.parse(verifyExtractRes.text || '{"verifyPrice":0}');
-              let verifyPrice = verifyData.verifyPrice || 0;
-              verifyPrice = autoCorrectPrice(verifyPrice);
+              }
               if (verifyPrice > 0 && marketBasePrice > 0) {
                 const divergePct = Math.abs(verifyPrice - marketBasePrice) / marketBasePrice;
                 if (divergePct <= 0.2) {
@@ -34296,6 +35672,7 @@ function createLeadRoutes(authenticateToken) {
       }
       const tenantId = user.tenantId;
       const page = Math.max(1, parseInt(req.query.page) || 1);
+      const viewMode = (req.query.viewMode || "").toLowerCase();
       const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize) || 20, 500));
       const filters = {};
       if (req.query.stage) filters.stage = req.query.stage;
@@ -34310,6 +35687,17 @@ function createLeadRoutes(authenticateToken) {
       const scoreLte = parseFloat(req.query.score_lte);
       if (req.query.score_gte && !isNaN(scoreGte)) filters.score_gte = scoreGte;
       if (req.query.score_lte && !isNaN(scoreLte)) filters.score_lte = scoreLte;
+      if (req.query.cursor !== void 0 && viewMode !== "board") {
+        const cursor = req.query.cursor || void 0;
+        const result2 = await leadRepository.findLeadsCursor(tenantId, {
+          pageSize,
+          cursor: cursor || void 0,
+          filters,
+          userId: user.id,
+          userRole: user.role
+        });
+        return res.json(result2);
+      }
       const result = await leadRepository.findLeads(
         tenantId,
         { page, pageSize },
@@ -34675,6 +36063,7 @@ function createLeadRoutes(authenticateToken) {
 // server/routes/listingRoutes.ts
 init_listingRepository();
 import { Router as Router2 } from "express";
+init_priceCalibrationService();
 var HCMC_VIEWBOX = "106.40,10.60,107.00,11.20";
 var NON_HCMC_PROVINCES_SRV = [
   "dong nai",
@@ -34890,7 +36279,6 @@ function createListingRoutes(authenticateToken) {
   router.get("/", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const page = Math.max(1, parseInt(req.query.page) || 1);
       const pageSize = Math.max(1, Math.min(parseInt(req.query.pageSize) || 20, 200));
       const filters = {};
       if (req.query.type && req.query.type !== "ALL") filters.type = req.query.type;
@@ -34909,11 +36297,32 @@ function createListingRoutes(authenticateToken) {
       if (req.query.projectCode) filters.projectCode = req.query.projectCode;
       if (req.query.noProjectCode === "true") filters.noProjectCode = true;
       if (req.query.isVerified) filters.isVerified = req.query.isVerified === "true";
-      if (user.role === "PARTNER_ADMIN" || user.role === "PARTNER_AGENT") {
-        const result2 = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
-        return res.json({ ...result2, data: result2.data.map(redactSensitiveFields) });
+      const isPartner = user.role === "PARTNER_ADMIN" || user.role === "PARTNER_AGENT";
+      if (req.query.cursor !== void 0 || req.query.cursorMode === "true") {
+        const cursor = req.query.cursor || void 0;
+        const result2 = await listingRepository.findListingsCursor(user.tenantId, {
+          pageSize,
+          cursor,
+          filters,
+          userId: user.id,
+          userRole: user.role
+        });
+        if (isPartner) {
+          return res.json({ ...result2, data: result2.data.map(redactSensitiveFields) });
+        }
+        return res.json(result2);
       }
-      const result = await listingRepository.findListings(user.tenantId, { page, pageSize }, filters, user.id, user.role);
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const result = await listingRepository.findListings(
+        user.tenantId,
+        { page, pageSize },
+        filters,
+        user.id,
+        user.role
+      );
+      if (isPartner) {
+        return res.json({ ...result, data: result.data.map(redactSensitiveFields) });
+      }
       res.json(result);
     } catch (error48) {
       console.error("Error fetching listings:", error48);
@@ -35042,6 +36451,26 @@ function createListingRoutes(authenticateToken) {
       const { assignedTo: _stripped, ...safeBody } = req.body;
       const listing = await listingRepository.update(user.tenantId, String(req.params.id), safeBody);
       if (!listing) return res.status(404).json({ error: "Listing not found" });
+      if (listing.status === "SOLD" && listing.price && listing.area) {
+        const pricePerM2 = Math.round(listing.price / listing.area);
+        if (pricePerM2 > 1e6 && listing.location) {
+          const { getRegionalBasePrice: getRegionalBasePrice2 } = await Promise.resolve().then(() => (init_valuationEngine(), valuationEngine_exports));
+          const regional = getRegionalBasePrice2(listing.location, listing.propertyType);
+          const normalizedKey = listing.location.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+          setImmediate(
+            () => priceCalibrationService.recordTransaction({
+              locationKey: normalizedKey,
+              locationDisplay: listing.location,
+              pricePerM2,
+              propertyType: listing.propertyType || "townhouse_center",
+              confidence: regional.confidence,
+              listingId: parseInt(req.params.id, 10),
+              tenantId: user.tenantId
+            }).catch(() => {
+            })
+          );
+        }
+      }
       await auditRepository.log(user.tenantId, {
         actorId: user.id,
         action: "UPDATE",
@@ -40531,10 +41960,14 @@ function createScimRoutes() {
 // server/routes/valuationRoutes.ts
 init_valuationEngine();
 init_marketDataService();
+init_priceCalibrationService();
 init_listingRepository();
 init_logger();
 init_db();
 import { Router as Router20 } from "express";
+function normalizeAddrKey(addr) {
+  return addr.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+}
 async function loadRlhfPriceCorrection(tenantId, address, propertyType) {
   try {
     const addrParts = address.split(",").map((p) => p.trim()).filter(Boolean);
@@ -40621,13 +42054,13 @@ function stripPropertyTypePrefix(address) {
   }
   return result.trim();
 }
-function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, guestValuationRateLimit2) {
+function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, guestValuationRateLimit2, userValuationRateLimit2) {
   const router = Router20();
   router.post(
     "/advanced",
     optionalAuth,
     (req, res, next) => {
-      const limiter = req.user ? aiRateLimit2 : guestValuationRateLimit2;
+      const limiter = req.user ? userValuationRateLimit2 || aiRateLimit2 : guestValuationRateLimit2;
       return limiter(req, res, next);
     },
     async (req, res) => {
@@ -40658,6 +42091,10 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
             error: "Missing required fields: address, area, roadWidth, legal"
           });
         }
+        const sanitizedAddress = String(address).slice(0, 300).replace(/[`\\]/g, "").replace(/\n{3,}/g, "\n").replace(/\b(?:ignore|system\s+prompt|instruction|override|jailbreak)\b/gi, "[x]").trim();
+        if (!sanitizedAddress) return res.status(400).json({ error: "Invalid address" });
+        req.body.address = sanitizedAddress;
+        const addressClean = sanitizedAddress;
         const areaNum = Number(area);
         const roadWidthNum = Number(roadWidth);
         if (isNaN(areaNum) || areaNum <= 0) return res.status(400).json({ error: "area must be a positive number" });
@@ -40683,8 +42120,8 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
         let resolvedPropertyType;
         let marketDataSource;
         resolvedPropertyType = propertyType || "townhouse_center";
-        logger.info(`[Valuation] Request: "${address}" | ${areaNum}m\xB2 | ${resolvedPropertyType} | road=${roadWidthNum}m${roadTypeLabel ? " (" + roadTypeLabel + ")" : ""} | legal=${legalValue}${resolvedBuildingAge !== void 0 ? " | age=" + resolvedBuildingAge + "yr" : ""}${direction ? " | dir=" + direction : ""}${frontageWidth ? " | mtien=" + frontageWidth + "m" : ""}${bedrooms !== void 0 ? " | " + bedrooms + "PN" : ""}`);
-        const marketAddress = stripPropertyTypePrefix(address);
+        logger.info(`[Valuation] Request: "${addressClean}" | ${areaNum}m\xB2 | ${resolvedPropertyType} | road=${roadWidthNum}m${roadTypeLabel ? " (" + roadTypeLabel + ")" : ""} | legal=${legalValue}${resolvedBuildingAge !== void 0 ? " | age=" + resolvedBuildingAge + "yr" : ""}${direction ? " | dir=" + direction : ""}${frontageWidth ? " | mtien=" + frontageWidth + "m" : ""}${bedrooms !== void 0 ? " | " + bedrooms + "PN" : ""}`);
+        const marketAddress = stripPropertyTypePrefix(addressClean);
         const cacheEntry = skipCache ? null : await marketDataService.getMarketData(marketAddress, resolvedPropertyType);
         if (cacheEntry) {
           const isTypeSpecificCache = cacheEntry.normalizedKey.includes(":");
@@ -40713,7 +42150,7 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
           try {
             const { aiService: aiService2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
             const aiResult = await aiService2.getRealtimeValuation(
-              address,
+              addressClean,
               areaNum,
               roadWidthNum,
               legal,
@@ -40733,7 +42170,7 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
             monthlyRent = aiResult.incomeApproach?.monthlyRent;
             marketDataSource = "AI_LIVE";
           } catch {
-            const regional = getRegionalBasePrice(address, resolvedPropertyType);
+            const regional = getRegionalBasePrice(addressClean, resolvedPropertyType);
             marketBasePrice = regional.price;
             aiConfidence = regional.confidence;
             marketTrend = `\u01AF\u1EDBc t\xEDnh khu v\u1EF1c ${regional.region}`;
@@ -40741,11 +42178,11 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
           }
         }
         {
-          const regionalRef = getRegionalBasePrice(address, resolvedPropertyType);
+          const regionalRef = getRegionalBasePrice(addressClean, resolvedPropertyType);
           const threshold = regionalRef.price * 0.55;
           if (marketBasePrice < threshold) {
             logger.warn(
-              `[Valuation] marketBasePrice ${(marketBasePrice / 1e6).toFixed(0)}M < regional floor ${(threshold / 1e6).toFixed(0)}M for "${address}" (${regionalRef.region}) \u2014 overriding to ${(regionalRef.price / 1e6).toFixed(0)}M`
+              `[Valuation] marketBasePrice ${(marketBasePrice / 1e6).toFixed(0)}M < regional floor ${(threshold / 1e6).toFixed(0)}M for "${addressClean}" (${regionalRef.region}) \u2014 overriding to ${(regionalRef.price / 1e6).toFixed(0)}M`
             );
             marketBasePrice = regionalRef.price;
             aiConfidence = Math.max(aiConfidence, regionalRef.confidence);
@@ -40758,7 +42195,7 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
         if (!skipInternalComps && user?.tenantId) {
           try {
             const comps = await listingRepository.findComparables(user.tenantId, {
-              location: address,
+              location: addressClean,
               area: areaNum,
               propertyType: resolvedPropertyType,
               maxSamples: 15
@@ -40768,6 +42205,19 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
               internalCompsCount = comps.count;
               comparables = comps.samples;
               logger.info(`[Valuation] Internal comps: ${comps.count} listings, median=${(comps.medianPricePerM2 / 1e6).toFixed(0)} tr/m\xB2`);
+              const compsKey = normalizeAddrKey(addressClean);
+              setImmediate(
+                () => priceCalibrationService.recordObservation({
+                  locationKey: compsKey,
+                  locationDisplay: addressClean,
+                  pricePerM2: comps.medianPricePerM2,
+                  propertyType: resolvedPropertyType,
+                  source: "internal_comps",
+                  confidence: Math.min(85, 50 + comps.count * 5),
+                  tenantId: user?.tenantId
+                }).catch(() => {
+                })
+              );
             }
           } catch (compsErr) {
             logger.warn("[Valuation] Could not fetch internal comps:", compsErr.message);
@@ -40806,7 +42256,7 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
         let rlhfFactor = 1;
         let rlhfSamples = 0;
         if (user?.tenantId) {
-          const rlhf = await loadRlhfPriceCorrection(user.tenantId, address, resolvedPropertyType);
+          const rlhf = await loadRlhfPriceCorrection(user.tenantId, addressClean, resolvedPropertyType);
           rlhfFactor = rlhf.factor;
           rlhfSamples = rlhf.sampleCount;
         }
@@ -56796,6 +58246,7 @@ function createConnectorRoutes(authenticateToken) {
 
 // server.ts
 init_marketDataService();
+init_priceCalibrationService();
 
 // server/middleware/security.ts
 import crypto7 from "crypto";
@@ -57079,9 +58530,16 @@ var livechatRateLimit = rateLimit({
 var guestValuationRateLimit = rateLimit({
   name: "guest_valuation",
   windowMs: 24 * 60 * 6e4,
-  maxRequests: 3,
+  maxRequests: 1,
   keyFn: (req) => `gv:${req.ip || "anon"}`,
-  message: "B\u1EA1n \u0111\xE3 d\xF9ng h\u1EBFt 3 l\u01B0\u1EE3t \u0111\u1ECBnh gi\xE1 mi\u1EC5n ph\xED h\xF4m nay. \u0110\u0103ng nh\u1EADp \u0111\u1EC3 ti\u1EBFp t\u1EE5c kh\xF4ng gi\u1EDBi h\u1EA1n."
+  message: "B\u1EA1n \u0111\xE3 d\xF9ng h\u1EBFt 1 l\u01B0\u1EE3t \u0111\u1ECBnh gi\xE1 mi\u1EC5n ph\xED h\xF4m nay. \u0110\u0103ng nh\u1EADp \u0111\u1EC3 ti\u1EBFp t\u1EE5c."
+});
+var userValuationRateLimit = rateLimit({
+  name: "user_valuation",
+  windowMs: 24 * 60 * 6e4,
+  maxRequests: 3,
+  keyFn: (req) => `uv:${req.user?.id || req.user?.tenantId || req.ip || "user"}`,
+  message: "B\u1EA1n \u0111\xE3 d\xF9ng h\u1EBFt 3 l\u01B0\u1EE3t \u0111\u1ECBnh gi\xE1 h\xF4m nay. Vui l\xF2ng th\u1EED l\u1EA1i v\xE0o ng\xE0y mai."
 });
 
 // server.ts
@@ -58868,7 +60326,7 @@ var DICTIONARY = {
     "landing.market_title": "Th\u1ECB Tr\u01B0\u1EDDng Tr\u1EF1c Tuy\u1EBFn",
     "landing.market_subtitle": "C\u1EACP NH\u1EACT 24/7",
     "landing.market_view_all": "Xem To\xE0n B\u1ED9 Th\u1ECB Tr\u01B0\u1EDDng",
-    "landing.category_unit": "C\u0103n & \u0110\u1EA5t",
+    "landing.category_unit": "Nh\xE0 & \u0110\u1EA5t",
     "landing.cta_title": "S\u1EB5n S\xE0ng B\u1EE9t Ph\xE1?",
     "landing.cta_desc": "Tr\u1EA3i nghi\u1EC7m s\u1EE9c m\u1EA1nh c\u1EE7a c\xF4ng ngh\u1EC7 trong t\u1EEBng giao d\u1ECBch. \u0110\u0103ng k\xFD ngay h\xF4m nay.",
     "landing.cta_btn_register": "B\u1EAFt \u0110\u1EA7u Mi\u1EC5n Ph\xED",
@@ -58886,6 +60344,7 @@ var DICTIONARY = {
     "footer.col_legal": "H\u1ED7 Tr\u1EE3",
     "footer.col_terms": "Ph\xE1p L\xFD",
     "footer.link_help": "Trung T\xE2m Tr\u1EE3 Gi\xFAp",
+    "footer.link_user_guide": "H\u01B0\u1EDBng D\u1EABn S\u1EED D\u1EE5ng",
     "footer.link_api": "T\xE0i Li\u1EC7u API",
     "footer.system_status": "Tr\u1EA1ng Th\xE1i H\u1EC7 Th\u1ED1ng",
     "footer.link_terms": "\u0110i\u1EC1u Kho\u1EA3n",
@@ -60933,7 +62392,7 @@ var DICTIONARY = {
     "landing.market_title": "Online Marketplace",
     "landing.market_subtitle": "UPDATED 24/7",
     "landing.market_view_all": "View Full Market",
-    "landing.category_unit": "Units & Land",
+    "landing.category_unit": "Houses & Land",
     "landing.cta_title": "Ready for Breakthrough?",
     "landing.cta_desc": "Experience the power of technology in every transaction. Register today.",
     "landing.cta_btn_register": "Start Free",
@@ -60951,6 +62410,7 @@ var DICTIONARY = {
     "footer.col_legal": "Support",
     "footer.col_terms": "Legal",
     "footer.link_help": "Help Center",
+    "footer.link_user_guide": "User Guide",
     "footer.link_api": "API Docs",
     "footer.system_status": "System Status",
     "footer.link_terms": "Terms",
@@ -62046,6 +63506,8 @@ async function startServer() {
     if (!migrationOk) {
       logger.warn("[migrations] Skipped due to DB connectivity issue. Schema may be out of date until restart.");
     }
+    priceCalibrationService.init(pool);
+    logger.info("[PriceCalibration] Self-learning calibration engine initialized");
   } else {
     console.warn("DATABASE_URL not set. Skipping database migrations.");
   }
@@ -62064,9 +63526,21 @@ async function startServer() {
       if (req.query.priceMin) filters.price_gte = parseFloat(req.query.priceMin);
       if (req.query.priceMax) filters.price_lte = parseFloat(req.query.priceMax);
       if (req.query.search) filters.search = req.query.search;
-      const result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
+      if (req.query.location) filters.location_contains = req.query.location;
+      if (req.query.isVerified === "true") filters.isVerified = true;
+      let result;
+      if (req.query.cursor !== void 0) {
+        const cursor = req.query.cursor || void 0;
+        result = await listingRepository.findListingsCursor(PUBLIC_TENANT, {
+          pageSize,
+          cursor: cursor || void 0,
+          filters
+        });
+      } else {
+        result = await listingRepository.findListings(PUBLIC_TENANT, { page, pageSize }, filters);
+      }
       res.json(result);
-      if (page === 1) {
+      if (page === 1 || !req.query.cursor) {
         const ip = getClientIp(req);
         lookupIp(ip).then((geo) => visitorRepository.log({
           tenantId: PUBLIC_TENANT,
@@ -62087,6 +63561,23 @@ async function startServer() {
     } catch (error48) {
       console.error("Error fetching public listings:", error48);
       res.status(500).json({ error: "Failed to fetch listings" });
+    }
+  });
+  app.get("/api/public/listings/locations", apiRateLimit, async (req, res) => {
+    try {
+      const pool3 = listingRepository.pool;
+      const result = await pool3.query(
+        `SELECT DISTINCT TRIM(SPLIT_PART(location, ',', -1)) AS loc
+           FROM listings
+           WHERE tenant_id = $1
+             AND status IN ('AVAILABLE','OPENING','BOOKING')
+             AND location IS NOT NULL AND location <> ''
+           ORDER BY 1`,
+        [PUBLIC_TENANT]
+      );
+      res.json(result.rows.map((r) => r.loc).filter(Boolean));
+    } catch {
+      res.json([]);
     }
   });
   app.get("/api/public/listings/:id", apiRateLimit, async (req, res) => {
@@ -62552,6 +64043,49 @@ async function startServer() {
       res.status(500).json({ error: "Failed to delete SEO override" });
     }
   });
+  app.get("/api/admin/price-history", apiRateLimit, authenticateToken, async (req, res) => {
+    const user = req.user;
+    if (!user || user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      return res.status(403).json({ error: "Ch\u1EC9 ADMIN m\u1EDBi c\xF3 th\u1EC3 xem l\u1ECBch s\u1EED gi\xE1" });
+    }
+    const locationKey = (req.query.location || "").slice(0, 120);
+    const days = Math.min(365, parseInt(req.query.days || "90", 10));
+    if (!locationKey) return res.status(400).json({ error: "C\u1EA7n truy\u1EC1n location" });
+    const history = await priceCalibrationService.getPriceHistory(locationKey, days);
+    res.json({ locationKey, days, history });
+  });
+  app.get("/api/admin/price-calibration", apiRateLimit, authenticateToken, async (req, res) => {
+    const user = req.user;
+    if (!user || user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      return res.status(403).json({ error: "Ch\u1EC9 ADMIN m\u1EDBi c\xF3 th\u1EC3 xem calibration" });
+    }
+    try {
+      const limit = Math.min(200, parseInt(req.query.limit || "50", 10));
+      const { rows } = await pool.query(
+        `SELECT location_key, location_display, calibrated_price_per_m2,
+                sample_count, avg_ai_price, avg_comps_price, avg_transaction_price,
+                ai_weight, comps_weight, txn_weight,
+                confidence_score, trend_text, last_calibrated_at
+         FROM avm_calibration
+         ORDER BY last_calibrated_at DESC
+         LIMIT $1`,
+        [limit]
+      );
+      res.json({ total: rows.length, calibrations: rows });
+    } catch (err4) {
+      res.status(500).json({ error: err4.message });
+    }
+  });
+  app.post("/api/admin/price-calibration/recalibrate", apiRateLimit, authenticateToken, async (req, res) => {
+    const user = req.user;
+    if (!user || user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      return res.status(403).json({ error: "Ch\u1EC9 ADMIN m\u1EDBi c\xF3 th\u1EC3 ch\u1EA1y hi\u1EC7u ch\u1EC9nh" });
+    }
+    priceCalibrationService.calibrateAll().catch(
+      (e) => console.error("[Calibration] Manual recalibrate error:", e.message)
+    );
+    res.json({ message: "\u0110ang ch\u1EA1y hi\u1EC7u ch\u1EC9nh gi\xE1 trong n\u1EC1n \u2014 ki\u1EC3m tra log \u0111\u1EC3 theo d\xF5i." });
+  });
   app.use("/api/leads", apiRateLimit, createLeadRoutes(authenticateToken));
   app.use("/api/listings", apiRateLimit, createListingRoutes(authenticateToken));
   app.use("/api/proposals", apiRateLimit, createProposalRoutes(authenticateToken, () => broadcastIo));
@@ -62573,7 +64107,7 @@ async function startServer() {
   app.use("/api/upload", apiRateLimit, createUploadRoutes(authenticateToken));
   app.use("/uploads", createUploadServeRoute(authenticateToken));
   app.use("/scim/v2", express.json({ type: ["application/json", "application/scim+json"] }), createScimRoutes());
-  app.use("/api/valuation", apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit, optionalAuth, guestValuationRateLimit));
+  app.use("/api/valuation", apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit, optionalAuth, guestValuationRateLimit, userValuationRateLimit));
   app.use("/api/connectors", apiRateLimit, createConnectorRoutes(authenticateToken));
   app.use("/api/projects", apiRateLimit, createProjectRoutes(authenticateToken));
   app.use("/api/tenant", apiRateLimit, createTenantRoutes(authenticateToken));
