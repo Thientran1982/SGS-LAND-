@@ -600,7 +600,9 @@ export const Dashboard: React.FC = () => {
             {(analytics.totalLeads ?? 0) < 5 && !localStorage.getItem('sgs_guide_dismissed') && (
                 <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-900/40 to-slate-800/60 border border-emerald-800/40">
                     <div className="flex items-center gap-3">
-                        <span className="text-xl shrink-0">🚀</span>
+                        <span className="text-emerald-400 shrink-0">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </span>
                         <div>
                             <p className="text-sm font-bold text-white">
                                 {language === 'vn' ? 'Bắt đầu với SGS LAND' : 'Getting started with SGS LAND'}
