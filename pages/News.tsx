@@ -214,8 +214,19 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
     );
 };
 
-const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article, onSave: (data: Partial<Article>) => void, onCancel: () => void }) => {
+const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId }: {
+    initialData?: Article;
+    onSave: (data: Partial<Article>) => void;
+    onCancel: () => void;
+    onUploadingChange?: (uploading: boolean) => void;
+    formId?: string;
+}) => {
     const [uploadingCount, setUploadingCount] = useState(0);
+
+    useEffect(() => {
+        onUploadingChange?.(uploadingCount > 0);
+    }, [uploadingCount, onUploadingChange]);
+
     const [formData, setFormData] = useState<Partial<Article>>(initialData || {
         title: '',
         excerpt: '',
@@ -247,25 +258,21 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
 
-        const imageFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
-        const videoFiles = Array.from(e.target.files).filter(f => f.type.startsWith('video/'));
+        const allFiles = Array.from(e.target.files);
+        const imageFiles = allFiles.filter(f => f.type.startsWith('image/'));
+        const videoFiles = allFiles.filter(f => f.type.startsWith('video/'));
+        const uploadableFiles = [...imageFiles, ...videoFiles];
 
-        if (videoFiles.length > 0) {
-            videoFiles.forEach(file => {
-                const url = URL.createObjectURL(file);
-                setFormData(prev => ({ ...prev, videos: [...(prev.videos || []), url] }));
-            });
-        }
+        if (uploadableFiles.length === 0) return;
 
-        if (imageFiles.length === 0) return;
-
-        setUploadingCount(c => c + imageFiles.length);
+        setUploadingCount(c => c + uploadableFiles.length);
         e.target.value = '';
 
         try {
-            const compressed = await compressImages(imageFiles);
+            const compressedImages = imageFiles.length > 0 ? await compressImages(imageFiles) : [];
             const fd = new FormData();
-            compressed.forEach(f => fd.append('files', f));
+            compressedImages.forEach(f => fd.append('files', f));
+            videoFiles.forEach(f => fd.append('files', f));
 
             const res = await fetch('/api/upload', {
                 method: 'POST',
@@ -279,18 +286,21 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
             }
 
             const data = await res.json();
-            const uploadedUrls: string[] = (data.files || []).map((f: any) => f.url as string);
+            const uploaded: Array<{ url: string; mimetype: string }> = data.files || [];
+            const imgUrls = uploaded.filter(f => f.mimetype?.startsWith('image/')).map(f => f.url);
+            const vidUrls = uploaded.filter(f => f.mimetype?.startsWith('video/')).map(f => f.url);
 
             setFormData(prev => ({
                 ...prev,
-                images: [...(prev.images || []), ...uploadedUrls],
-                image: prev.image || uploadedUrls[0] || '',
+                images: [...(prev.images || []), ...imgUrls],
+                videos: [...(prev.videos || []), ...vidUrls],
+                image: prev.image || imgUrls[0] || '',
             }));
         } catch (err: any) {
             console.error('[ArticleForm] upload error:', err);
-            alert(`Lỗi tải ảnh: ${err.message}`);
+            alert(`Lỗi tải file: ${err.message}`);
         } finally {
-            setUploadingCount(c => c - imageFiles.length);
+            setUploadingCount(c => c - uploadableFiles.length);
         }
     };
 
@@ -314,7 +324,7 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 bg-[var(--bg-surface)] p-8 rounded-2xl shadow-sm border border-[var(--glass-border)]">
+        <form id={formId} onSubmit={handleSubmit} className="space-y-6 bg-[var(--bg-surface)] p-8 rounded-2xl shadow-sm border border-[var(--glass-border)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Tiêu đề</label>
@@ -433,7 +443,8 @@ export const News: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [errorToast, setErrorToast] = useState<string | null>(null);
-    
+    const [isArticleUploading, setIsArticleUploading] = useState(false);
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -557,22 +568,33 @@ export const News: React.FC = () => {
             <div className="min-h-screen bg-[var(--glass-surface)] font-sans text-[var(--text-primary)] pb-20 overflow-y-auto h-[100dvh] no-scrollbar">
                 <div className="sticky top-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-50 border-b border-[var(--glass-border)]">
                     <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
-                        <button onClick={() => { setIsCreating(false); setEditingArticle(null); }} className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors min-h-[44px] shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => { setIsCreating(false); setEditingArticle(null); setIsArticleUploading(false); }}
+                            className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-secondary)] hover:text-indigo-600 transition-colors min-h-[44px] shrink-0"
+                        >
                             {ICONS.BACK} <span className="hidden sm:inline">Hủy</span>
                         </button>
                         <div className="flex items-center gap-2 min-w-0">
                             <span className="font-bold text-base sm:text-lg hidden sm:inline truncate">{isCreating ? 'ĐĂNG TIN MỚI' : 'SỬA TIN TỨC'}</span>
                         </div>
-                        <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
-                            {currentUser ? 'Bảng Điều Khiển' : 'Đăng Nhập'}
+                        <button
+                            type="submit"
+                            form="article-form"
+                            disabled={isArticleUploading}
+                            className="px-4 sm:px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isArticleUploading ? 'Đang tải...' : 'Lưu bài viết'}
                         </button>
                     </div>
                 </div>
                 <div className="max-w-4xl mx-auto px-6 py-12">
-                    <ArticleForm 
-                        initialData={editingArticle || undefined} 
-                        onSave={handleSaveArticle} 
-                        onCancel={() => { setIsCreating(false); setEditingArticle(null); }} 
+                    <ArticleForm
+                        formId="article-form"
+                        initialData={editingArticle || undefined}
+                        onSave={handleSaveArticle}
+                        onCancel={() => { setIsCreating(false); setEditingArticle(null); }}
+                        onUploadingChange={setIsArticleUploading}
                     />
                 </div>
             </div>
