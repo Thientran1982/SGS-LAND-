@@ -205,6 +205,19 @@ export function createValuationRoutes(
         });
       }
 
+      // Sanitize free-text address before it reaches any AI prompt
+      const sanitizedAddress: string = String(address)
+        .slice(0, 300)
+        .replace(/[`\\]/g, '')
+        .replace(/\n{3,}/g, '\n')
+        .replace(/\b(?:ignore|system\s+prompt|instruction|override|jailbreak)\b/gi, '[x]')
+        .trim();
+      if (!sanitizedAddress) return res.status(400).json({ error: 'Invalid address' });
+
+      // Re-assign so rest of handler uses sanitized value
+      (req.body as any).address = sanitizedAddress;
+      const addressClean: string = sanitizedAddress;
+
       const areaNum = Number(area);
       const roadWidthNum = Number(roadWidth);
       if (isNaN(areaNum) || areaNum <= 0) return res.status(400).json({ error: 'area must be a positive number' });
@@ -237,12 +250,12 @@ export function createValuationRoutes(
 
       resolvedPropertyType = (propertyType || 'townhouse_center') as PropertyType;
 
-      logger.info(`[Valuation] Request: "${address}" | ${areaNum}m² | ${resolvedPropertyType} | road=${roadWidthNum}m${roadTypeLabel ? ' (' + roadTypeLabel + ')' : ''} | legal=${legalValue}${resolvedBuildingAge !== undefined ? ' | age=' + resolvedBuildingAge + 'yr' : ''}${direction ? ' | dir=' + direction : ''}${frontageWidth ? ' | mtien=' + frontageWidth + 'm' : ''}${bedrooms !== undefined ? ' | ' + bedrooms + 'PN' : ''}`);
+      logger.info(`[Valuation] Request: "${addressClean}" | ${areaNum}m² | ${resolvedPropertyType} | road=${roadWidthNum}m${roadTypeLabel ? ' (' + roadTypeLabel + ')' : ''} | legal=${legalValue}${resolvedBuildingAge !== undefined ? ' | age=' + resolvedBuildingAge + 'yr' : ''}${direction ? ' | dir=' + direction : ''}${frontageWidth ? ' | mtien=' + frontageWidth + 'm' : ''}${bedrooms !== undefined ? ' | ' + bedrooms + 'PN' : ''}`);
 
       // Strip property-type prefix keywords (e.g. "căn hộ", "nhà phố") from the address
       // so the cache key is location-only, preventing the AI from returning type-specific
       // prices that confuse the type multiplier logic.
-      const marketAddress = stripPropertyTypePrefix(address);
+      const marketAddress = stripPropertyTypePrefix(addressClean);
 
       // Pass resolvedPropertyType so the cache uses a type-specific key
       // (e.g. "vinhome central park binh thanh:apartment_center") for non-townhouse types.
@@ -293,7 +306,7 @@ export function createValuationRoutes(
         try {
           const { aiService } = await import('../ai');
           const aiResult = await aiService.getRealtimeValuation(
-            address, areaNum, roadWidthNum, legal, propertyType,
+            addressClean, areaNum, roadWidthNum, legal, propertyType,
             undefined,
             {
               buildingAge: resolvedBuildingAge,
@@ -310,7 +323,7 @@ export function createValuationRoutes(
           marketDataSource = 'AI_LIVE';
         } catch {
           // Regional table also uses correct type multiplier
-          const regional = getRegionalBasePrice(address, resolvedPropertyType);
+          const regional = getRegionalBasePrice(addressClean, resolvedPropertyType);
           marketBasePrice = regional.price;
           aiConfidence = regional.confidence;
           marketTrend = `Ước tính khu vực ${regional.region}`;
@@ -325,12 +338,12 @@ export function createValuationRoutes(
       // (< 55% of our known baseline), replace it with the regional value to avoid
       // under-valuation caused by Gemini returning generic district prices.
       {
-        const regionalRef = getRegionalBasePrice(address, resolvedPropertyType);
+        const regionalRef = getRegionalBasePrice(addressClean, resolvedPropertyType);
         const threshold   = regionalRef.price * 0.55;
         if (marketBasePrice < threshold) {
           logger.warn(
             `[Valuation] marketBasePrice ${(marketBasePrice/1_000_000).toFixed(0)}M < regional floor ` +
-            `${(threshold/1_000_000).toFixed(0)}M for "${address}" (${regionalRef.region}) — ` +
+            `${(threshold/1_000_000).toFixed(0)}M for "${addressClean}" (${regionalRef.region}) — ` +
             `overriding to ${(regionalRef.price/1_000_000).toFixed(0)}M`
           );
           marketBasePrice  = regionalRef.price;
@@ -347,7 +360,7 @@ export function createValuationRoutes(
       if (!skipInternalComps && user?.tenantId) {
         try {
           const comps = await listingRepository.findComparables(user.tenantId, {
-            location: address,
+            location: addressClean,
             area: areaNum,
             propertyType: resolvedPropertyType,
             maxSamples: 15,
@@ -406,7 +419,7 @@ export function createValuationRoutes(
       let rlhfFactor = 1.0;
       let rlhfSamples = 0;
       if (user?.tenantId) {
-        const rlhf = await loadRlhfPriceCorrection(user.tenantId, address, resolvedPropertyType);
+        const rlhf = await loadRlhfPriceCorrection(user.tenantId, addressClean, resolvedPropertyType);
         rlhfFactor = rlhf.factor;
         rlhfSamples = rlhf.sampleCount;
       }

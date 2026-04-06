@@ -107,6 +107,20 @@ async function buildRlhfContext(tenantId: string, intent: string): Promise<RlhfC
     }
 }
 
+// ---------------------------------------------------------------------------
+// Prompt injection sanitizer — strip dangerous control tokens from user inputs
+// before embedding them inside AI prompts.
+// ---------------------------------------------------------------------------
+function sanitizePromptInput(str: string, maxLen = 300): string {
+    if (!str) return '';
+    return str
+        .slice(0, maxLen)
+        .replace(/[`\\]/g, '')                        // remove backticks & backslashes (prompt escape vectors)
+        .replace(/\n{3,}/g, '\n\n')                   // collapse excessive newlines
+        .replace(/\b(?:ignore|system\s+prompt|instruction|override|jailbreak|forget\s+everything)\b/gi, '[x]')
+        .trim();
+}
+
 // Spend accumulator: flush to DB every 10 calls or 30s (avoid per-request DB write)
 const spendBuffer: Map<string, number> = new Map();
 let spendFlushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -2223,6 +2237,9 @@ PHÂN TÍCH (chuyên nghiệp, súc tích):
         interactionId: string;
     }> {
         try {
+            // ── Sanitize user-provided inputs before embedding in prompts ─────────
+            address = sanitizePromptInput(address, 300);
+
             // ── STEP 1: Google Search grounding → get RAW market text data ──────────
             // IMPORTANT: Ask AI for the BASE PRICE of a STANDARD REFERENCE property:
             //   (Sổ Hồng, lộ giới 4m, diện tích 60-100m²) in the target area.
@@ -2452,7 +2469,9 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                     contents: saleSearchPrompt,
                     config: {
                         systemInstruction: valSearchInstruction,
-                        tools: [{ googleSearch: {} }]
+                        tools: [{ googleSearch: {} }],
+                        temperature: 0.3,       // moderate — allows diverse search synthesis
+                        maxOutputTokens: 2048,  // cap search summary size
                     }
                 }),
                 getAiClient().models.generateContent({
@@ -2460,7 +2479,9 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                     contents: rentalSearchPrompt,
                     config: {
                         systemInstruction: valRentalInstruction,
-                        tools: [{ googleSearch: {} }]
+                        tools: [{ googleSearch: {} }],
+                        temperature: 0.3,
+                        maxOutputTokens: 1536,
                     }
                 })
             ]);
@@ -2630,7 +2651,10 @@ GIÁ THUÊ (từ DỮ LIỆU GIÁ THUÊ):
                             config: {
                                 systemInstruction: valuationSystemInstruction,
                                 responseMimeType: 'application/json',
-                                responseSchema: extractSchema
+                                responseSchema: extractSchema,
+                                temperature: 0.1,      // very low — deterministic JSON, no hallucination
+                                topP: 0.8,
+                                maxOutputTokens: 1024, // schema output is bounded
                             }
                         });
                         extractText = resp.text || '{}';
@@ -2835,7 +2859,9 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
                         contents: verifyPrompt,
                         config: {
                             systemInstruction: valSearchInstruction,
-                            tools: [{ googleSearch: {} }]
+                            tools: [{ googleSearch: {} }],
+                            temperature: 0.3,
+                            maxOutputTokens: 1024,
                         }
                     });
 

@@ -389,7 +389,7 @@ export function createListingRoutes(authenticateToken: any) {
               pricePerM2,
               propertyType:    (listing.propertyType as string) || 'townhouse_center',
               confidence:      regional.confidence,
-              listingId:       parseInt(req.params.id, 10),
+              listingId:       parseInt(req.params.id as string, 10),
               tenantId:        user.tenantId,
             }).catch(() => {})
           );

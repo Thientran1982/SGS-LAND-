@@ -1,0 +1,208 @@
+## NHIỆM VỤ: SỬA GEMINI API — ĐỊNH GIÁ CHÍNH XÁC
+
+File cần sửa: [TÊN_FILE_API] (file gọi Gemini API)
+
+--- PHẦN 1: SYSTEM INSTRUCTION CHO GEMINI ---
+
+Tìm nơi tạo model Gemini. Thêm systemInstruction như sau.
+Dùng đúng cú pháp của SDK đang có trong project:
+
+// Nếu dùng @google/generative-ai (npm package):
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",  // dùng flash để nhanh và rẻ hơn
+  systemInstruction: `Bạn là chuyên gia thẩm định giá bất động sản
+Việt Nam 20 năm kinh nghiệm. Áp dụng phương pháp so sánh thị trường
+theo Thông tư 28/2021/TT-BTC Bộ Tài chính.
+
+HỆ SỐ ĐIỀU CHỈNH BẮT BUỘC ÁP DỤNG:
+Vị trí đường:
+- Mặt tiền đường lớn >8m: hệ số 1.00 (cơ sở)
+- Mặt tiền đường nhỏ 4-8m: hệ số 0.80
+- Hẻm xe hơi ≥4m: hệ số 0.60
+- Hẻm xe máy <4m: hệ số 0.45
+
+Hướng nhà:
+- Đông Nam, Nam: +8%
+- Đông, Tây Nam: +0% (cơ sở)
+- Bắc Đông Bắc: -5%
+- Tây, Tây Bắc: -6%
+
+Pháp lý:
+- Sổ đỏ/hồng: +0%
+- Đang làm sổ: -12%
+- Giấy tay: -25%
+- Hợp đồng: -20%
+
+Nội thất:
+- Thô: +0% | Cơ bản: +4% | Đầy đủ: +8% | Cao cấp: +16%
+
+Tuổi nhà: khấu hao 1.5%/năm, tối đa 30%
+
+LUẬT BẮT BUỘC: Chỉ trả về JSON, không có text nào khác.
+Không giải thích. Không markdown. Chỉ JSON thuần.`,
+  generationConfig: {
+    temperature: 0.1,     // thấp = ổn định, không hallucinate
+    topP: 0.8,
+    maxOutputTokens: 1024,
+    responseMimeType: "application/json", // ép Gemini trả JSON
+  },
+});
+
+--- PHẦN 2: USER PROMPT TEMPLATE ---
+
+Khi gọi model.generateContent(), dùng prompt này.
+Thay các giá trị {placeholder} bằng data từ form:
+
+const userPrompt = `Định giá bất động sản sau và trả về JSON:
+
+THÔNG TIN BẤT ĐỘNG SẢN:
+- Địa chỉ: ${sanitize(data.dia_chi)}
+- Loại hình: ${data.loai_hinh}
+- Diện tích đất: ${data.dien_tich_dat}m²
+- Diện tích sử dụng: ${data.dien_tich_su_dung}m²
+- Số tầng: ${data.so_tang}
+- Số phòng ngủ: ${data.so_phong_ngu} | Số WC: ${data.so_wc}
+- Hướng cửa chính: ${data.huong_nha}
+- Vị trí đường: ${data.vi_tri_duong}
+- Chiều rộng mặt tiền: ${data.chieu_rong_mat_tien || 'không có'}m
+- Tình trạng pháp lý: ${data.phap_ly}
+- Năm xây dựng: ${data.nam_xay_dung || 'không rõ'}
+- Nội thất: ${data.noi_that}
+- Ghi chú thêm: ${sanitize(data.ghi_chu || '')}
+
+JSON SCHEMA BẮT BUỘC (trả về đúng format này):
+{
+  "gia_uoc_tinh": ,
+  "gia_min": ,
+  "gia_max": ,
+  "gia_tren_m2": ,
+  "do_tin_cay": ,
+  "breakdown": {
+    "gia_dat_khu_vuc": ,
+    "he_so_vi_tri": ,
+    "dieu_chinh_huong": ,
+    "dieu_chinh_phap_ly": ,
+    "dieu_chinh_noi_that": ,
+    "khau_hao": 
+  },
+  "nhan_xet": "",
+  "rui_ro": ["", ""],
+  "disclaimer": "Kết quả mang tính tham khảo, không phải thẩm định pháp lý chính thức."
+}`;
+
+--- PHẦN 3: HÀM SANITIZE (chống prompt injection) ---
+
+Thêm hàm này vào file, gọi trước khi đưa text vào prompt:
+
+function sanitize(str) {
+  if (!str) return '';
+  return str
+    .slice(0, 300)
+    .replace(/[`'"\\]/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/ignore|system|instruction|override|jailbreak/gi, '[x]')
+    .trim();
+}
+
+--- PHẦN 4: XỬ LÝ RESPONSE GEMINI AN TOÀN ---
+
+Thay thế code xử lý response hiện tại bằng:
+
+async function callGeminiValuation(data) {
+  let attempt = 0;
+  while (attempt < 2) {  // thử tối đa 2 lần
+    attempt++;
+    try {
+      const result = await model.generateContent(userPrompt);
+      const rawText = result.response.text().trim();
+
+      // Parse JSON an toàn
+      let parsed;
+      try {
+        parsed = JSON.parse(rawText);
+      } catch {
+        // Gemini đôi khi wrap trong ```json ... ``` dù đã set mimeType
+        const match = rawText.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error('Gemini không trả về JSON hợp lệ');
+        parsed = JSON.parse(match[0]);
+      }
+
+      // Validate dữ liệu trả về
+      if (
+        typeof parsed.gia_uoc_tinh !== 'number' ||
+        parsed.gia_uoc_tinh <= 0 ||
+        parsed.gia_uoc_tinh > 1000 ||
+        typeof parsed.do_tin_cay !== 'number' ||
+        parsed.do_tin_cay < 50 ||
+        parsed.do_tin_cay > 99 ||
+        !parsed.breakdown
+      ) {
+        if (attempt < 2) continue;  // thử lại lần 2
+        throw new Error('Dữ liệu định giá không hợp lệ');
+      }
+
+      return { success: true, data: parsed };
+
+    } catch (err) {
+      if (attempt >= 2) {
+        return {
+          success: false,
+          error: 'Hệ thống AI tạm thời gặp sự cố. Vui lòng thử lại sau ít phút.'
+        };
+      }
+    }
+  }
+}
+
+--- PHẦN 5: RATE LIMITING ĐƠN GIẢN (không cần Redis) ---
+
+Thêm vào file backend/API handler:
+
+const _rl = new Map();
+function checkLimit(ip) {
+  const now = Date.now();
+  const r = _rl.get(ip);
+  if (!r || now > r.reset) {
+    _rl.set(ip, { count: 1, reset: now + 86400000 });
+    return true;
+  }
+  if (r.count >= 30) return false;
+  r.count++;
+  return true;
+}
+
+// Dùng trong handler:
+const ip = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+if (!checkLimit(String(ip).split(',')[0].trim())) {
+  return res.status(429).json({
+    success: false,
+    error: 'Bạn đã định giá quá 30 lần hôm nay. Thử lại sau 24 giờ.'
+  });
+}
+
+--- PHẦN 6: KIỂM TRA SAU KHI SỬA ---
+
+Test với dữ liệu mẫu thực tế này:
+{
+  dia_chi: "123 Nguyễn Văn Linh, Phường Tân Phong, Quận 7, TP.HCM",
+  loai_hinh: "nha_pho",
+  dien_tich_dat: 60,
+  dien_tich_su_dung: 180,
+  so_tang: 3,
+  so_phong_ngu: 4,
+  so_wc: 3,
+  huong_nha: "dong_nam",
+  vi_tri_duong: "hem_xe_hoi",
+  chieu_rong_mat_tien: 4,
+  phap_ly: "so_do",
+  noi_that: "day_du",
+  nam_xay_dung: 2018
+}
+
+Kết quả mong đợi hợp lý: gia_uoc_tinh trong khoảng 6-10 tỷ
+(tuỳ dữ liệu thị trường Gemini dùng)
+
+Báo cáo:
+- JSON Gemini trả về có đúng schema không?
+- Giá ước tính có trong khoảng hợp lý không?
+- Console có lỗi không?
