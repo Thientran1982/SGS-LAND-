@@ -1,0 +1,163 @@
+## NHIỆM VỤ: SỬA UI HIỂN THỊ KẾT QUẢ ĐỊNH GIÁ
+
+Tìm component/phần code hiển thị kết quả sau khi Gemini trả về.
+Sửa lại toàn bộ phần result display.
+
+--- PHẦN 1: HÀM FORMAT TIỀN VIỆT NAM ---
+
+Thêm hàm này, dùng ở mọi nơi hiển thị số tiền:
+
+function formatVND(ty) {
+  if (ty >= 1) {
+    const rounded = Math.round(ty * 100) / 100;
+    return rounded.toFixed(2).replace('.', ',') + ' tỷ';
+  } else {
+    const trieu = Math.round(ty * 1000);
+    return trieu.toLocaleString('vi-VN') + ' triệu';
+  }
+}
+// Ví dụ: formatVND(6.5) → "6,50 tỷ"
+// Ví dụ: formatVND(0.85) → "850 triệu"
+
+--- PHẦN 2: THANH ĐỊNH GIÁ RANGE ---
+
+Thêm HTML+CSS sau vào kết quả, thay thế phần hiển thị giá cũ:
+
+// HTML structure (điều chỉnh theo framework đang dùng):
+
+<div class="valuation-result">
+
+  <!-- Giá chính -->
+  <div class="main-price">
+    <div class="price-label">Giá ước tính</div>
+    <div class="price-value">{formatVND(data.gia_uoc_tinh)}</div>
+    <div class="price-m2">~ {data.gia_tren_m2} triệu/m²</div>
+  </div>
+
+  <!-- Thanh range -->
+  <div class="range-bar-wrap">
+    <div class="range-labels">
+      <span>Thấp nhất<br>{formatVND(data.gia_min)}</span>
+      <span>Cao nhất<br>{formatVND(data.gia_max)}</span>
+    </div>
+    <div class="range-bar-track">
+      <div class="range-bar-fill"></div>
+      <div class="range-bar-dot" title="Giá ước tính"></div>
+    </div>
+    <div class="confidence-badge confidence-{getLevel(data.do_tin_cay)}">
+      Độ tin cậy: {data.do_tin_cay}%
+    </div>
+  </div>
+
+  <!-- CSS cho thanh range -->
+  <style>
+  .range-bar-track {
+    position: relative; height: 8px;
+    background: linear-gradient(to right, #639922, #EF9F27, #E24B4A);
+    border-radius: 4px; margin: 8px 0;
+  }
+  .range-bar-dot {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px; height: 18px; border-radius: 50%;
+    background: white; border: 3px solid #185FA5;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .confidence-high  { color: #3B6D11; background: #EAF3DE; }
+  .confidence-med   { color: #854F0B; background: #FAEEDA; }
+  .confidence-low   { color: #A32D2D; background: #FCEBEB; }
+  </style>
+
+</div>
+
+function getLevel(c) {
+  return c >= 80 ? 'high' : c >= 70 ? 'med' : 'low';
+}
+
+--- PHẦN 3: BẢNG BREAKDOWN ĐỊNH GIÁ ---
+
+Thêm section "Cơ sở định giá" (accordion, mặc định đóng):
+
+Hiển thị bảng với dữ liệu từ data.breakdown:
+
+| Yếu tố            | Chi tiết          | Điều chỉnh |
+|--------------------|-------------------|------------|
+| Giá đất khu vực   | XX triệu/m²       | Cơ sở      |
+| Vị trí đường      | [vi_tri_duong]    | hệ số 0.XX |
+| Hướng cửa         | [huong_nha]       | +X% / -X%  |
+| Pháp lý           | [phap_ly]         | -X% / +0%  |
+| Nội thất          | [noi_that]        | +X%        |
+| Tuổi nhà          | X năm             | -X%        |
+
+Quy tắc màu sắc cột "Điều chỉnh":
+- Dương (+): màu xanh lá (#3B6D11)
+- Âm (-): màu đỏ (#A32D2D)
+- Cơ sở: màu xám (#5F5E5A)
+
+--- PHẦN 4: NHẬN XÉT VÀ CẢNH BÁO ---
+
+Thêm 2 section sau bảng breakdown:
+
+Section "Nhận xét của AI":
+- Text từ data.nhan_xet
+- Font 14px, line-height 1.6
+- Border-left 3px màu xanh dương
+
+Section "Lưu ý rủi ro" (chỉ hiện nếu data.rui_ro.length > 0):
+- Mỗi rủi ro 1 dòng
+- Prefix icon: ▲ (màu cam #854F0B)
+
+--- PHẦN 5: DISCLAIMER BẮT BUỘC (không được ẩn) ---
+
+Cuối trang kết quả, luôn hiển thị box này:
+
+<div style="
+  background: #F1EFE8;
+  border: 0.5px solid #D3D1C7;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 20px;
+  font-size: 12px;
+  color: #5F5E5A;
+  line-height: 1.6;
+">
+  ⚠️ <strong>Lưu ý quan trọng:</strong> Kết quả định giá mang tính
+  tham khảo dựa trên dữ liệu AI, không phải thẩm định pháp lý chính
+  thức theo Nghị định 21/2021/NĐ-CP. SGS Land không chịu trách nhiệm
+  về các quyết định giao dịch dựa trên kết quả này. Để có thẩm định
+  chính thức, vui lòng liên hệ chuyên gia thẩm định được cấp phép
+  của Bộ Tài chính Việt Nam.
+</div>
+
+--- PHẦN 6: LƯU LỊCH SỬ LOCAL ---
+
+Sau mỗi định giá thành công, lưu vào localStorage:
+
+function saveHistory(inputData, result) {
+  const history = JSON.parse(localStorage.getItem('sgs_history') || '[]');
+  history.unshift({
+    id: Date.now(),
+    time: new Date().toLocaleString('vi-VN'),
+    dia_chi: inputData.dia_chi,
+    loai_hinh: inputData.loai_hinh,
+    gia: result.gia_uoc_tinh,
+    do_tin_cay: result.do_tin_cay,
+  });
+  localStorage.setItem('sgs_history', JSON.stringify(history.slice(0, 10)));
+}
+
+Thêm link "Lịch sử định giá (X lần)" ở cuối trang.
+Click → hiện modal danh sách 10 lần gần nhất dạng bảng.
+
+--- KIỂM TRA CUỐI ---
+
+Sau khi sửa xong toàn bộ, test end-to-end:
+1. Điền form đầy đủ → submit → loading state hiện không?
+2. Kết quả hiện: thanh range, giá, độ tin cậy không?
+3. Bảng breakdown có số điều chỉnh + màu sắc đúng không?
+4. Disclaimer luôn hiện cuối trang không?
+5. Lịch sử được lưu localStorage không?
+6. Thử submit form thiếu trường → lỗi validation hiện đúng không?
+7. Mở Console → không có lỗi JS nào không?
+
+Báo cáo từng điểm pass/fail.

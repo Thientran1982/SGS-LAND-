@@ -141,6 +141,23 @@ function clearHistory(): void {
     try { localStorage.removeItem(HISTORY_LS_KEY); } catch { /* ignore */ }
 }
 
+// --- FORMAT TIỀN VIỆT NAM ---
+// formatVND(6.5)   → "6,50 tỷ"
+// formatVND(0.85)  → "850 triệu"
+function formatVND(totalVnd: number): string {
+    const ty = totalVnd / 1_000_000_000;
+    if (ty >= 1) {
+        const rounded = Math.round(ty * 100) / 100;
+        return rounded.toFixed(2).replace('.', ',') + ' tỷ';
+    }
+    const trieu = Math.round(ty * 1000);
+    return trieu.toLocaleString('vi-VN') + ' triệu';
+}
+
+function getConfidenceLevel(c: number): 'high' | 'med' | 'low' {
+    return c >= 80 ? 'high' : c >= 70 ? 'med' : 'low';
+}
+
 // --- DYNAMIC AGENT STEPS (ghi nhận thông tin người dùng và xử lý theo từng agent) ---
 interface AgentStep { icon: string; title: string; details: string[] }
 
@@ -518,6 +535,9 @@ export const AiValuation: React.FC = () => {
 
     // Ref for interval cleanup
     const intervalRef = useRef<any>(null);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [historyItems, setHistoryItems] = useState<ValuationHistoryItem[]>([]);
+    const [breakdownOpen, setBreakdownOpen] = useState(false);
 
     useEffect(() => {
         return () => {
@@ -759,6 +779,24 @@ export const AiValuation: React.FC = () => {
             incomeApproach: aiResult.incomeApproach,
             reconciliation: aiResult.reconciliation,
         });
+
+        // Save to localStorage history
+        const histItem: ValuationHistoryItem = {
+            id: Date.now().toString(),
+            date: new Date().toLocaleString('vi-VN'),
+            address,
+            area: areaNum,
+            propertyType,
+            legal: legal as ValuationHistoryItem['legal'],
+            totalPrice,
+            pricePerM2,
+            rangeMin,
+            rangeMax,
+            confidence,
+            marketTrend: aiResult.marketTrend || '',
+        };
+        addToHistory(histItem);
+        setHistoryItems(readHistory());
     };
 
     const handleAdjustParams = () => {
@@ -1664,7 +1702,7 @@ export const AiValuation: React.FC = () => {
                                         {formatSmartPrice(valuation.price, t)} <span className="text-2xl text-emerald-500">VNĐ</span>
                                     </div>
                                     <div className="text-slate-400 text-sm mt-2 font-medium">
-                                        Biên độ: {formatSmartPrice(valuation.range[0], t)} — {formatSmartPrice(valuation.range[1], t)}
+                                        Biên độ: {formatVND(valuation.range[0])} — {formatVND(valuation.range[1])}
                                     </div>
                                 </div>
                                 <div className="flex gap-3 flex-wrap justify-end">
@@ -1685,6 +1723,39 @@ export const AiValuation: React.FC = () => {
                                 </div>
                             </div>
 
+                            {/* ── RANGE BAR ── */}
+                            {(() => {
+                                const min = valuation.range[0];
+                                const max = valuation.range[1];
+                                const mid = valuation.price;
+                                const pct = max > min ? Math.round(((mid - min) / (max - min)) * 100) : 50;
+                                const confLevel = getConfidenceLevel(valuation.confidence);
+                                const confColors: Record<string, string> = {
+                                    high: 'text-[#3B6D11] bg-[#EAF3DE]',
+                                    med:  'text-[#854F0B] bg-[#FAEEDA]',
+                                    low:  'text-[#A32D2D] bg-[#FCEBEB]',
+                                };
+                                return (
+                                    <div className="mb-2">
+                                        <div className="flex justify-between text-xs text-slate-400 font-medium mb-1.5">
+                                            <span>Thấp nhất<br /><span className="text-white font-bold">{formatVND(min)}</span></span>
+                                            <span className="text-right">Cao nhất<br /><span className="text-white font-bold">{formatVND(max)}</span></span>
+                                        </div>
+                                        <div className="relative h-2 rounded-full overflow-visible" style={{ background: 'linear-gradient(to right, #639922, #EF9F27, #E24B4A)' }}>
+                                            <div
+                                                className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-[3px] border-[#185FA5] shadow-md"
+                                                style={{ left: `clamp(0%, ${pct}%, 100%)`, transform: 'translate(-50%, -50%)' }}
+                                                title="Giá ước tính"
+                                            />
+                                        </div>
+                                        <div className="flex justify-end mt-2">
+                                            <span className={`text-xs font-bold px-3 py-1 rounded-full ${confColors[confLevel]}`}>
+                                                Độ tin cậy: {valuation.confidence}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* ── INPUT SUMMARY CHIPS ── */}
                             {(() => {
@@ -1779,6 +1850,96 @@ export const AiValuation: React.FC = () => {
                                 );
                             })()}
                         </div>
+
+                        {/* ── CƠ SỞ ĐỊNH GIÁ (ACCORDION TABLE) ── */}
+                        {valuation.factors.length > 0 && (() => {
+                            const avmFactors = valuation.factors.filter(f => f.type === 'AVM');
+                            const pricePerM2Tr = Math.round(valuation.pricePerM2 / 1_000_000);
+                            const rows: { label: string; detail: string; adj: string; isPos: boolean; isBase: boolean }[] = [
+                                {
+                                    label: 'Giá đất khu vực',
+                                    detail: `${pricePerM2Tr} triệu/m²`,
+                                    adj: 'Cơ sở',
+                                    isPos: true,
+                                    isBase: true,
+                                },
+                                ...avmFactors.map(f => ({
+                                    label: f.label,
+                                    detail: f.description || '—',
+                                    adj: f.impact === 0 ? 'Chuẩn' : `${f.isPositive ? '+' : '-'}${f.impact}%`,
+                                    isPos: f.isPositive,
+                                    isBase: false,
+                                })),
+                            ];
+                            return (
+                                <div className="bg-slate-800 rounded-[32px] border border-slate-700 shadow-2xl mb-6 overflow-hidden">
+                                    <button
+                                        onClick={() => setBreakdownOpen(v => !v)}
+                                        className="w-full flex items-center justify-between px-8 py-5 text-left hover:bg-slate-700/30 transition-colors"
+                                    >
+                                        <span className="text-slate-300 uppercase text-xs font-bold tracking-widest flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                                            Cơ sở định giá
+                                        </span>
+                                        <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${breakdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                    </button>
+                                    {breakdownOpen && (
+                                        <div className="border-t border-slate-700">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="border-b border-slate-700/50 bg-slate-900/30">
+                                                        <th className="px-6 py-2.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Yếu tố</th>
+                                                        <th className="px-4 py-2.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Chi tiết</th>
+                                                        <th className="px-4 py-2.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Điều chỉnh</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-800">
+                                                    {rows.map((row, i) => (
+                                                        <tr key={i} className="hover:bg-slate-700/20">
+                                                            <td className="px-6 py-3 font-medium text-slate-200">{row.label}</td>
+                                                            <td className="px-4 py-3 text-slate-400 text-xs">{row.detail}</td>
+                                                            <td className="px-4 py-3 text-right">
+                                                                <span className={`font-bold text-xs ${row.isBase ? 'text-[#9CA3AF]' : row.isPos ? 'text-[#3B6D11]' : 'text-[#A32D2D]'}`}>
+                                                                    {row.adj}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()}
+
+                        {/* ── NHẬN XÉT AI + LƯU Ý RỦI RO ── */}
+                        {valuation.marketTrend && valuation.marketTrend !== 'Đang cập nhật' && (
+                            <div className="bg-slate-800 rounded-[32px] border border-slate-700 p-8 shadow-2xl mb-6 space-y-5">
+                                <div>
+                                    <div className="text-slate-400 uppercase text-xs font-bold tracking-widest mb-3 flex items-center gap-2">
+                                        <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                                        Nhận xét của AI
+                                    </div>
+                                    <p className="text-slate-300 text-sm leading-relaxed border-l-[3px] border-blue-500 pl-4">
+                                        {valuation.marketTrend}
+                                    </p>
+                                </div>
+                                {/giảm|rủi ro|cẩn thận|thận trọng|biến động|khó bán|kém thanh khoản/i.test(valuation.marketTrend) && (
+                                    <div className="space-y-1.5">
+                                        <div className="text-slate-400 uppercase text-xs font-bold tracking-widest mb-2 flex items-center gap-2">
+                                            <span className="text-[#854F0B]">▲</span> Lưu ý rủi ro
+                                        </div>
+                                        {valuation.marketTrend.split(/[.;]/).filter(s => /giảm|rủi ro|cẩn thận|thận trọng|biến động|khó bán|kém thanh khoản/i.test(s) && s.trim().length > 10).slice(0, 3).map((risk, i) => (
+                                            <div key={i} className="flex items-start gap-2 text-sm text-amber-300">
+                                                <span className="text-[#854F0B] mt-0.5 shrink-0">▲</span>
+                                                <span>{risk.trim()}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* ── PHƯƠNG PHÁP THU NHẬP + TỔNG HỢP ── */}
                         {valuation.incomeApproach && (
@@ -2020,13 +2181,42 @@ export const AiValuation: React.FC = () => {
                             </div>
                         )}
 
-                        <div className="flex justify-center mt-12 gap-4">
-                            <button onClick={handleAdjustParams} className="px-8 py-3 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 font-bold transition-colors flex items-center gap-2">
-                                {ICONS.EDIT} Điều Chỉnh Thông Số
-                            </button>
-                            <button onClick={handleNewValuation} className="px-8 py-3 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 font-bold transition-colors flex items-center gap-2">
-                                {ICONS.RESET} Định Giá Mới
-                            </button>
+                        {/* ── DISCLAIMER BẮT BUỘC ── */}
+                        <div style={{
+                            background: '#F1EFE8',
+                            border: '0.5px solid #D3D1C7',
+                            borderRadius: '8px',
+                            padding: '12px 14px',
+                            marginTop: '20px',
+                            fontSize: '12px',
+                            color: '#5F5E5A',
+                            lineHeight: 1.6,
+                        }}>
+                            ⚠️ <strong>Lưu ý quan trọng:</strong> Kết quả định giá mang tính tham khảo dựa trên dữ liệu AI, không phải thẩm định pháp lý chính thức theo Nghị định 21/2021/NĐ-CP. SGS Land không chịu trách nhiệm về các quyết định giao dịch dựa trên kết quả này. Để có thẩm định chính thức, vui lòng liên hệ chuyên gia thẩm định được cấp phép của Bộ Tài chính Việt Nam.
+                        </div>
+
+                        {/* ── ACTION BUTTONS + HISTORY LINK ── */}
+                        <div className="flex flex-col items-center gap-3 mt-10">
+                            <div className="flex justify-center gap-4">
+                                <button onClick={handleAdjustParams} className="px-8 py-3 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 font-bold transition-colors flex items-center gap-2">
+                                    {ICONS.EDIT} Điều Chỉnh Thông Số
+                                </button>
+                                <button onClick={handleNewValuation} className="px-8 py-3 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 font-bold transition-colors flex items-center gap-2">
+                                    {ICONS.RESET} Định Giá Mới
+                                </button>
+                            </div>
+                            {(() => {
+                                const hist = readHistory();
+                                if (hist.length === 0) return null;
+                                return (
+                                    <button
+                                        onClick={() => { setHistoryItems(hist); setShowHistoryModal(true); }}
+                                        className="text-slate-500 hover:text-slate-300 text-sm transition-colors underline underline-offset-2"
+                                    >
+                                        Lịch sử định giá ({hist.length} lần)
+                                    </button>
+                                );
+                            })()}
                         </div>
                     </div>
                 )}
@@ -2061,6 +2251,56 @@ export const AiValuation: React.FC = () => {
                     <span className="font-bold text-sm">{toast.msg}</span>
                 </div>
             ) : null,
+            document.body
+        )}
+        {showHistoryModal && createPortal(
+            <div className="fixed inset-0 z-[350] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowHistoryModal(false)}>
+                <div
+                    className="max-w-2xl w-full bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[80vh]"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
+                        <h2 className="font-bold text-white text-base">Lịch sử định giá ({historyItems.length} lần)</h2>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => { clearHistory(); setHistoryItems([]); setShowHistoryModal(false); }}
+                                className="text-slate-500 hover:text-rose-400 text-xs transition-colors"
+                            >
+                                Xoá lịch sử
+                            </button>
+                            <button onClick={() => setShowHistoryModal(false)} className="text-slate-400 hover:text-white">
+                                {ICONS.X}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="overflow-y-auto">
+                        <table className="w-full text-sm">
+                            <thead className="sticky top-0 bg-slate-900">
+                                <tr className="border-b border-slate-700">
+                                    <th className="px-4 py-3 text-left text-xs text-slate-500 font-bold uppercase tracking-wider">Thời gian</th>
+                                    <th className="px-4 py-3 text-left text-xs text-slate-500 font-bold uppercase tracking-wider">Địa chỉ</th>
+                                    <th className="px-4 py-3 text-right text-xs text-slate-500 font-bold uppercase tracking-wider">Giá ước tính</th>
+                                    <th className="px-4 py-3 text-right text-xs text-slate-500 font-bold uppercase tracking-wider">Tin cậy</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800">
+                                {historyItems.map(h => (
+                                    <tr key={h.id} className="hover:bg-slate-700/30">
+                                        <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{h.date}</td>
+                                        <td className="px-4 py-3 text-slate-200 max-w-[200px] truncate" title={h.address}>{h.address}</td>
+                                        <td className="px-4 py-3 text-right font-bold text-emerald-400 whitespace-nowrap">{formatVND(h.totalPrice)}</td>
+                                        <td className="px-4 py-3 text-right">
+                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${h.confidence >= 80 ? 'text-[#3B6D11] bg-[#EAF3DE]' : h.confidence >= 70 ? 'text-[#854F0B] bg-[#FAEEDA]' : 'text-[#A32D2D] bg-[#FCEBEB]'}`}>
+                                                {h.confidence}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>,
             document.body
         )}
         {showGuestGate && createPortal(
