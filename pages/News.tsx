@@ -214,6 +214,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
 };
 
 const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article, onSave: (data: Partial<Article>) => void, onCancel: () => void }) => {
+    const [uploadingCount, setUploadingCount] = useState(0);
     const [formData, setFormData] = useState<Partial<Article>>(initialData || {
         title: '',
         excerpt: '',
@@ -242,59 +243,52 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
         setFormData(prev => ({ ...prev, tags }));
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const files = Array.from(e.target.files);
-            
-            files.forEach(file => {
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 800;
-                            const MAX_HEIGHT = 800;
-                            let width = img.width;
-                            let height = img.height;
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
 
-                            if (width > height) {
-                                if (width > MAX_WIDTH) {
-                                    height *= MAX_WIDTH / width;
-                                    width = MAX_WIDTH;
-                                }
-                            } else {
-                                if (height > MAX_HEIGHT) {
-                                    width *= MAX_HEIGHT / height;
-                                    height = MAX_HEIGHT;
-                                }
-                            }
+        const imageFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+        const videoFiles = Array.from(e.target.files).filter(f => f.type.startsWith('video/'));
 
-                            canvas.width = width;
-                            canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx?.drawImage(img, 0, 0, width, height);
-                            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-
-                            setFormData(prev => ({
-                                ...prev,
-                                images: [...(prev.images || []), dataUrl],
-                                image: prev.image || dataUrl
-                            }));
-                        };
-                        img.src = event.target?.result as string;
-                    };
-                    reader.readAsDataURL(file);
-                } else if (file.type.startsWith('video/')) {
-                    // For videos in mock DB, we just use a placeholder or the blob URL 
-                    // (Note: blob URLs won't persist across reloads, but Base64 video is too large for localStorage)
-                    const url = URL.createObjectURL(file);
-                    setFormData(prev => ({
-                        ...prev,
-                        videos: [...(prev.videos || []), url]
-                    }));
-                }
+        if (videoFiles.length > 0) {
+            videoFiles.forEach(file => {
+                const url = URL.createObjectURL(file);
+                setFormData(prev => ({ ...prev, videos: [...(prev.videos || []), url] }));
             });
+        }
+
+        if (imageFiles.length === 0) return;
+
+        setUploadingCount(c => c + imageFiles.length);
+        e.target.value = '';
+
+        try {
+            const fd = new FormData();
+            imageFiles.forEach(f => fd.append('files', f));
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                credentials: 'include',
+                body: fd,
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `Upload failed (${res.status})`);
+            }
+
+            const data = await res.json();
+            const uploadedUrls: string[] = (data.files || []).map((f: any) => f.url as string);
+
+            setFormData(prev => ({
+                ...prev,
+                images: [...(prev.images || []), ...uploadedUrls],
+                image: prev.image || uploadedUrls[0] || '',
+            }));
+        } catch (err: any) {
+            console.error('[ArticleForm] upload error:', err);
+            alert(`Lỗi tải ảnh: ${err.message}`);
+        } finally {
+            setUploadingCount(c => c - imageFiles.length);
         }
     };
 
@@ -354,17 +348,26 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
                     <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Hình ảnh & Video đính kèm</label>
                     <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:border-indigo-500 transition-colors bg-[var(--glass-surface)]">
                         <div className="space-y-1 text-center">
-                            <svg className="mx-auto h-12 w-12 text-[var(--text-secondary)]" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            <div className="flex text-sm text-[var(--text-secondary)] justify-center">
-                                <label htmlFor="file-upload" className="relative cursor-pointer bg-[var(--bg-surface)] rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 px-2 py-1 shadow-sm border border-[var(--glass-border)]">
-                                    <span>Tải file lên</span>
-                                    <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple accept="image/*,video/*" onChange={handleFileChange} />
-                                </label>
-                                <p className="pl-1 py-1">hoặc kéo thả vào đây</p>
-                            </div>
-                            <p className="text-xs text-[var(--text-tertiary)]">PNG, JPG, GIF, MP4 lên đến 50MB</p>
+                            {uploadingCount > 0 ? (
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+                                    <p className="text-sm text-indigo-600 font-medium">Đang tải {uploadingCount} ảnh lên...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <svg className="mx-auto h-12 w-12 text-[var(--text-secondary)]" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                    <div className="flex text-sm text-[var(--text-secondary)] justify-center">
+                                        <label htmlFor="file-upload" className="relative cursor-pointer bg-[var(--bg-surface)] rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 px-2 py-1 shadow-sm border border-[var(--glass-border)]">
+                                            <span>Tải file lên</span>
+                                            <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple accept="image/*,video/*" onChange={handleFileChange} />
+                                        </label>
+                                        <p className="pl-1 py-1">hoặc kéo thả vào đây</p>
+                                    </div>
+                                    <p className="text-xs text-[var(--text-tertiary)]">PNG, JPG, GIF, MP4 lên đến 50MB</p>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -406,7 +409,9 @@ const ArticleForm = ({ initialData, onSave, onCancel }: { initialData?: Article,
             </div>
             <div className="flex justify-end gap-3 pt-6 border-t border-[var(--glass-border)]">
                 <button type="button" onClick={onCancel} className="px-6 py-3 rounded-xl font-bold text-[var(--text-secondary)] hover:bg-[var(--glass-surface-hover)] transition-colors">Hủy</button>
-                <button type="submit" className="px-6 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all">Lưu bài viết</button>
+                <button type="submit" disabled={uploadingCount > 0} className="px-6 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    {uploadingCount > 0 ? 'Đang tải ảnh...' : 'Lưu bài viết'}
+                </button>
             </div>
         </form>
     );

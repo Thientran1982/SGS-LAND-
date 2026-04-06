@@ -5,6 +5,22 @@ class ArticleRepository extends BaseRepository {
     super('articles');
   }
 
+  protected rowToEntity<T>(row: Record<string, any>): T {
+    const entity: Record<string, any> = {};
+    for (const [key, value] of Object.entries(row)) {
+      const camel = this.snakeToCamel(key);
+      entity[camel] = value;
+    }
+    if (entity.coverImage !== undefined && entity.image === undefined) {
+      entity.image = entity.coverImage;
+      delete entity.coverImage;
+    }
+    if (!Array.isArray(entity.images)) {
+      entity.images = entity.images || [];
+    }
+    return entity as T;
+  }
+
   async findArticles(tenantId: string, pagination?: { page: number; pageSize: number }, filters?: any) {
     return this.withTenant(tenantId, async (client) => {
       const page = pagination?.page || 1;
@@ -57,13 +73,16 @@ class ArticleRepository extends BaseRepository {
   async create(tenantId: string, data: any) {
     return this.withTenant(tenantId, async (client) => {
       const slug = data.slug || data.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const coverImage = data.coverImage || data.image || null;
+      const images: string[] = Array.isArray(data.images) ? data.images : [];
       const result = await client.query(
-        `INSERT INTO articles (title, slug, content, excerpt, category, tags, author, cover_image, status, published_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        `INSERT INTO articles (title, slug, content, excerpt, category, tags, author, cover_image, images, featured, status, published_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12) RETURNING *`,
         [
           data.title, slug, data.content || '', data.excerpt || '',
           data.category || 'general', JSON.stringify(data.tags || []),
-          data.author || '', data.coverImage || null,
+          data.author || '', coverImage, JSON.stringify(images),
+          data.featured ?? false,
           data.status || 'DRAFT',
           data.status === 'PUBLISHED' ? new Date().toISOString() : null,
         ]
@@ -78,6 +97,14 @@ class ArticleRepository extends BaseRepository {
       const values: any[] = [];
       let paramIndex = 1;
 
+      const resolvedData = { ...data };
+      if ((resolvedData.image !== undefined || resolvedData.coverImage !== undefined) && resolvedData.coverImage === undefined) {
+        resolvedData.coverImage = resolvedData.image;
+      }
+      if (resolvedData.image !== undefined && resolvedData.coverImage !== undefined) {
+        resolvedData.coverImage = resolvedData.coverImage || resolvedData.image;
+      }
+
       const allowedFields: Record<string, string> = {
         title: 'title', content: 'content', excerpt: 'excerpt',
         category: 'category', tags: 'tags', author: 'author',
@@ -85,11 +112,23 @@ class ArticleRepository extends BaseRepository {
       };
 
       for (const [key, col] of Object.entries(allowedFields)) {
-        if (data[key] !== undefined) {
+        if (resolvedData[key] !== undefined) {
           fields.push(`${col} = $${paramIndex}`);
-          values.push(key === 'tags' ? JSON.stringify(data[key]) : data[key]);
+          values.push(key === 'tags' ? JSON.stringify(resolvedData[key]) : resolvedData[key]);
           paramIndex++;
         }
+      }
+
+      if (resolvedData.images !== undefined && Array.isArray(resolvedData.images)) {
+        fields.push(`images = $${paramIndex}::jsonb`);
+        values.push(JSON.stringify(resolvedData.images));
+        paramIndex++;
+      }
+
+      if (resolvedData.featured !== undefined) {
+        fields.push(`featured = $${paramIndex}`);
+        values.push(resolvedData.featured);
+        paramIndex++;
       }
 
       if (data.status === 'PUBLISHED') {
