@@ -2,13 +2,6 @@ import { useEffect, useRef } from 'react';
 import { api } from './api/apiClient';
 import { PAGE_LABELS } from '../config/pageLabels';
 
-function getPathFromHash(): string {
-  let hash = window.location.hash.slice(1);
-  if (hash.startsWith('/')) hash = hash.slice(1);
-  if (hash.endsWith('/')) hash = hash.slice(0, -1);
-  return hash.split('?')[0].split('/')[0] || '';
-}
-
 async function trackPageView(path: string): Promise<void> {
   if (!path) return;
   const pageLabel = PAGE_LABELS[path] || path;
@@ -19,30 +12,26 @@ async function trackPageView(path: string): Promise<void> {
   }
 }
 
-export function usePageTracker(isAuthenticated: boolean) {
+export function usePageTracker(isAuthenticated: boolean, currentPath: string) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTrackedRef = useRef<string>('');
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !currentPath) return;
+    if (currentPath === lastTrackedRef.current) return;
 
-    const track = () => {
-      const path = getPathFromHash();
-      if (!path || path === lastTrackedRef.current) return;
-      lastTrackedRef.current = path;
+    lastTrackedRef.current = currentPath;
 
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        trackPageView(path);
-      }, 1000);
-    };
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      trackPageView(currentPath);
+    }, 1000);
 
-    track();
-
-    window.addEventListener('hashchange', track);
     return () => {
-      window.removeEventListener('hashchange', track);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentPath]);
 }
