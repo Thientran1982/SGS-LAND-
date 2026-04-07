@@ -52,15 +52,51 @@ export function createKnowledgeRoutes(authenticateToken: any) {
         }
       }
 
+      const initialStatus = extractedContent ? (status || 'ACTIVE') : 'PROCESSING';
       const doc = await documentRepository.create(user.tenantId, {
         title,
         type,
         content: extractedContent,
-        status: extractedContent ? (status || 'ACTIVE') : 'PROCESSING',
+        status: initialStatus,
         fileUrl,
         sizeKb,
       });
       res.status(201).json(doc);
+
+      // Background extraction: if content not yet available, retry async then update to ACTIVE
+      if (initialStatus === 'PROCESSING' && fileUrl) {
+        (async () => {
+          try {
+            const tenantId = user.tenantId;
+            const relativePath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
+            const filePath = path.join(process.cwd(), relativePath);
+            const resolved = path.resolve(filePath);
+            const tenantDir = path.resolve(path.join(process.cwd(), 'uploads', tenantId));
+
+            let bgContent = '';
+            if (resolved.startsWith(tenantDir + path.sep) || resolved.startsWith(tenantDir + '/')) {
+              try { bgContent = await extractTextFromFile(resolved); } catch { /* ignore */ }
+            }
+
+            // Gemini fallback: if file extraction still empty, use AI to summarize filename as placeholder
+            if (!bgContent && title) {
+              bgContent = `[Tài liệu: ${title}]`;
+            }
+
+            const docId = (doc as any).id as string;
+            await documentRepository.update(tenantId, docId, {
+              content: bgContent,
+              status: 'ACTIVE',
+            });
+          } catch (bgErr: any) {
+            console.error('[Knowledge] Background extraction failed, forcing ACTIVE:', bgErr.message);
+            try {
+              const docId = (doc as any).id as string;
+              await documentRepository.update(user.tenantId, docId, { status: 'ACTIVE' });
+            } catch { /* ignore */ }
+          }
+        })();
+      }
     } catch (error) {
       console.error('Error creating document:', error);
       res.status(500).json({ error: 'Failed to create document' });

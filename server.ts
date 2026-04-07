@@ -2464,7 +2464,7 @@ async function startServer() {
 
   // Prevent uncaught exceptions from crashing the server (log and continue where safe)
   process.on('uncaughtException', (err: Error) => {
-    logger.error('[Server] Uncaught exception:', err.message, err.stack);
+    logger.error(`[Server] Uncaught exception: ${err.message}\n${err.stack}`);
     // Only exit on truly fatal errors; most async errors should not crash the process
     if ((err as any).code === 'ERR_USE_AFTER_CLOSE') return;
   });
