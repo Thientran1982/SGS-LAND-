@@ -18,6 +18,9 @@ class ArticleRepository extends BaseRepository {
     if (!Array.isArray(entity.images)) {
       entity.images = entity.images || [];
     }
+    if (!Array.isArray(entity.videos)) {
+      entity.videos = entity.videos || [];
+    }
     return entity as T;
   }
 
@@ -72,22 +75,43 @@ class ArticleRepository extends BaseRepository {
 
   async create(tenantId: string, data: any) {
     return this.withTenant(tenantId, async (client) => {
-      const slug = data.slug || data.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const baseSlug = (data.slug || data.title || 'bai-viet')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        .slice(0, 200) || 'bai-viet';
       const coverImage = data.coverImage || data.image || null;
       const images: string[] = Array.isArray(data.images) ? data.images : [];
-      const result = await client.query(
-        `INSERT INTO articles (title, slug, content, excerpt, category, tags, author, cover_image, images, featured, status, published_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12) RETURNING *`,
-        [
-          data.title, slug, data.content || '', data.excerpt || '',
-          data.category || 'general', JSON.stringify(data.tags || []),
-          data.author || '', coverImage, JSON.stringify(images),
-          data.featured ?? false,
-          data.status || 'DRAFT',
-          data.status === 'PUBLISHED' ? new Date().toISOString() : null,
-        ]
-      );
-      return this.rowToEntity(result.rows[0]);
+      const videos: string[] = Array.isArray(data.videos) ? data.videos : [];
+
+      const params = [
+        data.title, '', data.content || '', data.excerpt || '',
+        data.category || 'general', JSON.stringify(data.tags || []),
+        data.author || '', coverImage, JSON.stringify(images),
+        data.featured ?? false,
+        data.status || 'DRAFT',
+        data.status === 'PUBLISHED' ? new Date().toISOString() : null,
+        JSON.stringify(videos),
+      ];
+
+      // Try base slug first, then up to 5 suffixed variants on duplicate key
+      const suffixes = ['', ...Array.from({ length: 5 }, (_, i) => `-${Date.now() + i}`).reverse()];
+      for (const suffix of suffixes) {
+        const slug = baseSlug + suffix;
+        params[1] = slug;
+        try {
+          const result = await client.query(
+            `INSERT INTO articles (title, slug, content, excerpt, category, tags, author, cover_image, images, featured, status, published_at, videos)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $13::jsonb) RETURNING *`,
+            params
+          );
+          return this.rowToEntity(result.rows[0]);
+        } catch (err: any) {
+          if (err.code === '23505' && suffix !== suffixes[suffixes.length - 1]) continue;
+          throw err;
+        }
+      }
+      throw new Error('Không thể tạo slug duy nhất cho bài viết');
     });
   }
 
@@ -122,6 +146,12 @@ class ArticleRepository extends BaseRepository {
       if (resolvedData.images !== undefined && Array.isArray(resolvedData.images)) {
         fields.push(`images = $${paramIndex}::jsonb`);
         values.push(JSON.stringify(resolvedData.images));
+        paramIndex++;
+      }
+
+      if (resolvedData.videos !== undefined && Array.isArray(resolvedData.videos)) {
+        fields.push(`videos = $${paramIndex}::jsonb`);
+        values.push(JSON.stringify(resolvedData.videos));
         paramIndex++;
       }
 
