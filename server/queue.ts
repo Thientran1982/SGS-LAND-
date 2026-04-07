@@ -306,8 +306,38 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
     }
 
     if (event_name === 'follow') {
-      await upsertLeadBySocialId(tenantId, 'zalo', senderId, sender?.display_name);
+      const followLead = await upsertLeadBySocialId(tenantId, 'zalo', senderId, sender?.display_name);
       logger.info(`[Zalo] Người theo dõi mới ${senderId} → lead đã tạo/tìm thấy`);
+      // Notify admins about new Zalo OA follower
+      (async () => {
+        try {
+          const { notificationRepository } = await import('./repositories/notificationRepository');
+          const { pool } = await import('./db');
+          const admins = await pool.query(
+            `SELECT id FROM users WHERE tenant_id = $1 AND role IN ('ADMIN', 'TEAM_LEAD') LIMIT 5`,
+            [tenantId]
+          );
+          const followerName = sender?.display_name || `Zalo User ${senderId.slice(-6)}`;
+          for (const admin of admins.rows) {
+            await notificationRepository.create({
+              tenantId,
+              userId: admin.id,
+              type: 'ZALO_MESSAGE',
+              title: `Người dùng Zalo mới theo dõi OA`,
+              body: followerName,
+              metadata: { leadId: followLead.id, senderId, channel: 'ZALO', event: 'follow' },
+            });
+            io.to(`user:${admin.id}`).emit('notification', {
+              type: 'ZALO_MESSAGE',
+              title: `Người dùng Zalo mới theo dõi OA`,
+              body: followerName,
+              leadId: followLead.id,
+            });
+          }
+        } catch (err: any) {
+          logger.warn('[Zalo] Lỗi tạo thông báo follow:', err.message);
+        }
+      })();
       return;
     }
 
@@ -337,6 +367,51 @@ export async function processWebhookJob(io: Server, job: any): Promise<void> {
 
       io.to(leadId).emit('receive_message', { room: leadId, message: savedInteraction, isWebhook: true });
       io.to(`tenant:${tenantId}`).emit('new_inbound_message', { leadId, message: savedInteraction, source: 'Zalo' });
+
+      // Gửi thông báo in-app cho agent phụ trách (hoặc tất cả admin nếu chưa có agent)
+      (async () => {
+        try {
+          const { notificationRepository } = await import('./repositories/notificationRepository');
+          const preview = textContent.length > 60 ? textContent.slice(0, 60) + '…' : textContent;
+          const title = `Zalo: ${lead.name || senderId}`;
+
+          if (lead.assignedTo) {
+            await notificationRepository.create({
+              tenantId,
+              userId: lead.assignedTo,
+              type: 'ZALO_MESSAGE',
+              title,
+              body: preview,
+              metadata: { leadId, senderId, channel: 'ZALO' },
+            });
+            io.to(`user:${lead.assignedTo}`).emit('notification', {
+              type: 'ZALO_MESSAGE', title, body: preview, leadId,
+            });
+          } else {
+            // Chưa có agent — thông báo cho tất cả ADMIN trong tenant
+            const { pool } = await import('./db');
+            const admins = await pool.query(
+              `SELECT id FROM users WHERE tenant_id = $1 AND role = 'ADMIN' LIMIT 5`,
+              [tenantId]
+            );
+            for (const admin of admins.rows) {
+              await notificationRepository.create({
+                tenantId,
+                userId: admin.id,
+                type: 'ZALO_MESSAGE',
+                title,
+                body: preview,
+                metadata: { leadId, senderId, channel: 'ZALO', unassigned: true },
+              });
+              io.to(`user:${admin.id}`).emit('notification', {
+                type: 'ZALO_MESSAGE', title, body: preview, leadId,
+              });
+            }
+          }
+        } catch (err: any) {
+          logger.warn('[Zalo] Lỗi tạo thông báo agent:', err.message);
+        }
+      })();
 
       // AI scoring + auto-reply chạy song song trong background
       (async () => {
