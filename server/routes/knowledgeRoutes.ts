@@ -203,11 +203,11 @@ export function createKnowledgeRoutes(authenticateToken: any) {
       if (!CAN_MANAGE.includes(user.role)) {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
-      const { title, content, excerpt, category, tags, author, coverImage, image, images, featured, status, slug } = req.body;
+      const { title, content, excerpt, category, tags, author, coverImage, image, images, videos, featured, status, slug } = req.body;
       if (!title) return res.status(400).json({ error: 'Title is required' });
       const article = await articleRepository.create(user.tenantId, {
         title, content, excerpt, category, tags,
-        author: author || user.name, coverImage: coverImage || image, image, images, featured,
+        author: author || user.name, coverImage: coverImage || image, image, images, videos, featured,
         status: status || 'PUBLISHED', slug,
       });
       res.status(201).json(article);
