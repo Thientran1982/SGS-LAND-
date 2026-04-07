@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx server.ts",
     "start": "node server.js",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=esm --outfile=server.js --external:pg --external:bcrypt --external:socket.io --external:@socket.io/redis-adapter --external:redis --external:ioredis --external:bullmq --external:nodemailer --external:multer --external:file-type --external:pdf-parse --external:mammoth --external:pdfjs-dist --external:exceljs --external:ws --external:y-websocket --external:yjs --external:@google/genai --external:vite --external:express --external:cookie-parser --external:jsonwebtoken --external:helmet --external:dotenv --external:sharp",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=esm --outfile=server.js --external:pg --external:bcrypt --external:socket.io --external:@socket.io/redis-adapter --external:redis --external:ioredis --external:bullmq --external:nodemailer --external:multer --external:file-type --external:pdf-parse --external:mammoth --external:pdfjs-dist --external:exceljs --external:ws --external:y-websocket --external:yjs --external:@google/genai --external:vite --external:express --external:cookie-parser --external:jsonwebtoken --external:helmet --external:dotenv --external:sharp --external:compression",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "seed": "tsx server/seed.ts",
