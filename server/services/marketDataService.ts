@@ -23,11 +23,17 @@ const CACHE_TTL_MS      = parseInt(process.env.MARKET_CACHE_TTL_HOURS || '6') * 
 const SEED_TTL_MS       = 24 * 3_600_000;    // seed data valid for 24h
 const REDIS_TTL_SECS    = 86_400;            // 24h Redis key TTL
 const MAX_CACHE_ENTRIES = 300;
-const SEED_BATCH_SIZE   = 3;                 // parallel searches per batch
-const SEED_BATCH_DELAY  = 3_000;            // ms between batches (rate-limit buffer)
+const SEED_BATCH_SIZE   = 2;                 // parallel searches per batch (reduced to be gentle on quota)
+const SEED_BATCH_DELAY  = 5_000;            // ms between batches (rate-limit buffer)
 const MIN_PRICE_VND     = 5_000_000;        // sanity: 5 triệu/m²
 const MAX_PRICE_VND     = 1_000_000_000;    // sanity: 1 tỷ/m²
 const REDIS_KEY_PREFIX  = 'sgsland:market:v2:';
+// Gemini free tier = 20 req/day. Reserve 5 for on-demand AVM calls.
+// Each seed entry uses 2 calls (search + extract). Daily limit = 15 → 7 seed entries max/day.
+const GEMINI_DAILY_LIMIT = parseInt(process.env.GEMINI_DAILY_LIMIT || '15');
+const GEMINI_DAILY_KEY_PREFIX = 'sgsland:gemini:daily:';
+// Prevents repeated seeding on server restart within the same calendar day
+const SEED_DATE_KEY = 'sgsland:market:seed_date:';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Seed locations: one representative address per province/city of Vietnam
@@ -437,6 +443,72 @@ class MarketDataService {
     return MarketDataService.instance;
   }
 
+  // ── Daily Gemini quota tracking ───────────────────────────────────────────
+
+  private getTodayVN(): string {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }); // YYYY-MM-DD
+  }
+
+  /** Get how many Gemini API calls have been made today */
+  async getDailyGeminiCalls(): Promise<number> {
+    if (!this.redisClient) return 0;
+    try {
+      const val = await this.redisClient.get(`${GEMINI_DAILY_KEY_PREFIX}${this.getTodayVN()}`);
+      return parseInt(String(val ?? '0'), 10) || 0;
+    } catch { return 0; }
+  }
+
+  /**
+   * Attempt to "consume" one Gemini API call from the daily budget.
+   * Returns true if the call is allowed, false if daily limit is reached.
+   */
+  private async tryConsumeGeminiQuota(): Promise<boolean> {
+    if (this.isQuotaExhausted) return false;
+    if (!this.redisClient) return true; // no Redis → no tracking, allow
+    try {
+      const key = `${GEMINI_DAILY_KEY_PREFIX}${this.getTodayVN()}`;
+      const newCount = await this.redisClient.incr(key);
+      if (newCount === 1) {
+        // First call of the day — expire at end of current calendar day (VN timezone)
+        const now = Date.now();
+        const endOfDayVN = new Date(
+          new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) + 'T23:59:59+07:00'
+        ).getTime();
+        const ttlSecs = Math.max(60, Math.ceil((endOfDayVN - now) / 1000));
+        await this.redisClient.expire(key, ttlSecs);
+      }
+      if (newCount > GEMINI_DAILY_LIMIT) {
+        logger.warn(`[MarketData] Gemini daily limit reached (${newCount - 1}/${GEMINI_DAILY_LIMIT}) — switching to regional table for remainder of day`);
+        this.markQuotaExhausted();
+        return false;
+      }
+      return true;
+    } catch { return true; } // Redis error → allow the call
+  }
+
+  /** Mark that seeding ran today so restarts don't re-trigger it */
+  private async markSeedDoneToday(): Promise<void> {
+    if (!this.redisClient) return;
+    try {
+      const key = `${SEED_DATE_KEY}${this.getTodayVN()}`;
+      const now = Date.now();
+      const endOfDayVN = new Date(
+        new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) + 'T23:59:59+07:00'
+      ).getTime();
+      const ttlSecs = Math.max(60, Math.ceil((endOfDayVN - now) / 1000));
+      await this.redisClient.set(key, '1', { ex: ttlSecs });
+    } catch {}
+  }
+
+  /** Returns true if seeding already ran at some point today */
+  private async hasSeedRunToday(): Promise<boolean> {
+    if (!this.redisClient) return false;
+    try {
+      const val = await this.redisClient.get(`${SEED_DATE_KEY}${this.getTodayVN()}`);
+      return !!val;
+    } catch { return false; }
+  }
+
   /** Start background refresh loop and seed all provinces */
   async start(io: SocketServer): Promise<void> {
     this.io = io;
@@ -507,10 +579,19 @@ class MarketDataService {
   get cacheSize(): number { return this.cache.size; }
 
   // ── Seed all provinces ────────────────────────────────────────────────────
-  /** Run background seed for all Vietnamese provinces — skips already-cached entries */
+  /** Run background seed for all Vietnamese provinces — skips already-cached entries and respects daily quota */
   async seedAllProvinces(): Promise<void> {
     if (this.isSeedRunning) return;
+
+    // One seed pass per calendar day — prevents repeated quota burn on restarts
+    const alreadySeeded = await this.hasSeedRunToday();
+    if (alreadySeeded) {
+      logger.info('[MarketData] Seed already ran today — skipping (daily lock active)');
+      return;
+    }
+
     this.isSeedRunning = true;
+    await this.markSeedDoneToday();
     logger.info(`[MarketData] Starting background seed for ${SEED_LOCATIONS.length} locations...`);
 
     const missing = SEED_LOCATIONS.filter(({ location }) => {
@@ -531,34 +612,35 @@ class MarketDataService {
     let failCount = 0;
 
     for (let i = 0; i < missing.length; i += SEED_BATCH_SIZE) {
-      const batch = missing.slice(i, i + SEED_BATCH_SIZE);
-
-      await Promise.allSettled(
-        batch.map(async ({ location, pType }) => {
-          try {
-            await this.fetchSeedEntry(location, pType || 'townhouse_center');
-            successCount++;
-          } catch (err: any) {
-            failCount++;
-            logger.error(`[MarketData] Seed failed "${location}": ${err.message}`);
-          }
-        })
-      );
-
-      // Stop seeding if quota was hit during this batch
+      // Check quota before starting a new batch
       if (this.isQuotaExhausted) {
-        logger.warn(`[MarketData] Seed aborted — Gemini quota exhausted after ${successCount} locations. Will resume when circuit resets.`);
+        logger.warn(`[MarketData] Seed aborted — Gemini quota exhausted after ${successCount} locations. Will resume tomorrow.`);
         break;
       }
 
+      const batch = missing.slice(i, i + SEED_BATCH_SIZE);
+
+      // Process batch sequentially to avoid parallel quota overcounting
+      for (const { location, pType } of batch) {
+        if (this.isQuotaExhausted) break;
+        try {
+          await this.fetchSeedEntry(location, pType || 'townhouse_center');
+          successCount++;
+        } catch (err: any) {
+          failCount++;
+          logger.error(`[MarketData] Seed failed "${location}": ${err.message}`);
+        }
+      }
+
       // Rate-limit: wait between batches
-      if (i + SEED_BATCH_SIZE < missing.length) {
+      if (i + SEED_BATCH_SIZE < missing.length && !this.isQuotaExhausted) {
         await new Promise(r => setTimeout(r, SEED_BATCH_DELAY));
       }
     }
 
     this.isSeedRunning = false;
-    logger.info(`[MarketData] Seed complete — ${successCount} success, ${failCount} failed. Cache size: ${this.cache.size}`);
+    const dailyCalls = await this.getDailyGeminiCalls();
+    logger.info(`[MarketData] Seed complete — ${successCount} success, ${failCount} failed. Cache size: ${this.cache.size}. Gemini calls today: ${dailyCalls}/${GEMINI_DAILY_LIMIT}`);
   }
 
   // ── Private methods ───────────────────────────────────────────────────────
@@ -616,9 +698,10 @@ class MarketDataService {
   private async fetchAndCache(location: string, key: string, fetchPropertyType: string = 'townhouse_center'): Promise<MarketDataEntry> {
     let entry: MarketDataEntry;
 
-    // Circuit breaker: skip AI call when quota is known to be exhausted
-    if (this.isQuotaExhausted) {
-      logger.debug(`[MarketData] Circuit breaker active — using regional table for "${location}"`);
+    // Circuit breaker + daily quota check before full AVM (uses multiple Gemini calls)
+    const canCallAvm = await this.tryConsumeGeminiQuota();
+    if (!canCallAvm) {
+      logger.debug(`[MarketData] Quota guard — using regional table for "${location}"`);
       return this.storeEntry(key, this.buildRegionalEntry(location, key));
     }
 
@@ -672,8 +755,10 @@ class MarketDataService {
     const key = normalizeLocation(location);
     const regional = getRegionalBasePrice(location, pType);
 
-    // Skip AI if quota is exhausted
-    if (this.isQuotaExhausted) {
+    // Skip AI if circuit breaker or daily quota is reached
+    // fetchLightMarketPrice uses 2 Gemini calls — consume 2 quota slots
+    const canCall = (await this.tryConsumeGeminiQuota()) && (await this.tryConsumeGeminiQuota());
+    if (!canCall) {
       return this.storeEntry(key, this.buildRegionalEntry(location, key));
     }
 

@@ -56,11 +56,14 @@ const STAR_ICON = <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="c
 const PERSON_ICON = <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
 const ARROW_ICON = <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>;
 
+const ZALO_ICON = <svg className="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.11-1.35A9.96 9.96 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm1.5 14.5H8a.5.5 0 010-1h3.5V14H8.5a.5.5 0 010-1h3a1 1 0 011 1v1.5a1 1 0 01-1 1zm2-4H8a.5.5 0 010-1h7.5a.5.5 0 010 1zm0-2.5H8a.5.5 0 010-1h7.5a.5.5 0 010 1z"/></svg>;
+
 const NOTIF_ICON: Record<string, React.ReactNode> = {
     PROPOSAL_INTEREST: ICONS.HEART,
     PROPOSAL_APPROVED: STAR_ICON,
     LEAD_ASSIGNED:     PERSON_ICON,
     STAGE_CHANGE:      ARROW_ICON,
+    ZALO_MESSAGE:      ZALO_ICON,
 };
 
 // -----------------------------------------------------------------------------
