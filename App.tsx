@@ -420,7 +420,7 @@ const AppShell: React.FC = () => {
     const interestNotifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useThemeConfig();
-    usePageTracker(authState === 'AUTH');
+    usePageTracker(authState === 'AUTH', route.base);
 
     // Tracks which private pages have been mounted — CSS show/hide instead of unmount/remount.
     // Uses a ref updated synchronously during render to avoid the extra useEffect render cycle
