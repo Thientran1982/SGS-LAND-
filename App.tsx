@@ -249,6 +249,20 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
         console.error("Uncaught error:", error, errorInfo);
+        // Auto-reload once when a chunk-load failure occurs after a production redeploy.
+        // Guard against infinite loops: only reload if we haven't already done so this session.
+        const isChunk =
+            error.message?.includes('Failed to fetch dynamically imported module') ||
+            error.message?.includes('Importing a module script failed') ||
+            error.message?.includes('dynamically imported module') ||
+            (error as any).name === 'ChunkLoadError';
+        if (isChunk) {
+            const RELOAD_KEY = '__sgs_chunk_reload__';
+            if (!sessionStorage.getItem(RELOAD_KEY)) {
+                sessionStorage.setItem(RELOAD_KEY, '1');
+                window.location.reload();
+            }
+        }
     }
 
     render() {
@@ -470,9 +484,36 @@ const AppShell: React.FC = () => {
         const onLogout = () => { localStorage.removeItem(AUTH_CACHE_KEY); db.clearUserCache(); setCurrentUser(null); setAuthState('GUEST'); setSessionKey(k => k + 1); };
         window.addEventListener('auth:login', onLogin);
         window.addEventListener('auth:logout', onLogout);
+
+        // Re-verify auth when user returns to the tab after being idle.
+        // This handles cases where the JWT expired while the page was open.
+        let hiddenAt = 0;
+        const IDLE_RECHECK_MS = 30 * 60 * 1000; // 30 minutes
+        const onVisibilityChange = () => {
+            if (document.hidden) {
+                hiddenAt = Date.now();
+                return;
+            }
+            // Clear chunk reload guard so next deployment update can trigger a fresh reload
+            sessionStorage.removeItem('__sgs_chunk_reload__');
+            // Re-verify auth only after a long absence
+            if (hiddenAt > 0 && Date.now() - hiddenAt > IDLE_RECHECK_MS) {
+                hiddenAt = 0;
+                db.clearUserCache();
+                db.getCurrentUser()
+                    .then(u => {
+                        if (u) { localStorage.setItem(AUTH_CACHE_KEY, '1'); setCurrentUser(u); setAuthState('AUTH'); }
+                        else { localStorage.removeItem(AUTH_CACHE_KEY); setCurrentUser(null); setAuthState('GUEST'); }
+                    })
+                    .catch(() => { localStorage.removeItem(AUTH_CACHE_KEY); setCurrentUser(null); setAuthState('GUEST'); });
+            }
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+
         return () => {
             window.removeEventListener('auth:login', onLogin);
             window.removeEventListener('auth:logout', onLogout);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
         };
     }, []);
 
