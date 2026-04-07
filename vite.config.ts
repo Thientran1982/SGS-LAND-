@@ -4,14 +4,12 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
-    const isProduction = mode === 'production';
     return {
       server: {
         port: 5000,
         host: '0.0.0.0',
         allowedHosts: true,
         warmup: {
-          // Pre-transform the most-accessed modules in dev for faster first navigation
           clientFiles: [
             './pages/Dashboard.tsx',
             './pages/Leads.tsx',
@@ -45,7 +43,6 @@ export default defineConfig(({ mode }) => {
         }
       },
       optimizeDeps: {
-        // Pre-bundle heavy deps so they're not transformed on first request
         include: [
           'react',
           'react-dom',
@@ -57,22 +54,23 @@ export default defineConfig(({ mode }) => {
         ],
       },
       build: {
-        // Raised to 1000 — exceljs (~940KB) and jspdf (~390KB) are intentionally
-        // lazy-loaded via dynamic import() and expected to be large separate chunks.
+        // Use esbuild for minification (faster than terser, comparable output)
+        minify: 'esbuild',
+        target: 'es2018',
+        // Raise limit for intentionally-large lazy chunks (exceljs, jspdf)
         chunkSizeWarningLimit: 1000,
+        // Enable CSS code splitting so each chunk only loads the CSS it needs
+        cssCodeSplit: true,
+        // Preload all chunks by default (modulepreload improves LCP on SPA)
+        modulePreload: { polyfill: true },
         rollupOptions: {
           output: {
             manualChunks: {
-              // Split heavy vendor libs into separate cached chunks.
-              // NOTE: 'exceljs' and 'jspdf' are intentionally NOT listed here —
-              // they are lazy-loaded via dynamic import() in Dashboard, Leads, and
-              // ListingDetail and should only download when the user triggers an export.
               'vendor-react': ['react', 'react-dom'],
               'vendor-query': ['@tanstack/react-query'],
               'vendor-charts': ['recharts'],
               'vendor-motion': ['motion/react'],
               'vendor-icons': ['lucide-react'],
-              // Group rarely-used enterprise pages together
               'pages-enterprise': [
                 './pages/AdminUsers',
                 './pages/EnterpriseSettings',
