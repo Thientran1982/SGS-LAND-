@@ -69,6 +69,7 @@ import m047 from './047_agent_observations';
 import m048 from './048_performance_indexes';
 import m049 from './049_leads_cursor_index';
 import m050 from './050_articles_images_column';
+import m051 from './051_articles_videos_column';
 
 dotenv.config();
 
@@ -134,6 +135,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '048_performance_indexes.ts':  m048,
   '049_leads_cursor_index.ts':   m049,
   '050_articles_images_column.ts': m050,
+  '051_articles_videos_column.ts': m051,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {

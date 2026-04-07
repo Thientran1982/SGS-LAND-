@@ -346,10 +346,7 @@ const ArticleForm = ({ initialData, onSave, onCancel, onUploadingChange, formId 
                     <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Tác giả</label>
                     <input type="text" name="author" value={formData.author} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                 </div>
-                <div>
-                    <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">URL Hình ảnh chính</label>
-                    <input type="text" name="image" value={formData.image} onChange={handleChange} placeholder="https://... hoặc tải ảnh lên ở trên" className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
-                </div>
+                <input type="hidden" name="image" value={formData.image} />
                 <div>
                     <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Tags (cách nhau bằng dấu phẩy)</label>
                     <input type="text" value={formData.tags?.join(', ')} onChange={handleTagsChange} className="w-full px-4 py-3 rounded-xl border border-[var(--glass-border)] focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
