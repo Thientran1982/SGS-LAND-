@@ -1,4 +1,5 @@
 import express from "express";
+import compression from "compression";
 import path from "path";
 import { Server } from "socket.io";
 import http from "http";
@@ -73,6 +74,16 @@ async function startServer() {
   const app = express();
   const PORT = parseInt(process.env.PORT || '5000', 10);
 
+  // Gzip compression — reduces JS/CSS/JSON payload by ~70-80%
+  app.use(compression({
+    level: 6,  // balanced speed vs ratio
+    threshold: 1024,  // only compress responses > 1KB
+    filter: (req, res) => {
+      // Don't compress SSE streams (they handle their own framing)
+      if (req.path.includes('/api/ai-chat-stream') || req.path.includes('/api/events')) return false;
+      return compression.filter(req, res);
+    },
+  }));
   app.use(securityHeaders);
   app.use(corsMiddleware);
   app.use('/api/webhooks', express.json({
@@ -2336,7 +2347,17 @@ async function startServer() {
     });
 
     // All other SPA routes → inject admin-saved override or fallback to defaults
-    app.use(express.static("dist"));
+    // Long-lived cache for hashed assets (JS/CSS chunks have content hash in filename)
+    app.use(express.static("dist", {
+      maxAge: '1y',
+      immutable: true,
+      setHeaders: (res, filePath) => {
+        // HTML should never be cached long-term (SPA shell changes on redeploy)
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+        }
+      },
+    }));
     app.use(async (req: express.Request, res: express.Response) => {
       try {
         // Derive route key from pathname: strip leading "/"
