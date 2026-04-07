@@ -333,10 +333,8 @@
     <link rel="preload" href="/critical.css" as="style" />
     <link rel="preload" href="/theme-init.js" as="script" />
 
-    <!-- Non-render-blocking font load: use media=print trick so fonts never block FCP -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" />
-    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" /></noscript>
+    <!-- Google Fonts — synchronous load required: CSP blocks inline onload handlers in production -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" />
 
     <link rel="stylesheet" href="/critical.css" />
 
