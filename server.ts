@@ -2435,6 +2435,18 @@ async function startServer() {
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
+
+  // Prevent unhandled promise rejections from crashing the server
+  process.on('unhandledRejection', (reason: unknown) => {
+    logger.error('[Server] Unhandled promise rejection:', reason instanceof Error ? reason.message : String(reason));
+  });
+
+  // Prevent uncaught exceptions from crashing the server (log and continue where safe)
+  process.on('uncaughtException', (err: Error) => {
+    logger.error('[Server] Uncaught exception:', err.message, err.stack);
+    // Only exit on truly fatal errors; most async errors should not crash the process
+    if ((err as any).code === 'ERR_USE_AFTER_CLOSE') return;
+  });
 }
 
 startServer();
