@@ -62,6 +62,22 @@ export const KnowledgeBase: React.FC = () => {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
+    // Auto-poll khi có doc đang xử lý — refresh đến khi tất cả hoàn thành
+    useEffect(() => {
+        const hasProcessing = docs.some(d => d.status === 'PROCESSING');
+        if (!hasProcessing) return;
+        const timer = setInterval(async () => {
+            try {
+                const data = await db.getDocuments(undefined);
+                setDocs(data || []);
+                if (!(data || []).some((d: KnowledgeDocument) => d.status === 'PROCESSING')) {
+                    clearInterval(timer);
+                }
+            } catch { /* ignore */ }
+        }, 3000);
+        return () => clearInterval(timer);
+    }, [docs]);
+
     const displayedDocs = debouncedSearch
         ? docs.filter(d => normalizeString(d.title || '').includes(normalizeString(debouncedSearch)))
         : docs;
