@@ -91,7 +91,7 @@ export function createErrorLogRoutes(authenticateToken: any, pool: Pool) {
       if (!ADMIN_ROLES.has(user.role)) {
         return res.status(403).json({ error: 'Không có quyền truy cập' });
       }
-      const id = parseInt(req.params.id);
+      const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
       if (isNaN(id)) return res.status(400).json({ error: 'ID không hợp lệ' });
 
       const ok = await repo.resolve(user.tenantId, id, user.id);
