@@ -123,11 +123,8 @@ export function isNonHCMCAddress(address: string): boolean {
 
     // Explicit HCMC markers always win — even if the address string contains a
     // province name as part of a street/ward name (e.g. "Đường Nguyễn Bình Dương").
-    const HCMC_MARKERS = [
-        'hcm', 'ho chi minh', 'tphcm', 'tp hcm',
-        'thanh pho ho chi minh', 'tp. ho chi minh', 'tp.ho chi minh',
-    ];
-    if (HCMC_MARKERS.some(m => lower.includes(m))) return false;
+    // Uses pre-built array to avoid object allocation on every call.
+    if (_HCMC_MARKERS_LOWER.some(m => lower.includes(m))) return false;
 
     // Only scan the last two comma-delimited segments.  Province/city names appear at
     // the END of Vietnamese addresses; names embedded in street names (e.g. "Đường
@@ -135,10 +132,9 @@ export function isNonHCMCAddress(address: string): boolean {
     const segments = lower.split(',').map(s => s.trim()).filter(Boolean);
     const tail = segments.slice(-2).join(',');
 
-    for (const province of NON_HCMC_PROVINCES) {
-        const plain = province.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const escaped = plain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        if (new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i').test(tail)) return true;
+    // Use pre-compiled regexes — avoids creating new RegExp objects in a hot loop.
+    for (const re of _NON_HCMC_PROVINCE_COMPILED) {
+        if (re.test(tail)) return true;
     }
     return false;
 }
@@ -1048,17 +1044,47 @@ export const NON_HCMC_PLACE_CENTERS: { key: string; coords: [number, number]; la
     { key: 'hoa binh',         coords: [20.8135, 105.3388], label: 'Hòa Bình' },
 ];
 
+// ── Pre-compiled lookup tables (built once at module load) ───────────────────
+// Creating `new RegExp(...)` inside a loop that runs 300–700 times per listing
+// freezes the browser main thread when 400+ listings are processed in Phase 1
+// of the MapView geocoding pipeline.  All regexes are compiled here once so
+// subsequent calls to getProvinceFallback / getDistrictFallback / isNonHCMCAddress
+// only call RegExp.prototype.test() on already-compiled objects (~100 ns each).
+
+function makeWordBoundaryRe(plainKey: string): RegExp {
+    const escaped = plainKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i');
+}
+
+const _PROVINCE_COMPILED: { re: RegExp; coords: [number, number]; label: string }[] =
+    NON_HCMC_PLACE_CENTERS.map(e => ({ re: makeWordBoundaryRe(e.key), coords: e.coords, label: e.label }));
+
+const _DISTRICT_COMPILED: { re: RegExp; key: string }[] =
+    Object.keys(HCMC_DISTRICT_CENTERS)
+        .sort((a, b) => b.length - a.length)          // longest key first → most-specific match wins
+        .map(key => ({ re: makeWordBoundaryRe(key), key }));
+
+const _NON_HCMC_PROVINCE_COMPILED: RegExp[] =
+    NON_HCMC_PROVINCES.map(province => {
+        const plain = province.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return makeWordBoundaryRe(plain);
+    });
+
+const _HCMC_MARKERS_LOWER = [
+    'hcm', 'ho chi minh', 'tphcm', 'tp hcm',
+    'thanh pho ho chi minh', 'tp. ho chi minh', 'tp.ho chi minh',
+];
+
+// ── End pre-compiled lookup tables ───────────────────────────────────────────
+
 /**
  * Scan an address for a known non-HCMC province / district name and return
  * its approximate centre coordinates.  Returns null when nothing matches.
  */
 export function getProvinceFallback(address: string): { coords: [number, number]; label: string } | null {
     const lower = address.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    for (const entry of NON_HCMC_PLACE_CENTERS) {
-        const escaped = entry.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        if (new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i').test(lower)) {
-            return { coords: entry.coords, label: entry.label };
-        }
+    for (const { re, coords, label } of _PROVINCE_COMPILED) {
+        if (re.test(lower)) return { coords, label };
     }
     return null;
 }
@@ -1069,12 +1095,8 @@ export function getProvinceFallback(address: string): { coords: [number, number]
  */
 export function getDistrictFallback(address: string): { coords: [number, number]; district: string } | null {
     const lower = address.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const keys = Object.keys(HCMC_DISTRICT_CENTERS).sort((a, b) => b.length - a.length);
-    for (const key of keys) {
-        const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        if (new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i').test(lower)) {
-            return { coords: HCMC_DISTRICT_CENTERS[key], district: HCMC_DISTRICTS[key] || key };
-        }
+    for (const { re, key } of _DISTRICT_COMPILED) {
+        if (re.test(lower)) return { coords: HCMC_DISTRICT_CENTERS[key], district: HCMC_DISTRICTS[key] || key };
     }
     return null;
 }
