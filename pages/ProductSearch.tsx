@@ -714,7 +714,7 @@ export const ProductSearch: React.FC = () => {
                     {/* 3. BOARD VIEW */}
                     {viewMode === 'BOARD' && (
                         <div ref={boardContainerRef} className="h-full overflow-x-auto pb-4 no-scrollbar flex gap-6 snap-x cursor-grab active:cursor-grabbing">
-                            {loading ? (
+                            {boardLoading ? (
                                 [1,2,3,4].map(i => (
                                     <div key={i} className="min-w-[320px] w-[320px] flex flex-col h-full bg-[var(--glass-surface-hover)]/50 rounded-2xl border border-[var(--glass-border)]/60 snap-start animate-pulse">
                                         <div className="p-4 border-b border-[var(--glass-border)]/50 flex justify-between items-center">
