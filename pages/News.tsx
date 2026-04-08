@@ -18,6 +18,25 @@ const sanitizeHtml = (html: string): string => DOMPurify.sanitize(html, {
     FORCE_BODY: true,
 });
 
+/**
+ * Normalize raw article content before rendering.
+ * - If the content already contains block-level HTML tags (p, div, h1-h6, ul, ol…),
+ *   it is treated as structured HTML and returned as-is.
+ * - Otherwise (plain text / textarea input), newlines are converted to proper HTML:
+ *     double newline  → paragraph break  (<p> split)
+ *     single newline  → line break       (<br>)
+ */
+const normalizeContent = (content: string): string => {
+    const trimmed = content.trim();
+    if (!trimmed) return '';
+    if (/<(p|div|h[1-6]|ul|ol|li|blockquote|figure)\b/i.test(trimmed)) return trimmed;
+    const body = trimmed
+        .replace(/\r\n/g, '\n')
+        .replace(/\n{2,}/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+    return `<p>${body}</p>`;
+};
+
 // -----------------------------------------------------------------------------
 // TYPES & MOCK DATA (2026 CONTEXT)
 // -----------------------------------------------------------------------------
@@ -177,7 +196,7 @@ const ArticleDetail = ({ article, onBack, onEdit, onDelete, isAdmin }: { article
                     <p className="lead font-medium text-xl text-[var(--text-primary)] mb-8 not-prose border-l-4 border-indigo-500 pl-4 bg-[var(--glass-surface)] py-2 rounded-r-lg">
                         {article.excerpt}
                     </p>
-                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content || '') }} />
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(normalizeContent(article.content || '')) }} />
                 </div>
 
                 {/* Media Gallery */}
