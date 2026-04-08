@@ -97,23 +97,25 @@ const ShareModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () => vo
 // --- Financial Calculator Component ---
 const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, formatCurrency: (val: number) => string, t: any }) => {
     const [mode, setMode] = useState<'LOAN' | 'RENT'>('LOAN');
-    
-    // Loan State
+
+    // ── Loan State ──
     const [ratio, setRatio] = useState(70);
     const [term, setTerm] = useState(20);
     const [rate, setRate] = useState(8.5);
 
-    // Rent State
-    // Default rental yield approx 0.4% per month of property value
-    const [monthlyRent, setMonthlyRent] = useState(Math.round((price * 0.004) / 100000) * 100000);
+    // ── Rent/Investment State ──
+    // 0.4%/tháng = ~4.8%/năm — mức cho thuê trung bình thị trường Việt Nam
+    const [monthlyRent, setMonthlyRent] = useState(() => Math.round((price * 0.004) / 100000) * 100000);
     const [occupancy, setOccupancy] = useState(90);
+    // Tăng trưởng BĐS trung bình Việt Nam: 7%/năm (CBRE, Savills 2019-2024)
+    const [appreciation, setAppreciation] = useState(7);
+    const [holdingYears, setHoldingYears] = useState(10);
 
-    // Loan Calculations
+    // ── Loan Calculations ──
     const loanAmount = price * (ratio / 100);
     const downPayment = price - loanAmount;
     const monthlyRate = rate / 100 / 12;
     const totalMonths = term * 12;
-    // Standard amortization formula (guard: 0% rate → divide evenly; term=0 → 0)
     const monthlyPayment = loanAmount > 0 && term > 0
         ? (monthlyRate === 0
             ? loanAmount / totalMonths
@@ -122,22 +124,36 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
     const totalPayment = monthlyPayment * totalMonths;
     const totalInterest = totalPayment - loanAmount;
 
-    // Rent Calculations
+    // ── Investment Calculations ──
+    // Dòng tiền thuê
     const annualRevenue = monthlyRent * 12 * (occupancy / 100);
     const grossYield = price > 0 ? (annualRevenue / price) * 100 : 0;
+    const paybackYears = annualRevenue > 0 ? price / annualRevenue : 0;
+    // Tăng giá vốn theo lãi kép: P × (1 + r)^n
+    const projectedPrice = price > 0 ? price * Math.pow(1 + appreciation / 100, holdingYears) : 0;
+    const capitalGain = projectedPrice - price;
+    // Tổng thu nhập từ cho thuê trong N năm
+    const totalRentalIncome = annualRevenue * holdingYears;
+    // Tổng lợi nhuận = tăng giá vốn + thu nhập thuê
+    const totalProfit = capitalGain + totalRentalIncome;
+    const totalROI = price > 0 ? (totalProfit / price) * 100 : 0;
+    // CAGR tổng (giá bán + tổng thuê) trên vốn đầu tư ban đầu
+    const annualizedReturn = price > 0 && holdingYears > 0
+        ? (Math.pow((projectedPrice + totalRentalIncome) / price, 1 / holdingYears) - 1) * 100
+        : 0;
 
     return (
         <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden h-full">
             <div className="flex border-b border-[var(--glass-border)]">
-                <button 
-                    onClick={() => setMode('LOAN')} 
+                <button
+                    onClick={() => setMode('LOAN')}
                     className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'LOAN' ? 'text-indigo-600 bg-indigo-50/50' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
                 >
                     {ICONS.CALC} {t('calc.loan')}
                 </button>
                 <div className="w-px bg-[var(--glass-surface-hover)]"></div>
-                <button 
-                    onClick={() => setMode('RENT')} 
+                <button
+                    onClick={() => setMode('RENT')}
                     className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${mode === 'RENT' ? 'text-emerald-600 bg-emerald-50/50' : 'text-[var(--text-tertiary)] hover:bg-[var(--glass-surface)]'}`}
                 >
                     {ICONS.CHART} {t('calc.rent')}
@@ -186,18 +202,18 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-enter">
-                        <div className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter">
+                        {/* ── LEFT: Inputs ── */}
+                        <div className="space-y-4">
                             <div>
                                 <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.expected_rent')}</label>
                                 <input
-                                    type="number"
-                                    min="0"
+                                    type="number" min="0"
                                     value={monthlyRent}
                                     onChange={e => setMonthlyRent(Math.max(0, Number(e.target.value)))}
                                     className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-emerald-500"
                                 />
-                                <div className="text-xs2 text-[var(--text-secondary)] mt-1 text-right">{formatCurrency(monthlyRent)}</div>
+                                <div className="text-xs2 text-[var(--text-secondary)] mt-1 text-right">{formatCurrency(monthlyRent)}{t('calc.per_month')}</div>
                             </div>
                             <div>
                                 <div className="flex justify-between mb-2">
@@ -206,18 +222,76 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                                 </div>
                                 <input type="range" min="50" max="100" step="5" value={occupancy} onChange={e => setOccupancy(Number(e.target.value))} className="w-full accent-emerald-600 h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
                             </div>
-                        </div>
-                        <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-100 flex flex-col justify-center min-w-0">
-                            <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-1 truncate">{t('calc.gross_yield')}</div>
-                            <div className="text-2xl md:text-3xl font-black text-emerald-900 mb-4 break-words">{grossYield.toFixed(2)}%<span className="text-base font-medium text-emerald-600 ml-1">{t('calc.per_year')}</span></div>
-                            <div className="space-y-2 text-sm">
-                                <div className="flex justify-between items-center gap-2 flex-wrap">
-                                    <span className="text-emerald-500 truncate">{t('calc.annual_cashflow')}</span>
-                                    <span className="font-bold text-emerald-800 break-all">{formatCurrency(annualRevenue)}</span>
+                            <div className="border-t border-[var(--glass-border)] pt-4">
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase">{t('calc.appreciation_rate')}</label>
+                                        <span className="text-sm font-bold text-violet-600">{appreciation}%{t('calc.per_year')}</span>
+                                    </div>
+                                    <input type="range" min="0" max="20" step="0.5" value={appreciation} onChange={e => setAppreciation(Number(e.target.value))} className="w-full accent-violet-600 h-2 bg-[var(--glass-surface-hover)] rounded-lg appearance-none cursor-pointer" />
+                                    <div className="flex justify-between text-xs2 text-[var(--text-secondary)] mt-1">
+                                        <span>0%</span><span>20%</span>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between items-center gap-2 flex-wrap">
-                                    <span className="text-emerald-500 truncate">{t('calc.payback_period')}</span>
-                                    <span className="font-bold text-emerald-800 whitespace-nowrap">{annualRevenue > 0 ? (price / annualRevenue).toFixed(1) : '---'} {t('calc.years')}</span>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.holding_years')}</label>
+                                <input
+                                    type="number" min="1" max="50"
+                                    value={holdingYears}
+                                    onChange={e => setHoldingYears(Math.max(1, Math.min(50, Number(e.target.value))))}
+                                    className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-violet-500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* ── RIGHT: Results ── */}
+                        <div className="space-y-3">
+                            {/* Card 1: Dòng tiền cho thuê */}
+                            <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100">
+                                <div className="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-1">{t('calc.gross_yield')}</div>
+                                <div className="text-2xl font-black text-emerald-900">{grossYield.toFixed(2)}%<span className="text-sm font-medium text-emerald-600 ml-1">{t('calc.per_year')}</span></div>
+                                <div className="mt-2 space-y-1.5 text-xs">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-emerald-600">{t('calc.annual_cashflow')}</span>
+                                        <span className="font-bold text-emerald-900">{formatCurrency(annualRevenue)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-emerald-600">{t('calc.payback_period')}</span>
+                                        <span className="font-bold text-emerald-900">{paybackYears > 0 ? paybackYears.toFixed(1) : '---'}{t('calc.years')}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Card 2: Tăng giá vốn */}
+                            <div className="bg-violet-50 rounded-2xl p-4 border border-violet-100">
+                                <div className="text-xs text-violet-600 font-bold uppercase tracking-wider mb-1">{t('calc.projected_price_label')}</div>
+                                <div className="text-2xl font-black text-violet-900 break-words">{price > 0 ? formatCurrency(projectedPrice) : '---'}</div>
+                                <div className="mt-2 space-y-1.5 text-xs">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-violet-600">{t('calc.capital_gain')}</span>
+                                        <span className="font-bold text-violet-900">+{formatCurrency(capitalGain)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-violet-600">{t('calc.total_rental_income')} ({holdingYears}{t('calc.years')})</span>
+                                        <span className="font-bold text-violet-900">+{formatCurrency(totalRentalIncome)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Card 3: Tổng lợi nhuận */}
+                            <div className="bg-sky-50 rounded-2xl p-4 border border-sky-100">
+                                <div className="text-xs text-sky-600 font-bold uppercase tracking-wider mb-1">{t('calc.total_profit')}</div>
+                                <div className="text-2xl font-black text-sky-900 break-words">{formatCurrency(totalProfit)}</div>
+                                <div className="mt-2 space-y-1.5 text-xs">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sky-600">{t('calc.total_roi')}</span>
+                                        <span className="font-bold text-sky-900">{totalROI.toFixed(1)}%</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sky-600">{t('calc.annualized_return')}</span>
+                                        <span className="font-bold text-sky-900">{annualizedReturn.toFixed(2)}%{t('calc.per_year')}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1221,7 +1295,7 @@ export const ListingDetail: React.FC = () => {
 
     useEffect(() => {
         if (listing && listing.type !== PropertyType.PROJECT && listing.area > 0 && listing.location) {
-            fetchTeaserData(listing.location, listing.area, listing.attributes?.propertyType);
+            fetchTeaserData(listing.location, listing.area, listing.attributes?.propertyType as string | undefined);
         }
     }, [listing, fetchTeaserData]);
 
