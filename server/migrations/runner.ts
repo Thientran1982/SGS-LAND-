@@ -72,6 +72,7 @@ import m050 from './050_articles_images_column';
 import m051 from './051_articles_videos_column';
 import m052 from './052_fix_listing_status_opening';
 import m053 from './053_fix_processing_documents';
+import m054 from './054_error_logs';
 
 dotenv.config();
 
@@ -140,6 +141,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '051_articles_videos_column.ts': m051,
   '052_fix_listing_status_opening.ts': m052,
   '053_fix_processing_documents.ts': m053,
+  '054_error_logs.ts': m054,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
