@@ -2316,12 +2316,20 @@ async function startServer() {
     // Preload the base HTML once at startup to avoid repeated disk reads.
     try { getBaseHtml(); } catch { /* dist not ready in some edge cases */ }
 
-    // Helper that sends injected HTML
-    const sendMeta = (res: express.Response, meta: Parameters<typeof injectMeta>[1]) => {
+    // Helper that sends injected HTML.
+    // SEO routes (/listing/:id, /news/:id) use cache=true (60s CDN-friendly).
+    // The SPA catch-all uses cache=false (no-cache) so browsers always fetch
+    // fresh HTML after a redeploy, preventing ChunkLoadError from stale chunk hashes.
+    const sendMeta = (res: express.Response, meta: Parameters<typeof injectMeta>[1], cache = true) => {
       try {
         const html = injectMeta(getBaseHtml(), meta);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+        res.setHeader(
+          'Cache-Control',
+          cache
+            ? 'public, max-age=60, stale-while-revalidate=300'
+            : 'no-cache, no-store, must-revalidate'
+        );
         res.send(html);
       } catch {
         res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
@@ -2373,8 +2381,9 @@ async function startServer() {
           row?.og_image,
           req.path
         );
-        sendMeta(res, meta);
+        sendMeta(res, meta, false); // no-cache: SPA shell must always be fresh after redeploy
       } catch {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
       }
     });
