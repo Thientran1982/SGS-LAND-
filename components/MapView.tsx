@@ -580,61 +580,70 @@ const MapView: React.FC<MapViewProps> = memo(({
 
         const run = async () => {
             const resolved: PointEntry[] = [];
-            const pending: Listing[]     = [];
+            const toGeocode: Listing[]   = [];
             const bounds = L.latLngBounds([]);
 
+            // ── Phase 1 (synchronous): trusted coords + cache hits + immediate fallbacks ──
+            // All listings that don't need a live Nominatim call are resolved here in one
+            // pass so we never call renderClusters() more than once for the sync phase.
             for (const listing of listings) {
                 if (hasTrustedCoords(listing)) {
                     const pt: [number, number] = [listing.coordinates!.lat, listing.coordinates!.lng];
                     resolved.push({ listing, point: pt, approximate: false });
                     bounds.extend(pt);
-                } else { pending.push(listing); }
+                } else if (!listing.location) {
+                    // No location string at all — immediate fallback, don't queue for geocoding
+                    const point = getFallbackPoint(listing);
+                    resolved.push({ listing, point, approximate: true });
+                    bounds.extend(point);
+                } else {
+                    const cached = geoCache.current.get(listing.location);
+                    if (cached !== undefined) {
+                        // Cache hit — no network call needed
+                        const point = cached ?? getFallbackPoint(listing);
+                        resolved.push({ listing, point, approximate: !cached });
+                        bounds.extend(point);
+                    } else {
+                        toGeocode.push(listing);
+                    }
+                }
             }
 
+            // Listings that exceed the geocode budget get fallback points immediately
+            // so the map never blocks waiting for Nominatim when there are many listings.
+            const geocodeBatch  = toGeocode.slice(0, MAX_GEOCODE_REQUESTS);
+            const fallbackBatch = toGeocode.slice(MAX_GEOCODE_REQUESTS);
+            for (const listing of fallbackBatch) {
+                const point = getFallbackPoint(listing);
+                resolved.push({ listing, point, approximate: true });
+                bounds.extend(point);
+            }
+
+            // Single render for all sync-resolved entries — avoids the O(n²) clustering
+            // freeze that occurred when renderClusters() was called once per listing.
             allEntries.current = [...resolved];
-            // Only auto-zoom on initial paint when ALL listings already have real
-            // coordinates (e.g. single-listing detail view).  When there are pending
-            // listings to geocode we skip this early fitBounds so the map stays at
-            // the HCMC default centre instead of jumping to a lone outlier (e.g. a
-            // project in Nhơn Trạch / Đồng Nai that happens to be the only entry with
-            // stored coordinates while hundreds of HCMC listings are still being
-            // resolved).  The final fitBounds at the end of the geocoding loop will
-            // show the full distribution once all points are known.
-            if (bounds.isValid() && pending.length === 0) {
+            if (bounds.isValid() && geocodeBatch.length === 0) {
                 mapInst.current!.fitBounds(bounds, { padding: [60, 60], maxZoom: 15, animate: false });
-                // Never auto-zoom below 13 — below that, district centroids cluster
-                // together and the user sees only one big cluster bubble instead of pins.
                 if (mapInst.current!.getZoom() < 13) mapInst.current!.setZoom(13, { animate: false });
             }
             renderClustersRef.current();
 
+            // ── Phase 2 (async): geocode remaining listings one by one ──
+            // Each iteration has an await (sleep + fetch), so renderClusters() here is
+            // naturally throttled to at most ~1 call/sec — safe for the browser.
             let geocodeCount = 0;
-            for (const listing of pending) {
+            for (const listing of geocodeBatch) {
                 if (cancel()) break;
-                let point: [number, number];
-                let approximate = true;
-
-                const cached = listing.location ? geoCache.current.get(listing.location) : undefined;
-                if (cached !== undefined) {
-                    point = cached ?? getFallbackPoint(listing);
-                    approximate = !cached;
-                } else if (geocodeCount < MAX_GEOCODE_REQUESTS && listing.location) {
-                    // Only sleep if Nominatim is reachable — no point rate-limiting a blocked endpoint
-                    if (geocodeCount > 0 && !cancel() && nominatimReachable) await sleep(1100);
-                    if (cancel()) break;
-                    const r = await geocodeLocation(listing.location, geoCache.current);
-                    geocodeCount++;
-                    point = r ? (approximate = false, r) : getFallbackPoint(listing);
-                } else {
-                    point = getFallbackPoint(listing);
-                }
+                if (geocodeCount > 0 && !cancel() && nominatimReachable) await sleep(1100);
+                if (cancel()) break;
+                const r = await geocodeLocation(listing.location!, geoCache.current);
+                geocodeCount++;
+                const point      = r ?? getFallbackPoint(listing);
+                const approximate = !r;
 
                 if (cancel()) break;
                 resolved.push({ listing, point, approximate });
                 bounds.extend(point);
-
-                // Progressive render: update after every listing so the map shows
-                // pins as they resolve instead of waiting for the full batch.
                 allEntries.current = [...resolved];
                 renderClustersRef.current();
             }
