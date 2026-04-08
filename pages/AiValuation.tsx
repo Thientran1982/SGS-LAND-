@@ -1863,21 +1863,21 @@ export const AiValuation: React.FC = () => {
 
                             {/* ── INPUT SUMMARY CHIPS ── */}
                             {(() => {
-                                const legalChip = legal === 'PINK_BOOK' ? '📄 Sổ Hồng' : legal === 'CONTRACT' ? '📋 HĐ Mua Bán' : legal === 'PENDING' ? '🕐 Đang làm sổ' : '📝 Vi Bằng';
+                                const legalChip = legal === 'PINK_BOOK' ? 'Sổ Hồng' : legal === 'CONTRACT' ? 'HĐ Mua Bán' : legal === 'PENDING' ? 'Đang làm sổ' : 'Vi Bằng';
                                 const dirLabels: Record<string,string> = { N:'Bắc', S:'Nam', E:'Đông', W:'Tây', NE:'Đông Bắc', SE:'Đông Nam', SW:'Tây Nam', NW:'Tây Bắc' };
                                 const roadTypeLabelMap: Record<string,string> = { alley_moto:'Hẻm xe máy', alley_car:'Hẻm xe hơi', minor:'Đường nhỏ', major:'Đường lớn', boulevard:'Đại lộ' };
                                 const chips: string[] = [];
-                                chips.push(`🏠 ${PROPERTY_TYPE_LABELS[propertyType] || 'Nhà phố'}`);
-                                chips.push(`📐 ${parseFloat(area) || 0}m²`);
+                                chips.push(PROPERTY_TYPE_LABELS[propertyType] || 'Nhà phố');
+                                chips.push(`${parseFloat(area) || 0}m²`);
                                 chips.push(legalChip);
-                                if (roadTypeSelect) chips.push(`🛣 ${roadTypeLabelMap[roadTypeSelect] || roadTypeSelect}`);
-                                else if (roadWidth) chips.push(`🛣 Lộ giới ${roadWidth}m`);
-                                if (yearBuilt && parseInt(yearBuilt) >= 1975) chips.push(`🏗 Xây ${yearBuilt} (${CURRENT_YEAR - parseInt(yearBuilt)} tuổi)`);
-                                else if (buildingAge && parseFloat(buildingAge) > 0) chips.push(`🏗 ${parseFloat(buildingAge)} tuổi`);
-                                if (direction) chips.push(`🧭 Hướng ${dirLabels[direction] || direction}`);
-                                if (frontageWidth && parseFloat(frontageWidth) > 0) chips.push(`📏 MT ${frontageWidth}m`);
-                                if (bedrooms !== null && isApartmentOrProject) chips.push(`🛏 ${bedrooms} phòng ngủ`);
-                                if (floorLevel && parseFloat(floorLevel) > 0) chips.push(`🏢 Tầng ${floorLevel}`);
+                                if (roadTypeSelect) chips.push(roadTypeLabelMap[roadTypeSelect] || roadTypeSelect);
+                                else if (roadWidth) chips.push(`Lộ giới ${roadWidth}m`);
+                                if (yearBuilt && parseInt(yearBuilt) >= 1975) chips.push(`Xây ${yearBuilt} (${CURRENT_YEAR - parseInt(yearBuilt)} tuổi)`);
+                                else if (buildingAge && parseFloat(buildingAge) > 0) chips.push(`${parseFloat(buildingAge)} tuổi`);
+                                if (direction) chips.push(`Hướng ${dirLabels[direction] || direction}`);
+                                if (frontageWidth && parseFloat(frontageWidth) > 0) chips.push(`MT ${frontageWidth}m`);
+                                if (bedrooms !== null && isApartmentOrProject) chips.push(`${bedrooms} phòng ngủ`);
+                                if (floorLevel && parseFloat(floorLevel) > 0) chips.push(`Tầng ${floorLevel}`);
                                 return (
                                     <div className="flex flex-wrap gap-1.5 mb-6">
                                         {chips.map((c, i) => (
@@ -1886,14 +1886,6 @@ export const AiValuation: React.FC = () => {
                                     </div>
                                 );
                             })()}
-
-                            {/* ── FORMULA DISPLAY ── */}
-                            {valuation.formula && (
-                                <div className="mb-6 bg-slate-900/50 rounded-xl border border-slate-700/40 px-4 py-2.5 flex items-center gap-2 overflow-x-auto">
-                                    <svg className="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                    <span className="text-xs text-slate-400 font-mono whitespace-nowrap">{valuation.formula}</span>
-                                </div>
-                            )}
 
                             {/* ── FACTORS BREAKDOWN (XAI) ── */}
                             {valuation.factors.length > 0 && (() => {
