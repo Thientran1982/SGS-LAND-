@@ -9,8 +9,8 @@ types.setTypeParser(20, (val: string) => parseInt(val, 10));
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 20,
-  idleTimeoutMillis: 600000,     // 10 min — keep connections alive during low-traffic periods
+  max: 10,
+  idleTimeoutMillis: 240000,     // 4 min — evict idle connections before Neon's 5-min hard timeout
   connectionTimeoutMillis: 15000,
   statement_timeout: 30000,
   keepAlive: true,               // Send TCP keepalive packets to detect dead connections

@@ -927,7 +927,7 @@ async function startServer() {
   app.get('/api/public/listings', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 200);
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 500);
       const hasProjectCode = !!req.query.projectCode;
       const filters: any = { status_in: ['AVAILABLE', 'OPENING', 'BOOKING'] };
       if (!hasProjectCode) filters.noProjectCode = true;

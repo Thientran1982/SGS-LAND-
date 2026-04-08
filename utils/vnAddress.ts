@@ -120,10 +120,25 @@ const NON_HCMC_PROVINCES: string[] = [
 
 export function isNonHCMCAddress(address: string): boolean {
     const lower = address.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // Explicit HCMC markers always win — even if the address string contains a
+    // province name as part of a street/ward name (e.g. "Đường Nguyễn Bình Dương").
+    const HCMC_MARKERS = [
+        'hcm', 'ho chi minh', 'tphcm', 'tp hcm',
+        'thanh pho ho chi minh', 'tp. ho chi minh', 'tp.ho chi minh',
+    ];
+    if (HCMC_MARKERS.some(m => lower.includes(m))) return false;
+
+    // Only scan the last two comma-delimited segments.  Province/city names appear at
+    // the END of Vietnamese addresses; names embedded in street names (e.g. "Đường
+    // Nguyễn Bình Dương, Quận 7") must NOT trigger a non-HCMC match.
+    const segments = lower.split(',').map(s => s.trim()).filter(Boolean);
+    const tail = segments.slice(-2).join(',');
+
     for (const province of NON_HCMC_PROVINCES) {
         const plain = province.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const escaped = plain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        if (new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i').test(lower)) return true;
+        if (new RegExp(`(?<![\\w])${escaped}(?![\\w])`, 'i').test(tail)) return true;
     }
     return false;
 }
