@@ -1098,6 +1098,26 @@ export const ListingDetail: React.FC = () => {
     const [shareOpen, setShareOpen] = useState(false);
     const [valuation, setValuation] = useState<any>(null);
     const [isValuating, setIsValuating] = useState(false);
+    const [teaserData, setTeaserData] = useState<{
+        found: boolean;
+        locationDisplay: string;
+        pricePerM2: number;
+        priceMin: number;
+        priceMax: number;
+        pricePerM2Display: string;
+        totalMin: number;
+        totalMid: number;
+        totalMax: number;
+        totalMinDisplay: string;
+        totalMidDisplay: string;
+        totalMaxDisplay: string;
+        area: number;
+        confidence: number;
+        trendText: string;
+        dataSource: string;
+        dataAge: string;
+    } | null>(null);
+    const [isTeaserLoading, setIsTeaserLoading] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
     const [showPhone, setShowPhone] = useState(false);
@@ -1180,6 +1200,30 @@ export const ListingDetail: React.FC = () => {
             setLoading(false);
         }
     }, [id]);
+
+    const fetchTeaserData = useCallback(async (loc: string, area: number, type?: string) => {
+        if (!loc || area <= 0) return;
+        setIsTeaserLoading(true);
+        try {
+            const params = new URLSearchParams({ location: loc, area: String(area) });
+            if (type) params.set('type', type);
+            const res = await fetch(`/api/valuation/teaser?${params.toString()}`);
+            if (res.ok) {
+                const data = await res.json();
+                setTeaserData(data);
+            }
+        } catch (e) {
+            console.error('[Teaser] fetch error', e);
+        } finally {
+            setIsTeaserLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (listing && listing.type !== PropertyType.PROJECT && listing.area > 0 && listing.location) {
+            fetchTeaserData(listing.location, listing.area, listing.attributes?.propertyType);
+        }
+    }, [listing, fetchTeaserData]);
 
     useEffect(() => {
         if (listing) {
@@ -1514,90 +1558,206 @@ export const ListingDetail: React.FC = () => {
                         <ProjectUnits projectCode={listing.code} parentLocation={listing.location} parentContactPhone={listing.contactPhone} t={t} formatCurrency={formatCurrency} formatCompactNumber={formatCompactNumber} />
                     )}
 
-                    {/* Financial Tools & AI Valuation */}
+                    {/* Financial Tools & AI Valuation — Plan B */}
                     {listing.type !== PropertyType.PROJECT && (
                         <div className="flex flex-col gap-8 mt-8">
                             <div className="min-w-0">
                                 <FinancialSuite price={listing.price} formatCurrency={formatCurrency} t={t} />
                             </div>
-                            
+
+                            {/* ── Valuation Card ─────────────────────────────────── */}
                             <div className="bg-[var(--bg-surface)] rounded-[24px] border border-[var(--glass-border)] shadow-sm overflow-hidden flex flex-col min-w-0">
-                                <div className="p-6 border-b border-[var(--glass-border)] flex justify-between items-center bg-indigo-50/30">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
-                                            <Sparkles className="w-4 h-4" />
-                                        </div>
-                                        <h3 className="font-bold text-[var(--text-primary)]">Thẩm định AI (Real-time)</h3>
+
+                                {/* Header */}
+                                <div className="p-5 border-b border-[var(--glass-border)] flex items-center gap-3 bg-gradient-to-r from-indigo-50/40 to-violet-50/20">
+                                    <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
+                                        <Sparkles className="w-4 h-4" />
                                     </div>
-                                    <button 
-                                        onClick={handleAiValuation}
-                                        disabled={isValuating}
-                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
-                                    >
-                                        {!currentUser && <Lock className="w-3 h-3" />}
-                                        {isValuating ? 'Đang thẩm định...' : (!currentUser ? 'Đăng nhập để thẩm định' : 'Bắt đầu thẩm định')}
-                                    </button>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-[var(--text-primary)] text-sm">Thẩm định giá thị trường</h3>
+                                        <p className="text-xs text-[var(--text-tertiary)]">Dữ liệu thực tế · Cập nhật liên tục</p>
+                                    </div>
                                 </div>
-                                <div className="p-6 flex-1">
-                                    {!valuation && !isValuating && (
-                                        <div className="h-full flex flex-col items-center justify-center text-center space-y-3 py-10">
-                                            <div className="w-12 h-12 bg-[var(--glass-surface)] rounded-full flex items-center justify-center text-[var(--text-secondary)]">
-                                                {ICONS.CALC}
-                                            </div>
-                                            <p className="text-sm text-[var(--text-tertiary)] max-w-[240px]">
-                                                Sử dụng AI & Thuật toán nâng cao để phân tích giá thị trường thực tế tại khu vực này.
-                                            </p>
+
+                                <div className="p-6 flex-1 space-y-5">
+
+                                    {/* ── Step 1: Teaser (market estimate) — shown to everyone ── */}
+                                    {isTeaserLoading && (
+                                        <div className="space-y-3 animate-pulse">
+                                            <div className="h-5 bg-[var(--glass-surface-hover)] rounded-lg w-2/3"></div>
+                                            <div className="h-14 bg-[var(--glass-surface-hover)] rounded-2xl"></div>
+                                            <div className="h-4 bg-[var(--glass-surface-hover)] rounded-lg w-1/2"></div>
                                         </div>
                                     )}
 
-                                    {isValuating && (
-                                        <div className="space-y-4 animate-pulse">
-                                            <div className="h-8 bg-[var(--glass-surface-hover)] rounded-lg w-3/4"></div>
-                                            <div className="h-20 bg-[var(--glass-surface-hover)] rounded-lg"></div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="h-16 bg-[var(--glass-surface-hover)] rounded-lg"></div>
-                                                <div className="h-16 bg-[var(--glass-surface-hover)] rounded-lg"></div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {valuation && (
-                                        <div className="animate-enter space-y-6">
-                                            <div className="flex flex-wrap items-end gap-2">
-                                                <span className="text-2xl md:text-3xl font-black text-[var(--text-primary)] break-words">{formatCurrency(valuation.estimatedPrice)}</span>
-                                                <span className="text-sm font-bold text-[var(--text-secondary)] mb-1">/ tổng diện tích</span>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 min-w-0">
-                                                    <div className="text-xs2 font-bold text-emerald-600 uppercase mb-1 truncate">Độ tin cậy</div>
-                                                    <div className="text-xl font-black text-emerald-900">{(valuation.confidenceScore * 100).toFixed(0)}%</div>
+                                    {!isTeaserLoading && teaserData && (
+                                        <div className="space-y-4 animate-enter">
+                                            {/* Price range band */}
+                                            <div>
+                                                <div className="flex items-baseline justify-between gap-2 mb-1 flex-wrap">
+                                                    <span className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide">Ước tính thị trường</span>
+                                                    <span className="text-xs text-[var(--text-tertiary)]">{teaserData.pricePerM2Display}</span>
                                                 </div>
-                                                <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 min-w-0">
-                                                    <div className="text-xs2 font-bold text-indigo-600 uppercase mb-1 truncate">Đơn giá m²</div>
-                                                    <div className="text-xl font-black text-indigo-900 break-all">{formatCurrency(valuation.pricePerM2)}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Phân tích thị trường</h4>
-                                                <p className="text-sm text-[var(--text-secondary)] leading-relaxed italic">
-                                                    "{valuation.reasoning}"
-                                                </p>
-                                            </div>
-
-                                            {valuation.comparables && valuation.comparables.length > 0 && (
-                                                <div className="space-y-3">
-                                                    <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Tài sản so sánh</h4>
-                                                    <div className="space-y-2">
-                                                        {valuation.comparables.map((comp: any, idx: number) => (
-                                                            <div key={idx} className="flex justify-between items-center gap-2 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] flex-wrap">
-                                                                <span className="text-xs font-medium text-[var(--text-secondary)] truncate flex-1 min-w-[120px]">{comp.address}</span>
-                                                                <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{formatCurrency(comp.price)}</span>
-                                                            </div>
-                                                        ))}
+                                                {/* Main price range */}
+                                                <div className="bg-gradient-to-r from-indigo-50 to-violet-50 rounded-2xl border border-indigo-100 p-4">
+                                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                        <div className="text-center">
+                                                            <div className="text-[10px] font-bold text-indigo-400 uppercase mb-0.5">Thấp</div>
+                                                            <div className="text-sm font-black text-indigo-700">{teaserData.totalMinDisplay}</div>
+                                                        </div>
+                                                        <div className="flex-1 h-2 mx-2 bg-indigo-100 rounded-full relative min-w-[40px]">
+                                                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-violet-500 rounded-full opacity-60"></div>
+                                                            <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-4 h-4 bg-indigo-600 rounded-full shadow border-2 border-white"></div>
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <div className="text-[10px] font-bold text-violet-400 uppercase mb-0.5">Cao</div>
+                                                            <div className="text-sm font-black text-violet-700">{teaserData.totalMaxDisplay}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-3 pt-3 border-t border-indigo-100 text-center">
+                                                        <span className="text-xs text-indigo-600 font-medium">Trung tâm: </span>
+                                                        <span className="text-sm font-black text-indigo-800">{teaserData.totalMidDisplay}</span>
                                                     </div>
                                                 </div>
+                                                {/* Meta row */}
+                                                <div className="flex items-center gap-3 mt-2 flex-wrap">
+                                                    <span className="inline-flex items-center gap-1 text-[10px] text-[var(--text-tertiary)] font-medium">
+                                                        <svg className="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                                        {teaserData.dataSource}
+                                                    </span>
+                                                    <span className="text-[10px] text-[var(--text-tertiary)]">·</span>
+                                                    <span className="text-[10px] text-[var(--text-tertiary)]">{teaserData.trendText}</span>
+                                                    <span className="text-[10px] text-[var(--text-tertiary)]">·</span>
+                                                    <span className="text-[10px] text-[var(--text-tertiary)]">Độ tin cậy {teaserData.confidence}%</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Divider */}
+                                            <div className="border-t border-[var(--glass-border)]"></div>
+
+                                            {/* ── Step 2a: Guest CTA ── */}
+                                            {!currentUser && (
+                                                <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-50 p-5 space-y-3">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                            <Sparkles className="w-4 h-4 text-indigo-600" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-bold text-indigo-900">Nhận báo cáo AI chi tiết — Miễn phí</p>
+                                                            <p className="text-xs text-indigo-600 mt-0.5 leading-relaxed">
+                                                                Phân tích sâu theo 7 hệ số thị trường, so sánh tài sản tương đương, dự báo xu hướng giá.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            window.location.hash = `#/${ROUTES.LOGIN}?returnTo=${encodeURIComponent(window.location.hash)}`;
+                                                        }}
+                                                        className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                    >
+                                                        <Lock className="w-3.5 h-3.5" />
+                                                        Đăng nhập để nhận báo cáo AI
+                                                    </button>
+                                                    <p className="text-center text-[10px] text-indigo-400">Miễn phí · Không cần thẻ tín dụng</p>
+                                                </div>
+                                            )}
+
+                                            {/* ── Step 2b: Logged-in user AI valuation ── */}
+                                            {currentUser && !valuation && (
+                                                <div className="space-y-3">
+                                                    <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
+                                                        Phân tích AI chuyên sâu — 7 hệ số thị trường, tài sản so sánh, dự báo xu hướng.
+                                                    </p>
+                                                    <button
+                                                        onClick={handleAiValuation}
+                                                        disabled={isValuating}
+                                                        className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
+                                                    >
+                                                        <Sparkles className="w-4 h-4" />
+                                                        {isValuating ? 'Đang phân tích...' : 'Bắt đầu thẩm định AI'}
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* AI valuation loading skeleton */}
+                                            {isValuating && (
+                                                <div className="space-y-4 animate-pulse">
+                                                    <div className="h-8 bg-[var(--glass-surface-hover)] rounded-lg w-3/4"></div>
+                                                    <div className="h-20 bg-[var(--glass-surface-hover)] rounded-lg"></div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="h-16 bg-[var(--glass-surface-hover)] rounded-lg"></div>
+                                                        <div className="h-16 bg-[var(--glass-surface-hover)] rounded-lg"></div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Full AI valuation result */}
+                                            {valuation && (
+                                                <div className="animate-enter space-y-5">
+                                                    <div className="flex flex-wrap items-end gap-2">
+                                                        <span className="text-2xl md:text-3xl font-black text-[var(--text-primary)] break-words">{formatCurrency(valuation.estimatedPrice)}</span>
+                                                        <span className="text-sm font-bold text-[var(--text-secondary)] mb-1">/ tổng</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 min-w-0">
+                                                            <div className="text-xs font-bold text-emerald-600 uppercase mb-1 truncate">Độ tin cậy AI</div>
+                                                            <div className="text-xl font-black text-emerald-900">{(valuation.confidenceScore * 100).toFixed(0)}%</div>
+                                                        </div>
+                                                        <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 min-w-0">
+                                                            <div className="text-xs font-bold text-indigo-600 uppercase mb-1 truncate">Đơn giá m²</div>
+                                                            <div className="text-xl font-black text-indigo-900 break-all">{formatCurrency(valuation.pricePerM2)}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Phân tích thị trường</h4>
+                                                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed italic">"{valuation.reasoning}"</p>
+                                                    </div>
+                                                    {valuation.comparables && valuation.comparables.length > 0 && (
+                                                        <div className="space-y-2">
+                                                            <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase">Tài sản so sánh</h4>
+                                                            <div className="space-y-2">
+                                                                {valuation.comparables.map((comp: any, idx: number) => (
+                                                                    <div key={idx} className="flex justify-between items-center gap-2 p-3 bg-[var(--glass-surface)] rounded-xl border border-[var(--glass-border)] flex-wrap">
+                                                                        <span className="text-xs font-medium text-[var(--text-secondary)] truncate flex-1 min-w-[120px]">{comp.address}</span>
+                                                                        <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">{formatCurrency(comp.price)}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* No teaser data fallback — show original gate for logged-in users */}
+                                    {!isTeaserLoading && !teaserData && (
+                                        <div className="space-y-4">
+                                            <div className="h-full flex flex-col items-center justify-center text-center space-y-3 py-6">
+                                                <div className="w-12 h-12 bg-[var(--glass-surface)] rounded-full flex items-center justify-center text-[var(--text-secondary)]">
+                                                    {ICONS.CALC}
+                                                </div>
+                                                <p className="text-sm text-[var(--text-tertiary)] max-w-[240px]">
+                                                    Sử dụng AI & Thuật toán nâng cao để phân tích giá thị trường thực tế.
+                                                </p>
+                                            </div>
+                                            {currentUser ? (
+                                                <button
+                                                    onClick={handleAiValuation}
+                                                    disabled={isValuating}
+                                                    className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${isValuating ? 'bg-[var(--glass-surface-hover)] text-[var(--text-secondary)]' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'}`}
+                                                >
+                                                    <Sparkles className="w-4 h-4" />
+                                                    {isValuating ? 'Đang thẩm định...' : 'Bắt đầu thẩm định AI'}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => { window.location.hash = `#/${ROUTES.LOGIN}`; }}
+                                                    className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <Lock className="w-3.5 h-3.5" />
+                                                    Đăng nhập để thẩm định AI
+                                                </button>
                                             )}
                                         </div>
                                     )}

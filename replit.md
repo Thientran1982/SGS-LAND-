@@ -254,6 +254,9 @@ Accepts address if ANY of:
 **Market/Valuation (migration 046)**: market_price_history
 **Agent Self-Learning (migration 047)**: agent_observations, agent_system_change_log
 **Error Monitoring (migration 054)**: error_logs
+**Market Price Seed (migration 055)**: seeds 80+ Vietnamese locations (HCM, Hanoi, Da Nang, Hai Phong, Can Tho, major provinces) with research-based Q1/2025 prices into `market_price_history` (source=`regional_table`). `normalizeKey()` inline in migration mirrors `normalizeLocation()` in marketDataService (note: Vietnamese 'đ' → space due to no NFD decomposition).
+**Teaser Valuation (Plan B)**: `GET /api/valuation/teaser?location=&area=&type=&listing_id=` — PUBLIC endpoint, no auth required. Queries `market_price_history` for nearest location match (exact → partial), applies property-type multiplier, returns price range band (min/mid/max in VNĐ). Fallback to `getRegionalBasePrice()`. Zero AI token consumption.
+**ListingDetail.tsx valuation UX (Plan B)**: teaser price range band shown immediately for all users (guest + logged-in). Guest CTA → login page with returnTo param. Logged-in users see "Bắt đầu thẩm định AI" button. Full AI valuation result shown below. Auto-fetches teaser on listing load via `fetchTeaserData()` useCallback + useEffect.
 
 ### Error Monitoring (`/error-monitor` — Admin only)
 - **Frontend capture** (`utils/errorMonitor.ts`): `window.onerror`, `unhandledrejection`, React `ErrorBoundary.componentDidCatch` all report to `POST /api/error-logs`
