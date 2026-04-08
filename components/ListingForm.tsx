@@ -442,15 +442,15 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
             <div className="grid grid-cols-3 gap-4">
                 <div>
                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_bed')}</label>
-                    <input type="number" value={formData.bedrooms ?? ''} onChange={e => setFormData({...formData, bedrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    <input type="number" value={formData.bedrooms || ''} onChange={e => setFormData({...formData, bedrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
                 </div>
                 <div>
                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_bath')}</label>
-                    <input type="number" value={formData.bathrooms ?? ''} onChange={e => setFormData({...formData, bathrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    <input type="number" value={formData.bathrooms || ''} onChange={e => setFormData({...formData, bathrooms: Number(e.target.value)})} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
                 </div>
                 <div>
                     <label className="text-xs3 font-bold text-[var(--text-tertiary)] uppercase mb-1 block">{t('inventory.label_floors')}</label>
-                    <input type="number" value={formData.attributes?.floor ?? ''} onChange={e => updateAttribute('floor', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
+                    <input type="number" value={(formData.attributes?.floor as number) || ''} onChange={e => updateAttribute('floor', Number(e.target.value))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none" />
                 </div>
                 <div className="col-span-1">
                     <Dropdown
@@ -615,10 +615,15 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         <input
                                             type="number"
                                             step="0.000001"
-                                            value={formData.coordinates?.lat ?? ''}
+                                            value={formData.coordinates?.lat || ''}
                                             onChange={e => {
                                                 const lat = parseFloat(e.target.value);
-                                                setFormData({ ...formData, coordinates: { lat: isNaN(lat) ? 0 : lat, lng: formData.coordinates?.lng ?? 0 } });
+                                                if (e.target.value === '' || isNaN(lat)) {
+                                                    const lng = formData.coordinates?.lng;
+                                                    setFormData({ ...formData, coordinates: lng ? { lat: 0, lng } : undefined });
+                                                } else {
+                                                    setFormData({ ...formData, coordinates: { lat, lng: formData.coordinates?.lng ?? 0 } });
+                                                }
                                             }}
                                             className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-mono focus:border-indigo-500 outline-none"
                                             placeholder="10.776900"
@@ -629,10 +634,15 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         <input
                                             type="number"
                                             step="0.000001"
-                                            value={formData.coordinates?.lng ?? ''}
+                                            value={formData.coordinates?.lng || ''}
                                             onChange={e => {
                                                 const lng = parseFloat(e.target.value);
-                                                setFormData({ ...formData, coordinates: { lat: formData.coordinates?.lat ?? 0, lng: isNaN(lng) ? 0 : lng } });
+                                                if (e.target.value === '' || isNaN(lng)) {
+                                                    const lat = formData.coordinates?.lat;
+                                                    setFormData({ ...formData, coordinates: lat ? { lat, lng: 0 } : undefined });
+                                                } else {
+                                                    setFormData({ ...formData, coordinates: { lat: formData.coordinates?.lat ?? 0, lng } });
+                                                }
                                             }}
                                             className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2.5 text-sm font-mono focus:border-indigo-500 outline-none"
                                             placeholder="106.700900"
@@ -678,7 +688,7 @@ export const ListingForm: React.FC<ListingFormProps> = memo(({ isOpen, onClose, 
                                         <div className="relative">
                                             <input 
                                                 type="number" 
-                                                value={formData.area ?? ''} 
+                                                value={formData.area || ''} 
                                                 onChange={e => setFormData({...formData, area: Number(e.target.value)})} 
                                                 className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:border-indigo-500 outline-none pr-8 ${errors.area ? 'border-rose-300 bg-rose-50' : 'border-[var(--glass-border)]'}`} 
                                             />
