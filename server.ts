@@ -45,6 +45,7 @@ import { createTaskRoutes } from "./server/routes/taskRoutes";
 import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
+import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
 import { priceCalibrationService } from "./server/services/priceCalibrationService";
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
@@ -1603,6 +1604,9 @@ async function startServer() {
   // Advanced valuation: multi-source, 7-coefficient AVM + market cache
   app.use('/api/valuation', apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit, optionalAuth, guestValuationRateLimit, userValuationRateLimit));
   app.use('/api/connectors', apiRateLimit, createConnectorRoutes(authenticateToken));
+  // Error monitoring: frontend reports + admin query (POST is rate-limited, no auth required)
+  initErrorLogRepo(pool);
+  app.use('/api/error-logs', apiRateLimit, createErrorLogRoutes(authenticateToken, pool));
   // B2B2C: project management + partner access control
   app.use('/api/projects', apiRateLimit, createProjectRoutes(authenticateToken));
   app.use('/api/tenant', apiRateLimit, createTenantRoutes(authenticateToken));

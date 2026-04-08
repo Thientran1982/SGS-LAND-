@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from './logger';
+import { logBackendError } from '../routes/errorLogRoutes';
 
 export class AppError extends Error {
   statusCode: number;
@@ -50,6 +51,21 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
   }
 
   logger.error(`[${req.method}] ${req.path} - Unhandled error:`, err);
+
+  // Persist unhandled backend errors to error_logs table
+  const user = (req as any).user;
+  logBackendError({
+    tenantId: user?.tenantId,
+    message: err.message || 'Unknown backend error',
+    stack: err.stack,
+    path: `${req.method} ${req.path}`,
+    severity: 'critical',
+    metadata: {
+      method: req.method,
+      query: req.query,
+      statusCode: 500,
+    },
+  });
 
   const isDev = process.env.NODE_ENV !== 'production';
   res.status(500).json({

@@ -48,6 +48,7 @@ export const ROUTES = {
     SECURITY: 'security',
     AI_GOVERNANCE: 'ai-governance',
     SEO_MANAGER: 'seo-manager',
+    ERROR_MONITOR: 'error-monitor',
     PROFILE: 'profile',
     MOBILE_APP: 'mobile-app',
     RESET_PASSWORD: 'reset-password',

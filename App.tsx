@@ -14,6 +14,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { usePageTracker } from './services/pageTracker';
 import { socket } from './services/websocket';
 import { copyToClipboard } from './utils/clipboard';
+import { initErrorMonitor, captureException } from './utils/errorMonitor';
+
+// Khởi tạo ngay khi module load — bắt lỗi toàn cục từ sớm nhất có thể
+initErrorMonitor();
 
 // -----------------------------------------------------------------------------
 // 1. LAZY LOADED PAGES
@@ -88,6 +92,7 @@ const DataPlatform = lazyLoad(() => import('./pages/DataPlatform'), 'DataPlatfor
 const SecurityCompliance = lazyLoad(() => import('./pages/SecurityCompliance'), 'SecurityCompliance');
 const AiGovernance = lazyLoad(() => import('./pages/AiGovernance'), 'AiGovernance');
 const SeoManager = lazyLoad(() => import('./pages/SeoManager'), 'SeoManager');
+const ErrorMonitor = lazyLoad(() => import('./pages/ErrorMonitor'), 'ErrorMonitor');
 const Profile = lazyLoad(() => import('./pages/Profile'), 'Profile');
 
 // ---------------------------------------------------------------------------
@@ -115,6 +120,7 @@ registerPrefetch(ROUTES.DATA_PLATFORM,       () => import('./pages/DataPlatform'
 registerPrefetch(ROUTES.SECURITY,           () => import('./pages/SecurityCompliance'));
 registerPrefetch(ROUTES.AI_GOVERNANCE,       () => import('./pages/AiGovernance'));
 registerPrefetch(ROUTES.SEO_MANAGER,         () => import('./pages/SeoManager'));
+registerPrefetch(ROUTES.ERROR_MONITOR,       () => import('./pages/ErrorMonitor'));
 registerPrefetch(ROUTES.PROFILE,            () => import('./pages/Profile'));
 registerPrefetch(ROUTES.TASK_DASHBOARD,     () => import('./pages/TaskDashboard'));
 registerPrefetch(ROUTES.TASK_KANBAN,        () => import('./pages/TaskKanban'));
@@ -194,6 +200,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.SECURITY]: SecurityCompliance,
     [ROUTES.AI_GOVERNANCE]: AiGovernance,
     [ROUTES.SEO_MANAGER]: SeoManager,
+    [ROUTES.ERROR_MONITOR]: ErrorMonitor,
     [ROUTES.PROFILE]: Profile,
     // Task Management
     [ROUTES.TASK_DASHBOARD]: TaskDashboard,
@@ -263,6 +270,11 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
                 window.location.reload();
             }
         }
+        // Report to error monitoring (non-blocking)
+        captureException(error, {
+            component: errorInfo.componentStack?.trim().split('\n')[1]?.trim() ?? 'Unknown',
+            metadata: { componentStack: errorInfo.componentStack?.slice(0, 1000) },
+        });
     }
 
     render() {
@@ -403,6 +415,7 @@ const ADMIN_ONLY_ROUTES: Set<string> = new Set([
     ROUTES.SECURITY,
     ROUTES.AI_GOVERNANCE,
     ROUTES.SEO_MANAGER,
+    ROUTES.ERROR_MONITOR,
 ]);
 
 const ADMIN_ROLES = new Set(['ADMIN', 'TEAM_LEAD']);

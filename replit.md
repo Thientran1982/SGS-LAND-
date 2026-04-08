@@ -240,7 +240,7 @@ Accepts address if ANY of:
 - **Client validation**: 10MB file size limit, MIME type filtering on all upload forms
 - **Used by**: ListingForm (property images, max 10, drag-to-reorder), KnowledgeBase (document upload with text extraction), Profile (avatar upload)
 
-### Database Tables (34 total)
+### Database Tables (35 total)
 **Core CRM**: users, leads, listings, proposals, contracts, interactions, tasks, favorites
 **Organization**: tenants, teams, team_members
 **Automation**: sequences, routing_rules, templates
@@ -253,6 +253,14 @@ Accepts address if ANY of:
 **Task Management (migration 020)**: departments, wf_tasks, task_assignments, task_comments, task_activity_logs, task_reminders
 **Market/Valuation (migration 046)**: market_price_history
 **Agent Self-Learning (migration 047)**: agent_observations, agent_system_change_log
+**Error Monitoring (migration 054)**: error_logs
+
+### Error Monitoring (`/error-monitor` — Admin only)
+- **Frontend capture** (`utils/errorMonitor.ts`): `window.onerror`, `unhandledrejection`, React `ErrorBoundary.componentDidCatch` all report to `POST /api/error-logs`
+- **Backend capture** (`server/middleware/errorHandler.ts`): All unhandled Express errors auto-persisted to `error_logs` with severity=critical
+- **Deduplication**: 30-second dedup window per message+path, max 20 queued before flush, 2s debounce
+- **API** (`server/routes/errorLogRoutes.ts`): `GET /api/error-logs` (paginated, filterable), `GET /api/error-logs/stats` (KPIs + 30-day trend), `PATCH /:id/resolve`, `POST /resolve-all`, `DELETE /resolved`
+- **Dashboard** (`pages/ErrorMonitor.tsx`): Stats cards, 30-day sparkline chart, filterable list by type/severity/resolved state, stack trace expandable, one-click resolve
 
 ## Security
 

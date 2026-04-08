@@ -28,6 +28,7 @@ export const PAGE_LABELS: Record<string, string> = {
   [ROUTES.SECURITY]: 'Bảo Mật & Tuân Thủ',
   [ROUTES.AI_GOVERNANCE]: 'Quản Trị AI',
   [ROUTES.SEO_MANAGER]: 'Quản Lý SEO',
+  [ROUTES.ERROR_MONITOR]: 'Giám Sát Lỗi',
   [ROUTES.PROFILE]: 'Hồ Sơ Cá Nhân',
   [ROUTES.MOBILE_APP]: 'Ứng Dụng Di Động',
 };
