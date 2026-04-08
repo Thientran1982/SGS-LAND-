@@ -100,8 +100,11 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
 
     // ── Loan State ──
     const [ratio, setRatio] = useState(70);
-    const [term, setTerm] = useState(20);
-    const [rate, setRate] = useState(8.5);
+    // String states: cho phép ô trống (tránh nhảy về 0/1 khi xoá hết)
+    const [termStr, setTermStr] = useState('20');
+    const [rateStr, setRateStr] = useState('8.5');
+    const term = Math.max(1, Number(termStr) || 1);
+    const rate = Math.max(0, Number(rateStr) || 0);
 
     // ── Rent/Investment State ──
     // 0.4%/tháng = ~4.8%/năm — mức cho thuê trung bình thị trường Việt Nam
@@ -114,7 +117,8 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
     const [occupancy, setOccupancy] = useState(90);
     // Tăng trưởng BĐS trung bình Việt Nam: 7%/năm (CBRE, Savills 2019-2024)
     const [appreciation, setAppreciation] = useState(7);
-    const [holdingYears, setHoldingYears] = useState(10);
+    const [holdingYearsStr, setHoldingYearsStr] = useState('10');
+    const holdingYears = Math.max(1, Math.min(50, Number(holdingYearsStr) || 1));
 
     // ── Loan Calculations ──
     const loanAmount = price * (ratio / 100);
@@ -183,11 +187,28 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.term_years')}</label>
-                                    <input type="number" min="1" max="50" value={term} onChange={e => setTerm(Math.max(1, Number(e.target.value)))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500" />
+                                    <input
+                                        type="text" inputMode="numeric" pattern="[0-9]*"
+                                        value={termStr}
+                                        placeholder="20"
+                                        onChange={e => setTermStr(e.target.value.replace(/[^0-9]/g, ''))}
+                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500"
+                                    />
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.interest_rate')}</label>
-                                    <input type="number" min="0" max="50" step="0.1" value={rate} onChange={e => setRate(Math.max(0, Number(e.target.value)))} className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500" />
+                                    <input
+                                        type="text" inputMode="decimal" pattern="[0-9.]*"
+                                        value={rateStr}
+                                        placeholder="8.5"
+                                        onChange={e => {
+                                            const v = e.target.value.replace(/[^0-9.]/g, '');
+                                            // chỉ cho 1 dấu chấm
+                                            const parts = v.split('.');
+                                            setRateStr(parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : v);
+                                        }}
+                                        className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-indigo-500"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -248,9 +269,10 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                             <div>
                                 <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.holding_years')}</label>
                                 <input
-                                    type="number" min="1" max="50"
-                                    value={holdingYears}
-                                    onChange={e => setHoldingYears(Math.max(1, Math.min(50, Number(e.target.value))))}
+                                    type="text" inputMode="numeric" pattern="[0-9]*"
+                                    value={holdingYearsStr}
+                                    placeholder="10"
+                                    onChange={e => setHoldingYearsStr(e.target.value.replace(/[^0-9]/g, ''))}
                                     className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-violet-500"
                                 />
                             </div>
