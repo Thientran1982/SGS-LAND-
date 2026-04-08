@@ -696,6 +696,8 @@ export class AnalyticsRepository extends BaseRepository {
           'Khách vãng lai': 'Direct', 'khách vãng lai': 'Direct',
           // Event variants
           'event': 'Event', 'EVENT': 'Event', 'Sự kiện': 'Event', 'sự kiện': 'Event',
+          // QR code widget (source=QR appended by LiveChat widget)
+          'QR': 'QR Code', 'qr': 'QR Code', 'QR_CODE': 'QR Code', 'qr_code': 'QR Code',
           // Other / Unknown catch-all
           'other': 'Other', 'OTHER': 'Other',
           'unknown': 'Other', 'UNKNOWN': 'Other', 'Khác': 'Other',
