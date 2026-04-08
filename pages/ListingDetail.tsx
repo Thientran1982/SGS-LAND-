@@ -105,7 +105,12 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
 
     // ── Rent/Investment State ──
     // 0.4%/tháng = ~4.8%/năm — mức cho thuê trung bình thị trường Việt Nam
-    const [monthlyRent, setMonthlyRent] = useState(() => Math.round((price * 0.004) / 100000) * 100000);
+    // Dùng string để cho phép input trống (tránh hiện số 0 khi xoá hết)
+    const [monthlyRentStr, setMonthlyRentStr] = useState<string>(() => {
+        const def = Math.round((price * 0.004) / 100000) * 100000;
+        return def > 0 ? String(def) : '';
+    });
+    const monthlyRent = Math.max(0, Number(monthlyRentStr) || 0);
     const [occupancy, setOccupancy] = useState(90);
     // Tăng trưởng BĐS trung bình Việt Nam: 7%/năm (CBRE, Savills 2019-2024)
     const [appreciation, setAppreciation] = useState(7);
@@ -208,9 +213,15 @@ const FinancialSuite = memo(({ price, formatCurrency, t }: { price: number, form
                             <div>
                                 <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase block mb-1">{t('calc.expected_rent')}</label>
                                 <input
-                                    type="number" min="0"
-                                    value={monthlyRent}
-                                    onChange={e => setMonthlyRent(Math.max(0, Number(e.target.value)))}
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={monthlyRentStr}
+                                    placeholder="Nhập giá thuê..."
+                                    onChange={e => {
+                                        const v = e.target.value.replace(/[^0-9]/g, '');
+                                        setMonthlyRentStr(v);
+                                    }}
                                     className="w-full border border-[var(--glass-border)] rounded-xl px-3 py-2 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-emerald-500"
                                 />
                                 <div className="text-xs2 text-[var(--text-secondary)] mt-1 text-right">{formatCurrency(monthlyRent)}{t('calc.per_month')}</div>
