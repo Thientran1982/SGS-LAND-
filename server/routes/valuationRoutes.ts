@@ -606,6 +606,178 @@ export function createValuationRoutes(
   });
 
   // ──────────────────────────────────────────────────────────────────────────
+  // GET /api/valuation/teaser  (PUBLIC — no auth required)
+  // Returns a rough price-range estimate using market_price_history only.
+  // Zero AI token consumption. Used for guest-facing pre-registration UI.
+  //
+  // Query params:
+  //   location  (string, required) — address / district / city
+  //   area      (number, required) — property area in m²
+  //   type      (string, optional) — PropertyType enum value
+  //   listing_id (number, optional) — if provided, auto-resolves location+area
+  // ──────────────────────────────────────────────────────────────────────────
+  router.get('/teaser', async (req: Request, res: Response) => {
+    const rawLocation = (req.query.location as string | undefined)?.trim();
+    const rawArea     = req.query.area as string | undefined;
+    const propertyType = (req.query.type as string | undefined) || 'townhouse_center';
+    const listingIdParam = req.query.listing_id as string | undefined;
+
+    let location = rawLocation;
+    let area     = rawArea ? parseFloat(rawArea) : NaN;
+
+    // Auto-resolve from listing when listing_id is provided
+    if (listingIdParam) {
+      const listingId = parseInt(listingIdParam, 10);
+      if (!isNaN(listingId)) {
+        try {
+          const lRow = await pool.query(
+            `SELECT address, area, property_type FROM listings WHERE id = $1 LIMIT 1`,
+            [listingId]
+          );
+          if (lRow.rows.length > 0) {
+            const l = lRow.rows[0];
+            if (!location && l.address) location = l.address;
+            if (isNaN(area) && l.area)   area     = parseFloat(l.area);
+            if (propertyType === 'townhouse_center' && l.property_type) {
+              // don't override user-supplied type
+            }
+          }
+        } catch { /* ignore, proceed with query params */ }
+      }
+    }
+
+    if (!location || isNaN(area) || area <= 0) {
+      return res.status(400).json({ error: 'location and area are required' });
+    }
+
+    try {
+      const normalKey = normalizeAddrKey(location);
+
+      // ── 1. Look up market_price_history (regional_table rows preferred) ──
+      const histResult = await pool.query<{
+        location_display: string;
+        price_per_m2: string;
+        price_min: string | null;
+        price_max: string | null;
+        confidence: number;
+        trend_text: string | null;
+        source: string;
+        recorded_at: string;
+        similarity: number;
+      }>(
+        `SELECT
+           location_display,
+           price_per_m2,
+           price_min,
+           price_max,
+           confidence,
+           trend_text,
+           source,
+           recorded_at,
+           -- simple contains-score: 1 if exact, 0.5 if partial
+           CASE
+             WHEN location_key = $1 THEN 1.0
+             WHEN location_key LIKE '%' || SPLIT_PART($1, ' ', 1) || '%' THEN 0.6
+             WHEN $1 LIKE '%' || SPLIT_PART(location_key, ' ', 1) || '%' THEN 0.5
+             ELSE 0.0
+           END AS similarity
+         FROM market_price_history
+         WHERE
+           location_key = $1
+           OR (
+             length($1) >= 6
+             AND (
+               location_key LIKE '%' || SPLIT_PART($1, ' ', array_length(string_to_array($1,' '),1)) || '%'
+               OR $1 LIKE '%' || SPLIT_PART(location_key, ' ', array_length(string_to_array(location_key,' '),1)) || '%'
+             )
+           )
+         ORDER BY similarity DESC, recorded_at DESC
+         LIMIT 5`,
+        [normalKey]
+      );
+
+      let pricePerM2: number;
+      let priceMin: number;
+      let priceMax: number;
+      let locationDisplay: string;
+      let confidence: number;
+      let trendText: string;
+      let dataSource: string;
+      let dataAge: string;
+      let foundMatch = false;
+
+      if (histResult.rows.length > 0) {
+        const row = histResult.rows[0];
+        pricePerM2     = parseInt(row.price_per_m2, 10);
+        priceMin       = row.price_min ? parseInt(row.price_min, 10) : Math.round(pricePerM2 * 0.85);
+        priceMax       = row.price_max ? parseInt(row.price_max, 10) : Math.round(pricePerM2 * 1.15);
+        locationDisplay = row.location_display;
+        confidence      = row.confidence ?? 65;
+        trendText       = row.trend_text ?? 'Ổn định';
+        dataSource      = row.source === 'regional_table' ? 'Dữ liệu thị trường Q1/2025' : 'Dữ liệu thị trường';
+        const recordedAt = new Date(row.recorded_at);
+        const ageMs      = Date.now() - recordedAt.getTime();
+        const ageDays    = Math.floor(ageMs / 86_400_000);
+        dataAge          = ageDays < 7 ? 'Vừa cập nhật' : ageDays < 30 ? `${ageDays} ngày trước` : 'Hơn 1 tháng trước';
+        foundMatch       = true;
+      } else {
+        // ── 2. Fallback to getRegionalBasePrice() from valuationEngine ────
+        const fallbackResult = getRegionalBasePrice(location);
+        pricePerM2     = fallbackResult.price;
+        priceMin       = Math.round(fallbackResult.price * 0.80);
+        priceMax       = Math.round(fallbackResult.price * 1.25);
+        locationDisplay = location;
+        confidence      = fallbackResult.confidence;
+        trendText       = 'Ổn định';
+        dataSource      = 'Bảng giá tham chiếu';
+        dataAge         = 'Dữ liệu tham chiếu';
+      }
+
+      // Apply property-type multiplier (same logic as advanced endpoint)
+      const typeMult = PROPERTY_TYPE_PRICE_MULT[propertyType as PropertyType] ?? 1.0;
+      if (typeMult !== 1.0 && propertyType !== 'townhouse_center' && propertyType !== 'townhouse_suburb') {
+        pricePerM2 = Math.round(pricePerM2 * typeMult);
+        priceMin   = Math.round(priceMin   * typeMult);
+        priceMax   = Math.round(priceMax   * typeMult);
+      }
+
+      // Compute total value range
+      const totalMin = Math.round(priceMin * area);
+      const totalMid = Math.round(pricePerM2 * area);
+      const totalMax = Math.round(priceMax * area);
+
+      const formatBillion = (v: number) => {
+        if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(2)} tỷ`;
+        if (v >= 1_000_000)     return `${(v / 1_000_000).toFixed(0)} triệu`;
+        return `${v.toLocaleString('vi-VN')} ₫`;
+      };
+
+      res.json({
+        found:          foundMatch,
+        locationDisplay,
+        pricePerM2,
+        priceMin,
+        priceMax,
+        pricePerM2Display: `${(pricePerM2 / 1_000_000).toFixed(0)} triệu/m²`,
+        totalMin,
+        totalMid,
+        totalMax,
+        totalMinDisplay: formatBillion(totalMin),
+        totalMidDisplay: formatBillion(totalMid),
+        totalMaxDisplay: formatBillion(totalMax),
+        area,
+        confidence,
+        trendText,
+        dataSource,
+        dataAge,
+      });
+    } catch (err: any) {
+      logger.error('[Valuation] Teaser error:', err);
+      res.status(500).json({ error: 'Failed to compute teaser estimate' });
+    }
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
   // GET /api/valuation/cache-status (admin only)
   // ──────────────────────────────────────────────────────────────────────────
   router.get('/cache-status', authenticateToken, async (req: Request, res: Response) => {
