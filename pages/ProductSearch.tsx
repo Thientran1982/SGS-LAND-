@@ -459,6 +459,25 @@ export const ProductSearch: React.FC = () => {
                 </div>
             </div>
 
+            {/* LOCATION QUICK-LINKS — SEO internal linking */}
+            <div className="shrink-0 bg-[var(--bg-surface)]/80 border-b border-[var(--glass-border)] px-4 md:px-6 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                <span className="text-[var(--text-tertiary)] text-xs shrink-0 font-medium hidden sm:inline">{t('search.all_locations')}:</span>
+                {[
+                    { label: 'BĐS Đồng Nai', href: `/${ROUTES.BDS_DONG_NAI}` },
+                    { label: 'BĐS Long Thành', href: `/${ROUTES.BDS_LONG_THANH}` },
+                    { label: 'Aqua City', href: `/${ROUTES.DU_AN}/aqua-city` },
+                    { label: 'Manhattan Quận 9', href: `/${ROUTES.DU_AN}/manhattan` },
+                ].map(({ label, href }) => (
+                    <a
+                        key={href}
+                        href={href}
+                        className="shrink-0 text-xs font-medium px-3 py-1 rounded-full border border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all bg-[var(--glass-surface)] whitespace-nowrap"
+                    >
+                        {label}
+                    </a>
+                ))}
+            </div>
+
             {/* FETCH ERROR */}
             {fetchError && (
                 <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
