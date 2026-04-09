@@ -582,7 +582,7 @@ export const Landing: React.FC = () => {
 
             {/* FOOTER */}
             <footer className="bg-[var(--bg-surface)] dark:bg-slate-900 text-sm py-16 md:py-20 px-6 border-t border-[var(--glass-border)] dark:border-slate-800 pb-safe-footer">
-                <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 md:gap-12">
+                <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-8 md:gap-12">
                     <div className="col-span-2">
                         <div className="flex items-center gap-2 mb-4 md:mb-6">
                             <Logo className="w-5 h-5 md:w-6 md:h-6 text-[var(--text-primary)] dark:text-white" />
@@ -600,6 +600,16 @@ export const Landing: React.FC = () => {
                             <FooterLink label={t('footer.link_valuation')} route={ROUTES.AI_VALUATION} />
                             <FooterLink label={t('footer.link_crm')} route={ROUTES.CRM_SOLUTION} />
                             <FooterLink label={t('footer.link_consignment')} route={ROUTES.KY_GUI} />
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="font-bold text-[var(--text-primary)] dark:text-white mb-4 md:mb-6 uppercase tracking-wider text-xs2 md:text-xs">{t('footer.col_locations')}</h4>
+                        <ul className="space-y-3 md:space-y-4 font-medium text-xs md:text-sm">
+                            <li><a href={`/${ROUTES.BDS_DONG_NAI}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_dong_nai')}</a></li>
+                            <li><a href={`/${ROUTES.BDS_LONG_THANH}`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_long_thanh')}</a></li>
+                            <li><a href={`/${ROUTES.DU_AN}/aqua-city`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_aqua_city')}</a></li>
+                            <li><a href={`/${ROUTES.DU_AN}/manhattan`} className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_manhattan')}</a></li>
                         </ul>
                     </div>
 
