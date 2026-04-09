@@ -2390,6 +2390,22 @@ async function startServer() {
       } catch { next(); }
     });
 
+    // ─── SEO Local & Project Landing Pages ──────────────────────────────────
+    // These routes serve full SSR meta for Googlebot; the SPA renders the page.
+    const LOCAL_LANDING_ROUTES = [
+      '/bat-dong-san-dong-nai',
+      '/bat-dong-san-long-thanh',
+    ] as const;
+    for (const route of LOCAL_LANDING_ROUTES) {
+      app.get(route, (_req: express.Request, res: express.Response) => {
+        sendMeta(res, buildStaticPageMeta(null, null, null, route));
+      });
+    }
+    app.get('/du-an/:projectSlug', (req: express.Request, res: express.Response) => {
+      const pagePath = `/du-an/${req.params.projectSlug}`;
+      sendMeta(res, buildStaticPageMeta(null, null, null, pagePath));
+    });
+
     // All other SPA routes → inject admin-saved override or fallback to defaults
     // Long-lived cache for hashed assets (JS/CSS chunks have content hash in filename)
     app.use(express.static("dist", {

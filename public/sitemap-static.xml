@@ -147,6 +147,40 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/status" />
   </url>
 
+  <!-- ══ LANDING PAGES ĐỊA PHƯƠNG & DỰ ÁN ══ -->
+  <url>
+    <loc>https://sgsland.vn/bat-dong-san-dong-nai</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.88</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-dong-nai" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-dong-nai" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/bat-dong-san-long-thanh</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.87</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-long-thanh" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-long-thanh" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/aqua-city</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/aqua-city" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/aqua-city" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/manhattan</loc>
+    <lastmod>2026-04-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.83</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/manhattan" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/manhattan" />
+  </url>
+
   <!-- ══ CHÍNH SÁCH PHÁP LÝ ══ -->
   <url>
     <loc>https://sgsland.vn/privacy-policy</loc>

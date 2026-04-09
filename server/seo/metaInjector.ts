@@ -23,7 +23,7 @@ const DEFAULT_META = {
 };
 
 /** Server-side route → meta mapping (mirrors utils/seo.ts ROUTE_SEO without browser APIs). */
-const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?: string; noIndex?: boolean }> = {
+const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?: string; noIndex?: boolean; structuredData?: object }> = {
   '':                      { title: DEFAULT_META.title, description: DEFAULT_META.description, h1: 'SGS LAND - Nền Tảng Quản Lý Bất Động Sản AI' },
   home:                    { title: DEFAULT_META.title, description: DEFAULT_META.description, h1: 'SGS LAND - Nền Tảng Quản Lý Bất Động Sản AI' },
   marketplace:             { title: 'Mua Bán Bất Động Sản | Nhà Đất Toàn Quốc - SGS LAND', description: 'Mua bán bất động sản toàn quốc — tìm kiếm nhà đất, căn hộ, biệt thự theo vị trí, diện tích và mức giá. Kho hàng nghìn bất động sản cập nhật realtime.', h1: 'Mua Bán Bất Động Sản | Nhà Đất Toàn Quốc' },
@@ -41,6 +41,147 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   'ky-gui-bat-dong-san':   { title: 'Ký Gửi Bất Động Sản | Bán Nhanh, Giá Tốt - SGS LAND', description: 'Ký gửi bất động sản tại SGS LAND — đội ngũ chuyên gia định giá miễn phí, tiếp cận hàng nghìn khách hàng tiềm năng và hỗ trợ pháp lý toàn diện.', h1: 'Ký Gửi Bất Động Sản' },
   livechat:                { title: 'Chat Trực Tiếp | Hỗ Trợ Khách Hàng 24/7 - SGS LAND', description: 'Kết nối trực tiếp với đội ngũ tư vấn SGS LAND qua Live Chat. Được hỗ trợ 24/7 về bất động sản, định giá AI và các dịch vụ.', h1: 'Chat Trực Tiếp Với Chuyên Gia' },
   login:                   { title: 'Đăng Nhập | SGS LAND Enterprise', description: 'Đăng nhập vào nền tảng quản lý bất động sản SGS LAND.', noIndex: true },
+
+  // ─── SEO Local & Project Landing Pages ─────────────────────────────────────
+  'bat-dong-san-dong-nai': {
+    title: 'Bất Động Sản Đồng Nai | Nhà Đất, Căn Hộ, Dự Án - SGS LAND',
+    description: 'Tìm mua bán bất động sản Đồng Nai: nhà đất Long Thành, Nhơn Trạch, Biên Hòa. Cập nhật giá thị trường, dự án mới và pháp lý rõ ràng tại SGS LAND.',
+    h1: 'Bất Động Sản Đồng Nai',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'Bất Động Sản Đồng Nai', item: `${APP_URL}/bat-dong-san-dong-nai` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Bất động sản Đồng Nai có nên đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Đồng Nai là một trong những thị trường BĐS tiềm năng nhất miền Nam nhờ ba động lực chính: sân bay Long Thành (hoàn thành 2026), các tuyến cao tốc kết nối TP.HCM và làn sóng di dời khu công nghiệp. Giá đất nhiều khu vực tăng 15-25%/năm.' } },
+            { '@type': 'Question', name: 'Giá đất Đồng Nai hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá đất Đồng Nai dao động lớn theo vị trí: đất nền Long Thành 8-25 triệu/m², đất nền Nhơn Trạch 5-15 triệu/m², căn hộ Biên Hòa 35-80 triệu/m², biệt thự dự án 15-50 triệu/m².' } },
+            { '@type': 'Question', name: 'Sân bay Long Thành ảnh hưởng thế nào đến giá BĐS?', acceptedAnswer: { '@type': 'Answer', text: 'Sân bay quốc tế Long Thành có công suất 25 triệu hành khách/giai đoạn 1. BĐS trong bán kính 15km từ sân bay có mức tăng giá trung bình 20-35% kể từ khi khởi công.' } },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/bat-dong-san-dong-nai#agent`,
+          name: 'SGS LAND - Bất Động Sản Đồng Nai',
+          url: `${APP_URL}/bat-dong-san-dong-nai`,
+          areaServed: { '@type': 'State', name: 'Đồng Nai', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+          knowsAbout: ['Bất động sản Đồng Nai', 'Đất nền Long Thành', 'Nhơn Trạch', 'Biên Hòa', 'Sân bay Long Thành'],
+        },
+      ],
+    },
+  },
+  'bat-dong-san-long-thanh': {
+    title: 'Bất Động Sản Long Thành | Đất Nền Sân Bay, Căn Hộ - SGS LAND',
+    description: 'Mua bán bất động sản Long Thành, Đồng Nai: đất nền khu vực sân bay Long Thành, dự án căn hộ và liền kề. Cơ hội đầu tư tiềm năng tại SGS LAND.',
+    h1: 'Bất Động Sản Long Thành',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'BĐS Đồng Nai', item: `${APP_URL}/bat-dong-san-dong-nai` },
+            { '@type': 'ListItem', position: 3, name: 'Bất Động Sản Long Thành', item: `${APP_URL}/bat-dong-san-long-thanh` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Có nên mua đất Long Thành năm 2025-2026 không?', acceptedAnswer: { '@type': 'Answer', text: 'Long Thành là một trong các thị trường BĐS được khuyến nghị đầu tư mạnh. Với sân bay Long Thành hoàn thành giai đoạn 1 năm 2026, giá BĐS được dự báo tiếp tục tăng 15-25%/năm.' } },
+            { '@type': 'Question', name: 'Giá đất nền Long Thành hiện nay khoảng bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Đất nền thổ cư mặt tiền đường lớn: 20-35 triệu/m². Đất phân lô dự án sổ sẵn: 10-25 triệu/m². Đất vườn nông nghiệp có thể chuyển đổi: 3-8 triệu/m².' } },
+            { '@type': 'Question', name: 'Sân bay Long Thành khai thác vào năm nào?', acceptedAnswer: { '@type': 'Answer', text: 'Sân bay Long Thành giai đoạn 1 dự kiến hoàn thành vào cuối năm 2026, khai thác thương mại đầu năm 2027 với công suất 25 triệu hành khách/năm.' } },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/bat-dong-san-long-thanh#agent`,
+          name: 'SGS LAND - Bất Động Sản Long Thành',
+          url: `${APP_URL}/bat-dong-san-long-thanh`,
+          areaServed: { '@type': 'City', name: 'Long Thành', containedInPlace: { '@type': 'State', name: 'Đồng Nai', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
+          knowsAbout: ['Bất động sản Long Thành', 'Đất nền sân bay Long Thành', 'Đầu tư BĐS Đồng Nai'],
+        },
+      ],
+    },
+  },
+  'du-an/aqua-city': {
+    title: 'Aqua City Novaland | Căn Hộ, Biệt Thự Đồng Nai - SGS LAND',
+    description: 'Aqua City Novaland Đồng Nai: tổng quan dự án, vị trí, tiện ích đẳng cấp, bảng giá và pháp lý cập nhật. Tư vấn và đặt chỗ miễn phí tại SGS LAND.',
+    h1: 'Aqua City Novaland',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Dự Án BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'Aqua City Novaland', item: `${APP_URL}/du-an/aqua-city` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Aqua City Novaland có đáng mua không?', acceptedAnswer: { '@type': 'Answer', text: 'Aqua City là đại đô thị sinh thái 1.000ha với hơn 100.000m² mặt nước, tiện ích 5 sao. Đây là lựa chọn phù hợp cho người mua ở thực và đầu tư dài hạn, đặc biệt hưởng lợi từ cầu Nhơn Trạch và sân bay Long Thành.' } },
+            { '@type': 'Question', name: 'Giá căn hộ Aqua City hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá tham khảo: căn hộ 1-2 phòng ngủ từ 3-5 tỷ; nhà phố liền kề từ 6-12 tỷ; biệt thự đơn lập từ 15-50 tỷ. Liên hệ SGS LAND để nhận bảng giá cập nhật nhất.' } },
+            { '@type': 'Question', name: 'Aqua City cách TP.HCM bao xa?', acceptedAnswer: { '@type': 'Answer', text: 'Aqua City tại Nhơn Trạch, cách trung tâm TP.HCM 35-40km. Khi cầu Nhơn Trạch hoàn thành, thời gian di chuyển đến quận 2 chỉ còn 20-25 phút.' } },
+          ],
+        },
+        {
+          '@type': 'ApartmentComplex',
+          '@id': `${APP_URL}/du-an/aqua-city#project`,
+          name: 'Aqua City Novaland',
+          description: 'Đại đô thị sinh thái 1.000ha do Novaland phát triển tại Nhơn Trạch, Đồng Nai',
+          url: `${APP_URL}/du-an/aqua-city`,
+          numberOfRooms: '1-4',
+          address: { '@type': 'PostalAddress', addressLocality: 'Nhơn Trạch', addressRegion: 'Đồng Nai', addressCountry: 'VN' },
+          floorSize: { '@type': 'QuantitativeValue', value: 1000, unitText: 'ha' },
+        },
+      ],
+    },
+  },
+  'du-an/manhattan': {
+    title: 'Dự Án Manhattan | Căn Hộ Cao Cấp Bình Dương - SGS LAND',
+    description: 'Dự án Manhattan Bình Dương: vị trí đắc địa, thiết kế hiện đại, giá từ 35 triệu/m². Xem bảng giá, tiến độ xây dựng và chính sách ưu đãi tại SGS LAND.',
+    h1: 'Dự Án Manhattan',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Dự Án BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'Dự Án Manhattan', item: `${APP_URL}/du-an/manhattan` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Dự án Manhattan Bình Dương có ưu điểm gì nổi bật?', acceptedAnswer: { '@type': 'Answer', text: 'Manhattan Bình Dương nổi bật với vị trí trung tâm Bình Dương, thiết kế chuẩn quốc tế phù hợp chuyên gia nước ngoài và giá cạnh tranh hơn căn hộ cao cấp TP.HCM cùng phân khúc.' } },
+            { '@type': 'Question', name: 'Giá căn hộ Manhattan Bình Dương từ bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Giá tham khảo từ 35 triệu/m², căn hộ 1 phòng ngủ từ 2-3 tỷ, 2 phòng ngủ từ 3-5 tỷ, 3 phòng ngủ từ 5-8 tỷ. Hỗ trợ vay ngân hàng tối đa 70% giá trị.' } },
+            { '@type': 'Question', name: 'Có thể cho thuê căn hộ Manhattan không?', acceptedAnswer: { '@type': 'Answer', text: 'Bình Dương có nhu cầu thuê nhà ở cao nhất cả nước. Căn hộ Manhattan phù hợp cho thuê với giá 10-25 triệu/tháng, tỷ suất lợi nhuận cho thuê ước tính 5-7%/năm.' } },
+          ],
+        },
+        {
+          '@type': 'ApartmentComplex',
+          '@id': `${APP_URL}/du-an/manhattan#project`,
+          name: 'Dự Án Manhattan Bình Dương',
+          description: 'Tổ hợp căn hộ cao cấp chuẩn quốc tế tại trung tâm tỉnh lỵ Bình Dương',
+          url: `${APP_URL}/du-an/manhattan`,
+          address: { '@type': 'PostalAddress', addressLocality: 'Bình Dương', addressCountry: 'VN' },
+          offers: { '@type': 'Offer', price: '35000000', priceCurrency: 'VND', unitText: 'm²' },
+        },
+      ],
+    },
+  },
 };
 
 export interface MetaData {
@@ -151,9 +292,10 @@ export function buildStaticPageMeta(
   ogImage: string | null | undefined,
   pagePath: string
 ): MetaData {
-  // Derive route key from path (e.g. "/about-us" → "about-us", "/" → "")
-  const routeKey = pagePath.replace(/^\//, '').split('/')[0] || '';
-  const routeMeta = STATIC_PAGE_META[routeKey] ?? STATIC_PAGE_META[''];
+  // Full path lookup first (e.g. "du-an/aqua-city"), then first segment, then default
+  const fullKey = pagePath.replace(/^\//, '') || '';
+  const shortKey = fullKey.split('/')[0] || '';
+  const routeMeta = STATIC_PAGE_META[fullKey] ?? STATIC_PAGE_META[shortKey] ?? STATIC_PAGE_META[''];
   return {
     title: overrideTitle || routeMeta.title,
     description: overrideDesc || routeMeta.description,
@@ -162,6 +304,7 @@ export function buildStaticPageMeta(
     url: `${APP_URL}${pagePath}`,
     type: 'website',
     noIndex: routeMeta.noIndex,
+    structuredData: routeMeta.structuredData,
   };
 }
 

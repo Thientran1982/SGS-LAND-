@@ -19,7 +19,12 @@ export const ROUTES = {
     STATUS_PUBLIC: 'status',
     LIVE_CHAT: 'livechat',
     KY_GUI: 'ky-gui-bat-dong-san',
-    
+
+    // SEO Landing Pages — Local & Project
+    BDS_DONG_NAI: 'bat-dong-san-dong-nai',
+    BDS_LONG_THANH: 'bat-dong-san-long-thanh',
+    DU_AN: 'du-an',
+
     // Legal Pages
     PRIVACY: 'privacy-policy',
     TERMS: 'terms-of-service',

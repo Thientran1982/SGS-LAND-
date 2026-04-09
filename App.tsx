@@ -57,6 +57,8 @@ const PrivacyPolicy = lazyLoad(() => import('./pages/Legal'), 'PrivacyPolicy');
 const TermsOfService = lazyLoad(() => import('./pages/Legal'), 'TermsOfService');
 const CookieSettings = lazyLoad(() => import('./pages/Legal'), 'CookieSettings');
 const Consignment = lazyLoad(() => import('./pages/Consignment'), 'Consignment');
+const LocalLandingPage = lazyLoad(() => import('./pages/LocalLandingPage'), 'LocalLandingPage');
+const ProjectLandingPage = lazyLoad(() => import('./pages/ProjectLandingPage'), 'ProjectLandingPage');
 
 // Private Pages - Core
 const Dashboard = lazyLoad(() => import('./pages/Dashboard'), 'Dashboard');
@@ -175,6 +177,9 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.TERMS]: TermsOfService,
     [ROUTES.COOKIES]: CookieSettings,
     [ROUTES.KY_GUI]: Consignment,
+    [ROUTES.BDS_DONG_NAI]: LocalLandingPage,
+    [ROUTES.BDS_LONG_THANH]: LocalLandingPage,
+    [ROUTES.DU_AN]: ProjectLandingPage,
     [ROUTES.LOGIN]: Login,
     [ROUTES.LISTING]: ListingDetail, 
 
@@ -233,6 +238,9 @@ const PUBLIC_ROUTES = new Set([
     ROUTES.TERMS,
     ROUTES.COOKIES,
     ROUTES.KY_GUI,
+    ROUTES.BDS_DONG_NAI,
+    ROUTES.BDS_LONG_THANH,
+    ROUTES.DU_AN,
     ROUTES.LOGIN,
     ROUTES.RESET_PASSWORD,
     ROUTES.VERIFY_EMAIL,
