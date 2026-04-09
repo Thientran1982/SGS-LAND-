@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ROUTES } from '../config/routes';
 import { useTranslation } from '../services/i18n';
+import { Logo } from '../components/Logo';
 
 interface LocationConfig {
     slug: string;
@@ -191,7 +192,7 @@ export default function LocalLandingPage() {
                         className="flex items-center gap-2 font-bold text-[var(--primary-600)] text-lg"
                         aria-label="SGS LAND - Trang chủ"
                     >
-                        <svg className="w-7 h-7" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="currentColor"/><path d="M8 22l8-14 8 14H8z" fill="white" opacity=".9"/></svg>
+                        <Logo className="w-6 h-6" />
                         SGS LAND
                     </button>
                     <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[var(--text-secondary)]">
@@ -396,8 +397,11 @@ export default function LocalLandingPage() {
             <footer className="bg-[var(--bg-surface)] border-t border-[var(--glass-border)] py-8 px-4">
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div>
-                        <p className="font-bold text-[var(--text-primary)]">SGS LAND</p>
-                        <p className="text-xs text-[var(--text-secondary)] mt-1">Nền tảng BĐS AI hàng đầu Việt Nam</p>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Logo className="w-5 h-5 text-[var(--text-primary)]" />
+                            <p className="font-bold text-[var(--text-primary)]">SGS LAND</p>
+                        </div>
+                        <p className="text-xs text-[var(--text-secondary)]">Nền tảng BĐS AI hàng đầu Việt Nam</p>
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
                         <button onClick={() => navigate('/marketplace')} className="hover:text-[var(--primary-600)]">Mua Bán BĐS</button>
