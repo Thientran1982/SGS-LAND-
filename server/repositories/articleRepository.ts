@@ -24,6 +24,16 @@ class ArticleRepository extends BaseRepository {
     return entity as T;
   }
 
+  async findBySlug(tenantId: string, slug: string): Promise<any | null> {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT * FROM articles WHERE slug = $1 LIMIT 1`,
+        [slug]
+      );
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
+  }
+
   async findArticles(tenantId: string, pagination?: { page: number; pageSize: number }, filters?: any) {
     return this.withTenant(tenantId, async (client) => {
       const page = pagination?.page || 1;
