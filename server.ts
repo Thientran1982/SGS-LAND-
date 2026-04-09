@@ -1194,7 +1194,12 @@ async function startServer() {
 
   app.get('/api/public/articles/:id', apiRateLimit, async (req: express.Request, res: express.Response) => {
     try {
-      const article = await articleRepository.findById(PUBLIC_TENANT, String(req.params.id));
+      const idOrSlug = String(req.params.id);
+      const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      let article = UUID_PATTERN.test(idOrSlug)
+        ? await articleRepository.findById(PUBLIC_TENANT, idOrSlug)
+        : await articleRepository.findBySlug(PUBLIC_TENANT, idOrSlug);
+      if (!article) article = await articleRepository.findBySlug(PUBLIC_TENANT, idOrSlug);
       if (!article) return res.status(404).json({ error: 'Article not found' }) as any;
       res.json(normalizeArticle(article));
     } catch (error) {
@@ -2287,23 +2292,33 @@ async function startServer() {
   });
 
   app.get('/sitemap-news.xml', async (_req: express.Request, res: express.Response) => {
+    const client = await pool.connect();
     try {
-      const result = await pool.query(
-        `SELECT id, updated_at, published_at FROM articles
+      await client.query('BEGIN');
+      await client.query('SET LOCAL row_security = off');
+      const result = await client.query(
+        `SELECT id, slug, title, updated_at, published_at FROM articles
          WHERE status = 'PUBLISHED'
          ORDER BY published_at DESC LIMIT 50000`
       );
+      await client.query('COMMIT');
       const urls = result.rows.map((r: any) => {
+        const slug = r.slug || r.id;
         const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split('T')[0] : TODAY;
-        return `  <url>\n    <loc>${APP_SITEMAP_URL}/news/${r.id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.70</priority>\n  </url>`;
+        const pubDate = r.published_at ? new Date(r.published_at).toISOString() : new Date(lastmod).toISOString();
+        const title = (r.title || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `  <url>\n    <loc>${APP_SITEMAP_URL}/news/${slug}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.70</priority>\n    <news:news>\n      <news:publication>\n        <news:name>SGS LAND</news:name>\n        <news:language>vi</news:language>\n      </news:publication>\n      <news:publication_date>${pubDate}</news:publication_date>\n      <news:title>${title}</news:title>\n    </news:news>\n  </url>`;
       }).join('\n');
-      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`;
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n${urls}\n</urlset>`;
       res.setHeader('Content-Type', 'application/xml; charset=utf-8');
       res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
       res.send(xml);
     } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
       logger.error('[Sitemap] news error:', err);
       res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+    } finally {
+      client.release();
     }
   });
 
@@ -2356,10 +2371,20 @@ async function startServer() {
       } catch { next(); }
     });
 
-    // /news/:id → inject article-specific meta
-    app.get('/news/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // /news/:idOrSlug → inject article-specific meta; redirect UUID→slug (301)
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    app.get('/news/:idOrSlug', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
-        const article = await articleRepository.findById(DEFAULT_TENANT_ID, String(req.params.id));
+        const idOrSlug = String(req.params.idOrSlug);
+        let article: any = null;
+        if (UUID_RE.test(idOrSlug)) {
+          article = await articleRepository.findById(DEFAULT_TENANT_ID, idOrSlug);
+          if (article?.slug) {
+            return res.redirect(301, `/news/${article.slug}`);
+          }
+        } else {
+          article = await articleRepository.findBySlug(DEFAULT_TENANT_ID, idOrSlug);
+        }
         if (!article) return next();
         sendMeta(res, buildArticleMeta(article));
       } catch { next(); }

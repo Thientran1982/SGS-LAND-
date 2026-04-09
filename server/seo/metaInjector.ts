@@ -16,7 +16,7 @@ const DEFAULT_IMAGE = `${APP_URL}/og-image.jpg`;
 const DEFAULT_META = {
   title: 'SGS LAND | Nền Tảng Quản Lý Bất Động Sản AI Số 1 Việt Nam',
   description:
-    'SGS LAND - Nền tảng quản lý bất động sản thế hệ mới tích hợp AI định giá tự động, CRM đa kênh và quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
+    'SGS LAND - Nền tảng BĐS AI: định giá tự động, CRM đa kênh, quản lý kho hàng toàn diện. Giải pháp #1 cho sàn giao dịch và doanh nghiệp bất động sản Việt Nam.',
   image: DEFAULT_IMAGE,
   url: APP_URL,
   type: 'website',
@@ -122,7 +122,7 @@ export function buildArticleMeta(article: any): MetaData {
   const title = article.title ? `${article.title} - Tin Tức BĐS | SGS LAND` : DEFAULT_META.title;
   const description = rawExcerpt.slice(0, 300) || DEFAULT_META.description;
   const image = article.coverImage || article.cover_image || DEFAULT_IMAGE;
-  const url = `${APP_URL}/news/${article.id}`;
+  const url = article.slug ? `${APP_URL}/news/${article.slug}` : `${APP_URL}/news/${article.id}`;
 
   const structuredData = {
     '@context': 'https://schema.org',
