@@ -484,6 +484,9 @@ export const DICTIONARY = {
         "source.TIKTOK": "TikTok",
         "source.GOOGLE": "Google",
         "source.OTHER": "Khác",
+        "source.link": "Liên kết",
+        "source.Link": "Liên kết",
+        "source.LINK": "Liên kết",
 
         "dash.greeting_morning": "Xin chào,",
         "dash.overview_subtitle": "Tổng quan tình hình kinh doanh hôm nay.",
@@ -2631,6 +2634,9 @@ export const DICTIONARY = {
         "source.TIKTOK": "TikTok",
         "source.GOOGLE": "Google",
         "source.OTHER": "Other",
+        "source.link": "Link",
+        "source.Link": "Link",
+        "source.LINK": "Link",
 
         "dash.greeting_morning": "Hello,",
         "dash.overview_subtitle": "Overview of today's business situation.",
