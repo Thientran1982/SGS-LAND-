@@ -55,23 +55,23 @@ export const PROJECT_CATALOG = [
     siteUrl: 'https://sgsland.vn',
     note:    'Cổng dữ liệu nội bộ — JSON API trực tiếp',
     color:   'indigo',
-    logo:    '🏠',
+    logo:    'SGS',
   },
   {
     id:      'vinhomes-green-paradise',
     name:    'Vinhomes Green Paradise',
     siteUrl: 'https://vinhomesgreensparadise.vinhomes.vn',
-    note:    'Dự án Vinhomes — scrape qua ScraperAPI',
+    note:    'Dự án Vinhomes tại Bắc Hà Nội',
     color:   'emerald',
-    logo:    '🌿',
+    logo:    'VGP',
   },
   {
     id:      'vinhomes-central-park',
     name:    'Vinhomes Central Park',
     siteUrl: 'https://centralpark.vinhomes.vn',
-    note:    'Dự án Vinhomes — scrape qua ScraperAPI',
+    note:    'Dự án Vinhomes tại Bình Thạnh, TP.HCM',
     color:   'blue',
-    logo:    '🌳',
+    logo:    'VCP',
   },
   {
     id:      'swanbay',
@@ -79,7 +79,7 @@ export const PROJECT_CATALOG = [
     siteUrl: 'https://swanbay.vn',
     note:    'Đảo thiên nga Đồng Nai — scrape qua ScraperAPI',
     color:   'sky',
-    logo:    '🦢',
+    logo:    'SWB',
   },
   {
     id:      'swanpark',
@@ -87,23 +87,104 @@ export const PROJECT_CATALOG = [
     siteUrl: 'https://swanpark.vn',
     note:    'Swan Park Nhơn Trạch — scrape qua ScraperAPI',
     color:   'cyan',
-    logo:    '🌊',
+    logo:    'SWP',
   },
   {
     id:      'phu-my-hung',
     name:    'Phú Mỹ Hưng',
     siteUrl: 'https://phumyhung.vn',
-    note:    'Khu đô thị Phú Mỹ Hưng Quận 7 — scrape qua ScraperAPI',
+    note:    'Khu đô thị Phú Mỹ Hưng Quận 7',
     color:   'amber',
-    logo:    '🏙️',
+    logo:    'PMH',
   },
   {
     id:      'sala',
     name:    'Sala Đại Quang Minh',
     siteUrl: 'https://daikimgroup.vn/du-an/sala-dai-quang-minh',
-    note:    'Sala Thủ Thiêm — scrape qua ScraperAPI',
+    note:    'Sala Thủ Thiêm, Quận 2',
     color:   'rose',
-    logo:    '🏛️',
+    logo:    'SAL',
+  },
+  // ── 10 dự án bổ sung ──────────────────────────────────────────────────────
+  {
+    id:      'aqua-city',
+    name:    'Aqua City',
+    siteUrl: 'https://aquacity.com.vn',
+    note:    'Novaland — Đồng Nai',
+    color:   'teal',
+    logo:    'AQC',
+  },
+  {
+    id:      'izumi',
+    name:    'Izumi City',
+    siteUrl: 'https://izumicity.com.vn',
+    note:    'Nam Long — Bình Dương / Long An',
+    color:   'violet',
+    logo:    'IZM',
+  },
+  {
+    id:      'global-city',
+    name:    'Global City',
+    siteUrl: 'https://globalcity.vn',
+    note:    'Masterise Homes — Quận 2, TP.HCM',
+    color:   'blue',
+    logo:    'GLC',
+  },
+  {
+    id:      'masterise',
+    name:    'Masterise Homes',
+    siteUrl: 'https://masterisehomes.com',
+    note:    'Masterise Homes — nhiều dự án TP.HCM',
+    color:   'slate',
+    logo:    'MAS',
+  },
+  {
+    id:      'gamuda-land',
+    name:    'Gamuda Land',
+    siteUrl: 'https://gamudacity.com.vn',
+    note:    'Gamuda City — Hoàng Mai, Hà Nội & TP.HCM',
+    color:   'green',
+    logo:    'GAM',
+  },
+  {
+    id:      'sun-land',
+    name:    'Sun Land',
+    siteUrl: 'https://sungroup.com.vn/bat-dong-san-nha-o',
+    note:    'Sun Group — khu dân cư toàn quốc',
+    color:   'orange',
+    logo:    'SUN',
+  },
+  {
+    id:      'van-phuc-city',
+    name:    'Vạn Phúc City',
+    siteUrl: 'https://vanphuccity.com.vn',
+    note:    'Vạn Phúc City — Thủ Đức, TP.HCM',
+    color:   'purple',
+    logo:    'VPC',
+  },
+  {
+    id:      'son-kim-land',
+    name:    'Sơn Kim Land',
+    siteUrl: 'https://sonkimland.com.vn',
+    note:    'Sơn Kim Land — TP.HCM & Đà Nẵng',
+    color:   'pink',
+    logo:    'SKL',
+  },
+  {
+    id:      'bim-land',
+    name:    'BIM Land',
+    siteUrl: 'https://bimland.com.vn',
+    note:    'BIM Land — Hà Nội, Quảng Ninh, Phú Quốc',
+    color:   'lime',
+    logo:    'BIM',
+  },
+  {
+    id:      'vinacapital',
+    name:    'VinaCapital',
+    siteUrl: 'https://vinacapital.com/vi/real-estate',
+    note:    'VinaCapital RE — resort & đô thị cao cấp',
+    color:   'yellow',
+    logo:    'VNC',
   },
 ];
 
@@ -450,6 +531,69 @@ async function scrapeSala(): Promise<ProjectResult> {
 
 // ── Runner map ────────────────────────────────────────────────────────────────
 
+// ── Scraper functions for 10 new projects (generic HTML) ─────────────────────
+
+const GENERIC_SELECTORS = {
+  card:   '.product-item, [class*="product-item"], .project-item, article, .item',
+  title:  'h2, h3, h4, [class*="title"], [class*="name"]',
+  price:  '[class*="price"]',
+  area:   '[class*="area"], [class*="dien-tich"]',
+  block:  '[class*="block"], [class*="toa"]',
+  floor:  '[class*="floor"], [class*="tang"]',
+  status: '[class*="status"], [class*="trang-thai"]',
+  link:   'a',
+  image:  'img',
+};
+
+function makeGenericScraper(id: string, urls: { url: string; type?: string }[]) {
+  const proj = PROJECT_CATALOG.find(p => p.id === id)!;
+  return () => scrapeHtmlProject({
+    projectId: id, baseUrl: new URL(proj.siteUrl).origin, urls,
+    selectors: GENERIC_SELECTORS,
+  });
+}
+
+const EXTRA_RUNNERS: Record<string, () => Promise<ProjectResult>> = {
+  'aqua-city':   makeGenericScraper('aqua-city', [
+    { url: 'https://aquacity.com.vn/du-an', type: 'Bất động sản' },
+    { url: 'https://aquacity.com.vn/san-pham', type: 'Bất động sản' },
+  ]),
+  'izumi':       makeGenericScraper('izumi', [
+    { url: 'https://izumicity.com.vn/du-an', type: 'Bất động sản' },
+    { url: 'https://izumicity.com.vn/san-pham', type: 'Căn hộ' },
+  ]),
+  'global-city': makeGenericScraper('global-city', [
+    { url: 'https://globalcity.vn/du-an', type: 'Bất động sản' },
+    { url: 'https://globalcity.vn/can-ho', type: 'Căn hộ' },
+  ]),
+  'masterise':   makeGenericScraper('masterise', [
+    { url: 'https://masterisehomes.com/du-an', type: 'Bất động sản' },
+    { url: 'https://masterisehomes.com/can-ho', type: 'Căn hộ' },
+  ]),
+  'gamuda-land': makeGenericScraper('gamuda-land', [
+    { url: 'https://gamudacity.com.vn/can-ho', type: 'Căn hộ' },
+    { url: 'https://gamudacity.com.vn/biet-thu', type: 'Biệt thự' },
+  ]),
+  'sun-land':    makeGenericScraper('sun-land', [
+    { url: 'https://sungroup.com.vn/bat-dong-san-nha-o', type: 'Bất động sản' },
+  ]),
+  'van-phuc-city': makeGenericScraper('van-phuc-city', [
+    { url: 'https://vanphuccity.com.vn/du-an', type: 'Bất động sản' },
+    { url: 'https://vanphuccity.com.vn/can-ho', type: 'Căn hộ' },
+  ]),
+  'son-kim-land': makeGenericScraper('son-kim-land', [
+    { url: 'https://sonkimland.com.vn/du-an', type: 'Bất động sản' },
+    { url: 'https://sonkimland.com.vn/san-pham', type: 'Bất động sản' },
+  ]),
+  'bim-land':    makeGenericScraper('bim-land', [
+    { url: 'https://bimland.com.vn/du-an', type: 'Bất động sản' },
+    { url: 'https://bimland.com.vn/san-pham', type: 'Bất động sản' },
+  ]),
+  'vinacapital': makeGenericScraper('vinacapital', [
+    { url: 'https://vinacapital.com/vi/real-estate', type: 'Bất động sản' },
+  ]),
+};
+
 const PROJECT_RUNNERS: Record<string, () => Promise<ProjectResult>> = {
   'sgsland':                  scrapeSgsland,
   'vinhomes-green-paradise':  scrapeVinhomesGreenParadise,
@@ -458,6 +602,7 @@ const PROJECT_RUNNERS: Record<string, () => Promise<ProjectResult>> = {
   'swanpark':                 scrapeSwanPark,
   'phu-my-hung':              scrapePhuMyHung,
   'sala':                     scrapeSala,
+  ...EXTRA_RUNNERS,
 };
 
 // ── Lead types ────────────────────────────────────────────────────────────────
@@ -532,6 +677,16 @@ const PROJECT_KEYWORDS: Record<string, string[]> = {
   'swanpark':                ['Swan Park', 'SwanPark', 'Nhơn Trạch'],
   'phu-my-hung':             ['Phú Mỹ Hưng', 'Phu My Hung', 'PMH'],
   'sala':                    ['Sala Đại Quang Minh', 'Sala DQM', 'Sala Thủ Thiêm'],
+  'aqua-city':               ['Aqua City', 'Aqua City Novaland', 'Đồng Nai Novaland'],
+  'izumi':                   ['Izumi City', 'Nam Long Izumi', 'Izumi Nam Long'],
+  'global-city':             ['Global City', 'Global City Masterise', 'Masterise Quận 2'],
+  'masterise':               ['Masterise Homes', 'Masterise', 'Masteri'],
+  'gamuda-land':             ['Gamuda Land', 'Gamuda City', 'Gamuda Hoàng Mai'],
+  'sun-land':                ['Sun Land', 'Sun Group bất động sản', 'Sun Property'],
+  'van-phuc-city':           ['Vạn Phúc City', 'Van Phuc City', 'Khu đô thị Vạn Phúc'],
+  'son-kim-land':            ['Sơn Kim Land', 'Son Kim Land', 'The Standard SKL'],
+  'bim-land':                ['BIM Land', 'BIM Group', 'BIM Property'],
+  'vinacapital':             ['VinaCapital', 'Vina Capital', 'VinaCapital Real Estate'],
 };
 
 // ── Lead scraper: sgsland.vn internal DB ─────────────────────────────────────
@@ -898,6 +1053,45 @@ async function scrapeProjectWebsiteLeads(projectId: string): Promise<LeadScrapeR
       'https://daikimgroup.vn/lien-he',
       'https://daikimgroup.vn/du-an/sala-dai-quang-minh',
     ],
+    'aqua-city': [
+      'https://aquacity.com.vn/lien-he',
+      'https://aquacity.com.vn/dai-ly',
+    ],
+    'izumi': [
+      'https://izumicity.com.vn/lien-he',
+      'https://izumicity.com.vn/dai-ly-phan-phoi',
+    ],
+    'global-city': [
+      'https://globalcity.vn/lien-he',
+      'https://globalcity.vn/dai-ly',
+    ],
+    'masterise': [
+      'https://masterisehomes.com/lien-he',
+      'https://masterisehomes.com/dai-ly',
+    ],
+    'gamuda-land': [
+      'https://gamudacity.com.vn/lien-he',
+      'https://gamudacity.com.vn/dai-ly',
+    ],
+    'sun-land': [
+      'https://sungroup.com.vn/lien-he',
+    ],
+    'van-phuc-city': [
+      'https://vanphuccity.com.vn/lien-he',
+      'https://vanphuccity.com.vn/dai-ly',
+    ],
+    'son-kim-land': [
+      'https://sonkimland.com.vn/lien-he',
+      'https://sonkimland.com.vn/dai-ly',
+    ],
+    'bim-land': [
+      'https://bimland.com.vn/lien-he',
+      'https://bimland.com.vn/dai-ly',
+    ],
+    'vinacapital': [
+      'https://vinacapital.com/vi/lien-he',
+      'https://vinacapital.com/vi/real-estate',
+    ],
   };
 
   const urls      = CONTACT_PATHS[projectId] ?? [];
@@ -1018,6 +1212,16 @@ const LEAD_RUNNERS: Record<string, () => Promise<LeadScrapeResult>> = {
   'swanpark':                 () => scrapeAllLeadsForProject('swanpark'),
   'phu-my-hung':              () => scrapeAllLeadsForProject('phu-my-hung'),
   'sala':                     () => scrapeAllLeadsForProject('sala'),
+  'aqua-city':                () => scrapeAllLeadsForProject('aqua-city'),
+  'izumi':                    () => scrapeAllLeadsForProject('izumi'),
+  'global-city':              () => scrapeAllLeadsForProject('global-city'),
+  'masterise':                () => scrapeAllLeadsForProject('masterise'),
+  'gamuda-land':              () => scrapeAllLeadsForProject('gamuda-land'),
+  'sun-land':                 () => scrapeAllLeadsForProject('sun-land'),
+  'van-phuc-city':            () => scrapeAllLeadsForProject('van-phuc-city'),
+  'son-kim-land':             () => scrapeAllLeadsForProject('son-kim-land'),
+  'bim-land':                 () => scrapeAllLeadsForProject('bim-land'),
+  'vinacapital':              () => scrapeAllLeadsForProject('vinacapital'),
 };
 
 // ── Lead cache (45 min TTL) ───────────────────────────────────────────────────

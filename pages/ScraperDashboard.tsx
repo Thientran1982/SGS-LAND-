@@ -129,6 +129,15 @@ const PROJECT_COLOR_MAP: Record<string, string> = {
   cyan:    'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-700',
   amber:   'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700',
   rose:    'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-700',
+  teal:    'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-700',
+  violet:  'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-700',
+  slate:   'bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600',
+  green:   'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700',
+  orange:  'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700',
+  purple:  'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700',
+  pink:    'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-700',
+  lime:    'bg-lime-100 dark:bg-lime-900/30 text-lime-700 dark:text-lime-300 border-lime-200 dark:border-lime-700',
+  yellow:  'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700',
 };
 
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
@@ -513,7 +522,7 @@ function ProjectsTab() {
                 </div>
 
                 <div className="flex items-start gap-3 pr-5 mb-3">
-                  <span className={`text-2xl w-10 h-10 rounded-xl flex items-center justify-center border flex-shrink-0 ${colorCls}`}>{proj.logo}</span>
+                  <span className={`text-[10px] font-bold leading-none w-10 h-10 rounded-xl flex items-center justify-center border flex-shrink-0 ${colorCls}`}>{proj.logo}</span>
                   <div className="min-w-0">
                     <p className="font-bold text-sm text-[var(--text-primary)] leading-tight">{proj.name}</p>
                     <a
