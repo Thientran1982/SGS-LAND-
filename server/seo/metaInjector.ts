@@ -148,8 +148,8 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
 
   // ─── SEO Local & Project Landing Pages ─────────────────────────────────────
   'bat-dong-san-dong-nai': {
-    title: 'Bất Động Sản Đồng Nai | Nhà Đất, Căn Hộ, Dự Án - SGS LAND',
-    description: 'Tìm mua bán bất động sản Đồng Nai: nhà đất Long Thành, Nhơn Trạch, Biên Hòa. Cập nhật giá thị trường, dự án mới và pháp lý rõ ràng tại SGS LAND.',
+    title: 'Bất Động Sản Đồng Nai | Mua Bán Nhà Đất 2025 — SGS LAND',
+    description: 'Mua bán bất động sản Đồng Nai: Nhơn Trạch, Biên Hòa, Long Thành. Kho hàng nghìn căn, giá thực tế, pháp lý kiểm tra trước. SGS LAND.',
     h1: 'Bất Động Sản Đồng Nai',
     structuredData: {
       '@context': 'https://schema.org',
@@ -187,8 +187,8 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
     },
   },
   'bat-dong-san-long-thanh': {
-    title: 'Bất Động Sản Long Thành | Đất Nền Sân Bay, Căn Hộ - SGS LAND',
-    description: 'Mua bán bất động sản Long Thành, Đồng Nai: đất nền khu vực sân bay Long Thành, dự án căn hộ và liền kề. Cơ hội đầu tư tiềm năng tại SGS LAND.',
+    title: 'Bất Động Sản Long Thành | Đất Nền, Nhà Phố — SGS LAND',
+    description: 'Mua bán đất nền, nhà phố Long Thành Đồng Nai. Vùng kinh tế sân bay, tiềm năng tăng giá cao. Định giá AI miễn phí tại SGS LAND.',
     h1: 'Bất Động Sản Long Thành',
     structuredData: {
       '@context': 'https://schema.org',
@@ -309,8 +309,8 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
 
   // ─── New Location Landing Pages ─────────────────────────────────────────────
   'bat-dong-san-thu-duc': {
-    title: 'Bất Động Sản TP Thủ Đức | Căn Hộ, Nhà Phố, Metro - SGS LAND',
-    description: 'Mua bán bất động sản TP Thủ Đức: căn hộ Thủ Thiêm, Vinhomes Grand Park, khu vực Metro số 1. Tư vấn pháp lý và định giá AI miễn phí tại SGS LAND.',
+    title: 'Bất Động Sản TP Thủ Đức | Căn Hộ, Đất Nền — SGS LAND',
+    description: 'Mua bán bất động sản TP Thủ Đức: Vinhomes, Masterise, The Global City. Giá thị trường cập nhật, tư vấn chuyên nghiệp tại SGS LAND.',
     h1: 'Bất Động Sản TP Thủ Đức',
     structuredData: {
       '@context': 'https://schema.org',
@@ -343,8 +343,8 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
     },
   },
   'bat-dong-san-binh-duong': {
-    title: 'Bất Động Sản Bình Dương | Căn Hộ, Đất Nền KCN - SGS LAND',
-    description: 'Mua bán bất động sản Bình Dương: căn hộ Thuận An, Dĩ An, đất nền Bình Dương. Nhu cầu cho thuê cao từ 500.000+ chuyên gia KCN. Tư vấn miễn phí SGS LAND.',
+    title: 'Bất Động Sản Bình Dương | Nhà Phố, Đất Nền — SGS LAND',
+    description: 'Mua bán nhà đất Bình Dương: Thuận An, Dĩ An, Thủ Dầu Một. Pháp lý an toàn, định giá AI chính xác. Liên hệ SGS LAND ngay.',
     h1: 'Bất Động Sản Bình Dương',
     structuredData: {
       '@context': 'https://schema.org',
@@ -377,8 +377,8 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
     },
   },
   'bat-dong-san-quan-7': {
-    title: 'Bất Động Sản Quận 7 | Phú Mỹ Hưng, Căn Hộ Cao Cấp - SGS LAND',
-    description: 'Mua bán bất động sản Quận 7 TP.HCM: Phú Mỹ Hưng, Sunrise City, khu cộng đồng quốc tế. Căn hộ cao cấp, nhà phố, biệt thự. Tư vấn và định giá AI tại SGS LAND.',
+    title: 'Bất Động Sản Quận 7 TP.HCM | Nhà Phố, Căn Hộ — SGS LAND',
+    description: 'Mua bán nhà đất Quận 7: Phú Mỹ Hưng, Tân Phong, Tân Quy. Vị trí đắc địa, tiện ích cao cấp. Kho hàng đa dạng tại SGS LAND.',
     h1: 'Bất Động Sản Quận 7',
     structuredData: {
       '@context': 'https://schema.org',
@@ -411,8 +411,8 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
     },
   },
   'bat-dong-san-phu-nhuan': {
-    title: 'Bất Động Sản Phú Nhuận | Nhà Phố, Biệt Thự Nội Đô - SGS LAND',
-    description: 'Mua bán bất động sản Phú Nhuận TP.HCM: nhà phố mặt tiền, nhà hẻm xe hơi, căn hộ cao cấp. Gần sân bay Tân Sơn Nhất, giáp Q1/Q3. Tư vấn và định giá AI miễn phí tại SGS LAND.',
+    title: 'Bất Động Sản Phú Nhuận TP.HCM | Nhà Trung Tâm — SGS LAND',
+    description: 'Mua bán nhà đất Phú Nhuận: Nhà phố, căn hộ trung tâm TP.HCM. Vị trí thuận tiện, giao thông kết nối. Tư vấn miễn phí tại SGS LAND.',
     h1: 'Bất Động Sản Phú Nhuận',
     structuredData: {
       '@context': 'https://schema.org',
