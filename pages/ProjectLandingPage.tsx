@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 
 interface ProjectConfig {
     slug: string;
@@ -990,7 +991,35 @@ export default function ProjectLandingPage() {
         );
     }
 
+    const metaTitle = `${cfg.name} | ${cfg.projectType} ${cfg.location} — SGS LAND`;
+    const metaDesc = cfg.heroDescription.length > 155
+        ? cfg.heroDescription.slice(0, 152) + '...'
+        : cfg.heroDescription;
+
     return (
+        <>
+            <SeoHead
+                title={metaTitle}
+                description={metaDesc}
+                canonicalPath={`/du-an/${cfg.slug}`}
+                structuredData={{
+                    '@context': 'https://schema.org',
+                    '@type': 'ApartmentComplex',
+                    name: cfg.name,
+                    description: metaDesc,
+                    url: `https://sgsland.vn/du-an/${cfg.slug}`,
+                    address: {
+                        '@type': 'PostalAddress',
+                        addressLocality: cfg.location,
+                        addressCountry: 'VN',
+                    },
+                    additionalProperty: {
+                        '@type': 'PropertyValue',
+                        name: 'Chủ đầu tư',
+                        value: cfg.developer,
+                    },
+                }}
+            />
         <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)]">
             {/* ── Nav ── */}
             <header className="sticky top-0 z-50 bg-[var(--bg-surface)]/95 backdrop-blur border-b border-[var(--glass-border)]">
@@ -1180,6 +1209,7 @@ export default function ProjectLandingPage() {
                 </div>
             </footer>
         </div>
+        </>
     );
 }
 

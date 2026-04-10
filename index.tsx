@@ -1,6 +1,7 @@
 import './styles/globals.css';
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
+import { HelmetProvider } from 'react-helmet-async';
 import App from './App'; 
 import { systemService } from './services/systemService';
 import { copyToClipboard } from './utils/clipboard';
@@ -296,9 +297,11 @@ const mountApp = () => {
         }
         window.__sgsCrmRoot.render(
           <React.StrictMode>
-            <ErrorBoundary>
-              <App />
-            </ErrorBoundary>
+            <HelmetProvider>
+              <ErrorBoundary>
+                <App />
+              </ErrorBoundary>
+            </HelmetProvider>
           </React.StrictMode>
         );
     } catch (e) {
