@@ -86,9 +86,29 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
                 q: 'Mua Aqua City để đầu tư hay ở thực tốt hơn?',
                 a: 'Aqua City phù hợp cho cả hai mục đích. Để ở thực: hưởng trọn tiện ích 5 sao, không khí trong lành và không gian sống xanh vượt trội so với nội thành. Để đầu tư: tiềm năng tăng giá từ cầu Nhơn Trạch + sân bay Long Thành, sinh lời cho thuê từ cư dân và chuyên gia nước ngoài làm việc tại khu vực.',
             },
+            {
+                q: 'Aqua City đã có sổ hồng riêng chưa?',
+                a: 'Một số phân khu Aqua City đã được cấp sổ hồng riêng từng căn, đây là điểm cộng lớn so với nhiều dự án tại Nhơn Trạch. Tuy nhiên, tình trạng pháp lý từng phân khu khác nhau — SGS LAND hỗ trợ tra cứu và xác minh sổ hồng cụ thể theo từng căn trước khi bạn đặt cọc.',
+            },
+            {
+                q: 'Novaland có còn tài chính ổn định không sau tái cơ cấu?',
+                a: 'Novaland đã hoàn thành tái cơ cấu tài chính năm 2024, đạt thoả thuận với trái chủ quốc tế và tiếp tục bàn giao các phân khu tại Aqua City. Tập đoàn vẫn là chủ đầu tư BĐS tư nhân lớn nhất Việt Nam với quỹ đất trên 10.600ha. Rủi ro tài chính đã giảm đáng kể so với giai đoạn 2022-2023.',
+            },
+            {
+                q: 'So sánh Aqua City và Izumi City — nên chọn dự án nào?',
+                a: 'Aqua City (1.000ha, Nhơn Trạch): quy mô lớn hơn, tiện ích nhiều hơn (golf, marina, bệnh viện), giá biệt thự cao hơn, cách TP.HCM 35-40km. Izumi City (170ha, Biên Hòa): chuẩn Nhật Bản, Fuji Mart, Nam Long có track record bàn giao tốt, giá nhà phố thấp hơn, gần TP.HCM hơn (30 phút). Chọn Aqua City nếu ưu tiên quy mô và tiện ích; Izumi City nếu ưu tiên uy tín chủ đầu tư và vị trí gần.',
+            },
+            {
+                q: 'Cho thuê căn hộ/nhà phố Aqua City được bao nhiêu tiền?',
+                a: 'Giá cho thuê tham khảo: Căn hộ studio 1PN: 4-7 triệu/tháng; nhà phố liền kề: 8-15 triệu/tháng; biệt thự đơn lập: 30-60 triệu/tháng. Phân khúc cho thuê chuyên gia Nhật, Hàn tại các KCN Nhơn Trạch đang tăng mạnh. Tỷ suất cho thuê biệt thự cao cấp ước đạt 4-6%/năm.',
+            },
+            {
+                q: 'Aqua City có dịch vụ quản lý và vận hành tòa nhà không?',
+                a: 'Aqua City được vận hành bởi đội ngũ quản lý tòa nhà chuyên nghiệp của Novaland với dịch vụ an ninh 24/7, vệ sinh môi trường, bảo trì hạ tầng và chăm sóc cư dân. Phí quản lý tòa nhà thông thường 10.000-15.000 đồng/m²/tháng tùy phân khu và loại hình bất động sản.',
+            },
         ],
         relatedProjects: [
-            { name: 'Dự Án Manhattan', slug: 'manhattan' },
+            { name: 'Izumi City Nam Long', slug: 'izumi-city' },
             { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
             { name: 'BĐS Long Thành', slug: 'bat-dong-san-long-thanh' },
         ],
@@ -160,11 +180,31 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
                 q: 'Pháp lý Manhattan Bình Dương có rõ ràng không?',
                 a: 'Dự án được cấp sổ hồng 50 năm có gia hạn theo quy định pháp luật hiện hành. Becamex IDC là chủ đầu tư uy tín với hàng chục năm kinh nghiệm phát triển đô thị tại Bình Dương. SGS LAND cung cấp dịch vụ kiểm tra pháp lý độc lập miễn phí trước giao dịch.',
             },
+            {
+                q: 'Chuyên gia nước ngoài có ưa chuộng dự án Manhattan Bình Dương không?',
+                a: 'Bình Dương có hơn 50.000 chuyên gia và quản lý nước ngoài (Hàn Quốc, Nhật Bản, Đài Loan, Singapore) đang làm việc tại các KCN. Căn hộ cao cấp chuẩn quốc tế như Manhattan rất được ưa chuộng cho cả mua và thuê. Giá thuê từ nhu cầu này duy trì ổn định 10-20 triệu/tháng, đảm bảo dòng tiền tốt cho nhà đầu tư.',
+            },
+            {
+                q: 'Vay ngân hàng mua căn hộ Manhattan Bình Dương có dễ không?',
+                a: 'Nhờ pháp lý sổ hồng minh bạch và chủ đầu tư Becamex IDC uy tín, việc vay ngân hàng khá thuận lợi. Các ngân hàng liên kết: Vietcombank, BIDV, VPBank, ACB cho vay tối đa 70% giá trị căn hộ, kỳ hạn đến 25 năm, lãi suất ưu đãi 24 tháng đầu. SGS LAND hỗ trợ hồ sơ vay miễn phí.',
+            },
+            {
+                q: 'So sánh Manhattan Bình Dương và Vinhomes tại Bình Dương — nên chọn đâu?',
+                a: 'Manhattan: giá thường thấp hơn, thiết kế hướng chuyên gia nước ngoài, tỷ suất cho thuê tốt hơn (nhu cầu từ KCN). Vinhomes Bình Dương: thương hiệu mạnh hơn, tiện ích đồng bộ hơn, thanh khoản thứ cấp cao hơn nhưng phí quản lý cũng cao hơn. Chọn Manhattan nếu ưu tiên đầu tư cho thuê; Vinhomes nếu ưu tiên thương hiệu và thanh khoản.',
+            },
+            {
+                q: 'Becamex IDC là chủ đầu tư như thế nào?',
+                a: 'Becamex IDC Corp là Tổng Công Ty Đầu Tư và Phát Triển Công Nghiệp thuộc UBND tỉnh Bình Dương — một trong những chủ đầu tư KCN và đô thị lớn nhất Đông Nam Bộ. Với 30+ năm kinh nghiệm phát triển KCN VSIP, Thành Phố Mới Bình Dương và các dự án nhà ở, Becamex IDC có năng lực tài chính vững và track record bàn giao tốt.',
+            },
+            {
+                q: 'Giá thứ cấp căn hộ Manhattan Bình Dương hiện tại là bao nhiêu?',
+                a: 'Thị trường thứ cấp Manhattan Bình Dương ghi nhận giá: 1PN (45-55m²) khoảng 2,5-3,5 tỷ; 2PN (70-90m²) khoảng 4-6 tỷ; 3PN (100-120m²) khoảng 6-9 tỷ. Thanh khoản tốt hơn nhiều so với đất nền vùng ven nhờ nhu cầu thực từ chuyên gia KCN. Liên hệ SGS LAND để cập nhật giá thị trường thứ cấp mới nhất.',
+            },
         ],
         relatedProjects: [
             { name: 'Aqua City Novaland', slug: 'aqua-city' },
             { name: 'BĐS Bình Dương', slug: 'bat-dong-san-binh-duong' },
-            { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
+            { name: 'Izumi City Nam Long', slug: 'izumi-city' },
         ],
     },
     'izumi-city': {
