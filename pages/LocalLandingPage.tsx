@@ -143,6 +143,259 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
             { name: 'Gem Sky World', slug: 'marketplace' },
         ],
     },
+    'bat-dong-san-thu-duc': {
+        slug: 'bat-dong-san-thu-duc',
+        name: 'TP Thủ Đức',
+        province: 'TP.HCM',
+        searchQuery: 'Thủ Đức',
+        heroDescription:
+            'Bất động sản TP Thủ Đức — thành phố trong thành phố đầu tiên của Việt Nam — đang là tâm điểm đầu tư nhờ hội tụ ba quận cũ (Q2, Q9, Thủ Đức) với hạ tầng đồng bộ, Khu Công Nghệ Cao SHTP, Đại Học Quốc Gia và khu đô thị mới Thủ Thiêm. SGS LAND cung cấp kho hàng BĐS đã xác minh pháp lý và tư vấn chuyên sâu thị trường Thủ Đức.',
+        stats: [
+            { label: 'Dân số', value: '1,1 triệu' },
+            { label: 'Dự án căn hộ cao cấp', value: '80+' },
+            { label: 'Giá căn hộ trung bình', value: '70-150 tr/m²' },
+            { label: 'Tốc độ tăng giá/năm', value: '10-18%' },
+        ],
+        highlights: [
+            {
+                title: 'Khu Đô Thị Thủ Thiêm (Q2 cũ)',
+                desc: 'Khu đô thị mới Thủ Thiêm 657ha đối diện Q1 qua sông Sài Gòn — trung tâm tài chính tương lai của TP.HCM. Giá đất thương mại và căn hộ hạng sang tiếp tục thiết lập kỷ lục mới.',
+            },
+            {
+                title: 'Vinhomes Grand Park & Metro số 1 (Q9 cũ)',
+                desc: 'Siêu đô thị 271ha Vinhomes Grand Park, Khu Công Nghệ Cao SHTP và tuyến Metro số 1 Bến Thành – Suối Tiên đã biến Q9 thành trung tâm công nghệ và căn hộ giá tốt nhất TP.HCM.',
+            },
+            {
+                title: 'Đại Học Quốc Gia & Làng Đại Học',
+                desc: 'Khu vực Đại Học Quốc Gia TP.HCM với hơn 80.000 sinh viên tạo nhu cầu nhà ở, thương mại và dịch vụ khổng lồ. Đất nền và nhà trọ đầu tư thu nhập thụ động ổn định.',
+            },
+            {
+                title: 'Hạ tầng giao thông liên kết',
+                desc: 'Metro số 1, vành đai 2 mở rộng, cao tốc TP.HCM – Long Thành – Dầu Giây và cầu Thủ Thiêm 2 tạo mạng lưới giao thông đa tầng, kết nối Thủ Đức với toàn bộ TP.HCM trong 20-40 phút.',
+            },
+        ],
+        faqs: [
+            {
+                q: 'Bất động sản TP Thủ Đức có nên đầu tư không?',
+                a: 'TP Thủ Đức là khu vực có tiềm năng tăng trưởng BĐS cao nhất TP.HCM nhờ ba động lực: hạ tầng Metro số 1 đưa vào khai thác, Khu Đô Thị Thủ Thiêm phát triển mạnh và làn sóng dịch chuyển doanh nghiệp công nghệ. Giá căn hộ tăng 10-18%/năm, đất nền tăng 15-25%/năm.',
+            },
+            {
+                q: 'Giá căn hộ TP Thủ Đức hiện nay là bao nhiêu?',
+                a: 'Giá căn hộ Thủ Đức biến động theo khu vực: Thủ Thiêm (Q2 cũ) 80-250 triệu/m²; khu vực Metro số 1 (Q9 cũ) 45-90 triệu/m²; Thủ Đức (gần ĐH Quốc Gia) 35-65 triệu/m². Phân khúc cho thuê sôi động nhờ nhu cầu từ chuyên gia công nghệ và sinh viên.',
+            },
+            {
+                q: 'Khu vực nào ở Thủ Đức nên đầu tư nhất?',
+                a: 'Ba khu vực nên chú ý: (1) Thủ Thiêm — bất động sản hạng sang, tăng giá tốt nhất dài hạn; (2) Khu vực Metro số 1 (Suối Tiên – Bình Thái) — căn hộ vừa túi tiền, nhu cầu thuê cao; (3) Khu Công Nghệ Cao SHTP — đất nền và nhà phố hưởng lợi từ 80.000+ chuyên gia IT.',
+            },
+            {
+                q: 'Metro số 1 ảnh hưởng thế nào đến BĐS Thủ Đức?',
+                a: 'Tuyến Metro số 1 Bến Thành – Suối Tiên (19,7km, 14 ga) đã vận hành cuối 2024. BĐS trong bán kính 500m quanh các ga Metro tăng giá 20-40% so với trước khi Metro khai thác. Nhà cho thuê gần ga Metro đạt tỷ suất cho thuê 6-9%/năm.',
+            },
+            {
+                q: 'SGS LAND hỗ trợ mua BĐS Thủ Đức như thế nào?',
+                a: 'SGS LAND cung cấp dịch vụ toàn diện: tìm kiếm BĐS Thủ Đức theo nhu cầu (ngân sách, mục đích), định giá AI miễn phí so sánh với thị trường, kiểm tra pháp lý sổ đỏ độc lập, hỗ trợ vay vốn ngân hàng lãi suất tốt và đồng hành ký kết hợp đồng an toàn.',
+            },
+        ],
+        relatedLocations: [
+            { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
+            { name: 'BĐS Quận 7', slug: 'bat-dong-san-quan-7' },
+            { name: 'BĐS Bình Dương', slug: 'bat-dong-san-binh-duong' },
+        ],
+        relatedProjects: [
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+            { name: 'The Global City', slug: 'the-global-city' },
+            { name: 'Khu Đô Thị Thủ Thiêm', slug: 'thu-thiem' },
+        ],
+    },
+    'bat-dong-san-binh-duong': {
+        slug: 'bat-dong-san-binh-duong',
+        name: 'Bình Dương',
+        province: 'Bình Dương',
+        searchQuery: 'Bình Dương',
+        heroDescription:
+            'Bất động sản Bình Dương — tỉnh công nghiệp phát triển nhất Đông Nam Bộ — đang thu hút làn sóng đầu tư mạnh mẽ nhờ hơn 30 khu công nghiệp, 500.000+ chuyên gia và công nhân nước ngoài. Giá căn hộ và đất nền Bình Dương cạnh tranh hơn TP.HCM 40-50%, tiềm năng cho thuê và tăng giá vượt trội. SGS LAND hỗ trợ giao dịch BĐS Bình Dương chuyên nghiệp.',
+        stats: [
+            { label: 'Khu công nghiệp', value: '30+' },
+            { label: 'Chuyên gia nước ngoài', value: '500.000+' },
+            { label: 'Giá căn hộ trung bình', value: '35-70 tr/m²' },
+            { label: 'Tỷ suất cho thuê', value: '5-8%/năm' },
+        ],
+        highlights: [
+            {
+                title: 'Thành Phố Mới Bình Dương',
+                desc: 'Thành phố Mới Bình Dương (Bình Dương New City) là đô thị thông minh được quy hoạch bài bản với hệ thống hạ tầng hiện đại, trung tâm hành chính, AEON Mall, WTC Bình Dương và hàng chục tòa nhà văn phòng hạng A.',
+            },
+            {
+                title: 'Thuận An & Dĩ An — Vùng Giáp Ranh TP.HCM',
+                desc: 'Thuận An và Dĩ An giáp với TP Thủ Đức, kết nối TP.HCM chỉ 15-25 phút. Giá căn hộ và đất nền rẻ hơn 30-50% so với Thủ Đức nhưng tiện ích và kết nối tương đương. Nhu cầu thuê nhà rất lớn từ công nhân và chuyên gia.',
+            },
+            {
+                title: 'Hệ Sinh Thái KCN & Chuyên Gia Nước Ngoài',
+                desc: 'Hơn 500.000 chuyên gia Hàn Quốc, Nhật Bản, Đài Loan và các nước tạo nhu cầu thuê căn hộ tiêu chuẩn quốc tế rất lớn. Căn hộ cao cấp tại Bình Dương cho thuê 10-25 triệu/tháng, tỷ suất đạt 5-8%/năm.',
+            },
+            {
+                title: 'Hạ Tầng Giao Thông Đồng Bộ',
+                desc: 'Đại lộ Bình Dương 8 làn, cao tốc TP.HCM – Thủ Dầu Một – Chơn Thành và quy hoạch Metro Bến Thành – Suối Tiên – Bình Dương kết nối toàn vùng. Thời gian di chuyển từ Thuận An đến Q1 chỉ 30-40 phút.',
+            },
+        ],
+        faqs: [
+            {
+                q: 'Bất động sản Bình Dương có tiềm năng không?',
+                a: 'Bình Dương là tỉnh có tốc độ đô thị hóa nhanh nhất cả nước với hơn 30 KCN đang hoạt động. Nhu cầu nhà ở từ 500.000+ chuyên gia và công nhân tạo thị trường cho thuê sôi động. Giá BĐS tăng 8-15%/năm trong 5 năm gần đây, thấp hơn TP.HCM nhưng tiềm năng còn lớn.',
+            },
+            {
+                q: 'Mua căn hộ Bình Dương để cho thuê có lời không?',
+                a: 'Bình Dương là thị trường cho thuê BĐS sôi động nhất cả nước do nhu cầu từ chuyên gia KCN. Căn hộ cao cấp (Becamex, Vsip, Manhattan) cho thuê 10-25 triệu/tháng. Tỷ suất cho thuê bruto đạt 5-8%/năm — vượt lãi suất gửi tiết kiệm ngân hàng. Phù hợp đầu tư dòng tiền thụ động.',
+            },
+            {
+                q: 'Giá đất Bình Dương hiện nay là bao nhiêu?',
+                a: 'Giá đất Bình Dương theo khu vực: Thủ Dầu Một (trung tâm) 30-80 triệu/m²; Thuận An, Dĩ An (giáp TP.HCM) 40-100 triệu/m²; Thành Phố Mới 20-50 triệu/m²; Bến Cát, Tân Uyên 8-20 triệu/m². Giá đất TP Bình Dương thấp hơn TP.HCM 40-60% với cùng tiện ích.',
+            },
+            {
+                q: 'Dự án căn hộ nào tốt nhất ở Bình Dương?',
+                a: 'Các dự án nổi bật: Manhattan (Becamex IDC) — chuẩn quốc tế tại trung tâm; Charm City (Charm Group) — căn hộ vừa túi tiền khu Dĩ An; Phúc Đạt Tower (Thuận An); Precia (An Gia) — vị trí vàng giáp Thủ Đức. SGS LAND có thông tin và bảng giá cập nhật tất cả dự án Bình Dương.',
+            },
+            {
+                q: 'Thuận An hay Thủ Dầu Một nên chọn khu vực nào đầu tư?',
+                a: 'Thuận An — phù hợp đầu tư cho thuê (giáp TP.HCM, nhu cầu thuê cao, giá dưới 2 tỷ/căn). Thủ Dầu Một — phù hợp ở thực lâu dài (trung tâm hành chính, tiện ích đầy đủ). Thành Phố Mới Bình Dương — lý tưởng cho đầu tư dài hạn khi đô thị hóa hoàn chỉnh (10-15 năm). Liên hệ SGS LAND để được tư vấn theo mục tiêu cụ thể.',
+            },
+        ],
+        relatedLocations: [
+            { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
+            { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
+            { name: 'BĐS Bình Chánh', slug: 'bat-dong-san-binh-chanh' },
+        ],
+        relatedProjects: [
+            { name: 'Dự Án Manhattan Bình Dương', slug: 'manhattan' },
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+        ],
+    },
+    'bat-dong-san-quan-7': {
+        slug: 'bat-dong-san-quan-7',
+        name: 'Quận 7',
+        province: 'TP.HCM',
+        searchQuery: 'Quận 7',
+        heroDescription:
+            'Bất động sản Quận 7 — khu vực Phú Mỹ Hưng và cộng đồng quốc tế sôi động nhất TP.HCM. Với chuẩn sống đẳng cấp, hạ tầng xanh và cộng đồng cư dân Hàn Quốc, Nhật Bản và Đài Loan, Quận 7 là lựa chọn hàng đầu cho chuyên gia nước ngoài và người Việt thành đạt. SGS LAND hỗ trợ tư vấn và giao dịch BĐS Quận 7 chuyên nghiệp.',
+        stats: [
+            { label: 'Chuyên gia nước ngoài cư trú', value: '30.000+' },
+            { label: 'Giá căn hộ cao cấp', value: '70-150 tr/m²' },
+            { label: 'Giá thuê căn hộ', value: '15-60 tr/tháng' },
+            { label: 'Trường quốc tế trong khu vực', value: '20+' },
+        ],
+        highlights: [
+            {
+                title: 'Phú Mỹ Hưng — Khu Đô Thị Kiểu Mẫu',
+                desc: 'Phú Mỹ Hưng (500ha) là khu đô thị kiểu mẫu đầu tiên của Việt Nam với hạ tầng xanh, phong cách sống Singapore. Giá căn hộ 70-150 triệu/m², nhà phố biệt lập 200-500 triệu/m², cho thuê 25-60 triệu/tháng.',
+            },
+            {
+                title: 'Cộng Đồng Hàn Quốc & Quốc Tế Sầm Uất',
+                desc: 'Hơn 30.000 chuyên gia Hàn Quốc, Nhật, Đài Loan sinh sống tại Quận 7 tạo hệ sinh thái thương mại, ẩm thực, y tế và giáo dục đặc sắc. BĐS cho thuê luôn có thanh khoản tốt với giá thuê cao nhất TP.HCM.',
+            },
+            {
+                title: 'Kết Nối Hạ Tầng Mạnh',
+                desc: 'Đường Nguyễn Văn Linh (trục huyết mạch), đường Mai Chí Thọ, cao tốc TP.HCM – Trung Lương và cầu Khánh Hội kết nối Quận 7 với trung tâm Q1 (15 phút) và toàn TP.HCM. Quy hoạch Metro số 4 đi qua.',
+            },
+            {
+                title: 'Hệ Thống Tiện Ích Hàng Đầu',
+                desc: 'SC VivoCity, Crescent Mall, Lotte Mart, 20+ trường quốc tế (ISHCMC, BIS, Eaton), bệnh viện FV (tiêu chuẩn Pháp), công viên Sunrise, khu thể thao cao cấp — hệ sinh thái tiện ích tốt nhất TP.HCM.',
+            },
+        ],
+        faqs: [
+            {
+                q: 'Bất động sản Quận 7 có đáng đầu tư không?',
+                a: 'Quận 7 là thị trường BĐS ổn định và thanh khoản cao nhất TP.HCM nhờ cộng đồng quốc tế đông đảo. Giá BĐS Q7 tăng đều đặn 8-12%/năm, ít bị tác động bởi biến động thị trường chung. Phù hợp đầu tư cho thuê dài hạn và tích lũy tài sản bền vững.',
+            },
+            {
+                q: 'Giá căn hộ Quận 7 hiện tại là bao nhiêu?',
+                a: 'Giá căn hộ Q7 theo phân khúc: Phú Mỹ Hưng (cao cấp) 70-150 triệu/m²; Sunrise City, Sunrise Cityview 55-90 triệu/m²; khu vực khác Q7 40-70 triệu/m². Cho thuê: studio/1PN 15-25 triệu/tháng; 2-3PN 25-60 triệu/tháng tại Phú Mỹ Hưng.',
+            },
+            {
+                q: 'Phú Mỹ Hưng có đặc điểm gì hấp dẫn nhà đầu tư nước ngoài?',
+                a: 'Phú Mỹ Hưng thu hút nhà đầu tư nước ngoài vì: (1) Cộng đồng quốc tế đông đảo (Hàn, Nhật, Đài) giúp BĐS dễ cho thuê; (2) Hạ tầng xanh, an toàn, chuẩn Singapore; (3) Hệ thống trường quốc tế, bệnh viện 5 sao trong tầm tay; (4) Pháp lý rõ ràng, được phép mua và cho thuê hợp pháp.',
+            },
+            {
+                q: 'Mua nhà Quận 7 để cho thuê thu nhập bao nhiêu?',
+                a: 'Căn hộ Phú Mỹ Hưng cho thuê 20-60 triệu/tháng, tỷ suất gross yield khoảng 4-6%/năm. Nhà phố mặt tiền đường Nguyễn Văn Linh cho thuê mặt bằng kinh doanh 50-150 triệu/tháng. Giá trị BĐS Q7 tăng thêm 8-12%/năm, tổng return thực tế 12-18%/năm.',
+            },
+            {
+                q: 'Tuyến Metro nào đi qua Quận 7?',
+                a: 'Quy hoạch tuyến Metro số 4 (Thạnh Xuân – Khu Đô Thị Hiệp Phước) đi qua Quận 7. Ngoài ra, Quận 7 được hưởng lợi gián tiếp từ Metro số 1 (Bến Thành – Suối Tiên) và các tuyến xe buýt nhanh BRT. Khi Metro hoàn thành, giá BĐS quanh các ga được dự báo tăng thêm 20-30%.',
+            },
+        ],
+        relatedLocations: [
+            { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
+            { name: 'BĐS Bình Chánh', slug: 'bat-dong-san-binh-chanh' },
+            { name: 'Mua Bán BĐS TP.HCM', slug: 'marketplace' },
+        ],
+        relatedProjects: [
+            { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
+            { name: 'Masterise Homes', slug: 'masterise-homes' },
+        ],
+    },
+    'bat-dong-san-binh-chanh': {
+        slug: 'bat-dong-san-binh-chanh',
+        name: 'Bình Chánh',
+        province: 'TP.HCM',
+        searchQuery: 'Bình Chánh',
+        heroDescription:
+            'Bất động sản Bình Chánh — huyện ngoại thành phía Tây Nam TP.HCM đang trong quá trình đô thị hóa mạnh mẽ với hàng loạt dự án khu dân cư và đô thị mới. Giá đất Bình Chánh hấp dẫn, tiềm năng tăng giá cao khi hạ tầng vành đai 3 và vành đai 4 hoàn thành. SGS LAND tư vấn và giao dịch BĐS Bình Chánh an toàn, hiệu quả.',
+        stats: [
+            { label: 'Diện tích', value: '252 km²' },
+            { label: 'Dân số', value: '700.000+' },
+            { label: 'Giá đất mặt tiền', value: '20-60 tr/m²' },
+            { label: 'Tốc độ tăng giá/năm', value: '12-20%' },
+        ],
+        highlights: [
+            {
+                title: 'Hưởng Lợi Từ Vành Đai 3 & 4',
+                desc: 'Đường Vành đai 3 TP.HCM (dự kiến hoàn thành 2025-2026) đi qua Bình Chánh, kết nối trực tiếp với Bình Dương, Đồng Nai và Long An. Đường Vành đai 4 quy hoạch tiếp tục mở rộng không gian phát triển. BĐS quanh vành đai tăng giá mạnh.',
+            },
+            {
+                title: 'Khu Đô Thị Mới Bình Chánh',
+                desc: 'Nhiều dự án khu đô thị lớn đang triển khai: Akari City (Nam Long), Vinhomes Grand Park giai đoạn mở rộng, Tên Lửa Complex và hàng chục dự án nhà ở xã hội, nhà ở vừa túi tiền phục vụ người dân TP.HCM.',
+            },
+            {
+                title: 'Giá Đất Hấp Dẫn, Còn Nhiều Dư Địa',
+                desc: 'Giá đất Bình Chánh thấp hơn nội thành 50-70%, phù hợp ngân sách 2-5 tỷ đồng. Đất nền phân lô sổ đỏ từ 15-40 triệu/m², nhà phố dự án từ 4-8 tỷ. Tiềm năng tăng giá còn lớn khi hạ tầng hoàn thiện.',
+            },
+            {
+                title: 'Kết Nối Cao Tốc & Logistics',
+                desc: 'Bình Chánh nằm trên trục cao tốc TP.HCM – Trung Lương (về miền Tây), quốc lộ 1A và kết nối Bến Lức – Long Thành. Nhiều khu công nghiệp và trung tâm logistics lớn tạo nhu cầu nhà ở công nhân và chuyên gia.',
+            },
+        ],
+        faqs: [
+            {
+                q: 'Đất Bình Chánh hiện nay giá bao nhiêu?',
+                a: 'Giá đất Bình Chánh theo vị trí: mặt tiền quốc lộ 1A 40-80 triệu/m²; đường lớn trong thị trấn 20-45 triệu/m²; đất nền phân lô dự án 15-35 triệu/m²; đất ruộng/vườn chuyển mục đích 3-10 triệu/m². Khu giáp Q8, Q7 giá cao hơn 20-30%.',
+            },
+            {
+                q: 'Có nên mua đất Bình Chánh để đầu tư không?',
+                a: 'Bình Chánh là thị trường đầu tư trung và dài hạn tiềm năng. Vành đai 3 hoàn thành sẽ kéo theo đô thị hóa mạnh, tăng giá 20-40%. Phù hợp ngân sách 2-5 tỷ, mua đất nền hoặc nhà phố dự án. Lưu ý chọn sản phẩm đã có sổ đỏ và kiểm tra quy hoạch trước khi mua.',
+            },
+            {
+                q: 'Dự án nào đáng mua nhất ở Bình Chánh hiện nay?',
+                a: 'Các dự án uy tín tại Bình Chánh: Akari City (Nam Long) — căn hộ pháp lý chuẩn, giá hợp lý; Tên Lửa Complex — nhà phố thương mại; các dự án HUD Bình Chánh — nhà ở xã hội giá ưu đãi. SGS LAND có danh sách đầy đủ dự án Bình Chánh và hỗ trợ tư vấn miễn phí.',
+            },
+            {
+                q: 'Bình Chánh có nguy cơ ngập lụt không?',
+                a: 'Một số khu vực Bình Chánh có nguy cơ ngập theo triều cường, đặc biệt gần sông Bến Lức, kênh Đôi. Nên chọn dự án có nền cao, hệ thống thoát nước bài bản. SGS LAND kiểm tra thực địa và lịch sử ngập lụt trước khi tư vấn mua, bảo đảm an toàn đầu tư.',
+            },
+            {
+                q: 'Vành đai 3 ảnh hưởng thế nào đến BĐS Bình Chánh?',
+                a: 'Đường Vành đai 3 (dự kiến hoàn thành 2025-2026) đi qua Bình Chánh giúp kết nối trực tiếp với Bình Dương, Đồng Nai và Long An trong 20-30 phút. BĐS trong bán kính 1-2km quanh các nút giao vành đai 3 tại Bình Chánh được dự báo tăng giá 30-50% sau khi thông đường.',
+            },
+        ],
+        relatedLocations: [
+            { name: 'BĐS Quận 7', slug: 'bat-dong-san-quan-7' },
+            { name: 'BĐS Long Thành', slug: 'bat-dong-san-long-thanh' },
+            { name: 'Mua Bán BĐS TP.HCM', slug: 'marketplace' },
+        ],
+        relatedProjects: [
+            { name: 'Aqua City Novaland', slug: 'aqua-city' },
+            { name: 'Dự Án Manhattan', slug: 'manhattan' },
+        ],
+    },
 };
 
 function navigate(path: string) {

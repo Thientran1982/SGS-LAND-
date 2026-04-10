@@ -2395,6 +2395,10 @@ async function startServer() {
     const LOCAL_LANDING_ROUTES = [
       '/bat-dong-san-dong-nai',
       '/bat-dong-san-long-thanh',
+      '/bat-dong-san-thu-duc',
+      '/bat-dong-san-binh-duong',
+      '/bat-dong-san-quan-7',
+      '/bat-dong-san-binh-chanh',
     ] as const;
     for (const route of LOCAL_LANDING_ROUTES) {
       app.get(route, (_req: express.Request, res: express.Response) => {

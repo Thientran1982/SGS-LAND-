@@ -16,6 +16,24 @@ Allow: /privacy-policy
 Allow: /terms-of-service
 Allow: /cookie-settings
 Allow: /crm-platform
+Allow: /bat-dong-san-dong-nai
+Allow: /bat-dong-san-long-thanh
+Allow: /bat-dong-san-thu-duc
+Allow: /bat-dong-san-binh-duong
+Allow: /bat-dong-san-quan-7
+Allow: /bat-dong-san-binh-chanh
+Allow: /du-an/aqua-city
+Allow: /du-an/izumi-city
+Allow: /du-an/vinhomes-grand-park
+Allow: /du-an/vinhomes-central-park
+Allow: /du-an/thu-thiem
+Allow: /du-an/son-kim-land
+Allow: /du-an/masterise-homes
+Allow: /du-an/the-global-city
+Allow: /du-an/nha-pho-trung-tam
+Allow: /du-an/manhattan
+Allow: /llms.txt
+Allow: /llms-full.txt
 
 Disallow: /login
 Disallow: /dashboard
@@ -53,5 +71,48 @@ User-agent: Bingbot
 Allow: /
 Crawl-delay: 2
 
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Claude-Web
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Anthropic-AI
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Gemini-WebFetch
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Google-Extended
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: YouBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: CCBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
 Sitemap: https://sgsland.vn/sitemap.xml
+Sitemap: https://sgsland.vn/sitemap-static.xml
 Sitemap: https://sgsland.vn/sitemap-images.xml
+Sitemap: https://sgsland.vn/sitemap-news.xml
+Sitemap: https://sgsland.vn/sitemap-listings.xml

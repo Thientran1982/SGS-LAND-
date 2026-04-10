@@ -98,7 +98,7 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         name: 'Dự Án Manhattan',
         developer: 'Becamex IDC & Đối Tác',
         location: 'Bình Dương',
-        locationSlug: 'marketplace',
+        locationSlug: 'bat-dong-san-binh-duong',
         heroDescription:
             'Dự án Manhattan Bình Dương là tổ hợp căn hộ cao cấp hướng đến tiêu chuẩn quốc tế tại trung tâm tỉnh lỵ Bình Dương — thủ phủ công nghiệp và kinh tế năng động nhất Đông Nam Bộ. Với thiết kế sang trọng, hạ tầng kỹ thuật đồng bộ và vị trí kết nối chiến lược, Manhattan là lựa chọn lý tưởng cho chuyên gia, nhà quản lý và nhà đầu tư.',
         priceRange: 'Từ 35 triệu/m²',
@@ -163,8 +163,603 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
         ],
         relatedProjects: [
             { name: 'Aqua City Novaland', slug: 'aqua-city' },
+            { name: 'BĐS Bình Dương', slug: 'bat-dong-san-binh-duong' },
+            { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
+        ],
+    },
+    'izumi-city': {
+        slug: 'izumi-city',
+        name: 'Izumi City Nam Long',
+        developer: 'Nam Long Group & Hankyu Hanshin Properties',
+        location: 'Biên Hòa, Đồng Nai',
+        locationSlug: 'bat-dong-san-dong-nai',
+        heroDescription:
+            'Izumi City là đô thị tích hợp chuẩn Nhật Bản quy mô 170ha tại Biên Hòa, Đồng Nai, do Nam Long Group hợp tác cùng tập đoàn Hankyu Hanshin Properties (Nhật Bản) phát triển. Với tiêu chuẩn sống đẳng cấp, hệ thống tiện ích 4 tầng và vị trí chiến lược cách TP.HCM 30 phút, Izumi City là lựa chọn sống xanh hàng đầu khu vực miền Đông. SGS LAND hỗ trợ tư vấn và giao dịch Izumi City chuyên nghiệp.',
+        priceRange: 'Nhà phố từ 5 tỷ — Biệt thự từ 10 tỷ',
+        projectType: 'Đô Thị Tích Hợp Chuẩn Nhật',
+        scale: '170 ha',
+        details: [
+            { label: 'Chủ đầu tư', value: 'Nam Long Group & Hankyu Hanshin (Nhật Bản)' },
+            { label: 'Vị trí', value: 'Biên Hòa, Đồng Nai' },
+            { label: 'Quy mô', value: '170 ha' },
+            { label: 'Khoảng cách TP.HCM', value: '~30 phút (cao tốc)' },
+            { label: 'Loại hình', value: 'Nhà phố, biệt thự, căn hộ Akari' },
+            { label: 'Mức giá tham khảo', value: 'Nhà phố 5-12 tỷ; biệt thự 10-25 tỷ' },
+            { label: 'Pháp lý', value: 'Sổ hồng riêng từng căn' },
+            { label: 'Tiến độ', value: 'Nhiều phân khu đã bàn giao' },
+        ],
+        amenities: [
+            {
+                title: 'Tiện ích đặc trưng Nhật Bản',
+                items: [
+                    'Siêu thị Fuji Mart (chuỗi Nhật Bản)',
+                    'Trường học chuẩn Nhật Bản trong khuôn viên',
+                    'Trung tâm y tế tiêu chuẩn Nhật',
+                    'Công viên trung tâm 7ha cảnh quan Nhật',
+                    'Khu thể thao tổng hợp & hồ bơi Olympic',
+                    'Câu lạc bộ cộng đồng & nhà văn hóa',
+                    'Khu vườn sinh thái & đường dạo bộ',
+                    'Hệ thống an ninh 24/7 tiêu chuẩn cao',
+                ],
+            },
+            {
+                title: 'Kết nối hạ tầng',
+                items: [
+                    'Cao tốc TP.HCM – Long Thành – Dầu Giây (5 phút)',
+                    'Cách sân bay Long Thành 20 phút',
+                    'Quốc lộ 1A kết nối Biên Hòa – TP.HCM',
+                    'Trung tâm Biên Hòa 5km, đủ tiện ích đô thị',
+                    'Cầu Đồng Nai và cầu Long Thành kết nối đa hướng',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Izumi City Nam Long có đáng mua không?',
+                a: 'Izumi City là dự án đô thị tích hợp hiếm hoi tại Đồng Nai được phát triển theo chuẩn Nhật Bản với đối tác Hankyu Hanshin uy tín. Dự án phù hợp cho cả ở thực (tiêu chuẩn sống cao, yên tĩnh) và đầu tư (hưởng lợi sân bay Long Thành, thanh khoản tốt). Nam Long là chủ đầu tư có lịch sử bàn giao đúng tiến độ và pháp lý minh bạch.',
+            },
+            {
+                q: 'Giá nhà phố và biệt thự Izumi City là bao nhiêu?',
+                a: 'Nhà phố liền kề Izumi City từ 5-12 tỷ tùy diện tích và vị trí trong dự án. Biệt thự song lập từ 10-18 tỷ; biệt thự đơn lập từ 15-25 tỷ. Căn hộ Akari (phân khu căn hộ trong Izumi) từ 2-5 tỷ. Liên hệ SGS LAND để nhận bảng giá cập nhật và chính sách ưu đãi.',
+            },
+            {
+                q: 'Izumi City cách TP.HCM bao xa và đi như thế nào?',
+                a: 'Izumi City tại Biên Hòa, Đồng Nai, cách trung tâm TP.HCM khoảng 30km. Di chuyển nhanh nhất qua cao tốc TP.HCM – Long Thành – Dầu Giây (khoảng 25-35 phút tùy giờ). Ngoài ra còn có quốc lộ 1A và đường vành đai 3 đang triển khai.',
+            },
+            {
+                q: 'Tiện ích Nhật Bản tại Izumi City gồm những gì?',
+                a: 'Izumi City tích hợp hệ thống tiện ích theo chuẩn Nhật: siêu thị Fuji Mart, trường học chuẩn Nhật, trung tâm y tế, công viên 7ha thiết kế phong cách Nhật, khu thể thao và nhà văn hóa cộng đồng. Đây là môi trường sống phù hợp cho các gia đình có con nhỏ muốn tiêu chuẩn giáo dục và y tế cao.',
+            },
+            {
+                q: 'Izumi City có sổ hồng riêng không?',
+                a: 'Có, Izumi City được cấp sổ hồng riêng từng căn nhà/biệt thự. Nam Long Group cam kết pháp lý rõ ràng và đã có kinh nghiệm bàn giao sổ hồng cho nhiều dự án như Flora, Valora. SGS LAND hỗ trợ kiểm tra pháp lý miễn phí trước giao dịch.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Aqua City Novaland', slug: 'aqua-city' },
             { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
             { name: 'BĐS Long Thành', slug: 'bat-dong-san-long-thanh' },
+        ],
+    },
+    'vinhomes-grand-park': {
+        slug: 'vinhomes-grand-park',
+        name: 'Vinhomes Grand Park',
+        developer: 'Vinhomes (Tập đoàn Vingroup)',
+        location: 'Quận 9 (TP Thủ Đức), TP.HCM',
+        locationSlug: 'bat-dong-san-thu-duc',
+        heroDescription:
+            'Vinhomes Grand Park là siêu đô thị 271ha tại Quận 9 (nay là TP Thủ Đức), TP.HCM — một trong những dự án bất động sản quy mô lớn nhất và được tìm kiếm nhiều nhất Việt Nam. Với 44 tòa tháp căn hộ, công viên trung tâm 36ha, hệ thống tiện ích Vinschool, Vinmec, Vinhome và kết nối Metro số 1, Grand Park là trung tâm đô thị năng động của TP Thủ Đức. SGS LAND hỗ trợ tư vấn và giao dịch mua bán Vinhomes Grand Park.',
+        priceRange: 'Căn hộ từ 2,5 tỷ — Shophouse từ 10 tỷ',
+        projectType: 'Siêu Đô Thị',
+        scale: '271 ha',
+        details: [
+            { label: 'Chủ đầu tư', value: 'Vinhomes (Vingroup)' },
+            { label: 'Vị trí', value: 'Quận 9 (TP Thủ Đức), TP.HCM' },
+            { label: 'Quy mô', value: '271 ha' },
+            { label: 'Số tòa tháp', value: '44 tòa cao tầng' },
+            { label: 'Loại hình', value: 'Căn hộ, shophouse, biệt thự' },
+            { label: 'Mức giá tham khảo', value: 'Căn hộ 2,5-6 tỷ; shophouse 10 tỷ+' },
+            { label: 'Kết nối Metro', value: 'Metro số 1 Bến Thành – Suối Tiên' },
+            { label: 'Pháp lý', value: 'Sổ hồng riêng' },
+        ],
+        amenities: [
+            {
+                title: 'Tiện ích nội khu đẳng cấp',
+                items: [
+                    'Công viên trung tâm 36ha — lớn nhất TP.HCM',
+                    'Trường học Vinschool các cấp',
+                    'Bệnh viện Vinmec tiêu chuẩn quốc tế',
+                    'Trung tâm thương mại Vincom Mega Mall',
+                    'Hồ bơi Olympic và khu thể thao đa năng',
+                    'Khu vui chơi trẻ em & công viên chuyên đề',
+                    'Hệ thống an ninh 24/7 Smart Home',
+                    'Bãi đỗ xe ngầm thông minh',
+                ],
+            },
+            {
+                title: 'Kết nối giao thông',
+                items: [
+                    'Metro số 1 (ga Suối Tiên, Bến Xe Miền Đông mới) — cách 5 phút đi bộ',
+                    'Cao tốc TP.HCM – Long Thành – Dầu Giây',
+                    'Vành đai 2 mở rộng kết nối toàn TP.HCM',
+                    'Quốc lộ 1A và Xa lộ Hà Nội',
+                    'Cách sân bay Long Thành 25 phút',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Vinhomes Grand Park có đáng mua không năm 2025-2026?',
+                a: 'Vinhomes Grand Park là dự án có thanh khoản tốt nhất khu vực Thủ Đức nhờ quy mô lớn, thương hiệu Vinhomes uy tín và kết nối Metro số 1. Phù hợp cho cả ở thực (tiện ích đầy đủ, môi trường sống hiện đại) và đầu tư cho thuê (nhu cầu từ chuyên gia công nghệ SHTP và sinh viên ĐH Quốc Gia). Giá tăng ổn định 8-15%/năm.',
+            },
+            {
+                q: 'Giá căn hộ Vinhomes Grand Park mới nhất là bao nhiêu?',
+                a: 'Giá căn hộ Vinhomes Grand Park trên thị trường thứ cấp (2025-2026): The Rainbow 2,5-4 tỷ; The Origami 3-5 tỷ; The Beverly 4-7 tỷ; The Opus One (hạng sang) 8-15 tỷ. Giá cho thuê 8-20 triệu/tháng tùy phân khu và diện tích. Liên hệ SGS LAND để nhận bảng giá cập nhật nhất.',
+            },
+            {
+                q: 'Phân khu nào tốt nhất tại Vinhomes Grand Park?',
+                a: 'Mỗi phân khu phù hợp mục đích khác nhau: The Rainbow & Origami — giá tốt, phù hợp ở thực và đầu tư cho thuê; The Beverly — vị trí trung tâm, tiện ích phong phú; The Opus One — phân khúc hạng sang, cộng đồng cư dân cao cấp. SGS LAND tư vấn chọn phân khu theo ngân sách và mục tiêu đầu tư cụ thể.',
+            },
+            {
+                q: 'Metro số 1 ảnh hưởng thế nào đến Vinhomes Grand Park?',
+                a: 'Tuyến Metro số 1 (Bến Thành – Suối Tiên) đã vận hành cuối 2024, với ga Suối Tiên và Bến Xe Miền Đông Mới chỉ 5-10 phút đi bộ từ Grand Park. Từ khi Metro hoạt động, giá thuê căn hộ tăng 15-20% và thời gian về trung tâm Q1 giảm xuống còn 30 phút. BĐS cạnh Metro tăng giá bền vững.',
+            },
+            {
+                q: 'Cho thuê căn hộ Vinhomes Grand Park thu nhập bao nhiêu?',
+                a: 'Căn hộ 1 phòng ngủ (45-55m²) cho thuê 8-12 triệu/tháng; 2 phòng ngủ 12-18 triệu/tháng; 3 phòng ngủ 18-25 triệu/tháng. Tỷ suất cho thuê gross yield khoảng 4-6%/năm. Nhu cầu thuê rất tốt từ chuyên gia SHTP, sinh viên ĐH Quốc Gia và nhân viên văn phòng khu Đông.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
+            { name: 'The Global City', slug: 'the-global-city' },
+            { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
+        ],
+    },
+    'vinhomes-central-park': {
+        slug: 'vinhomes-central-park',
+        name: 'Vinhomes Central Park',
+        developer: 'Vinhomes (Tập đoàn Vingroup)',
+        location: 'Quận Bình Thạnh, TP.HCM',
+        locationSlug: 'marketplace',
+        heroDescription:
+            'Vinhomes Central Park là đại đô thị ven sông Sài Gòn tại Quận Bình Thạnh — biểu tượng BĐS cao cấp nội thành TP.HCM với 44 tòa tháp, công viên 3,3ha, bể bơi vô cực và tòa Landmark 81 cao nhất Việt Nam. Cư dân đẳng cấp, vị trí đắc địa, kết nối nhanh đến sân bay Tân Sơn Nhất và trung tâm tài chính. SGS LAND hỗ trợ tư vấn mua bán và cho thuê Vinhomes Central Park.',
+        priceRange: 'Từ 50 triệu/m² — Penthouse 200+ triệu/m²',
+        projectType: 'Đại Đô Thị Ven Sông',
+        scale: '44 tòa cao tầng, 14.500 căn',
+        details: [
+            { label: 'Chủ đầu tư', value: 'Vinhomes (Vingroup)' },
+            { label: 'Vị trí', value: 'Quận Bình Thạnh, TP.HCM' },
+            { label: 'Số tòa / căn', value: '44 tòa cao tầng, ~14.500 căn' },
+            { label: 'Điểm nhấn', value: 'Landmark 81 — tòa nhà cao nhất Việt Nam' },
+            { label: 'Loại hình', value: 'Căn hộ cao cấp, penthouse, biệt thự sông' },
+            { label: 'Mức giá tham khảo', value: 'Căn hộ 50-150 tr/m²; penthouse 200+ tr/m²' },
+            { label: 'Cho thuê', value: '15-60 triệu/tháng tùy loại căn' },
+            { label: 'Kết nối', value: '10 phút đến sân bay Tân Sơn Nhất' },
+        ],
+        amenities: [
+            {
+                title: 'Tiện ích đẳng cấp nội đô',
+                items: [
+                    'Công viên trung tâm 3,3ha ven sông Sài Gòn',
+                    'Bể bơi vô cực (Infinity Pool) view thành phố',
+                    'Trung tâm thương mại Vincom Central Park',
+                    'Landmark 81 — Sky Bar, văn phòng, khách sạn 6 sao',
+                    'Rạp chiếu phim, khu ẩm thực đa văn hóa',
+                    'Phòng gym, spa và khu thể thao trong nhà',
+                    'Vườn BBQ, khu vui chơi trẻ em tiêu chuẩn cao',
+                    'An ninh đa lớp, quản lý chuyên nghiệp 24/7',
+                ],
+            },
+            {
+                title: 'Kết nối chiến lược nội thành',
+                items: [
+                    'Sân bay Tân Sơn Nhất chỉ 10 phút',
+                    'Quận 1 (trung tâm tài chính) 15 phút',
+                    'Metro Bến Thành – Tham Lương qua khu vực',
+                    'Cầu Sài Gòn, cầu Thủ Thiêm kết nối đa hướng',
+                    'Xa lộ Hà Nội, đại lộ Phạm Văn Đồng',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Vinhomes Central Park có phải BĐS hạng sang không?',
+                a: 'Vinhomes Central Park thuộc phân khúc cao cấp – hạng sang tại TP.HCM, với giá từ 50-200 triệu/m² tùy tầng và view. Cư dân gồm nhiều doanh nhân, chuyên gia nước ngoài và nhân sự cấp cao. Landmark 81 (tòa nhà cao nhất VN) là biểu tượng của dự án, tạo giá trị thương hiệu bền vững.',
+            },
+            {
+                q: 'Giá căn hộ Vinhomes Central Park mới nhất?',
+                a: 'Thị trường thứ cấp 2025-2026: căn hộ 1 phòng ngủ từ 3,5-5 tỷ; 2 phòng ngủ 5-9 tỷ; 3 phòng ngủ 8-15 tỷ; penthouse từ 20-50 tỷ. Cho thuê: studio 15-20 triệu/tháng; 2PN 25-40 triệu/tháng; biệt thự sông 60-120 triệu/tháng. Liên hệ SGS LAND để nhận báo giá cập nhật.',
+            },
+            {
+                q: 'Landmark 81 tại Vinhomes Central Park là gì?',
+                a: 'Landmark 81 là tòa nhà cao nhất Việt Nam (461m, 81 tầng) nằm trong Vinhomes Central Park. Tòa nhà bao gồm: khách sạn Marriott 5 sao, văn phòng hạng A+, căn hộ dịch vụ cao cấp Serviced Apartment và đài quan sát trên đỉnh. Đây là biểu tượng kiến trúc của TP.HCM, tạo thêm giá trị thương hiệu và giá BĐS cho toàn khu.',
+            },
+            {
+                q: 'Đầu tư cho thuê Vinhomes Central Park có lời không?',
+                a: 'Vinhomes Central Park là thị trường cho thuê sôi động nhất khu vực Bình Thạnh. Tỷ suất gross yield khoảng 4-6%/năm, cộng thêm tăng giá BĐS 8-12%/năm, tổng return 12-18%/năm. Nhu cầu thuê rất mạnh từ chuyên gia nước ngoài, doanh nhân và nhân sự công ty đa quốc gia muốn ở gần sân bay và trung tâm tài chính.',
+            },
+            {
+                q: 'Mua căn hộ Vinhomes Central Park cần kiểm tra pháp lý gì?',
+                a: 'Khi mua thứ cấp tại Central Park cần kiểm tra: (1) Sổ hồng chính chủ, không tranh chấp; (2) Không có nghĩa vụ tài chính đang thế chấp ngân hàng; (3) Phí quản lý và tiện ích không nợ đọng; (4) Biên bản bàn giao và hồ sơ kỹ thuật đầy đủ. SGS LAND kiểm tra pháp lý độc lập miễn phí cho mọi giao dịch.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+            { name: 'Masterise Homes', slug: 'masterise-homes' },
+            { name: 'Khu Đô Thị Thủ Thiêm', slug: 'thu-thiem' },
+        ],
+    },
+    'thu-thiem': {
+        slug: 'thu-thiem',
+        name: 'Khu Đô Thị Thủ Thiêm',
+        developer: 'UBND TP.HCM & Các Chủ Đầu Tư Lớn',
+        location: 'Thủ Thiêm, TP Thủ Đức (Q2 cũ), TP.HCM',
+        locationSlug: 'bat-dong-san-thu-duc',
+        heroDescription:
+            'Khu Đô Thị Mới Thủ Thiêm (657ha) đối diện Q1 qua sông Sài Gòn — được quy hoạch là Trung Tâm Tài Chính – Thương Mại tương lai của TP.HCM và cả nước. Với hạ tầng hiện đại đồng bộ, cầu và hầm Thủ Thiêm kết nối trực tiếp Q1, Thủ Thiêm là điểm đến của các dự án bất động sản hạng sang và thương mại đẳng cấp quốc tế. SGS LAND hỗ trợ tư vấn mua bán BĐS Thủ Thiêm.',
+        priceRange: 'Căn hộ từ 80 triệu/m² — Đất thương mại từ 500 triệu/m²',
+        projectType: 'Khu Đô Thị Tài Chính Hạng Sang',
+        scale: '657 ha',
+        details: [
+            { label: 'Vị trí', value: 'Thủ Thiêm, TP Thủ Đức (Q2 cũ), TP.HCM' },
+            { label: 'Quy mô', value: '657 ha (khu đô thị mới)' },
+            { label: 'Kết nối Q1', value: 'Hầm Thủ Thiêm, cầu Thủ Thiêm 2' },
+            { label: 'Loại hình', value: 'Căn hộ hạng sang, văn phòng A+, thương mại' },
+            { label: 'Mức giá', value: 'Căn hộ 80-250 tr/m²; đất TM 200-500 tr/m²' },
+            { label: 'Dự án tiêu biểu', value: 'Empire City, Metropole, The River' },
+            { label: 'Định hướng', value: 'Trung tâm tài chính quốc tế TP.HCM' },
+            { label: 'Pháp lý', value: 'Quy hoạch 1/500 rõ ràng' },
+        ],
+        amenities: [
+            {
+                title: 'Hạ tầng đô thị hiện đại',
+                items: [
+                    'Quảng trường trung tâm 12ha ven sông',
+                    'Tuyến đường thủy nội địa Thủ Thiêm',
+                    'Hệ thống ngầm hóa điện, viễn thông toàn khu',
+                    'Công viên bờ sông Sài Gòn dài 10km',
+                    'Trung tâm biểu diễn nghệ thuật quốc tế (đang xây)',
+                    'Hệ thống xe buýt nhanh BRT nội khu',
+                    'Bãi đỗ xe ngầm 5 tầng dưới quảng trường',
+                    'Khu phức hợp văn phòng – khách sạn – thương mại',
+                ],
+            },
+            {
+                title: 'Kết nối đa phương thức',
+                items: [
+                    'Hầm Thủ Thiêm — kết nối thẳng Q1 trong 5 phút',
+                    'Cầu Thủ Thiêm 2 — kết nối Q1, Ba Son',
+                    'Cầu Ba Son — kết nối Bình Thạnh, Q1',
+                    'Metro số 2 (Bến Thành – Thủ Thiêm) quy hoạch đi qua',
+                    'Kết nối cao tốc TP.HCM – Long Thành qua TP Thủ Đức',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Khu đô thị Thủ Thiêm có đáng đầu tư không?',
+                a: 'Thủ Thiêm là thị trường BĐS chiến lược dài hạn — quy hoạch là trung tâm tài chính quốc tế TP.HCM (tương tự Pudong/Thượng Hải). Giá BĐS đã tăng mạnh nhưng tiềm năng còn lớn khi các tòa nhà văn phòng, khách sạn và trung tâm thương mại hoàn thành trong 2025-2030. Phù hợp với nhà đầu tư dài hạn tài chính mạnh.',
+            },
+            {
+                q: 'Giá căn hộ Thủ Thiêm hiện tại là bao nhiêu?',
+                a: 'Giá căn hộ Thủ Thiêm thuộc hàng cao nhất TP.HCM: Empire City 90-150 triệu/m²; Metropole Thủ Thiêm 90-130 triệu/m²; The River Thủ Thiêm 80-120 triệu/m²; Grand Marina Saigon 130-250 triệu/m². Cho thuê các dự án này 35-80 triệu/tháng. Liên hệ SGS LAND để so sánh và tư vấn.',
+            },
+            {
+                q: 'Các dự án BĐS nào đáng chú ý tại Thủ Thiêm?',
+                a: 'Ba dự án lớn nhất: (1) Empire City (Keppel Land + Tiến Phước) — 14,57ha, căn hộ từ 5-15 tỷ; (2) Metropole Thủ Thiêm (SonKim Land) — khu đô thị hỗn hợp, căn hộ 7-20 tỷ; (3) The River (Kiến Á) — căn hộ 80-100 triệu/m². Ngoài ra còn Grand Marina Saigon (Masterise Homes) tại vị trí bến cảng lịch sử Ba Son.',
+            },
+            {
+                q: 'Khu đô thị Thủ Thiêm sẽ phát triển thành gì?',
+                a: 'Theo quy hoạch được duyệt, Thủ Thiêm sẽ là "Manhattan của Sài Gòn" với trung tâm tài chính – ngân hàng, văn phòng tập đoàn quốc tế, khách sạn 5-6 sao, trung tâm thương mại cao cấp, căn hộ hạng sang và quảng trường quốc tế. Khi hoàn chỉnh (dự kiến 2030-2035), Thủ Thiêm sẽ là trung tâm kinh tế của toàn bộ Đông Nam Á.',
+            },
+            {
+                q: 'Rủi ro khi đầu tư BĐS Thủ Thiêm là gì?',
+                a: 'Rủi ro chính cần lưu ý: (1) Giá cao, thanh khoản thứ cấp chậm hơn nội thành truyền thống; (2) Tiến độ hoàn thiện hạ tầng có thể chậm so với quy hoạch; (3) Một số lô đất vẫn đang tranh chấp quy hoạch cần kiểm tra kỹ. SGS LAND hỗ trợ kiểm tra pháp lý và đánh giá rủi ro độc lập trước khi đầu tư.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
+            { name: 'Masterise Homes', slug: 'masterise-homes' },
+            { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
+        ],
+    },
+    'son-kim-land': {
+        slug: 'son-kim-land',
+        name: 'Sơn Kim Land',
+        developer: 'Sơn Kim Land (Sơn Kim Group)',
+        location: 'TP.HCM & Hà Nội',
+        locationSlug: 'marketplace',
+        heroDescription:
+            'Sơn Kim Land là thương hiệu bất động sản cao cấp thuộc Sơn Kim Group — tập đoàn đa ngành hàng đầu Việt Nam với chuỗi trung tâm thương mại GEM CENTER, hệ thống GS25 và các dự án BĐS nghỉ dưỡng, căn hộ tại TP.HCM và Hà Nội. Danh mục dự án đa dạng từ căn hộ trung cao cấp đến bất động sản thương mại và nghỉ dưỡng. SGS LAND hỗ trợ tư vấn mua bán, cho thuê dự án Sơn Kim Land.',
+        priceRange: 'Từ 40 triệu/m² — 150 triệu/m²',
+        projectType: 'BĐS Thương Mại & Căn Hộ Cao Cấp',
+        scale: 'Nhiều dự án tại TP.HCM & Hà Nội',
+        details: [
+            { label: 'Chủ đầu tư', value: 'Sơn Kim Land (Sơn Kim Group)' },
+            { label: 'Thị trường', value: 'TP.HCM, Hà Nội' },
+            { label: 'Phân khúc', value: 'Căn hộ trung cao cấp, BĐS thương mại, nghỉ dưỡng' },
+            { label: 'Dự án tiêu biểu', value: 'Gem Riverside, Seasons Avenue, Metropole Thủ Thiêm' },
+            { label: 'Mức giá tham khảo', value: 'Căn hộ 40-150 triệu/m²' },
+            { label: 'Hệ sinh thái', value: 'GEM CENTER, GS25, khách sạn 5 sao' },
+            { label: 'Kinh nghiệm', value: '20+ năm phát triển BĐS' },
+            { label: 'Đặc điểm', value: 'Tích hợp thương mại, dịch vụ và ở ở cùng khu' },
+        ],
+        amenities: [
+            {
+                title: 'Hệ sinh thái Sơn Kim',
+                items: [
+                    'GEM CENTER — trung tâm sự kiện & hội nghị hàng đầu TP.HCM',
+                    'GS25 — chuỗi cửa hàng tiện lợi Hàn Quốc tiêu chuẩn quốc tế',
+                    'Khách sạn 4-5 sao liên kết trong các dự án lớn',
+                    'Khu thương mại tích hợp với lifestyle shopping',
+                    'F&B cao cấp — nhà hàng, cà phê đa phong cách',
+                    'Khu văn phòng hạng B+/A trong dự án hỗn hợp',
+                    'Dịch vụ quản lý tòa nhà chuyên nghiệp',
+                    'Tiêu chuẩn xây dựng Green Building',
+                ],
+            },
+            {
+                title: 'Dự án nổi bật',
+                items: [
+                    'Gem Riverside Q4 — căn hộ ven sông Sài Gòn',
+                    'Metropole Thủ Thiêm — khu đô thị Thủ Thiêm (đồng đầu tư)',
+                    'Seasons Avenue Mỗ Lao — căn hộ cao cấp Hà Nội',
+                    'Geleximco Southern Star — Hà Đông, Hà Nội',
+                    'GEM Center Nguyễn Đình Chiểu — Q3, TP.HCM',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Sơn Kim Land có uy tín không?',
+                a: 'Sơn Kim Land là thương hiệu BĐS có uy tín tốt, thuộc Sơn Kim Group — tập đoàn thành lập từ 1993 với các mảng kinh doanh đa dạng: BĐS, bán lẻ (GS25), tổ chức sự kiện (GEM CENTER), khách sạn. Dự án Gem Riverside và Metropole Thủ Thiêm được đánh giá cao về thiết kế và chất lượng xây dựng.',
+            },
+            {
+                q: 'Dự án Gem Riverside của Sơn Kim Land như thế nào?',
+                a: 'Gem Riverside tại Quận 4 TP.HCM là dự án căn hộ cao cấp ven sông Sài Gòn. Vị trí cực kỳ hiếm — mặt tiền sông trong nội thành, cách Q1 chỉ 10 phút. Giá 65-100 triệu/m², phù hợp đầu tư dài hạn hoặc ở thực tại trung tâm thành phố với view sông đắt giá.',
+            },
+            {
+                q: 'Sơn Kim Land có dự án nào tại Hà Nội không?',
+                a: 'Sơn Kim Land phát triển Seasons Avenue tại Mỗ Lao (Hà Đông, Hà Nội) — căn hộ cao cấp với hệ thống tiện ích đồng bộ, gần các trục giao thông lớn. Ngoài ra tham gia Geleximco Southern Star cùng đối tác. Hà Nội là thị trường chiến lược mà Sơn Kim Land đang mở rộng.',
+            },
+            {
+                q: 'GEM CENTER liên quan gì đến Sơn Kim Land?',
+                a: 'GEM Center (186 Lê Thánh Tôn, Q1, TP.HCM) là trung tâm sự kiện và hội nghị hàng đầu TP.HCM do Sơn Kim Group vận hành. Đây là phần của hệ sinh thái thương mại Sơn Kim Land — tạo ra giá trị cộng thêm cho các dự án BĐS cùng thương hiệu. Nhà đầu tư tại dự án Sơn Kim Land được hưởng lợi từ hệ sinh thái này.',
+            },
+            {
+                q: 'Nên mua dự án Sơn Kim Land hay thương hiệu khác?',
+                a: 'Sơn Kim Land phù hợp với nhà đầu tư ưu tiên: (1) BĐS tích hợp thương mại – dịch vụ – ở; (2) Cộng đồng cư dân chuyên nghiệp, quốc tế hóa; (3) Hệ sinh thái vận hành chuyên nghiệp dài hạn. So sánh với Vinhomes (quy mô lớn, giá đại trà) và Masterise (hạng sang). SGS LAND tư vấn khách quan, không hoa hồng chủ đầu tư.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Khu Đô Thị Thủ Thiêm', slug: 'thu-thiem' },
+            { name: 'Masterise Homes', slug: 'masterise-homes' },
+            { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
+        ],
+    },
+    'masterise-homes': {
+        slug: 'masterise-homes',
+        name: 'Masterise Homes',
+        developer: 'Masterise Homes (Masterise Group)',
+        location: 'TP.HCM & Toàn Quốc',
+        locationSlug: 'bat-dong-san-thu-duc',
+        heroDescription:
+            'Masterise Homes là thương hiệu bất động sản hạng sang – ultra luxury hàng đầu Việt Nam thuộc Masterise Group. Danh mục dự án bao gồm Masteri Thảo Điền, Masteri An Phú, Masteri Centre Point, Lumière Boulevard, Lumière Riverside và Grand Marina Saigon — đều thiết kế bởi kiến trúc sư quốc tế, vận hành bởi chuỗi khách sạn 5 sao. SGS LAND hỗ trợ tư vấn và giao dịch Masterise Homes chuyên nghiệp.',
+        priceRange: 'Từ 60 triệu/m² — Penthouse 300+ triệu/m²',
+        projectType: 'Bất Động Sản Hạng Sang & Ultra Luxury',
+        scale: 'Nhiều dự án tại TP.HCM, Hà Nội, Phú Quốc',
+        details: [
+            { label: 'Chủ đầu tư', value: 'Masterise Homes (Masterise Group)' },
+            { label: 'Phân khúc', value: 'Hạng sang đến ultra-luxury' },
+            { label: 'Dự án tiêu biểu', value: 'Masteri Thảo Điền, Lumière, Grand Marina' },
+            { label: 'Mức giá', value: '60-300 triệu/m²' },
+            { label: 'Vận hành', value: 'Chuỗi khách sạn 5 sao quốc tế' },
+            { label: 'Thiết kế', value: 'Kiến trúc sư & interior designer quốc tế' },
+            { label: 'Thị trường', value: 'TP.HCM, Hà Nội, Phú Quốc, Nha Trang' },
+            { label: 'Cộng đồng', value: 'Doanh nhân, chuyên gia cấp cao, expats' },
+        ],
+        amenities: [
+            {
+                title: 'Tiêu chuẩn ultra-luxury',
+                items: [
+                    'Thiết kế nội thất bởi designer quốc tế (Châu Âu, Singapore)',
+                    'Lobby khách sạn 6 sao với concierge 24/7',
+                    'Sky Pool, Sky Lounge trên tầng cao',
+                    'Private cinema và wine cellar riêng từng tầng',
+                    'Gym, spa, yoga studio chuẩn khách sạn 5 sao',
+                    'Hệ thống smart home tích hợp toàn bộ',
+                    'Bãi đỗ xe riêng, butler service theo yêu cầu',
+                    'Khu vực cộng đồng business club độc quyền',
+                ],
+            },
+            {
+                title: 'Danh mục dự án Masterise',
+                items: [
+                    'Masteri Thảo Điền (Q2) — căn hộ hạng sang ven sông',
+                    'Masteri An Phú (Q2) — vị trí vàng cạnh Metro số 1',
+                    'Masteri Centre Point (Q9) — kết nối Khu Đô Thị mới',
+                    'Lumière Boulevard (Q9) — căn hộ ultra-luxury',
+                    'Lumière Riverside (Q2) — biệt thự ven sông Sài Gòn',
+                    'Grand Marina Saigon (Ba Son) — phức hợp 5 sao ngay Q1',
+                    'The Global City (An Phú) — đô thị thương mại 117ha',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Masterise Homes có đáng tin không?',
+                a: 'Masterise Homes là thương hiệu BĐS hạng sang uy tín của Việt Nam, có hậu thuẫn từ Masterise Group với các đối tác quốc tế như Marriott, IHG. Dự án Masteri Thảo Điền và Masteri An Phú đã bàn giao thành công, giữ giá tốt qua các chu kỳ thị trường. Đây là lựa chọn an toàn cho nhà đầu tư dài hạn.',
+            },
+            {
+                q: 'Giá căn hộ Masterise Homes hiện nay là bao nhiêu?',
+                a: 'Giá Masterise theo dự án: Masteri Thảo Điền 65-100 triệu/m²; Masteri An Phú 60-90 triệu/m²; Lumière Boulevard 90-150 triệu/m²; Grand Marina Saigon 130-300 triệu/m² (luxury). Cho thuê: Masteri Thảo Điền 25-60 triệu/tháng; căn hộ Lumière 40-80 triệu/tháng. Liên hệ SGS LAND để báo giá cập nhật.',
+            },
+            {
+                q: 'Grand Marina Saigon của Masterise có đặc biệt không?',
+                a: 'Grand Marina Saigon là dự án BĐS hạng sang nhất TP.HCM tại địa điểm lịch sử Ba Son (Q1). Tòa nhà được tích hợp với khách sạn Marriott, JW Marriott và có quyền truy cập bến du thuyền riêng trên sông Sài Gòn. Giá từ 130-300 triệu/m², phù hợp nhà đầu tư tìm kiếm tài sản trú ẩn giá trị và tỷ suất cho thuê cao nhất thị trường.',
+            },
+            {
+                q: 'Masteri Thảo Điền hay Masteri An Phú nên chọn?',
+                a: 'Masteri Thảo Điền — vị trí gần sông hơn, cộng đồng expat đông, tiện ích xung quanh phong phú; phù hợp cho thuê ngắn hạn và cư dân nước ngoài. Masteri An Phú — cạnh ga Metro số 1, kết nối toàn TP.HCM dễ dàng; phù hợp đi làm và thanh khoản cao. SGS LAND tư vấn chọn theo mục tiêu cụ thể của bạn.',
+            },
+            {
+                q: 'Lumière Boulevard và Lumière Riverside khác nhau thế nào?',
+                a: 'Lumière Boulevard (Tô Ngọc Vân, Q9/Thủ Đức) — căn hộ ultra-luxury theo phong cách Paris, gần Metro số 1, giá 90-150 triệu/m². Lumière Riverside (Q2) — biệt thự ven sông Sài Gòn tầm nhìn toàn cảnh, tính riêng tư cao, giá 120-200 triệu/m². Cả hai đều được vận hành bởi chuỗi khách sạn 5 sao quốc tế.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'The Global City', slug: 'the-global-city' },
+            { name: 'Khu Đô Thị Thủ Thiêm', slug: 'thu-thiem' },
+            { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
+        ],
+    },
+    'the-global-city': {
+        slug: 'the-global-city',
+        name: 'The Global City',
+        developer: 'Masterise Homes',
+        location: 'An Phú, TP Thủ Đức, TP.HCM',
+        locationSlug: 'bat-dong-san-thu-duc',
+        heroDescription:
+            'The Global City là đại đô thị thương mại – dịch vụ – nhà ở 117ha do Masterise Homes phát triển tại An Phú, TP Thủ Đức — vị trí đắc địa nhất khu Đông TP.HCM, cạnh Metro số 1 và đối diện Thủ Thiêm. Là tổ hợp lớn nhất của Masterise Homes, The Global City bao gồm nhà phố thương mại, biệt thự, shophouse, văn phòng, trường học và bệnh viện tiêu chuẩn quốc tế. SGS LAND hỗ trợ tư vấn và giao dịch The Global City.',
+        priceRange: 'Nhà phố từ 15 tỷ — Biệt thự từ 30 tỷ',
+        projectType: 'Đại Đô Thị Thương Mại Quốc Tế',
+        scale: '117 ha',
+        details: [
+            { label: 'Chủ đầu tư', value: 'Masterise Homes' },
+            { label: 'Vị trí', value: 'An Phú, TP Thủ Đức, TP.HCM' },
+            { label: 'Quy mô', value: '117 ha' },
+            { label: 'Kết nối Metro', value: 'Cạnh ga Metro số 1 An Phú' },
+            { label: 'Loại hình', value: 'Nhà phố, biệt thự, shophouse thương mại' },
+            { label: 'Mức giá', value: 'Nhà phố 15-40 tỷ; biệt thự 30-120 tỷ' },
+            { label: 'Tiêu chuẩn', value: 'Chuẩn Singapore (Capitaland, Keppel)' },
+            { label: 'Pháp lý', value: 'Sổ hồng riêng, quy hoạch 1/500 rõ ràng' },
+        ],
+        amenities: [
+            {
+                title: 'Hạ tầng thương mại đẳng cấp',
+                items: [
+                    'Trung tâm thương mại quy mô 200.000m² (chuẩn Singapore)',
+                    'Văn phòng hạng A+ — hub kinh doanh khu Đông',
+                    'Trường học quốc tế (BIS, Eaton House, IVS)',
+                    'Bệnh viện tiêu chuẩn 5 sao quốc tế',
+                    'Khách sạn 5-6 sao với hội trường sự kiện lớn',
+                    'Khu F&B đa ẩm thực tầm cỡ quốc tế',
+                    'Fitness center và spa toàn diện',
+                    'Khu vui chơi trẻ em & công viên cộng đồng',
+                ],
+            },
+            {
+                title: 'Kết nối vượt trội',
+                items: [
+                    'Ga Metro số 1 An Phú — đi vào hoạt động 2024',
+                    'Cầu Thủ Thiêm 2 — kết nối Q1 trong 5 phút',
+                    'Đường Mai Chí Thọ — trục huyết mạch khu Đông',
+                    'Cao tốc TP.HCM – Long Thành – Dầu Giây',
+                    'Tunnel Thủ Thiêm kết nối thẳng Q1',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'The Global City có phải dự án tốt để đầu tư không?',
+                a: 'The Global City là dự án chiến lược của Masterise Homes tại vị trí đắc địa nhất khu Đông TP.HCM. Với quy mô 117ha, tích hợp đầy đủ thương mại – giáo dục – y tế – ở ở, dự án tạo một đô thị tự cung tự cấp hoàn chỉnh. Phù hợp đầu tư nhà phố thương mại (cho thuê kinh doanh) và biệt thự nghỉ dưỡng-ở thực cao cấp.',
+            },
+            {
+                q: 'Giá nhà phố thương mại The Global City là bao nhiêu?',
+                a: 'Nhà phố thương mại The Global City (shophouse) có giá từ 15-40 tỷ tùy vị trí mặt tiền và diện tích. Biệt thự song lập từ 30-60 tỷ; biệt thự đơn lập từ 60-120 tỷ. Cho thuê nhà phố thương mại từ 50-200 triệu/tháng (mặt tiền trục chính). Liên hệ SGS LAND để nhận bảng giá và chính sách chiết khấu.',
+            },
+            {
+                q: 'The Global City cách Q1 và Thủ Thiêm bao xa?',
+                a: 'The Global City tại An Phú, TP Thủ Đức — cách Q1 khoảng 6-8km, di chuyển qua cầu Thủ Thiêm 2 hoặc hầm Thủ Thiêm chỉ 5-10 phút. Cách khu Thủ Thiêm khoảng 2km (kết nối đường Mai Chí Thọ). Metro số 1 ga An Phú chỉ cách 5 phút đi bộ.',
+            },
+            {
+                q: 'Trường học và bệnh viện tại The Global City như thế nào?',
+                a: 'The Global City tích hợp hệ thống giáo dục – y tế đẳng cấp: trường học quốc tế BIS (British International School), Eaton House và IVS với chương trình IB/IGCSE; bệnh viện 5 sao tiêu chuẩn quốc tế với hơn 300 giường bệnh. Đây là lợi thế lớn cho gia đình có con nhỏ và cư dân nước ngoài.',
+            },
+            {
+                q: 'Tiêu chuẩn Singapore tại The Global City nghĩa là gì?',
+                a: 'Masterise Homes hợp tác với các kiến trúc sư và nhà quy hoạch từ Singapore (từng làm việc với CapitaLand, Keppel Land) để thiết kế The Global City. Điều này có nghĩa: quy hoạch phân khu khoa học, hệ thống cây xanh – không gian công cộng đạt chuẩn, hạ tầng kỹ thuật đồng bộ và thiết kế đô thị bền vững — tương tự One North hay Sentosa Cove của Singapore.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Masterise Homes', slug: 'masterise-homes' },
+            { name: 'Khu Đô Thị Thủ Thiêm', slug: 'thu-thiem' },
+            { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
+        ],
+    },
+    'nha-pho-trung-tam': {
+        slug: 'nha-pho-trung-tam',
+        name: 'Nhà Phố Trung Tâm TP.HCM',
+        developer: 'Nhiều Chủ Sở Hữu Cá Nhân & Tổ Chức',
+        location: 'Quận 1, 3, 5, Phú Nhuận, Bình Thạnh, Gò Vấp',
+        locationSlug: 'marketplace',
+        heroDescription:
+            'Nhà phố trung tâm TP.HCM — tài sản bất động sản ổn định giá nhất và thanh khoản cao nhất Việt Nam. Mặt tiền kinh doanh Quận 1-3, nhà hẻm xe hơi, shophouse phố cổ — đây là tài sản tích lũy bền vững qua các thế hệ với giá thuê thương mại cao, giá trị tăng đều đặn và pháp lý ổn định. SGS LAND hỗ trợ tìm kiếm, định giá AI và giao dịch nhà phố trung tâm TP.HCM.',
+        priceRange: 'Nhà hẻm từ 5 tỷ — Mặt tiền Q1 từ 30 tỷ',
+        projectType: 'Nhà Phố & Shophouse Nội Thành',
+        scale: 'Toàn khu nội thành TP.HCM',
+        details: [
+            { label: 'Khu vực', value: 'Q1, Q3, Q5, Phú Nhuận, Bình Thạnh, Gò Vấp' },
+            { label: 'Loại hình', value: 'Nhà mặt tiền, nhà hẻm, shophouse, nhà phố liền kề' },
+            { label: 'Giá mặt tiền Q1', value: '500-2.000 triệu/m²' },
+            { label: 'Giá hẻm xe hơi Q3', value: '100-250 triệu/m²' },
+            { label: 'Cho thuê mặt bằng', value: '50-300 triệu/tháng (mặt tiền lớn)' },
+            { label: 'Pháp lý', value: 'Sổ hồng chính chủ, thổ cư ổn định' },
+            { label: 'Đặc điểm', value: 'Tài sản tích lũy bền vững qua thế hệ' },
+            { label: 'Phù hợp', value: 'Kinh doanh, đầu tư cho thuê, tích lũy' },
+        ],
+        amenities: [
+            {
+                title: 'Ưu điểm nhà phố nội thành',
+                items: [
+                    'Vị trí trung tâm, tiếp cận mọi tiện ích thành phố',
+                    'Cho thuê mặt bằng kinh doanh giá cao, ổn định',
+                    'Pháp lý sổ đỏ thổ cư — an toàn, không thời hạn',
+                    'Giá trị tăng bền vững 8-15%/năm trong 30 năm qua',
+                    'Đa dạng hóa danh mục — ở + kinh doanh + cho thuê',
+                    'Thanh khoản tốt, dễ bán lại bất kỳ thời điểm',
+                    'Không mất phí quản lý chung cư, tự chủ hoàn toàn',
+                    'Có thể xây mới, sửa chữa tự do theo nhu cầu',
+                ],
+            },
+            {
+                title: 'Khu vực nổi bật',
+                items: [
+                    'Quận 1 (Nguyễn Huệ, Đồng Khởi) — đắt giá nhất VN',
+                    'Quận 3 (Võ Văn Tần, Nam Kỳ Khởi Nghĩa) — nhà phố cổ',
+                    'Phú Nhuận (Phan Xích Long, Hoàng Văn Thụ) — sầm uất',
+                    'Bình Thạnh (Đinh Bộ Lĩnh, Xô Viết Nghệ Tĩnh) — gần Landmark',
+                    'Quận 5 (Châu Văn Liêm, Trần Hưng Đạo) — trung tâm người Hoa',
+                    'Gò Vấp (Lê Văn Thọ, Quang Trung) — đang tăng giá mạnh',
+                ],
+            },
+        ],
+        faqs: [
+            {
+                q: 'Nên mua nhà phố hay căn hộ tại TP.HCM để đầu tư?',
+                a: 'Nhà phố trung tâm có ba lợi thế so với căn hộ: (1) Pháp lý sổ đỏ thổ cư — không thời hạn, không mất phí quản lý; (2) Thu nhập kép — vừa ở, vừa cho thuê mặt bằng; (3) Giá trị tăng trưởng dài hạn bền vững hơn. Nhược điểm: giá cao hơn căn hộ cùng vị trí 30-50%. Phù hợp nhà đầu tư tài chính mạnh, tầm nhìn dài hạn.',
+            },
+            {
+                q: 'Giá mặt tiền Quận 1 TP.HCM hiện nay là bao nhiêu?',
+                a: 'Giá mặt tiền Quận 1 là cao nhất Việt Nam: đường Nguyễn Huệ, Đồng Khởi 1.000-2.000 triệu/m²; Lê Lợi, Lê Thánh Tôn 500-1.000 triệu/m²; các đường nhánh 300-600 triệu/m². Cho thuê mặt bằng kinh doanh mặt tiền Q1: 100-500 triệu/tháng. Đây là tài sản hiếm và tăng giá bền vững nhất thị trường.',
+            },
+            {
+                q: 'Nhà hẻm xe hơi Quận 3, Phú Nhuận giá bao nhiêu?',
+                a: 'Nhà hẻm xe hơi (hẻm 4-6m) tại Q3 từ 100-200 triệu/m²; tại Phú Nhuận 80-150 triệu/m²; tại Bình Thạnh 60-120 triệu/m². Nhà 4x15m (60m²) Q3 dao động 6-12 tỷ. Đây là phân khúc phổ biến nhất — vừa ở thực, vừa tích lũy tài sản với ngân sách 5-15 tỷ.',
+            },
+            {
+                q: 'SGS LAND hỗ trợ tìm nhà phố trung tâm như thế nào?',
+                a: 'SGS LAND cung cấp: (1) Tìm kiếm nhà phố theo yêu cầu — khu vực, giá, diện tích, pháp lý; (2) Định giá AI miễn phí — so sánh với 500+ giao dịch thực trong bán kính 500m; (3) Kiểm tra pháp lý sổ đỏ độc lập trước giao dịch; (4) Hỗ trợ đàm phán giá và điều kiện hợp đồng; (5) Kết nối công chứng, ngân hàng vay vốn lãi suất tốt.',
+            },
+            {
+                q: 'Tại sao nhà phố nội thành TP.HCM luôn tăng giá?',
+                a: 'Ba lý do cốt lõi: (1) Quỹ đất nội thành hữu hạn — không thể xây mới mặt tiền lớn; (2) Lạm phát đồng tiền dài hạn đẩy giá tài sản thực tăng; (3) TP.HCM là đầu tàu kinh tế Việt Nam — nhu cầu mặt bằng kinh doanh và ở thực liên tục tăng theo dân số và GDP. Trong 30 năm qua, nhà phố nội thành TP.HCM tăng giá trung bình 12-18%/năm.',
+            },
+        ],
+        relatedProjects: [
+            { name: 'Khu Đô Thị Thủ Thiêm', slug: 'thu-thiem' },
+            { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
+            { name: 'Mua Bán BĐS TP.HCM', slug: 'marketplace' },
         ],
     },
 };

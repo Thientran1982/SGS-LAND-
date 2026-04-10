@@ -23,6 +23,10 @@ export const ROUTES = {
     // SEO Landing Pages — Local & Project
     BDS_DONG_NAI: 'bat-dong-san-dong-nai',
     BDS_LONG_THANH: 'bat-dong-san-long-thanh',
+    BDS_THU_DUC: 'bat-dong-san-thu-duc',
+    BDS_BINH_DUONG: 'bat-dong-san-binh-duong',
+    BDS_QUAN_7: 'bat-dong-san-quan-7',
+    BDS_BINH_CHANH: 'bat-dong-san-binh-chanh',
     DU_AN: 'du-an',
 
     // Legal Pages

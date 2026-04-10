@@ -465,8 +465,17 @@ export const ProductSearch: React.FC = () => {
                 {[
                     { label: 'BĐS Đồng Nai', href: `/${ROUTES.BDS_DONG_NAI}` },
                     { label: 'BĐS Long Thành', href: `/${ROUTES.BDS_LONG_THANH}` },
+                    { label: 'BĐS Thủ Đức', href: `/${ROUTES.BDS_THU_DUC}` },
+                    { label: 'BĐS Bình Dương', href: `/${ROUTES.BDS_BINH_DUONG}` },
+                    { label: 'BĐS Quận 7', href: `/${ROUTES.BDS_QUAN_7}` },
+                    { label: 'BĐS Bình Chánh', href: `/${ROUTES.BDS_BINH_CHANH}` },
                     { label: 'Aqua City', href: `/${ROUTES.DU_AN}/aqua-city` },
-                    { label: 'Manhattan Quận 9', href: `/${ROUTES.DU_AN}/manhattan` },
+                    { label: 'Vinhomes Grand Park', href: `/${ROUTES.DU_AN}/vinhomes-grand-park` },
+                    { label: 'Izumi City', href: `/${ROUTES.DU_AN}/izumi-city` },
+                    { label: 'The Global City', href: `/${ROUTES.DU_AN}/the-global-city` },
+                    { label: 'Masterise Homes', href: `/${ROUTES.DU_AN}/masterise-homes` },
+                    { label: 'Thủ Thiêm', href: `/${ROUTES.DU_AN}/thu-thiem` },
+                    { label: 'Manhattan Bình Dương', href: `/${ROUTES.DU_AN}/manhattan` },
                 ].map(({ label, href }) => (
                     <a
                         key={href}

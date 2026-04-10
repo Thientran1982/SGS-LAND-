@@ -147,10 +147,10 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/status" />
   </url>
 
-  <!-- ══ LANDING PAGES ĐỊA PHƯƠNG & DỰ ÁN ══ -->
+  <!-- ══ LANDING PAGES ĐỊA PHƯƠNG ══ -->
   <url>
     <loc>https://sgsland.vn/bat-dong-san-dong-nai</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.88</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-dong-nai" />
@@ -158,23 +158,121 @@
   </url>
   <url>
     <loc>https://sgsland.vn/bat-dong-san-long-thanh</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.87</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-long-thanh" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-long-thanh" />
   </url>
   <url>
+    <loc>https://sgsland.vn/bat-dong-san-thu-duc</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.87</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-thu-duc" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-thu-duc" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/bat-dong-san-binh-duong</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.86</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-binh-duong" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-binh-duong" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/bat-dong-san-quan-7</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-quan-7" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-quan-7" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/bat-dong-san-binh-chanh</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.84</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/bat-dong-san-binh-chanh" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/bat-dong-san-binh-chanh" />
+  </url>
+
+  <!-- ══ LANDING PAGES DỰ ÁN ══ -->
+  <url>
     <loc>https://sgsland.vn/du-an/aqua-city</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/aqua-city" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/aqua-city" />
   </url>
   <url>
+    <loc>https://sgsland.vn/du-an/izumi-city</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.84</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/izumi-city" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/izumi-city" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/vinhomes-grand-park</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.84</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/vinhomes-grand-park" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/vinhomes-grand-park" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/vinhomes-central-park</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.83</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/vinhomes-central-park" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/vinhomes-central-park" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/thu-thiem</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.83</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/thu-thiem" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/thu-thiem" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/son-kim-land</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/son-kim-land" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/son-kim-land" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/masterise-homes</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/masterise-homes" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/masterise-homes" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/the-global-city</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.82</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/the-global-city" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/the-global-city" />
+  </url>
+  <url>
+    <loc>https://sgsland.vn/du-an/nha-pho-trung-tam</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.81</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/nha-pho-trung-tam" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/du-an/nha-pho-trung-tam" />
+  </url>
+  <url>
     <loc>https://sgsland.vn/du-an/manhattan</loc>
-    <lastmod>2026-04-09</lastmod>
+    <lastmod>2026-04-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.83</priority>
     <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/du-an/manhattan" />
