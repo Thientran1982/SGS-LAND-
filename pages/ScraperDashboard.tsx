@@ -739,9 +739,16 @@ const INTEREST_LABELS: Record<LeadInterest, { label: string; cls: string }> = {
 };
 
 const SOURCE_DISPLAY: Record<string, { label: string; cls: string }> = {
-  sgsland_db:  { label: 'DB nội bộ',    cls: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' },
-  batdongsan:  { label: 'BatDongSan',   cls: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
-  muaban:      { label: 'Muaban',        cls: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400' },
+  sgsland_db:    { label: 'DB nội bộ',    cls: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' },
+  batdongsan:    { label: 'BatDongSan',   cls: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
+  muaban:        { label: 'Muaban',       cls: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400' },
+  homedy:        { label: 'Homedy',       cls: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' },
+  homedy_forum:  { label: 'Homedy HĐ',   cls: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
+  alonhadat:     { label: 'AlonNhaDat',  cls: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+  mogi:          { label: 'Mogi',         cls: 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' },
+  nhatot:        { label: 'NhaTot',       cls: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400' },
+  cafeland:      { label: 'Cafeland',     cls: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
+  website:       { label: 'Trang dự án', cls: 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300' },
 };
 
 function LeadsTab() {
@@ -985,12 +992,12 @@ function LeadsTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-[var(--glass-surface-hover)]">
-                  <th className="text-left px-4 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Họ tên</th>
-                  <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider whitespace-nowrap">Số điện thoại</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Liên hệ</th>
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider whitespace-nowrap">SĐT / Email</th>
                   <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Dự án</th>
                   <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Phân loại</th>
                   <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Nguồn</th>
-                  <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Tin đăng</th>
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Tin / Ghi chú</th>
                   <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">CRM</th>
                 </tr>
               </thead>
@@ -1000,25 +1007,26 @@ function LeadsTab() {
                   const colorCls  = proj ? PROJECT_COLOR_MAP[proj.color] : PROJECT_COLOR_MAP['indigo'];
                   const inter     = INTEREST_LABELS[lead.interest] ?? INTEREST_LABELS['unknown'];
                   const srcInfo   = SOURCE_DISPLAY[lead.source] ?? { label: lead.source, cls: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' };
-                  const isImported= imported.has(lead.id);
-                  const isImporting=importing.has(lead.id);
+                  const isImported  = imported.has(lead.id);
+                  const isImporting = importing.has(lead.id);
+                  const hasContact  = !!(lead.phone || lead.email);
                   return (
                     <tr key={lead.id} className={`hover:bg-[var(--glass-surface-hover)] transition-colors ${isImported ? 'opacity-60' : ''}`}>
                       <td className="px-4 py-3">
-                        <span className="font-medium text-[var(--text-primary)]">{lead.name || '—'}</span>
-                        {lead.email && <div className="text-xs text-[var(--text-tertiary)] mt-0.5">{lead.email}</div>}
+                        <span className="font-medium text-[var(--text-primary)] text-sm">{lead.name || 'Không rõ'}</span>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
-                        <a
-                          href={`tel:${lead.phone}`}
-                          className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline tracking-wide"
-                        >
-                          {lead.phone}
-                        </a>
+                        {lead.phone
+                          ? <a href={`tel:${lead.phone}`} className="block font-bold text-indigo-600 dark:text-indigo-400 hover:underline tracking-wide text-sm">{lead.phone}</a>
+                          : null}
+                        {lead.email
+                          ? <a href={`mailto:${lead.email}`} className="block text-xs text-[var(--text-secondary)] hover:text-indigo-500 hover:underline mt-0.5 max-w-[180px] truncate">{lead.email}</a>
+                          : null}
+                        {!hasContact && <span className="text-xs text-[var(--text-tertiary)]">—</span>}
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1.5">
-                          {proj && <span className={`w-5 h-5 rounded flex items-center justify-center text-xs border ${colorCls}`}>{proj.logo}</span>}
+                          {proj && <span className={`w-5 h-5 rounded flex items-center justify-center text-xs border flex-shrink-0 ${colorCls}`}>{proj.logo}</span>}
                           <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap">{lead.project}</span>
                         </div>
                       </td>
@@ -1027,15 +1035,15 @@ function LeadsTab() {
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${srcInfo.cls}`}>{srcInfo.label}</span>
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${srcInfo.cls}`}>{srcInfo.label}</span>
                           {lead.sourceUrl && (
-                            <a href={lead.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--text-tertiary)] hover:text-indigo-500 transition-colors">{ICONS.EXTERNAL}</a>
+                            <a href={lead.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--text-tertiary)] hover:text-indigo-500 transition-colors flex-shrink-0">{ICONS.EXTERNAL}</a>
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-3 max-w-[200px]">
-                        <div className="text-xs text-[var(--text-secondary)] line-clamp-2">{lead.listing || '—'}</div>
-                        {lead.price && <div className="text-xs font-semibold text-[var(--text-primary)] mt-0.5">{lead.price}</div>}
+                      <td className="px-3 py-3 max-w-[220px]">
+                        <div className="text-xs text-[var(--text-secondary)] line-clamp-2">{lead.listing || lead.notes || '—'}</div>
+                        {lead.price && <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">{lead.price}</div>}
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
                         {isImported ? (
@@ -1043,8 +1051,8 @@ function LeadsTab() {
                         ) : (
                           <button
                             onClick={() => handleImport(lead)}
-                            disabled={isImporting}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
+                            disabled={isImporting || !hasContact}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             {isImporting
                               ? <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
