@@ -4,6 +4,33 @@ import { useTranslation } from '../services/i18n';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
 
+const LOCATION_SEO_META: Record<string, { title: string; description: string }> = {
+    'bat-dong-san-dong-nai': {
+        title: 'Bất Động Sản Đồng Nai | Nhà Đất, Căn Hộ, Dự Án - SGS LAND',
+        description: 'Tìm mua bán bất động sản Đồng Nai: nhà đất Long Thành, Nhơn Trạch, Biên Hòa. Cập nhật giá thị trường, dự án mới và pháp lý rõ ràng tại SGS LAND.',
+    },
+    'bat-dong-san-long-thanh': {
+        title: 'Bất Động Sản Long Thành | Đất Nền Sân Bay, Căn Hộ - SGS LAND',
+        description: 'Mua bán bất động sản Long Thành, Đồng Nai: đất nền khu vực sân bay Long Thành, dự án căn hộ và liền kề. Cơ hội đầu tư tiềm năng tại SGS LAND.',
+    },
+    'bat-dong-san-thu-duc': {
+        title: 'Bất Động Sản TP Thủ Đức | Căn Hộ, Nhà Phố, Metro - SGS LAND',
+        description: 'Mua bán bất động sản TP Thủ Đức: căn hộ Thủ Thiêm, Vinhomes Grand Park, khu vực Metro số 1. Tư vấn pháp lý và định giá AI miễn phí tại SGS LAND.',
+    },
+    'bat-dong-san-binh-duong': {
+        title: 'Bất Động Sản Bình Dương | Căn Hộ, Đất Nền KCN - SGS LAND',
+        description: 'Mua bán bất động sản Bình Dương: căn hộ Thuận An, Dĩ An, đất nền Bình Dương. Nhu cầu cho thuê cao từ 500.000+ chuyên gia KCN. Tư vấn miễn phí SGS LAND.',
+    },
+    'bat-dong-san-quan-7': {
+        title: 'Bất Động Sản Quận 7 | Phú Mỹ Hưng, Căn Hộ Cao Cấp - SGS LAND',
+        description: 'Mua bán bất động sản Quận 7 TP.HCM: Phú Mỹ Hưng, Sunrise City, khu cộng đồng quốc tế. Căn hộ cao cấp, nhà phố, biệt thự. Tư vấn và định giá AI tại SGS LAND.',
+    },
+    'bat-dong-san-phu-nhuan': {
+        title: 'Bất Động Sản Phú Nhuận | Nhà Phố, Biệt Thự Nội Đô - SGS LAND',
+        description: 'Mua bán bất động sản Phú Nhuận TP.HCM: nhà phố mặt tiền, nhà hẻm xe hơi, căn hộ cao cấp. Gần sân bay Tân Sơn Nhất, giáp Q1/Q3. Tư vấn và định giá AI miễn phí tại SGS LAND.',
+    },
+};
+
 interface LocationConfig {
     slug: string;
     name: string;
@@ -560,22 +587,22 @@ export default function LocalLandingPage() {
         return p.toLocaleString('vi-VN');
     };
 
-    const metaTitle = `Bất Động Sản ${cfg.name} | Nhà Phố, Căn Hộ, Đất Nền — SGS LAND`;
-    const metaDesc = cfg.heroDescription.length > 155
-        ? cfg.heroDescription.slice(0, 152) + '...'
-        : cfg.heroDescription;
+    const seoMeta = LOCATION_SEO_META[slug] ?? {
+        title: `Bất Động Sản ${cfg.name} | Nhà Phố, Căn Hộ - SGS LAND`,
+        description: cfg.heroDescription.slice(0, 155),
+    };
 
     return (
         <>
             <SeoHead
-                title={metaTitle}
-                description={metaDesc}
+                title={seoMeta.title}
+                description={seoMeta.description}
                 canonicalPath={`/${cfg.slug}`}
                 structuredData={{
                     '@context': 'https://schema.org',
                     '@type': 'RealEstateAgent',
                     name: `SGS LAND — BĐS ${cfg.name}`,
-                    description: metaDesc,
+                    description: seoMeta.description,
                     url: `https://sgsland.vn/${cfg.slug}`,
                     areaServed: {
                         '@type': 'Place',
