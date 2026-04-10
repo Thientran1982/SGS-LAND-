@@ -24,8 +24,53 @@ const DEFAULT_META = {
 
 /** Server-side route → meta mapping (mirrors utils/seo.ts ROUTE_SEO without browser APIs). */
 const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?: string; noIndex?: boolean; structuredData?: object }> = {
-  '':                      { title: DEFAULT_META.title, description: DEFAULT_META.description, h1: 'SGS LAND - Nền Tảng Quản Lý Bất Động Sản AI' },
-  home:                    { title: DEFAULT_META.title, description: DEFAULT_META.description, h1: 'SGS LAND - Nền Tảng Quản Lý Bất Động Sản AI' },
+  '': {
+    title: DEFAULT_META.title,
+    description: DEFAULT_META.description,
+    h1: 'SGS LAND - Nền Tảng Quản Lý Bất Động Sản AI',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          '@id': `${APP_URL}/#org`,
+          name: 'SGS LAND',
+          url: APP_URL,
+          logo: { '@type': 'ImageObject', url: `${APP_URL}/apple-touch-icon.png` },
+          sameAs: ['https://www.facebook.com/sgslandvn'],
+          description: 'Nền tảng công nghệ bất động sản AI hàng đầu Việt Nam, chuyên tư vấn và giao dịch bất động sản TP.HCM, Đồng Nai, Bình Dương.',
+          contactPoint: { '@type': 'ContactPoint', contactType: 'customer service', availableLanguage: ['Vietnamese', 'English'], url: `${APP_URL}/contact` },
+          areaServed: { '@type': 'Country', name: 'Việt Nam' },
+          knowsAbout: ['Bất động sản', 'Định giá AI', 'CRM bất động sản', 'Aqua City', 'Vinhomes', 'Masterise Homes', 'Đồng Nai', 'TP.HCM', 'Bình Dương'],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/#agent`,
+          name: 'SGS LAND - Nền Tảng BĐS AI Số 1 Việt Nam',
+          url: APP_URL,
+          description: 'Định giá bất động sản AI, mua bán BĐS, CRM đa kênh tại Việt Nam.',
+          areaServed: [
+            { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+            { '@type': 'State', name: 'Đồng Nai', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+            { '@type': 'State', name: 'Bình Dương', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+          ],
+          knowsAbout: ['Aqua City Novaland', 'Izumi City', 'Vinhomes Grand Park', 'Vinhomes Central Park', 'The Global City', 'Masterise Homes', 'Thủ Thiêm', 'BĐS Long Thành', 'BĐS Đồng Nai', 'BĐS Bình Dương', 'BĐS Quận 7', 'BĐS Bình Chánh', 'BĐS TP Thủ Đức'],
+        },
+        {
+          '@type': 'WebSite',
+          '@id': `${APP_URL}/#website`,
+          url: APP_URL,
+          name: 'SGS LAND',
+          potentialAction: { '@type': 'SearchAction', target: { '@type': 'EntryPoint', urlTemplate: `${APP_URL}/marketplace?q={search_term_string}` }, 'query-input': 'required name=search_term_string' },
+        },
+      ],
+    },
+  },
+  home: {
+    title: DEFAULT_META.title,
+    description: DEFAULT_META.description,
+    h1: 'SGS LAND - Nền Tảng Quản Lý Bất Động Sản AI',
+  },
   marketplace:             { title: 'Mua Bán Bất Động Sản | Nhà Đất Toàn Quốc - SGS LAND', description: 'Mua bán bất động sản toàn quốc — tìm kiếm nhà đất, căn hộ, biệt thự theo vị trí, diện tích và mức giá. Kho hàng nghìn bất động sản cập nhật realtime.', h1: 'Mua Bán Bất Động Sản | Nhà Đất Toàn Quốc' },
   'ai-valuation':          { title: 'Định Giá Bất Động Sản Bằng AI | Sai Số ±5% - SGS LAND', description: 'Công nghệ định giá bất động sản AI từ SGS LAND với sai số chỉ ±5–10% — ngang chuẩn thẩm định viên chuyên nghiệp. Hoàn toàn miễn phí.', h1: 'Định Giá Bất Động Sản Bằng AI' },
   'crm-platform':          { title: 'Nền Tảng CRM Bất Động Sản Thế Hệ Mới | SGS LAND', description: 'Hệ thống CRM bất động sản tích hợp AI, đa kênh Zalo/Facebook/Email, tự động hóa quy trình từ lead đến hợp đồng.', h1: 'CRM Bất Động Sản Thế Hệ Mới' },
@@ -178,6 +223,424 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
           url: `${APP_URL}/du-an/manhattan`,
           address: { '@type': 'PostalAddress', addressLocality: 'Bình Dương', addressCountry: 'VN' },
           offers: { '@type': 'Offer', price: '35000000', priceCurrency: 'VND', unitText: 'm²' },
+        },
+      ],
+    },
+  },
+
+  // ─── New Location Landing Pages ─────────────────────────────────────────────
+  'bat-dong-san-thu-duc': {
+    title: 'Bất Động Sản TP Thủ Đức | Căn Hộ, Nhà Phố, Metro - SGS LAND',
+    description: 'Mua bán bất động sản TP Thủ Đức: căn hộ Thủ Thiêm, Vinhomes Grand Park, khu vực Metro số 1. Tư vấn pháp lý và định giá AI miễn phí tại SGS LAND.',
+    h1: 'Bất Động Sản TP Thủ Đức',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'BĐS TP Thủ Đức', item: `${APP_URL}/bat-dong-san-thu-duc` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Bất động sản TP Thủ Đức có nên đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'TP Thủ Đức là khu vực có tiềm năng tăng trưởng BĐS cao nhất TP.HCM nhờ Metro số 1, Khu Đô Thị Thủ Thiêm và Khu Công Nghệ Cao SHTP. Giá căn hộ tăng 10-18%/năm.' } },
+            { '@type': 'Question', name: 'Giá căn hộ TP Thủ Đức hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Thủ Thiêm (Q2 cũ) 80-250 triệu/m²; khu vực Metro số 1 (Q9 cũ) 45-90 triệu/m²; Thủ Đức 35-65 triệu/m².' } },
+            { '@type': 'Question', name: 'Metro số 1 ảnh hưởng thế nào đến BĐS Thủ Đức?', acceptedAnswer: { '@type': 'Answer', text: 'BĐS trong bán kính 500m quanh các ga Metro số 1 tăng giá 20-40% sau khi Metro vận hành. Nhà cho thuê gần ga Metro đạt tỷ suất 6-9%/năm.' } },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/bat-dong-san-thu-duc#agent`,
+          name: 'SGS LAND - BĐS TP Thủ Đức',
+          url: `${APP_URL}/bat-dong-san-thu-duc`,
+          areaServed: { '@type': 'City', name: 'TP Thủ Đức', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
+          knowsAbout: ['Bất động sản Thủ Đức', 'Thủ Thiêm', 'Vinhomes Grand Park', 'The Global City', 'Metro số 1', 'SHTP'],
+        },
+      ],
+    },
+  },
+  'bat-dong-san-binh-duong': {
+    title: 'Bất Động Sản Bình Dương | Căn Hộ, Đất Nền KCN - SGS LAND',
+    description: 'Mua bán bất động sản Bình Dương: căn hộ Thuận An, Dĩ An, đất nền Bình Dương. Nhu cầu cho thuê cao từ 500.000+ chuyên gia KCN. Tư vấn miễn phí SGS LAND.',
+    h1: 'Bất Động Sản Bình Dương',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'BĐS Bình Dương', item: `${APP_URL}/bat-dong-san-binh-duong` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Bất động sản Bình Dương có tiềm năng không?', acceptedAnswer: { '@type': 'Answer', text: 'Bình Dương là tỉnh có tốc độ đô thị hóa nhanh nhất cả nước với hơn 30 KCN đang hoạt động. Giá BĐS tăng 8-15%/năm trong 5 năm gần đây.' } },
+            { '@type': 'Question', name: 'Mua căn hộ Bình Dương để cho thuê có lời không?', acceptedAnswer: { '@type': 'Answer', text: 'Căn hộ cao cấp tại Bình Dương cho thuê 10-25 triệu/tháng. Tỷ suất cho thuê bruto đạt 5-8%/năm, vượt lãi suất gửi tiết kiệm ngân hàng.' } },
+            { '@type': 'Question', name: 'Giá đất Bình Dương hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Thuận An, Dĩ An 40-100 triệu/m²; Thủ Dầu Một 30-80 triệu/m²; Thành Phố Mới 20-50 triệu/m²; Bến Cát, Tân Uyên 8-20 triệu/m².' } },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/bat-dong-san-binh-duong#agent`,
+          name: 'SGS LAND - BĐS Bình Dương',
+          url: `${APP_URL}/bat-dong-san-binh-duong`,
+          areaServed: { '@type': 'State', name: 'Bình Dương', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+          knowsAbout: ['Bất động sản Bình Dương', 'Khu công nghiệp Bình Dương', 'Thuận An', 'Dĩ An', 'Thành Phố Mới Bình Dương', 'Manhattan Bình Dương'],
+        },
+      ],
+    },
+  },
+  'bat-dong-san-quan-7': {
+    title: 'Bất Động Sản Quận 7 | Phú Mỹ Hưng, Căn Hộ Cao Cấp - SGS LAND',
+    description: 'Mua bán bất động sản Quận 7 TP.HCM: Phú Mỹ Hưng, Sunrise City, khu cộng đồng quốc tế. Căn hộ cao cấp, nhà phố, biệt thự. Tư vấn và định giá AI tại SGS LAND.',
+    h1: 'Bất Động Sản Quận 7',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'BĐS Quận 7', item: `${APP_URL}/bat-dong-san-quan-7` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Bất động sản Quận 7 có đáng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Quận 7 là thị trường BĐS ổn định và thanh khoản cao nhất TP.HCM nhờ cộng đồng quốc tế đông đảo. Giá BĐS tăng đều đặn 8-12%/năm.' } },
+            { '@type': 'Question', name: 'Giá căn hộ Quận 7 hiện tại là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Phú Mỹ Hưng 70-150 triệu/m²; Sunrise City 55-90 triệu/m²; khu vực khác Q7 40-70 triệu/m². Cho thuê 2-3PN Phú Mỹ Hưng 25-60 triệu/tháng.' } },
+            { '@type': 'Question', name: 'Phú Mỹ Hưng có đặc điểm gì hấp dẫn nhà đầu tư?', acceptedAnswer: { '@type': 'Answer', text: 'Phú Mỹ Hưng thu hút nhà đầu tư nhờ cộng đồng quốc tế đông (Hàn, Nhật, Đài), hạ tầng xanh chuẩn Singapore, 20+ trường quốc tế và bệnh viện FV tiêu chuẩn Pháp.' } },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/bat-dong-san-quan-7#agent`,
+          name: 'SGS LAND - BĐS Quận 7',
+          url: `${APP_URL}/bat-dong-san-quan-7`,
+          areaServed: { '@type': 'City', name: 'Quận 7', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
+          knowsAbout: ['Bất động sản Quận 7', 'Phú Mỹ Hưng', 'Sunrise City', 'Cộng đồng Hàn Quốc TP.HCM', 'Trường quốc tế Quận 7'],
+        },
+      ],
+    },
+  },
+  'bat-dong-san-binh-chanh': {
+    title: 'Bất Động Sản Bình Chánh | Đất Nền, Nhà Phố - SGS LAND',
+    description: 'Mua bán bất động sản Bình Chánh TP.HCM: đất nền, nhà phố giá hấp dẫn, hưởng lợi Vành đai 3. Kiểm tra pháp lý và định giá AI miễn phí tại SGS LAND.',
+    h1: 'Bất Động Sản Bình Chánh',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'BĐS Bình Chánh', item: `${APP_URL}/bat-dong-san-binh-chanh` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Đất Bình Chánh hiện nay giá bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Mặt tiền quốc lộ 1A 40-80 triệu/m²; đường lớn thị trấn 20-45 triệu/m²; đất nền dự án 15-35 triệu/m²; đất vườn chuyển mục đích 3-10 triệu/m².' } },
+            { '@type': 'Question', name: 'Có nên mua đất Bình Chánh để đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Bình Chánh là thị trường đầu tư trung và dài hạn tiềm năng. Vành đai 3 hoàn thành sẽ kéo theo đô thị hóa mạnh, tăng giá 20-40%.' } },
+            { '@type': 'Question', name: 'Vành đai 3 ảnh hưởng thế nào đến BĐS Bình Chánh?', acceptedAnswer: { '@type': 'Answer', text: 'BĐS trong bán kính 1-2km quanh nút giao vành đai 3 tại Bình Chánh được dự báo tăng giá 30-50% sau khi thông đường (2025-2026).' } },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/bat-dong-san-binh-chanh#agent`,
+          name: 'SGS LAND - BĐS Bình Chánh',
+          url: `${APP_URL}/bat-dong-san-binh-chanh`,
+          areaServed: { '@type': 'City', name: 'Bình Chánh', containedInPlace: { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } } },
+          knowsAbout: ['Bất động sản Bình Chánh', 'Đất nền Bình Chánh', 'Vành đai 3 TP.HCM', 'Akari City Nam Long'],
+        },
+      ],
+    },
+  },
+
+  // ─── New Project Landing Pages ───────────────────────────────────────────────
+  'du-an/izumi-city': {
+    title: 'Izumi City Nam Long | Đô Thị Chuẩn Nhật Bản Đồng Nai - SGS LAND',
+    description: 'Izumi City Nam Long Biên Hòa: đô thị tích hợp 170ha chuẩn Nhật Bản, siêu thị Fuji Mart, trường học Nhật. Bảng giá nhà phố, biệt thự và tư vấn tại SGS LAND.',
+    h1: 'Izumi City Nam Long',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'BĐS Đồng Nai', item: `${APP_URL}/bat-dong-san-dong-nai` },
+            { '@type': 'ListItem', position: 3, name: 'Izumi City Nam Long', item: `${APP_URL}/du-an/izumi-city` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Izumi City Nam Long có đáng mua không?', acceptedAnswer: { '@type': 'Answer', text: 'Izumi City là dự án đô thị tích hợp chuẩn Nhật Bản với đối tác Hankyu Hanshin uy tín. Phù hợp ở thực và đầu tư hưởng lợi sân bay Long Thành. Nam Long có lịch sử bàn giao đúng tiến độ.' } },
+            { '@type': 'Question', name: 'Giá nhà phố Izumi City là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Nhà phố liền kề từ 5-12 tỷ; biệt thự song lập 10-18 tỷ; biệt thự đơn lập 15-25 tỷ; căn hộ Akari 2-5 tỷ.' } },
+            { '@type': 'Question', name: 'Izumi City cách TP.HCM bao xa?', acceptedAnswer: { '@type': 'Answer', text: 'Izumi City tại Biên Hòa, Đồng Nai, cách trung tâm TP.HCM khoảng 30km qua cao tốc TP.HCM – Long Thành – Dầu Giây, di chuyển 25-35 phút.' } },
+          ],
+        },
+        {
+          '@type': 'ApartmentComplex',
+          '@id': `${APP_URL}/du-an/izumi-city#project`,
+          name: 'Izumi City Nam Long',
+          description: 'Đô thị tích hợp 170ha chuẩn Nhật Bản tại Biên Hòa, Đồng Nai',
+          url: `${APP_URL}/du-an/izumi-city`,
+          address: { '@type': 'PostalAddress', addressLocality: 'Biên Hòa', addressRegion: 'Đồng Nai', addressCountry: 'VN' },
+          floorSize: { '@type': 'QuantitativeValue', value: 170, unitText: 'ha' },
+        },
+      ],
+    },
+  },
+  'du-an/vinhomes-grand-park': {
+    title: 'Vinhomes Grand Park | Siêu Đô Thị 271ha Thủ Đức - SGS LAND',
+    description: 'Vinhomes Grand Park Quận 9 TP Thủ Đức: căn hộ, shophouse, biệt thự siêu đô thị 271ha. Công viên 36ha, Metro số 1, Vinmec, Vinschool. Bảng giá tại SGS LAND.',
+    h1: 'Vinhomes Grand Park',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'BĐS TP Thủ Đức', item: `${APP_URL}/bat-dong-san-thu-duc` },
+            { '@type': 'ListItem', position: 3, name: 'Vinhomes Grand Park', item: `${APP_URL}/du-an/vinhomes-grand-park` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Vinhomes Grand Park có đáng mua không năm 2025-2026?', acceptedAnswer: { '@type': 'Answer', text: 'Vinhomes Grand Park là dự án có thanh khoản tốt nhất Thủ Đức nhờ quy mô lớn, Metro số 1 và thương hiệu Vinhomes uy tín. Giá tăng ổn định 8-15%/năm.' } },
+            { '@type': 'Question', name: 'Giá căn hộ Vinhomes Grand Park mới nhất là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'The Rainbow 2,5-4 tỷ; The Origami 3-5 tỷ; The Beverly 4-7 tỷ; The Opus One 8-15 tỷ. Cho thuê 8-20 triệu/tháng tùy phân khu.' } },
+            { '@type': 'Question', name: 'Metro số 1 ảnh hưởng thế nào đến Vinhomes Grand Park?', acceptedAnswer: { '@type': 'Answer', text: 'Ga Suối Tiên và Bến Xe Miền Đông Mới chỉ 5-10 phút đi bộ từ Grand Park. Giá thuê tăng 15-20% sau khi Metro hoạt động, thời gian về Q1 còn 30 phút.' } },
+          ],
+        },
+        {
+          '@type': 'ApartmentComplex',
+          '@id': `${APP_URL}/du-an/vinhomes-grand-park#project`,
+          name: 'Vinhomes Grand Park',
+          description: 'Siêu đô thị 271ha với 44 tòa tháp tại TP Thủ Đức, TP.HCM',
+          url: `${APP_URL}/du-an/vinhomes-grand-park`,
+          address: { '@type': 'PostalAddress', addressLocality: 'TP Thủ Đức', addressRegion: 'TP.HCM', addressCountry: 'VN' },
+          floorSize: { '@type': 'QuantitativeValue', value: 271, unitText: 'ha' },
+        },
+      ],
+    },
+  },
+  'du-an/vinhomes-central-park': {
+    title: 'Vinhomes Central Park | Căn Hộ Cao Cấp Bình Thạnh Landmark 81 - SGS LAND',
+    description: 'Vinhomes Central Park Bình Thạnh: 44 tòa cao tầng, Landmark 81, bể bơi vô cực ven sông Sài Gòn. Căn hộ từ 50 triệu/m², cho thuê 15-60 triệu/tháng. Tư vấn tại SGS LAND.',
+    h1: 'Vinhomes Central Park',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'Vinhomes Central Park', item: `${APP_URL}/du-an/vinhomes-central-park` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Vinhomes Central Park có phải BĐS hạng sang không?', acceptedAnswer: { '@type': 'Answer', text: 'Vinhomes Central Park thuộc phân khúc cao cấp – hạng sang tại TP.HCM với giá 50-200 triệu/m². Landmark 81 (tòa nhà cao nhất VN) là biểu tượng của dự án.' } },
+            { '@type': 'Question', name: 'Giá căn hộ Vinhomes Central Park mới nhất?', acceptedAnswer: { '@type': 'Answer', text: 'Căn hộ 1PN từ 3,5-5 tỷ; 2PN 5-9 tỷ; 3PN 8-15 tỷ; penthouse từ 20-50 tỷ. Cho thuê: studio 15-20 triệu/tháng; 2PN 25-40 triệu/tháng.' } },
+            { '@type': 'Question', name: 'Landmark 81 tại Vinhomes Central Park là gì?', acceptedAnswer: { '@type': 'Answer', text: 'Landmark 81 là tòa nhà cao nhất Việt Nam (461m, 81 tầng) gồm khách sạn Marriott 5 sao, văn phòng hạng A+ và đài quan sát trên đỉnh.' } },
+          ],
+        },
+        {
+          '@type': 'ApartmentComplex',
+          '@id': `${APP_URL}/du-an/vinhomes-central-park#project`,
+          name: 'Vinhomes Central Park',
+          description: '44 tòa cao tầng ven sông Sài Gòn tại Bình Thạnh, TP.HCM',
+          url: `${APP_URL}/du-an/vinhomes-central-park`,
+          address: { '@type': 'PostalAddress', addressLocality: 'Bình Thạnh', addressRegion: 'TP.HCM', addressCountry: 'VN' },
+          numberOfRooms: '1-4',
+          offers: { '@type': 'Offer', price: '50000000', priceCurrency: 'VND', unitText: 'm²' },
+        },
+      ],
+    },
+  },
+  'du-an/thu-thiem': {
+    title: 'Khu Đô Thị Thủ Thiêm | BĐS Hạng Sang Trung Tâm Tài Chính - SGS LAND',
+    description: 'Bất động sản Khu Đô Thị Mới Thủ Thiêm 657ha — trung tâm tài chính tương lai TP.HCM. Empire City, Metropole, The River. Giá từ 80 triệu/m². Tư vấn tại SGS LAND.',
+    h1: 'Khu Đô Thị Thủ Thiêm',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'BĐS TP Thủ Đức', item: `${APP_URL}/bat-dong-san-thu-duc` },
+            { '@type': 'ListItem', position: 3, name: 'Khu Đô Thị Thủ Thiêm', item: `${APP_URL}/du-an/thu-thiem` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Khu đô thị Thủ Thiêm có đáng đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'Thủ Thiêm là thị trường BĐS chiến lược dài hạn, quy hoạch là trung tâm tài chính quốc tế TP.HCM tương tự Pudong Thượng Hải. Phù hợp nhà đầu tư dài hạn tài chính mạnh.' } },
+            { '@type': 'Question', name: 'Giá căn hộ Thủ Thiêm hiện tại là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Empire City 90-150 triệu/m²; Metropole Thủ Thiêm 90-130 triệu/m²; The River 80-120 triệu/m²; Grand Marina Saigon 130-250 triệu/m².' } },
+            { '@type': 'Question', name: 'Các dự án BĐS nào đáng chú ý tại Thủ Thiêm?', acceptedAnswer: { '@type': 'Answer', text: 'Ba dự án lớn nhất: Empire City (Keppel Land), Metropole Thủ Thiêm (SonKim Land) và The River (Kiến Á). Ngoài ra còn Grand Marina Saigon (Masterise Homes) tại Ba Son.' } },
+          ],
+        },
+        {
+          '@type': 'ApartmentComplex',
+          '@id': `${APP_URL}/du-an/thu-thiem#project`,
+          name: 'Khu Đô Thị Mới Thủ Thiêm',
+          description: 'Khu đô thị mới 657ha đối diện Q1 qua sông Sài Gòn — trung tâm tài chính tương lai TP.HCM',
+          url: `${APP_URL}/du-an/thu-thiem`,
+          address: { '@type': 'PostalAddress', addressLocality: 'Thủ Thiêm', addressRegion: 'TP.HCM', addressCountry: 'VN' },
+          floorSize: { '@type': 'QuantitativeValue', value: 657, unitText: 'ha' },
+        },
+      ],
+    },
+  },
+  'du-an/son-kim-land': {
+    title: 'Sơn Kim Land | BĐS Thương Mại Cao Cấp TP.HCM & Hà Nội - SGS LAND',
+    description: 'Sơn Kim Land — danh mục BĐS cao cấp: Gem Riverside Q4, Metropole Thủ Thiêm, Seasons Avenue HN. GEM Center, GS25. Giá 40-150 triệu/m². Tư vấn tại SGS LAND.',
+    h1: 'Sơn Kim Land',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Dự Án BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'Sơn Kim Land', item: `${APP_URL}/du-an/son-kim-land` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Sơn Kim Land có uy tín không?', acceptedAnswer: { '@type': 'Answer', text: 'Sơn Kim Land là thương hiệu BĐS uy tín thuộc Sơn Kim Group thành lập từ 1993 với BĐS, bán lẻ GS25, GEM Center. Gem Riverside và Metropole Thủ Thiêm được đánh giá cao về thiết kế.' } },
+            { '@type': 'Question', name: 'Dự án Gem Riverside của Sơn Kim Land như thế nào?', acceptedAnswer: { '@type': 'Answer', text: 'Gem Riverside tại Quận 4 là căn hộ cao cấp ven sông Sài Gòn, cách Q1 10 phút. Giá 65-100 triệu/m², phù hợp đầu tư dài hạn tại trung tâm thành phố.' } },
+            { '@type': 'Question', name: 'GEM Center liên quan gì đến Sơn Kim Land?', acceptedAnswer: { '@type': 'Answer', text: 'GEM Center (186 Lê Thánh Tôn, Q1) là trung tâm sự kiện hàng đầu TP.HCM do Sơn Kim Group vận hành, tạo giá trị cộng thêm cho hệ sinh thái BĐS Sơn Kim Land.' } },
+          ],
+        },
+        {
+          '@type': 'Organization',
+          '@id': `${APP_URL}/du-an/son-kim-land#org`,
+          name: 'Sơn Kim Land',
+          description: 'Thương hiệu bất động sản cao cấp thuộc Sơn Kim Group với 20+ năm kinh nghiệm',
+          url: `${APP_URL}/du-an/son-kim-land`,
+          knowsAbout: ['Gem Riverside', 'Metropole Thủ Thiêm', 'Seasons Avenue', 'GEM Center', 'GS25'],
+        },
+      ],
+    },
+  },
+  'du-an/masterise-homes': {
+    title: 'Masterise Homes | Căn Hộ Hạng Sang Masteri, Lumière, Grand Marina - SGS LAND',
+    description: 'Masterise Homes — BĐS hạng sang Việt Nam: Masteri Thảo Điền, Lumière Boulevard, Grand Marina Saigon. Giá 60-300 triệu/m². Vận hành bởi chuỗi khách sạn 5 sao. Tư vấn SGS LAND.',
+    h1: 'Masterise Homes',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Dự Án BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'Masterise Homes', item: `${APP_URL}/du-an/masterise-homes` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Masterise Homes có đáng tin không?', acceptedAnswer: { '@type': 'Answer', text: 'Masterise Homes là thương hiệu BĐS hạng sang uy tín với đối tác Marriott, IHG. Masteri Thảo Điền và Masteri An Phú đã bàn giao thành công, giữ giá tốt qua các chu kỳ thị trường.' } },
+            { '@type': 'Question', name: 'Giá căn hộ Masterise Homes hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Masteri Thảo Điền 65-100 triệu/m²; Lumière Boulevard 90-150 triệu/m²; Grand Marina Saigon 130-300 triệu/m². Cho thuê Masteri Thảo Điền 25-60 triệu/tháng.' } },
+            { '@type': 'Question', name: 'Grand Marina Saigon của Masterise có đặc biệt không?', acceptedAnswer: { '@type': 'Answer', text: 'Grand Marina Saigon tại Ba Son (Q1) là BĐS hạng sang nhất TP.HCM, tích hợp khách sạn Marriott, JW Marriott và bến du thuyền riêng trên sông Sài Gòn. Giá 130-300 triệu/m².' } },
+          ],
+        },
+        {
+          '@type': 'Organization',
+          '@id': `${APP_URL}/du-an/masterise-homes#org`,
+          name: 'Masterise Homes',
+          description: 'Thương hiệu bất động sản hạng sang đến ultra-luxury hàng đầu Việt Nam thuộc Masterise Group',
+          url: `${APP_URL}/du-an/masterise-homes`,
+          knowsAbout: ['Masteri Thảo Điền', 'Masteri An Phú', 'Lumière Boulevard', 'Lumière Riverside', 'Grand Marina Saigon', 'The Global City'],
+        },
+      ],
+    },
+  },
+  'du-an/the-global-city': {
+    title: 'The Global City Masterise | Đại Đô Thị 117ha An Phú Thủ Đức - SGS LAND',
+    description: 'The Global City Masterise Homes An Phú Thủ Đức: đại đô thị 117ha chuẩn Singapore, cạnh Metro số 1. Nhà phố từ 15 tỷ, biệt thự từ 30 tỷ. Tư vấn tại SGS LAND.',
+    h1: 'The Global City',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'BĐS TP Thủ Đức', item: `${APP_URL}/bat-dong-san-thu-duc` },
+            { '@type': 'ListItem', position: 3, name: 'The Global City', item: `${APP_URL}/du-an/the-global-city` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'The Global City có phải dự án tốt để đầu tư không?', acceptedAnswer: { '@type': 'Answer', text: 'The Global City là dự án chiến lược 117ha tại vị trí đắc địa khu Đông TP.HCM, tích hợp thương mại – giáo dục – y tế – ở. Phù hợp đầu tư nhà phố thương mại và biệt thự dài hạn.' } },
+            { '@type': 'Question', name: 'Giá nhà phố thương mại The Global City là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Shophouse từ 15-40 tỷ tùy vị trí; biệt thự song lập 30-60 tỷ; biệt thự đơn lập 60-120 tỷ. Cho thuê nhà phố từ 50-200 triệu/tháng (mặt tiền trục chính).' } },
+            { '@type': 'Question', name: 'The Global City cách Q1 và Thủ Thiêm bao xa?', acceptedAnswer: { '@type': 'Answer', text: 'The Global City tại An Phú, TP Thủ Đức, cách Q1 khoảng 6-8km qua cầu Thủ Thiêm 2 chỉ 5-10 phút. Cách Thủ Thiêm 2km. Metro số 1 ga An Phú chỉ 5 phút đi bộ.' } },
+          ],
+        },
+        {
+          '@type': 'ApartmentComplex',
+          '@id': `${APP_URL}/du-an/the-global-city#project`,
+          name: 'The Global City',
+          description: 'Đại đô thị thương mại 117ha chuẩn Singapore do Masterise Homes phát triển tại An Phú, TP Thủ Đức',
+          url: `${APP_URL}/du-an/the-global-city`,
+          address: { '@type': 'PostalAddress', addressLocality: 'An Phú, TP Thủ Đức', addressRegion: 'TP.HCM', addressCountry: 'VN' },
+          floorSize: { '@type': 'QuantitativeValue', value: 117, unitText: 'ha' },
+        },
+      ],
+    },
+  },
+  'du-an/nha-pho-trung-tam': {
+    title: 'Nhà Phố Trung Tâm TP.HCM | Mặt Tiền, Nhà Hẻm, Shophouse - SGS LAND',
+    description: 'Mua bán nhà phố trung tâm TP.HCM: mặt tiền Q1 từ 500 triệu/m², nhà hẻm Q3 từ 100 triệu/m². Định giá AI miễn phí, kiểm tra pháp lý độc lập tại SGS LAND.',
+    h1: 'Nhà Phố Trung Tâm TP.HCM',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Mua Bán BĐS', item: `${APP_URL}/marketplace` },
+            { '@type': 'ListItem', position: 3, name: 'Nhà Phố Trung Tâm', item: `${APP_URL}/du-an/nha-pho-trung-tam` },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Nên mua nhà phố hay căn hộ tại TP.HCM để đầu tư?', acceptedAnswer: { '@type': 'Answer', text: 'Nhà phố có ba lợi thế: pháp lý sổ đỏ không thời hạn, thu nhập kép (ở + cho thuê mặt bằng) và tăng trưởng giá trị bền vững 8-15%/năm trong 30 năm qua.' } },
+            { '@type': 'Question', name: 'Giá mặt tiền Quận 1 TP.HCM hiện nay là bao nhiêu?', acceptedAnswer: { '@type': 'Answer', text: 'Đường Nguyễn Huệ, Đồng Khởi 1.000-2.000 triệu/m²; Lê Lợi, Lê Thánh Tôn 500-1.000 triệu/m²; các đường nhánh 300-600 triệu/m². Cho thuê mặt bằng kinh doanh 100-500 triệu/tháng.' } },
+            { '@type': 'Question', name: 'Tại sao nhà phố nội thành TP.HCM luôn tăng giá?', acceptedAnswer: { '@type': 'Answer', text: 'Ba lý do: quỹ đất nội thành hữu hạn, lạm phát đồng tiền đẩy giá tài sản thực tăng, và TP.HCM là đầu tàu kinh tế Việt Nam với nhu cầu mặt bằng kinh doanh liên tục tăng.' } },
+          ],
+        },
+        {
+          '@type': 'RealEstateAgent',
+          '@id': `${APP_URL}/du-an/nha-pho-trung-tam#agent`,
+          name: 'SGS LAND - Nhà Phố Trung Tâm TP.HCM',
+          url: `${APP_URL}/du-an/nha-pho-trung-tam`,
+          areaServed: { '@type': 'City', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+          knowsAbout: ['Nhà phố Quận 1', 'Mặt tiền TP.HCM', 'Nhà hẻm xe hơi', 'Shophouse nội thành', 'Phú Nhuận', 'Bình Thạnh'],
         },
       ],
     },

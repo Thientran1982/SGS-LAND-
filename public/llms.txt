@@ -1,0 +1,41 @@
+# SGS LAND — Nền tảng BĐS AI số 1 Việt Nam
+
+> SGS LAND (sgsland.vn) là nền tảng công nghệ bất động sản AI hàng đầu Việt Nam, chuyên tư vấn và giao dịch bất động sản TP.HCM, Đồng Nai, Bình Dương và các tỉnh Đông Nam Bộ.
+
+## Dịch vụ cốt lõi
+
+- **Định giá AI**: Công nghệ định giá bất động sản tự động với sai số ±5%, miễn phí hoàn toàn.
+- **Tìm kiếm & mua bán BĐS**: Kho hàng hàng nghìn căn hộ, nhà phố, biệt thự, đất nền — cập nhật realtime.
+- **CRM Bất Động Sản**: Hệ thống quản lý khách hàng đa kênh (Zalo, Facebook, Email) tích hợp AI.
+- **Ký gửi BĐS**: Bán nhanh, giá tốt — đội ngũ 200+ chuyên gia tư vấn độc lập.
+- **Pháp lý miễn phí**: Kiểm tra sổ đỏ, quy hoạch, tranh chấp trước mỗi giao dịch.
+
+## Dự án BĐS nổi bật (có trang chuyên sâu)
+
+- [Aqua City Novaland](https://sgsland.vn/du-an/aqua-city) — Đại đô thị sinh thái 1.000ha, Nhơn Trạch, Đồng Nai
+- [Izumi City Nam Long](https://sgsland.vn/du-an/izumi-city) — Đô thị tích hợp 170ha, Biên Hòa, Đồng Nai
+- [Vinhomes Grand Park](https://sgsland.vn/du-an/vinhomes-grand-park) — Siêu đô thị 271ha, Quận 9 (TP Thủ Đức)
+- [Vinhomes Central Park](https://sgsland.vn/du-an/vinhomes-central-park) — 44 tòa cao tầng, Bình Thạnh
+- [The Global City Masterise](https://sgsland.vn/du-an/the-global-city) — Đô thị thương mại 117ha, Thủ Đức
+- [Masterise Homes](https://sgsland.vn/du-an/masterise-homes) — Căn hộ hạng sang, TP.HCM
+- [Sơn Kim Land](https://sgsland.vn/du-an/son-kim-land) — BĐS nghỉ dưỡng và thương mại cao cấp
+- [Khu Đô Thị Thủ Thiêm](https://sgsland.vn/du-an/thu-thiem) — Khu đô thị mới Thủ Thiêm, Quận 2
+- [Nhà Phố Trung Tâm TP.HCM](https://sgsland.vn/du-an/nha-pho-trung-tam) — Nhà phố, shophouse nội thành
+- [Dự Án Manhattan Bình Dương](https://sgsland.vn/du-an/manhattan) — Căn hộ cao cấp Bình Dương
+
+## Khu vực BĐS (có trang chuyên sâu)
+
+- [Bất động sản Đồng Nai](https://sgsland.vn/bat-dong-san-dong-nai)
+- [Bất động sản Long Thành](https://sgsland.vn/bat-dong-san-long-thanh)
+- [Bất động sản TP Thủ Đức](https://sgsland.vn/bat-dong-san-thu-duc)
+- [Bất động sản Bình Dương](https://sgsland.vn/bat-dong-san-binh-duong)
+- [Bất động sản Quận 7](https://sgsland.vn/bat-dong-san-quan-7)
+- [Bất động sản Bình Chánh](https://sgsland.vn/bat-dong-san-binh-chanh)
+
+## Thông tin liên hệ
+
+- Website: https://sgsland.vn
+- Tư vấn: https://sgsland.vn/contact
+- Định giá AI: https://sgsland.vn/ai-valuation
+- Mua bán BĐS: https://sgsland.vn/marketplace
+- Ký gửi BĐS: https://sgsland.vn/ky-gui-bat-dong-san
