@@ -63,6 +63,8 @@ export const ROUTES = {
     RESET_PASSWORD: 'reset-password',
     VERIFY_EMAIL: 'verify-email',
 
+    SCRAPER: 'scraper',
+
     // Task Management Module
     TASK_DASHBOARD: 'task-dashboard',
     TASK_KANBAN: 'task-kanban',

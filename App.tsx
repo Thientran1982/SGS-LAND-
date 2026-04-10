@@ -95,6 +95,7 @@ const SecurityCompliance = lazyLoad(() => import('./pages/SecurityCompliance'), 
 const AiGovernance = lazyLoad(() => import('./pages/AiGovernance'), 'AiGovernance');
 const SeoManager = lazyLoad(() => import('./pages/SeoManager'), 'SeoManager');
 const ErrorMonitor = lazyLoad(() => import('./pages/ErrorMonitor'), 'ErrorMonitor');
+const ScraperDashboard = lazyLoad(() => import('./pages/ScraperDashboard'), 'ScraperDashboard');
 const Profile = lazyLoad(() => import('./pages/Profile'), 'Profile');
 
 // ---------------------------------------------------------------------------
@@ -123,6 +124,7 @@ registerPrefetch(ROUTES.SECURITY,           () => import('./pages/SecurityCompli
 registerPrefetch(ROUTES.AI_GOVERNANCE,       () => import('./pages/AiGovernance'));
 registerPrefetch(ROUTES.SEO_MANAGER,         () => import('./pages/SeoManager'));
 registerPrefetch(ROUTES.ERROR_MONITOR,       () => import('./pages/ErrorMonitor'));
+registerPrefetch(ROUTES.SCRAPER,            () => import('./pages/ScraperDashboard'));
 registerPrefetch(ROUTES.PROFILE,            () => import('./pages/Profile'));
 registerPrefetch(ROUTES.TASK_DASHBOARD,     () => import('./pages/TaskDashboard'));
 registerPrefetch(ROUTES.TASK_KANBAN,        () => import('./pages/TaskKanban'));
@@ -210,6 +212,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.AI_GOVERNANCE]: AiGovernance,
     [ROUTES.SEO_MANAGER]: SeoManager,
     [ROUTES.ERROR_MONITOR]: ErrorMonitor,
+    [ROUTES.SCRAPER]: ScraperDashboard,
     [ROUTES.PROFILE]: Profile,
     // Task Management
     [ROUTES.TASK_DASHBOARD]: TaskDashboard,
