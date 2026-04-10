@@ -965,6 +965,23 @@ export function injectMeta(baseHtml: string, meta: MetaData): string {
   }
 
   if (m.structuredData) {
+    const sdJson = JSON.stringify(m.structuredData);
+    const hasPageFaq = sdJson.includes('"FAQPage"');
+    const hasPageBreadcrumb = sdJson.includes('"BreadcrumbList"');
+
+    // Remove global JSON-LD blocks whose @type is now covered by the page-specific
+    // structured data below. Keeping both causes Google to flag "duplicate @type" errors.
+    if (hasPageFaq || hasPageBreadcrumb) {
+      html = html.replace(
+        /<script\s+type="application\/ld\+json">([\s\S]+?)<\/script>/gi,
+        (match, content) => {
+          if (hasPageFaq && content.includes('"FAQPage"')) return '';
+          if (hasPageBreadcrumb && content.includes('"BreadcrumbList"')) return '';
+          return match;
+        }
+      );
+    }
+
     const jsonLd = `  <script type="application/ld+json">${JSON.stringify(m.structuredData)}</script>`;
     html = html.replace('</head>', `${jsonLd}\n</head>`);
   }
