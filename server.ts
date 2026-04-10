@@ -45,6 +45,7 @@ import { createTaskRoutes } from "./server/routes/taskRoutes";
 import { createDepartmentRoutes } from "./server/routes/departmentRoutes";
 import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
+import { createScraperRoutes } from "./server/routes/scraperRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
 import { priceCalibrationService } from "./server/services/priceCalibrationService";
@@ -1609,6 +1610,7 @@ async function startServer() {
   // Advanced valuation: multi-source, 7-coefficient AVM + market cache
   app.use('/api/valuation', apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit, optionalAuth, guestValuationRateLimit, userValuationRateLimit));
   app.use('/api/connectors', apiRateLimit, createConnectorRoutes(authenticateToken));
+  app.use('/api/scraper',   apiRateLimit, createScraperRoutes(authenticateToken));
   // Error monitoring: frontend reports + admin query (POST is rate-limited, no auth required)
   initErrorLogRepo(pool);
   app.use('/api/error-logs', apiRateLimit, createErrorLogRoutes(authenticateToken, pool));

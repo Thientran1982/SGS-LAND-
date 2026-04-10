@@ -768,6 +768,15 @@ Two root causes prevented AI from responding in the LiveChat widget:
 - External tool links: Google Search Console, PageSpeed Insights, Rich Results Test, Schema Markup Validator
 - Registered at route `seo-manager`, added to `ADMIN_ONLY_ROUTES`, listed in Ecosystem nav group (Globe icon)
 
+**pages/ScraperDashboard.tsx** — Admin-only market scraper dashboard (route `scraper`, Ecosystem nav group, Rss icon):
+- Source status cards: Chợ Tốt (active), AlonNhaDat (active), BatDongSan (CF-blocked), Muaban (CF-blocked)
+- Run panel: source multi-select, page count picker, "Chạy scraper" button with spinner
+- Summary stat cards: total listings, per-source count + duration badge
+- Listings table: title+link, price, area (m²), giá/m², transaction badge, location, source badge, posted time
+- Toolbar: text search, transaction filter (Tất cả/Bán/Cho thuê), sort (price/area/pricePerM2)
+- Server route: `POST /api/scraper/run` (ADMIN/TEAM_LEAD only), `GET /api/scraper/results`, `GET /api/scraper/status`
+- In-memory cache (30-min TTL) — no DB writes; Cloudflare bypass detection with user-facing warnings
+
 **Wire-up**:
 - `pages/ListingDetail.tsx` — Calls `injectListingSEO(listing)` on listing load, `clearDynamicSEO('listing')` on unmount
 - `pages/News.tsx` (ArticleDetail) — Calls `injectArticleSEO(article)` on mount, `clearDynamicSEO('news')` on unmount
