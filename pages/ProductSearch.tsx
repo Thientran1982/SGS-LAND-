@@ -472,9 +472,12 @@ export const ProductSearch: React.FC = () => {
                     { label: 'Aqua City', href: `/${ROUTES.DU_AN}/aqua-city` },
                     { label: 'Vinhomes Grand Park', href: `/${ROUTES.DU_AN}/vinhomes-grand-park` },
                     { label: 'Izumi City', href: `/${ROUTES.DU_AN}/izumi-city` },
+                    { label: 'Vinhomes Central Park', href: `/${ROUTES.DU_AN}/vinhomes-central-park` },
+                    { label: 'Sơn Kim Land', href: `/${ROUTES.DU_AN}/son-kim-land` },
                     { label: 'The Global City', href: `/${ROUTES.DU_AN}/the-global-city` },
                     { label: 'Masterise Homes', href: `/${ROUTES.DU_AN}/masterise-homes` },
                     { label: 'Thủ Thiêm', href: `/${ROUTES.DU_AN}/thu-thiem` },
+                    { label: 'Nhà Phố Trung Tâm', href: `/${ROUTES.DU_AN}/nha-pho-trung-tam` },
                     { label: 'Manhattan Bình Dương', href: `/${ROUTES.DU_AN}/manhattan` },
                 ].map(({ label, href }) => (
                     <a
