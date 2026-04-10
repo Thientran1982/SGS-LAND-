@@ -1,0 +1,83 @@
+// app/du-an/[slug]/page.tsx
+
+import { Metadata } from 'next'
+
+// Danh sách dự án — thêm đủ tất cả
+const duAnData: Record<string, { title: string; description: string }> = {
+  'aqua-city': {
+    title: 'Aqua City Novaland | Mua Bán BĐS Nhơn Trạch — SGS LAND',
+    description: 'Aqua City Novaland: Đại đô thị sinh thái 1.000ha tại Nhơn Trạch, Đồng Nai. Giá từ 3 tỷ. Tư vấn pháp lý miễn phí, định giá AI. Liên hệ SGS LAND.',
+  },
+  'izumi-city': {
+    title: 'Izumi City Nam Long | Đô Thị 170ha Biên Hòa — SGS LAND',
+    description: 'Izumi City Nam Long: Đô thị tích hợp 170ha tại Biên Hòa, Đồng Nai. Tiện ích Nhật Bản, pháp lý minh bạch. SGS LAND tư vấn chuyên sâu.',
+  },
+  'thu-thiem': {
+    title: 'Khu Đô Thị Thủ Thiêm | BĐS Trung Tâm TP.HCM — SGS LAND',
+    description: 'Bất động sản Thủ Thiêm Quận 2: Căn hộ, nhà phố, shophouse trung tâm TP.HCM. Pháp lý rõ ràng, giá thị trường cập nhật. Tư vấn miễn phí tại SGS LAND.',
+  },
+  'vinhomes-grand-park': {
+    title: 'Vinhomes Grand Park | Siêu Đô Thị 271ha Quận 9 — SGS LAND',
+    description: 'Vinhomes Grand Park TP Thủ Đức: 271ha, 44 tòa cao tầng, tiện ích đẳng cấp. Giá và bảng hàng cập nhật realtime tại SGS LAND.',
+  },
+  'vinhomes-central-park': {
+    title: 'Vinhomes Central Park | 44 Tòa Bình Thạnh — SGS LAND',
+    description: 'Vinhomes Central Park Bình Thạnh: Khu đô thị cao cấp ven sông Sài Gòn. Căn hộ, shophouse, biệt thự. Tư vấn và định giá AI tại SGS LAND.',
+  },
+  'son-kim-land': {
+    title: 'Sơn Kim Land | BĐS Nghỉ Dưỡng Cao Cấp TP.HCM — SGS LAND',
+    description: 'Dự án Sơn Kim Land: BĐS thương mại và nghỉ dưỡng cao cấp tại TP.HCM. Tư vấn đầu tư chuyên nghiệp cùng SGS LAND.',
+  },
+  'the-global-city': {
+    title: 'The Global City Masterise | Đô Thị 117ha Thủ Đức — SGS LAND',
+    description: 'The Global City Masterise Homes: Đô thị thương mại 117ha tại TP Thủ Đức. Căn hộ hạng sang, shophouse mặt tiền đại lộ. SGS LAND tư vấn trực tiếp.',
+  },
+  'masterise-homes': {
+    title: 'Masterise Homes | Căn Hộ Hạng Sang TP.HCM — SGS LAND',
+    description: 'Masterise Homes TP.HCM: Căn hộ hạng sang chuẩn quốc tế. Vị trí đắc địa, thiết kế hiện đại. Liên hệ SGS LAND để nhận bảng giá.',
+  },
+  'nha-pho-trung-tam': {
+    title: 'Nhà Phố Trung Tâm TP.HCM | Shophouse Nội Thành — SGS LAND',
+    description: 'Nhà phố, shophouse trung tâm TP.HCM: Quận 1, 3, 5, Bình Thạnh, Phú Nhuận. Kho hàng cập nhật, pháp lý kiểm tra trước giao dịch. SGS LAND.',
+  },
+  'manhattan': {
+    title: 'Grand Manhattan Novaland | Căn Hộ Hạng Sang TP.HCM — SGS LAND',
+    description: 'Grand Manhattan Novaland: Căn hộ hạng sang tại trung tâm TP.HCM. Thiết kế Manhattan phong cách Mỹ. Tư vấn và giá bán tại SGS LAND.',
+  },
+}
+
+// ✅ Hàm generateMetadata — tự động canonical đúng
+export async function generateMetadata(
+  { params }: { params: { slug: string } }
+): Promise<Metadata> {
+  const slug = params.slug
+  const data = duAnData[slug]
+
+  const pageUrl = `https://sgsland.vn/du-an/${slug}`
+
+  return {
+    title: data?.title ?? 'Dự Án Bất Động Sản — SGS LAND',
+    description: data?.description ?? 'Tư vấn bất động sản chuyên nghiệp tại SGS LAND.',
+    alternates: {
+      canonical: pageUrl,   // ✅ Đây là dòng quan trọng nhất
+    },
+    openGraph: {
+      title: data?.title,
+      description: data?.description,
+      url: pageUrl,
+      siteName: 'SGS LAND',
+      locale: 'vi_VN',
+      type: 'website',
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+  }
+}
