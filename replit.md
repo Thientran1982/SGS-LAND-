@@ -735,7 +735,20 @@ Two root causes prevented AI from responding in the LiveChat widget:
 - Button hover direction standardized: `hover:bg-indigo-500` → `hover:bg-indigo-700`
 - `--rose-500` added to `.dark` mode override
 
-### SEO Architecture (March 2026)
+### SEO Architecture (April 2026)
+
+**3-layer SEO stack:**
+1. **SSR layer** (`server/seo/metaInjector.ts` + Express) — Injects correct meta tags server-side before HTML reaches crawlers (GPTBot, ClaudeBot, Gemini-Bot, Googlebot). Covers all 10 project pages + 6 location pages with full JSON-LD, OG, Twitter Card.
+2. **React Helmet layer** (`components/SeoHead.tsx` + `react-helmet-async`) — Client-side layer for SPA navigation. Used in `ProjectLandingPage` and `LocalLandingPage`. Includes title, description, canonical, OG, Twitter Card, JSON-LD structured data.
+3. **DOM manipulation layer** (`utils/seo.ts`) — Used for all other routes (dashboard, marketplace, etc.) via `updatePageSEO()`.
+
+**OG Image**: `public/og-image.jpg` (1200×630px, HCMC skyline, ~172KB) — served at `https://sgsland.vn/og-image.jpg`, used as DEFAULT_IMAGE in metaInjector and SeoHead.
+
+**components/SeoHead.tsx** — React Helmet Async component for landing pages:
+- Props: `title`, `description`, `canonicalPath?`, `ogImage?`, `structuredData?`, `noindex?`
+- Outputs: title, meta description, canonical, robots, og:type/url/title/description/image/locale/site_name, twitter:card, JSON-LD
+- Used in: `ProjectLandingPage` (ApartmentComplex schema), `LocalLandingPage` (RealEstateAgent schema)
+- HelmetProvider added to `index.tsx` root render
 
 **utils/seo.ts** — Central SEO module:
 - `ROUTE_SEO` (exported) — Static per-route SEO config (title, description, path, noIndex)

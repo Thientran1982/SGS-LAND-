@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ROUTES } from '../config/routes';
 import { useTranslation } from '../services/i18n';
 import { Logo } from '../components/Logo';
+import { SeoHead } from '../components/SeoHead';
 
 interface LocationConfig {
     slug: string;
@@ -559,7 +560,34 @@ export default function LocalLandingPage() {
         return p.toLocaleString('vi-VN');
     };
 
+    const metaTitle = `Bất Động Sản ${cfg.name} | Nhà Phố, Căn Hộ, Đất Nền — SGS LAND`;
+    const metaDesc = cfg.heroDescription.length > 155
+        ? cfg.heroDescription.slice(0, 152) + '...'
+        : cfg.heroDescription;
+
     return (
+        <>
+            <SeoHead
+                title={metaTitle}
+                description={metaDesc}
+                canonicalPath={`/${cfg.slug}`}
+                structuredData={{
+                    '@context': 'https://schema.org',
+                    '@type': 'RealEstateAgent',
+                    name: `SGS LAND — BĐS ${cfg.name}`,
+                    description: metaDesc,
+                    url: `https://sgsland.vn/${cfg.slug}`,
+                    areaServed: {
+                        '@type': 'Place',
+                        name: cfg.province,
+                        address: {
+                            '@type': 'PostalAddress',
+                            addressLocality: cfg.province,
+                            addressCountry: 'VN',
+                        },
+                    },
+                }}
+            />
         <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)]">
             {/* ── Nav ── */}
             <header className="sticky top-0 z-50 bg-[var(--bg-surface)]/95 backdrop-blur border-b border-[var(--glass-border)]">
@@ -790,6 +818,7 @@ export default function LocalLandingPage() {
                 </div>
             </footer>
         </div>
+        </>
     );
 }
 
