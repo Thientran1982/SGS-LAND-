@@ -468,7 +468,7 @@ export const ProductSearch: React.FC = () => {
                     { label: 'BĐS Thủ Đức', href: `/${ROUTES.BDS_THU_DUC}` },
                     { label: 'BĐS Bình Dương', href: `/${ROUTES.BDS_BINH_DUONG}` },
                     { label: 'BĐS Quận 7', href: `/${ROUTES.BDS_QUAN_7}` },
-                    { label: 'BĐS Bình Chánh', href: `/${ROUTES.BDS_BINH_CHANH}` },
+                    { label: 'BĐS Phú Nhuận', href: `/${ROUTES.BDS_PHU_NHUAN}` },
                     { label: 'Aqua City', href: `/${ROUTES.DU_AN}/aqua-city` },
                     { label: 'Vinhomes Grand Park', href: `/${ROUTES.DU_AN}/vinhomes-grand-park` },
                     { label: 'Izumi City', href: `/${ROUTES.DU_AN}/izumi-city` },
@@ -478,7 +478,7 @@ export const ProductSearch: React.FC = () => {
                     { label: 'Masterise Homes', href: `/${ROUTES.DU_AN}/masterise-homes` },
                     { label: 'Thủ Thiêm', href: `/${ROUTES.DU_AN}/thu-thiem` },
                     { label: 'Nhà Phố Trung Tâm', href: `/${ROUTES.DU_AN}/nha-pho-trung-tam` },
-                    { label: 'Manhattan Bình Dương', href: `/${ROUTES.DU_AN}/manhattan` },
+                    { label: 'Grand Manhattan Novaland', href: `/${ROUTES.DU_AN}/manhattan` },
                 ].map(({ label, href }) => (
                     <a
                         key={href}

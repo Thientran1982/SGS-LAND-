@@ -21,7 +21,7 @@ Allow: /bat-dong-san-long-thanh
 Allow: /bat-dong-san-thu-duc
 Allow: /bat-dong-san-binh-duong
 Allow: /bat-dong-san-quan-7
-Allow: /bat-dong-san-binh-chanh
+Allow: /bat-dong-san-phu-nhuan
 Allow: /du-an/aqua-city
 Allow: /du-an/izumi-city
 Allow: /du-an/vinhomes-grand-park

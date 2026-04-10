@@ -97,7 +97,7 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
         ],
         relatedProjects: [
             { name: 'Aqua City Novaland', slug: 'aqua-city' },
-            { name: 'Dự Án Manhattan', slug: 'manhattan' },
+            { name: 'Grand Manhattan Novaland', slug: 'manhattan' },
         ],
     },
     'bat-dong-san-long-thanh': {
@@ -343,10 +343,10 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
         relatedLocations: [
             { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
             { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
-            { name: 'BĐS Bình Chánh', slug: 'bat-dong-san-binh-chanh' },
+            { name: 'BĐS Phú Nhuận', slug: 'bat-dong-san-phu-nhuan' },
         ],
         relatedProjects: [
-            { name: 'Dự Án Manhattan Bình Dương', slug: 'manhattan' },
+            { name: 'Grand Manhattan Novaland', slug: 'manhattan' },
             { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
         ],
     },
@@ -425,7 +425,7 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
         ],
         relatedLocations: [
             { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
-            { name: 'BĐS Bình Chánh', slug: 'bat-dong-san-binh-chanh' },
+            { name: 'BĐS Phú Nhuận', slug: 'bat-dong-san-phu-nhuan' },
             { name: 'BĐS Long Thành', slug: 'bat-dong-san-long-thanh' },
         ],
         relatedProjects: [
@@ -433,87 +433,91 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
             { name: 'Masterise Homes', slug: 'masterise-homes' },
         ],
     },
-    'bat-dong-san-binh-chanh': {
-        slug: 'bat-dong-san-binh-chanh',
-        name: 'Bình Chánh',
+    'bat-dong-san-phu-nhuan': {
+        slug: 'bat-dong-san-phu-nhuan',
+        name: 'Phú Nhuận',
         province: 'TP.HCM',
-        searchQuery: 'Bình Chánh',
+        searchQuery: 'Phú Nhuận',
         heroDescription:
-            'Bất động sản Bình Chánh — huyện ngoại thành phía Tây Nam TP.HCM đang trong quá trình đô thị hóa mạnh mẽ với hàng loạt dự án khu dân cư và đô thị mới. Giá đất Bình Chánh hấp dẫn, tiềm năng tăng giá cao khi hạ tầng vành đai 3 và vành đai 4 hoàn thành. SGS LAND tư vấn và giao dịch BĐS Bình Chánh an toàn, hiệu quả.',
+            'Bất động sản Phú Nhuận — quận nội thành đắc địa TP.HCM, tiếp giáp Quận 1, Quận 3 và Bình Thạnh, cách sân bay Tân Sơn Nhất chỉ 5-10 phút. Nhà phố mặt tiền Phú Nhuận thuộc phân khúc cao cấp nhất nội đô, giá trị tích lũy bền vững và thanh khoản vượt trội. SGS LAND tư vấn mua bán nhà phố, biệt thự, căn hộ Phú Nhuận chuyên sâu.',
         stats: [
-            { label: 'Diện tích', value: '252 km²' },
-            { label: 'Dân số', value: '700.000+' },
-            { label: 'Giá đất mặt tiền', value: '20-60 tr/m²' },
-            { label: 'Tốc độ tăng giá/năm', value: '12-20%' },
+            { label: 'Diện tích', value: '4,88 km²' },
+            { label: 'Dân số', value: '170.000+' },
+            { label: 'Nhà phố mặt tiền', value: '150-300 tr/m²' },
+            { label: 'Tốc độ tăng giá/năm', value: '8-15%' },
         ],
         highlights: [
             {
-                title: 'Hưởng Lợi Từ Vành Đai 3 & 4',
-                desc: 'Đường Vành đai 3 TP.HCM (dự kiến hoàn thành 2025-2026) đi qua Bình Chánh, kết nối trực tiếp với Bình Dương, Đồng Nai và Long An. Đường Vành đai 4 quy hoạch tiếp tục mở rộng không gian phát triển. BĐS quanh vành đai tăng giá mạnh.',
+                title: 'Vị Trí Đắc Địa Trung Tâm TP.HCM',
+                desc: 'Phú Nhuận tiếp giáp Quận 1 (Đinh Tiên Hoàng), Quận 3 (Trường Sa), Bình Thạnh và Tân Bình — kết nối mọi trung tâm kinh doanh, giáo dục, y tế lớn của thành phố trong 10-15 phút. Hạ tầng giao thông nội đô hoàn thiện, không bị ảnh hưởng bởi ngập lụt.',
             },
             {
-                title: 'Khu Đô Thị Mới Bình Chánh',
-                desc: 'Nhiều dự án khu đô thị lớn đang triển khai: Akari City (Nam Long), Vinhomes Grand Park giai đoạn mở rộng, Tên Lửa Complex và hàng chục dự án nhà ở xã hội, nhà ở vừa túi tiền phục vụ người dân TP.HCM.',
+                title: 'Gần Sân Bay Tân Sơn Nhất',
+                desc: 'Khoảng cách đến sân bay Tân Sơn Nhất chỉ 2-4km — thuận lợi đặc biệt cho doanh nhân, chuyên gia nước ngoài và gia đình cần di chuyển thường xuyên. Đây là lợi thế hiếm có của BĐS Phú Nhuận so với các quận khác.',
             },
             {
-                title: 'Giá Đất Hấp Dẫn, Còn Nhiều Dư Địa',
-                desc: 'Giá đất Bình Chánh thấp hơn nội thành 50-70%, phù hợp ngân sách 2-5 tỷ đồng. Đất nền phân lô sổ đỏ từ 15-40 triệu/m², nhà phố dự án từ 4-8 tỷ. Tiềm năng tăng giá còn lớn khi hạ tầng hoàn thiện.',
+                title: 'Nhà Phố Cao Cấp — Tài Sản Tích Lũy Bền Vững',
+                desc: 'Nhà phố mặt tiền các tuyến đường lớn (Phan Đình Phùng, Hoàng Văn Thụ, Trường Sa) giá 150-300 triệu/m². Nhà hẻm xe hơi 80-150 triệu/m². Pháp lý sổ đỏ chính chủ, thanh khoản cao, nhu cầu thuê mặt bằng kinh doanh ổn định quanh năm.',
             },
             {
-                title: 'Kết Nối Cao Tốc & Logistics',
-                desc: 'Bình Chánh nằm trên trục cao tốc TP.HCM – Trung Lương (về miền Tây), quốc lộ 1A và kết nối Bến Lức – Long Thành. Nhiều khu công nghiệp và trung tâm logistics lớn tạo nhu cầu nhà ở công nhân và chuyên gia.',
+                title: 'Cộng Đồng Dân Cư Cao Cấp & Tiện Ích Đồng Bộ',
+                desc: 'Phú Nhuận có mật độ trường học, bệnh viện, nhà hàng và trung tâm mua sắm cao bậc nhất TP.HCM. Trường Gia Định, Lê Quý Đôn, bệnh viện Gia Định, Vạn Hạnh Mall và hàng trăm quán cà phê, boutique cao cấp tạo nên hệ sinh thái sống chất lượng.',
             },
         ],
         faqs: [
             {
-                q: 'Đất Bình Chánh hiện nay giá bao nhiêu?',
-                a: 'Giá đất Bình Chánh theo vị trí: mặt tiền quốc lộ 1A 40-80 triệu/m²; đường lớn trong thị trấn 20-45 triệu/m²; đất nền phân lô dự án 15-35 triệu/m²; đất ruộng/vườn chuyển mục đích 3-10 triệu/m². Khu giáp Q8, Q7 giá cao hơn 20-30%.',
+                q: 'Giá nhà phố Phú Nhuận hiện nay là bao nhiêu?',
+                a: 'Giá nhà phố Phú Nhuận theo vị trí: mặt tiền đường lớn (Phan Đình Phùng, Hoàng Văn Thụ, Trường Sa) 150-300 triệu/m²; nhà hẻm xe hơi thông thoáng 80-150 triệu/m²; nhà hẻm nhỏ 50-80 triệu/m². Căn hộ chung cư cao cấp 60-120 triệu/m². Giá đã bao gồm vị trí nội đô đắc địa và pháp lý sổ đỏ ổn định.',
             },
             {
-                q: 'Có nên mua đất Bình Chánh để đầu tư không?',
-                a: 'Bình Chánh là thị trường đầu tư trung và dài hạn tiềm năng. Vành đai 3 hoàn thành sẽ kéo theo đô thị hóa mạnh, tăng giá 20-40%. Phù hợp ngân sách 2-5 tỷ, mua đất nền hoặc nhà phố dự án. Lưu ý chọn sản phẩm đã có sổ đỏ và kiểm tra quy hoạch trước khi mua.',
+                q: 'BĐS Phú Nhuận có đáng đầu tư không?',
+                a: 'Phú Nhuận là thị trường BĐS trú ẩn an toàn của TP.HCM — giá tăng đều đặn 8-15%/năm trong 10 năm qua, không có biến động mạnh như vùng ven. Thanh khoản vượt trội nhờ nhu cầu ở thực, kinh doanh và cho thuê văn phòng, mặt bằng từ doanh nhân và chuyên gia nước ngoài.',
             },
             {
-                q: 'Dự án nào đáng mua nhất ở Bình Chánh hiện nay?',
-                a: 'Các dự án uy tín tại Bình Chánh: Akari City (Nam Long) — căn hộ pháp lý chuẩn, giá hợp lý; Tên Lửa Complex — nhà phố thương mại; các dự án HUD Bình Chánh — nhà ở xã hội giá ưu đãi. SGS LAND có danh sách đầy đủ dự án Bình Chánh và hỗ trợ tư vấn miễn phí.',
+                q: 'Khu vực nào của Phú Nhuận có tiềm năng đầu tư tốt nhất?',
+                a: 'Ba cụm đáng chú ý: (1) Trục Phan Đình Phùng – Nguyễn Kiệm: sầm uất, mặt bằng kinh doanh cho thuê 50-150 triệu/tháng; (2) Trường Sa – Hoàng Sa ven kênh: view đẹp, nhiều nhà hàng cao cấp, giá tăng đều; (3) Cống Quỳnh – Yên Đỗ: yên tĩnh, phù hợp ở thực, giá hợp lý hơn. SGS LAND tư vấn theo nhu cầu cụ thể.',
             },
             {
-                q: 'Bình Chánh có nguy cơ ngập lụt không?',
-                a: 'Một số khu vực Bình Chánh có nguy cơ ngập theo triều cường, đặc biệt gần sông Bến Lức, kênh Đôi. Nên chọn dự án có nền cao, hệ thống thoát nước bài bản. SGS LAND kiểm tra thực địa và lịch sử ngập lụt trước khi tư vấn mua, bảo đảm an toàn đầu tư.',
+                q: 'Cho thuê nhà phố Phú Nhuận thu nhập bao nhiêu mỗi tháng?',
+                a: 'Cho thuê mặt bằng kinh doanh: mặt tiền đường lớn 50-200 triệu/tháng (tùy diện tích); nhà hẻm xe hơi 20-60 triệu/tháng. Cho thuê nhà nguyên căn ở: nhà 4-5 tầng 30-80 triệu/tháng. Gross yield cho thuê mặt bằng thường đạt 5-8%/năm, ổn định hơn phân khúc vùng ven.',
             },
             {
-                q: 'Vành đai 3 ảnh hưởng thế nào đến BĐS Bình Chánh?',
-                a: 'Đường Vành đai 3 (dự kiến hoàn thành 2025-2026) đi qua Bình Chánh giúp kết nối trực tiếp với Bình Dương, Đồng Nai và Long An trong 20-30 phút. BĐS trong bán kính 1-2km quanh các nút giao vành đai 3 tại Bình Chánh được dự báo tăng giá 30-50% sau khi thông đường.',
+                q: 'Gần sân bay Tân Sơn Nhất có ảnh hưởng gì đến BĐS Phú Nhuận không?',
+                a: 'Gần sân bay Tân Sơn Nhất (2-4km) là lợi thế kép: thuận tiện cho người di chuyển thường xuyên và tạo nhu cầu thuê nhà, văn phòng từ chuyên gia hàng không, phi công, tiếp viên và doanh nhân quốc tế. Đây là yếu tố giữ cho thị trường cho thuê Phú Nhuận luôn sôi động.',
             },
             {
-                q: 'Akari City Nam Long Bình Chánh giá bao nhiêu năm 2026?',
-                a: 'Akari City (Nam Long, Q. Bình Tân giáp Bình Chánh): căn hộ 2PN ~65-85 triệu/m², giá từ 3-4 tỷ. Cho thuê 8-12 triệu/tháng. Pháp lý sổ hồng rõ ràng, bàn giao đúng hạn, phù hợp người mua ở thực và đầu tư dài hạn.',
+                q: 'So sánh BĐS Phú Nhuận và Bình Thạnh — nên chọn đâu?',
+                a: 'Phú Nhuận: nhỏ hơn, giá cao hơn 20-40%, gần Q1/Q3 hơn, tiện ích cao cấp hơn, pháp lý sổ đỏ ổn định — phù hợp đầu tư dài hạn và ở thực cao cấp. Bình Thạnh: diện tích lớn hơn, giá vừa hơn, có nhiều dự án căn hộ mới, thị trường cho thuê sôi động nhờ Vinhomes Central Park. Chọn theo ngân sách và mục tiêu đầu tư.',
             },
             {
-                q: 'Cao tốc Trung Lương – Bình Chánh mở ra cơ hội gì?',
-                a: 'Bình Chánh là cửa ngõ cao tốc TP.HCM – Trung Lương, huyết mạch kết nối miền Tây 13 tỉnh thành. Logistics, nhà kho và đất công nghiệp tăng giá mạnh. Nhà phố trục quốc lộ 1A cho thuê kinh doanh 20-50 triệu/tháng.',
+                q: 'Pháp lý nhà phố Phú Nhuận có minh bạch không?',
+                a: 'Phú Nhuận là quận nội thành lâu đời, hầu hết nhà phố đã có sổ đỏ/sổ hồng chính chủ rõ ràng. Tỷ lệ nhà quy hoạch lộ giới thấp hơn các quận ven. SGS LAND kiểm tra quy hoạch 1/500, lịch sử giao dịch và tình trạng pháp lý miễn phí trước khi tư vấn giao dịch.',
             },
             {
-                q: 'Khu dân cư tốt nhất ở Bình Chánh là khu nào?',
-                a: 'Bốn khu vực đáng cân nhắc: (1) Phong Phú (giáp Q8, Q7): dân cư đông, tiện ích đầy đủ; (2) Bình Hưng: gần Phú Mỹ Hưng, giá hợp lý; (3) Tân Kiên (gần trung tâm H. Bình Chánh): đất nền giá tốt; (4) Vĩnh Lộc A/B: phát triển công nghiệp-nhà ở công nhân.',
+                q: 'Nhà hẻm Phú Nhuận giá bao nhiêu và có đáng mua không?',
+                a: 'Nhà hẻm xe hơi (4m trở lên) Phú Nhuận: 80-150 triệu/m², nhà 4x15m từ 7-15 tỷ. Nhà hẻm nhỏ (2-3m): 50-80 triệu/m², từ 4-8 tỷ. Đây là phân khúc hợp lý để ở thực trong nội đô — an toàn, thanh khoản tốt và tăng giá ổn định. Phù hợp ngân sách 5-15 tỷ.',
             },
             {
-                q: 'Nhà ở xã hội Bình Chánh có dễ mua không?',
-                a: 'TP.HCM đang đẩy mạnh nhà ở xã hội tại Bình Chánh (Vĩnh Lộc, Bình Hưng). Giá 15-22 triệu/m², cần đủ điều kiện (chưa có nhà, thu nhập dưới ngưỡng). SGS LAND hướng dẫn hồ sơ đăng ký nhà ở xã hội miễn phí.',
+                q: 'Tiện ích và trường học tại Phú Nhuận có tốt không?',
+                a: 'Phú Nhuận có mật độ tiện ích cao hàng đầu TP.HCM: THPT Gia Định (top 3 TP.HCM), THPT Lê Quý Đôn, bệnh viện Gia Định, BV Quận Phú Nhuận, Vạn Hạnh Mall, hàng trăm quán cà phê cao cấp, nhà hàng đa ẩm thực, gym, spa. Lý tưởng cho gia đình có con ở thực.',
             },
             {
-                q: 'SGS LAND tư vấn mua đất Bình Chánh như thế nào?',
-                a: 'SGS LAND kiểm tra quy hoạch đất Bình Chánh (tránh đất lộ giới, đất nông nghiệp), định giá AI so sánh thị trường, xác minh pháp lý sổ đỏ và lịch sử ngập lụt trước khi tư vấn. Không thu phí tư vấn từ người mua.',
+                q: 'SGS LAND tư vấn mua nhà Phú Nhuận như thế nào?',
+                a: 'SGS LAND tra cứu quy hoạch thực địa Phú Nhuận (lộ giới, cốt nền, tranh chấp), định giá AI so sánh giao dịch thực tế khu vực, xác minh pháp lý sổ đỏ và hỗ trợ đàm phán giá. Không thu phí tư vấn từ người mua — chỉ hưởng hoa hồng từ bên bán khi giao dịch thành công.',
+            },
+            {
+                q: 'Xu hướng giá BĐS Phú Nhuận trong 5 năm tới sẽ như thế nào?',
+                a: 'BĐS Phú Nhuận được hỗ trợ bởi ba yếu tố dài hạn: (1) Quỹ đất nội thành ngày càng khan hiếm — không thể mở rộng; (2) Mở rộng Metro số 2 (Bến Thành – Tham Lương) đi qua Phú Nhuận dự kiến vận hành 2028-2030; (3) Cải tạo kênh Nhiêu Lộc – Thị Nghè kết hợp greenway ven kênh. Dự báo tăng giá 10-18%/năm trong 5 năm tới.',
             },
         ],
         relatedLocations: [
             { name: 'BĐS Quận 7', slug: 'bat-dong-san-quan-7' },
-            { name: 'BĐS Long Thành', slug: 'bat-dong-san-long-thanh' },
             { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
+            { name: 'BĐS Bình Dương', slug: 'bat-dong-san-binh-duong' },
         ],
         relatedProjects: [
-            { name: 'Aqua City Novaland', slug: 'aqua-city' },
-            { name: 'Dự Án Manhattan', slug: 'manhattan' },
+            { name: 'Grand Manhattan Novaland', slug: 'manhattan' },
+            { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
         ],
     },
 };
