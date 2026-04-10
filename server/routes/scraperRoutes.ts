@@ -59,7 +59,7 @@ function parseArea(raw: string): number {
 }
 
 /** Fetch via ScraperAPI proxy (bypasses Cloudflare). render=true uses headless browser. */
-async function scraperApiFetch(targetUrl: string, render = false): Promise<Response> {
+async function scraperApiFetch(targetUrl: string, render = false) {
   const key = process.env.SCRAPERAPI_KEY;
   if (!key) throw new Error('SCRAPERAPI_KEY not configured');
   const proxyUrl = `http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(targetUrl)}&country_code=vn${render ? '&render=true' : ''}`;
