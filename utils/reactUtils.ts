@@ -12,6 +12,8 @@ function isChunkLoadError(error: unknown): boolean {
         msg.includes('Failed to fetch dynamically imported module') ||
         msg.includes('Importing a module script failed') ||
         msg.includes('dynamically imported module') ||
+        msg.includes('is not a valid JavaScript MIME type') ||
+        msg.includes('Load failed') ||
         (error as any).name === 'ChunkLoadError'
     );
 }
