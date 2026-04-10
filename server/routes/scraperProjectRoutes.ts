@@ -489,9 +489,11 @@ export interface LeadScrapeResult {
   error?:     string;
 }
 
-// ── Phone extractor (Vietnamese mobile numbers) ───────────────────────────────
+// ── Phone + email extractors ──────────────────────────────────────────────────
 
-const VN_PHONE_RE = /(?:(?:\+84|84|0)(?:3[2-9]|5[6-9]|7[06-9]|8[0-9]|9[0-9])\d{7})/g;
+const VN_PHONE_RE  = /(?:(?:\+84|84|0)(?:3[2-9]|5[6-9]|7[06-9]|8[0-9]|9[0-9])\d{7})/g;
+const EMAIL_RE     = /[\w.+%-]{2,}@[\w-]+\.[a-z]{2,}/gi;
+const FAKE_PHONES  = new Set(['0000000000', '1234567890', '0123456789']);
 
 function normalizePhone(raw: string): string {
   const s = raw.replace(/\D/g, '');
@@ -499,13 +501,38 @@ function normalizePhone(raw: string): string {
   return s.startsWith('0') ? s : '0' + s;
 }
 
-function extractPhones(html: string): string[] {
-  const matches = html.match(VN_PHONE_RE) ?? [];
-  const seen    = new Set<string>();
-  return matches
+function extractPhones(text: string): string[] {
+  const seen = new Set<string>();
+  return (text.match(VN_PHONE_RE) ?? [])
     .map(m => normalizePhone(m))
-    .filter(p => { if (seen.has(p)) return false; seen.add(p); return true; });
+    .filter(p => {
+      if (p.length !== 10 || FAKE_PHONES.has(p) || seen.has(p)) return false;
+      seen.add(p); return true;
+    });
 }
+
+function extractEmails(text: string): string[] {
+  const seen = new Set<string>();
+  const BAD  = ['example.com', 'domain.com', 'email.com', 'test.com', 'sentry.io'];
+  return (text.match(EMAIL_RE) ?? [])
+    .map(m => m.toLowerCase())
+    .filter(e => {
+      if (seen.has(e) || BAD.some(b => e.endsWith(b))) return false;
+      seen.add(e); return true;
+    });
+}
+
+// ── Project search keyword map ────────────────────────────────────────────────
+
+const PROJECT_KEYWORDS: Record<string, string[]> = {
+  'sgsland':                 ['sgsland', 'SGS Land'],
+  'vinhomes-green-paradise': ['Vinhomes Green Paradise', 'Green Paradise Vinhomes'],
+  'vinhomes-central-park':   ['Vinhomes Central Park', 'Central Park Vinhomes'],
+  'swanbay':                 ['Swan Bay', 'SwanBay', 'Đảo thiên nga'],
+  'swanpark':                ['Swan Park', 'SwanPark', 'Nhơn Trạch'],
+  'phu-my-hung':             ['Phú Mỹ Hưng', 'Phu My Hung', 'PMH'],
+  'sala':                    ['Sala Đại Quang Minh', 'Sala DQM', 'Sala Thủ Thiêm'],
+};
 
 // ── Lead scraper: sgsland.vn internal DB ─────────────────────────────────────
 
@@ -552,143 +579,401 @@ async function scrapeSgslandLeads(): Promise<LeadScrapeResult> {
   }
 }
 
-// ── Lead scraper: search classifieds for project name ─────────────────────────
+// ── Shared lead builder ───────────────────────────────────────────────────────
+
+interface LeadCandidate {
+  name:     string;
+  phone:    string;
+  email:    string;
+  source:   string;
+  url:      string;
+  title:    string;
+  price:    string;
+  interest: ProjectLead['interest'];
+  notes:    string;
+}
+
+function buildLead(projectId: string, proj: typeof PROJECT_CATALOG[0], c: LeadCandidate, suffix: string): ProjectLead {
+  return {
+    id:         `${projectId}-${c.source}-${suffix}`,
+    projectId:  proj.id,
+    project:    proj.name,
+    name:       c.name || 'Không rõ',
+    phone:      c.phone,
+    email:      c.email,
+    source:     c.source,
+    sourceUrl:  c.url,
+    listing:    c.title,
+    price:      c.price,
+    interest:   c.interest,
+    notes:      c.notes,
+    scrapedAt:  new Date().toISOString(),
+    importedAt: null,
+  };
+}
+
+// ── Generic page scraper — returns cards with contact data ────────────────────
+
+interface SrcDef {
+  label:    string;
+  url:      string;
+  interest: ProjectLead['interest'];
+  card:     string;
+  title:    string;
+  price:    string;
+  name:     string;
+  link:     string;
+}
+
+async function scrapeOneSrc(
+  src: SrcDef,
+  proj: typeof PROJECT_CATALOG[0],
+  seenPhone: Set<string>,
+  seenEmail: Set<string>,
+): Promise<ProjectLead[]> {
+  const out: ProjectLead[] = [];
+  try {
+    const res  = await scraperApiFetch(src.url, true);
+    if (!res.ok) return out;
+    const html = await res.text();
+    if (html.includes('Just a moment') || html.includes('cf_chl_opt') || html.length < 1000) return out;
+
+    const $ = cheerio.load(html);
+
+    // ── Structured card extraction ─────────────────────────────────────────
+    $(src.card).slice(0, 40).each((_, el) => {
+      const $el = $(el);
+      const elHtml  = $el.html() ?? '';
+      const elText  = $el.text();
+      const titleTx = $el.find(src.title).first().text().trim() || $el.find('h2,h3,h4').first().text().trim();
+      if (!titleTx) return;
+
+      const priceTx = $el.find(src.price).first().text().trim();
+      const nameTx  = $el.find(src.name).first().text().trim().slice(0, 80);
+      const href    = $el.find(src.link).first().attr('href') ?? $el.find('a').first().attr('href') ?? '';
+      const fullUrl = href.startsWith('http') ? href
+        : href.startsWith('/') ? `https://${new URL(src.url).host}${href}`
+        : src.url;
+
+      // Phone: data attributes first, then text
+      const dataPhone = $el.find('[data-phone]').attr('data-phone')
+                     ?? $el.find('[data-contact-phone]').attr('data-contact-phone')
+                     ?? $el.find('[data-original-phone]').attr('data-original-phone')
+                     ?? $el.find('[data-sdt]').attr('data-sdt')
+                     ?? '';
+
+      const phones = dataPhone
+        ? [normalizePhone(dataPhone)].filter(p => p.length === 10)
+        : extractPhones(elHtml + ' ' + elText);
+
+      const emails = extractEmails(elHtml + ' ' + elText);
+
+      for (const phone of phones.slice(0, 2)) {
+        if (seenPhone.has(phone)) continue;
+        seenPhone.add(phone);
+        const email = emails.find(e => !seenEmail.has(e)) ?? '';
+        if (email) seenEmail.add(email);
+        out.push(buildLead(proj.id, proj, {
+          name:     nameTx,
+          phone,
+          email,
+          source:   src.label,
+          url:      fullUrl,
+          title:    titleTx,
+          price:    priceTx,
+          interest: src.interest,
+          notes:    `[${src.label.toUpperCase()}] ${titleTx}${priceTx ? ' · ' + priceTx : ''}`,
+        }, phone));
+      }
+
+      // Contacts with email but no phone
+      for (const email of emails.slice(0, 2)) {
+        if (seenEmail.has(email)) continue;
+        seenEmail.add(email);
+        out.push(buildLead(proj.id, proj, {
+          name: nameTx, phone: '', email,
+          source: src.label, url: fullUrl, title: titleTx,
+          price: priceTx, interest: src.interest,
+          notes: `[${src.label.toUpperCase()}] Email: ${email} — ${titleTx}`,
+        }, email.replace(/[@.]/g, '_')));
+      }
+    });
+
+    // ── Fallback: raw regex over full page ─────────────────────────────────
+    if (out.length < 3) {
+      for (const phone of extractPhones(html).slice(0, 15)) {
+        if (seenPhone.has(phone)) continue;
+        seenPhone.add(phone);
+        out.push(buildLead(proj.id, proj, {
+          name: '', phone, email: '', source: src.label,
+          url: src.url, title: '', price: '',
+          interest: src.interest,
+          notes: `SĐT trích xuất từ ${src.label}`,
+        }, `raw-${phone}`));
+      }
+      for (const email of extractEmails(html).slice(0, 10)) {
+        if (seenEmail.has(email)) continue;
+        seenEmail.add(email);
+        out.push(buildLead(proj.id, proj, {
+          name: '', phone: '', email, source: src.label,
+          url: src.url, title: '', price: '',
+          interest: src.interest,
+          notes: `Email trích xuất từ ${src.label}`,
+        }, `raw-${email.replace(/[@.]/g, '_')}`));
+      }
+    }
+  } catch { /* skip source on error */ }
+  return out;
+}
+
+// ── Lead scraper: 8 classifieds + portal sources ──────────────────────────────
 
 async function scrapeClassifiedLeads(projectId: string): Promise<LeadScrapeResult> {
-  const start  = Date.now();
-  const leads: ProjectLead[] = [];
-  const proj   = PROJECT_CATALOG.find(p => p.id === projectId);
-  if (!proj) return { projectId, project: projectId, ok: false, leads, total: 0, durationMs: 0, error: 'Project not found' };
+  const start = Date.now();
+  const proj  = PROJECT_CATALOG.find(p => p.id === projectId);
+  if (!proj) return { projectId, project: projectId, ok: false, leads: [], total: 0, durationMs: 0, error: 'Project not found' };
 
   if (!process.env.SCRAPERAPI_KEY) {
-    return { projectId: proj.id, project: proj.name, ok: false, leads, total: 0, durationMs: Date.now() - start, error: 'SCRAPERAPI_KEY chưa được cấu hình' };
+    return { projectId: proj.id, project: proj.name, ok: false, leads: [], total: 0, durationMs: Date.now() - start, error: 'SCRAPERAPI_KEY chưa được cấu hình' };
   }
 
-  const keyword = encodeURIComponent(proj.name.replace('Vinhomes ', ''));
-  const SEARCH_SOURCES = [
+  const keywords  = PROJECT_KEYWORDS[projectId] ?? [proj.name];
+  const kw        = encodeURIComponent(keywords[0]);
+  const kwShort   = encodeURIComponent((keywords[1] ?? keywords[0]).split(' ').slice(0, 3).join(' '));
+
+  const SOURCES: SrcDef[] = [
+    // ── BatDongSan — bán ────────────────────────────────────────────────────
     {
-      label: 'batdongsan',
-      url:   `https://batdongsan.com.vn/ban-can-ho-chung-cu?keyword=${keyword}`,
-      interest: 'seller' as const,
-      selectors: {
-        card:    '.js__product-link-for-product-id, [data-product-id], .product-item, .re__card-full',
-        title:   '.re__card-info-title, .title, h3',
-        price:   '.re__card-config-price, .price',
-        area:    '.re__card-config-area, .area',
-        name:    '.re__card-info-agent-name, [class*="agent-name"]',
-        phone:   '[data-phone], [data-contact-phone], [data-original-phone]',
-        link:    'a',
-      },
+      label: 'batdongsan', interest: 'seller',
+      url:   `https://batdongsan.com.vn/ban-can-ho-chung-cu?keyword=${kw}`,
+      card:  '.re__card-full, [data-product-id]',
+      title: '.re__card-info-title, h3',
+      price: '.re__card-config-price',
+      name:  '.re__card-info-agent-name, [class*="agent-name"]',
+      link:  'a.re__card-info-title',
     },
+    // ── BatDongSan — cần mua / thuê ─────────────────────────────────────────
     {
-      label: 'batdongsan_buy',
-      url:   `https://batdongsan.com.vn/can-mua-thue?keyword=${keyword}`,
-      interest: 'buyer' as const,
-      selectors: {
-        card:    '.re__card-full, .js__product-link-for-product-id, .product-item',
-        title:   '.re__card-info-title, h3',
-        price:   '.re__card-config-price, .price',
-        area:    '.re__card-config-area',
-        name:    '.re__card-info-agent-name, [class*="agent-name"]',
-        phone:   '[data-phone], [data-contact-phone]',
-        link:    'a',
-      },
+      label: 'batdongsan', interest: 'buyer',
+      url:   `https://batdongsan.com.vn/can-mua-thue?keyword=${kw}`,
+      card:  '.re__card-full, [data-product-id]',
+      title: '.re__card-info-title, h3',
+      price: '.re__card-config-price',
+      name:  '.re__card-info-agent-name',
+      link:  'a.re__card-info-title',
     },
+    // ── Muaban.net ───────────────────────────────────────────────────────────
     {
-      label: 'muaban',
-      url:   `https://muaban.net/bat-dong-san?q=${keyword}`,
-      interest: 'seller' as const,
-      selectors: {
-        card:    '.listing-item, .re-listing, article, [class*="listing"]',
-        title:   'h2, h3, [class*="title"]',
-        price:   '[class*="price"]',
-        area:    '[class*="area"]',
-        name:    '[class*="seller"], [class*="contact"], [class*="agent"]',
-        phone:   '[class*="phone"], [data-phone]',
-        link:    'a',
-      },
+      label: 'muaban', interest: 'seller',
+      url:   `https://muaban.net/bat-dong-san?q=${kw}`,
+      card:  '.listing-item, [class*="item-listing"], article.item',
+      title: 'h2,h3,[class*="title"]',
+      price: '[class*="price"]',
+      name:  '[class*="seller"],[class*="contact"],[class*="user"]',
+      link:  'a',
+    },
+    // ── Homedy.com — bán ─────────────────────────────────────────────────────
+    {
+      label: 'homedy', interest: 'seller',
+      url:   `https://homedy.com/ban-can-ho-chung-cu?keyword=${kw}`,
+      card:  '.product-item, [class*="product-item"], .item-product',
+      title: '.product-title, h3,[class*="title"]',
+      price: '.product-price,[class*="price"]',
+      name:  '[class*="agent"],[class*="contact"],[class*="user"]',
+      link:  'a.product-title, a',
+    },
+    // ── Homedy.com — hỏi đáp / quan tâm dự án ────────────────────────────────
+    {
+      label: 'homedy_forum', interest: 'buyer',
+      url:   `https://homedy.com/hoi-dap?keyword=${kw}`,
+      card:  '.question-item, [class*="question"], .forum-item, article',
+      title: 'h2,h3,[class*="title"],[class*="question"]',
+      price: '[class*="price"]',
+      name:  '[class*="author"],[class*="user"],[class*="name"]',
+      link:  'a',
+    },
+    // ── Alonhadat.com.vn ─────────────────────────────────────────────────────
+    {
+      label: 'alonhadat', interest: 'seller',
+      url:   `https://alonhadat.com.vn/tim-kiem.html?text=${kwShort}&chuyen=1`,
+      card:  '.content-item, .property-item, [class*="content-item"]',
+      title: '.ct-title, h3, [class*="title"]',
+      price: '.ct-price, [class*="price"]',
+      name:  '.ct-name, [class*="contact"],[class*="agent"]',
+      link:  'a.ct-title, a',
+    },
+    // ── Mogi.vn ──────────────────────────────────────────────────────────────
+    {
+      label: 'mogi', interest: 'seller',
+      url:   `https://mogi.vn/mua-ban/tim-kiem?q=${kw}`,
+      card:  '.prop-item, .prop-list-item, [class*="prop-item"]',
+      title: '.prop-name, h3,[class*="title"]',
+      price: '.prop-price, [class*="price"]',
+      name:  '.prop-contact, [class*="contact"],[class*="agent"]',
+      link:  'a.prop-name, a',
+    },
+    // ── NhaTot.com ───────────────────────────────────────────────────────────
+    {
+      label: 'nhatot', interest: 'seller',
+      url:   `https://www.nhatot.com/mua-ban-bat-dong-san?q=${kw}`,
+      card:  '[class*="ad-listing"],[class*="AdItem"],[class*="aditem"],article',
+      title: '[class*="subject"],[class*="title"],h2,h3',
+      price: '[class*="price"]',
+      name:  '[class*="account"],[class*="author"],[class*="seller"]',
+      link:  'a',
+    },
+    // ── Cafeland.vn ──────────────────────────────────────────────────────────
+    {
+      label: 'cafeland', interest: 'investor',
+      url:   `https://cafeland.vn/tim-kiem/?s=${kw}`,
+      card:  '.item-news, article, [class*="item-news"]',
+      title: 'h2,h3,[class*="title"]',
+      price: '[class*="price"]',
+      name:  '[class*="author"],[class*="contact"]',
+      link:  'a',
     },
   ];
 
-  const seen = new Set<string>(); // dedupe by phone
+  const seenPhone = new Set<string>();
+  const seenEmail = new Set<string>();
+  const allLeads:  ProjectLead[] = [];
 
-  for (const src of SEARCH_SOURCES) {
+  // Run all sources in parallel (max 4 concurrent to avoid rate limiting)
+  const BATCH = 4;
+  for (let i = 0; i < SOURCES.length; i += BATCH) {
+    const batch  = SOURCES.slice(i, i + BATCH);
+    const results = await Promise.allSettled(
+      batch.map(src => scrapeOneSrc(src, proj, seenPhone, seenEmail))
+    );
+    for (const r of results) {
+      if (r.status === 'fulfilled') allLeads.push(...r.value);
+    }
+    if (i + BATCH < SOURCES.length) await sleep(1000);
+  }
+
+  return {
+    projectId: proj.id, project: proj.name,
+    ok: allLeads.length > 0, leads: allLeads,
+    total: allLeads.length, durationMs: Date.now() - start,
+  };
+}
+
+// ── Lead scraper: project website agents/contacts ─────────────────────────────
+
+async function scrapeProjectWebsiteLeads(projectId: string): Promise<LeadScrapeResult> {
+  const start = Date.now();
+  const proj  = PROJECT_CATALOG.find(p => p.id === projectId);
+  if (!proj || projectId === 'sgsland') {
+    return { projectId: projectId || '', project: proj?.name ?? '', ok: false, leads: [], total: 0, durationMs: 0 };
+  }
+
+  if (!process.env.SCRAPERAPI_KEY) {
+    return { projectId: proj.id, project: proj.name, ok: false, leads: [], total: 0, durationMs: Date.now() - start, error: 'SCRAPERAPI_KEY chưa được cấu hình' };
+  }
+
+  const CONTACT_PATHS: Record<string, string[]> = {
+    'vinhomes-green-paradise': [
+      'https://vinhomesgreensparadise.vinhomes.vn/lien-he',
+      'https://vinhomesgreensparadise.vinhomes.vn/dai-ly',
+      'https://vinhomesgreensparadise.vinhomes.vn/tu-van',
+    ],
+    'vinhomes-central-park': [
+      'https://centralpark.vinhomes.vn/lien-he',
+      'https://centralpark.vinhomes.vn/dai-ly',
+    ],
+    'swanbay': [
+      'https://swanbay.vn/lien-he',
+      'https://swanbay.vn/tu-van',
+      'https://swanbay.vn/dai-ly',
+    ],
+    'swanpark': [
+      'https://swanpark.vn/lien-he',
+      'https://swanpark.vn/tu-van',
+    ],
+    'phu-my-hung': [
+      'https://phumyhung.vn/lien-he',
+      'https://phumyhung.vn/mua-ban/tim-dai-ly',
+    ],
+    'sala': [
+      'https://daikimgroup.vn/lien-he',
+      'https://daikimgroup.vn/du-an/sala-dai-quang-minh',
+    ],
+  };
+
+  const urls      = CONTACT_PATHS[projectId] ?? [];
+  const leads:    ProjectLead[] = [];
+  const seenPhone = new Set<string>();
+  const seenEmail = new Set<string>();
+
+  for (const url of urls) {
     try {
-      const res  = await scraperApiFetch(src.url, true);
+      const res  = await scraperApiFetch(url, true);
       if (!res.ok) continue;
       const html = await res.text();
-      if (html.includes('Just a moment') || html.includes('cf_chl_opt')) continue;
+      if (html.includes('Just a moment') || html.length < 500) continue;
 
-      const $    = cheerio.load(html);
+      const $     = cheerio.load(html);
+      const text  = $.text();
 
-      // Extract from structured card elements
-      $(src.selectors.card).slice(0, 30).each((_, el) => {
-        const $el = $(el);
-        const titleText  = $el.find(src.selectors.title).first().text().trim();
-        if (!titleText) return;
+      // Agent/contact cards on project site
+      const agentSel = '.agent-item, .broker-item, [class*="agent"], [class*="broker"], [class*="tu-van"], [class*="nhan-vien"], [class*="expert"]';
+      $(agentSel).slice(0, 20).each((_, el) => {
+        const $el     = $(el);
+        const elHtml  = $el.html() ?? '';
+        const nameTx  = $el.find('[class*="name"],h3,h4').first().text().trim().slice(0, 80);
+        const phones  = extractPhones(elHtml);
+        const emails  = extractEmails(elHtml);
+        const href    = $el.find('a').first().attr('href') ?? '';
+        const fullUrl = href.startsWith('http') ? href : url;
 
-        const priceText  = $el.find(src.selectors.price).first().text().trim();
-        const nameText   = $el.find(src.selectors.name).first().text().trim();
-        const href       = $el.find(src.selectors.link).first().attr('href') ?? '';
-        const fullUrl    = href.startsWith('http') ? href : href.startsWith('/') ? `https://${new URL(src.url).host}${href}` : src.url;
-
-        // Phone from data attribute
-        const phoneAttr  = $el.find('[data-phone],[data-contact-phone],[data-original-phone]').first().attr('data-phone')
-                          ?? $el.find('[data-phone],[data-contact-phone],[data-original-phone]').first().attr('data-contact-phone')
-                          ?? $el.find('[data-phone],[data-contact-phone],[data-original-phone]').first().attr('data-original-phone')
-                          ?? '';
-
-        // Phone from text/html using regex
-        const phones     = phoneAttr ? [normalizePhone(phoneAttr)] : extractPhones($el.html() ?? '');
-
-        for (const phone of phones.slice(0, 2)) {
-          if (!phone || phone.length < 10 || seen.has(phone)) continue;
-          seen.add(phone);
-          leads.push({
-            id:         `${projectId}-${src.label}-${phone}`,
-            projectId:  proj.id,
-            project:    proj.name,
-            name:       nameText || 'Không rõ',
-            phone,
-            email:      '',
-            source:     src.label.replace('_buy', ''),
-            sourceUrl:  fullUrl,
-            listing:    titleText,
-            price:      priceText,
-            interest:   src.interest,
-            notes:      `Thu thập từ ${src.label} — "${titleText}"`,
-            scrapedAt:  new Date().toISOString(),
-            importedAt: null,
-          });
+        for (const phone of phones.slice(0, 1)) {
+          if (seenPhone.has(phone)) continue;
+          seenPhone.add(phone);
+          leads.push(buildLead(proj.id, proj, {
+            name: nameTx, phone,
+            email: emails[0] ?? '',
+            source: 'website', url: fullUrl,
+            title: `Đại lý / Tư vấn viên tại ${proj.name}`,
+            price: '', interest: 'seller',
+            notes: `[WEBSITE] Tư vấn viên dự án — ${proj.name} · ${url}`,
+          }, phone));
+        }
+        for (const email of emails.slice(0, 1)) {
+          if (seenEmail.has(email)) continue;
+          seenEmail.add(email);
+          leads.push(buildLead(proj.id, proj, {
+            name: nameTx, phone: '', email,
+            source: 'website', url: fullUrl,
+            title: `Liên hệ tại ${proj.name}`,
+            price: '', interest: 'seller',
+            notes: `[WEBSITE] Email liên hệ — ${proj.name}`,
+          }, email.replace(/[@.]/g, '_')));
         }
       });
 
-      // Also extract any phones from full page HTML (may catch inline numbers)
-      if (leads.filter(l => l.projectId === proj.id).length < 5) {
-        const allPhones = extractPhones(html);
-        for (const phone of allPhones.slice(0, 20)) {
-          if (seen.has(phone)) continue;
-          seen.add(phone);
-          leads.push({
-            id:         `${projectId}-${src.label}-raw-${phone}`,
-            projectId:  proj.id,
-            project:    proj.name,
-            name:       'Không rõ',
-            phone,
-            email:      '',
-            source:     src.label.replace('_buy', ''),
-            sourceUrl:  src.url,
-            listing:    '',
-            price:      '',
-            interest:   'unknown',
-            notes:      `SĐT trích xuất từ trang ${src.label}`,
-            scrapedAt:  new Date().toISOString(),
-            importedAt: null,
-          });
-        }
+      // Fallback: raw extraction from entire contact page
+      for (const phone of extractPhones(text + html).slice(0, 10)) {
+        if (seenPhone.has(phone)) continue;
+        seenPhone.add(phone);
+        leads.push(buildLead(proj.id, proj, {
+          name: '', phone, email: '', source: 'website', url,
+          title: `Liên hệ chính thức — ${proj.name}`,
+          price: '', interest: 'seller',
+          notes: `[WEBSITE] SĐT trích từ trang chính thức ${proj.name}`,
+        }, `site-${phone}`));
+      }
+      for (const email of extractEmails(text + html).slice(0, 5)) {
+        if (seenEmail.has(email)) continue;
+        seenEmail.add(email);
+        leads.push(buildLead(proj.id, proj, {
+          name: '', phone: '', email, source: 'website', url,
+          title: `Email liên hệ — ${proj.name}`,
+          price: '', interest: 'unknown',
+          notes: `[WEBSITE] Email trích từ trang chính thức ${proj.name}`,
+        }, `site-${email.replace(/[@.]/g, '_')}`));
       }
 
-      await sleep(1500);
+      await sleep(1200);
     } catch { continue; }
   }
 
@@ -699,16 +984,40 @@ async function scrapeClassifiedLeads(projectId: string): Promise<LeadScrapeResul
   };
 }
 
+// ── Combined lead scraper for external projects ───────────────────────────────
+
+async function scrapeAllLeadsForProject(projectId: string): Promise<LeadScrapeResult> {
+  const [classified, website] = await Promise.allSettled([
+    scrapeClassifiedLeads(projectId),
+    scrapeProjectWebsiteLeads(projectId),
+  ]);
+
+  const r1 = classified.status === 'fulfilled' ? classified.value : null;
+  const r2 = website.status    === 'fulfilled' ? website.value    : null;
+
+  const proj = PROJECT_CATALOG.find(p => p.id === projectId)!;
+  const allLeads = [...(r1?.leads ?? []), ...(r2?.leads ?? [])];
+
+  return {
+    projectId, project: proj?.name ?? projectId,
+    ok: allLeads.length > 0,
+    leads: allLeads,
+    total: allLeads.length,
+    durationMs: (r1?.durationMs ?? 0) + (r2?.durationMs ?? 0),
+    error: (!r1?.ok && !r2?.ok) ? (r1?.error ?? r2?.error) : undefined,
+  };
+}
+
 // ── Lead runner map ───────────────────────────────────────────────────────────
 
 const LEAD_RUNNERS: Record<string, () => Promise<LeadScrapeResult>> = {
   'sgsland':                  scrapeSgslandLeads,
-  'vinhomes-green-paradise':  () => scrapeClassifiedLeads('vinhomes-green-paradise'),
-  'vinhomes-central-park':    () => scrapeClassifiedLeads('vinhomes-central-park'),
-  'swanbay':                  () => scrapeClassifiedLeads('swanbay'),
-  'swanpark':                 () => scrapeClassifiedLeads('swanpark'),
-  'phu-my-hung':              () => scrapeClassifiedLeads('phu-my-hung'),
-  'sala':                     () => scrapeClassifiedLeads('sala'),
+  'vinhomes-green-paradise':  () => scrapeAllLeadsForProject('vinhomes-green-paradise'),
+  'vinhomes-central-park':    () => scrapeAllLeadsForProject('vinhomes-central-park'),
+  'swanbay':                  () => scrapeAllLeadsForProject('swanbay'),
+  'swanpark':                 () => scrapeAllLeadsForProject('swanpark'),
+  'phu-my-hung':              () => scrapeAllLeadsForProject('phu-my-hung'),
+  'sala':                     () => scrapeAllLeadsForProject('sala'),
 };
 
 // ── Lead cache (45 min TTL) ───────────────────────────────────────────────────
