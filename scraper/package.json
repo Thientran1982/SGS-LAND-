@@ -1,0 +1,28 @@
+{
+  "name": "sgsland-scraper",
+  "version": "2.0.0",
+  "description": "Web scraper cho sgsland.vn — thu thập dữ liệu BĐS realtime",
+  "type": "module",
+  "scripts": {
+    "scrape":       "npx tsx src/main.ts",
+    "scrape:csv":   "npx tsx src/main.ts --format=csv",
+    "scrape:both":  "npx tsx src/main.ts --format=both",
+    "schedule":     "npx tsx src/main.ts --mode=schedule --interval=30",
+    "villa":        "npx tsx src/main.ts --type=Villa",
+    "townhouse":    "npx tsx src/main.ts --type=Townhouse",
+    "land":         "npx tsx src/main.ts --type=Land",
+    "dongnai":      "npx tsx src/main.ts --location=\"Đồng Nai\"",
+    "binhduong":    "npx tsx src/main.ts --location=\"Bình Dương\"",
+    "hcmc":         "npx tsx src/main.ts --location=\"Hồ Chí Minh\"",
+    "with-val":     "npx tsx src/main.ts --valuation",
+    "verified":     "npx tsx src/main.ts --verified",
+    "build":        "tsc",
+    "start":        "node dist/main.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx":         "^4.7.0",
+    "typescript":  "^5.4.0"
+  }
+}
