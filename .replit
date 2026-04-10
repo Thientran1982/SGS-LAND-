@@ -78,7 +78,6 @@ PORT = "5000"
 [userenv.production]
 NODE_ENV = "production"
 PORT = "5000"
-ALLOWED_ORIGINS = "https://sgs-land.replit.app"
 APP_URL = "https://sgsland.vn"
 
 [objectStorage]
