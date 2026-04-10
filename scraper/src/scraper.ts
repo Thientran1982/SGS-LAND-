@@ -118,7 +118,7 @@ function computeStats(listings: Listing[]): ScrapeStats {
 // ── Default config ────────────────────────────────────────────────────────────
 
 export const DEFAULT_CONFIG: ScraperConfig = {
-  baseUrl:             'https://sgsland.vn',
+  baseUrl:             'https://sgs-land.replit.app',
   pageSize:            20,
   delayMs:             800,
   maxRetries:          3,
