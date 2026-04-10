@@ -3,6 +3,49 @@ import { ROUTES } from '../config/routes';
 import { Logo } from '../components/Logo';
 import { SeoHead } from '../components/SeoHead';
 
+const PROJECT_SEO_META: Record<string, { title: string; description: string }> = {
+    'aqua-city': {
+        title: 'Aqua City Novaland | Căn Hộ, Biệt Thự Đồng Nai - SGS LAND',
+        description: 'Aqua City Novaland Đồng Nai: tổng quan dự án, vị trí, tiện ích đẳng cấp, bảng giá và pháp lý cập nhật. Tư vấn và đặt chỗ miễn phí tại SGS LAND.',
+    },
+    'izumi-city': {
+        title: 'Izumi City Nam Long | Đô Thị Chuẩn Nhật Bản Đồng Nai - SGS LAND',
+        description: 'Izumi City Nam Long Biên Hòa: đô thị tích hợp 170ha chuẩn Nhật Bản, siêu thị Fuji Mart, trường học Nhật. Bảng giá nhà phố, biệt thự và tư vấn tại SGS LAND.',
+    },
+    'manhattan': {
+        title: 'Grand Manhattan Novaland | Căn Hộ Hạng Sang Novaland TP.HCM - SGS LAND',
+        description: 'Grand Manhattan Novaland: căn hộ hạng sang biểu tượng của Novaland tại trung tâm TP.HCM, từ 120 triệu/m². Xem bảng giá, penthouse và sky villa tại SGS LAND.',
+    },
+    'vinhomes-grand-park': {
+        title: 'Vinhomes Grand Park | Siêu Đô Thị 271ha Thủ Đức - SGS LAND',
+        description: 'Vinhomes Grand Park Quận 9 TP Thủ Đức: căn hộ, shophouse, biệt thự siêu đô thị 271ha. Công viên 36ha, Metro số 1, Vinmec, Vinschool. Bảng giá tại SGS LAND.',
+    },
+    'vinhomes-central-park': {
+        title: 'Vinhomes Central Park | Căn Hộ Cao Cấp Bình Thạnh Landmark 81 - SGS LAND',
+        description: 'Vinhomes Central Park Bình Thạnh: 44 tòa cao tầng, Landmark 81, bể bơi vô cực ven sông Sài Gòn. Căn hộ từ 50 triệu/m², cho thuê 15-60 triệu/tháng. Tư vấn tại SGS LAND.',
+    },
+    'thu-thiem': {
+        title: 'Khu Đô Thị Thủ Thiêm | BĐS Hạng Sang Trung Tâm Tài Chính - SGS LAND',
+        description: 'Bất động sản Khu Đô Thị Mới Thủ Thiêm 657ha — trung tâm tài chính tương lai TP.HCM. Empire City, Metropole, The River. Giá từ 80 triệu/m². Tư vấn tại SGS LAND.',
+    },
+    'son-kim-land': {
+        title: 'Sơn Kim Land | BĐS Thương Mại Cao Cấp TP.HCM & Hà Nội - SGS LAND',
+        description: 'Sơn Kim Land — danh mục BĐS cao cấp: Gem Riverside Q4, Metropole Thủ Thiêm, Seasons Avenue HN. GEM Center, GS25. Giá 40-150 triệu/m². Tư vấn tại SGS LAND.',
+    },
+    'masterise-homes': {
+        title: 'Masterise Homes | Căn Hộ Hạng Sang Masteri, Lumière, Grand Marina - SGS LAND',
+        description: 'Masterise Homes — BĐS hạng sang Việt Nam: Masteri Thảo Điền, Lumière Boulevard, Grand Marina Saigon. Giá 60-300 triệu/m². Vận hành bởi chuỗi khách sạn 5 sao. Tư vấn SGS LAND.',
+    },
+    'the-global-city': {
+        title: 'The Global City Masterise | Đại Đô Thị 117ha An Phú Thủ Đức - SGS LAND',
+        description: 'The Global City Masterise Homes An Phú Thủ Đức: đại đô thị 117ha chuẩn Singapore, cạnh Metro số 1. Nhà phố từ 15 tỷ, biệt thự từ 30 tỷ. Tư vấn tại SGS LAND.',
+    },
+    'nha-pho-trung-tam': {
+        title: 'Nhà Phố Trung Tâm TP.HCM | Mặt Tiền, Nhà Hẻm, Shophouse - SGS LAND',
+        description: 'Mua bán nhà phố trung tâm TP.HCM: mặt tiền Q1 từ 500 triệu/m², nhà hẻm Q3 từ 100 triệu/m². Định giá AI miễn phí, kiểm tra pháp lý độc lập tại SGS LAND.',
+    },
+};
+
 interface ProjectConfig {
     slug: string;
     name: string;
@@ -991,22 +1034,22 @@ export default function ProjectLandingPage() {
         );
     }
 
-    const metaTitle = `${cfg.name} | ${cfg.projectType} ${cfg.location} — SGS LAND`;
-    const metaDesc = cfg.heroDescription.length > 155
-        ? cfg.heroDescription.slice(0, 152) + '...'
-        : cfg.heroDescription;
+    const seoMeta = PROJECT_SEO_META[projectSlug] ?? {
+        title: `${cfg.name} | ${cfg.projectType} ${cfg.location} — SGS LAND`,
+        description: cfg.heroDescription.slice(0, 155),
+    };
 
     return (
         <>
             <SeoHead
-                title={metaTitle}
-                description={metaDesc}
+                title={seoMeta.title}
+                description={seoMeta.description}
                 canonicalPath={`/du-an/${cfg.slug}`}
                 structuredData={{
                     '@context': 'https://schema.org',
                     '@type': 'ApartmentComplex',
                     name: cfg.name,
-                    description: metaDesc,
+                    description: seoMeta.description,
                     url: `https://sgsland.vn/du-an/${cfg.slug}`,
                     address: {
                         '@type': 'PostalAddress',
