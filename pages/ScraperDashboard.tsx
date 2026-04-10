@@ -4,7 +4,7 @@ import { Dropdown } from '../components/Dropdown';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Tab = 'market' | 'projects';
+type Tab = 'market' | 'projects' | 'leads';
 
 // -- Market tab
 interface SourceStatus  { id: string; name: string; status: 'active' | 'blocked'; note: string; listings: string; }
@@ -708,6 +708,379 @@ function ProjectsTab() {
   );
 }
 
+// ── ──────────────── LEADS TAB ──────────────────────────────────────────────
+
+type LeadInterest = 'seller' | 'buyer' | 'renter' | 'investor' | 'unknown';
+
+interface ProjectLead {
+  id: string; projectId: string; project: string;
+  name: string; phone: string; email: string;
+  source: string; sourceUrl: string; listing: string; price: string;
+  interest: LeadInterest; notes: string;
+  scrapedAt: string; importedAt: string | null;
+}
+
+interface LeadResultSummary {
+  projectId: string; project: string;
+  ok: boolean; count: number; error?: string; durationMs: number;
+}
+
+interface LeadRunResponse {
+  ok: boolean; results: LeadResultSummary[];
+  leads: ProjectLead[]; totalLeads: number; scrapedAt: string;
+}
+
+const INTEREST_LABELS: Record<LeadInterest, { label: string; cls: string }> = {
+  seller:   { label: 'Người bán',    cls: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
+  buyer:    { label: 'Người mua',    cls: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
+  renter:   { label: 'Thuê',         cls: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+  investor: { label: 'Nhà đầu tư',   cls: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400' },
+  unknown:  { label: 'Chưa xác định',cls: 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400' },
+};
+
+const SOURCE_DISPLAY: Record<string, { label: string; cls: string }> = {
+  sgsland_db:  { label: 'DB nội bộ',    cls: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' },
+  batdongsan:  { label: 'BatDongSan',   cls: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
+  muaban:      { label: 'Muaban',        cls: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400' },
+};
+
+function LeadsTab() {
+  const [catalog,     setCatalog]     = useState<ProjectCatalog[]>([]);
+  const [results,     setResults]     = useState<LeadResultSummary[]>([]);
+  const [leads,       setLeads]       = useState<ProjectLead[]>([]);
+  const [scrapedAt,   setScrapedAt]   = useState<string | null>(null);
+  const [loading,     setLoading]     = useState(false);
+  const [running,     setRunning]     = useState(false);
+  const [error,       setError]       = useState<string | null>(null);
+  const [selected,    setSelected]    = useState<string[]>([]);
+  const [filter,      setFilter]      = useState('');
+  const [projFilter,  setProjFilter]  = useState('all');
+  const [interFilter, setInterFilter] = useState('all');
+  const [importing,   setImporting]   = useState<Set<string>>(new Set());
+  const [imported,    setImported]    = useState<Set<string>>(new Set());
+
+  const loadCatalog = useCallback(async () => {
+    try {
+      const res = await fetch('/api/scraper/projects/catalog', { credentials: 'include' });
+      if (res.ok) {
+        const data: CatalogResponse = await res.json();
+        setCatalog(data.projects ?? []);
+        if (selected.length === 0) setSelected(data.projects.map(p => p.id));
+      }
+    } catch { /* ignore */ }
+  }, []); // eslint-disable-line
+
+  const loadResults = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/scraper/projects/leads/results', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setResults(data.results ?? []);
+        setLeads(data.leads ?? []);
+        setScrapedAt(data.scrapedAt ?? null);
+      }
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadCatalog(); loadResults(); }, [loadCatalog, loadResults]);
+
+  const handleRun = async () => {
+    if (running || !selected.length) return;
+    setRunning(true); setError(null);
+    try {
+      const res  = await fetch('/api/scraper/projects/leads/run', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projects: selected }),
+      });
+      const data: LeadRunResponse = await res.json();
+      if (!res.ok) throw new Error((data as any).error ?? 'Lỗi không xác định');
+      setResults(data.results ?? []);
+      setLeads(data.leads ?? []);
+      setScrapedAt(data.scrapedAt ?? null);
+    } catch (err) { setError(String(err)); }
+    setRunning(false);
+  };
+
+  const handleImport = async (lead: ProjectLead) => {
+    setImporting(prev => new Set(prev).add(lead.id));
+    try {
+      const res = await fetch('/api/scraper/projects/leads/import', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lead),
+      });
+      if (res.ok || res.status === 409) {
+        setImported(prev => new Set(prev).add(lead.id));
+      }
+    } catch { /* ignore */ }
+    setImporting(prev => { const n = new Set(prev); n.delete(lead.id); return n; });
+  };
+
+  const handleBulkImport = async () => {
+    const toImport = displayed.filter(l => !imported.has(l.id));
+    if (!toImport.length) return;
+    const res = await fetch('/api/scraper/projects/leads/import-bulk', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ leads: toImport }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setImported(prev => { const n = new Set(prev); toImport.forEach(l => n.add(l.id)); return n; });
+      alert(`✅ Import ${data.imported} lead, bỏ qua ${data.skipped} trùng SĐT`);
+    }
+  };
+
+  const toggleProject = (id: string) =>
+    setSelected(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
+
+  const projOptions = [{ value: 'all', label: 'Tất cả dự án' }, ...catalog.map(p => ({ value: p.id, label: p.name }))];
+
+  const displayed = leads
+    .filter(l => projFilter  === 'all' || l.projectId === projFilter)
+    .filter(l => interFilter === 'all' || l.interest   === interFilter)
+    .filter(l => !filter || l.name.toLowerCase().includes(filter.toLowerCase())
+                          || l.phone.includes(filter)
+                          || l.listing.toLowerCase().includes(filter.toLowerCase()));
+
+  return (
+    <div className="space-y-4">
+      {/* Project selector */}
+      {catalog.length > 0 && (
+        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-4">
+          <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Chọn dự án cần tìm khách hàng</p>
+          <div className="flex flex-wrap gap-2">
+            {catalog.map(proj => {
+              const colorCls   = PROJECT_COLOR_MAP[proj.color] ?? PROJECT_COLOR_MAP['indigo'];
+              const isSelected = selected.includes(proj.id);
+              const resultInfo = results.find(r => r.projectId === proj.id);
+              return (
+                <button
+                  key={proj.id}
+                  onClick={() => toggleProject(proj.id)}
+                  className={[
+                    'flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all',
+                    isSelected
+                      ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 shadow-sm'
+                      : 'border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-indigo-300',
+                  ].join(' ')}
+                >
+                  <span className={`w-6 h-6 rounded-lg flex items-center justify-center border flex-shrink-0 ${colorCls}`}>{proj.logo}</span>
+                  <span>{proj.name}</span>
+                  {resultInfo && (
+                    <span className={`ml-1 px-1.5 rounded-full text-[10px] font-bold ${resultInfo.ok ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600'}`}>
+                      {resultInfo.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Run panel */}
+      <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-5">
+        <div className="flex flex-wrap items-center gap-4">
+          <div>
+            <p className="text-sm font-bold text-[var(--text-primary)]">
+              {selected.length === 0 ? 'Chọn dự án bên trên' : `${selected.length} dự án — tìm kiếm khách quan tâm`}
+            </p>
+            <p className="text-xs text-[var(--text-tertiary)] mt-0.5 leading-relaxed">
+              Lấy SĐT từ DB nội bộ (sgsland.vn) và các sàn BDS (batdongsan.com.vn, muaban.net)
+              {scrapedAt ? ` · Cập nhật ${fmtRelative(scrapedAt)}` : ''}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              onClick={loadResults}
+              disabled={loading}
+              className="p-2 rounded-xl bg-[var(--glass-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+            >
+              <span className={loading ? 'animate-spin inline-block' : ''}>{ICONS.REFRESH}</span>
+            </button>
+            {leads.length > 0 && (
+              <button
+                onClick={handleBulkImport}
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-sm shadow hover:bg-emerald-700 transition-all"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Import tất cả vào CRM
+              </button>
+            )}
+            <button
+              onClick={handleRun}
+              disabled={running || !selected.length}
+              className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-sm shadow hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {running
+                ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Đang tìm...</>
+                : <>{ICONS.PLAY}Tìm khách hàng</>}
+            </button>
+          </div>
+        </div>
+        {error && (
+          <div className="mt-3 flex items-start gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 rounded-xl text-sm">
+            {ICONS.WARN}<span>{error}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Summary row */}
+      {results.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          {results.map(r => (
+            <div key={r.projectId} className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border ${r.ok ? 'border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'border-rose-200 dark:border-rose-700 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
+              <span>{r.project}</span>
+              <span className="font-bold">{r.count} leads</span>
+              {r.error && <span className="opacity-70" title={r.error}>⚠</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Leads table */}
+      {leads.length > 0 && (
+        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl overflow-hidden">
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-[var(--glass-border)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">Khách hàng quan tâm</h2>
+            <input
+              type="text"
+              value={filter}
+              onChange={e => setFilter(e.target.value)}
+              placeholder="Tìm tên, SĐT..."
+              className="flex-1 min-w-[140px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500"
+            />
+            {catalog.length > 0 && (
+              <div className="min-w-[160px]">
+                <Dropdown
+                  value={projFilter}
+                  onChange={(v) => setProjFilter(v as string)}
+                  options={projOptions}
+                />
+              </div>
+            )}
+            <div className="min-w-[160px]">
+              <Dropdown
+                value={interFilter}
+                onChange={(v) => setInterFilter(v as string)}
+                options={[
+                  { value: 'all',      label: 'Mọi phân loại' },
+                  { value: 'seller',   label: 'Người bán' },
+                  { value: 'buyer',    label: 'Người mua' },
+                  { value: 'renter',   label: 'Thuê' },
+                  { value: 'investor', label: 'Nhà đầu tư' },
+                  { value: 'unknown',  label: 'Chưa xác định' },
+                ]}
+              />
+            </div>
+            <span className="text-xs text-[var(--text-tertiary)] ml-auto">
+              {displayed.length} khách · {imported.size} đã import
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-[var(--glass-surface-hover)]">
+                  <th className="text-left px-4 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Họ tên</th>
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider whitespace-nowrap">Số điện thoại</th>
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Dự án</th>
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Phân loại</th>
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Nguồn</th>
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Tin đăng</th>
+                  <th className="text-left px-3 py-2.5 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">CRM</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--glass-border)]">
+                {displayed.slice(0, 200).map((lead: ProjectLead) => {
+                  const proj      = catalog.find(p => p.id === lead.projectId);
+                  const colorCls  = proj ? PROJECT_COLOR_MAP[proj.color] : PROJECT_COLOR_MAP['indigo'];
+                  const inter     = INTEREST_LABELS[lead.interest] ?? INTEREST_LABELS['unknown'];
+                  const srcInfo   = SOURCE_DISPLAY[lead.source] ?? { label: lead.source, cls: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' };
+                  const isImported= imported.has(lead.id);
+                  const isImporting=importing.has(lead.id);
+                  return (
+                    <tr key={lead.id} className={`hover:bg-[var(--glass-surface-hover)] transition-colors ${isImported ? 'opacity-60' : ''}`}>
+                      <td className="px-4 py-3">
+                        <span className="font-medium text-[var(--text-primary)]">{lead.name || '—'}</span>
+                        {lead.email && <div className="text-xs text-[var(--text-tertiary)] mt-0.5">{lead.email}</div>}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <a
+                          href={`tel:${lead.phone}`}
+                          className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline tracking-wide"
+                        >
+                          {lead.phone}
+                        </a>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-1.5">
+                          {proj && <span className={`w-5 h-5 rounded flex items-center justify-center text-xs border ${colorCls}`}>{proj.logo}</span>}
+                          <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap">{lead.project}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${inter.cls}`}>{inter.label}</span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-1">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${srcInfo.cls}`}>{srcInfo.label}</span>
+                          {lead.sourceUrl && (
+                            <a href={lead.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--text-tertiary)] hover:text-indigo-500 transition-colors">{ICONS.EXTERNAL}</a>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 max-w-[200px]">
+                        <div className="text-xs text-[var(--text-secondary)] line-clamp-2">{lead.listing || '—'}</div>
+                        {lead.price && <div className="text-xs font-semibold text-[var(--text-primary)] mt-0.5">{lead.price}</div>}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {isImported ? (
+                          <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">{ICONS.CHECK}Đã lưu</span>
+                        ) : (
+                          <button
+                            onClick={() => handleImport(lead)}
+                            disabled={isImporting}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
+                          >
+                            {isImporting
+                              ? <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
+                              : <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>}
+                            Import
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {displayed.length > 200 && (
+              <div className="px-4 py-2 text-xs text-center text-[var(--text-tertiary)] border-t border-[var(--glass-border)]">
+                Hiển thị 200/{displayed.length} kết quả. Dùng bộ lọc để thu hẹp.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!loading && !running && leads.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center mb-4 text-3xl">📞</div>
+          <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">Chưa có dữ liệu khách hàng</h3>
+          <p className="text-sm text-[var(--text-tertiary)] max-w-sm">
+            Chọn dự án và nhấn "Tìm khách hàng" để thu thập SĐT từ DB nội bộ và các sàn BĐS.
+            Sau đó nhấn "Import" để thêm trực tiếp vào CRM.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── ─────────────── MAIN PAGE ────────────────────────────────────────────────
 
 export default function ScraperDashboard() {
@@ -716,6 +1089,9 @@ export default function ScraperDashboard() {
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'market',   label: 'Sàn thị trường', icon: ICONS.GLOBE },
     { id: 'projects', label: 'Dự án BĐS',      icon: ICONS.BUILDING },
+    { id: 'leads',    label: 'Khách hàng',
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    },
   ];
 
   return (
@@ -755,6 +1131,7 @@ export default function ScraperDashboard() {
       <div className="flex-1 px-6 py-5 overflow-auto min-h-0">
         {tab === 'market'   && <MarketTab />}
         {tab === 'projects' && <ProjectsTab />}
+        {tab === 'leads'    && <LeadsTab />}
       </div>
     </div>
   );

@@ -12,6 +12,7 @@
 
 import { Router, Request, Response } from 'express';
 import * as cheerio from 'cheerio';
+import { pool, withTenantContext } from '../db';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -459,6 +460,267 @@ const PROJECT_RUNNERS: Record<string, () => Promise<ProjectResult>> = {
   'sala':                     scrapeSala,
 };
 
+// ── Lead types ────────────────────────────────────────────────────────────────
+
+export interface ProjectLead {
+  id:          string;
+  projectId:   string;
+  project:     string;
+  name:        string;
+  phone:       string;
+  email:       string;
+  source:      string;   // 'sgsland_db' | 'batdongsan' | 'muaban' | 'website'
+  sourceUrl:   string;
+  listing:     string;   // listing title if from classifieds
+  price:       string;
+  interest:    'seller' | 'buyer' | 'renter' | 'investor' | 'unknown';
+  notes:       string;
+  scrapedAt:   string;
+  importedAt:  string | null;
+}
+
+export interface LeadScrapeResult {
+  projectId:  string;
+  project:    string;
+  ok:         boolean;
+  leads:      ProjectLead[];
+  total:      number;
+  durationMs: number;
+  error?:     string;
+}
+
+// ── Phone extractor (Vietnamese mobile numbers) ───────────────────────────────
+
+const VN_PHONE_RE = /(?:(?:\+84|84|0)(?:3[2-9]|5[6-9]|7[06-9]|8[0-9]|9[0-9])\d{7})/g;
+
+function normalizePhone(raw: string): string {
+  const s = raw.replace(/\D/g, '');
+  if (s.startsWith('84') && s.length === 11) return '0' + s.slice(2);
+  return s.startsWith('0') ? s : '0' + s;
+}
+
+function extractPhones(html: string): string[] {
+  const matches = html.match(VN_PHONE_RE) ?? [];
+  const seen    = new Set<string>();
+  return matches
+    .map(m => normalizePhone(m))
+    .filter(p => { if (seen.has(p)) return false; seen.add(p); return true; });
+}
+
+// ── Lead scraper: sgsland.vn internal DB ─────────────────────────────────────
+
+async function scrapeSgslandLeads(): Promise<LeadScrapeResult> {
+  const start  = Date.now();
+  const leads: ProjectLead[] = [];
+  const proj   = PROJECT_CATALOG.find(p => p.id === 'sgsland')!;
+
+  try {
+    const DEFAULT_TENANT = '00000000-0000-0000-0000-000000000001';
+    const { rows } = await pool.query(
+      `SELECT id, name, COALESCE(phone,'') AS phone, COALESCE(email,'') AS email,
+              COALESCE(source,'DIRECT') AS source, COALESCE(stage,'NEW') AS stage,
+              COALESCE(notes,'') AS notes, created_at
+         FROM leads
+        WHERE tenant_id = $1
+          AND phone IS NOT NULL AND phone <> ''
+        ORDER BY created_at DESC
+        LIMIT 200`,
+      [DEFAULT_TENANT]
+    );
+
+    for (const r of rows) {
+      leads.push({
+        id:         `sgsland-db-${r.id}`,
+        projectId:  proj.id,
+        project:    proj.name,
+        name:       r.name ?? '',
+        phone:      r.phone,
+        email:      r.email,
+        source:     'sgsland_db',
+        sourceUrl:  'https://sgsland.vn',
+        listing:    '',
+        price:      '',
+        interest:   'unknown',
+        notes:      r.notes ?? '',
+        scrapedAt:  new Date().toISOString(),
+        importedAt: null,
+      });
+    }
+    return { projectId: proj.id, project: proj.name, ok: true, leads, total: leads.length, durationMs: Date.now() - start };
+  } catch (err) {
+    return { projectId: proj.id, project: proj.name, ok: false, leads, total: 0, durationMs: Date.now() - start, error: String(err) };
+  }
+}
+
+// ── Lead scraper: search classifieds for project name ─────────────────────────
+
+async function scrapeClassifiedLeads(projectId: string): Promise<LeadScrapeResult> {
+  const start  = Date.now();
+  const leads: ProjectLead[] = [];
+  const proj   = PROJECT_CATALOG.find(p => p.id === projectId);
+  if (!proj) return { projectId, project: projectId, ok: false, leads, total: 0, durationMs: 0, error: 'Project not found' };
+
+  if (!process.env.SCRAPERAPI_KEY) {
+    return { projectId: proj.id, project: proj.name, ok: false, leads, total: 0, durationMs: Date.now() - start, error: 'SCRAPERAPI_KEY chưa được cấu hình' };
+  }
+
+  const keyword = encodeURIComponent(proj.name.replace('Vinhomes ', ''));
+  const SEARCH_SOURCES = [
+    {
+      label: 'batdongsan',
+      url:   `https://batdongsan.com.vn/ban-can-ho-chung-cu?keyword=${keyword}`,
+      interest: 'seller' as const,
+      selectors: {
+        card:    '.js__product-link-for-product-id, [data-product-id], .product-item, .re__card-full',
+        title:   '.re__card-info-title, .title, h3',
+        price:   '.re__card-config-price, .price',
+        area:    '.re__card-config-area, .area',
+        name:    '.re__card-info-agent-name, [class*="agent-name"]',
+        phone:   '[data-phone], [data-contact-phone], [data-original-phone]',
+        link:    'a',
+      },
+    },
+    {
+      label: 'batdongsan_buy',
+      url:   `https://batdongsan.com.vn/can-mua-thue?keyword=${keyword}`,
+      interest: 'buyer' as const,
+      selectors: {
+        card:    '.re__card-full, .js__product-link-for-product-id, .product-item',
+        title:   '.re__card-info-title, h3',
+        price:   '.re__card-config-price, .price',
+        area:    '.re__card-config-area',
+        name:    '.re__card-info-agent-name, [class*="agent-name"]',
+        phone:   '[data-phone], [data-contact-phone]',
+        link:    'a',
+      },
+    },
+    {
+      label: 'muaban',
+      url:   `https://muaban.net/bat-dong-san?q=${keyword}`,
+      interest: 'seller' as const,
+      selectors: {
+        card:    '.listing-item, .re-listing, article, [class*="listing"]',
+        title:   'h2, h3, [class*="title"]',
+        price:   '[class*="price"]',
+        area:    '[class*="area"]',
+        name:    '[class*="seller"], [class*="contact"], [class*="agent"]',
+        phone:   '[class*="phone"], [data-phone]',
+        link:    'a',
+      },
+    },
+  ];
+
+  const seen = new Set<string>(); // dedupe by phone
+
+  for (const src of SEARCH_SOURCES) {
+    try {
+      const res  = await scraperApiFetch(src.url, true);
+      if (!res.ok) continue;
+      const html = await res.text();
+      if (html.includes('Just a moment') || html.includes('cf_chl_opt')) continue;
+
+      const $    = cheerio.load(html);
+
+      // Extract from structured card elements
+      $(src.selectors.card).slice(0, 30).each((_, el) => {
+        const $el = $(el);
+        const titleText  = $el.find(src.selectors.title).first().text().trim();
+        if (!titleText) return;
+
+        const priceText  = $el.find(src.selectors.price).first().text().trim();
+        const nameText   = $el.find(src.selectors.name).first().text().trim();
+        const href       = $el.find(src.selectors.link).first().attr('href') ?? '';
+        const fullUrl    = href.startsWith('http') ? href : href.startsWith('/') ? `https://${new URL(src.url).host}${href}` : src.url;
+
+        // Phone from data attribute
+        const phoneAttr  = $el.find('[data-phone],[data-contact-phone],[data-original-phone]').first().attr('data-phone')
+                          ?? $el.find('[data-phone],[data-contact-phone],[data-original-phone]').first().attr('data-contact-phone')
+                          ?? $el.find('[data-phone],[data-contact-phone],[data-original-phone]').first().attr('data-original-phone')
+                          ?? '';
+
+        // Phone from text/html using regex
+        const phones     = phoneAttr ? [normalizePhone(phoneAttr)] : extractPhones($el.html() ?? '');
+
+        for (const phone of phones.slice(0, 2)) {
+          if (!phone || phone.length < 10 || seen.has(phone)) continue;
+          seen.add(phone);
+          leads.push({
+            id:         `${projectId}-${src.label}-${phone}`,
+            projectId:  proj.id,
+            project:    proj.name,
+            name:       nameText || 'Không rõ',
+            phone,
+            email:      '',
+            source:     src.label.replace('_buy', ''),
+            sourceUrl:  fullUrl,
+            listing:    titleText,
+            price:      priceText,
+            interest:   src.interest,
+            notes:      `Thu thập từ ${src.label} — "${titleText}"`,
+            scrapedAt:  new Date().toISOString(),
+            importedAt: null,
+          });
+        }
+      });
+
+      // Also extract any phones from full page HTML (may catch inline numbers)
+      if (leads.filter(l => l.projectId === proj.id).length < 5) {
+        const allPhones = extractPhones(html);
+        for (const phone of allPhones.slice(0, 20)) {
+          if (seen.has(phone)) continue;
+          seen.add(phone);
+          leads.push({
+            id:         `${projectId}-${src.label}-raw-${phone}`,
+            projectId:  proj.id,
+            project:    proj.name,
+            name:       'Không rõ',
+            phone,
+            email:      '',
+            source:     src.label.replace('_buy', ''),
+            sourceUrl:  src.url,
+            listing:    '',
+            price:      '',
+            interest:   'unknown',
+            notes:      `SĐT trích xuất từ trang ${src.label}`,
+            scrapedAt:  new Date().toISOString(),
+            importedAt: null,
+          });
+        }
+      }
+
+      await sleep(1500);
+    } catch { continue; }
+  }
+
+  return {
+    projectId: proj.id, project: proj.name,
+    ok: leads.length > 0, leads, total: leads.length,
+    durationMs: Date.now() - start,
+  };
+}
+
+// ── Lead runner map ───────────────────────────────────────────────────────────
+
+const LEAD_RUNNERS: Record<string, () => Promise<LeadScrapeResult>> = {
+  'sgsland':                  scrapeSgslandLeads,
+  'vinhomes-green-paradise':  () => scrapeClassifiedLeads('vinhomes-green-paradise'),
+  'vinhomes-central-park':    () => scrapeClassifiedLeads('vinhomes-central-park'),
+  'swanbay':                  () => scrapeClassifiedLeads('swanbay'),
+  'swanpark':                 () => scrapeClassifiedLeads('swanpark'),
+  'phu-my-hung':              () => scrapeClassifiedLeads('phu-my-hung'),
+  'sala':                     () => scrapeClassifiedLeads('sala'),
+};
+
+// ── Lead cache (45 min TTL) ───────────────────────────────────────────────────
+
+let cachedLeads: LeadScrapeResult[] | null  = null;
+let leadCacheTs = 0;
+const LEAD_CACHE_TTL_MS = 45 * 60 * 1000;
+
+function isLeadCacheValid() {
+  return !!cachedLeads && Date.now() - leadCacheTs < LEAD_CACHE_TTL_MS;
+}
+
 // ── In-memory cache (60 min TTL) ──────────────────────────────────────────────
 
 let cachedResults: ProjectResult[] | null = null;
@@ -508,6 +770,172 @@ export function createScraperProjectRoutes(authenticateToken: any) {
       scrapedAt:  new Date(cacheTimestamp).toISOString(),
       cacheAge:   Math.round((Date.now() - cacheTimestamp) / 1000),
     });
+  });
+
+  // GET /api/scraper/projects/leads/results — cached leads
+  router.get('/leads/results', authenticateToken, (_req: Request, res: Response) => {
+    if (!cachedLeads) {
+      return res.json({ results: [], leads: [], totalLeads: 0, scrapedAt: null });
+    }
+    const allLeads = cachedLeads.flatMap(r => r.leads);
+    res.json({
+      results:    cachedLeads.map(r => ({
+        projectId: r.projectId, project: r.project,
+        ok: r.ok, count: r.leads.length, error: r.error, durationMs: r.durationMs,
+      })),
+      leads:      allLeads,
+      totalLeads: allLeads.length,
+      scrapedAt:  new Date(leadCacheTs).toISOString(),
+      cacheAge:   Math.round((Date.now() - leadCacheTs) / 1000),
+    });
+  });
+
+  // POST /api/scraper/projects/leads/run — scrape leads
+  router.post('/leads/run', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ Admin/Team Lead mới có thể chạy scraper' });
+      }
+
+      const { projects = Object.keys(LEAD_RUNNERS) } = req.body as { projects?: string[] };
+      const validProjects = projects.filter(p => LEAD_RUNNERS[p]);
+
+      const settled = await Promise.allSettled(validProjects.map(id => LEAD_RUNNERS[id]()));
+      const results: LeadScrapeResult[] = settled.map((r, i) => {
+        if (r.status === 'fulfilled') return r.value;
+        const proj = PROJECT_CATALOG.find(p => p.id === validProjects[i])!;
+        return { projectId: proj.id, project: proj.name, ok: false, leads: [], total: 0, durationMs: 0, error: String((r as PromiseRejectedResult).reason) };
+      });
+
+      cachedLeads  = results;
+      leadCacheTs  = Date.now();
+
+      const allLeads = results.flatMap(r => r.leads);
+      res.json({
+        ok: true,
+        results: results.map(r => ({ projectId: r.projectId, project: r.project, ok: r.ok, count: r.leads.length, error: r.error, durationMs: r.durationMs })),
+        leads: allLeads,
+        totalLeads: allLeads.length,
+        scrapedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      res.status(500).json({ error: 'Lead scrape thất bại', detail: String(err) });
+    }
+  });
+
+  // POST /api/scraper/projects/leads/import — import one lead into CRM
+  router.post('/leads/import', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['ADMIN', 'TEAM_LEAD', 'SALES'].includes(user.role)) {
+        return res.status(403).json({ error: 'Không có quyền import lead' });
+      }
+
+      const { name, phone, email, source, notes, projectId, project, sourceUrl, listing, interest } =
+        req.body as Partial<ProjectLead>;
+
+      if (!phone) return res.status(400).json({ error: 'Thiếu số điện thoại' });
+
+      const DEFAULT_TENANT = '00000000-0000-0000-0000-000000000001';
+      const tenantId       = user.tenantId ?? DEFAULT_TENANT;
+
+      // Dedup check
+      const { rows: dup } = await pool.query(
+        `SELECT id FROM leads WHERE tenant_id = $1 AND phone = $2 LIMIT 1`,
+        [tenantId, phone]
+      );
+      if (dup.length) {
+        return res.status(409).json({ error: 'SĐT đã tồn tại trong CRM', leadId: dup[0].id });
+      }
+
+      const notesText = [
+        notes,
+        listing  ? `Tin đăng: ${listing}` : '',
+        sourceUrl? `Nguồn: ${sourceUrl}`  : '',
+        project  ? `Dự án: ${project}`    : '',
+        interest ? `Phân loại: ${interest === 'seller' ? 'Người bán' : interest === 'buyer' ? 'Người mua' : 'Chưa xác định'}` : '',
+      ].filter(Boolean).join('\n').trim();
+
+      const insertSrc = source === 'sgsland_db' ? 'DIRECT'
+        : source === 'batdongsan' ? 'WEBSITE'
+        : source === 'muaban' ? 'WEBSITE'
+        : 'WEBSITE';
+
+      const { rows } = await withTenantContext(tenantId, async (client) =>
+        client.query(
+          `INSERT INTO leads (tenant_id, name, phone, email, source, stage, notes, attributes)
+           VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, 'NEW', $5, $6)
+           RETURNING *`,
+          [
+            name || 'Không rõ',
+            phone,
+            email || null,
+            insertSrc,
+            notesText || null,
+            JSON.stringify({ projectId, projectName: project, interest, scrapedFrom: sourceUrl }),
+          ]
+        )
+      );
+
+      res.status(201).json({ ok: true, lead: rows[0] });
+    } catch (err) {
+      res.status(500).json({ error: 'Import thất bại', detail: String(err) });
+    }
+  });
+
+  // POST /api/scraper/projects/leads/import-bulk — import multiple leads
+  router.post('/leads/import-bulk', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ Admin/Team Lead mới có thể import hàng loạt' });
+      }
+
+      const { leads = [] } = req.body as { leads: Partial<ProjectLead>[] };
+      const DEFAULT_TENANT = '00000000-0000-0000-0000-000000000001';
+      const tenantId       = user.tenantId ?? DEFAULT_TENANT;
+
+      let imported = 0;
+      let skipped  = 0;
+      const errors: string[] = [];
+
+      for (const lead of leads.slice(0, 50)) {
+        if (!lead.phone) { skipped++; continue; }
+        try {
+          const { rows: dup } = await pool.query(
+            `SELECT id FROM leads WHERE tenant_id = $1 AND phone = $2 LIMIT 1`,
+            [tenantId, lead.phone]
+          );
+          if (dup.length) { skipped++; continue; }
+
+          const notesText = [
+            lead.notes,
+            lead.listing   ? `Tin đăng: ${lead.listing}`   : '',
+            lead.sourceUrl ? `Nguồn: ${lead.sourceUrl}`    : '',
+            lead.project   ? `Dự án: ${lead.project}`      : '',
+          ].filter(Boolean).join('\n').trim();
+
+          await withTenantContext(tenantId, (client) =>
+            client.query(
+              `INSERT INTO leads (tenant_id, name, phone, email, source, stage, notes, attributes)
+               VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, 'NEW', $5, $6)`,
+              [
+                lead.name || 'Không rõ', lead.phone, lead.email || null,
+                lead.source === 'sgsland_db' ? 'DIRECT' : 'WEBSITE',
+                notesText || null,
+                JSON.stringify({ projectId: lead.projectId, projectName: lead.project, interest: lead.interest }),
+              ]
+            )
+          );
+          imported++;
+        } catch (e) { errors.push(String(e)); }
+      }
+
+      res.json({ ok: true, imported, skipped, errors: errors.slice(0, 5) });
+    } catch (err) {
+      res.status(500).json({ error: 'Bulk import thất bại', detail: String(err) });
+    }
   });
 
   // POST /api/scraper/projects/run — run project scrapers
