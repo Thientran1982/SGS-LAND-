@@ -1,9 +1,6 @@
 # SGSLand Scraper v2.0
 
-Web scraper thu thập dữ liệu BĐS từ API công khai của SGS Land.
-
-**Production API:** `https://sgs-land.replit.app` (default)<br>
-**Custom domain:** `https://sgsland.vn` (nếu DNS đã trỏ)
+Web scraper thu thập dữ liệu BĐS từ API công khai của [sgsland.vn](https://sgsland.vn).
 
 ## Cài đặt
 
