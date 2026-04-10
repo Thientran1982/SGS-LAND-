@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from '../services/i18n';
+import { Dropdown } from '../components/Dropdown';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -279,15 +280,13 @@ export default function ScraperDashboard() {
             </div>
 
             {/* Pages */}
-            <div>
-              <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-2">Số trang</label>
-              <select
+            <div className="min-w-[140px]">
+              <Dropdown
+                label="Số trang"
                 value={pages}
-                onChange={e => setPages(Number(e.target.value))}
-                className="bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] text-[var(--text-primary)] rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500"
-              >
-                {[1,2,3,5,10].map(v => <option key={v} value={v}>{v} trang</option>)}
-              </select>
+                onChange={(v) => setPages(Number(v))}
+                options={[1, 2, 3, 5, 10].map(v => ({ value: v, label: `${v} trang / nguồn` }))}
+              />
             </div>
 
             {/* Run button */}
@@ -352,24 +351,28 @@ export default function ScraperDashboard() {
                 placeholder="Tìm theo tên, địa điểm..."
                 className="flex-1 min-w-[160px] bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500"
               />
-              <select
-                value={txFilter}
-                onChange={e => setTxFilter(e.target.value as any)}
-                className="bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] text-[var(--text-secondary)] rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:border-indigo-500"
-              >
-                <option value="all">Tất cả</option>
-                <option value="Bán">Bán</option>
-                <option value="Cho thuê">Cho thuê</option>
-              </select>
-              <select
-                value={sortKey}
-                onChange={e => setSortKey(e.target.value as any)}
-                className="bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] text-[var(--text-secondary)] rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:border-indigo-500"
-              >
-                <option value="price">Sắp theo giá</option>
-                <option value="area">Sắp theo diện tích</option>
-                <option value="pricePerM2">Sắp theo giá/m²</option>
-              </select>
+              <div className="min-w-[160px]">
+                <Dropdown
+                  value={txFilter}
+                  onChange={(v) => setTxFilter(v as 'all' | 'Bán' | 'Cho thuê')}
+                  options={[
+                    { value: 'all',      label: 'Tất cả giao dịch' },
+                    { value: 'Bán',      label: 'Mua bán' },
+                    { value: 'Cho thuê', label: 'Cho thuê' },
+                  ]}
+                />
+              </div>
+              <div className="min-w-[180px]">
+                <Dropdown
+                  value={sortKey}
+                  onChange={(v) => setSortKey(v as 'price' | 'area' | 'pricePerM2')}
+                  options={[
+                    { value: 'price',      label: 'Sắp theo giá' },
+                    { value: 'area',       label: 'Sắp theo diện tích' },
+                    { value: 'pricePerM2', label: 'Sắp theo giá / m²' },
+                  ]}
+                />
+              </div>
               <span className="text-xs text-[var(--text-tertiary)] ml-auto">{displayed.length} tin</span>
             </div>
 
