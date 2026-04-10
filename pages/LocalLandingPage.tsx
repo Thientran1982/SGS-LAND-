@@ -176,11 +176,11 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
         relatedLocations: [
             { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
             { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
-            { name: 'Aqua City Novaland', slug: 'du-an/aqua-city' },
+            { name: 'BĐS Bình Dương', slug: 'bat-dong-san-binh-duong' },
         ],
         relatedProjects: [
             { name: 'Aqua City Novaland', slug: 'aqua-city' },
-            { name: 'Gem Sky World', slug: 'marketplace' },
+            { name: 'Izumi City Nam Long', slug: 'izumi-city' },
         ],
     },
     'bat-dong-san-thu-duc': {
