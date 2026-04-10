@@ -929,6 +929,26 @@ export function injectMeta(baseHtml: string, meta: MetaData): string {
     `$1${u}$2`
   );
 
+  // Fix hreflang for non-homepage pages.
+  // Location/project landing pages are Vietnamese-only — hreflang must point to the
+  // page's own canonical URL, not the homepage. Leaving en/x-default pointing to "/" 
+  // causes a canonical conflict that Google Search Console flags as "URL has issues".
+  if (u !== APP_URL && u !== `${APP_URL}/`) {
+    html = html.replace(
+      /(<link\s+rel="alternate"\s+hreflang="vi"\s+href=")[^"]*(")/i,
+      `$1${u}$2`
+    );
+    // Remove the English hreflang line — no English version exists for these pages
+    html = html.replace(
+      /[ \t]*<link\s+rel="alternate"\s+hreflang="en"\s+href="[^"]*"\s*\/?>\n?/i,
+      ''
+    );
+    html = html.replace(
+      /(<link\s+rel="alternate"\s+hreflang="x-default"\s+href=")[^"]*(")/i,
+      `$1${u}$2`
+    );
+  }
+
   if (m.noIndex) {
     html = html.replace(
       /(<meta\s+name="robots"\s+content=")[^"]*(")/i,
