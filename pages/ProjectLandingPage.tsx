@@ -274,6 +274,26 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
                 q: 'Izumi City có sổ hồng riêng không?',
                 a: 'Có, Izumi City được cấp sổ hồng riêng từng căn nhà/biệt thự. Nam Long Group cam kết pháp lý rõ ràng và đã có kinh nghiệm bàn giao sổ hồng cho nhiều dự án như Flora, Valora. SGS LAND hỗ trợ kiểm tra pháp lý miễn phí trước giao dịch.',
             },
+            {
+                q: 'Nam Long Group có uy tín bàn giao đúng hẹn không?',
+                a: 'Nam Long Group là một trong những chủ đầu tư mid-high end có track record bàn giao đúng tiến độ tốt nhất Việt Nam. Các dự án Flora Fuji, Flora Panorama, Valora Kikyo đều bàn giao đúng hạn. Đây là điểm khác biệt quan trọng so với nhiều chủ đầu tư khác trong giai đoạn thị trường khó khăn 2022-2024.',
+            },
+            {
+                q: 'Cho thuê Izumi City thu nhập bao nhiêu mỗi tháng?',
+                a: 'Nhà phố liền kề Izumi City cho thuê 8-15 triệu/tháng; biệt thự song lập 15-25 triệu/tháng; biệt thự đơn lập 25-40 triệu/tháng. Nhu cầu thuê từ chuyên gia KCN Biên Hòa và Nhơn Trạch. Tỷ suất cho thuê gross yield ước đạt 4-5%/năm so với giá trị tài sản.',
+            },
+            {
+                q: 'So sánh Izumi City và Aqua City — nên chọn dự án nào?',
+                a: 'Izumi City: nhỏ hơn (170ha vs 1.000ha), tiêu chuẩn Nhật Bản (Fuji Mart, Hankyu Hanshin), gần TP.HCM hơn, Nam Long track record tốt, giá nhà phố vừa hơn. Aqua City: quy mô lớn hơn, marina/golf, Novaland thương hiệu lớn hơn, giá biệt thự cao hơn. SGS LAND tư vấn theo ngân sách và mục tiêu cụ thể.',
+            },
+            {
+                q: 'Sân bay Long Thành ảnh hưởng thế nào đến giá BĐS Izumi City?',
+                a: 'Izumi City tại Biên Hòa, cách sân bay Long Thành 20 phút. Khi SBLT hoàn thành (dự kiến 2026-2028), nhu cầu nhà ở cho nhân sự sân bay, logistics và thương mại sẽ tăng mạnh khu vực Đồng Nai. Giá BĐS Izumi City dự báo tăng 15-25% khi SBLT đi vào hoạt động.',
+            },
+            {
+                q: 'Vay ngân hàng mua nhà Izumi City có được không?',
+                a: 'Pháp lý sổ hồng rõ ràng của Izumi City giúp vay ngân hàng thuận lợi. LTV tối đa 70%, kỳ hạn 20-25 năm, lãi suất ưu đãi 18-24 tháng đầu qua ngân hàng hợp tác của Nam Long. SGS LAND hỗ trợ hồ sơ vay và so sánh gói vay từ nhiều ngân hàng miễn phí.',
+            },
         ],
         relatedProjects: [
             { name: 'Aqua City Novaland', slug: 'aqua-city' },
@@ -347,6 +367,26 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             {
                 q: 'Cho thuê căn hộ Vinhomes Grand Park thu nhập bao nhiêu?',
                 a: 'Căn hộ 1 phòng ngủ (45-55m²) cho thuê 8-12 triệu/tháng; 2 phòng ngủ 12-18 triệu/tháng; 3 phòng ngủ 18-25 triệu/tháng. Tỷ suất cho thuê gross yield khoảng 4-6%/năm. Nhu cầu thuê rất tốt từ chuyên gia SHTP, sinh viên ĐH Quốc Gia và nhân viên văn phòng khu Đông.',
+            },
+            {
+                q: 'The Opus One Vinhomes Grand Park có đáng đầu tư không?',
+                a: 'The Opus One là phân khu hạng sang nhất Grand Park, giá 8-15 tỷ/căn, thiết kế bởi kiến trúc sư quốc tế, vận hành chuẩn khách sạn 5 sao. Phù hợp nhà đầu tư tìm tài sản cao cấp trong hệ sinh thái Vinhomes với cộng đồng doanh nhân. Gross yield cho thuê 3-5%/năm, tăng giá ổn định.',
+            },
+            {
+                q: 'Vinhomes Grand Park có phù hợp cho gia đình có con nhỏ không?',
+                a: 'Grand Park là lựa chọn lý tưởng cho gia đình: Vinschool các cấp (mầm non đến THPT) ngay trong khuôn viên, Vinmec tiêu chuẩn quốc tế, công viên 36ha an toàn cho trẻ vui chơi. Cộng đồng cư dân văn minh và môi trường sống trong lành, hệ thống an ninh 24/7.',
+            },
+            {
+                q: 'Pháp lý Vinhomes Grand Park có sổ hồng chưa?',
+                a: 'Nhiều phân khu tại Grand Park đã hoàn thành bàn giao và được cấp sổ hồng riêng: The Rainbow, The Origami, The Beverly đã bàn giao 2019-2022. The Opus One đang trong tiến độ bàn giao. SGS LAND hỗ trợ xác minh sổ hồng từng căn cụ thể trước khi đặt cọc.',
+            },
+            {
+                q: 'So sánh Vinhomes Grand Park và Vinhomes Central Park — nên chọn đâu?',
+                a: 'Grand Park (Q9): lớn hơn (271ha), giá rẻ hơn (2,5-7 tỷ), cộng đồng trẻ, gần SHTP. Central Park (Bình Thạnh): giá cao hơn (4-15 tỷ), gần sân bay Tân Sơn Nhất, view sông, Landmark 81. Chọn Grand Park nếu ngân sách vừa và ưu tiên tiện ích; chọn Central Park nếu cần vị trí nội thành đẳng cấp.',
+            },
+            {
+                q: 'Tầng nào nên chọn khi mua căn hộ Vinhomes Grand Park?',
+                a: 'Tầng 15-25: giá trung bình, thoáng gió, view tốt. Tầng 26 trở lên: view toàn thành phố và sông, giá cao hơn 10-20%, phù hợp đầu tư dài hạn. Tầng 5-14: dễ ra vào, phù hợp gia đình có người lớn tuổi. Tầng 1-4 (shophouse): cho thuê kinh doanh, giá khác biệt hẳn. SGS LAND tư vấn theo mục tiêu cụ thể.',
             },
         ],
         relatedProjects: [
@@ -422,6 +462,26 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
                 q: 'Mua căn hộ Vinhomes Central Park cần kiểm tra pháp lý gì?',
                 a: 'Khi mua thứ cấp tại Central Park cần kiểm tra: (1) Sổ hồng chính chủ, không tranh chấp; (2) Không có nghĩa vụ tài chính đang thế chấp ngân hàng; (3) Phí quản lý và tiện ích không nợ đọng; (4) Biên bản bàn giao và hồ sơ kỹ thuật đầy đủ. SGS LAND kiểm tra pháp lý độc lập miễn phí cho mọi giao dịch.',
             },
+            {
+                q: 'Người nước ngoài có được mua căn hộ Vinhomes Central Park không?',
+                a: 'Theo Luật Nhà Ở 2023, người nước ngoài được mua tối đa 30% số căn hộ trong một tòa nhà. Vinhomes Central Park có cộng đồng expat rất đông (Hàn, Nhật, Âu, Mỹ), pháp lý cấp cho người nước ngoài rõ ràng. SGS LAND hỗ trợ thủ tục pháp lý riêng cho người nước ngoài mua BĐS tại Việt Nam.',
+            },
+            {
+                q: 'So sánh Vinhomes Central Park và Thủ Thiêm — nên chọn đâu?',
+                a: 'Central Park: hệ sinh thái Vinhomes hoàn chỉnh, gần sân bay Tân Sơn Nhất, giá 50-200 triệu/m², thanh khoản cao. Thủ Thiêm: tiềm năng dài hạn cao hơn (quy hoạch tài chính quốc tế), giá 80-250 triệu/m², đang phát triển. Chọn Central Park nếu cần thanh khoản; chọn Thủ Thiêm nếu đầu tư dài hạn 5-10 năm.',
+            },
+            {
+                q: 'Phí quản lý tòa nhà Vinhomes Central Park là bao nhiêu?',
+                a: 'Phí quản lý Vinhomes Central Park khoảng 10.000-12.000 VNĐ/m²/tháng. Căn 2PN (75m²) khoảng 750.000-900.000 đồng/tháng. Phí này bao gồm an ninh 24/7, vệ sinh tòa nhà, bảo trì thang máy, tiện ích công cộng. Vinhomes quản lý chuyên nghiệp, chất lượng dịch vụ cao nhất trong các dự án tại TP.HCM.',
+            },
+            {
+                q: 'Căn hộ tầng cao view sông Vinhomes Central Park đẹp không?',
+                a: 'Căn hộ tầng 20 trở lên tại Central Park có view sông Sài Gòn và Landmark 81 — được coi là một trong những view đẹp nhất Việt Nam. Tầng càng cao, giá càng tăng 10-25%. Các tòa Landmark Plus, Landmark 1-6 view sông đẹp nhất. Căn góc 2 view giá cao hơn 15-20% nhưng rất được ưa chuộng.',
+            },
+            {
+                q: 'Vay ngân hàng mua căn hộ thứ cấp Vinhomes Central Park có khó không?',
+                a: 'Mua thứ cấp vay ngân hàng tại Central Park thuận lợi vì sổ hồng riêng đầy đủ. LTV tối đa 65-70%, kỳ hạn 25 năm. Nhiều ngân hàng nhận thế chấp căn hộ Central Park (VCB, Techcombank, BIDV). SGS LAND hỗ trợ hồ sơ vay và tìm gói lãi suất tốt nhất thị trường.',
+            },
         ],
         relatedProjects: [
             { name: 'Vinhomes Grand Park', slug: 'vinhomes-grand-park' },
@@ -496,6 +556,26 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
                 q: 'Rủi ro khi đầu tư BĐS Thủ Thiêm là gì?',
                 a: 'Rủi ro chính cần lưu ý: (1) Giá cao, thanh khoản thứ cấp chậm hơn nội thành truyền thống; (2) Tiến độ hoàn thiện hạ tầng có thể chậm so với quy hoạch; (3) Một số lô đất vẫn đang tranh chấp quy hoạch cần kiểm tra kỹ. SGS LAND hỗ trợ kiểm tra pháp lý và đánh giá rủi ro độc lập trước khi đầu tư.',
             },
+            {
+                q: 'Metropole Thủ Thiêm của Sơn Kim Land là dự án như thế nào?',
+                a: 'Metropole Thủ Thiêm (5,04ha) là dự án 5 phân khu do Sơn Kim Land và Creed Group (Nhật Bản) đồng phát triển ngay trung tâm Thủ Thiêm. Bao gồm The River, The Grand Riverside, The Crest Residence, The Peak, The Galleria — giá 7-30 tỷ/căn. Đây là khu tổ hợp có thiết kế đẹp nhất Thủ Thiêm hiện tại.',
+            },
+            {
+                q: 'Hầm Thủ Thiêm và cầu Thủ Thiêm 2 đã hoạt động chưa?',
+                a: 'Cả hai đã hoạt động: Hầm Thủ Thiêm (từ 2011) kết nối thẳng Q1 qua đường Nguyễn Hữu Cảnh; cầu Thủ Thiêm 2 (từ 2022) kết nối Ba Son-Q1. Từ đó, di chuyển từ Thủ Thiêm vào Q1 chỉ còn 5-8 phút, tăng đáng kể giá trị BĐS khu vực.',
+            },
+            {
+                q: 'Người nước ngoài có mua được BĐS Thủ Thiêm không?',
+                a: 'Theo Luật Nhà Ở 2023, người nước ngoài được mua tối đa 30% căn hộ trong một dự án. Các dự án Thủ Thiêm như Metropole, Empire City, The River đều có phần dành cho người nước ngoài. SGS LAND hỗ trợ quy trình pháp lý riêng cho người nước ngoài mua BĐS tại khu vực Thủ Thiêm.',
+            },
+            {
+                q: 'Grand Marina Saigon tại Ba Son có gì đặc biệt?',
+                a: 'Grand Marina Saigon (Ba Son, Q1) do Masterise Homes phát triển là dự án BĐS sang trọng nhất TP.HCM: tích hợp khách sạn Marriott International, JW Marriott, bến du thuyền riêng trên sông Sài Gòn và căn hộ branded residence. Giá 130-300 triệu/m², đây là tài sản ultra-luxury tốt nhất thị trường Việt Nam.',
+            },
+            {
+                q: 'Empire City Thủ Thiêm tiến độ bàn giao như thế nào?',
+                a: 'Empire City (Keppel Land + Tiến Phước + Watco, 14,57ha) đang trong tiến độ xây dựng nhiều phân khu. Tháp Tilia và Empire 88 đã hoàn thành. Chủ đầu tư Singapore Keppel Land uy tín cao, đảm bảo tiến độ và chất lượng. SGS LAND cập nhật tiến độ từng phân khu trước khi mua.',
+            },
         ],
         relatedProjects: [
             { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
@@ -569,6 +649,26 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             {
                 q: 'Nên mua dự án Sơn Kim Land hay thương hiệu khác?',
                 a: 'Sơn Kim Land phù hợp với nhà đầu tư ưu tiên: (1) BĐS tích hợp thương mại – dịch vụ – ở; (2) Cộng đồng cư dân chuyên nghiệp, quốc tế hóa; (3) Hệ sinh thái vận hành chuyên nghiệp dài hạn. So sánh với Vinhomes (quy mô lớn, giá đại trà) và Masterise (hạng sang). SGS LAND tư vấn khách quan, không hoa hồng chủ đầu tư.',
+            },
+            {
+                q: 'Metropole Thủ Thiêm của Sơn Kim Land có đáng mua không?',
+                a: 'Metropole Thủ Thiêm (đồng phát triển với Creed Group Nhật Bản) tại vị trí số 1 Thủ Thiêm — trực tiếp nhìn ra sông Sài Gòn. Phân khu The River và The Grand Riverside đã bàn giao, thanh khoản thứ cấp tốt. Giá 7-20 tỷ/căn, tỷ suất cho thuê 3-5%/năm. Phù hợp đầu tư dài hạn theo quy hoạch trung tâm tài chính TP.HCM.',
+            },
+            {
+                q: 'Gem Riverside Q4 Sơn Kim Land giá bao nhiêu năm 2026?',
+                a: 'Gem Riverside tại Quận 4, mặt tiền sông Sài Gòn, thị trường thứ cấp 2025-2026: căn 2PN (70-80m²) khoảng 5-8 tỷ, 3PN (90-110m²) khoảng 8-12 tỷ. Cho thuê 2PN 20-30 triệu/tháng, 3PN 30-45 triệu/tháng. Vị trí hiếm view sông nội thành, tiềm năng tăng giá bền vững.',
+            },
+            {
+                q: 'GS25 của Sơn Kim Land có ý nghĩa gì với dự án BĐS?',
+                a: 'Sơn Kim Group vận hành GS25 Việt Nam (chuỗi convenience store Hàn Quốc, 700+ điểm). Trong dự án Sơn Kim Land thường có GS25 nội khu, tạo tiện ích sống đầy đủ cho cư dân. Hệ sinh thái GS25 + GEM Center + BĐS tạo ra cộng đồng lifestyle tích hợp, khác biệt với chủ đầu tư thông thường.',
+            },
+            {
+                q: 'So sánh Sơn Kim Land và Masterise Homes — khác nhau thế nào?',
+                a: 'Sơn Kim Land: tích hợp thương mại-lifestyle mạnh (GEM Center, GS25, hotel), giá từ 50-130 triệu/m², cộng đồng quốc tế vừa phải. Masterise: ultra-luxury (branded residence, 60-300 triệu/m²), vận hành bởi Marriott/IHG, cộng đồng doanh nhân/expat cấp cao. Chọn Sơn Kim nếu giá vừa hơn; chọn Masterise nếu cần prestige cao nhất.',
+            },
+            {
+                q: 'Sơn Kim Land có dự án nghỉ dưỡng hay resort nào không?',
+                a: 'Sơn Kim Land đang phát triển mảng hospitality và nghỉ dưỡng tại các điểm du lịch cao cấp như Đà Nẵng và Phú Quốc. Đây là chiến lược mở rộng danh mục ngoài BĐS đô thị. Đầu tư BĐS nghỉ dưỡng Sơn Kim tận dụng thương hiệu và hệ sinh thái vận hành khách sạn sẵn có.',
             },
         ],
         relatedProjects: [
@@ -646,6 +746,26 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
                 q: 'Lumière Boulevard và Lumière Riverside khác nhau thế nào?',
                 a: 'Lumière Boulevard (Tô Ngọc Vân, Q9/Thủ Đức) — căn hộ ultra-luxury theo phong cách Paris, gần Metro số 1, giá 90-150 triệu/m². Lumière Riverside (Q2) — biệt thự ven sông Sài Gòn tầm nhìn toàn cảnh, tính riêng tư cao, giá 120-200 triệu/m². Cả hai đều được vận hành bởi chuỗi khách sạn 5 sao quốc tế.',
             },
+            {
+                q: 'Masteri Thảo Điền có còn là BĐS tốt để đầu tư năm 2026 không?',
+                a: 'Masteri Thảo Điền (Q2) đã bàn giao từ 2017-2018, sổ hồng đầy đủ, giá tăng đều 10%+/năm. Thị trường cho thuê mạnh (25-60 triệu/tháng) nhờ vị trí Thảo Điền expat hub. Giá thứ cấp 65-100 triệu/m², thanh khoản tốt. Đây vẫn là BĐS hạng sang an toàn để tích lũy dài hạn.',
+            },
+            {
+                q: 'Người nước ngoài có thể mua dự án Masterise Homes không?',
+                a: 'Theo Luật Nhà Ở 2023, người nước ngoài được mua tối đa 30% số căn trong dự án chung cư. Masteri Thảo Điền, Masteri An Phú có cộng đồng expat đông nhất TP.HCM. SGS LAND hỗ trợ quy trình pháp lý, hợp đồng song ngữ và thủ tục chuyển tiền cho người nước ngoài mua BĐS Masterise.',
+            },
+            {
+                q: 'Grand Marina Saigon tiến độ bàn giao năm 2025-2026 như thế nào?',
+                a: 'Grand Marina Saigon (Ba Son, Q1) phân khu đầu đã bàn giao 2024. Phân khu JW Marriott và Marriott Executive Apartments đang tiếp tục hoàn thiện và bàn giao 2025-2026. Tiến độ đúng cam kết từ Masterise. SGS LAND theo dõi cập nhật tiến độ từng tháng.',
+            },
+            {
+                q: 'Masterise Homes hỗ trợ vay ngân hàng mua căn hộ không?',
+                a: 'Masterise Homes hợp tác với nhiều ngân hàng lớn: Techcombank, VPBank, BIDV. LTV tối đa 70%, lãi suất ưu đãi 0-5%/18-24 tháng đầu rồi thả nổi. SGS LAND so sánh các gói vay và hỗ trợ hồ sơ miễn phí để nhà đầu tư chọn được gói tài chính tối ưu nhất.',
+            },
+            {
+                q: 'Tại sao Masterise Homes được coi là ultra-luxury?',
+                a: 'Ba yếu tố: (1) Thiết kế bởi kiến trúc sư và interior designer quốc tế (Châu Âu, Singapore); (2) Vận hành bởi chuỗi khách sạn 5 sao Marriott, IHG — concierge, butler, valet 24/7; (3) Vị trí prime location — Thảo Điền, An Phú, Ba Son Q1. Kết hợp ba yếu tố này tạo ra branded residence đẳng cấp nhất thị trường Việt Nam.',
+            },
         ],
         relatedProjects: [
             { name: 'The Global City', slug: 'the-global-city' },
@@ -719,6 +839,26 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
             {
                 q: 'Tiêu chuẩn Singapore tại The Global City nghĩa là gì?',
                 a: 'Masterise Homes hợp tác với các kiến trúc sư và nhà quy hoạch từ Singapore (từng làm việc với CapitaLand, Keppel Land) để thiết kế The Global City. Điều này có nghĩa: quy hoạch phân khu khoa học, hệ thống cây xanh – không gian công cộng đạt chuẩn, hạ tầng kỹ thuật đồng bộ và thiết kế đô thị bền vững — tương tự One North hay Sentosa Cove của Singapore.',
+            },
+            {
+                q: 'Shophouse thương mại The Global City cho thuê được bao nhiêu tiền?',
+                a: 'Shophouse mặt tiền trục chính The Global City cho thuê 50-200 triệu/tháng tùy diện tích và vị trí. Đây là mức giá tương đương mặt tiền đường lớn Q2-Q9 hiện tại. Khi hoàn thành toàn bộ (2026-2028), nhu cầu thuê kinh doanh từ 60.000+ cư dân nội khu và lưu lượng từ Metro số 1 sẽ rất cao.',
+            },
+            {
+                q: 'The Global City đã mở bán và bàn giao chưa?',
+                a: 'Các giai đoạn nhà phố thương mại và shophouse đã mở bán. Một số phân khu đã và đang bàn giao 2024-2025. Masterise Homes theo đúng tiến độ cam kết — là điểm mạnh của thương hiệu. SGS LAND cập nhật tiến độ bàn giao từng phân khu theo thời gian thực.',
+            },
+            {
+                q: 'Trường BIS tại The Global City học phí bao nhiêu?',
+                a: 'British International School (BIS) tại The Global City theo chương trình quốc tế IB/IGCSE, học phí khoảng 20-40 triệu VNĐ/tháng. IVS (International Village School) khoảng 10-20 triệu/tháng. Sự hiện diện của các trường quốc tế top-tier là lợi thế lớn thu hút cư dân expat và gia đình có con học trường quốc tế.',
+            },
+            {
+                q: 'The Global City có cạnh tranh được với Thủ Thiêm không?',
+                a: 'The Global City và Thủ Thiêm bổ trợ nhau hơn là cạnh tranh: Thủ Thiêm là trung tâm tài chính-văn phòng tương lai; The Global City là đô thị thương mại-dịch vụ-ở tích hợp. Lợi thế The Global City: Metro số 1 ngay cửa, quy mô thương mại lớn hơn (117ha vs ~50ha khu ở Thủ Thiêm), giá nhà phố vừa hơn đất Thủ Thiêm.',
+            },
+            {
+                q: 'Vay ngân hàng mua nhà phố The Global City có thuận lợi không?',
+                a: 'Pháp lý rõ ràng và Masterise Homes uy tín cao giúp vay ngân hàng dễ dàng. LTV tối đa 65-70%, kỳ hạn 20-25 năm. Techcombank và VPBank là ngân hàng chính hỗ trợ The Global City với lãi suất ưu đãi 12-18 tháng đầu. SGS LAND hỗ trợ hồ sơ vay và so sánh gói vay miễn phí.',
             },
         ],
         relatedProjects: [
@@ -795,11 +935,31 @@ const PROJECT_CONFIG: Record<string, ProjectConfig> = {
                 q: 'Tại sao nhà phố nội thành TP.HCM luôn tăng giá?',
                 a: 'Ba lý do cốt lõi: (1) Quỹ đất nội thành hữu hạn — không thể xây mới mặt tiền lớn; (2) Lạm phát đồng tiền dài hạn đẩy giá tài sản thực tăng; (3) TP.HCM là đầu tàu kinh tế Việt Nam — nhu cầu mặt bằng kinh doanh và ở thực liên tục tăng theo dân số và GDP. Trong 30 năm qua, nhà phố nội thành TP.HCM tăng giá trung bình 12-18%/năm.',
             },
+            {
+                q: 'Nhà phố Gò Vấp có đang tăng giá nhanh không năm 2025-2026?',
+                a: 'Gò Vấp đang tăng giá mạnh nhất trong các quận nội thành: 15-25%/năm nhờ hạ tầng hoàn thiện (Metro số 2 quy hoạch đi qua, đường Lê Văn Thọ, Quang Trung mở rộng). Nhà hẻm xe hơi Q. Gò Vấp từ 4-8 tỷ, mặt tiền 6-12 tỷ — còn rẻ hơn 30-40% so với Q3 và Phú Nhuận lân cận.',
+            },
+            {
+                q: 'Mua nhà phố làm homestay hay Airbnb TP.HCM có hiệu quả không?',
+                a: 'Nhà phố Q1-3 vị trí du lịch cho thuê Airbnb rất hiệu quả: 1,5-5 triệu/đêm, công suất 70-90%. ROI homestay cao hơn cho thuê dài hạn 30-50%. Tuy nhiên cần đăng ký kinh doanh, xin giấy phép lưu trú và tuân thủ quy định phòng cháy chữa cháy. SGS LAND tư vấn quy trình hợp pháp hóa homestay.',
+            },
+            {
+                q: 'Kiểm tra pháp lý nhà phố cũ TP.HCM cần lưu ý những gì?',
+                a: 'Sáu điểm cần kiểm tra khi mua nhà phố cũ: (1) Sổ đỏ/hồng thổ cư — không phải sổ tạm; (2) Không nằm trong quy hoạch lộ giới, hành lang bảo vệ kênh rạch; (3) Không tranh chấp thừa kế, thế chấp ngân hàng; (4) Diện tích sổ đỏ khớp hiện trạng; (5) Không vi phạm xây dựng; (6) Nộp đủ thuế trước bạ. SGS LAND kiểm tra miễn phí.',
+            },
+            {
+                q: 'Giá nhà phố mặt tiền Phú Nhuận hiện tại là bao nhiêu?',
+                a: 'Mặt tiền Phú Nhuận (Phan Xích Long, Hoàng Văn Thụ, Phổ Quang): 200-500 triệu/m². Nhà 4x15m (60m²) mặt tiền khoảng 12-30 tỷ; nhà hẻm xe hơi (4m+) 80-150 triệu/m², nhà 60m² khoảng 5-9 tỷ. Phú Nhuận sôi động bởi F&B, văn phòng và gần sân bay Tân Sơn Nhất.',
+            },
+            {
+                q: 'SGS LAND định giá AI nhà phố nội thành chính xác cỡ nào?',
+                a: 'Hệ thống định giá AI của SGS LAND phân tích 500+ giao dịch thực trong bán kính 500m, 12 tháng gần nhất, điều chỉnh theo diện tích, chiều rộng mặt tiền, số tầng, hướng nhà, lộ giới, tình trạng pháp lý. Độ chính xác đạt 92% so với giá giao dịch thực. Định giá miễn phí trong 5 phút ngay trên ứng dụng SGS LAND.',
+            },
         ],
         relatedProjects: [
             { name: 'Khu Đô Thị Thủ Thiêm', slug: 'thu-thiem' },
             { name: 'Vinhomes Central Park', slug: 'vinhomes-central-park' },
-            { name: 'Mua Bán BĐS TP.HCM', slug: 'marketplace' },
+            { name: 'The Global City', slug: 'the-global-city' },
         ],
     },
 };
