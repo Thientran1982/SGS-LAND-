@@ -4105,6 +4105,191 @@ var init_fix_processing_documents = __esm({
   }
 });
 
+// server/migrations/054_error_logs.ts
+var migration54, error_logs_default;
+var init_error_logs = __esm({
+  "server/migrations/054_error_logs.ts"() {
+    migration54 = {
+      description: "Create error_logs table for frontend + backend error monitoring",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS error_logs (
+        id              SERIAL PRIMARY KEY,
+        tenant_id       VARCHAR(36) NOT NULL,
+        type            VARCHAR(30) NOT NULL CHECK (type IN ('frontend', 'backend', 'unhandled_promise', 'chunk_load')),
+        severity        VARCHAR(10) NOT NULL CHECK (severity IN ('error', 'warning', 'critical')),
+        message         TEXT NOT NULL,
+        stack           TEXT,
+        component       VARCHAR(500),
+        path            VARCHAR(1000),
+        user_id         VARCHAR(36),
+        user_agent      TEXT,
+        metadata        JSONB DEFAULT '{}',
+        resolved        BOOLEAN DEFAULT FALSE,
+        resolved_at     TIMESTAMPTZ,
+        resolved_by     VARCHAR(36),
+        created_at      TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_error_logs_tenant_created
+        ON error_logs (tenant_id, created_at DESC);
+
+      CREATE INDEX IF NOT EXISTS idx_error_logs_type
+        ON error_logs (tenant_id, type, created_at DESC);
+
+      CREATE INDEX IF NOT EXISTS idx_error_logs_resolved
+        ON error_logs (tenant_id, resolved, created_at DESC);
+    `);
+      },
+      async down(client) {
+        await client.query(`DROP TABLE IF EXISTS error_logs;`);
+      }
+    };
+    error_logs_default = migration54;
+  }
+});
+
+// server/migrations/055_seed_market_prices.ts
+function normalizeKey(location) {
+  return location.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+var SEEDS, migration55, seed_market_prices_default;
+var init_seed_market_prices = __esm({
+  "server/migrations/055_seed_market_prices.ts"() {
+    SEEDS = [
+      // ══ TP. Hồ Chí Minh — Quận nội thành ════════════════════════════════════
+      { location: "Qu\u1EADn 1, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 4e8, priceMin: 28e7, priceMax: 6e8, trend: "T\u0103ng tr\u01B0\u1EDFng \u1ED5n \u0111\u1ECBnh", confidence: 85 },
+      { location: "Qu\u1EADn 3, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 28e7, priceMin: 2e8, priceMax: 4e8, trend: "T\u0103ng nh\u1EB9", confidence: 80 },
+      { location: "Qu\u1EADn 4, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 175e6, priceMin: 12e7, priceMax: 25e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 78 },
+      { location: "Qu\u1EADn 5 Ch\u1EE3 L\u1EDBn, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 2e8, priceMin: 14e7, priceMax: 28e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 78 },
+      { location: "Qu\u1EADn 6, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 13e7, priceMin: 9e7, priceMax: 18e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 76 },
+      { location: "Qu\u1EADn 7 Ph\xFA M\u1EF9 H\u01B0ng, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 22e7, priceMin: 16e7, priceMax: 32e7, trend: "T\u0103ng tr\u01B0\u1EDFng t\u1ED1t", confidence: 82 },
+      { location: "Qu\u1EADn 8, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 1e8, priceMin: 7e7, priceMax: 14e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 76 },
+      { location: "Qu\u1EADn 10, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 178e6, priceMin: 13e7, priceMax: 25e7, trend: "T\u0103ng nh\u1EB9", confidence: 78 },
+      { location: "Qu\u1EADn 11, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 15e7, priceMin: 11e7, priceMax: 21e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 77 },
+      { location: "Qu\u1EADn 12, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 7e7, priceMin: 5e7, priceMax: 1e8, trend: "T\u0103ng nh\u1EB9", confidence: 76 },
+      { location: "Qu\u1EADn B\xECnh Th\u1EA1nh, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 16e7, priceMin: 11e7, priceMax: 23e7, trend: "T\u0103ng nh\u1EB9", confidence: 80 },
+      { location: "Qu\u1EADn Ph\xFA Nhu\u1EADn, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 19e7, priceMin: 14e7, priceMax: 28e7, trend: "T\u0103ng nh\u1EB9", confidence: 80 },
+      { location: "Qu\u1EADn T\xE2n B\xECnh, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 14e7, priceMin: 1e8, priceMax: 2e8, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 78 },
+      { location: "Qu\u1EADn T\xE2n Ph\xFA, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 1e8, priceMin: 7e7, priceMax: 14e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 77 },
+      { location: "Qu\u1EADn G\xF2 V\u1EA5p, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 9e7, priceMin: 6e7, priceMax: 13e7, trend: "T\u0103ng nh\u1EB9", confidence: 77 },
+      { location: "Qu\u1EADn B\xECnh T\xE2n, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 8e7, priceMin: 55e6, priceMax: 115e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 76 },
+      // TP.HCM — Thành phố Thủ Đức (Q2 + Q9 cũ)
+      { location: "Th\u1EA3o \u0110i\u1EC1n, Th\u1EE7 \u0110\u1EE9c, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 2e8, priceMin: 14e7, priceMax: 3e8, trend: "T\u0103ng tr\u01B0\u1EDFng t\u1ED1t", confidence: 80 },
+      { location: "Th\u1EE7 Thi\xEAm, Th\u1EE7 \u0110\u1EE9c, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 28e7, priceMin: 18e7, priceMax: 42e7, trend: "T\u0103ng m\u1EA1nh", confidence: 78 },
+      { location: "Qu\u1EADn Th\u1EE7 \u0110\u1EE9c, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 1e8, priceMin: 65e6, priceMax: 15e7, trend: "T\u0103ng tr\u01B0\u1EDFng t\u1ED1t", confidence: 78 },
+      { location: "Vinhomes Grand Park, Th\u1EE7 \u0110\u1EE9c, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 95e6, priceMin: 65e6, priceMax: 14e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 75 },
+      // TP.HCM — Huyện ngoại thành
+      { location: "Huy\u1EC7n B\xECnh Ch\xE1nh, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 35e6, priceMin: 2e7, priceMax: 55e6, trend: "T\u0103ng nh\u1EB9", confidence: 72 },
+      { location: "Huy\u1EC7n Nh\xE0 B\xE8, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 4e7, priceMin: 25e6, priceMax: 65e6, trend: "T\u0103ng nh\u1EB9", confidence: 72 },
+      { location: "Huy\u1EC7n H\xF3c M\xF4n, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 3e7, priceMin: 18e6, priceMax: 48e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 70 },
+      { location: "Huy\u1EC7n C\u1EE7 Chi, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 17e6, priceMin: 1e7, priceMax: 28e6, trend: "T\u0103ng nh\u1EB9", confidence: 68 },
+      { location: "Huy\u1EC7n C\u1EA7n Gi\u1EDD, TP. H\u1ED3 Ch\xED Minh", pricePerM2: 12e6, priceMin: 7e6, priceMax: 2e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 65 },
+      // ══ Hà Nội — Quận nội thành ══════════════════════════════════════════════
+      { location: "Qu\u1EADn Ho\xE0n Ki\u1EBFm, H\xE0 N\u1ED9i", pricePerM2: 5e8, priceMin: 35e7, priceMax: 8e8, trend: "T\u0103ng m\u1EA1nh", confidence: 85 },
+      { location: "Qu\u1EADn Ba \u0110\xECnh, H\xE0 N\u1ED9i", pricePerM2: 3e8, priceMin: 2e8, priceMax: 45e7, trend: "T\u0103ng tr\u01B0\u1EDFng t\u1ED1t", confidence: 82 },
+      { location: "Qu\u1EADn \u0110\u1ED1ng \u0110a, H\xE0 N\u1ED9i", pricePerM2: 25e7, priceMin: 17e7, priceMax: 37e7, trend: "T\u0103ng nh\u1EB9", confidence: 82 },
+      { location: "Qu\u1EADn Hai B\xE0 Tr\u01B0ng, H\xE0 N\u1ED9i", pricePerM2: 22e7, priceMin: 15e7, priceMax: 33e7, trend: "T\u0103ng nh\u1EB9", confidence: 80 },
+      { location: "Qu\u1EADn T\xE2y H\u1ED3, H\xE0 N\u1ED9i", pricePerM2: 28e7, priceMin: 19e7, priceMax: 43e7, trend: "T\u0103ng tr\u01B0\u1EDFng t\u1ED1t", confidence: 82 },
+      { location: "Qu\u1EADn C\u1EA7u Gi\u1EA5y, H\xE0 N\u1ED9i", pricePerM2: 22e7, priceMin: 15e7, priceMax: 33e7, trend: "T\u0103ng nh\u1EB9", confidence: 80 },
+      { location: "Qu\u1EADn Thanh Xu\xE2n, H\xE0 N\u1ED9i", pricePerM2: 18e7, priceMin: 12e7, priceMax: 26e7, trend: "T\u0103ng nh\u1EB9", confidence: 80 },
+      { location: "Qu\u1EADn Ho\xE0ng Mai, H\xE0 N\u1ED9i", pricePerM2: 11e7, priceMin: 75e6, priceMax: 16e7, trend: "T\u0103ng nh\u1EB9", confidence: 78 },
+      { location: "Qu\u1EADn Nam T\u1EEB Li\xEAm, H\xE0 N\u1ED9i", pricePerM2: 14e7, priceMin: 95e6, priceMax: 21e7, trend: "T\u0103ng tr\u01B0\u1EDFng t\u1ED1t", confidence: 78 },
+      { location: "Qu\u1EADn B\u1EAFc T\u1EEB Li\xEAm, H\xE0 N\u1ED9i", pricePerM2: 1e8, priceMin: 68e6, priceMax: 15e7, trend: "T\u0103ng nh\u1EB9", confidence: 78 },
+      { location: "Qu\u1EADn Long Bi\xEAn, H\xE0 N\u1ED9i", pricePerM2: 1e8, priceMin: 68e6, priceMax: 15e7, trend: "T\u0103ng nh\u1EB9", confidence: 77 },
+      { location: "Qu\u1EADn H\xE0 \u0110\xF4ng, H\xE0 N\u1ED9i", pricePerM2: 85e6, priceMin: 58e6, priceMax: 125e6, trend: "T\u0103ng nh\u1EB9", confidence: 77 },
+      // Hà Nội — Huyện ngoại thành
+      { location: "Huy\u1EC7n Gia L\xE2m, H\xE0 N\u1ED9i", pricePerM2: 65e6, priceMin: 42e6, priceMax: 1e8, trend: "T\u0103ng nh\u1EB9", confidence: 74 },
+      { location: "Huy\u1EC7n \u0110\xF4ng Anh, H\xE0 N\u1ED9i", pricePerM2: 55e6, priceMin: 35e6, priceMax: 85e6, trend: "T\u0103ng nh\u1EB9", confidence: 73 },
+      { location: "Huy\u1EC7n Thanh Tr\xEC, H\xE0 N\u1ED9i", pricePerM2: 65e6, priceMin: 42e6, priceMax: 1e8, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 73 },
+      { location: "Huy\u1EC7n Ho\xE0i \u0110\u1EE9c, H\xE0 N\u1ED9i", pricePerM2: 1e8, priceMin: 65e6, priceMax: 15e7, trend: "T\u0103ng nh\u1EB9", confidence: 74 },
+      { location: "Huy\u1EC7n M\xEA Linh, H\xE0 N\u1ED9i", pricePerM2: 55e6, priceMin: 35e6, priceMax: 85e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 72 },
+      { location: "Huy\u1EC7n \u0110an Ph\u01B0\u1EE3ng, H\xE0 N\u1ED9i", pricePerM2: 6e7, priceMin: 38e6, priceMax: 92e6, trend: "T\u0103ng nh\u1EB9", confidence: 72 },
+      { location: "Huy\u1EC7n Th\u1EA1ch Th\u1EA5t - H\xF2a L\u1EA1c, H\xE0 N\u1ED9i", pricePerM2: 32e6, priceMin: 2e7, priceMax: 5e7, trend: "T\u0103ng nh\u1EB9", confidence: 70 },
+      { location: "Huy\u1EC7n S\xF3c S\u01A1n, H\xE0 N\u1ED9i", pricePerM2: 25e6, priceMin: 15e6, priceMax: 4e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 68 },
+      // ══ Đà Nẵng ══════════════════════════════════════════════════════════════
+      { location: "Qu\u1EADn H\u1EA3i Ch\xE2u, \u0110\xE0 N\u1EB5ng", pricePerM2: 13e7, priceMin: 9e7, priceMax: 2e8, trend: "T\u0103ng nh\u1EB9", confidence: 78 },
+      { location: "Qu\u1EADn S\u01A1n Tr\xE0, \u0110\xE0 N\u1EB5ng", pricePerM2: 1e8, priceMin: 68e6, priceMax: 155e6, trend: "T\u0103ng nh\u1EB9", confidence: 76 },
+      { location: "Qu\u1EADn Ng\u0169 H\xE0nh S\u01A1n, \u0110\xE0 N\u1EB5ng", pricePerM2: 9e7, priceMin: 6e7, priceMax: 14e7, trend: "T\u0103ng nh\u1EB9", confidence: 76 },
+      { location: "Qu\u1EADn Li\xEAn Chi\u1EC3u, \u0110\xE0 N\u1EB5ng", pricePerM2: 7e7, priceMin: 47e6, priceMax: 108e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 75 },
+      { location: "Qu\u1EADn Thanh Kh\xEA, \u0110\xE0 N\u1EB5ng", pricePerM2: 8e7, priceMin: 54e6, priceMax: 125e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 76 },
+      { location: "Qu\u1EADn C\u1EA9m L\u1EC7, \u0110\xE0 N\u1EB5ng", pricePerM2: 7e7, priceMin: 47e6, priceMax: 108e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 74 },
+      { location: "Huy\u1EC7n H\xF2a Vang, \u0110\xE0 N\u1EB5ng", pricePerM2: 25e6, priceMin: 14e6, priceMax: 4e7, trend: "T\u0103ng nh\u1EB9", confidence: 68 },
+      { location: "\u0110\u01B0\u1EDDng V\xF5 Nguy\xEAn Gi\xE1p - Bi\u1EC3n M\u1EF9 Kh\xEA, \u0110\xE0 N\u1EB5ng", pricePerM2: 12e7, priceMin: 8e7, priceMax: 19e7, trend: "T\u0103ng tr\u01B0\u1EDFng t\u1ED1t", confidence: 76 },
+      // ══ Hải Phòng ═════════════════════════════════════════════════════════════
+      { location: "Qu\u1EADn H\u1ED3ng B\xE0ng, H\u1EA3i Ph\xF2ng", pricePerM2: 65e6, priceMin: 43e6, priceMax: 1e8, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 74 },
+      { location: "Qu\u1EADn Ng\xF4 Quy\u1EC1n, H\u1EA3i Ph\xF2ng", pricePerM2: 6e7, priceMin: 4e7, priceMax: 92e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 74 },
+      { location: "Qu\u1EADn L\xEA Ch\xE2n, H\u1EA3i Ph\xF2ng", pricePerM2: 55e6, priceMin: 36e6, priceMax: 85e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 73 },
+      { location: "Qu\u1EADn H\u1EA3i An, H\u1EA3i Ph\xF2ng", pricePerM2: 45e6, priceMin: 3e7, priceMax: 7e7, trend: "T\u0103ng nh\u1EB9", confidence: 72 },
+      { location: "Qu\u1EADn D\u01B0\u01A1ng Kinh, H\u1EA3i Ph\xF2ng", pricePerM2: 35e6, priceMin: 22e6, priceMax: 55e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 70 },
+      { location: "Huy\u1EC7n An D\u01B0\u01A1ng, H\u1EA3i Ph\xF2ng", pricePerM2: 3e7, priceMin: 18e6, priceMax: 48e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 70 },
+      { location: "Th\xE0nh ph\u1ED1 \u0110\u1ED3 S\u01A1n, H\u1EA3i Ph\xF2ng", pricePerM2: 5e7, priceMin: 3e7, priceMax: 8e7, trend: "T\u0103ng nh\u1EB9", confidence: 70 },
+      { location: "Huy\u1EC7n Thu\u1EF7 Nguy\xEAn, H\u1EA3i Ph\xF2ng", pricePerM2: 25e6, priceMin: 14e6, priceMax: 4e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 68 },
+      // ══ Cần Thơ ═══════════════════════════════════════════════════════════════
+      { location: "Qu\u1EADn Ninh Ki\u1EC1u, C\u1EA7n Th\u01A1", pricePerM2: 65e6, priceMin: 42e6, priceMax: 1e8, trend: "T\u0103ng nh\u1EB9", confidence: 73 },
+      { location: "Qu\u1EADn B\xECnh Thu\u1EF7, C\u1EA7n Th\u01A1", pricePerM2: 4e7, priceMin: 25e6, priceMax: 63e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 70 },
+      { location: "Qu\u1EADn C\xE1i R\u0103ng, C\u1EA7n Th\u01A1", pricePerM2: 35e6, priceMin: 22e6, priceMax: 55e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 70 },
+      { location: "Qu\u1EADn \xD4 M\xF4n, C\u1EA7n Th\u01A1", pricePerM2: 25e6, priceMin: 14e6, priceMax: 4e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 68 },
+      { location: "Qu\u1EADn Th\u1ED1t N\u1ED1t, C\u1EA7n Th\u01A1", pricePerM2: 2e7, priceMin: 11e6, priceMax: 32e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 65 },
+      // ══ Tỉnh thành lân cận TP.HCM ════════════════════════════════════════════
+      { location: "Th\xE0nh ph\u1ED1 Bi\xEAn H\xF2a, \u0110\u1ED3ng Nai", pricePerM2: 35e6, priceMin: 22e6, priceMax: 55e6, trend: "T\u0103ng nh\u1EB9", confidence: 72 },
+      { location: "Nh\u01A1n Tr\u1EA1ch, \u0110\u1ED3ng Nai", pricePerM2: 25e6, priceMin: 15e6, priceMax: 4e7, trend: "T\u0103ng nh\u1EB9", confidence: 70 },
+      { location: "Th\xE0nh ph\u1ED1 Th\u1EE7 D\u1EA7u M\u1ED9t, B\xECnh D\u01B0\u01A1ng", pricePerM2: 5e7, priceMin: 33e6, priceMax: 78e6, trend: "T\u0103ng nh\u1EB9", confidence: 73 },
+      { location: "Th\xE0nh ph\u1ED1 D\u0129 An, B\xECnh D\u01B0\u01A1ng", pricePerM2: 55e6, priceMin: 36e6, priceMax: 85e6, trend: "T\u0103ng nh\u1EB9", confidence: 73 },
+      { location: "Th\xE0nh ph\u1ED1 Thu\u1EADn An, B\xECnh D\u01B0\u01A1ng", pricePerM2: 5e7, priceMin: 33e6, priceMax: 78e6, trend: "T\u0103ng nh\u1EB9", confidence: 72 },
+      { location: "Th\xE0nh ph\u1ED1 V\u0169ng T\xE0u, B\xE0 R\u1ECBa - V\u0169ng T\xE0u", pricePerM2: 6e7, priceMin: 38e6, priceMax: 95e6, trend: "T\u0103ng tr\u01B0\u1EDFng t\u1ED1t", confidence: 73 },
+      { location: "Th\xE0nh ph\u1ED1 Long An", pricePerM2: 22e6, priceMin: 13e6, priceMax: 35e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 68 },
+      { location: "Th\xE0nh ph\u1ED1 M\u1EF9 Tho, Ti\u1EC1n Giang", pricePerM2: 22e6, priceMin: 13e6, priceMax: 35e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 66 },
+      // ══ Miền Trung — Nghỉ dưỡng & Đô thị ════════════════════════════════════
+      { location: "Th\xE0nh ph\u1ED1 Nha Trang, Kh\xE1nh H\xF2a", pricePerM2: 8e7, priceMin: 5e7, priceMax: 13e7, trend: "T\u0103ng tr\u01B0\u1EDFng t\u1ED1t", confidence: 73 },
+      { location: "Th\xE0nh ph\u1ED1 \u0110\xE0 L\u1EA1t, L\xE2m \u0110\u1ED3ng", pricePerM2: 7e7, priceMin: 45e6, priceMax: 115e6, trend: "T\u0103ng m\u1EA1nh", confidence: 73 },
+      { location: "Th\xE0nh ph\u1ED1 Quy Nh\u01A1n, B\xECnh \u0110\u1ECBnh", pricePerM2: 5e7, priceMin: 32e6, priceMax: 8e7, trend: "T\u0103ng nh\u1EB9", confidence: 70 },
+      { location: "Th\xE0nh ph\u1ED1 Hu\u1EBF, Th\u1EEBa Thi\xEAn Hu\u1EBF", pricePerM2: 45e6, priceMin: 28e6, priceMax: 72e6, trend: "T\u0103ng nh\u1EB9", confidence: 70 },
+      { location: "Th\u1ECB x\xE3 H\u1ED9i An, Qu\u1EA3ng Nam", pricePerM2: 9e7, priceMin: 55e6, priceMax: 145e6, trend: "T\u0103ng m\u1EA1nh", confidence: 72 },
+      { location: "Th\xE0nh ph\u1ED1 Phan Thi\u1EBFt, B\xECnh Thu\u1EADn", pricePerM2: 35e6, priceMin: 2e7, priceMax: 58e6, trend: "T\u0103ng nh\u1EB9", confidence: 68 },
+      { location: "Th\xE0nh ph\u1ED1 Vinh, Ngh\u1EC7 An", pricePerM2: 35e6, priceMin: 22e6, priceMax: 55e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 68 },
+      // ══ Miền Bắc — Tỉnh thành phát triển ════════════════════════════════════
+      { location: "Th\xE0nh ph\u1ED1 H\u1EA1 Long, Qu\u1EA3ng Ninh", pricePerM2: 5e7, priceMin: 3e7, priceMax: 8e7, trend: "T\u0103ng tr\u01B0\u1EDFng t\u1ED1t", confidence: 70 },
+      { location: "Th\xE0nh ph\u1ED1 B\u1EAFc Ninh", pricePerM2: 4e7, priceMin: 25e6, priceMax: 63e6, trend: "T\u0103ng nh\u1EB9", confidence: 70 },
+      { location: "Th\xE0nh ph\u1ED1 Th\xE1i Nguy\xEAn", pricePerM2: 25e6, priceMin: 15e6, priceMax: 4e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 68 },
+      { location: "Th\xE0nh ph\u1ED1 H\u1EA3i D\u01B0\u01A1ng", pricePerM2: 3e7, priceMin: 18e6, priceMax: 48e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 68 },
+      { location: "Th\xE0nh ph\u1ED1 Nam \u0110\u1ECBnh", pricePerM2: 3e7, priceMin: 18e6, priceMax: 48e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 67 },
+      // ══ Tây Nguyên & Miền Nam ════════════════════════════════════════════════
+      { location: "Th\xE0nh ph\u1ED1 Bu\xF4n Ma Thu\u1ED9t, \u0110\u1EAFk L\u1EAFk", pricePerM2: 35e6, priceMin: 2e7, priceMax: 56e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 68 },
+      { location: "Th\xE0nh ph\u1ED1 Pleiku, Gia Lai", pricePerM2: 28e6, priceMin: 16e6, priceMax: 45e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 67 },
+      { location: "Th\xE0nh ph\u1ED1 C\xE0 Mau", pricePerM2: 15e6, priceMin: 9e6, priceMax: 24e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 64 },
+      { location: "Th\xE0nh ph\u1ED1 R\u1EA1ch Gi\xE1, Ki\xEAn Giang", pricePerM2: 2e7, priceMin: 11e6, priceMax: 32e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 65 },
+      { location: "Th\xE0nh ph\u1ED1 Long Xuy\xEAn, An Giang", pricePerM2: 25e6, priceMin: 14e6, priceMax: 4e7, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 66 },
+      { location: "Th\xE0nh ph\u1ED1 B\u1EBFn Tre", pricePerM2: 18e6, priceMin: 1e7, priceMax: 29e6, trend: "\u1ED4n \u0111\u1ECBnh", confidence: 64 }
+    ];
+    migration55 = {
+      description: "Seed comprehensive Vietnamese real estate market prices Q1/2025 into market_price_history",
+      async up(client) {
+        await client.query(`DELETE FROM market_price_history WHERE source = 'regional_table'`);
+        for (const seed of SEEDS) {
+          const key = normalizeKey(seed.location);
+          const mid = seed.pricePerM2;
+          const pMin = seed.priceMin ?? Math.round(mid * 0.8);
+          const pMax = seed.priceMax ?? Math.round(mid * 1.25);
+          const conf = seed.confidence ?? 70;
+          const trend = seed.trend ?? "\u1ED4n \u0111\u1ECBnh";
+          await client.query(
+            `INSERT INTO market_price_history
+           (location_key, location_display, price_per_m2, price_min, price_max,
+            property_type, source, confidence, trend_text, source_count, data_recency, recorded_at)
+         VALUES ($1,$2,$3,$4,$5,'townhouse_center','regional_table',$6,$7,1,'q1_2025',NOW())`,
+            [key, seed.location, mid, pMin, pMax, conf, trend]
+          );
+        }
+      },
+      async down(client) {
+        await client.query(`DELETE FROM market_price_history WHERE source = 'regional_table'`);
+      }
+    };
+    seed_market_prices_default = migration55;
+  }
+});
+
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -4157,15 +4342,15 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file2 of pending) {
-      const migration54 = MIGRATION_REGISTRY[file2];
-      if (!migration54 || typeof migration54.up !== "function") {
+      const migration56 = MIGRATION_REGISTRY[file2];
+      if (!migration56 || typeof migration56.up !== "function") {
         throw new Error(`[migrations] Invalid migration module for ${file2} \u2014 missing up() function`);
       }
-      console.log(`[migrations] Applying ${file2}: ${migration54.description || ""}`);
-      await migration54.up(client);
+      console.log(`[migrations] Applying ${file2}: ${migration56.description || ""}`);
+      await migration56.up(client);
       await client.query(
         "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
-        [file2, migration54.description || null]
+        [file2, migration56.description || null]
       );
       console.log(`[migrations] \u2713 ${file2}`);
     }
@@ -4200,15 +4385,15 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const migration54 = MIGRATION_REGISTRY[lastVersion];
-    if (!migration54) {
+    const migration56 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration56) {
       throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
     }
-    if (!migration54.down) {
+    if (!migration56.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
     console.log(`[migrations] Rolling back ${lastVersion}...`);
-    await migration54.down(client);
+    await migration56.down(client);
     await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
     await client.query("COMMIT");
     console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
@@ -4276,6 +4461,8 @@ var init_runner = __esm({
     init_articles_videos_column();
     init_fix_listing_status_opening();
     init_fix_processing_documents();
+    init_error_logs();
+    init_seed_market_prices();
     dotenv.config();
     MIGRATION_REGISTRY = {
       "001_baseline_schema.ts": baseline_schema_default,
@@ -4330,7 +4517,9 @@ var init_runner = __esm({
       "050_articles_images_column.ts": articles_images_column_default,
       "051_articles_videos_column.ts": articles_videos_column_default,
       "052_fix_listing_status_opening.ts": fix_listing_status_opening_default,
-      "053_fix_processing_documents.ts": fix_processing_documents_default
+      "053_fix_processing_documents.ts": fix_processing_documents_default,
+      "054_error_logs.ts": error_logs_default,
+      "055_seed_market_prices.ts": seed_market_prices_default
     };
     MIGRATION_ADVISORY_LOCK_KEY = 74839230;
   }
@@ -27980,14 +28169,15 @@ function buildListingMeta(listing) {
     ...listing.area ? { floorSize: { "@type": "QuantitativeValue", value: listing.area, unitCode: "MTK" } } : {},
     ...listing.bedrooms != null ? { numberOfRooms: listing.bedrooms } : {}
   };
-  return { title, description, image, url: url2, type: "website", structuredData };
+  const h1 = listing.title || `${transaction} ${type} ${areaStr}`.trim() || "B\u1EA5t \u0110\u1ED9ng S\u1EA3n SGS LAND";
+  return { title, description, h1, image, url: url2, type: "website", structuredData };
 }
 function buildArticleMeta(article) {
   const rawExcerpt = article.excerpt || (article.content ? article.content.replace(/<[^>]+>/g, "").slice(0, 160) : "");
   const title = article.title ? `${article.title} - Tin T\u1EE9c B\u0110S | SGS LAND` : DEFAULT_META.title;
   const description = rawExcerpt.slice(0, 300) || DEFAULT_META.description;
   const image = article.coverImage || article.cover_image || DEFAULT_IMAGE;
-  const url2 = `${APP_URL}/news/${article.id}`;
+  const url2 = article.slug ? `${APP_URL}/news/${article.slug}` : `${APP_URL}/news/${article.id}`;
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -28005,18 +28195,21 @@ function buildArticleMeta(article) {
       logo: { "@type": "ImageObject", url: `${APP_URL}/apple-touch-icon.png` }
     }
   };
-  return { title, description, image, url: url2, type: "article", structuredData };
+  return { title, description, h1: article.title || void 0, image, url: url2, type: "article", structuredData };
 }
 function buildStaticPageMeta(overrideTitle, overrideDesc, ogImage, pagePath) {
-  const routeKey = pagePath.replace(/^\//, "").split("/")[0] || "";
-  const routeMeta = STATIC_PAGE_META[routeKey] ?? STATIC_PAGE_META[""];
+  const fullKey = pagePath.replace(/^\//, "") || "";
+  const shortKey = fullKey.split("/")[0] || "";
+  const routeMeta = STATIC_PAGE_META[fullKey] ?? STATIC_PAGE_META[shortKey] ?? STATIC_PAGE_META[""];
   return {
     title: overrideTitle || routeMeta.title,
     description: overrideDesc || routeMeta.description,
+    h1: routeMeta.h1,
     image: ogImage || DEFAULT_IMAGE,
     url: `${APP_URL}${pagePath}`,
     type: "website",
-    noIndex: routeMeta.noIndex
+    noIndex: routeMeta.noIndex,
+    structuredData: routeMeta.structuredData
   };
 }
 function injectMeta(baseHtml, meta3) {
@@ -28052,6 +28245,13 @@ function injectMeta(baseHtml, meta3) {
       `$1noindex, nofollow$2`
     );
   }
+  if (m.h1) {
+    const h1Text = esc2(m.h1);
+    html = html.replace(
+      /(<h1[^>]*>)[^<]*(<\/h1>)/i,
+      `$1${h1Text}$2`
+    );
+  }
   if (m.structuredData) {
     const jsonLd = `  <script type="application/ld+json">${JSON.stringify(m.structuredData)}</script>`;
     html = html.replace("</head>", `${jsonLd}
@@ -28073,29 +28273,696 @@ var init_metaInjector = __esm({
     DEFAULT_IMAGE = `${APP_URL}/og-image.jpg`;
     DEFAULT_META = {
       title: "SGS LAND | N\u1EC1n T\u1EA3ng Qu\u1EA3n L\xFD B\u1EA5t \u0110\u1ED9ng S\u1EA3n AI S\u1ED1 1 Vi\u1EC7t Nam",
-      description: "SGS LAND - N\u1EC1n t\u1EA3ng qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n th\u1EBF h\u1EC7 m\u1EDBi t\xEDch h\u1EE3p AI \u0111\u1ECBnh gi\xE1 t\u1EF1 \u0111\u1ED9ng, CRM \u0111a k\xEAnh v\xE0 qu\u1EA3n l\xFD kho h\xE0ng to\xE0n di\u1EC7n. Gi\u1EA3i ph\xE1p #1 cho s\xE0n giao d\u1ECBch v\xE0 doanh nghi\u1EC7p b\u1EA5t \u0111\u1ED9ng s\u1EA3n Vi\u1EC7t Nam.",
+      description: "SGS LAND - N\u1EC1n t\u1EA3ng B\u0110S AI: \u0111\u1ECBnh gi\xE1 t\u1EF1 \u0111\u1ED9ng, CRM \u0111a k\xEAnh, qu\u1EA3n l\xFD kho h\xE0ng to\xE0n di\u1EC7n. Gi\u1EA3i ph\xE1p #1 cho s\xE0n giao d\u1ECBch v\xE0 doanh nghi\u1EC7p b\u1EA5t \u0111\u1ED9ng s\u1EA3n Vi\u1EC7t Nam.",
       image: DEFAULT_IMAGE,
       url: APP_URL,
       type: "website"
     };
     STATIC_PAGE_META = {
-      "": { title: DEFAULT_META.title, description: DEFAULT_META.description },
-      home: { title: DEFAULT_META.title, description: DEFAULT_META.description },
-      marketplace: { title: "T\xECm Ki\u1EBFm B\u1EA5t \u0110\u1ED9ng S\u1EA3n | Kho H\xE0ng Realtime - SGS LAND", description: "T\xECm ki\u1EBFm b\u1EA5t \u0111\u1ED9ng s\u1EA3n theo v\u1ECB tr\xED, lo\u1EA1i h\xECnh, di\u1EC7n t\xEDch v\xE0 m\u1EE9c gi\xE1. Kho h\xE0ng h\xE0ng ngh\xECn b\u1EA5t \u0111\u1ED9ng s\u1EA3n c\u1EADp nh\u1EADt realtime tr\xEAn to\xE0n qu\u1ED1c." },
-      "ai-valuation": { title: "\u0110\u1ECBnh Gi\xE1 B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\u1EB1ng AI | Sai S\u1ED1 \xB15% - SGS LAND", description: "C\xF4ng ngh\u1EC7 \u0111\u1ECBnh gi\xE1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI t\u1EEB SGS LAND v\u1EDBi sai s\u1ED1 ch\u1EC9 \xB15\u201310% \u2014 ngang chu\u1EA9n th\u1EA9m \u0111\u1ECBnh vi\xEAn chuy\xEAn nghi\u1EC7p. Ho\xE0n to\xE0n mi\u1EC5n ph\xED." },
-      "crm-platform": { title: "N\u1EC1n T\u1EA3ng CRM B\u1EA5t \u0110\u1ED9ng S\u1EA3n Th\u1EBF H\u1EC7 M\u1EDBi | SGS LAND", description: "H\u1EC7 th\u1ED1ng CRM b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\xEDch h\u1EE3p AI, \u0111a k\xEAnh Zalo/Facebook/Email, t\u1EF1 \u0111\u1ED9ng h\xF3a quy tr\xECnh t\u1EEB lead \u0111\u1EBFn h\u1EE3p \u0111\u1ED3ng." },
-      "about-us": { title: "V\u1EC1 Ch\xFAng T\xF4i | SGS LAND \u2013 \u0110\u1ED9i Ng\u0169 & T\u1EA7m Nh\xECn", description: "SGS LAND - C\xF4ng ty c\xF4ng ngh\u1EC7 b\u1EA5t \u0111\u1ED9ng s\u1EA3n h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam. T\xECm hi\u1EC3u v\u1EC1 t\u1EA7m nh\xECn, s\u1EE9 m\u1EC7nh v\xE0 gi\xE1 tr\u1ECB c\u1ED1t l\xF5i c\u1EE7a ch\xFAng t\xF4i." },
-      news: { title: "Tin T\u1EE9c B\u1EA5t \u0110\u1ED9ng S\u1EA3n | Th\u1ECB Tr\u01B0\u1EDDng B\u0110S C\u1EADp Nh\u1EADt - SGS LAND", description: "C\u1EADp nh\u1EADt tin t\u1EE9c b\u1EA5t \u0111\u1ED9ng s\u1EA3n m\u1EDBi nh\u1EA5t, ph\xE2n t\xEDch th\u1ECB tr\u01B0\u1EDDng, xu h\u01B0\u1EDBng gi\xE1 v\xE0 c\xE1c ch\xEDnh s\xE1ch ph\xE1p lu\u1EADt li\xEAn quan \u0111\u1EBFn b\u1EA5t \u0111\u1ED9ng s\u1EA3n Vi\u1EC7t Nam." },
-      contact: { title: "Li\xEAn H\u1EC7 T\u01B0 V\u1EA5n | SGS LAND", description: "Li\xEAn h\u1EC7 v\u1EDBi \u0111\u1ED9i ng\u0169 t\u01B0 v\u1EA5n SGS LAND \u0111\u1EC3 \u0111\u01B0\u1EE3c h\u1ED7 tr\u1EE3 demo, t\u01B0 v\u1EA5n g\xF3i d\u1ECBch v\u1EE5 v\xE0 t\xEDch h\u1EE3p n\u1EC1n t\u1EA3ng qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n." },
-      careers: { title: "Tuy\u1EC3n D\u1EE5ng | C\u01A1 H\u1ED9i Ngh\u1EC1 Nghi\u1EC7p t\u1EA1i SGS LAND", description: "Tham gia \u0111\u1ED9i ng\u0169 SGS LAND \u2013 n\u01A1i c\xF4ng ngh\u1EC7 v\xE0 b\u1EA5t \u0111\u1ED9ng s\u1EA3n h\u1ED9i t\u1EE5. Kh\xE1m ph\xE1 c\u01A1 h\u1ED9i vi\u1EC7c l\xE0m trong l\u0129nh v\u1EF1c AI, product v\xE0 business development." },
-      "help-center": { title: "Trung T\xE2m H\u1ED7 Tr\u1EE3 | SGS LAND Help Center", description: "T\xECm h\u01B0\u1EDBng d\u1EABn s\u1EED d\u1EE5ng, c\xE2u h\u1ECFi th\u01B0\u1EDDng g\u1EB7p v\xE0 t\xE0i li\u1EC7u k\u1EF9 thu\u1EADt cho n\u1EC1n t\u1EA3ng qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n SGS LAND." },
-      developers: { title: "API & T\xE0i Li\u1EC7u K\u1EF9 Thu\u1EADt | SGS LAND Developers", description: "T\xE0i li\u1EC7u API SGS LAND d\xE0nh cho nh\xE0 ph\xE1t tri\u1EC3n. T\xEDch h\u1EE3p d\u1EEF li\u1EC7u b\u1EA5t \u0111\u1ED9ng s\u1EA3n, \u0111\u1ECBnh gi\xE1 AI v\xE0 CRM v\xE0o \u1EE9ng d\u1EE5ng c\u1EE7a b\u1EA1n." },
-      status: { title: "Tr\u1EA1ng Th\xE1i H\u1EC7 Th\u1ED1ng | SGS LAND Status", description: "Theo d\xF5i tr\u1EA1ng th\xE1i ho\u1EA1t \u0111\u1ED9ng realtime c\u1EE7a n\u1EC1n t\u1EA3ng SGS LAND \u2013 uptime, latency v\xE0 s\u1EF1 c\u1ED1 h\u1EC7 th\u1ED1ng." },
-      "privacy-policy": { title: "Ch\xEDnh S\xE1ch B\u1EA3o M\u1EADt | SGS LAND", description: "Ch\xEDnh s\xE1ch b\u1EA3o m\u1EADt d\u1EEF li\u1EC7u c\u1EE7a SGS LAND. T\xECm hi\u1EC3u c\xE1ch ch\xFAng t\xF4i thu th\u1EADp, s\u1EED d\u1EE5ng v\xE0 b\u1EA3o v\u1EC7 th\xF4ng tin c\u1EE7a b\u1EA1n." },
-      "terms-of-service": { title: "\u0110i\u1EC1u Kho\u1EA3n S\u1EED D\u1EE5ng | SGS LAND", description: "\u0110i\u1EC1u kho\u1EA3n v\xE0 \u0111i\u1EC1u ki\u1EC7n s\u1EED d\u1EE5ng n\u1EC1n t\u1EA3ng SGS LAND. Quy\u1EC1n l\u1EE3i v\xE0 tr\xE1ch nhi\u1EC7m c\u1EE7a ng\u01B0\u1EDDi d\xF9ng v\xE0 nh\xE0 cung c\u1EA5p d\u1ECBch v\u1EE5." },
-      "ky-gui-bat-dong-san": { title: "K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n | B\xE1n Nhanh, Gi\xE1 T\u1ED1t - SGS LAND", description: "K\xFD g\u1EEDi b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EA1i SGS LAND \u2014 \u0111\u1ED9i ng\u0169 chuy\xEAn gia \u0111\u1ECBnh gi\xE1 mi\u1EC5n ph\xED, ti\u1EBFp c\u1EADn h\xE0ng ngh\xECn kh\xE1ch h\xE0ng ti\u1EC1m n\u0103ng v\xE0 h\u1ED7 tr\u1EE3 ph\xE1p l\xFD to\xE0n di\u1EC7n." },
-      livechat: { title: "Chat Tr\u1EF1c Ti\u1EBFp | H\u1ED7 Tr\u1EE3 Kh\xE1ch H\xE0ng 24/7 - SGS LAND", description: "K\u1EBFt n\u1ED1i tr\u1EF1c ti\u1EBFp v\u1EDBi \u0111\u1ED9i ng\u0169 t\u01B0 v\u1EA5n SGS LAND qua Live Chat. \u0110\u01B0\u1EE3c h\u1ED7 tr\u1EE3 24/7 v\u1EC1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n, \u0111\u1ECBnh gi\xE1 AI v\xE0 c\xE1c d\u1ECBch v\u1EE5." },
-      login: { title: "\u0110\u0103ng Nh\u1EADp | SGS LAND Enterprise", description: "\u0110\u0103ng nh\u1EADp v\xE0o n\u1EC1n t\u1EA3ng qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n SGS LAND.", noIndex: true }
+      "": {
+        title: DEFAULT_META.title,
+        description: DEFAULT_META.description,
+        h1: "SGS LAND - N\u1EC1n T\u1EA3ng Qu\u1EA3n L\xFD B\u1EA5t \u0110\u1ED9ng S\u1EA3n AI",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": `${APP_URL}/#org`,
+              name: "SGS LAND",
+              url: APP_URL,
+              logo: { "@type": "ImageObject", url: `${APP_URL}/apple-touch-icon.png` },
+              sameAs: ["https://www.facebook.com/sgslandvn"],
+              description: "N\u1EC1n t\u1EA3ng c\xF4ng ngh\u1EC7 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam, chuy\xEAn t\u01B0 v\u1EA5n v\xE0 giao d\u1ECBch b\u1EA5t \u0111\u1ED9ng s\u1EA3n TP.HCM, \u0110\u1ED3ng Nai, B\xECnh D\u01B0\u01A1ng.",
+              contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: ["Vietnamese", "English"], url: `${APP_URL}/contact` },
+              areaServed: { "@type": "Country", name: "Vi\u1EC7t Nam" },
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n", "\u0110\u1ECBnh gi\xE1 AI", "CRM b\u1EA5t \u0111\u1ED9ng s\u1EA3n", "Aqua City", "Vinhomes", "Masterise Homes", "\u0110\u1ED3ng Nai", "TP.HCM", "B\xECnh D\u01B0\u01A1ng"]
+            },
+            {
+              "@type": "RealEstateAgent",
+              "@id": `${APP_URL}/#agent`,
+              name: "SGS LAND - N\u1EC1n T\u1EA3ng B\u0110S AI S\u1ED1 1 Vi\u1EC7t Nam",
+              url: APP_URL,
+              description: "\u0110\u1ECBnh gi\xE1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI, mua b\xE1n B\u0110S, CRM \u0111a k\xEAnh t\u1EA1i Vi\u1EC7t Nam.",
+              areaServed: [
+                { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "B\xECnh D\u01B0\u01A1ng", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } }
+              ],
+              knowsAbout: ["Aqua City Novaland", "Izumi City", "Vinhomes Grand Park", "Vinhomes Central Park", "The Global City", "Masterise Homes", "Th\u1EE7 Thi\xEAm", "B\u0110S Long Th\xE0nh", "B\u0110S \u0110\u1ED3ng Nai", "B\u0110S B\xECnh D\u01B0\u01A1ng", "B\u0110S Qu\u1EADn 7", "B\u0110S B\xECnh Ch\xE1nh", "B\u0110S TP Th\u1EE7 \u0110\u1EE9c"]
+            },
+            {
+              "@type": "WebSite",
+              "@id": `${APP_URL}/#website`,
+              url: APP_URL,
+              name: "SGS LAND",
+              potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: `${APP_URL}/marketplace?q={search_term_string}` }, "query-input": "required name=search_term_string" }
+            }
+          ]
+        }
+      },
+      home: {
+        title: DEFAULT_META.title,
+        description: DEFAULT_META.description,
+        h1: "SGS LAND - N\u1EC1n T\u1EA3ng Qu\u1EA3n L\xFD B\u1EA5t \u0110\u1ED9ng S\u1EA3n AI"
+      },
+      marketplace: { title: "Mua B\xE1n B\u1EA5t \u0110\u1ED9ng S\u1EA3n | Nh\xE0 \u0110\u1EA5t To\xE0n Qu\u1ED1c - SGS LAND", description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n to\xE0n qu\u1ED1c \u2014 t\xECm ki\u1EBFm nh\xE0 \u0111\u1EA5t, c\u0103n h\u1ED9, bi\u1EC7t th\u1EF1 theo v\u1ECB tr\xED, di\u1EC7n t\xEDch v\xE0 m\u1EE9c gi\xE1. Kho h\xE0ng ngh\xECn b\u1EA5t \u0111\u1ED9ng s\u1EA3n c\u1EADp nh\u1EADt realtime.", h1: "Mua B\xE1n B\u1EA5t \u0110\u1ED9ng S\u1EA3n | Nh\xE0 \u0110\u1EA5t To\xE0n Qu\u1ED1c" },
+      "ai-valuation": { title: "\u0110\u1ECBnh Gi\xE1 B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\u1EB1ng AI | Sai S\u1ED1 \xB15% - SGS LAND", description: "C\xF4ng ngh\u1EC7 \u0111\u1ECBnh gi\xE1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI t\u1EEB SGS LAND v\u1EDBi sai s\u1ED1 ch\u1EC9 \xB15\u201310% \u2014 ngang chu\u1EA9n th\u1EA9m \u0111\u1ECBnh vi\xEAn chuy\xEAn nghi\u1EC7p. Ho\xE0n to\xE0n mi\u1EC5n ph\xED.", h1: "\u0110\u1ECBnh Gi\xE1 B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\u1EB1ng AI" },
+      "crm-platform": { title: "N\u1EC1n T\u1EA3ng CRM B\u1EA5t \u0110\u1ED9ng S\u1EA3n Th\u1EBF H\u1EC7 M\u1EDBi | SGS LAND", description: "H\u1EC7 th\u1ED1ng CRM b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\xEDch h\u1EE3p AI, \u0111a k\xEAnh Zalo/Facebook/Email, t\u1EF1 \u0111\u1ED9ng h\xF3a quy tr\xECnh t\u1EEB lead \u0111\u1EBFn h\u1EE3p \u0111\u1ED3ng.", h1: "CRM B\u1EA5t \u0110\u1ED9ng S\u1EA3n Th\u1EBF H\u1EC7 M\u1EDBi" },
+      "about-us": { title: "V\u1EC1 Ch\xFAng T\xF4i | SGS LAND \u2013 \u0110\u1ED9i Ng\u0169 & T\u1EA7m Nh\xECn", description: "SGS LAND - C\xF4ng ty c\xF4ng ngh\u1EC7 b\u1EA5t \u0111\u1ED9ng s\u1EA3n h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam. T\xECm hi\u1EC3u v\u1EC1 t\u1EA7m nh\xECn, s\u1EE9 m\u1EC7nh v\xE0 gi\xE1 tr\u1ECB c\u1ED1t l\xF5i c\u1EE7a ch\xFAng t\xF4i.", h1: "V\u1EC1 SGS LAND" },
+      news: { title: "Tin T\u1EE9c B\u1EA5t \u0110\u1ED9ng S\u1EA3n | Th\u1ECB Tr\u01B0\u1EDDng B\u0110S C\u1EADp Nh\u1EADt - SGS LAND", description: "C\u1EADp nh\u1EADt tin t\u1EE9c b\u1EA5t \u0111\u1ED9ng s\u1EA3n m\u1EDBi nh\u1EA5t, ph\xE2n t\xEDch th\u1ECB tr\u01B0\u1EDDng, xu h\u01B0\u1EDBng gi\xE1 v\xE0 c\xE1c ch\xEDnh s\xE1ch ph\xE1p lu\u1EADt li\xEAn quan \u0111\u1EBFn b\u1EA5t \u0111\u1ED9ng s\u1EA3n Vi\u1EC7t Nam.", h1: "Tin T\u1EE9c B\u1EA5t \u0110\u1ED9ng S\u1EA3n M\u1EDBi Nh\u1EA5t" },
+      contact: { title: "Li\xEAn H\u1EC7 T\u01B0 V\u1EA5n | SGS LAND", description: "Li\xEAn h\u1EC7 v\u1EDBi \u0111\u1ED9i ng\u0169 t\u01B0 v\u1EA5n SGS LAND \u0111\u1EC3 \u0111\u01B0\u1EE3c h\u1ED7 tr\u1EE3 demo, t\u01B0 v\u1EA5n g\xF3i d\u1ECBch v\u1EE5 v\xE0 t\xEDch h\u1EE3p n\u1EC1n t\u1EA3ng qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n.", h1: "Li\xEAn H\u1EC7 SGS LAND" },
+      careers: { title: "Tuy\u1EC3n D\u1EE5ng | C\u01A1 H\u1ED9i Ngh\u1EC1 Nghi\u1EC7p t\u1EA1i SGS LAND", description: "Tham gia \u0111\u1ED9i ng\u0169 SGS LAND \u2013 n\u01A1i c\xF4ng ngh\u1EC7 v\xE0 b\u1EA5t \u0111\u1ED9ng s\u1EA3n h\u1ED9i t\u1EE5. Kh\xE1m ph\xE1 c\u01A1 h\u1ED9i vi\u1EC7c l\xE0m trong l\u0129nh v\u1EF1c AI, product v\xE0 business development.", h1: "C\u01A1 H\u1ED9i Ngh\u1EC1 Nghi\u1EC7p t\u1EA1i SGS LAND" },
+      "help-center": { title: "Trung T\xE2m H\u1ED7 Tr\u1EE3 | SGS LAND Help Center", description: "T\xECm h\u01B0\u1EDBng d\u1EABn s\u1EED d\u1EE5ng, c\xE2u h\u1ECFi th\u01B0\u1EDDng g\u1EB7p v\xE0 t\xE0i li\u1EC7u k\u1EF9 thu\u1EADt cho n\u1EC1n t\u1EA3ng qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n SGS LAND.", h1: "Trung T\xE2m H\u1ED7 Tr\u1EE3 SGS LAND" },
+      developers: { title: "API & T\xE0i Li\u1EC7u K\u1EF9 Thu\u1EADt | SGS LAND Developers", description: "T\xE0i li\u1EC7u API SGS LAND d\xE0nh cho nh\xE0 ph\xE1t tri\u1EC3n. T\xEDch h\u1EE3p d\u1EEF li\u1EC7u b\u1EA5t \u0111\u1ED9ng s\u1EA3n, \u0111\u1ECBnh gi\xE1 AI v\xE0 CRM v\xE0o \u1EE9ng d\u1EE5ng c\u1EE7a b\u1EA1n.", h1: "SGS LAND Developer API" },
+      status: { title: "Tr\u1EA1ng Th\xE1i H\u1EC7 Th\u1ED1ng | SGS LAND Status", description: "Theo d\xF5i tr\u1EA1ng th\xE1i ho\u1EA1t \u0111\u1ED9ng realtime c\u1EE7a n\u1EC1n t\u1EA3ng SGS LAND \u2013 uptime, latency v\xE0 s\u1EF1 c\u1ED1 h\u1EC7 th\u1ED1ng.", h1: "Tr\u1EA1ng Th\xE1i H\u1EC7 Th\u1ED1ng SGS LAND" },
+      "privacy-policy": { title: "Ch\xEDnh S\xE1ch B\u1EA3o M\u1EADt | SGS LAND", description: "Ch\xEDnh s\xE1ch b\u1EA3o m\u1EADt d\u1EEF li\u1EC7u c\u1EE7a SGS LAND. T\xECm hi\u1EC3u c\xE1ch ch\xFAng t\xF4i thu th\u1EADp, s\u1EED d\u1EE5ng v\xE0 b\u1EA3o v\u1EC7 th\xF4ng tin c\u1EE7a b\u1EA1n.", h1: "Ch\xEDnh S\xE1ch B\u1EA3o M\u1EADt" },
+      "terms-of-service": { title: "\u0110i\u1EC1u Kho\u1EA3n S\u1EED D\u1EE5ng | SGS LAND", description: "\u0110i\u1EC1u kho\u1EA3n v\xE0 \u0111i\u1EC1u ki\u1EC7n s\u1EED d\u1EE5ng n\u1EC1n t\u1EA3ng SGS LAND. Quy\u1EC1n l\u1EE3i v\xE0 tr\xE1ch nhi\u1EC7m c\u1EE7a ng\u01B0\u1EDDi d\xF9ng v\xE0 nh\xE0 cung c\u1EA5p d\u1ECBch v\u1EE5.", h1: "\u0110i\u1EC1u Kho\u1EA3n S\u1EED D\u1EE5ng" },
+      "ky-gui-bat-dong-san": { title: "K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n | B\xE1n Nhanh, Gi\xE1 T\u1ED1t - SGS LAND", description: "K\xFD g\u1EEDi b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EA1i SGS LAND \u2014 \u0111\u1ED9i ng\u0169 chuy\xEAn gia \u0111\u1ECBnh gi\xE1 mi\u1EC5n ph\xED, ti\u1EBFp c\u1EADn h\xE0ng ngh\xECn kh\xE1ch h\xE0ng ti\u1EC1m n\u0103ng v\xE0 h\u1ED7 tr\u1EE3 ph\xE1p l\xFD to\xE0n di\u1EC7n.", h1: "K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n" },
+      livechat: { title: "Chat Tr\u1EF1c Ti\u1EBFp | H\u1ED7 Tr\u1EE3 Kh\xE1ch H\xE0ng 24/7 - SGS LAND", description: "K\u1EBFt n\u1ED1i tr\u1EF1c ti\u1EBFp v\u1EDBi \u0111\u1ED9i ng\u0169 t\u01B0 v\u1EA5n SGS LAND qua Live Chat. \u0110\u01B0\u1EE3c h\u1ED7 tr\u1EE3 24/7 v\u1EC1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n, \u0111\u1ECBnh gi\xE1 AI v\xE0 c\xE1c d\u1ECBch v\u1EE5.", h1: "Chat Tr\u1EF1c Ti\u1EBFp V\u1EDBi Chuy\xEAn Gia" },
+      login: { title: "\u0110\u0103ng Nh\u1EADp | SGS LAND Enterprise", description: "\u0110\u0103ng nh\u1EADp v\xE0o n\u1EC1n t\u1EA3ng qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n SGS LAND.", noIndex: true },
+      // ─── SEO Local & Project Landing Pages ─────────────────────────────────────
+      "bat-dong-san-dong-nai": {
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n \u0110\u1ED3ng Nai | Nh\xE0 \u0110\u1EA5t, C\u0103n H\u1ED9, D\u1EF1 \xC1n - SGS LAND",
+        description: "T\xECm mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n \u0110\u1ED3ng Nai: nh\xE0 \u0111\u1EA5t Long Th\xE0nh, Nh\u01A1n Tr\u1EA1ch, Bi\xEAn H\xF2a. C\u1EADp nh\u1EADt gi\xE1 th\u1ECB tr\u01B0\u1EDDng, d\u1EF1 \xE1n m\u1EDBi v\xE0 ph\xE1p l\xFD r\xF5 r\xE0ng t\u1EA1i SGS LAND.",
+        h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n \u0110\u1ED3ng Nai",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n \u0110\u1ED3ng Nai", item: `${APP_URL}/bat-dong-san-dong-nai` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n \u0110\u1ED3ng Nai c\xF3 n\xEAn \u0111\u1EA7u t\u01B0 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "\u0110\u1ED3ng Nai l\xE0 m\u1ED9t trong nh\u1EEFng th\u1ECB tr\u01B0\u1EDDng B\u0110S ti\u1EC1m n\u0103ng nh\u1EA5t mi\u1EC1n Nam nh\u1EDD ba \u0111\u1ED9ng l\u1EF1c ch\xEDnh: s\xE2n bay Long Th\xE0nh (ho\xE0n th\xE0nh 2026), c\xE1c tuy\u1EBFn cao t\u1ED1c k\u1EBFt n\u1ED1i TP.HCM v\xE0 l\xE0n s\xF3ng di d\u1EDDi khu c\xF4ng nghi\u1EC7p. Gi\xE1 \u0111\u1EA5t nhi\u1EC1u khu v\u1EF1c t\u0103ng 15-25%/n\u0103m." } },
+                { "@type": "Question", name: "Gi\xE1 \u0111\u1EA5t \u0110\u1ED3ng Nai hi\u1EC7n nay l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Gi\xE1 \u0111\u1EA5t \u0110\u1ED3ng Nai dao \u0111\u1ED9ng l\u1EDBn theo v\u1ECB tr\xED: \u0111\u1EA5t n\u1EC1n Long Th\xE0nh 8-25 tri\u1EC7u/m\xB2, \u0111\u1EA5t n\u1EC1n Nh\u01A1n Tr\u1EA1ch 5-15 tri\u1EC7u/m\xB2, c\u0103n h\u1ED9 Bi\xEAn H\xF2a 35-80 tri\u1EC7u/m\xB2, bi\u1EC7t th\u1EF1 d\u1EF1 \xE1n 15-50 tri\u1EC7u/m\xB2." } },
+                { "@type": "Question", name: "S\xE2n bay Long Th\xE0nh \u1EA3nh h\u01B0\u1EDFng th\u1EBF n\xE0o \u0111\u1EBFn gi\xE1 B\u0110S?", acceptedAnswer: { "@type": "Answer", text: "S\xE2n bay qu\u1ED1c t\u1EBF Long Th\xE0nh c\xF3 c\xF4ng su\u1EA5t 25 tri\u1EC7u h\xE0nh kh\xE1ch/giai \u0111o\u1EA1n 1. B\u0110S trong b\xE1n k\xEDnh 15km t\u1EEB s\xE2n bay c\xF3 m\u1EE9c t\u0103ng gi\xE1 trung b\xECnh 20-35% k\u1EC3 t\u1EEB khi kh\u1EDFi c\xF4ng." } },
+                { "@type": "Question", name: "Nh\u1EEFng d\u1EF1 \xE1n B\u0110S n\xE0o n\u1ED5i b\u1EADt t\u1EA1i \u0110\u1ED3ng Nai?", acceptedAnswer: { "@type": "Answer", text: "C\xE1c d\u1EF1 \xE1n l\u1EDBn: Aqua City (Novaland, 1.000ha t\u1EA1i Nh\u01A1n Tr\u1EA1ch), Izumi City (Nam Long, 170ha t\u1EA1i Bi\xEAn H\xF2a), Gem Sky World (Long Th\xE0nh), HUD Nh\u01A1n Tr\u1EA1ch. SGS LAND cung c\u1EA5p th\xF4ng tin v\xE0 t\u01B0 v\u1EA5n t\u1EA5t c\u1EA3 d\u1EF1 \xE1n." } },
+                { "@type": "Question", name: "Mua \u0111\u1EA5t \u0110\u1ED3ng Nai c\u1EA7n l\u01B0u \xFD g\xEC v\u1EC1 ph\xE1p l\xFD?", acceptedAnswer: { "@type": "Answer", text: "Ki\u1EC3m tra quy ho\u1EA1ch (tr\xE1nh \u0111\u1EA5t quy ho\u1EA1ch l\u1ED9, \u0111\u1EA5t n\xF4ng nghi\u1EC7p ch\u01B0a chuy\u1EC3n m\u1EE5c \u0111\xEDch), x\xE1c nh\u1EADn s\u1ED5 \u0111\u1ECF ch\xEDnh ch\u1EE7, tr\xE1nh \u0111\u1EA5t chung s\u1ED5. SGS LAND ki\u1EC3m tra ph\xE1p l\xFD mi\u1EC5n ph\xED tr\u01B0\u1EDBc giao d\u1ECBch." } },
+                { "@type": "Question", name: "B\xECnh D\u01B0\u01A1ng hay \u0110\u1ED3ng Nai n\xEAn \u0111\u1EA7u t\u01B0 B\u0110S h\u01A1n?", acceptedAnswer: { "@type": "Answer", text: "B\xECnh D\u01B0\u01A1ng m\u1EA1nh v\u1EC1 \u0111\xF4 th\u1ECB ho\xE1, nhu c\u1EA7u thu\xEA l\u1EDBn. \u0110\u1ED3ng Nai ti\u1EC1m n\u0103ng t\u0103ng tr\u01B0\u1EDFng c\xF2n l\u1EDBn h\u01A1n nh\u1EDD s\xE2n bay Long Th\xE0nh. Ng\xE2n s\xE1ch v\u1EEBa, \u0111\u1EA7u t\u01B0 d\xE0i h\u1EA1n n\xEAn ch\u1ECDn \u0110\u1ED3ng Nai." } },
+                { "@type": "Question", name: "C\xF3 th\u1EC3 vay ng\xE2n h\xE0ng mua B\u0110S \u0110\u1ED3ng Nai kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "C\xF3. Ng\xE2n h\xE0ng l\u1EDBn cho vay mua B\u0110S \u0110\u1ED3ng Nai LTV 70-80%, k\u1EF3 h\u1EA1n 15-25 n\u0103m, l\xE3i su\u1EA5t \u01B0u \u0111\xE3i 6-8,5%/n\u0103m 24 th\xE1ng \u0111\u1EA7u. SGS LAND k\u1EBFt n\u1ED1i ng\xE2n h\xE0ng v\xE0 h\u1ED7 tr\u1EE3 h\u1ED3 s\u01A1 vay mi\u1EC5n ph\xED." } },
+                { "@type": "Question", name: "T\xECm m\xF4i gi\u1EDBi b\u1EA5t \u0111\u1ED9ng s\u1EA3n \u0110\u1ED3ng Nai uy t\xEDn \u1EDF \u0111\xE2u?", acceptedAnswer: { "@type": "Answer", text: "SGS LAND c\xF3 \u0111\u1ED9i ng\u0169 200+ chuy\xEAn gia am hi\u1EC3u \u0110\u1ED3ng Nai, Bi\xEAn H\xF2a, Long Th\xE0nh, Nh\u01A1n Tr\u1EA1ch. B\u0110S ki\u1EC3m tra ph\xE1p l\xFD \u0111\u1ED9c l\u1EADp, gi\xE1 so s\xE1nh realtime b\u1EB1ng AI \u2014 giao d\u1ECBch an to\xE0n, minh b\u1EA1ch." } }
+              ]
+            },
+            {
+              "@type": "RealEstateAgent",
+              "@id": `${APP_URL}/bat-dong-san-dong-nai#agent`,
+              name: "SGS LAND - B\u1EA5t \u0110\u1ED9ng S\u1EA3n \u0110\u1ED3ng Nai",
+              url: `${APP_URL}/bat-dong-san-dong-nai`,
+              areaServed: { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n \u0110\u1ED3ng Nai", "\u0110\u1EA5t n\u1EC1n Long Th\xE0nh", "Nh\u01A1n Tr\u1EA1ch", "Bi\xEAn H\xF2a", "S\xE2n bay Long Th\xE0nh"]
+            }
+          ]
+        }
+      },
+      "bat-dong-san-long-thanh": {
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Long Th\xE0nh | \u0110\u1EA5t N\u1EC1n S\xE2n Bay, C\u0103n H\u1ED9 - SGS LAND",
+        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n Long Th\xE0nh, \u0110\u1ED3ng Nai: \u0111\u1EA5t n\u1EC1n khu v\u1EF1c s\xE2n bay Long Th\xE0nh, d\u1EF1 \xE1n c\u0103n h\u1ED9 v\xE0 li\u1EC1n k\u1EC1. C\u01A1 h\u1ED9i \u0111\u1EA7u t\u01B0 ti\u1EC1m n\u0103ng t\u1EA1i SGS LAND.",
+        h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Long Th\xE0nh",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "B\u0110S \u0110\u1ED3ng Nai", item: `${APP_URL}/bat-dong-san-dong-nai` },
+                { "@type": "ListItem", position: 3, name: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Long Th\xE0nh", item: `${APP_URL}/bat-dong-san-long-thanh` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "C\xF3 n\xEAn mua \u0111\u1EA5t Long Th\xE0nh n\u0103m 2025-2026 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Long Th\xE0nh l\xE0 m\u1ED9t trong c\xE1c th\u1ECB tr\u01B0\u1EDDng B\u0110S \u0111\u01B0\u1EE3c khuy\u1EBFn ngh\u1ECB \u0111\u1EA7u t\u01B0 m\u1EA1nh. V\u1EDBi s\xE2n bay Long Th\xE0nh ho\xE0n th\xE0nh giai \u0111o\u1EA1n 1 n\u0103m 2026, gi\xE1 B\u0110S \u0111\u01B0\u1EE3c d\u1EF1 b\xE1o ti\u1EBFp t\u1EE5c t\u0103ng 15-25%/n\u0103m." } },
+                { "@type": "Question", name: "Gi\xE1 \u0111\u1EA5t n\u1EC1n Long Th\xE0nh hi\u1EC7n nay kho\u1EA3ng bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "\u0110\u1EA5t n\u1EC1n th\u1ED5 c\u01B0 m\u1EB7t ti\u1EC1n \u0111\u01B0\u1EDDng l\u1EDBn: 20-35 tri\u1EC7u/m\xB2. \u0110\u1EA5t ph\xE2n l\xF4 d\u1EF1 \xE1n s\u1ED5 s\u1EB5n: 10-25 tri\u1EC7u/m\xB2. \u0110\u1EA5t v\u01B0\u1EDDn n\xF4ng nghi\u1EC7p c\xF3 th\u1EC3 chuy\u1EC3n \u0111\u1ED5i: 3-8 tri\u1EC7u/m\xB2." } },
+                { "@type": "Question", name: "S\xE2n bay Long Th\xE0nh khai th\xE1c v\xE0o n\u0103m n\xE0o?", acceptedAnswer: { "@type": "Answer", text: "S\xE2n bay Long Th\xE0nh giai \u0111o\u1EA1n 1 d\u1EF1 ki\u1EBFn ho\xE0n th\xE0nh v\xE0o cu\u1ED1i n\u0103m 2026, khai th\xE1c th\u01B0\u01A1ng m\u1EA1i \u0111\u1EA7u n\u0103m 2027 v\u1EDBi c\xF4ng su\u1EA5t 25 tri\u1EC7u h\xE0nh kh\xE1ch/n\u0103m." } },
+                { "@type": "Question", name: "Mua B\u0110S Long Th\xE0nh qua SGS LAND c\xF3 l\u1EE3i \xEDch g\xEC?", acceptedAnswer: { "@type": "Answer", text: "SGS LAND cung c\u1EA5p kho h\xE0ng Long Th\xE0nh \u0111\xE3 x\xE1c minh ph\xE1p l\xFD, so s\xE1nh gi\xE1 realtime b\u1EB1ng AI, h\u1ED7 tr\u1EE3 \u0111\xE0m ph\xE1n v\xE0 k\u1EBFt n\u1ED1i ng\xE2n h\xE0ng vay v\u1ED1n l\xE3i su\u1EA5t t\u1ED1t." } },
+                { "@type": "Question", name: "R\u1EE7i ro khi \u0111\u1EA7u t\u01B0 \u0111\u1EA5t Long Th\xE0nh l\xE0 g\xEC?", acceptedAnswer: { "@type": "Answer", text: "R\u1EE7i ro c\u1EA7n l\u01B0u \xFD: \u0111\u1EA5t quy ho\u1EA1ch \u0111\u01B0\u1EDDng/s\xE2n bay ch\u01B0a gi\u1EA3i to\u1EA3, \u0111\u1EA5t kh\xF4ng s\u1ED5 \u0111\u1ECF, d\u1EF1 \xE1n ma ch\u01B0a \u0111\u1EE7 \u0111i\u1EC1u ki\u1EC7n m\u1EDF b\xE1n. SGS LAND ki\u1EC3m tra ph\xE1p l\xFD \u0111\u1ED9c l\u1EADp tr\u01B0\u1EDBc m\u1ED7i giao d\u1ECBch." } },
+                { "@type": "Question", name: "Khu v\u1EF1c n\xE0o \u1EDF Long Th\xE0nh g\u1EA7n s\xE2n bay nh\u1EA5t?", acceptedAnswer: { "@type": "Answer", text: "X\xE3 B\xECnh S\u01A1n, Long An, Su\u1ED1i Tr\u1EA7u g\u1EA7n s\xE2n bay nh\u1EA5t (3-5km). Khu v\u1EF1c th\u1ECB tr\u1EA5n Long Th\xE0nh v\xE0 c\xE1c x\xE3 ph\xEDa Nam (Long Ph\u01B0\u1EDBc, Ph\u01B0\u1EDBc B\xECnh) c\xE2n b\u1EB1ng t\u1ED1t gi\u1EEFa ti\u1EC1m n\u0103ng v\xE0 r\u1EE7i ro ph\xE1p l\xFD." } },
+                { "@type": "Question", name: "T\u1EF7 su\u1EA5t cho thu\xEA B\u0110S Long Th\xE0nh l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Nh\xE0 tr\u1ECD c\xF4ng nh\xE2n KCN 8-12%/n\u0103m; nh\xE0 ph\u1ED1 th\u01B0\u01A1ng m\u1EA1i 5-8%/n\u0103m; c\u0103n h\u1ED9 cho chuy\xEAn gia 5-7%/n\u0103m. Nhu c\u1EA7u thu\xEA t\u0103ng m\u1EA1nh khi s\xE2n bay Long Th\xE0nh v\u1EADn h\xE0nh." } },
+                { "@type": "Question", name: "C\u1EA7u n\xE0o k\u1EBFt n\u1ED1i Long Th\xE0nh v\u1EDBi TP.HCM?", acceptedAnswer: { "@type": "Answer", text: "T\u01B0\u01A1ng lai: C\u1EA7u Nh\u01A1n Tr\u1EA1ch (\u0111ang thi c\xF4ng, d\u1EF1 ki\u1EBFn 2025-2026) r\xFAt ng\u1EAFn k\u1EBFt n\u1ED1i Long Th\xE0nh \u2013 Q2 c\xF2n 20-25 ph\xFAt qua cao t\u1ED1c B\u1EBFn L\u1EE9c \u2013 Long Th\xE0nh." } }
+              ]
+            },
+            {
+              "@type": "RealEstateAgent",
+              "@id": `${APP_URL}/bat-dong-san-long-thanh#agent`,
+              name: "SGS LAND - B\u1EA5t \u0110\u1ED9ng S\u1EA3n Long Th\xE0nh",
+              url: `${APP_URL}/bat-dong-san-long-thanh`,
+              areaServed: { "@type": "City", name: "Long Th\xE0nh", containedInPlace: { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } } },
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n Long Th\xE0nh", "\u0110\u1EA5t n\u1EC1n s\xE2n bay Long Th\xE0nh", "\u0110\u1EA7u t\u01B0 B\u0110S \u0110\u1ED3ng Nai"]
+            }
+          ]
+        }
+      },
+      "du-an/aqua-city": {
+        title: "Aqua City Novaland | C\u0103n H\u1ED9, Bi\u1EC7t Th\u1EF1 \u0110\u1ED3ng Nai - SGS LAND",
+        description: "Aqua City Novaland \u0110\u1ED3ng Nai: t\u1ED5ng quan d\u1EF1 \xE1n, v\u1ECB tr\xED, ti\u1EC7n \xEDch \u0111\u1EB3ng c\u1EA5p, b\u1EA3ng gi\xE1 v\xE0 ph\xE1p l\xFD c\u1EADp nh\u1EADt. T\u01B0 v\u1EA5n v\xE0 \u0111\u1EB7t ch\u1ED7 mi\u1EC5n ph\xED t\u1EA1i SGS LAND.",
+        h1: "Aqua City Novaland",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "Aqua City Novaland", item: `${APP_URL}/du-an/aqua-city` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "Aqua City Novaland c\xF3 \u0111\xE1ng mua kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Aqua City l\xE0 \u0111\u1EA1i \u0111\xF4 th\u1ECB sinh th\xE1i 1.000ha v\u1EDBi h\u01A1n 100.000m\xB2 m\u1EB7t n\u01B0\u1EDBc, ti\u1EC7n \xEDch 5 sao. \u0110\xE2y l\xE0 l\u1EF1a ch\u1ECDn ph\xF9 h\u1EE3p cho ng\u01B0\u1EDDi mua \u1EDF th\u1EF1c v\xE0 \u0111\u1EA7u t\u01B0 d\xE0i h\u1EA1n, \u0111\u1EB7c bi\u1EC7t h\u01B0\u1EDFng l\u1EE3i t\u1EEB c\u1EA7u Nh\u01A1n Tr\u1EA1ch v\xE0 s\xE2n bay Long Th\xE0nh." } },
+                { "@type": "Question", name: "Gi\xE1 c\u0103n h\u1ED9 Aqua City hi\u1EC7n nay l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Gi\xE1 tham kh\u1EA3o: c\u0103n h\u1ED9 1-2 ph\xF2ng ng\u1EE7 t\u1EEB 3-5 t\u1EF7; nh\xE0 ph\u1ED1 li\u1EC1n k\u1EC1 t\u1EEB 6-12 t\u1EF7; bi\u1EC7t th\u1EF1 \u0111\u01A1n l\u1EADp t\u1EEB 15-50 t\u1EF7. Li\xEAn h\u1EC7 SGS LAND \u0111\u1EC3 nh\u1EADn b\u1EA3ng gi\xE1 c\u1EADp nh\u1EADt nh\u1EA5t." } },
+                { "@type": "Question", name: "Aqua City c\xE1ch TP.HCM bao xa?", acceptedAnswer: { "@type": "Answer", text: "Aqua City t\u1EA1i Nh\u01A1n Tr\u1EA1ch, c\xE1ch trung t\xE2m TP.HCM 35-40km. Khi c\u1EA7u Nh\u01A1n Tr\u1EA1ch ho\xE0n th\xE0nh, th\u1EDDi gian di chuy\u1EC3n \u0111\u1EBFn qu\u1EADn 2 ch\u1EC9 c\xF2n 20-25 ph\xFAt." } },
+                { "@type": "Question", name: "Ph\xE1p l\xFD Aqua City c\xF3 an to\xE0n kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Aqua City \u0111\u01B0\u1EE3c c\u1EA5p s\u1ED5 h\u1ED3ng ri\xEAng cho t\u1EEBng c\u0103n. Sau t\xE1i c\u01A1 c\u1EA5u t\xE0i ch\xEDnh, Novaland \u0111\xE3 ho\xE0n th\xE0nh ngh\u0129a v\u1EE5 ph\xE1p l\xFD v\xE0 ti\u1EBFp t\u1EE5c b\xE0n giao nhi\u1EC1u ph\xE2n khu. SGS LAND ki\u1EC3m tra ph\xE1p l\xFD mi\u1EC5n ph\xED." } },
+                { "@type": "Question", name: "Aqua City \u0111\xE3 c\xF3 s\u1ED5 h\u1ED3ng ri\xEAng ch\u01B0a?", acceptedAnswer: { "@type": "Answer", text: "M\u1ED9t s\u1ED1 ph\xE2n khu Aqua City \u0111\xE3 \u0111\u01B0\u1EE3c c\u1EA5p s\u1ED5 h\u1ED3ng ri\xEAng t\u1EEBng c\u0103n. T\xECnh tr\u1EA1ng ph\xE1p l\xFD t\u1EEBng ph\xE2n khu kh\xE1c nhau \u2014 SGS LAND h\u1ED7 tr\u1EE3 x\xE1c minh s\u1ED5 h\u1ED3ng c\u1EE5 th\u1EC3 tr\u01B0\u1EDBc khi \u0111\u1EB7t c\u1ECDc." } },
+                { "@type": "Question", name: "Novaland c\xF3 c\xF2n t\xE0i ch\xEDnh \u1ED5n \u0111\u1ECBnh sau t\xE1i c\u01A1 c\u1EA5u?", acceptedAnswer: { "@type": "Answer", text: "Novaland ho\xE0n th\xE0nh t\xE1i c\u01A1 c\u1EA5u t\xE0i ch\xEDnh n\u0103m 2024, \u0111\u1EA1t tho\u1EA3 thu\u1EADn v\u1EDBi tr\xE1i ch\u1EE7 qu\u1ED1c t\u1EBF v\xE0 ti\u1EBFp t\u1EE5c b\xE0n giao Aqua City. V\u1EABn l\xE0 ch\u1EE7 \u0111\u1EA7u t\u01B0 B\u0110S t\u01B0 nh\xE2n l\u1EDBn nh\u1EA5t Vi\u1EC7t Nam v\u1EDBi qu\u1EF9 \u0111\u1EA5t 10.600ha+." } },
+                { "@type": "Question", name: "So s\xE1nh Aqua City v\xE0 Izumi City \u2014 n\xEAn ch\u1ECDn \u0111\xE2u?", acceptedAnswer: { "@type": "Answer", text: "Aqua City: quy m\xF4 l\u1EDBn h\u01A1n (1.000ha), ti\u1EC7n \xEDch golf/marina, gi\xE1 bi\u1EC7t th\u1EF1 cao h\u01A1n. Izumi City: chu\u1EA9n Nh\u1EADt B\u1EA3n, Fuji Mart, Nam Long track record b\xE0n giao t\u1ED1t, gi\xE1 nh\xE0 ph\u1ED1 th\u1EA5p h\u01A1n, g\u1EA7n TP.HCM h\u01A1n." } },
+                { "@type": "Question", name: "Cho thu\xEA Aqua City \u0111\u01B0\u1EE3c bao nhi\xEAu ti\u1EC1n?", acceptedAnswer: { "@type": "Answer", text: "C\u0103n h\u1ED9 1PN: 4-7 tri\u1EC7u/th\xE1ng; nh\xE0 ph\u1ED1 li\u1EC1n k\u1EC1: 8-15 tri\u1EC7u/th\xE1ng; bi\u1EC7t th\u1EF1 \u0111\u01A1n l\u1EADp: 30-60 tri\u1EC7u/th\xE1ng. T\u1EF7 su\u1EA5t cho thu\xEA bi\u1EC7t th\u1EF1 cao c\u1EA5p \u01B0\u1EDBc \u0111\u1EA1t 4-6%/n\u0103m." } }
+              ]
+            },
+            {
+              "@type": "ApartmentComplex",
+              "@id": `${APP_URL}/du-an/aqua-city#project`,
+              name: "Aqua City Novaland",
+              description: "\u0110\u1EA1i \u0111\xF4 th\u1ECB sinh th\xE1i 1.000ha do Novaland ph\xE1t tri\u1EC3n t\u1EA1i Nh\u01A1n Tr\u1EA1ch, \u0110\u1ED3ng Nai",
+              url: `${APP_URL}/du-an/aqua-city`,
+              numberOfRooms: "1-4",
+              address: { "@type": "PostalAddress", addressLocality: "Nh\u01A1n Tr\u1EA1ch", addressRegion: "\u0110\u1ED3ng Nai", addressCountry: "VN" },
+              floorSize: { "@type": "QuantitativeValue", value: 1e3, unitText: "ha" }
+            }
+          ]
+        }
+      },
+      "du-an/manhattan": {
+        title: "D\u1EF1 \xC1n Manhattan | C\u0103n H\u1ED9 Cao C\u1EA5p B\xECnh D\u01B0\u01A1ng - SGS LAND",
+        description: "D\u1EF1 \xE1n Manhattan B\xECnh D\u01B0\u01A1ng: v\u1ECB tr\xED \u0111\u1EAFc \u0111\u1ECBa, thi\u1EBFt k\u1EBF hi\u1EC7n \u0111\u1EA1i, gi\xE1 t\u1EEB 35 tri\u1EC7u/m\xB2. Xem b\u1EA3ng gi\xE1, ti\u1EBFn \u0111\u1ED9 x\xE2y d\u1EF1ng v\xE0 ch\xEDnh s\xE1ch \u01B0u \u0111\xE3i t\u1EA1i SGS LAND.",
+        h1: "D\u1EF1 \xC1n Manhattan",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "D\u1EF1 \xC1n Manhattan", item: `${APP_URL}/du-an/manhattan` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "D\u1EF1 \xE1n Manhattan B\xECnh D\u01B0\u01A1ng c\xF3 \u01B0u \u0111i\u1EC3m g\xEC n\u1ED5i b\u1EADt?", acceptedAnswer: { "@type": "Answer", text: "Manhattan B\xECnh D\u01B0\u01A1ng n\u1ED5i b\u1EADt v\u1EDBi v\u1ECB tr\xED trung t\xE2m B\xECnh D\u01B0\u01A1ng, thi\u1EBFt k\u1EBF chu\u1EA9n qu\u1ED1c t\u1EBF ph\xF9 h\u1EE3p chuy\xEAn gia n\u01B0\u1EDBc ngo\xE0i v\xE0 gi\xE1 c\u1EA1nh tranh h\u01A1n c\u0103n h\u1ED9 cao c\u1EA5p TP.HCM c\xF9ng ph\xE2n kh\xFAc." } },
+                { "@type": "Question", name: "Gi\xE1 c\u0103n h\u1ED9 Manhattan B\xECnh D\u01B0\u01A1ng t\u1EEB bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Gi\xE1 tham kh\u1EA3o t\u1EEB 35 tri\u1EC7u/m\xB2, c\u0103n h\u1ED9 1 ph\xF2ng ng\u1EE7 t\u1EEB 2-3 t\u1EF7, 2 ph\xF2ng ng\u1EE7 t\u1EEB 3-5 t\u1EF7, 3 ph\xF2ng ng\u1EE7 t\u1EEB 5-8 t\u1EF7. H\u1ED7 tr\u1EE3 vay ng\xE2n h\xE0ng t\u1ED1i \u0111a 70% gi\xE1 tr\u1ECB." } },
+                { "@type": "Question", name: "C\xF3 th\u1EC3 cho thu\xEA c\u0103n h\u1ED9 Manhattan kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "B\xECnh D\u01B0\u01A1ng c\xF3 nhu c\u1EA7u thu\xEA nh\xE0 \u1EDF cao nh\u1EA5t c\u1EA3 n\u01B0\u1EDBc. C\u0103n h\u1ED9 Manhattan ph\xF9 h\u1EE3p cho thu\xEA v\u1EDBi gi\xE1 10-25 tri\u1EC7u/th\xE1ng, t\u1EF7 su\u1EA5t l\u1EE3i nhu\u1EADn cho thu\xEA \u01B0\u1EDBc t\xEDnh 5-7%/n\u0103m." } },
+                { "@type": "Question", name: "Ph\xE1p l\xFD Manhattan B\xECnh D\u01B0\u01A1ng c\xF3 r\xF5 r\xE0ng kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "D\u1EF1 \xE1n \u0111\u01B0\u1EE3c c\u1EA5p s\u1ED5 h\u1ED3ng 50 n\u0103m c\xF3 gia h\u1EA1n. Becamex IDC l\xE0 ch\u1EE7 \u0111\u1EA7u t\u01B0 uy t\xEDn v\u1EDBi 30+ n\u0103m kinh nghi\u1EC7m ph\xE1t tri\u1EC3n \u0111\xF4 th\u1ECB B\xECnh D\u01B0\u01A1ng. SGS LAND ki\u1EC3m tra ph\xE1p l\xFD \u0111\u1ED9c l\u1EADp mi\u1EC5n ph\xED." } },
+                { "@type": "Question", name: "Chuy\xEAn gia n\u01B0\u1EDBc ngo\xE0i c\xF3 \u01B0a chu\u1ED9ng Manhattan B\xECnh D\u01B0\u01A1ng kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "B\xECnh D\u01B0\u01A1ng c\xF3 50.000+ chuy\xEAn gia n\u01B0\u1EDBc ngo\xE0i (H\xE0n, Nh\u1EADt, \u0110\xE0i Loan). C\u0103n h\u1ED9 chu\u1EA9n qu\u1ED1c t\u1EBF nh\u01B0 Manhattan r\u1EA5t \u0111\u01B0\u1EE3c \u01B0a chu\u1ED9ng cho thu\xEA, gi\xE1 10-20 tri\u1EC7u/th\xE1ng, d\xF2ng ti\u1EC1n \u1ED5n \u0111\u1ECBnh." } },
+                { "@type": "Question", name: "Becamex IDC l\xE0 ch\u1EE7 \u0111\u1EA7u t\u01B0 nh\u01B0 th\u1EBF n\xE0o?", acceptedAnswer: { "@type": "Answer", text: "Becamex IDC Corp thu\u1ED9c UBND t\u1EC9nh B\xECnh D\u01B0\u01A1ng, l\xE0 ch\u1EE7 \u0111\u1EA7u t\u01B0 KCN v\xE0 \u0111\xF4 th\u1ECB l\u1EDBn nh\u1EA5t \u0110\xF4ng Nam B\u1ED9 v\u1EDBi 30+ n\u0103m kinh nghi\u1EC7m ph\xE1t tri\u1EC3n KCN VSIP v\xE0 Th\xE0nh Ph\u1ED1 M\u1EDBi B\xECnh D\u01B0\u01A1ng." } },
+                { "@type": "Question", name: "Vay ng\xE2n h\xE0ng mua c\u0103n h\u1ED9 Manhattan B\xECnh D\u01B0\u01A1ng c\xF3 d\u1EC5 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Ph\xE1p l\xFD minh b\u1EA1ch v\xE0 Becamex IDC uy t\xEDn gi\xFAp vay ng\xE2n h\xE0ng thu\u1EADn l\u1EE3i. LTV t\u1ED1i \u0111a 70%, k\u1EF3 h\u1EA1n 25 n\u0103m, l\xE3i su\u1EA5t \u01B0u \u0111\xE3i 24 th\xE1ng \u0111\u1EA7u. SGS LAND h\u1ED7 tr\u1EE3 h\u1ED3 s\u01A1 vay mi\u1EC5n ph\xED." } },
+                { "@type": "Question", name: "Gi\xE1 th\u1EE9 c\u1EA5p c\u0103n h\u1ED9 Manhattan B\xECnh D\u01B0\u01A1ng hi\u1EC7n t\u1EA1i?", acceptedAnswer: { "@type": "Answer", text: "1PN (45-55m\xB2) kho\u1EA3ng 2,5-3,5 t\u1EF7; 2PN (70-90m\xB2) kho\u1EA3ng 4-6 t\u1EF7; 3PN (100-120m\xB2) kho\u1EA3ng 6-9 t\u1EF7. Thanh kho\u1EA3n t\u1ED1t nh\u1EDD nhu c\u1EA7u th\u1EF1c t\u1EEB chuy\xEAn gia KCN B\xECnh D\u01B0\u01A1ng." } }
+              ]
+            },
+            {
+              "@type": "ApartmentComplex",
+              "@id": `${APP_URL}/du-an/manhattan#project`,
+              name: "D\u1EF1 \xC1n Manhattan B\xECnh D\u01B0\u01A1ng",
+              description: "T\u1ED5 h\u1EE3p c\u0103n h\u1ED9 cao c\u1EA5p chu\u1EA9n qu\u1ED1c t\u1EBF t\u1EA1i trung t\xE2m t\u1EC9nh l\u1EF5 B\xECnh D\u01B0\u01A1ng",
+              url: `${APP_URL}/du-an/manhattan`,
+              address: { "@type": "PostalAddress", addressLocality: "B\xECnh D\u01B0\u01A1ng", addressCountry: "VN" },
+              offers: { "@type": "Offer", price: "35000000", priceCurrency: "VND", unitText: "m\xB2" }
+            }
+          ]
+        }
+      },
+      // ─── New Location Landing Pages ─────────────────────────────────────────────
+      "bat-dong-san-thu-duc": {
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n TP Th\u1EE7 \u0110\u1EE9c | C\u0103n H\u1ED9, Nh\xE0 Ph\u1ED1, Metro - SGS LAND",
+        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n TP Th\u1EE7 \u0110\u1EE9c: c\u0103n h\u1ED9 Th\u1EE7 Thi\xEAm, Vinhomes Grand Park, khu v\u1EF1c Metro s\u1ED1 1. T\u01B0 v\u1EA5n ph\xE1p l\xFD v\xE0 \u0111\u1ECBnh gi\xE1 AI mi\u1EC5n ph\xED t\u1EA1i SGS LAND.",
+        h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n TP Th\u1EE7 \u0110\u1EE9c",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL}/bat-dong-san-thu-duc` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n TP Th\u1EE7 \u0110\u1EE9c c\xF3 n\xEAn \u0111\u1EA7u t\u01B0 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "TP Th\u1EE7 \u0110\u1EE9c l\xE0 khu v\u1EF1c c\xF3 ti\u1EC1m n\u0103ng t\u0103ng tr\u01B0\u1EDFng B\u0110S cao nh\u1EA5t TP.HCM nh\u1EDD Metro s\u1ED1 1, Khu \u0110\xF4 Th\u1ECB Th\u1EE7 Thi\xEAm v\xE0 Khu C\xF4ng Ngh\u1EC7 Cao SHTP. Gi\xE1 c\u0103n h\u1ED9 t\u0103ng 10-18%/n\u0103m." } },
+                { "@type": "Question", name: "Gi\xE1 c\u0103n h\u1ED9 TP Th\u1EE7 \u0110\u1EE9c hi\u1EC7n nay l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Th\u1EE7 Thi\xEAm (Q2 c\u0169) 80-250 tri\u1EC7u/m\xB2; khu v\u1EF1c Metro s\u1ED1 1 (Q9 c\u0169) 45-90 tri\u1EC7u/m\xB2; Th\u1EE7 \u0110\u1EE9c 35-65 tri\u1EC7u/m\xB2." } },
+                { "@type": "Question", name: "Metro s\u1ED1 1 \u1EA3nh h\u01B0\u1EDFng th\u1EBF n\xE0o \u0111\u1EBFn B\u0110S Th\u1EE7 \u0110\u1EE9c?", acceptedAnswer: { "@type": "Answer", text: "B\u0110S trong b\xE1n k\xEDnh 500m quanh c\xE1c ga Metro s\u1ED1 1 t\u0103ng gi\xE1 20-40% sau khi Metro v\u1EADn h\xE0nh. Nh\xE0 cho thu\xEA g\u1EA7n ga Metro \u0111\u1EA1t t\u1EF7 su\u1EA5t 6-9%/n\u0103m." } }
+              ]
+            },
+            {
+              "@type": "RealEstateAgent",
+              "@id": `${APP_URL}/bat-dong-san-thu-duc#agent`,
+              name: "SGS LAND - B\u0110S TP Th\u1EE7 \u0110\u1EE9c",
+              url: `${APP_URL}/bat-dong-san-thu-duc`,
+              areaServed: { "@type": "City", name: "TP Th\u1EE7 \u0110\u1EE9c", containedInPlace: { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } } },
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n Th\u1EE7 \u0110\u1EE9c", "Th\u1EE7 Thi\xEAm", "Vinhomes Grand Park", "The Global City", "Metro s\u1ED1 1", "SHTP"]
+            }
+          ]
+        }
+      },
+      "bat-dong-san-binh-duong": {
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\xECnh D\u01B0\u01A1ng | C\u0103n H\u1ED9, \u0110\u1EA5t N\u1EC1n KCN - SGS LAND",
+        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh D\u01B0\u01A1ng: c\u0103n h\u1ED9 Thu\u1EADn An, D\u0129 An, \u0111\u1EA5t n\u1EC1n B\xECnh D\u01B0\u01A1ng. Nhu c\u1EA7u cho thu\xEA cao t\u1EEB 500.000+ chuy\xEAn gia KCN. T\u01B0 v\u1EA5n mi\u1EC5n ph\xED SGS LAND.",
+        h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\xECnh D\u01B0\u01A1ng",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "B\u0110S B\xECnh D\u01B0\u01A1ng", item: `${APP_URL}/bat-dong-san-binh-duong` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh D\u01B0\u01A1ng c\xF3 ti\u1EC1m n\u0103ng kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "B\xECnh D\u01B0\u01A1ng l\xE0 t\u1EC9nh c\xF3 t\u1ED1c \u0111\u1ED9 \u0111\xF4 th\u1ECB h\xF3a nhanh nh\u1EA5t c\u1EA3 n\u01B0\u1EDBc v\u1EDBi h\u01A1n 30 KCN \u0111ang ho\u1EA1t \u0111\u1ED9ng. Gi\xE1 B\u0110S t\u0103ng 8-15%/n\u0103m trong 5 n\u0103m g\u1EA7n \u0111\xE2y." } },
+                { "@type": "Question", name: "Mua c\u0103n h\u1ED9 B\xECnh D\u01B0\u01A1ng \u0111\u1EC3 cho thu\xEA c\xF3 l\u1EDDi kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "C\u0103n h\u1ED9 cao c\u1EA5p t\u1EA1i B\xECnh D\u01B0\u01A1ng cho thu\xEA 10-25 tri\u1EC7u/th\xE1ng. T\u1EF7 su\u1EA5t cho thu\xEA bruto \u0111\u1EA1t 5-8%/n\u0103m, v\u01B0\u1EE3t l\xE3i su\u1EA5t g\u1EEDi ti\u1EBFt ki\u1EC7m ng\xE2n h\xE0ng." } },
+                { "@type": "Question", name: "Gi\xE1 \u0111\u1EA5t B\xECnh D\u01B0\u01A1ng hi\u1EC7n nay l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Thu\u1EADn An, D\u0129 An 40-100 tri\u1EC7u/m\xB2; Th\u1EE7 D\u1EA7u M\u1ED9t 30-80 tri\u1EC7u/m\xB2; Th\xE0nh Ph\u1ED1 M\u1EDBi 20-50 tri\u1EC7u/m\xB2; B\u1EBFn C\xE1t, T\xE2n Uy\xEAn 8-20 tri\u1EC7u/m\xB2." } }
+              ]
+            },
+            {
+              "@type": "RealEstateAgent",
+              "@id": `${APP_URL}/bat-dong-san-binh-duong#agent`,
+              name: "SGS LAND - B\u0110S B\xECnh D\u01B0\u01A1ng",
+              url: `${APP_URL}/bat-dong-san-binh-duong`,
+              areaServed: { "@type": "State", name: "B\xECnh D\u01B0\u01A1ng", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh D\u01B0\u01A1ng", "Khu c\xF4ng nghi\u1EC7p B\xECnh D\u01B0\u01A1ng", "Thu\u1EADn An", "D\u0129 An", "Th\xE0nh Ph\u1ED1 M\u1EDBi B\xECnh D\u01B0\u01A1ng", "Manhattan B\xECnh D\u01B0\u01A1ng"]
+            }
+          ]
+        }
+      },
+      "bat-dong-san-quan-7": {
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Qu\u1EADn 7 | Ph\xFA M\u1EF9 H\u01B0ng, C\u0103n H\u1ED9 Cao C\u1EA5p - SGS LAND",
+        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n Qu\u1EADn 7 TP.HCM: Ph\xFA M\u1EF9 H\u01B0ng, Sunrise City, khu c\u1ED9ng \u0111\u1ED3ng qu\u1ED1c t\u1EBF. C\u0103n h\u1ED9 cao c\u1EA5p, nh\xE0 ph\u1ED1, bi\u1EC7t th\u1EF1. T\u01B0 v\u1EA5n v\xE0 \u0111\u1ECBnh gi\xE1 AI t\u1EA1i SGS LAND.",
+        h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Qu\u1EADn 7",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "B\u0110S Qu\u1EADn 7", item: `${APP_URL}/bat-dong-san-quan-7` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n Qu\u1EADn 7 c\xF3 \u0111\xE1ng \u0111\u1EA7u t\u01B0 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Qu\u1EADn 7 l\xE0 th\u1ECB tr\u01B0\u1EDDng B\u0110S \u1ED5n \u0111\u1ECBnh v\xE0 thanh kho\u1EA3n cao nh\u1EA5t TP.HCM nh\u1EDD c\u1ED9ng \u0111\u1ED3ng qu\u1ED1c t\u1EBF \u0111\xF4ng \u0111\u1EA3o. Gi\xE1 B\u0110S t\u0103ng \u0111\u1EC1u \u0111\u1EB7n 8-12%/n\u0103m." } },
+                { "@type": "Question", name: "Gi\xE1 c\u0103n h\u1ED9 Qu\u1EADn 7 hi\u1EC7n t\u1EA1i l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Ph\xFA M\u1EF9 H\u01B0ng 70-150 tri\u1EC7u/m\xB2; Sunrise City 55-90 tri\u1EC7u/m\xB2; khu v\u1EF1c kh\xE1c Q7 40-70 tri\u1EC7u/m\xB2. Cho thu\xEA 2-3PN Ph\xFA M\u1EF9 H\u01B0ng 25-60 tri\u1EC7u/th\xE1ng." } },
+                { "@type": "Question", name: "Ph\xFA M\u1EF9 H\u01B0ng c\xF3 \u0111\u1EB7c \u0111i\u1EC3m g\xEC h\u1EA5p d\u1EABn nh\xE0 \u0111\u1EA7u t\u01B0?", acceptedAnswer: { "@type": "Answer", text: "Ph\xFA M\u1EF9 H\u01B0ng thu h\xFAt nh\xE0 \u0111\u1EA7u t\u01B0 nh\u1EDD c\u1ED9ng \u0111\u1ED3ng qu\u1ED1c t\u1EBF \u0111\xF4ng (H\xE0n, Nh\u1EADt, \u0110\xE0i), h\u1EA1 t\u1EA7ng xanh chu\u1EA9n Singapore, 20+ tr\u01B0\u1EDDng qu\u1ED1c t\u1EBF v\xE0 b\u1EC7nh vi\u1EC7n FV ti\xEAu chu\u1EA9n Ph\xE1p." } }
+              ]
+            },
+            {
+              "@type": "RealEstateAgent",
+              "@id": `${APP_URL}/bat-dong-san-quan-7#agent`,
+              name: "SGS LAND - B\u0110S Qu\u1EADn 7",
+              url: `${APP_URL}/bat-dong-san-quan-7`,
+              areaServed: { "@type": "City", name: "Qu\u1EADn 7", containedInPlace: { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } } },
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n Qu\u1EADn 7", "Ph\xFA M\u1EF9 H\u01B0ng", "Sunrise City", "C\u1ED9ng \u0111\u1ED3ng H\xE0n Qu\u1ED1c TP.HCM", "Tr\u01B0\u1EDDng qu\u1ED1c t\u1EBF Qu\u1EADn 7"]
+            }
+          ]
+        }
+      },
+      "bat-dong-san-binh-chanh": {
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\xECnh Ch\xE1nh | \u0110\u1EA5t N\u1EC1n, Nh\xE0 Ph\u1ED1 - SGS LAND",
+        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh Ch\xE1nh TP.HCM: \u0111\u1EA5t n\u1EC1n, nh\xE0 ph\u1ED1 gi\xE1 h\u1EA5p d\u1EABn, h\u01B0\u1EDFng l\u1EE3i V\xE0nh \u0111ai 3. Ki\u1EC3m tra ph\xE1p l\xFD v\xE0 \u0111\u1ECBnh gi\xE1 AI mi\u1EC5n ph\xED t\u1EA1i SGS LAND.",
+        h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\xECnh Ch\xE1nh",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "B\u0110S B\xECnh Ch\xE1nh", item: `${APP_URL}/bat-dong-san-binh-chanh` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "\u0110\u1EA5t B\xECnh Ch\xE1nh hi\u1EC7n nay gi\xE1 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "M\u1EB7t ti\u1EC1n qu\u1ED1c l\u1ED9 1A 40-80 tri\u1EC7u/m\xB2; \u0111\u01B0\u1EDDng l\u1EDBn th\u1ECB tr\u1EA5n 20-45 tri\u1EC7u/m\xB2; \u0111\u1EA5t n\u1EC1n d\u1EF1 \xE1n 15-35 tri\u1EC7u/m\xB2; \u0111\u1EA5t v\u01B0\u1EDDn chuy\u1EC3n m\u1EE5c \u0111\xEDch 3-10 tri\u1EC7u/m\xB2." } },
+                { "@type": "Question", name: "C\xF3 n\xEAn mua \u0111\u1EA5t B\xECnh Ch\xE1nh \u0111\u1EC3 \u0111\u1EA7u t\u01B0 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "B\xECnh Ch\xE1nh l\xE0 th\u1ECB tr\u01B0\u1EDDng \u0111\u1EA7u t\u01B0 trung v\xE0 d\xE0i h\u1EA1n ti\u1EC1m n\u0103ng. V\xE0nh \u0111ai 3 ho\xE0n th\xE0nh s\u1EBD k\xE9o theo \u0111\xF4 th\u1ECB h\xF3a m\u1EA1nh, t\u0103ng gi\xE1 20-40%." } },
+                { "@type": "Question", name: "V\xE0nh \u0111ai 3 \u1EA3nh h\u01B0\u1EDFng th\u1EBF n\xE0o \u0111\u1EBFn B\u0110S B\xECnh Ch\xE1nh?", acceptedAnswer: { "@type": "Answer", text: "B\u0110S trong b\xE1n k\xEDnh 1-2km quanh n\xFAt giao v\xE0nh \u0111ai 3 t\u1EA1i B\xECnh Ch\xE1nh \u0111\u01B0\u1EE3c d\u1EF1 b\xE1o t\u0103ng gi\xE1 30-50% sau khi th\xF4ng \u0111\u01B0\u1EDDng (2025-2026)." } }
+              ]
+            },
+            {
+              "@type": "RealEstateAgent",
+              "@id": `${APP_URL}/bat-dong-san-binh-chanh#agent`,
+              name: "SGS LAND - B\u0110S B\xECnh Ch\xE1nh",
+              url: `${APP_URL}/bat-dong-san-binh-chanh`,
+              areaServed: { "@type": "City", name: "B\xECnh Ch\xE1nh", containedInPlace: { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } } },
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh Ch\xE1nh", "\u0110\u1EA5t n\u1EC1n B\xECnh Ch\xE1nh", "V\xE0nh \u0111ai 3 TP.HCM", "Akari City Nam Long"]
+            }
+          ]
+        }
+      },
+      // ─── New Project Landing Pages ───────────────────────────────────────────────
+      "du-an/izumi-city": {
+        title: "Izumi City Nam Long | \u0110\xF4 Th\u1ECB Chu\u1EA9n Nh\u1EADt B\u1EA3n \u0110\u1ED3ng Nai - SGS LAND",
+        description: "Izumi City Nam Long Bi\xEAn H\xF2a: \u0111\xF4 th\u1ECB t\xEDch h\u1EE3p 170ha chu\u1EA9n Nh\u1EADt B\u1EA3n, si\xEAu th\u1ECB Fuji Mart, tr\u01B0\u1EDDng h\u1ECDc Nh\u1EADt. B\u1EA3ng gi\xE1 nh\xE0 ph\u1ED1, bi\u1EC7t th\u1EF1 v\xE0 t\u01B0 v\u1EA5n t\u1EA1i SGS LAND.",
+        h1: "Izumi City Nam Long",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "B\u0110S \u0110\u1ED3ng Nai", item: `${APP_URL}/bat-dong-san-dong-nai` },
+                { "@type": "ListItem", position: 3, name: "Izumi City Nam Long", item: `${APP_URL}/du-an/izumi-city` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "Izumi City Nam Long c\xF3 \u0111\xE1ng mua kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Izumi City l\xE0 d\u1EF1 \xE1n \u0111\xF4 th\u1ECB t\xEDch h\u1EE3p chu\u1EA9n Nh\u1EADt B\u1EA3n v\u1EDBi \u0111\u1ED1i t\xE1c Hankyu Hanshin uy t\xEDn. Ph\xF9 h\u1EE3p \u1EDF th\u1EF1c v\xE0 \u0111\u1EA7u t\u01B0 h\u01B0\u1EDFng l\u1EE3i s\xE2n bay Long Th\xE0nh. Nam Long c\xF3 l\u1ECBch s\u1EED b\xE0n giao \u0111\xFAng ti\u1EBFn \u0111\u1ED9." } },
+                { "@type": "Question", name: "Gi\xE1 nh\xE0 ph\u1ED1 Izumi City l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Nh\xE0 ph\u1ED1 li\u1EC1n k\u1EC1 t\u1EEB 5-12 t\u1EF7; bi\u1EC7t th\u1EF1 song l\u1EADp 10-18 t\u1EF7; bi\u1EC7t th\u1EF1 \u0111\u01A1n l\u1EADp 15-25 t\u1EF7; c\u0103n h\u1ED9 Akari 2-5 t\u1EF7." } },
+                { "@type": "Question", name: "Izumi City c\xE1ch TP.HCM bao xa?", acceptedAnswer: { "@type": "Answer", text: "Izumi City t\u1EA1i Bi\xEAn H\xF2a, \u0110\u1ED3ng Nai, c\xE1ch trung t\xE2m TP.HCM kho\u1EA3ng 30km qua cao t\u1ED1c TP.HCM \u2013 Long Th\xE0nh \u2013 D\u1EA7u Gi\xE2y, di chuy\u1EC3n 25-35 ph\xFAt." } },
+                { "@type": "Question", name: "Ti\u1EC7n \xEDch Nh\u1EADt B\u1EA3n t\u1EA1i Izumi City g\u1ED3m nh\u1EEFng g\xEC?", acceptedAnswer: { "@type": "Answer", text: "Si\xEAu th\u1ECB Fuji Mart, tr\u01B0\u1EDDng h\u1ECDc chu\u1EA9n Nh\u1EADt, trung t\xE2m y t\u1EBF, c\xF4ng vi\xEAn 7ha phong c\xE1ch Nh\u1EADt, khu th\u1EC3 thao v\xE0 nh\xE0 v\u0103n h\xF3a c\u1ED9ng \u0111\u1ED3ng." } },
+                { "@type": "Question", name: "Nam Long Group c\xF3 uy t\xEDn b\xE0n giao \u0111\xFAng h\u1EB9n kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Nam Long l\xE0 ch\u1EE7 \u0111\u1EA7u t\u01B0 mid-high end c\xF3 track record b\xE0n giao \u0111\xFAng ti\u1EBFn \u0111\u1ED9 t\u1ED1t nh\u1EA5t Vi\u1EC7t Nam. Flora Fuji, Flora Panorama, Valora Kikyo \u0111\u1EC1u b\xE0n giao \u0111\xFAng h\u1EA1n." } },
+                { "@type": "Question", name: "So s\xE1nh Izumi City v\xE0 Aqua City \u2014 n\xEAn ch\u1ECDn \u0111\xE2u?", acceptedAnswer: { "@type": "Answer", text: "Izumi City: nh\u1ECF h\u01A1n (170ha), chu\u1EA9n Nh\u1EADt B\u1EA3n, g\u1EA7n TP.HCM h\u01A1n, Nam Long track record t\u1ED1t, gi\xE1 nh\xE0 ph\u1ED1 v\u1EEBa h\u01A1n. Aqua City: 1.000ha, marina/golf, Novaland th\u01B0\u01A1ng hi\u1EC7u l\u1EDBn." } },
+                { "@type": "Question", name: "Cho thu\xEA Izumi City thu nh\u1EADp bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Nh\xE0 ph\u1ED1 li\u1EC1n k\u1EC1 8-15 tri\u1EC7u/th\xE1ng; bi\u1EC7t th\u1EF1 song l\u1EADp 15-25 tri\u1EC7u/th\xE1ng; bi\u1EC7t th\u1EF1 \u0111\u01A1n l\u1EADp 25-40 tri\u1EC7u/th\xE1ng. Gross yield \u01B0\u1EDBc \u0111\u1EA1t 4-5%/n\u0103m." } },
+                { "@type": "Question", name: "S\xE2n bay Long Th\xE0nh \u1EA3nh h\u01B0\u1EDFng th\u1EBF n\xE0o \u0111\u1EBFn Izumi City?", acceptedAnswer: { "@type": "Answer", text: "Izumi City c\xE1ch s\xE2n bay Long Th\xE0nh 20 ph\xFAt. Khi SBLT ho\xE0n th\xE0nh, gi\xE1 B\u0110S Izumi d\u1EF1 b\xE1o t\u0103ng 15-25% nh\u1EDD nhu c\u1EA7u nh\xE0 \u1EDF t\u1EEB nh\xE2n s\u1EF1 s\xE2n bay v\xE0 logistics \u0110\u1ED3ng Nai." } }
+              ]
+            },
+            {
+              "@type": "ApartmentComplex",
+              "@id": `${APP_URL}/du-an/izumi-city#project`,
+              name: "Izumi City Nam Long",
+              description: "\u0110\xF4 th\u1ECB t\xEDch h\u1EE3p 170ha chu\u1EA9n Nh\u1EADt B\u1EA3n t\u1EA1i Bi\xEAn H\xF2a, \u0110\u1ED3ng Nai",
+              url: `${APP_URL}/du-an/izumi-city`,
+              address: { "@type": "PostalAddress", addressLocality: "Bi\xEAn H\xF2a", addressRegion: "\u0110\u1ED3ng Nai", addressCountry: "VN" },
+              floorSize: { "@type": "QuantitativeValue", value: 170, unitText: "ha" }
+            }
+          ]
+        }
+      },
+      "du-an/vinhomes-grand-park": {
+        title: "Vinhomes Grand Park | Si\xEAu \u0110\xF4 Th\u1ECB 271ha Th\u1EE7 \u0110\u1EE9c - SGS LAND",
+        description: "Vinhomes Grand Park Qu\u1EADn 9 TP Th\u1EE7 \u0110\u1EE9c: c\u0103n h\u1ED9, shophouse, bi\u1EC7t th\u1EF1 si\xEAu \u0111\xF4 th\u1ECB 271ha. C\xF4ng vi\xEAn 36ha, Metro s\u1ED1 1, Vinmec, Vinschool. B\u1EA3ng gi\xE1 t\u1EA1i SGS LAND.",
+        h1: "Vinhomes Grand Park",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL}/bat-dong-san-thu-duc` },
+                { "@type": "ListItem", position: 3, name: "Vinhomes Grand Park", item: `${APP_URL}/du-an/vinhomes-grand-park` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "Vinhomes Grand Park c\xF3 \u0111\xE1ng mua kh\xF4ng n\u0103m 2025-2026?", acceptedAnswer: { "@type": "Answer", text: "Vinhomes Grand Park l\xE0 d\u1EF1 \xE1n c\xF3 thanh kho\u1EA3n t\u1ED1t nh\u1EA5t Th\u1EE7 \u0110\u1EE9c nh\u1EDD quy m\xF4 l\u1EDBn, Metro s\u1ED1 1 v\xE0 th\u01B0\u01A1ng hi\u1EC7u Vinhomes uy t\xEDn. Gi\xE1 t\u0103ng \u1ED5n \u0111\u1ECBnh 8-15%/n\u0103m." } },
+                { "@type": "Question", name: "Gi\xE1 c\u0103n h\u1ED9 Vinhomes Grand Park m\u1EDBi nh\u1EA5t l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "The Rainbow 2,5-4 t\u1EF7; The Origami 3-5 t\u1EF7; The Beverly 4-7 t\u1EF7; The Opus One 8-15 t\u1EF7. Cho thu\xEA 8-20 tri\u1EC7u/th\xE1ng t\xF9y ph\xE2n khu." } },
+                { "@type": "Question", name: "Metro s\u1ED1 1 \u1EA3nh h\u01B0\u1EDFng th\u1EBF n\xE0o \u0111\u1EBFn Vinhomes Grand Park?", acceptedAnswer: { "@type": "Answer", text: "Ga Su\u1ED1i Ti\xEAn v\xE0 B\u1EBFn Xe Mi\u1EC1n \u0110\xF4ng M\u1EDBi ch\u1EC9 5-10 ph\xFAt \u0111i b\u1ED9 t\u1EEB Grand Park. Gi\xE1 thu\xEA t\u0103ng 15-20% sau khi Metro ho\u1EA1t \u0111\u1ED9ng, th\u1EDDi gian v\u1EC1 Q1 c\xF2n 30 ph\xFAt." } },
+                { "@type": "Question", name: "The Opus One Vinhomes Grand Park c\xF3 \u0111\xE1ng \u0111\u1EA7u t\u01B0 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "The Opus One l\xE0 ph\xE2n khu h\u1EA1ng sang nh\u1EA5t Grand Park, gi\xE1 8-15 t\u1EF7/c\u0103n, thi\u1EBFt k\u1EBF qu\u1ED1c t\u1EBF, v\u1EADn h\xE0nh chu\u1EA9n kh\xE1ch s\u1EA1n 5 sao. Ph\xF9 h\u1EE3p \u0111\u1EA7u t\u01B0 d\xE0i h\u1EA1n cho thu\xEA." } },
+                { "@type": "Question", name: "So s\xE1nh Vinhomes Grand Park v\xE0 Vinhomes Central Park?", acceptedAnswer: { "@type": "Answer", text: "Grand Park (271ha, 2,5-7 t\u1EF7, c\u1ED9ng \u0111\u1ED3ng tr\u1EBB, g\u1EA7n SHTP) ph\xF9 h\u1EE3p ng\xE2n s\xE1ch v\u1EEBa. Central Park (B\xECnh Th\u1EA1nh, 50-200 tri\u1EC7u/m\xB2, g\u1EA7n s\xE2n bay, Landmark 81) d\xE0nh cho n\u1ED9i th\xE0nh \u0111\u1EB3ng c\u1EA5p." } },
+                { "@type": "Question", name: "Ph\xE1p l\xFD Vinhomes Grand Park c\xF3 s\u1ED5 h\u1ED3ng ch\u01B0a?", acceptedAnswer: { "@type": "Answer", text: "The Rainbow, Origami, Beverly \u0111\xE3 b\xE0n giao v\xE0 c\xF3 s\u1ED5 h\u1ED3ng ri\xEAng. The Opus One \u0111ang ti\u1EBFp t\u1EE5c b\xE0n giao. SGS LAND x\xE1c minh s\u1ED5 h\u1ED3ng t\u1EEBng c\u0103n mi\u1EC5n ph\xED tr\u01B0\u1EDBc khi \u0111\u1EB7t c\u1ECDc." } },
+                { "@type": "Question", name: "Cho thu\xEA c\u0103n h\u1ED9 Vinhomes Grand Park thu nh\u1EADp bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "1PN (45-55m\xB2) 8-12 tri\u1EC7u/th\xE1ng; 2PN 12-18 tri\u1EC7u/th\xE1ng; 3PN 18-25 tri\u1EC7u/th\xE1ng. Gross yield 4-6%/n\u0103m. Nhu c\u1EA7u thu\xEA m\u1EA1nh t\u1EEB chuy\xEAn gia SHTP v\xE0 sinh vi\xEAn \u0110H Qu\u1ED1c Gia." } },
+                { "@type": "Question", name: "Vinhomes Grand Park c\xF3 ph\xF9 h\u1EE3p cho gia \u0111\xECnh c\xF3 con nh\u1ECF kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "R\u1EA5t ph\xF9 h\u1EE3p \u2014 Vinschool c\xE1c c\u1EA5p trong khu\xF4n vi\xEAn, Vinmec qu\u1ED1c t\u1EBF, c\xF4ng vi\xEAn 36ha an to\xE0n. C\u1ED9ng \u0111\u1ED3ng c\u01B0 d\xE2n v\u0103n minh, h\u1EC7 th\u1ED1ng an ninh 24/7." } }
+              ]
+            },
+            {
+              "@type": "ApartmentComplex",
+              "@id": `${APP_URL}/du-an/vinhomes-grand-park#project`,
+              name: "Vinhomes Grand Park",
+              description: "Si\xEAu \u0111\xF4 th\u1ECB 271ha v\u1EDBi 44 t\xF2a th\xE1p t\u1EA1i TP Th\u1EE7 \u0110\u1EE9c, TP.HCM",
+              url: `${APP_URL}/du-an/vinhomes-grand-park`,
+              address: { "@type": "PostalAddress", addressLocality: "TP Th\u1EE7 \u0110\u1EE9c", addressRegion: "TP.HCM", addressCountry: "VN" },
+              floorSize: { "@type": "QuantitativeValue", value: 271, unitText: "ha" }
+            }
+          ]
+        }
+      },
+      "du-an/vinhomes-central-park": {
+        title: "Vinhomes Central Park | C\u0103n H\u1ED9 Cao C\u1EA5p B\xECnh Th\u1EA1nh Landmark 81 - SGS LAND",
+        description: "Vinhomes Central Park B\xECnh Th\u1EA1nh: 44 t\xF2a cao t\u1EA7ng, Landmark 81, b\u1EC3 b\u01A1i v\xF4 c\u1EF1c ven s\xF4ng S\xE0i G\xF2n. C\u0103n h\u1ED9 t\u1EEB 50 tri\u1EC7u/m\xB2, cho thu\xEA 15-60 tri\u1EC7u/th\xE1ng. T\u01B0 v\u1EA5n t\u1EA1i SGS LAND.",
+        h1: "Vinhomes Central Park",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "Vinhomes Central Park", item: `${APP_URL}/du-an/vinhomes-central-park` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "Vinhomes Central Park c\xF3 ph\u1EA3i B\u0110S h\u1EA1ng sang kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Vinhomes Central Park thu\u1ED9c ph\xE2n kh\xFAc cao c\u1EA5p \u2013 h\u1EA1ng sang t\u1EA1i TP.HCM v\u1EDBi gi\xE1 50-200 tri\u1EC7u/m\xB2. Landmark 81 (t\xF2a nh\xE0 cao nh\u1EA5t VN) l\xE0 bi\u1EC3u t\u01B0\u1EE3ng c\u1EE7a d\u1EF1 \xE1n." } },
+                { "@type": "Question", name: "Gi\xE1 c\u0103n h\u1ED9 Vinhomes Central Park m\u1EDBi nh\u1EA5t?", acceptedAnswer: { "@type": "Answer", text: "C\u0103n h\u1ED9 1PN t\u1EEB 3,5-5 t\u1EF7; 2PN 5-9 t\u1EF7; 3PN 8-15 t\u1EF7; penthouse t\u1EEB 20-50 t\u1EF7. Cho thu\xEA: studio 15-20 tri\u1EC7u/th\xE1ng; 2PN 25-40 tri\u1EC7u/th\xE1ng." } },
+                { "@type": "Question", name: "Landmark 81 t\u1EA1i Vinhomes Central Park l\xE0 g\xEC?", acceptedAnswer: { "@type": "Answer", text: "Landmark 81 l\xE0 t\xF2a nh\xE0 cao nh\u1EA5t Vi\u1EC7t Nam (461m, 81 t\u1EA7ng) g\u1ED3m kh\xE1ch s\u1EA1n Marriott 5 sao, v\u0103n ph\xF2ng h\u1EA1ng A+ v\xE0 \u0111\xE0i quan s\xE1t tr\xEAn \u0111\u1EC9nh." } },
+                { "@type": "Question", name: "Ng\u01B0\u1EDDi n\u01B0\u1EDBc ngo\xE0i c\xF3 \u0111\u01B0\u1EE3c mua c\u0103n h\u1ED9 Vinhomes Central Park kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Theo Lu\u1EADt Nh\xE0 \u1EDE 2023, ng\u01B0\u1EDDi n\u01B0\u1EDBc ngo\xE0i mua t\u1ED1i \u0111a 30% s\u1ED1 c\u0103n. Central Park c\xF3 c\u1ED9ng \u0111\u1ED3ng expat H\xE0n, Nh\u1EADt, \xC2u r\u1EA5t \u0111\xF4ng. SGS LAND h\u1ED7 tr\u1EE3 th\u1EE7 t\u1EE5c ph\xE1p l\xFD ri\xEAng cho ng\u01B0\u1EDDi n\u01B0\u1EDBc ngo\xE0i." } },
+                { "@type": "Question", name: "\u0110\u1EA7u t\u01B0 cho thu\xEA Vinhomes Central Park c\xF3 l\u1EDDi kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Gross yield 4-6%/n\u0103m c\u1ED9ng t\u0103ng gi\xE1 B\u0110S 8-12%/n\u0103m, t\u1ED5ng return 12-18%/n\u0103m. Nhu c\u1EA7u thu\xEA m\u1EA1nh t\u1EEB chuy\xEAn gia n\u01B0\u1EDBc ngo\xE0i v\xE0 doanh nh\xE2n c\u1EA5p cao." } },
+                { "@type": "Question", name: "Ph\xED qu\u1EA3n l\xFD Vinhomes Central Park l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Ph\xED qu\u1EA3n l\xFD 10.000-12.000 VN\u0110/m\xB2/th\xE1ng. C\u0103n 2PN (75m\xB2) kho\u1EA3ng 750.000-900.000 \u0111\u1ED3ng/th\xE1ng. Vinhomes qu\u1EA3n l\xFD chuy\xEAn nghi\u1EC7p, ch\u1EA5t l\u01B0\u1EE3ng d\u1ECBch v\u1EE5 cao nh\u1EA5t TP.HCM." } },
+                { "@type": "Question", name: "Vay ng\xE2n h\xE0ng mua th\u1EE9 c\u1EA5p Vinhomes Central Park c\xF3 kh\xF3 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "S\u1ED5 h\u1ED3ng ri\xEAng \u0111\u1EA7y \u0111\u1EE7, vay thu\u1EADn l\u1EE3i. LTV t\u1ED1i \u0111a 65-70%, k\u1EF3 h\u1EA1n 25 n\u0103m. VCB, Techcombank, BIDV \u0111\u1EC1u nh\u1EADn th\u1EBF ch\u1EA5p. SGS LAND h\u1ED7 tr\u1EE3 h\u1ED3 s\u01A1 vay mi\u1EC5n ph\xED." } },
+                { "@type": "Question", name: "So s\xE1nh Vinhomes Central Park v\xE0 Th\u1EE7 Thi\xEAm?", acceptedAnswer: { "@type": "Answer", text: "Central Park: h\u1EC7 sinh th\xE1i Vinhomes \u0111\u1EA7y \u0111\u1EE7, g\u1EA7n s\xE2n bay, thanh kho\u1EA3n cao. Th\u1EE7 Thi\xEAm: ti\u1EC1m n\u0103ng d\xE0i h\u1EA1n cao h\u01A1n, gi\xE1 cao h\u01A1n, \u0111ang ph\xE1t tri\u1EC3n. Ch\u1ECDn Central Park n\u1EBFu c\u1EA7n thanh kho\u1EA3n." } }
+              ]
+            },
+            {
+              "@type": "ApartmentComplex",
+              "@id": `${APP_URL}/du-an/vinhomes-central-park#project`,
+              name: "Vinhomes Central Park",
+              description: "44 t\xF2a cao t\u1EA7ng ven s\xF4ng S\xE0i G\xF2n t\u1EA1i B\xECnh Th\u1EA1nh, TP.HCM",
+              url: `${APP_URL}/du-an/vinhomes-central-park`,
+              address: { "@type": "PostalAddress", addressLocality: "B\xECnh Th\u1EA1nh", addressRegion: "TP.HCM", addressCountry: "VN" },
+              numberOfRooms: "1-4",
+              offers: { "@type": "Offer", price: "50000000", priceCurrency: "VND", unitText: "m\xB2" }
+            }
+          ]
+        }
+      },
+      "du-an/thu-thiem": {
+        title: "Khu \u0110\xF4 Th\u1ECB Th\u1EE7 Thi\xEAm | B\u0110S H\u1EA1ng Sang Trung T\xE2m T\xE0i Ch\xEDnh - SGS LAND",
+        description: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n Khu \u0110\xF4 Th\u1ECB M\u1EDBi Th\u1EE7 Thi\xEAm 657ha \u2014 trung t\xE2m t\xE0i ch\xEDnh t\u01B0\u01A1ng lai TP.HCM. Empire City, Metropole, The River. Gi\xE1 t\u1EEB 80 tri\u1EC7u/m\xB2. T\u01B0 v\u1EA5n t\u1EA1i SGS LAND.",
+        h1: "Khu \u0110\xF4 Th\u1ECB Th\u1EE7 Thi\xEAm",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL}/bat-dong-san-thu-duc` },
+                { "@type": "ListItem", position: 3, name: "Khu \u0110\xF4 Th\u1ECB Th\u1EE7 Thi\xEAm", item: `${APP_URL}/du-an/thu-thiem` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "Khu \u0111\xF4 th\u1ECB Th\u1EE7 Thi\xEAm c\xF3 \u0111\xE1ng \u0111\u1EA7u t\u01B0 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Th\u1EE7 Thi\xEAm l\xE0 th\u1ECB tr\u01B0\u1EDDng B\u0110S chi\u1EBFn l\u01B0\u1EE3c d\xE0i h\u1EA1n, quy ho\u1EA1ch l\xE0 trung t\xE2m t\xE0i ch\xEDnh qu\u1ED1c t\u1EBF TP.HCM t\u01B0\u01A1ng t\u1EF1 Pudong Th\u01B0\u1EE3ng H\u1EA3i. Ph\xF9 h\u1EE3p nh\xE0 \u0111\u1EA7u t\u01B0 d\xE0i h\u1EA1n t\xE0i ch\xEDnh m\u1EA1nh." } },
+                { "@type": "Question", name: "Gi\xE1 c\u0103n h\u1ED9 Th\u1EE7 Thi\xEAm hi\u1EC7n t\u1EA1i l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Empire City 90-150 tri\u1EC7u/m\xB2; Metropole Th\u1EE7 Thi\xEAm 90-130 tri\u1EC7u/m\xB2; The River 80-120 tri\u1EC7u/m\xB2; Grand Marina Saigon 130-250 tri\u1EC7u/m\xB2." } },
+                { "@type": "Question", name: "C\xE1c d\u1EF1 \xE1n B\u0110S n\xE0o \u0111\xE1ng ch\xFA \xFD t\u1EA1i Th\u1EE7 Thi\xEAm?", acceptedAnswer: { "@type": "Answer", text: "Ba d\u1EF1 \xE1n l\u1EDBn nh\u1EA5t: Empire City (Keppel Land), Metropole Th\u1EE7 Thi\xEAm (SonKim Land) v\xE0 The River (Ki\u1EBFn \xC1). Ngo\xE0i ra c\xF2n Grand Marina Saigon (Masterise Homes) t\u1EA1i Ba Son." } },
+                { "@type": "Question", name: "H\u1EA7m Th\u1EE7 Thi\xEAm v\xE0 c\u1EA7u Th\u1EE7 Thi\xEAm 2 \u0111\xE3 ho\u1EA1t \u0111\u1ED9ng ch\u01B0a?", acceptedAnswer: { "@type": "Answer", text: "C\u1EA3 hai \u0111\xE3 ho\u1EA1t \u0111\u1ED9ng: H\u1EA7m Th\u1EE7 Thi\xEAm t\u1EEB 2011, c\u1EA7u Th\u1EE7 Thi\xEAm 2 t\u1EEB 2022. Di chuy\u1EC3n t\u1EEB Th\u1EE7 Thi\xEAm v\xE0o Q1 ch\u1EC9 c\xF2n 5-8 ph\xFAt." } },
+                { "@type": "Question", name: "Metropole Th\u1EE7 Thi\xEAm SonKim Land l\xE0 d\u1EF1 \xE1n nh\u01B0 th\u1EBF n\xE0o?", acceptedAnswer: { "@type": "Answer", text: "Metropole Th\u1EE7 Thi\xEAm (5,04ha) l\xE0 5 ph\xE2n khu do S\u01A1n Kim Land v\xE0 Creed Group Nh\u1EADt B\u1EA3n \u0111\u1ED3ng ph\xE1t tri\u1EC3n. The River v\xE0 The Grand Riverside \u0111\xE3 b\xE0n giao, gi\xE1 7-20 t\u1EF7/c\u0103n." } },
+                { "@type": "Question", name: "Ng\u01B0\u1EDDi n\u01B0\u1EDBc ngo\xE0i c\xF3 mua \u0111\u01B0\u1EE3c B\u0110S Th\u1EE7 Thi\xEAm kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Theo Lu\u1EADt Nh\xE0 \u1EDE 2023, ng\u01B0\u1EDDi n\u01B0\u1EDBc ngo\xE0i mua t\u1ED1i \u0111a 30% c\u0103n h\u1ED9 trong m\u1ED9t d\u1EF1 \xE1n. Metropole, Empire City, The River \u0111\u1EC1u c\xF3 ph\u1EA7n d\xE0nh cho ng\u01B0\u1EDDi n\u01B0\u1EDBc ngo\xE0i." } },
+                { "@type": "Question", name: "Th\u1EE7 Thi\xEAm s\u1EBD ph\xE1t tri\u1EC3n th\xE0nh trung t\xE2m t\xE0i ch\xEDnh nh\u01B0 th\u1EBF n\xE0o?", acceptedAnswer: { "@type": "Answer", text: 'Th\u1EE7 Thi\xEAm quy ho\u1EA1ch l\xE0 "Manhattan c\u1EE7a S\xE0i G\xF2n" v\u1EDBi v\u0103n ph\xF2ng t\u1EADp \u0111o\xE0n qu\u1ED1c t\u1EBF, kh\xE1ch s\u1EA1n 5-6 sao, th\u01B0\u01A1ng m\u1EA1i cao c\u1EA5p. D\u1EF1 ki\u1EBFn ho\xE0n ch\u1EC9nh 2030-2035, l\xE0 trung t\xE2m kinh t\u1EBF \u0110\xF4ng Nam \xC1.' } },
+                { "@type": "Question", name: "R\u1EE7i ro khi \u0111\u1EA7u t\u01B0 B\u0110S Th\u1EE7 Thi\xEAm l\xE0 g\xEC?", acceptedAnswer: { "@type": "Answer", text: "R\u1EE7i ro: gi\xE1 cao, thanh kho\u1EA3n th\u1EE9 c\u1EA5p ch\u1EADm h\u01A1n n\u1ED9i th\xE0nh; ti\u1EBFn \u0111\u1ED9 h\u1EA1 t\u1EA7ng c\xF3 th\u1EC3 ch\u1EADm; m\u1ED9t s\u1ED1 l\xF4 \u0111\u1EA5t c\xF2n tranh ch\u1EA5p quy ho\u1EA1ch. SGS LAND ki\u1EC3m tra ph\xE1p l\xFD v\xE0 \u0111\xE1nh gi\xE1 r\u1EE7i ro \u0111\u1ED9c l\u1EADp." } }
+              ]
+            },
+            {
+              "@type": "ApartmentComplex",
+              "@id": `${APP_URL}/du-an/thu-thiem#project`,
+              name: "Khu \u0110\xF4 Th\u1ECB M\u1EDBi Th\u1EE7 Thi\xEAm",
+              description: "Khu \u0111\xF4 th\u1ECB m\u1EDBi 657ha \u0111\u1ED1i di\u1EC7n Q1 qua s\xF4ng S\xE0i G\xF2n \u2014 trung t\xE2m t\xE0i ch\xEDnh t\u01B0\u01A1ng lai TP.HCM",
+              url: `${APP_URL}/du-an/thu-thiem`,
+              address: { "@type": "PostalAddress", addressLocality: "Th\u1EE7 Thi\xEAm", addressRegion: "TP.HCM", addressCountry: "VN" },
+              floorSize: { "@type": "QuantitativeValue", value: 657, unitText: "ha" }
+            }
+          ]
+        }
+      },
+      "du-an/son-kim-land": {
+        title: "S\u01A1n Kim Land | B\u0110S Th\u01B0\u01A1ng M\u1EA1i Cao C\u1EA5p TP.HCM & H\xE0 N\u1ED9i - SGS LAND",
+        description: "S\u01A1n Kim Land \u2014 danh m\u1EE5c B\u0110S cao c\u1EA5p: Gem Riverside Q4, Metropole Th\u1EE7 Thi\xEAm, Seasons Avenue HN. GEM Center, GS25. Gi\xE1 40-150 tri\u1EC7u/m\xB2. T\u01B0 v\u1EA5n t\u1EA1i SGS LAND.",
+        h1: "S\u01A1n Kim Land",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "S\u01A1n Kim Land", item: `${APP_URL}/du-an/son-kim-land` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "S\u01A1n Kim Land c\xF3 uy t\xEDn kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "S\u01A1n Kim Land l\xE0 th\u01B0\u01A1ng hi\u1EC7u B\u0110S uy t\xEDn thu\u1ED9c S\u01A1n Kim Group th\xE0nh l\u1EADp t\u1EEB 1993 v\u1EDBi B\u0110S, b\xE1n l\u1EBB GS25, GEM Center. Gem Riverside v\xE0 Metropole Th\u1EE7 Thi\xEAm \u0111\u01B0\u1EE3c \u0111\xE1nh gi\xE1 cao v\u1EC1 thi\u1EBFt k\u1EBF." } },
+                { "@type": "Question", name: "D\u1EF1 \xE1n Gem Riverside c\u1EE7a S\u01A1n Kim Land nh\u01B0 th\u1EBF n\xE0o?", acceptedAnswer: { "@type": "Answer", text: "Gem Riverside t\u1EA1i Qu\u1EADn 4 l\xE0 c\u0103n h\u1ED9 cao c\u1EA5p ven s\xF4ng S\xE0i G\xF2n, c\xE1ch Q1 10 ph\xFAt. Gi\xE1 65-100 tri\u1EC7u/m\xB2, ph\xF9 h\u1EE3p \u0111\u1EA7u t\u01B0 d\xE0i h\u1EA1n t\u1EA1i trung t\xE2m th\xE0nh ph\u1ED1." } },
+                { "@type": "Question", name: "GEM Center li\xEAn quan g\xEC \u0111\u1EBFn S\u01A1n Kim Land?", acceptedAnswer: { "@type": "Answer", text: "GEM Center (186 L\xEA Th\xE1nh T\xF4n, Q1) l\xE0 trung t\xE2m s\u1EF1 ki\u1EC7n h\xE0ng \u0111\u1EA7u TP.HCM do S\u01A1n Kim Group v\u1EADn h\xE0nh, t\u1EA1o gi\xE1 tr\u1ECB c\u1ED9ng th\xEAm cho h\u1EC7 sinh th\xE1i B\u0110S S\u01A1n Kim Land." } },
+                { "@type": "Question", name: "Metropole Th\u1EE7 Thi\xEAm c\u1EE7a S\u01A1n Kim Land c\xF3 \u0111\xE1ng mua kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Metropole Th\u1EE7 Thi\xEAm \u0111\u1ED3ng ph\xE1t tri\u1EC3n v\u1EDBi Creed Group Nh\u1EADt B\u1EA3n, v\u1ECB tr\xED s\u1ED1 1 Th\u1EE7 Thi\xEAm nh\xECn ra s\xF4ng S\xE0i G\xF2n. Ph\xE2n khu The River \u0111\xE3 b\xE0n giao, gi\xE1 7-20 t\u1EF7/c\u0103n, yield 3-5%/n\u0103m." } },
+                { "@type": "Question", name: "Gem Riverside Q4 S\u01A1n Kim Land gi\xE1 bao nhi\xEAu n\u0103m 2026?", acceptedAnswer: { "@type": "Answer", text: "Th\u1EE9 c\u1EA5p 2026: 2PN (70-80m\xB2) kho\u1EA3ng 5-8 t\u1EF7, 3PN (90-110m\xB2) kho\u1EA3ng 8-12 t\u1EF7. Cho thu\xEA 2PN 20-30 tri\u1EC7u/th\xE1ng. V\u1ECB tr\xED hi\u1EBFm view s\xF4ng n\u1ED9i th\xE0nh, ti\u1EC1m n\u0103ng t\u0103ng gi\xE1 b\u1EC1n v\u1EEFng." } },
+                { "@type": "Question", name: "So s\xE1nh S\u01A1n Kim Land v\xE0 Masterise Homes?", acceptedAnswer: { "@type": "Answer", text: "S\u01A1n Kim Land: t\xEDch h\u1EE3p th\u01B0\u01A1ng m\u1EA1i-lifestyle, gi\xE1 50-130 tri\u1EC7u/m\xB2. Masterise: ultra-luxury branded residence, v\u1EADn h\xE0nh Marriott/IHG, 60-300 tri\u1EC7u/m\xB2. Ch\u1ECDn S\u01A1n Kim n\u1EBFu gi\xE1 v\u1EEBa h\u01A1n." } },
+                { "@type": "Question", name: "GS25 c\xF3 m\u1EB7t trong d\u1EF1 \xE1n S\u01A1n Kim Land kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "S\u01A1n Kim Group v\u1EADn h\xE0nh GS25 Vi\u1EC7t Nam (700+ \u0111i\u1EC3m, chu\u1ED7i H\xE0n Qu\u1ED1c). Trong d\u1EF1 \xE1n S\u01A1n Kim Land th\u01B0\u1EDDng t\xEDch h\u1EE3p GS25 n\u1ED9i khu, t\u1EA1o ti\u1EC7n \xEDch lifestyle t\xEDch h\u1EE3p cho c\u01B0 d\xE2n." } },
+                { "@type": "Question", name: "N\xEAn ch\u1ECDn d\u1EF1 \xE1n S\u01A1n Kim Land hay th\u01B0\u01A1ng hi\u1EC7u kh\xE1c?", acceptedAnswer: { "@type": "Answer", text: "S\u01A1n Kim Land ph\xF9 h\u1EE3p v\u1EDBi nh\xE0 \u0111\u1EA7u t\u01B0 \u01B0u ti\xEAn B\u0110S t\xEDch h\u1EE3p th\u01B0\u01A1ng m\u1EA1i-d\u1ECBch v\u1EE5, c\u1ED9ng \u0111\u1ED3ng qu\u1ED1c t\u1EBF v\xE0 v\u1EADn h\xE0nh chuy\xEAn nghi\u1EC7p. SGS LAND t\u01B0 v\u1EA5n kh\xE1ch quan, kh\xF4ng hoa h\u1ED3ng ch\u1EE7 \u0111\u1EA7u t\u01B0." } }
+              ]
+            },
+            {
+              "@type": "ApartmentComplex",
+              "@id": `${APP_URL}/du-an/son-kim-land#project`,
+              name: "S\u01A1n Kim Land \u2014 Gem Riverside & Metropole Th\u1EE7 Thi\xEAm",
+              description: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n cao c\u1EA5p S\u01A1n Kim Land: Gem Riverside (Q4), Metropole Th\u1EE7 Thi\xEAm (An Ph\xFA, TP Th\u1EE7 \u0110\u1EE9c). T\xEDch h\u1EE3p GEM Center v\xE0 GS25.",
+              url: `${APP_URL}/du-an/son-kim-land`,
+              address: { "@type": "PostalAddress", addressLocality: "TP.HCM", addressCountry: "VN" },
+              priceRange: "50-300 tri\u1EC7u/m\xB2",
+              amenityFeature: ["GEM Center", "GS25", "S\xF4ng S\xE0i G\xF2n", "Creed Group Nh\u1EADt B\u1EA3n"]
+            }
+          ]
+        }
+      },
+      "du-an/masterise-homes": {
+        title: "Masterise Homes | C\u0103n H\u1ED9 H\u1EA1ng Sang Masteri, Lumi\xE8re, Grand Marina - SGS LAND",
+        description: "Masterise Homes \u2014 B\u0110S h\u1EA1ng sang Vi\u1EC7t Nam: Masteri Th\u1EA3o \u0110i\u1EC1n, Lumi\xE8re Boulevard, Grand Marina Saigon. Gi\xE1 60-300 tri\u1EC7u/m\xB2. V\u1EADn h\xE0nh b\u1EDFi chu\u1ED7i kh\xE1ch s\u1EA1n 5 sao. T\u01B0 v\u1EA5n SGS LAND.",
+        h1: "Masterise Homes",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "Masterise Homes", item: `${APP_URL}/du-an/masterise-homes` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "Masterise Homes c\xF3 \u0111\xE1ng tin kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Masterise Homes l\xE0 th\u01B0\u01A1ng hi\u1EC7u B\u0110S h\u1EA1ng sang uy t\xEDn v\u1EDBi \u0111\u1ED1i t\xE1c Marriott, IHG. Masteri Th\u1EA3o \u0110i\u1EC1n v\xE0 Masteri An Ph\xFA \u0111\xE3 b\xE0n giao th\xE0nh c\xF4ng, gi\u1EEF gi\xE1 t\u1ED1t qua c\xE1c chu k\u1EF3 th\u1ECB tr\u01B0\u1EDDng." } },
+                { "@type": "Question", name: "Gi\xE1 c\u0103n h\u1ED9 Masterise Homes hi\u1EC7n nay l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Masteri Th\u1EA3o \u0110i\u1EC1n 65-100 tri\u1EC7u/m\xB2; Lumi\xE8re Boulevard 90-150 tri\u1EC7u/m\xB2; Grand Marina Saigon 130-300 tri\u1EC7u/m\xB2. Cho thu\xEA Masteri Th\u1EA3o \u0110i\u1EC1n 25-60 tri\u1EC7u/th\xE1ng." } },
+                { "@type": "Question", name: "Grand Marina Saigon c\u1EE7a Masterise c\xF3 \u0111\u1EB7c bi\u1EC7t kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Grand Marina Saigon t\u1EA1i Ba Son (Q1) l\xE0 B\u0110S h\u1EA1ng sang nh\u1EA5t TP.HCM, t\xEDch h\u1EE3p kh\xE1ch s\u1EA1n Marriott, JW Marriott v\xE0 b\u1EBFn du thuy\u1EC1n ri\xEAng tr\xEAn s\xF4ng S\xE0i G\xF2n. Gi\xE1 130-300 tri\u1EC7u/m\xB2." } },
+                { "@type": "Question", name: "Masteri Th\u1EA3o \u0110i\u1EC1n c\xF3 c\xF2n t\u1ED1t \u0111\u1EC3 \u0111\u1EA7u t\u01B0 n\u0103m 2026 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Masteri Th\u1EA3o \u0110i\u1EC1n \u0111\xE3 b\xE0n giao 2017-2018, s\u1ED5 h\u1ED3ng \u0111\u1EA7y \u0111\u1EE7, gi\xE1 t\u0103ng 10%+/n\u0103m. Cho thu\xEA 25-60 tri\u1EC7u/th\xE1ng nh\u1EDD v\u1ECB tr\xED Th\u1EA3o \u0110i\u1EC1n expat hub. Gi\xE1 th\u1EE9 c\u1EA5p 65-100 tri\u1EC7u/m\xB2." } },
+                { "@type": "Question", name: "Ng\u01B0\u1EDDi n\u01B0\u1EDBc ngo\xE0i c\xF3 th\u1EC3 mua Masterise Homes kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Theo Lu\u1EADt Nh\xE0 \u1EDE 2023, ng\u01B0\u1EDDi n\u01B0\u1EDBc ngo\xE0i mua t\u1ED1i \u0111a 30% s\u1ED1 c\u0103n. Masteri Th\u1EA3o \u0110i\u1EC1n c\xF3 c\u1ED9ng \u0111\u1ED3ng expat \u0111\xF4ng nh\u1EA5t TP.HCM. SGS LAND h\u1ED7 tr\u1EE3 h\u1EE3p \u0111\u1ED3ng song ng\u1EEF v\xE0 th\u1EE7 t\u1EE5c chuy\u1EC3n ti\u1EC1n." } },
+                { "@type": "Question", name: "Masteri Th\u1EA3o \u0110i\u1EC1n hay Masteri An Ph\xFA n\xEAn ch\u1ECDn?", acceptedAnswer: { "@type": "Answer", text: "Th\u1EA3o \u0110i\u1EC1n: g\u1EA7n s\xF4ng h\u01A1n, c\u1ED9ng \u0111\u1ED3ng expat \u0111\xF4ng, cho thu\xEA ng\u1EAFn h\u1EA1n t\u1ED1t. An Ph\xFA: c\u1EA1nh ga Metro s\u1ED1 1, k\u1EBFt n\u1ED1i to\xE0n TP.HCM, thanh kho\u1EA3n cao. SGS LAND t\u01B0 v\u1EA5n theo m\u1EE5c ti\xEAu c\u1EE5 th\u1EC3." } },
+                { "@type": "Question", name: "T\u1EA1i sao Masterise \u0111\u01B0\u1EE3c coi l\xE0 ultra-luxury?", acceptedAnswer: { "@type": "Answer", text: "Ba y\u1EBFu t\u1ED1: thi\u1EBFt k\u1EBF b\u1EDFi ki\u1EBFn tr\xFAc s\u01B0 Ch\xE2u \xC2u/Singapore; v\u1EADn h\xE0nh b\u1EDFi Marriott/IHG concierge 24/7; v\u1ECB tr\xED prime location Th\u1EA3o \u0110i\u1EC1n, An Ph\xFA, Ba Son Q1. Branded residence \u0111\u1EB3ng c\u1EA5p nh\u1EA5t VN." } },
+                { "@type": "Question", name: "Lumi\xE8re Boulevard v\xE0 Lumi\xE8re Riverside kh\xE1c nhau th\u1EBF n\xE0o?", acceptedAnswer: { "@type": "Answer", text: "Lumi\xE8re Boulevard (Q9/Th\u1EE7 \u0110\u1EE9c): ultra-luxury phong c\xE1ch Paris, g\u1EA7n Metro, 90-150 tri\u1EC7u/m\xB2. Lumi\xE8re Riverside (Q2): bi\u1EC7t th\u1EF1 ven s\xF4ng, t\xEDnh ri\xEAng t\u01B0 cao, 120-200 tri\u1EC7u/m\xB2. C\u1EA3 hai v\u1EADn h\xE0nh 5 sao." } }
+              ]
+            },
+            {
+              "@type": "ApartmentComplex",
+              "@id": `${APP_URL}/du-an/masterise-homes#project`,
+              name: "Masterise Homes \u2014 Masteri Th\u1EA3o \u0110i\u1EC1n & Grand Marina Saigon",
+              description: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n ultra-luxury Masterise Homes t\u1EA1i TP.HCM: Masteri Th\u1EA3o \u0110i\u1EC1n, Masteri An Ph\xFA, Lumi\xE8re Boulevard, Grand Marina Saigon v\u1EADn h\xE0nh Marriott/IHG.",
+              url: `${APP_URL}/du-an/masterise-homes`,
+              address: { "@type": "PostalAddress", addressLocality: "TP.HCM", addressCountry: "VN" },
+              priceRange: "60-300 tri\u1EC7u/m\xB2",
+              amenityFeature: ["Marriott", "JW Marriott", "B\u1EBFn Du Thuy\u1EC1n", "Concierge 24/7", "Tr\u01B0\u1EDDng Qu\u1ED1c T\u1EBF"]
+            }
+          ]
+        }
+      },
+      "du-an/the-global-city": {
+        title: "The Global City Masterise | \u0110\u1EA1i \u0110\xF4 Th\u1ECB 117ha An Ph\xFA Th\u1EE7 \u0110\u1EE9c - SGS LAND",
+        description: "The Global City Masterise Homes An Ph\xFA Th\u1EE7 \u0110\u1EE9c: \u0111\u1EA1i \u0111\xF4 th\u1ECB 117ha chu\u1EA9n Singapore, c\u1EA1nh Metro s\u1ED1 1. Nh\xE0 ph\u1ED1 t\u1EEB 15 t\u1EF7, bi\u1EC7t th\u1EF1 t\u1EEB 30 t\u1EF7. T\u01B0 v\u1EA5n t\u1EA1i SGS LAND.",
+        h1: "The Global City",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL}/bat-dong-san-thu-duc` },
+                { "@type": "ListItem", position: 3, name: "The Global City", item: `${APP_URL}/du-an/the-global-city` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "The Global City c\xF3 ph\u1EA3i d\u1EF1 \xE1n t\u1ED1t \u0111\u1EC3 \u0111\u1EA7u t\u01B0 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "The Global City l\xE0 d\u1EF1 \xE1n chi\u1EBFn l\u01B0\u1EE3c 117ha t\u1EA1i v\u1ECB tr\xED \u0111\u1EAFc \u0111\u1ECBa khu \u0110\xF4ng TP.HCM, t\xEDch h\u1EE3p th\u01B0\u01A1ng m\u1EA1i \u2013 gi\xE1o d\u1EE5c \u2013 y t\u1EBF \u2013 \u1EDF. Ph\xF9 h\u1EE3p \u0111\u1EA7u t\u01B0 nh\xE0 ph\u1ED1 th\u01B0\u01A1ng m\u1EA1i v\xE0 bi\u1EC7t th\u1EF1 d\xE0i h\u1EA1n." } },
+                { "@type": "Question", name: "Gi\xE1 nh\xE0 ph\u1ED1 th\u01B0\u01A1ng m\u1EA1i The Global City l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Shophouse t\u1EEB 15-40 t\u1EF7 t\xF9y v\u1ECB tr\xED; bi\u1EC7t th\u1EF1 song l\u1EADp 30-60 t\u1EF7; bi\u1EC7t th\u1EF1 \u0111\u01A1n l\u1EADp 60-120 t\u1EF7. Cho thu\xEA nh\xE0 ph\u1ED1 t\u1EEB 50-200 tri\u1EC7u/th\xE1ng (m\u1EB7t ti\u1EC1n tr\u1EE5c ch\xEDnh)." } },
+                { "@type": "Question", name: "The Global City c\xE1ch Q1 v\xE0 Th\u1EE7 Thi\xEAm bao xa?", acceptedAnswer: { "@type": "Answer", text: "The Global City t\u1EA1i An Ph\xFA, TP Th\u1EE7 \u0110\u1EE9c, c\xE1ch Q1 kho\u1EA3ng 6-8km qua c\u1EA7u Th\u1EE7 Thi\xEAm 2 ch\u1EC9 5-10 ph\xFAt. C\xE1ch Th\u1EE7 Thi\xEAm 2km. Metro s\u1ED1 1 ga An Ph\xFA ch\u1EC9 5 ph\xFAt \u0111i b\u1ED9." } },
+                { "@type": "Question", name: "Tr\u01B0\u1EDDng h\u1ECDc v\xE0 b\u1EC7nh vi\u1EC7n t\u1EA1i The Global City nh\u01B0 th\u1EBF n\xE0o?", acceptedAnswer: { "@type": "Answer", text: "Tr\u01B0\u1EDDng qu\u1ED1c t\u1EBF BIS (IB/IGCSE, 20-40 tri\u1EC7u/th\xE1ng), Eaton House, IVS (10-20 tri\u1EC7u/th\xE1ng); b\u1EC7nh vi\u1EC7n 5 sao ti\xEAu chu\u1EA9n qu\u1ED1c t\u1EBF 300 gi\u01B0\u1EDDng b\u1EC7nh. L\u1EE3i th\u1EBF l\u1EDBn thu h\xFAt expat." } },
+                { "@type": "Question", name: "Shophouse The Global City cho thu\xEA \u0111\u01B0\u1EE3c bao nhi\xEAu ti\u1EC1n?", acceptedAnswer: { "@type": "Answer", text: "M\u1EB7t ti\u1EC1n tr\u1EE5c ch\xEDnh The Global City cho thu\xEA 50-200 tri\u1EC7u/th\xE1ng. Khi ho\xE0n th\xE0nh to\xE0n b\u1ED9 2026-2028, nhu c\u1EA7u kinh doanh t\u1EEB 60.000+ c\u01B0 d\xE2n n\u1ED9i khu v\xE0 l\u01B0u l\u01B0\u1EE3ng Metro s\u1ED1 1." } },
+                { "@type": "Question", name: "The Global City c\xF3 c\u1EA1nh tranh \u0111\u01B0\u1EE3c v\u1EDBi Th\u1EE7 Thi\xEAm kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "The Global City v\xE0 Th\u1EE7 Thi\xEAm b\u1ED5 tr\u1EE3 nhau: Th\u1EE7 Thi\xEAm l\xE0 t\xE0i ch\xEDnh-v\u0103n ph\xF2ng; The Global City l\xE0 th\u01B0\u01A1ng m\u1EA1i-d\u1ECBch v\u1EE5-\u1EDF t\xEDch h\u1EE3p. L\u1EE3i th\u1EBF: Metro s\u1ED1 1 ngay c\u1EEDa, quy m\xF4 th\u01B0\u01A1ng m\u1EA1i l\u1EDBn h\u01A1n." } },
+                { "@type": "Question", name: "Ti\xEAu chu\u1EA9n Singapore t\u1EA1i The Global City ngh\u0129a l\xE0 g\xEC?", acceptedAnswer: { "@type": "Answer", text: "Masterise h\u1EE3p t\xE1c ki\u1EBFn tr\xFAc s\u01B0 Singapore (t\u1EEBng l\xE0m v\u1EDBi CapitaLand, Keppel): quy ho\u1EA1ch ph\xE2n khu khoa h\u1ECDc, c\xE2y xanh \u0111\u1EA1t chu\u1EA9n, h\u1EA1 t\u1EA7ng \u0111\u1ED3ng b\u1ED9 \u2014 t\u01B0\u01A1ng t\u1EF1 One North hay Sentosa Cove." } },
+                { "@type": "Question", name: "Vay ng\xE2n h\xE0ng mua nh\xE0 ph\u1ED1 The Global City c\xF3 thu\u1EADn l\u1EE3i kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Ph\xE1p l\xFD r\xF5 r\xE0ng, Masterise uy t\xEDn cao, vay ng\xE2n h\xE0ng d\u1EC5 d\xE0ng. LTV 65-70%, k\u1EF3 h\u1EA1n 20-25 n\u0103m, Techcombank/VPBank \u01B0u \u0111\xE3i 12-18 th\xE1ng \u0111\u1EA7u. SGS LAND h\u1ED7 tr\u1EE3 h\u1ED3 s\u01A1 vay mi\u1EC5n ph\xED." } }
+              ]
+            },
+            {
+              "@type": "ApartmentComplex",
+              "@id": `${APP_URL}/du-an/the-global-city#project`,
+              name: "The Global City",
+              description: "\u0110\u1EA1i \u0111\xF4 th\u1ECB th\u01B0\u01A1ng m\u1EA1i 117ha chu\u1EA9n Singapore do Masterise Homes ph\xE1t tri\u1EC3n t\u1EA1i An Ph\xFA, TP Th\u1EE7 \u0110\u1EE9c",
+              url: `${APP_URL}/du-an/the-global-city`,
+              address: { "@type": "PostalAddress", addressLocality: "An Ph\xFA, TP Th\u1EE7 \u0110\u1EE9c", addressRegion: "TP.HCM", addressCountry: "VN" },
+              floorSize: { "@type": "QuantitativeValue", value: 117, unitText: "ha" }
+            }
+          ]
+        }
+      },
+      "du-an/nha-pho-trung-tam": {
+        title: "Nh\xE0 Ph\u1ED1 Trung T\xE2m TP.HCM | M\u1EB7t Ti\u1EC1n, Nh\xE0 H\u1EBBm, Shophouse - SGS LAND",
+        description: "Mua b\xE1n nh\xE0 ph\u1ED1 trung t\xE2m TP.HCM: m\u1EB7t ti\u1EC1n Q1 t\u1EEB 500 tri\u1EC7u/m\xB2, nh\xE0 h\u1EBBm Q3 t\u1EEB 100 tri\u1EC7u/m\xB2. \u0110\u1ECBnh gi\xE1 AI mi\u1EC5n ph\xED, ki\u1EC3m tra ph\xE1p l\xFD \u0111\u1ED9c l\u1EADp t\u1EA1i SGS LAND.",
+        h1: "Nh\xE0 Ph\u1ED1 Trung T\xE2m TP.HCM",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "Nh\xE0 Ph\u1ED1 Trung T\xE2m", item: `${APP_URL}/du-an/nha-pho-trung-tam` }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: [
+                { "@type": "Question", name: "N\xEAn mua nh\xE0 ph\u1ED1 hay c\u0103n h\u1ED9 t\u1EA1i TP.HCM \u0111\u1EC3 \u0111\u1EA7u t\u01B0?", acceptedAnswer: { "@type": "Answer", text: "Nh\xE0 ph\u1ED1 c\xF3 ba l\u1EE3i th\u1EBF: ph\xE1p l\xFD s\u1ED5 \u0111\u1ECF kh\xF4ng th\u1EDDi h\u1EA1n, thu nh\u1EADp k\xE9p (\u1EDF + cho thu\xEA m\u1EB7t b\u1EB1ng) v\xE0 t\u0103ng tr\u01B0\u1EDFng gi\xE1 tr\u1ECB b\u1EC1n v\u1EEFng 8-15%/n\u0103m trong 30 n\u0103m qua." } },
+                { "@type": "Question", name: "Gi\xE1 m\u1EB7t ti\u1EC1n Qu\u1EADn 1 TP.HCM hi\u1EC7n nay l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "\u0110\u01B0\u1EDDng Nguy\u1EC5n Hu\u1EC7, \u0110\u1ED3ng Kh\u1EDFi 1.000-2.000 tri\u1EC7u/m\xB2; L\xEA L\u1EE3i, L\xEA Th\xE1nh T\xF4n 500-1.000 tri\u1EC7u/m\xB2; c\xE1c \u0111\u01B0\u1EDDng nh\xE1nh 300-600 tri\u1EC7u/m\xB2. Cho thu\xEA m\u1EB7t b\u1EB1ng kinh doanh 100-500 tri\u1EC7u/th\xE1ng." } },
+                { "@type": "Question", name: "T\u1EA1i sao nh\xE0 ph\u1ED1 n\u1ED9i th\xE0nh TP.HCM lu\xF4n t\u0103ng gi\xE1?", acceptedAnswer: { "@type": "Answer", text: "Ba l\xFD do: qu\u1EF9 \u0111\u1EA5t n\u1ED9i th\xE0nh h\u1EEFu h\u1EA1n, l\u1EA1m ph\xE1t \u0111\u1ED3ng ti\u1EC1n \u0111\u1EA9y gi\xE1 t\xE0i s\u1EA3n th\u1EF1c t\u0103ng, v\xE0 TP.HCM l\xE0 \u0111\u1EA7u t\xE0u kinh t\u1EBF Vi\u1EC7t Nam v\u1EDBi nhu c\u1EA7u m\u1EB7t b\u1EB1ng kinh doanh li\xEAn t\u1EE5c t\u0103ng." } },
+                { "@type": "Question", name: "Nh\xE0 h\u1EBBm xe h\u01A1i Qu\u1EADn 3, Ph\xFA Nhu\u1EADn gi\xE1 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Nh\xE0 h\u1EBBm 4-6m Q3 t\u1EEB 100-200 tri\u1EC7u/m\xB2; Ph\xFA Nhu\u1EADn 80-150 tri\u1EC7u/m\xB2; B\xECnh Th\u1EA1nh 60-120 tri\u1EC7u/m\xB2. Nh\xE0 4x15m Q3 kho\u1EA3ng 6-12 t\u1EF7 \u2014 ph\xE2n kh\xFAc ph\u1ED5 bi\u1EBFn nh\u1EA5t v\u1EDBi ng\xE2n s\xE1ch 5-15 t\u1EF7." } },
+                { "@type": "Question", name: "Ki\u1EC3m tra ph\xE1p l\xFD nh\xE0 ph\u1ED1 c\u0169 TP.HCM c\u1EA7n l\u01B0u \xFD g\xEC?", acceptedAnswer: { "@type": "Answer", text: "S\xE1u \u0111i\u1EC3m: (1) S\u1ED5 \u0111\u1ECF th\u1ED5 c\u01B0 ch\xEDnh ch\u1EE7; (2) Kh\xF4ng quy ho\u1EA1ch l\u1ED9 gi\u1EDBi/k\xEAnh r\u1EA1ch; (3) Kh\xF4ng tranh ch\u1EA5p th\u1EEBa k\u1EBF; (4) Di\u1EC7n t\xEDch kh\u1EDBp hi\u1EC7n tr\u1EA1ng; (5) Kh\xF4ng vi ph\u1EA1m x\xE2y d\u1EF1ng; (6) \u0110\u1EE7 thu\u1EBF tr\u01B0\u1EDBc b\u1EA1." } },
+                { "@type": "Question", name: "SGS LAND \u0111\u1ECBnh gi\xE1 AI nh\xE0 ph\u1ED1 n\u1ED9i th\xE0nh ch\xEDnh x\xE1c c\u1EE1 n\xE0o?", acceptedAnswer: { "@type": "Answer", text: "Ph\xE2n t\xEDch 500+ giao d\u1ECBch th\u1EF1c trong b\xE1n k\xEDnh 500m, \u0111i\u1EC1u ch\u1EC9nh theo 12 y\u1EBFu t\u1ED1 (di\u1EC7n t\xEDch, m\u1EB7t ti\u1EC1n, s\u1ED1 t\u1EA7ng, h\u01B0\u1EDBng, l\u1ED9 gi\u1EDBi, ph\xE1p l\xFD). \u0110\u1ED9 ch\xEDnh x\xE1c 92% so v\u1EDBi gi\xE1 giao d\u1ECBch th\u1EF1c." } },
+                { "@type": "Question", name: "Nh\xE0 ph\u1ED1 G\xF2 V\u1EA5p c\xF3 \u0111ang t\u0103ng gi\xE1 nhanh kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "G\xF2 V\u1EA5p t\u0103ng gi\xE1 m\u1EA1nh nh\u1EA5t c\xE1c qu\u1EADn n\u1ED9i th\xE0nh 2025-2026: 15-25%/n\u0103m nh\u1EDD h\u1EA1 t\u1EA7ng ho\xE0n thi\u1EC7n. Nh\xE0 h\u1EBBm t\u1EEB 4-8 t\u1EF7, m\u1EB7t ti\u1EC1n 6-12 t\u1EF7 \u2014 r\u1EBB h\u01A1n 30-40% so v\u1EDBi Q3 v\xE0 Ph\xFA Nhu\u1EADn l\xE2n c\u1EADn." } },
+                { "@type": "Question", name: "SGS LAND h\u1ED7 tr\u1EE3 t\xECm nh\xE0 ph\u1ED1 trung t\xE2m nh\u01B0 th\u1EBF n\xE0o?", acceptedAnswer: { "@type": "Answer", text: "SGS LAND cung c\u1EA5p: t\xECm ki\u1EBFm theo y\xEAu c\u1EA7u, \u0111\u1ECBnh gi\xE1 AI mi\u1EC5n ph\xED, ki\u1EC3m tra ph\xE1p l\xFD s\u1ED5 \u0111\u1ECF \u0111\u1ED9c l\u1EADp, h\u1ED7 tr\u1EE3 \u0111\xE0m ph\xE1n gi\xE1, k\u1EBFt n\u1ED1i c\xF4ng ch\u1EE9ng v\xE0 ng\xE2n h\xE0ng vay v\u1ED1n l\xE3i su\u1EA5t t\u1ED1t." } }
+              ]
+            },
+            {
+              "@type": "ApartmentComplex",
+              "@id": `${APP_URL}/du-an/nha-pho-trung-tam#project`,
+              name: "Nh\xE0 Ph\u1ED1 Trung T\xE2m TP.HCM \u2014 M\u1EB7t Ti\u1EC1n & Nh\xE0 H\u1EBBm N\u1ED9i Th\xE0nh",
+              description: "Nh\xE0 ph\u1ED1 m\u1EB7t ti\u1EC1n v\xE0 nh\xE0 h\u1EBBm xe h\u01A1i t\u1EA1i c\xE1c qu\u1EADn trung t\xE2m TP.HCM: Q1, Q3, Ph\xFA Nhu\u1EADn, B\xECnh Th\u1EA1nh, G\xF2 V\u1EA5p. S\u1ED5 \u0111\u1ECF, ph\xE1p l\xFD r\xF5 r\xE0ng, ti\u1EC1m n\u0103ng t\u0103ng gi\xE1 8-15%/n\u0103m.",
+              url: `${APP_URL}/du-an/nha-pho-trung-tam`,
+              address: { "@type": "PostalAddress", addressLocality: "TP.HCM", addressCountry: "VN" },
+              priceRange: "60-2000 tri\u1EC7u/m\xB2",
+              amenityFeature: ["S\u1ED5 \u0111\u1ECF v\u0129nh vi\u1EC5n", "M\u1EB7t ti\u1EC1n kinh doanh", "Trung t\xE2m TP.HCM", "Kh\xF4ng th\u1EDDi h\u1EA1n s\u1EDF h\u1EEFu"]
+            }
+          ]
+        }
+      }
     };
     _cachedHtml = null;
   }
@@ -28916,6 +29783,15 @@ var ArticleRepository = class extends BaseRepository {
       entity.videos = entity.videos || [];
     }
     return entity;
+  }
+  async findBySlug(tenantId, slug) {
+    return this.withTenant(tenantId, async (client) => {
+      const result = await client.query(
+        `SELECT * FROM articles WHERE slug = $1 LIMIT 1`,
+        [slug]
+      );
+      return result.rows[0] ? this.rowToEntity(result.rows[0]) : null;
+    });
   }
   async findArticles(tenantId, pagination, filters) {
     return this.withTenant(tenantId, async (client) => {
@@ -32297,6 +33173,11 @@ var AnalyticsRepository = class extends BaseRepository {
           "EVENT": "Event",
           "S\u1EF1 ki\u1EC7n": "Event",
           "s\u1EF1 ki\u1EC7n": "Event",
+          // QR code widget (source=QR appended by LiveChat widget)
+          "QR": "QR Code",
+          "qr": "QR Code",
+          "QR_CODE": "QR Code",
+          "qr_code": "QR Code",
           // Other / Unknown catch-all
           "other": "Other",
           "OTHER": "Other",
@@ -36242,6 +37123,140 @@ function createValuationRoutes(authenticateToken, aiRateLimit2, optionalAuth, gu
     } catch (err4) {
       logger.error("[Valuation] Comparables error:", err4);
       res.status(500).json({ error: "Failed to fetch comparables" });
+    }
+  });
+  router.get("/teaser", async (req, res) => {
+    const rawLocation = req.query.location?.trim();
+    const rawArea = req.query.area;
+    const propertyType = req.query.type || "townhouse_center";
+    const listingIdParam = req.query.listing_id;
+    let location = rawLocation;
+    let area = rawArea ? parseFloat(rawArea) : NaN;
+    if (listingIdParam) {
+      const listingId = parseInt(listingIdParam, 10);
+      if (!isNaN(listingId)) {
+        try {
+          const lRow = await pool.query(
+            `SELECT address, area, property_type FROM listings WHERE id = $1 LIMIT 1`,
+            [listingId]
+          );
+          if (lRow.rows.length > 0) {
+            const l = lRow.rows[0];
+            if (!location && l.address) location = l.address;
+            if (isNaN(area) && l.area) area = parseFloat(l.area);
+            if (propertyType === "townhouse_center" && l.property_type) {
+            }
+          }
+        } catch {
+        }
+      }
+    }
+    if (!location || isNaN(area) || area <= 0) {
+      return res.status(400).json({ error: "location and area are required" });
+    }
+    try {
+      const normalKey = normalizeAddrKey(location);
+      const histResult = await pool.query(
+        `SELECT
+           location_display,
+           price_per_m2,
+           price_min,
+           price_max,
+           confidence,
+           trend_text,
+           source,
+           recorded_at,
+           -- simple contains-score: 1 if exact, 0.5 if partial
+           CASE
+             WHEN location_key = $1 THEN 1.0
+             WHEN location_key LIKE '%' || SPLIT_PART($1, ' ', 1) || '%' THEN 0.6
+             WHEN $1 LIKE '%' || SPLIT_PART(location_key, ' ', 1) || '%' THEN 0.5
+             ELSE 0.0
+           END AS similarity
+         FROM market_price_history
+         WHERE
+           location_key = $1
+           OR (
+             length($1) >= 6
+             AND (
+               location_key LIKE '%' || SPLIT_PART($1, ' ', array_length(string_to_array($1,' '),1)) || '%'
+               OR $1 LIKE '%' || SPLIT_PART(location_key, ' ', array_length(string_to_array(location_key,' '),1)) || '%'
+             )
+           )
+         ORDER BY similarity DESC, recorded_at DESC
+         LIMIT 5`,
+        [normalKey]
+      );
+      let pricePerM2;
+      let priceMin;
+      let priceMax;
+      let locationDisplay;
+      let confidence;
+      let trendText;
+      let dataSource;
+      let dataAge;
+      let foundMatch = false;
+      if (histResult.rows.length > 0) {
+        const row = histResult.rows[0];
+        pricePerM2 = parseInt(row.price_per_m2, 10);
+        priceMin = row.price_min ? parseInt(row.price_min, 10) : Math.round(pricePerM2 * 0.85);
+        priceMax = row.price_max ? parseInt(row.price_max, 10) : Math.round(pricePerM2 * 1.15);
+        locationDisplay = row.location_display;
+        confidence = row.confidence ?? 65;
+        trendText = row.trend_text ?? "\u1ED4n \u0111\u1ECBnh";
+        dataSource = row.source === "regional_table" ? "D\u1EEF li\u1EC7u th\u1ECB tr\u01B0\u1EDDng Q1/2025" : "D\u1EEF li\u1EC7u th\u1ECB tr\u01B0\u1EDDng";
+        const recordedAt = new Date(row.recorded_at);
+        const ageMs = Date.now() - recordedAt.getTime();
+        const ageDays = Math.floor(ageMs / 864e5);
+        dataAge = ageDays < 7 ? "V\u1EEBa c\u1EADp nh\u1EADt" : ageDays < 30 ? `${ageDays} ng\xE0y tr\u01B0\u1EDBc` : "H\u01A1n 1 th\xE1ng tr\u01B0\u1EDBc";
+        foundMatch = true;
+      } else {
+        const fallbackResult = getRegionalBasePrice(location);
+        pricePerM2 = fallbackResult.price;
+        priceMin = Math.round(fallbackResult.price * 0.8);
+        priceMax = Math.round(fallbackResult.price * 1.25);
+        locationDisplay = location;
+        confidence = fallbackResult.confidence;
+        trendText = "\u1ED4n \u0111\u1ECBnh";
+        dataSource = "B\u1EA3ng gi\xE1 tham chi\u1EBFu";
+        dataAge = "D\u1EEF li\u1EC7u tham chi\u1EBFu";
+      }
+      const typeMult = PROPERTY_TYPE_PRICE_MULT[propertyType] ?? 1;
+      if (typeMult !== 1 && propertyType !== "townhouse_center" && propertyType !== "townhouse_suburb") {
+        pricePerM2 = Math.round(pricePerM2 * typeMult);
+        priceMin = Math.round(priceMin * typeMult);
+        priceMax = Math.round(priceMax * typeMult);
+      }
+      const totalMin = Math.round(priceMin * area);
+      const totalMid = Math.round(pricePerM2 * area);
+      const totalMax = Math.round(priceMax * area);
+      const formatBillion = (v) => {
+        if (v >= 1e9) return `${(v / 1e9).toFixed(2)} t\u1EF7`;
+        if (v >= 1e6) return `${(v / 1e6).toFixed(0)} tri\u1EC7u`;
+        return `${v.toLocaleString("vi-VN")} \u20AB`;
+      };
+      res.json({
+        found: foundMatch,
+        locationDisplay,
+        pricePerM2,
+        priceMin,
+        priceMax,
+        pricePerM2Display: `${(pricePerM2 / 1e6).toFixed(0)} tri\u1EC7u/m\xB2`,
+        totalMin,
+        totalMid,
+        totalMax,
+        totalMinDisplay: formatBillion(totalMin),
+        totalMidDisplay: formatBillion(totalMid),
+        totalMaxDisplay: formatBillion(totalMax),
+        area,
+        confidence,
+        trendText,
+        dataSource,
+        dataAge
+      });
+    } catch (err4) {
+      logger.error("[Valuation] Teaser error:", err4);
+      res.status(500).json({ error: "Failed to compute teaser estimate" });
     }
   });
   router.get("/cache-status", authenticateToken, async (req, res) => {
@@ -52091,6 +53106,285 @@ function createConnectorRoutes(authenticateToken) {
   return router;
 }
 
+// server/routes/errorLogRoutes.ts
+import { Router as Router27 } from "express";
+
+// server/repositories/errorLogRepository.ts
+var ErrorLogRepository = class {
+  constructor(pool3) {
+    this.pool = pool3;
+  }
+  async insert(entry) {
+    try {
+      await this.pool.query(
+        `INSERT INTO error_logs
+           (tenant_id, type, severity, message, stack, component, path, user_id, user_agent, metadata)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [
+          entry.tenantId,
+          entry.type,
+          entry.severity,
+          entry.message.slice(0, 5e3),
+          entry.stack?.slice(0, 1e4) ?? null,
+          entry.component?.slice(0, 500) ?? null,
+          entry.path?.slice(0, 1e3) ?? null,
+          entry.userId ?? null,
+          entry.userAgent?.slice(0, 500) ?? null,
+          JSON.stringify(entry.metadata ?? {})
+        ]
+      );
+    } catch {
+    }
+  }
+  async list(tenantId, opts) {
+    const page = Math.max(1, opts.page ?? 1);
+    const pageSize = Math.min(100, opts.pageSize ?? 50);
+    const offset = (page - 1) * pageSize;
+    const conditions = ["tenant_id = $1"];
+    const params = [tenantId];
+    let idx = 2;
+    if (opts.type) {
+      conditions.push(`type = $${idx++}`);
+      params.push(opts.type);
+    }
+    if (opts.severity) {
+      conditions.push(`severity = $${idx++}`);
+      params.push(opts.severity);
+    }
+    if (opts.resolved !== void 0) {
+      conditions.push(`resolved = $${idx++}`);
+      params.push(opts.resolved);
+    }
+    const where = conditions.join(" AND ");
+    const [rows, countRow] = await Promise.all([
+      this.pool.query(
+        `SELECT id, tenant_id, type, severity, message, stack, component, path,
+                user_id, user_agent, metadata, resolved, resolved_at, resolved_by, created_at
+         FROM error_logs
+         WHERE ${where}
+         ORDER BY created_at DESC
+         LIMIT $${idx} OFFSET $${idx + 1}`,
+        [...params, pageSize, offset]
+      ),
+      this.pool.query(`SELECT COUNT(*)::int AS total FROM error_logs WHERE ${where}`, params)
+    ]);
+    return {
+      items: rows.rows.map(this.mapRow),
+      total: countRow.rows[0]?.total ?? 0
+    };
+  }
+  async getStats(tenantId) {
+    const [totals, byType, bySeverity, trend] = await Promise.all([
+      this.pool.query(
+        `SELECT COUNT(*)::int AS total,
+                SUM(CASE WHEN resolved = FALSE THEN 1 ELSE 0 END)::int AS unresolved
+         FROM error_logs WHERE tenant_id = $1`,
+        [tenantId]
+      ),
+      this.pool.query(
+        `SELECT type, COUNT(*)::int AS cnt FROM error_logs
+         WHERE tenant_id = $1 GROUP BY type`,
+        [tenantId]
+      ),
+      this.pool.query(
+        `SELECT severity, COUNT(*)::int AS cnt FROM error_logs
+         WHERE tenant_id = $1 GROUP BY severity`,
+        [tenantId]
+      ),
+      this.pool.query(
+        `SELECT DATE(created_at) AS date, COUNT(*)::int AS count
+         FROM error_logs
+         WHERE tenant_id = $1 AND created_at >= NOW() - INTERVAL '30 days'
+         GROUP BY DATE(created_at)
+         ORDER BY date ASC`,
+        [tenantId]
+      )
+    ]);
+    return {
+      total: totals.rows[0]?.total ?? 0,
+      unresolved: totals.rows[0]?.unresolved ?? 0,
+      byType: Object.fromEntries(byType.rows.map((r) => [r.type, r.cnt])),
+      bySeverity: Object.fromEntries(bySeverity.rows.map((r) => [r.severity, r.cnt])),
+      trend: trend.rows.map((r) => ({ date: r.date, count: r.count }))
+    };
+  }
+  async resolve(tenantId, id, resolvedBy) {
+    const result = await this.pool.query(
+      `UPDATE error_logs
+       SET resolved = TRUE, resolved_at = NOW(), resolved_by = $1
+       WHERE id = $2 AND tenant_id = $3`,
+      [resolvedBy, id, tenantId]
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+  async bulkResolve(tenantId, resolvedBy) {
+    const result = await this.pool.query(
+      `UPDATE error_logs
+       SET resolved = TRUE, resolved_at = NOW(), resolved_by = $1
+       WHERE tenant_id = $2 AND resolved = FALSE`,
+      [resolvedBy, tenantId]
+    );
+    return result.rowCount ?? 0;
+  }
+  async deleteResolved(tenantId) {
+    const result = await this.pool.query(
+      `DELETE FROM error_logs WHERE tenant_id = $1 AND resolved = TRUE`,
+      [tenantId]
+    );
+    return result.rowCount ?? 0;
+  }
+  async deleteOld(tenantId, daysOld) {
+    const result = await this.pool.query(
+      `DELETE FROM error_logs
+       WHERE tenant_id = $1 AND created_at < NOW() - INTERVAL '1 day' * $2`,
+      [tenantId, daysOld]
+    );
+    return result.rowCount ?? 0;
+  }
+  mapRow(row) {
+    return {
+      id: row.id,
+      tenantId: row.tenant_id,
+      type: row.type,
+      severity: row.severity,
+      message: row.message,
+      stack: row.stack ?? void 0,
+      component: row.component ?? void 0,
+      path: row.path ?? void 0,
+      userId: row.user_id ?? void 0,
+      userAgent: row.user_agent ?? void 0,
+      metadata: row.metadata ?? {},
+      resolved: row.resolved,
+      resolvedAt: row.resolved_at ?? void 0,
+      resolvedBy: row.resolved_by ?? void 0,
+      createdAt: row.created_at
+    };
+  }
+};
+
+// server/routes/errorLogRoutes.ts
+var ADMIN_ROLES3 = /* @__PURE__ */ new Set(["ADMIN", "TEAM_LEAD"]);
+var DEFAULT_TENANT_ID2 = process.env.DEFAULT_TENANT_ID || "default";
+function createErrorLogRoutes(authenticateToken, pool3) {
+  const router = Router27();
+  const repo = new ErrorLogRepository(pool3);
+  router.post("/", async (req, res) => {
+    try {
+      const body = req.body ?? {};
+      const user = req.user;
+      const tenantId = user?.tenantId ?? DEFAULT_TENANT_ID2;
+      const type = ["frontend", "backend", "unhandled_promise", "chunk_load"].includes(body.type) ? body.type : "frontend";
+      const severity = ["error", "warning", "critical"].includes(body.severity) ? body.severity : "error";
+      if (!body.message || typeof body.message !== "string") {
+        return res.status(400).json({ error: "message is required" });
+      }
+      await repo.insert({
+        tenantId,
+        type,
+        severity,
+        message: body.message,
+        stack: body.stack,
+        component: body.component,
+        path: body.path ?? req.headers.referer,
+        userId: user?.id ?? body.userId,
+        userAgent: req.headers["user-agent"],
+        metadata: typeof body.metadata === "object" ? body.metadata : {}
+      });
+      return res.status(201).json({ ok: true });
+    } catch {
+      return res.status(500).json({ error: "L\u1ED7i ghi error log" });
+    }
+  });
+  router.get("/", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!ADMIN_ROLES3.has(user.role)) {
+        return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      }
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 50;
+      const type = req.query.type;
+      const severity = req.query.severity;
+      const resolvedParam = req.query.resolved;
+      const resolved = resolvedParam === "true" ? true : resolvedParam === "false" ? false : void 0;
+      const result = await repo.list(user.tenantId, { page, pageSize, type, severity, resolved });
+      return res.json(result);
+    } catch {
+      return res.status(500).json({ error: "L\u1ED7i truy v\u1EA5n error logs" });
+    }
+  });
+  router.get("/stats", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!ADMIN_ROLES3.has(user.role)) {
+        return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      }
+      const stats = await repo.getStats(user.tenantId);
+      return res.json(stats);
+    } catch {
+      return res.status(500).json({ error: "L\u1ED7i l\u1EA5y th\u1ED1ng k\xEA" });
+    }
+  });
+  router.patch("/:id/resolve", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!ADMIN_ROLES3.has(user.role)) {
+        return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      }
+      const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: "ID kh\xF4ng h\u1EE3p l\u1EC7" });
+      const ok4 = await repo.resolve(user.tenantId, id, user.id);
+      return res.json({ ok: ok4 });
+    } catch {
+      return res.status(500).json({ error: "L\u1ED7i c\u1EADp nh\u1EADt" });
+    }
+  });
+  router.post("/resolve-all", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!ADMIN_ROLES3.has(user.role)) {
+        return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      }
+      const count = await repo.bulkResolve(user.tenantId, user.id);
+      return res.json({ count });
+    } catch {
+      return res.status(500).json({ error: "L\u1ED7i c\u1EADp nh\u1EADt h\xE0ng lo\u1EA1t" });
+    }
+  });
+  router.delete("/resolved", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!ADMIN_ROLES3.has(user.role)) {
+        return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n truy c\u1EADp" });
+      }
+      const count = await repo.deleteResolved(user.tenantId);
+      return res.json({ count });
+    } catch {
+      return res.status(500).json({ error: "L\u1ED7i x\xF3a logs" });
+    }
+  });
+  return router;
+}
+var _errorLogRepo = null;
+function initErrorLogRepo(pool3) {
+  _errorLogRepo = new ErrorLogRepository(pool3);
+}
+async function logBackendError(opts) {
+  if (!_errorLogRepo) return;
+  try {
+    await _errorLogRepo.insert({
+      tenantId: opts.tenantId ?? DEFAULT_TENANT_ID2,
+      type: "backend",
+      severity: opts.severity ?? "error",
+      message: opts.message,
+      stack: opts.stack,
+      path: opts.path,
+      metadata: opts.metadata ?? {}
+    });
+  } catch {
+  }
+}
+
 // server.ts
 init_marketDataService();
 init_priceCalibrationService();
@@ -52230,6 +53524,19 @@ function errorHandler(err4, req, res, _next) {
     return res.status(err4.statusCode).json(response);
   }
   logger.error(`[${req.method}] ${req.path} - Unhandled error:`, err4);
+  const user = req.user;
+  logBackendError({
+    tenantId: user?.tenantId,
+    message: err4.message || "Unknown backend error",
+    stack: err4.stack,
+    path: `${req.method} ${req.path}`,
+    severity: "critical",
+    metadata: {
+      method: req.method,
+      query: req.query,
+      statusCode: 500
+    }
+  });
   const isDev = process.env.NODE_ENV !== "production";
   res.status(500).json({
     error: "Internal server error",
@@ -52506,8 +53813,17 @@ var DICTIONARY = {
     "calc.gross_yield": "T\u1EF7 su\u1EA5t l\u1EE3i nhu\u1EADn (Gross Yield)",
     "calc.annual_cashflow": "D\xF2ng ti\u1EC1n n\u0103m",
     "calc.payback_period": "Th\u1EDDi gian ho\xE0n v\u1ED1n",
-    "calc.per_year": " / n\u0103m",
+    "calc.per_year": "/n\u0103m",
+    "calc.per_month": "/th\xE1ng",
     "calc.years": " n\u0103m",
+    "calc.appreciation_rate": "T\u1EF7 l\u1EC7 t\u0103ng gi\xE1 k\u1EF3 v\u1ECDng (%/n\u0103m)",
+    "calc.holding_years": "Th\u1EDDi gian n\u1EAFm gi\u1EEF (n\u0103m)",
+    "calc.projected_price_label": "Gi\xE1 d\u1EF1 ki\u1EBFn khi b\xE1n l\u1EA1i",
+    "calc.capital_gain": "L\u1EE3i nhu\u1EADn t\u0103ng gi\xE1 v\u1ED1n",
+    "calc.total_rental_income": "T\u1ED5ng thu nh\u1EADp cho thu\xEA",
+    "calc.total_profit": "T\u1ED5ng l\u1EE3i nhu\u1EADn d\u1EF1 ki\u1EBFn",
+    "calc.total_roi": "ROI t\u1ED5ng",
+    "calc.annualized_return": "L\u1EE3i su\u1EA5t b\xECnh qu\xE2n/n\u0103m",
     "404.title": "Kh\xF4ng t\xECm th\u1EA5y trang",
     "404.desc": "Trang b\u1EA1n \u0111ang t\xECm ki\u1EBFm kh\xF4ng t\u1ED3n t\u1EA1i ho\u1EB7c \u0111\xE3 b\u1ECB x\xF3a.",
     "mobile.title": "\u1EE8ng D\u1EE5ng Di \u0110\u1ED9ng SGS Land",
@@ -52673,6 +53989,7 @@ var DICTIONARY = {
     "menu.security": "B\u1EA3o M\u1EADt & Tu\xE2n Th\u1EE7",
     "menu.ai-governance": "Qu\u1EA3n Tr\u1ECB AI",
     "menu.seo-manager": "Qu\u1EA3n L\xFD SEO",
+    "menu.error-monitor": "Gi\xE1m S\xE1t L\u1ED7i",
     "menu.system": "H\u1EA1 T\u1EA7ng H\u1EC7 Th\u1ED1ng",
     "menu.marketplace-apps": "Kho \u1EE8ng D\u1EE5ng",
     "menu.mobile-app": "\u1EE8ng D\u1EE5ng Di \u0110\u1ED9ng",
@@ -52868,6 +54185,8 @@ var DICTIONARY = {
     "source.Direct": "Tr\u1EF1c ti\u1EBFp",
     "source.Event": "S\u1EF1 ki\u1EC7n",
     "source.Other": "Kh\xE1c",
+    "source.QR Code": "M\xE3 QR",
+    "source.QR": "M\xE3 QR",
     "source.Gi\u1EDBi thi\u1EC7u": "Gi\u1EDBi thi\u1EC7u",
     "source.Kh\xE1ch v\xE3ng lai": "Kh\xE1ch v\xE3ng lai",
     "source.UNKNOWN": "Kh\xF4ng x\xE1c \u0111\u1ECBnh",
@@ -52881,6 +54200,9 @@ var DICTIONARY = {
     "source.TIKTOK": "TikTok",
     "source.GOOGLE": "Google",
     "source.OTHER": "Kh\xE1c",
+    "source.link": "Li\xEAn k\u1EBFt",
+    "source.Link": "Li\xEAn k\u1EBFt",
+    "source.LINK": "Li\xEAn k\u1EBFt",
     "dash.greeting_morning": "Xin ch\xE0o,",
     "dash.overview_subtitle": "T\u1ED5ng quan t\xECnh h\xECnh kinh doanh h\xF4m nay.",
     "dash.filter_7d": "7 ng\xE0y qua",
@@ -54170,9 +55492,9 @@ var DICTIONARY = {
     "landing.feature_crm_desc": "Qu\u1EA3n l\xFD v\xF2ng \u0111\u1EDDi kh\xE1ch h\xE0ng tr\u1ECDn v\u1EB9n. T\u1EF1 \u0111\u1ED9ng ch\u1EA5m \u0111i\u1EC3m ti\u1EC1m n\u0103ng v\xE0 nh\u1EAFc l\u1ECBch ch\u0103m s\xF3c.",
     "landing.feature_comm_title": "\u0110a K\xEAnh H\u1EE3p Nh\u1EA5t",
     "landing.feature_comm_desc": "T\u01B0\u01A1ng t\xE1c v\u1EDBi kh\xE1ch h\xE0ng qua Zalo, Facebook, Email v\xE0 SMS tr\xEAn m\u1ED9t giao di\u1EC7n duy nh\u1EA5t.",
-    "landing.market_title": "Th\u1ECB Tr\u01B0\u1EDDng Tr\u1EF1c Tuy\u1EBFn",
+    "landing.market_title": "S\u1EA3n Ph\u1EA9m Tr\u1EF1c Tuy\u1EBFn",
     "landing.market_subtitle": "C\u1EACP NH\u1EACT 24/7",
-    "landing.market_view_all": "Xem To\xE0n B\u1ED9 Th\u1ECB Tr\u01B0\u1EDDng",
+    "landing.market_view_all": "Xem To\xE0n B\u1ED9 S\u1EA3n Ph\u1EA9m",
     "landing.category_unit": "Nh\xE0 & \u0110\u1EA5t",
     "landing.cta_title": "S\u1EB5n S\xE0ng B\u1EE9t Ph\xE1?",
     "landing.cta_desc": "Tr\u1EA3i nghi\u1EC7m s\u1EE9c m\u1EA1nh c\u1EE7a c\xF4ng ngh\u1EC7 trong t\u1EEBng giao d\u1ECBch. \u0110\u0103ng k\xFD ngay h\xF4m nay.",
@@ -54197,6 +55519,11 @@ var DICTIONARY = {
     "footer.link_terms": "\u0110i\u1EC1u Kho\u1EA3n",
     "footer.link_privacy": "B\u1EA3o M\u1EADt",
     "footer.copyright": "\xA9 {year} SGS Land Corp. B\u1EA3n quy\u1EC1n \u0111\u01B0\u1EE3c b\u1EA3o h\u1ED9.",
+    "footer.col_locations": "Khu V\u1EF1c N\u1ED5i B\u1EADt",
+    "footer.link_dong_nai": "B\u0110S \u0110\u1ED3ng Nai",
+    "footer.link_long_thanh": "B\u0110S Long Th\xE0nh",
+    "footer.link_aqua_city": "Aqua City",
+    "footer.link_manhattan": "Manhattan Qu\u1EADn 9",
     "livechat.title": "Chat v\u1EDBi ch\xFAng t\xF4i",
     "livechat.subtitle": "Vui l\xF2ng \u0111\u1EC3 l\u1EA1i th\xF4ng tin \u0111\u1EC3 ch\xFAng t\xF4i h\u1ED7 tr\u1EE3 b\u1EA1n t\u1ED1t nh\u1EA5t.",
     "livechat.name_label": "H\u1ECD v\xE0 t\xEAn",
@@ -54572,8 +55899,17 @@ var DICTIONARY = {
     "calc.gross_yield": "Gross Yield",
     "calc.annual_cashflow": "Annual Cashflow",
     "calc.payback_period": "Payback Period",
-    "calc.per_year": " / year",
-    "calc.years": " years",
+    "calc.per_year": "/yr",
+    "calc.per_month": "/mo",
+    "calc.years": " yrs",
+    "calc.appreciation_rate": "Expected Appreciation (%/yr)",
+    "calc.holding_years": "Holding Period (years)",
+    "calc.projected_price_label": "Projected Resale Price",
+    "calc.capital_gain": "Capital Gain",
+    "calc.total_rental_income": "Total Rental Income",
+    "calc.total_profit": "Total Projected Profit",
+    "calc.total_roi": "Total ROI",
+    "calc.annualized_return": "Annualized Return",
     "404.title": "Page Not Found",
     "404.desc": "The page you are looking for does not exist or has been removed.",
     "mobile.title": "SGS Land Mobile App",
@@ -54739,6 +56075,7 @@ var DICTIONARY = {
     "menu.security": "Security & Compliance",
     "menu.ai-governance": "AI Governance",
     "menu.seo-manager": "SEO Manager",
+    "menu.error-monitor": "Error Monitor",
     "menu.system": "System Infrastructure",
     "menu.marketplace-apps": "App Store",
     "menu.mobile-app": "Mobile App",
@@ -54934,6 +56271,8 @@ var DICTIONARY = {
     "source.Direct": "Direct",
     "source.Event": "Event",
     "source.Other": "Other",
+    "source.QR Code": "QR Code",
+    "source.QR": "QR Code",
     "source.Gi\u1EDBi thi\u1EC7u": "Referral",
     "source.Kh\xE1ch v\xE3ng lai": "Walk-in",
     "source.UNKNOWN": "Unknown",
@@ -54947,6 +56286,9 @@ var DICTIONARY = {
     "source.TIKTOK": "TikTok",
     "source.GOOGLE": "Google",
     "source.OTHER": "Other",
+    "source.link": "Link",
+    "source.Link": "Link",
+    "source.LINK": "Link",
     "dash.greeting_morning": "Hello,",
     "dash.overview_subtitle": "Overview of today's business situation.",
     "dash.filter_7d": "Last 7 days",
@@ -56236,9 +57578,9 @@ var DICTIONARY = {
     "landing.feature_crm_desc": "Complete customer lifecycle management. Auto-scoring and care scheduling.",
     "landing.feature_comm_title": "Unified Channel",
     "landing.feature_comm_desc": "Interact with customers via Zalo, Facebook, Email and SMS on a single interface.",
-    "landing.market_title": "Online Marketplace",
+    "landing.market_title": "Online Products",
     "landing.market_subtitle": "UPDATED 24/7",
-    "landing.market_view_all": "View Full Market",
+    "landing.market_view_all": "View All Products",
     "landing.category_unit": "Houses & Land",
     "landing.cta_title": "Ready for Breakthrough?",
     "landing.cta_desc": "Experience the power of technology in every transaction. Register today.",
@@ -56263,6 +57605,11 @@ var DICTIONARY = {
     "footer.link_terms": "Terms",
     "footer.link_privacy": "Privacy",
     "footer.copyright": "\xA9 {year} SGS Land Corp. All rights reserved.",
+    "footer.col_locations": "Featured Areas",
+    "footer.link_dong_nai": "Dong Nai Real Estate",
+    "footer.link_long_thanh": "Long Thanh Real Estate",
+    "footer.link_aqua_city": "Aqua City",
+    "footer.link_manhattan": "Manhattan District 9",
     "livechat.title": "Chat with us",
     "livechat.subtitle": "Please leave your information so we can best support you.",
     "livechat.name_label": "Full Name",
@@ -57605,7 +58952,10 @@ async function startServer() {
   });
   app.get("/api/public/articles/:id", apiRateLimit, async (req, res) => {
     try {
-      const article = await articleRepository.findById(PUBLIC_TENANT, String(req.params.id));
+      const idOrSlug = String(req.params.id);
+      const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      let article = UUID_PATTERN.test(idOrSlug) ? await articleRepository.findById(PUBLIC_TENANT, idOrSlug) : await articleRepository.findBySlug(PUBLIC_TENANT, idOrSlug);
+      if (!article) article = await articleRepository.findBySlug(PUBLIC_TENANT, idOrSlug);
       if (!article) return res.status(404).json({ error: "Article not found" });
       res.json(normalizeArticle(article));
     } catch (error48) {
@@ -57966,6 +59316,8 @@ async function startServer() {
   app.use("/scim/v2", express.json({ type: ["application/json", "application/scim+json"] }), createScimRoutes());
   app.use("/api/valuation", apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit, optionalAuth, guestValuationRateLimit, userValuationRateLimit));
   app.use("/api/connectors", apiRateLimit, createConnectorRoutes(authenticateToken));
+  initErrorLogRepo(pool);
+  app.use("/api/error-logs", apiRateLimit, createErrorLogRoutes(authenticateToken, pool));
   app.use("/api/projects", apiRateLimit, createProjectRoutes(authenticateToken));
   app.use("/api/tenant", apiRateLimit, createTenantRoutes(authenticateToken));
   app.use("/api/tasks", apiRateLimit, createTaskRoutes(authenticateToken));
@@ -58470,12 +59822,16 @@ async function startServer() {
   const APP_SITEMAP_URL = (process.env.APP_URL || "https://sgsland.vn").replace(/\/$/, "");
   const TODAY = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
   app.get("/sitemap-listings.xml", async (_req, res) => {
+    const client = await pool.connect();
     try {
-      const result = await pool.query(
+      await client.query("BEGIN");
+      await client.query("SET LOCAL row_security = off");
+      const result = await client.query(
         `SELECT id, updated_at FROM listings
          WHERE status = 'ACTIVE'
          ORDER BY updated_at DESC LIMIT 50000`
       );
+      await client.query("COMMIT");
       const urls = result.rows.map((r) => {
         const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split("T")[0] : TODAY;
         return `  <url>
@@ -58493,36 +59849,60 @@ ${urls}
       res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
       res.send(xml);
     } catch (err4) {
+      await client.query("ROLLBACK").catch(() => {
+      });
       logger.error("[Sitemap] listings error:", err4);
       res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+    } finally {
+      client.release();
     }
   });
   app.get("/sitemap-news.xml", async (_req, res) => {
+    const client = await pool.connect();
     try {
-      const result = await pool.query(
-        `SELECT id, updated_at, published_at FROM articles
+      await client.query("BEGIN");
+      await client.query("SET LOCAL row_security = off");
+      const result = await client.query(
+        `SELECT id, slug, title, updated_at, published_at FROM articles
          WHERE status = 'PUBLISHED'
          ORDER BY published_at DESC LIMIT 50000`
       );
+      await client.query("COMMIT");
       const urls = result.rows.map((r) => {
+        const slug = r.slug || r.id;
         const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split("T")[0] : TODAY;
+        const pubDate = r.published_at ? new Date(r.published_at).toISOString() : new Date(lastmod).toISOString();
+        const title = (r.title || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return `  <url>
-    <loc>${APP_SITEMAP_URL}/news/${r.id}</loc>
+    <loc>${APP_SITEMAP_URL}/news/${slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
+    <news:news>
+      <news:publication>
+        <news:name>SGS LAND</news:name>
+        <news:language>vi</news:language>
+      </news:publication>
+      <news:publication_date>${pubDate}</news:publication_date>
+      <news:title>${title}</news:title>
+    </news:news>
   </url>`;
       }).join("\n");
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
 ${urls}
 </urlset>`;
       res.setHeader("Content-Type", "application/xml; charset=utf-8");
       res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
       res.send(xml);
     } catch (err4) {
+      await client.query("ROLLBACK").catch(() => {
+      });
       logger.error("[Sitemap] news error:", err4);
       res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+    } finally {
+      client.release();
     }
   });
   app.use(express.static("public"));
@@ -58539,11 +59919,14 @@ ${urls}
       getBaseHtml2();
     } catch {
     }
-    const sendMeta = (res, meta3) => {
+    const sendMeta = (res, meta3, cache = true) => {
       try {
         const html = injectMeta2(getBaseHtml2(), meta3);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
-        res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+        res.setHeader(
+          "Cache-Control",
+          cache ? "public, max-age=60, stale-while-revalidate=300" : "no-cache, no-store, must-revalidate"
+        );
         res.send(html);
       } catch {
         res.sendFile(path7.join(process.cwd(), "dist", "index.html"));
@@ -58558,14 +59941,41 @@ ${urls}
         next();
       }
     });
-    app.get("/news/:id", async (req, res, next) => {
+    const UUID_RE2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    app.get("/news/:idOrSlug", async (req, res, next) => {
       try {
-        const article = await articleRepository.findById(DEFAULT_TENANT_ID, String(req.params.id));
+        const idOrSlug = String(req.params.idOrSlug);
+        let article = null;
+        if (UUID_RE2.test(idOrSlug)) {
+          article = await articleRepository.findById(DEFAULT_TENANT_ID, idOrSlug);
+          if (article?.slug) {
+            return res.redirect(301, `/news/${article.slug}`);
+          }
+        } else {
+          article = await articleRepository.findBySlug(DEFAULT_TENANT_ID, idOrSlug);
+        }
         if (!article) return next();
         sendMeta(res, buildArticleMeta2(article));
       } catch {
         next();
       }
+    });
+    const LOCAL_LANDING_ROUTES = [
+      "/bat-dong-san-dong-nai",
+      "/bat-dong-san-long-thanh",
+      "/bat-dong-san-thu-duc",
+      "/bat-dong-san-binh-duong",
+      "/bat-dong-san-quan-7",
+      "/bat-dong-san-binh-chanh"
+    ];
+    for (const route of LOCAL_LANDING_ROUTES) {
+      app.get(route, (_req, res) => {
+        sendMeta(res, buildStaticPageMeta2(null, null, null, route));
+      });
+    }
+    app.get("/du-an/:projectSlug", (req, res) => {
+      const pagePath = `/du-an/${req.params.projectSlug}`;
+      sendMeta(res, buildStaticPageMeta2(null, null, null, pagePath));
     });
     app.use(express.static("dist", {
       maxAge: "1y",
@@ -58590,8 +60000,9 @@ ${urls}
           row?.og_image,
           req.path
         );
-        sendMeta(res, meta3);
+        sendMeta(res, meta3, false);
       } catch {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         res.sendFile(path7.join(process.cwd(), "dist", "index.html"));
       }
     });
