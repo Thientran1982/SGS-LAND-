@@ -69,11 +69,31 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
                 q: 'Mua đất Đồng Nai cần lưu ý gì về pháp lý?',
                 a: 'Kiểm tra quy hoạch sử dụng đất (tránh mua đất quy hoạch lộ, đất nông nghiệp chưa chuyển mục đích), xác nhận chủ sở hữu qua sổ đỏ chính chủ, tránh đất chung sổ phân lô chưa tách thửa. SGS LAND cung cấp dịch vụ kiểm tra pháp lý miễn phí và đồng hành cùng công chứng để bảo vệ quyền lợi người mua.',
             },
+            {
+                q: 'Bình Dương hay Đồng Nai nên đầu tư BĐS hơn?',
+                a: 'Hai thị trường có lợi thế khác nhau: Bình Dương mạnh về công nghiệp, đô thị hoá cao, giá đất đã tăng nhiều và nhu cầu cho thuê cực lớn. Đồng Nai vẫn đang trong chu kỳ đầu tăng giá mạnh nhờ sân bay Long Thành — tiềm năng tăng trưởng còn lớn hơn. Ngân sách hạn chế nên chọn Đồng Nai; ngân sách cao hơn và cần thanh khoản nhanh nên chọn Bình Dương.',
+            },
+            {
+                q: 'Loại đất nào ở Đồng Nai có tiềm năng tăng giá cao nhất?',
+                a: 'Đất nền thổ cư sổ đỏ trong bán kính 5-10km từ sân bay Long Thành (huyện Long Thành) và đất liền kề khu công nghiệp mới (Nhơn Trạch 3, Nhơn Trạch 6) có tiềm năng tăng giá tốt nhất. Thứ hai là nhà phố thương mại mặt tiền đường lớn tại Biên Hòa — tận hưởng đô thị hóa và nhu cầu thương mại.',
+            },
+            {
+                q: 'Có thể vay ngân hàng mua BĐS Đồng Nai không?',
+                a: 'Có. Hầu hết ngân hàng lớn (Vietcombank, BIDV, Agribank, VPBank, Techcombank) đều cho vay mua BĐS Đồng Nai với LTV tối đa 70-80% giá trị tài sản, kỳ hạn 15-25 năm. Lãi suất ưu đãi 6-8,5%/năm (24 tháng đầu). SGS LAND kết nối ngân hàng miễn phí và hỗ trợ hồ sơ vay.',
+            },
+            {
+                q: 'Tìm môi giới bất động sản Đồng Nai uy tín ở đâu?',
+                a: 'SGS LAND là nền tảng BĐS AI với đội ngũ 200+ chuyên gia am hiểu thị trường Đồng Nai, Biên Hòa, Long Thành, Nhơn Trạch. Tất cả môi giới đều được xác thực chứng chỉ hành nghề, BĐS kiểm tra pháp lý độc lập và giá được so sánh realtime bằng AI — đảm bảo giao dịch an toàn, minh bạch.',
+            },
+            {
+                q: 'Cho thuê BĐS tại Đồng Nai có hiệu quả không?',
+                a: 'Đồng Nai có hơn 30 khu công nghiệp với 500.000+ công nhân và chuyên gia nước ngoài — tạo nhu cầu thuê nhà ổn định. Phòng trọ và chung cư mini: 2-4 triệu/tháng (tỷ suất 8-12%/năm). Căn hộ cao cấp: 8-15 triệu/tháng cho chuyên gia. Nhà phố thương mại mặt tiền: 15-50 triệu/tháng.',
+            },
         ],
         relatedLocations: [
             { name: 'BĐS Long Thành', slug: 'bat-dong-san-long-thanh' },
-            { name: 'BĐS TP.HCM', slug: 'marketplace' },
-            { name: 'BĐS Bình Dương', slug: 'marketplace' },
+            { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
+            { name: 'BĐS Bình Dương', slug: 'bat-dong-san-binh-duong' },
         ],
         relatedProjects: [
             { name: 'Aqua City Novaland', slug: 'aqua-city' },
@@ -132,11 +152,31 @@ const LOCATION_CONFIG: Record<string, LocationConfig> = {
                 q: 'Rủi ro khi đầu tư đất Long Thành là gì?',
                 a: 'Rủi ro cần lưu ý: đất quy hoạch đường hoặc sân bay chưa giải toả, đất không có sổ đỏ hoặc đang tranh chấp, dự án ma chưa đủ điều kiện mở bán, bong bóng giá do thông tin thổi phồng. SGS LAND kiểm tra pháp lý độc lập trước mỗi giao dịch để bảo vệ người mua.',
             },
+            {
+                q: 'Khu vực nào ở Long Thành gần sân bay nhất và nên mua?',
+                a: 'Các xã gần sân bay Long Thành nhất: Bình Sơn, Long An, Suối Trầu (bán kính 3-5km). Tuy nhiên, một số khu vực này vẫn trong vùng quy hoạch — cần kiểm tra kỹ trước khi mua. Khu vực thị trấn Long Thành và các xã phía Nam (Long Phước, Phước Bình) cân bằng tốt giữa tiềm năng và rủi ro pháp lý.',
+            },
+            {
+                q: 'Mua BĐS Long Thành để ở hay để đầu tư cho thuê tốt hơn?',
+                a: 'Để ở: Long Thành có không khí trong lành, mật độ thấp, phù hợp gia đình muốn thoát khỏi TP.HCM đông đúc. Để đầu tư cho thuê: nhu cầu thuê chuyên gia KCN cao và tăng khi sân bay mở. Để lướt sóng ngắn hạn: cần thận trọng vì tính thanh khoản chưa cao bằng TP.HCM.',
+            },
+            {
+                q: 'Cầu nào kết nối Long Thành với TP.HCM?',
+                a: 'Hiện tại: Phà Bình Khánh và cao tốc TP.HCM – Long Thành – Dầu Giây (qua Nhơn Trạch). Tương lai: Cầu Nhơn Trạch (đang thi công, dự kiến 2025-2026) rút ngắn kết nối Long Thành – Q2 còn 20-25 phút. Cầu Long Thành (quy hoạch) sẽ tạo thêm kết nối với Bà Rịa – Vũng Tàu.',
+            },
+            {
+                q: 'Tỷ suất cho thuê BĐS Long Thành đạt bao nhiêu phần trăm?',
+                a: 'Tỷ suất cho thuê gộp (bruto yield) tại Long Thành: nhà trọ công nhân KCN 8-12%/năm; nhà phố thương mại mặt tiền 5-8%/năm; căn hộ cao cấp dành chuyên gia 5-7%/năm. Tỷ suất thực (sau chi phí) thường thấp hơn 1-2 điểm %. Nhu cầu thuê tăng mạnh khi sân bay Long Thành đi vào hoạt động.',
+            },
+            {
+                q: 'So sánh BĐS Long Thành và TP Thủ Đức — nên chọn đâu?',
+                a: 'Thủ Đức: giá cao hơn 2-5 lần, thanh khoản cực tốt, hạ tầng Metro hoàn thiện — phù hợp đầu tư ngắn-trung hạn và ở thực cho người làm TP.HCM. Long Thành: giá thấp hơn, tiềm năng tăng trưởng dài hạn lớn hơn nhờ sân bay — phù hợp đầu tư dài hạn 5-10 năm và ngân sách vừa.',
+            },
         ],
         relatedLocations: [
             { name: 'BĐS Đồng Nai', slug: 'bat-dong-san-dong-nai' },
-            { name: 'BĐS TP.HCM', slug: 'marketplace' },
-            { name: 'Toàn Bộ Dự Án', slug: 'du-an/aqua-city' },
+            { name: 'BĐS TP Thủ Đức', slug: 'bat-dong-san-thu-duc' },
+            { name: 'Aqua City Novaland', slug: 'du-an/aqua-city' },
         ],
         relatedProjects: [
             { name: 'Aqua City Novaland', slug: 'aqua-city' },
