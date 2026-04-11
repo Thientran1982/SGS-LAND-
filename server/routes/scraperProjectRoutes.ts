@@ -565,9 +565,8 @@ function makeGenericScraper(id: string, urls: { url: string; type?: string }[]) 
 }
 
 // ── 8. Aqua City (Novaland) — dedicated scraper ───────────────────────────────
-// aquacity.com.vn is a fully client-side SPA that blocks generic crawlers.
-// Strategy A: ScraperAPI premium JS render + comprehensive selectors
-// Strategy B: Regex price-pattern extraction from rendered HTML as fallback
+// aquacity.com.vn blocks all crawlers (0-byte SPA response).
+// Source: batdongsan.com.vn keyword search via ScraperAPI premium rendering.
 async function scrapeAquaCity(): Promise<ProjectResult> {
   const start = Date.now();
   const units: ProjectUnit[] = [];
@@ -583,64 +582,121 @@ async function scrapeAquaCity(): Promise<ProjectResult> {
 
   const key = process.env.SCRAPERAPI_KEY;
 
-  const primaryUrls = [
-    { url: 'https://aquacity.com.vn/san-pham',    type: 'Bất động sản' },
-    { url: 'https://aquacity.com.vn/du-an',        type: 'Bất động sản' },
-    { url: 'https://aquacity.com.vn/nha-pho',      type: 'Nhà phố' },
-    { url: 'https://aquacity.com.vn/biet-thu',     type: 'Biệt thự' },
-    { url: 'https://aquacity.com.vn/can-ho',       type: 'Căn hộ' },
-    { url: 'https://aquacity.com.vn',              type: 'Bất động sản' },
+  // batdongsan.com.vn is a Next.js app protected by Cloudflare.
+  // ScraperAPI premium=true breaks through CF and renders the React shell.
+  // Use keyword-based search URLs that specifically return Aqua City listings.
+  const sourceUrls = [
+    {
+      url:     'https://batdongsan.com.vn/ban-nha-dat-dong-nai?q=aqua+city',
+      type:    'Bất động sản',
+      domain:  'batdongsan.com.vn',
+    },
+    {
+      url:     'https://batdongsan.com.vn/ban-can-ho-chung-cu-dong-nai?q=aqua+city',
+      type:    'Căn hộ',
+      domain:  'batdongsan.com.vn',
+    },
+    {
+      url:     'https://batdongsan.com.vn/ban-nha-rieng-dong-nai?q=aqua+city',
+      type:    'Nhà phố',
+      domain:  'batdongsan.com.vn',
+    },
+    {
+      url:     'https://batdongsan.com.vn/ban-biet-thu-lien-ke-dong-nai?q=aqua+city',
+      type:    'Biệt thự',
+      domain:  'batdongsan.com.vn',
+    },
+    {
+      url:     'https://batdongsan.com.vn/tim-kiem?q=aqua+city+dong+nai',
+      type:    'Bất động sản',
+      domain:  'batdongsan.com.vn',
+    },
+    // Fallback: nhatot.com rendered search
+    {
+      url:     'https://www.nhatot.com/mua-ban-bat-dong-san-dong-nai?q=aqua+city',
+      type:    'Bất động sản',
+      domain:  'nhatot.com',
+    },
   ];
 
-  const CARD_SELECTORS = [
-    '.product-item', '[class*="product-item"]', '[class*="ProductItem"]',
-    '.apartment-item', '[class*="apartment-item"]', '[class*="ApartmentItem"]',
-    '.project-item', '[class*="project-item"]', '[class*="ProjectItem"]',
-    '.listing-item', '[class*="listing-item"]', '[class*="ListingItem"]',
-    '.property-item', '[class*="property-item"]', '[class*="PropertyItem"]',
-    '.card-item', '[class*="card-item"]', '[class*="CardItem"]',
-    '.item-product', '[class*="item-product"]',
-    '.nha-pho', '.biet-thu', '.can-ho', '.shophouse',
-    '[class*="nha-pho"]', '[class*="biet-thu"]', '[class*="can-ho"]',
-    'article', '.item',
+  // ── BatDongSan rendered HTML selectors ───────────────────────────────────
+  // BDS uses Next.js; after ScraperAPI renders the SPA the card markup is:
+  //   <div class="re__card-full js__product-link-for-product-id-XXXXXXX">
+  //     <h3 class="re__card-title"><a ...>title text</a></h3>
+  //     <span class="re__card-config-price">3,5 tỷ</span>
+  //     <span class="re__card-config-area">75 m²</span>
+  //   </div>
+  const BDS_CARD_SELECTORS = [
+    '.re__card-full',
+    '[class*="re__card-full"]',
+    '[class^="re__card"]',
+    '[class*="re__card"]',
+  ];
+  const GENERIC_CARD_SELECTORS = [
+    '.product-item', '[class*="product-item"]',
+    '.property-item', '[class*="property-item"]',
+    '.listing-item', '[class*="listing-item"]',
+    '.js__product',  '[class*="js__product"]',
+    'article.item',  'li.item',
+    '[class*="CardItem"]', '[class*="card-item"]',
   ];
 
-  for (const { url, type: urlType } of primaryUrls) {
-    if (units.length >= 5) break;
+  const extractTitle = ($el: cheerio.Cheerio<any>) =>
+    $el.find('.re__card-title, [class*="re__card-title"], h3 a, h2 a, h3, h2, [class*="title"]')
+      .first().text().trim();
+  const extractPrice = ($el: cheerio.Cheerio<any>) =>
+    $el.find(
+      '.re__card-config-price, [class*="re__card-config-price"], ' +
+      '[class*="price"], [class*="Price"], [class*="gia"], [class*="Gia"]'
+    ).first().text().trim();
+  const extractArea = ($el: cheerio.Cheerio<any>) =>
+    $el.find(
+      '.re__card-config-area, [class*="re__card-config-area"], ' +
+      '[class*="area"], [class*="Area"], [class*="dien-tich"], [class*="acreage"]'
+    ).first().text().trim();
+
+  for (const { url, type: urlType, domain } of sourceUrls) {
+    if (units.length >= 8) break;
     try {
       const proxyUrl =
         `http://api.scraperapi.com?api_key=${key}` +
         `&url=${encodeURIComponent(url)}` +
-        `&render=true&wait=7000&premium=true&country_code=vn`;
-      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(60_000) });
+        `&render=true&wait=9000&premium=true&country_code=vn`;
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(70_000) });
       if (!res.ok) continue;
       const html = await res.text();
       if (html.includes('Just a moment') || html.includes('cf_chl_opt')) continue;
-      if (html.length < 2000) continue;
+      if (html.length < 3000) continue;
 
       const $ = cheerio.load(html);
 
-      // ── Strategy A: CSS selector scan ────────────────────────────────────
-      for (const sel of CARD_SELECTORS) {
+      // ── Strategy A: BatDongSan-specific selectors ─────────────────────────
+      const allCardSelectors = [...BDS_CARD_SELECTORS, ...GENERIC_CARD_SELECTORS];
+      for (const sel of allCardSelectors) {
         const cards = $(sel);
         if (cards.length === 0) continue;
 
         cards.each((_, el) => {
-          const $el = $(el);
-          const titleText = $el
-            .find('h1,h2,h3,h4,h5,[class*="title"],[class*="name"],[class*="heading"]')
-            .first().text().trim();
-          if (!titleText || titleText.length < 3) return;
+          const $el  = $(el);
+          const titleText = extractTitle($el as any);
+          if (!titleText || titleText.length < 5) return;
 
-          const priceRaw = $el
-            .find('[class*="price"],[class*="gia"],[class*="Price"],[class*="Gia"]')
-            .first().text().trim();
-          const areaRaw = $el
-            .find('[class*="area"],[class*="dien-tich"],[class*="acreage"],[class*="m2"],[class*="Area"]')
-            .first().text().trim();
-          const href   = $el.find('a').first().attr('href') || url;
-          const imgSrc = $el.find('img').first().attr('src')
-                      || $el.find('img').first().attr('data-src') || '';
+          // Only keep listings that mention aqua city / novaland / nhon trach
+          const titleLower = titleText.toLowerCase();
+          const isRelevant =
+            titleLower.includes('aqua') ||
+            titleLower.includes('novaland') ||
+            titleLower.includes('nhơn trạch') ||
+            titleLower.includes('nhon trach') ||
+            titleLower.includes('long hưng') ||
+            titleLower.includes('long hung');
+          if (!isRelevant) return;
+
+          const priceRaw = extractPrice($el as any);
+          const areaRaw  = extractArea($el as any);
+          const href     = $el.find('a').first().attr('href') || url;
+          const imgSrc   = $el.find('img').first().attr('src')
+                        || $el.find('img').first().attr('data-src') || '';
 
           const price  = parseVnPrice(priceRaw);
           const area   = parseArea(areaRaw);
@@ -660,10 +716,10 @@ async function scrapeAquaCity(): Promise<ProjectResult> {
             status:       'available',
             direction:    '',
             url:          href.startsWith('http') ? href
-                          : href.startsWith('/')  ? `https://aquacity.com.vn${href}`
+                          : href.startsWith('/')  ? `https://${domain}${href}`
                           : url,
             imageUrl:     imgSrc
-                          ? (imgSrc.startsWith('http') ? imgSrc : `https://aquacity.com.vn${imgSrc}`)
+                          ? (imgSrc.startsWith('http') ? imgSrc : `https://${domain}${imgSrc}`)
                           : null,
             scrapedAt:    new Date().toISOString(),
           });
@@ -672,22 +728,28 @@ async function scrapeAquaCity(): Promise<ProjectResult> {
         if (units.length > 0) break;
       }
 
-      // ── Strategy B: Regex price-pattern extraction (SPA fallback) ────────
+      // ── Strategy B: Regex price-pattern + context extraction ─────────────
       if (units.length === 0) {
         const pricePattern = /([\d]+[.,][\d]+)\s*tỷ|([\d]+)\s*tỷ/gi;
         const matches = [...html.matchAll(pricePattern)];
 
         for (let i = 0; i < Math.min(matches.length, 20); i++) {
-          const m      = matches[i];
-          const ctx    = html.substring(Math.max(0, m.index! - 300), m.index! + 200);
-          const $ctx   = cheerio.load(ctx);
-          const title  = $ctx('h1,h2,h3,h4,h5,p,[class*="title"],[class*="name"]')
-                          .first().text().trim()
-                      || `Bất động sản Aqua City #${i + 1}`;
-          const area   = parseArea($ctx('[class*="area"],[class*="m2"]').first().text().trim()
-                      || ctx.match(/([\d]+)\s*m²/)?.[1] || '');
-          const rawPrc = m[0];
-          const price  = parseVnPrice(rawPrc);
+          const m    = matches[i];
+          const ctx  = html.substring(Math.max(0, m.index! - 400), m.index! + 300);
+          // Only keep if context mentions aqua / novaland
+          if (
+            !/(aqua|novaland|nhơn\s*trạch|nhon\s*trach|long\s*hưng|long\s*hung)/i
+              .test(ctx)
+          ) continue;
+          const $ctx = cheerio.load(ctx);
+          const title =
+            $ctx('h1,h2,h3,h4,h5,p,[class*="title"],[class*="name"]')
+              .first().text().trim()
+            || `Bất động sản Aqua City #${i + 1}`;
+          const areaStr = $ctx('[class*="area"],[class*="m2"]').first().text()
+                        || ctx.match(/([\d]+)\s*m[²2]/)?.[1] || '';
+          const area    = parseArea(areaStr);
+          const price   = parseVnPrice(m[0]);
           if (!price) continue;
 
           units.push({
@@ -715,7 +777,7 @@ async function scrapeAquaCity(): Promise<ProjectResult> {
   }
 
   const warning = units.length === 0
-    ? 'Không parse được dữ liệu từ aquacity.com.vn. Trang SPA yêu cầu trình duyệt thực để tải nội dung.'
+    ? 'Không tìm thấy tin rao Aqua City trên batdongsan.com.vn. Thử lại sau hoặc kiểm tra SCRAPERAPI_KEY.'
     : undefined;
 
   return {

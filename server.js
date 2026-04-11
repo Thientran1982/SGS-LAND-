@@ -28239,6 +28239,20 @@ function injectMeta(baseHtml, meta3) {
     /(<link\s+(?:id="canonical-url"\s+)?rel="canonical"\s+href=")[^"]*(")/i,
     `$1${u}$2`
   );
+  if (u !== APP_URL && u !== `${APP_URL}/`) {
+    html = html.replace(
+      /(<link\s+rel="alternate"\s+hreflang="vi"\s+href=")[^"]*(")/i,
+      `$1${u}$2`
+    );
+    html = html.replace(
+      /[ \t]*<link\s+rel="alternate"\s+hreflang="en"\s+href="[^"]*"\s*\/?>\n?/i,
+      ""
+    );
+    html = html.replace(
+      /(<link\s+rel="alternate"\s+hreflang="x-default"\s+href=")[^"]*(")/i,
+      `$1${u}$2`
+    );
+  }
   if (m.noIndex) {
     html = html.replace(
       /(<meta\s+name="robots"\s+content=")[^"]*(")/i,
@@ -28253,6 +28267,19 @@ function injectMeta(baseHtml, meta3) {
     );
   }
   if (m.structuredData) {
+    const sdJson = JSON.stringify(m.structuredData);
+    const hasPageFaq = sdJson.includes('"FAQPage"');
+    const hasPageBreadcrumb = sdJson.includes('"BreadcrumbList"');
+    if (hasPageFaq || hasPageBreadcrumb) {
+      html = html.replace(
+        /<script\s+type="application\/ld\+json">([\s\S]+?)<\/script>/gi,
+        (match, content) => {
+          if (hasPageFaq && content.includes('"FAQPage"')) return "";
+          if (hasPageBreadcrumb && content.includes('"BreadcrumbList"')) return "";
+          return match;
+        }
+      );
+    }
     const jsonLd = `  <script type="application/ld+json">${JSON.stringify(m.structuredData)}</script>`;
     html = html.replace("</head>", `${jsonLd}
 </head>`);
@@ -28292,11 +28319,22 @@ var init_metaInjector = __esm({
               name: "SGS LAND",
               url: APP_URL,
               logo: { "@type": "ImageObject", url: `${APP_URL}/apple-touch-icon.png` },
-              sameAs: ["https://www.facebook.com/sgslandvn"],
+              sameAs: [
+                "https://www.facebook.com/sgslandvn",
+                "https://www.linkedin.com/company/sgsland",
+                "https://www.youtube.com/@sgsland",
+                "https://zalo.me/sgsland",
+                "https://sgsland.vn"
+              ],
               description: "N\u1EC1n t\u1EA3ng c\xF4ng ngh\u1EC7 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam, chuy\xEAn t\u01B0 v\u1EA5n v\xE0 giao d\u1ECBch b\u1EA5t \u0111\u1ED9ng s\u1EA3n TP.HCM, \u0110\u1ED3ng Nai, B\xECnh D\u01B0\u01A1ng.",
               contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: ["Vietnamese", "English"], url: `${APP_URL}/contact` },
-              areaServed: { "@type": "Country", name: "Vi\u1EC7t Nam" },
-              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n", "\u0110\u1ECBnh gi\xE1 AI", "CRM b\u1EA5t \u0111\u1ED9ng s\u1EA3n", "Aqua City", "Vinhomes", "Masterise Homes", "\u0110\u1ED3ng Nai", "TP.HCM", "B\xECnh D\u01B0\u01A1ng"]
+              areaServed: [
+                { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "B\xECnh D\u01B0\u01A1ng", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "Long An", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } }
+              ],
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n", "\u0110\u1ECBnh gi\xE1 AI", "CRM b\u1EA5t \u0111\u1ED9ng s\u1EA3n", "Aqua City", "Vinhomes Grand Park", "Vinhomes Central Park", "Masterise Homes", "S\u01A1n Kim Land", "The Global City", "Th\u1EE7 Thi\xEAm", "\u0110\u1ED3ng Nai", "Long Th\xE0nh", "TP.HCM", "B\xECnh D\u01B0\u01A1ng", "Qu\u1EADn 7", "Th\u1EE7 \u0110\u1EE9c"]
             },
             {
               "@type": "RealEstateAgent",
@@ -28309,7 +28347,7 @@ var init_metaInjector = __esm({
                 { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
                 { "@type": "State", name: "B\xECnh D\u01B0\u01A1ng", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } }
               ],
-              knowsAbout: ["Aqua City Novaland", "Izumi City", "Vinhomes Grand Park", "Vinhomes Central Park", "The Global City", "Masterise Homes", "Th\u1EE7 Thi\xEAm", "B\u0110S Long Th\xE0nh", "B\u0110S \u0110\u1ED3ng Nai", "B\u0110S B\xECnh D\u01B0\u01A1ng", "B\u0110S Qu\u1EADn 7", "B\u0110S B\xECnh Ch\xE1nh", "B\u0110S TP Th\u1EE7 \u0110\u1EE9c"]
+              knowsAbout: ["Aqua City Novaland", "Izumi City", "Vinhomes Grand Park", "Vinhomes Central Park", "The Global City", "Masterise Homes", "Th\u1EE7 Thi\xEAm", "B\u0110S Long Th\xE0nh", "B\u0110S \u0110\u1ED3ng Nai", "B\u0110S B\xECnh D\u01B0\u01A1ng", "B\u0110S Qu\u1EADn 7", "B\u0110S Ph\xFA Nhu\u1EADn", "B\u0110S TP Th\u1EE7 \u0110\u1EE9c"]
             },
             {
               "@type": "WebSite",
@@ -28324,7 +28362,55 @@ var init_metaInjector = __esm({
       home: {
         title: DEFAULT_META.title,
         description: DEFAULT_META.description,
-        h1: "SGS LAND - N\u1EC1n T\u1EA3ng Qu\u1EA3n L\xFD B\u1EA5t \u0110\u1ED9ng S\u1EA3n AI"
+        h1: "SGS LAND - N\u1EC1n T\u1EA3ng Qu\u1EA3n L\xFD B\u1EA5t \u0110\u1ED9ng S\u1EA3n AI",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": `${APP_URL}/#org`,
+              name: "SGS LAND",
+              url: APP_URL,
+              logo: { "@type": "ImageObject", url: `${APP_URL}/apple-touch-icon.png` },
+              sameAs: [
+                "https://www.facebook.com/sgslandvn",
+                "https://www.linkedin.com/company/sgsland",
+                "https://www.youtube.com/@sgsland",
+                "https://zalo.me/sgsland",
+                "https://sgsland.vn"
+              ],
+              description: "N\u1EC1n t\u1EA3ng c\xF4ng ngh\u1EC7 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam, chuy\xEAn t\u01B0 v\u1EA5n v\xE0 giao d\u1ECBch b\u1EA5t \u0111\u1ED9ng s\u1EA3n TP.HCM, \u0110\u1ED3ng Nai, B\xECnh D\u01B0\u01A1ng.",
+              contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: ["Vietnamese", "English"], url: `${APP_URL}/contact` },
+              areaServed: [
+                { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "B\xECnh D\u01B0\u01A1ng", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "Long An", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } }
+              ],
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n", "\u0110\u1ECBnh gi\xE1 AI", "CRM b\u1EA5t \u0111\u1ED9ng s\u1EA3n", "Aqua City", "Vinhomes Grand Park", "Vinhomes Central Park", "Masterise Homes", "S\u01A1n Kim Land", "The Global City", "Th\u1EE7 Thi\xEAm", "\u0110\u1ED3ng Nai", "Long Th\xE0nh", "TP.HCM", "B\xECnh D\u01B0\u01A1ng", "Qu\u1EADn 7", "Th\u1EE7 \u0110\u1EE9c"]
+            },
+            {
+              "@type": "RealEstateAgent",
+              "@id": `${APP_URL}/#agent`,
+              name: "SGS LAND - N\u1EC1n T\u1EA3ng B\u0110S AI S\u1ED1 1 Vi\u1EC7t Nam",
+              url: APP_URL,
+              description: "\u0110\u1ECBnh gi\xE1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI, mua b\xE1n B\u0110S, CRM \u0111a k\xEAnh t\u1EA1i Vi\u1EC7t Nam.",
+              areaServed: [
+                { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "B\xECnh D\u01B0\u01A1ng", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } }
+              ],
+              knowsAbout: ["Aqua City Novaland", "Izumi City", "Vinhomes Grand Park", "Vinhomes Central Park", "The Global City", "Masterise Homes", "Th\u1EE7 Thi\xEAm", "B\u0110S Long Th\xE0nh", "B\u0110S \u0110\u1ED3ng Nai", "B\u0110S B\xECnh D\u01B0\u01A1ng", "B\u0110S Qu\u1EADn 7", "B\u0110S Ph\xFA Nhu\u1EADn", "B\u0110S TP Th\u1EE7 \u0110\u1EE9c"]
+            },
+            {
+              "@type": "WebSite",
+              "@id": `${APP_URL}/#website`,
+              url: APP_URL,
+              name: "SGS LAND",
+              potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: `${APP_URL}/marketplace?q={search_term_string}` }, "query-input": "required name=search_term_string" }
+            }
+          ]
+        }
       },
       marketplace: { title: "Mua B\xE1n B\u1EA5t \u0110\u1ED9ng S\u1EA3n | Nh\xE0 \u0110\u1EA5t To\xE0n Qu\u1ED1c - SGS LAND", description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n to\xE0n qu\u1ED1c \u2014 t\xECm ki\u1EBFm nh\xE0 \u0111\u1EA5t, c\u0103n h\u1ED9, bi\u1EC7t th\u1EF1 theo v\u1ECB tr\xED, di\u1EC7n t\xEDch v\xE0 m\u1EE9c gi\xE1. Kho h\xE0ng ngh\xECn b\u1EA5t \u0111\u1ED9ng s\u1EA3n c\u1EADp nh\u1EADt realtime.", h1: "Mua B\xE1n B\u1EA5t \u0110\u1ED9ng S\u1EA3n | Nh\xE0 \u0110\u1EA5t To\xE0n Qu\u1ED1c" },
       "ai-valuation": { title: "\u0110\u1ECBnh Gi\xE1 B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\u1EB1ng AI | Sai S\u1ED1 \xB15% - SGS LAND", description: "C\xF4ng ngh\u1EC7 \u0111\u1ECBnh gi\xE1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI t\u1EEB SGS LAND v\u1EDBi sai s\u1ED1 ch\u1EC9 \xB15\u201310% \u2014 ngang chu\u1EA9n th\u1EA9m \u0111\u1ECBnh vi\xEAn chuy\xEAn nghi\u1EC7p. Ho\xE0n to\xE0n mi\u1EC5n ph\xED.", h1: "\u0110\u1ECBnh Gi\xE1 B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\u1EB1ng AI" },
@@ -28338,13 +28424,73 @@ var init_metaInjector = __esm({
       status: { title: "Tr\u1EA1ng Th\xE1i H\u1EC7 Th\u1ED1ng | SGS LAND Status", description: "Theo d\xF5i tr\u1EA1ng th\xE1i ho\u1EA1t \u0111\u1ED9ng realtime c\u1EE7a n\u1EC1n t\u1EA3ng SGS LAND \u2013 uptime, latency v\xE0 s\u1EF1 c\u1ED1 h\u1EC7 th\u1ED1ng.", h1: "Tr\u1EA1ng Th\xE1i H\u1EC7 Th\u1ED1ng SGS LAND" },
       "privacy-policy": { title: "Ch\xEDnh S\xE1ch B\u1EA3o M\u1EADt | SGS LAND", description: "Ch\xEDnh s\xE1ch b\u1EA3o m\u1EADt d\u1EEF li\u1EC7u c\u1EE7a SGS LAND. T\xECm hi\u1EC3u c\xE1ch ch\xFAng t\xF4i thu th\u1EADp, s\u1EED d\u1EE5ng v\xE0 b\u1EA3o v\u1EC7 th\xF4ng tin c\u1EE7a b\u1EA1n.", h1: "Ch\xEDnh S\xE1ch B\u1EA3o M\u1EADt" },
       "terms-of-service": { title: "\u0110i\u1EC1u Kho\u1EA3n S\u1EED D\u1EE5ng | SGS LAND", description: "\u0110i\u1EC1u kho\u1EA3n v\xE0 \u0111i\u1EC1u ki\u1EC7n s\u1EED d\u1EE5ng n\u1EC1n t\u1EA3ng SGS LAND. Quy\u1EC1n l\u1EE3i v\xE0 tr\xE1ch nhi\u1EC7m c\u1EE7a ng\u01B0\u1EDDi d\xF9ng v\xE0 nh\xE0 cung c\u1EA5p d\u1ECBch v\u1EE5.", h1: "\u0110i\u1EC1u Kho\u1EA3n S\u1EED D\u1EE5ng" },
-      "ky-gui-bat-dong-san": { title: "K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n | B\xE1n Nhanh, Gi\xE1 T\u1ED1t - SGS LAND", description: "K\xFD g\u1EEDi b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EA1i SGS LAND \u2014 \u0111\u1ED9i ng\u0169 chuy\xEAn gia \u0111\u1ECBnh gi\xE1 mi\u1EC5n ph\xED, ti\u1EBFp c\u1EADn h\xE0ng ngh\xECn kh\xE1ch h\xE0ng ti\u1EC1m n\u0103ng v\xE0 h\u1ED7 tr\u1EE3 ph\xE1p l\xFD to\xE0n di\u1EC7n.", h1: "K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n" },
+      "ky-gui-bat-dong-san": {
+        title: "K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n | B\xE1n Nhanh, Gi\xE1 T\u1ED1t - SGS LAND",
+        description: "K\xFD g\u1EEDi b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EA1i SGS LAND \u2014 \u0111\u1ED9i ng\u0169 chuy\xEAn gia \u0111\u1ECBnh gi\xE1 mi\u1EC5n ph\xED, ti\u1EBFp c\u1EADn h\xE0ng ngh\xECn kh\xE1ch h\xE0ng ti\u1EC1m n\u0103ng v\xE0 h\u1ED7 tr\u1EE3 ph\xE1p l\xFD to\xE0n di\u1EC7n.",
+        h1: "K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n",
+        structuredData: {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
+                { "@type": "ListItem", position: 2, name: "K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n", item: `${APP_URL}/ky-gui-bat-dong-san` }
+              ]
+            },
+            {
+              "@type": "HowTo",
+              name: "Quy tr\xECnh k\xFD g\u1EEDi b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EA1i SGS LAND",
+              description: "H\u01B0\u1EDBng d\u1EABn t\u1EEBng b\u01B0\u1EDBc quy tr\xECnh k\xFD g\u1EEDi b\u1EA5t \u0111\u1ED9ng s\u1EA3n \u0111\u1EC3 mua b\xE1n ho\u1EB7c cho thu\xEA qua s\xE0n giao d\u1ECBch SGS LAND.",
+              inLanguage: "vi",
+              totalTime: "P7D",
+              step: [
+                { "@type": "HowToStep", position: 1, name: "Ti\u1EBFp nh\u1EADn h\u1ED3 s\u01A1", text: "\u0110i\u1EC1n form \u0111\u0103ng k\xFD k\xFD g\u1EEDi. Chuy\xEAn vi\xEAn SGS LAND li\xEAn h\u1EC7 trong v\xF2ng 4 gi\u1EDD l\xE0m vi\u1EC7c \u0111\u1EC3 x\xE1c nh\u1EADn th\xF4ng tin v\xE0 thu th\u1EADp h\u1ED3 s\u01A1 ph\xE1p l\xFD ban \u0111\u1EA7u." },
+                { "@type": "HowToStep", position: 2, name: "Th\u1EA9m \u0111\u1ECBnh ph\xE1p l\xFD", text: "\u0110\u1ED9i ng\u0169 ph\xE1p l\xFD SGS LAND ki\u1EC3m tra t\xEDnh h\u1EE3p l\u1EC7 c\u1EE7a h\u1ED3 s\u01A1: t\xECnh tr\u1EA1ng tranh ch\u1EA5p, quy ho\u1EA1ch, ngh\u0129a v\u1EE5 t\xE0i ch\xEDnh c\xF2n l\u1EA1i. Ho\xE0n th\xE0nh trong 1\u20133 ng\xE0y l\xE0m vi\u1EC7c." },
+                { "@type": "HowToStep", position: 3, name: "K\xFD k\u1EBFt h\u1EE3p \u0111\u1ED3ng k\xFD g\u1EEDi", text: "Hai b\xEAn k\xFD H\u1EE3p \u0111\u1ED3ng K\xFD g\u1EEDi B\u1EA5t \u0111\u1ED9ng s\u1EA3n x\xE1c \u0111\u1ECBnh r\xF5 m\u1EE9c hoa h\u1ED3ng, th\u1EDDi h\u1EA1n k\xFD g\u1EEDi, quy\u1EC1n v\xE0 ngh\u0129a v\u1EE5 t\u1EEBng b\xEAn. C\u0103n c\u1EE9 \u0110i\u1EC1u 41\u201342 Lu\u1EADt KDB\u0110S 2023 & Ngh\u1ECB \u0111\u1ECBnh 96/2024/N\u0110-CP." },
+                { "@type": "HowToStep", position: 4, name: "\u0110\u1ECBnh gi\xE1 & Tri\u1EC3n khai marketing", text: "\u0110\u1ECBnh gi\xE1 b\u1EB1ng AI (AVM) k\u1EBFt h\u1EE3p th\u1EA9m \u0111\u1ECBnh th\u1EF1c t\u1EBF. \u0110\u0103ng tin tr\xEAn SGS LAND, s\xE0n giao d\u1ECBch \u0111\u1ED1i t\xE1c, m\u1EA1ng x\xE3 h\u1ED9i v\xE0 k\xEAnh m\xF4i gi\u1EDBi n\u1ED9i b\u1ED9. B\u1ED9 \u1EA3nh, video v\xE0 m\xF4 t\u1EA3 SEO mi\u1EC5n ph\xED." },
+                { "@type": "HowToStep", position: 5, name: "K\u1EBFt n\u1ED1i kh\xE1ch & \u0110\xE0m ph\xE1n", text: "M\xF4i gi\u1EDBi SGS LAND d\u1EABn d\u1EAFt to\xE0n b\u1ED9 qu\xE1 tr\xECnh xem nh\xE0, \u0111\xE0m ph\xE1n gi\xE1 v\xE0 \u0111i\u1EC1u kho\u1EA3n h\u1EE3p \u0111\u1ED3ng mua b\xE1n ho\u1EB7c thu\xEA. Ch\u1EE7 s\u1EDF h\u1EEFu \u0111\u01B0\u1EE3c c\u1EADp nh\u1EADt ti\u1EBFn \u0111\u1ED9 \u0111\u1ECBnh k\u1EF3." },
+                { "@type": "HowToStep", position: 6, name: "K\xFD k\u1EBFt & Thu hoa h\u1ED3ng", text: "Sau khi h\u1EE3p \u0111\u1ED3ng mua b\xE1n ho\u1EB7c thu\xEA \u0111\u01B0\u1EE3c k\xFD k\u1EBFt h\u1EE3p l\u1EC7 v\xE0 ti\u1EC1n \u0111\u01B0\u1EE3c chuy\u1EC3n cho ch\u1EE7 s\u1EDF h\u1EEFu, hoa h\u1ED3ng SGS LAND \u0111\u01B0\u1EE3c thanh to\xE1n theo h\u1EE3p \u0111\u1ED3ng k\xFD g\u1EEDi. Ch\u1EC9 thu ph\xED khi giao d\u1ECBch th\xE0nh c\xF4ng." }
+              ]
+            },
+            {
+              "@type": "FAQPage",
+              inLanguage: "vi",
+              mainEntity: [
+                { "@type": "Question", name: "K\xFD g\u1EEDi b\u1EA5t \u0111\u1ED9ng s\u1EA3n l\xE0 g\xEC?", acceptedAnswer: { "@type": "Answer", text: "K\xFD g\u1EEDi b\u1EA5t \u0111\u1ED9ng s\u1EA3n l\xE0 vi\u1EC7c ch\u1EE7 s\u1EDF h\u1EEFu \u1EE7y quy\u1EC1n cho SGS LAND th\u1EF1c hi\u1EC7n to\xE0n b\u1ED9 ho\u1EA1t \u0111\u1ED9ng marketing, m\xF4i gi\u1EDBi v\xE0 h\u1ED7 tr\u1EE3 ph\xE1p l\xFD \u0111\u1EC3 mua b\xE1n ho\u1EB7c cho thu\xEA t\xE0i s\u1EA3n. Hai b\xEAn k\xFD H\u1EE3p \u0111\u1ED3ng K\xFD g\u1EEDi theo quy \u0111\u1ECBnh Lu\u1EADt KDB\u0110S 2023." } },
+                { "@type": "Question", name: "Hoa h\u1ED3ng \u0111\u01B0\u1EE3c t\xEDnh nh\u01B0 th\u1EBF n\xE0o v\xE0 khi n\xE0o ph\u1EA3i tr\u1EA3?", acceptedAnswer: { "@type": "Answer", text: "Hoa h\u1ED3ng ch\u1EC9 ph\xE1t sinh khi giao d\u1ECBch th\xE0nh c\xF4ng: (1) Mua b\xE1n: 1\u20132% gi\xE1 tr\u1ECB h\u1EE3p \u0111\u1ED3ng, thu khi h\u1EE3p \u0111\u1ED3ng c\xF4ng ch\u1EE9ng; (2) Cho thu\xEA \u226512 th\xE1ng: 1 th\xE1ng ti\u1EC1n thu\xEA; (3) Cho thu\xEA <12 th\xE1ng: 50% th\xE1ng thu\xEA. Kh\xF4ng c\xF3 b\u1EA5t k\u1EF3 kho\u1EA3n ph\xED n\xE0o n\u1EBFu kh\xF4ng giao d\u1ECBch." } },
+                { "@type": "Question", name: "T\xF4i c\xF3 c\u1EA7n \u0111\u1EB7t c\u1ECDc hay tr\u1EA3 ph\xED tr\u01B0\u1EDBc kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Ho\xE0n to\xE0n kh\xF4ng. SGS LAND kh\xF4ng thu b\u1EA5t k\u1EF3 kho\u1EA3n ph\xED n\xE0o tr\u01B0\u1EDBc khi giao d\u1ECBch th\xE0nh c\xF4ng. To\xE0n b\u1ED9 chi ph\xED marketing \u2014 \u1EA3nh, video, qu\u1EA3ng c\xE1o \u2014 do SGS LAND chi tr\u1EA3." } },
+                { "@type": "Question", name: "Th\u1EDDi h\u1EA1n h\u1EE3p \u0111\u1ED3ng k\xFD g\u1EEDi l\xE0 bao l\xE2u?", acceptedAnswer: { "@type": "Answer", text: "Th\xF4ng th\u01B0\u1EDDng 3\u20136 th\xE1ng, c\xF3 th\u1EC3 gia h\u1EA1n theo th\u1ECFa thu\u1EADn. Trong th\u1EDDi h\u1EA1n h\u1EE3p \u0111\u1ED3ng, ch\u1EE7 s\u1EDF h\u1EEFu kh\xF4ng k\xFD giao d\u1ECBch \u0111\u1ED9c l\u1EADp v\u1EDBi kh\xE1ch h\xE0ng do SGS LAND gi\u1EDBi thi\u1EC7u \u0111\u1EC3 tr\xE1nh tranh ch\u1EA5p hoa h\u1ED3ng." } },
+                { "@type": "Question", name: "T\xF4i c\xF3 th\u1EC3 t\u1EF1 b\xE1n trong th\u1EDDi gian k\xFD g\u1EEDi kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "C\xF3 th\u1EC3 \u2014 n\u1EBFu kh\xE1ch mua l\xE0 ng\u01B0\u1EDDi ch\u1EE7 s\u1EDF h\u1EEFu t\u1EF1 t\xECm, kh\xF4ng qua SGS LAND. Tuy nhi\xEAn, n\u1EBFu kh\xE1ch mua \u0111\xE3 t\u1EEBng \u0111\u01B0\u1EE3c SGS LAND gi\u1EDBi thi\u1EC7u, hoa h\u1ED3ng v\u1EABn ph\xE1t sinh theo h\u1EE3p \u0111\u1ED3ng k\xFD g\u1EEDi (\u0111i\u1EC1u kho\u1EA3n b\u1EA3o l\u01B0u kh\xE1ch h\xE0ng th\u01B0\u1EDDng 90 ng\xE0y)." } },
+                { "@type": "Question", name: "SGS LAND c\xF3 \u0111\u1EA3m b\u1EA3o b\xE1n \u0111\u01B0\u1EE3c kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "SGS LAND cam k\u1EBFt n\u1ED7 l\u1EF1c ti\u1EBFp th\u1ECB t\u1ED1i \u0111a, nh\u01B0ng k\u1EBFt qu\u1EA3 giao d\u1ECBch ph\u1EE5 thu\u1ED9c v\xE0o th\u1ECB tr\u01B0\u1EDDng v\xE0 gi\xE1 k\u1EF3 v\u1ECDng c\u1EE7a ch\u1EE7 s\u1EDF h\u1EEFu. Ch\xFAng t\xF4i t\u01B0 v\u1EA5n \u0111\u1ECBnh gi\xE1 th\u1EF1c t\u1EBF \u0111\u1EC3 t\u1ED1i \u01B0u kh\u1EA3 n\u0103ng giao d\u1ECBch nhanh." } },
+                { "@type": "Question", name: "T\xE0i li\u1EC7u ph\xE1p l\xFD c\u1EA7n chu\u1EA9n b\u1ECB g\u1ED3m nh\u1EEFng g\xEC?", acceptedAnswer: { "@type": "Answer", text: "T\u1ED1i thi\u1EC3u: (1) S\u1ED5 \u0111\u1ECF / S\u1ED5 h\u1ED3ng (Gi\u1EA5y CNQSD\u0110) b\u1EA3n g\u1ED1c ho\u1EB7c photo c\xF4ng ch\u1EE9ng; (2) CMND/CCCD c\u1EE7a ch\u1EE7 s\u1EDF h\u1EEFu; (3) Gi\u1EA5y ph\xE9p x\xE2y d\u1EF1ng (n\u1EBFu nh\xE0 \u1EDF). \u0110\u1ED9i ng\u0169 SGS LAND s\u1EBD h\u01B0\u1EDBng d\u1EABn chi ti\u1EBFt sau khi ti\u1EBFp nh\u1EADn y\xEAu c\u1EA7u." } },
+                { "@type": "Question", name: "V\xF9ng \u0111\u1ECBa l\xFD SGS LAND \u0111ang ho\u1EA1t \u0111\u1ED9ng?", acceptedAnswer: { "@type": "Answer", text: "SGS LAND hi\u1EC7n ho\u1EA1t \u0111\u1ED9ng t\u1EADp trung t\u1EA1i TP. H\u1ED3 Ch\xED Minh v\xE0 c\xE1c t\u1EC9nh l\xE2n c\u1EADn (B\xECnh D\u01B0\u01A1ng, \u0110\u1ED3ng Nai, Long An). \u0110ang m\u1EDF r\u1ED9ng sang H\xE0 N\u1ED9i v\xE0 \u0110\xE0 N\u1EB5ng. Li\xEAn h\u1EC7 \u0111\u1EC3 ki\u1EC3m tra kh\u1EA3 n\u0103ng k\xFD g\u1EEDi t\u1EA1i khu v\u1EF1c c\u1EE7a b\u1EA1n." } }
+              ]
+            },
+            {
+              "@type": "Service",
+              "@id": `${APP_URL}/ky-gui-bat-dong-san#service`,
+              name: "D\u1ECBch v\u1EE5 K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n SGS LAND",
+              serviceType: "K\xFD g\u1EEDi b\u1EA5t \u0111\u1ED9ng s\u1EA3n",
+              inLanguage: "vi",
+              provider: { "@type": "Organization", name: "SGS LAND", url: APP_URL },
+              areaServed: [
+                { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "B\xECnh D\u01B0\u01A1ng", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
+                { "@type": "State", name: "Long An", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } }
+              ],
+              url: `${APP_URL}/ky-gui-bat-dong-san`
+            }
+          ]
+        }
+      },
       livechat: { title: "Chat Tr\u1EF1c Ti\u1EBFp | H\u1ED7 Tr\u1EE3 Kh\xE1ch H\xE0ng 24/7 - SGS LAND", description: "K\u1EBFt n\u1ED1i tr\u1EF1c ti\u1EBFp v\u1EDBi \u0111\u1ED9i ng\u0169 t\u01B0 v\u1EA5n SGS LAND qua Live Chat. \u0110\u01B0\u1EE3c h\u1ED7 tr\u1EE3 24/7 v\u1EC1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n, \u0111\u1ECBnh gi\xE1 AI v\xE0 c\xE1c d\u1ECBch v\u1EE5.", h1: "Chat Tr\u1EF1c Ti\u1EBFp V\u1EDBi Chuy\xEAn Gia" },
       login: { title: "\u0110\u0103ng Nh\u1EADp | SGS LAND Enterprise", description: "\u0110\u0103ng nh\u1EADp v\xE0o n\u1EC1n t\u1EA3ng qu\u1EA3n l\xFD b\u1EA5t \u0111\u1ED9ng s\u1EA3n SGS LAND.", noIndex: true },
       // ─── SEO Local & Project Landing Pages ─────────────────────────────────────
       "bat-dong-san-dong-nai": {
-        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n \u0110\u1ED3ng Nai | Nh\xE0 \u0110\u1EA5t, C\u0103n H\u1ED9, D\u1EF1 \xC1n - SGS LAND",
-        description: "T\xECm mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n \u0110\u1ED3ng Nai: nh\xE0 \u0111\u1EA5t Long Th\xE0nh, Nh\u01A1n Tr\u1EA1ch, Bi\xEAn H\xF2a. C\u1EADp nh\u1EADt gi\xE1 th\u1ECB tr\u01B0\u1EDDng, d\u1EF1 \xE1n m\u1EDBi v\xE0 ph\xE1p l\xFD r\xF5 r\xE0ng t\u1EA1i SGS LAND.",
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n \u0110\u1ED3ng Nai | Mua B\xE1n Nh\xE0 \u0110\u1EA5t 2025 \u2014 SGS LAND",
+        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n \u0110\u1ED3ng Nai: Nh\u01A1n Tr\u1EA1ch, Bi\xEAn H\xF2a, Long Th\xE0nh. Kho h\xE0ng ngh\xECn c\u0103n, gi\xE1 th\u1EF1c t\u1EBF, ph\xE1p l\xFD ki\u1EC3m tra tr\u01B0\u1EDBc. SGS LAND.",
         h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n \u0110\u1ED3ng Nai",
         structuredData: {
           "@context": "https://schema.org",
@@ -28382,8 +28528,8 @@ var init_metaInjector = __esm({
         }
       },
       "bat-dong-san-long-thanh": {
-        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Long Th\xE0nh | \u0110\u1EA5t N\u1EC1n S\xE2n Bay, C\u0103n H\u1ED9 - SGS LAND",
-        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n Long Th\xE0nh, \u0110\u1ED3ng Nai: \u0111\u1EA5t n\u1EC1n khu v\u1EF1c s\xE2n bay Long Th\xE0nh, d\u1EF1 \xE1n c\u0103n h\u1ED9 v\xE0 li\u1EC1n k\u1EC1. C\u01A1 h\u1ED9i \u0111\u1EA7u t\u01B0 ti\u1EC1m n\u0103ng t\u1EA1i SGS LAND.",
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Long Th\xE0nh | \u0110\u1EA5t N\u1EC1n, Nh\xE0 Ph\u1ED1 \u2014 SGS LAND",
+        description: "Mua b\xE1n \u0111\u1EA5t n\u1EC1n, nh\xE0 ph\u1ED1 Long Th\xE0nh \u0110\u1ED3ng Nai. V\xF9ng kinh t\u1EBF s\xE2n bay, ti\u1EC1m n\u0103ng t\u0103ng gi\xE1 cao. \u0110\u1ECBnh gi\xE1 AI mi\u1EC5n ph\xED t\u1EA1i SGS LAND.",
         h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Long Th\xE0nh",
         structuredData: {
           "@context": "https://schema.org",
@@ -28462,9 +28608,9 @@ var init_metaInjector = __esm({
         }
       },
       "du-an/manhattan": {
-        title: "D\u1EF1 \xC1n Manhattan | C\u0103n H\u1ED9 Cao C\u1EA5p B\xECnh D\u01B0\u01A1ng - SGS LAND",
-        description: "D\u1EF1 \xE1n Manhattan B\xECnh D\u01B0\u01A1ng: v\u1ECB tr\xED \u0111\u1EAFc \u0111\u1ECBa, thi\u1EBFt k\u1EBF hi\u1EC7n \u0111\u1EA1i, gi\xE1 t\u1EEB 35 tri\u1EC7u/m\xB2. Xem b\u1EA3ng gi\xE1, ti\u1EBFn \u0111\u1ED9 x\xE2y d\u1EF1ng v\xE0 ch\xEDnh s\xE1ch \u01B0u \u0111\xE3i t\u1EA1i SGS LAND.",
-        h1: "D\u1EF1 \xC1n Manhattan",
+        title: "Grand Manhattan Novaland | C\u0103n H\u1ED9 H\u1EA1ng Sang Novaland TP.HCM - SGS LAND",
+        description: "Grand Manhattan Novaland: c\u0103n h\u1ED9 h\u1EA1ng sang bi\u1EC3u t\u01B0\u1EE3ng c\u1EE7a Novaland t\u1EA1i trung t\xE2m TP.HCM, t\u1EEB 120 tri\u1EC7u/m\xB2. Xem b\u1EA3ng gi\xE1, penthouse v\xE0 sky villa t\u1EA1i SGS LAND.",
+        h1: "Grand Manhattan Novaland",
         structuredData: {
           "@context": "https://schema.org",
           "@graph": [
@@ -28473,38 +28619,38 @@ var init_metaInjector = __esm({
               itemListElement: [
                 { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
                 { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "D\u1EF1 \xC1n Manhattan", item: `${APP_URL}/du-an/manhattan` }
+                { "@type": "ListItem", position: 3, name: "Grand Manhattan Novaland", item: `${APP_URL}/du-an/manhattan` }
               ]
             },
             {
               "@type": "FAQPage",
               mainEntity: [
-                { "@type": "Question", name: "D\u1EF1 \xE1n Manhattan B\xECnh D\u01B0\u01A1ng c\xF3 \u01B0u \u0111i\u1EC3m g\xEC n\u1ED5i b\u1EADt?", acceptedAnswer: { "@type": "Answer", text: "Manhattan B\xECnh D\u01B0\u01A1ng n\u1ED5i b\u1EADt v\u1EDBi v\u1ECB tr\xED trung t\xE2m B\xECnh D\u01B0\u01A1ng, thi\u1EBFt k\u1EBF chu\u1EA9n qu\u1ED1c t\u1EBF ph\xF9 h\u1EE3p chuy\xEAn gia n\u01B0\u1EDBc ngo\xE0i v\xE0 gi\xE1 c\u1EA1nh tranh h\u01A1n c\u0103n h\u1ED9 cao c\u1EA5p TP.HCM c\xF9ng ph\xE2n kh\xFAc." } },
-                { "@type": "Question", name: "Gi\xE1 c\u0103n h\u1ED9 Manhattan B\xECnh D\u01B0\u01A1ng t\u1EEB bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Gi\xE1 tham kh\u1EA3o t\u1EEB 35 tri\u1EC7u/m\xB2, c\u0103n h\u1ED9 1 ph\xF2ng ng\u1EE7 t\u1EEB 2-3 t\u1EF7, 2 ph\xF2ng ng\u1EE7 t\u1EEB 3-5 t\u1EF7, 3 ph\xF2ng ng\u1EE7 t\u1EEB 5-8 t\u1EF7. H\u1ED7 tr\u1EE3 vay ng\xE2n h\xE0ng t\u1ED1i \u0111a 70% gi\xE1 tr\u1ECB." } },
-                { "@type": "Question", name: "C\xF3 th\u1EC3 cho thu\xEA c\u0103n h\u1ED9 Manhattan kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "B\xECnh D\u01B0\u01A1ng c\xF3 nhu c\u1EA7u thu\xEA nh\xE0 \u1EDF cao nh\u1EA5t c\u1EA3 n\u01B0\u1EDBc. C\u0103n h\u1ED9 Manhattan ph\xF9 h\u1EE3p cho thu\xEA v\u1EDBi gi\xE1 10-25 tri\u1EC7u/th\xE1ng, t\u1EF7 su\u1EA5t l\u1EE3i nhu\u1EADn cho thu\xEA \u01B0\u1EDBc t\xEDnh 5-7%/n\u0103m." } },
-                { "@type": "Question", name: "Ph\xE1p l\xFD Manhattan B\xECnh D\u01B0\u01A1ng c\xF3 r\xF5 r\xE0ng kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "D\u1EF1 \xE1n \u0111\u01B0\u1EE3c c\u1EA5p s\u1ED5 h\u1ED3ng 50 n\u0103m c\xF3 gia h\u1EA1n. Becamex IDC l\xE0 ch\u1EE7 \u0111\u1EA7u t\u01B0 uy t\xEDn v\u1EDBi 30+ n\u0103m kinh nghi\u1EC7m ph\xE1t tri\u1EC3n \u0111\xF4 th\u1ECB B\xECnh D\u01B0\u01A1ng. SGS LAND ki\u1EC3m tra ph\xE1p l\xFD \u0111\u1ED9c l\u1EADp mi\u1EC5n ph\xED." } },
-                { "@type": "Question", name: "Chuy\xEAn gia n\u01B0\u1EDBc ngo\xE0i c\xF3 \u01B0a chu\u1ED9ng Manhattan B\xECnh D\u01B0\u01A1ng kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "B\xECnh D\u01B0\u01A1ng c\xF3 50.000+ chuy\xEAn gia n\u01B0\u1EDBc ngo\xE0i (H\xE0n, Nh\u1EADt, \u0110\xE0i Loan). C\u0103n h\u1ED9 chu\u1EA9n qu\u1ED1c t\u1EBF nh\u01B0 Manhattan r\u1EA5t \u0111\u01B0\u1EE3c \u01B0a chu\u1ED9ng cho thu\xEA, gi\xE1 10-20 tri\u1EC7u/th\xE1ng, d\xF2ng ti\u1EC1n \u1ED5n \u0111\u1ECBnh." } },
-                { "@type": "Question", name: "Becamex IDC l\xE0 ch\u1EE7 \u0111\u1EA7u t\u01B0 nh\u01B0 th\u1EBF n\xE0o?", acceptedAnswer: { "@type": "Answer", text: "Becamex IDC Corp thu\u1ED9c UBND t\u1EC9nh B\xECnh D\u01B0\u01A1ng, l\xE0 ch\u1EE7 \u0111\u1EA7u t\u01B0 KCN v\xE0 \u0111\xF4 th\u1ECB l\u1EDBn nh\u1EA5t \u0110\xF4ng Nam B\u1ED9 v\u1EDBi 30+ n\u0103m kinh nghi\u1EC7m ph\xE1t tri\u1EC3n KCN VSIP v\xE0 Th\xE0nh Ph\u1ED1 M\u1EDBi B\xECnh D\u01B0\u01A1ng." } },
-                { "@type": "Question", name: "Vay ng\xE2n h\xE0ng mua c\u0103n h\u1ED9 Manhattan B\xECnh D\u01B0\u01A1ng c\xF3 d\u1EC5 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Ph\xE1p l\xFD minh b\u1EA1ch v\xE0 Becamex IDC uy t\xEDn gi\xFAp vay ng\xE2n h\xE0ng thu\u1EADn l\u1EE3i. LTV t\u1ED1i \u0111a 70%, k\u1EF3 h\u1EA1n 25 n\u0103m, l\xE3i su\u1EA5t \u01B0u \u0111\xE3i 24 th\xE1ng \u0111\u1EA7u. SGS LAND h\u1ED7 tr\u1EE3 h\u1ED3 s\u01A1 vay mi\u1EC5n ph\xED." } },
-                { "@type": "Question", name: "Gi\xE1 th\u1EE9 c\u1EA5p c\u0103n h\u1ED9 Manhattan B\xECnh D\u01B0\u01A1ng hi\u1EC7n t\u1EA1i?", acceptedAnswer: { "@type": "Answer", text: "1PN (45-55m\xB2) kho\u1EA3ng 2,5-3,5 t\u1EF7; 2PN (70-90m\xB2) kho\u1EA3ng 4-6 t\u1EF7; 3PN (100-120m\xB2) kho\u1EA3ng 6-9 t\u1EF7. Thanh kho\u1EA3n t\u1ED1t nh\u1EDD nhu c\u1EA7u th\u1EF1c t\u1EEB chuy\xEAn gia KCN B\xECnh D\u01B0\u01A1ng." } }
+                { "@type": "Question", name: "Grand Manhattan Novaland c\xF3 \u0111i\u1EC3m g\xEC n\u1ED5i b\u1EADt?", acceptedAnswer: { "@type": "Answer", text: "Grand Manhattan Novaland n\u1ED5i b\u1EADt v\u1EDBi th\u01B0\u01A1ng hi\u1EC7u Novaland h\u1EA1ng sang, v\u1ECB tr\xED trung t\xE2m n\u1ED9i \u0111\xF4 TP.HCM v\xE0 chu\u1EA9n m\u1EF1c 5 sao t\u1EEB ti\u1EC7n \xEDch \u0111\u1EBFn d\u1ECBch v\u1EE5 qu\u1EA3n l\xFD v\u1EADn h\xE0nh." } },
+                { "@type": "Question", name: "Gi\xE1 c\u0103n h\u1ED9 Grand Manhattan Novaland t\u1EEB bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Gi\xE1 t\u1EEB 120 tri\u1EC7u/m\xB2; c\u0103n h\u1ED9 2PN t\u1EEB 9-15 t\u1EF7; 3PN t\u1EEB 15-22 t\u1EF7; penthouse t\u1EEB 30-50 t\u1EF7. H\u1ED7 tr\u1EE3 vay ng\xE2n h\xE0ng t\u1ED1i \u0111a 70% gi\xE1 tr\u1ECB." } },
+                { "@type": "Question", name: "Grand Manhattan Novaland \u1EDF v\u1ECB tr\xED n\xE0o t\u1EA1i TP.HCM?", acceptedAnswer: { "@type": "Answer", text: "T\u1ECDa l\u1EA1c n\u1ED9i th\xE0nh TP.HCM, ti\u1EBFp gi\xE1p Qu\u1EADn 1 v\xE0 khu v\u1EF1c Ph\xFA Nhu\u1EADn. Ch\u1EC9 5-10 ph\xFAt \u0111\u1EBFn s\xE2n bay T\xE2n S\u01A1n Nh\u1EA5t, 10-15 ph\xFAt \u0111\u1EBFn Landmark 81." } },
+                { "@type": "Question", name: "Cho thu\xEA Grand Manhattan Novaland thu nh\u1EADp bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "Cho thu\xEA d\xE0i h\u1EA1n: 2PN 50-80 tri\u1EC7u/th\xE1ng; 3PN 80-130 tri\u1EC7u/th\xE1ng; penthouse t\u1EEB 150 tri\u1EC7u/th\xE1ng. Nhu c\u1EA7u thu\xEA h\u1EA1ng sang t\u1EEB doanh nh\xE2n v\xE0 chuy\xEAn gia qu\u1ED1c t\u1EBF \u1ED5n \u0111\u1ECBnh." } },
+                { "@type": "Question", name: "Ph\xE1p l\xFD Grand Manhattan Novaland c\xF3 an to\xE0n kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Novaland Group l\xE0 t\u1EADp \u0111o\xE0n B\u0110S ni\xEAm y\u1EBFt HOSE (m\xE3 NVL), minh b\u1EA1ch t\xE0i ch\xEDnh cao. D\u1EF1 \xE1n c\u1EA5p s\u1ED5 h\u1ED3ng ch\xEDnh ch\u1EE7 l\xE2u d\xE0i. SGS LAND ki\u1EC3m tra ph\xE1p l\xFD \u0111\u1ED9c l\u1EADp mi\u1EC5n ph\xED." } },
+                { "@type": "Question", name: "Novaland Group c\xF3 uy t\xEDn nh\u01B0 th\u1EBF n\xE0o?", acceptedAnswer: { "@type": "Answer", text: "Novaland l\xE0 m\u1ED9t trong hai t\u1EADp \u0111o\xE0n B\u0110S t\u01B0 nh\xE2n l\u1EDBn nh\u1EA5t Vi\u1EC7t Nam, v\u1EDBi c\xE1c d\u1EF1 \xE1n bi\u1EC3u t\u01B0\u1EE3ng: Aqua City 1.000ha, Novaworld Phan Thi\u1EBFt, NovaWorld H\u1ED3 Tr\xE0m." } },
+                { "@type": "Question", name: "Vay ng\xE2n h\xE0ng mua Grand Manhattan Novaland c\xF3 d\u1EC5 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Novaland uy t\xEDn v\xE0 ph\xE1p l\xFD minh b\u1EA1ch gi\xFAp vay thu\u1EADn l\u1EE3i. LTV t\u1ED1i \u0111a 70%, k\u1EF3 h\u1EA1n 25 n\u0103m, l\xE3i su\u1EA5t \u01B0u \u0111\xE3i 18-24 th\xE1ng \u0111\u1EA7u. SGS LAND h\u1ED7 tr\u1EE3 h\u1ED3 s\u01A1 vay mi\u1EC5n ph\xED." } },
+                { "@type": "Question", name: "Ti\u1EC1m n\u0103ng t\u0103ng gi\xE1 Grand Manhattan Novaland trong 5 n\u0103m t\u1EDBi?", acceptedAnswer: { "@type": "Answer", text: "B\u0110S h\u1EA1ng sang n\u1ED9i \u0111\xF4 TP.HCM t\u0103ng 10-18%/n\u0103m trong th\u1EADp k\u1EF7 qua. Grand Manhattan h\u01B0\u1EDFng l\u1EE3i t\u1EEB qu\u1EF9 \u0111\u1EA5t khan hi\u1EBFm, Metro s\u1ED1 2 (2028-2030) v\xE0 TP.HCM ph\xE1t tri\u1EC3n th\xE0nh trung t\xE2m t\xE0i ch\xEDnh khu v\u1EF1c." } }
               ]
             },
             {
               "@type": "ApartmentComplex",
               "@id": `${APP_URL}/du-an/manhattan#project`,
-              name: "D\u1EF1 \xC1n Manhattan B\xECnh D\u01B0\u01A1ng",
-              description: "T\u1ED5 h\u1EE3p c\u0103n h\u1ED9 cao c\u1EA5p chu\u1EA9n qu\u1ED1c t\u1EBF t\u1EA1i trung t\xE2m t\u1EC9nh l\u1EF5 B\xECnh D\u01B0\u01A1ng",
+              name: "Grand Manhattan Novaland",
+              description: "T\u1ED5 h\u1EE3p c\u0103n h\u1ED9 h\u1EA1ng sang bi\u1EC3u t\u01B0\u1EE3ng c\u1EE7a Novaland t\u1EA1i trung t\xE2m TP.HCM, chu\u1EA9n m\u1EF1c 5 sao qu\u1ED1c t\u1EBF",
               url: `${APP_URL}/du-an/manhattan`,
-              address: { "@type": "PostalAddress", addressLocality: "B\xECnh D\u01B0\u01A1ng", addressCountry: "VN" },
-              offers: { "@type": "Offer", price: "35000000", priceCurrency: "VND", unitText: "m\xB2" }
+              address: { "@type": "PostalAddress", addressLocality: "TP.HCM", addressCountry: "VN" },
+              offers: { "@type": "Offer", price: "120000000", priceCurrency: "VND", unitText: "m\xB2" }
             }
           ]
         }
       },
       // ─── New Location Landing Pages ─────────────────────────────────────────────
       "bat-dong-san-thu-duc": {
-        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n TP Th\u1EE7 \u0110\u1EE9c | C\u0103n H\u1ED9, Nh\xE0 Ph\u1ED1, Metro - SGS LAND",
-        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n TP Th\u1EE7 \u0110\u1EE9c: c\u0103n h\u1ED9 Th\u1EE7 Thi\xEAm, Vinhomes Grand Park, khu v\u1EF1c Metro s\u1ED1 1. T\u01B0 v\u1EA5n ph\xE1p l\xFD v\xE0 \u0111\u1ECBnh gi\xE1 AI mi\u1EC5n ph\xED t\u1EA1i SGS LAND.",
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n TP Th\u1EE7 \u0110\u1EE9c | C\u0103n H\u1ED9, \u0110\u1EA5t N\u1EC1n \u2014 SGS LAND",
+        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n TP Th\u1EE7 \u0110\u1EE9c: Vinhomes, Masterise, The Global City. Gi\xE1 th\u1ECB tr\u01B0\u1EDDng c\u1EADp nh\u1EADt, t\u01B0 v\u1EA5n chuy\xEAn nghi\u1EC7p t\u1EA1i SGS LAND.",
         h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n TP Th\u1EE7 \u0110\u1EE9c",
         structuredData: {
           "@context": "https://schema.org",
@@ -28537,8 +28683,8 @@ var init_metaInjector = __esm({
         }
       },
       "bat-dong-san-binh-duong": {
-        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\xECnh D\u01B0\u01A1ng | C\u0103n H\u1ED9, \u0110\u1EA5t N\u1EC1n KCN - SGS LAND",
-        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh D\u01B0\u01A1ng: c\u0103n h\u1ED9 Thu\u1EADn An, D\u0129 An, \u0111\u1EA5t n\u1EC1n B\xECnh D\u01B0\u01A1ng. Nhu c\u1EA7u cho thu\xEA cao t\u1EEB 500.000+ chuy\xEAn gia KCN. T\u01B0 v\u1EA5n mi\u1EC5n ph\xED SGS LAND.",
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\xECnh D\u01B0\u01A1ng | Nh\xE0 Ph\u1ED1, \u0110\u1EA5t N\u1EC1n \u2014 SGS LAND",
+        description: "Mua b\xE1n nh\xE0 \u0111\u1EA5t B\xECnh D\u01B0\u01A1ng: Thu\u1EADn An, D\u0129 An, Th\u1EE7 D\u1EA7u M\u1ED9t. Ph\xE1p l\xFD an to\xE0n, \u0111\u1ECBnh gi\xE1 AI ch\xEDnh x\xE1c. Li\xEAn h\u1EC7 SGS LAND ngay.",
         h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\xECnh D\u01B0\u01A1ng",
         structuredData: {
           "@context": "https://schema.org",
@@ -28565,14 +28711,14 @@ var init_metaInjector = __esm({
               name: "SGS LAND - B\u0110S B\xECnh D\u01B0\u01A1ng",
               url: `${APP_URL}/bat-dong-san-binh-duong`,
               areaServed: { "@type": "State", name: "B\xECnh D\u01B0\u01A1ng", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
-              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh D\u01B0\u01A1ng", "Khu c\xF4ng nghi\u1EC7p B\xECnh D\u01B0\u01A1ng", "Thu\u1EADn An", "D\u0129 An", "Th\xE0nh Ph\u1ED1 M\u1EDBi B\xECnh D\u01B0\u01A1ng", "Manhattan B\xECnh D\u01B0\u01A1ng"]
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh D\u01B0\u01A1ng", "Khu c\xF4ng nghi\u1EC7p B\xECnh D\u01B0\u01A1ng", "Thu\u1EADn An", "D\u0129 An", "Th\xE0nh Ph\u1ED1 M\u1EDBi B\xECnh D\u01B0\u01A1ng", "Grand Manhattan Novaland"]
             }
           ]
         }
       },
       "bat-dong-san-quan-7": {
-        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Qu\u1EADn 7 | Ph\xFA M\u1EF9 H\u01B0ng, C\u0103n H\u1ED9 Cao C\u1EA5p - SGS LAND",
-        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n Qu\u1EADn 7 TP.HCM: Ph\xFA M\u1EF9 H\u01B0ng, Sunrise City, khu c\u1ED9ng \u0111\u1ED3ng qu\u1ED1c t\u1EBF. C\u0103n h\u1ED9 cao c\u1EA5p, nh\xE0 ph\u1ED1, bi\u1EC7t th\u1EF1. T\u01B0 v\u1EA5n v\xE0 \u0111\u1ECBnh gi\xE1 AI t\u1EA1i SGS LAND.",
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Qu\u1EADn 7 TP.HCM | Nh\xE0 Ph\u1ED1, C\u0103n H\u1ED9 \u2014 SGS LAND",
+        description: "Mua b\xE1n nh\xE0 \u0111\u1EA5t Qu\u1EADn 7: Ph\xFA M\u1EF9 H\u01B0ng, T\xE2n Phong, T\xE2n Quy. V\u1ECB tr\xED \u0111\u1EAFc \u0111\u1ECBa, ti\u1EC7n \xEDch cao c\u1EA5p. Kho h\xE0ng \u0111a d\u1EA1ng t\u1EA1i SGS LAND.",
         h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Qu\u1EADn 7",
         structuredData: {
           "@context": "https://schema.org",
@@ -28604,10 +28750,10 @@ var init_metaInjector = __esm({
           ]
         }
       },
-      "bat-dong-san-binh-chanh": {
-        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\xECnh Ch\xE1nh | \u0110\u1EA5t N\u1EC1n, Nh\xE0 Ph\u1ED1 - SGS LAND",
-        description: "Mua b\xE1n b\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh Ch\xE1nh TP.HCM: \u0111\u1EA5t n\u1EC1n, nh\xE0 ph\u1ED1 gi\xE1 h\u1EA5p d\u1EABn, h\u01B0\u1EDFng l\u1EE3i V\xE0nh \u0111ai 3. Ki\u1EC3m tra ph\xE1p l\xFD v\xE0 \u0111\u1ECBnh gi\xE1 AI mi\u1EC5n ph\xED t\u1EA1i SGS LAND.",
-        h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n B\xECnh Ch\xE1nh",
+      "bat-dong-san-phu-nhuan": {
+        title: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Ph\xFA Nhu\u1EADn TP.HCM | Nh\xE0 Trung T\xE2m \u2014 SGS LAND",
+        description: "Mua b\xE1n nh\xE0 \u0111\u1EA5t Ph\xFA Nhu\u1EADn: Nh\xE0 ph\u1ED1, c\u0103n h\u1ED9 trung t\xE2m TP.HCM. V\u1ECB tr\xED thu\u1EADn ti\u1EC7n, giao th\xF4ng k\u1EBFt n\u1ED1i. T\u01B0 v\u1EA5n mi\u1EC5n ph\xED t\u1EA1i SGS LAND.",
+        h1: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Ph\xFA Nhu\u1EADn",
         structuredData: {
           "@context": "https://schema.org",
           "@graph": [
@@ -28616,24 +28762,24 @@ var init_metaInjector = __esm({
               itemListElement: [
                 { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
                 { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "B\u0110S B\xECnh Ch\xE1nh", item: `${APP_URL}/bat-dong-san-binh-chanh` }
+                { "@type": "ListItem", position: 3, name: "B\u0110S Ph\xFA Nhu\u1EADn", item: `${APP_URL}/bat-dong-san-phu-nhuan` }
               ]
             },
             {
               "@type": "FAQPage",
               mainEntity: [
-                { "@type": "Question", name: "\u0110\u1EA5t B\xECnh Ch\xE1nh hi\u1EC7n nay gi\xE1 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "M\u1EB7t ti\u1EC1n qu\u1ED1c l\u1ED9 1A 40-80 tri\u1EC7u/m\xB2; \u0111\u01B0\u1EDDng l\u1EDBn th\u1ECB tr\u1EA5n 20-45 tri\u1EC7u/m\xB2; \u0111\u1EA5t n\u1EC1n d\u1EF1 \xE1n 15-35 tri\u1EC7u/m\xB2; \u0111\u1EA5t v\u01B0\u1EDDn chuy\u1EC3n m\u1EE5c \u0111\xEDch 3-10 tri\u1EC7u/m\xB2." } },
-                { "@type": "Question", name: "C\xF3 n\xEAn mua \u0111\u1EA5t B\xECnh Ch\xE1nh \u0111\u1EC3 \u0111\u1EA7u t\u01B0 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "B\xECnh Ch\xE1nh l\xE0 th\u1ECB tr\u01B0\u1EDDng \u0111\u1EA7u t\u01B0 trung v\xE0 d\xE0i h\u1EA1n ti\u1EC1m n\u0103ng. V\xE0nh \u0111ai 3 ho\xE0n th\xE0nh s\u1EBD k\xE9o theo \u0111\xF4 th\u1ECB h\xF3a m\u1EA1nh, t\u0103ng gi\xE1 20-40%." } },
-                { "@type": "Question", name: "V\xE0nh \u0111ai 3 \u1EA3nh h\u01B0\u1EDFng th\u1EBF n\xE0o \u0111\u1EBFn B\u0110S B\xECnh Ch\xE1nh?", acceptedAnswer: { "@type": "Answer", text: "B\u0110S trong b\xE1n k\xEDnh 1-2km quanh n\xFAt giao v\xE0nh \u0111ai 3 t\u1EA1i B\xECnh Ch\xE1nh \u0111\u01B0\u1EE3c d\u1EF1 b\xE1o t\u0103ng gi\xE1 30-50% sau khi th\xF4ng \u0111\u01B0\u1EDDng (2025-2026)." } }
+                { "@type": "Question", name: "Gi\xE1 nh\xE0 ph\u1ED1 Ph\xFA Nhu\u1EADn hi\u1EC7n nay l\xE0 bao nhi\xEAu?", acceptedAnswer: { "@type": "Answer", text: "M\u1EB7t ti\u1EC1n \u0111\u01B0\u1EDDng l\u1EDBn (Phan \u0110\xECnh Ph\xF9ng, Ho\xE0ng V\u0103n Th\u1EE5) 150-300 tri\u1EC7u/m\xB2; nh\xE0 h\u1EBBm xe h\u01A1i 80-150 tri\u1EC7u/m\xB2; nh\xE0 h\u1EBBm nh\u1ECF 50-80 tri\u1EC7u/m\xB2. C\u0103n h\u1ED9 cao c\u1EA5p 60-120 tri\u1EC7u/m\xB2." } },
+                { "@type": "Question", name: "B\u0110S Ph\xFA Nhu\u1EADn c\xF3 \u0111\xE1ng \u0111\u1EA7u t\u01B0 kh\xF4ng?", acceptedAnswer: { "@type": "Answer", text: "Ph\xFA Nhu\u1EADn l\xE0 th\u1ECB tr\u01B0\u1EDDng B\u0110S tr\xFA \u1EA9n an to\xE0n \u2014 gi\xE1 t\u0103ng \u0111\u1EC1u \u0111\u1EB7n 8-15%/n\u0103m, thanh kho\u1EA3n v\u01B0\u1EE3t tr\u1ED9i nh\u1EDD nhu c\u1EA7u \u1EDF th\u1EF1c v\xE0 cho thu\xEA m\u1EB7t b\u1EB1ng kinh doanh t\u1EEB doanh nh\xE2n v\xE0 chuy\xEAn gia qu\u1ED1c t\u1EBF." } },
+                { "@type": "Question", name: "G\u1EA7n s\xE2n bay T\xE2n S\u01A1n Nh\u1EA5t c\xF3 l\u1EE3i g\xEC cho B\u0110S Ph\xFA Nhu\u1EADn?", acceptedAnswer: { "@type": "Answer", text: "C\xE1ch s\xE2n bay T\xE2n S\u01A1n Nh\u1EA5t 2-4km t\u1EA1o nhu c\u1EA7u thu\xEA nh\xE0 v\xE0 v\u0103n ph\xF2ng t\u1EEB chuy\xEAn gia h\xE0ng kh\xF4ng, phi c\xF4ng, doanh nh\xE2n qu\u1ED1c t\u1EBF \u2014 gi\u1EEF cho th\u1ECB tr\u01B0\u1EDDng cho thu\xEA Ph\xFA Nhu\u1EADn lu\xF4n s\xF4i \u0111\u1ED9ng." } }
               ]
             },
             {
               "@type": "RealEstateAgent",
-              "@id": `${APP_URL}/bat-dong-san-binh-chanh#agent`,
-              name: "SGS LAND - B\u0110S B\xECnh Ch\xE1nh",
-              url: `${APP_URL}/bat-dong-san-binh-chanh`,
-              areaServed: { "@type": "City", name: "B\xECnh Ch\xE1nh", containedInPlace: { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } } },
-              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh Ch\xE1nh", "\u0110\u1EA5t n\u1EC1n B\xECnh Ch\xE1nh", "V\xE0nh \u0111ai 3 TP.HCM", "Akari City Nam Long"]
+              "@id": `${APP_URL}/bat-dong-san-phu-nhuan#agent`,
+              name: "SGS LAND - B\u0110S Ph\xFA Nhu\u1EADn",
+              url: `${APP_URL}/bat-dong-san-phu-nhuan`,
+              areaServed: { "@type": "City", name: "Ph\xFA Nhu\u1EADn", containedInPlace: { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } } },
+              knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n Ph\xFA Nhu\u1EADn", "Nh\xE0 ph\u1ED1 Ph\xFA Nhu\u1EADn", "Phan \u0110\xECnh Ph\xF9ng", "Ho\xE0ng V\u0103n Th\u1EE5", "G\u1EA7n s\xE2n bay T\xE2n S\u01A1n Nh\u1EA5t"]
             }
           ]
         }
@@ -53106,8 +53252,1987 @@ function createConnectorRoutes(authenticateToken) {
   return router;
 }
 
-// server/routes/errorLogRoutes.ts
+// server/routes/scraperRoutes.ts
 import { Router as Router27 } from "express";
+import * as cheerio from "cheerio";
+var HEADERS_BROWSER = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+  "Accept-Language": "vi-VN,vi;q=0.9,en;q=0.8"
+};
+var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function parseVnPrice(raw) {
+  const s2 = (raw ?? "").toLowerCase().replace(/\s/g, "").replace(/,/g, ".");
+  const ty = s2.match(/([\d.]+)tỷ/);
+  const tr = s2.match(/([\d.]+)triệu/);
+  const ty2 = s2.match(/([\d.]+)ty/);
+  if (ty) return Math.round(parseFloat(ty[1]) * 1e9);
+  if (ty2) return Math.round(parseFloat(ty2[1]) * 1e9);
+  if (tr) return Math.round(parseFloat(tr[1]) * 1e6);
+  return 0;
+}
+function parseArea(raw) {
+  const m = (raw ?? "").replace(/,/g, ".").match(/[\d.]+/);
+  return m ? parseFloat(m[0]) : 0;
+}
+async function scraperApiFetch(targetUrl, render = false) {
+  const key = process.env.SCRAPERAPI_KEY;
+  if (!key) throw new Error("SCRAPERAPI_KEY not configured");
+  const proxyUrl = `http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(targetUrl)}&country_code=vn${render ? "&render=true" : ""}`;
+  return fetch(proxyUrl, { signal: AbortSignal.timeout(3e4) });
+}
+async function scrapeChotot(maxPages = 3) {
+  const start = Date.now();
+  const listings = [];
+  try {
+    for (let page = 0; page < maxPages; page++) {
+      const offset = page * 20;
+      const url2 = `https://gateway.chotot.com/v1/public/ad-listing?cg=1020&o=${offset}&limit=20&st=s,k&key_param_included=true`;
+      const res = await fetch(url2, { headers: { "Accept": "application/json", "User-Agent": "Mozilla/5.0" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const ads = data.ads ?? [];
+      if (!ads.length) break;
+      for (const ad of ads) {
+        const price = Number(ad.price ?? 0);
+        const area = parseArea(String(ad.size ?? ad.area ?? ""));
+        listings.push({
+          id: `chotot-${ad.list_id ?? ad.ad_id}`,
+          source: "Ch\u1EE3 T\u1ED1t",
+          title: String(ad.subject ?? ""),
+          type: String(ad.category_name ?? "Nh\xE0 \u1EDF"),
+          transaction: String(ad.type ?? "").toLowerCase() === "r" ? "Cho thu\xEA" : "B\xE1n",
+          price,
+          priceDisplay: String(ad.price_string ?? ""),
+          area,
+          pricePerM2: area > 0 ? Math.round(price / area) : 0,
+          location: [String(ad.street_name ?? ""), String(ad.area_name ?? ""), String(ad.region_name ?? "")].filter(Boolean).join(", "),
+          province: String(ad.region_name ?? ""),
+          bedrooms: ad.rooms ? Number(ad.rooms) : null,
+          imageUrl: String(ad.thumbnail_image ?? ad.image ?? "") || null,
+          url: `https://www.chotot.com/${ad.list_id}.htm`,
+          postedAt: ad.list_time ? new Date(Number(ad.list_time)).toISOString() : null,
+          scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+        });
+      }
+      if (page < maxPages - 1) await sleep(600);
+    }
+    return { source: "chotot", ok: true, listings, total: listings.length, durationMs: Date.now() - start };
+  } catch (err4) {
+    return { source: "chotot", ok: false, listings, total: 0, durationMs: Date.now() - start, error: String(err4) };
+  }
+}
+var ALONHADAT_URLS = [
+  { url: "https://alonhadat.com.vn/nha-dat/can-ban/nha-dat/tp-ho-chi-minh/1/quan-1.html", province: "TP H\u1ED3 Ch\xED Minh", district: "Qu\u1EADn 1" },
+  { url: "https://alonhadat.com.vn/nha-dat/can-ban/nha-dat/tp-ho-chi-minh/3/quan-3.html", province: "TP H\u1ED3 Ch\xED Minh", district: "Qu\u1EADn 3" },
+  { url: "https://alonhadat.com.vn/nha-dat/can-ban/nha-dat/tp-ho-chi-minh/7/quan-binh-thanh.html", province: "TP H\u1ED3 Ch\xED Minh", district: "B\xECnh Th\u1EA1nh" },
+  { url: "https://alonhadat.com.vn/nha-dat/can-ban/nha-dat/dong-nai/1/thanh-pho-bien-hoa.html", province: "\u0110\u1ED3ng Nai", district: "Bi\xEAn H\xF2a" },
+  { url: "https://alonhadat.com.vn/nha-dat/can-ban/nha-dat/binh-duong/1/thanh-pho-thu-dau-mot.html", province: "B\xECnh D\u01B0\u01A1ng", district: "Th\u1EE7 D\u1EA7u M\u1ED9t" }
+];
+async function scrapeAlonNhaDat(maxUrls = 3) {
+  const start = Date.now();
+  const listings = [];
+  let okCount = 0;
+  for (const { url: url2, province, district } of ALONHADAT_URLS.slice(0, maxUrls)) {
+    try {
+      const res = await fetch(url2, { headers: HEADERS_BROWSER });
+      if (!res.ok) continue;
+      const html = await res.text();
+      const $ = cheerio.load(html);
+      $("article.property-item").each((_, el) => {
+        const $el = $(el);
+        const href = $el.find("a.link").attr("href") ?? "";
+        const title = $el.find(".property-title").text().trim();
+        const date5 = $el.find("time.created-date").attr("datetime") ?? null;
+        const det = $el.find(".property-details");
+        const priceRaw = det.find(".price strong").text().trim() || $el.find(".price").text().trim();
+        const areaRaw = det.find(".area").text().trim() || det.find(".square").text().trim();
+        const imgSrc = $el.find(".thumbnail img").attr("src") ?? null;
+        const bedRaw = det.find(".bedroom").text().trim();
+        const idMatch = href.match(/(\d{5,})/);
+        const extId = idMatch ? idMatch[1] : `${Date.now()}-${Math.random()}`;
+        const price = parseVnPrice(priceRaw);
+        const area = parseArea(areaRaw);
+        listings.push({
+          id: `alonhadat-${extId}`,
+          source: "AlonNhaDat",
+          title,
+          type: "Nh\xE0 \u1EDF",
+          transaction: "B\xE1n",
+          price,
+          priceDisplay: priceRaw,
+          area,
+          pricePerM2: area > 0 ? Math.round(price / area) : 0,
+          location: [district, province].join(", "),
+          province,
+          bedrooms: bedRaw ? parseInt(bedRaw) || null : null,
+          imageUrl: imgSrc ? imgSrc.startsWith("http") ? imgSrc : `https://alonhadat.com.vn${imgSrc}` : null,
+          url: href.startsWith("http") ? href : `https://alonhadat.com.vn${href}`,
+          postedAt: date5,
+          scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+        });
+      });
+      okCount++;
+      await sleep(700);
+    } catch {
+    }
+  }
+  return { source: "alonhadat", ok: okCount > 0, listings, total: listings.length, durationMs: Date.now() - start };
+}
+var BDS_PAGES = [
+  { url: "https://batdongsan.com.vn/nha-dat-ban-tp-hcm", province: "TP H\u1ED3 Ch\xED Minh" },
+  { url: "https://batdongsan.com.vn/nha-dat-ban-ha-noi", province: "H\xE0 N\u1ED9i" },
+  { url: "https://batdongsan.com.vn/nha-dat-ban-da-nang", province: "\u0110\xE0 N\u1EB5ng" }
+];
+async function scrapeBatDongSan(maxPages = 2) {
+  const start = Date.now();
+  const listings = [];
+  if (!process.env.SCRAPERAPI_KEY) {
+    return {
+      source: "batdongsan",
+      ok: false,
+      listings,
+      total: 0,
+      durationMs: Date.now() - start,
+      error: "SCRAPERAPI_KEY ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\xECnh",
+      warning: "Th\xEAm SCRAPERAPI_KEY v\xE0o secrets \u0111\u1EC3 b\u1EADt scraper n\xE0y."
+    };
+  }
+  let okCount = 0;
+  for (const { url: url2, province } of BDS_PAGES.slice(0, maxPages)) {
+    try {
+      const res = await scraperApiFetch(url2, true);
+      if (!res.ok) {
+        continue;
+      }
+      const html = await res.text();
+      const $ = cheerio.load(html);
+      const cards = $('[class*="re__card-full"]').length ? $('[class*="re__card-full"]') : $('[class*="js__card"]');
+      cards.each((_, el) => {
+        const $el = $(el);
+        const titleEl = $el.find('[class*="re__card-title"] a, [class*="card-title"] a').first();
+        const href = titleEl.attr("href") ?? $el.find("a").first().attr("href") ?? "";
+        const title = titleEl.text().trim() || $el.find("h3").first().text().trim();
+        if (!title) return;
+        const priceRaw = $el.find('[class*="re__card-config-price"] [class*="value"], [class*="price"]').first().text().trim();
+        const areaRaw = $el.find('[class*="re__card-config-area"] [class*="value"], [class*="area"]').first().text().trim();
+        const locRaw = $el.find('[class*="re__card-location"]').first().text().trim();
+        const imgSrc = $el.find("img").first().attr("src") ?? $el.find("img").first().attr("data-src") ?? null;
+        const idMatch = href.match(/pr(\d+)/) ?? href.match(/(\d{5,})/);
+        const extId = idMatch ? idMatch[1] : `${Date.now()}-${Math.random()}`;
+        const price = parseVnPrice(priceRaw);
+        const area = parseArea(areaRaw);
+        listings.push({
+          id: `bds-${extId}`,
+          source: "BatDongSan",
+          title,
+          type: "Nh\xE0 \u1EDF",
+          transaction: "B\xE1n",
+          price,
+          priceDisplay: priceRaw,
+          area,
+          pricePerM2: area > 0 ? Math.round(price / area) : 0,
+          location: locRaw || province,
+          province,
+          bedrooms: null,
+          imageUrl: imgSrc ?? null,
+          url: href.startsWith("http") ? href : `https://batdongsan.com.vn${href}`,
+          postedAt: null,
+          scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+        });
+      });
+      okCount++;
+      await sleep(1e3);
+    } catch (err4) {
+      continue;
+    }
+  }
+  return {
+    source: "batdongsan",
+    ok: okCount > 0 && listings.length > 0,
+    listings,
+    total: listings.length,
+    durationMs: Date.now() - start,
+    ...listings.length === 0 ? { warning: "Scrape th\xE0nh c\xF4ng nh\u01B0ng kh\xF4ng parse \u0111\u01B0\u1EE3c listing. C\u1EA5u tr\xFAc HTML c\xF3 th\u1EC3 \u0111\xE3 thay \u0111\u1ED5i." } : {}
+  };
+}
+var MUABAN_PAGES = [
+  { url: "https://muaban.net/bat-dong-san/nha-o", province: "To\xE0n qu\u1ED1c" },
+  { url: "https://muaban.net/bat-dong-san/can-ho", province: "To\xE0n qu\u1ED1c" }
+];
+async function scrapeMuaban(maxPages = 2) {
+  const start = Date.now();
+  const listings = [];
+  if (!process.env.SCRAPERAPI_KEY) {
+    return {
+      source: "muaban",
+      ok: false,
+      listings,
+      total: 0,
+      durationMs: Date.now() - start,
+      error: "SCRAPERAPI_KEY ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\xECnh",
+      warning: "Th\xEAm SCRAPERAPI_KEY v\xE0o secrets \u0111\u1EC3 b\u1EADt scraper n\xE0y."
+    };
+  }
+  let okCount = 0;
+  for (const { url: url2, province } of MUABAN_PAGES.slice(0, maxPages)) {
+    try {
+      const res = await scraperApiFetch(url2, true);
+      if (!res.ok) continue;
+      const html = await res.text();
+      const $ = cheerio.load(html);
+      const cards = $('[class*="AdItem"], .item--product, [class*="product-item"], article[class*="item"]');
+      cards.each((_, el) => {
+        const $el = $(el);
+        const titleEl = $el.find('h2 a, h3 a, [class*="title"] a, [class*="name"] a').first();
+        const href = titleEl.attr("href") ?? $el.find("a").first().attr("href") ?? "";
+        const title = titleEl.text().trim() || $el.find("h2, h3").first().text().trim();
+        if (!title) return;
+        const priceRaw = $el.find('[class*="price"]').first().text().trim();
+        const areaRaw = $el.find('[class*="area"], [class*="dien-tich"]').first().text().trim();
+        const locRaw = $el.find('[class*="location"], [class*="address"], [class*="dia-diem"]').first().text().trim();
+        const imgSrc = $el.find("img").first().attr("src") ?? $el.find("img").first().attr("data-src") ?? null;
+        const idMatch = href.match(/(\d{5,})/);
+        const extId = idMatch ? idMatch[1] : `${Date.now()}-${Math.random()}`;
+        const price = parseVnPrice(priceRaw);
+        const area = parseArea(areaRaw);
+        listings.push({
+          id: `muaban-${extId}`,
+          source: "Muaban",
+          title,
+          type: "Nh\xE0 \u1EDF",
+          transaction: "B\xE1n",
+          price,
+          priceDisplay: priceRaw,
+          area,
+          pricePerM2: area > 0 ? Math.round(price / area) : 0,
+          location: locRaw || province,
+          province,
+          bedrooms: null,
+          imageUrl: imgSrc ?? null,
+          url: href.startsWith("http") ? href : `https://muaban.net${href}`,
+          postedAt: null,
+          scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+        });
+      });
+      okCount++;
+      await sleep(1e3);
+    } catch {
+      continue;
+    }
+  }
+  return {
+    source: "muaban",
+    ok: okCount > 0 && listings.length > 0,
+    listings,
+    total: listings.length,
+    durationMs: Date.now() - start,
+    ...listings.length === 0 ? { warning: "Scrape th\xE0nh c\xF4ng nh\u01B0ng kh\xF4ng parse \u0111\u01B0\u1EE3c listing. C\u1EA5u tr\xFAc HTML c\xF3 th\u1EC3 \u0111\xE3 thay \u0111\u1ED5i." } : {}
+  };
+}
+var cachedResults = null;
+var cacheTimestamp = 0;
+var CACHE_TTL_MS2 = 30 * 60 * 1e3;
+function isCacheValid() {
+  return !!cachedResults && Date.now() - cacheTimestamp < CACHE_TTL_MS2;
+}
+function createScraperRoutes(authenticateToken) {
+  const router = Router27();
+  const ADMIN_ROLES4 = ["ADMIN", "TEAM_LEAD"];
+  const hasScraperApiKey = () => !!process.env.SCRAPERAPI_KEY;
+  router.get("/status", authenticateToken, (_req, res) => {
+    const apiReady = hasScraperApiKey();
+    res.json({
+      sources: [
+        { id: "chotot", name: "Ch\u1EE3 T\u1ED1t", status: "active", note: "API c\xF4ng khai \u2014 ho\u1EA1t \u0111\u1ED9ng t\u1ED1t", listings: "10,000+" },
+        { id: "alonhadat", name: "AlonNhaDat", status: "active", note: "HTML scraping \u2014 kh\xF4ng c\xF3 Cloudflare", listings: "~20/trang" },
+        { id: "batdongsan", name: "BatDongSan.com.vn", status: apiReady ? "active" : "blocked", note: apiReady ? "ScraperAPI proxy \u2014 CF bypass OK" : "C\u1EA7n SCRAPERAPI_KEY", listings: apiReady ? "20-40/trang" : "0" },
+        { id: "muaban", name: "Muaban.net", status: apiReady ? "active" : "blocked", note: apiReady ? "ScraperAPI proxy \u2014 CF bypass OK" : "C\u1EA7n SCRAPERAPI_KEY", listings: apiReady ? "20-40/trang" : "0" }
+      ],
+      scraperApiConfigured: apiReady,
+      cacheValid: isCacheValid(),
+      cacheAge: cachedResults ? Math.round((Date.now() - cacheTimestamp) / 1e3) : null,
+      cacheTtlMin: 30
+    });
+  });
+  router.get("/results", authenticateToken, (_req, res) => {
+    if (!cachedResults) {
+      return res.json({ results: [], scrapedAt: null, totalListings: 0 });
+    }
+    const all = cachedResults.flatMap((r) => r.listings);
+    res.json({
+      results: cachedResults.map((r) => ({ source: r.source, ok: r.ok, count: r.listings.length, error: r.error, warning: r.warning, durationMs: r.durationMs })),
+      listings: all,
+      totalListings: all.length,
+      scrapedAt: new Date(cacheTimestamp).toISOString(),
+      cacheAge: Math.round((Date.now() - cacheTimestamp) / 1e3)
+    });
+  });
+  router.post("/run", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!ADMIN_ROLES4.includes(user.role)) {
+        return res.status(403).json({ error: "Ch\u1EC9 Admin/Team Lead m\u1EDBi c\xF3 th\u1EC3 ch\u1EA1y scraper" });
+      }
+      const { sources = ["chotot", "alonhadat"], pages = 3 } = req.body;
+      const maxPages = Math.min(Number(pages) || 3, 10);
+      const results = [];
+      if (sources.includes("chotot")) results.push(await scrapeChotot(maxPages));
+      if (sources.includes("alonhadat")) results.push(await scrapeAlonNhaDat(Math.min(maxPages, 5)));
+      if (sources.includes("batdongsan")) results.push(await scrapeBatDongSan(Math.min(maxPages, 3)));
+      if (sources.includes("muaban")) results.push(await scrapeMuaban(Math.min(maxPages, 3)));
+      cachedResults = results;
+      cacheTimestamp = Date.now();
+      const all = results.flatMap((r) => r.listings);
+      res.json({
+        ok: true,
+        results: results.map((r) => ({ source: r.source, ok: r.ok, count: r.listings.length, error: r.error, warning: r.warning, durationMs: r.durationMs })),
+        listings: all,
+        totalListings: all.length,
+        scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    } catch (err4) {
+      res.status(500).json({ error: "Scrape failed", detail: String(err4) });
+    }
+  });
+  return router;
+}
+
+// server/routes/scraperProjectRoutes.ts
+init_db();
+import { Router as Router28 } from "express";
+import * as cheerio2 from "cheerio";
+var PROJECT_CATALOG = [
+  {
+    id: "sgsland",
+    name: "SGSLand.vn",
+    siteUrl: "https://sgsland.vn",
+    note: "C\u1ED5ng d\u1EEF li\u1EC7u n\u1ED9i b\u1ED9 \u2014 JSON API tr\u1EF1c ti\u1EBFp",
+    color: "indigo",
+    logo: "SGS"
+  },
+  {
+    id: "vinhomes-green-paradise",
+    name: "Vinhomes Green Paradise",
+    siteUrl: "https://vinhomesgreensparadise.vinhomes.vn",
+    note: "D\u1EF1 \xE1n Vinhomes t\u1EA1i B\u1EAFc H\xE0 N\u1ED9i",
+    color: "emerald",
+    logo: "VGP"
+  },
+  {
+    id: "vinhomes-central-park",
+    name: "Vinhomes Central Park",
+    siteUrl: "https://centralpark.vinhomes.vn",
+    note: "D\u1EF1 \xE1n Vinhomes t\u1EA1i B\xECnh Th\u1EA1nh, TP.HCM",
+    color: "blue",
+    logo: "VCP"
+  },
+  {
+    id: "swanbay",
+    name: "Swan Bay",
+    siteUrl: "https://swanbay.vn",
+    note: "\u0110\u1EA3o thi\xEAn nga \u0110\u1ED3ng Nai \u2014 scrape qua ScraperAPI",
+    color: "sky",
+    logo: "SWB"
+  },
+  {
+    id: "swanpark",
+    name: "Swan Park",
+    siteUrl: "https://swanpark.vn",
+    note: "Swan Park Nh\u01A1n Tr\u1EA1ch \u2014 scrape qua ScraperAPI",
+    color: "cyan",
+    logo: "SWP"
+  },
+  {
+    id: "phu-my-hung",
+    name: "Ph\xFA M\u1EF9 H\u01B0ng",
+    siteUrl: "https://phumyhung.vn",
+    note: "Khu \u0111\xF4 th\u1ECB Ph\xFA M\u1EF9 H\u01B0ng Qu\u1EADn 7",
+    color: "amber",
+    logo: "PMH"
+  },
+  {
+    id: "sala",
+    name: "Sala \u0110\u1EA1i Quang Minh",
+    siteUrl: "https://daikimgroup.vn/du-an/sala-dai-quang-minh",
+    note: "Sala Th\u1EE7 Thi\xEAm, Qu\u1EADn 2",
+    color: "rose",
+    logo: "SAL"
+  },
+  // ── 10 dự án bổ sung ──────────────────────────────────────────────────────
+  {
+    id: "aqua-city",
+    name: "Aqua City",
+    siteUrl: "https://aquacity.com.vn",
+    note: "Novaland \u2014 \u0110\u1ED3ng Nai",
+    color: "teal",
+    logo: "AQC"
+  },
+  {
+    id: "izumi",
+    name: "Izumi City",
+    siteUrl: "https://izumicity.com.vn",
+    note: "Nam Long \u2014 B\xECnh D\u01B0\u01A1ng / Long An",
+    color: "violet",
+    logo: "IZM"
+  },
+  {
+    id: "global-city",
+    name: "Global City",
+    siteUrl: "https://globalcity.vn",
+    note: "Masterise Homes \u2014 Qu\u1EADn 2, TP.HCM",
+    color: "blue",
+    logo: "GLC"
+  },
+  {
+    id: "masterise",
+    name: "Masterise Homes",
+    siteUrl: "https://masterisehomes.com",
+    note: "Masterise Homes \u2014 nhi\u1EC1u d\u1EF1 \xE1n TP.HCM",
+    color: "slate",
+    logo: "MAS"
+  },
+  {
+    id: "gamuda-land",
+    name: "Gamuda Land",
+    siteUrl: "https://gamudacity.com.vn",
+    note: "Gamuda City \u2014 Ho\xE0ng Mai, H\xE0 N\u1ED9i & TP.HCM",
+    color: "green",
+    logo: "GAM"
+  },
+  {
+    id: "sun-land",
+    name: "Sun Land",
+    siteUrl: "https://sungroup.com.vn/bat-dong-san-nha-o",
+    note: "Sun Group \u2014 khu d\xE2n c\u01B0 to\xE0n qu\u1ED1c",
+    color: "orange",
+    logo: "SUN"
+  },
+  {
+    id: "van-phuc-city",
+    name: "V\u1EA1n Ph\xFAc City",
+    siteUrl: "https://vanphuccity.com.vn",
+    note: "V\u1EA1n Ph\xFAc City \u2014 Th\u1EE7 \u0110\u1EE9c, TP.HCM",
+    color: "purple",
+    logo: "VPC"
+  },
+  {
+    id: "son-kim-land",
+    name: "S\u01A1n Kim Land",
+    siteUrl: "https://sonkimland.com.vn",
+    note: "S\u01A1n Kim Land \u2014 TP.HCM & \u0110\xE0 N\u1EB5ng",
+    color: "pink",
+    logo: "SKL"
+  },
+  {
+    id: "bim-land",
+    name: "BIM Land",
+    siteUrl: "https://bimland.com.vn",
+    note: "BIM Land \u2014 H\xE0 N\u1ED9i, Qu\u1EA3ng Ninh, Ph\xFA Qu\u1ED1c",
+    color: "lime",
+    logo: "BIM"
+  },
+  {
+    id: "vinacapital",
+    name: "VinaCapital",
+    siteUrl: "https://vinacapital.com/vi/real-estate",
+    note: "VinaCapital RE \u2014 resort & \u0111\xF4 th\u1ECB cao c\u1EA5p",
+    color: "yellow",
+    logo: "VNC"
+  }
+];
+var sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
+function parseVnPrice2(raw) {
+  const s2 = (raw ?? "").toLowerCase().replace(/\s/g, "").replace(/,/g, ".");
+  const ty = s2.match(/([\d.]+)tỷ/);
+  const tr = s2.match(/([\d.]+)triệu/);
+  const ty2 = s2.match(/([\d.]+)ty/);
+  if (ty) return Math.round(parseFloat(ty[1]) * 1e9);
+  if (ty2) return Math.round(parseFloat(ty2[1]) * 1e9);
+  if (tr) return Math.round(parseFloat(tr[1]) * 1e6);
+  return 0;
+}
+function parseArea2(raw) {
+  const m = (raw ?? "").replace(/,/g, ".").match(/[\d.]+/);
+  return m ? parseFloat(m[0]) : 0;
+}
+function fmtPrice(price) {
+  if (!price) return "Li\xEAn h\u1EC7";
+  if (price >= 1e9) return `${(price / 1e9).toFixed(2)} t\u1EF7`;
+  if (price >= 1e6) return `${(price / 1e6).toFixed(0)} tri\u1EC7u`;
+  return price.toLocaleString("vi-VN") + " \u0111";
+}
+async function scraperApiFetch2(targetUrl, render = true) {
+  const key = process.env.SCRAPERAPI_KEY;
+  if (!key) throw new Error("SCRAPERAPI_KEY ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\xECnh");
+  const proxyUrl = `http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(targetUrl)}&country_code=vn${render ? "&render=true" : ""}`;
+  return fetch(proxyUrl, { signal: AbortSignal.timeout(45e3) });
+}
+var delayMs = (ms) => new Promise((r) => setTimeout(r, ms));
+function normalizePhoneLocal(raw) {
+  if (!raw) return "";
+  let p = raw.replace(/\D/g, "");
+  if (p.startsWith("840") && p.length === 12) p = "0" + p.slice(2);
+  else if (p.startsWith("84") && p.length === 11) p = "0" + p.slice(2);
+  if (!p.startsWith("0") && p.length >= 9) p = "0" + p;
+  return p.length >= 9 && p.length <= 11 ? p : "";
+}
+async function scrapeSgsland() {
+  const start = Date.now();
+  const units = [];
+  const proj = PROJECT_CATALOG.find((p) => p.id === "sgsland");
+  try {
+    const res = await fetch("https://sgsland.vn/api/public/listings?page=1&pageSize=100", {
+      headers: { "Accept": "application/json", "User-Agent": "SGSLand-Scraper/1.0" },
+      signal: AbortSignal.timeout(12e3)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const raw = data.listings ?? (Array.isArray(data) ? data : []);
+    for (const l of raw) {
+      const price = Number(l.price ?? 0);
+      const area = Number(l.area ?? 0);
+      units.push({
+        id: `sgsland-${l.id}`,
+        project: proj.name,
+        projectId: proj.id,
+        type: String(l.type ?? l.category ?? "B\u1EA5t \u0111\u1ED9ng s\u1EA3n"),
+        block: String(l.block ?? l.projectCode ?? ""),
+        floor: String(l.floor ?? ""),
+        area,
+        price,
+        priceDisplay: fmtPrice(price),
+        pricePerM2: area > 0 ? Math.round(price / area) : 0,
+        status: l.status === "AVAILABLE" ? "available" : l.status === "SOLD" ? "sold" : "unknown",
+        direction: String(l.direction ?? l.attributes?.direction ?? ""),
+        url: `https://sgsland.vn/listing/${l.id}`,
+        imageUrl: Array.isArray(l.images) && l.images[0] ? l.images[0].startsWith("http") ? l.images[0] : `https://sgsland.vn${l.images[0]}` : null,
+        scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    }
+    return { projectId: proj.id, project: proj.name, siteUrl: proj.siteUrl, ok: true, units, total: units.length, durationMs: Date.now() - start };
+  } catch (err4) {
+    return { projectId: proj.id, project: proj.name, siteUrl: proj.siteUrl, ok: false, units, total: 0, durationMs: Date.now() - start, error: String(err4) };
+  }
+}
+async function scrapeHtmlProject(cfg) {
+  const start = Date.now();
+  const units = [];
+  const proj = PROJECT_CATALOG.find((p) => p.id === cfg.projectId);
+  let ok4 = false;
+  if (!process.env.SCRAPERAPI_KEY) {
+    return {
+      projectId: proj.id,
+      project: proj.name,
+      siteUrl: proj.siteUrl,
+      ok: false,
+      units,
+      total: 0,
+      durationMs: Date.now() - start,
+      error: "SCRAPERAPI_KEY ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\xECnh"
+    };
+  }
+  for (const { url: url2, type: urlType } of cfg.urls) {
+    try {
+      const res = await scraperApiFetch2(url2, true);
+      if (!res.ok) continue;
+      const html = await res.text();
+      if (html.includes("Just a moment") || html.includes("cf_chl_opt")) {
+        continue;
+      }
+      const $ = cheerio2.load(html);
+      const cards = $(cfg.selectors.card);
+      cards.each((_, el) => {
+        const $el = $(el);
+        const getText = (sel) => sel ? $el.find(sel).first().text().trim() : "";
+        const getAttr = (sel, attr) => $el.find(sel).first().attr(attr) ?? "";
+        const titleText = getText(cfg.selectors.title) || $el.find("h2,h3,h4").first().text().trim();
+        if (!titleText) return;
+        const priceRaw = getText(cfg.selectors.price);
+        const areaRaw = getText(cfg.selectors.area);
+        const blockTxt = getText(cfg.selectors.block);
+        const floorTxt = getText(cfg.selectors.floor);
+        const dirTxt = getText(cfg.selectors.direction);
+        const statusTxt = getText(cfg.selectors.status).toLowerCase();
+        const href = cfg.selectors.link ? getAttr(cfg.selectors.link, "href") || $el.find("a").first().attr("href") || url2 : $el.find("a").first().attr("href") || url2;
+        const imgSrc = cfg.selectors.image ? getAttr(cfg.selectors.image, "src") || getAttr(cfg.selectors.image, "data-src") : $el.find("img").first().attr("src") || $el.find("img").first().attr("data-src") || "";
+        const price = parseVnPrice2(priceRaw);
+        const area = parseArea2(areaRaw);
+        const idKey = `${cfg.projectId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const status = statusTxt.includes("b\xE1n") || statusTxt.includes("sold") ? "sold" : statusTxt.includes("gi\u1EEF") || statusTxt.includes("hold") || statusTxt.includes("reserved") ? "reserved" : "available";
+        units.push({
+          id: idKey,
+          project: proj.name,
+          projectId: proj.id,
+          type: urlType || getText(cfg.selectors.type) || "B\u1EA5t \u0111\u1ED9ng s\u1EA3n",
+          block: blockTxt,
+          floor: floorTxt,
+          area,
+          price,
+          priceDisplay: price > 0 ? fmtPrice(price) : priceRaw || "Li\xEAn h\u1EC7",
+          pricePerM2: area > 0 && price > 0 ? Math.round(price / area) : 0,
+          status,
+          direction: dirTxt,
+          url: href.startsWith("http") ? href : href.startsWith("/") ? `${cfg.baseUrl}${href}` : url2,
+          imageUrl: imgSrc ? imgSrc.startsWith("http") ? imgSrc : `${cfg.baseUrl}${imgSrc}` : null,
+          scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+        });
+      });
+      if (units.length > 0) ok4 = true;
+      await sleep2(1200);
+    } catch {
+      continue;
+    }
+  }
+  const warning = !ok4 && units.length === 0 ? "Kh\xF4ng parse \u0111\u01B0\u1EE3c d\u1EEF li\u1EC7u. Trang c\xF3 th\u1EC3 c\u1EA7n c\u1EA5u tr\xFAc selector kh\xE1c ho\u1EB7c \u0111\xF2i h\u1ECFi t\u01B0\u01A1ng t\xE1c JS." : void 0;
+  return {
+    projectId: proj.id,
+    project: proj.name,
+    siteUrl: proj.siteUrl,
+    ok: ok4 || units.length > 0,
+    units,
+    total: units.length,
+    durationMs: Date.now() - start,
+    ...warning ? { warning } : {}
+  };
+}
+async function scrapeVinhomesGreenParadise() {
+  return scrapeHtmlProject({
+    projectId: "vinhomes-green-paradise",
+    baseUrl: "https://vinhomesgreensparadise.vinhomes.vn",
+    urls: [
+      { url: "https://vinhomesgreensparadise.vinhomes.vn/can-ho", type: "C\u0103n h\u1ED9" },
+      { url: "https://vinhomesgreensparadise.vinhomes.vn/nha-pho", type: "Nh\xE0 ph\u1ED1" }
+    ],
+    selectors: {
+      card: '.product-item, .apartment-item, [class*="product-item"], [class*="apartment"], .item-product',
+      title: '.product-title, .apartment-name, h3, h4, [class*="title"]',
+      price: '.product-price, .price, [class*="price"]',
+      area: '.product-area, .area, [class*="area"], [class*="dien-tich"]',
+      block: '[class*="block"], [class*="toa"]',
+      floor: '[class*="floor"], [class*="tang"]',
+      status: '[class*="status"], [class*="trang-thai"]',
+      link: "a",
+      image: "img"
+    }
+  });
+}
+async function scrapeVinhomesCentralPark() {
+  return scrapeHtmlProject({
+    projectId: "vinhomes-central-park",
+    baseUrl: "https://centralpark.vinhomes.vn",
+    urls: [
+      { url: "https://centralpark.vinhomes.vn/can-ho-central-park", type: "C\u0103n h\u1ED9" },
+      { url: "https://centralpark.vinhomes.vn/biet-thu-central-park", type: "Bi\u1EC7t th\u1EF1" }
+    ],
+    selectors: {
+      card: '.product-item, .apartment-item, [class*="product-item"], [class*="apartment"]',
+      title: '.product-title, h3, h4, [class*="title"]',
+      price: '.price, [class*="price"]',
+      area: '[class*="area"], [class*="dien-tich"]',
+      block: '[class*="block"], [class*="toa"]',
+      floor: '[class*="floor"], [class*="tang"]',
+      status: '[class*="status"]',
+      link: "a",
+      image: "img"
+    }
+  });
+}
+async function scrapeSwanBay() {
+  return scrapeHtmlProject({
+    projectId: "swanbay",
+    baseUrl: "https://swanbay.vn",
+    urls: [
+      { url: "https://swanbay.vn/du-an", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" },
+      { url: "https://swanbay.vn/san-pham", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" }
+    ],
+    selectors: {
+      card: '.product-item, .project-item, [class*="product-item"], [class*="project-item"], article',
+      title: 'h2, h3, .title, [class*="title"]',
+      price: '[class*="price"], .price',
+      area: '[class*="area"], [class*="dien-tich"]',
+      block: '[class*="block"]',
+      floor: '[class*="floor"]',
+      status: '[class*="status"]',
+      link: "a",
+      image: "img"
+    }
+  });
+}
+async function scrapeSwanPark() {
+  return scrapeHtmlProject({
+    projectId: "swanpark",
+    baseUrl: "https://swanpark.vn",
+    urls: [
+      { url: "https://swanpark.vn/du-an", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" },
+      { url: "https://swanpark.vn/san-pham", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" }
+    ],
+    selectors: {
+      card: '.product-item, [class*="product"], article, .item',
+      title: 'h2, h3, [class*="title"]',
+      price: '[class*="price"]',
+      area: '[class*="area"]',
+      block: '[class*="block"]',
+      floor: '[class*="floor"]',
+      status: '[class*="status"]',
+      link: "a",
+      image: "img"
+    }
+  });
+}
+async function scrapePhuMyHung() {
+  return scrapeHtmlProject({
+    projectId: "phu-my-hung",
+    baseUrl: "https://phumyhung.vn",
+    urls: [
+      { url: "https://phumyhung.vn/bds/can-ho-cho-ban", type: "C\u0103n h\u1ED9" },
+      { url: "https://phumyhung.vn/bds/nha-cho-ban", type: "Nh\xE0" },
+      { url: "https://phumyhung.vn/bds/dat-cho-ban", type: "\u0110\u1EA5t" }
+    ],
+    selectors: {
+      card: '.property-item, .product-item, [class*="property-item"], article',
+      title: '.property-title, h3, h2, [class*="title"]',
+      price: '.price, [class*="price"]',
+      area: '.area, [class*="area"], [class*="dien-tich"]',
+      block: '[class*="block"], [class*="du-an"]',
+      floor: '[class*="floor"]',
+      status: '[class*="status"]',
+      link: "a",
+      image: "img"
+    }
+  });
+}
+async function scrapeSala() {
+  return scrapeHtmlProject({
+    projectId: "sala",
+    baseUrl: "https://daikimgroup.vn",
+    urls: [
+      { url: "https://daikimgroup.vn/du-an/sala-dai-quang-minh", type: "C\u0103n h\u1ED9 / Nh\xE0 ph\u1ED1" }
+    ],
+    selectors: {
+      card: '.product-item, .project-item, [class*="product"], article, .item',
+      title: 'h2, h3, [class*="title"], [class*="name"]',
+      price: '[class*="price"]',
+      area: '[class*="area"]',
+      block: '[class*="block"], [class*="toa"]',
+      floor: '[class*="floor"]',
+      status: '[class*="status"]',
+      link: "a",
+      image: "img"
+    }
+  });
+}
+var GENERIC_SELECTORS = {
+  card: '.product-item, [class*="product-item"], .project-item, article, .item',
+  title: 'h2, h3, h4, [class*="title"], [class*="name"]',
+  price: '[class*="price"]',
+  area: '[class*="area"], [class*="dien-tich"]',
+  block: '[class*="block"], [class*="toa"]',
+  floor: '[class*="floor"], [class*="tang"]',
+  status: '[class*="status"], [class*="trang-thai"]',
+  link: "a",
+  image: "img"
+};
+function makeGenericScraper(id, urls) {
+  const proj = PROJECT_CATALOG.find((p) => p.id === id);
+  return () => scrapeHtmlProject({
+    projectId: id,
+    baseUrl: new URL(proj.siteUrl).origin,
+    urls,
+    selectors: GENERIC_SELECTORS
+  });
+}
+async function scrapeAquaCity() {
+  const start = Date.now();
+  const units = [];
+  const proj = PROJECT_CATALOG.find((p) => p.id === "aqua-city");
+  if (!process.env.SCRAPERAPI_KEY) {
+    return {
+      projectId: proj.id,
+      project: proj.name,
+      siteUrl: proj.siteUrl,
+      ok: false,
+      units,
+      total: 0,
+      durationMs: Date.now() - start,
+      error: "SCRAPERAPI_KEY ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\xECnh"
+    };
+  }
+  const key = process.env.SCRAPERAPI_KEY;
+  const sourceUrls = [
+    {
+      url: "https://batdongsan.com.vn/ban-nha-dat-dong-nai?q=aqua+city",
+      type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n",
+      domain: "batdongsan.com.vn"
+    },
+    {
+      url: "https://batdongsan.com.vn/ban-can-ho-chung-cu-dong-nai?q=aqua+city",
+      type: "C\u0103n h\u1ED9",
+      domain: "batdongsan.com.vn"
+    },
+    {
+      url: "https://batdongsan.com.vn/ban-nha-rieng-dong-nai?q=aqua+city",
+      type: "Nh\xE0 ph\u1ED1",
+      domain: "batdongsan.com.vn"
+    },
+    {
+      url: "https://batdongsan.com.vn/ban-biet-thu-lien-ke-dong-nai?q=aqua+city",
+      type: "Bi\u1EC7t th\u1EF1",
+      domain: "batdongsan.com.vn"
+    },
+    {
+      url: "https://batdongsan.com.vn/tim-kiem?q=aqua+city+dong+nai",
+      type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n",
+      domain: "batdongsan.com.vn"
+    },
+    // Fallback: nhatot.com rendered search
+    {
+      url: "https://www.nhatot.com/mua-ban-bat-dong-san-dong-nai?q=aqua+city",
+      type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n",
+      domain: "nhatot.com"
+    }
+  ];
+  const BDS_CARD_SELECTORS = [
+    ".re__card-full",
+    '[class*="re__card-full"]',
+    '[class^="re__card"]',
+    '[class*="re__card"]'
+  ];
+  const GENERIC_CARD_SELECTORS = [
+    ".product-item",
+    '[class*="product-item"]',
+    ".property-item",
+    '[class*="property-item"]',
+    ".listing-item",
+    '[class*="listing-item"]',
+    ".js__product",
+    '[class*="js__product"]',
+    "article.item",
+    "li.item",
+    '[class*="CardItem"]',
+    '[class*="card-item"]'
+  ];
+  const extractTitle = ($el) => $el.find('.re__card-title, [class*="re__card-title"], h3 a, h2 a, h3, h2, [class*="title"]').first().text().trim();
+  const extractPrice = ($el) => $el.find(
+    '.re__card-config-price, [class*="re__card-config-price"], [class*="price"], [class*="Price"], [class*="gia"], [class*="Gia"]'
+  ).first().text().trim();
+  const extractArea = ($el) => $el.find(
+    '.re__card-config-area, [class*="re__card-config-area"], [class*="area"], [class*="Area"], [class*="dien-tich"], [class*="acreage"]'
+  ).first().text().trim();
+  for (const { url: url2, type: urlType, domain: domain2 } of sourceUrls) {
+    if (units.length >= 8) break;
+    try {
+      const proxyUrl = `http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(url2)}&render=true&wait=9000&premium=true&country_code=vn`;
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(7e4) });
+      if (!res.ok) continue;
+      const html = await res.text();
+      if (html.includes("Just a moment") || html.includes("cf_chl_opt")) continue;
+      if (html.length < 3e3) continue;
+      const $ = cheerio2.load(html);
+      const allCardSelectors = [...BDS_CARD_SELECTORS, ...GENERIC_CARD_SELECTORS];
+      for (const sel of allCardSelectors) {
+        const cards = $(sel);
+        if (cards.length === 0) continue;
+        cards.each((_, el) => {
+          const $el = $(el);
+          const titleText = extractTitle($el);
+          if (!titleText || titleText.length < 5) return;
+          const titleLower = titleText.toLowerCase();
+          const isRelevant = titleLower.includes("aqua") || titleLower.includes("novaland") || titleLower.includes("nh\u01A1n tr\u1EA1ch") || titleLower.includes("nhon trach") || titleLower.includes("long h\u01B0ng") || titleLower.includes("long hung");
+          if (!isRelevant) return;
+          const priceRaw = extractPrice($el);
+          const areaRaw = extractArea($el);
+          const href = $el.find("a").first().attr("href") || url2;
+          const imgSrc = $el.find("img").first().attr("src") || $el.find("img").first().attr("data-src") || "";
+          const price = parseVnPrice2(priceRaw);
+          const area = parseArea2(areaRaw);
+          const idKey = `aqua-city-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+          units.push({
+            id: idKey,
+            project: proj.name,
+            projectId: proj.id,
+            type: urlType || "B\u1EA5t \u0111\u1ED9ng s\u1EA3n",
+            block: "",
+            floor: "",
+            area,
+            price,
+            priceDisplay: price > 0 ? fmtPrice(price) : priceRaw || "Li\xEAn h\u1EC7",
+            pricePerM2: area > 0 && price > 0 ? Math.round(price / area) : 0,
+            status: "available",
+            direction: "",
+            url: href.startsWith("http") ? href : href.startsWith("/") ? `https://${domain2}${href}` : url2,
+            imageUrl: imgSrc ? imgSrc.startsWith("http") ? imgSrc : `https://${domain2}${imgSrc}` : null,
+            scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+          });
+        });
+        if (units.length > 0) break;
+      }
+      if (units.length === 0) {
+        const pricePattern = /([\d]+[.,][\d]+)\s*tỷ|([\d]+)\s*tỷ/gi;
+        const matches = [...html.matchAll(pricePattern)];
+        for (let i = 0; i < Math.min(matches.length, 20); i++) {
+          const m = matches[i];
+          const ctx = html.substring(Math.max(0, m.index - 400), m.index + 300);
+          if (!/(aqua|novaland|nhơn\s*trạch|nhon\s*trach|long\s*hưng|long\s*hung)/i.test(ctx)) continue;
+          const $ctx = cheerio2.load(ctx);
+          const title = $ctx('h1,h2,h3,h4,h5,p,[class*="title"],[class*="name"]').first().text().trim() || `B\u1EA5t \u0111\u1ED9ng s\u1EA3n Aqua City #${i + 1}`;
+          const areaStr = $ctx('[class*="area"],[class*="m2"]').first().text() || ctx.match(/([\d]+)\s*m[²2]/)?.[1] || "";
+          const area = parseArea2(areaStr);
+          const price = parseVnPrice2(m[0]);
+          if (!price) continue;
+          units.push({
+            id: `aqua-city-regex-${i}-${Date.now()}`,
+            project: proj.name,
+            projectId: proj.id,
+            type: urlType || "B\u1EA5t \u0111\u1ED9ng s\u1EA3n",
+            block: "",
+            floor: "",
+            area,
+            price,
+            priceDisplay: fmtPrice(price),
+            pricePerM2: area > 0 ? Math.round(price / area) : 0,
+            status: "available",
+            direction: "",
+            url: url2,
+            imageUrl: null,
+            scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+          });
+        }
+      }
+      if (units.length > 0) break;
+    } catch {
+      continue;
+    }
+  }
+  const warning = units.length === 0 ? "Kh\xF4ng t\xECm th\u1EA5y tin rao Aqua City tr\xEAn batdongsan.com.vn. Th\u1EED l\u1EA1i sau ho\u1EB7c ki\u1EC3m tra SCRAPERAPI_KEY." : void 0;
+  return {
+    projectId: proj.id,
+    project: proj.name,
+    siteUrl: proj.siteUrl,
+    ok: units.length > 0,
+    units,
+    total: units.length,
+    durationMs: Date.now() - start,
+    ...warning ? { warning } : {}
+  };
+}
+var EXTRA_RUNNERS = {
+  "aqua-city": scrapeAquaCity,
+  "izumi": makeGenericScraper("izumi", [
+    { url: "https://izumicity.com.vn/du-an", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" },
+    { url: "https://izumicity.com.vn/san-pham", type: "C\u0103n h\u1ED9" }
+  ]),
+  "global-city": makeGenericScraper("global-city", [
+    { url: "https://globalcity.vn/du-an", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" },
+    { url: "https://globalcity.vn/can-ho", type: "C\u0103n h\u1ED9" }
+  ]),
+  "masterise": makeGenericScraper("masterise", [
+    { url: "https://masterisehomes.com/du-an", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" },
+    { url: "https://masterisehomes.com/can-ho", type: "C\u0103n h\u1ED9" }
+  ]),
+  "gamuda-land": makeGenericScraper("gamuda-land", [
+    { url: "https://gamudacity.com.vn/can-ho", type: "C\u0103n h\u1ED9" },
+    { url: "https://gamudacity.com.vn/biet-thu", type: "Bi\u1EC7t th\u1EF1" }
+  ]),
+  "sun-land": makeGenericScraper("sun-land", [
+    { url: "https://sungroup.com.vn/bat-dong-san-nha-o", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" }
+  ]),
+  "van-phuc-city": makeGenericScraper("van-phuc-city", [
+    { url: "https://vanphuccity.com.vn/du-an", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" },
+    { url: "https://vanphuccity.com.vn/can-ho", type: "C\u0103n h\u1ED9" }
+  ]),
+  "son-kim-land": makeGenericScraper("son-kim-land", [
+    { url: "https://sonkimland.com.vn/du-an", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" },
+    { url: "https://sonkimland.com.vn/san-pham", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" }
+  ]),
+  "bim-land": makeGenericScraper("bim-land", [
+    { url: "https://bimland.com.vn/du-an", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" },
+    { url: "https://bimland.com.vn/san-pham", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" }
+  ]),
+  "vinacapital": makeGenericScraper("vinacapital", [
+    { url: "https://vinacapital.com/vi/real-estate", type: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n" }
+  ])
+};
+var PROJECT_RUNNERS = {
+  "sgsland": scrapeSgsland,
+  "vinhomes-green-paradise": scrapeVinhomesGreenParadise,
+  "vinhomes-central-park": scrapeVinhomesCentralPark,
+  "swanbay": scrapeSwanBay,
+  "swanpark": scrapeSwanPark,
+  "phu-my-hung": scrapePhuMyHung,
+  "sala": scrapeSala,
+  ...EXTRA_RUNNERS
+};
+var VN_PHONE_RE = /(?:(?:\+84|84|0)(?:3[2-9]|5[6-9]|7[06-9]|8[0-9]|9[0-9])\d{7})/g;
+var EMAIL_RE = /[\w.+%-]{2,}@[\w-]+\.[a-z]{2,}/gi;
+var FAKE_PHONES = /* @__PURE__ */ new Set(["0000000000", "1234567890", "0123456789"]);
+function normalizePhone(raw) {
+  const s2 = raw.replace(/\D/g, "");
+  if (s2.startsWith("84") && s2.length === 11) return "0" + s2.slice(2);
+  return s2.startsWith("0") ? s2 : "0" + s2;
+}
+function extractPhones(text) {
+  const seen = /* @__PURE__ */ new Set();
+  return (text.match(VN_PHONE_RE) ?? []).map((m) => normalizePhone(m)).filter((p) => {
+    if (p.length !== 10 || FAKE_PHONES.has(p) || seen.has(p)) return false;
+    seen.add(p);
+    return true;
+  });
+}
+function extractEmails(text) {
+  const seen = /* @__PURE__ */ new Set();
+  const BAD = ["example.com", "domain.com", "email.com", "test.com", "sentry.io"];
+  return (text.match(EMAIL_RE) ?? []).map((m) => m.toLowerCase()).filter((e) => {
+    if (seen.has(e) || BAD.some((b) => e.endsWith(b))) return false;
+    seen.add(e);
+    return true;
+  });
+}
+var PROJECT_KEYWORDS = {
+  "sgsland": ["sgsland", "SGS Land"],
+  "vinhomes-green-paradise": ["Vinhomes Green Paradise", "Green Paradise Vinhomes"],
+  "vinhomes-central-park": ["Vinhomes Central Park", "Central Park Vinhomes"],
+  "swanbay": ["Swan Bay", "SwanBay", "\u0110\u1EA3o thi\xEAn nga"],
+  "swanpark": ["Swan Park", "SwanPark", "Nh\u01A1n Tr\u1EA1ch"],
+  "phu-my-hung": ["Ph\xFA M\u1EF9 H\u01B0ng", "Phu My Hung", "PMH"],
+  "sala": ["Sala \u0110\u1EA1i Quang Minh", "Sala DQM", "Sala Th\u1EE7 Thi\xEAm"],
+  "aqua-city": ["Aqua City", "Aqua City Novaland", "\u0110\u1ED3ng Nai Novaland"],
+  "izumi": ["Izumi City", "Nam Long Izumi", "Izumi Nam Long"],
+  "global-city": ["Global City", "Global City Masterise", "Masterise Qu\u1EADn 2"],
+  "masterise": ["Masterise Homes", "Masterise", "Masteri"],
+  "gamuda-land": ["Gamuda Land", "Gamuda City", "Gamuda Ho\xE0ng Mai"],
+  "sun-land": ["Sun Land", "Sun Group b\u1EA5t \u0111\u1ED9ng s\u1EA3n", "Sun Property"],
+  "van-phuc-city": ["V\u1EA1n Ph\xFAc City", "Van Phuc City", "Khu \u0111\xF4 th\u1ECB V\u1EA1n Ph\xFAc"],
+  "son-kim-land": ["S\u01A1n Kim Land", "Son Kim Land", "The Standard SKL"],
+  "bim-land": ["BIM Land", "BIM Group", "BIM Property"],
+  "vinacapital": ["VinaCapital", "Vina Capital", "VinaCapital Real Estate"]
+};
+async function scrapeSgslandLeads() {
+  const start = Date.now();
+  const leads = [];
+  const proj = PROJECT_CATALOG.find((p) => p.id === "sgsland");
+  try {
+    const DEFAULT_TENANT = "00000000-0000-0000-0000-000000000001";
+    const { rows } = await pool.query(
+      `SELECT id, name, COALESCE(phone,'') AS phone, COALESCE(email,'') AS email,
+              COALESCE(source,'DIRECT') AS source, COALESCE(stage,'NEW') AS stage,
+              COALESCE(notes,'') AS notes, created_at
+         FROM leads
+        WHERE tenant_id = $1
+          AND phone IS NOT NULL AND phone <> ''
+        ORDER BY created_at DESC
+        LIMIT 200`,
+      [DEFAULT_TENANT]
+    );
+    for (const r of rows) {
+      leads.push({
+        id: `sgsland-db-${r.id}`,
+        projectId: proj.id,
+        project: proj.name,
+        name: r.name ?? "",
+        phone: r.phone,
+        email: r.email,
+        source: "sgsland_db",
+        sourceUrl: "https://sgsland.vn",
+        listing: "",
+        price: "",
+        interest: "unknown",
+        notes: r.notes ?? "",
+        scrapedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        importedAt: null
+      });
+    }
+    return { projectId: proj.id, project: proj.name, ok: true, leads, total: leads.length, durationMs: Date.now() - start };
+  } catch (err4) {
+    return { projectId: proj.id, project: proj.name, ok: false, leads, total: 0, durationMs: Date.now() - start, error: String(err4) };
+  }
+}
+function buildLead(projectId, proj, c, suffix) {
+  return {
+    id: `${projectId}-${c.source}-${suffix}`,
+    projectId: proj.id,
+    project: proj.name,
+    name: c.name || "Kh\xF4ng r\xF5",
+    phone: c.phone,
+    email: c.email,
+    source: c.source,
+    sourceUrl: c.url,
+    listing: c.title,
+    price: c.price,
+    interest: c.interest,
+    notes: c.notes,
+    scrapedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    importedAt: null
+  };
+}
+async function scrapeOneSrc(src, proj, seenPhone, seenEmail) {
+  const out = [];
+  try {
+    const res = await scraperApiFetch2(src.url, true);
+    if (!res.ok) return out;
+    const html = await res.text();
+    if (html.includes("Just a moment") || html.includes("cf_chl_opt") || html.length < 1e3) return out;
+    const $ = cheerio2.load(html);
+    $(src.card).slice(0, 40).each((_, el) => {
+      const $el = $(el);
+      const elHtml = $el.html() ?? "";
+      const elText = $el.text();
+      const titleTx = $el.find(src.title).first().text().trim() || $el.find("h2,h3,h4").first().text().trim();
+      if (!titleTx) return;
+      const priceTx = $el.find(src.price).first().text().trim();
+      const nameTx = $el.find(src.name).first().text().trim().slice(0, 80);
+      const href = $el.find(src.link).first().attr("href") ?? $el.find("a").first().attr("href") ?? "";
+      const fullUrl = href.startsWith("http") ? href : href.startsWith("/") ? `https://${new URL(src.url).host}${href}` : src.url;
+      const dataPhone = $el.find("[data-phone]").attr("data-phone") ?? $el.find("[data-contact-phone]").attr("data-contact-phone") ?? $el.find("[data-original-phone]").attr("data-original-phone") ?? $el.find("[data-sdt]").attr("data-sdt") ?? "";
+      const phones = dataPhone ? [normalizePhone(dataPhone)].filter((p) => p.length === 10) : extractPhones(elHtml + " " + elText);
+      const emails = extractEmails(elHtml + " " + elText);
+      for (const phone of phones.slice(0, 2)) {
+        if (seenPhone.has(phone)) continue;
+        seenPhone.add(phone);
+        const email3 = emails.find((e) => !seenEmail.has(e)) ?? "";
+        if (email3) seenEmail.add(email3);
+        out.push(buildLead(proj.id, proj, {
+          name: nameTx,
+          phone,
+          email: email3,
+          source: src.label,
+          url: fullUrl,
+          title: titleTx,
+          price: priceTx,
+          interest: src.interest,
+          notes: `[${src.label.toUpperCase()}] ${titleTx}${priceTx ? " \xB7 " + priceTx : ""}`
+        }, phone));
+      }
+      for (const email3 of emails.slice(0, 2)) {
+        if (seenEmail.has(email3)) continue;
+        seenEmail.add(email3);
+        out.push(buildLead(proj.id, proj, {
+          name: nameTx,
+          phone: "",
+          email: email3,
+          source: src.label,
+          url: fullUrl,
+          title: titleTx,
+          price: priceTx,
+          interest: src.interest,
+          notes: `[${src.label.toUpperCase()}] Email: ${email3} \u2014 ${titleTx}`
+        }, email3.replace(/[@.]/g, "_")));
+      }
+    });
+    if (out.length < 3) {
+      for (const phone of extractPhones(html).slice(0, 15)) {
+        if (seenPhone.has(phone)) continue;
+        seenPhone.add(phone);
+        out.push(buildLead(proj.id, proj, {
+          name: "",
+          phone,
+          email: "",
+          source: src.label,
+          url: src.url,
+          title: "",
+          price: "",
+          interest: src.interest,
+          notes: `S\u0110T tr\xEDch xu\u1EA5t t\u1EEB ${src.label}`
+        }, `raw-${phone}`));
+      }
+      for (const email3 of extractEmails(html).slice(0, 10)) {
+        if (seenEmail.has(email3)) continue;
+        seenEmail.add(email3);
+        out.push(buildLead(proj.id, proj, {
+          name: "",
+          phone: "",
+          email: email3,
+          source: src.label,
+          url: src.url,
+          title: "",
+          price: "",
+          interest: src.interest,
+          notes: `Email tr\xEDch xu\u1EA5t t\u1EEB ${src.label}`
+        }, `raw-${email3.replace(/[@.]/g, "_")}`));
+      }
+    }
+  } catch {
+  }
+  return out;
+}
+async function scrapeClassifiedLeads(projectId) {
+  const start = Date.now();
+  const proj = PROJECT_CATALOG.find((p) => p.id === projectId);
+  if (!proj) return { projectId, project: projectId, ok: false, leads: [], total: 0, durationMs: 0, error: "Project not found" };
+  if (!process.env.SCRAPERAPI_KEY) {
+    return { projectId: proj.id, project: proj.name, ok: false, leads: [], total: 0, durationMs: Date.now() - start, error: "SCRAPERAPI_KEY ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\xECnh" };
+  }
+  const keywords = PROJECT_KEYWORDS[projectId] ?? [proj.name];
+  const kw = encodeURIComponent(keywords[0]);
+  const kwShort = encodeURIComponent((keywords[1] ?? keywords[0]).split(" ").slice(0, 3).join(" "));
+  const SOURCES = [
+    // ── BatDongSan — bán ────────────────────────────────────────────────────
+    {
+      label: "batdongsan",
+      interest: "seller",
+      url: `https://batdongsan.com.vn/ban-can-ho-chung-cu?keyword=${kw}`,
+      card: ".re__card-full, [data-product-id]",
+      title: ".re__card-info-title, h3",
+      price: ".re__card-config-price",
+      name: '.re__card-info-agent-name, [class*="agent-name"]',
+      link: "a.re__card-info-title"
+    },
+    // ── BatDongSan — cần mua / thuê ─────────────────────────────────────────
+    {
+      label: "batdongsan",
+      interest: "buyer",
+      url: `https://batdongsan.com.vn/can-mua-thue?keyword=${kw}`,
+      card: ".re__card-full, [data-product-id]",
+      title: ".re__card-info-title, h3",
+      price: ".re__card-config-price",
+      name: ".re__card-info-agent-name",
+      link: "a.re__card-info-title"
+    },
+    // ── Muaban.net ───────────────────────────────────────────────────────────
+    {
+      label: "muaban",
+      interest: "seller",
+      url: `https://muaban.net/bat-dong-san?q=${kw}`,
+      card: '.listing-item, [class*="item-listing"], article.item',
+      title: 'h2,h3,[class*="title"]',
+      price: '[class*="price"]',
+      name: '[class*="seller"],[class*="contact"],[class*="user"]',
+      link: "a"
+    },
+    // ── Homedy.com — bán ─────────────────────────────────────────────────────
+    {
+      label: "homedy",
+      interest: "seller",
+      url: `https://homedy.com/ban-can-ho-chung-cu?keyword=${kw}`,
+      card: '.product-item, [class*="product-item"], .item-product',
+      title: '.product-title, h3,[class*="title"]',
+      price: '.product-price,[class*="price"]',
+      name: '[class*="agent"],[class*="contact"],[class*="user"]',
+      link: "a.product-title, a"
+    },
+    // ── Homedy.com — hỏi đáp / quan tâm dự án ────────────────────────────────
+    {
+      label: "homedy_forum",
+      interest: "buyer",
+      url: `https://homedy.com/hoi-dap?keyword=${kw}`,
+      card: '.question-item, [class*="question"], .forum-item, article',
+      title: 'h2,h3,[class*="title"],[class*="question"]',
+      price: '[class*="price"]',
+      name: '[class*="author"],[class*="user"],[class*="name"]',
+      link: "a"
+    },
+    // ── Alonhadat.com.vn ─────────────────────────────────────────────────────
+    {
+      label: "alonhadat",
+      interest: "seller",
+      url: `https://alonhadat.com.vn/tim-kiem.html?text=${kwShort}&chuyen=1`,
+      card: '.content-item, .property-item, [class*="content-item"]',
+      title: '.ct-title, h3, [class*="title"]',
+      price: '.ct-price, [class*="price"]',
+      name: '.ct-name, [class*="contact"],[class*="agent"]',
+      link: "a.ct-title, a"
+    },
+    // ── Mogi.vn ──────────────────────────────────────────────────────────────
+    {
+      label: "mogi",
+      interest: "seller",
+      url: `https://mogi.vn/mua-ban/tim-kiem?q=${kw}`,
+      card: '.prop-item, .prop-list-item, [class*="prop-item"]',
+      title: '.prop-name, h3,[class*="title"]',
+      price: '.prop-price, [class*="price"]',
+      name: '.prop-contact, [class*="contact"],[class*="agent"]',
+      link: "a.prop-name, a"
+    },
+    // ── NhaTot.com ───────────────────────────────────────────────────────────
+    {
+      label: "nhatot",
+      interest: "seller",
+      url: `https://www.nhatot.com/mua-ban-bat-dong-san?q=${kw}`,
+      card: '[class*="ad-listing"],[class*="AdItem"],[class*="aditem"],article',
+      title: '[class*="subject"],[class*="title"],h2,h3',
+      price: '[class*="price"]',
+      name: '[class*="account"],[class*="author"],[class*="seller"]',
+      link: "a"
+    },
+    // ── Cafeland.vn ──────────────────────────────────────────────────────────
+    {
+      label: "cafeland",
+      interest: "investor",
+      url: `https://cafeland.vn/tim-kiem/?s=${kw}`,
+      card: '.item-news, article, [class*="item-news"]',
+      title: 'h2,h3,[class*="title"]',
+      price: '[class*="price"]',
+      name: '[class*="author"],[class*="contact"]',
+      link: "a"
+    }
+  ];
+  const seenPhone = /* @__PURE__ */ new Set();
+  const seenEmail = /* @__PURE__ */ new Set();
+  const allLeads = [];
+  const BATCH = 4;
+  for (let i = 0; i < SOURCES.length; i += BATCH) {
+    const batch = SOURCES.slice(i, i + BATCH);
+    const results = await Promise.allSettled(
+      batch.map((src) => scrapeOneSrc(src, proj, seenPhone, seenEmail))
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled") allLeads.push(...r.value);
+    }
+    if (i + BATCH < SOURCES.length) await sleep2(1e3);
+  }
+  return {
+    projectId: proj.id,
+    project: proj.name,
+    ok: allLeads.length > 0,
+    leads: allLeads,
+    total: allLeads.length,
+    durationMs: Date.now() - start
+  };
+}
+async function scrapeProjectWebsiteLeads(projectId) {
+  const start = Date.now();
+  const proj = PROJECT_CATALOG.find((p) => p.id === projectId);
+  if (!proj || projectId === "sgsland") {
+    return { projectId: projectId || "", project: proj?.name ?? "", ok: false, leads: [], total: 0, durationMs: 0 };
+  }
+  if (!process.env.SCRAPERAPI_KEY) {
+    return { projectId: proj.id, project: proj.name, ok: false, leads: [], total: 0, durationMs: Date.now() - start, error: "SCRAPERAPI_KEY ch\u01B0a \u0111\u01B0\u1EE3c c\u1EA5u h\xECnh" };
+  }
+  const CONTACT_PATHS = {
+    "vinhomes-green-paradise": [
+      "https://vinhomesgreensparadise.vinhomes.vn/lien-he",
+      "https://vinhomesgreensparadise.vinhomes.vn/dai-ly",
+      "https://vinhomesgreensparadise.vinhomes.vn/tu-van"
+    ],
+    "vinhomes-central-park": [
+      "https://centralpark.vinhomes.vn/lien-he",
+      "https://centralpark.vinhomes.vn/dai-ly"
+    ],
+    "swanbay": [
+      "https://swanbay.vn/lien-he",
+      "https://swanbay.vn/tu-van",
+      "https://swanbay.vn/dai-ly"
+    ],
+    "swanpark": [
+      "https://swanpark.vn/lien-he",
+      "https://swanpark.vn/tu-van"
+    ],
+    "phu-my-hung": [
+      "https://phumyhung.vn/lien-he",
+      "https://phumyhung.vn/mua-ban/tim-dai-ly"
+    ],
+    "sala": [
+      "https://daikimgroup.vn/lien-he",
+      "https://daikimgroup.vn/du-an/sala-dai-quang-minh"
+    ],
+    "aqua-city": [
+      "https://aquacity.com.vn/lien-he",
+      "https://aquacity.com.vn/dai-ly"
+    ],
+    "izumi": [
+      "https://izumicity.com.vn/lien-he",
+      "https://izumicity.com.vn/dai-ly-phan-phoi"
+    ],
+    "global-city": [
+      "https://globalcity.vn/lien-he",
+      "https://globalcity.vn/dai-ly"
+    ],
+    "masterise": [
+      "https://masterisehomes.com/lien-he",
+      "https://masterisehomes.com/dai-ly"
+    ],
+    "gamuda-land": [
+      "https://gamudacity.com.vn/lien-he",
+      "https://gamudacity.com.vn/dai-ly"
+    ],
+    "sun-land": [
+      "https://sungroup.com.vn/lien-he"
+    ],
+    "van-phuc-city": [
+      "https://vanphuccity.com.vn/lien-he",
+      "https://vanphuccity.com.vn/dai-ly"
+    ],
+    "son-kim-land": [
+      "https://sonkimland.com.vn/lien-he",
+      "https://sonkimland.com.vn/dai-ly"
+    ],
+    "bim-land": [
+      "https://bimland.com.vn/lien-he",
+      "https://bimland.com.vn/dai-ly"
+    ],
+    "vinacapital": [
+      "https://vinacapital.com/vi/lien-he",
+      "https://vinacapital.com/vi/real-estate"
+    ]
+  };
+  const urls = CONTACT_PATHS[projectId] ?? [];
+  const leads = [];
+  const seenPhone = /* @__PURE__ */ new Set();
+  const seenEmail = /* @__PURE__ */ new Set();
+  for (const url2 of urls) {
+    try {
+      const res = await scraperApiFetch2(url2, true);
+      if (!res.ok) continue;
+      const html = await res.text();
+      if (html.includes("Just a moment") || html.length < 500) continue;
+      const $ = cheerio2.load(html);
+      const text = $.text();
+      const agentSel = '.agent-item, .broker-item, [class*="agent"], [class*="broker"], [class*="tu-van"], [class*="nhan-vien"], [class*="expert"]';
+      $(agentSel).slice(0, 20).each((_, el) => {
+        const $el = $(el);
+        const elHtml = $el.html() ?? "";
+        const nameTx = $el.find('[class*="name"],h3,h4').first().text().trim().slice(0, 80);
+        const phones = extractPhones(elHtml);
+        const emails = extractEmails(elHtml);
+        const href = $el.find("a").first().attr("href") ?? "";
+        const fullUrl = href.startsWith("http") ? href : url2;
+        for (const phone of phones.slice(0, 1)) {
+          if (seenPhone.has(phone)) continue;
+          seenPhone.add(phone);
+          leads.push(buildLead(proj.id, proj, {
+            name: nameTx,
+            phone,
+            email: emails[0] ?? "",
+            source: "website",
+            url: fullUrl,
+            title: `\u0110\u1EA1i l\xFD / T\u01B0 v\u1EA5n vi\xEAn t\u1EA1i ${proj.name}`,
+            price: "",
+            interest: "seller",
+            notes: `[WEBSITE] T\u01B0 v\u1EA5n vi\xEAn d\u1EF1 \xE1n \u2014 ${proj.name} \xB7 ${url2}`
+          }, phone));
+        }
+        for (const email3 of emails.slice(0, 1)) {
+          if (seenEmail.has(email3)) continue;
+          seenEmail.add(email3);
+          leads.push(buildLead(proj.id, proj, {
+            name: nameTx,
+            phone: "",
+            email: email3,
+            source: "website",
+            url: fullUrl,
+            title: `Li\xEAn h\u1EC7 t\u1EA1i ${proj.name}`,
+            price: "",
+            interest: "seller",
+            notes: `[WEBSITE] Email li\xEAn h\u1EC7 \u2014 ${proj.name}`
+          }, email3.replace(/[@.]/g, "_")));
+        }
+      });
+      for (const phone of extractPhones(text + html).slice(0, 10)) {
+        if (seenPhone.has(phone)) continue;
+        seenPhone.add(phone);
+        leads.push(buildLead(proj.id, proj, {
+          name: "",
+          phone,
+          email: "",
+          source: "website",
+          url: url2,
+          title: `Li\xEAn h\u1EC7 ch\xEDnh th\u1EE9c \u2014 ${proj.name}`,
+          price: "",
+          interest: "seller",
+          notes: `[WEBSITE] S\u0110T tr\xEDch t\u1EEB trang ch\xEDnh th\u1EE9c ${proj.name}`
+        }, `site-${phone}`));
+      }
+      for (const email3 of extractEmails(text + html).slice(0, 5)) {
+        if (seenEmail.has(email3)) continue;
+        seenEmail.add(email3);
+        leads.push(buildLead(proj.id, proj, {
+          name: "",
+          phone: "",
+          email: email3,
+          source: "website",
+          url: url2,
+          title: `Email li\xEAn h\u1EC7 \u2014 ${proj.name}`,
+          price: "",
+          interest: "unknown",
+          notes: `[WEBSITE] Email tr\xEDch t\u1EEB trang ch\xEDnh th\u1EE9c ${proj.name}`
+        }, `site-${email3.replace(/[@.]/g, "_")}`));
+      }
+      await sleep2(1200);
+    } catch {
+      continue;
+    }
+  }
+  return {
+    projectId: proj.id,
+    project: proj.name,
+    ok: leads.length > 0,
+    leads,
+    total: leads.length,
+    durationMs: Date.now() - start
+  };
+}
+async function scrapeAllLeadsForProject(projectId) {
+  const [classified, website] = await Promise.allSettled([
+    scrapeClassifiedLeads(projectId),
+    scrapeProjectWebsiteLeads(projectId)
+  ]);
+  const r1 = classified.status === "fulfilled" ? classified.value : null;
+  const r2 = website.status === "fulfilled" ? website.value : null;
+  const proj = PROJECT_CATALOG.find((p) => p.id === projectId);
+  const allLeads = [...r1?.leads ?? [], ...r2?.leads ?? []];
+  return {
+    projectId,
+    project: proj?.name ?? projectId,
+    ok: allLeads.length > 0,
+    leads: allLeads,
+    total: allLeads.length,
+    durationMs: (r1?.durationMs ?? 0) + (r2?.durationMs ?? 0),
+    error: !r1?.ok && !r2?.ok ? r1?.error ?? r2?.error : void 0
+  };
+}
+var LEAD_RUNNERS = {
+  "sgsland": scrapeSgslandLeads,
+  "vinhomes-green-paradise": () => scrapeAllLeadsForProject("vinhomes-green-paradise"),
+  "vinhomes-central-park": () => scrapeAllLeadsForProject("vinhomes-central-park"),
+  "swanbay": () => scrapeAllLeadsForProject("swanbay"),
+  "swanpark": () => scrapeAllLeadsForProject("swanpark"),
+  "phu-my-hung": () => scrapeAllLeadsForProject("phu-my-hung"),
+  "sala": () => scrapeAllLeadsForProject("sala"),
+  "aqua-city": () => scrapeAllLeadsForProject("aqua-city"),
+  "izumi": () => scrapeAllLeadsForProject("izumi"),
+  "global-city": () => scrapeAllLeadsForProject("global-city"),
+  "masterise": () => scrapeAllLeadsForProject("masterise"),
+  "gamuda-land": () => scrapeAllLeadsForProject("gamuda-land"),
+  "sun-land": () => scrapeAllLeadsForProject("sun-land"),
+  "van-phuc-city": () => scrapeAllLeadsForProject("van-phuc-city"),
+  "son-kim-land": () => scrapeAllLeadsForProject("son-kim-land"),
+  "bim-land": () => scrapeAllLeadsForProject("bim-land"),
+  "vinacapital": () => scrapeAllLeadsForProject("vinacapital")
+};
+var cachedLeads = null;
+var leadCacheTs = 0;
+var LEAD_CACHE_TTL_MS = 45 * 60 * 1e3;
+var cachedResults2 = null;
+var cacheTimestamp2 = 0;
+var CACHE_TTL_MS3 = 60 * 60 * 1e3;
+function isCacheValid2() {
+  return !!cachedResults2 && Date.now() - cacheTimestamp2 < CACHE_TTL_MS3;
+}
+async function scrapeChototLeadsGlobal() {
+  const leads = [];
+  const regions = [["13", "TP.HCM"], ["60", "\u0110\u1ED3ng Nai"], ["19", "B\xECnh D\u01B0\u01A1ng"]];
+  const cats = [["1020", "C\u0103n h\u1ED9"], ["1040", "\u0110\u1EA5t n\u1EC1n"], ["1000", "Nh\xE0 \u0111\u1EA5t"]];
+  for (const [rc, rn] of regions) {
+    for (const [cc, cn] of cats) {
+      await delayMs(300);
+      const url2 = `https://gateway.chotot.com/v1/public/ad-listing?cg=${cc}&region_v2=${rc}&limit=20&st=k&f=p&w=1`;
+      try {
+        const res = await scraperApiFetch2(url2, false);
+        if (!res.ok) continue;
+        const data = await res.json();
+        for (const ad of data.ads ?? []) {
+          const loc = [ad.ward_name, ad.area_name, ad.region_name].filter(Boolean).join(", ");
+          leads.push({
+            id: `ct-${ad.ad_id}`,
+            projectId: "",
+            project: "Ch\u1EE3T\u1ED1t",
+            name: String(ad.account_name ?? "Kh\xF4ng r\xF5"),
+            phone: "",
+            email: "",
+            source: "chotot",
+            sourceUrl: `https://www.chotot.com/${ad.ad_id}.htm`,
+            listing: String(ad.subject ?? "").substring(0, 80),
+            price: String(ad.price_string ?? ""),
+            interest: "seller",
+            notes: `${rn} / ${cn} \u2014 ${loc}`,
+            scrapedAt: (/* @__PURE__ */ new Date()).toISOString(),
+            importedAt: null
+          });
+        }
+      } catch {
+      }
+    }
+  }
+  const top = leads.slice(0, 30);
+  for (const lead of top) {
+    await delayMs(400);
+    const adId = lead.id.replace("ct-", "");
+    try {
+      const res = await scraperApiFetch2(`https://gateway.chotot.com/v2/public/ad-listing/${adId}.json`, false);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const ad = data.ad ?? {};
+      const ph = normalizePhoneLocal(String(ad.phone ?? ""));
+      if (ph) {
+        lead.phone = ph;
+        lead.name = String(ad.contact_name ?? ad.account_name ?? lead.name);
+        lead.email = String(ad.email ?? "");
+      }
+    } catch {
+    }
+  }
+  return leads.filter((l) => l.phone);
+}
+async function scrapeFacebookLeads(fbToken, fbPage) {
+  const leads = [];
+  const [, formId] = fbPage.split(":");
+  const url2 = `https://graph.facebook.com/v19.0/${formId}/leads?access_token=${fbToken}&fields=id,created_time,field_data&limit=100`;
+  const r = await fetch(url2, { signal: AbortSignal.timeout(15e3) });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  for (const fl of d.data ?? []) {
+    const fields = {};
+    (fl.field_data ?? []).forEach((f) => {
+      fields[f.name] = f.values?.[0] ?? "";
+    });
+    const phone = normalizePhoneLocal(fields.phone_number ?? fields.phone ?? fields.so_dien_thoai ?? "");
+    if (!phone) continue;
+    leads.push({
+      id: `fb-${fl.id}`,
+      projectId: "",
+      project: "Facebook Lead Ads",
+      name: fields.full_name ?? fields.name ?? fields.ho_ten ?? "Kh\xE1ch FB",
+      phone,
+      email: fields.email ?? fields.email_address ?? "",
+      source: "facebook",
+      sourceUrl: "https://facebook.com",
+      listing: "Facebook Lead Form",
+      price: "",
+      interest: "buyer",
+      notes: JSON.stringify(fields).substring(0, 100),
+      scrapedAt: fl.created_time ?? (/* @__PURE__ */ new Date()).toISOString(),
+      importedAt: null
+    });
+  }
+  return leads;
+}
+async function scrapeTikTokLeads(ttToken, ttAdv) {
+  const leads = [];
+  const url2 = `https://business-api.tiktok.com/open_api/v1.3/lead/get/?advertiser_id=${ttAdv}&page_size=100`;
+  const r = await fetch(url2, { headers: { "Access-Token": ttToken, "Content-Type": "application/json" }, signal: AbortSignal.timeout(15e3) });
+  const d = await r.json();
+  if (d.code !== 0) throw new Error(d.message ?? "TikTok API error");
+  for (const tl of d.data?.lead_list ?? []) {
+    const phone = normalizePhoneLocal(tl.phone_number ?? tl.phone ?? "");
+    if (!phone) continue;
+    leads.push({
+      id: `tt-${tl.lead_id}`,
+      projectId: "",
+      project: "TikTok Lead Gen",
+      name: tl.display_name ?? "Kh\xE1ch TikTok",
+      phone,
+      email: tl.email ?? "",
+      source: "tiktok",
+      sourceUrl: "",
+      listing: `TikTok Lead: ${tl.ad_name ?? ""}`,
+      price: "",
+      interest: "buyer",
+      notes: tl.ad_name ?? "",
+      scrapedAt: tl.create_time ?? (/* @__PURE__ */ new Date()).toISOString(),
+      importedAt: null
+    });
+  }
+  return leads;
+}
+async function scrapeZaloLeads(zlToken) {
+  const leads = [];
+  const url2 = "https://openapi.zalo.me/v2.0/oa/listrecentchat?data=" + encodeURIComponent(JSON.stringify({ offset: 0, count: 50 }));
+  const r = await fetch(url2, { headers: { "access_token": zlToken }, signal: AbortSignal.timeout(15e3) });
+  const d = await r.json();
+  if (d.error !== 0) throw new Error(d.message ?? "Zalo API error");
+  for (const c of d.data ?? []) {
+    const phone = normalizePhoneLocal(c.src?.phone ?? "");
+    leads.push({
+      id: `zl-${c.uid}`,
+      projectId: "",
+      project: "Zalo OA",
+      name: c.src?.display_name ?? "Kh\xE1ch Zalo",
+      phone: phone || c.src?.phone || "",
+      email: "",
+      source: "zalo",
+      sourceUrl: "https://zalo.me",
+      listing: String(c.last_message?.text ?? "").substring(0, 60),
+      price: "",
+      interest: "buyer",
+      notes: `Zalo chat: ${c.src?.display_name ?? ""}`,
+      scrapedAt: c.last_message?.time ? new Date(Number(c.last_message.time) * 1e3).toISOString() : (/* @__PURE__ */ new Date()).toISOString(),
+      importedAt: null
+    });
+  }
+  return leads;
+}
+function createScraperProjectRoutes(authenticateToken) {
+  const router = Router28();
+  const ADMIN_ROLES4 = ["ADMIN", "TEAM_LEAD"];
+  router.get("/catalog", authenticateToken, (_req, res) => {
+    const hasKey = !!process.env.SCRAPERAPI_KEY;
+    res.json({
+      projects: PROJECT_CATALOG.map((p) => ({
+        ...p,
+        apiReady: p.id === "sgsland" ? true : hasKey,
+        note: p.id === "sgsland" ? "API n\u1ED9i b\u1ED9 \u2014 lu\xF4n s\u1EB5n s\xE0ng" : hasKey ? p.note : "C\u1EA7n SCRAPERAPI_KEY \u0111\u1EC3 scrape"
+      })),
+      cacheValid: isCacheValid2(),
+      cacheAge: cachedResults2 ? Math.round((Date.now() - cacheTimestamp2) / 1e3) : null,
+      cacheTtlMin: 60
+    });
+  });
+  router.get("/results", authenticateToken, (_req, res) => {
+    if (!cachedResults2) {
+      return res.json({ results: [], units: [], totalUnits: 0, scrapedAt: null });
+    }
+    const allUnits = cachedResults2.flatMap((r) => r.units);
+    res.json({
+      results: cachedResults2.map((r) => ({
+        projectId: r.projectId,
+        project: r.project,
+        siteUrl: r.siteUrl,
+        ok: r.ok,
+        count: r.units.length,
+        error: r.error,
+        warning: r.warning,
+        durationMs: r.durationMs
+      })),
+      units: allUnits,
+      totalUnits: allUnits.length,
+      scrapedAt: new Date(cacheTimestamp2).toISOString(),
+      cacheAge: Math.round((Date.now() - cacheTimestamp2) / 1e3)
+    });
+  });
+  router.get("/leads/results", authenticateToken, (_req, res) => {
+    if (!cachedLeads) {
+      return res.json({ results: [], leads: [], totalLeads: 0, scrapedAt: null });
+    }
+    const allLeads = cachedLeads.flatMap((r) => r.leads);
+    res.json({
+      results: cachedLeads.map((r) => ({
+        projectId: r.projectId,
+        project: r.project,
+        ok: r.ok,
+        count: r.leads.length,
+        error: r.error,
+        durationMs: r.durationMs
+      })),
+      leads: allLeads,
+      totalLeads: allLeads.length,
+      scrapedAt: new Date(leadCacheTs).toISOString(),
+      cacheAge: Math.round((Date.now() - leadCacheTs) / 1e3)
+    });
+  });
+  router.post("/leads/run", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!["ADMIN", "TEAM_LEAD"].includes(user.role)) {
+        return res.status(403).json({ error: "Ch\u1EC9 Admin/Team Lead m\u1EDBi c\xF3 th\u1EC3 ch\u1EA1y scraper" });
+      }
+      const { projects = Object.keys(LEAD_RUNNERS) } = req.body;
+      const validProjects = projects.filter((p) => LEAD_RUNNERS[p]);
+      const settled = await Promise.allSettled(validProjects.map((id) => LEAD_RUNNERS[id]()));
+      const results = settled.map((r, i) => {
+        if (r.status === "fulfilled") return r.value;
+        const proj = PROJECT_CATALOG.find((p) => p.id === validProjects[i]);
+        return { projectId: proj.id, project: proj.name, ok: false, leads: [], total: 0, durationMs: 0, error: String(r.reason) };
+      });
+      cachedLeads = results;
+      leadCacheTs = Date.now();
+      const allLeads = results.flatMap((r) => r.leads);
+      res.json({
+        ok: true,
+        results: results.map((r) => ({ projectId: r.projectId, project: r.project, ok: r.ok, count: r.leads.length, error: r.error, durationMs: r.durationMs })),
+        leads: allLeads,
+        totalLeads: allLeads.length,
+        scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    } catch (err4) {
+      res.status(500).json({ error: "Lead scrape th\u1EA5t b\u1EA1i", detail: String(err4) });
+    }
+  });
+  router.post("/leads/import", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!["ADMIN", "TEAM_LEAD", "SALES"].includes(user.role)) {
+        return res.status(403).json({ error: "Kh\xF4ng c\xF3 quy\u1EC1n import lead" });
+      }
+      const { name, phone, email: email3, source, notes, projectId, project, sourceUrl, listing, interest } = req.body;
+      if (!phone) return res.status(400).json({ error: "Thi\u1EBFu s\u1ED1 \u0111i\u1EC7n tho\u1EA1i" });
+      const DEFAULT_TENANT = "00000000-0000-0000-0000-000000000001";
+      const tenantId = user.tenantId ?? DEFAULT_TENANT;
+      const { rows: dup } = await pool.query(
+        `SELECT id FROM leads WHERE tenant_id = $1 AND phone = $2 LIMIT 1`,
+        [tenantId, phone]
+      );
+      if (dup.length) {
+        return res.status(409).json({ error: "S\u0110T \u0111\xE3 t\u1ED3n t\u1EA1i trong CRM", leadId: dup[0].id });
+      }
+      const notesText = [
+        notes,
+        listing ? `Tin \u0111\u0103ng: ${listing}` : "",
+        sourceUrl ? `Ngu\u1ED3n: ${sourceUrl}` : "",
+        project ? `D\u1EF1 \xE1n: ${project}` : "",
+        interest ? `Ph\xE2n lo\u1EA1i: ${interest === "seller" ? "Ng\u01B0\u1EDDi b\xE1n" : interest === "buyer" ? "Ng\u01B0\u1EDDi mua" : "Ch\u01B0a x\xE1c \u0111\u1ECBnh"}` : ""
+      ].filter(Boolean).join("\n").trim();
+      const insertSrc = source === "sgsland_db" ? "DIRECT" : source === "batdongsan" ? "WEBSITE" : source === "muaban" ? "WEBSITE" : "WEBSITE";
+      const { rows } = await withTenantContext(
+        tenantId,
+        async (client) => client.query(
+          `INSERT INTO leads (tenant_id, name, phone, email, source, stage, notes, attributes)
+           VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, 'NEW', $5, $6)
+           RETURNING *`,
+          [
+            name || "Kh\xF4ng r\xF5",
+            phone,
+            email3 || null,
+            insertSrc,
+            notesText || null,
+            JSON.stringify({ projectId, projectName: project, interest, scrapedFrom: sourceUrl })
+          ]
+        )
+      );
+      res.status(201).json({ ok: true, lead: rows[0] });
+    } catch (err4) {
+      res.status(500).json({ error: "Import th\u1EA5t b\u1EA1i", detail: String(err4) });
+    }
+  });
+  router.post("/leads/import-bulk", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!["ADMIN", "TEAM_LEAD"].includes(user.role)) {
+        return res.status(403).json({ error: "Ch\u1EC9 Admin/Team Lead m\u1EDBi c\xF3 th\u1EC3 import h\xE0ng lo\u1EA1t" });
+      }
+      const { leads = [] } = req.body;
+      const DEFAULT_TENANT = "00000000-0000-0000-0000-000000000001";
+      const tenantId = user.tenantId ?? DEFAULT_TENANT;
+      let imported = 0;
+      let skipped = 0;
+      const errors = [];
+      for (const lead of leads.slice(0, 50)) {
+        if (!lead.phone) {
+          skipped++;
+          continue;
+        }
+        try {
+          const { rows: dup } = await pool.query(
+            `SELECT id FROM leads WHERE tenant_id = $1 AND phone = $2 LIMIT 1`,
+            [tenantId, lead.phone]
+          );
+          if (dup.length) {
+            skipped++;
+            continue;
+          }
+          const notesText = [
+            lead.notes,
+            lead.listing ? `Tin \u0111\u0103ng: ${lead.listing}` : "",
+            lead.sourceUrl ? `Ngu\u1ED3n: ${lead.sourceUrl}` : "",
+            lead.project ? `D\u1EF1 \xE1n: ${lead.project}` : ""
+          ].filter(Boolean).join("\n").trim();
+          await withTenantContext(
+            tenantId,
+            (client) => client.query(
+              `INSERT INTO leads (tenant_id, name, phone, email, source, stage, notes, attributes)
+               VALUES (current_setting('app.current_tenant_id', true)::uuid, $1, $2, $3, $4, 'NEW', $5, $6)`,
+              [
+                lead.name || "Kh\xF4ng r\xF5",
+                lead.phone,
+                lead.email || null,
+                lead.source === "sgsland_db" ? "DIRECT" : "WEBSITE",
+                notesText || null,
+                JSON.stringify({ projectId: lead.projectId, projectName: lead.project, interest: lead.interest })
+              ]
+            )
+          );
+          imported++;
+        } catch (e) {
+          errors.push(String(e));
+        }
+      }
+      res.json({ ok: true, imported, skipped, errors: errors.slice(0, 5) });
+    } catch (err4) {
+      res.status(500).json({ error: "Bulk import th\u1EA5t b\u1EA1i", detail: String(err4) });
+    }
+  });
+  router.post("/leads/chotot", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!["ADMIN", "TEAM_LEAD"].includes(user.role)) {
+        return res.status(403).json({ error: "Ch\u1EC9 Admin/Team Lead m\u1EDBi c\xF3 th\u1EC3 ch\u1EA1y scraper" });
+      }
+      if (!process.env.SCRAPERAPI_KEY) {
+        return res.status(400).json({ error: "C\u1EA7n c\u1EA5u h\xECnh SCRAPERAPI_KEY \u0111\u1EC3 d\xF9ng Ch\u1EE3T\u1ED1t scraper" });
+      }
+      const leads = await scrapeChototLeadsGlobal();
+      res.json({ ok: true, leads, total: leads.length, scrapedAt: (/* @__PURE__ */ new Date()).toISOString() });
+    } catch (err4) {
+      res.status(500).json({ error: "Ch\u1EE3T\u1ED1t scrape th\u1EA5t b\u1EA1i", detail: String(err4) });
+    }
+  });
+  router.post("/leads/social", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!["ADMIN", "TEAM_LEAD"].includes(user.role)) {
+        return res.status(403).json({ error: "Ch\u1EC9 Admin/Team Lead m\u1EDBi c\xF3 th\u1EC3 ch\u1EA1y scraper" });
+      }
+      const { source, fbToken, fbPage, ttToken, ttAdv, zlToken } = req.body;
+      let leads = [];
+      if (source === "facebook") {
+        if (!fbToken || !fbPage) return res.status(400).json({ error: "Thi\u1EBFu Facebook token ho\u1EB7c Page ID:Form ID" });
+        leads = await scrapeFacebookLeads(fbToken, fbPage);
+      } else if (source === "tiktok") {
+        if (!ttToken || !ttAdv) return res.status(400).json({ error: "Thi\u1EBFu TikTok access token ho\u1EB7c Advertiser ID" });
+        leads = await scrapeTikTokLeads(ttToken, ttAdv);
+      } else if (source === "zalo") {
+        if (!zlToken) return res.status(400).json({ error: "Thi\u1EBFu Zalo OA access token" });
+        leads = await scrapeZaloLeads(zlToken);
+      } else {
+        return res.status(400).json({ error: "Ngu\u1ED3n kh\xF4ng h\u1EE3p l\u1EC7. D\xF9ng: facebook | tiktok | zalo" });
+      }
+      res.json({ ok: true, leads, total: leads.length, scrapedAt: (/* @__PURE__ */ new Date()).toISOString() });
+    } catch (err4) {
+      res.status(500).json({ error: "Social scrape th\u1EA5t b\u1EA1i", detail: String(err4) });
+    }
+  });
+  router.post("/run", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!ADMIN_ROLES4.includes(user.role)) {
+        return res.status(403).json({ error: "Ch\u1EC9 Admin/Team Lead m\u1EDBi c\xF3 th\u1EC3 ch\u1EA1y scraper" });
+      }
+      const { projects = Object.keys(PROJECT_RUNNERS) } = req.body;
+      const validProjects = projects.filter((p) => PROJECT_RUNNERS[p]);
+      const results = await Promise.allSettled(
+        validProjects.map((id) => PROJECT_RUNNERS[id]())
+      );
+      const settled = results.map((r, i) => {
+        if (r.status === "fulfilled") return r.value;
+        const proj = PROJECT_CATALOG.find((p) => p.id === validProjects[i]);
+        return {
+          projectId: proj.id,
+          project: proj.name,
+          siteUrl: proj.siteUrl,
+          ok: false,
+          units: [],
+          total: 0,
+          durationMs: 0,
+          error: String(r.reason)
+        };
+      });
+      cachedResults2 = settled;
+      cacheTimestamp2 = Date.now();
+      const allUnits = settled.flatMap((r) => r.units);
+      res.json({
+        ok: true,
+        results: settled.map((r) => ({
+          projectId: r.projectId,
+          project: r.project,
+          siteUrl: r.siteUrl,
+          ok: r.ok,
+          count: r.units.length,
+          error: r.error,
+          warning: r.warning,
+          durationMs: r.durationMs
+        })),
+        units: allUnits,
+        totalUnits: allUnits.length,
+        scrapedAt: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    } catch (err4) {
+      res.status(500).json({ error: "Scrape th\u1EA5t b\u1EA1i", detail: String(err4) });
+    }
+  });
+  return router;
+}
+
+// server/routes/errorLogRoutes.ts
+import { Router as Router29 } from "express";
 
 // server/repositories/errorLogRepository.ts
 var ErrorLogRepository = class {
@@ -53266,7 +55391,7 @@ var ErrorLogRepository = class {
 var ADMIN_ROLES3 = /* @__PURE__ */ new Set(["ADMIN", "TEAM_LEAD"]);
 var DEFAULT_TENANT_ID2 = process.env.DEFAULT_TENANT_ID || "default";
 function createErrorLogRoutes(authenticateToken, pool3) {
-  const router = Router27();
+  const router = Router29();
   const repo = new ErrorLogRepository(pool3);
   router.post("/", async (req, res) => {
     try {
@@ -53990,6 +56115,7 @@ var DICTIONARY = {
     "menu.ai-governance": "Qu\u1EA3n Tr\u1ECB AI",
     "menu.seo-manager": "Qu\u1EA3n L\xFD SEO",
     "menu.error-monitor": "Gi\xE1m S\xE1t L\u1ED7i",
+    "menu.scraper": "Scraper Th\u1ECB Tr\u01B0\u1EDDng",
     "menu.system": "H\u1EA1 T\u1EA7ng H\u1EC7 Th\u1ED1ng",
     "menu.marketplace-apps": "Kho \u1EE8ng D\u1EE5ng",
     "menu.mobile-app": "\u1EE8ng D\u1EE5ng Di \u0110\u1ED9ng",
@@ -55523,7 +57649,7 @@ var DICTIONARY = {
     "footer.link_dong_nai": "B\u0110S \u0110\u1ED3ng Nai",
     "footer.link_long_thanh": "B\u0110S Long Th\xE0nh",
     "footer.link_aqua_city": "Aqua City",
-    "footer.link_manhattan": "Manhattan Qu\u1EADn 9",
+    "footer.link_manhattan": "Grand Manhattan Novaland",
     "livechat.title": "Chat v\u1EDBi ch\xFAng t\xF4i",
     "livechat.subtitle": "Vui l\xF2ng \u0111\u1EC3 l\u1EA1i th\xF4ng tin \u0111\u1EC3 ch\xFAng t\xF4i h\u1ED7 tr\u1EE3 b\u1EA1n t\u1ED1t nh\u1EA5t.",
     "livechat.name_label": "H\u1ECD v\xE0 t\xEAn",
@@ -55770,7 +57896,7 @@ var DICTIONARY = {
     "contact.placeholder_name": "Nguy\u1EC5n V\u0103n A",
     "contact.placeholder_message": "Chi ti\u1EBFt y\xEAu c\u1EA7u c\u1EE7a b\u1EA1n...",
     "contact.placeholder_subject": "Ch\u1ECDn ch\u1EE7 \u0111\u1EC1...",
-    "contact.subj_support": "H\u1ED7 tr\u1EE3 k\u1EF9 thu\u1EADt",
+    "contact.subj_support": "T\u01B0 v\u1EA5n thi\u1EBFt k\u1EBF, X\xE2y d\u1EF1ng",
     "contact.subj_sales": "T\u01B0 v\u1EA5n mua/b\xE1n",
     "contact.subj_partner": "H\u1EE3p t\xE1c kinh doanh",
     "contact.subj_other": "Kh\xE1c",
@@ -56076,6 +58202,7 @@ var DICTIONARY = {
     "menu.ai-governance": "AI Governance",
     "menu.seo-manager": "SEO Manager",
     "menu.error-monitor": "Error Monitor",
+    "menu.scraper": "Market Scraper",
     "menu.system": "System Infrastructure",
     "menu.marketplace-apps": "App Store",
     "menu.mobile-app": "Mobile App",
@@ -57609,7 +59736,7 @@ var DICTIONARY = {
     "footer.link_dong_nai": "Dong Nai Real Estate",
     "footer.link_long_thanh": "Long Thanh Real Estate",
     "footer.link_aqua_city": "Aqua City",
-    "footer.link_manhattan": "Manhattan District 9",
+    "footer.link_manhattan": "Grand Manhattan Novaland",
     "livechat.title": "Chat with us",
     "livechat.subtitle": "Please leave your information so we can best support you.",
     "livechat.name_label": "Full Name",
@@ -57855,7 +59982,7 @@ var DICTIONARY = {
     "contact.placeholder_name": "John Smith",
     "contact.placeholder_message": "Details of your request...",
     "contact.placeholder_subject": "Select a subject...",
-    "contact.subj_support": "Technical Support",
+    "contact.subj_support": "Design & Construction Consulting",
     "contact.subj_sales": "Buy/Sell Consulting",
     "contact.subj_partner": "Business Partnership",
     "contact.subj_other": "Other",
@@ -57905,7 +60032,7 @@ init_interactionRepository();
 // server/services/geoService.ts
 init_logger();
 var geoCache = /* @__PURE__ */ new Map();
-var CACHE_TTL_MS2 = 24 * 60 * 60 * 1e3;
+var CACHE_TTL_MS4 = 24 * 60 * 60 * 1e3;
 var PRIVATE_IP_RE = /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|::1$|::ffff:127\.|fd|fc)/i;
 function isPrivateIp(ip) {
   return !ip || PRIVATE_IP_RE.test(ip) || ip === "localhost";
@@ -57913,7 +60040,7 @@ function isPrivateIp(ip) {
 async function lookupIp(ip) {
   if (isPrivateIp(ip)) return null;
   const cached2 = geoCache.get(ip);
-  if (cached2 && Date.now() - cached2.ts < CACHE_TTL_MS2) return cached2.data;
+  if (cached2 && Date.now() - cached2.ts < CACHE_TTL_MS4) return cached2.data;
   try {
     const res = await fetch(
       `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,countryCode,regionName,city,lat,lon,isp`,
@@ -59316,6 +61443,8 @@ async function startServer() {
   app.use("/scim/v2", express.json({ type: ["application/json", "application/scim+json"] }), createScimRoutes());
   app.use("/api/valuation", apiRateLimit, createValuationRoutes(authenticateToken, aiRateLimit, optionalAuth, guestValuationRateLimit, userValuationRateLimit));
   app.use("/api/connectors", apiRateLimit, createConnectorRoutes(authenticateToken));
+  app.use("/api/scraper", apiRateLimit, createScraperRoutes(authenticateToken));
+  app.use("/api/scraper/projects", apiRateLimit, createScraperProjectRoutes(authenticateToken));
   initErrorLogRepo(pool);
   app.use("/api/error-logs", apiRateLimit, createErrorLogRoutes(authenticateToken, pool));
   app.use("/api/projects", apiRateLimit, createProjectRoutes(authenticateToken));
@@ -59966,7 +62095,7 @@ ${urls}
       "/bat-dong-san-thu-duc",
       "/bat-dong-san-binh-duong",
       "/bat-dong-san-quan-7",
-      "/bat-dong-san-binh-chanh"
+      "/bat-dong-san-phu-nhuan"
     ];
     for (const route of LOCAL_LANDING_ROUTES) {
       app.get(route, (_req, res) => {
