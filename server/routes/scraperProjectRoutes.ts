@@ -564,11 +564,170 @@ function makeGenericScraper(id: string, urls: { url: string; type?: string }[]) 
   });
 }
 
+// ── 8. Aqua City (Novaland) — dedicated scraper ───────────────────────────────
+// aquacity.com.vn is a fully client-side SPA that blocks generic crawlers.
+// Strategy A: ScraperAPI premium JS render + comprehensive selectors
+// Strategy B: Regex price-pattern extraction from rendered HTML as fallback
+async function scrapeAquaCity(): Promise<ProjectResult> {
+  const start = Date.now();
+  const units: ProjectUnit[] = [];
+  const proj  = PROJECT_CATALOG.find(p => p.id === 'aqua-city')!;
+
+  if (!process.env.SCRAPERAPI_KEY) {
+    return {
+      projectId: proj.id, project: proj.name, siteUrl: proj.siteUrl,
+      ok: false, units, total: 0, durationMs: Date.now() - start,
+      error: 'SCRAPERAPI_KEY chưa được cấu hình',
+    };
+  }
+
+  const key = process.env.SCRAPERAPI_KEY;
+
+  const primaryUrls = [
+    { url: 'https://aquacity.com.vn/san-pham',    type: 'Bất động sản' },
+    { url: 'https://aquacity.com.vn/du-an',        type: 'Bất động sản' },
+    { url: 'https://aquacity.com.vn/nha-pho',      type: 'Nhà phố' },
+    { url: 'https://aquacity.com.vn/biet-thu',     type: 'Biệt thự' },
+    { url: 'https://aquacity.com.vn/can-ho',       type: 'Căn hộ' },
+    { url: 'https://aquacity.com.vn',              type: 'Bất động sản' },
+  ];
+
+  const CARD_SELECTORS = [
+    '.product-item', '[class*="product-item"]', '[class*="ProductItem"]',
+    '.apartment-item', '[class*="apartment-item"]', '[class*="ApartmentItem"]',
+    '.project-item', '[class*="project-item"]', '[class*="ProjectItem"]',
+    '.listing-item', '[class*="listing-item"]', '[class*="ListingItem"]',
+    '.property-item', '[class*="property-item"]', '[class*="PropertyItem"]',
+    '.card-item', '[class*="card-item"]', '[class*="CardItem"]',
+    '.item-product', '[class*="item-product"]',
+    '.nha-pho', '.biet-thu', '.can-ho', '.shophouse',
+    '[class*="nha-pho"]', '[class*="biet-thu"]', '[class*="can-ho"]',
+    'article', '.item',
+  ];
+
+  for (const { url, type: urlType } of primaryUrls) {
+    if (units.length >= 5) break;
+    try {
+      const proxyUrl =
+        `http://api.scraperapi.com?api_key=${key}` +
+        `&url=${encodeURIComponent(url)}` +
+        `&render=true&wait=7000&premium=true&country_code=vn`;
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(60_000) });
+      if (!res.ok) continue;
+      const html = await res.text();
+      if (html.includes('Just a moment') || html.includes('cf_chl_opt')) continue;
+      if (html.length < 2000) continue;
+
+      const $ = cheerio.load(html);
+
+      // ── Strategy A: CSS selector scan ────────────────────────────────────
+      for (const sel of CARD_SELECTORS) {
+        const cards = $(sel);
+        if (cards.length === 0) continue;
+
+        cards.each((_, el) => {
+          const $el = $(el);
+          const titleText = $el
+            .find('h1,h2,h3,h4,h5,[class*="title"],[class*="name"],[class*="heading"]')
+            .first().text().trim();
+          if (!titleText || titleText.length < 3) return;
+
+          const priceRaw = $el
+            .find('[class*="price"],[class*="gia"],[class*="Price"],[class*="Gia"]')
+            .first().text().trim();
+          const areaRaw = $el
+            .find('[class*="area"],[class*="dien-tich"],[class*="acreage"],[class*="m2"],[class*="Area"]')
+            .first().text().trim();
+          const href   = $el.find('a').first().attr('href') || url;
+          const imgSrc = $el.find('img').first().attr('src')
+                      || $el.find('img').first().attr('data-src') || '';
+
+          const price  = parseVnPrice(priceRaw);
+          const area   = parseArea(areaRaw);
+          const idKey  = `aqua-city-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+          units.push({
+            id:           idKey,
+            project:      proj.name,
+            projectId:    proj.id,
+            type:         urlType || 'Bất động sản',
+            block:        '',
+            floor:        '',
+            area,
+            price,
+            priceDisplay: price > 0 ? fmtPrice(price) : priceRaw || 'Liên hệ',
+            pricePerM2:   area > 0 && price > 0 ? Math.round(price / area) : 0,
+            status:       'available',
+            direction:    '',
+            url:          href.startsWith('http') ? href
+                          : href.startsWith('/')  ? `https://aquacity.com.vn${href}`
+                          : url,
+            imageUrl:     imgSrc
+                          ? (imgSrc.startsWith('http') ? imgSrc : `https://aquacity.com.vn${imgSrc}`)
+                          : null,
+            scrapedAt:    new Date().toISOString(),
+          });
+        });
+
+        if (units.length > 0) break;
+      }
+
+      // ── Strategy B: Regex price-pattern extraction (SPA fallback) ────────
+      if (units.length === 0) {
+        const pricePattern = /([\d]+[.,][\d]+)\s*tỷ|([\d]+)\s*tỷ/gi;
+        const matches = [...html.matchAll(pricePattern)];
+
+        for (let i = 0; i < Math.min(matches.length, 20); i++) {
+          const m      = matches[i];
+          const ctx    = html.substring(Math.max(0, m.index! - 300), m.index! + 200);
+          const $ctx   = cheerio.load(ctx);
+          const title  = $ctx('h1,h2,h3,h4,h5,p,[class*="title"],[class*="name"]')
+                          .first().text().trim()
+                      || `Bất động sản Aqua City #${i + 1}`;
+          const area   = parseArea($ctx('[class*="area"],[class*="m2"]').first().text().trim()
+                      || ctx.match(/([\d]+)\s*m²/)?.[1] || '');
+          const rawPrc = m[0];
+          const price  = parseVnPrice(rawPrc);
+          if (!price) continue;
+
+          units.push({
+            id:           `aqua-city-regex-${i}-${Date.now()}`,
+            project:      proj.name,
+            projectId:    proj.id,
+            type:         urlType || 'Bất động sản',
+            block:        '',
+            floor:        '',
+            area,
+            price,
+            priceDisplay: fmtPrice(price),
+            pricePerM2:   area > 0 ? Math.round(price / area) : 0,
+            status:       'available',
+            direction:    '',
+            url,
+            imageUrl:     null,
+            scrapedAt:    new Date().toISOString(),
+          });
+        }
+      }
+
+      if (units.length > 0) break;
+    } catch { continue; }
+  }
+
+  const warning = units.length === 0
+    ? 'Không parse được dữ liệu từ aquacity.com.vn. Trang SPA yêu cầu trình duyệt thực để tải nội dung.'
+    : undefined;
+
+  return {
+    projectId: proj.id, project: proj.name, siteUrl: proj.siteUrl,
+    ok: units.length > 0, units, total: units.length,
+    durationMs: Date.now() - start,
+    ...(warning ? { warning } : {}),
+  };
+}
+
 const EXTRA_RUNNERS: Record<string, () => Promise<ProjectResult>> = {
-  'aqua-city':   makeGenericScraper('aqua-city', [
-    { url: 'https://aquacity.com.vn/du-an', type: 'Bất động sản' },
-    { url: 'https://aquacity.com.vn/san-pham', type: 'Bất động sản' },
-  ]),
+  'aqua-city':   scrapeAquaCity,
   'izumi':       makeGenericScraper('izumi', [
     { url: 'https://izumicity.com.vn/du-an', type: 'Bất động sản' },
     { url: 'https://izumicity.com.vn/san-pham', type: 'Căn hộ' },
