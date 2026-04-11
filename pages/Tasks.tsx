@@ -4,6 +4,7 @@ import {
   CheckSquare, Square, CheckCircle, AlertCircle, ChevronDown, Download,
   AlertTriangle, User2
 } from 'lucide-react';
+import { Dropdown } from '../components/Dropdown';
 import { taskApi, TaskListParams } from '../services/taskApi';
 import { WfTask, WfTaskStatus, TaskPriority } from '../types';
 import { TaskDetailContent } from '../components/TaskDetailContent';
@@ -349,15 +350,18 @@ function TaskList() {
               )}
             </div>
             {/* Status / export / delete */}
-            <select value={bulkAction === 'assign' ? '' : bulkAction} onChange={e => { setBulkAction(e.target.value); setBulkAssignPickerOpen(false); }}
-              className="h-[28px] px-2 text-xs bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 rounded-lg text-[var(--text-secondary)] focus:outline-none">
-              <option value="">Đổi trạng thái...</option>
-              {ALL_STATUSES.map(s => (
-                <option key={s} value={s}>→ {STATUS_LABELS[s]}</option>
-              ))}
-              <option value="export">📥 Xuất CSV</option>
-              <option value="delete">🗑 Xóa</option>
-            </select>
+            <div className="min-w-[200px]">
+              <Dropdown
+                value={bulkAction === 'assign' ? '' : bulkAction}
+                onChange={(v) => { setBulkAction(v as string); setBulkAssignPickerOpen(false); }}
+                placeholder="Đổi trạng thái..."
+                options={[
+                  ...ALL_STATUSES.map(s => ({ value: s, label: `→ ${STATUS_LABELS[s]}` })),
+                  { value: 'export', label: 'Xuất CSV' },
+                  { value: 'delete', label: 'Xóa' },
+                ]}
+              />
+            </div>
             <button onClick={runBulkAction} disabled={!bulkAction || bulkAction === 'assign' || bulkLoading}
               className="h-[28px] px-3 text-xs bg-indigo-600 text-white rounded-lg font-medium flex items-center gap-1 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
               {bulkLoading ? <Loader2 size={11} className="animate-spin" /> : null} Áp dụng
