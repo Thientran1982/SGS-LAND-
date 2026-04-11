@@ -254,11 +254,13 @@ function AccessPanel({ project, onClose, t }: AccessPanelProps) {
                         {err && <p className="text-rose-600 text-xs bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5" role="alert">{err}</p>}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="col-span-2">
-                                <label htmlFor="pa-tenant" className={labelCls}>{t('project.partner_tenant')} *</label>
-                                <select id="pa-tenant" className={inputCls} value={grantForm.partnerTenantId} onChange={e => setGrantForm(f => ({ ...f, partnerTenantId: e.target.value }))}>
-                                    <option value="">{t('common.select')}</option>
-                                    {availableTenants.map(t2 => <option key={t2.id} value={t2.id}>{t2.name} ({t2.domain})</option>)}
-                                </select>
+                                <label className={labelCls}>{t('project.partner_tenant')} *</label>
+                                <Dropdown
+                                    value={grantForm.partnerTenantId}
+                                    onChange={(v) => setGrantForm(f => ({ ...f, partnerTenantId: v as string }))}
+                                    placeholder={t('common.select')}
+                                    options={availableTenants.map(t2 => ({ value: t2.id, label: `${t2.name} (${t2.domain})` }))}
+                                />
                             </div>
                             <div>
                                 <label htmlFor="pa-expires" className={labelCls}>{t('project.expires_at')}</label>
@@ -806,10 +808,12 @@ function ListingAccessPanel({ listings, tenants, onClose, t }: ListingAccessPane
                         <div className="grid grid-cols-2 gap-3">
                             <div className="col-span-2">
                                 <label className={labelCls}>{t('project.listing_access_partner_label')} *</label>
-                                <select className={inputCls} value={grantForm.partnerTenantId} onChange={e => setGrantForm(f => ({ ...f, partnerTenantId: e.target.value }))}>
-                                    <option value="">{t('project.listing_access_select')}</option>
-                                    {tenants.map(t2 => <option key={t2.id} value={t2.id}>{t2.name} ({t2.domain})</option>)}
-                                </select>
+                                <Dropdown
+                                    value={grantForm.partnerTenantId}
+                                    onChange={(v) => setGrantForm(f => ({ ...f, partnerTenantId: v as string }))}
+                                    placeholder={t('project.listing_access_select')}
+                                    options={tenants.map(t2 => ({ value: t2.id, label: `${t2.name} (${t2.domain})` }))}
+                                />
                             </div>
                             <div>
                                 <label className={labelCls}>{t('project.expires_at')}</label>
