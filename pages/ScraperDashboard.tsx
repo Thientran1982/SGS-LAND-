@@ -758,22 +758,34 @@ const SOURCE_DISPLAY: Record<string, { label: string; cls: string }> = {
   nhatot:        { label: 'NhaTot',       cls: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400' },
   cafeland:      { label: 'Cafeland',     cls: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   website:       { label: 'Trang dự án', cls: 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300' },
+  chotot:        { label: 'ChợTốt',       cls: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' },
+  facebook:      { label: 'Facebook Ads', cls: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+  tiktok:        { label: 'TikTok',       cls: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200' },
+  zalo:          { label: 'Zalo OA',      cls: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400' },
 };
 
+interface SocialCfg { fbToken: string; fbPage: string; ttToken: string; ttAdv: string; zlToken: string; }
+
 function LeadsTab() {
-  const [catalog,     setCatalog]     = useState<ProjectCatalog[]>([]);
-  const [results,     setResults]     = useState<LeadResultSummary[]>([]);
-  const [leads,       setLeads]       = useState<ProjectLead[]>([]);
-  const [scrapedAt,   setScrapedAt]   = useState<string | null>(null);
-  const [loading,     setLoading]     = useState(false);
-  const [running,     setRunning]     = useState(false);
-  const [error,       setError]       = useState<string | null>(null);
-  const [selected,    setSelected]    = useState<string[]>([]);
-  const [filter,      setFilter]      = useState('');
-  const [projFilter,  setProjFilter]  = useState('all');
-  const [interFilter, setInterFilter] = useState('all');
-  const [importing,   setImporting]   = useState<Set<string>>(new Set());
-  const [imported,    setImported]    = useState<Set<string>>(new Set());
+  const [catalog,        setCatalog]        = useState<ProjectCatalog[]>([]);
+  const [results,        setResults]        = useState<LeadResultSummary[]>([]);
+  const [leads,          setLeads]          = useState<ProjectLead[]>([]);
+  const [scrapedAt,      setScrapedAt]      = useState<string | null>(null);
+  const [loading,        setLoading]        = useState(false);
+  const [running,        setRunning]        = useState(false);
+  const [error,          setError]          = useState<string | null>(null);
+  const [selected,       setSelected]       = useState<string[]>([]);
+  const [filter,         setFilter]         = useState('');
+  const [projFilter,     setProjFilter]     = useState('all');
+  const [interFilter,    setInterFilter]    = useState('all');
+  const [importing,      setImporting]      = useState<Set<string>>(new Set());
+  const [imported,       setImported]       = useState<Set<string>>(new Set());
+  const [viewMode,       setViewMode]       = useState<'table' | 'cards'>('table');
+  const [extLeads,       setExtLeads]       = useState<ProjectLead[]>([]);
+  const [extRunning,     setExtRunning]     = useState<string | null>(null);
+  const [extError,       setExtError]       = useState<string | null>(null);
+  const [socialCfg,      setSocialCfg]      = useState<SocialCfg>({ fbToken: '', fbPage: '', ttToken: '', ttAdv: '', zlToken: '' });
+  const [showCfg,        setShowCfg]        = useState(false);
 
   const loadCatalog = useCallback(async () => {
     try {
@@ -850,17 +862,69 @@ function LeadsTab() {
     }
   };
 
+  const handleRunChotot = async () => {
+    setExtRunning('chotot'); setExtError(null);
+    try {
+      const res = await fetch('/api/scraper/projects/leads/chotot', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Lỗi không xác định');
+      setExtLeads(prev => [...prev.filter(l => l.source !== 'chotot'), ...(data.leads ?? [])]);
+    } catch (err) { setExtError(String(err)); }
+    setExtRunning(null);
+  };
+
+  const handleRunSocial = async (source: string) => {
+    setExtRunning(source); setExtError(null);
+    try {
+      const res = await fetch('/api/scraper/projects/leads/social', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source, ...socialCfg }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Lỗi không xác định');
+      setExtLeads(prev => [...prev.filter(l => l.source !== source), ...(data.leads ?? [])]);
+    } catch (err) { setExtError(String(err)); }
+    setExtRunning(null);
+  };
+
+  const handleExportCSV = () => {
+    const all = [...displayed, ...extDisplayed];
+    if (!all.length) return;
+    const header = 'Tên,SĐT,Email,Dự án,Phân loại,Nguồn,Tin đăng,Giá,Ghi chú,Thu thập lúc';
+    const rows = all.map(l => [
+      l.name, l.phone, l.email, l.project,
+      INTEREST_LABELS[l.interest]?.label ?? l.interest,
+      SOURCE_DISPLAY[l.source]?.label ?? l.source,
+      l.listing?.replace(/,/g, ' '), l.price,
+      l.notes?.replace(/,/g, ' '), l.scrapedAt,
+    ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
+    const csv  = [header, ...rows].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a'); a.href = url; a.download = `leads_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
   const toggleProject = (id: string) =>
     setSelected(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
 
   const projOptions = [{ value: 'all', label: 'Tất cả dự án' }, ...catalog.map(p => ({ value: p.id, label: p.name }))];
 
+  const matchFilter = (l: ProjectLead) => !filter
+    || l.name.toLowerCase().includes(filter.toLowerCase())
+    || l.phone.includes(filter)
+    || l.listing.toLowerCase().includes(filter.toLowerCase());
+
   const displayed = leads
     .filter(l => projFilter  === 'all' || l.projectId === projFilter)
     .filter(l => interFilter === 'all' || l.interest   === interFilter)
-    .filter(l => !filter || l.name.toLowerCase().includes(filter.toLowerCase())
-                          || l.phone.includes(filter)
-                          || l.listing.toLowerCase().includes(filter.toLowerCase()));
+    .filter(matchFilter);
+
+  const extDisplayed = extLeads.filter(matchFilter);
 
   return (
     <div className="space-y-4">
@@ -897,6 +961,88 @@ function LeadsTab() {
           </div>
         </div>
       )}
+
+      {/* External / Social sources */}
+      <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Nguồn mở rộng</p>
+          <button
+            onClick={() => setShowCfg(c => !c)}
+            className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-indigo-500 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Cấu hình API
+          </button>
+        </div>
+
+        {/* Config panel */}
+        {showCfg && (
+          <div className="mb-4 p-4 bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1">Facebook Access Token</label>
+              <input value={socialCfg.fbToken} onChange={e => setSocialCfg(c => ({...c, fbToken: e.target.value}))} placeholder="EAAxxxxxx..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1">Facebook Page ID:Form ID</label>
+              <input value={socialCfg.fbPage} onChange={e => setSocialCfg(c => ({...c, fbPage: e.target.value}))} placeholder="123456789:987654321" className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1">TikTok Access Token</label>
+              <input value={socialCfg.ttToken} onChange={e => setSocialCfg(c => ({...c, ttToken: e.target.value}))} placeholder="tt_xxxxxxxxxx..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1">TikTok Advertiser ID</label>
+              <input value={socialCfg.ttAdv} onChange={e => setSocialCfg(c => ({...c, ttAdv: e.target.value}))} placeholder="7123456789..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider block mb-1">Zalo OA Access Token</label>
+              <input value={socialCfg.zlToken} onChange={e => setSocialCfg(c => ({...c, zlToken: e.target.value}))} placeholder="zoa_xxxxxxxxxx..." className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-indigo-500" />
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: 'chotot',   label: 'ChợTốt',      onRun: handleRunChotot,             needsKey: true,  hasToken: true },
+            { id: 'facebook', label: 'Facebook Ads', onRun: () => handleRunSocial('facebook'), needsKey: false, hasToken: !!(socialCfg.fbToken && socialCfg.fbPage) },
+            { id: 'tiktok',   label: 'TikTok',       onRun: () => handleRunSocial('tiktok'),   needsKey: false, hasToken: !!(socialCfg.ttToken && socialCfg.ttAdv) },
+            { id: 'zalo',     label: 'Zalo OA',      onRun: () => handleRunSocial('zalo'),      needsKey: false, hasToken: !!socialCfg.zlToken },
+          ].map(src => {
+            const count   = extLeads.filter(l => l.source === src.id).length;
+            const busy    = extRunning === src.id;
+            const locked  = !src.hasToken;
+            const srcInfo = SOURCE_DISPLAY[src.id];
+            return (
+              <div key={src.id} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-surface-hover)]">
+                <span className={`text-xs font-semibold ${srcInfo?.cls ?? ''} px-1.5 py-0.5 rounded-full`}>{src.label}</span>
+                {count > 0 && <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded-full">{count}</span>}
+                <button
+                  onClick={locked ? () => setShowCfg(true) : src.onRun}
+                  disabled={busy || !!extRunning}
+                  title={locked ? 'Cần cấu hình token — nhấn để mở Cấu hình API' : `Chạy ${src.label}`}
+                  className={[
+                    'ml-1 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all',
+                    busy ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 cursor-not-allowed'
+                      : locked ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-100'
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700',
+                  ].join(' ')}
+                >
+                  {busy
+                    ? <><span className="w-3 h-3 border border-current/30 border-t-current rounded-full animate-spin" />Đang chạy</>
+                    : locked
+                    ? <>{ICONS.LOCK}Token</>
+                    : <>{ICONS.PLAY}Chạy</>}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        {extError && (
+          <div className="mt-3 flex items-start gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 rounded-xl text-xs">
+            {ICONS.WARN}<span>{extError}</span>
+          </div>
+        )}
+      </div>
 
       {/* Run panel */}
       <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl p-5">
@@ -993,10 +1139,79 @@ function LeadsTab() {
                 ]}
               />
             </div>
-            <span className="text-xs text-[var(--text-tertiary)] ml-auto">
+            <span className="text-xs text-[var(--text-tertiary)]">
               {displayed.length} khách · {imported.size} đã import
             </span>
+            <div className="flex items-center gap-1 ml-auto">
+              <button
+                onClick={() => setViewMode('table')}
+                title="Chế độ bảng"
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+              </button>
+              <button
+                onClick={() => setViewMode('cards')}
+                title="Chế độ thẻ"
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'cards' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </button>
+              <button
+                onClick={handleExportCSV}
+                title="Xuất CSV"
+                className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-emerald-600 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+            </div>
           </div>
+          {/* Card view */}
+          {viewMode === 'cards' && (
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {displayed.slice(0, 200).map((lead: ProjectLead) => {
+                const proj      = catalog.find(p => p.id === lead.projectId);
+                const colorCls  = proj ? PROJECT_COLOR_MAP[proj.color] : PROJECT_COLOR_MAP['indigo'];
+                const srcInfo   = SOURCE_DISPLAY[lead.source] ?? { label: lead.source, cls: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' };
+                const isImported  = imported.has(lead.id);
+                const isImporting = importing.has(lead.id);
+                const hasContact  = !!(lead.phone || lead.email);
+                return (
+                  <div key={lead.id} className={`bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 flex flex-col gap-2 ${isImported ? 'opacity-60' : ''}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-semibold text-sm text-[var(--text-primary)] leading-tight line-clamp-1">{lead.name || 'Không rõ'}</span>
+                      <span className={`flex-shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${srcInfo.cls}`}>{srcInfo.label}</span>
+                    </div>
+                    {lead.phone && <a href={`tel:${lead.phone}`} className="text-base font-bold text-indigo-600 dark:text-indigo-400 hover:underline tracking-wide">{lead.phone}</a>}
+                    {lead.email && <a href={`mailto:${lead.email}`} className="text-xs text-[var(--text-secondary)] hover:text-indigo-500 hover:underline truncate">{lead.email}</a>}
+                    {proj && (
+                      <div className="flex items-center gap-1">
+                        <span className={`w-4 h-4 rounded flex items-center justify-center text-[8px] border flex-shrink-0 ${colorCls}`}>{proj.logo}</span>
+                        <span className="text-xs text-[var(--text-tertiary)] truncate">{lead.project}</span>
+                      </div>
+                    )}
+                    {lead.price && <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{lead.price}</span>}
+                    <div className="mt-auto pt-1">
+                      {isImported ? (
+                        <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">{ICONS.CHECK}Đã lưu CRM</span>
+                      ) : (
+                        <button
+                          onClick={() => handleImport(lead)}
+                          disabled={isImporting || !hasContact}
+                          className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {isImporting ? <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                          Import CRM
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {/* Table view */}
+          {viewMode === 'table' && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -1080,6 +1295,55 @@ function LeadsTab() {
                 Hiển thị 200/{displayed.length} kết quả. Dùng bộ lọc để thu hẹp.
               </div>
             )}
+          </div>
+          )}
+        </div>
+      )}
+
+      {/* External leads (ChợTốt / Social) */}
+      {extDisplayed.length > 0 && (
+        <div className="bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl overflow-hidden">
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-[var(--glass-border)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">Nguồn mở rộng</h2>
+            <span className="text-xs text-[var(--text-tertiary)]">{extDisplayed.length} liên hệ</span>
+            <button onClick={handleExportCSV} className="ml-auto flex items-center gap-1 text-xs text-emerald-600 hover:underline font-semibold">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Xuất CSV
+            </button>
+          </div>
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {extDisplayed.slice(0, 200).map((lead: ProjectLead) => {
+              const srcInfo    = SOURCE_DISPLAY[lead.source] ?? { label: lead.source, cls: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' };
+              const isImported  = imported.has(lead.id);
+              const isImporting = importing.has(lead.id);
+              const hasContact  = !!(lead.phone || lead.email);
+              return (
+                <div key={lead.id} className={`bg-[var(--glass-surface-hover)] border border-[var(--glass-border)] rounded-xl p-3 flex flex-col gap-2 ${isImported ? 'opacity-60' : ''}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-semibold text-sm text-[var(--text-primary)] leading-tight line-clamp-1">{lead.name || 'Không rõ'}</span>
+                    <span className={`flex-shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${srcInfo.cls}`}>{srcInfo.label}</span>
+                  </div>
+                  {lead.phone && <a href={`tel:${lead.phone}`} className="text-base font-bold text-indigo-600 dark:text-indigo-400 hover:underline tracking-wide">{lead.phone}</a>}
+                  {lead.email && <span className="text-xs text-[var(--text-secondary)] truncate">{lead.email}</span>}
+                  {lead.listing && <div className="text-xs text-[var(--text-secondary)] line-clamp-2">{lead.listing}</div>}
+                  {lead.price   && <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{lead.price}</span>}
+                  <div className="mt-auto pt-1">
+                    {isImported ? (
+                      <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">{ICONS.CHECK}Đã lưu CRM</span>
+                    ) : (
+                      <button
+                        onClick={() => handleImport(lead)}
+                        disabled={isImporting || !hasContact}
+                        className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {isImporting ? <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                        Import CRM
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

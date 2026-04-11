@@ -228,6 +228,17 @@ async function scraperApiFetch(targetUrl: string, render = true) {
   return fetch(proxyUrl, { signal: AbortSignal.timeout(45_000) });
 }
 
+const delayMs = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
+function normalizePhoneLocal(raw: string): string {
+  if (!raw) return '';
+  let p = raw.replace(/\D/g, '');
+  if (p.startsWith('840') && p.length === 12) p = '0' + p.slice(2);
+  else if (p.startsWith('84') && p.length === 11) p = '0' + p.slice(2);
+  if (!p.startsWith('0') && p.length >= 9) p = '0' + p;
+  return (p.length >= 9 && p.length <= 11) ? p : '';
+}
+
 // ── 1. SGSLand.vn — own JSON API ──────────────────────────────────────────────
 
 async function scrapeSgsland(): Promise<ProjectResult> {
@@ -1244,6 +1255,133 @@ function isCacheValid() {
   return !!cachedResults && Date.now() - cacheTimestamp < CACHE_TTL_MS;
 }
 
+// ── ChợTốt global lead scraper ───────────────────────────────────────────────
+
+async function scrapeChototLeadsGlobal(): Promise<ProjectLead[]> {
+  const leads: ProjectLead[] = [];
+  const regions = [['13', 'TP.HCM'], ['60', 'Đồng Nai'], ['19', 'Bình Dương']];
+  const cats    = [['1020', 'Căn hộ'], ['1040', 'Đất nền'], ['1000', 'Nhà đất']];
+
+  for (const [rc, rn] of regions) {
+    for (const [cc, cn] of cats) {
+      await delayMs(300);
+      const url = `https://gateway.chotot.com/v1/public/ad-listing?cg=${cc}&region_v2=${rc}&limit=20&st=k&f=p&w=1`;
+      try {
+        const res = await scraperApiFetch(url, false);
+        if (!res.ok) continue;
+        const data = await res.json() as { ads?: any[] };
+        for (const ad of (data.ads ?? [])) {
+          const loc = [ad.ward_name, ad.area_name, ad.region_name].filter(Boolean).join(', ');
+          leads.push({
+            id:         `ct-${ad.ad_id}`,
+            projectId:  '',
+            project:    'ChợTốt',
+            name:       String(ad.account_name ?? 'Không rõ'),
+            phone:      '',
+            email:      '',
+            source:     'chotot',
+            sourceUrl:  `https://www.chotot.com/${ad.ad_id}.htm`,
+            listing:    String(ad.subject ?? '').substring(0, 80),
+            price:      String(ad.price_string ?? ''),
+            interest:   'seller',
+            notes:      `${rn} / ${cn} — ${loc}`,
+            scrapedAt:  new Date().toISOString(),
+            importedAt: null,
+          });
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  const top = leads.slice(0, 30);
+  for (const lead of top) {
+    await delayMs(400);
+    const adId = lead.id.replace('ct-', '');
+    try {
+      const res = await scraperApiFetch(`https://gateway.chotot.com/v2/public/ad-listing/${adId}.json`, false);
+      if (!res.ok) continue;
+      const data = await res.json() as { ad?: any };
+      const ad   = data.ad ?? {};
+      const ph   = normalizePhoneLocal(String(ad.phone ?? ''));
+      if (ph) {
+        lead.phone = ph;
+        lead.name  = String(ad.contact_name ?? ad.account_name ?? lead.name);
+        lead.email = String(ad.email ?? '');
+      }
+    } catch { /* ignore */ }
+  }
+  return leads.filter(l => l.phone);
+}
+
+// ── Social media lead scraper ─────────────────────────────────────────────────
+
+async function scrapeFacebookLeads(fbToken: string, fbPage: string): Promise<ProjectLead[]> {
+  const leads: ProjectLead[] = [];
+  const [, formId] = fbPage.split(':');
+  const url = `https://graph.facebook.com/v19.0/${formId}/leads?access_token=${fbToken}&fields=id,created_time,field_data&limit=100`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+  const d = await r.json() as { data?: any[]; error?: { message: string } };
+  if (d.error) throw new Error(d.error.message);
+  for (const fl of (d.data ?? [])) {
+    const fields: Record<string, string> = {};
+    (fl.field_data ?? []).forEach((f: any) => { fields[f.name] = f.values?.[0] ?? ''; });
+    const phone = normalizePhoneLocal(fields.phone_number ?? fields.phone ?? fields.so_dien_thoai ?? '');
+    if (!phone) continue;
+    leads.push({
+      id: `fb-${fl.id}`, projectId: '', project: 'Facebook Lead Ads',
+      name: fields.full_name ?? fields.name ?? fields.ho_ten ?? 'Khách FB',
+      phone, email: fields.email ?? fields.email_address ?? '',
+      source: 'facebook', sourceUrl: 'https://facebook.com',
+      listing: 'Facebook Lead Form', price: '', interest: 'buyer',
+      notes: JSON.stringify(fields).substring(0, 100),
+      scrapedAt: fl.created_time ?? new Date().toISOString(), importedAt: null,
+    });
+  }
+  return leads;
+}
+
+async function scrapeTikTokLeads(ttToken: string, ttAdv: string): Promise<ProjectLead[]> {
+  const leads: ProjectLead[] = [];
+  const url = `https://business-api.tiktok.com/open_api/v1.3/lead/get/?advertiser_id=${ttAdv}&page_size=100`;
+  const r = await fetch(url, { headers: { 'Access-Token': ttToken, 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(15_000) });
+  const d = await r.json() as { code?: number; message?: string; data?: { lead_list?: any[] } };
+  if (d.code !== 0) throw new Error(d.message ?? 'TikTok API error');
+  for (const tl of (d.data?.lead_list ?? [])) {
+    const phone = normalizePhoneLocal(tl.phone_number ?? tl.phone ?? '');
+    if (!phone) continue;
+    leads.push({
+      id: `tt-${tl.lead_id}`, projectId: '', project: 'TikTok Lead Gen',
+      name: tl.display_name ?? 'Khách TikTok', phone, email: tl.email ?? '',
+      source: 'tiktok', sourceUrl: '',
+      listing: `TikTok Lead: ${tl.ad_name ?? ''}`, price: '', interest: 'buyer',
+      notes: tl.ad_name ?? '', scrapedAt: tl.create_time ?? new Date().toISOString(), importedAt: null,
+    });
+  }
+  return leads;
+}
+
+async function scrapeZaloLeads(zlToken: string): Promise<ProjectLead[]> {
+  const leads: ProjectLead[] = [];
+  const url = 'https://openapi.zalo.me/v2.0/oa/listrecentchat?data=' + encodeURIComponent(JSON.stringify({ offset: 0, count: 50 }));
+  const r = await fetch(url, { headers: { 'access_token': zlToken }, signal: AbortSignal.timeout(15_000) });
+  const d = await r.json() as { error?: number; message?: string; data?: any[] };
+  if (d.error !== 0) throw new Error(d.message ?? 'Zalo API error');
+  for (const c of (d.data ?? [])) {
+    const phone = normalizePhoneLocal(c.src?.phone ?? '');
+    leads.push({
+      id: `zl-${c.uid}`, projectId: '', project: 'Zalo OA',
+      name: c.src?.display_name ?? 'Khách Zalo', phone: phone || c.src?.phone || '',
+      email: '', source: 'zalo', sourceUrl: 'https://zalo.me',
+      listing: String(c.last_message?.text ?? '').substring(0, 60),
+      price: '', interest: 'buyer',
+      notes: `Zalo chat: ${c.src?.display_name ?? ''}`,
+      scrapedAt: c.last_message?.time ? new Date(Number(c.last_message.time) * 1000).toISOString() : new Date().toISOString(),
+      importedAt: null,
+    });
+  }
+  return leads;
+}
+
 // ── Route factory ─────────────────────────────────────────────────────────────
 
 export function createScraperProjectRoutes(authenticateToken: any) {
@@ -1448,6 +1586,53 @@ export function createScraperProjectRoutes(authenticateToken: any) {
       res.json({ ok: true, imported, skipped, errors: errors.slice(0, 5) });
     } catch (err) {
       res.status(500).json({ error: 'Bulk import thất bại', detail: String(err) });
+    }
+  });
+
+  // POST /api/scraper/projects/leads/chotot — ChợTốt global lead scraper
+  router.post('/leads/chotot', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ Admin/Team Lead mới có thể chạy scraper' });
+      }
+      if (!process.env.SCRAPERAPI_KEY) {
+        return res.status(400).json({ error: 'Cần cấu hình SCRAPERAPI_KEY để dùng ChợTốt scraper' });
+      }
+      const leads = await scrapeChototLeadsGlobal();
+      res.json({ ok: true, leads, total: leads.length, scrapedAt: new Date().toISOString() });
+    } catch (err) {
+      res.status(500).json({ error: 'ChợTốt scrape thất bại', detail: String(err) });
+    }
+  });
+
+  // POST /api/scraper/projects/leads/social — Facebook / TikTok / Zalo leads
+  router.post('/leads/social', authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!['ADMIN', 'TEAM_LEAD'].includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ Admin/Team Lead mới có thể chạy scraper' });
+      }
+      const { source, fbToken, fbPage, ttToken, ttAdv, zlToken } = req.body as {
+        source: string; fbToken?: string; fbPage?: string;
+        ttToken?: string; ttAdv?: string; zlToken?: string;
+      };
+      let leads: ProjectLead[] = [];
+      if (source === 'facebook') {
+        if (!fbToken || !fbPage) return res.status(400).json({ error: 'Thiếu Facebook token hoặc Page ID:Form ID' });
+        leads = await scrapeFacebookLeads(fbToken, fbPage);
+      } else if (source === 'tiktok') {
+        if (!ttToken || !ttAdv) return res.status(400).json({ error: 'Thiếu TikTok access token hoặc Advertiser ID' });
+        leads = await scrapeTikTokLeads(ttToken, ttAdv);
+      } else if (source === 'zalo') {
+        if (!zlToken) return res.status(400).json({ error: 'Thiếu Zalo OA access token' });
+        leads = await scrapeZaloLeads(zlToken);
+      } else {
+        return res.status(400).json({ error: 'Nguồn không hợp lệ. Dùng: facebook | tiktok | zalo' });
+      }
+      res.json({ ok: true, leads, total: leads.length, scrapedAt: new Date().toISOString() });
+    } catch (err) {
+      res.status(500).json({ error: 'Social scrape thất bại', detail: String(err) });
     }
   });
 
