@@ -142,7 +142,67 @@ const STATIC_PAGE_META: Record<string, { title: string; description: string; h1?
   status:                  { title: 'Trạng Thái Hệ Thống | SGS LAND Status', description: 'Theo dõi trạng thái hoạt động realtime của nền tảng SGS LAND – uptime, latency và sự cố hệ thống.', h1: 'Trạng Thái Hệ Thống SGS LAND' },
   'privacy-policy':        { title: 'Chính Sách Bảo Mật | SGS LAND', description: 'Chính sách bảo mật dữ liệu của SGS LAND. Tìm hiểu cách chúng tôi thu thập, sử dụng và bảo vệ thông tin của bạn.', h1: 'Chính Sách Bảo Mật' },
   'terms-of-service':      { title: 'Điều Khoản Sử Dụng | SGS LAND', description: 'Điều khoản và điều kiện sử dụng nền tảng SGS LAND. Quyền lợi và trách nhiệm của người dùng và nhà cung cấp dịch vụ.', h1: 'Điều Khoản Sử Dụng' },
-  'ky-gui-bat-dong-san':   { title: 'Ký Gửi Bất Động Sản | Bán Nhanh, Giá Tốt - SGS LAND', description: 'Ký gửi bất động sản tại SGS LAND — đội ngũ chuyên gia định giá miễn phí, tiếp cận hàng nghìn khách hàng tiềm năng và hỗ trợ pháp lý toàn diện.', h1: 'Ký Gửi Bất Động Sản' },
+  'ky-gui-bat-dong-san': {
+    title: 'Ký Gửi Bất Động Sản | Bán Nhanh, Giá Tốt - SGS LAND',
+    description: 'Ký gửi bất động sản tại SGS LAND — đội ngũ chuyên gia định giá miễn phí, tiếp cận hàng nghìn khách hàng tiềm năng và hỗ trợ pháp lý toàn diện.',
+    h1: 'Ký Gửi Bất Động Sản',
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang Chủ', item: `${APP_URL}` },
+            { '@type': 'ListItem', position: 2, name: 'Ký Gửi Bất Động Sản', item: `${APP_URL}/ky-gui-bat-dong-san` },
+          ],
+        },
+        {
+          '@type': 'HowTo',
+          name: 'Quy trình ký gửi bất động sản tại SGS LAND',
+          description: 'Hướng dẫn từng bước quy trình ký gửi bất động sản để mua bán hoặc cho thuê qua sàn giao dịch SGS LAND.',
+          inLanguage: 'vi',
+          totalTime: 'P7D',
+          step: [
+            { '@type': 'HowToStep', position: 1, name: 'Tiếp nhận hồ sơ', text: 'Điền form đăng ký ký gửi. Chuyên viên SGS LAND liên hệ trong vòng 4 giờ làm việc để xác nhận thông tin và thu thập hồ sơ pháp lý ban đầu.' },
+            { '@type': 'HowToStep', position: 2, name: 'Thẩm định pháp lý', text: 'Đội ngũ pháp lý SGS LAND kiểm tra tính hợp lệ của hồ sơ: tình trạng tranh chấp, quy hoạch, nghĩa vụ tài chính còn lại. Hoàn thành trong 1–3 ngày làm việc.' },
+            { '@type': 'HowToStep', position: 3, name: 'Ký kết hợp đồng ký gửi', text: 'Hai bên ký Hợp đồng Ký gửi Bất động sản xác định rõ mức hoa hồng, thời hạn ký gửi, quyền và nghĩa vụ từng bên. Căn cứ Điều 41–42 Luật KDBĐS 2023 & Nghị định 96/2024/NĐ-CP.' },
+            { '@type': 'HowToStep', position: 4, name: 'Định giá & Triển khai marketing', text: 'Định giá bằng AI (AVM) kết hợp thẩm định thực tế. Đăng tin trên SGS LAND, sàn giao dịch đối tác, mạng xã hội và kênh môi giới nội bộ. Bộ ảnh, video và mô tả SEO miễn phí.' },
+            { '@type': 'HowToStep', position: 5, name: 'Kết nối khách & Đàm phán', text: 'Môi giới SGS LAND dẫn dắt toàn bộ quá trình xem nhà, đàm phán giá và điều khoản hợp đồng mua bán hoặc thuê. Chủ sở hữu được cập nhật tiến độ định kỳ.' },
+            { '@type': 'HowToStep', position: 6, name: 'Ký kết & Thu hoa hồng', text: 'Sau khi hợp đồng mua bán hoặc thuê được ký kết hợp lệ và tiền được chuyển cho chủ sở hữu, hoa hồng SGS LAND được thanh toán theo hợp đồng ký gửi. Chỉ thu phí khi giao dịch thành công.' },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          inLanguage: 'vi',
+          mainEntity: [
+            { '@type': 'Question', name: 'Ký gửi bất động sản là gì?', acceptedAnswer: { '@type': 'Answer', text: 'Ký gửi bất động sản là việc chủ sở hữu ủy quyền cho SGS LAND thực hiện toàn bộ hoạt động marketing, môi giới và hỗ trợ pháp lý để mua bán hoặc cho thuê tài sản. Hai bên ký Hợp đồng Ký gửi theo quy định Luật KDBĐS 2023.' } },
+            { '@type': 'Question', name: 'Hoa hồng được tính như thế nào và khi nào phải trả?', acceptedAnswer: { '@type': 'Answer', text: 'Hoa hồng chỉ phát sinh khi giao dịch thành công: (1) Mua bán: 1–2% giá trị hợp đồng, thu khi hợp đồng công chứng; (2) Cho thuê ≥12 tháng: 1 tháng tiền thuê; (3) Cho thuê <12 tháng: 50% tháng thuê. Không có bất kỳ khoản phí nào nếu không giao dịch.' } },
+            { '@type': 'Question', name: 'Tôi có cần đặt cọc hay trả phí trước không?', acceptedAnswer: { '@type': 'Answer', text: 'Hoàn toàn không. SGS LAND không thu bất kỳ khoản phí nào trước khi giao dịch thành công. Toàn bộ chi phí marketing — ảnh, video, quảng cáo — do SGS LAND chi trả.' } },
+            { '@type': 'Question', name: 'Thời hạn hợp đồng ký gửi là bao lâu?', acceptedAnswer: { '@type': 'Answer', text: 'Thông thường 3–6 tháng, có thể gia hạn theo thỏa thuận. Trong thời hạn hợp đồng, chủ sở hữu không ký giao dịch độc lập với khách hàng do SGS LAND giới thiệu để tránh tranh chấp hoa hồng.' } },
+            { '@type': 'Question', name: 'Tôi có thể tự bán trong thời gian ký gửi không?', acceptedAnswer: { '@type': 'Answer', text: 'Có thể — nếu khách mua là người chủ sở hữu tự tìm, không qua SGS LAND. Tuy nhiên, nếu khách mua đã từng được SGS LAND giới thiệu, hoa hồng vẫn phát sinh theo hợp đồng ký gửi (điều khoản bảo lưu khách hàng thường 90 ngày).' } },
+            { '@type': 'Question', name: 'SGS LAND có đảm bảo bán được không?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND cam kết nỗ lực tiếp thị tối đa, nhưng kết quả giao dịch phụ thuộc vào thị trường và giá kỳ vọng của chủ sở hữu. Chúng tôi tư vấn định giá thực tế để tối ưu khả năng giao dịch nhanh.' } },
+            { '@type': 'Question', name: 'Tài liệu pháp lý cần chuẩn bị gồm những gì?', acceptedAnswer: { '@type': 'Answer', text: 'Tối thiểu: (1) Sổ đỏ / Sổ hồng (Giấy CNQSDĐ) bản gốc hoặc photo công chứng; (2) CMND/CCCD của chủ sở hữu; (3) Giấy phép xây dựng (nếu nhà ở). Đội ngũ SGS LAND sẽ hướng dẫn chi tiết sau khi tiếp nhận yêu cầu.' } },
+            { '@type': 'Question', name: 'Vùng địa lý SGS LAND đang hoạt động?', acceptedAnswer: { '@type': 'Answer', text: 'SGS LAND hiện hoạt động tập trung tại TP. Hồ Chí Minh và các tỉnh lân cận (Bình Dương, Đồng Nai, Long An). Đang mở rộng sang Hà Nội và Đà Nẵng. Liên hệ để kiểm tra khả năng ký gửi tại khu vực của bạn.' } },
+          ],
+        },
+        {
+          '@type': 'Service',
+          '@id': `${APP_URL}/ky-gui-bat-dong-san#service`,
+          name: 'Dịch vụ Ký Gửi Bất Động Sản SGS LAND',
+          serviceType: 'Ký gửi bất động sản',
+          inLanguage: 'vi',
+          provider: { '@type': 'Organization', name: 'SGS LAND', url: APP_URL },
+          areaServed: [
+            { '@type': 'State', name: 'TP.HCM', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+            { '@type': 'State', name: 'Bình Dương', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+            { '@type': 'State', name: 'Đồng Nai', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+            { '@type': 'State', name: 'Long An', containedInPlace: { '@type': 'Country', name: 'Việt Nam' } },
+          ],
+          url: `${APP_URL}/ky-gui-bat-dong-san`,
+        },
+      ],
+    },
+  },
   livechat:                { title: 'Chat Trực Tiếp | Hỗ Trợ Khách Hàng 24/7 - SGS LAND', description: 'Kết nối trực tiếp với đội ngũ tư vấn SGS LAND qua Live Chat. Được hỗ trợ 24/7 về bất động sản, định giá AI và các dịch vụ.', h1: 'Chat Trực Tiếp Với Chuyên Gia' },
   login:                   { title: 'Đăng Nhập | SGS LAND Enterprise', description: 'Đăng nhập vào nền tảng quản lý bất động sản SGS LAND.', noIndex: true },
 

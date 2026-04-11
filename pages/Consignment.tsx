@@ -271,44 +271,7 @@ export const Consignment: React.FC = () => {
         setMeta('twitter:title', 'Ký Gửi Bất Động Sản | SGS LAND – Miễn Phí, Pháp Lý Bảo Đảm');
         setMeta('twitter:description', desc);
 
-        // HowTo + FAQPage structured data
-        const howToSchema = {
-            '@context': 'https://schema.org',
-            '@type': 'HowTo',
-            'name': 'Quy trình ký gửi bất động sản tại SGS LAND',
-            'description': 'Hướng dẫn từng bước quy trình ký gửi bất động sản để mua bán hoặc cho thuê qua sàn giao dịch SGS LAND.',
-            'totalTime': 'P7D',
-            'step': PROCESS_STEPS.map((s, i) => ({
-                '@type': 'HowToStep',
-                'position': i + 1,
-                'name': s.title,
-                'text': s.desc,
-            })),
-        };
-        const faqSchema = {
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            'mainEntity': FAQ_ITEMS.map(item => ({
-                '@type': 'Question',
-                'name': item.q,
-                'acceptedAnswer': { '@type': 'Answer', 'text': item.a },
-            })),
-        };
-        const addSchema = (schema: object, id: string) => {
-            document.getElementById(id)?.remove();
-            const s = document.createElement('script');
-            s.type = 'application/ld+json';
-            s.id = id;
-            s.text = JSON.stringify(schema);
-            document.head.appendChild(s);
-        };
-        addSchema(howToSchema, 'schema-howto-consignment');
-        addSchema(faqSchema, 'schema-faq-consignment');
-
-        return () => {
-            document.getElementById('schema-howto-consignment')?.remove();
-            document.getElementById('schema-faq-consignment')?.remove();
-        };
+        return () => { /* structured data injected server-side via metaInjector */ };
     }, []);
 
     const navigate = (path: string) => {
