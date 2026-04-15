@@ -28551,31 +28551,6 @@ function getBankRatesHtml(ugcRates = []) {
       <strong>L\u01B0u \xFD:</strong> B\u1EA3ng l\xE3i su\u1EA5t mang t\xEDnh tham kh\u1EA3o, c\u1EADp nh\u1EADt Q2/2026. L\xE3i su\u1EA5t th\u1EF1c t\u1EBF ph\u1EE5 thu\u1ED9c v\xE0o h\u1ED3 s\u01A1 kh\xE1ch h\xE0ng, lo\u1EA1i t\xE0i s\u1EA3n v\xE0 ch\xEDnh s\xE1ch t\u1EEBng ng\xE2n h\xE0ng. Li\xEAn h\u1EC7 ng\xE2n h\xE0ng ho\u1EB7c chuy\xEAn gia SGS Land \u0111\u1EC3 \u0111\u01B0\u1EE3c b\xE1o gi\xE1 ch\xEDnh x\xE1c.
     </div>
 
-    <!-- Seed Rate Table -->
-    <div class="card">
-      <div class="card-hdr">
-        <div>
-          <h2>B\u1EA3ng L\xE3i Su\u1EA5t Vay Th\u1EBF Ch\u1EA5p B\u1EA5t \u0110\u1ED9ng S\u1EA3n</h2>
-          <p>T\u1ED5ng h\u1EE3p l\xE3i su\u1EA5t t\u1EEB ng\xE2n h\xE0ng qu\u1ED1c doanh & t\u01B0 nh\xE2n l\u1EDBn nh\u1EA5t Vi\u1EC7t Nam \xB7 Q2/2026</p>
-        </div>
-      </div>
-      <div class="tbl-wrap">
-        <table aria-label="B\u1EA3ng l\xE3i su\u1EA5t ng\xE2n h\xE0ng">
-          <thead>
-            <tr>
-              <th>Ng\xE2n h\xE0ng</th>
-              <th>Lo\u1EA1i vay</th>
-              <th>L\xE3i su\u1EA5t</th>
-              <th>K\u1EF3 h\u1EA1n</th>
-              <th>Hotline</th>
-              <th>Ghi ch\xFA</th>
-            </tr>
-          </thead>
-          <tbody>${seedTableRows}</tbody>
-        </table>
-      </div>
-    </div>
-
     <!-- Community UGC Table -->
     <div class="card">
       <div class="card-hdr">

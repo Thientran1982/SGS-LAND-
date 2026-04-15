@@ -452,31 +452,6 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
       <strong>Lưu ý:</strong> Bảng lãi suất mang tính tham khảo, cập nhật Q2/2026. Lãi suất thực tế phụ thuộc vào hồ sơ khách hàng, loại tài sản và chính sách từng ngân hàng. Liên hệ ngân hàng hoặc chuyên gia SGS Land để được báo giá chính xác.
     </div>
 
-    <!-- Seed Rate Table -->
-    <div class="card">
-      <div class="card-hdr">
-        <div>
-          <h2>Bảng Lãi Suất Vay Thế Chấp Bất Động Sản</h2>
-          <p>Tổng hợp lãi suất từ ngân hàng quốc doanh & tư nhân lớn nhất Việt Nam · Q2/2026</p>
-        </div>
-      </div>
-      <div class="tbl-wrap">
-        <table aria-label="Bảng lãi suất ngân hàng">
-          <thead>
-            <tr>
-              <th>Ngân hàng</th>
-              <th>Loại vay</th>
-              <th>Lãi suất</th>
-              <th>Kỳ hạn</th>
-              <th>Hotline</th>
-              <th>Ghi chú</th>
-            </tr>
-          </thead>
-          <tbody>${seedTableRows}</tbody>
-        </table>
-      </div>
-    </div>
-
     <!-- Community UGC Table -->
     <div class="card">
       <div class="card-hdr">
