@@ -275,7 +275,13 @@ function seedRow(r: BankRateRow): string {
 }
 
 function ugcRow(r: BankRateRow): string {
-  const dt = r.updated_at ? r.updated_at.slice(0, 10) : '';
+  const rawDate = r.updated_at as unknown;
+  const dt = rawDate
+    ? (rawDate instanceof Date
+        ? (rawDate as Date).toISOString()
+        : String(rawDate)
+      ).slice(0, 10)
+    : '';
   return `<tr class="ugc-row">
     <td><span class="bank-name">${esc(r.bank_name)}</span></td>
     <td><span class="chip">${esc(r.loan_type)}</span></td>
@@ -345,7 +351,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
   const ugcTableRows  = ugcRates.length
     ? ugcRates.map(ugcRow).join('')
     : `<tr><td colspan="7" class="ugc-empty">Chưa có thông tin lãi suất nào được đăng từ cộng đồng.<br/>
-        <a href="/#/lai-suat-ngan-hang" style="color:#4F46E5;font-weight:600">Đăng thông tin lãi suất ngay →</a>
+        <a href="/#/lai-suat-ngan-hang" class="ugc-cta-link">Đăng thông tin lãi suất ngay →</a>
        </td></tr>`;
 
   const faqHtml = FAQ.map(f => `
@@ -384,9 +390,9 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 <header class="hdr">
   <a href="/" class="hdr-brand">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M12 2L2 7l10 5 10-5-10-5z" style="opacity:1"/>
-      <path d="M2 12l10 5 10-5" style="opacity:0.8"/>
-      <path d="M2 17l10 5 10-5" style="opacity:0.6"/>
+      <path d="M12 2L2 7l10 5 10-5-10-5z" class="svg-p1"/>
+      <path d="M2 12l10 5 10-5" class="svg-p2"/>
+      <path d="M2 17l10 5 10-5" class="svg-p3"/>
     </svg>
     <span class="hdr-brand-name">SGS LAND</span>
   </a>
@@ -401,8 +407,8 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 <section class="hero">
   <div class="wrap">
     <nav aria-label="Breadcrumb">
-      <div class="bc" style="justify-content:center;color:#94A3B8">
-        <a href="/" style="color:#CBD5E1">Trang chủ</a>
+      <div class="bc bc-center">
+        <a href="/" class="bc-home">Trang chủ</a>
         <span class="bc-sep">›</span>
         <span>Lãi suất ngân hàng</span>
       </div>
@@ -481,7 +487,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
       </div>
       <div class="ugc-intro">
         Bạn là nhân viên ngân hàng hoặc chuyên gia tài chính? 
-        <a href="/#/lai-suat-ngan-hang" style="font-weight:600">Đăng nhập để chia sẻ thông tin lãi suất →</a>
+        <a href="/#/lai-suat-ngan-hang">Đăng nhập để chia sẻ thông tin lãi suất →</a>
       </div>
       <div class="tbl-wrap">
         <table>
@@ -522,9 +528,9 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
     </div>
 
     <!-- Internal links -->
-    <div class="card" style="padding:20px 24px">
-      <h2 style="font-size:15px;color:#0F172A;margin-bottom:14px;font-weight:700">Tìm Hiểu Thêm Về Bất Động Sản</h2>
-      <ul style="list-style:none;display:flex;flex-wrap:wrap;gap:10px">
+    <div class="card card-links">
+      <h2>Tìm Hiểu Thêm Về Bất Động Sản</h2>
+      <ul class="links-list">
         <li><a href="/#/bat-dong-san-dong-nai">BĐS Đồng Nai</a></li>
         <li>·</li>
         <li><a href="/#/bat-dong-san-long-thanh">BĐS Long Thành</a></li>
@@ -545,13 +551,13 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 <!-- FOOTER -->
 <footer class="ftr">
   <div class="wrap">
-    <a href="/" style="display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;text-decoration:none">
+    <a href="/" class="ftr-brand">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 2L2 7l10 5 10-5-10-5z" style="opacity:1"/>
-        <path d="M2 12l10 5 10-5" style="opacity:0.8"/>
-        <path d="M2 17l10 5 10-5" style="opacity:0.6"/>
+        <path d="M12 2L2 7l10 5 10-5-10-5z" class="svg-p1"/>
+        <path d="M2 12l10 5 10-5" class="svg-p2"/>
+        <path d="M2 17l10 5 10-5" class="svg-p3"/>
       </svg>
-      <span style="font-weight:700;font-size:16px;color:#fff;letter-spacing:0.5px">SGS LAND</span>
+      <span class="ftr-brand-name">SGS LAND</span>
     </a>
     <p>
       <a href="/#/about-us">Về chúng tôi</a> &nbsp;·&nbsp;
@@ -559,8 +565,8 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
       <a href="/#/privacy-policy">Chính sách</a> &nbsp;·&nbsp;
       <a href="/lai-suat-vay-ngan-hang">Lãi suất ngân hàng</a>
     </p>
-    <p style="margin-top:14px">&copy; ${new Date().getFullYear()} SGS Land &mdash; 122-124 B2, Sala, Thủ Đức, TP.HCM &mdash; 0971 132 378</p>
-    <p style="margin-top:6px;font-size:11px;color:#475569">Thông tin lãi suất mang tính tham khảo. Liên hệ ngân hàng để biết lãi suất chính xác.</p>
+    <p class="ftr-copy">&copy; ${new Date().getFullYear()} SGS Land &mdash; 122-124 B2, Sala, Thủ Đức, TP.HCM &mdash; 0971 132 378</p>
+    <p class="ftr-note">Thông tin lãi suất mang tính tham khảo. Liên hệ ngân hàng để biết lãi suất chính xác.</p>
   </div>
 </footer>
 

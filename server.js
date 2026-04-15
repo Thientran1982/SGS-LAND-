@@ -4290,6 +4290,46 @@ var init_seed_market_prices = __esm({
   }
 });
 
+// server/migrations/056_bank_rates.ts
+var migration56, bank_rates_default;
+var init_bank_rates = __esm({
+  "server/migrations/056_bank_rates.ts"() {
+    migration56 = {
+      description: "Create bank_rates table for user-submitted interest rate listings",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS bank_rates (
+        id            SERIAL PRIMARY KEY,
+        tenant_id     VARCHAR(36)     NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001',
+        bank_name     VARCHAR(120)    NOT NULL,
+        bank_slug     VARCHAR(120)    NOT NULL,
+        loan_type     VARCHAR(120)    NOT NULL,
+        rate_min      DECIMAL(5,2)    NOT NULL,
+        rate_max      DECIMAL(5,2),
+        tenor_min     INTEGER,
+        tenor_max     INTEGER,
+        contact_name  VARCHAR(200),
+        contact_phone VARCHAR(30),
+        notes         TEXT,
+        is_verified   BOOLEAN         NOT NULL DEFAULT FALSE,
+        submitted_by  VARCHAR(36),
+        updated_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+        created_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_bank_rates_tenant   ON bank_rates(tenant_id);
+      CREATE INDEX IF NOT EXISTS idx_bank_rates_slug     ON bank_rates(bank_slug);
+      CREATE INDEX IF NOT EXISTS idx_bank_rates_created  ON bank_rates(created_at DESC);
+    `);
+      },
+      async down(client) {
+        await client.query(`DROP TABLE IF EXISTS bank_rates;`);
+      }
+    };
+    bank_rates_default = migration56;
+  }
+});
+
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -4342,15 +4382,15 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file2 of pending) {
-      const migration56 = MIGRATION_REGISTRY[file2];
-      if (!migration56 || typeof migration56.up !== "function") {
+      const migration57 = MIGRATION_REGISTRY[file2];
+      if (!migration57 || typeof migration57.up !== "function") {
         throw new Error(`[migrations] Invalid migration module for ${file2} \u2014 missing up() function`);
       }
-      console.log(`[migrations] Applying ${file2}: ${migration56.description || ""}`);
-      await migration56.up(client);
+      console.log(`[migrations] Applying ${file2}: ${migration57.description || ""}`);
+      await migration57.up(client);
       await client.query(
         "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
-        [file2, migration56.description || null]
+        [file2, migration57.description || null]
       );
       console.log(`[migrations] \u2713 ${file2}`);
     }
@@ -4385,15 +4425,15 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const migration56 = MIGRATION_REGISTRY[lastVersion];
-    if (!migration56) {
+    const migration57 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration57) {
       throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
     }
-    if (!migration56.down) {
+    if (!migration57.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
     console.log(`[migrations] Rolling back ${lastVersion}...`);
-    await migration56.down(client);
+    await migration57.down(client);
     await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
     await client.query("COMMIT");
     console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
@@ -4463,6 +4503,7 @@ var init_runner = __esm({
     init_fix_processing_documents();
     init_error_logs();
     init_seed_market_prices();
+    init_bank_rates();
     dotenv.config();
     MIGRATION_REGISTRY = {
       "001_baseline_schema.ts": baseline_schema_default,
@@ -4519,7 +4560,8 @@ var init_runner = __esm({
       "052_fix_listing_status_opening.ts": fix_listing_status_opening_default,
       "053_fix_processing_documents.ts": fix_processing_documents_default,
       "054_error_logs.ts": error_logs_default,
-      "055_seed_market_prices.ts": seed_market_prices_default
+      "055_seed_market_prices.ts": seed_market_prices_default,
+      "056_bank_rates.ts": bank_rates_default
     };
     MIGRATION_ADVISORY_LOCK_KEY = 74839230;
   }
@@ -27481,7 +27523,7 @@ function emailBase(content, footerNote) {
               </tr>
               <tr>
                 <td align="center">
-                  <span style="color:#94A3B8;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,sans-serif;">Enterprise Real Estate Platform</span>
+                  <span style="color:#94A3B8;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,sans-serif;">N\u1EC1n t\u1EA3ng B\u1EA5t \u0110\u1ED9ng S\u1EA3n Chuy\xEAn Nghi\u1EC7p</span>
                 </td>
               </tr>
             </table>
@@ -27500,10 +27542,10 @@ function emailBase(content, footerNote) {
           <td class="email-footer" bgcolor="#F8FAFC" style="padding:18px 40px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 12px 12px;text-align:center;">
             ${footerNote ? `<p style="color:#64748B;font-size:12px;line-height:1.6;margin:0 0 10px;font-family:Arial,sans-serif;">${footerNote}</p>` : ""}
             <p style="color:#94A3B8;font-size:11px;margin:0;line-height:1.8;font-family:Arial,sans-serif;">
-              &copy; ${year2} SGS LAND &mdash; Enterprise Real Estate Platform<br />
+              &copy; ${year2} SGS LAND &mdash; 122-124 B2, Sala, Th\u1EE7 \u0110\u1EE9c, TP.HCM<br />
               <a href="https://sgsland.vn" style="color:#4F46E5;text-decoration:none;font-family:Arial,sans-serif;">sgsland.vn</a>
               &nbsp;&bull;&nbsp;
-              <a href="mailto:support@sgsland.vn" style="color:#4F46E5;text-decoration:none;font-family:Arial,sans-serif;">support@sgsland.vn</a>
+              <a href="mailto:info@sgsland.vn" style="color:#4F46E5;text-decoration:none;font-family:Arial,sans-serif;">info@sgsland.vn</a>
             </p>
           </td>
         </tr>
@@ -27956,7 +27998,7 @@ async function sendContactAutoReply(to, name, subjectKey, message2) {
   return sendEmail(DEFAULT_TENANT_ID, {
     to,
     subject: `SGS Land \u2013 X\xE1c nh\u1EADn nh\u1EADn y\xEAu c\u1EA7u: ${info.label}`,
-    html: emailBase(content, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi t\u1EF1 \u0111\u1ED9ng sau khi b\u1EA1n \u0111i\u1EC1n form li\xEAn h\u1EC7 t\u1EA1i sgsland.vn/lien-he"),
+    html: emailBase(content, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi t\u1EF1 \u0111\u1ED9ng sau khi b\u1EA1n \u0111i\u1EC1n form li\xEAn h\u1EC7 t\u1EA1i sgsland.vn"),
     text: `Xin ch\xE0o ${name},
 
 C\u1EA3m \u01A1n b\u1EA1n \u0111\xE3 li\xEAn h\u1EC7 v\u1EDBi SGS Land v\u1EC1: ${info.label}.
@@ -27965,6 +28007,7 @@ Ch\xFAng t\xF4i \u0111\xE3 nh\u1EADn \u0111\u01B0\u1EE3c y\xEAu c\u1EA7u v\xE0 s
 
 Hotline: 0971 132 378 (24/7)
 Email: info@sgsland.vn
+Website: https://sgsland.vn
 
 \u2014 SGS LAND`
   });
@@ -27992,7 +28035,7 @@ var init_emailService = __esm({
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">3.</span>&nbsp; B\xE1o gi\xE1 chi ti\u1EBFt & k\xFD h\u1EE3p \u0111\u1ED3ng t\u01B0 v\u1EA5n/thi c\xF4ng</td></tr>
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">4.</span>&nbsp; Theo d\xF5i ti\u1EBFn \u0111\u1ED9 & b\xE0n giao c\xF4ng tr\xECnh</td></tr>
       </table>`,
-        cta: { url: "https://sgsland.vn/du-an", label: "Xem D\u1EF1 \xC1n Tham Kh\u1EA3o" }
+        cta: { url: "https://sgsland.vn/#/marketplace", label: "Xem Tin Rao B\u1EA5t \u0110\u1ED9ng S\u1EA3n" }
       },
       sales: {
         label: "T\u01B0 v\u1EA5n Mua/B\xE1n B\u1EA5t \u0110\u1ED9ng S\u1EA3n",
@@ -28009,7 +28052,7 @@ var init_emailService = __esm({
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">3.</span>&nbsp; \u0110i th\u1EF1c \u0111\u1ECBa & \u0111\xE1nh gi\xE1 ph\xE1p l\xFD d\u1EF1 \xE1n</td></tr>
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">4.</span>&nbsp; H\u1ED7 tr\u1EE3 \u0111\xE0m ph\xE1n gi\xE1 & ho\xE0n thi\u1EC7n h\u1EE3p \u0111\u1ED3ng</td></tr>
       </table>`,
-        cta: { url: "https://sgsland.vn/listings", label: "Xem Tin Rao M\u1EDBi Nh\u1EA5t" }
+        cta: { url: "https://sgsland.vn/#/marketplace", label: "Xem Tin Rao M\u1EDBi Nh\u1EA5t" }
       },
       partnership: {
         label: "H\u1EE3p t\xE1c Kinh doanh",
@@ -28026,7 +28069,7 @@ var init_emailService = __esm({
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Cung c\u1EA5p d\u1ECBch v\u1EE5 cho h\u1EC7 sinh th\xE1i b\u1EA5t \u0111\u1ED9ng s\u1EA3n</td></tr>
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; \u0110\u1ED1i t\xE1c c\xF4ng ngh\u1EC7 & truy\u1EC1n th\xF4ng</td></tr>
       </table>`,
-        cta: { url: "https://sgsland.vn/gioi-thieu", label: "T\xECm Hi\u1EC3u V\u1EC1 SGS Land" }
+        cta: { url: "https://sgsland.vn/#/contact", label: "Li\xEAn H\u1EC7 H\u1EE3p T\xE1c Ngay" }
       },
       other: {
         label: "Y\xEAu c\u1EA7u kh\xE1c",
@@ -28037,7 +28080,7 @@ var init_emailService = __esm({
         \u0110\u1ED9i ng\u0169 SGS Land s\u1EBD xem x\xE9t y\xEAu c\u1EA7u c\u1EE7a b\u1EA1n v\xE0 ph\u1EA3n h\u1ED3i trong v\xF2ng <strong>24 gi\u1EDD l\xE0m vi\u1EC7c</strong>.
         N\u1EBFu c\u1EA7n h\u1ED7 tr\u1EE3 g\u1EA5p, b\u1EA1n c\xF3 th\u1EC3 g\u1ECDi hotline <strong>0971 132 378</strong> (24/7).
       </p>`,
-        cta: { url: "https://sgsland.vn/lien-he", label: "Xem Th\xEAm Th\xF4ng Tin Li\xEAn H\u1EC7" }
+        cta: { url: "https://sgsland.vn/#/contact", label: "Xem Th\xEAm Th\xF4ng Tin Li\xEAn H\u1EC7" }
       }
     };
     emailService = {
@@ -28317,6 +28360,511 @@ var init_aml = __esm({
   }
 });
 
+// server/seo/bankRatesPage.ts
+var bankRatesPage_exports = {};
+__export(bankRatesPage_exports, {
+  SEED_RATES: () => SEED_RATES,
+  getBankRatesHtml: () => getBankRatesHtml
+});
+function esc2(s2) {
+  if (!s2) return "";
+  return s2.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function fmtRate(min, max) {
+  return max ? `${min}% \u2013 ${max}%` : `${min}%`;
+}
+function fmtTenor(min, max) {
+  if (!min && !max) return "\u2014";
+  const toYr = (m) => m % 12 === 0 ? `${m / 12} n\u0103m` : `${m} th\xE1ng`;
+  if (min && max) return `${toYr(min)} \u2013 ${toYr(max)}`;
+  if (max) return `T\u1ED1i \u0111a ${toYr(max)}`;
+  return `T\u1EEB ${toYr(min)}`;
+}
+function seedRow(r) {
+  const verified = r.is_verified ? `<span class="verified">&#10003; \u0110\xE3 x\xE1c minh</span>` : `<span class="chip">C\u1ED9ng \u0111\u1ED3ng</span>`;
+  return `<tr>
+    <td><span class="bank-name">${esc2(r.bank_name)}</span><br/>${verified}</td>
+    <td><span class="chip">${esc2(r.loan_type)}</span></td>
+    <td><span class="rate-val">${fmtRate(r.rate_min, r.rate_max)}/n\u0103m</span></td>
+    <td>${fmtTenor(r.tenor_min, r.tenor_max)}</td>
+    <td>${r.contact_phone ? `<a href="tel:${esc2(r.contact_phone)}">${esc2(r.contact_phone)}</a>` : "\u2014"}</td>
+    <td><span class="note">${esc2(r.notes)}</span></td>
+  </tr>`;
+}
+function ugcRow(r) {
+  const rawDate = r.updated_at;
+  const dt = rawDate ? (rawDate instanceof Date ? rawDate.toISOString() : String(rawDate)).slice(0, 10) : "";
+  return `<tr class="ugc-row">
+    <td><span class="bank-name">${esc2(r.bank_name)}</span></td>
+    <td><span class="chip">${esc2(r.loan_type)}</span></td>
+    <td><span class="rate-val">${fmtRate(r.rate_min, r.rate_max)}/n\u0103m</span></td>
+    <td>${fmtTenor(r.tenor_min, r.tenor_max)}</td>
+    <td>${r.contact_name ? esc2(r.contact_name) : "\u2014"}</td>
+    <td>${r.contact_phone ? `<a href="tel:${esc2(r.contact_phone)}">${esc2(r.contact_phone)}</a>` : "\u2014"}</td>
+    <td><span class="note">${dt}</span></td>
+  </tr>`;
+}
+function buildSchema(ugcCount) {
+  const dataset = {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: "B\u1EA3ng l\xE3i su\u1EA5t vay ng\xE2n h\xE0ng mua b\u1EA5t \u0111\u1ED9ng s\u1EA3n Vi\u1EC7t Nam 2026",
+    description: "D\u1EEF li\u1EC7u l\xE3i su\u1EA5t vay th\u1EBF ch\u1EA5p b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EEB c\xE1c ng\xE2n h\xE0ng l\u1EDBn t\u1EA1i Vi\u1EC7t Nam, bao g\u1ED3m Vietcombank, BIDV, Agribank, Techcombank, MB Bank v\xE0 nhi\u1EC1u ng\xE2n h\xE0ng kh\xE1c. C\u1EADp nh\u1EADt Q2 2026.",
+    url: CANONICAL,
+    creator: { "@type": "Organization", name: "SGS Land", url: APP_URL },
+    dateModified: NOW_ISO,
+    license: "https://creativecommons.org/licenses/by/4.0/",
+    variableMeasured: "L\xE3i su\u1EA5t vay th\u1EBF ch\u1EA5p b\u1EA5t \u0111\u1ED9ng s\u1EA3n (%/n\u0103m)"
+  };
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: APP_URL },
+      { "@type": "ListItem", position: 2, name: "L\xE3i Su\u1EA5t Ng\xE2n H\xE0ng", item: CANONICAL }
+    ]
+  };
+  const webpage = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "L\xE3i Su\u1EA5t Vay Ng\xE2n H\xE0ng 2026 | B\u1EA3ng So S\xE1nh M\u1EDBi Nh\u1EA5t \u2013 SGS Land",
+    description: "So s\xE1nh l\xE3i su\u1EA5t vay th\u1EBF ch\u1EA5p b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EEB 12 ng\xE2n h\xE0ng l\u1EDBn t\u1EA1i Vi\u1EC7t Nam. C\u1EADp nh\u1EADt Q2 2026.",
+    url: CANONICAL,
+    datePublished: "2024-01-01",
+    dateModified: NOW_ISO,
+    publisher: { "@type": "Organization", name: "SGS Land", url: APP_URL },
+    breadcrumb: { "@type": "BreadcrumbList", itemListElement: breadcrumb.itemListElement }
+  };
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a }
+    }))
+  };
+  return [dataset, breadcrumb, webpage, faqSchema].map((s2) => `<script type="application/ld+json">${JSON.stringify(s2)}</script>`).join("\n");
+}
+function getBankRatesHtml(ugcRates = []) {
+  const totalBanks = SEED_RATES.length;
+  const minRate = Math.min(...SEED_RATES.map((r) => r.rate_min)).toFixed(1);
+  const maxRate = Math.max(...SEED_RATES.map((r) => r.rate_max ?? r.rate_min)).toFixed(1);
+  const seedTableRows = SEED_RATES.map(seedRow).join("");
+  const ugcTableRows = ugcRates.length ? ugcRates.map(ugcRow).join("") : `<tr><td colspan="7" class="ugc-empty">Ch\u01B0a c\xF3 th\xF4ng tin l\xE3i su\u1EA5t n\xE0o \u0111\u01B0\u1EE3c \u0111\u0103ng t\u1EEB c\u1ED9ng \u0111\u1ED3ng.<br/>
+        <a href="/#/lai-suat-ngan-hang" class="ugc-cta-link">\u0110\u0103ng th\xF4ng tin l\xE3i su\u1EA5t ngay \u2192</a>
+       </td></tr>`;
+  const faqHtml = FAQ.map((f) => `
+    <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+      <div class="faq-q" itemprop="name">${esc2(f.q)}</div>
+      <div class="faq-a" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+        <span itemprop="text">${esc2(f.a)}</span>
+      </div>
+    </div>`).join("");
+  return `<!DOCTYPE html>
+<html lang="vi" itemscope itemtype="https://schema.org/WebPage">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"/>
+  <link rel="apple-touch-icon" href="/icon-192.png"/>
+  <title>L\xE3i Su\u1EA5t Vay Ng\xE2n H\xE0ng 2026 | B\u1EA3ng So S\xE1nh M\u1EDBi Nh\u1EA5t \u2013 SGS Land</title>
+  <meta name="description" content="C\u1EADp nh\u1EADt b\u1EA3ng l\xE3i su\u1EA5t vay ng\xE2n h\xE0ng mua b\u1EA5t \u0111\u1ED9ng s\u1EA3n m\u1EDBi nh\u1EA5t Q2/2026. So s\xE1nh l\xE3i su\u1EA5t th\u1EBF ch\u1EA5p t\u1EEB Vietcombank, BIDV, Techcombank, Agribank, MB Bank. T\u01B0 v\u1EA5n vay mi\u1EC5n ph\xED."/>
+  <link rel="canonical" href="${CANONICAL}"/>
+  <meta property="og:title" content="L\xE3i Su\u1EA5t Vay Ng\xE2n H\xE0ng 2026 \u2013 SGS Land"/>
+  <meta property="og:description" content="So s\xE1nh l\xE3i su\u1EA5t vay th\u1EBF ch\u1EA5p b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EEB 12+ ng\xE2n h\xE0ng l\u1EDBn t\u1EA1i Vi\u1EC7t Nam. C\u1EADp nh\u1EADt Q2 2026."/>
+  <meta property="og:url" content="${CANONICAL}"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="${APP_URL}/og-image.jpg"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <link rel="alternate" hreflang="vi" href="${CANONICAL}"/>
+  <link rel="alternate" hreflang="x-default" href="${CANONICAL}"/>
+  ${buildSchema(ugcRates.length)}
+  <link rel="stylesheet" href="/bank-rates.css"/>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <a href="/" class="hdr-brand">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 2L2 7l10 5 10-5-10-5z" class="svg-p1"/>
+      <path d="M2 12l10 5 10-5" class="svg-p2"/>
+      <path d="M2 17l10 5 10-5" class="svg-p3"/>
+    </svg>
+    <span class="hdr-brand-name">SGS LAND</span>
+  </a>
+  <nav class="hdr-nav">
+    <a href="/#/marketplace">Tin rao</a>
+    <a href="/#/lai-suat-ngan-hang">\u0110\u0103ng l\xE3i su\u1EA5t</a>
+    <a href="/#/contact" class="primary">T\u01B0 v\u1EA5n mi\u1EC5n ph\xED</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <nav aria-label="Breadcrumb">
+      <div class="bc bc-center">
+        <a href="/" class="bc-home">Trang ch\u1EE7</a>
+        <span class="bc-sep">\u203A</span>
+        <span>L\xE3i su\u1EA5t ng\xE2n h\xE0ng</span>
+      </div>
+    </nav>
+    <h1 itemprop="name">B\u1EA3ng L\xE3i Su\u1EA5t Vay Ng\xE2n H\xE0ng Mua B\u0110S M\u1EDBi Nh\u1EA5t 2026</h1>
+    <p itemprop="description">So s\xE1nh l\xE3i su\u1EA5t vay th\u1EBF ch\u1EA5p b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EEB ${totalBanks} ng\xE2n h\xE0ng l\u1EDBn t\u1EA1i Vi\u1EC7t Nam. T\u01B0 v\u1EA5n vay mua nh\xE0 mi\u1EC5n ph\xED t\u1EEB chuy\xEAn gia SGS Land.</p>
+    <div class="hero-meta">
+      <span class="hero-badge">C\u1EADp nh\u1EADt Q2/2026</span>
+      <span class="hero-badge">${totalBanks} ng\xE2n h\xE0ng</span>
+      <span class="hero-badge">${minRate}% \u2013 ${maxRate}%/n\u0103m</span>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<main class="content">
+  <div class="wrap">
+
+    <!-- Key stats -->
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-val">${minRate}%</span>
+        <div class="info-label">L\xE3i su\u1EA5t th\u1EA5p nh\u1EA5t/n\u0103m<br/>(Agribank)</div>
+      </div>
+      <div class="info-item">
+        <span class="info-val">${totalBanks}</span>
+        <div class="info-label">Ng\xE2n h\xE0ng trong b\u1EA3ng<br/>so s\xE1nh</div>
+      </div>
+      <div class="info-item">
+        <span class="info-val">30</span>
+        <div class="info-label">Th\u1EDDi h\u1EA1n vay t\u1ED1i \u0111a<br/>(n\u0103m)</div>
+      </div>
+      <div class="info-item">
+        <span class="info-val">85%</span>
+        <div class="info-label">T\u1EF7 l\u1EC7 cho vay t\u1ED1i \u0111a<br/>gi\xE1 tr\u1ECB B\u0110S</div>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      <strong>L\u01B0u \xFD:</strong> B\u1EA3ng l\xE3i su\u1EA5t mang t\xEDnh tham kh\u1EA3o, c\u1EADp nh\u1EADt Q2/2026. L\xE3i su\u1EA5t th\u1EF1c t\u1EBF ph\u1EE5 thu\u1ED9c v\xE0o h\u1ED3 s\u01A1 kh\xE1ch h\xE0ng, lo\u1EA1i t\xE0i s\u1EA3n v\xE0 ch\xEDnh s\xE1ch t\u1EEBng ng\xE2n h\xE0ng. Li\xEAn h\u1EC7 ng\xE2n h\xE0ng ho\u1EB7c chuy\xEAn gia SGS Land \u0111\u1EC3 \u0111\u01B0\u1EE3c b\xE1o gi\xE1 ch\xEDnh x\xE1c.
+    </div>
+
+    <!-- Seed Rate Table -->
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <h2>B\u1EA3ng L\xE3i Su\u1EA5t Vay Th\u1EBF Ch\u1EA5p B\u1EA5t \u0110\u1ED9ng S\u1EA3n</h2>
+          <p>T\u1ED5ng h\u1EE3p l\xE3i su\u1EA5t t\u1EEB ng\xE2n h\xE0ng qu\u1ED1c doanh & t\u01B0 nh\xE2n l\u1EDBn nh\u1EA5t Vi\u1EC7t Nam \xB7 Q2/2026</p>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table aria-label="B\u1EA3ng l\xE3i su\u1EA5t ng\xE2n h\xE0ng">
+          <thead>
+            <tr>
+              <th>Ng\xE2n h\xE0ng</th>
+              <th>Lo\u1EA1i vay</th>
+              <th>L\xE3i su\u1EA5t</th>
+              <th>K\u1EF3 h\u1EA1n</th>
+              <th>Hotline</th>
+              <th>Ghi ch\xFA</th>
+            </tr>
+          </thead>
+          <tbody>${seedTableRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Community UGC Table -->
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <h2>L\xE3i Su\u1EA5t C\u1EADp Nh\u1EADt T\u1EEB C\u1ED9ng \u0110\u1ED3ng <span class="badge-blue">UGC</span></h2>
+          <p>Th\xF4ng tin do m\xF4i gi\u1EDBi v\xE0 ng\xE2n h\xE0ng \u0111\u1ED1i t\xE1c chia s\u1EBB \u2014 bao g\u1ED3m ng\u01B0\u1EDDi li\xEAn h\u1EC7 tr\u1EF1c ti\u1EBFp</p>
+        </div>
+      </div>
+      <div class="ugc-intro">
+        B\u1EA1n l\xE0 nh\xE2n vi\xEAn ng\xE2n h\xE0ng ho\u1EB7c chuy\xEAn gia t\xE0i ch\xEDnh? 
+        <a href="/#/lai-suat-ngan-hang">\u0110\u0103ng nh\u1EADp \u0111\u1EC3 chia s\u1EBB th\xF4ng tin l\xE3i su\u1EA5t \u2192</a>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ng\xE2n h\xE0ng</th>
+              <th>Lo\u1EA1i vay</th>
+              <th>L\xE3i su\u1EA5t</th>
+              <th>K\u1EF3 h\u1EA1n</th>
+              <th>Ng\u01B0\u1EDDi li\xEAn h\u1EC7</th>
+              <th>S\u1ED1 \u0111i\u1EC7n tho\u1EA1i</th>
+              <th>C\u1EADp nh\u1EADt</th>
+            </tr>
+          </thead>
+          <tbody>${ugcTableRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-box">
+      <h2>C\u1EA7n T\u01B0 V\u1EA5n Vay Mua Nh\xE0 Mi\u1EC5n Ph\xED?</h2>
+      <p>Chuy\xEAn gia SGS Land k\u1EBFt n\u1ED1i b\u1EA1n v\u1EDBi ng\xE2n h\xE0ng ph\xF9 h\u1EE3p, h\u1ED7 tr\u1EE3 h\u1ED3 s\u01A1 v\xE0 \u0111\xE0m ph\xE1n l\xE3i su\u1EA5t t\u1ED1t nh\u1EA5t</p>
+      <a href="/#/contact" class="cta-btn">T\u01B0 V\u1EA5n Mi\u1EC5n Ph\xED Ngay</a>
+    </div>
+
+    <!-- FAQ -->
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <h2>C\xE2u H\u1ECFi Th\u01B0\u1EDDng G\u1EB7p V\u1EC1 L\xE3i Su\u1EA5t Vay Ng\xE2n H\xE0ng</h2>
+          <p>Gi\u1EA3i \u0111\xE1p c\xE1c th\u1EAFc m\u1EAFc ph\u1ED5 bi\u1EBFn v\u1EC1 vay th\u1EBF ch\u1EA5p b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EA1i Vi\u1EC7t Nam</p>
+        </div>
+      </div>
+      <div class="faq-list" itemscope itemtype="https://schema.org/FAQPage">
+        ${faqHtml}
+      </div>
+    </div>
+
+    <!-- Internal links -->
+    <div class="card card-links">
+      <h2>T\xECm Hi\u1EC3u Th\xEAm V\u1EC1 B\u1EA5t \u0110\u1ED9ng S\u1EA3n</h2>
+      <ul class="links-list">
+        <li><a href="/#/bat-dong-san-dong-nai">B\u0110S \u0110\u1ED3ng Nai</a></li>
+        <li>\xB7</li>
+        <li><a href="/#/bat-dong-san-long-thanh">B\u0110S Long Th\xE0nh</a></li>
+        <li>\xB7</li>
+        <li><a href="/#/bat-dong-san-thu-duc">B\u0110S Th\u1EE7 \u0110\u1EE9c</a></li>
+        <li>\xB7</li>
+        <li><a href="/#/bat-dong-san-binh-duong">B\u0110S B\xECnh D\u01B0\u01A1ng</a></li>
+        <li>\xB7</li>
+        <li><a href="/#/ai-valuation">\u0110\u1ECBnh gi\xE1 AI</a></li>
+        <li>\xB7</li>
+        <li><a href="/#/marketplace">Tin rao mua b\xE1n</a></li>
+      </ul>
+    </div>
+
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="ftr">
+  <div class="wrap">
+    <a href="/" class="ftr-brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" class="svg-p1"/>
+        <path d="M2 12l10 5 10-5" class="svg-p2"/>
+        <path d="M2 17l10 5 10-5" class="svg-p3"/>
+      </svg>
+      <span class="ftr-brand-name">SGS LAND</span>
+    </a>
+    <p>
+      <a href="/#/about-us">V\u1EC1 ch\xFAng t\xF4i</a> &nbsp;\xB7&nbsp;
+      <a href="/#/contact">Li\xEAn h\u1EC7</a> &nbsp;\xB7&nbsp;
+      <a href="/#/privacy-policy">Ch\xEDnh s\xE1ch</a> &nbsp;\xB7&nbsp;
+      <a href="/lai-suat-vay-ngan-hang">L\xE3i su\u1EA5t ng\xE2n h\xE0ng</a>
+    </p>
+    <p class="ftr-copy">&copy; ${(/* @__PURE__ */ new Date()).getFullYear()} SGS Land &mdash; 122-124 B2, Sala, Th\u1EE7 \u0110\u1EE9c, TP.HCM &mdash; 0971 132 378</p>
+    <p class="ftr-note">Th\xF4ng tin l\xE3i su\u1EA5t mang t\xEDnh tham kh\u1EA3o. Li\xEAn h\u1EC7 ng\xE2n h\xE0ng \u0111\u1EC3 bi\u1EBFt l\xE3i su\u1EA5t ch\xEDnh x\xE1c.</p>
+  </div>
+</footer>
+
+</body>
+</html>`;
+}
+var APP_URL, CANONICAL, NOW_ISO, SEED_RATES, FAQ;
+var init_bankRatesPage = __esm({
+  "server/seo/bankRatesPage.ts"() {
+    APP_URL = "https://sgsland.vn";
+    CANONICAL = `${APP_URL}/lai-suat-vay-ngan-hang`;
+    NOW_ISO = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+    SEED_RATES = [
+      {
+        bank_name: "Agribank",
+        bank_slug: "agribank",
+        loan_type: "Th\u1EBF ch\u1EA5p B\u0110S",
+        rate_min: 6,
+        rate_max: 7.8,
+        tenor_min: 60,
+        tenor_max: 360,
+        contact_name: "B\u1ED9 ph\u1EADn KHCN",
+        contact_phone: "1900 558 818",
+        notes: "\u01AFu \u0111\xE3i 6 th\xE1ng \u0111\u1EA7u t\u1EEB 6,0%/n\u0103m cho nh\xE0 \u1EDF x\xE3 h\u1ED9i. \u01AFu ti\xEAn kh\xE1ch h\xE0ng l\u01B0\u01A1ng qua Agribank.",
+        is_verified: true
+      },
+      {
+        bank_name: "Vietcombank",
+        bank_slug: "vietcombank",
+        loan_type: "Th\u1EBF ch\u1EA5p B\u0110S",
+        rate_min: 6.5,
+        rate_max: 8,
+        tenor_min: 60,
+        tenor_max: 360,
+        contact_name: "Ph\xF2ng KHCN",
+        contact_phone: "1800 545 413",
+        notes: "L\xE3i su\u1EA5t \u01B0u \u0111\xE3i 12 th\xE1ng \u0111\u1EA7u t\u1EEB 6,5%/n\u0103m. Mi\u1EC5n ph\xED qu\u1EA3n l\xFD t\xE0i kho\u1EA3n khi vay.",
+        is_verified: true
+      },
+      {
+        bank_name: "VietinBank",
+        bank_slug: "vietinbank",
+        loan_type: "Vay mua nh\xE0",
+        rate_min: 6.5,
+        rate_max: 8.3,
+        tenor_min: 60,
+        tenor_max: 300,
+        contact_name: "KHCN",
+        contact_phone: "1800 588 895",
+        notes: "Cho vay t\u1ED1i \u0111a 80% gi\xE1 tr\u1ECB B\u0110S. \xC2n h\u1EA1n g\u1ED1c t\u1ED1i \u0111a 12 th\xE1ng.",
+        is_verified: true
+      },
+      {
+        bank_name: "BIDV",
+        bank_slug: "bidv",
+        loan_type: "Th\u1EBF ch\u1EA5p B\u0110S",
+        rate_min: 7,
+        rate_max: 8.5,
+        tenor_min: 60,
+        tenor_max: 360,
+        contact_name: "KHCN",
+        contact_phone: "1900 9247",
+        notes: "L\xE3i \u01B0u \u0111\xE3i cho d\u1EF1 \xE1n li\xEAn k\u1EBFt BIDV. H\u1ED7 tr\u1EE3 vay t\u1ED1i \u0111a 85% gi\xE1 tr\u1ECB B\u0110S.",
+        is_verified: true
+      },
+      {
+        bank_name: "Sacombank",
+        bank_slug: "sacombank",
+        loan_type: "Th\u1EBF ch\u1EA5p B\u0110S",
+        rate_min: 7,
+        rate_max: 8.9,
+        tenor_min: 12,
+        tenor_max: 240,
+        contact_name: "KHCN",
+        contact_phone: "1800 5858 82",
+        notes: "Kh\xF4ng y\xEAu c\u1EA7u ch\u1EE9ng minh thu nh\u1EADp v\u1EDBi t\xE0i s\u1EA3n \u0111\u1EA3m b\u1EA3o cao. Gi\u1EA3i ng\xE2n trong 5 ng\xE0y.",
+        is_verified: true
+      },
+      {
+        bank_name: "ACB",
+        bank_slug: "acb",
+        loan_type: "Th\u1EBF ch\u1EA5p B\u0110S",
+        rate_min: 7.3,
+        rate_max: 9.5,
+        tenor_min: 12,
+        tenor_max: 300,
+        contact_name: "KHCN",
+        contact_phone: "1900 545 486",
+        notes: "\u01AFu \u0111\xE3i cho d\u1EF1 \xE1n \u0111\u1ED1i t\xE1c ACB. Ph\xEA duy\u1EC7t trong 48h. Vay linh ho\u1EA1t t\u1EEBng \u0111\u1EE3t.",
+        is_verified: true
+      },
+      {
+        bank_name: "MB Bank",
+        bank_slug: "mb-bank",
+        loan_type: "Vay mua nh\xE0",
+        rate_min: 7.2,
+        rate_max: 9,
+        tenor_min: 12,
+        tenor_max: 240,
+        contact_name: "KHCN",
+        contact_phone: "1800 0080",
+        notes: "Mi\u1EC5n ph\xED b\u1EA3o hi\u1EC3m n\u0103m \u0111\u1EA7u. Ph\xEA duy\u1EC7t online qua \u1EE9ng d\u1EE5ng MBBank.",
+        is_verified: true
+      },
+      {
+        bank_name: "Techcombank",
+        bank_slug: "techcombank",
+        loan_type: "Th\u1EBF ch\u1EA5p B\u0110S",
+        rate_min: 7.5,
+        rate_max: 9.8,
+        tenor_min: 12,
+        tenor_max: 240,
+        contact_name: "KHCN",
+        contact_phone: "1800 588 822",
+        notes: "Kh\xF4ng ph\xED tr\u1EA3 n\u1EE3 tr\u01B0\u1EDBc h\u1EA1n t\u1EEB n\u0103m th\u1EE9 4. Li\xEAn k\u1EBFt Vinhomes, Masterise, Gamuda.",
+        is_verified: true
+      },
+      {
+        bank_name: "SHB",
+        bank_slug: "shb",
+        loan_type: "Th\u1EBF ch\u1EA5p B\u0110S",
+        rate_min: 7.2,
+        rate_max: 8.8,
+        tenor_min: 12,
+        tenor_max: 240,
+        contact_name: null,
+        contact_phone: "1800 599 928",
+        notes: "L\xE3i su\u1EA5t \u01B0u \u0111\xE3i k\xE8m g\xF3i b\u1EA3o hi\u1EC3m nh\xE2n th\u1ECD. Th\u1EE7 t\u1EE5c \u0111\u01A1n gi\u1EA3n.",
+        is_verified: false
+      },
+      {
+        bank_name: "HDBank",
+        bank_slug: "hdbank",
+        loan_type: "Th\u1EBF ch\u1EA5p B\u0110S",
+        rate_min: 7.8,
+        rate_max: 10.2,
+        tenor_min: 12,
+        tenor_max: 240,
+        contact_name: null,
+        contact_phone: "1800 599 999",
+        notes: "\u01AFu ti\xEAn kh\xE1ch mua B\u0110S d\u1EF1 \xE1n li\xEAn k\u1EBFt HDBank. Gi\u1EA3i ng\xE2n nhanh trong tu\u1EA7n.",
+        is_verified: false
+      },
+      {
+        bank_name: "VPBank",
+        bank_slug: "vpbank",
+        loan_type: "Vay mua nh\xE0",
+        rate_min: 8.2,
+        rate_max: 11,
+        tenor_min: 12,
+        tenor_max: 240,
+        contact_name: null,
+        contact_phone: "1900 545 415",
+        notes: "Ph\xEA duy\u1EC7t trong 24h. Cho vay t\xEDn ch\u1EA5p k\u1EBFt h\u1EE3p th\u1EBF ch\u1EA5p linh ho\u1EA1t.",
+        is_verified: false
+      },
+      {
+        bank_name: "OCB",
+        bank_slug: "ocb",
+        loan_type: "Vay mua nh\xE0",
+        rate_min: 7.9,
+        rate_max: 10.5,
+        tenor_min: 12,
+        tenor_max: 240,
+        contact_name: null,
+        contact_phone: "1800 6678",
+        notes: "Li\xEAn k\u1EBFt Masterise Homes, Nam Long. \u01AFu \u0111\xE3i l\xE3i su\u1EA5t cho kh\xE1ch h\xE0ng \u01B0u ti\xEAn.",
+        is_verified: false
+      }
+    ];
+    FAQ = [
+      {
+        q: "L\xE3i su\u1EA5t vay mua nh\xE0 hi\u1EC7n t\u1EA1i n\u0103m 2026 l\xE0 bao nhi\xEAu?",
+        a: "L\xE3i su\u1EA5t vay mua nh\xE0 (th\u1EBF ch\u1EA5p b\u1EA5t \u0111\u1ED9ng s\u1EA3n) t\u1EA1i Vi\u1EC7t Nam n\u0103m 2026 dao \u0111\u1ED9ng t\u1EEB 6,0%/n\u0103m (Agribank) \u0111\u1EBFn 11,0%/n\u0103m (VPBank). C\xE1c ng\xE2n h\xE0ng qu\u1ED1c doanh nh\u01B0 Vietcombank, BIDV, VietinBank, Agribank c\xF3 l\xE3i su\u1EA5t t\u1EEB 6,5\u20138,5%/n\u0103m. Ng\xE2n h\xE0ng t\u01B0 nh\xE2n (Techcombank, VPBank, ACB\u2026) th\u01B0\u1EDDng t\u1EEB 7,5\u201311%/n\u0103m. Xu h\u01B0\u1EDBng l\xE3i su\u1EA5t \u0111ang \u1EDF m\u1EE9c \u1ED5n \u0111\u1ECBnh trong Q2/2026 sau \u0111\u1EE3t \u0111i\u1EC1u ch\u1EC9nh gi\u1EA3m t\u1EEB NHNN."
+      },
+      {
+        q: "Ng\xE2n h\xE0ng n\xE0o c\xF3 l\xE3i su\u1EA5t vay b\u1EA5t \u0111\u1ED9ng s\u1EA3n th\u1EA5p nh\u1EA5t n\u0103m 2026?",
+        a: "Agribank hi\u1EC7n c\xF3 l\xE3i su\u1EA5t vay b\u1EA5t \u0111\u1ED9ng s\u1EA3n th\u1EA5p nh\u1EA5t th\u1ECB tr\u01B0\u1EDDng (t\u1EEB 6,0%/n\u0103m), \u0111\u1EB7c bi\u1EC7t d\xE0nh cho vay nh\xE0 \u1EDF x\xE3 h\u1ED9i v\xE0 kh\xE1ch h\xE0ng nh\u1EADn l\u01B0\u01A1ng qua Agribank. Ti\u1EBFp theo l\xE0 Vietcombank v\xE0 VietinBank v\u1EDBi l\xE3i su\u1EA5t t\u1EEB 6,5%/n\u0103m trong giai \u0111o\u1EA1n \u01B0u \u0111\xE3i. Ng\xE2n h\xE0ng qu\u1ED1c doanh th\u01B0\u1EDDng y\xEAu c\u1EA7u h\u1ED3 s\u01A1 ch\u1EB7t ch\u1EBD h\u01A1n so v\u1EDBi ng\xE2n h\xE0ng t\u01B0 nh\xE2n."
+      },
+      {
+        q: "\u0110i\u1EC1u ki\u1EC7n vay mua nh\xE0 t\u1EA1i ng\xE2n h\xE0ng l\xE0 g\xEC?",
+        a: "\u0110\u1EC3 vay mua nh\xE0 t\u1EA1i ng\xE2n h\xE0ng Vi\u1EC7t Nam, b\u1EA1n c\u1EA7n: (1) Thu nh\u1EADp h\xE0ng th\xE1ng \u1ED5n \u0111\u1ECBnh v\xE0 c\xF3 th\u1EC3 ch\u1EE9ng minh; (2) T\xE0i s\u1EA3n th\u1EBF ch\u1EA5p \u2014 th\u01B0\u1EDDng l\xE0 ch\xEDnh b\u1EA5t \u0111\u1ED9ng s\u1EA3n d\u1EF1 \u0111\u1ECBnh mua; (3) H\u1ED3 s\u01A1 ph\xE1p l\xFD \u0111\u1EA7y \u0111\u1EE7 (CCCD, h\u1ED9 kh\u1EA9u, h\u1EE3p \u0111\u1ED3ng mua b\xE1n ho\u1EB7c \u0111\u1EB7t c\u1ECDc); (4) L\u1ECBch s\u1EED t\xEDn d\u1EE5ng t\u1ED1t t\u1EA1i CIC. V\u1ED1n t\u1EF1 c\xF3 t\u1ED1i thi\u1EC3u 20\u201330% gi\xE1 tr\u1ECB b\u1EA5t \u0111\u1ED9ng s\u1EA3n."
+      },
+      {
+        q: "Th\u1EDDi h\u1EA1n vay mua nh\xE0 t\u1ED1i \u0111a l\xE0 bao l\xE2u?",
+        a: "Th\u1EDDi h\u1EA1n vay mua nh\xE0 t\u1ED1i \u0111a t\u1EA1i c\xE1c ng\xE2n h\xE0ng Vi\u1EC7t Nam hi\u1EC7n nay: Agribank, Vietcombank, BIDV \u2014 t\u1ED1i \u0111a 30 n\u0103m; VietinBank \u2014 t\u1ED1i \u0111a 25 n\u0103m; Techcombank, ACB, Sacombank \u2014 t\u1ED1i \u0111a 20 n\u0103m; VPBank, MB Bank, HDBank \u2014 t\u1ED1i \u0111a 20 n\u0103m. Th\u1EDDi h\u1EA1n vay ph\u1EE5 thu\u1ED9c v\xE0o \u0111\u1ED9 tu\u1ED5i v\xE0 thu nh\u1EADp c\u1EE7a ng\u01B0\u1EDDi vay."
+      },
+      {
+        q: "Cho vay bao nhi\xEAu ph\u1EA7n tr\u0103m gi\xE1 tr\u1ECB b\u1EA5t \u0111\u1ED9ng s\u1EA3n?",
+        a: "H\u1EA7u h\u1EBFt ng\xE2n h\xE0ng cho vay t\u1ED1i \u0111a 70\u201385% gi\xE1 tr\u1ECB t\xE0i s\u1EA3n th\u1EA9m \u0111\u1ECBnh. BIDV v\xE0 Agribank h\u1ED7 tr\u1EE3 \u0111\u1EBFn 85%. Vietcombank, VietinBank th\u01B0\u1EDDng t\u1ED1i \u0111a 80%. Ng\xE2n h\xE0ng t\u01B0 nh\xE2n linh ho\u1EA1t h\u01A1n nh\u01B0ng l\xE3i su\u1EA5t cao h\u01A1n. Ph\u1EA7n c\xF2n l\u1EA1i (15\u201330%) l\xE0 v\u1ED1n t\u1EF1 c\xF3 c\u1EE7a ng\u01B0\u1EDDi mua."
+      },
+      {
+        q: "L\xE3i su\u1EA5t c\u1ED1 \u0111\u1ECBnh hay th\u1EA3 n\u1ED5i c\xF3 l\u1EE3i h\u01A1n?",
+        a: "L\xE3i su\u1EA5t c\u1ED1 \u0111\u1ECBnh ph\xF9 h\u1EE3p n\u1EBFu b\u1EA1n c\u1EA7n \u1ED5n \u0111\u1ECBnh t\xE0i ch\xEDnh v\xE0 d\u1EF1 b\xE1o l\xE3i su\u1EA5t s\u1EBD t\u0103ng. L\xE3i su\u1EA5t th\u1EA3 n\u1ED5i th\u01B0\u1EDDng th\u1EA5p h\u01A1n trong ng\u1EAFn h\u1EA1n nh\u01B0ng c\xF3 r\u1EE7i ro t\u0103ng theo th\u1ECB tr\u01B0\u1EDDng. \u0110a s\u1ED1 ng\xE2n h\xE0ng Vi\u1EC7t Nam \xE1p d\u1EE5ng l\xE3i su\u1EA5t \u01B0u \u0111\xE3i c\u1ED1 \u0111\u1ECBnh 6\u201324 th\xE1ng \u0111\u1EA7u, sau \u0111\xF3 th\u1EA3 n\u1ED5i theo l\xE3i su\u1EA5t huy \u0111\u1ED9ng c\u1ED9ng bi\xEAn \u0111\u1ED9 2\u20134%/n\u0103m."
+      }
+    ];
+  }
+});
+
 // server/seo/metaInjector.ts
 var metaInjector_exports = {};
 __export(metaInjector_exports, {
@@ -28328,7 +28876,7 @@ __export(metaInjector_exports, {
 });
 import { readFileSync } from "fs";
 import path6 from "path";
-function esc2(str) {
+function esc3(str) {
   return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 function fmtVND(price) {
@@ -28352,7 +28900,7 @@ function buildListingMeta(listing) {
   const description = parts.join(" \u2014 ").slice(0, 160);
   const images = Array.isArray(listing.images) ? listing.images : [];
   const image = images[0] || DEFAULT_IMAGE;
-  const url2 = `${APP_URL}/listing/${listing.id}`;
+  const url2 = `${APP_URL2}/listing/${listing.id}`;
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
@@ -28374,7 +28922,7 @@ function buildArticleMeta(article) {
   const title = article.title ? `${article.title} - Tin T\u1EE9c B\u0110S | SGS LAND` : DEFAULT_META.title;
   const description = rawExcerpt.slice(0, 300) || DEFAULT_META.description;
   const image = article.coverImage || article.cover_image || DEFAULT_IMAGE;
-  const url2 = article.slug ? `${APP_URL}/news/${article.slug}` : `${APP_URL}/news/${article.id}`;
+  const url2 = article.slug ? `${APP_URL2}/news/${article.slug}` : `${APP_URL2}/news/${article.id}`;
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -28389,7 +28937,7 @@ function buildArticleMeta(article) {
     publisher: {
       "@type": "Organization",
       name: "SGS LAND",
-      logo: { "@type": "ImageObject", url: `${APP_URL}/apple-touch-icon.png` }
+      logo: { "@type": "ImageObject", url: `${APP_URL2}/apple-touch-icon.png` }
     }
   };
   return { title, description, h1: article.title || void 0, image, url: url2, type: "article", structuredData };
@@ -28403,7 +28951,7 @@ function buildStaticPageMeta(overrideTitle, overrideDesc, ogImage, pagePath) {
     description: overrideDesc || routeMeta.description,
     h1: routeMeta.h1,
     image: ogImage || DEFAULT_IMAGE,
-    url: `${APP_URL}${pagePath}`,
+    url: `${APP_URL2}${pagePath}`,
     type: "website",
     noIndex: routeMeta.noIndex,
     structuredData: routeMeta.structuredData
@@ -28411,8 +28959,8 @@ function buildStaticPageMeta(overrideTitle, overrideDesc, ogImage, pagePath) {
 }
 function injectMeta(baseHtml, meta3) {
   const m = { ...DEFAULT_META, ...meta3 };
-  const t = esc2(m.title);
-  const d = esc2(m.description);
+  const t = esc3(m.title);
+  const d = esc3(m.description);
   const img = m.image;
   const u = m.url;
   const type = m.type || "website";
@@ -28436,7 +28984,7 @@ function injectMeta(baseHtml, meta3) {
     /(<link\s+(?:id="canonical-url"\s+)?rel="canonical"\s+href=")[^"]*(")/i,
     `$1${u}$2`
   );
-  if (u !== APP_URL && u !== `${APP_URL}/`) {
+  if (u !== APP_URL2 && u !== `${APP_URL2}/`) {
     html = html.replace(
       /(<link\s+rel="alternate"\s+hreflang="vi"\s+href=")[^"]*(")/i,
       `$1${u}$2`
@@ -28457,7 +29005,7 @@ function injectMeta(baseHtml, meta3) {
     );
   }
   if (m.h1) {
-    const h1Text = esc2(m.h1);
+    const h1Text = esc3(m.h1);
     html = html.replace(
       /(<h1[^>]*>)[^<]*(<\/h1>)/i,
       `$1${h1Text}$2`
@@ -28490,16 +29038,16 @@ function getBaseHtml() {
   }
   return _cachedHtml;
 }
-var APP_URL, DEFAULT_IMAGE, DEFAULT_META, STATIC_PAGE_META, _cachedHtml;
+var APP_URL2, DEFAULT_IMAGE, DEFAULT_META, STATIC_PAGE_META, _cachedHtml;
 var init_metaInjector = __esm({
   "server/seo/metaInjector.ts"() {
-    APP_URL = (process.env.APP_URL || "https://sgsland.vn").replace(/\/$/, "");
-    DEFAULT_IMAGE = `${APP_URL}/og-image.jpg`;
+    APP_URL2 = (process.env.APP_URL || "https://sgsland.vn").replace(/\/$/, "");
+    DEFAULT_IMAGE = `${APP_URL2}/og-image.jpg`;
     DEFAULT_META = {
       title: "SGS LAND | N\u1EC1n T\u1EA3ng Qu\u1EA3n L\xFD B\u1EA5t \u0110\u1ED9ng S\u1EA3n AI S\u1ED1 1 Vi\u1EC7t Nam",
       description: "SGS LAND - N\u1EC1n t\u1EA3ng B\u0110S AI: \u0111\u1ECBnh gi\xE1 t\u1EF1 \u0111\u1ED9ng, CRM \u0111a k\xEAnh, qu\u1EA3n l\xFD kho h\xE0ng to\xE0n di\u1EC7n. Gi\u1EA3i ph\xE1p #1 cho s\xE0n giao d\u1ECBch v\xE0 doanh nghi\u1EC7p b\u1EA5t \u0111\u1ED9ng s\u1EA3n Vi\u1EC7t Nam.",
       image: DEFAULT_IMAGE,
-      url: APP_URL,
+      url: APP_URL2,
       type: "website"
     };
     STATIC_PAGE_META = {
@@ -28512,10 +29060,10 @@ var init_metaInjector = __esm({
           "@graph": [
             {
               "@type": "Organization",
-              "@id": `${APP_URL}/#org`,
+              "@id": `${APP_URL2}/#org`,
               name: "SGS LAND",
-              url: APP_URL,
-              logo: { "@type": "ImageObject", url: `${APP_URL}/apple-touch-icon.png` },
+              url: APP_URL2,
+              logo: { "@type": "ImageObject", url: `${APP_URL2}/apple-touch-icon.png` },
               sameAs: [
                 "https://www.facebook.com/sgslandvn",
                 "https://www.linkedin.com/company/sgsland",
@@ -28524,7 +29072,7 @@ var init_metaInjector = __esm({
                 "https://sgsland.vn"
               ],
               description: "N\u1EC1n t\u1EA3ng c\xF4ng ngh\u1EC7 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam, chuy\xEAn t\u01B0 v\u1EA5n v\xE0 giao d\u1ECBch b\u1EA5t \u0111\u1ED9ng s\u1EA3n TP.HCM, \u0110\u1ED3ng Nai, B\xECnh D\u01B0\u01A1ng.",
-              contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: ["Vietnamese", "English"], url: `${APP_URL}/contact` },
+              contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: ["Vietnamese", "English"], url: `${APP_URL2}/contact` },
               areaServed: [
                 { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
                 { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
@@ -28535,9 +29083,9 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "RealEstateAgent",
-              "@id": `${APP_URL}/#agent`,
+              "@id": `${APP_URL2}/#agent`,
               name: "SGS LAND - N\u1EC1n T\u1EA3ng B\u0110S AI S\u1ED1 1 Vi\u1EC7t Nam",
-              url: APP_URL,
+              url: APP_URL2,
               description: "\u0110\u1ECBnh gi\xE1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI, mua b\xE1n B\u0110S, CRM \u0111a k\xEAnh t\u1EA1i Vi\u1EC7t Nam.",
               areaServed: [
                 { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
@@ -28548,10 +29096,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "WebSite",
-              "@id": `${APP_URL}/#website`,
-              url: APP_URL,
+              "@id": `${APP_URL2}/#website`,
+              url: APP_URL2,
               name: "SGS LAND",
-              potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: `${APP_URL}/marketplace?q={search_term_string}` }, "query-input": "required name=search_term_string" }
+              potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: `${APP_URL2}/marketplace?q={search_term_string}` }, "query-input": "required name=search_term_string" }
             }
           ]
         }
@@ -28565,10 +29113,10 @@ var init_metaInjector = __esm({
           "@graph": [
             {
               "@type": "Organization",
-              "@id": `${APP_URL}/#org`,
+              "@id": `${APP_URL2}/#org`,
               name: "SGS LAND",
-              url: APP_URL,
-              logo: { "@type": "ImageObject", url: `${APP_URL}/apple-touch-icon.png` },
+              url: APP_URL2,
+              logo: { "@type": "ImageObject", url: `${APP_URL2}/apple-touch-icon.png` },
               sameAs: [
                 "https://www.facebook.com/sgslandvn",
                 "https://www.linkedin.com/company/sgsland",
@@ -28577,7 +29125,7 @@ var init_metaInjector = __esm({
                 "https://sgsland.vn"
               ],
               description: "N\u1EC1n t\u1EA3ng c\xF4ng ngh\u1EC7 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI h\xE0ng \u0111\u1EA7u Vi\u1EC7t Nam, chuy\xEAn t\u01B0 v\u1EA5n v\xE0 giao d\u1ECBch b\u1EA5t \u0111\u1ED9ng s\u1EA3n TP.HCM, \u0110\u1ED3ng Nai, B\xECnh D\u01B0\u01A1ng.",
-              contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: ["Vietnamese", "English"], url: `${APP_URL}/contact` },
+              contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: ["Vietnamese", "English"], url: `${APP_URL2}/contact` },
               areaServed: [
                 { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
                 { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
@@ -28588,9 +29136,9 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "RealEstateAgent",
-              "@id": `${APP_URL}/#agent`,
+              "@id": `${APP_URL2}/#agent`,
               name: "SGS LAND - N\u1EC1n T\u1EA3ng B\u0110S AI S\u1ED1 1 Vi\u1EC7t Nam",
-              url: APP_URL,
+              url: APP_URL2,
               description: "\u0110\u1ECBnh gi\xE1 b\u1EA5t \u0111\u1ED9ng s\u1EA3n AI, mua b\xE1n B\u0110S, CRM \u0111a k\xEAnh t\u1EA1i Vi\u1EC7t Nam.",
               areaServed: [
                 { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
@@ -28601,10 +29149,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "WebSite",
-              "@id": `${APP_URL}/#website`,
-              url: APP_URL,
+              "@id": `${APP_URL2}/#website`,
+              url: APP_URL2,
               name: "SGS LAND",
-              potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: `${APP_URL}/marketplace?q={search_term_string}` }, "query-input": "required name=search_term_string" }
+              potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: `${APP_URL2}/marketplace?q={search_term_string}` }, "query-input": "required name=search_term_string" }
             }
           ]
         }
@@ -28631,8 +29179,8 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n", item: `${APP_URL}/ky-gui-bat-dong-san` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n", item: `${APP_URL2}/ky-gui-bat-dong-san` }
               ]
             },
             {
@@ -28666,18 +29214,18 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "Service",
-              "@id": `${APP_URL}/ky-gui-bat-dong-san#service`,
+              "@id": `${APP_URL2}/ky-gui-bat-dong-san#service`,
               name: "D\u1ECBch v\u1EE5 K\xFD G\u1EEDi B\u1EA5t \u0110\u1ED9ng S\u1EA3n SGS LAND",
               serviceType: "K\xFD g\u1EEDi b\u1EA5t \u0111\u1ED9ng s\u1EA3n",
               inLanguage: "vi",
-              provider: { "@type": "Organization", name: "SGS LAND", url: APP_URL },
+              provider: { "@type": "Organization", name: "SGS LAND", url: APP_URL2 },
               areaServed: [
                 { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
                 { "@type": "State", name: "B\xECnh D\u01B0\u01A1ng", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
                 { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
                 { "@type": "State", name: "Long An", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } }
               ],
-              url: `${APP_URL}/ky-gui-bat-dong-san`
+              url: `${APP_URL2}/ky-gui-bat-dong-san`
             }
           ]
         }
@@ -28695,9 +29243,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n \u0110\u1ED3ng Nai", item: `${APP_URL}/bat-dong-san-dong-nai` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n \u0110\u1ED3ng Nai", item: `${APP_URL2}/bat-dong-san-dong-nai` }
               ]
             },
             {
@@ -28715,9 +29263,9 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "RealEstateAgent",
-              "@id": `${APP_URL}/bat-dong-san-dong-nai#agent`,
+              "@id": `${APP_URL2}/bat-dong-san-dong-nai#agent`,
               name: "SGS LAND - B\u1EA5t \u0110\u1ED9ng S\u1EA3n \u0110\u1ED3ng Nai",
-              url: `${APP_URL}/bat-dong-san-dong-nai`,
+              url: `${APP_URL2}/bat-dong-san-dong-nai`,
               areaServed: { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
               knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n \u0110\u1ED3ng Nai", "\u0110\u1EA5t n\u1EC1n Long Th\xE0nh", "Nh\u01A1n Tr\u1EA1ch", "Bi\xEAn H\xF2a", "S\xE2n bay Long Th\xE0nh"]
             }
@@ -28734,9 +29282,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "B\u0110S \u0110\u1ED3ng Nai", item: `${APP_URL}/bat-dong-san-dong-nai` },
-                { "@type": "ListItem", position: 3, name: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Long Th\xE0nh", item: `${APP_URL}/bat-dong-san-long-thanh` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "B\u0110S \u0110\u1ED3ng Nai", item: `${APP_URL2}/bat-dong-san-dong-nai` },
+                { "@type": "ListItem", position: 3, name: "B\u1EA5t \u0110\u1ED9ng S\u1EA3n Long Th\xE0nh", item: `${APP_URL2}/bat-dong-san-long-thanh` }
               ]
             },
             {
@@ -28754,9 +29302,9 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "RealEstateAgent",
-              "@id": `${APP_URL}/bat-dong-san-long-thanh#agent`,
+              "@id": `${APP_URL2}/bat-dong-san-long-thanh#agent`,
               name: "SGS LAND - B\u1EA5t \u0110\u1ED9ng S\u1EA3n Long Th\xE0nh",
-              url: `${APP_URL}/bat-dong-san-long-thanh`,
+              url: `${APP_URL2}/bat-dong-san-long-thanh`,
               areaServed: { "@type": "City", name: "Long Th\xE0nh", containedInPlace: { "@type": "State", name: "\u0110\u1ED3ng Nai", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } } },
               knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n Long Th\xE0nh", "\u0110\u1EA5t n\u1EC1n s\xE2n bay Long Th\xE0nh", "\u0110\u1EA7u t\u01B0 B\u0110S \u0110\u1ED3ng Nai"]
             }
@@ -28773,9 +29321,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "Aqua City Novaland", item: `${APP_URL}/du-an/aqua-city` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "Aqua City Novaland", item: `${APP_URL2}/du-an/aqua-city` }
               ]
             },
             {
@@ -28793,10 +29341,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "ApartmentComplex",
-              "@id": `${APP_URL}/du-an/aqua-city#project`,
+              "@id": `${APP_URL2}/du-an/aqua-city#project`,
               name: "Aqua City Novaland",
               description: "\u0110\u1EA1i \u0111\xF4 th\u1ECB sinh th\xE1i 1.000ha do Novaland ph\xE1t tri\u1EC3n t\u1EA1i Nh\u01A1n Tr\u1EA1ch, \u0110\u1ED3ng Nai",
-              url: `${APP_URL}/du-an/aqua-city`,
+              url: `${APP_URL2}/du-an/aqua-city`,
               numberOfRooms: "1-4",
               address: { "@type": "PostalAddress", addressLocality: "Nh\u01A1n Tr\u1EA1ch", addressRegion: "\u0110\u1ED3ng Nai", addressCountry: "VN" },
               floorSize: { "@type": "QuantitativeValue", value: 1e3, unitText: "ha" }
@@ -28814,9 +29362,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "Grand Manhattan Novaland", item: `${APP_URL}/du-an/manhattan` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "Grand Manhattan Novaland", item: `${APP_URL2}/du-an/manhattan` }
               ]
             },
             {
@@ -28834,10 +29382,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "ApartmentComplex",
-              "@id": `${APP_URL}/du-an/manhattan#project`,
+              "@id": `${APP_URL2}/du-an/manhattan#project`,
               name: "Grand Manhattan Novaland",
               description: "T\u1ED5 h\u1EE3p c\u0103n h\u1ED9 h\u1EA1ng sang bi\u1EC3u t\u01B0\u1EE3ng c\u1EE7a Novaland t\u1EA1i trung t\xE2m TP.HCM, chu\u1EA9n m\u1EF1c 5 sao qu\u1ED1c t\u1EBF",
-              url: `${APP_URL}/du-an/manhattan`,
+              url: `${APP_URL2}/du-an/manhattan`,
               address: { "@type": "PostalAddress", addressLocality: "TP.HCM", addressCountry: "VN" },
               offers: { "@type": "Offer", price: "120000000", priceCurrency: "VND", unitText: "m\xB2" }
             }
@@ -28855,9 +29403,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL}/bat-dong-san-thu-duc` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL2}/bat-dong-san-thu-duc` }
               ]
             },
             {
@@ -28870,9 +29418,9 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "RealEstateAgent",
-              "@id": `${APP_URL}/bat-dong-san-thu-duc#agent`,
+              "@id": `${APP_URL2}/bat-dong-san-thu-duc#agent`,
               name: "SGS LAND - B\u0110S TP Th\u1EE7 \u0110\u1EE9c",
-              url: `${APP_URL}/bat-dong-san-thu-duc`,
+              url: `${APP_URL2}/bat-dong-san-thu-duc`,
               areaServed: { "@type": "City", name: "TP Th\u1EE7 \u0110\u1EE9c", containedInPlace: { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } } },
               knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n Th\u1EE7 \u0110\u1EE9c", "Th\u1EE7 Thi\xEAm", "Vinhomes Grand Park", "The Global City", "Metro s\u1ED1 1", "SHTP"]
             }
@@ -28889,9 +29437,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "B\u0110S B\xECnh D\u01B0\u01A1ng", item: `${APP_URL}/bat-dong-san-binh-duong` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "B\u0110S B\xECnh D\u01B0\u01A1ng", item: `${APP_URL2}/bat-dong-san-binh-duong` }
               ]
             },
             {
@@ -28904,9 +29452,9 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "RealEstateAgent",
-              "@id": `${APP_URL}/bat-dong-san-binh-duong#agent`,
+              "@id": `${APP_URL2}/bat-dong-san-binh-duong#agent`,
               name: "SGS LAND - B\u0110S B\xECnh D\u01B0\u01A1ng",
-              url: `${APP_URL}/bat-dong-san-binh-duong`,
+              url: `${APP_URL2}/bat-dong-san-binh-duong`,
               areaServed: { "@type": "State", name: "B\xECnh D\u01B0\u01A1ng", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } },
               knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n B\xECnh D\u01B0\u01A1ng", "Khu c\xF4ng nghi\u1EC7p B\xECnh D\u01B0\u01A1ng", "Thu\u1EADn An", "D\u0129 An", "Th\xE0nh Ph\u1ED1 M\u1EDBi B\xECnh D\u01B0\u01A1ng", "Grand Manhattan Novaland"]
             }
@@ -28923,9 +29471,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "B\u0110S Qu\u1EADn 7", item: `${APP_URL}/bat-dong-san-quan-7` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "B\u0110S Qu\u1EADn 7", item: `${APP_URL2}/bat-dong-san-quan-7` }
               ]
             },
             {
@@ -28938,9 +29486,9 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "RealEstateAgent",
-              "@id": `${APP_URL}/bat-dong-san-quan-7#agent`,
+              "@id": `${APP_URL2}/bat-dong-san-quan-7#agent`,
               name: "SGS LAND - B\u0110S Qu\u1EADn 7",
-              url: `${APP_URL}/bat-dong-san-quan-7`,
+              url: `${APP_URL2}/bat-dong-san-quan-7`,
               areaServed: { "@type": "City", name: "Qu\u1EADn 7", containedInPlace: { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } } },
               knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n Qu\u1EADn 7", "Ph\xFA M\u1EF9 H\u01B0ng", "Sunrise City", "C\u1ED9ng \u0111\u1ED3ng H\xE0n Qu\u1ED1c TP.HCM", "Tr\u01B0\u1EDDng qu\u1ED1c t\u1EBF Qu\u1EADn 7"]
             }
@@ -28957,9 +29505,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "B\u0110S Ph\xFA Nhu\u1EADn", item: `${APP_URL}/bat-dong-san-phu-nhuan` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "B\u0110S Ph\xFA Nhu\u1EADn", item: `${APP_URL2}/bat-dong-san-phu-nhuan` }
               ]
             },
             {
@@ -28972,9 +29520,9 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "RealEstateAgent",
-              "@id": `${APP_URL}/bat-dong-san-phu-nhuan#agent`,
+              "@id": `${APP_URL2}/bat-dong-san-phu-nhuan#agent`,
               name: "SGS LAND - B\u0110S Ph\xFA Nhu\u1EADn",
-              url: `${APP_URL}/bat-dong-san-phu-nhuan`,
+              url: `${APP_URL2}/bat-dong-san-phu-nhuan`,
               areaServed: { "@type": "City", name: "Ph\xFA Nhu\u1EADn", containedInPlace: { "@type": "State", name: "TP.HCM", containedInPlace: { "@type": "Country", name: "Vi\u1EC7t Nam" } } },
               knowsAbout: ["B\u1EA5t \u0111\u1ED9ng s\u1EA3n Ph\xFA Nhu\u1EADn", "Nh\xE0 ph\u1ED1 Ph\xFA Nhu\u1EADn", "Phan \u0110\xECnh Ph\xF9ng", "Ho\xE0ng V\u0103n Th\u1EE5", "G\u1EA7n s\xE2n bay T\xE2n S\u01A1n Nh\u1EA5t"]
             }
@@ -28992,9 +29540,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "B\u0110S \u0110\u1ED3ng Nai", item: `${APP_URL}/bat-dong-san-dong-nai` },
-                { "@type": "ListItem", position: 3, name: "Izumi City Nam Long", item: `${APP_URL}/du-an/izumi-city` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "B\u0110S \u0110\u1ED3ng Nai", item: `${APP_URL2}/bat-dong-san-dong-nai` },
+                { "@type": "ListItem", position: 3, name: "Izumi City Nam Long", item: `${APP_URL2}/du-an/izumi-city` }
               ]
             },
             {
@@ -29012,10 +29560,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "ApartmentComplex",
-              "@id": `${APP_URL}/du-an/izumi-city#project`,
+              "@id": `${APP_URL2}/du-an/izumi-city#project`,
               name: "Izumi City Nam Long",
               description: "\u0110\xF4 th\u1ECB t\xEDch h\u1EE3p 170ha chu\u1EA9n Nh\u1EADt B\u1EA3n t\u1EA1i Bi\xEAn H\xF2a, \u0110\u1ED3ng Nai",
-              url: `${APP_URL}/du-an/izumi-city`,
+              url: `${APP_URL2}/du-an/izumi-city`,
               address: { "@type": "PostalAddress", addressLocality: "Bi\xEAn H\xF2a", addressRegion: "\u0110\u1ED3ng Nai", addressCountry: "VN" },
               floorSize: { "@type": "QuantitativeValue", value: 170, unitText: "ha" }
             }
@@ -29032,9 +29580,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL}/bat-dong-san-thu-duc` },
-                { "@type": "ListItem", position: 3, name: "Vinhomes Grand Park", item: `${APP_URL}/du-an/vinhomes-grand-park` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL2}/bat-dong-san-thu-duc` },
+                { "@type": "ListItem", position: 3, name: "Vinhomes Grand Park", item: `${APP_URL2}/du-an/vinhomes-grand-park` }
               ]
             },
             {
@@ -29052,10 +29600,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "ApartmentComplex",
-              "@id": `${APP_URL}/du-an/vinhomes-grand-park#project`,
+              "@id": `${APP_URL2}/du-an/vinhomes-grand-park#project`,
               name: "Vinhomes Grand Park",
               description: "Si\xEAu \u0111\xF4 th\u1ECB 271ha v\u1EDBi 44 t\xF2a th\xE1p t\u1EA1i TP Th\u1EE7 \u0110\u1EE9c, TP.HCM",
-              url: `${APP_URL}/du-an/vinhomes-grand-park`,
+              url: `${APP_URL2}/du-an/vinhomes-grand-park`,
               address: { "@type": "PostalAddress", addressLocality: "TP Th\u1EE7 \u0110\u1EE9c", addressRegion: "TP.HCM", addressCountry: "VN" },
               floorSize: { "@type": "QuantitativeValue", value: 271, unitText: "ha" }
             }
@@ -29072,9 +29620,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "Vinhomes Central Park", item: `${APP_URL}/du-an/vinhomes-central-park` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "Vinhomes Central Park", item: `${APP_URL2}/du-an/vinhomes-central-park` }
               ]
             },
             {
@@ -29092,10 +29640,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "ApartmentComplex",
-              "@id": `${APP_URL}/du-an/vinhomes-central-park#project`,
+              "@id": `${APP_URL2}/du-an/vinhomes-central-park#project`,
               name: "Vinhomes Central Park",
               description: "44 t\xF2a cao t\u1EA7ng ven s\xF4ng S\xE0i G\xF2n t\u1EA1i B\xECnh Th\u1EA1nh, TP.HCM",
-              url: `${APP_URL}/du-an/vinhomes-central-park`,
+              url: `${APP_URL2}/du-an/vinhomes-central-park`,
               address: { "@type": "PostalAddress", addressLocality: "B\xECnh Th\u1EA1nh", addressRegion: "TP.HCM", addressCountry: "VN" },
               numberOfRooms: "1-4",
               offers: { "@type": "Offer", price: "50000000", priceCurrency: "VND", unitText: "m\xB2" }
@@ -29113,9 +29661,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL}/bat-dong-san-thu-duc` },
-                { "@type": "ListItem", position: 3, name: "Khu \u0110\xF4 Th\u1ECB Th\u1EE7 Thi\xEAm", item: `${APP_URL}/du-an/thu-thiem` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL2}/bat-dong-san-thu-duc` },
+                { "@type": "ListItem", position: 3, name: "Khu \u0110\xF4 Th\u1ECB Th\u1EE7 Thi\xEAm", item: `${APP_URL2}/du-an/thu-thiem` }
               ]
             },
             {
@@ -29133,10 +29681,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "ApartmentComplex",
-              "@id": `${APP_URL}/du-an/thu-thiem#project`,
+              "@id": `${APP_URL2}/du-an/thu-thiem#project`,
               name: "Khu \u0110\xF4 Th\u1ECB M\u1EDBi Th\u1EE7 Thi\xEAm",
               description: "Khu \u0111\xF4 th\u1ECB m\u1EDBi 657ha \u0111\u1ED1i di\u1EC7n Q1 qua s\xF4ng S\xE0i G\xF2n \u2014 trung t\xE2m t\xE0i ch\xEDnh t\u01B0\u01A1ng lai TP.HCM",
-              url: `${APP_URL}/du-an/thu-thiem`,
+              url: `${APP_URL2}/du-an/thu-thiem`,
               address: { "@type": "PostalAddress", addressLocality: "Th\u1EE7 Thi\xEAm", addressRegion: "TP.HCM", addressCountry: "VN" },
               floorSize: { "@type": "QuantitativeValue", value: 657, unitText: "ha" }
             }
@@ -29153,9 +29701,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "S\u01A1n Kim Land", item: `${APP_URL}/du-an/son-kim-land` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "S\u01A1n Kim Land", item: `${APP_URL2}/du-an/son-kim-land` }
               ]
             },
             {
@@ -29173,10 +29721,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "ApartmentComplex",
-              "@id": `${APP_URL}/du-an/son-kim-land#project`,
+              "@id": `${APP_URL2}/du-an/son-kim-land#project`,
               name: "S\u01A1n Kim Land \u2014 Gem Riverside & Metropole Th\u1EE7 Thi\xEAm",
               description: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n cao c\u1EA5p S\u01A1n Kim Land: Gem Riverside (Q4), Metropole Th\u1EE7 Thi\xEAm (An Ph\xFA, TP Th\u1EE7 \u0110\u1EE9c). T\xEDch h\u1EE3p GEM Center v\xE0 GS25.",
-              url: `${APP_URL}/du-an/son-kim-land`,
+              url: `${APP_URL2}/du-an/son-kim-land`,
               address: { "@type": "PostalAddress", addressLocality: "TP.HCM", addressCountry: "VN" },
               priceRange: "50-300 tri\u1EC7u/m\xB2",
               amenityFeature: ["GEM Center", "GS25", "S\xF4ng S\xE0i G\xF2n", "Creed Group Nh\u1EADt B\u1EA3n"]
@@ -29194,9 +29742,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "Masterise Homes", item: `${APP_URL}/du-an/masterise-homes` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "D\u1EF1 \xC1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "Masterise Homes", item: `${APP_URL2}/du-an/masterise-homes` }
               ]
             },
             {
@@ -29214,10 +29762,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "ApartmentComplex",
-              "@id": `${APP_URL}/du-an/masterise-homes#project`,
+              "@id": `${APP_URL2}/du-an/masterise-homes#project`,
               name: "Masterise Homes \u2014 Masteri Th\u1EA3o \u0110i\u1EC1n & Grand Marina Saigon",
               description: "B\u1EA5t \u0111\u1ED9ng s\u1EA3n ultra-luxury Masterise Homes t\u1EA1i TP.HCM: Masteri Th\u1EA3o \u0110i\u1EC1n, Masteri An Ph\xFA, Lumi\xE8re Boulevard, Grand Marina Saigon v\u1EADn h\xE0nh Marriott/IHG.",
-              url: `${APP_URL}/du-an/masterise-homes`,
+              url: `${APP_URL2}/du-an/masterise-homes`,
               address: { "@type": "PostalAddress", addressLocality: "TP.HCM", addressCountry: "VN" },
               priceRange: "60-300 tri\u1EC7u/m\xB2",
               amenityFeature: ["Marriott", "JW Marriott", "B\u1EBFn Du Thuy\u1EC1n", "Concierge 24/7", "Tr\u01B0\u1EDDng Qu\u1ED1c T\u1EBF"]
@@ -29235,9 +29783,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL}/bat-dong-san-thu-duc` },
-                { "@type": "ListItem", position: 3, name: "The Global City", item: `${APP_URL}/du-an/the-global-city` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "B\u0110S TP Th\u1EE7 \u0110\u1EE9c", item: `${APP_URL2}/bat-dong-san-thu-duc` },
+                { "@type": "ListItem", position: 3, name: "The Global City", item: `${APP_URL2}/du-an/the-global-city` }
               ]
             },
             {
@@ -29255,10 +29803,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "ApartmentComplex",
-              "@id": `${APP_URL}/du-an/the-global-city#project`,
+              "@id": `${APP_URL2}/du-an/the-global-city#project`,
               name: "The Global City",
               description: "\u0110\u1EA1i \u0111\xF4 th\u1ECB th\u01B0\u01A1ng m\u1EA1i 117ha chu\u1EA9n Singapore do Masterise Homes ph\xE1t tri\u1EC3n t\u1EA1i An Ph\xFA, TP Th\u1EE7 \u0110\u1EE9c",
-              url: `${APP_URL}/du-an/the-global-city`,
+              url: `${APP_URL2}/du-an/the-global-city`,
               address: { "@type": "PostalAddress", addressLocality: "An Ph\xFA, TP Th\u1EE7 \u0110\u1EE9c", addressRegion: "TP.HCM", addressCountry: "VN" },
               floorSize: { "@type": "QuantitativeValue", value: 117, unitText: "ha" }
             }
@@ -29275,9 +29823,9 @@ var init_metaInjector = __esm({
             {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL}` },
-                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL}/marketplace` },
-                { "@type": "ListItem", position: 3, name: "Nh\xE0 Ph\u1ED1 Trung T\xE2m", item: `${APP_URL}/du-an/nha-pho-trung-tam` }
+                { "@type": "ListItem", position: 1, name: "Trang Ch\u1EE7", item: `${APP_URL2}` },
+                { "@type": "ListItem", position: 2, name: "Mua B\xE1n B\u0110S", item: `${APP_URL2}/marketplace` },
+                { "@type": "ListItem", position: 3, name: "Nh\xE0 Ph\u1ED1 Trung T\xE2m", item: `${APP_URL2}/du-an/nha-pho-trung-tam` }
               ]
             },
             {
@@ -29295,10 +29843,10 @@ var init_metaInjector = __esm({
             },
             {
               "@type": "ApartmentComplex",
-              "@id": `${APP_URL}/du-an/nha-pho-trung-tam#project`,
+              "@id": `${APP_URL2}/du-an/nha-pho-trung-tam#project`,
               name: "Nh\xE0 Ph\u1ED1 Trung T\xE2m TP.HCM \u2014 M\u1EB7t Ti\u1EC1n & Nh\xE0 H\u1EBBm N\u1ED9i Th\xE0nh",
               description: "Nh\xE0 ph\u1ED1 m\u1EB7t ti\u1EC1n v\xE0 nh\xE0 h\u1EBBm xe h\u01A1i t\u1EA1i c\xE1c qu\u1EADn trung t\xE2m TP.HCM: Q1, Q3, Ph\xFA Nhu\u1EADn, B\xECnh Th\u1EA1nh, G\xF2 V\u1EA5p. S\u1ED5 \u0111\u1ECF, ph\xE1p l\xFD r\xF5 r\xE0ng, ti\u1EC1m n\u0103ng t\u0103ng gi\xE1 8-15%/n\u0103m.",
-              url: `${APP_URL}/du-an/nha-pho-trung-tam`,
+              url: `${APP_URL2}/du-an/nha-pho-trung-tam`,
               address: { "@type": "PostalAddress", addressLocality: "TP.HCM", addressCountry: "VN" },
               priceRange: "60-2000 tri\u1EC7u/m\xB2",
               amenityFeature: ["S\u1ED5 \u0111\u1ECF v\u0129nh vi\u1EC5n", "M\u1EB7t ti\u1EC1n kinh doanh", "Trung t\xE2m TP.HCM", "Kh\xF4ng th\u1EDDi h\u1EA1n s\u1EDF h\u1EEFu"]
@@ -31152,8 +31700,8 @@ var NON_HCMC_PROVINCES_SRV = [
 function isNonHCMCSrv(location) {
   const lower = location.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   for (const kw of NON_HCMC_PROVINCES_SRV) {
-    const esc3 = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (new RegExp(`(?<![\\w])${esc3}(?![\\w])`, "i").test(lower)) return true;
+    const esc4 = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`(?<![\\w])${esc4}(?![\\w])`, "i").test(lower)) return true;
   }
   return false;
 }
@@ -31194,8 +31742,8 @@ var ADMIN_MAP = {
 function normalizeVNSrv(addr) {
   let r = addr;
   for (const [plain, diacritic] of Object.entries(HCMC_DISTRICT_MAP)) {
-    const esc3 = plain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    r = r.replace(new RegExp(`(?<![\\w\xC0-\u024F])${esc3}(?![\\w\xC0-\u024F])`, "gi"), diacritic);
+    const esc4 = plain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    r = r.replace(new RegExp(`(?<![\\w\xC0-\u024F])${esc4}(?![\\w\xC0-\u024F])`, "gi"), diacritic);
   }
   for (const [pat, diacritic] of Object.entries(ADMIN_MAP)) {
     r = r.replace(new RegExp(pat, "gi"), diacritic);
@@ -56298,6 +56846,7 @@ var DICTIONARY = {
     "menu.inventory": "Kho B\u1EA5t \u0110\u1ED9ng S\u1EA3n",
     "menu.inbox": "H\u1ED9p Th\u01B0 \u0110a K\xEAnh",
     "menu.favorites": "B\u0110S Quan T\xE2m",
+    "menu.marketplace": "S\xE0n Giao D\u1ECBch",
     "menu.approvals": "Ph\xEA Duy\u1EC7t",
     "menu.sequences": "Chi\u1EBFn D\u1ECBch T\u1EF1 \u0110\u1ED9ng",
     "menu.scoring-rules": "C\u1EA5u H\xECnh \u0110i\u1EC3m S\u1ED1",
@@ -57829,6 +58378,7 @@ var DICTIONARY = {
     "footer.link_valuation": "\u0110\u1ECBnh Gi\xE1 AI",
     "footer.link_crm": "SGS CRM",
     "footer.link_consignment": "K\xFD G\u1EEDi B\u0110S",
+    "footer.link_bank_rates": "L\xE3i Su\u1EA5t Ng\xE2n H\xE0ng",
     "footer.col_company": "V\u1EC1 Ch\xFAng T\xF4i",
     "footer.link_about": "C\xE2u Chuy\u1EC7n",
     "footer.link_careers": "Tuy\u1EC3n D\u1EE5ng",
@@ -58106,6 +58656,54 @@ var DICTIONARY = {
     "contact.success": "\u0110\xE3 g\u1EEDi th\xE0nh c\xF4ng! C\u1EA3m \u01A1n",
     "contact.btn_send": "G\u1EEDi Ngay",
     "contact.btn_sending": "\u0110ang g\u1EEDi tin nh\u1EAFn...",
+    "bank_rates.page_header": "L\xE3i Su\u1EA5t Ng\xE2n H\xE0ng",
+    "bank_rates.badge": "T\xE0i Ch\xEDnh & Vay V\u1ED1n",
+    "bank_rates.h1": "B\u1EA3ng L\xE3i Su\u1EA5t Vay Ng\xE2n H\xE0ng Mua B\u0110S 2026",
+    "bank_rates.subtitle": "So s\xE1nh l\xE3i su\u1EA5t th\u1EBF ch\u1EA5p b\u1EA5t \u0111\u1ED9ng s\u1EA3n t\u1EEB 12+ ng\xE2n h\xE0ng l\u1EDBn. C\u1ED9ng \u0111\u1ED3ng c\xF9ng chia s\u1EBB th\xF4ng tin l\xE3i su\u1EA5t m\u1EDBi nh\u1EA5t.",
+    "bank_rates.updated": "C\u1EADp nh\u1EADt Q2/2026",
+    "bank_rates.view_seo_page": "Xem trang \u0111\u1EA7y \u0111\u1EE7",
+    "bank_rates.login_gate_title": "\u0110\u0103ng nh\u1EADp \u0111\u1EC3 chia s\u1EBB l\xE3i su\u1EA5t",
+    "bank_rates.login_gate_desc": "B\u1EA1n l\xE0 nh\xE2n vi\xEAn ng\xE2n h\xE0ng ho\u1EB7c chuy\xEAn gia t\xE0i ch\xEDnh? \u0110\u0103ng nh\u1EADp \u0111\u1EC3 chia s\u1EBB th\xF4ng tin l\xE3i su\u1EA5t gi\xFAp c\u1ED9ng \u0111\u1ED3ng.",
+    "bank_rates.login_to_post": "\u0110\u0103ng Nh\u1EADp Ngay",
+    "bank_rates.btn_add": "\u0110\u0103ng Th\xF4ng Tin L\xE3i Su\u1EA5t",
+    "bank_rates.form_title": "Chia S\u1EBB Th\xF4ng Tin L\xE3i Su\u1EA5t",
+    "bank_rates.label_bank": "T\xEAn Ng\xE2n H\xE0ng",
+    "bank_rates.placeholder_bank": "Ch\u1ECDn ho\u1EB7c nh\u1EADp t\xEAn ng\xE2n h\xE0ng",
+    "bank_rates.label_loan_type": "Lo\u1EA1i Vay",
+    "bank_rates.placeholder_loan_type": "Ch\u1ECDn lo\u1EA1i vay",
+    "bank_rates.label_rate_min": "L\xE3i su\u1EA5t t\u1ED1i thi\u1EC3u (%/n\u0103m)",
+    "bank_rates.label_rate_max": "L\xE3i su\u1EA5t t\u1ED1i \u0111a (%/n\u0103m)",
+    "bank_rates.label_tenor_min": "K\u1EF3 h\u1EA1n t\u1ED1i thi\u1EC3u (th\xE1ng)",
+    "bank_rates.label_tenor_max": "K\u1EF3 h\u1EA1n t\u1ED1i \u0111a (th\xE1ng)",
+    "bank_rates.label_contact": "Ng\u01B0\u1EDDi li\xEAn h\u1EC7",
+    "bank_rates.placeholder_contact": "H\u1ECD t\xEAn ng\u01B0\u1EDDi li\xEAn h\u1EC7",
+    "bank_rates.label_phone": "S\u1ED1 \u0111i\u1EC7n tho\u1EA1i",
+    "bank_rates.label_notes": "Ghi ch\xFA (\u01B0u \u0111\xE3i, \u0111i\u1EC1u ki\u1EC7n...)",
+    "bank_rates.placeholder_notes": "V\xED d\u1EE5: \u01AFu \u0111\xE3i 12 th\xE1ng \u0111\u1EA7u, kh\xF4ng ph\xED tr\u1EA3 tr\u01B0\u1EDBc h\u1EA1n...",
+    "bank_rates.btn_submit": "G\u1EEDi Th\xF4ng Tin",
+    "bank_rates.btn_sending": "\u0110ang g\u1EEDi...",
+    "bank_rates.btn_cancel": "H\u1EE7y",
+    "bank_rates.success": "\u0110\xE3 \u0111\u0103ng th\xF4ng tin l\xE3i su\u1EA5t th\xE0nh c\xF4ng!",
+    "bank_rates.err_bank": "Vui l\xF2ng ch\u1ECDn ng\xE2n h\xE0ng",
+    "bank_rates.err_rate_min": "L\xE3i su\u1EA5t kh\xF4ng h\u1EE3p l\u1EC7 (0\u201350%)",
+    "bank_rates.err_rate_max": "L\xE3i su\u1EA5t t\u1ED1i \u0111a ph\u1EA3i l\u1EDBn h\u01A1n t\u1ED1i thi\u1EC3u",
+    "bank_rates.err_phone": "S\u1ED1 \u0111i\u1EC7n tho\u1EA1i kh\xF4ng h\u1EE3p l\u1EC7",
+    "bank_rates.err_submit": "Kh\xF4ng th\u1EC3 g\u1EEDi th\xF4ng tin. Th\u1EED l\u1EA1i sau.",
+    "bank_rates.table_title": "L\xE3i Su\u1EA5t T\u1EEB C\u1ED9ng \u0110\u1ED3ng",
+    "bank_rates.table_desc": "Th\xF4ng tin do nh\xE2n vi\xEAn ng\xE2n h\xE0ng v\xE0 chuy\xEAn gia t\xE0i ch\xEDnh chia s\u1EBB \u2014 bao g\u1ED3m ng\u01B0\u1EDDi li\xEAn h\u1EC7 tr\u1EF1c ti\u1EBFp",
+    "bank_rates.empty_title": "Ch\u01B0a c\xF3 th\xF4ng tin l\xE3i su\u1EA5t",
+    "bank_rates.empty_desc": "H\xE3y l\xE0 ng\u01B0\u1EDDi \u0111\u1EA7u ti\xEAn chia s\u1EBB th\xF4ng tin l\xE3i su\u1EA5t t\u1EEB ng\xE2n h\xE0ng c\u1EE7a b\u1EA1n",
+    "bank_rates.col_bank": "Ng\xE2n h\xE0ng",
+    "bank_rates.col_type": "Lo\u1EA1i vay",
+    "bank_rates.col_rate": "L\xE3i su\u1EA5t",
+    "bank_rates.col_tenor": "K\u1EF3 h\u1EA1n",
+    "bank_rates.col_contact": "Ng\u01B0\u1EDDi li\xEAn h\u1EC7",
+    "bank_rates.col_phone": "\u0110i\u1EC7n tho\u1EA1i",
+    "bank_rates.col_notes": "Ghi ch\xFA",
+    "bank_rates.col_updated": "C\u1EADp nh\u1EADt",
+    "bank_rates.seo_block_title": "Tra C\u1EE9u L\xE3i Su\u1EA5t \u0110\u1EA7y \u0110\u1EE7",
+    "bank_rates.seo_block_desc": "Trang so s\xE1nh l\xE3i su\u1EA5t v\u1EDBi \u0111\u1EA7y \u0111\u1EE7 th\xF4ng tin t\u1EEB 12 ng\xE2n h\xE0ng l\u1EDBn.",
+    "bank_rates.seo_block_link": "Xem B\u1EA3ng L\xE3i Su\u1EA5t \u0110\u1EA7y \u0110\u1EE7 \u2192",
     "crm.hero_badge": "D\xE0nh cho Doanh Nghi\u1EC7p B\u0110S",
     "crm.hero_title": "T\u0103ng T\u1ED1c Doanh S\u1ED1",
     "crm.hero_title_highlight": "V\u1EDBi CRM T\u1EF1 \u0110\u1ED9ng H\xF3a",
@@ -58385,6 +58983,7 @@ var DICTIONARY = {
     "menu.inventory": "Inventory",
     "menu.inbox": "Omnichannel Inbox",
     "menu.favorites": "Watchlist",
+    "menu.marketplace": "Marketplace",
     "menu.approvals": "Approvals",
     "menu.sequences": "Auto Campaigns",
     "menu.scoring-rules": "Scoring Config",
@@ -59916,6 +60515,7 @@ var DICTIONARY = {
     "footer.link_valuation": "AI Valuation",
     "footer.link_crm": "SGS CRM",
     "footer.link_consignment": "Consignment",
+    "footer.link_bank_rates": "Bank Interest Rates",
     "footer.col_company": "Company",
     "footer.link_about": "Story",
     "footer.link_careers": "Careers",
@@ -60192,6 +60792,54 @@ var DICTIONARY = {
     "contact.success": "Message sent! Thank you,",
     "contact.btn_send": "Send Now",
     "contact.btn_sending": "Sending...",
+    "bank_rates.page_header": "Bank Interest Rates",
+    "bank_rates.badge": "Finance & Loans",
+    "bank_rates.h1": "Bank Mortgage Interest Rates 2026",
+    "bank_rates.subtitle": "Compare mortgage rates from 12+ major banks in Vietnam. Community-shared, always up to date.",
+    "bank_rates.updated": "Updated Q2/2026",
+    "bank_rates.view_seo_page": "View full page",
+    "bank_rates.login_gate_title": "Log in to share rates",
+    "bank_rates.login_gate_desc": "Are you a bank officer or financial advisor? Log in to share interest rate information with the community.",
+    "bank_rates.login_to_post": "Log In Now",
+    "bank_rates.btn_add": "Post Interest Rate",
+    "bank_rates.form_title": "Share Interest Rate Information",
+    "bank_rates.label_bank": "Bank Name",
+    "bank_rates.placeholder_bank": "Select or type bank name",
+    "bank_rates.label_loan_type": "Loan Type",
+    "bank_rates.placeholder_loan_type": "Select loan type",
+    "bank_rates.label_rate_min": "Minimum rate (%/year)",
+    "bank_rates.label_rate_max": "Maximum rate (%/year)",
+    "bank_rates.label_tenor_min": "Minimum tenor (months)",
+    "bank_rates.label_tenor_max": "Maximum tenor (months)",
+    "bank_rates.label_contact": "Contact person",
+    "bank_rates.placeholder_contact": "Full name",
+    "bank_rates.label_phone": "Phone number",
+    "bank_rates.label_notes": "Notes (promotions, conditions...)",
+    "bank_rates.placeholder_notes": "e.g. First 12 months promotional rate, no prepayment fee...",
+    "bank_rates.btn_submit": "Submit",
+    "bank_rates.btn_sending": "Submitting...",
+    "bank_rates.btn_cancel": "Cancel",
+    "bank_rates.success": "Interest rate posted successfully!",
+    "bank_rates.err_bank": "Please select a bank",
+    "bank_rates.err_rate_min": "Invalid interest rate (0\u201350%)",
+    "bank_rates.err_rate_max": "Max rate must be greater than min rate",
+    "bank_rates.err_phone": "Invalid phone number",
+    "bank_rates.err_submit": "Failed to submit. Please try again.",
+    "bank_rates.table_title": "Community Interest Rates",
+    "bank_rates.table_desc": "Submitted by bank officers and financial advisors \u2014 includes direct contact",
+    "bank_rates.empty_title": "No rates submitted yet",
+    "bank_rates.empty_desc": "Be the first to share interest rate information from your bank",
+    "bank_rates.col_bank": "Bank",
+    "bank_rates.col_type": "Loan type",
+    "bank_rates.col_rate": "Rate",
+    "bank_rates.col_tenor": "Tenor",
+    "bank_rates.col_contact": "Contact",
+    "bank_rates.col_phone": "Phone",
+    "bank_rates.col_notes": "Notes",
+    "bank_rates.col_updated": "Updated",
+    "bank_rates.seo_block_title": "Full Rate Comparison",
+    "bank_rates.seo_block_desc": "Full rate comparison page with complete data from 12 major banks.",
+    "bank_rates.seo_block_link": "View Full Rate Table \u2192",
     "crm.hero_badge": "For Real Estate Businesses",
     "crm.hero_title": "Accelerate Sales",
     "crm.hero_title_highlight": "With Automated CRM",
@@ -61508,6 +62156,73 @@ async function startServer() {
       res.status(500).json({ error: "Kh\xF4ng th\u1EC3 g\u1EEDi y\xEAu c\u1EA7u. Vui l\xF2ng th\u1EED l\u1EA1i ho\u1EB7c li\xEAn h\u1EC7 info@sgsland.vn." });
     }
   });
+  app.get("/api/public/bank-rates", apiRateLimit, async (_req, res) => {
+    try {
+      const result = await pool.query(
+        `SELECT id, bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max,
+                contact_name, contact_phone, notes, is_verified, updated_at
+         FROM bank_rates
+         WHERE tenant_id = $1
+         ORDER BY is_verified DESC, created_at DESC
+         LIMIT 200`,
+        [DEFAULT_TENANT_ID]
+      );
+      res.json({ rates: result.rows });
+    } catch (err4) {
+      console.error("[bank-rates GET]", err4);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  app.post("/api/bank-rates", apiRateLimit, authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      const {
+        bank_name,
+        loan_type,
+        rate_min,
+        rate_max,
+        tenor_min,
+        tenor_max,
+        contact_name,
+        contact_phone,
+        notes
+      } = req.body;
+      if (!bank_name || typeof bank_name !== "string" || bank_name.trim().length === 0) {
+        return res.status(400).json({ error: "bank_name is required" });
+      }
+      const rMin = parseFloat(rate_min);
+      if (isNaN(rMin) || rMin <= 0 || rMin > 50) {
+        return res.status(400).json({ error: "rate_min must be between 0 and 50" });
+      }
+      const slug = bank_name.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
+      const result = await pool.query(
+        `INSERT INTO bank_rates
+           (tenant_id, bank_name, bank_slug, loan_type, rate_min, rate_max,
+            tenor_min, tenor_max, contact_name, contact_phone, notes, submitted_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+         RETURNING id, bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max,
+                   contact_name, contact_phone, notes, is_verified, updated_at`,
+        [
+          DEFAULT_TENANT_ID,
+          bank_name.trim().slice(0, 120),
+          slug.slice(0, 120),
+          (loan_type || "Th\u1EBF ch\u1EA5p B\u0110S").trim().slice(0, 120),
+          rMin,
+          rate_max ? parseFloat(rate_max) : null,
+          tenor_min ? parseInt(tenor_min) : null,
+          tenor_max ? parseInt(tenor_max) : null,
+          contact_name ? contact_name.trim().slice(0, 200) : null,
+          contact_phone ? contact_phone.trim().slice(0, 30) : null,
+          notes ? notes.trim().slice(0, 2e3) : null,
+          user?.id || null
+        ]
+      );
+      res.status(201).json({ rate: result.rows[0] });
+    } catch (err4) {
+      console.error("[bank-rates POST]", err4);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
   app.get("/api/seo-overrides", apiRateLimit, async (_req, res) => {
     try {
       const result = await pool.query(
@@ -62230,6 +62945,30 @@ ${urls}
     }
   });
   app.use(express.static("public"));
+  app.get("/lai-suat-vay-ngan-hang", async (_req, res) => {
+    try {
+      const { getBankRatesHtml: getBankRatesHtml2 } = await Promise.resolve().then(() => (init_bankRatesPage(), bankRatesPage_exports));
+      let ugcRates = [];
+      try {
+        const r = await pool.query(
+          `SELECT id, bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max,
+                  contact_name, contact_phone, notes, is_verified, updated_at
+           FROM bank_rates WHERE tenant_id = $1
+           ORDER BY is_verified DESC, created_at DESC LIMIT 100`,
+          [DEFAULT_TENANT_ID]
+        );
+        ugcRates = r.rows;
+      } catch {
+      }
+      const html = getBankRatesHtml2(ugcRates);
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+      res.send(html);
+    } catch (err4) {
+      console.error("[bank-rates SSR]", err4);
+      res.status(500).send("Internal server error");
+    }
+  });
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
