@@ -148,14 +148,24 @@ export const Landing: React.FC = () => {
     const [activeCategory, setActiveCategory] = useState<'ALL' | 'PROJECT' | 'UNIT'>('ALL');
     const [searchQuery, setSearchQuery] = useState('');
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [favorites, setFavorites] = useState<Set<string>>(new Set());
     
     // Typewriter effect
     const [text, setText] = useState('');
     
     useEffect(() => {
-        db.getCurrentUser().then(setCurrentUser);
+        db.getCurrentUser().then(user => {
+            setCurrentUser(user);
+            if (user) {
+                db.getFavorites(1, 1000)
+                    .then(res => setFavorites(new Set(res.data.map((f: any) => f.id))))
+                    .catch(() => {});
+            } else {
+                try { setFavorites(new Set(JSON.parse(localStorage.getItem('sgs_favorites') || '[]'))); } catch {}
+            }
+        }).catch(() => {});
 
-        const onLogout = () => setCurrentUser(null);
+        const onLogout = () => { setCurrentUser(null); setFavorites(new Set()); };
         window.addEventListener('auth:logout', onLogout);
         return () => window.removeEventListener('auth:logout', onLogout);
     }, []);
@@ -218,6 +228,15 @@ export const Landing: React.FC = () => {
             ? `${ROUTES.SEARCH}?q=${encodeURIComponent(searchQuery.trim())}` 
             : ROUTES.SEARCH;
         navigateTo(route);
+    };
+
+    const handleToggleFavorite = async (id: string) => {
+        if (!currentUser) { navigateTo(ROUTES.LOGIN); return; }
+        const isFav = favorites.has(id);
+        const newSet = new Set(favorites);
+        if (isFav) newSet.delete(id); else newSet.add(id);
+        setFavorites(newSet);
+        try { await db.toggleFavorite(id); } catch { setFavorites(favorites); }
     };
 
     const displayedListings = useMemo(() => {
@@ -513,10 +532,10 @@ export const Landing: React.FC = () => {
                                 transition={{ duration: 0.5, delay: Math.min(index, 5) * 0.1 }}
                             >
                                 <ListingCard
-                                    item={item}
+                                    item={{ ...item, isFavorite: favorites.has(item.id) }}
                                     t={t}
                                     formatCurrency={formatCurrency}
-                                    onToggleFavorite={() => navigateTo(ROUTES.LOGIN)}
+                                    onToggleFavorite={(id) => handleToggleFavorite(id)}
                                     onEdit={() => {}}
                                     onDelete={() => {}}
                                     onClick={() => navigateTo(`${ROUTES.LISTING}/${item.id}`)}
