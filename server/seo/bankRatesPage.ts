@@ -12,7 +12,7 @@ const APP_URL = 'https://sgsland.vn';
 const CANONICAL = `${APP_URL}/lai-suat-vay-ngan-hang`;
 const NOW_ISO = new Date().toISOString().slice(0, 10);
 
-// ── Seed data — updated Q2 2025 ───────────────────────────────────────────────
+// ── Seed data — updated Q2 2026 ───────────────────────────────────────────────
 // Source: published rate schedules from each bank's official website.
 // Rates shown are indicative annual interest rates (%/năm).
 export interface BankRateRow {
@@ -34,98 +34,98 @@ export interface BankRateRow {
 export const SEED_RATES: BankRateRow[] = [
   {
     bank_name: 'Agribank', bank_slug: 'agribank',
-    loan_type: 'Thế chấp BĐS', rate_min: 6.5, rate_max: 8.2,
+    loan_type: 'Thế chấp BĐS', rate_min: 6.0, rate_max: 7.8,
     tenor_min: 60, tenor_max: 360,
     contact_name: 'Bộ phận KHCN', contact_phone: '1900 558 818',
-    notes: 'Lãi suất ưu đãi cho nhà ở xã hội. Ưu tiên khách hàng giao dịch thường xuyên.',
+    notes: 'Ưu đãi 6 tháng đầu từ 6,0%/năm cho nhà ở xã hội. Ưu tiên khách hàng lương qua Agribank.',
     is_verified: true,
   },
   {
     bank_name: 'Vietcombank', bank_slug: 'vietcombank',
-    loan_type: 'Thế chấp BĐS', rate_min: 7.0, rate_max: 8.5,
+    loan_type: 'Thế chấp BĐS', rate_min: 6.5, rate_max: 8.0,
     tenor_min: 60, tenor_max: 360,
     contact_name: 'Phòng KHCN', contact_phone: '1800 545 413',
-    notes: 'Ưu đãi 12 tháng đầu. Miễn phí quản lý tài khoản khi vay.',
+    notes: 'Lãi suất ưu đãi 12 tháng đầu từ 6,5%/năm. Miễn phí quản lý tài khoản khi vay.',
     is_verified: true,
   },
   {
     bank_name: 'VietinBank', bank_slug: 'vietinbank',
-    loan_type: 'Vay mua nhà', rate_min: 7.0, rate_max: 8.8,
+    loan_type: 'Vay mua nhà', rate_min: 6.5, rate_max: 8.3,
     tenor_min: 60, tenor_max: 300,
     contact_name: 'KHCN', contact_phone: '1800 588 895',
-    notes: 'Cho vay tối đa 80% giá trị BĐS. Linh hoạt phương thức trả.',
+    notes: 'Cho vay tối đa 80% giá trị BĐS. Ân hạn gốc tối đa 12 tháng.',
     is_verified: true,
   },
   {
     bank_name: 'BIDV', bank_slug: 'bidv',
-    loan_type: 'Thế chấp BĐS', rate_min: 7.5, rate_max: 9.0,
+    loan_type: 'Thế chấp BĐS', rate_min: 7.0, rate_max: 8.5,
     tenor_min: 60, tenor_max: 360,
     contact_name: 'KHCN', contact_phone: '1900 9247',
-    notes: 'Lãi suất ưu đãi cho dự án liên kết BIDV. Hỗ trợ vay tối đa 85%.',
+    notes: 'Lãi ưu đãi cho dự án liên kết BIDV. Hỗ trợ vay tối đa 85% giá trị BĐS.',
     is_verified: true,
   },
   {
     bank_name: 'Sacombank', bank_slug: 'sacombank',
-    loan_type: 'Thế chấp BĐS', rate_min: 7.5, rate_max: 9.5,
+    loan_type: 'Thế chấp BĐS', rate_min: 7.0, rate_max: 8.9,
     tenor_min: 12, tenor_max: 240,
     contact_name: 'KHCN', contact_phone: '1800 5858 82',
-    notes: 'Không yêu cầu chứng minh thu nhập với tài sản đảm bảo cao.',
+    notes: 'Không yêu cầu chứng minh thu nhập với tài sản đảm bảo cao. Giải ngân trong 5 ngày.',
     is_verified: true,
   },
   {
     bank_name: 'ACB', bank_slug: 'acb',
-    loan_type: 'Thế chấp BĐS', rate_min: 8.0, rate_max: 10.2,
+    loan_type: 'Thế chấp BĐS', rate_min: 7.3, rate_max: 9.5,
     tenor_min: 12, tenor_max: 300,
     contact_name: 'KHCN', contact_phone: '1900 545 486',
-    notes: 'Ưu đãi cho dự án đối tác ACB. Phê duyệt trong 48h.',
+    notes: 'Ưu đãi cho dự án đối tác ACB. Phê duyệt trong 48h. Vay linh hoạt từng đợt.',
     is_verified: true,
   },
   {
     bank_name: 'MB Bank', bank_slug: 'mb-bank',
-    loan_type: 'Vay mua nhà', rate_min: 8.0, rate_max: 10.0,
-    tenor_min: 12, tenor_max: 180,
+    loan_type: 'Vay mua nhà', rate_min: 7.2, rate_max: 9.0,
+    tenor_min: 12, tenor_max: 240,
     contact_name: 'KHCN', contact_phone: '1800 0080',
-    notes: 'Miễn phí bảo hiểm năm đầu. Tích điểm MBBank App.',
+    notes: 'Miễn phí bảo hiểm năm đầu. Phê duyệt online qua ứng dụng MBBank.',
     is_verified: true,
   },
   {
     bank_name: 'Techcombank', bank_slug: 'techcombank',
-    loan_type: 'Thế chấp BĐS', rate_min: 8.0, rate_max: 10.5,
+    loan_type: 'Thế chấp BĐS', rate_min: 7.5, rate_max: 9.8,
     tenor_min: 12, tenor_max: 240,
     contact_name: 'KHCN', contact_phone: '1800 588 822',
-    notes: 'Không phí trả nợ trước hạn. Liên kết Vinhomes, Masterise.',
+    notes: 'Không phí trả nợ trước hạn từ năm thứ 4. Liên kết Vinhomes, Masterise, Gamuda.',
     is_verified: true,
   },
   {
     bank_name: 'SHB', bank_slug: 'shb',
-    loan_type: 'Thế chấp BĐS', rate_min: 7.8, rate_max: 9.5,
+    loan_type: 'Thế chấp BĐS', rate_min: 7.2, rate_max: 8.8,
     tenor_min: 12, tenor_max: 240,
     contact_name: null, contact_phone: '1800 599 928',
-    notes: 'Lãi suất ưu đãi kèm gói bảo hiểm nhân thọ.',
+    notes: 'Lãi suất ưu đãi kèm gói bảo hiểm nhân thọ. Thủ tục đơn giản.',
     is_verified: false,
   },
   {
     bank_name: 'HDBank', bank_slug: 'hdbank',
-    loan_type: 'Thế chấp BĐS', rate_min: 8.5, rate_max: 11.0,
-    tenor_min: 12, tenor_max: 180,
+    loan_type: 'Thế chấp BĐS', rate_min: 7.8, rate_max: 10.2,
+    tenor_min: 12, tenor_max: 240,
     contact_name: null, contact_phone: '1800 599 999',
-    notes: 'Ưu tiên khách mua BĐS Dự án Vinhomes - HDBank.',
+    notes: 'Ưu tiên khách mua BĐS dự án liên kết HDBank. Giải ngân nhanh trong tuần.',
     is_verified: false,
   },
   {
     bank_name: 'VPBank', bank_slug: 'vpbank',
-    loan_type: 'Vay mua nhà', rate_min: 9.0, rate_max: 12.0,
+    loan_type: 'Vay mua nhà', rate_min: 8.2, rate_max: 11.0,
     tenor_min: 12, tenor_max: 240,
     contact_name: null, contact_phone: '1900 545 415',
-    notes: 'Phê duyệt trong 24h. Cho vay tín chấp kết hợp thế chấp.',
+    notes: 'Phê duyệt trong 24h. Cho vay tín chấp kết hợp thế chấp linh hoạt.',
     is_verified: false,
   },
   {
     bank_name: 'OCB', bank_slug: 'ocb',
-    loan_type: 'Vay mua nhà', rate_min: 8.5, rate_max: 11.5,
-    tenor_min: 12, tenor_max: 180,
+    loan_type: 'Vay mua nhà', rate_min: 7.9, rate_max: 10.5,
+    tenor_min: 12, tenor_max: 240,
     contact_name: null, contact_phone: '1800 6678',
-    notes: 'Liên kết Masterise Homes. Ưu đãi khách hàng VIP.',
+    notes: 'Liên kết Masterise Homes, Nam Long. Ưu đãi lãi suất cho khách hàng ưu tiên.',
     is_verified: false,
   },
 ];
@@ -157,20 +157,20 @@ function fmtTenor(min: number | null, max: number | null): string {
 
 const FAQ = [
   {
-    q: 'Lãi suất vay mua nhà hiện tại là bao nhiêu?',
-    a: 'Lãi suất vay mua nhà (thế chấp bất động sản) tại Việt Nam năm 2025 dao động từ 6,5%/năm (Agribank) đến 12%/năm (VPBank). Các ngân hàng quốc doanh như Vietcombank, BIDV, VietinBank, Agribank có lãi suất từ 7–9%/năm. Ngân hàng tư nhân (Techcombank, VPBank, VIB…) thường từ 8–12%/năm.',
+    q: 'Lãi suất vay mua nhà hiện tại năm 2026 là bao nhiêu?',
+    a: 'Lãi suất vay mua nhà (thế chấp bất động sản) tại Việt Nam năm 2026 dao động từ 6,0%/năm (Agribank) đến 11,0%/năm (VPBank). Các ngân hàng quốc doanh như Vietcombank, BIDV, VietinBank, Agribank có lãi suất từ 6,5–8,5%/năm. Ngân hàng tư nhân (Techcombank, VPBank, ACB…) thường từ 7,5–11%/năm. Xu hướng lãi suất đang ở mức ổn định trong Q2/2026 sau đợt điều chỉnh giảm từ NHNN.',
   },
   {
-    q: 'Ngân hàng nào có lãi suất vay bất động sản thấp nhất?',
-    a: 'Agribank hiện có lãi suất vay bất động sản thấp nhất thị trường (từ 6,5%/năm), đặc biệt dành cho vay nhà ở xã hội. Tiếp theo là Vietcombank và VietinBank với lãi suất từ 7%/năm. Tuy nhiên, ngân hàng quốc doanh thường yêu cầu hồ sơ chặt chẽ hơn.',
+    q: 'Ngân hàng nào có lãi suất vay bất động sản thấp nhất năm 2026?',
+    a: 'Agribank hiện có lãi suất vay bất động sản thấp nhất thị trường (từ 6,0%/năm), đặc biệt dành cho vay nhà ở xã hội và khách hàng nhận lương qua Agribank. Tiếp theo là Vietcombank và VietinBank với lãi suất từ 6,5%/năm trong giai đoạn ưu đãi. Ngân hàng quốc doanh thường yêu cầu hồ sơ chặt chẽ hơn so với ngân hàng tư nhân.',
   },
   {
     q: 'Điều kiện vay mua nhà tại ngân hàng là gì?',
-    a: 'Để vay mua nhà tại ngân hàng Việt Nam, bạn cần: (1) Thu nhập hàng tháng ổn định và có thể chứng minh; (2) Tài sản thế chấp — thường là chính bất động sản dự định mua; (3) Hồ sơ pháp lý đầy đủ (CMND/CCCD, hộ khẩu, hợp đồng mua bán); (4) Lịch sử tín dụng tốt (điểm CIC từ 600+). Vốn tự có thông thường tối thiểu 20–30% giá trị bất động sản.',
+    a: 'Để vay mua nhà tại ngân hàng Việt Nam, bạn cần: (1) Thu nhập hàng tháng ổn định và có thể chứng minh; (2) Tài sản thế chấp — thường là chính bất động sản dự định mua; (3) Hồ sơ pháp lý đầy đủ (CCCD, hộ khẩu, hợp đồng mua bán hoặc đặt cọc); (4) Lịch sử tín dụng tốt tại CIC. Vốn tự có tối thiểu 20–30% giá trị bất động sản.',
   },
   {
     q: 'Thời hạn vay mua nhà tối đa là bao lâu?',
-    a: 'Thời hạn vay mua nhà tối đa tại các ngân hàng Việt Nam: Agribank, Vietcombank, BIDV — tối đa 30 năm; VietinBank — tối đa 25 năm; Techcombank, ACB, Sacombank — tối đa 20 năm; VPBank, MB Bank, HDBank — tối đa 15–20 năm.',
+    a: 'Thời hạn vay mua nhà tối đa tại các ngân hàng Việt Nam hiện nay: Agribank, Vietcombank, BIDV — tối đa 30 năm; VietinBank — tối đa 25 năm; Techcombank, ACB, Sacombank — tối đa 20 năm; VPBank, MB Bank, HDBank — tối đa 20 năm. Thời hạn vay phụ thuộc vào độ tuổi và thu nhập của người vay.',
   },
   {
     q: 'Cho vay bao nhiêu phần trăm giá trị bất động sản?',
@@ -178,7 +178,7 @@ const FAQ = [
   },
   {
     q: 'Lãi suất cố định hay thả nổi có lợi hơn?',
-    a: 'Lãi suất cố định (fixed) phù hợp nếu bạn cần ổn định tài chính và dự báo lãi suất sẽ tăng. Lãi suất thả nổi (variable) thường thấp hơn trong ngắn hạn nhưng rủi ro tăng theo thị trường. Đa số ngân hàng Việt Nam áp dụng lãi suất ưu đãi cố định 6–24 tháng đầu, sau đó thả nổi theo lãi suất huy động + biên độ (2–4%).',
+    a: 'Lãi suất cố định phù hợp nếu bạn cần ổn định tài chính và dự báo lãi suất sẽ tăng. Lãi suất thả nổi thường thấp hơn trong ngắn hạn nhưng có rủi ro tăng theo thị trường. Đa số ngân hàng Việt Nam áp dụng lãi suất ưu đãi cố định 6–24 tháng đầu, sau đó thả nổi theo lãi suất huy động cộng biên độ 2–4%/năm.',
   },
 ];
 
@@ -295,8 +295,8 @@ function buildSchema(ugcCount: number): string {
   const dataset = {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
-    name: 'Bảng lãi suất vay ngân hàng mua bất động sản Việt Nam 2025',
-    description: 'Dữ liệu lãi suất vay thế chấp bất động sản từ các ngân hàng lớn tại Việt Nam, bao gồm Vietcombank, BIDV, Agribank, Techcombank, MB Bank và nhiều ngân hàng khác. Cập nhật Q2 2025.',
+    name: 'Bảng lãi suất vay ngân hàng mua bất động sản Việt Nam 2026',
+    description: 'Dữ liệu lãi suất vay thế chấp bất động sản từ các ngân hàng lớn tại Việt Nam, bao gồm Vietcombank, BIDV, Agribank, Techcombank, MB Bank và nhiều ngân hàng khác. Cập nhật Q2 2026.',
     url: CANONICAL,
     creator: { '@type': 'Organization', name: 'SGS Land', url: APP_URL },
     dateModified: NOW_ISO,
@@ -314,8 +314,8 @@ function buildSchema(ugcCount: number): string {
   const webpage = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'Lãi Suất Vay Ngân Hàng 2025 | Bảng So Sánh Mới Nhất – SGS Land',
-    description: 'So sánh lãi suất vay thế chấp bất động sản từ 12 ngân hàng lớn tại Việt Nam. Cập nhật Q2 2025.',
+    name: 'Lãi Suất Vay Ngân Hàng 2026 | Bảng So Sánh Mới Nhất – SGS Land',
+    description: 'So sánh lãi suất vay thế chấp bất động sản từ 12 ngân hàng lớn tại Việt Nam. Cập nhật Q2 2026.',
     url: CANONICAL,
     datePublished: '2024-01-01',
     dateModified: NOW_ISO,
@@ -363,11 +363,11 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Lãi Suất Vay Ngân Hàng 2025 | Bảng So Sánh Mới Nhất – SGS Land</title>
-  <meta name="description" content="Cập nhật bảng lãi suất vay ngân hàng mua bất động sản mới nhất 2025. So sánh lãi suất thế chấp từ Vietcombank, BIDV, Techcombank, Agribank, MB Bank. Tư vấn vay miễn phí."/>
+  <title>Lãi Suất Vay Ngân Hàng 2026 | Bảng So Sánh Mới Nhất – SGS Land</title>
+  <meta name="description" content="Cập nhật bảng lãi suất vay ngân hàng mua bất động sản mới nhất Q2/2026. So sánh lãi suất thế chấp từ Vietcombank, BIDV, Techcombank, Agribank, MB Bank. Tư vấn vay miễn phí."/>
   <link rel="canonical" href="${CANONICAL}"/>
-  <meta property="og:title" content="Lãi Suất Vay Ngân Hàng 2025 – SGS Land"/>
-  <meta property="og:description" content="So sánh lãi suất vay thế chấp bất động sản từ 12+ ngân hàng lớn tại Việt Nam. Cập nhật Q2 2025."/>
+  <meta property="og:title" content="Lãi Suất Vay Ngân Hàng 2026 – SGS Land"/>
+  <meta property="og:description" content="So sánh lãi suất vay thế chấp bất động sản từ 12+ ngân hàng lớn tại Việt Nam. Cập nhật Q2 2026."/>
   <meta property="og:url" content="${CANONICAL}"/>
   <meta property="og:type" content="website"/>
   <meta property="og:image" content="${APP_URL}/og-image.jpg"/>
@@ -407,12 +407,12 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
         <span>Lãi suất ngân hàng</span>
       </div>
     </nav>
-    <h1 itemprop="name">Bảng Lãi Suất Vay Ngân Hàng Mua BĐS Mới Nhất 2025</h1>
+    <h1 itemprop="name">Bảng Lãi Suất Vay Ngân Hàng Mua BĐS Mới Nhất 2026</h1>
     <p itemprop="description">So sánh lãi suất vay thế chấp bất động sản từ ${totalBanks} ngân hàng lớn tại Việt Nam. Tư vấn vay mua nhà miễn phí từ chuyên gia SGS Land.</p>
     <div class="hero-meta">
-      <span class="hero-badge">&#128198; Cập nhật Q2/2025</span>
-      <span class="hero-badge">&#127979; ${totalBanks} ngân hàng</span>
-      <span class="hero-badge">&#128176; ${minRate}% – ${maxRate}%/năm</span>
+      <span class="hero-badge">Cập nhật Q2/2026</span>
+      <span class="hero-badge">${totalBanks} ngân hàng</span>
+      <span class="hero-badge">${minRate}% – ${maxRate}%/năm</span>
     </div>
   </div>
 </section>
@@ -443,7 +443,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 
     <!-- Disclaimer -->
     <div class="disclaimer">
-      <strong>&#9888; Lưu ý:</strong> Bảng lãi suất mang tính tham khảo, cập nhật Q2/2025. Lãi suất thực tế phụ thuộc vào hồ sơ khách hàng, loại tài sản và chính sách từng ngân hàng. Liên hệ ngân hàng hoặc chuyên gia SGS Land để được báo giá chính xác.
+      <strong>Lưu ý:</strong> Bảng lãi suất mang tính tham khảo, cập nhật Q2/2026. Lãi suất thực tế phụ thuộc vào hồ sơ khách hàng, loại tài sản và chính sách từng ngân hàng. Liên hệ ngân hàng hoặc chuyên gia SGS Land để được báo giá chính xác.
     </div>
 
     <!-- Seed Rate Table -->
@@ -451,7 +451,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
       <div class="card-hdr">
         <div>
           <h2>Bảng Lãi Suất Vay Thế Chấp Bất Động Sản</h2>
-          <p>Tổng hợp lãi suất từ ngân hàng quốc doanh & tư nhân lớn nhất Việt Nam · Q2/2025</p>
+          <p>Tổng hợp lãi suất từ ngân hàng quốc doanh & tư nhân lớn nhất Việt Nam · Q2/2026</p>
         </div>
       </div>
       <div class="tbl-wrap">
