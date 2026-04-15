@@ -191,14 +191,17 @@ function css(): string {
     a{color:#4F46E5;text-decoration:none}a:hover{text-decoration:underline}
     .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
     /* Header */
-    .hdr{background:#1E293B;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .hdr-brand{display:flex;align-items:center;gap:10px}
-    .hdr-logo{background:#4F46E5;padding:5px 14px;border-radius:7px;color:#fff;font-size:15px;font-weight:700;letter-spacing:2px;white-space:nowrap}
-    .hdr-logo span{color:#A5B4FC}
-    .hdr-tagline{color:#94A3B8;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;display:none}
+    .hdr{background:#1E293B;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100}
+    .hdr-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .hdr-brand:hover{text-decoration:none}
+    .hdr-brand-name{font-weight:700;font-size:16px;color:#fff;letter-spacing:0.5px;white-space:nowrap}
+    .hdr-tagline{color:#94A3B8;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;display:none;padding-left:12px;border-left:1px solid #334155}
     @media(min-width:600px){.hdr-tagline{display:block}}
-    .hdr-nav a{color:#CBD5E1;font-size:13px;font-weight:600;padding:6px 14px;border-radius:8px;border:1px solid #334155;transition:background .15s}
-    .hdr-nav a:hover{background:#334155;text-decoration:none}
+    .hdr-nav{display:flex;align-items:center;gap:8px}
+    .hdr-nav a{color:#CBD5E1;font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;border:1px solid #334155;transition:background .15s;white-space:nowrap}
+    .hdr-nav a:hover{background:#334155;color:#fff;text-decoration:none}
+    .hdr-nav a.primary{background:#4F46E5;border-color:#4F46E5;color:#fff}
+    .hdr-nav a.primary:hover{background:#4338CA;border-color:#4338CA}
     /* Hero */
     .hero{background:linear-gradient(135deg,#1E293B 0%,#1e3a5f 100%);padding:48px 20px 60px;text-align:center}
     .hero h1{color:#fff;font-size:clamp(22px,4vw,36px);font-weight:800;line-height:1.25;margin-bottom:12px}
@@ -344,7 +347,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
   const ugcTableRows  = ugcRates.length
     ? ugcRates.map(ugcRow).join('')
     : `<tr><td colspan="7" class="ugc-empty">Chưa có thông tin lãi suất nào được đăng từ cộng đồng.<br/>
-        <a href="${APP_URL}/#/lai-suat-ngan-hang" style="color:#4F46E5;font-weight:600">Đăng thông tin lãi suất ngay →</a>
+        <a href="/#/lai-suat-ngan-hang" style="color:#4F46E5;font-weight:600">Đăng thông tin lãi suất ngay →</a>
        </td></tr>`;
 
   const faqHtml = FAQ.map(f => `
@@ -378,14 +381,19 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 
 <!-- HEADER -->
 <header class="hdr">
-  <div class="hdr-brand">
-    <a href="${APP_URL}" class="hdr-logo">SGS<span>&nbsp;LAND</span></a>
-    <span class="hdr-tagline">Enterprise Real Estate Platform</span>
-  </div>
+  <a href="/" class="hdr-brand">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 2L2 7l10 5 10-5-10-5z" style="opacity:1"/>
+      <path d="M2 12l10 5 10-5" style="opacity:0.8"/>
+      <path d="M2 17l10 5 10-5" style="opacity:0.6"/>
+    </svg>
+    <span class="hdr-brand-name">SGS LAND</span>
+  </a>
+  <span class="hdr-tagline">Enterprise Real Estate Platform</span>
   <nav class="hdr-nav">
-    <a href="${APP_URL}/#/marketplace">Tin rao</a>
-    &nbsp;
-    <a href="${APP_URL}/#/lai-suat-ngan-hang">Đăng lãi suất</a>
+    <a href="/#/marketplace">Tin rao</a>
+    <a href="/#/lai-suat-ngan-hang">Đăng lãi suất</a>
+    <a href="/#/contact" class="primary">Tư vấn miễn phí</a>
   </nav>
 </header>
 
@@ -394,7 +402,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
   <div class="wrap">
     <nav aria-label="Breadcrumb">
       <div class="bc" style="justify-content:center;color:#94A3B8">
-        <a href="${APP_URL}" style="color:#CBD5E1">Trang chủ</a>
+        <a href="/" style="color:#CBD5E1">Trang chủ</a>
         <span class="bc-sep">›</span>
         <span>Lãi suất ngân hàng</span>
       </div>
@@ -473,7 +481,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
       </div>
       <div class="ugc-intro">
         Bạn là nhân viên ngân hàng hoặc chuyên gia tài chính? 
-        <a href="${APP_URL}/#/lai-suat-ngan-hang" style="font-weight:600">Đăng nhập để chia sẻ thông tin lãi suất →</a>
+        <a href="/#/lai-suat-ngan-hang" style="font-weight:600">Đăng nhập để chia sẻ thông tin lãi suất →</a>
       </div>
       <div class="tbl-wrap">
         <table>
@@ -497,7 +505,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
     <div class="cta-box">
       <h2>Cần Tư Vấn Vay Mua Nhà Miễn Phí?</h2>
       <p>Chuyên gia SGS Land kết nối bạn với ngân hàng phù hợp, hỗ trợ hồ sơ và đàm phán lãi suất tốt nhất</p>
-      <a href="${APP_URL}/#/contact" class="cta-btn">Tư Vấn Miễn Phí Ngay</a>
+      <a href="/#/contact" class="cta-btn">Tư Vấn Miễn Phí Ngay</a>
     </div>
 
     <!-- FAQ -->
@@ -517,17 +525,17 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
     <div class="card" style="padding:20px 24px">
       <h2 style="font-size:15px;color:#0F172A;margin-bottom:14px;font-weight:700">Tìm Hiểu Thêm Về Bất Động Sản</h2>
       <ul style="list-style:none;display:flex;flex-wrap:wrap;gap:10px">
-        <li><a href="${APP_URL}/#/bat-dong-san-dong-nai">BĐS Đồng Nai</a></li>
+        <li><a href="/#/bat-dong-san-dong-nai">BĐS Đồng Nai</a></li>
         <li>·</li>
-        <li><a href="${APP_URL}/#/bat-dong-san-long-thanh">BĐS Long Thành</a></li>
+        <li><a href="/#/bat-dong-san-long-thanh">BĐS Long Thành</a></li>
         <li>·</li>
-        <li><a href="${APP_URL}/#/bat-dong-san-thu-duc">BĐS Thủ Đức</a></li>
+        <li><a href="/#/bat-dong-san-thu-duc">BĐS Thủ Đức</a></li>
         <li>·</li>
-        <li><a href="${APP_URL}/#/bat-dong-san-binh-duong">BĐS Bình Dương</a></li>
+        <li><a href="/#/bat-dong-san-binh-duong">BĐS Bình Dương</a></li>
         <li>·</li>
-        <li><a href="${APP_URL}/#/ai-valuation">Định giá AI</a></li>
+        <li><a href="/#/ai-valuation">Định giá AI</a></li>
         <li>·</li>
-        <li><a href="${APP_URL}/#/marketplace">Tin rao mua bán</a></li>
+        <li><a href="/#/marketplace">Tin rao mua bán</a></li>
       </ul>
     </div>
 
@@ -537,12 +545,19 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 <!-- FOOTER -->
 <footer class="ftr">
   <div class="wrap">
-    <a href="${APP_URL}" class="hdr-logo" style="display:inline-block;margin-bottom:10px">SGS<span style="color:#A5B4FC">&nbsp;LAND</span></a>
+    <a href="/" style="display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;text-decoration:none">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" style="opacity:1"/>
+        <path d="M2 12l10 5 10-5" style="opacity:0.8"/>
+        <path d="M2 17l10 5 10-5" style="opacity:0.6"/>
+      </svg>
+      <span style="font-weight:700;font-size:16px;color:#fff;letter-spacing:0.5px">SGS LAND</span>
+    </a>
     <p>
-      <a href="${APP_URL}/#/about-us">Về chúng tôi</a> &nbsp;·&nbsp;
-      <a href="${APP_URL}/#/contact">Liên hệ</a> &nbsp;·&nbsp;
-      <a href="${APP_URL}/#/privacy-policy">Chính sách</a> &nbsp;·&nbsp;
-      <a href="${CANONICAL}">Lãi suất ngân hàng</a>
+      <a href="/#/about-us">Về chúng tôi</a> &nbsp;·&nbsp;
+      <a href="/#/contact">Liên hệ</a> &nbsp;·&nbsp;
+      <a href="/#/privacy-policy">Chính sách</a> &nbsp;·&nbsp;
+      <a href="/lai-suat-vay-ngan-hang">Lãi suất ngân hàng</a>
     </p>
     <p style="margin-top:14px">&copy; ${new Date().getFullYear()} SGS Land &mdash; 122-124 B2, Sala, Thủ Đức, TP.HCM &mdash; 0971 132 378</p>
     <p style="margin-top:6px;font-size:11px;color:#475569">Thông tin lãi suất mang tính tham khảo. Liên hệ ngân hàng để biết lãi suất chính xác.</p>
