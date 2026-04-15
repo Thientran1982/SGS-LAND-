@@ -1210,7 +1210,7 @@ async function startServer() {
     }
   });
 
-  // Public contact form — sends email to info@sgsland.vn
+  // Public contact form — notifies info@sgsland.vn + sends auto-reply to customer
   app.post('/api/public/contact', publicLeadRateLimit, async (req: express.Request, res: express.Response) => {
     try {
       const { name, email, subject, message } = req.body;
@@ -1222,30 +1222,28 @@ async function startServer() {
         return res.status(400).json({ error: 'Email không hợp lệ' });
       }
 
-      const subjectLine = subject
-        ? `[Liên Hệ] ${subject} — ${name}`
-        : `[Liên Hệ] Tin nhắn từ ${name}`;
+      // Map subject key → Vietnamese label
+      const SUBJECT_LABELS: Record<string, string> = {
+        support:     'Tư vấn Thiết kế & Xây dựng',
+        sales:       'Tư vấn Mua/Bán Bất Động Sản',
+        partnership: 'Hợp tác Kinh doanh',
+        other:       'Yêu cầu khác',
+      };
+      const subjectLabel = SUBJECT_LABELS[subject] || (subject ? String(subject) : 'Yêu cầu khác');
+      const subjectKey   = Object.keys(SUBJECT_LABELS).includes(subject) ? subject : 'other';
 
-      const html = `
-        <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
-          <h2 style="color:#4f46e5">Tin nhắn mới từ trang Liên Hệ</h2>
-          <table style="width:100%;border-collapse:collapse">
-            <tr><td style="padding:8px;font-weight:bold;color:#555">Họ tên:</td><td style="padding:8px">${name}</td></tr>
-            <tr><td style="padding:8px;font-weight:bold;color:#555">Email:</td><td style="padding:8px"><a href="mailto:${email}">${email}</a></td></tr>
-            <tr><td style="padding:8px;font-weight:bold;color:#555">Chủ đề:</td><td style="padding:8px">${subject || '—'}</td></tr>
-          </table>
-          <div style="margin-top:16px;padding:16px;background:#f8f9fa;border-radius:8px;border-left:4px solid #4f46e5">
-            <strong style="color:#555">Nội dung:</strong>
-            <p style="margin-top:8px;white-space:pre-wrap">${message}</p>
-          </div>
-          <p style="margin-top:24px;color:#888;font-size:12px">— SGS Land CRM · info@sgsland.vn</p>
-        </div>`;
+      // Fire both emails concurrently — don't let one failure block the other
+      const [notifyResult, autoReplyResult] = await Promise.allSettled([
+        emailService.sendContactNotification(name.trim(), email.trim(), subjectLabel, message.trim()),
+        emailService.sendContactAutoReply(email.trim(), name.trim(), subjectKey, message.trim()),
+      ]);
 
-      await emailService.sendEmail(DEFAULT_TENANT_ID, {
-        to: 'info@sgsland.vn',
-        subject: subjectLine,
-        html,
-      });
+      if (notifyResult.status === 'rejected') {
+        console.error('[Contact] Internal notification failed:', notifyResult.reason);
+      }
+      if (autoReplyResult.status === 'rejected') {
+        console.error('[Contact] Auto-reply failed:', autoReplyResult.reason);
+      }
 
       res.json({ success: true });
     } catch (error) {

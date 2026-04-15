@@ -27839,12 +27839,207 @@ async function sendSequenceEmail(tenantId, to, subject, content) {
     text: plainText
   });
 }
-var emailService;
+async function sendContactNotification(name, email3, subjectLabel, message2) {
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email3);
+  const safeSubject = escapeHtml(subjectLabel);
+  const safeMsg = escapeHtml(message2).replace(/\n/g, "<br>");
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle("#EEF2FF", "&#9993;")}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Tin Nh\u1EAFn M\u1EDBi T\u1EEB Trang Li\xEAn H\u1EC7</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">Kh\xE1ch h\xE0ng v\u1EEBa g\u1EEDi y\xEAu c\u1EA7u qua sgsland.vn/lien-he</span></td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFC" style="border:1px solid #E2E8F0;border-radius:8px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="100" style="padding:6px 0;color:#64748B;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;vertical-align:top;">H\u1ECD t\xEAn</td>
+            <td style="padding:6px 0;color:#0F172A;font-size:14px;font-weight:bold;font-family:Arial,sans-serif;">${safeName}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#64748B;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;vertical-align:top;">Email</td>
+            <td style="padding:6px 0;font-family:Arial,sans-serif;"><a href="mailto:${safeEmail}" style="color:#4F46E5;text-decoration:none;font-size:14px;">${safeEmail}</a></td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#64748B;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;vertical-align:top;">Ch\u1EE7 \u0111\u1EC1</td>
+            <td style="padding:6px 0;font-family:Arial,sans-serif;">
+              <span style="display:inline-block;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:bold;padding:3px 10px;border-radius:20px;font-family:Arial,sans-serif;">${safeSubject}</span>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(16)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td bgcolor="#F0FDF4" style="padding:16px 20px;border:1px solid #BBF7D0;border-radius:8px;border-left:4px solid #22C55E;">
+          <p style="color:#64748B;font-size:11px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">N\u1ED9i dung tin nh\u1EAFn</p>
+          <p style="color:#1E293B;font-size:14px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">${safeMsg}</p>
+        </td>
+      </tr>
+    </table>
+    ${spacer(24)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton(`mailto:${safeEmail}`, "Ph\u1EA3n H\u1ED3i Kh\xE1ch H\xE0ng Ngay")}</td></tr>
+    </table>
+  `;
+  return sendEmail(DEFAULT_TENANT_ID, {
+    to: "info@sgsland.vn",
+    subject: `[Li\xEAn H\u1EC7] ${safeSubject} \u2014 ${safeName}`,
+    html: emailBase(content, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi t\u1EF1 \u0111\u1ED9ng t\u1EEB form li\xEAn h\u1EC7 t\u1EA1i sgsland.vn"),
+    text: `Tin nh\u1EAFn m\u1EDBi t\u1EEB ${name} <${email3}>
+Ch\u1EE7 \u0111\u1EC1: ${subjectLabel}
+
+${message2}`
+  });
+}
+async function sendContactAutoReply(to, name, subjectKey, message2) {
+  const safeName = escapeHtml(name);
+  const safeMsg = escapeHtml(message2.length > 400 ? message2.slice(0, 400) + "..." : message2).replace(/\n/g, "<br>");
+  const info = SUBJECT_GUIDANCE[subjectKey] || SUBJECT_GUIDANCE["other"];
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle(info.iconBg, info.icon)}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Ch\xFAng T\xF4i \u0110\xE3 Nh\u1EADn \u0110\u01B0\u1EE3c Tin Nh\u1EAFn!</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;">
+        <span style="display:inline-block;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px;font-family:Arial,sans-serif;">${escapeHtml(info.label)}</span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif;">Xin ch\xE0o <strong>${safeName}</strong>,</p>
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">
+      C\u1EA3m \u01A1n b\u1EA1n \u0111\xE3 li\xEAn h\u1EC7 v\u1EDBi <strong>SGS Land</strong>. Ch\xFAng t\xF4i \u0111\xE3 nh\u1EADn \u0111\u01B0\u1EE3c y\xEAu c\u1EA7u c\u1EE7a b\u1EA1n v\xE0 s\u1EBD ph\u1EA3n h\u1ED3i s\u1EDBm nh\u1EA5t c\xF3 th\u1EC3.
+    </p>
+
+    <!-- Subject-specific guidance -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFC" style="border:1px solid #E2E8F0;border-radius:8px;margin-bottom:0;">
+      <tr><td style="padding:18px 20px;">
+        <p style="color:#0F172A;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 12px;font-family:Arial,sans-serif;">\u0110i\u1EC1u g\xEC s\u1EBD x\u1EA3y ra ti\u1EBFp theo?</p>
+        ${info.guidance}
+      </td></tr>
+    </table>
+    ${spacer(16)}
+
+    <!-- Submitted message echo -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td bgcolor="#F0F4FF" style="padding:14px 18px;border:1px solid #C7D2FE;border-radius:8px;border-left:4px solid #4F46E5;">
+          <p style="color:#64748B;font-size:11px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">N\u1ED9i dung b\u1EA1n \u0111\xE3 g\u1EEDi</p>
+          <p style="color:#334155;font-size:13px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">${safeMsg}</p>
+        </td>
+      </tr>
+    </table>
+    ${spacer(28)}
+
+    ${info.cta ? `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton(info.cta.url, info.cta.label)}</td></tr>
+    </table>
+    ${spacer(20)}
+    ` : ""}
+
+    <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;font-family:Arial,sans-serif;">
+      C\u1EA7n h\u1ED7 tr\u1EE3 ngay? G\u1ECDi hotline <strong style="color:#0F172A;">0971 132 378</strong> (24/7)<br />
+      ho\u1EB7c email <a href="mailto:info@sgsland.vn" style="color:#4F46E5;text-decoration:none;">info@sgsland.vn</a>
+    </p>
+  `;
+  return sendEmail(DEFAULT_TENANT_ID, {
+    to,
+    subject: `SGS Land \u2013 X\xE1c nh\u1EADn nh\u1EADn y\xEAu c\u1EA7u: ${info.label}`,
+    html: emailBase(content, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi t\u1EF1 \u0111\u1ED9ng sau khi b\u1EA1n \u0111i\u1EC1n form li\xEAn h\u1EC7 t\u1EA1i sgsland.vn/lien-he"),
+    text: `Xin ch\xE0o ${name},
+
+C\u1EA3m \u01A1n b\u1EA1n \u0111\xE3 li\xEAn h\u1EC7 v\u1EDBi SGS Land v\u1EC1: ${info.label}.
+
+Ch\xFAng t\xF4i \u0111\xE3 nh\u1EADn \u0111\u01B0\u1EE3c y\xEAu c\u1EA7u v\xE0 s\u1EBD ph\u1EA3n h\u1ED3i s\u1EDBm nh\u1EA5t.
+
+Hotline: 0971 132 378 (24/7)
+Email: info@sgsland.vn
+
+\u2014 SGS LAND`
+  });
+}
+var SUBJECT_GUIDANCE, emailService;
 var init_emailService = __esm({
   "server/services/emailService.ts"() {
     init_enterpriseConfigRepository();
+    init_constants();
     init_brevoService();
     init_logger();
+    SUBJECT_GUIDANCE = {
+      support: {
+        label: "T\u01B0 v\u1EA5n Thi\u1EBFt k\u1EBF & X\xE2y d\u1EF1ng",
+        icon: "&#127775;",
+        iconBg: "#EEF2FF",
+        guidance: `
+      <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 12px;font-family:Arial,sans-serif;">
+        Chuy\xEAn vi\xEAn t\u01B0 v\u1EA5n thi\u1EBFt k\u1EBF c\u1EE7a ch\xFAng t\xF4i s\u1EBD li\xEAn h\u1EC7 l\u1EA1i v\u1EDBi b\u1EA1n trong v\xF2ng <strong>2\u20134 gi\u1EDD l\xE0m vi\u1EC7c</strong>.
+      </p>
+      <p style="color:#64748B;font-size:13px;font-weight:bold;margin:0 0 8px;font-family:Arial,sans-serif;">Qu\xE1 tr\xECnh t\u01B0 v\u1EA5n bao g\u1ED3m:</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">1.</span>&nbsp; Trao \u0111\u1ED5i y\xEAu c\u1EA7u & phong c\xE1ch thi\u1EBFt k\u1EBF mong mu\u1ED1n</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">2.</span>&nbsp; Kh\u1EA3o s\xE1t m\u1EB7t b\u1EB1ng & l\xEAn ph\u01B0\u01A1ng \xE1n thi\u1EBFt k\u1EBF s\u01A1 b\u1ED9</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">3.</span>&nbsp; B\xE1o gi\xE1 chi ti\u1EBFt & k\xFD h\u1EE3p \u0111\u1ED3ng t\u01B0 v\u1EA5n/thi c\xF4ng</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">4.</span>&nbsp; Theo d\xF5i ti\u1EBFn \u0111\u1ED9 & b\xE0n giao c\xF4ng tr\xECnh</td></tr>
+      </table>`,
+        cta: { url: "https://sgsland.vn/du-an", label: "Xem D\u1EF1 \xC1n Tham Kh\u1EA3o" }
+      },
+      sales: {
+        label: "T\u01B0 v\u1EA5n Mua/B\xE1n B\u1EA5t \u0110\u1ED9ng S\u1EA3n",
+        icon: "&#127968;",
+        iconBg: "#ECFDF5",
+        guidance: `
+      <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 12px;font-family:Arial,sans-serif;">
+        M\xF4i gi\u1EDBi chuy\xEAn nghi\u1EC7p SGS Land s\u1EBD li\xEAn h\u1EC7 v\u1EDBi b\u1EA1n trong v\xF2ng <strong>1\u20132 gi\u1EDD</strong> \u0111\u1EC3 t\xECm hi\u1EC3u nhu c\u1EA7u v\xE0 \u0111\u1EC1 xu\u1EA5t c\xE1c b\u1EA5t \u0111\u1ED9ng s\u1EA3n ph\xF9 h\u1EE3p.
+      </p>
+      <p style="color:#64748B;font-size:13px;font-weight:bold;margin:0 0 8px;font-family:Arial,sans-serif;">Quy tr\xECnh t\u01B0 v\u1EA5n mua/b\xE1n:</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">1.</span>&nbsp; X\xE1c \u0111\u1ECBnh nhu c\u1EA7u & ng\xE2n s\xE1ch c\u1EE7a b\u1EA1n</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">2.</span>&nbsp; S\xE0ng l\u1ECDc & gi\u1EDBi thi\u1EC7u b\u1EA5t \u0111\u1ED9ng s\u1EA3n ph\xF9 h\u1EE3p</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">3.</span>&nbsp; \u0110i th\u1EF1c \u0111\u1ECBa & \u0111\xE1nh gi\xE1 ph\xE1p l\xFD d\u1EF1 \xE1n</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">4.</span>&nbsp; H\u1ED7 tr\u1EE3 \u0111\xE0m ph\xE1n gi\xE1 & ho\xE0n thi\u1EC7n h\u1EE3p \u0111\u1ED3ng</td></tr>
+      </table>`,
+        cta: { url: "https://sgsland.vn/listings", label: "Xem Tin Rao M\u1EDBi Nh\u1EA5t" }
+      },
+      partnership: {
+        label: "H\u1EE3p t\xE1c Kinh doanh",
+        icon: "&#129309;",
+        iconBg: "#FFF7ED",
+        guidance: `
+      <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 12px;font-family:Arial,sans-serif;">
+        Ban l\xE3nh \u0111\u1EA1o SGS Land s\u1EBD xem x\xE9t \u0111\u1EC1 xu\u1EA5t c\u1EE7a b\u1EA1n v\xE0 ph\u1EA3n h\u1ED3i trong v\xF2ng <strong>1\u20132 ng\xE0y l\xE0m vi\u1EC7c</strong>.
+      </p>
+      <p style="color:#64748B;font-size:13px;font-weight:bold;margin:0 0 8px;font-family:Arial,sans-serif;">H\xECnh th\u1EE9c h\u1EE3p t\xE1c ch\xFAng t\xF4i quan t\xE2m:</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; H\u1EE3p t\xE1c ph\xE2n ph\u1ED1i & m\xF4i gi\u1EDBi b\u1EA5t \u0111\u1ED9ng s\u1EA3n</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Li\xEAn doanh ph\xE1t tri\u1EC3n d\u1EF1 \xE1n</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Cung c\u1EA5p d\u1ECBch v\u1EE5 cho h\u1EC7 sinh th\xE1i b\u1EA5t \u0111\u1ED9ng s\u1EA3n</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; \u0110\u1ED1i t\xE1c c\xF4ng ngh\u1EC7 & truy\u1EC1n th\xF4ng</td></tr>
+      </table>`,
+        cta: { url: "https://sgsland.vn/gioi-thieu", label: "T\xECm Hi\u1EC3u V\u1EC1 SGS Land" }
+      },
+      other: {
+        label: "Y\xEAu c\u1EA7u kh\xE1c",
+        icon: "&#128172;",
+        iconBg: "#F0F9FF",
+        guidance: `
+      <p style="color:#475569;font-size:14px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">
+        \u0110\u1ED9i ng\u0169 SGS Land s\u1EBD xem x\xE9t y\xEAu c\u1EA7u c\u1EE7a b\u1EA1n v\xE0 ph\u1EA3n h\u1ED3i trong v\xF2ng <strong>24 gi\u1EDD l\xE0m vi\u1EC7c</strong>.
+        N\u1EBFu c\u1EA7n h\u1ED7 tr\u1EE3 g\u1EA5p, b\u1EA1n c\xF3 th\u1EC3 g\u1ECDi hotline <strong>0971 132 378</strong> (24/7).
+      </p>`,
+        cta: { url: "https://sgsland.vn/lien-he", label: "Xem Th\xEAm Th\xF4ng Tin Li\xEAn H\u1EC7" }
+      }
+    };
     emailService = {
       sendEmail,
       sendPasswordResetEmail,
@@ -27852,6 +28047,8 @@ var init_emailService = __esm({
       sendWelcomeEmail,
       sendInviteEmail,
       sendSequenceEmail,
+      sendContactNotification,
+      sendContactAutoReply,
       testSmtpConnection,
       getSmtpConfig
     };
@@ -61100,26 +61297,24 @@ async function startServer() {
       if (!emailRegex.test(email3)) {
         return res.status(400).json({ error: "Email kh\xF4ng h\u1EE3p l\u1EC7" });
       }
-      const subjectLine = subject ? `[Li\xEAn H\u1EC7] ${subject} \u2014 ${name}` : `[Li\xEAn H\u1EC7] Tin nh\u1EAFn t\u1EEB ${name}`;
-      const html = `
-        <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
-          <h2 style="color:#4f46e5">Tin nh\u1EAFn m\u1EDBi t\u1EEB trang Li\xEAn H\u1EC7</h2>
-          <table style="width:100%;border-collapse:collapse">
-            <tr><td style="padding:8px;font-weight:bold;color:#555">H\u1ECD t\xEAn:</td><td style="padding:8px">${name}</td></tr>
-            <tr><td style="padding:8px;font-weight:bold;color:#555">Email:</td><td style="padding:8px"><a href="mailto:${email3}">${email3}</a></td></tr>
-            <tr><td style="padding:8px;font-weight:bold;color:#555">Ch\u1EE7 \u0111\u1EC1:</td><td style="padding:8px">${subject || "\u2014"}</td></tr>
-          </table>
-          <div style="margin-top:16px;padding:16px;background:#f8f9fa;border-radius:8px;border-left:4px solid #4f46e5">
-            <strong style="color:#555">N\u1ED9i dung:</strong>
-            <p style="margin-top:8px;white-space:pre-wrap">${message2}</p>
-          </div>
-          <p style="margin-top:24px;color:#888;font-size:12px">\u2014 SGS Land CRM \xB7 info@sgsland.vn</p>
-        </div>`;
-      await emailService.sendEmail(DEFAULT_TENANT_ID, {
-        to: "info@sgsland.vn",
-        subject: subjectLine,
-        html
-      });
+      const SUBJECT_LABELS = {
+        support: "T\u01B0 v\u1EA5n Thi\u1EBFt k\u1EBF & X\xE2y d\u1EF1ng",
+        sales: "T\u01B0 v\u1EA5n Mua/B\xE1n B\u1EA5t \u0110\u1ED9ng S\u1EA3n",
+        partnership: "H\u1EE3p t\xE1c Kinh doanh",
+        other: "Y\xEAu c\u1EA7u kh\xE1c"
+      };
+      const subjectLabel = SUBJECT_LABELS[subject] || (subject ? String(subject) : "Y\xEAu c\u1EA7u kh\xE1c");
+      const subjectKey = Object.keys(SUBJECT_LABELS).includes(subject) ? subject : "other";
+      const [notifyResult, autoReplyResult] = await Promise.allSettled([
+        emailService.sendContactNotification(name.trim(), email3.trim(), subjectLabel, message2.trim()),
+        emailService.sendContactAutoReply(email3.trim(), name.trim(), subjectKey, message2.trim())
+      ]);
+      if (notifyResult.status === "rejected") {
+        console.error("[Contact] Internal notification failed:", notifyResult.reason);
+      }
+      if (autoReplyResult.status === "rejected") {
+        console.error("[Contact] Auto-reply failed:", autoReplyResult.reason);
+      }
       res.json({ success: true });
     } catch (error48) {
       console.error("[Contact] Failed to send contact email:", error48);

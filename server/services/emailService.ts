@@ -468,6 +468,209 @@ async function sendSequenceEmail(tenantId: string, to: string, subject: string, 
   });
 }
 
+// ── Contact form — internal notification (to info@sgsland.vn) ─────────────────
+
+async function sendContactNotification(
+  name: string,
+  email: string,
+  subjectLabel: string,
+  message: string,
+): Promise<EmailResult> {
+  const safeName    = escapeHtml(name);
+  const safeEmail   = escapeHtml(email);
+  const safeSubject = escapeHtml(subjectLabel);
+  const safeMsg     = escapeHtml(message).replace(/\n/g, '<br>');
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#EEF2FF', '&#9993;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Tin Nhắn Mới Từ Trang Liên Hệ</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;"><span style="color:#64748B;font-size:13px;font-family:Arial,sans-serif;">Khách hàng vừa gửi yêu cầu qua sgsland.vn/lien-he</span></td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFC" style="border:1px solid #E2E8F0;border-radius:8px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="100" style="padding:6px 0;color:#64748B;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;vertical-align:top;">Họ tên</td>
+            <td style="padding:6px 0;color:#0F172A;font-size:14px;font-weight:bold;font-family:Arial,sans-serif;">${safeName}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#64748B;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;vertical-align:top;">Email</td>
+            <td style="padding:6px 0;font-family:Arial,sans-serif;"><a href="mailto:${safeEmail}" style="color:#4F46E5;text-decoration:none;font-size:14px;">${safeEmail}</a></td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;color:#64748B;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;vertical-align:top;">Chủ đề</td>
+            <td style="padding:6px 0;font-family:Arial,sans-serif;">
+              <span style="display:inline-block;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:bold;padding:3px 10px;border-radius:20px;font-family:Arial,sans-serif;">${safeSubject}</span>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(16)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td bgcolor="#F0FDF4" style="padding:16px 20px;border:1px solid #BBF7D0;border-radius:8px;border-left:4px solid #22C55E;">
+          <p style="color:#64748B;font-size:11px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">Nội dung tin nhắn</p>
+          <p style="color:#1E293B;font-size:14px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">${safeMsg}</p>
+        </td>
+      </tr>
+    </table>
+    ${spacer(24)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton(`mailto:${safeEmail}`, 'Phản Hồi Khách Hàng Ngay')}</td></tr>
+    </table>
+  `;
+
+  return sendEmail(DEFAULT_TENANT_ID, {
+    to: 'info@sgsland.vn',
+    subject: `[Liên Hệ] ${safeSubject} — ${safeName}`,
+    html: emailBase(content, 'Email này được gửi tự động từ form liên hệ tại sgsland.vn'),
+    text: `Tin nhắn mới từ ${name} <${email}>\nChủ đề: ${subjectLabel}\n\n${message}`,
+  });
+}
+
+// ── Contact form — auto-reply to customer ─────────────────────────────────────
+
+const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: string; guidance: string; cta?: { url: string; label: string } }> = {
+  support: {
+    label: 'Tư vấn Thiết kế & Xây dựng',
+    icon:  '&#127775;',
+    iconBg: '#EEF2FF',
+    guidance: `
+      <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 12px;font-family:Arial,sans-serif;">
+        Chuyên viên tư vấn thiết kế của chúng tôi sẽ liên hệ lại với bạn trong vòng <strong>2–4 giờ làm việc</strong>.
+      </p>
+      <p style="color:#64748B;font-size:13px;font-weight:bold;margin:0 0 8px;font-family:Arial,sans-serif;">Quá trình tư vấn bao gồm:</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">1.</span>&nbsp; Trao đổi yêu cầu & phong cách thiết kế mong muốn</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">2.</span>&nbsp; Khảo sát mặt bằng & lên phương án thiết kế sơ bộ</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">3.</span>&nbsp; Báo giá chi tiết & ký hợp đồng tư vấn/thi công</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">4.</span>&nbsp; Theo dõi tiến độ & bàn giao công trình</td></tr>
+      </table>`,
+    cta: { url: 'https://sgsland.vn/du-an', label: 'Xem Dự Án Tham Khảo' },
+  },
+  sales: {
+    label: 'Tư vấn Mua/Bán Bất Động Sản',
+    icon:  '&#127968;',
+    iconBg: '#ECFDF5',
+    guidance: `
+      <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 12px;font-family:Arial,sans-serif;">
+        Môi giới chuyên nghiệp SGS Land sẽ liên hệ với bạn trong vòng <strong>1–2 giờ</strong> để tìm hiểu nhu cầu và đề xuất các bất động sản phù hợp.
+      </p>
+      <p style="color:#64748B;font-size:13px;font-weight:bold;margin:0 0 8px;font-family:Arial,sans-serif;">Quy trình tư vấn mua/bán:</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">1.</span>&nbsp; Xác định nhu cầu & ngân sách của bạn</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">2.</span>&nbsp; Sàng lọc & giới thiệu bất động sản phù hợp</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">3.</span>&nbsp; Đi thực địa & đánh giá pháp lý dự án</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">4.</span>&nbsp; Hỗ trợ đàm phán giá & hoàn thiện hợp đồng</td></tr>
+      </table>`,
+    cta: { url: 'https://sgsland.vn/listings', label: 'Xem Tin Rao Mới Nhất' },
+  },
+  partnership: {
+    label: 'Hợp tác Kinh doanh',
+    icon:  '&#129309;',
+    iconBg: '#FFF7ED',
+    guidance: `
+      <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 12px;font-family:Arial,sans-serif;">
+        Ban lãnh đạo SGS Land sẽ xem xét đề xuất của bạn và phản hồi trong vòng <strong>1–2 ngày làm việc</strong>.
+      </p>
+      <p style="color:#64748B;font-size:13px;font-weight:bold;margin:0 0 8px;font-family:Arial,sans-serif;">Hình thức hợp tác chúng tôi quan tâm:</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Hợp tác phân phối & môi giới bất động sản</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Liên doanh phát triển dự án</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Cung cấp dịch vụ cho hệ sinh thái bất động sản</td></tr>
+        <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Đối tác công nghệ & truyền thông</td></tr>
+      </table>`,
+    cta: { url: 'https://sgsland.vn/gioi-thieu', label: 'Tìm Hiểu Về SGS Land' },
+  },
+  other: {
+    label: 'Yêu cầu khác',
+    icon:  '&#128172;',
+    iconBg: '#F0F9FF',
+    guidance: `
+      <p style="color:#475569;font-size:14px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">
+        Đội ngũ SGS Land sẽ xem xét yêu cầu của bạn và phản hồi trong vòng <strong>24 giờ làm việc</strong>.
+        Nếu cần hỗ trợ gấp, bạn có thể gọi hotline <strong>0971 132 378</strong> (24/7).
+      </p>`,
+    cta: { url: 'https://sgsland.vn/lien-he', label: 'Xem Thêm Thông Tin Liên Hệ' },
+  },
+};
+
+async function sendContactAutoReply(
+  to: string,
+  name: string,
+  subjectKey: string,
+  message: string,
+): Promise<EmailResult> {
+  const safeName  = escapeHtml(name);
+  const safeMsg   = escapeHtml(message.length > 400 ? message.slice(0, 400) + '...' : message).replace(/\n/g, '<br>');
+  const info      = SUBJECT_GUIDANCE[subjectKey] || SUBJECT_GUIDANCE['other'];
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle(info.iconBg, info.icon)}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center"><h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">Chúng Tôi Đã Nhận Được Tin Nhắn!</h1></td></tr>
+      <tr><td align="center" style="padding-top:6px;">
+        <span style="display:inline-block;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px;font-family:Arial,sans-serif;">${escapeHtml(info.label)}</span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#334155;font-size:15px;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif;">Xin chào <strong>${safeName}</strong>,</p>
+    <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">
+      Cảm ơn bạn đã liên hệ với <strong>SGS Land</strong>. Chúng tôi đã nhận được yêu cầu của bạn và sẽ phản hồi sớm nhất có thể.
+    </p>
+
+    <!-- Subject-specific guidance -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFC" style="border:1px solid #E2E8F0;border-radius:8px;margin-bottom:0;">
+      <tr><td style="padding:18px 20px;">
+        <p style="color:#0F172A;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 12px;font-family:Arial,sans-serif;">Điều gì sẽ xảy ra tiếp theo?</p>
+        ${info.guidance}
+      </td></tr>
+    </table>
+    ${spacer(16)}
+
+    <!-- Submitted message echo -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td bgcolor="#F0F4FF" style="padding:14px 18px;border:1px solid #C7D2FE;border-radius:8px;border-left:4px solid #4F46E5;">
+          <p style="color:#64748B;font-size:11px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">Nội dung bạn đã gửi</p>
+          <p style="color:#334155;font-size:13px;line-height:1.7;margin:0;font-family:Arial,sans-serif;">${safeMsg}</p>
+        </td>
+      </tr>
+    </table>
+    ${spacer(28)}
+
+    ${info.cta ? `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${primaryButton(info.cta.url, info.cta.label)}</td></tr>
+    </table>
+    ${spacer(20)}
+    ` : ''}
+
+    <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;font-family:Arial,sans-serif;">
+      Cần hỗ trợ ngay? Gọi hotline <strong style="color:#0F172A;">0971 132 378</strong> (24/7)<br />
+      hoặc email <a href="mailto:info@sgsland.vn" style="color:#4F46E5;text-decoration:none;">info@sgsland.vn</a>
+    </p>
+  `;
+
+  return sendEmail(DEFAULT_TENANT_ID, {
+    to,
+    subject: `SGS Land – Xác nhận nhận yêu cầu: ${info.label}`,
+    html: emailBase(content, 'Email này được gửi tự động sau khi bạn điền form liên hệ tại sgsland.vn/lien-he'),
+    text: `Xin chào ${name},\n\nCảm ơn bạn đã liên hệ với SGS Land về: ${info.label}.\n\nChúng tôi đã nhận được yêu cầu và sẽ phản hồi sớm nhất.\n\nHotline: 0971 132 378 (24/7)\nEmail: info@sgsland.vn\n\n— SGS LAND`,
+  });
+}
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export const emailService = {
@@ -477,6 +680,8 @@ export const emailService = {
   sendWelcomeEmail,
   sendInviteEmail,
   sendSequenceEmail,
+  sendContactNotification,
+  sendContactAutoReply,
   testSmtpConnection,
   getSmtpConfig,
 };
