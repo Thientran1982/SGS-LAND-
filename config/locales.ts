@@ -2173,7 +2173,7 @@ export const DICTIONARY = {
         "bank_rates.col_notes": "Ghi chú",
         "bank_rates.col_updated": "Cập nhật",
         "bank_rates.seo_block_title": "Tra Cứu Lãi Suất Đầy Đủ",
-        "bank_rates.seo_block_desc": "Trang so sánh lãi suất SEO với đầy đủ thông tin từ 12 ngân hàng lớn, FAQ và schema dữ liệu chuẩn.",
+        "bank_rates.seo_block_desc": "Trang so sánh lãi suất với đầy đủ thông tin từ 12 ngân hàng lớn.",
         "bank_rates.seo_block_link": "Xem Bảng Lãi Suất Đầy Đủ →",
 
         "crm.hero_badge": "Dành cho Doanh Nghiệp BĐS",
@@ -4378,7 +4378,7 @@ export const DICTIONARY = {
         "bank_rates.col_notes": "Notes",
         "bank_rates.col_updated": "Updated",
         "bank_rates.seo_block_title": "Full Rate Comparison",
-        "bank_rates.seo_block_desc": "SEO-optimized page with complete data from 12 banks, FAQs and structured schema.",
+        "bank_rates.seo_block_desc": "Full rate comparison page with complete data from 12 major banks.",
         "bank_rates.seo_block_link": "View Full Rate Table →",
 
         "crm.hero_badge": "For Real Estate Businesses",
