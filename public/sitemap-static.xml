@@ -116,6 +116,16 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/livechat" />
   </url>
 
+  <!-- ══ LÃI SUẤT VAY NGÂN HÀNG ══ -->
+  <url>
+    <loc>https://sgsland.vn/lai-suat-vay-ngan-hang</loc>
+    <lastmod>2026-04-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://sgsland.vn/lai-suat-vay-ngan-hang" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sgsland.vn/lai-suat-vay-ngan-hang" />
+  </url>
+
   <!-- ══ KÝ GỬI BẤT ĐỘNG SẢN ══ -->
   <url>
     <loc>https://sgsland.vn/ky-gui-bat-dong-san</loc>

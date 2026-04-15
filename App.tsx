@@ -57,6 +57,7 @@ const PrivacyPolicy = lazyLoad(() => import('./pages/Legal'), 'PrivacyPolicy');
 const TermsOfService = lazyLoad(() => import('./pages/Legal'), 'TermsOfService');
 const CookieSettings = lazyLoad(() => import('./pages/Legal'), 'CookieSettings');
 const Consignment = lazyLoad(() => import('./pages/Consignment'), 'Consignment');
+const BankRates = lazyLoad(() => import('./pages/BankRates'), 'BankRates');
 const LocalLandingPage = lazyLoad(() => import('./pages/LocalLandingPage'), 'LocalLandingPage');
 const ProjectLandingPage = lazyLoad(() => import('./pages/ProjectLandingPage'), 'ProjectLandingPage');
 
@@ -179,6 +180,7 @@ const PAGE_REGISTRY: Record<string, React.ComponentType<any>> = {
     [ROUTES.TERMS]: TermsOfService,
     [ROUTES.COOKIES]: CookieSettings,
     [ROUTES.KY_GUI]: Consignment,
+    [ROUTES.BANK_RATES]: BankRates,
     [ROUTES.BDS_DONG_NAI]: LocalLandingPage,
     [ROUTES.BDS_LONG_THANH]: LocalLandingPage,
     [ROUTES.BDS_THU_DUC]: LocalLandingPage,
@@ -245,6 +247,7 @@ const PUBLIC_ROUTES = new Set([
     ROUTES.TERMS,
     ROUTES.COOKIES,
     ROUTES.KY_GUI,
+    ROUTES.BANK_RATES,
     ROUTES.BDS_DONG_NAI,
     ROUTES.BDS_LONG_THANH,
     ROUTES.BDS_THU_DUC,

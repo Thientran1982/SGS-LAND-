@@ -19,6 +19,7 @@ export const ROUTES = {
     STATUS_PUBLIC: 'status',
     LIVE_CHAT: 'livechat',
     KY_GUI: 'ky-gui-bat-dong-san',
+    BANK_RATES: 'lai-suat-ngan-hang',
 
     // SEO Landing Pages — Local & Project
     BDS_DONG_NAI: 'bat-dong-san-dong-nai',
