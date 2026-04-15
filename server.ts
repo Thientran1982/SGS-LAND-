@@ -1535,7 +1535,7 @@ async function startServer() {
   app.put('/api/bank-rates/:id', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     try {
       const user = (req as any).user;
-      const rateId = parseInt(req.params.id, 10);
+      const rateId = parseInt(req.params.id as string, 10);
       if (isNaN(rateId)) return res.status(400).json({ error: 'Invalid id' }) as any;
 
       const existing = await pool.query(
@@ -1594,7 +1594,7 @@ async function startServer() {
       if (!user || !['ADMIN', 'TEAM_LEAD', 'SUPER_ADMIN'].includes(user.role)) {
         return res.status(403).json({ error: 'Chỉ Admin và Trưởng nhóm mới có thể xóa' }) as any;
       }
-      const rateId = parseInt(req.params.id, 10);
+      const rateId = parseInt(req.params.id as string, 10);
       if (isNaN(rateId)) return res.status(400).json({ error: 'Invalid id' }) as any;
 
       const result = await pool.query(
