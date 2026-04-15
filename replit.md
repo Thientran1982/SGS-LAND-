@@ -13,7 +13,7 @@ AI-powered real estate CRM and management platform for the Vietnamese market.
 - **Queue**: QStash (Upstash) with in-memory fallback when `QSTASH_TOKEN` not configured
 - **AI**: Google Gemini via `@google/genai`
 - **Auth**: JWT with httpOnly cookies, bcrypt password hashing, password reset tokens, **email verification on register**
-- **Email**: Brevo API (primary) + Nodemailer SMTP fallback + console fallback; verification email, password reset, welcome, invite, sequences
+- **Email**: Brevo API (primary) + Nodemailer SMTP fallback + console fallback; verification email, password reset, welcome, invite, sequences, **engagement automation (NUDGE_A/B/C)**
 
 ## Architecture
 

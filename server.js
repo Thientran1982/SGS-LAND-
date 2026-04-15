@@ -4330,6 +4330,38 @@ var init_bank_rates = __esm({
   }
 });
 
+// server/migrations/057_email_campaign_log.ts
+var migration57, email_campaign_log_default;
+var init_email_campaign_log = __esm({
+  "server/migrations/057_email_campaign_log.ts"() {
+    migration57 = {
+      description: "T\u1EA1o b\u1EA3ng email_campaign_log \u0111\u1EC3 theo d\xF5i email t\u1EF1 \u0111\u1ED9ng g\u1EEDi cho user",
+      async up(client) {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS email_campaign_log (
+        id          UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id   VARCHAR(36)   NOT NULL,
+        user_id     UUID          NOT NULL,
+        email       VARCHAR(255)  NOT NULL,
+        campaign    VARCHAR(50)   NOT NULL,
+        sent_at     TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_ecl_user_campaign
+        ON email_campaign_log(user_id, campaign, sent_at DESC);
+
+      CREATE INDEX IF NOT EXISTS idx_ecl_tenant_sent
+        ON email_campaign_log(tenant_id, sent_at DESC);
+    `);
+      },
+      async down(client) {
+        await client.query(`DROP TABLE IF EXISTS email_campaign_log;`);
+      }
+    };
+    email_campaign_log_default = migration57;
+  }
+});
+
 // server/migrations/runner.ts
 var runner_exports = {};
 __export(runner_exports, {
@@ -4382,15 +4414,15 @@ async function runPendingMigrations(pool3, isDryRun = false) {
       return;
     }
     for (const file2 of pending) {
-      const migration57 = MIGRATION_REGISTRY[file2];
-      if (!migration57 || typeof migration57.up !== "function") {
+      const migration58 = MIGRATION_REGISTRY[file2];
+      if (!migration58 || typeof migration58.up !== "function") {
         throw new Error(`[migrations] Invalid migration module for ${file2} \u2014 missing up() function`);
       }
-      console.log(`[migrations] Applying ${file2}: ${migration57.description || ""}`);
-      await migration57.up(client);
+      console.log(`[migrations] Applying ${file2}: ${migration58.description || ""}`);
+      await migration58.up(client);
       await client.query(
         "INSERT INTO schema_versions (version, description) VALUES ($1, $2)",
-        [file2, migration57.description || null]
+        [file2, migration58.description || null]
       );
       console.log(`[migrations] \u2713 ${file2}`);
     }
@@ -4425,15 +4457,15 @@ async function rollbackLastMigration(pool3) {
       return;
     }
     const lastVersion = result.rows[0].version;
-    const migration57 = MIGRATION_REGISTRY[lastVersion];
-    if (!migration57) {
+    const migration58 = MIGRATION_REGISTRY[lastVersion];
+    if (!migration58) {
       throw new Error(`[migrations] Unknown migration version: ${lastVersion}`);
     }
-    if (!migration57.down) {
+    if (!migration58.down) {
       throw new Error(`Migration ${lastVersion} has no down() \u2014 cannot rollback`);
     }
     console.log(`[migrations] Rolling back ${lastVersion}...`);
-    await migration57.down(client);
+    await migration58.down(client);
     await client.query("DELETE FROM schema_versions WHERE version = $1", [lastVersion]);
     await client.query("COMMIT");
     console.log(`[migrations] \u2713 Rolled back ${lastVersion}`);
@@ -4504,6 +4536,7 @@ var init_runner = __esm({
     init_error_logs();
     init_seed_market_prices();
     init_bank_rates();
+    init_email_campaign_log();
     dotenv.config();
     MIGRATION_REGISTRY = {
       "001_baseline_schema.ts": baseline_schema_default,
@@ -4561,7 +4594,8 @@ var init_runner = __esm({
       "053_fix_processing_documents.ts": fix_processing_documents_default,
       "054_error_logs.ts": error_logs_default,
       "055_seed_market_prices.ts": seed_market_prices_default,
-      "056_bank_rates.ts": bank_rates_default
+      "056_bank_rates.ts": bank_rates_default,
+      "057_email_campaign_log.ts": email_campaign_log_default
     };
     MIGRATION_ADVISORY_LOCK_KEY = 74839230;
   }
@@ -28012,6 +28046,231 @@ Website: https://sgsland.vn
 \u2014 SGS LAND`
   });
 }
+async function sendNudgeA(tenantId, to, userName) {
+  const safeName = escapeHtml(userName || "b\u1EA1n");
+  const listingUrl = "https://sgsland.vn/#/dang-tin";
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle("#EEF2FF", "&#127968;")}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
+          \u0110\u0103ng Tin B\u0110S \u0110\u1EA7u Ti\xEAn C\u1EE7a B\u1EA1n \u2014 Mi\u1EC5n Ph\xED!
+        </h1>
+      </td></tr>
+      <tr><td align="center" style="padding-top:8px;">
+        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
+          Xin ch\xE0o <strong>${safeName}</strong>, b\u1EA1n v\u1EABn ch\u01B0a \u0111\u0103ng tin b\u1EA5t \u0111\u1ED9ng s\u1EA3n n\xE0o tr\xEAn SGS LAND.
+        </span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
+      Th\u1ECB tr\u01B0\u1EDDng B\u0110S t\u1EA1i TP.HCM, H\xE0 N\u1ED9i v\xE0 c\xE1c t\u1EC9nh \u0111ang c\xF3 h\xE0ng ngh\xECn ng\u01B0\u1EDDi mua \u0111ang t\xECm ki\u1EBFm m\u1ED7i ng\xE0y.
+      \u0110\u0103ng tin ngay h\xF4m nay \u0111\u1EC3 ti\u1EBFp c\u1EADn \u0111\xFAng kh\xE1ch h\xE0ng ti\u1EC1m n\u0103ng:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFC" style="border:1px solid #E2E8F0;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#10003;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Mi\u1EC5n ph\xED 100%</strong> \u2014 Kh\xF4ng m\u1EA5t ph\xED \u0111\u0103ng tin
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#10003;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>H\u1ED7 tr\u1EE3 AI</strong> \u2014 M\xF4 t\u1EA3 t\u1EF1 \u0111\u1ED9ng, g\u1EE3i \xFD gi\xE1 th\u1ECB tr\u01B0\u1EDDng
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#10003;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
+              <strong>Ti\u1EBFp c\u1EADn ngay</strong> \u2014 Tin hi\u1EC3n th\u1ECB tr\xEAn SGS LAND ngay sau khi \u0111\u0103ng
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(8)}
+    ${primaryButton(listingUrl, "\u0110\u0103ng Tin Ngay \u2014 Mi\u1EC5n Ph\xED")}
+    ${spacer(20)}
+    <p style="color:#94A3B8;font-size:12px;text-align:center;margin:0;font-family:Arial,sans-serif;">
+      Ch\u1EC9 m\u1EA5t 5 ph\xFAt \u0111\u1EC3 ho\xE0n th\xE0nh tin \u0111\u0103ng \u0111\u1EA7u ti\xEAn c\u1EE7a b\u1EA1n.
+    </p>
+  `;
+  return sendEmail(tenantId, {
+    to,
+    subject: "SGS LAND \u2013 \u0110\u0103ng tin B\u0110S \u0111\u1EA7u ti\xEAn c\u1EE7a b\u1EA1n \u2014 Ho\xE0n to\xE0n mi\u1EC5n ph\xED",
+    html: emailBase(content, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi t\u1EF1 \u0111\u1ED9ng v\xEC b\u1EA1n ch\u01B0a \u0111\u0103ng tin b\u1EA5t \u0111\u1ED9ng s\u1EA3n n\xE0o tr\xEAn SGS LAND."),
+    text: `Xin ch\xE0o ${userName},
+
+B\u1EA1n ch\u01B0a \u0111\u0103ng tin b\u1EA5t \u0111\u1ED9ng s\u1EA3n n\xE0o tr\xEAn SGS LAND. H\xE3y \u0111\u0103ng tin \u0111\u1EA7u ti\xEAn ho\xE0n to\xE0n mi\u1EC5n ph\xED t\u1EA1i:
+${listingUrl}
+
+Ch\u1EC9 m\u1EA5t 5 ph\xFAt!
+
+\u2014 SGS LAND`
+  });
+}
+async function sendNudgeB(tenantId, to, userName) {
+  const safeName = escapeHtml(userName || "b\u1EA1n");
+  const dashboardUrl = "https://sgsland.vn/#/tin-dang";
+  const listingUrl = "https://sgsland.vn/#/dang-tin";
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle("#FFF7ED", "&#128204;")}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
+          Tin B\u0110S C\u1EE7a B\u1EA1n C\u1EA7n \u0110\u01B0\u1EE3c C\u1EADp Nh\u1EADt?
+        </h1>
+      </td></tr>
+      <tr><td align="center" style="padding-top:8px;">
+        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
+          Xin ch\xE0o <strong>${safeName}</strong>, \u0111\xE3 m\u1ED9t th\u1EDDi gian k\u1EC3 t\u1EEB khi b\u1EA1n \u0111\u0103ng tin \u0111\u1EA7u ti\xEAn tr\xEAn SGS LAND.
+        </span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
+      Tin \u0111\u0103ng \u0111\xE3 c\u0169 s\u1EBD \xEDt \u0111\u01B0\u1EE3c hi\u1EC3n th\u1ECB h\u01A1n. \u0110\u1EC3 t\u0103ng l\u01B0\u1EE3t xem v\xE0 thu h\xFAt kh\xE1ch mua/thu\xEA:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF7ED" style="border:1px solid #FED7AA;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#9889;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>C\u1EADp nh\u1EADt gi\xE1</strong> \u2014 \u0110i\u1EC1u ch\u1EC9nh theo xu h\u01B0\u1EDBng th\u1ECB tr\u01B0\u1EDDng hi\u1EC7n t\u1EA1i
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#9889;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Th\xEAm \u1EA3nh th\u1EF1c t\u1EBF</strong> \u2014 Tin c\xF3 nhi\u1EC1u \u1EA3nh \u0111\u01B0\u1EE3c xem nhi\u1EC1u h\u01A1n 3 l\u1EA7n
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#9889;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
+              <strong>\u0110\u0103ng th\xEAm tin m\u1EDBi</strong> \u2014 Nhi\u1EC1u tin = nhi\u1EC1u c\u01A1 h\u1ED9i th\xE0nh giao d\u1ECBch
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(4)}
+    ${primaryButton(dashboardUrl, "C\u1EADp Nh\u1EADt Tin C\u1EE7a T\xF4i")}
+    ${spacer(12)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <a href="${listingUrl}" style="color:#4F46E5;font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
+          Ho\u1EB7c \u0111\u0103ng th\xEAm tin m\u1EDBi mi\u1EC5n ph\xED &rarr;
+        </a>
+      </td></tr>
+    </table>
+    ${spacer(20)}
+  `;
+  return sendEmail(tenantId, {
+    to,
+    subject: "SGS LAND \u2013 Tin B\u0110S c\u1EE7a b\u1EA1n c\u1EA7n \u0111\u01B0\u1EE3c c\u1EADp nh\u1EADt \u0111\u1EC3 ti\u1EBFp c\u1EADn nhi\u1EC1u kh\xE1ch h\u01A1n",
+    html: emailBase(content, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi t\u1EF1 \u0111\u1ED9ng v\xEC tin b\u1EA5t \u0111\u1ED9ng s\u1EA3n c\u1EE7a b\u1EA1n \u0111\xE3 l\xE2u ch\u01B0a c\u1EADp nh\u1EADt."),
+    text: `Xin ch\xE0o ${userName},
+
+Tin \u0111\u0103ng c\u1EE7a b\u1EA1n \u0111\xE3 l\xE2u ch\u01B0a c\u1EADp nh\u1EADt. H\xE3y c\u1EADp nh\u1EADt \u0111\u1EC3 t\u0103ng l\u01B0\u1EE3t xem:
+${dashboardUrl}
+
+Ho\u1EB7c \u0111\u0103ng th\xEAm tin m\u1EDBi:
+${listingUrl}
+
+\u2014 SGS LAND`
+  });
+}
+async function sendNudgeC(tenantId, to, userName) {
+  const safeName = escapeHtml(userName || "b\u1EA1n");
+  const loginUrl = "https://sgsland.vn/#/dang-nhap";
+  const marketUrl = "https://sgsland.vn/#/tim-kiem";
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle("#F0FDF4", "&#128200;")}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
+          Th\u1ECB Tr\u01B0\u1EDDng B\u0110S \u0110ang S\xF4i \u0110\u1ED9ng \u2014 \u0110\u1EEBng B\u1ECF L\u1EE1!
+        </h1>
+      </td></tr>
+      <tr><td align="center" style="padding-top:8px;">
+        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
+          Xin ch\xE0o <strong>${safeName}</strong>, \u0111\xE3 l\xE2u kh\xF4ng th\u1EA5y b\u1EA1n tr\xEAn SGS LAND.
+        </span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
+      Trong th\u1EDDi gian qua th\u1ECB tr\u01B0\u1EDDng b\u1EA5t \u0111\u1ED9ng s\u1EA3n Vi\u1EC7t Nam c\xF3 nhi\u1EC1u bi\u1EBFn \u0111\u1ED9ng \u0111\xE1ng ch\xFA \xFD:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F0FDF4" style="border:1px solid #BBF7D0;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128205;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>TP.HCM</strong> \u2014 Ph\xE2n kh\xFAc c\u0103n h\u1ED9 trung c\u1EA5p giao d\u1ECBch t\u0103ng m\u1EA1nh qu\xFD n\xE0y
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128205;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>H\xE0 N\u1ED9i</strong> \u2014 \u0110\u1EA5t n\u1EC1n ven \u0111\xF4 thu h\xFAt nh\xE0 \u0111\u1EA7u t\u01B0 d\xE0i h\u1EA1n
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128205;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
+              <strong>L\xE3i su\u1EA5t</strong> \u2014 C\xE1c ng\xE2n h\xE0ng \u0111ang c\xF3 g\xF3i vay \u01B0u \u0111\xE3i t\u1EEB 6%/n\u0103m
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(4)}
+    ${primaryButton(loginUrl, "\u0110\u0103ng Nh\u1EADp Xem Th\u1ECB Tr\u01B0\u1EDDng")}
+    ${spacer(12)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <a href="${marketUrl}" style="color:#4F46E5;font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
+          Xem tin B\u0110S m\u1EDBi nh\u1EA5t kh\xF4ng c\u1EA7n \u0111\u0103ng nh\u1EADp &rarr;
+        </a>
+      </td></tr>
+    </table>
+    ${spacer(20)}
+  `;
+  return sendEmail(tenantId, {
+    to,
+    subject: "SGS LAND \u2013 Th\u1ECB tr\u01B0\u1EDDng B\u0110S \u0111ang s\xF4i \u0111\u1ED9ng, c\u01A1 h\u1ED9i \u0111ang ch\u1EDD b\u1EA1n",
+    html: emailBase(content, "Email n\xE0y \u0111\u01B0\u1EE3c g\u1EEDi v\xEC b\u1EA1n l\xE0 th\xE0nh vi\xEAn SGS LAND ch\u01B0a \u0111\u0103ng nh\u1EADp g\u1EA7n \u0111\xE2y."),
+    text: `Xin ch\xE0o ${userName},
+
+Th\u1ECB tr\u01B0\u1EDDng B\u0110S Vi\u1EC7t Nam \u0111ang c\xF3 nhi\u1EC1u c\u01A1 h\u1ED9i h\u1EA5p d\u1EABn. H\xE3y quay l\u1EA1i SGS LAND:
+${loginUrl}
+
+Ho\u1EB7c xem tin kh\xF4ng c\u1EA7n \u0111\u0103ng nh\u1EADp:
+${marketUrl}
+
+\u2014 SGS LAND`
+  });
+}
 var SUBJECT_GUIDANCE, emailService;
 var init_emailService = __esm({
   "server/services/emailService.ts"() {
@@ -28092,6 +28351,9 @@ var init_emailService = __esm({
       sendSequenceEmail,
       sendContactNotification,
       sendContactAutoReply,
+      sendNudgeA,
+      sendNudgeB,
+      sendNudgeC,
       testSmtpConnection,
       getSmtpConfig
     };
@@ -55951,8 +56213,187 @@ function createScraperProjectRoutes(authenticateToken) {
   return router;
 }
 
-// server/routes/errorLogRoutes.ts
+// server/routes/engagementCronRoutes.ts
+init_logger();
+init_emailService();
 import { Router as Router29 } from "express";
+
+// server/repositories/campaignRepository.ts
+async function logCampaignEmail(pool3, tenantId, userId, email3, campaign) {
+  await pool3.query(
+    `INSERT INTO email_campaign_log (tenant_id, user_id, email, campaign)
+     VALUES ($1, $2, $3, $4)`,
+    [tenantId, userId, email3, campaign]
+  );
+}
+async function querySegmentA(pool3) {
+  const result = await pool3.query(`
+    SELECT u.id, u.tenant_id, u.email, u.name
+    FROM users u
+    WHERE u.status = 'ACTIVE'
+      AND u.email IS NOT NULL
+      AND u.email != ''
+      AND u.created_at <= NOW() - INTERVAL '3 days'
+      AND NOT EXISTS (
+        SELECT 1 FROM listings l
+        WHERE l.created_by = u.id
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM email_campaign_log ecl
+        WHERE ecl.user_id = u.id
+          AND ecl.campaign = 'NUDGE_A'
+          AND ecl.sent_at > NOW() - INTERVAL '3650 days'
+      )
+    ORDER BY u.created_at ASC
+    LIMIT 100
+  `);
+  return result.rows;
+}
+async function querySegmentB(pool3) {
+  const result = await pool3.query(`
+    SELECT u.id, u.tenant_id, u.email, u.name
+    FROM users u
+    WHERE u.status = 'ACTIVE'
+      AND u.email IS NOT NULL
+      AND u.email != ''
+      AND (
+        SELECT COUNT(*) FROM listings l WHERE l.created_by = u.id
+      ) = 1
+      AND (
+        SELECT MAX(l.created_at) FROM listings l WHERE l.created_by = u.id
+      ) <= NOW() - INTERVAL '7 days'
+      AND NOT EXISTS (
+        SELECT 1 FROM email_campaign_log ecl
+        WHERE ecl.user_id = u.id
+          AND ecl.campaign = 'NUDGE_B'
+          AND ecl.sent_at > NOW() - INTERVAL '7 days'
+      )
+    ORDER BY u.created_at ASC
+    LIMIT 100
+  `);
+  return result.rows;
+}
+async function querySegmentC(pool3) {
+  const result = await pool3.query(`
+    SELECT u.id, u.tenant_id, u.email, u.name
+    FROM users u
+    WHERE u.status = 'ACTIVE'
+      AND u.email IS NOT NULL
+      AND u.email != ''
+      AND u.last_login_at IS NOT NULL
+      AND u.last_login_at <= NOW() - INTERVAL '30 days'
+      AND NOT EXISTS (
+        SELECT 1 FROM email_campaign_log ecl
+        WHERE ecl.user_id = u.id
+          AND ecl.campaign = 'NUDGE_C'
+          AND ecl.sent_at > NOW() - INTERVAL '30 days'
+      )
+    ORDER BY u.last_login_at ASC
+    LIMIT 100
+  `);
+  return result.rows;
+}
+
+// server/routes/engagementCronRoutes.ts
+function createEngagementCronRouter(pool3, cronSecret) {
+  const router = Router29();
+  router.post("/api/internal/engagement-email-cron", async (req, res) => {
+    const providedSecret = req.headers["x-internal-secret"] || req.body?.secret;
+    if (!providedSecret || providedSecret !== cronSecret) {
+      logger.warn("[EngagementCron] T\u1EEB ch\u1ED1i \u2014 sai secret");
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const dryRun = req.body?.dry_run === true;
+    logger.info(`[EngagementCron] B\u1EAFt \u0111\u1EA7u${dryRun ? " (dry-run)" : ""} \u2014 ${(/* @__PURE__ */ new Date()).toISOString()}`);
+    const stats = {
+      nudge_a: { queried: 0, sent: 0, failed: 0 },
+      nudge_b: { queried: 0, sent: 0, failed: 0 },
+      nudge_c: { queried: 0, sent: 0, failed: 0 }
+    };
+    try {
+      const usersA = await querySegmentA(pool3);
+      stats.nudge_a.queried = usersA.length;
+      logger.info(`[EngagementCron] NUDGE_A: ${usersA.length} user`);
+      for (const user of usersA) {
+        await processUser(
+          pool3,
+          user,
+          "NUDGE_A",
+          dryRun,
+          stats.nudge_a,
+          () => emailService.sendNudgeA(user.tenant_id, user.email, user.name)
+        );
+      }
+      const usersB = await querySegmentB(pool3);
+      stats.nudge_b.queried = usersB.length;
+      logger.info(`[EngagementCron] NUDGE_B: ${usersB.length} user`);
+      for (const user of usersB) {
+        await processUser(
+          pool3,
+          user,
+          "NUDGE_B",
+          dryRun,
+          stats.nudge_b,
+          () => emailService.sendNudgeB(user.tenant_id, user.email, user.name)
+        );
+      }
+      const usersC = await querySegmentC(pool3);
+      stats.nudge_c.queried = usersC.length;
+      logger.info(`[EngagementCron] NUDGE_C: ${usersC.length} user`);
+      for (const user of usersC) {
+        await processUser(
+          pool3,
+          user,
+          "NUDGE_C",
+          dryRun,
+          stats.nudge_c,
+          () => emailService.sendNudgeC(user.tenant_id, user.email, user.name)
+        );
+      }
+      const totalSent = stats.nudge_a.sent + stats.nudge_b.sent + stats.nudge_c.sent;
+      const totalFail = stats.nudge_a.failed + stats.nudge_b.failed + stats.nudge_c.failed;
+      logger.info(
+        `[EngagementCron] Ho\xE0n th\xE0nh \u2014 T\u1ED5ng g\u1EEDi: ${totalSent}, L\u1ED7i: ${totalFail}${dryRun ? " (dry-run)" : ""}`
+      );
+      return res.json({
+        ok: true,
+        dry_run: dryRun,
+        run_at: (/* @__PURE__ */ new Date()).toISOString(),
+        stats,
+        total_sent: totalSent,
+        total_failed: totalFail
+      });
+    } catch (err4) {
+      logger.error("[EngagementCron] L\u1ED7i kh\xF4ng x\xE1c \u0111\u1ECBnh:", err4.message);
+      return res.status(500).json({ error: "Internal error", detail: err4.message });
+    }
+  });
+  return router;
+}
+async function processUser(pool3, user, campaign, dryRun, stats, sendFn) {
+  try {
+    if (dryRun) {
+      logger.info(`[EngagementCron][dry-run] ${campaign} \u2192 ${user.email} (${user.name})`);
+      stats.sent++;
+      return;
+    }
+    const result = await sendFn();
+    if (result.success) {
+      await logCampaignEmail(pool3, user.tenant_id, user.id, user.email, campaign);
+      stats.sent++;
+      logger.info(`[EngagementCron] ${campaign} \u2713 \u2192 ${user.email}`);
+    } else {
+      stats.failed++;
+      logger.warn(`[EngagementCron] ${campaign} \u2717 \u2192 ${user.email} (email service tr\u1EA3 v\u1EC1 l\u1ED7i)`);
+    }
+  } catch (err4) {
+    stats.failed++;
+    logger.error(`[EngagementCron] ${campaign} l\u1ED7i \u2192 ${user.email}: ${err4.message}`);
+  }
+}
+
+// server/routes/errorLogRoutes.ts
+import { Router as Router30 } from "express";
 
 // server/repositories/errorLogRepository.ts
 var ErrorLogRepository = class {
@@ -56111,7 +56552,7 @@ var ErrorLogRepository = class {
 var ADMIN_ROLES3 = /* @__PURE__ */ new Set(["ADMIN", "TEAM_LEAD"]);
 var DEFAULT_TENANT_ID2 = process.env.DEFAULT_TENANT_ID || "default";
 function createErrorLogRoutes(authenticateToken, pool3) {
-  const router = Router29();
+  const router = Router30();
   const repo = new ErrorLogRepository(pool3);
   router.post("/", async (req, res) => {
     try {
@@ -62782,6 +63223,10 @@ async function startServer() {
       return res.status(500).json({ error: err4.message });
     }
   });
+  {
+    const engagementSecret = process.env.ENGAGEMENT_CRON_SECRET || process.env.JWT_SECRET?.slice(0, 32) || "";
+    app.use(createEngagementCronRouter(pool, engagementSecret));
+  }
   app.get("/api/webhooks/facebook", (req, res) => {
     const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
     if (!VERIFY_TOKEN) return res.sendStatus(503);
@@ -63169,6 +63614,39 @@ ${urls}
         }
       } catch (e) {
         logger.warn("[RLHF] L\u1ED7i khi \u0111\u0103ng k\xFD QStash schedule:", e.message);
+      }
+      try {
+        const engagementSecret = process.env.ENGAGEMENT_CRON_SECRET || process.env.JWT_SECRET?.slice(0, 32) || "";
+        const devDomain2 = process.env.REPLIT_DEV_DOMAIN;
+        const prodDomain2 = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim() || process.env.APP_DOMAIN;
+        const appDomain2 = prodDomain2 || devDomain2;
+        if (appDomain2 && engagementSecret) {
+          const engScheduleId = "engagement-email-daily";
+          const engScheduleUrl = `https://${appDomain2}/api/internal/engagement-email-cron`;
+          const engQstashEp = `https://qstash.upstash.io/v2/schedules/${engScheduleId}`;
+          const qstashToken = process.env.QSTASH_TOKEN;
+          const engBody = JSON.stringify({ secret: engagementSecret });
+          const engResp = await fetch(engQstashEp, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${qstashToken}`,
+              "Content-Type": "application/json",
+              "Upstash-Destination": engScheduleUrl,
+              "Upstash-Cron": "0 20 * * *",
+              // 3:00 SA ICT = 20:00 UTC
+              "Upstash-Method": "POST"
+            },
+            body: engBody
+          });
+          if (engResp.ok) {
+            logger.info("[EngagementCron] \u0110\xE3 \u0111\u0103ng k\xFD QStash daily schedule \u2014 ch\u1EA1y l\xFAc 3:00 SA ICT");
+          } else {
+            const errText = await engResp.text();
+            logger.warn(`[EngagementCron] Kh\xF4ng th\u1EC3 \u0111\u0103ng k\xFD QStash schedule: ${engResp.status} ${errText}`);
+          }
+        }
+      } catch (e) {
+        logger.warn("[EngagementCron] L\u1ED7i khi \u0111\u0103ng k\xFD QStash schedule:", e.message);
       }
     }
   });

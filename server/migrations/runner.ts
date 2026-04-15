@@ -75,6 +75,7 @@ import m053 from './053_fix_processing_documents';
 import m054 from './054_error_logs';
 import m055 from './055_seed_market_prices';
 import m056 from './056_bank_rates';
+import m057 from './057_email_campaign_log';
 
 dotenv.config();
 
@@ -146,6 +147,7 @@ const MIGRATION_REGISTRY: Record<string, Migration> = {
   '054_error_logs.ts': m054,
   '055_seed_market_prices.ts': m055,
   '056_bank_rates.ts': m056,
+  '057_email_campaign_log.ts': m057,
 };
 
 async function ensureSchemaVersionsTable(client: PoolClient): Promise<void> {
