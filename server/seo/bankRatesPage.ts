@@ -361,6 +361,8 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="icon" href="/favicon.ico" sizes="any"/>
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
   <title>Lãi Suất Vay Ngân Hàng 2026 | Bảng So Sánh Mới Nhất – SGS Land</title>
   <meta name="description" content="Cập nhật bảng lãi suất vay ngân hàng mua bất động sản mới nhất Q2/2026. So sánh lãi suất thế chấp từ Vietcombank, BIDV, Techcombank, Agribank, MB Bank. Tư vấn vay miễn phí."/>
   <link rel="canonical" href="${CANONICAL}"/>
