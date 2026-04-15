@@ -1305,6 +1305,7 @@ class DatabaseApiClient {
     const core = { id: 'core', labelKey: 'menu.core', items: [
       { id: 'home', labelKey: 'menu.home', route: ROUTES.LANDING, iconKey: ROUTES.LANDING },
       { id: 'dash', labelKey: 'menu.dashboard', route: ROUTES.DASHBOARD, iconKey: ROUTES.DASHBOARD },
+      { id: 'search', labelKey: 'menu.marketplace', route: ROUTES.SEARCH, iconKey: ROUTES.SEARCH },
       { id: 'leads', labelKey: 'menu.leads', route: ROUTES.LEADS, iconKey: ROUTES.LEADS },
       { id: 'contracts', labelKey: 'menu.contracts', route: ROUTES.CONTRACTS, iconKey: ROUTES.CONTRACTS },
       { id: 'inv', labelKey: 'menu.inventory', route: ROUTES.INVENTORY, iconKey: ROUTES.INVENTORY },
