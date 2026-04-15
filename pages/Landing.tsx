@@ -659,8 +659,22 @@ export const Landing: React.FC = () => {
                         <ul className="space-y-3 md:space-y-4 text-[var(--text-tertiary)] dark:text-slate-400 font-medium text-xs md:text-sm">
                             <FooterLink label={t('footer.link_help')} route={ROUTES.HELP_CENTER} />
                             <FooterLink label={t('footer.link_user_guide')} route={ROUTES.USER_GUIDE} />
-                            <FooterLink label={t('footer.link_api')} route={ROUTES.API_DOCS} />
-                            <FooterLink label={t('footer.system_status')} route={ROUTES.STATUS_PUBLIC} />
+                            <li>
+                                <button
+                                    onClick={() => navigateTo(currentUser ? ROUTES.API_DOCS : ROUTES.LOGIN)}
+                                    className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left text-[var(--text-tertiary)] dark:text-slate-400 hover:translate-x-1 duration-200 inline-block"
+                                >
+                                    {t('footer.link_api')}
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    onClick={() => navigateTo(currentUser ? ROUTES.STATUS_PUBLIC : ROUTES.LOGIN)}
+                                    className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left text-[var(--text-tertiary)] dark:text-slate-400 hover:translate-x-1 duration-200 inline-block"
+                                >
+                                    {t('footer.system_status')}
+                                </button>
+                            </li>
                         </ul>
                     </div>
 
