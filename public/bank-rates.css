@@ -12,6 +12,8 @@ a{color:#4F46E5;text-decoration:none}a:hover{text-decoration:underline}
 .hdr-nav a:hover{background:#334155;color:#fff;text-decoration:none}
 .hdr-nav a.primary{background:#4F46E5;border-color:#4F46E5;color:#fff}
 .hdr-nav a.primary:hover{background:#4338CA;border-color:#4338CA}
+/* SVG icon paths */
+.svg-p1{opacity:1}.svg-p2{opacity:0.8}.svg-p3{opacity:0.6}
 /* Hero */
 .hero{background:linear-gradient(135deg,#1E293B 0%,#1e3a5f 100%);padding:48px 20px 60px;text-align:center}
 .hero h1{color:#fff;font-size:clamp(22px,4vw,36px);font-weight:800;line-height:1.25;margin-bottom:12px}
@@ -56,14 +58,27 @@ tbody td{padding:13px 16px;font-size:14px;color:#334155;vertical-align:top}
 /* Breadcrumb */
 .bc{padding:14px 0;font-size:13px;color:#64748B;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .bc-sep{color:#CBD5E1}
+.bc-center{justify-content:center;color:#94A3B8}
+.bc-home{color:#CBD5E1}
 /* Footer */
 .ftr{background:#1E293B;color:#94A3B8;padding:32px 20px;text-align:center}
 .ftr a{color:#A5B4FC;font-size:13px}
 .ftr p{font-size:12px;margin-top:10px}
+.ftr-brand{display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;text-decoration:none}
+.ftr-brand:hover{text-decoration:none}
+.ftr-brand-name{font-weight:700;font-size:16px;color:#fff;letter-spacing:0.5px}
+.ftr-copy{margin-top:14px}
+.ftr-note{margin-top:6px;font-size:11px;color:#475569}
 /* Disclaimer */
 .disclaimer{background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:14px 18px;font-size:12px;color:#92400E;margin-bottom:24px}
 /* UGC section */
 .ugc-intro{padding:20px 24px;color:#64748B;font-size:13px;border-bottom:1px solid #E2E8F0}
+.ugc-intro a{font-weight:600}
 .ugc-empty{padding:32px 24px;text-align:center;color:#94A3B8;font-size:14px}
+.ugc-cta-link{color:#4F46E5;font-weight:600}
 .ugc-row td:first-child{min-width:130px}
 .chip{display:inline-block;background:#F1F5F9;border:1px solid #E2E8F0;padding:2px 8px;border-radius:6px;font-size:11px;color:#475569}
+/* Internal links card */
+.card-links{padding:20px 24px}
+.card-links h2{font-size:15px;color:#0F172A;margin-bottom:14px;font-weight:700}
+.links-list{list-style:none;display:flex;flex-wrap:wrap;gap:10px}
