@@ -1468,7 +1468,7 @@ async function startServer() {
     try {
       const result = await pool.query(
         `SELECT id, bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max,
-                contact_name, contact_phone, notes, is_verified, updated_at
+                contact_name, contact_phone, notes, is_verified, submitted_by, updated_at
          FROM bank_rates
          WHERE tenant_id = $1
          ORDER BY is_verified DESC, created_at DESC
@@ -1526,6 +1526,84 @@ async function startServer() {
       res.status(201).json({ rate: result.rows[0] });
     } catch (err) {
       console.error('[bank-rates POST]', err);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // PUT /api/bank-rates/:id — owner can edit their own submitted rate
+  app.put('/api/bank-rates/:id', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    try {
+      const user = (req as any).user;
+      const rateId = parseInt(req.params.id, 10);
+      if (isNaN(rateId)) return res.status(400).json({ error: 'Invalid id' }) as any;
+
+      const existing = await pool.query(
+        'SELECT submitted_by FROM bank_rates WHERE id = $1 AND tenant_id = $2',
+        [rateId, DEFAULT_TENANT_ID]
+      );
+      if (!existing.rows.length) return res.status(404).json({ error: 'Not found' }) as any;
+      if (existing.rows[0].submitted_by !== user?.id) {
+        return res.status(403).json({ error: 'Chỉ người đăng mới có thể sửa' }) as any;
+      }
+
+      const { bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max, contact_name, contact_phone, notes } = req.body;
+      if (!bank_name || typeof bank_name !== 'string' || bank_name.trim().length === 0) {
+        return res.status(400).json({ error: 'bank_name is required' }) as any;
+      }
+      const rMin = parseFloat(rate_min);
+      if (isNaN(rMin) || rMin <= 0 || rMin > 50) {
+        return res.status(400).json({ error: 'rate_min must be between 0 and 50' }) as any;
+      }
+      const slug = (bank_name as string).toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+
+      const result = await pool.query(
+        `UPDATE bank_rates
+         SET bank_name = $1, bank_slug = $2, loan_type = $3, rate_min = $4, rate_max = $5,
+             tenor_min = $6, tenor_max = $7, contact_name = $8, contact_phone = $9,
+             notes = $10, updated_at = NOW()
+         WHERE id = $11 AND tenant_id = $12
+         RETURNING id, bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max,
+                   contact_name, contact_phone, notes, is_verified, submitted_by, updated_at`,
+        [
+          (bank_name as string).trim().slice(0, 120),
+          slug.slice(0, 120),
+          (loan_type as string || 'Thế chấp BĐS').trim().slice(0, 120),
+          rMin,
+          rate_max ? parseFloat(rate_max) : null,
+          tenor_min ? parseInt(tenor_min) : null,
+          tenor_max ? parseInt(tenor_max) : null,
+          contact_name ? (contact_name as string).trim().slice(0, 200) : null,
+          contact_phone ? (contact_phone as string).trim().slice(0, 30) : null,
+          notes ? (notes as string).trim().slice(0, 2000) : null,
+          rateId,
+          DEFAULT_TENANT_ID,
+        ]
+      );
+      res.json({ rate: result.rows[0] });
+    } catch (err) {
+      console.error('[bank-rates PUT]', err);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // DELETE /api/bank-rates/:id — ADMIN or TEAM_LEAD only
+  app.delete('/api/bank-rates/:id', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user || !['ADMIN', 'TEAM_LEAD', 'SUPER_ADMIN'].includes(user.role)) {
+        return res.status(403).json({ error: 'Chỉ Admin và Trưởng nhóm mới có thể xóa' }) as any;
+      }
+      const rateId = parseInt(req.params.id, 10);
+      if (isNaN(rateId)) return res.status(400).json({ error: 'Invalid id' }) as any;
+
+      const result = await pool.query(
+        'DELETE FROM bank_rates WHERE id = $1 AND tenant_id = $2 RETURNING id',
+        [rateId, DEFAULT_TENANT_ID]
+      );
+      if (!result.rows.length) return res.status(404).json({ error: 'Not found' }) as any;
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[bank-rates DELETE]', err);
       res.status(500).json({ error: 'Internal server error' });
     }
   });
