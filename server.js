@@ -58701,6 +58701,15 @@ var DICTIONARY = {
     "bank_rates.col_phone": "\u0110i\u1EC7n tho\u1EA1i",
     "bank_rates.col_notes": "Ghi ch\xFA",
     "bank_rates.col_updated": "C\u1EADp nh\u1EADt",
+    "bank_rates.col_actions": "Thao t\xE1c",
+    "bank_rates.btn_edit": "S\u1EEDa",
+    "bank_rates.btn_delete": "X\xF3a",
+    "bank_rates.edit_form_title": "Ch\u1EC9nh S\u1EEDa Th\xF4ng Tin L\xE3i Su\u1EA5t",
+    "bank_rates.success_edit": "\u0110\xE3 c\u1EADp nh\u1EADt th\xF4ng tin l\xE3i su\u1EA5t!",
+    "bank_rates.success_delete": "\u0110\xE3 x\xF3a th\xF4ng tin l\xE3i su\u1EA5t!",
+    "bank_rates.err_edit": "Kh\xF4ng th\u1EC3 c\u1EADp nh\u1EADt. Th\u1EED l\u1EA1i sau.",
+    "bank_rates.err_delete": "Kh\xF4ng th\u1EC3 x\xF3a. Th\u1EED l\u1EA1i sau.",
+    "bank_rates.confirm_delete": "X\xE1c nh\u1EADn x\xF3a th\xF4ng tin l\xE3i su\u1EA5t n\xE0y?",
     "bank_rates.seo_block_title": "Tra C\u1EE9u L\xE3i Su\u1EA5t \u0110\u1EA7y \u0110\u1EE7",
     "bank_rates.seo_block_desc": "Trang so s\xE1nh l\xE3i su\u1EA5t v\u1EDBi \u0111\u1EA7y \u0111\u1EE7 th\xF4ng tin t\u1EEB 12 ng\xE2n h\xE0ng l\u1EDBn.",
     "bank_rates.seo_block_link": "Xem B\u1EA3ng L\xE3i Su\u1EA5t \u0110\u1EA7y \u0110\u1EE7 \u2192",
@@ -60837,6 +60846,15 @@ var DICTIONARY = {
     "bank_rates.col_phone": "Phone",
     "bank_rates.col_notes": "Notes",
     "bank_rates.col_updated": "Updated",
+    "bank_rates.col_actions": "Actions",
+    "bank_rates.btn_edit": "Edit",
+    "bank_rates.btn_delete": "Delete",
+    "bank_rates.edit_form_title": "Edit Interest Rate",
+    "bank_rates.success_edit": "Interest rate updated successfully!",
+    "bank_rates.success_delete": "Interest rate deleted successfully!",
+    "bank_rates.err_edit": "Failed to update. Please try again.",
+    "bank_rates.err_delete": "Failed to delete. Please try again.",
+    "bank_rates.confirm_delete": "Confirm deleting this interest rate?",
     "bank_rates.seo_block_title": "Full Rate Comparison",
     "bank_rates.seo_block_desc": "Full rate comparison page with complete data from 12 major banks.",
     "bank_rates.seo_block_link": "View Full Rate Table \u2192",
@@ -62160,7 +62178,7 @@ async function startServer() {
     try {
       const result = await pool.query(
         `SELECT id, bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max,
-                contact_name, contact_phone, notes, is_verified, updated_at
+                contact_name, contact_phone, notes, is_verified, submitted_by, updated_at
          FROM bank_rates
          WHERE tenant_id = $1
          ORDER BY is_verified DESC, created_at DESC
@@ -62220,6 +62238,76 @@ async function startServer() {
       res.status(201).json({ rate: result.rows[0] });
     } catch (err4) {
       console.error("[bank-rates POST]", err4);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  app.put("/api/bank-rates/:id", apiRateLimit, authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      const rateId = parseInt(req.params.id, 10);
+      if (isNaN(rateId)) return res.status(400).json({ error: "Invalid id" });
+      const existing = await pool.query(
+        "SELECT submitted_by FROM bank_rates WHERE id = $1 AND tenant_id = $2",
+        [rateId, DEFAULT_TENANT_ID]
+      );
+      if (!existing.rows.length) return res.status(404).json({ error: "Not found" });
+      if (existing.rows[0].submitted_by !== user?.id) {
+        return res.status(403).json({ error: "Ch\u1EC9 ng\u01B0\u1EDDi \u0111\u0103ng m\u1EDBi c\xF3 th\u1EC3 s\u1EEDa" });
+      }
+      const { bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max, contact_name, contact_phone, notes } = req.body;
+      if (!bank_name || typeof bank_name !== "string" || bank_name.trim().length === 0) {
+        return res.status(400).json({ error: "bank_name is required" });
+      }
+      const rMin = parseFloat(rate_min);
+      if (isNaN(rMin) || rMin <= 0 || rMin > 50) {
+        return res.status(400).json({ error: "rate_min must be between 0 and 50" });
+      }
+      const slug = bank_name.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
+      const result = await pool.query(
+        `UPDATE bank_rates
+         SET bank_name = $1, bank_slug = $2, loan_type = $3, rate_min = $4, rate_max = $5,
+             tenor_min = $6, tenor_max = $7, contact_name = $8, contact_phone = $9,
+             notes = $10, updated_at = NOW()
+         WHERE id = $11 AND tenant_id = $12
+         RETURNING id, bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max,
+                   contact_name, contact_phone, notes, is_verified, submitted_by, updated_at`,
+        [
+          bank_name.trim().slice(0, 120),
+          slug.slice(0, 120),
+          (loan_type || "Th\u1EBF ch\u1EA5p B\u0110S").trim().slice(0, 120),
+          rMin,
+          rate_max ? parseFloat(rate_max) : null,
+          tenor_min ? parseInt(tenor_min) : null,
+          tenor_max ? parseInt(tenor_max) : null,
+          contact_name ? contact_name.trim().slice(0, 200) : null,
+          contact_phone ? contact_phone.trim().slice(0, 30) : null,
+          notes ? notes.trim().slice(0, 2e3) : null,
+          rateId,
+          DEFAULT_TENANT_ID
+        ]
+      );
+      res.json({ rate: result.rows[0] });
+    } catch (err4) {
+      console.error("[bank-rates PUT]", err4);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  app.delete("/api/bank-rates/:id", apiRateLimit, authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user || !["ADMIN", "TEAM_LEAD", "SUPER_ADMIN"].includes(user.role)) {
+        return res.status(403).json({ error: "Ch\u1EC9 Admin v\xE0 Tr\u01B0\u1EDFng nh\xF3m m\u1EDBi c\xF3 th\u1EC3 x\xF3a" });
+      }
+      const rateId = parseInt(req.params.id, 10);
+      if (isNaN(rateId)) return res.status(400).json({ error: "Invalid id" });
+      const result = await pool.query(
+        "DELETE FROM bank_rates WHERE id = $1 AND tenant_id = $2 RETURNING id",
+        [rateId, DEFAULT_TENANT_ID]
+      );
+      if (!result.rows.length) return res.status(404).json({ error: "Not found" });
+      res.json({ success: true });
+    } catch (err4) {
+      console.error("[bank-rates DELETE]", err4);
       res.status(500).json({ error: "Internal server error" });
     }
   });
