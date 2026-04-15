@@ -195,8 +195,6 @@ function css(): string {
     .hdr-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
     .hdr-brand:hover{text-decoration:none}
     .hdr-brand-name{font-weight:700;font-size:16px;color:#fff;letter-spacing:0.5px;white-space:nowrap}
-    .hdr-tagline{color:#94A3B8;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;display:none;padding-left:12px;border-left:1px solid #334155}
-    @media(min-width:600px){.hdr-tagline{display:block}}
     .hdr-nav{display:flex;align-items:center;gap:8px}
     .hdr-nav a{color:#CBD5E1;font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;border:1px solid #334155;transition:background .15s;white-space:nowrap}
     .hdr-nav a:hover{background:#334155;color:#fff;text-decoration:none}
@@ -389,7 +387,6 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
     </svg>
     <span class="hdr-brand-name">SGS LAND</span>
   </a>
-  <span class="hdr-tagline">Enterprise Real Estate Platform</span>
   <nav class="hdr-nav">
     <a href="/#/marketplace">Tin rao</a>
     <a href="/#/lai-suat-ngan-hang">Đăng lãi suất</a>
