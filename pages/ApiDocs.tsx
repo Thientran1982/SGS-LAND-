@@ -63,9 +63,13 @@ export const ApiDocs: React.FC = () => {
                         <Logo className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 shrink-0" />
                         <span className="font-bold text-base sm:text-lg hidden sm:inline truncate">SGS API</span>
                     </div>
-                    <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
-                        {currentUser ? t('menu.dashboard') : t('auth.btn_login')}
-                    </button>
+                    {currentUser ? (
+                        <button onClick={handleLogin} className="px-3 sm:px-6 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg active:scale-95 text-xs sm:text-sm min-h-[44px] shrink-0 whitespace-nowrap">
+                            {t('menu.dashboard')}
+                        </button>
+                    ) : (
+                        <div className="w-[80px] sm:w-[120px]" />
+                    )}
                 </div>
             </div>
 
