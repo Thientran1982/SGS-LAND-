@@ -600,6 +600,7 @@ export const Landing: React.FC = () => {
                             <FooterLink label={t('footer.link_valuation')} route={ROUTES.AI_VALUATION} />
                             <FooterLink label={t('footer.link_crm')} route={ROUTES.CRM_SOLUTION} />
                             <FooterLink label={t('footer.link_consignment')} route={ROUTES.KY_GUI} />
+                            <li><a href="/lai-suat-vay-ngan-hang" className="text-[var(--text-tertiary)] dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:translate-x-1 duration-200 inline-block transition-all">{t('footer.link_bank_rates')}</a></li>
                         </ul>
                     </div>
 

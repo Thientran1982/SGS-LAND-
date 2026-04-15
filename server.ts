@@ -1460,6 +1460,76 @@ async function startServer() {
     }
   });
 
+  // ─── Bank Rates API ────────────────────────────────────────────────────────
+  // GET  /api/public/bank-rates  — public: list community-submitted rates
+  // POST /api/bank-rates         — authenticated: submit a new rate
+
+  app.get('/api/public/bank-rates', apiRateLimit, async (_req: express.Request, res: express.Response) => {
+    try {
+      const result = await pool.query(
+        `SELECT id, bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max,
+                contact_name, contact_phone, notes, is_verified, updated_at
+         FROM bank_rates
+         WHERE tenant_id = $1
+         ORDER BY is_verified DESC, created_at DESC
+         LIMIT 200`,
+        [DEFAULT_TENANT_ID]
+      );
+      res.json({ rates: result.rows });
+    } catch (err) {
+      console.error('[bank-rates GET]', err);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/bank-rates', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    try {
+      const user = (req as any).user;
+      const {
+        bank_name, loan_type, rate_min, rate_max,
+        tenor_min, tenor_max, contact_name, contact_phone, notes,
+      } = req.body;
+
+      if (!bank_name || typeof bank_name !== 'string' || bank_name.trim().length === 0) {
+        return res.status(400).json({ error: 'bank_name is required' });
+      }
+      const rMin = parseFloat(rate_min);
+      if (isNaN(rMin) || rMin <= 0 || rMin > 50) {
+        return res.status(400).json({ error: 'rate_min must be between 0 and 50' });
+      }
+
+      const slug = (bank_name as string).toLowerCase().trim()
+        .replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+
+      const result = await pool.query(
+        `INSERT INTO bank_rates
+           (tenant_id, bank_name, bank_slug, loan_type, rate_min, rate_max,
+            tenor_min, tenor_max, contact_name, contact_phone, notes, submitted_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+         RETURNING id, bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max,
+                   contact_name, contact_phone, notes, is_verified, updated_at`,
+        [
+          DEFAULT_TENANT_ID,
+          (bank_name as string).trim().slice(0, 120),
+          slug.slice(0, 120),
+          (loan_type as string || 'Thế chấp BĐS').trim().slice(0, 120),
+          rMin,
+          rate_max ? parseFloat(rate_max) : null,
+          tenor_min ? parseInt(tenor_min) : null,
+          tenor_max ? parseInt(tenor_max) : null,
+          contact_name ? (contact_name as string).trim().slice(0, 200) : null,
+          contact_phone ? (contact_phone as string).trim().slice(0, 30) : null,
+          notes ? (notes as string).trim().slice(0, 2000) : null,
+          user?.id || null,
+        ]
+      );
+      res.status(201).json({ rate: result.rows[0] });
+    } catch (err) {
+      console.error('[bank-rates POST]', err);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // ─── SEO Overrides API ─────────────────────────────────────────────────────
   // GET  /api/seo-overrides          — public read (used by server-side injector on start)
   // POST /api/seo-overrides/:key     — ADMIN only: upsert an override
@@ -2326,6 +2396,33 @@ async function startServer() {
 
   // Serve public assets (widget.js, QR codes, etc.) in all environments
   app.use(express.static("public"));
+
+  // ─── Bank Rates SSR Page (all environments) ────────────────────────────────
+  // Returns a COMPLETE HTML document (not the SPA shell) — fully crawlable by
+  // Googlebot and AI chatbots (ChatGPT, Gemini, Claude) without JavaScript.
+  app.get('/lai-suat-vay-ngan-hang', async (_req: express.Request, res: express.Response) => {
+    try {
+      const { getBankRatesHtml } = await import('./server/seo/bankRatesPage');
+      let ugcRates: any[] = [];
+      try {
+        const r = await pool.query(
+          `SELECT id, bank_name, loan_type, rate_min, rate_max, tenor_min, tenor_max,
+                  contact_name, contact_phone, notes, is_verified, updated_at
+           FROM bank_rates WHERE tenant_id = $1
+           ORDER BY is_verified DESC, created_at DESC LIMIT 100`,
+          [DEFAULT_TENANT_ID]
+        );
+        ugcRates = r.rows;
+      } catch { /* table may not exist yet */ }
+      const html = getBankRatesHtml(ugcRates);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+      res.send(html);
+    } catch (err) {
+      console.error('[bank-rates SSR]', err);
+      res.status(500).send('Internal server error');
+    }
+  });
 
   // Vite middleware for development (dynamically imported so vite is not required in production)
   if (process.env.NODE_ENV !== "production") {
