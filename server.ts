@@ -47,6 +47,7 @@ import { createTaskReportRoutes } from "./server/routes/taskReportRoutes";
 import { createConnectorRoutes } from "./server/routes/connectorRoutes";
 import { createScraperRoutes } from "./server/routes/scraperRoutes";
 import { createScraperProjectRoutes } from "./server/routes/scraperProjectRoutes";
+import { createEngagementCronRouter } from "./server/routes/engagementCronRoutes";
 import { createErrorLogRoutes, initErrorLogRepo } from "./server/routes/errorLogRoutes";
 import { marketDataService } from "./server/services/marketDataService";
 import { priceCalibrationService } from "./server/services/priceCalibrationService";
@@ -2246,6 +2247,17 @@ async function startServer() {
     }
   });
 
+  // ---------------------------------------------------------------------------
+  // Engagement Email Cron — gọi từ QStash (3:00 SA ICT hàng ngày)
+  // ---------------------------------------------------------------------------
+  {
+    const engagementSecret =
+      process.env.ENGAGEMENT_CRON_SECRET ||
+      process.env.JWT_SECRET?.slice(0, 32) ||
+      '';
+    app.use(createEngagementCronRouter(pool, engagementSecret));
+  }
+
   // Facebook Webhook Verification
   app.get("/api/webhooks/facebook", (req, res) => {
     const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
@@ -2659,6 +2671,46 @@ async function startServer() {
         }
       } catch (e: any) {
         logger.warn('[RLHF] Lỗi khi đăng ký QStash schedule:', e.message);
+      }
+
+      // ── Engagement Email Cron (NUDGE_A / B / C) — 3:00 SA ICT = 20:00 UTC ──
+      try {
+        const engagementSecret =
+          process.env.ENGAGEMENT_CRON_SECRET ||
+          process.env.JWT_SECRET?.slice(0, 32) ||
+          '';
+        const devDomain2  = process.env.REPLIT_DEV_DOMAIN;
+        const prodDomain2 = process.env.REPLIT_DOMAINS?.split(',')[0]?.trim() || process.env.APP_DOMAIN;
+        const appDomain2  = prodDomain2 || devDomain2;
+
+        if (appDomain2 && engagementSecret) {
+          const engScheduleId  = 'engagement-email-daily';
+          const engScheduleUrl = `https://${appDomain2}/api/internal/engagement-email-cron`;
+          const engQstashEp    = `https://qstash.upstash.io/v2/schedules/${engScheduleId}`;
+          const qstashToken    = process.env.QSTASH_TOKEN!;
+          const engBody        = JSON.stringify({ secret: engagementSecret });
+
+          const engResp = await fetch(engQstashEp, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${qstashToken}`,
+              'Content-Type': 'application/json',
+              'Upstash-Destination': engScheduleUrl,
+              'Upstash-Cron': '0 20 * * *', // 3:00 SA ICT = 20:00 UTC
+              'Upstash-Method': 'POST',
+            },
+            body: engBody,
+          });
+
+          if (engResp.ok) {
+            logger.info('[EngagementCron] Đã đăng ký QStash daily schedule — chạy lúc 3:00 SA ICT');
+          } else {
+            const errText = await engResp.text();
+            logger.warn(`[EngagementCron] Không thể đăng ký QStash schedule: ${engResp.status} ${errText}`);
+          }
+        }
+      } catch (e: any) {
+        logger.warn('[EngagementCron] Lỗi khi đăng ký QStash schedule:', e.message);
       }
     }
   });

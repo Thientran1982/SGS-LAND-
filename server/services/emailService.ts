@@ -671,6 +671,231 @@ async function sendContactAutoReply(
   });
 }
 
+// ── Email tự động theo hành vi người dùng ──────────────────────────────────────
+
+/**
+ * NUDGE_A — Gửi cho user đăng ký ≥ 3 ngày nhưng chưa đăng tin nào.
+ * Khuyến khích đăng tin bất động sản đầu tiên.
+ */
+async function sendNudgeA(tenantId: string, to: string, userName: string): Promise<EmailResult> {
+  const safeName = escapeHtml(userName || 'bạn');
+  const listingUrl = 'https://sgsland.vn/#/dang-tin';
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#EEF2FF', '&#127968;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
+          Đăng Tin BĐS Đầu Tiên Của Bạn — Miễn Phí!
+        </h1>
+      </td></tr>
+      <tr><td align="center" style="padding-top:8px;">
+        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
+          Xin chào <strong>${safeName}</strong>, bạn vẫn chưa đăng tin bất động sản nào trên SGS LAND.
+        </span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
+      Thị trường BĐS tại TP.HCM, Hà Nội và các tỉnh đang có hàng nghìn người mua đang tìm kiếm mỗi ngày.
+      Đăng tin ngay hôm nay để tiếp cận đúng khách hàng tiềm năng:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFC" style="border:1px solid #E2E8F0;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#10003;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Miễn phí 100%</strong> — Không mất phí đăng tin
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#10003;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Hỗ trợ AI</strong> — Mô tả tự động, gợi ý giá thị trường
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#10003;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
+              <strong>Tiếp cận ngay</strong> — Tin hiển thị trên SGS LAND ngay sau khi đăng
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(8)}
+    ${primaryButton(listingUrl, 'Đăng Tin Ngay — Miễn Phí')}
+    ${spacer(20)}
+    <p style="color:#94A3B8;font-size:12px;text-align:center;margin:0;font-family:Arial,sans-serif;">
+      Chỉ mất 5 phút để hoàn thành tin đăng đầu tiên của bạn.
+    </p>
+  `;
+
+  return sendEmail(tenantId, {
+    to,
+    subject: 'SGS LAND – Đăng tin BĐS đầu tiên của bạn — Hoàn toàn miễn phí',
+    html: emailBase(content, 'Email này được gửi tự động vì bạn chưa đăng tin bất động sản nào trên SGS LAND.'),
+    text: `Xin chào ${userName},\n\nBạn chưa đăng tin bất động sản nào trên SGS LAND. Hãy đăng tin đầu tiên hoàn toàn miễn phí tại:\n${listingUrl}\n\nChỉ mất 5 phút!\n\n— SGS LAND`,
+  });
+}
+
+/**
+ * NUDGE_B — Gửi cho user có đúng 1 listing, tạo ≥ 7 ngày, không còn hoạt động.
+ * Nhắc nhở cập nhật tin và đăng thêm.
+ */
+async function sendNudgeB(tenantId: string, to: string, userName: string): Promise<EmailResult> {
+  const safeName = escapeHtml(userName || 'bạn');
+  const dashboardUrl = 'https://sgsland.vn/#/tin-dang';
+  const listingUrl   = 'https://sgsland.vn/#/dang-tin';
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#FFF7ED', '&#128204;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
+          Tin BĐS Của Bạn Cần Được Cập Nhật?
+        </h1>
+      </td></tr>
+      <tr><td align="center" style="padding-top:8px;">
+        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
+          Xin chào <strong>${safeName}</strong>, đã một thời gian kể từ khi bạn đăng tin đầu tiên trên SGS LAND.
+        </span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
+      Tin đăng đã cũ sẽ ít được hiển thị hơn. Để tăng lượt xem và thu hút khách mua/thuê:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF7ED" style="border:1px solid #FED7AA;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#9889;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Cập nhật giá</strong> — Điều chỉnh theo xu hướng thị trường hiện tại
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#9889;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Thêm ảnh thực tế</strong> — Tin có nhiều ảnh được xem nhiều hơn 3 lần
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#9889;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
+              <strong>Đăng thêm tin mới</strong> — Nhiều tin = nhiều cơ hội thành giao dịch
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(4)}
+    ${primaryButton(dashboardUrl, 'Cập Nhật Tin Của Tôi')}
+    ${spacer(12)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <a href="${listingUrl}" style="color:#4F46E5;font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
+          Hoặc đăng thêm tin mới miễn phí &rarr;
+        </a>
+      </td></tr>
+    </table>
+    ${spacer(20)}
+  `;
+
+  return sendEmail(tenantId, {
+    to,
+    subject: 'SGS LAND – Tin BĐS của bạn cần được cập nhật để tiếp cận nhiều khách hơn',
+    html: emailBase(content, 'Email này được gửi tự động vì tin bất động sản của bạn đã lâu chưa cập nhật.'),
+    text: `Xin chào ${userName},\n\nTin đăng của bạn đã lâu chưa cập nhật. Hãy cập nhật để tăng lượt xem:\n${dashboardUrl}\n\nHoặc đăng thêm tin mới:\n${listingUrl}\n\n— SGS LAND`,
+  });
+}
+
+/**
+ * NUDGE_C — Gửi cho user không đăng nhập ≥ 30 ngày.
+ * Nhắc về thị trường sôi động, kêu gọi quay lại.
+ */
+async function sendNudgeC(tenantId: string, to: string, userName: string): Promise<EmailResult> {
+  const safeName   = escapeHtml(userName || 'bạn');
+  const loginUrl   = 'https://sgsland.vn/#/dang-nhap';
+  const marketUrl  = 'https://sgsland.vn/#/tim-kiem';
+
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">${iconCircle('#F0FDF4', '&#128200;')}</td></tr>
+    </table>
+    ${spacer(20)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <h1 class="email-title" style="color:#0F172A;font-size:22px;font-weight:bold;margin:0;font-family:Arial,sans-serif;">
+          Thị Trường BĐS Đang Sôi Động — Đừng Bỏ Lỡ!
+        </h1>
+      </td></tr>
+      <tr><td align="center" style="padding-top:8px;">
+        <span style="color:#64748B;font-size:14px;font-family:Arial,sans-serif;">
+          Xin chào <strong>${safeName}</strong>, đã lâu không thấy bạn trên SGS LAND.
+        </span>
+      </td></tr>
+    </table>
+    ${spacer(24)}
+    ${divider()}
+    <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 16px;font-family:Arial,sans-serif;">
+      Trong thời gian qua thị trường bất động sản Việt Nam có nhiều biến động đáng chú ý:
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F0FDF4" style="border:1px solid #BBF7D0;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128205;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>TP.HCM</strong> — Phân khúc căn hộ trung cấp giao dịch tăng mạnh quý này
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128205;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;padding-bottom:8px;">
+              <strong>Hà Nội</strong> — Đất nền ven đô thu hút nhà đầu tư dài hạn
+            </td>
+          </tr>
+          <tr>
+            <td width="28" valign="top" style="font-size:16px;padding-right:10px;font-family:Arial,sans-serif;">&#128205;</td>
+            <td style="color:#374151;font-size:13px;line-height:1.7;font-family:Arial,sans-serif;">
+              <strong>Lãi suất</strong> — Các ngân hàng đang có gói vay ưu đãi từ 6%/năm
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    ${spacer(4)}
+    ${primaryButton(loginUrl, 'Đăng Nhập Xem Thị Trường')}
+    ${spacer(12)}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center">
+        <a href="${marketUrl}" style="color:#4F46E5;font-size:13px;text-decoration:underline;font-family:Arial,sans-serif;">
+          Xem tin BĐS mới nhất không cần đăng nhập &rarr;
+        </a>
+      </td></tr>
+    </table>
+    ${spacer(20)}
+  `;
+
+  return sendEmail(tenantId, {
+    to,
+    subject: 'SGS LAND – Thị trường BĐS đang sôi động, cơ hội đang chờ bạn',
+    html: emailBase(content, 'Email này được gửi vì bạn là thành viên SGS LAND chưa đăng nhập gần đây.'),
+    text: `Xin chào ${userName},\n\nThị trường BĐS Việt Nam đang có nhiều cơ hội hấp dẫn. Hãy quay lại SGS LAND:\n${loginUrl}\n\nHoặc xem tin không cần đăng nhập:\n${marketUrl}\n\n— SGS LAND`,
+  });
+}
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export const emailService = {
@@ -682,6 +907,9 @@ export const emailService = {
   sendSequenceEmail,
   sendContactNotification,
   sendContactAutoReply,
+  sendNudgeA,
+  sendNudgeB,
+  sendNudgeC,
   testSmtpConnection,
   getSmtpConfig,
 };
