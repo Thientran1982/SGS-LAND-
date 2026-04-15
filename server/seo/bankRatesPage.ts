@@ -361,8 +361,9 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="icon" href="/favicon.ico" sizes="any"/>
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"/>
+  <link rel="apple-touch-icon" href="/icon-192.png"/>
   <title>Lãi Suất Vay Ngân Hàng 2026 | Bảng So Sánh Mới Nhất – SGS Land</title>
   <meta name="description" content="Cập nhật bảng lãi suất vay ngân hàng mua bất động sản mới nhất Q2/2026. So sánh lãi suất thế chấp từ Vietcombank, BIDV, Techcombank, Agribank, MB Bank. Tư vấn vay miễn phí."/>
   <link rel="canonical" href="${CANONICAL}"/>
@@ -375,7 +376,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
   <link rel="alternate" hreflang="vi" href="${CANONICAL}"/>
   <link rel="alternate" hreflang="x-default" href="${CANONICAL}"/>
   ${buildSchema(ugcRates.length)}
-  <style>${css()}</style>
+  <link rel="stylesheet" href="/bank-rates.css"/>
 </head>
 <body>
 
