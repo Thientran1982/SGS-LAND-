@@ -98,7 +98,7 @@ function emailBase(content: string, footerNote?: string): string {
               </tr>
               <tr>
                 <td align="center">
-                  <span style="color:#94A3B8;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,sans-serif;">Enterprise Real Estate Platform</span>
+                  <span style="color:#94A3B8;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,sans-serif;">Nền tảng Bất Động Sản Chuyên Nghiệp</span>
                 </td>
               </tr>
             </table>
@@ -117,10 +117,10 @@ function emailBase(content: string, footerNote?: string): string {
           <td class="email-footer" bgcolor="#F8FAFC" style="padding:18px 40px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 12px 12px;text-align:center;">
             ${footerNote ? `<p style="color:#64748B;font-size:12px;line-height:1.6;margin:0 0 10px;font-family:Arial,sans-serif;">${footerNote}</p>` : ''}
             <p style="color:#94A3B8;font-size:11px;margin:0;line-height:1.8;font-family:Arial,sans-serif;">
-              &copy; ${year} SGS LAND &mdash; Enterprise Real Estate Platform<br />
+              &copy; ${year} SGS LAND &mdash; 122-124 B2, Sala, Thủ Đức, TP.HCM<br />
               <a href="https://sgsland.vn" style="color:#4F46E5;text-decoration:none;font-family:Arial,sans-serif;">sgsland.vn</a>
               &nbsp;&bull;&nbsp;
-              <a href="mailto:support@sgsland.vn" style="color:#4F46E5;text-decoration:none;font-family:Arial,sans-serif;">support@sgsland.vn</a>
+              <a href="mailto:info@sgsland.vn" style="color:#4F46E5;text-decoration:none;font-family:Arial,sans-serif;">info@sgsland.vn</a>
             </p>
           </td>
         </tr>
@@ -553,7 +553,7 @@ const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: st
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">3.</span>&nbsp; Báo giá chi tiết & ký hợp đồng tư vấn/thi công</td></tr>
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#4F46E5;font-weight:bold;">4.</span>&nbsp; Theo dõi tiến độ & bàn giao công trình</td></tr>
       </table>`,
-    cta: { url: 'https://sgsland.vn/du-an', label: 'Xem Dự Án Tham Khảo' },
+    cta: { url: 'https://sgsland.vn/#/marketplace', label: 'Xem Tin Rao Bất Động Sản' },
   },
   sales: {
     label: 'Tư vấn Mua/Bán Bất Động Sản',
@@ -570,7 +570,7 @@ const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: st
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">3.</span>&nbsp; Đi thực địa & đánh giá pháp lý dự án</td></tr>
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#10B981;font-weight:bold;">4.</span>&nbsp; Hỗ trợ đàm phán giá & hoàn thiện hợp đồng</td></tr>
       </table>`,
-    cta: { url: 'https://sgsland.vn/listings', label: 'Xem Tin Rao Mới Nhất' },
+    cta: { url: 'https://sgsland.vn/#/marketplace', label: 'Xem Tin Rao Mới Nhất' },
   },
   partnership: {
     label: 'Hợp tác Kinh doanh',
@@ -587,7 +587,7 @@ const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: st
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Cung cấp dịch vụ cho hệ sinh thái bất động sản</td></tr>
         <tr><td style="padding:4px 0;color:#475569;font-size:13px;font-family:Arial,sans-serif;"><span style="color:#F59E0B;font-weight:bold;">&#9670;</span>&nbsp; Đối tác công nghệ & truyền thông</td></tr>
       </table>`,
-    cta: { url: 'https://sgsland.vn/gioi-thieu', label: 'Tìm Hiểu Về SGS Land' },
+    cta: { url: 'https://sgsland.vn/#/contact', label: 'Liên Hệ Hợp Tác Ngay' },
   },
   other: {
     label: 'Yêu cầu khác',
@@ -598,7 +598,7 @@ const SUBJECT_GUIDANCE: Record<string, { label: string; icon: string; iconBg: st
         Đội ngũ SGS Land sẽ xem xét yêu cầu của bạn và phản hồi trong vòng <strong>24 giờ làm việc</strong>.
         Nếu cần hỗ trợ gấp, bạn có thể gọi hotline <strong>0971 132 378</strong> (24/7).
       </p>`,
-    cta: { url: 'https://sgsland.vn/lien-he', label: 'Xem Thêm Thông Tin Liên Hệ' },
+    cta: { url: 'https://sgsland.vn/#/contact', label: 'Xem Thêm Thông Tin Liên Hệ' },
   },
 };
 
@@ -666,8 +666,8 @@ async function sendContactAutoReply(
   return sendEmail(DEFAULT_TENANT_ID, {
     to,
     subject: `SGS Land – Xác nhận nhận yêu cầu: ${info.label}`,
-    html: emailBase(content, 'Email này được gửi tự động sau khi bạn điền form liên hệ tại sgsland.vn/lien-he'),
-    text: `Xin chào ${name},\n\nCảm ơn bạn đã liên hệ với SGS Land về: ${info.label}.\n\nChúng tôi đã nhận được yêu cầu và sẽ phản hồi sớm nhất.\n\nHotline: 0971 132 378 (24/7)\nEmail: info@sgsland.vn\n\n— SGS LAND`,
+    html: emailBase(content, 'Email này được gửi tự động sau khi bạn điền form liên hệ tại sgsland.vn'),
+    text: `Xin chào ${name},\n\nCảm ơn bạn đã liên hệ với SGS Land về: ${info.label}.\n\nChúng tôi đã nhận được yêu cầu và sẽ phản hồi sớm nhất.\n\nHotline: 0971 132 378 (24/7)\nEmail: info@sgsland.vn\nWebsite: https://sgsland.vn\n\n— SGS LAND`,
   });
 }
 
