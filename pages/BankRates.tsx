@@ -199,7 +199,7 @@ export const BankRates: React.FC = () => {
           <h1 className="text-3xl md:text-4xl font-black text-[var(--text-primary)] mb-3 tracking-tight">{t('bank_rates.h1')}</h1>
           <p className="text-[var(--text-tertiary)] text-base max-w-2xl mx-auto mb-4">{t('bank_rates.subtitle')}</p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <span className="text-xs font-semibold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">&#128198; {t('bank_rates.updated')}</span>
+            <span className="text-xs font-semibold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">{t('bank_rates.updated')}</span>
             <a href="/lai-suat-vay-ngan-hang" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold bg-slate-100 text-slate-600 px-3 py-1 rounded-full flex items-center gap-1 hover:bg-slate-200 transition-colors">
               {ICONS.EXT} {t('bank_rates.view_seo_page')}
             </a>
