@@ -54,7 +54,7 @@ import { priceCalibrationService } from "./server/services/priceCalibrationServi
 import { securityHeaders, corsMiddleware, verifyWebhookSignature, preventParamPollution } from "./server/middleware/security";
 import { errorHandler } from "./server/middleware/errorHandler";
 import { sanitizeInput, validateBody, schemas } from "./server/middleware/validation";
-import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit } from "./server/middleware/rateLimiter";
+import { aiRateLimit, authRateLimit, webhookRateLimit, apiRateLimit, publicLeadRateLimit, livechatRateLimit, guestValuationRateLimit, userValuationRateLimit, monthlyValuationQuota } from "./server/middleware/rateLimiter";
 import { logger, requestLogger } from "./server/middleware/logger";
 import { writeAuditLog } from "./server/middleware/auditLog";
 import { DEFAULT_TENANT_ID } from "./server/constants";
@@ -668,10 +668,12 @@ async function startServer() {
     }
   });
 
-  app.post("/api/ai/valuation", optionalAuth, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const limiter = (req as any).user ? aiRateLimit : guestValuationRateLimit;
-    return limiter(req, res, next);
-  }, validateBody(schemas.aiValuation), async (req, res) => {
+  app.post("/api/ai/valuation", optionalAuth,
+    (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      if ((req as any).user) return monthlyValuationQuota(req, res, next);
+      return guestValuationRateLimit(req, res, next);
+    },
+    validateBody(schemas.aiValuation), async (req, res) => {
     try {
       const {
         address, area, roadWidth, legal, propertyType,
