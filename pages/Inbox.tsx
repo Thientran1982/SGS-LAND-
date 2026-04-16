@@ -659,6 +659,22 @@ export const Inbox: React.FC = () => {
     const selectedThread = threads.find(t => t.lead.id === selectedLeadId);
     const isAiActiveForSelected = selectedLeadId ? autoResponseMap[selectedLeadId] : false;
 
+    // When in manual mode, hide system-generated AI busy/error messages — they are
+    // noise for the human agent and confuse the conversation history.
+    const AI_SYS_PATTERNS = ['đang bận', 'system busy', 'tạm thời không khả dụng', 'temporarily busy'];
+    const visibleMessages = useMemo(() => {
+        if (isAiActiveForSelected) return messages;
+        return messages.filter(msg => {
+            if (msg.metadata?.isSysMsg) return false;
+            // Backward-compat: detect old DB messages without the flag by content
+            if (msg.metadata?.isAgent && msg.direction === 'OUTBOUND') {
+                const c = (msg.content || '').toLowerCase();
+                if (AI_SYS_PATTERNS.some(p => c.includes(p))) return false;
+            }
+            return true;
+        });
+    }, [messages, isAiActiveForSelected]);
+
     return (
         <>
         {/* Full-bleed on mobile, padded on sm+ — fills the flex-1 parent from Layout */}
@@ -935,13 +951,13 @@ export const Inbox: React.FC = () => {
 
                     {/* Messages List */}
                     <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4 bg-[var(--glass-surface)] space-y-3 sm:space-y-4 no-scrollbar scroll-smooth">
-                        {messages.length === 0 && (
+                        {visibleMessages.length === 0 && (
                             <div className="h-full flex flex-col items-center justify-center text-[var(--text-secondary)] opacity-60">
                                 <div className="text-4xl mb-2">💬</div>
                                 <div className="text-sm">{t('inbox.empty_messages')}</div>
                             </div>
                         )}
-                        {messages.map((msg, idx) => (
+                        {visibleMessages.map((msg, idx) => (
                             <MessageBubble 
                                 key={msg.id} 
                                 msg={msg} 
@@ -950,7 +966,7 @@ export const Inbox: React.FC = () => {
                                 formatCurrency={formatCurrency} 
                                 formatDate={formatDate}
                                 formatDateTime={formatDateTime}
-                                showDate={idx === 0 || new Date(msg.timestamp).getDate() !== new Date(messages[idx-1].timestamp).getDate()}
+                                showDate={idx === 0 || new Date(msg.timestamp).getDate() !== new Date(visibleMessages[idx-1].timestamp).getDate()}
                                 onAiFeedback={handleAiFeedback}
                             />
                         ))}

@@ -1163,7 +1163,7 @@ async function startServer() {
         direction: 'OUTBOUND',
         type: 'TEXT',
         content: result.content,
-        metadata: { isAgent: true }
+        metadata: { isAgent: true, ...(result.isSysMsg ? { isSysMsg: true } : {}) }
       });
       // Notify Inbox of the AI reply so agents see the outgoing response too
       broadcastIo?.to(leadId).emit('receive_message', { room: leadId, message: aiReply });
