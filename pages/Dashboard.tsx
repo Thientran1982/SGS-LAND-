@@ -649,9 +649,7 @@ export const Dashboard: React.FC = () => {
                                     {formatCompactNumber(analytics.revenue || 0)}
                                 </div>
                                 <div className="text-xs2 text-indigo-200 font-bold uppercase tracking-wider mt-1">
-                                    {language === 'vn'
-                                        ? 'Từ deal chốt & sản phẩm đã bán'
-                                        : 'From closed deals & sold listings'}
+                                    {t('dash.revenue_subtitle')}
                                 </div>
                             </div>
                             <div className="bg-[var(--bg-surface)]/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-xs flex items-center gap-2">
