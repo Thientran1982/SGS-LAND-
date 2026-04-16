@@ -602,7 +602,10 @@ export class AnalyticsRepository extends BaseRepository {
         aiDeflectionRate: Math.round(aiDeflectionRate * 100) / 100,
         aiDeflectionRateDelta: prevAiDeflectionRate > 0 ? calcDelta(aiDeflectionRate, prevAiDeflectionRate) : 0,
         salesVelocity,
-        salesVelocityDelta: prevSalesVelocity > 0 ? calcDelta(salesVelocity, prevSalesVelocity) : 0,
+        // Negate: fewer days = faster = better. calcDelta returns positive when current > previous,
+        // but for velocity a positive change (more days) is BAD, so we flip the sign so the
+        // TrendIndicator correctly colours improvement (fewer days) as green.
+        salesVelocityDelta: prevSalesVelocity > 0 ? -calcDelta(salesVelocity, prevSalesVelocity) : 0,
         conversionRate,
         totalLeadsDelta: calcDelta(leadStats.total, prevLeadTotal),
         leadsByStage,
