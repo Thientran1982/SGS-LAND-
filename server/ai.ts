@@ -2703,6 +2703,7 @@ Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise
         internalCompsMedian?: number;
         internalCompsCount?: number;
         roadTypeLabel?: string;
+        listingId?: string;
     }): Promise<{
         basePrice: number;
         pricePerM2: number;
@@ -2933,11 +2934,13 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
 
             // ── Load tất cả Skill instructions + RLHF trước khi chạy AI (song song để tiết kiệm latency) ──
             const tid = tenantId || '';
+            const listingId = advanced?.listingId;
             const [
                 valSearchInstruction,
                 valRentalInstruction,
                 valuationSystemInstruction,
                 rlhf,
+                valuationAgent,
             ] = await Promise.all([
                 getValuationSearchInstruction(tid).catch(() => DEFAULT_VALUATION_SEARCH_SYSTEM),
                 getValuationRentalInstruction(tid).catch(() => DEFAULT_VALUATION_RENTAL_SYSTEM),
@@ -2945,7 +2948,41 @@ Lưu ý: thuê nguyên căn làm nhà ở hoặc kinh doanh, không tính thuê 
                 tid
                     ? buildRlhfContext(tid, 'ESTIMATE_VALUATION').catch(() => ({ fewShotSection: '', negativeRulesSection: '' }))
                     : Promise.resolve({ fewShotSection: '', negativeRulesSection: '' }),
+                tid
+                    ? agentRepository.getAgentByName(tid, 'VALUATION').catch(() => null)
+                    : Promise.resolve(null),
             ]);
+
+            // ── Load per-property valuation memories (if we have agent + listingId) ──
+            const propertyMemories = (valuationAgent && listingId && tid)
+                ? await agentRepository.getPropertyMemories(tid, valuationAgent.id, listingId, 3).catch(() => [] as import('./repositories/agentRepository').AgentMemory[])
+                : [];
+
+            const propertyMemorySection = propertyMemories.length > 0
+                ? `\n=== LỊCH SỬ ĐỊNH GIÁ BĐS NÀY (${propertyMemories.length} lần trước) ===\n` +
+                  propertyMemories.map((m, i) => {
+                      const dt = new Date(m.createdAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+                      const sig = m.signals as Partial<import('./repositories/agentRepository').ValuationMemorySignals>;
+                      const totalFmt  = sig.totalPrice  ? `${(sig.totalPrice / 1e9).toFixed(2)} tỷ` : 'N/A';
+                      const perM2Fmt  = sig.pricePerM2  ? `${(sig.pricePerM2 / 1e6).toFixed(1)} tr/m²` : 'N/A';
+                      const confFmt   = sig.confidence  != null ? `${sig.confidence}%` : 'N/A';
+                      const trendFmt  = sig.trendGrowthPct != null ? `${sig.trendGrowthPct > 0 ? '+' : ''}${sig.trendGrowthPct}%/năm` : 'N/A';
+                      const rangeFmt  = (sig.rangeMin && sig.rangeMax)
+                          ? `${(sig.rangeMin / 1e9).toFixed(2)}-${(sig.rangeMax / 1e9).toFixed(2)} tỷ`
+                          : '';
+                      return `[Lần ${i + 1} — ${dt}]\nKết quả: ${totalFmt} (${perM2Fmt})` +
+                          (rangeFmt ? ` | Khoảng: ${rangeFmt}` : '') +
+                          ` | Độ tin cậy: ${confFmt} | Xu hướng: ${trendFmt}`;
+                  }).join('\n\n') +
+                  '\nLưu ý: Dùng lịch sử trên để xác nhận xu hướng thị trường của BĐS này. ' +
+                  'Nếu kết quả lần này chênh >15% so với lần trước → ghi rõ lý do trong analysisNotes.\n'
+                : '';
+
+            // ── Resolve extraction model: VALUATION agent override > governance > WRITER ──
+            const governanceValModel = await getGovernanceModel(tid).catch(() => GENAI_CONFIG.MODELS.WRITER);
+            const extractionModel = (valuationAgent?.model && valuationAgent.model.trim())
+                ? valuationAgent.model.trim()
+                : governanceValModel;
 
             // Run both searches in parallel — STEP 1 (Google Search grounding)
             const [saleSearchRes, rentalSearchRes] = await Promise.all([
@@ -3122,7 +3159,7 @@ GIÁ BÁN (từ phần DỮ LIỆU GIÁ BÁN):
 GIÁ THUÊ (từ DỮ LIỆU GIÁ THUÊ):
 - rentMin/rentMedian/rentMax: Giá thuê thực tế (triệu VNĐ/tháng) cho ${area}m². Nếu chỉ 1 con số → cả 3 bằng nhau. Quy đổi USD/đất: xem mô tả field trong schema.
 - propertyTypeEstimate: Loại BĐS phù hợp nhất.
-- locationFactors: 2-3 yếu tố vĩ mô khu vực (không lặp pháp lý/lộ giới/diện tích).`;
+- locationFactors: 2-3 yếu tố vĩ mô khu vực (không lặp pháp lý/lộ giới/diện tích).${propertyMemorySection}`;
 
             // Use Flash for extraction — Pro hits 503 under load; Flash is fast + reliable for structured JSON
             let extractText: string = '{}';
@@ -3131,7 +3168,7 @@ GIÁ THUÊ (từ DỮ LIỆU GIÁ THUÊ):
                 while (true) {
                     try {
                         const resp = await getAiClient().models.generateContent({
-                            model: GENAI_CONFIG.MODELS.WRITER,
+                            model: extractionModel,
                             contents: extractPrompt,
                             config: {
                                 systemInstruction: valuationSystemInstruction,
@@ -3439,6 +3476,30 @@ Cần xác nhận: Giá giao dịch thực tế 1m² của ${extractRefDescripti
                     type: 'LOCATION' as const
                 }))
             ];
+
+            // ── Fire-and-forget: save valuation result to VALUATION agent's property memory ──
+            if (valuationAgent && listingId && tid) {
+                const memorySummary =
+                    `Định giá lúc ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}: ` +
+                    `${(avmResult.totalPrice / 1e9).toFixed(2)} tỷ | ` +
+                    `${(avmResult.pricePerM2 / 1e6).toFixed(1)} tr/m² | ` +
+                    `Khoảng: ${(avmResult.rangeMin / 1e9).toFixed(2)}-${(avmResult.rangeMax / 1e9).toFixed(2)} tỷ | ` +
+                    `Độ tin cậy: ${avmResult.confidence}% | ` +
+                    `Xu hướng: ${trendGrowthPct > 0 ? '+' : ''}${trendGrowthPct}%/năm | ` +
+                    `Loại: ${propertyType || 'townhouse_center'} | Realtime: có`;
+
+                agentRepository.savePropertyMemory(tid, valuationAgent.id, listingId, memorySummary, {
+                    totalPrice:    avmResult.totalPrice,
+                    pricePerM2:    avmResult.pricePerM2,
+                    confidence:    avmResult.confidence,
+                    trendGrowthPct,
+                    propertyType:  propertyType || 'townhouse_center',
+                    address,
+                    rangeMin:      avmResult.rangeMin,
+                    rangeMax:      avmResult.rangeMax,
+                    isRealtime:    true,
+                }).catch(e => logger.warn('[Valuation] savePropertyMemory failed:', e));
+            }
 
             return {
                 interactionId,

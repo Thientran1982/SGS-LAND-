@@ -233,6 +233,7 @@ export function createValuationRoutes(
         bedrooms,
         monthlyRent: monthlyRentInput,
         roadTypeLabel,
+        listingId,
         // Override flags
         skipCache = false,
         skipInternalComps = false,
@@ -346,13 +347,14 @@ export function createValuationRoutes(
           const { aiService } = await import('../ai');
           const aiResult = await aiService.getRealtimeValuation(
             addressClean, areaNum, roadWidthNum, legal, propertyType,
-            undefined,
+            user?.tenantId,
             {
               buildingAge: resolvedBuildingAge,
               roadTypeLabel: roadTypeLabel || undefined,
               direction: direction || undefined,
               floorLevel: floorLevel !== undefined ? Number(floorLevel) : undefined,
               bedrooms: bedrooms !== undefined ? Number(bedrooms) : undefined,
+              listingId: listingId || undefined,
             }
           );
           marketBasePrice = aiResult.basePrice;

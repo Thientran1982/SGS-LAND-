@@ -39,10 +39,23 @@ export interface AgentMemory {
   id: string;
   tenantId: string;
   agentId: string;
-  leadId: string;
+  leadId: string | null;
+  listingId: string | null;
   summary: string;
   signals: Record<string, any>;
   createdAt: string;
+}
+
+export interface ValuationMemorySignals {
+  totalPrice: number;
+  pricePerM2: number;
+  confidence: number;
+  trendGrowthPct: number;
+  propertyType: string;
+  address: string;
+  rangeMin: number;
+  rangeMax: number;
+  isRealtime: boolean;
 }
 
 // ── In-memory cache ────────────────────────────────────────────────────────
@@ -80,7 +93,8 @@ class AgentRepository extends BaseRepository {
       id:        row.id,
       tenantId:  row.tenant_id,
       agentId:   row.agent_id,
-      leadId:    row.lead_id,
+      leadId:    row.lead_id ?? null,
+      listingId: row.listing_id ?? null,
       summary:   row.summary,
       signals:   row.signals || {},
       createdAt: row.created_at,
@@ -255,6 +269,67 @@ class AgentRepository extends BaseRepository {
         [leadId, limit]
       );
       return res.rows.map(row => ({ ...this.rowToMemory(row), agentName: row.agent_name }));
+    });
+  }
+
+  // ── Property (listing) memory — for VALUATION agent ────────────────────────
+
+  /**
+   * Retrieve the N most recent valuation memories for a specific listing.
+   * Returned in chronological order (oldest first) for prompt injection.
+   */
+  async getPropertyMemories(tenantId: string, agentId: string, listingId: string, limit = 3): Promise<AgentMemory[]> {
+    try {
+      return await this.withTenant(tenantId, async (client) => {
+        const res = await client.query(
+          `SELECT * FROM ai_agent_memories
+           WHERE agent_id = $1 AND listing_id = $2 AND ${TENANT_FILTER}
+           ORDER BY created_at DESC
+           LIMIT $3`,
+          [agentId, listingId, limit]
+        );
+        return res.rows.map(this.rowToMemory).reverse();
+      });
+    } catch (e) {
+      logger.warn('AgentRepository.getPropertyMemories failed:', e);
+      return [];
+    }
+  }
+
+  /**
+   * Save a valuation result to agent memory for a specific listing.
+   * Keeps only the last MAX_MEMORIES per listing to avoid unbounded growth.
+   */
+  async savePropertyMemory(
+    tenantId: string,
+    agentId: string,
+    listingId: string,
+    summary: string,
+    signals: ValuationMemorySignals | Record<string, any> = {}
+  ): Promise<AgentMemory> {
+    const MAX_MEMORIES = 10;
+
+    return this.withTenant(tenantId, async (client) => {
+      const res = await client.query(
+        `INSERT INTO ai_agent_memories (tenant_id, agent_id, listing_id, summary, signals)
+         VALUES ($1, $2, $3, $4, $5::jsonb)
+         RETURNING *`,
+        [tenantId, agentId, listingId, summary, JSON.stringify(signals)]
+      );
+
+      await client.query(
+        `DELETE FROM ai_agent_memories
+         WHERE agent_id = $1 AND listing_id = $2 AND tenant_id = $3
+           AND id NOT IN (
+             SELECT id FROM ai_agent_memories
+             WHERE agent_id = $1 AND listing_id = $2 AND tenant_id = $3
+             ORDER BY created_at DESC
+             LIMIT $4
+           )`,
+        [agentId, listingId, tenantId, MAX_MEMORIES]
+      );
+
+      return this.rowToMemory(res.rows[0]);
     });
   }
 }
