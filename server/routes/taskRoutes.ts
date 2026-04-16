@@ -7,23 +7,29 @@ const TaskStatuses = ['todo', 'in_progress', 'review', 'done', 'cancelled'] as c
 const TaskPriorities = ['low', 'medium', 'high', 'urgent'] as const;
 const TaskCategories = ['sales', 'legal', 'marketing', 'site_visit', 'customer_care', 'finance', 'construction', 'admin', 'other'] as const;
 
+// Zod v4 validates RFC 4122 UUID strictly (version [1-8] + variant [89abAB]).
+// Department IDs seeded by migration 020 use a custom format (e.g. d1000000-...) that
+// passes the hex-shape check but fails version/variant bits. We use a broad UUID-shape
+// regex here to avoid false 400 errors while migration 059 upgrades the IDs in-place.
+const UUID_SHAPE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
 const createTaskSchema = z.object({
   title: z.string().min(5, 'Tiêu đề phải từ 5 ký tự').max(500, 'Tiêu đề tối đa 500 ký tự'),
   description: z.string().max(5000).optional(),
-  project_id: z.string().uuid().optional().nullable(),
-  department_id: z.string().uuid().optional().nullable(),
+  project_id: z.string().regex(UUID_SHAPE, 'Dự án không hợp lệ').optional().nullable(),
+  department_id: z.string().regex(UUID_SHAPE, 'Phòng ban không hợp lệ').optional().nullable(),
   category: z.enum(TaskCategories).optional().nullable(),
   priority: z.enum(TaskPriorities).default('medium'),
   deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   estimated_hours: z.number().positive().optional().nullable(),
-  assignee_ids: z.array(z.string().uuid()).optional(),
+  assignee_ids: z.array(z.string().regex(UUID_SHAPE, 'ID người dùng không hợp lệ')).optional(),
 });
 
 const updateTaskSchema = z.object({
   title: z.string().min(5).max(500).optional(),
   description: z.string().max(5000).optional().nullable(),
-  project_id: z.string().uuid().optional().nullable(),
-  department_id: z.string().uuid().optional().nullable(),
+  project_id: z.string().regex(UUID_SHAPE, 'Dự án không hợp lệ').optional().nullable(),
+  department_id: z.string().regex(UUID_SHAPE, 'Phòng ban không hợp lệ').optional().nullable(),
   category: z.enum(TaskCategories).optional().nullable(),
   priority: z.enum(TaskPriorities).optional(),
   deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
