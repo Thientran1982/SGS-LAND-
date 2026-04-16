@@ -51,6 +51,10 @@ const AGENT_CACHE_TTL_MS = 5 * 60 * 1000;
 const agentCache = new Map<string, { agent: AiAgent; expiresAt: number }>();
 
 class AgentRepository extends BaseRepository {
+  constructor() {
+    super('ai_agents');
+  }
+
   // ── Row mappers ────────────────────────────────────────────────────────────
 
   private rowToAgent(row: any): AiAgent {

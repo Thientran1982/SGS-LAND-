@@ -33,7 +33,7 @@ export function createAgentRoutes(authenticateToken: any): Router {
       const user = (req as any).user;
       if (PARTNER_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền truy cập' });
 
-      const agent = await agentRepository.getAgentByName(user.tenantId, req.params.name.toUpperCase());
+      const agent = await agentRepository.getAgentByName(user.tenantId, (req.params.name as string).toUpperCase());
       if (!agent) return res.status(404).json({ error: 'Agent not found' });
       res.json(agent);
     } catch (e) {
@@ -51,7 +51,7 @@ export function createAgentRoutes(authenticateToken: any): Router {
       }
 
       const { systemInstruction, skills, model, displayName, description, active } = req.body;
-      const updated = await agentRepository.updateAgent(user.tenantId, req.params.id, {
+      const updated = await agentRepository.updateAgent(user.tenantId, req.params.id as string, {
         systemInstruction,
         skills,
         model,
@@ -74,7 +74,7 @@ export function createAgentRoutes(authenticateToken: any): Router {
 
       const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
       const memories = await agentRepository.getLeadMemories(
-        user.tenantId, req.params.agentId, req.params.leadId, limit
+        user.tenantId, req.params.agentId as string, req.params.leadId as string, limit
       );
       res.json(memories);
     } catch (e) {
@@ -88,7 +88,7 @@ export function createAgentRoutes(authenticateToken: any): Router {
       const user = (req as any).user;
       if (PARTNER_ROLES.includes(user.role)) return res.status(403).json({ error: 'Không có quyền truy cập' });
 
-      const memories = await agentRepository.getAllLeadMemories(user.tenantId, req.params.leadId);
+      const memories = await agentRepository.getAllLeadMemories(user.tenantId, req.params.leadId as string);
       res.json(memories);
     } catch (e) {
       res.status(500).json({ error: 'Failed to get lead memories' });

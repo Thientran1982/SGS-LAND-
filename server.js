@@ -18463,6 +18463,9 @@ var init_agentRepository = __esm({
     AGENT_CACHE_TTL_MS = 5 * 60 * 1e3;
     agentCache = /* @__PURE__ */ new Map();
     AgentRepository = class extends BaseRepository {
+      constructor() {
+        super("ai_agents");
+      }
       // ── Row mappers ────────────────────────────────────────────────────────────
       rowToAgent(row) {
         return {
