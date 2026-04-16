@@ -402,6 +402,13 @@ export const BankRates: React.FC = () => {
             <p className="text-sm text-[var(--text-tertiary)] mt-1">{t('bank_rates.table_desc')}</p>
           </div>
 
+          {/* Mobile scroll hint */}
+          {!loading && rates.length > 0 && (
+            <p className="sm:hidden text-center text-[11px] text-[var(--text-tertiary)] py-1.5 border-b border-[var(--glass-border)] bg-[var(--glass-surface)]">
+              ← Vuốt ngang để xem thêm →
+            </p>
+          )}
+
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="w-8 h-8 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin"/>

@@ -28825,6 +28825,7 @@ function getBankRatesHtml(ugcRates = []) {
         B\u1EA1n l\xE0 nh\xE2n vi\xEAn ng\xE2n h\xE0ng ho\u1EB7c chuy\xEAn gia t\xE0i ch\xEDnh? 
         <a href="/#/lai-suat-ngan-hang">\u0110\u0103ng nh\u1EADp \u0111\u1EC3 chia s\u1EBB th\xF4ng tin l\xE3i su\u1EA5t \u2192</a>
       </div>
+      <span class="tbl-scroll-hint">&#8592; Vu\u1ED1t ngang \u0111\u1EC3 xem th\xEAm &#8594;</span>
       <div class="tbl-wrap">
         <table>
           <thead>
