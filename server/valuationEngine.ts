@@ -1057,11 +1057,19 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     // ── TP.HCM — Gò Vấp ──────────────────────────────────────────────────────
     [/avida\s*go\s*vap|saigon\s*home.*gò\s*vấp|topaz\s*home/i, 'gò vấp'],
     // ── TP.HCM — Nhà Bè ──────────────────────────────────────────────────────
-    [/saigon\s*south\s*residences|camellia\s*garden|kdc\s*himlam\s*kênh\s*tẻ/i, 'nhà bè'],
+    [/saigon\s*south\s*residences|camellia\s*garden|kdc\s*himlam\s*kênh\s*tẻ|celesta\s*heights|gamuda.*nhà\s*bè/i, 'nhà bè'],
     // ── TP.HCM — Bình Chánh ──────────────────────────────────────────────────
     [/saigon\s*mia|westgate|flora\s*anh\s*đào|lovera\s*village|nam\s*long.*bình\s*chánh/i, 'bình chánh'],
     // ── TP.HCM — Hóc Môn / Củ Chi ───────────────────────────────────────────
     [/ecorivers\s*hậu\s*giang|hậu\s*giang.*resort|vinhome[s]?\s*củ\s*chi/i, 'củ chi'],
+    // ── TP.HCM — Thủ Đức (dự án 2026 mới) ───────────────────────────────────
+    [/lumière\s*riverside|lumiere\s*riverside|fiato\s*premier|the\s*classia|masteri\s*grand\s*view|gem\s*riverside.*thủ\s*đức/i, 'thủ đức'],
+    // ── TP.HCM — Quận 7 (dự án 2026 mới) ────────────────────────────────────
+    [/the\s*rivus|sunshine\s*city\s*sài\s*gòn|sunshine\s*city.*saigon/i, 'quận 7'],
+    // ── Bình Dương (dự án 2026 mới) ──────────────────────────────────────────
+    [/anderson\s*park|capitaland.*thuận\s*an|capitaland.*thuan\s*an|lavita\s*thuận\s*an|lavita\s*grand/i, 'thuận an'],
+    // ── Long Thành (dự án 2026 mới) ──────────────────────────────────────────
+    [/mt\s*eastmark\s*city/i, 'long thành'],
     // ── Hà Nội — Tây Hồ ──────────────────────────────────────────────────────
     [/the\s*westlake|sun\s*grand.*tây\s*hồ|ciputra|starlake.*tây\s*hồ|summit\s*building.*tây\s*hồ/i, 'tây hồ'],
     // ── Hà Nội — Cầu Giấy ───────────────────────────────────────────────────
@@ -1077,13 +1085,19 @@ export function getRegionalBasePrice(address: string, pType?: string): {
     // ── Hà Nội — Gia Lâm ─────────────────────────────────────────────────────
     [/vinhome[s]?\s*ocean\s*park|ocean\s*park|ecopark.*gia\s*lâm/i, 'gia lâm'],
     // ── Hà Nội — Đông Anh ────────────────────────────────────────────────────
-    [/eurowindow\s*river\s*park|vinhome[s]?\s*cổ\s*loa|sunshine\s*wonder.*đông\s*anh/i, 'đông anh'],
+    [/eurowindow\s*river\s*park|vinhome[s]?\s*cổ\s*loa|sunshine\s*wonder.*đông\s*anh|the\s*zenpark.*đông\s*anh|vinhome[s]?\s*co\s*loa/i, 'đông anh'],
     // ── Hà Nội — Long Biên ───────────────────────────────────────────────────
-    [/vinhome[s]?\s*riverside|the\s*manor\s*central\s*park|long\s*biên.*garden/i, 'long biên'],
+    [/vinhome[s]?\s*riverside|the\s*manor\s*central\s*park|long\s*biên.*garden|the\s*jade.*long\s*biên|sunshine\s*heritage.*long\s*biên/i, 'long biên'],
     // ── Hà Nội — Hoàng Mai ───────────────────────────────────────────────────
-    [/linh\s*đàm|helios.*linh\s*đàm|ct1\s*linh\s*đàm|hei\s*tower.*giải\s*phóng/i, 'hoàng mai'],
+    [/linh\s*đàm|helios.*linh\s*đàm|ct1\s*linh\s*đàm|hei\s*tower.*giải\s*phóng|imperia\s*sky\s*garden/i, 'hoàng mai'],
     // ── Hà Nội — Thạch Thất / Hòa Lạc ──────────────────────────────────────
     [/the\s*zen.*hòa\s*lạc|wyndham\s*hòa\s*lạc|vinhome[s]?\s*hòa\s*lạc/i, 'thạch thất'],
+    // ── Hà Nội — Hai Bà Trưng (2026 mới) ───────────────────────────────────
+    [/imperia\s*sky\s*garden|the\s*manor\s*central.*hai\s*bà\s*trưng/i, 'hai bà trưng'],
+    // ── Hà Nội — Tây Hồ (2026 mới) ──────────────────────────────────────────
+    [/sunshine\s*crystal\s*river|lumi\s*tây\s*hồ|tây\s*hồ.*sunshine/i, 'tây hồ'],
+    // ── Hà Nội — Nam Từ Liêm (2026 mới) ─────────────────────────────────────
+    [/lumi\s*han\s*oi|lumi\s*hanoi|capitaland.*nam\s*từ\s*liêm/i, 'nam từ liêm'],
     // ── Hưng Yên (vệ tinh Hà Nội) ────────────────────────────────────────────
     [/ecopark|vinhome[s]?\s*ocean\s*park\s*2|ocean\s*park\s*2|ocean\s*park\s*3/i, 'hưng yên'],
     // ── Vùng ven / Tỉnh lân cận HCM ─────────────────────────────────────────
@@ -1270,6 +1284,66 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/novaworld\s*hồ\s*tràm|soul\s*hồ\s*tràm|grand\s*ho\s*tram/i.test(enrichedAddr))
     streetOverride = 50_000_000;   // NovaWorld / Soul Hồ Tràm: 40-62M/m²
 
+  // ══ TP.HCM — Dự án mới 2026 ═══════════════════════════════════════════════
+  // Source: Batdongsan/OneHousing/CafeLand Q1-Q2/2026 launch prices
+  if (/lumière\s*riverside|lumiere\s*riverside/i.test(enrichedAddr))
+    streetOverride = 168_000_000;  // Lumière Riverside Masterise Homes Thủ Đức: 148-198M/m²
+  if (/fiato\s*premier/i.test(enrichedAddr))
+    streetOverride = 88_000_000;   // FIATO Premier Thủ Đức (Thắng Lợi Group): 78-102M/m²
+  if (/the\s*classia/i.test(enrichedAddr))
+    streetOverride = 82_000_000;   // The Classia Khang Điền Q9/Thủ Đức: 72-95M/m²
+  if (/masteri\s*grand\s*view/i.test(enrichedAddr))
+    streetOverride = 88_000_000;   // Masteri Grand View Q9/Thủ Đức: 78-102M/m²
+  if (/the\s*rivus/i.test(enrichedAddr))
+    streetOverride = 98_000_000;   // The Rivus Nam Long Q7: 85-115M/m²
+  if (/sunshine\s*city\s*sài\s*gòn|sunshine\s*city.*saigon/i.test(enrichedAddr))
+    streetOverride = 112_000_000;  // Sunshine City Sài Gòn Q7: 98-132M/m²
+  if (/celesta\s*heights/i.test(enrichedAddr))
+    streetOverride = 85_000_000;   // Celesta Heights Gamuda Land Nhà Bè: 72-102M/m²
+  if (/one\s*central\s*saigon|one\s*central.*q1/i.test(enrichedAddr))
+    streetOverride = 320_000_000;  // One Central Saigon Q1 (Hines/Mapletree): 280-400M/m²
+
+  // ══ Hà Nội — Dự án mới 2026 ══════════════════════════════════════════════
+  // Source: Batdongsan/OneHousing/CafeLand Q1-Q2/2026 launch prices
+  if (/vinhome[s]?\s*cổ\s*loa|vinhome[s]?\s*co\s*loa/i.test(enrichedAddr))
+    streetOverride = 92_000_000;   // Vinhomes Cổ Loa Đông Anh: 78-112M/m² (triển khai Q1/2026)
+  if (/lumi\s*han\s*oi|lumi\s*hanoi/i.test(enrichedAddr))
+    streetOverride = 90_000_000;   // Lumi Hanoi CapitaLand Nam Từ Liêm: 78-108M/m²
+  if (/sunshine\s*crystal\s*river/i.test(enrichedAddr))
+    streetOverride = 135_000_000;  // Sunshine Crystal River Tây Hồ: 118-158M/m²
+  if (/imperia\s*sky\s*garden/i.test(enrichedAddr))
+    streetOverride = 95_000_000;   // Imperia Sky Garden Hai Bà Trưng: 82-112M/m²
+  if (/the\s*zenpark.*đông\s*anh/i.test(enrichedAddr))
+    streetOverride = 85_000_000;   // The ZenPark Đông Anh: 72-102M/m²
+
+  // ══ Bình Dương — Dự án mới 2026 ══════════════════════════════════════════
+  // Source: Batdongsan/CafeLand Q1-Q2/2026 launch prices
+  if (/anderson\s*park/i.test(enrichedAddr))
+    streetOverride = 72_000_000;   // Anderson Park CapitaLand Thuận An: 62-84M/m²
+  if (/lavita\s*thuận\s*an|lavita\s*grand/i.test(enrichedAddr))
+    streetOverride = 68_000_000;   // Lavita Thuận An (Đức Khải Group): 58-80M/m²
+
+  // ══ Long Thành — Dự án mới 2026 ══════════════════════════════════════════
+  if (/mt\s*eastmark\s*city/i.test(enrichedAddr))
+    streetOverride = 55_000_000;   // MT Eastmark City Long Thành (KDI Holdings): 46-68M/m²
+
+  // ══ Đà Nẵng — Dự án mới 2026 ════════════════════════════════════════════
+  // Source: Batdongsan/CafeLand Q1-Q2/2026 launch prices Đà Nẵng
+  if (/risemount\s*apartment|risemount.*đà\s*nẵng/i.test(enrichedAddr))
+    streetOverride = 92_000_000;   // Risemount Apartment Resort Đà Nẵng: 80-110M/m²
+  if (/monarchy\s*riverfront|monarchy.*hải\s*châu/i.test(enrichedAddr))
+    streetOverride = 100_000_000;  // Monarchy Riverfront Hải Châu Đà Nẵng: 88-125M/m²
+  if (/the\s*fiio/i.test(enrichedAddr))
+    streetOverride = 88_000_000;   // The Fiio Đà Nẵng (DIC Holdings): 75-105M/m²
+
+  // ══ Phú Quốc — Dự án mới 2026 ═══════════════════════════════════════════
+  if (/beverly\s*hills.*phú\s*quốc|sun.*beverly.*phú\s*quốc/i.test(enrichedAddr))
+    streetOverride = 148_000_000;  // Beverly Hills Phú Quốc Sun Group: 125-185M/m²
+  if (/perla\s*búng\s*gùi|perla\s*bung\s*gui/i.test(enrichedAddr))
+    streetOverride = 120_000_000;  // Perla Búng Gùi Phú Quốc: 105-145M/m²
+  if (/the\s*landmark\s*phú\s*quốc|sun.*landmark.*phú\s*quốc/i.test(enrichedAddr))
+    streetOverride = 135_000_000;  // Sun Landmark Phú Quốc: 118-162M/m²
+
   // ══ Bình Dương premium projects ══════════════════════════════════════════
   if (/midori\s*park/i.test(enrichedAddr))
     streetOverride = 72_000_000;   // Midori Park Thuận An: 62-82M/m²
@@ -1358,19 +1432,19 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   // ── Huyện/thành phố ngoại thành ──────────────────────────────────────────
   if (/hà đông|ha dong/i.test(enrichedAddr))                  return getBase(76_000_000,  'Hà Đông, Hà Nội', 57);
   if (/gia lâm|gia lam/i.test(enrichedAddr))                  return getBase(75_000_000,  'Gia Lâm, Hà Nội', 57);
-  if (/đông anh|dong anh/i.test(enrichedAddr))                return getBase(68_000_000,  'Đông Anh, Hà Nội', 56);
-  if (/thanh trì|thanh tri/i.test(enrichedAddr))              return getBase(58_000_000,  'Thanh Trì, Hà Nội', 54);
-  if (/hoài đức|hoai duc/i.test(enrichedAddr))                return getBase(62_000_000,  'Hoài Đức, Hà Nội', 55);
-  if (/đan phượng|dan phuong/i.test(enrichedAddr))            return getBase(45_000_000,  'Đan Phượng, Hà Nội', 52);
-  if (/thạch thất|thach that/i.test(enrichedAddr))            return getBase(34_000_000,  'Thạch Thất, Hà Nội', 50);
-  if (/quốc oai|quoc oai/i.test(enrichedAddr))                return getBase(30_000_000,  'Quốc Oai, Hà Nội', 49);
-  if (/chương mỹ|chuong my/i.test(enrichedAddr))              return getBase(30_000_000,  'Chương Mỹ, Hà Nội', 49);
+  if (/đông anh|dong anh/i.test(enrichedAddr))                return getBase(75_000_000,  'Đông Anh, Hà Nội', 57);
+  if (/thanh trì|thanh tri/i.test(enrichedAddr))              return getBase(62_000_000,  'Thanh Trì, Hà Nội', 55);
+  if (/hoài đức|hoai duc/i.test(enrichedAddr))                return getBase(68_000_000,  'Hoài Đức, Hà Nội', 56);
+  if (/đan phượng|dan phuong/i.test(enrichedAddr))            return getBase(50_000_000,  'Đan Phượng, Hà Nội', 53);
+  if (/thạch thất|thach that/i.test(enrichedAddr))            return getBase(38_000_000,  'Thạch Thất, Hà Nội', 51);
+  if (/quốc oai|quoc oai/i.test(enrichedAddr))                return getBase(33_000_000,  'Quốc Oai, Hà Nội', 50);
+  if (/chương mỹ|chuong my/i.test(enrichedAddr))              return getBase(33_000_000,  'Chương Mỹ, Hà Nội', 49);
   if (/mỹ đức|my duc/i.test(enrichedAddr) && /hà\s*nội/i.test(enrichedAddr)) return getBase(23_000_000, 'Mỹ Đức, Hà Nội', 47);
   if (/ứng hòa|ung hoa/i.test(enrichedAddr))                  return getBase(21_000_000,  'Ứng Hòa, Hà Nội', 47);
   if (/phú xuyên|phu xuyen/i.test(enrichedAddr))              return getBase(23_000_000,  'Phú Xuyên, Hà Nội', 47);
   if (/thường tín|thuong tin/i.test(enrichedAddr))             return getBase(37_000_000,  'Thường Tín, Hà Nội', 50);
-  if (/mê linh|me linh/i.test(enrichedAddr))                  return getBase(42_000_000,  'Mê Linh, Hà Nội', 53);
-  if (/sóc sơn|soc son/i.test(enrichedAddr) && /hà\s*nội/i.test(enrichedAddr)) return getBase(32_000_000, 'Sóc Sơn, Hà Nội', 50);
+  if (/mê linh|me linh/i.test(enrichedAddr))                  return getBase(52_000_000,  'Mê Linh, Hà Nội', 54);
+  if (/sóc sơn|soc son/i.test(enrichedAddr) && /hà\s*nội/i.test(enrichedAddr)) return getBase(35_000_000, 'Sóc Sơn, Hà Nội', 51);
   if (/ba vì|ba vi/i.test(enrichedAddr))                      return getBase(20_000_000,  'Ba Vì, Hà Nội', 46);
   if (/hòa lạc|hoa lac/i.test(enrichedAddr))                  return getBase(35_000_000,  'Hòa Lạc, Hà Nội', 51);
   if (/hà nội|hanoi|ha noi/i.test(enrichedAddr))              return getBase(115_000_000, 'Hà Nội (trung bình)', 53);
@@ -1394,9 +1468,11 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/hải phòng|hai phong/i.test(enrichedAddr))           return getBase(53_000_000,  'Hải Phòng', 56);
 
   // ── Cần Thơ (TP trực thuộc TW) ───────────────────────────────────────────
-  if (/ninh kiều|ninh kieu/i.test(enrichedAddr))           return getBase(42_000_000,  'Ninh Kiều, Cần Thơ', 57);
-  if (/bình thuỷ|binh thuy/i.test(enrichedAddr))           return getBase(28_000_000,  'Bình Thuỷ, Cần Thơ', 53);
-  if (/cần thơ|can tho/i.test(enrichedAddr))               return getBase(35_000_000,  'Cần Thơ', 53);
+  // Source: Batdongsan/CBRE Vietnam Q2/2026 (cập nhật 17/4/2026)
+  // Ghi chú: Ninh Kiều tăng do hạ tầng đường vành đai + dự án mới Nam Long
+  if (/ninh kiều|ninh kieu/i.test(enrichedAddr))           return getBase(48_000_000,  'Ninh Kiều, Cần Thơ', 57);
+  if (/bình thuỷ|binh thuy/i.test(enrichedAddr))           return getBase(30_000_000,  'Bình Thuỷ, Cần Thơ', 53);
+  if (/cần thơ|can tho/i.test(enrichedAddr))               return getBase(38_000_000,  'Cần Thơ', 54);
 
   // ── Khánh Hòa (Nha Trang) ─────────────────────────────────────────────────
   // Source: Batdongsan/CBRE Vietnam Q2/2026 (cập nhật 17/4/2026)
@@ -1423,16 +1499,17 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/lâm đồng|lam dong/i.test(enrichedAddr))                 return getBase(40_000_000,  'Lâm Đồng', 53);
 
   // ── Bà Rịa – Vũng Tàu ─────────────────────────────────────────────────────
-  // Source: Batdongsan/CBRE/Savills Vietnam Q1/2026
-  if (/vũng tàu|vung tau/i.test(enrichedAddr))                return getBase(55_000_000,  'Vũng Tàu', 57);
-  if (/phú mỹ/i.test(enrichedAddr) && /brvt|bà\s*rịa|vũng\s*tàu/i.test(enrichedAddr)) return getBase(35_000_000, 'Phú Mỹ, BR-VT', 53);
-  if (/bà rịa\b|ba ria\b/i.test(enrichedAddr))               return getBase(30_000_000,  'Bà Rịa', 52);
-  if (/xuyên mộc|xuyen moc/i.test(enrichedAddr))              return getBase(25_000_000,  'Xuyên Mộc, BR-VT', 50);
-  if (/châu đức|chau duc/i.test(enrichedAddr))                return getBase(22_000_000,  'Châu Đức, BR-VT', 49);
-  if (/đất đỏ|dat do/i.test(enrichedAddr) && /brvt|bà\s*rịa|vũng\s*tàu/i.test(enrichedAddr)) return getBase(20_000_000, 'Đất Đỏ, BR-VT', 48);
-  if (/long điền|long dien/i.test(enrichedAddr))              return getBase(25_000_000,  'Long Điền, BR-VT', 50);
-  if (/côn đảo|con dao/i.test(enrichedAddr))                  return getBase(65_000_000,  'Côn Đảo, BR-VT', 52);
-  if (/bà rịa.?vũng tàu|br.?vt/i.test(enrichedAddr))         return getBase(40_000_000,  'Bà Rịa-Vũng Tàu', 52);
+  // Source: Batdongsan/CBRE/Savills Vietnam Q2/2026 (cập nhật 17/4/2026)
+  // Ghi chú: Vũng Tàu tăng do hạ tầng cao tốc Biên Hòa-Vũng Tàu + resort premium
+  if (/vũng tàu|vung tau/i.test(enrichedAddr))                return getBase(62_000_000,  'Vũng Tàu', 58);
+  if (/phú mỹ/i.test(enrichedAddr) && /brvt|bà\s*rịa|vũng\s*tàu/i.test(enrichedAddr)) return getBase(40_000_000, 'Phú Mỹ, BR-VT', 54);
+  if (/bà rịa\b|ba ria\b/i.test(enrichedAddr))               return getBase(34_000_000,  'Bà Rịa', 53);
+  if (/xuyên mộc|xuyen moc/i.test(enrichedAddr))              return getBase(28_000_000,  'Xuyên Mộc, BR-VT', 51);
+  if (/châu đức|chau duc/i.test(enrichedAddr))                return getBase(24_000_000,  'Châu Đức, BR-VT', 49);
+  if (/đất đỏ|dat do/i.test(enrichedAddr) && /brvt|bà\s*rịa|vũng\s*tàu/i.test(enrichedAddr)) return getBase(22_000_000, 'Đất Đỏ, BR-VT', 49);
+  if (/long điền|long dien/i.test(enrichedAddr))              return getBase(28_000_000,  'Long Điền, BR-VT', 51);
+  if (/côn đảo|con dao/i.test(enrichedAddr))                  return getBase(72_000_000,  'Côn Đảo, BR-VT', 53);
+  if (/bà rịa.?vũng tàu|br.?vt/i.test(enrichedAddr))         return getBase(44_000_000,  'Bà Rịa-Vũng Tàu', 53);
 
   // ── Đồng Nai ──────────────────────────────────────────────────────────────
   // Source: Batdongsan/CBRE/Savills/OneHousing Vietnam Q2/2026 (cập nhật 17/4/2026)
@@ -1462,15 +1539,16 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/bình dương|binh duong/i.test(enrichedAddr))           return getBase(42_000_000,  'Bình Dương', 56);
 
   // ── Long An ───────────────────────────────────────────────────────────────
-  // Source: Batdongsan/CBRE Vietnam Q1/2026
-  if (/tân an|tan an.*long an/i.test(enrichedAddr))          return getBase(30_000_000,  'Tân An, Long An', 52);
-  if (/bến lức|ben luc/i.test(enrichedAddr))                 return getBase(30_000_000,  'Bến Lức, Long An', 52);
-  if (/đức hòa|duc hoa/i.test(enrichedAddr))                 return getBase(25_000_000,  'Đức Hòa, Long An', 50);
-  if (/cần giuộc|can giuoc/i.test(enrichedAddr))             return getBase(25_000_000,  'Cần Giuộc, Long An', 50);
-  if (/cần đước|can duoc/i.test(enrichedAddr))               return getBase(22_000_000,  'Cần Đước, Long An', 48);
-  if (/thủ thừa|thu thua/i.test(enrichedAddr))               return getBase(18_000_000,  'Thủ Thừa, Long An', 47);
+  // Source: Batdongsan/CBRE Vietnam Q2/2026 (cập nhật 17/4/2026)
+  // Ghi chú: Bến Lức & Đức Hòa tăng do vành đai 3 và khu công nghiệp mở rộng
+  if (/tân an|tan an.*long an/i.test(enrichedAddr))          return getBase(32_000_000,  'Tân An, Long An', 53);
+  if (/bến lức|ben luc/i.test(enrichedAddr))                 return getBase(35_000_000,  'Bến Lức, Long An', 53);
+  if (/đức hòa|duc hoa/i.test(enrichedAddr))                 return getBase(28_000_000,  'Đức Hòa, Long An', 51);
+  if (/cần giuộc|can giuoc/i.test(enrichedAddr))             return getBase(28_000_000,  'Cần Giuộc, Long An', 51);
+  if (/cần đước|can duoc/i.test(enrichedAddr))               return getBase(24_000_000,  'Cần Đước, Long An', 49);
+  if (/thủ thừa|thu thua/i.test(enrichedAddr))               return getBase(19_000_000,  'Thủ Thừa, Long An', 47);
   if (/mộc hóa|moc hoa/i.test(enrichedAddr))                 return getBase(12_000_000,  'Mộc Hóa, Long An', 44);
-  if (/long an/i.test(enrichedAddr))                         return getBase(28_000_000,  'Long An', 52);
+  if (/long an/i.test(enrichedAddr))                         return getBase(30_000_000,  'Long An', 53);
 
   // ── Tây Ninh ──────────────────────────────────────────────────────────────
   if (/tây ninh|tay ninh/i.test(enrichedAddr))             return getBase(18_000_000,  'Tây Ninh', 48);
@@ -1532,18 +1610,20 @@ export function getRegionalBasePrice(address: string, pType?: string): {
   if (/kon tum/i.test(enrichedAddr))                        return getBase(12_000_000,  'Kon Tum', 44);
 
   // ── Đồng bằng sông Cửu Long ──────────────────────────────────────────────
-  if (/mỹ tho|my tho|tiền giang|tien giang/i.test(enrichedAddr)) return getBase(22_000_000, 'Tiền Giang', 50);
-  if (/bến tre|ben tre/i.test(enrichedAddr))               return getBase(16_000_000,  'Bến Tre', 47);
-  if (/trà vinh|tra vinh/i.test(enrichedAddr))             return getBase(13_000_000,  'Trà Vinh', 45);
-  if (/vĩnh long|vinh long/i.test(enrichedAddr))           return getBase(16_000_000,  'Vĩnh Long', 47);
-  if (/cao lãnh|cao lanh|đồng tháp|dong thap/i.test(enrichedAddr)) return getBase(14_000_000, 'Đồng Tháp', 46);
-  if (/long xuyên|long xuyen|châu đốc|chau doc|an giang/i.test(enrichedAddr)) return getBase(18_000_000, 'An Giang', 48);
-  if (/phú quốc|phu quoc/i.test(enrichedAddr))             return getBase(80_000_000,  'Phú Quốc, Kiên Giang', 57);
-  if (/rạch giá|rach gia|kiên giang|kien giang/i.test(enrichedAddr)) return getBase(20_000_000, 'Kiên Giang', 48);
-  if (/vị thanh|vi thanh|hậu giang|hau giang/i.test(enrichedAddr)) return getBase(12_000_000, 'Hậu Giang', 44);
-  if (/sóc trăng|soc trang/i.test(enrichedAddr))           return getBase(12_000_000,  'Sóc Trăng', 44);
-  if (/bạc liêu|bac lieu/i.test(enrichedAddr))             return getBase(12_000_000,  'Bạc Liêu', 44);
-  if (/cà mau/i.test(enrichedAddr))                        return getBase(14_000_000,  'Cà Mau', 44);
+  // Source: Batdongsan/CBRE Vietnam Q2/2026 (cập nhật 17/4/2026)
+  // Ghi chú: Mỹ Tho tăng do cầu Mỹ Thuận 2 hoàn thành; Phú Quốc tiếp tục phục hồi
+  if (/mỹ tho|my tho|tiền giang|tien giang/i.test(enrichedAddr)) return getBase(26_000_000, 'Tiền Giang', 51);
+  if (/bến tre|ben tre/i.test(enrichedAddr))               return getBase(18_000_000,  'Bến Tre', 48);
+  if (/trà vinh|tra vinh/i.test(enrichedAddr))             return getBase(14_000_000,  'Trà Vinh', 46);
+  if (/vĩnh long|vinh long/i.test(enrichedAddr))           return getBase(19_000_000,  'Vĩnh Long', 48);
+  if (/cao lãnh|cao lanh|đồng tháp|dong thap/i.test(enrichedAddr)) return getBase(16_000_000, 'Đồng Tháp', 47);
+  if (/long xuyên|long xuyen|châu đốc|chau doc|an giang/i.test(enrichedAddr)) return getBase(21_000_000, 'An Giang', 49);
+  if (/phú quốc|phu quoc/i.test(enrichedAddr))             return getBase(85_000_000,  'Phú Quốc, Kiên Giang', 57);
+  if (/rạch giá|rach gia|kiên giang|kien giang/i.test(enrichedAddr)) return getBase(22_000_000, 'Kiên Giang', 49);
+  if (/vị thanh|vi thanh|hậu giang|hau giang/i.test(enrichedAddr)) return getBase(13_000_000, 'Hậu Giang', 44);
+  if (/sóc trăng|soc trang/i.test(enrichedAddr))           return getBase(13_000_000,  'Sóc Trăng', 44);
+  if (/bạc liêu|bac lieu/i.test(enrichedAddr))             return getBase(13_000_000,  'Bạc Liêu', 44);
+  if (/cà mau/i.test(enrichedAddr))                        return getBase(15_000_000,  'Cà Mau', 45);
 
   // ── Quảng Ninh (Hạ Long) ─────────────────────────────────────────────────
   // Source: Batdongsan/CBRE Vietnam Q2/2026 (cập nhật 17/4/2026)
