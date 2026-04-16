@@ -791,6 +791,7 @@ export type AgentState = {
     tenantId: string;
     lang?: string;
     escalated?: boolean;
+    isSysMsg?: boolean;
     userFavorites?: CompactFavorite[];
 };
 
@@ -832,6 +833,7 @@ export class StateGraph {
             if (++iterations > MAX_ITERATIONS) {
                 logger.error(`[StateGraph] Max iterations (${MAX_ITERATIONS}) exceeded. Forcing END.`);
                 currentState.finalResponse = currentState.t('ai.msg_system_busy');
+                currentState.isSysMsg = true;
                 break;
             }
             const nodeFunc = this.nodes.get(currentNode);
@@ -853,6 +855,7 @@ export class StateGraph {
                 logger.error(`Error in node ${currentNode}:`, error);
                 currentState.trace.push({ id: `err_${Date.now()}`, node: 'ERROR', status: 'ERROR', output: error.message, timestamp: Date.now() });
                 currentState.finalResponse = currentState.t('ai.msg_system_busy');
+                currentState.isSysMsg = true;
                 currentState.error = error;
                 break;
             }
@@ -2392,6 +2395,7 @@ ${reconcileLine ? reconcileLine + '\n' : ''}Yếu tố: ${valResult.factors.slic
                 sentiment: 'NEUTRAL',
                 suggestedAction: finalState.suggestedAction,
                 escalated: finalState.escalated,
+                isSysMsg: finalState.isSysMsg,
                 intent: finalState.plan?.next_step,
                 userMessage: userMessage?.slice(0, 300),
             };
