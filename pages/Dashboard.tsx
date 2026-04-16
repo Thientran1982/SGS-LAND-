@@ -727,8 +727,12 @@ export const Dashboard: React.FC = () => {
                     <BentoCard title={t('dash.sales_velocity')} className="h-full min-h-[180px] bg-[var(--bg-surface)] dark:bg-slate-900 border border-[var(--glass-border)] dark:border-white/10 overflow-hidden">
                         <div className="flex flex-col justify-between h-full gap-4">
                             <div>
-                                <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white mt-2">{analytics.salesVelocity || 0}</div>
-                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">{t('dash.days_to_close')}</div>
+                                <div className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white mt-2">
+                                    {analytics.salesVelocity > 0 && analytics.salesVelocity < 1 ? '< 1' : (analytics.salesVelocity || '--')}
+                                </div>
+                                <div className="text-xs2 text-[var(--text-tertiary)] dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
+                                    {analytics.salesVelocity > 0 ? t('dash.days_to_close') : t('dash.no_closed_deals')}
+                                </div>
                             </div>
                             <div className="bg-[var(--glass-surface)] dark:bg-slate-800/50 p-3 rounded-xl border border-[var(--glass-border)] dark:border-slate-700/50 text-xs flex items-center gap-2">
                                 <TrendIndicator value={analytics.salesVelocityDelta || 0} label={t('dash.vs_last_period')} />

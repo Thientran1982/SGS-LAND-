@@ -270,10 +270,14 @@ export class AnalyticsRepository extends BaseRepository {
         : '';
       // Time-scoped AI deflection: filter current period so the rate reflects the selected window,
       // not an all-time average that makes the delta comparison meaningless.
+      // AI detection: count as automated when isAi=true OR isAgent=true in metadata.
+      // queue.ts saves { isAgent: true } (auto-reply worker); ai.ts may save { isAi: true }.
+      // Both flags indicate a fully-automated outbound response — must check either.
+      const AI_FLAG_FILTER = `(metadata->>'isAi' = 'true' OR metadata->>'isAgent' = 'true')`;
       const interactionStats = await client.query(`
         SELECT
           COUNT(*) FILTER (WHERE direction = 'OUTBOUND')::int as total_outbound,
-          COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND (metadata->>'isAi')::boolean = true)::int as ai_outbound
+          COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND ${AI_FLAG_FILTER})::int as ai_outbound
         FROM interactions i
         WHERE i.${TENANT_FILTER} ${interactionLeadFilter}
           ${useTimeFilter ? `AND i.timestamp >= NOW() - INTERVAL '${days} days'` : ''}
@@ -284,7 +288,7 @@ export class AnalyticsRepository extends BaseRepository {
         ? await client.query(`
             SELECT
               COUNT(*) FILTER (WHERE direction = 'OUTBOUND')::int as total_outbound,
-              COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND (metadata->>'isAi')::boolean = true)::int as ai_outbound
+              COUNT(*) FILTER (WHERE direction = 'OUTBOUND' AND ${AI_FLAG_FILTER})::int as ai_outbound
             FROM interactions i
             WHERE i.${TENANT_FILTER} ${interactionLeadFilter}
               AND i.timestamp >= NOW() - INTERVAL '${days * 2} days'
@@ -311,31 +315,50 @@ export class AnalyticsRepository extends BaseRepository {
           `)
         : { rows: [] };
 
-      // Sales velocity: time from lead created → deal closed (won_at).
-      // won_at is guaranteed accurate from migration 024; fall back to updated_at for legacy rows.
-      // Filter and group by won_at so we measure deals CLOSED in the selected period.
+      // Sales velocity: average days from listing/lead created → deal closed.
+      // Sources combined via UNION for the most complete picture:
+      //   1. WON leads: created_at → COALESCE(won_at, updated_at)
+      //   2. SOLD listings: created_at → updated_at (proxy for sold date; no sold_at column yet)
+      // Using won_at (m024) for accuracy where available; fall back to updated_at for legacy rows.
       const salesVelocityResult = await client.query(`
-        SELECT COALESCE(AVG(
-          EXTRACT(EPOCH FROM (COALESCE(won_at, updated_at) - created_at)) / 86400
-        ), 0)::numeric as avg_days
-        FROM leads
-        WHERE ${TENANT_FILTER}
-          AND stage = 'WON'
-          ${userLeadFilterNoAlias}
-          ${useTimeFilter ? `AND COALESCE(won_at, updated_at) >= NOW() - INTERVAL '${days} days'` : ''}
+        SELECT COALESCE(AVG(days), 0)::numeric as avg_days FROM (
+          SELECT EXTRACT(EPOCH FROM (COALESCE(won_at, updated_at) - created_at)) / 86400 as days
+          FROM leads
+          WHERE ${TENANT_FILTER}
+            AND stage = 'WON'
+            ${userLeadFilterNoAlias}
+            ${useTimeFilter ? `AND COALESCE(won_at, updated_at) >= NOW() - INTERVAL '${days} days'` : ''}
+          UNION ALL
+          SELECT EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400 as days
+          FROM listings
+          WHERE ${TENANT_FILTER}
+            AND status = 'SOLD'
+            AND updated_at > created_at
+            ${useTimeFilter ? `AND updated_at >= NOW() - INTERVAL '${days} days'` : ''}
+        ) combined
+        WHERE days > 0
       `);
 
       const prevSalesVelocityResult = useTimeFilter
         ? await client.query(`
-            SELECT COALESCE(AVG(
-              EXTRACT(EPOCH FROM (COALESCE(won_at, updated_at) - created_at)) / 86400
-            ), 0)::numeric as avg_days
-            FROM leads
-            WHERE ${TENANT_FILTER}
-              AND stage = 'WON'
-              ${userLeadFilterNoAlias}
-              AND COALESCE(won_at, updated_at) >= NOW() - INTERVAL '${days * 2} days'
-              AND COALESCE(won_at, updated_at) < NOW() - INTERVAL '${days} days'
+            SELECT COALESCE(AVG(days), 0)::numeric as avg_days FROM (
+              SELECT EXTRACT(EPOCH FROM (COALESCE(won_at, updated_at) - created_at)) / 86400 as days
+              FROM leads
+              WHERE ${TENANT_FILTER}
+                AND stage = 'WON'
+                ${userLeadFilterNoAlias}
+                AND COALESCE(won_at, updated_at) >= NOW() - INTERVAL '${days * 2} days'
+                AND COALESCE(won_at, updated_at) < NOW() - INTERVAL '${days} days'
+              UNION ALL
+              SELECT EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400 as days
+              FROM listings
+              WHERE ${TENANT_FILTER}
+                AND status = 'SOLD'
+                AND updated_at > created_at
+                AND updated_at >= NOW() - INTERVAL '${days * 2} days'
+                AND updated_at < NOW() - INTERVAL '${days} days'
+            ) combined
+            WHERE days > 0
           `)
         : { rows: [{ avg_days: '0' }] };
 
@@ -547,8 +570,9 @@ export class AnalyticsRepository extends BaseRepository {
       const prevRevenue = (parseFloat(prevRevenueResult.rows[0].revenue) || 0)
                         + (parseFloat(prevListingRevenueResult.rows[0].revenue) || 0);
 
-      const salesVelocity = Math.round(parseFloat(salesVelocityResult.rows[0].avg_days) || 0);
-      const prevSalesVelocity = Math.round(parseFloat(prevSalesVelocityResult.rows[0].avg_days) || 0);
+      // Keep 1 decimal place so sub-day velocities (e.g., 0.08 days) show as "0.1" instead of 0.
+      const salesVelocity = Math.round((parseFloat(salesVelocityResult.rows[0].avg_days) || 0) * 10) / 10;
+      const prevSalesVelocity = Math.round((parseFloat(prevSalesVelocityResult.rows[0].avg_days) || 0) * 10) / 10;
 
       const conversionRate = leadStats.total > 0
         ? Math.round((leadStats.won_leads / leadStats.total) * 10000) / 100
