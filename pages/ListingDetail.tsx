@@ -1512,6 +1512,7 @@ export const ListingDetail: React.FC = () => {
                     furnishing:    listing.attributes?.furniture     as string | undefined,
                     buildingAge:   listing.attributes?.buildingAge   as number | undefined,
                     bedrooms:      listing.bedrooms,
+                    listingId:     listing.id,
                 }
             );
 
