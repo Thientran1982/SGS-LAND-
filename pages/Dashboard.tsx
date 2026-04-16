@@ -123,6 +123,12 @@ const ScatterTooltip = memo(({ active, payload, t }: any) => {
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_price')}:</span>
                     <span className="font-mono font-bold text-[var(--text-primary)] dark:text-white">{data.price} {t('dash.scatter_price_unit')}</span>
                 </div>
+                {data.pricePerM2 > 0 && (
+                    <div className="flex items-center justify-between gap-4 mb-1">
+                        <span className="text-[var(--text-secondary)] dark:text-slate-400">Giá/m²:</span>
+                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{data.pricePerM2.toLocaleString('vi-VN')} tr/m²</span>
+                    </div>
+                )}
                 <div className="flex items-center justify-between gap-4 mb-1">
                     <span className="text-[var(--text-secondary)] dark:text-slate-400">{t('dash.scatter_interest')}:</span>
                     <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{data.interest} {t('dash.scatter_interest_unit')}</span>

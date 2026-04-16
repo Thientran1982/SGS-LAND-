@@ -27,7 +27,7 @@ export interface AnalyticsSummary {
   revenueByMonth: { month: string; revenue: number }[];
   leadsTrend: { date: string; count: number }[];
   recentActivities: { id: string; type: string; content: string; time: string }[];
-  marketPulse: { location: string; area: number; price: number; interest: number }[];
+  marketPulse: { location: string; area: number; price: number; pricePerM2: number; interest: number }[];
   agentLeaderboard: { name: string; avatar: string | null; deals: number; closeRate: number; slaScore: number; avgResponseMinutes: number | null }[];
   // Scope context for the frontend to display correctly
   scopeLabel: 'personal' | 'company'; // stable i18n key — frontend translates
@@ -370,17 +370,25 @@ export class AnalyticsRepository extends BaseRepository {
       // Market pulse: scatter plot of available listings (price vs area, coloured by district).
       // interest = number of proposals submitted for listings in the same district — a true
       // demand signal rather than a supply count.
+      //
+      // AREA priority: li.area (top-level column added m009) → attributes->>'area' → skip row.
+      // Never default to a magic number (80) — if area is unknown the dot is meaningless.
+      // PRICE: only include listings with price > 0 and a valid area so the chart is honest.
+      // price_per_m2 returned for tooltip display (triệu/m²).
       const marketPulseResult = await client.query(`
         SELECT
           COALESCE(li.attributes->>'district', li.attributes->>'city', 'Khác') as location,
-          COALESCE((li.attributes->>'area')::numeric, 80) as area,
-          COALESCE(li.price, 1000000000) / 1000000000.0 as price_ty,
+          COALESCE(li.area, (li.attributes->>'area')::numeric) as area,
+          li.price / 1000000000.0 as price_ty,
+          ROUND(li.price / COALESCE(li.area, (li.attributes->>'area')::numeric) / 1000000.0) as price_per_m2_trieu,
           COUNT(p.id)::int as proposal_demand
         FROM listings li
         LEFT JOIN proposals p ON p.listing_id = li.id AND p.tenant_id = li.tenant_id
         WHERE li.${TENANT_FILTER}
           AND li.status = 'AVAILABLE'
-        GROUP BY li.id, li.attributes, li.price, li.created_at
+          AND li.price > 0
+          AND COALESCE(li.area, (li.attributes->>'area')::numeric) > 0
+        GROUP BY li.id, li.area, li.attributes, li.price, li.created_at
         ORDER BY li.created_at DESC
         LIMIT 20
       `);
@@ -574,14 +582,24 @@ export class AnalyticsRepository extends BaseRepository {
         };
       });
 
-      const marketPulse = marketPulseResult.rows.map((row: any) => ({
-        location: row.location || 'Khác',
-        area: Math.round(parseFloat(row.area) || 80),
-        price: Math.round((parseFloat(row.price_ty) || 1) * 10) / 10,
-        // proposal_demand = number of proposals for this listing → true demand signal.
-        // Use 1 as minimum so every dot is visible on the scatter chart.
-        interest: Math.max(1, parseInt(row.proposal_demand) || 0),
-      }));
+      const marketPulse = marketPulseResult.rows
+        .map((row: any) => {
+          const area    = Math.round(parseFloat(row.area) || 0);
+          const price   = Math.round((parseFloat(row.price_ty) || 0) * 10) / 10;
+          const perM2   = Math.round(parseFloat(row.price_per_m2_trieu) || 0);
+          return {
+            location:   row.location || 'Khác',
+            area,
+            price,
+            // price per m² in triệu — shown in tooltip so team can spot data-entry errors
+            pricePerM2: perM2,
+            // proposal_demand = number of proposals for this listing → true demand signal.
+            // Use 1 as minimum so every dot is visible on the scatter chart.
+            interest: Math.max(1, parseInt(row.proposal_demand) || 0),
+          };
+        })
+        // Safety: skip any rows that slipped through without valid area/price
+        .filter((r: any) => r.area > 0 && r.price > 0);
 
       const agentLeaderboard = agentLeaderboardResult.rows.map((row: any) => {
         // slaScore = close_rate (70%) + response speed bonus (30%)
