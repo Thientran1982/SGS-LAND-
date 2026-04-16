@@ -1703,6 +1703,52 @@ async function startServer() {
   // GET  /api/admin/price-calibration                   → danh sách calibrated entries
   // POST /api/admin/price-calibration/recalibrate       → chạy hiệu chỉnh thủ công
 
+  // ─── Short Link Generator (Live Chat direct links) ──────────────────────────
+  // POST /api/links/shorten   → tạo short code Redis (TTL 30 ngày)
+  // GET  /c/:code             → redirect tới target URL (xem SSR section)
+
+  function genShortCode(): string {
+    return Math.random().toString(36).slice(2, 9);
+  }
+
+  app.post('/api/links/shorten', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
+    const { url } = req.body;
+    if (!url || typeof url !== 'string' || url.length > 2048) {
+      return res.status(400).json({ error: 'URL không hợp lệ' }) as any;
+    }
+    // Only allow internal livechat URLs
+    try {
+      const parsed = new URL(url);
+      if (!parsed.pathname.startsWith('/livechat')) {
+        return res.status(400).json({ error: 'Chỉ hỗ trợ rút gọn link livechat' }) as any;
+      }
+    } catch {
+      return res.status(400).json({ error: 'URL không hợp lệ' }) as any;
+    }
+
+    const code = genShortCode();
+    const redisKey = `sl:${code}`;
+    const TTL_SECS = 30 * 24 * 3600; // 30 ngày
+
+    try {
+      if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+        const { Redis } = await import('@upstash/redis');
+        const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+        await redis.set(redisKey, url, { ex: TTL_SECS });
+      } else {
+        // In-memory fallback for dev (non-persistent)
+        (global as any).__shortLinks = (global as any).__shortLinks || {};
+        (global as any).__shortLinks[code] = { url, exp: Date.now() + TTL_SECS * 1000 };
+      }
+    } catch (err) {
+      logger.error('[ShortLink] Redis error:', err);
+      return res.status(500).json({ error: 'Không thể tạo link rút gọn' }) as any;
+    }
+
+    const origin = `${req.protocol}://${req.get('host')}`;
+    res.json({ shortUrl: `${origin}/c/${code}`, code, ttlDays: 30 });
+  });
+
   app.get('/api/admin/price-history', apiRateLimit, authenticateToken, async (req: express.Request, res: express.Response) => {
     const user = (req as any).user;
     if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
@@ -2575,6 +2621,30 @@ async function startServer() {
         if (!listing) return next();
         sendMeta(res, buildListingMeta(listing));
       } catch { next(); }
+    });
+
+    // /c/:code → short link redirect (30-day TTL, Redis-backed)
+    app.get('/c/:code', async (req: express.Request, res: express.Response) => {
+      const code = String(req.params.code).replace(/[^a-z0-9]/gi, '');
+      if (!code || code.length > 20) return res.status(404).send('Link không tồn tại') as any;
+      try {
+        let targetUrl: string | null = null;
+        if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+          const { Redis } = await import('@upstash/redis');
+          const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+          targetUrl = await redis.get<string>(`sl:${code}`);
+        } else {
+          const mem = (global as any).__shortLinks?.[code];
+          if (mem && mem.exp > Date.now()) targetUrl = mem.url;
+        }
+        if (!targetUrl) {
+          return res.status(404).send('Link không tồn tại hoặc đã hết hạn') as any;
+        }
+        return res.redirect(302, targetUrl);
+      } catch (err) {
+        logger.error('[ShortLink] Redirect error:', err);
+        return res.status(500).send('Lỗi server') as any;
+      }
     });
 
     // /news/:idOrSlug → inject article-specific meta; redirect UUID→slug (301)

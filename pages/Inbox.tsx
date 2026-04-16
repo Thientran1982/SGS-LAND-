@@ -162,6 +162,8 @@ export const Inbox: React.FC = () => {
         const ov = getSEOOverrides();
         return ov['livechat']?.description || 'Chúng tôi sẵn sàng hỗ trợ bạn 24/7';
     });
+    const [shortLink, setShortLink] = useState<string | null>(null);
+    const [isGeneratingShortLink, setIsGeneratingShortLink] = useState(false);
     
     // --- SUPERVISOR STATE ---
     const [autoResponseMap, setAutoResponseMap] = useState<Record<string, boolean>>({}); // Toggle per thread
@@ -204,6 +206,31 @@ export const Inbox: React.FC = () => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Generate short link when widget modal opens or params change
+    const generateShortLink = useCallback(async (title: string, desc: string, agentId?: string) => {
+        setIsGeneratingShortLink(true);
+        setShortLink(null);
+        const origin = window.location.origin;
+        const fullUrl = `${origin}/livechat?title=${encodeURIComponent(title)}&desc=${encodeURIComponent(desc)}${agentId ? `&agent=${agentId}` : ''}&source=LINK&lang=${language}`;
+        try {
+            const res = await fetch('/api/links/shorten', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
+                body: JSON.stringify({ url: fullUrl }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setShortLink(data.shortUrl);
+            } else {
+                setShortLink(fullUrl);
+            }
+        } catch {
+            setShortLink(fullUrl);
+        } finally {
+            setIsGeneratingShortLink(false);
+        }
+    }, [language]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -270,6 +297,15 @@ export const Inbox: React.FC = () => {
         },
         staleTime: 60_000,
     });
+
+    // Auto-generate short link when widget modal opens (debounced on title/desc changes)
+    useEffect(() => {
+        if (!isWidgetModalOpen) return;
+        const timer = setTimeout(() => {
+            generateShortLink(widgetTitle, widgetDesc, currentUser?.id);
+        }, 600);
+        return () => clearTimeout(timer);
+    }, [isWidgetModalOpen, widgetTitle, widgetDesc, currentUser?.id, generateShortLink]);
 
     // --- WEBSOCKET INTEGRATION ---
     useEffect(() => {
@@ -1103,21 +1139,43 @@ export const Inbox: React.FC = () => {
 
                                     {/* Link */}
                                     <div>
-                                        <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_link_label')}</label>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="text-sm font-bold text-[var(--text-secondary)]">{t('inbox.widget_link_label')}</label>
+                                            {shortLink && !isGeneratingShortLink && (
+                                                <span className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full font-medium border border-emerald-200">{t('inbox.widget_short_valid')}</span>
+                                            )}
+                                        </div>
                                         <div className="flex gap-2">
-                                            <input
-                                                readOnly
-                                                value={`${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=LINK`}
-                                                className="flex-1 min-w-0 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm text-[var(--text-secondary)] font-mono"
-                                            />
+                                            {isGeneratingShortLink ? (
+                                                <div className="flex-1 flex items-center gap-2 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2">
+                                                    <svg className="w-4 h-4 animate-spin text-indigo-500 shrink-0" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                                                    <span className="text-sm text-[var(--text-tertiary)]">{t('inbox.widget_short_generating')}</span>
+                                                </div>
+                                            ) : (
+                                                <input
+                                                    readOnly
+                                                    value={shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=LINK&lang=${language}` : '?source=LINK'}`}
+                                                    className="flex-1 min-w-0 bg-[var(--glass-surface)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-sm text-[var(--text-secondary)] font-mono"
+                                                />
+                                            )}
                                             <button
                                                 onClick={() => {
-                                                    navigator.clipboard.writeText(`${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=LINK`).catch(() => {});
+                                                    const link = shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=LINK&lang=${language}` : '?source=LINK'}`;
+                                                    navigator.clipboard.writeText(link).catch(() => {});
                                                     notify(t('inbox.widget_link_copied'), 'success');
                                                 }}
-                                                className="px-4 py-2 bg-indigo-50 text-indigo-600 font-bold rounded-xl hover:bg-indigo-100 transition-colors text-sm whitespace-nowrap shrink-0"
+                                                disabled={isGeneratingShortLink}
+                                                className="px-4 py-2 bg-indigo-50 text-indigo-600 font-bold rounded-xl hover:bg-indigo-100 transition-colors text-sm whitespace-nowrap shrink-0 disabled:opacity-40"
                                             >
                                                 {t('inbox.widget_copy')}
+                                            </button>
+                                            <button
+                                                onClick={() => generateShortLink(widgetTitle, widgetDesc, currentUser?.id)}
+                                                disabled={isGeneratingShortLink}
+                                                title={t('inbox.widget_refresh_link')}
+                                                className="p-2 text-[var(--text-tertiary)] hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors disabled:opacity-40"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                             </button>
                                         </div>
                                         <p className="text-xs text-[var(--text-tertiary)] mt-2">{t('inbox.widget_link_desc')}</p>
@@ -1152,13 +1210,19 @@ export const Inbox: React.FC = () => {
                                         <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_qr_label')}</label>
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                                             <div className="bg-[var(--bg-surface)] p-2 rounded-xl shadow-sm border border-[var(--glass-border)] shrink-0 mx-auto sm:mx-0">
-                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=QR`)}`} alt={t('inbox.widget_qr_label')} className="w-32 h-32" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                                {(() => {
+                                                    const qrData = shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=QR&lang=${language}` : '?source=QR'}`;
+                                                    return <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`} alt={t('inbox.widget_qr_label')} className="w-32 h-32" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
+                                                })()}
                                             </div>
                                             <div className="text-center sm:text-left">
                                                 <h4 className="font-bold text-[var(--text-primary)] text-sm mb-1">{t('inbox.widget_qr_title')}</h4>
                                                 <p className="text-xs text-[var(--text-tertiary)] mb-4 leading-relaxed">{t('inbox.widget_qr_desc')}</p>
                                                 <a
-                                                    href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(`${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=QR`)}`}
+                                                    href={(() => {
+                                                        const qrData = shortLink || `${window.location.origin}/livechat${currentUser?.id ? `?agent=${currentUser.id}&source=QR&lang=${language}` : '?source=QR'}`;
+                                                        return `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(qrData)}`;
+                                                    })()}
                                                     download="livechat-qr.png"
                                                     target="_blank"
                                                     rel="noreferrer"
