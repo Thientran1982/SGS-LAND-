@@ -170,7 +170,14 @@ export class ProposalRepository extends BaseRepository {
   async findByTokenGlobal(token: string): Promise<any | null> {
     const result = await pool.query(
       `SELECT p.*,
-              l.name as lead_name, li.title as listing_title, li.location as listing_location
+              l.name as lead_name,
+              li.title as listing_title,
+              li.location as listing_location,
+              li.images as listing_images,
+              li.area as listing_area,
+              li.bedrooms as listing_bedrooms,
+              li.type as listing_type,
+              li.attributes as listing_attributes
        FROM proposals p
        LEFT JOIN leads l ON p.lead_id = l.id
        LEFT JOIN listings li ON p.listing_id = li.id
