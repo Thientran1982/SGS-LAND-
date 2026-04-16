@@ -492,13 +492,20 @@ export const Dashboard: React.FC = () => {
     }, [refetch]);
 
     useEffect(() => {
+        // Lead events — affects totalLeads, salesVelocity, pipeline
         socket.on('lead_created', scheduleRefetch);
         socket.on('lead_updated', scheduleRefetch);
         socket.on('lead_scored', scheduleRefetch);
+        // Proposal approved — affects pipelineValue (open deals change when approved)
+        socket.on('proposal_approved', scheduleRefetch);
+        // Inbound message — triggers AI auto-reply, affects aiDeflectionRate
+        socket.on('new_inbound_message', scheduleRefetch);
         return () => {
             socket.off('lead_created', scheduleRefetch);
             socket.off('lead_updated', scheduleRefetch);
             socket.off('lead_scored', scheduleRefetch);
+            socket.off('proposal_approved', scheduleRefetch);
+            socket.off('new_inbound_message', scheduleRefetch);
             if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
         };
     }, [scheduleRefetch]);

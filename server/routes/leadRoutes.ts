@@ -16,7 +16,7 @@ const STAGE_LABEL_VN: Record<string, string> = {
   MANUAL:      'Thủ công',
 };
 
-export function createLeadRoutes(authenticateToken: any) {
+export function createLeadRoutes(authenticateToken: any, getBroadcast?: () => any) {
   const router = Router();
 
   const PARTNER_ROLES = ['PARTNER_ADMIN', 'PARTNER_AGENT'];
@@ -205,6 +205,7 @@ export function createLeadRoutes(authenticateToken: any) {
         ipAddress: req.ip,
       });
 
+      getBroadcast?.()?.to(`tenant:${user.tenantId}`).emit('lead_created', { leadId: lead.id });
       res.status(201).json(lead);
     } catch (error) {
       console.error('Error creating lead:', error);
@@ -324,6 +325,7 @@ export function createLeadRoutes(authenticateToken: any) {
         }).catch(() => {});
       }
 
+      getBroadcast?.()?.to(`tenant:${user.tenantId}`).emit('lead_updated', { leadId: lead.id, stage: lead.stage });
       res.json(lead);
     } catch (error) {
       console.error('Error updating lead:', error);
