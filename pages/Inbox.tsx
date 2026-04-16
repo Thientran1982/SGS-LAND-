@@ -165,6 +165,8 @@ export const Inbox: React.FC = () => {
     const [shortLink, setShortLink] = useState<string | null>(null);
     const [isGeneratingShortLink, setIsGeneratingShortLink] = useState(false);
     const [linkChannel, setLinkChannel] = useState<'LINK' | 'ZALO' | 'FACEBOOK' | 'SMS'>('LINK');
+    const [qrChannel, setQrChannel] = useState<'QR' | 'ZALO' | 'FACEBOOK' | 'SMS'>('QR');
+    const [embedChannel, setEmbedChannel] = useState<'EMBED' | 'ZALO' | 'FACEBOOK' | 'SMS'>('EMBED');
     
     // --- SUPERVISOR STATE ---
     const [autoResponseMap, setAutoResponseMap] = useState<Record<string, boolean>>({}); // Toggle per thread
@@ -1215,16 +1217,37 @@ export const Inbox: React.FC = () => {
                                     {/* Embed Code */}
                                     <div>
                                         <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_embed_label')}</label>
+                                        {/* Embed channel selector */}
+                                        <div className="flex gap-2 mb-2">
+                                            {([
+                                                { key: 'EMBED' as const, label: t('inbox.widget_channel_embed'), activeClass: 'bg-indigo-500 text-white border-indigo-500 shadow-sm' },
+                                                { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
+                                                { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
+                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-violet-500 text-white border-violet-500 shadow-sm' },
+                                            ]).map(({ key, label, activeClass }) => (
+                                                <button
+                                                    key={key}
+                                                    onClick={() => setEmbedChannel(key)}
+                                                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                                                        embedChannel === key
+                                                            ? activeClass
+                                                            : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'
+                                                    }`}
+                                                >
+                                                    {label}
+                                                </button>
+                                            ))}
+                                        </div>
                                         <div className="relative">
                                             <textarea
                                                 readOnly
                                                 rows={5}
-                                                value={`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=EMBED&lang=${language}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`}
+                                                value={`<script>\n  window.SGSLAND_CHAT_URL = "${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=${embedChannel}&lang=${language}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`}
                                                 className="w-full bg-slate-900 text-emerald-400 border border-slate-800 rounded-xl px-4 py-3 text-xs font-mono resize-none leading-relaxed no-scrollbar"
                                             />
                                             <button
                                                 onClick={() => {
-                                                    const embedBase = `${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=EMBED&lang=${language}`;
+                                                    const embedBase = `${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=${embedChannel}&lang=${language}`;
                                                     const embedCode = `<script>\n  window.SGSLAND_CHAT_URL = "${embedBase}";\n</script>\n<script src="${window.location.origin}/widget.js" async></script>`;
                                                     navigator.clipboard.writeText(embedCode).catch(() => {});
                                                     notify(t('inbox.widget_embed_copied'), 'success');
@@ -1238,13 +1261,34 @@ export const Inbox: React.FC = () => {
                                         <p className="text-xs text-[var(--text-tertiary)] mt-2">{t('inbox.widget_embed_desc')}</p>
                                     </div>
 
-                                    {/* QR Code — always uses full URL with source=QR for accurate lead tracking */}
+                                    {/* QR Code */}
                                     <div>
                                         <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t('inbox.widget_qr_label')}</label>
+                                        {/* QR channel selector */}
+                                        <div className="flex gap-2 mb-3">
+                                            {([
+                                                { key: 'QR' as const, label: t('inbox.widget_channel_qr'), activeClass: 'bg-indigo-500 text-white border-indigo-500 shadow-sm' },
+                                                { key: 'ZALO' as const, label: 'Zalo', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-sm' },
+                                                { key: 'FACEBOOK' as const, label: 'Facebook', activeClass: 'bg-sky-600 text-white border-sky-600 shadow-sm' },
+                                                { key: 'SMS' as const, label: 'SMS', activeClass: 'bg-violet-500 text-white border-violet-500 shadow-sm' },
+                                            ]).map(({ key, label, activeClass }) => (
+                                                <button
+                                                    key={key}
+                                                    onClick={() => setQrChannel(key)}
+                                                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all border ${
+                                                        qrChannel === key
+                                                            ? activeClass
+                                                            : 'bg-[var(--glass-surface)] text-[var(--text-secondary)] border-[var(--glass-border)] hover:border-indigo-300'
+                                                    }`}
+                                                >
+                                                    {label}
+                                                </button>
+                                            ))}
+                                        </div>
                                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 bg-[var(--glass-surface)] p-4 rounded-xl border border-[var(--glass-border)]">
                                             <div className="bg-[var(--bg-surface)] p-2 rounded-xl shadow-sm border border-[var(--glass-border)] shrink-0 mx-auto sm:mx-0">
                                                 {(() => {
-                                                    const qrData = `${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=QR&lang=${language}`;
+                                                    const qrData = `${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=${qrChannel}&lang=${language}`;
                                                     return <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`} alt={t('inbox.widget_qr_label')} className="w-32 h-32" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />;
                                                 })()}
                                             </div>
@@ -1253,7 +1297,7 @@ export const Inbox: React.FC = () => {
                                                 <p className="text-xs text-[var(--text-tertiary)] mb-4 leading-relaxed">{t('inbox.widget_qr_desc')}</p>
                                                 <a
                                                     href={(() => {
-                                                        const qrData = `${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=QR&lang=${language}`;
+                                                        const qrData = `${window.location.origin}/livechat?title=${encodeURIComponent(widgetTitle)}&desc=${encodeURIComponent(widgetDesc)}${currentUser?.id ? `&agent=${currentUser.id}` : ''}&source=${qrChannel}&lang=${language}`;
                                                         return `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(qrData)}`;
                                                     })()}
                                                     download="livechat-qr.png"
