@@ -21,43 +21,43 @@ const stripMarkdown = (text: string): string =>
         .trim();
 
 const AIAnalysisCard = ({ summary, loading, t, onRefresh }: any) => (
-    <div className="bg-gradient-to-br from-indigo-50/50 to-white p-5 rounded-2xl mb-8 border border-indigo-100/50 shadow-sm animate-enter relative group overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100/20 rounded-full blur-3xl group-hover:bg-indigo-200/30 transition-all duration-700"></div>
-        
+    <div className="bg-white p-5 rounded-2xl mb-8 border border-indigo-100 shadow-sm animate-enter relative group overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-100/30 rounded-full blur-3xl pointer-events-none"></div>
+
         <div className="flex justify-between items-center mb-4 relative z-10">
             <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-100">
+                <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-200">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
                 <div>
                     <h4 className="font-bold text-indigo-900 text-xs uppercase tracking-widest">{t('detail.ai_analysis')}</h4>
-                    <p className="text-2xs text-indigo-400 font-medium uppercase tracking-tighter">{t('detail.ai_badge')}</p>
+                    <p className="text-2xs text-indigo-500 font-semibold uppercase tracking-tighter">{t('detail.ai_badge')}</p>
                 </div>
             </div>
-            <button 
+            <button
                 onClick={onRefresh}
                 disabled={loading}
-                className="p-2 text-indigo-400 hover:text-indigo-600 bg-[var(--bg-surface)] rounded-xl border border-[var(--glass-border)] hover:border-indigo-100 transition-all shadow-sm disabled:opacity-50"
+                className="p-2 text-indigo-500 hover:text-indigo-700 bg-indigo-50 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-all shadow-sm disabled:opacity-50"
                 title={t('common.refresh')}
             >
                 <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             </button>
         </div>
-        
+
         {loading ? (
-             <div className="space-y-2.5 py-1 relative z-10">
-                 <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-full"></div>
-                 <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-5/6"></div>
-                 <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-2/3"></div>
-             </div>
+            <div className="space-y-2.5 py-1 relative z-10">
+                <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-full"></div>
+                <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-5/6"></div>
+                <div className="h-3 bg-indigo-100 rounded-full animate-pulse w-2/3"></div>
+            </div>
         ) : (
             <div className="relative z-10">
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed font-medium">
+                <p className="text-sm text-slate-700 leading-relaxed font-medium">
                     {summary || t('detail.ai_no_data')}
                 </p>
                 <div className="mt-4 flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-500 text-2xs font-bold rounded-full uppercase tracking-tighter border border-indigo-100/50">{t('detail.ai_insights')}</span>
-                    <div className="h-px flex-1 bg-indigo-50"></div>
+                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-2xs font-bold rounded-full uppercase tracking-tighter border border-indigo-100">{t('detail.ai_insights')}</span>
+                    <div className="h-px flex-1 bg-indigo-100"></div>
                 </div>
             </div>
         )}
