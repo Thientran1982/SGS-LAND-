@@ -78,7 +78,77 @@ tbody td{padding:13px 16px;font-size:14px;color:#334155;vertical-align:top}
 .ugc-cta-link{color:#4F46E5;font-weight:600}
 .ugc-row td:first-child{min-width:130px}
 .chip{display:inline-block;background:#F1F5F9;border:1px solid #E2E8F0;padding:2px 8px;border-radius:6px;font-size:11px;color:#475569}
+/* Scroll hint — hidden on desktop, shown on mobile via media query */
+.tbl-scroll-hint{display:none}
 /* Internal links card */
 .card-links{padding:20px 24px}
 .card-links h2{font-size:15px;color:#0F172A;margin-bottom:14px;font-weight:700}
 .links-list{list-style:none;display:flex;flex-wrap:wrap;gap:10px}
+
+/* ── Responsive — Tablet (max-width: 900px) ─────────────────────────────── */
+@media (max-width:900px){
+  .info-grid{grid-template-columns:repeat(2,1fr)}
+  .hdr-nav a{font-size:12px;padding:6px 10px}
+  .hero{padding:40px 20px 50px}
+  .cta-box{padding:28px 22px}
+}
+
+/* ── Responsive — Mobile (max-width: 600px) ──────────────────────────────── */
+@media (max-width:600px){
+  /* Header */
+  .hdr{padding:10px 14px;gap:6px}
+  .hdr-brand-name{font-size:14px}
+  .hdr-nav{gap:5px}
+  .hdr-nav a{font-size:11px;padding:6px 9px;border-radius:7px;white-space:nowrap}
+
+  /* Hero */
+  .hero{padding:28px 14px 40px}
+  .hero p{font-size:13px}
+  .hero-meta{gap:8px}
+  .hero-badge{font-size:11px;padding:4px 10px}
+
+  /* Wrap */
+  .wrap{padding:0 12px}
+
+  /* Content */
+  .content{padding:20px 0 36px;margin-top:-10px}
+
+  /* Info grid — 2 cột trên mobile */
+  .info-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+  .info-item{padding:14px 12px;border-radius:10px}
+  .info-val{font-size:22px}
+  .info-label{font-size:11px}
+
+  /* Card */
+  .card{border-radius:12px;margin-bottom:18px}
+  .card-hdr{padding:14px 14px 12px;flex-wrap:wrap;gap:6px}
+  .card-hdr h2{font-size:15px}
+  .card-hdr p{font-size:12px}
+  .card-links{padding:16px 14px}
+
+  /* Table scroll hint */
+  .tbl-wrap{-webkit-overflow-scrolling:touch;position:relative}
+  .tbl-scroll-hint{display:block;text-align:center;font-size:11px;color:#94A3B8;padding:6px 0 2px;letter-spacing:.3px}
+
+  /* Disclaimer */
+  .disclaimer{padding:12px 14px;font-size:11px;margin-bottom:18px}
+
+  /* UGC */
+  .ugc-intro{padding:14px 14px;font-size:12px}
+  .ugc-empty{padding:24px 14px;font-size:13px}
+
+  /* FAQ */
+  .faq-list{padding:16px 14px}
+  .faq-q{font-size:13px;padding:12px 14px}
+  .faq-a{padding:12px 14px;font-size:13px}
+
+  /* CTA */
+  .cta-box{padding:26px 18px}
+  .cta-box h2{font-size:18px}
+  .cta-box p{font-size:13px}
+  .cta-btn{padding:11px 24px;font-size:14px}
+
+  /* Footer */
+  .ftr{padding:24px 14px}
+  .ftr a{font-size:12px}
+}

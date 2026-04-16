@@ -464,6 +464,7 @@ export function getBankRatesHtml(ugcRates: BankRateRow[] = []): string {
         Bạn là nhân viên ngân hàng hoặc chuyên gia tài chính? 
         <a href="/#/lai-suat-ngan-hang">Đăng nhập để chia sẻ thông tin lãi suất →</a>
       </div>
+      <span class="tbl-scroll-hint">&#8592; Vuốt ngang để xem thêm &#8594;</span>
       <div class="tbl-wrap">
         <table>
           <thead>
