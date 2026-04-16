@@ -69,9 +69,14 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: response.statusText }));
-    const error = new Error(errorData.error || errorData.message || `Request failed: ${response.status}`);
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    const error = new Error(
+      errorData.message ||
+      (typeof errorData.error === 'string' ? errorData.error : null) ||
+      `Request failed: ${response.status}`
+    );
     (error as any).status = response.status;
+    (error as any).code = errorData.code;
     (error as any).data = errorData;
     throw error;
   }

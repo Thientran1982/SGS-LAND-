@@ -212,6 +212,8 @@ export function createTaskRoutes(authenticateToken: any) {
 
       const parsed = createTaskSchema.safeParse(req.body);
       if (!parsed.success) {
+        const issues = parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`);
+        console.warn('[taskRoutes] createTask validation failed:', issues.join(' | '), '| body keys:', Object.keys(req.body));
         const msg = parsed.error.issues[0]?.message || 'Dữ liệu không hợp lệ';
         return res.status(400).json({ error: true, code: 'VALIDATION', message: msg });
       }
