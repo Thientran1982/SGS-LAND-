@@ -152,7 +152,8 @@ export default function LiveChat() {
         const handleNewMessage = (data: any) => {
             const msg: Interaction = data?.message ?? data;
             if (!msg || msg.leadId !== leadId) return;
-            if (isSysMessage(msg)) return;
+            // isSysMsg messages ARE shown to the customer in real-time so they know
+            // when AI is busy — only historical ones are filtered on initial load
             setMessages(prev => {
                 if (prev.find(m => m.id === msg.id)) return prev;
                 return [...prev, msg];
@@ -257,7 +258,9 @@ export default function LiveChat() {
                     // noReply = human agent took over; widget waits silently for agent reply
                     if (data.noReply) return;
                     const aiMsg: Interaction = data.reply;
-                    if (!isSysMessage(aiMsg)) {
+                    // Always show the reply — including isSysMsg (AI busy notices) so
+                    // the customer knows AI is temporarily unavailable
+                    if (aiMsg) {
                         setMessages(prev => {
                             if (prev.find(m => m.id === aiMsg.id)) return prev;
                             return [...prev, aiMsg];
@@ -381,7 +384,7 @@ export default function LiveChat() {
                         </span>
                     </div>
                 )}
-                {messages.filter(m => !isSysMessage(m)).map((msg, idx, arr) => (
+                {messages.map((msg, idx, arr) => (
                     <MessageBubble
                         key={msg.id}
                         msg={msg}
