@@ -127,7 +127,7 @@ export default function LiveChat() {
 
     useEffect(() => {
         if (!leadId) return;
-        socket.emit('join_room', leadId);
+        socket.emit('join_livechat_room', leadId);
 
         const handleNewMessage = (data: any) => {
             const msg: Interaction = data?.message ?? data;
