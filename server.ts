@@ -1796,7 +1796,7 @@ async function startServer() {
     res.json({ message: 'Đang chạy hiệu chỉnh giá trong nền — kiểm tra log để theo dõi.' });
   });
 
-  app.use('/api/leads', apiRateLimit, createLeadRoutes(authenticateToken));
+  app.use('/api/leads', apiRateLimit, createLeadRoutes(authenticateToken, () => broadcastIo));
   app.use('/api/listings', apiRateLimit, createListingRoutes(authenticateToken));
   app.use('/api/proposals', apiRateLimit, createProposalRoutes(authenticateToken, () => broadcastIo));
   app.use('/api/contracts', apiRateLimit, createContractRoutes(authenticateToken));
