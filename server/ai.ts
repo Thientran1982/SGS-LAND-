@@ -2491,50 +2491,167 @@ reasoning phải bằng ${lang === 'en' ? 'English' : 'Tiếng Việt'}, cụ th
 
     async summarizeLead(lead: Lead, logs: any[], lang: string = 'vn', tenantId: string = 'default') {
         try {
-            const budgetFmt = lead.preferences?.budgetMax
-                ? `${(lead.preferences.budgetMax / 1_000_000_000).toFixed(2)} Tỷ VNĐ`
-                : 'Chưa rõ';
+            const isVN = lang !== 'en';
+
+            // ── Time signals ─────────────────────────────────────────────────────
+            const now = Date.now();
+            const daysSinceCreated = lead.createdAt
+                ? Math.floor((now - new Date(lead.createdAt).getTime()) / 86_400_000)
+                : null;
+            const sortedLogs = [...logs].sort(
+                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            );
+            const lastContactDate = sortedLogs[0]?.timestamp
+                ? new Date(sortedLogs[0].timestamp)
+                : null;
+            const daysSinceLastContact = lastContactDate
+                ? Math.floor((now - lastContactDate.getTime()) / 86_400_000)
+                : null;
+
+            // ── Budget formatting ─────────────────────────────────────────────────
+            const fmtBudget = (val?: number) =>
+                val ? `${(val / 1_000_000_000).toFixed(2)} tỷ VNĐ` : null;
+            const budgetMin = fmtBudget(lead.preferences?.budgetMin);
+            const budgetMax = fmtBudget(lead.preferences?.budgetMax);
+            const budgetFmt = budgetMin && budgetMax
+                ? `${budgetMin} – ${budgetMax}`
+                : budgetMax || budgetMin || (isVN ? 'Chưa rõ' : 'Unknown');
+
+            // ── Score ────────────────────────────────────────────────────────────
             const scoreFmt = lead.score?.score != null
-                ? `${lead.score.score} điểm (${lead.score.grade || '?'}) — ${lead.score.reasoning || ''}`
-                : 'Chưa chấm điểm';
-            const formattedLogs = logs.map(log => {
-                const ts = log.timestamp ? new Date(log.timestamp).toLocaleString('vi-VN') : '';
-                const who = log.direction === 'INBOUND' ? 'Khách' : 'Sale';
-                return `[${ts}] ${who}: ${log.content}`;
-            }).join('\n') || '(Chưa có lịch sử tương tác)';
+                ? `${lead.score.score}/100 (${lead.score.grade || '?'}) — ${lead.score.reasoning || ''}`
+                : (isVN ? 'Chưa chấm điểm' : 'Not scored');
 
-            const prompt = `Ngôn ngữ: ${lang === 'en' ? 'English' : 'Tiếng Việt'}
+            // ── Preferences ──────────────────────────────────────────────────────
+            const pref = lead.preferences || {};
+            const areaParts = isVN
+                ? [
+                    pref.areaMin != null ? `từ ${pref.areaMin}m²` : null,
+                    pref.areaMax != null ? `đến ${pref.areaMax}m²` : null,
+                  ].filter(Boolean)
+                : [
+                    pref.areaMin != null ? `from ${pref.areaMin}m²` : null,
+                    pref.areaMax != null ? `to ${pref.areaMax}m²` : null,
+                  ].filter(Boolean);
 
-KHÁCH HÀNG: ${lead.name} | Nguồn: ${lead.source || 'Chưa rõ'} | CRM: ${lead.stage || 'Chưa rõ'} | Điểm: ${scoreFmt}
-Ngân sách: ${budgetFmt} | Loại: ${lead.preferences?.propertyTypes?.join(', ') || 'Chưa rõ'} | Khu vực: ${lead.preferences?.regions?.join(', ') || 'Chưa rõ'}
-Ghi chú: ${lead.notes || 'Không có'}
+            // ── Interaction log (most recent first, capped at 20 messages) ────────
+            const formattedLogs = sortedLogs.slice(0, 20).map(log => {
+                const ts = log.timestamp
+                    ? new Date(log.timestamp).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })
+                    : '';
+                const who = log.direction === 'INBOUND'
+                    ? (isVN ? 'Khách' : 'Lead')
+                    : (isVN ? 'Sale' : 'Agent');
+                const content = String(log.content || '').slice(0, 400);
+                return `[${ts}] ${who}: ${content}`;
+            }).join('\n') || (isVN ? '(Chưa có lịch sử tương tác)' : '(No interaction history)');
 
-LỊCH SỬ TƯƠNG TÁC (${logs.length} tin nhắn):
+            // ── SLA / urgency flags ───────────────────────────────────────────────
+            const slaFmt = lead.slaBreached
+                ? (isVN ? 'BREACH — cần liên hệ ngay hôm nay' : 'BREACHED — contact immediately')
+                : (isVN ? 'Bình thường' : 'OK');
+
+            if (isVN) {
+                const prompt = `Ngôn ngữ đầu ra: Tiếng Việt
+
+=== HỒ SƠ KHÁCH HÀNG ===
+Tên: ${lead.name} | Giai đoạn CRM: ${lead.stage || 'Chưa rõ'} | Điểm AI: ${scoreFmt}
+Nguồn tiếp cận: ${lead.source || 'Chưa rõ'} | Phụ trách: ${lead.assignedToName || 'Chưa phân công'}
+Thời gian trong pipeline: ${daysSinceCreated != null ? `${daysSinceCreated} ngày` : 'Không rõ'} | Liên hệ gần nhất: ${daysSinceLastContact != null ? `${daysSinceLastContact} ngày trước` : 'Chưa liên hệ'}
+SLA: ${slaFmt}
+Tags: ${lead.tags?.length ? lead.tags.join(', ') : 'Không có'}
+Ghi chú nhân viên: ${lead.notes || 'Không có'}
+
+=== NHU CẦU & NGÂN SÁCH ===
+Ngân sách: ${budgetFmt}
+Loại BĐS: ${pref.propertyTypes?.join(', ') || 'Chưa rõ'}
+Khu vực: ${pref.regions?.join(', ') || 'Chưa rõ'}
+Diện tích: ${areaParts.length ? areaParts.join(' ') : 'Chưa rõ'}
+Hướng: ${pref.directions?.join(', ') || 'Chưa rõ'}
+
+=== LỊCH SỬ TƯƠNG TÁC (${logs.length} tin nhắn) ===
 ${formattedLogs}
 
-PHÂN TÍCH (chuyên nghiệp, súc tích):
-1. Nhu cầu cốt lõi và động lực mua thực sự.
-2. Tâm trạng, thiện chí và xu hướng hành vi.
-3. Đánh giá rủi ro chốt deal (nếu có).
-4. Chiến lược tiếp cận tối ưu — hành động cụ thể ngay.`;
+=== YÊU CẦU PHÂN TÍCH ===
+Viết phân tích chân dung khách hàng theo 4 điểm sau. Mỗi điểm 2-3 câu, ngắn gọn, thực chiến. Dùng văn xuôi đánh số, KHÔNG dùng markdown hay ký tự đặc biệt.
 
-            const summarizeModel = await getGovernanceModel(tenantId);
-            const response = await getAiClient().models.generateContent({
-                model: summarizeModel,
-                contents: prompt,
-                config: {
-                    systemInstruction: "Bạn là một chuyên gia tư vấn BĐS kỳ cựu với khả năng thấu cảm khách hàng cực tốt."
-                }
-            });
+1. CHÂN DUNG: Đây là loại khách hàng nào (mua ở thực, đầu tư, lướt sóng, tìm hiểu thị trường)? Mức độ nghiêm túc và khả năng ra quyết định.
+2. NHU CẦU CỐT LÕI: Động lực mua thực sự — điều họ thực sự cần (có thể khác với điều họ nói). Áp lực hoặc kỳ vọng ẩn.
+3. RỦI RO & RÀO CẢN: Tâm trạng hiện tại, lo ngại chính, nguy cơ mất deal hoặc kéo dài pipeline bất thường.
+4. HÀNH ĐỘNG TIẾP THEO: 1-2 bước cụ thể và khả thi nhất cho sale thực hiện trong 24-48h tới để đẩy deal tiến lên.`;
 
-            return response.text || (lang === 'en' ? "Unable to analyze lead at this time." : "Không thể phân tích khách hàng vào lúc này.");
+                const summarizeModel = await getGovernanceModel(tenantId);
+                const response = await getAiClient().models.generateContent({
+                    model: summarizeModel,
+                    contents: prompt,
+                    config: {
+                        systemInstruction:
+                            'Bạn là chuyên gia phân tích tâm lý và hành vi khách hàng bất động sản hàng đầu Việt Nam, ' +
+                            'với 15+ năm kinh nghiệm thực chiến tư vấn và chốt deal. ' +
+                            'Nhiệm vụ: Viết bản phân tích chân dung khách hàng ngắn gọn, sắc bén và có tính hành động cao cho nhân viên sale BĐS. ' +
+                            'Nguyên tắc: Chỉ kết luận từ dữ liệu thực tế trong hồ sơ. Không suy diễn vô căn cứ. ' +
+                            'Ưu tiên insight actionable hơn nhận xét chung chung. ' +
+                            'Văn phong: Chuyên nghiệp, súc tích, như báo cáo của chuyên gia tư vấn cao cấp. ' +
+                            'Định dạng: Văn xuôi đánh số 1-4, KHÔNG dùng markdown, KHÔNG dùng ký tự **, #, -, •.',
+                    }
+                });
+                return response.text || 'Không thể phân tích khách hàng vào lúc này.';
+
+            } else {
+                const prompt = `Output language: English
+
+=== LEAD PROFILE ===
+Name: ${lead.name} | CRM Stage: ${lead.stage || 'Unknown'} | AI Score: ${scoreFmt}
+Source: ${lead.source || 'Unknown'} | Assigned to: ${lead.assignedToName || 'Unassigned'}
+Days in pipeline: ${daysSinceCreated != null ? `${daysSinceCreated} days` : 'Unknown'} | Last contact: ${daysSinceLastContact != null ? `${daysSinceLastContact} days ago` : 'No contact yet'}
+SLA: ${slaFmt}
+Tags: ${lead.tags?.length ? lead.tags.join(', ') : 'None'}
+Agent notes: ${lead.notes || 'None'}
+
+=== PREFERENCES & BUDGET ===
+Budget: ${budgetFmt}
+Property types: ${pref.propertyTypes?.join(', ') || 'Unknown'}
+Regions: ${pref.regions?.join(', ') || 'Unknown'}
+Area: ${areaParts.length ? areaParts.join(' ') : 'Unknown'}
+Directions: ${pref.directions?.join(', ') || 'Unknown'}
+
+=== INTERACTION HISTORY (${logs.length} messages) ===
+${formattedLogs}
+
+=== ANALYSIS REQUIRED ===
+Write a customer persona analysis in 4 points. Each point 2-3 sentences, concise and actionable. Plain numbered prose, NO markdown, NO special characters.
+
+1. PERSONA: What type of buyer is this (end-user, investor, speculator, market researcher)? Seriousness and decision-making capability.
+2. CORE NEED: Real buying motivation — what they truly need (may differ from what they say). Hidden pressures or expectations.
+3. RISKS & BLOCKERS: Current mindset, main concerns, risk of losing the deal or abnormal pipeline stall.
+4. NEXT ACTIONS: 1-2 most specific and executable steps for the agent to take in the next 24-48h to advance the deal.`;
+
+                const summarizeModel = await getGovernanceModel(tenantId);
+                const response = await getAiClient().models.generateContent({
+                    model: summarizeModel,
+                    contents: prompt,
+                    config: {
+                        systemInstruction:
+                            'You are a top real estate customer psychology and behavior analyst in Vietnam, ' +
+                            'with 15+ years of hands-on deal closing experience. ' +
+                            'Task: Write a concise, sharp, high-action customer persona analysis for real estate sales agents. ' +
+                            'Principle: Only draw conclusions from actual data in the profile. No unfounded speculation. ' +
+                            'Prioritize actionable insights over generic observations. ' +
+                            'Tone: Professional, concise, like a senior consultant\'s briefing note. ' +
+                            'Format: Numbered prose 1-4, NO markdown, NO **, #, -, • characters.',
+                    }
+                });
+                return response.text || 'Unable to analyze lead at this time.';
+            }
+
         } catch (e: any) {
             const msg = e?.message || String(e);
             const isQuota = msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('429');
             logger.error("AI Summarization Error:", e);
+            const isVN = lang !== 'en';
             return isQuota
-                ? (lang === 'en' ? 'AI analysis unavailable — system busy. Please try again in a few minutes.' : 'Hệ thống AI đang bận, vui lòng thử lại sau ít phút.')
-                : (lang === 'en' ? 'AI analysis temporarily unavailable.' : 'Phân tích AI tạm thời không khả dụng.');
+                ? (isVN ? 'Hệ thống AI đang bận, vui lòng thử lại sau ít phút.' : 'AI analysis unavailable — system busy. Please try again in a few minutes.')
+                : (isVN ? 'Phân tích AI tạm thời không khả dụng.' : 'AI analysis temporarily unavailable.');
         }
     }
 
