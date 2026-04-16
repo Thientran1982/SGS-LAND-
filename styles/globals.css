@@ -65,11 +65,13 @@ html.dark {
 }
 
 /* Glassmorphism utility */
-.glass-card {
-  background: var(--glass-surface);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--glass-border);
+@layer components {
+  .glass-card {
+    background: var(--glass-surface);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--glass-border);
+  }
 }
 
 /* Animations */
