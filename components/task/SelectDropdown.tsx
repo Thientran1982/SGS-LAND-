@@ -16,6 +16,7 @@ interface Props {
   className?: string;
   height?: number;
   error?: boolean;
+  disabled?: boolean;
 }
 
 export function SelectDropdown({
@@ -26,6 +27,7 @@ export function SelectDropdown({
   className = '',
   height = 38,
   error = false,
+  disabled = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number; width: number }>({ left: 0, width: 0 });
@@ -79,9 +81,10 @@ export function SelectDropdown({
       <button
         ref={btnRef}
         type="button"
-        onClick={() => open ? setOpen(false) : openMenu()}
+        disabled={disabled}
+        onClick={() => { if (disabled) return; open ? setOpen(false) : openMenu(); }}
         style={{ height }}
-        className={`w-full flex items-center justify-between gap-2 px-3 text-sm bg-[var(--glass-surface-hover)] border rounded-xl text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors ${error ? 'border-rose-400' : open ? 'border-indigo-400 ring-2 ring-indigo-500/20' : 'border-[var(--glass-border)] hover:border-indigo-300'} ${className}`}
+        className={`w-full flex items-center justify-between gap-2 px-3 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors ${disabled ? 'bg-[var(--glass-surface)] opacity-60 cursor-not-allowed border-[var(--glass-border)]' : 'bg-[var(--glass-surface-hover)] text-[var(--text-primary)]'} ${!disabled && (error ? 'border-rose-400' : open ? 'border-indigo-400 ring-2 ring-indigo-500/20' : 'border-[var(--glass-border)] hover:border-indigo-300')} ${className}`}
       >
         <span className="flex items-center gap-2 min-w-0 flex-1 truncate">
           {selected?.dot && (
